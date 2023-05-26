@@ -21,8 +21,7 @@ export class WebGPURenderer {
     this.domElement = new DOMElement({
       element: container,
       onSizeChanged: (boundingRect) => {
-        this.setSize(boundingRect)
-        this.setRenderPassView()
+        this.resize(boundingRect)
       },
     })
 
@@ -184,10 +183,10 @@ export class WebGPURenderer {
       : renderingSize.height
   }
 
-  // resize() {
-  //   this.setSize()
-  //   this.setRenderPassView()
-  // }
+  resize(boundingRect) {
+    this.setSize(boundingRect ?? this.domElement.element.getBoundingClientRect())
+    this.setRenderPassView()
+  }
 
   /**
    * Called at each draw call to render our scene and its content

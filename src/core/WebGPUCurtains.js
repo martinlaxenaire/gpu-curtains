@@ -77,11 +77,10 @@ export class WebGPUCurtains {
     this.initScroll()
   }
 
-  // resize() {
-  //   if(this.renderer) {
-  //     this.renderer.resize()
-  //   }
-  // }
+  // called only if autoResize is set to false
+  resize() {
+    this.renderer?.resize()
+  }
 
   /**
    * SCROLL
@@ -115,6 +114,10 @@ export class WebGPUCurtains {
   }
 
   render() {
-    if (this.renderer) this.renderer.render()
+    this.renderer?.render()
+  }
+
+  destroy() {
+    this.renderer?.destroy()
   }
 }
