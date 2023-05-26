@@ -260,13 +260,15 @@ export class DOM3DObject {
     this.matrices.modelViewProjection.shouldUpdate = true
   }
 
-  updateMatrixStack(updateProjectionMatrix = false) {
+  updateModelMatrixStack(sizeChanged = false) {
     this.matrices.world.shouldUpdate = true
     this.matrices.modelView.shouldUpdate = true
     this.matrices.modelViewProjection.shouldUpdate = true
 
     // we shouldn't have to handle projection matrix
   }
+
+  updateProjectionMatrixStack() {}
 
   /***
    This function takes pixel values along X and Y axis and convert them to world space coordinates
@@ -314,7 +316,7 @@ export class DOM3DObject {
     }
 
     this.setWorldTransformOrigin()
-    this.updateMatrixStack()
+    this.updateModelMatrixStack(true)
   }
 
   setWorldTransformOrigin() {
@@ -327,7 +329,7 @@ export class DOM3DObject {
       this.transforms.origin.model.z
     )
 
-    this.updateMatrixStack()
+    this.updateModelMatrixStack()
   }
 
   /***
@@ -336,7 +338,7 @@ export class DOM3DObject {
   applyRotation() {
     this.quaternion.setFromVec3(this.rotation)
 
-    this.updateMatrixStack()
+    this.updateModelMatrixStack()
   }
 
   /***
@@ -355,13 +357,14 @@ export class DOM3DObject {
       this.documentPosition.z / this.camera.CSSPerspective
     )
 
-    this.updateMatrixStack()
+    this.updateModelMatrixStack()
   }
 
   applyScale() {
     // TODO update textures matrix...
+    //this.resize()
 
-    this.updateMatrixStack()
+    this.updateModelMatrixStack(true)
   }
 
   // TODO setPosition, setRotation, setScale, etc.
@@ -380,6 +383,11 @@ export class DOM3DObject {
         this.matrices[matrixName].onUpdate()
         this.matrices[matrixName].shouldUpdate = false
       }
+    }
+
+    if (this.camera.shouldUpdate) {
+      this.updateProjectionMatrixStack()
+      this.camera.shouldUpdate = false
     }
   }
 }

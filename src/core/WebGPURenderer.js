@@ -186,6 +186,10 @@ export class WebGPURenderer {
   resize(boundingRect) {
     this.setSize(boundingRect ?? this.domElement.element.getBoundingClientRect())
     this.setRenderPassView()
+
+    // force plane resize
+    // plane HTMLElement might not have changed
+    this.planes?.forEach((plane) => plane.setPerspective())
   }
 
   /**

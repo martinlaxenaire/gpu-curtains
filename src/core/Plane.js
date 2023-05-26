@@ -139,6 +139,7 @@ export class Plane extends DOM3DObject {
           value: this.projectionMatrix,
           onBeforeUpdate: () => {
             this.matrixUniformBinding.uniforms.projection.value = this.projectionMatrix
+            console.log(this.matrixUniformBinding.uniforms.projection.value.elements)
           },
         },
         modelViewProjection: {
@@ -153,8 +154,8 @@ export class Plane extends DOM3DObject {
     })
   }
 
-  updateMatrixStack(updateProjectionMatrix = false) {
-    super.updateMatrixStack(updateProjectionMatrix)
+  updateModelMatrixStack(sizeChanged = false) {
+    super.updateModelMatrixStack(sizeChanged)
 
     if (this.matrixUniformBinding) {
       this.matrixUniformBinding.shouldUpdateUniform('world')
@@ -162,11 +163,16 @@ export class Plane extends DOM3DObject {
       this.matrixUniformBinding.shouldUpdateUniform('modelViewProjection')
     }
 
-    // if(this.matrixUniformBinding) {
-    //   this.matrixUniformBinding.shouldUpdate = true
-    // }
+    // TODO ugly
+    if (sizeChanged) {
+      this.textures?.forEach((texture) => texture.resize())
+    }
+  }
 
-    // we shouldn't have to handle projection matrix
+  updateProjectionMatrixStack() {
+    super.updateProjectionMatrixStack()
+
+    this.matrixUniformBinding.shouldUpdateUniform('projection')
   }
 
   /** SOURCES **/
