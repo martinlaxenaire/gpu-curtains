@@ -182,6 +182,11 @@ export class Material {
     this.renderer.device.queue.writeBuffer(this.state.attributesBuffers.indexBuffer, 0, this.attributes.indexArray)
   }
 
+  destroyAttributeBuffers() {
+    this.state.attributesBuffers?.vertexBuffer?.destroy()
+    this.state.attributesBuffers?.indexBuffer?.destroy()
+  }
+
   /** UNIFORMS **/
 
   setUniforms() {
@@ -237,6 +242,14 @@ export class Material {
     })
   }
 
+  destroyUniformBindings() {
+    this.state.uniformsGroups.forEach((uniformGroup) => {
+      uniformGroup.uniformBuffers.forEach((uniformBuffer) => {
+        uniformBuffer.destroy()
+      })
+    })
+  }
+
   updateUniformBinding(uniformGroup) {
     uniformGroup.uniformGroup.bindings.forEach((uniformBinding, index) => {
       if (uniformBinding.shouldUpdate) {
@@ -267,6 +280,10 @@ export class Material {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
       })
     }
+  }
+
+  destroyTextureBuffer(textureBinding) {
+    textureBinding.matrixUniformBuffer?.destroy()
   }
 
   createTextureBindGroup(textureBinding, texture) {
@@ -347,12 +364,22 @@ export class Material {
     })
 
     // update textures
-    this.state.texturesBindings.forEach((texture) => {
-      this.updateTexture(texture)
-      pass.setBindGroup(1, texture.bindGroup)
+    this.state.texturesBindings.forEach((textureBinding) => {
+      this.updateTexture(textureBinding)
+      pass.setBindGroup(1, textureBinding.bindGroup)
     })
 
     // draw
     pass.drawIndexed(this.attributes.indexBufferLength)
+  }
+
+  destroy() {
+    // destroy all buffers created with createBuffer
+    this.destroyAttributeBuffers()
+    this.destroyUniformBindings()
+
+    this.state.texturesBindings.forEach((textureBinding) => {
+      this.destroyTextureBuffer(textureBinding)
+    })
   }
 }

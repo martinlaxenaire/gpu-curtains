@@ -465,4 +465,8 @@ export class Texture {
     this.sourceLoaded = true // TODO useful?
     this.createTexture()
   }
+
+  destroy() {
+    this.texture?.destroy()
+  }
 }

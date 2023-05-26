@@ -238,4 +238,8 @@ export class Plane extends DOM3DObject {
 
     this.onRender()
   }
+
+  destroy() {
+    this.mesh?.material?.destroy()
+  }
 }

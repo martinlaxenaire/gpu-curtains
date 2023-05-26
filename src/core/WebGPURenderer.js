@@ -216,4 +216,17 @@ export class WebGPURenderer {
     const commandBuffer = encoder.finish()
     this.device.queue.submit([commandBuffer])
   }
+
+  destroy() {
+    this.planes.forEach((plane) => plane.destroy())
+
+    this.textures.forEach((texture) => texture.destroy())
+
+    // TODO what's best?
+    //this.renderPass?.target?.destroy()
+    this.context?.getCurrentTexture()?.destroy()
+
+    this.device?.destroy()
+    this.context?.unconfigure()
+  }
 }
