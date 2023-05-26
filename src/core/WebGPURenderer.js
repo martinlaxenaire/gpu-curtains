@@ -15,9 +15,6 @@ export class WebGPURenderer {
       return
     }
 
-    // keep track of planes
-    this.planes = []
-
     // create the canvas
     this.canvas = document.createElement('canvas')
 
@@ -29,14 +26,8 @@ export class WebGPURenderer {
       },
     })
 
-    // TODO add a resize observer on container
-    // this.setSize()
-    // this.observer = new ResizeObserver(entries => {
-    //   this.setSize(entries[0] && entries[0].contentRect)
-    // })
-    // this.observer.observe(this.container)
-
     this.setContext()
+    this.setRendererObjects()
   }
 
   /**
@@ -89,7 +80,28 @@ export class WebGPURenderer {
     })
   }
 
+  setRendererObjects() {
+    // keep track of planes, textures, etc.
+    this.planes = []
+    this.textures = []
+  }
+
   /** TEXTURES **/
+
+  setTexture(texture) {
+    if (!texture.sampler) {
+      texture.sampler = this.createSampler(texture.options.sampler)
+    }
+
+    if (!texture.texture) {
+      // call createTexture on texture class, that is then going to call the renderer createTexture method
+      texture.createTexture()
+    }
+  }
+
+  addTexture(texture) {
+    this.textures.push(texture)
+  }
 
   createSampler(options = {}) {
     if (!this.device) return false
@@ -102,6 +114,8 @@ export class WebGPURenderer {
 
     return this.device.createTexture(options)
   }
+
+  /** RENDER TEXTURES **/
 
   setRenderPassView() {
     if (!this.renderPass) return
@@ -181,6 +195,8 @@ export class WebGPURenderer {
    */
   render() {
     if (!this.ready) return
+
+    this.textures.forEach((texture) => this.setTexture(texture))
 
     // now render!
 

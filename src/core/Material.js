@@ -259,21 +259,7 @@ export class Material {
     })
   }
 
-  updateTextureBinding(textureBinding) {
-    const { texture } = textureBinding
-
-    if (!texture.sampler) {
-      texture.createSampler()
-    }
-
-    if (!texture.texture) {
-      texture.createTexture()
-    }
-
-    if (texture.shouldUpdate) {
-      texture.uploadTexture(this.renderer.device)
-    }
-
+  createTextureBuffer(textureBinding, texture) {
     if (!textureBinding.matrixUniformBuffer) {
       textureBinding.matrixUniformBuffer = this.renderer.device.createBuffer({
         label: this.options.label + ': Uniforms buffer from:' + texture.textureMatrix.label,
@@ -281,18 +267,9 @@ export class Material {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
       })
     }
+  }
 
-    if (texture.textureMatrix.shouldUpdate) {
-      const bufferOffset = 0
-      this.renderer.device.queue.writeBuffer(
-        textureBinding.matrixUniformBuffer,
-        bufferOffset,
-        texture.textureMatrix.value
-      )
-
-      texture.textureMatrix.shouldUpdate = false
-    }
-
+  createTextureBindGroup(textureBinding, texture) {
     if (texture.shouldBindGroup) {
       textureBinding.bindGroup = this.renderer.device.createBindGroup({
         label: 'Texture',
@@ -312,6 +289,31 @@ export class Material {
     }
 
     texture.shouldBindGroup = false
+  }
+
+  updateTextureBinding(textureBinding, texture) {
+    if (texture.textureMatrix.shouldUpdate) {
+      const bufferOffset = 0
+      this.renderer.device.queue.writeBuffer(
+        textureBinding.matrixUniformBuffer,
+        bufferOffset,
+        texture.textureMatrix.value
+      )
+
+      texture.textureMatrix.shouldUpdate = false
+    }
+  }
+
+  updateTexture(textureBinding) {
+    const { texture } = textureBinding
+
+    if (texture.shouldUpdate) {
+      texture.uploadTexture(this.renderer.device)
+    }
+
+    this.createTextureBuffer(textureBinding, texture)
+    this.createTextureBindGroup(textureBinding, texture)
+    this.updateTextureBinding(textureBinding, texture)
   }
 
   /** Render loop **/
@@ -346,7 +348,7 @@ export class Material {
 
     // update textures
     this.state.texturesBindings.forEach((texture) => {
-      this.updateTextureBinding(texture)
+      this.updateTexture(texture)
       pass.setBindGroup(1, texture.bindGroup)
     })
 

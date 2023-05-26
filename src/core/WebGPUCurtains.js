@@ -1,5 +1,5 @@
 import { WebGPURenderer } from './WebGPURenderer'
-import { ScrollManager } from '../../curtains-src/utils/ScrollManager'
+import { ScrollManager } from '../utils/ScrollManager'
 import ResizeManager from '../utils/ResizeManager'
 
 export class WebGPUCurtains {
