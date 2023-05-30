@@ -2,10 +2,9 @@ import { DOMElement } from './DOMElement'
 import { Mat4 } from '../math/Mat4'
 import { Vec3 } from '../math/Vec3'
 import { Quat } from '../math/Quat'
-import { Camera } from '../camera/Camera'
 
 export class DOM3DObject {
-  constructor(renderer, element, { fov = 50 } = {}) {
+  constructor(renderer, element) {
     this.renderer = renderer
 
     this.size = {
@@ -26,36 +25,31 @@ export class DOM3DObject {
     this.initTransforms()
     this.initMatrices()
 
-    this.camera = new Camera({
-      fov: fov,
-      width: this.renderer.domElement.boundingRect.width,
-      height: this.renderer.domElement.boundingRect.height,
-      pixelRatio: this.renderer.pixelRatio,
-      onBeforeUpdate: () => {
-        if (!this.camera) return
-
-        this.setWorldSizes()
-        this.applyPosition()
-      },
-    })
+    this.camera = this.renderer.camera
 
     this.domElement = new DOMElement({
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
       onPositionChanged: (boundingRect) => {
         this.size.document = boundingRect
-
-        this.setWorldSizes()
-        this.applyPosition()
+        this.updateSizeAndPosition()
       },
     })
   }
 
+  updateSizeAndPosition() {
+    this.setWorldSizes()
+    this.applyPosition()
+  }
+
+  updateSizePositionAndProjection() {
+    this.updateSizeAndPosition()
+    this.updateProjectionMatrixStack()
+  }
+
   resize(boundingRect) {
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
-    // reset perspective
-    // it will trigger camera onBeforeUpdate callback and update position and position
-    this.setPerspective(this.camera.fov, this.camera.near, this.camera.far)
+    this.updateSizePositionAndProjection()
   }
 
   /*** BOUNDING BOXES GETTERS ***/
@@ -68,29 +62,6 @@ export class DOM3DObject {
    ***/
   getBoundingRect() {
     return this.size.document
-  }
-
-  /** CAMERA **/
-
-  /***
-   This will set our perspective matrix new parameters (fov, near plane and far plane)
-   used internally but can be used externally as well to change fov for example
-
-   params :
-   @fov (float): the field of view
-   @near (float): the nearest point where object are displayed
-   @far (float): the farthest point where object are displayed
-   ***/
-  setPerspective(fov, near, far) {
-    const containerBoundingRect = this.renderer.domElement.boundingRect
-    this.camera.setPerspective(
-      fov,
-      near,
-      far,
-      containerBoundingRect.width,
-      containerBoundingRect.height,
-      this.renderer.pixelRatio
-    )
   }
 
   /** TRANSFOMS **/

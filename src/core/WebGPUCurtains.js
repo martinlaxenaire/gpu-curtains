@@ -3,10 +3,16 @@ import { ScrollManager } from '../utils/ScrollManager'
 import ResizeManager from '../utils/ResizeManager'
 
 export class WebGPUCurtains {
-  constructor({ container, pixelRatio }) {
+  constructor({ container, pixelRatio, fov }) {
     this.type = 'CurtainsGPU'
     this.container = container
     this.pixelRatio = pixelRatio
+
+    this.options = {
+      container,
+      pixelRatio,
+      fov,
+    }
 
     if (container) {
       this.setContainer(container)
@@ -51,6 +57,7 @@ export class WebGPUCurtains {
     this.renderer = new WebGPURenderer({
       container: this.container,
       pixelRatio: this.pixelRatio,
+      fov: this.options.fov,
     })
 
     this.canvas = this.renderer.canvas
@@ -80,6 +87,10 @@ export class WebGPUCurtains {
   // called only if autoResize is set to false
   resize() {
     this.renderer?.resize()
+  }
+
+  setPerspective(fov, near, far) {
+    this.renderer?.setPerspective(fov, near, far)
   }
 
   /**

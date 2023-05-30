@@ -34,7 +34,6 @@ export class Plane extends DOM3DObject {
       },
       autoloadSources = true,
       watchScroll = true,
-      fov = 50,
 
       // events
       onRender = () => {},
@@ -47,9 +46,7 @@ export class Plane extends DOM3DObject {
       return
     }
 
-    super(renderer, element, {
-      fov,
-    })
+    super(renderer, element)
 
     this.type = 'Plane'
 
@@ -169,7 +166,7 @@ export class Plane extends DOM3DObject {
   updateProjectionMatrixStack() {
     super.updateProjectionMatrixStack()
 
-    this.matrixUniformBinding.shouldUpdateUniform('projection')
+    this.matrixUniformBinding?.shouldUpdateUniform('projection')
   }
 
   /** SOURCES **/
