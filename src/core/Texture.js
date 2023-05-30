@@ -128,19 +128,6 @@ export class Texture {
 
   set parent(value) {
     this._parent = value
-
-    this.options.bindIndex = this._parent.textures.length * 3
-
-    // this.uniformGroup.bindings.forEach((binding, index) => {
-    //   binding.bindIndex = this.options.bindIndex + index
-    //   //binding.setWgslGroupFragment()
-    //   console.log(binding.bindIndex, binding.wgslStructFragment)
-    // })
-
-    this.textureMatrix.setBindIndex(this.options.bindIndex + 2)
-
-    // TODO
-
     this.resize()
   }
 

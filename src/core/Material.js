@@ -45,7 +45,6 @@ export class Material {
       attributesBuffers: null,
       uniformsGroups: [],
       texturesGroup: [],
-      texturesBindings: [],
     }
 
     this.setAttributesFromGeometry(geometry)
@@ -124,8 +123,8 @@ export class Material {
       this.createUniformsBindings()
     }
 
-    if (!this.state.texturesGroup[0].bindGroup && this.texturesBindings.length) {
-      this.createTextureBindGroup()
+    if (this.state.texturesGroup.length) {
+      this.createTexturesBindGroup()
     }
   }
 
@@ -303,16 +302,16 @@ export class Material {
   /** TEXTURES **/
 
   setTextures() {
-    this.state.texturesGroup = [
-      {
-        groupIndex: 1,
-        bindGroup: null,
-        bindings: [],
-      },
-    ]
+    // this.state.texturesGroup = [
+    //   {
+    //     groupIndex: 1,
+    //     bindGroup: null,
+    //     bindings: [],
+    //   },
+    // ]
 
-    //this.state.texturesGroup = []
-    this.texturesBindings = []
+    this.state.texturesGroup = []
+    this.textures = []
   }
 
   addTextureBinding(texture) {
@@ -321,24 +320,25 @@ export class Material {
       matrixUniformBuffer: null,
     }
 
-    this.texturesBindings.push(textureBinding)
+    this.textures.push(texture)
 
-    // this.state.texturesGroup.push({
-    //   groupIndex: this.state.texturesGroup + 1,
-    //   bindGroup: null,
-    //   texture,
-    //   bindings: textureBinding.texture.uniformGroup.bindings,
-    // })
+    this.state.texturesGroup.push({
+      groupIndex: this.state.texturesGroup.length + 1,
+      bindGroup: null,
+      texture,
+      matrixUniformBuffer: null,
+      bindings: textureBinding.texture.uniformGroup.bindings,
+    })
 
-    this.state.texturesGroup[0].bindings = [
-      ...this.state.texturesGroup[0].bindings,
-      ...textureBinding.texture.uniformGroup.bindings,
-    ]
+    // this.state.texturesGroup[0].bindings = [
+    //   ...this.state.texturesGroup[0].bindings,
+    //   ...textureBinding.texture.uniformGroup.bindings,
+    // ]
   }
 
-  createTextureBuffer(textureBinding, texture) {
-    if (!textureBinding.matrixUniformBuffer) {
-      textureBinding.matrixUniformBuffer = this.renderer.device.createBuffer({
+  createTextureBuffer(textureGroup, texture) {
+    if (!textureGroup.matrixUniformBuffer) {
+      textureGroup.matrixUniformBuffer = this.renderer.device.createBuffer({
         label: this.options.label + ': Uniforms buffer from: ' + texture.textureMatrix.label,
         size: texture.textureMatrix.value.byteLength,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -346,53 +346,45 @@ export class Material {
     }
   }
 
-  destroyTextureBuffer(textureBinding) {
-    textureBinding.matrixUniformBuffer?.destroy()
+  destroyTextureBuffer(textureGroup) {
+    textureGroup.matrixUniformBuffer?.destroy()
   }
 
-  createTextureBindGroup() {
-    // update textures
-    this.texturesBindings.forEach((textureBinding) => {
-      const { texture } = textureBinding
-      this.createTextureBuffer(textureBinding, texture)
+  createTexturesBindGroup() {
+    this.state.texturesGroup.forEach((textureGroup) => {
+      if (!textureGroup.bindGroup) {
+        const { texture } = textureGroup
+        this.createTextureBuffer(textureGroup, texture)
+        this.setTextureBindGroup(textureGroup, texture)
+      }
+    })
+  }
+
+  setTextureBindGroup(textureGroup, texture) {
+    textureGroup.bindGroup = this.renderer.device.createBindGroup({
+      label: `Texture ${texture.label} bind group`,
+      layout: this.state.pipeline.getBindGroupLayout(textureGroup.groupIndex),
+      entries: [
+        { binding: 0, resource: texture.sampler },
+        {
+          binding: 1,
+          resource: texture.texture.createView(),
+        },
+        {
+          binding: 2,
+          resource: { buffer: textureGroup.matrixUniformBuffer },
+        },
+      ],
     })
 
-    this.setTextureBindGroup()
+    texture.shouldBindGroup = false
   }
 
-  setTextureBindGroup() {
-    const entries = this.texturesBindings
-      .map((textureBinding, index) => {
-        const { texture } = textureBinding
-
-        return [
-          { binding: index * 3, resource: texture.sampler },
-          {
-            binding: index * 3 + 1,
-            resource: texture.texture.createView(),
-          },
-          {
-            binding: texture.textureMatrix.bindIndex,
-            resource: { buffer: textureBinding.matrixUniformBuffer },
-          },
-        ]
-      })
-      .flat()
-
-    this.state.texturesGroup[0].bindGroup = this.renderer.device.createBindGroup({
-      label: 'Texture',
-      layout: this.state.pipeline.getBindGroupLayout(1),
-      entries,
-    })
-
-    console.log(entries, this.state.texturesGroup[0].bindGroup)
-  }
-
-  updateTextureBinding(textureBinding, texture) {
+  updateTextureBinding(textureGroup, texture) {
     if (texture.textureMatrix.shouldUpdate) {
       const bufferOffset = 0
       this.renderer.device.queue.writeBuffer(
-        textureBinding.matrixUniformBuffer,
+        textureGroup.matrixUniformBuffer,
         bufferOffset,
         texture.textureMatrix.value
       )
@@ -401,19 +393,18 @@ export class Material {
     }
   }
 
-  updateTexture(textureBinding) {
-    const { texture } = textureBinding
+  updateTextureGroup(textureGroup) {
+    const { texture } = textureGroup
 
     if (texture.shouldUpdate) {
       texture.uploadTexture(this.renderer.device)
     }
 
     if (texture.shouldBindGroup) {
-      this.setTextureBindGroup()
-      texture.shouldBindGroup = false
+      this.setTextureBindGroup(textureGroup, texture)
     }
 
-    this.updateTextureBinding(textureBinding, texture)
+    this.updateTextureBinding(textureGroup, texture)
   }
 
   /** Render loop **/
@@ -447,14 +438,10 @@ export class Material {
     })
 
     // update textures
-    this.texturesBindings.forEach((textureBinding) => {
-      this.updateTexture(textureBinding)
+    this.state.texturesGroup.forEach((textureGroup) => {
+      this.updateTextureGroup(textureGroup)
+      pass.setBindGroup(textureGroup.groupIndex, textureGroup.bindGroup)
     })
-
-    this.texturesBindings.length &&
-      this.state.texturesGroup.forEach((textureGroup) => {
-        pass.setBindGroup(1, textureGroup.bindGroup)
-      })
 
     // draw
     pass.drawIndexed(this.attributes.indexBufferLength)
@@ -465,8 +452,8 @@ export class Material {
     this.destroyAttributeBuffers()
     this.destroyUniformBindings()
 
-    this.state.texturesBindings.forEach((textureBinding) => {
-      this.destroyTextureBuffer(textureBinding)
+    this.state.texturesGroup.forEach((textureGroup) => {
+      this.destroyTextureBuffer(textureGroup)
     })
   }
 }

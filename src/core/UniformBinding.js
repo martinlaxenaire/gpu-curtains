@@ -41,11 +41,6 @@ export class UniformBinding {
     this.setWGSLFragment()
   }
 
-  setBindIndex(index = 0) {
-    this.bindIndex = index
-    this.setWGSLFragment()
-  }
-
   setGroup() {
     Object.keys(this.uniforms).forEach((uniformKey) => {
       const uniform = this.uniforms[uniformKey]
