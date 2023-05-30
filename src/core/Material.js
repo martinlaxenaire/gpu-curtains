@@ -57,8 +57,6 @@ export class Material {
     this.shaders.fragment = this.options.shaders.fragment.code
 
     this.state.texturesGroup.toReversed().forEach((textureGroup) => {
-      if (!textureGroup.isActive) return
-
       let bindIndex = textureGroup.bindings.length - 1
 
       textureGroup.bindings.toReversed().forEach((textureBinding) => {
@@ -75,13 +73,11 @@ export class Material {
     this.uniformsGroups.toReversed().forEach((uniformGroup) => {
       uniformGroup.bindings.toReversed().forEach((uniformBinding) => {
         // patch shader only if the uniform struct is actually used
-        if (uniformBinding.isActive) {
-          this.shaders.vertex = `@group(${uniformBinding.groupIndex}) @binding(${uniformBinding.bindIndex}) ${uniformBinding.wgslGroupFragment}\n ${this.shaders.vertex}`
-          this.shaders.vertex = `${uniformBinding.wgslStructFragment}\n ${this.shaders.vertex}`
+        this.shaders.vertex = `@group(${uniformBinding.groupIndex}) @binding(${uniformBinding.bindIndex}) ${uniformBinding.wgslGroupFragment}\n ${this.shaders.vertex}`
+        this.shaders.vertex = `${uniformBinding.wgslStructFragment}\n ${this.shaders.vertex}`
 
-          this.shaders.fragment = `@group(${uniformBinding.groupIndex}) @binding(${uniformBinding.bindIndex}) ${uniformBinding.wgslGroupFragment}\n ${this.shaders.fragment}`
-          this.shaders.fragment = `${uniformBinding.wgslStructFragment}\n ${this.shaders.fragment}`
-        }
+        this.shaders.fragment = `@group(${uniformBinding.groupIndex}) @binding(${uniformBinding.bindIndex}) ${uniformBinding.wgslGroupFragment}\n ${this.shaders.fragment}`
+        this.shaders.fragment = `${uniformBinding.wgslStructFragment}\n ${this.shaders.fragment}`
       })
     })
 
@@ -92,6 +88,18 @@ export class Material {
   }
 
   setMaterial() {
+    if (!this.state.attributesBuffers) {
+      this.createAttributesBuffers()
+    }
+
+    if (!this.state.uniformsGroups.length && this.uniformsGroups.length) {
+      this.createUniformsBindings()
+    }
+
+    if (this.state.texturesGroup.length) {
+      this.createTexturesBindGroup()
+    }
+
     if (!this.shaders.code) {
       this.patchShaders()
     }
@@ -112,18 +120,6 @@ export class Material {
 
     if (!this.state.pipeline) {
       this.createRenderPipeline()
-    }
-
-    if (!this.state.attributesBuffers) {
-      this.createAttributesBuffers()
-    }
-
-    if (!this.state.uniformsGroups.length && this.uniformsGroups.length) {
-      this.createUniformsBindings()
-    }
-
-    if (this.state.texturesGroup.length) {
-      this.createTexturesBindGroup()
     }
   }
 
@@ -146,17 +142,27 @@ export class Material {
 
     // TODO handle culling, depth, etc here
 
+    const bindGroupLayouts = [...this.state.uniformsGroups, ...this.state.texturesGroup].map(
+      (group) => group.bindGroupLayout
+    )
+    console.log(bindGroupLayouts)
+
+    this.state.pipelineLayout = this.renderer.device.createPipelineLayout({
+      bindGroupLayouts,
+    })
+
     this.state.pipeline = this.renderer.device.createRenderPipeline({
       label: this.options.label + ': Render pipeline',
-      layout: 'auto',
+      //layout: 'auto',
+      layout: this.state.pipelineLayout,
       vertex: {
         module: this.state.vertexShaderModule,
-        entryPoint: 'vs', // TODO editable via options?
+        entryPoint: this.options.shaders.vertex.entryPoint, // TODO editable via options?
         buffers: this.attributes.pipelineBuffers,
       },
       fragment: {
         module: this.state.fragmentShaderModule,
-        entryPoint: 'fs', // TODO editable via options?
+        entryPoint: this.options.shaders.fragment.entryPoint, // TODO editable via options?
         targets: [{ format: this.renderer.preferredFormat }],
       },
       ...(this.renderer.sampleCount > 1 && {
@@ -232,19 +238,9 @@ export class Material {
         }
       }
 
-      const isActive =
+      uniformBinding.isActive =
         this.options.shaders.vertex.code.indexOf(uniformBinding.name + '.') !== -1 ||
         this.options.shaders.fragment.code.indexOf(uniformBinding.name + '.') !== -1
-
-      uniformBinding.isActive = isActive
-
-      if (
-        this.options.shaders.vertex.code.indexOf(uniformBinding.name + '.') === -1 &&
-        this.options.shaders.fragment.code.indexOf(uniformBinding.name + '.') === -1
-      ) {
-        console.warn('THIS UNIFORM IS NOT USED IN THE SHADERS!', uniformBinding.name)
-        //return
-      }
 
       this.uniformsGroups[uniformBinding.groupIndex].bindings.push(uniformBinding)
     })
@@ -254,36 +250,44 @@ export class Material {
     this.uniformsGroups.forEach((uniformGroup, index) => {
       const uniformBuffers = []
 
-      uniformGroup.bindings
-        .filter((uniformBinding) => uniformBinding.isActive)
-        .forEach((uniformBinding) => {
-          const uniformBuffer = this.renderer.device.createBuffer({
-            label: this.options.label + ': Uniforms buffer from:' + uniformBinding.label,
-            size: uniformBinding.value.byteLength,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-          })
-
-          uniformBuffers.push(uniformBuffer)
+      uniformGroup.bindings.forEach((uniformBinding) => {
+        const uniformBuffer = this.renderer.device.createBuffer({
+          label: this.options.label + ': Uniforms buffer from:' + uniformBinding.label,
+          size: uniformBinding.value.byteLength,
+          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         })
+
+        uniformBuffers.push(uniformBuffer)
+      })
+
+      const bindGroupLayout = this.renderer.device.createBindGroupLayout({
+        entries: uniformGroup.bindings.map((uniformBinding, index) => {
+          return {
+            binding: uniformBinding.bindIndex,
+            buffer: uniformBuffers[index],
+            visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          }
+        }),
+      })
 
       const bindGroup = this.renderer.device.createBindGroup({
         label: this.options.label + ': Uniform bind group',
-        layout: this.state.pipeline.getBindGroupLayout(uniformGroup.groupIndex),
-        entries: uniformGroup.bindings
-          .filter((uniformBinding) => uniformBinding.isActive)
-          .map((uniformBinding, index) => {
-            return {
-              binding: uniformBinding.bindIndex,
-              resource: {
-                buffer: uniformBuffers[index],
-              },
-            }
-          }),
+        //layout: this.state.pipeline.getBindGroupLayout(uniformGroup.groupIndex), // TODO use bindGroupLayout instead
+        layout: bindGroupLayout,
+        entries: uniformGroup.bindings.map((uniformBinding, index) => {
+          return {
+            binding: uniformBinding.bindIndex,
+            resource: {
+              buffer: uniformBuffers[index],
+            },
+          }
+        }),
       })
 
       this.state.uniformsGroups.push({
         uniformGroup,
         uniformBuffers,
+        bindGroupLayout,
         bindGroup,
       })
     })
@@ -298,16 +302,14 @@ export class Material {
   }
 
   updateUniformBinding(uniformGroup) {
-    uniformGroup.uniformGroup.bindings
-      .filter((uniformBinding) => uniformBinding.isActive)
-      .forEach((uniformBinding, index) => {
-        if (uniformBinding.shouldUpdate) {
-          const bufferOffset = 0
-          this.renderer.device.queue.writeBuffer(uniformGroup.uniformBuffers[index], bufferOffset, uniformBinding.value)
-        }
+    uniformGroup.uniformGroup.bindings.forEach((uniformBinding, index) => {
+      if (uniformBinding.shouldUpdate) {
+        const bufferOffset = 0
+        this.renderer.device.queue.writeBuffer(uniformGroup.uniformBuffers[index], bufferOffset, uniformBinding.value)
+      }
 
-        uniformBinding.shouldUpdate = false
-      })
+      uniformBinding.shouldUpdate = false
+    })
   }
 
   /** TEXTURES **/
@@ -327,6 +329,7 @@ export class Material {
 
     this.state.texturesGroup.push({
       groupIndex: this.state.texturesGroup.length + 1,
+      bindGroupLayout: null,
       bindGroup: null,
       texture,
       matrixUniformBuffer: null,
@@ -352,21 +355,36 @@ export class Material {
   }
 
   createTexturesBindGroup() {
-    this.state.texturesGroup
-      //.filter((textureGroup) => textureGroup.isActive)
-      .forEach((textureGroup) => {
-        if (!textureGroup.bindGroup && textureGroup.isActive) {
-          const { texture } = textureGroup
-          this.createTextureBuffer(textureGroup, texture)
-          this.setTextureBindGroup(textureGroup, texture)
-        }
-      })
+    this.state.texturesGroup.forEach((textureGroup) => {
+      if (!textureGroup.bindGroup) {
+        const { texture } = textureGroup
+        this.createTextureBuffer(textureGroup, texture)
+        this.setTextureBindGroup(textureGroup, texture)
+      }
+    })
   }
 
   setTextureBindGroup(textureGroup, texture) {
+    textureGroup.bindGroupLayout = this.renderer.device.createBindGroupLayout({
+      entries: [
+        { binding: 0, sampler: texture.sampler, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT },
+        {
+          binding: 1,
+          texture: texture.texture.createView(),
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        },
+        {
+          binding: 2,
+          buffer: textureGroup.matrixUniformBuffer,
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        },
+      ],
+    })
+
     textureGroup.bindGroup = this.renderer.device.createBindGroup({
       label: `Texture ${texture.options.name} bind group`,
-      layout: this.state.pipeline.getBindGroupLayout(textureGroup.groupIndex),
+      //layout: this.state.pipeline.getBindGroupLayout(textureGroup.groupIndex), // TODO use bindGroupLayout instead
+      layout: textureGroup.bindGroupLayout,
       entries: [
         { binding: 0, resource: texture.sampler },
         {
@@ -442,8 +460,6 @@ export class Material {
 
     // update textures
     this.state.texturesGroup.forEach((textureGroup) => {
-      if (!textureGroup.isActive) return
-
       this.updateTextureGroup(textureGroup)
       pass.setBindGroup(textureGroup.groupIndex, textureGroup.bindGroup)
     })
