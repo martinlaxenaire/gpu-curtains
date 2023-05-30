@@ -7,6 +7,8 @@ export class UniformBinding {
     this.groupIndex = groupIndex
     this.bindIndex = bindIndex
     this.size = 0
+
+    this.isActive = true
     this.shouldUpdate = false
     this.useStruct = useStruct
 
