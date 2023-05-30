@@ -1,4 +1,4 @@
-import { WebGPURenderer } from './WebGPURenderer'
+import { WebGPURenderer } from './renderer/WebGPURenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import ResizeManager from '../utils/ResizeManager'
 

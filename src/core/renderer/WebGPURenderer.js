@@ -1,4 +1,4 @@
-import { DOMElement } from './DOMElement'
+import { DOMElement } from '../DOMElement'
 
 export class WebGPURenderer {
   constructor({ container, pixelRatio, renderingScale = 1 }) {
