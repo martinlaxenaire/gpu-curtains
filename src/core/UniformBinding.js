@@ -41,6 +41,11 @@ export class UniformBinding {
     this.setWGSLFragment()
   }
 
+  setBindIndex(index = 0) {
+    this.bindIndex = index
+    this.setWGSLFragment()
+  }
+
   setGroup() {
     Object.keys(this.uniforms).forEach((uniformKey) => {
       const uniform = this.uniforms[uniformKey]
@@ -133,14 +138,12 @@ export class UniformBinding {
   };\n`
 
       this.wgslGroupFragment = `
-  @group(${this.groupIndex}) @binding(${this.bindIndex}) var<uniform> ${this.name}: ${this.label};`
+  var<uniform> ${this.name}: ${this.label};`
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = `${this.bindingElements
         .map((uniform, index) => {
-          return `@group(${this.groupIndex}) @binding(${this.bindIndex + index}) var<uniform> ${uniform.name}: ${
-            uniform.type
-          };\n`
+          return `var<uniform> ${uniform.name}: ${uniform.type};\n`
         })
         .join(',\n\t')}`
     }

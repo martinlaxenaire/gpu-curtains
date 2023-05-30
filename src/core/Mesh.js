@@ -5,14 +5,7 @@ import { Material } from './Material'
 export class Mesh {
   constructor(
     renderer,
-    {
-      label = 'Mesh',
-      vertexShader = '',
-      fragmentShader = '',
-      widthSegments = 1,
-      heightSegments = 1,
-      uniformsBindings = [],
-    }
+    { label = 'Mesh', shaders = {}, widthSegments = 1, heightSegments = 1, uniformsBindings = [] }
   ) {
     this.type = 'Mesh'
 
@@ -28,8 +21,7 @@ export class Mesh {
 
     this.options = {
       label,
-      vertexShader,
-      fragmentShader,
+      shaders,
     }
 
     this.geometry = new Geometry({
@@ -38,8 +30,7 @@ export class Mesh {
     })
 
     this.material = new Material(this.renderer, {
-      vertexShader,
-      fragmentShader,
+      shaders,
       uniformsBindings,
       geometry: this.geometry,
     })

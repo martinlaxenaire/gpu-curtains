@@ -15,8 +15,7 @@ export class Plane extends DOM3DObject {
       label = 'Plane',
 
       // material
-      vertexShader = '',
-      fragmentShader = '',
+      shaders = {},
       bindings = [],
 
       // geometry
@@ -82,8 +81,7 @@ export class Plane extends DOM3DObject {
 
     this.mesh = new Mesh(renderer, {
       label,
-      vertexShader,
-      fragmentShader,
+      shaders,
       widthSegments,
       heightSegments,
       uniformsBindings: this.uniformsBindings,
@@ -139,7 +137,6 @@ export class Plane extends DOM3DObject {
           value: this.projectionMatrix,
           onBeforeUpdate: () => {
             this.matrixUniformBinding.uniforms.projection.value = this.projectionMatrix
-            console.log(this.matrixUniformBinding.uniforms.projection.value.elements)
           },
         },
         modelViewProjection: {

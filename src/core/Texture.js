@@ -47,6 +47,7 @@ export class Texture {
     this.options = {
       label: options.label,
       name: options.name,
+      bindIndex: 0,
       texture: {
         generateMips: options.generateMips,
         flipY: options.flipY,
@@ -78,7 +79,7 @@ export class Texture {
       label: 'TextureMatrix',
       name: this.options.name + 'Matrix',
       groupIndex: 1, // TODO dirty?
-      bindIndex: 2, // TODO dirty?
+      bindIndex: this.options.bindIndex + 2, // TODO dirty?
       useStruct: false,
       uniforms: {
         matrix: {
@@ -96,16 +97,16 @@ export class Texture {
         {
           name: this.options.name + 'Sampler',
           groupIndex: 1,
-          bindIndex: 0,
+          bindIndex: this.options.bindIndex + 0,
           resource: this.sampler,
-          wgslGroupFragment: '@group(1) @binding(0) var ' + this.options.name + 'Sampler: sampler;', // TODO
+          wgslGroupFragment: `var ${this.options.name}Sampler: sampler;`, // TODO
         },
         {
           name: this.options.name,
           groupIndex: 1,
-          bindIndex: 1,
+          bindIndex: this.options.bindIndex + 1,
           resource: this.texture,
-          wgslGroupFragment: '@group(1) @binding(1) var ' + this.options.name + ': texture_2d<f32>;', // TODO
+          wgslGroupFragment: `var ${this.options.name}: texture_2d<f32>;`, // TODO
         },
         this.textureMatrix,
       ],
@@ -127,6 +128,17 @@ export class Texture {
 
   set parent(value) {
     this._parent = value
+
+    this.options.bindIndex = this._parent.textures.length * 3
+
+    // this.uniformGroup.bindings.forEach((binding, index) => {
+    //   binding.bindIndex = this.options.bindIndex + index
+    //   //binding.setWgslGroupFragment()
+    //   console.log(binding.bindIndex, binding.wgslStructFragment)
+    // })
+
+    this.textureMatrix.setBindIndex(this.options.bindIndex + 2)
+
     // TODO
 
     this.resize()
@@ -192,12 +204,13 @@ export class Texture {
     this.transforms.quaternion = value
   }
 
+  // rotation along Z axis is inverted relatively to the planes
   get rotation() {
-    return this.transforms.rotation.z
+    return -this.transforms.rotation.z
   }
 
   set rotation(value) {
-    this.transforms.rotation.z = value
+    this.transforms.rotation.z = -value
     this.applyRotation()
   }
 
@@ -268,6 +281,8 @@ export class Texture {
   }
 
   resize() {
+    if (!this.textureMatrix) return
+
     this.updateTextureMatrix()
     this.textureMatrix.shouldUpdateUniform(this.options.name + 'Matrix')
   }

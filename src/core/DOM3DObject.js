@@ -264,8 +264,6 @@ export class DOM3DObject {
     this.matrices.world.shouldUpdate = true
     this.matrices.modelView.shouldUpdate = true
     this.matrices.modelViewProjection.shouldUpdate = true
-
-    // we shouldn't have to handle projection matrix
   }
 
   updateProjectionMatrixStack() {}
