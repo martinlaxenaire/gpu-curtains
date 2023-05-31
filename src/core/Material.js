@@ -87,8 +87,8 @@ export class Material {
       this.createAttributesBuffers()
     }
 
-    const bindGroupsReady =
-      this.state.bindGroups.length === this.uniformsBindGroups.length + this.texturesBindGroups.length
+    const texturesBindGroupLength = 1
+    const bindGroupsReady = this.state.bindGroups.length === this.uniformsBindGroups.length + texturesBindGroupLength
 
     // TODO cache bind groups and pipelines?
     // https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change
@@ -237,23 +237,20 @@ export class Material {
   }
 
   createBindGroups() {
-    // uniforms first
+    // textures first
+    if (this.texturesBindGroups.canCreateBindGroup()) {
+      this.texturesBindGroups.setIndex(this.state.bindGroups.length)
+      this.texturesBindGroups.createBindingsBuffers()
+      this.texturesBindGroups.setBindGroupLayout()
+      this.texturesBindGroups.setBindGroup()
+
+      this.state.bindGroups.push(this.texturesBindGroups)
+    }
+
+    // then uniforms
     this.uniformsBindGroups.forEach((bindGroup) => {
       if (bindGroup.canCreateBindGroup()) {
         bindGroup.setIndex(this.state.bindGroups.length)
-        bindGroup.createBindingsBuffers()
-        bindGroup.setBindGroupLayout()
-        bindGroup.setBindGroup()
-
-        this.state.bindGroups.push(bindGroup)
-      }
-    })
-
-    // then textures
-    this.texturesBindGroups.forEach((bindGroup) => {
-      if (bindGroup.canCreateBindGroup()) {
-        bindGroup.setIndex(this.state.bindGroups.length)
-        bindGroup.createTextureBindings()
         bindGroup.createBindingsBuffers()
         bindGroup.setBindGroupLayout()
         bindGroup.setBindGroup()
@@ -275,25 +272,25 @@ export class Material {
 
   setTextures() {
     this.textures = []
-    this.texturesBindGroups = []
+    //this.texturesBindGroups = []
+    this.texturesBindGroups = new TextureBindGroup({
+      renderer: this.renderer,
+    })
   }
 
   addTextureBinding(texture) {
-    const textureBinding = {
-      texture,
-      matrixUniformBuffer: null,
-    }
-
     this.textures.push(texture)
 
     // TODO watch out for bind groups limit!! https://www.w3.org/TR/webgpu/#dom-supported-limits-maxbindgroups
-    this.texturesBindGroups.push(
-      new TextureBindGroup({
-        renderer: this.renderer,
-        bindings: textureBinding.texture.uniformGroup.bindings,
-        texture,
-      })
-    )
+    // this.texturesBindGroups.push(
+    //   new TextureBindGroup({
+    //     renderer: this.renderer,
+    //     bindings: textureBinding.texture.uniformGroup.bindings,
+    //     texture,
+    //   })
+    // )
+
+    this.texturesBindGroups.addTexture(texture)
   }
 
   /** Render loop **/
@@ -313,15 +310,26 @@ export class Material {
     if (!this.state.pipeline) return
 
     // update textures
-    this.texturesBindGroups.forEach((textureBindGroup) => {
-      const { texture } = textureBindGroup
+    // this.texturesBindGroups.forEach((textureBindGroup) => {
+    //   const { texture } = textureBindGroup
+    //
+    //   if (texture.shouldUpdate) {
+    //     texture.uploadTexture(this.renderer.device)
+    //   }
+    //
+    //   if (texture.shouldBindGroup) {
+    //     textureBindGroup.resetTextureBindGroup()
+    //     texture.shouldBindGroup = false
+    //   }
+    // })
 
+    this.texturesBindGroups?.textures.forEach((texture, index) => {
       if (texture.shouldUpdate) {
         texture.uploadTexture(this.renderer.device)
       }
 
       if (texture.shouldBindGroup) {
-        textureBindGroup.resetTextureBindGroup()
+        this.texturesBindGroups.resetTextureBindGroup(index)
         texture.shouldBindGroup = false
       }
     })
@@ -330,6 +338,7 @@ export class Material {
     this.updateBindGroups()
 
     // set pipeline
+    // TODO this could be done by the renderer instead if we cache / group the pipelines
     pass.setPipeline(this.state.pipeline)
 
     // set attributes
