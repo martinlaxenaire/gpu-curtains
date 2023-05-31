@@ -1,10 +1,5 @@
 import { Mesh } from './Mesh'
 import { UniformBinding } from './UniformBinding'
-import { Camera } from '../camera/Camera'
-import { DOMElement } from './DOMElement'
-import { Mat4 } from '../math/Mat4'
-import { Quat } from '../math/Quat'
-import { Vec3 } from '../math/Vec3'
 import { DOM3DObject } from './DOM3DObject'
 
 export class Plane extends DOM3DObject {

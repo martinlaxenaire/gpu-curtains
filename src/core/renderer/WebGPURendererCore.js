@@ -79,10 +79,6 @@ export class WebGPURendererCore {
     }
   }
 
-  addTexture(texture) {
-    this.textures.push(texture)
-  }
-
   createSampler(options = {}) {
     if (!this.device) return false
 

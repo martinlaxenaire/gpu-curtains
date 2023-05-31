@@ -4,7 +4,7 @@ export class UniformBinding {
   constructor({ label = 'Uniform', name = 'uniform', groupIndex = 0, bindIndex = 0, useStruct = true, uniforms = {} }) {
     this.label = label
     this.name = name
-    this.groupIndex = groupIndex
+    this.groupIndex = groupIndex // TODO remove
     this.bindIndex = bindIndex
     this.size = 0
 

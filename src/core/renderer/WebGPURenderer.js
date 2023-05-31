@@ -37,6 +37,10 @@ export class WebGPURenderer extends WebGPURendererCore {
     this.textures = []
   }
 
+  addTexture(texture) {
+    this.textures.push(texture)
+  }
+
   /** CAMERA **/
 
   /***

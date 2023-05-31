@@ -100,6 +100,7 @@ export class Texture {
           groupIndex: 1,
           bindIndex: this.options.bindIndex + 0,
           resource: this.sampler,
+          type: 'sampler',
           wgslGroupFragment: `var ${this.options.name}Sampler: sampler;`, // TODO
         },
         {
@@ -107,6 +108,7 @@ export class Texture {
           groupIndex: 1,
           bindIndex: this.options.bindIndex + 1,
           resource: this.texture,
+          type: 'texture',
           wgslGroupFragment: `var ${this.options.name}: texture_2d<f32>;`, // TODO
         },
         this.textureMatrix,
@@ -325,6 +327,9 @@ export class Texture {
           size: [this.size.width, this.size.height],
           usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
         }
+
+    // if we already have a texture, destroy it to free GPU memory
+    this.texture?.destroy()
 
     this.texture = this.renderer.createTexture(textureOptions)
 
