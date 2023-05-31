@@ -90,6 +90,8 @@ export class Material {
     const bindGroupsReady =
       this.state.bindGroups.length === this.uniformsBindGroups.length + this.texturesBindGroups.length
 
+    // TODO cache bind groups and pipelines?
+    // https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change
     if (!bindGroupsReady) {
       this.createBindGroups()
       return
@@ -217,21 +219,21 @@ export class Material {
     this.uniforms = {}
     this.uniformsBindGroups = []
 
-    this.options.uniformsBindings.forEach((uniformBinding) => {
-      this.uniforms = { ...this.uniforms, ...uniformBinding.uniforms }
+    const uniformsBindGroup = new BindGroup({
+      renderer: this.renderer,
+    })
 
-      if (!this.uniformsBindGroups[uniformBinding.groupIndex]) {
-        this.uniformsBindGroups[uniformBinding.groupIndex] = new BindGroup({
-          renderer: this.renderer,
-        })
-      }
+    this.options.uniformsBindings.forEach((uniformBinding, index) => {
+      this.uniforms = { ...this.uniforms, ...uniformBinding.uniforms }
 
       uniformBinding.isActive =
         this.options.shaders.vertex.code.indexOf(uniformBinding.name + '.') !== -1 ||
         this.options.shaders.fragment.code.indexOf(uniformBinding.name + '.') !== -1
 
-      this.uniformsBindGroups[uniformBinding.groupIndex].addBinding(uniformBinding)
+      uniformsBindGroup.addBinding(uniformBinding)
     })
+
+    this.uniformsBindGroups.push(uniformsBindGroup)
   }
 
   createBindGroups() {
@@ -284,6 +286,7 @@ export class Material {
 
     this.textures.push(texture)
 
+    // TODO watch out for bind groups limit!! https://www.w3.org/TR/webgpu/#dom-supported-limits-maxbindgroups
     this.texturesBindGroups.push(
       new TextureBindGroup({
         renderer: this.renderer,

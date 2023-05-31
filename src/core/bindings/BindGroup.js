@@ -40,6 +40,8 @@ export class BindGroup {
   createBindingsBuffers() {
     this.bindings.forEach((uniformBinding) => {
       if (!!uniformBinding.value) {
+        uniformBinding.bindIndex = this.entries.bindGroupLayout.length
+
         const buffer = this.renderer.device.createBuffer({
           label: ': Uniforms buffer from:' + uniformBinding.label, // TODO
           size: uniformBinding.value.byteLength,

@@ -14,6 +14,8 @@ export class TextureBindGroup extends BindGroup {
   createTextureBindings() {
     this.bindings.forEach((uniformBinding) => {
       if (uniformBinding.type) {
+        uniformBinding.bindIndex = this.entries.bindGroupLayout.length
+
         const bindingTypeValue =
           uniformBinding.type === 'texture' ? this.texture.texture.createView() : this.texture.sampler
 
@@ -32,24 +34,8 @@ export class TextureBindGroup extends BindGroup {
   }
 
   resetTextureBindGroup() {
-    //this.entries.bindGroup = []
-
-    // this.bindings.forEach((uniformBinding) => {
-    //   if (uniformBinding.type) {
-    //     const bindingTypeValue =
-    //       uniformBinding.type === 'texture' ? this.texture.texture.createView() : this.texture.sampler
-    //
-    //     this.entries.bindGroup.push({
-    //       binding: uniformBinding.bindIndex,
-    //       resource: bindingTypeValue,
-    //     })
-    //   }
-    // })
-
     this.entries.bindGroupLayout.forEach((bindGroupLayoutEntry, index) => {
-      if (bindGroupLayoutEntry.sampler) {
-        this.entries.bindGroup[index].resource = this.texture.sampler
-      } else if (bindGroupLayoutEntry.texture) {
+      if (bindGroupLayoutEntry.texture) {
         this.entries.bindGroup[index].resource = this.texture.texture.createView()
       }
     })

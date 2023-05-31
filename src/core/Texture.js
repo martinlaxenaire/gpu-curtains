@@ -48,7 +48,6 @@ export class Texture {
     this.options = {
       label: options.label,
       name: options.name,
-      bindIndex: 0,
       texture: {
         generateMips: options.generateMips,
         flipY: options.flipY,
@@ -79,8 +78,6 @@ export class Texture {
     this.textureMatrix = new UniformBinding({
       label: 'TextureMatrix',
       name: this.options.name + 'Matrix',
-      groupIndex: 1, // TODO dirty?
-      bindIndex: this.options.bindIndex + 2, // TODO dirty?
       useStruct: false,
       uniforms: {
         matrix: {
@@ -93,20 +90,15 @@ export class Texture {
     })
 
     this.uniformGroup = {
-      groupIndex: 1,
       bindings: [
         {
           name: this.options.name + 'Sampler',
-          groupIndex: 1,
-          bindIndex: this.options.bindIndex + 0,
           resource: this.sampler,
           type: 'sampler',
           wgslGroupFragment: `var ${this.options.name}Sampler: sampler;`, // TODO
         },
         {
           name: this.options.name,
-          groupIndex: 1,
-          bindIndex: this.options.bindIndex + 1,
           resource: this.texture,
           type: 'texture',
           wgslGroupFragment: `var ${this.options.name}: texture_2d<f32>;`, // TODO
