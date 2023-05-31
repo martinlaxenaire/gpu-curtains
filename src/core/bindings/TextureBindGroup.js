@@ -70,13 +70,11 @@ export class TextureBindGroup extends BindGroup {
   }
 
   resetTextureBindGroup(textureIndex) {
-    this.entries.bindGroupLayout.forEach((bindGroupLayoutEntry) => {
-      if (bindGroupLayoutEntry.texture) {
-        // texture bindGroup index is textureIndex * 3 + second position in bindings array
-        this.entries.bindGroup[textureIndex * 3 + 1].resource = this.textures[textureIndex].texture.createView()
-      }
-    })
+    // texture bindGroup index is textureIndex * 3 + second position in bindings array
+    if (this.entries.bindGroup[textureIndex * 3 + 1] && this.textures[textureIndex].texture) {
+      this.entries.bindGroup[textureIndex * 3 + 1].resource = this.textures[textureIndex].texture.createView()
 
-    this.setBindGroup()
+      this.setBindGroup()
+    }
   }
 }

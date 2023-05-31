@@ -1,7 +1,7 @@
 import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
-import { UniformBinding } from './UniformBinding'
+import { UniformBinding } from './bindings/UniformBinding'
 import { Quat } from '../math/Quat'
 import { generateMips } from '../utils/renderer-utils'
 
@@ -316,7 +316,7 @@ export class Texture {
         }
       : {
           format: 'rgba8unorm',
-          size: [this.size.width, this.size.height],
+          size: [this.size.width, this.size.height], // [1, 1]
           usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
         }
 

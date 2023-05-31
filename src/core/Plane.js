@@ -1,5 +1,5 @@
 import { Mesh } from './Mesh'
-import { UniformBinding } from './UniformBinding'
+import { UniformBinding } from './bindings/UniformBinding'
 import { DOM3DObject } from './DOM3DObject'
 
 export class Plane extends DOM3DObject {

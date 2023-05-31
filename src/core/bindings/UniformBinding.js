@@ -1,4 +1,4 @@
-import { Mat4 } from '../math/Mat4'
+import { Mat4 } from '../../math/Mat4'
 
 export class UniformBinding {
   constructor({ label = 'Uniform', name = 'uniform', bindIndex = 0, useStruct = true, uniforms = {} }) {

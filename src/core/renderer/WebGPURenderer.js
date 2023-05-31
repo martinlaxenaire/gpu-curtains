@@ -13,8 +13,15 @@ export class WebGPURenderer extends WebGPURendererCore {
 
     this.domElement = new DOMElement({
       element: container,
-      onSizeChanged: (boundingRect) => {
-        this.resize(boundingRect)
+      // onSizeChanged: (boundingRect) => {
+      //   this.resize(boundingRect)
+      // },
+    })
+
+    this.documentBody = new DOMElement({
+      element: document.body,
+      onSizeChanged: () => {
+        this.resize()
       },
     })
 
@@ -69,8 +76,8 @@ export class WebGPURenderer extends WebGPURendererCore {
 
     // force plane resize
     // plane HTMLElement might not have changed
-    //this.planes?.forEach((plane) => plane.setPerspective())
-    this.planes?.forEach((plane) => plane.updateSizeAndPosition())
+    //this.planes?.forEach((plane) => plane.updateSizeAndPosition())
+    this.planes?.forEach((plane) => plane.resize())
   }
 
   /**

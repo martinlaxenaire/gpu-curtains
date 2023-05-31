@@ -14,6 +14,8 @@ export class DOMElement {
       this.element = element
     }
 
+    this.isResizing = false
+
     this.onSizeChanged = onSizeChanged
     this.onPositionChanged = onPositionChanged
 
@@ -47,6 +49,8 @@ export class DOMElement {
   }
 
   updateScrollPosition(lastXDelta, lastYDelta) {
+    if (this.isResizing) return
+
     this._boundingRect.top += lastYDelta
     this._boundingRect.left += lastXDelta
 
@@ -54,6 +58,11 @@ export class DOMElement {
   }
 
   setSize(contentRect) {
+    this.isResizing = true
     this.boundingRect = contentRect ?? this.element.getBoundingClientRect()
+
+    setTimeout(() => {
+      this.isResizing = false
+    }, 50)
   }
 }
