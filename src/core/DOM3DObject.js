@@ -5,6 +5,13 @@ import { Quat } from '../math/Quat'
 
 export class DOM3DObject {
   constructor(renderer, element) {
+    // we could pass our curtains object OR our curtains renderer object
+    renderer = (renderer && renderer.renderer) || renderer
+
+    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+      return
+    }
+
     this.renderer = renderer
 
     this.size = {

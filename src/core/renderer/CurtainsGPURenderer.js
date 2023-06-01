@@ -1,12 +1,12 @@
-import { WebGPURendererCore } from './WebGPURendererCore'
+import { GPURenderer } from './GPURenderer'
 import { DOMElement } from '../DOMElement'
 import { Camera } from '../../camera/Camera'
 
-export class WebGPURenderer extends WebGPURendererCore {
+export class CurtainsGPURenderer extends GPURenderer {
   constructor({ container, pixelRatio, renderingScale = 1, fov = 50 }) {
     super()
 
-    this.type = 'Renderer'
+    this.type = 'CurtainsRenderer'
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.renderingScale = renderingScale

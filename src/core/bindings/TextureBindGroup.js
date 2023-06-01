@@ -2,6 +2,13 @@ import { BindGroup } from './BindGroup'
 
 export class TextureBindGroup extends BindGroup {
   constructor({ renderer, index = 0, bindings = [], textures = [] }) {
+    // we could pass our curtains object OR our curtains renderer object
+    renderer = (renderer && renderer.renderer) || renderer
+
+    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+      return
+    }
+
     super({ renderer, index, bindings })
 
     this.textures = textures

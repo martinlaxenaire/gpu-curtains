@@ -1,4 +1,4 @@
-import { WebGPURenderer } from './renderer/WebGPURenderer'
+import { CurtainsGPURenderer } from './renderer/CurtainsGPURenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import ResizeManager from '../utils/ResizeManager'
 
@@ -54,7 +54,7 @@ export class WebGPUCurtains {
    * Set renderer
    */
   setRenderer() {
-    this.renderer = new WebGPURenderer({
+    this.renderer = new CurtainsGPURenderer({
       container: this.container,
       pixelRatio: this.pixelRatio,
       fov: this.options.fov,

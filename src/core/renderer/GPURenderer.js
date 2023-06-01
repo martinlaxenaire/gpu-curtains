@@ -1,9 +1,9 @@
 import { generateMips } from '../../utils/renderer-utils'
 import { PipelineManager } from '../pipeline/PipelineManager'
 
-export class WebGPURendererCore {
+export class GPURenderer {
   constructor() {
-    this.type = 'RendererCore'
+    this.type = 'Renderer'
     this.ready = false
 
     this.gpu = navigator.gpu

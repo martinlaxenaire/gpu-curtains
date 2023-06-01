@@ -1,5 +1,12 @@
 export class BindGroup {
   constructor({ renderer, index = 0, bindings = [] }) {
+    // we could pass our curtains object OR our curtains renderer object
+    renderer = (renderer && renderer.renderer) || renderer
+
+    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+      return
+    }
+
     this.renderer = renderer
 
     this.index = index
