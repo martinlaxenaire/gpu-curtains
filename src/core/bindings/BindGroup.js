@@ -39,6 +39,8 @@ export class BindGroup {
 
   createBindingsBuffers() {
     this.bindings.forEach((uniformBinding) => {
+      if (!uniformBinding.visibility) uniformBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
+
       if (!!uniformBinding.value) {
         uniformBinding.bindIndex = this.entries.bindGroupLayout.length
 
@@ -56,7 +58,7 @@ export class BindGroup {
         this.entries.bindGroupLayout.push({
           binding: uniformBinding.bindIndex,
           buffer,
-          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          visibility: uniformBinding.visibility ?? GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
         })
 
         this.entries.bindGroup.push({

@@ -69,15 +69,28 @@ export class Material {
 
     this.state.bindGroups.toReversed().forEach((bindGroup) => {
       bindGroup.bindings.toReversed().forEach((binding) => {
-        this.shaders.vertex = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex}`
-        this.shaders.fragment = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.fragment}`
+        if (
+          binding.visibility === GPUShaderStage.VERTEX ||
+          binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
+        ) {
+          this.shaders.vertex = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex}`
+          this.shaders.vertex = `\n ${this.shaders.vertex}`
 
-        this.shaders.vertex = `\n ${this.shaders.vertex}`
-        this.shaders.fragment = `\n ${this.shaders.fragment}`
+          if (binding.wgslStructFragment) {
+            this.shaders.vertex = `${binding.wgslStructFragment}\n ${this.shaders.vertex}`
+          }
+        }
 
-        if (binding.wgslStructFragment) {
-          this.shaders.vertex = `${binding.wgslStructFragment}\n ${this.shaders.vertex}`
-          this.shaders.fragment = `${binding.wgslStructFragment}\n ${this.shaders.fragment}`
+        if (
+          binding.visibility === GPUShaderStage.FRAGMENT ||
+          binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
+        ) {
+          this.shaders.fragment = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.fragment}`
+          this.shaders.fragment = `\n ${this.shaders.fragment}`
+
+          if (binding.wgslStructFragment) {
+            this.shaders.fragment = `${binding.wgslStructFragment}\n ${this.shaders.fragment}`
+          }
         }
       })
 
@@ -86,7 +99,6 @@ export class Material {
     })
 
     this.shaders.vertex = `${this.attributes.wgslStructFragment}\n ${this.shaders.vertex}`
-    //this.shaders.fragment = `${this.attributes.wgslStructFragment}\n ${this.shaders.fragment}`
 
     this.shaders.code = this.shaders.vertex + '\n' + this.shaders.fragment
   }

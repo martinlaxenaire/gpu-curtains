@@ -1,11 +1,24 @@
 import { Mat4 } from '../../math/Mat4'
 
 export class UniformBinding {
-  constructor({ label = 'Uniform', name = 'uniform', bindIndex = 0, useStruct = true, uniforms = {} }) {
+  constructor({ label = 'Uniform', name = 'uniform', bindIndex = 0, useStruct = true, uniforms = {}, visibility }) {
     this.label = label
     this.name = name
     this.bindIndex = bindIndex
     this.size = 0
+
+    this.visibility = visibility
+      ? (() => {
+          switch (visibility) {
+            case 'vertex':
+              return GPUShaderStage.VERTEX
+            case 'fragment':
+              return GPUShaderStage.FRAGMENT
+            default:
+              return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
+          }
+        })()
+      : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
 
     this.isActive = true
     this.shouldUpdate = false

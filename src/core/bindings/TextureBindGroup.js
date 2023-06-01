@@ -31,6 +31,8 @@ export class TextureBindGroup extends BindGroup {
     let textureIndex = 0
 
     this.bindings.forEach((uniformBinding) => {
+      if (!uniformBinding.visibility) uniformBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
+
       if (!!uniformBinding.value) {
         uniformBinding.bindIndex = this.entries.bindGroupLayout.length
 
@@ -48,7 +50,7 @@ export class TextureBindGroup extends BindGroup {
         this.entries.bindGroupLayout.push({
           binding: uniformBinding.bindIndex,
           buffer,
-          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          visibility: uniformBinding.visibility,
         })
 
         this.entries.bindGroup.push({
@@ -60,21 +62,6 @@ export class TextureBindGroup extends BindGroup {
       } else if (uniformBinding.type) {
         uniformBinding.bindIndex = this.entries.bindGroupLayout.length
         const texture = this.textures[Math.floor(textureIndex * 0.5)]
-
-        //const bindingType = uniformBinding.type === 'sampler' ? 'sampler' : 'texture'
-        // const bindingType =
-        //   uniformBinding.type === 'texture'
-        //     ? texture.options.sourceType === 'video'
-        //       ? 'externalTexture'
-        //       : 'texture'
-        //     : 'sampler'
-
-        // const bindingTypeValue =
-        //   uniformBinding.type === 'texture'
-        //     ? texture.options.sourceType === 'video'
-        //       ? texture.texture
-        //       : texture.texture.createView()
-        //     : texture.sampler
 
         const bindingTypeValue = (() => {
           switch (uniformBinding.type) {
@@ -90,16 +77,10 @@ export class TextureBindGroup extends BindGroup {
           }
         })()
 
-        uniformBinding.type === 'texture'
-          ? texture.options.sourceType === 'video'
-            ? texture.texture
-            : texture.texture.createView()
-          : texture.sampler
-
         this.entries.bindGroupLayout.push({
           binding: uniformBinding.bindIndex,
           [uniformBinding.type]: bindingTypeValue,
-          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          visibility: uniformBinding.visibility,
         })
 
         this.entries.bindGroup.push({
@@ -132,7 +113,7 @@ export class TextureBindGroup extends BindGroup {
       this.entries.bindGroupLayout[entryIndex] = {
         binding: this.entries.bindGroupLayout[entryIndex].binding,
         [texture.bindings[1].type]: texture.texture,
-        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        visibility: this.entries.bindGroupLayout[entryIndex].visibility,
       }
 
       this.entries.bindGroup[entryIndex].resource = texture.texture

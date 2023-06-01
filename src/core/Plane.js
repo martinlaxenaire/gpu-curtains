@@ -67,6 +67,7 @@ export class Plane extends DOM3DObject {
           name: binding.name || 'uniforms' + index,
           bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms
           uniforms: binding.uniforms,
+          visibility: binding.visibility,
         })
       }),
     ]
