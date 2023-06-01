@@ -1,4 +1,5 @@
 import { generateMips } from '../../utils/renderer-utils'
+import { PipelineManager } from '../pipeline/PipelineManager'
 
 export class WebGPURendererCore {
   constructor() {
@@ -38,6 +39,8 @@ export class WebGPURendererCore {
       //viewFormats: []
     })
 
+    this.setPipelineManager()
+
     this.setRenderPass()
 
     // ready to start
@@ -66,6 +69,12 @@ export class WebGPURendererCore {
         // try again...
       }
     })
+  }
+
+  /** PIPELINES **/
+
+  setPipelineManager() {
+    this.pipelineManager = new PipelineManager({ renderer: this })
   }
 
   /** TEXTURES **/

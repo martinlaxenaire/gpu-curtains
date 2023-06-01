@@ -35,16 +35,10 @@ export class Material {
       uniformsBindings,
     }
 
-    this.shaders = {
-      vertex: '',
-      fragment: '',
-      code: null,
-    }
-
     this.state = {
       vertexShaderModule: null,
       fragmentShaderModule: null,
-      pipeline: null,
+      pipelineEntry: null,
       attributesBuffers: null,
       bindGroups: [],
     }
@@ -52,55 +46,6 @@ export class Material {
     this.setAttributesFromGeometry(geometry)
     this.setUniforms()
     this.setTextures()
-  }
-
-  patchShaders() {
-    this.shaders.vertex = this.options.shaders.vertex.code
-    this.shaders.fragment = this.options.shaders.fragment.code
-
-    // first add chunks
-    for (const chunk in ShaderChunks.vertex) {
-      this.shaders.vertex = `${ShaderChunks.vertex[chunk]}\n ${this.shaders.vertex}`
-    }
-
-    for (const chunk in ShaderChunks.fragment) {
-      this.shaders.fragment = `${ShaderChunks.fragment[chunk]}\n ${this.shaders.fragment}`
-    }
-
-    this.state.bindGroups.toReversed().forEach((bindGroup) => {
-      bindGroup.bindings.toReversed().forEach((binding) => {
-        if (
-          binding.visibility === GPUShaderStage.VERTEX ||
-          binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
-        ) {
-          this.shaders.vertex = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex}`
-          this.shaders.vertex = `\n ${this.shaders.vertex}`
-
-          if (binding.wgslStructFragment) {
-            this.shaders.vertex = `${binding.wgslStructFragment}\n ${this.shaders.vertex}`
-          }
-        }
-
-        if (
-          binding.visibility === GPUShaderStage.FRAGMENT ||
-          binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
-        ) {
-          this.shaders.fragment = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.fragment}`
-          this.shaders.fragment = `\n ${this.shaders.fragment}`
-
-          if (binding.wgslStructFragment) {
-            this.shaders.fragment = `${binding.wgslStructFragment}\n ${this.shaders.fragment}`
-          }
-        }
-      })
-
-      this.shaders.vertex = `\n ${this.shaders.vertex}`
-      this.shaders.fragment = `\n ${this.shaders.fragment}`
-    })
-
-    this.shaders.vertex = `${this.attributes.wgslStructFragment}\n ${this.shaders.vertex}`
-
-    this.shaders.code = this.shaders.vertex + '\n' + this.shaders.fragment
   }
 
   setMaterial() {
@@ -118,74 +63,17 @@ export class Material {
       return
     }
 
-    this.setShadersAndPipeline()
-  }
-
-  setShadersAndPipeline(forceRegeneration = false) {
-    if (!this.shaders.code || forceRegeneration) {
-      this.patchShaders()
-    }
-
-    if (!this.state.vertexShaderModule || forceRegeneration) {
-      this.state.vertexShaderModule = this.createShaderModule({
-        code: this.shaders.vertex,
-        type: 'Vertex',
-      })
-    }
-
-    if (!this.state.fragmentShaderModule || forceRegeneration) {
-      this.state.fragmentShaderModule = this.createShaderModule({
-        code: this.shaders.fragment,
-        type: 'Fragment',
-      })
-    }
-
-    if (!this.state.pipeline || forceRegeneration) {
-      this.createRenderPipeline()
+    if (!this.state.pipelineEntry) {
+      this.setPipelineEntry()
     }
   }
 
-  /** PROGRAM / PIPELINE **/
-
-  /**
-   * Creates a device shader module
-   *
-   * @param code
-   */
-  createShaderModule({ code = '', type = '' }) {
-    return this.renderer.device.createShaderModule({
-      label: this.options.label + ': ' + type + 'Shader module',
-      code,
-    })
-  }
-
-  createRenderPipeline() {
-    if (!this.state.vertexShaderModule || !this.state.fragmentShaderModule) return
-
-    // TODO handle culling, depth, etc here
-
-    this.state.pipelineLayout = this.renderer.device.createPipelineLayout({
-      bindGroupLayouts: this.state.bindGroups.map((bindGroup) => bindGroup.bindGroupLayout),
-    })
-
-    this.state.pipeline = this.renderer.device.createRenderPipeline({
+  setPipelineEntry() {
+    this.state.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
       label: this.options.label + ': Render pipeline',
-      layout: this.state.pipelineLayout,
-      vertex: {
-        module: this.state.vertexShaderModule,
-        entryPoint: this.options.shaders.vertex.entryPoint, // TODO editable via options?
-        buffers: this.attributes.pipelineBuffers,
-      },
-      fragment: {
-        module: this.state.fragmentShaderModule,
-        entryPoint: this.options.shaders.fragment.entryPoint, // TODO editable via options?
-        targets: [{ format: this.renderer.preferredFormat }],
-      },
-      ...(this.renderer.sampleCount > 1 && {
-        multisample: {
-          count: this.renderer.sampleCount,
-        },
-      }),
+      attributes: this.attributes,
+      bindGroups: this.state.bindGroups,
+      shaders: this.options.shaders,
     })
   }
 
@@ -321,7 +209,7 @@ export class Material {
     this.setMaterial()
 
     // pipeline is not ready yet
-    if (!this.state.pipeline) return
+    if (!this.state.pipelineEntry || !this.state.pipelineEntry.pipeline) return
 
     // update textures
     this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
@@ -331,7 +219,9 @@ export class Material {
           // TODO better way to flush the pipeline?
           if (!this.texturesBindGroup.hasVideoTexture) {
             this.texturesBindGroup.updateVideoTextureBindGroup(textureIndex)
-            this.setShadersAndPipeline(true)
+
+            this.state.pipelineEntry.flushPipelineEntry(this.state.bindGroups)
+
             this.texturesBindGroup.hasVideoTexture = true
           }
         } else {
@@ -348,9 +238,9 @@ export class Material {
     // update uniforms buffers
     this.updateBindGroups()
 
-    // set pipeline
-    // TODO this could be done by the renderer instead if we cache / group the pipelines
-    pass.setPipeline(this.state.pipeline)
+    // set current pipeline
+    // TODO this could be improved if we'd render mesh by pipelines order
+    this.renderer.pipelineManager.setCurrentPipeline(pass, this.state.pipelineEntry)
 
     // set attributes
     pass.setVertexBuffer(0, this.state.attributesBuffers.vertexBuffer)
