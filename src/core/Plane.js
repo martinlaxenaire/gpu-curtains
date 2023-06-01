@@ -183,13 +183,24 @@ export class Plane extends DOM3DObject {
             name: image.getAttribute('data-name') ?? 'texture' + this.textures.length,
           })
 
-          texture.loadSource(image.src)
+          texture.loadImage(image.src)
         })
       }
 
       // load videos
       if (videos.length) {
         //this.loadVideos(videos);
+
+        videos.forEach((video) => {
+          //console.log(image.src)
+          const texture = this.createTexture({
+            // TODO index in texture for bindings
+            name: video.getAttribute('data-name') ?? 'texture' + this.textures.length,
+          })
+
+          //texture.loadSource(image.src)
+          texture.loadVideo(video)
+        })
       }
 
       // load canvases

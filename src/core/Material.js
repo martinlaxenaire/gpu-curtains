@@ -1,5 +1,6 @@
 import { BindGroup } from './bindings/BindGroup'
 import { TextureBindGroup } from './bindings/TextureBindGroup'
+import { ShaderChunks } from '../shaders/ShaderChunks'
 
 export class Material {
   constructor(renderer, { label = 'Material', shaders = {}, uniformsBindings = [], geometry = {} }) {
@@ -16,7 +17,6 @@ export class Material {
 
     shaders = {
       ...{
-        // TODO default
         vertex: {
           code: '',
           entryPoint: 'main',
@@ -58,6 +58,15 @@ export class Material {
     this.shaders.vertex = this.options.shaders.vertex.code
     this.shaders.fragment = this.options.shaders.fragment.code
 
+    // first add chunks
+    for (const chunk in ShaderChunks.vertex) {
+      this.shaders.vertex = `${ShaderChunks.vertex[chunk]}\n ${this.shaders.vertex}`
+    }
+
+    for (const chunk in ShaderChunks.fragment) {
+      this.shaders.fragment = `${ShaderChunks.fragment[chunk]}\n ${this.shaders.fragment}`
+    }
+
     this.state.bindGroups.toReversed().forEach((bindGroup) => {
       bindGroup.bindings.toReversed().forEach((binding) => {
         this.shaders.vertex = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex}`
@@ -77,7 +86,7 @@ export class Material {
     })
 
     this.shaders.vertex = `${this.attributes.wgslStructFragment}\n ${this.shaders.vertex}`
-    this.shaders.fragment = `${this.attributes.wgslStructFragment}\n ${this.shaders.fragment}`
+    //this.shaders.fragment = `${this.attributes.wgslStructFragment}\n ${this.shaders.fragment}`
 
     this.shaders.code = this.shaders.vertex + '\n' + this.shaders.fragment
   }
@@ -97,25 +106,29 @@ export class Material {
       return
     }
 
-    if (!this.shaders.code) {
+    this.setShadersAndPipeline()
+  }
+
+  setShadersAndPipeline(forceRegeneration = false) {
+    if (!this.shaders.code || forceRegeneration) {
       this.patchShaders()
     }
 
-    if (!this.state.vertexShaderModule) {
+    if (!this.state.vertexShaderModule || forceRegeneration) {
       this.state.vertexShaderModule = this.createShaderModule({
         code: this.shaders.vertex,
         type: 'Vertex',
       })
     }
 
-    if (!this.state.fragmentShaderModule) {
+    if (!this.state.fragmentShaderModule || forceRegeneration) {
       this.state.fragmentShaderModule = this.createShaderModule({
         code: this.shaders.fragment,
         type: 'Fragment',
       })
     }
 
-    if (!this.state.pipeline) {
+    if (!this.state.pipeline || forceRegeneration) {
       this.createRenderPipeline()
     }
   }
@@ -238,13 +251,13 @@ export class Material {
 
   createBindGroups() {
     // textures first
-    if (this.texturesBindGroups.canCreateBindGroup()) {
-      this.texturesBindGroups.setIndex(this.state.bindGroups.length)
-      this.texturesBindGroups.createBindingsBuffers()
-      this.texturesBindGroups.setBindGroupLayout()
-      this.texturesBindGroups.setBindGroup()
+    if (this.texturesBindGroup.canCreateBindGroup()) {
+      this.texturesBindGroup.setIndex(this.state.bindGroups.length)
+      this.texturesBindGroup.createBindingsBuffers()
+      this.texturesBindGroup.setBindGroupLayout()
+      this.texturesBindGroup.setBindGroup()
 
-      this.state.bindGroups.push(this.texturesBindGroups)
+      this.state.bindGroups.push(this.texturesBindGroup)
     }
 
     // then uniforms
@@ -272,25 +285,14 @@ export class Material {
 
   setTextures() {
     this.textures = []
-    //this.texturesBindGroups = []
-    this.texturesBindGroups = new TextureBindGroup({
+    this.texturesBindGroup = new TextureBindGroup({
       renderer: this.renderer,
     })
   }
 
   addTextureBinding(texture) {
     this.textures.push(texture)
-
-    // TODO watch out for bind groups limit!! https://www.w3.org/TR/webgpu/#dom-supported-limits-maxbindgroups
-    // this.texturesBindGroups.push(
-    //   new TextureBindGroup({
-    //     renderer: this.renderer,
-    //     bindings: textureBinding.texture.uniformGroup.bindings,
-    //     texture,
-    //   })
-    // )
-
-    this.texturesBindGroups.addTexture(texture)
+    this.texturesBindGroup.addTexture(texture)
   }
 
   /** Render loop **/
@@ -310,26 +312,23 @@ export class Material {
     if (!this.state.pipeline) return
 
     // update textures
-    // this.texturesBindGroups.forEach((textureBindGroup) => {
-    //   const { texture } = textureBindGroup
-    //
-    //   if (texture.shouldUpdate) {
-    //     texture.uploadTexture(this.renderer.device)
-    //   }
-    //
-    //   if (texture.shouldBindGroup) {
-    //     textureBindGroup.resetTextureBindGroup()
-    //     texture.shouldBindGroup = false
-    //   }
-    // })
-
-    this.texturesBindGroups?.textures.forEach((texture, index) => {
+    this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
       if (texture.shouldUpdate) {
-        texture.uploadTexture(this.renderer.device)
+        if (texture.options.sourceType === 'video') {
+          texture.uploadVideoTexture()
+          // TODO better way to flush the pipeline?
+          if (!this.texturesBindGroup.hasVideoTexture) {
+            this.texturesBindGroup.updateVideoTextureBindGroup(textureIndex)
+            this.setShadersAndPipeline(true)
+            this.texturesBindGroup.hasVideoTexture = true
+          }
+        } else {
+          texture.uploadTexture()
+        }
       }
 
       if (texture.shouldBindGroup) {
-        this.texturesBindGroups.resetTextureBindGroup(index)
+        this.texturesBindGroup.resetTextureBindGroup(textureIndex)
         texture.shouldBindGroup = false
       }
     })

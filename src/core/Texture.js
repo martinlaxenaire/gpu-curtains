@@ -3,7 +3,6 @@ import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
 import { UniformBinding } from './bindings/UniformBinding'
 import { Quat } from '../math/Quat'
-import { generateMips } from '../utils/renderer-utils'
 
 export class Texture {
   constructor(
@@ -48,6 +47,7 @@ export class Texture {
     this.options = {
       label: options.label,
       name: options.name,
+      sourceType: 'empty',
       texture: {
         generateMips: options.generateMips,
         flipY: options.flipY,
@@ -89,23 +89,7 @@ export class Texture {
       },
     })
 
-    this.uniformGroup = {
-      bindings: [
-        {
-          name: this.options.name + 'Sampler',
-          resource: this.sampler,
-          type: 'sampler',
-          wgslGroupFragment: `var ${this.options.name}Sampler: sampler;`, // TODO
-        },
-        {
-          name: this.options.name,
-          resource: this.texture,
-          type: 'texture',
-          wgslGroupFragment: `var ${this.options.name}: texture_2d<f32>;`, // TODO
-        },
-        this.textureMatrix,
-      ],
-    }
+    this.setBindings()
 
     this._parent = null
 
@@ -115,6 +99,27 @@ export class Texture {
 
     // add texture to renderer so it can creates a placeholder texture ASAP
     this.renderer.addTexture(this)
+  }
+
+  setBindings() {
+    this.bindings = [
+      {
+        name: this.options.name + 'Sampler',
+        resource: this.sampler,
+        type: 'sampler',
+        wgslGroupFragment: `var ${this.options.name}Sampler: sampler;`, // TODO
+      },
+      {
+        name: this.options.name,
+        resource: this.texture,
+        type: this.options.sourceType === 'video' ? 'externalTexture' : 'texture',
+        wgslGroupFragment:
+          this.options.sourceType === 'video'
+            ? `var ${this.options.name}: texture_external;`
+            : `var ${this.options.name}: texture_2d<f32>;`, // TODO
+      },
+      this.textureMatrix,
+    ]
   }
 
   get parent() {
@@ -254,7 +259,7 @@ export class Texture {
     textureScale.y /= this.scale.y
 
     // compose our texture transformation matrix with adapted scale
-    this.textureMatrix.uniforms.matrix.value = this.textureMatrix.uniforms.matrix.value.composeFromOrigin(
+    this.textureMatrix.uniforms.matrix.value.composeFromOrigin(
       this.position,
       this.quaternion,
       textureScale,
@@ -264,8 +269,6 @@ export class Texture {
 
   resize() {
     if (!this.textureMatrix) return
-
-    this.updateTextureMatrix()
     this.textureMatrix.shouldUpdateUniform(this.options.name + 'Matrix')
   }
 
@@ -280,52 +283,38 @@ export class Texture {
     return await createImageBitmap(blob, { colorSpaceConversion: 'none' })
   }
 
-  // TODO do it on the Renderer instead?
-  uploadTexture(device) {
-    if (this.source) {
-      device.queue.copyExternalImageToTexture(
-        { source: this.source, flipY: this.options.texture.flipY },
-        { texture: this.texture },
-        { width: this.size.width, height: this.size.height }
-      )
-
-      if (this.texture.mipLevelCount > 1) {
-        generateMips(device)
-      }
-    } else {
-      device.queue.writeTexture(
-        { texture: this.texture },
-        new Uint8Array(this.options.texture.placeholderColor),
-        { bytesPerRow: 4 },
-        { width: 1, height: 1 }
-      )
-    }
-
+  uploadTexture() {
+    this.renderer.uploadTexture(this)
     this.shouldUpdate = false
   }
 
-  createTexture() {
-    const textureOptions = this.source
-      ? {
-          format: 'rgba8unorm',
-          mipLevelCount: this.options.texture.generateMips
-            ? this.getNumMipLevels(this.size.width, this.size.height)
-            : 1,
-          size: [this.size.width, this.size.height],
-          usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-        }
-      : {
-          format: 'rgba8unorm',
-          size: [this.size.width, this.size.height], // [1, 1]
-          usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
-        }
-
-    // if we already have a texture, destroy it to free GPU memory
-    this.texture?.destroy()
-
-    this.texture = this.renderer.createTexture(textureOptions)
-
+  uploadVideoTexture() {
+    this.texture = this.renderer.importExternalTexture(this.source)
     this.shouldBindGroup = true
+    this.shouldUpdate = true
+  }
+
+  createTexture() {
+    if (!this.source) {
+      this.texture = this.renderer.createTexture({
+        format: 'rgba8unorm',
+        size: [this.size.width, this.size.height], // [1, 1]
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+      })
+    } else if (this.options.sourceType !== 'video') {
+      // if we already have a texture, destroy it to free GPU memory
+      if (this.texture) this.texture.destroy()
+
+      this.texture = this.renderer.createTexture({
+        format: 'rgba8unorm',
+        mipLevelCount: this.options.texture.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1,
+        size: [this.size.width, this.size.height],
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+      })
+
+      this.shouldBindGroup = true
+    }
+
     this.shouldUpdate = true
   }
 
@@ -334,7 +323,24 @@ export class Texture {
   }
 
   async loadSource(source) {
+    // this.options.source = source
+    // this.source = await this.loadImageBitmap(this.options.source)
+    //
+    // this.size = {
+    //   width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
+    //   height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
+    // }
+    //
+    // this.textureMatrix.shouldUpdateUniform(this.options.name + 'Matrix')
+    //
+    // this.sourceLoaded = true // TODO useful?
+    // this.createTexture()
+  }
+
+  async loadImage(source) {
     this.options.source = source
+    this.options.sourceType = 'image'
+
     this.source = await this.loadImageBitmap(this.options.source)
 
     this.size = {
@@ -342,10 +348,33 @@ export class Texture {
       height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
     }
 
-    this.textureMatrix.shouldUpdateUniform(this.options.name + 'Matrix')
+    this.resize()
 
     this.sourceLoaded = true // TODO useful?
     this.createTexture()
+  }
+
+  async loadVideo(source) {
+    this.options.source = source
+
+    await source.play()
+
+    this.options.sourceType = 'video'
+
+    // reset texture bindings
+    this.setBindings()
+
+    this.size = {
+      width: this.options.source.videoWidth,
+      height: this.options.source.videoHeight,
+    }
+
+    this.source = source
+    this.shouldUpdate = true
+
+    this.resize()
+
+    this.sourceLoaded = true // TODO useful?
   }
 
   destroy() {

@@ -1,3 +1,5 @@
+import { generateMips } from '../../utils/renderer-utils'
+
 export class WebGPURendererCore {
   constructor() {
     this.type = 'RendererCore'
@@ -89,6 +91,31 @@ export class WebGPURendererCore {
     if (!this.device) return false
 
     return this.device.createTexture(options)
+  }
+
+  uploadTexture(texture) {
+    if (texture.source) {
+      this.device.queue.copyExternalImageToTexture(
+        { source: texture.source, flipY: texture.options.texture.flipY },
+        { texture: texture.texture },
+        { width: texture.size.width, height: texture.size.height }
+      )
+
+      if (texture.texture.mipLevelCount > 1) {
+        generateMips(this.device)
+      }
+    } else {
+      this.device.queue.writeTexture(
+        { texture: texture.texture },
+        new Uint8Array(texture.options.texture.placeholderColor),
+        { bytesPerRow: texture.size.width * 4 },
+        { width: texture.size.width, height: texture.size.height }
+      )
+    }
+  }
+
+  importExternalTexture(video) {
+    return this.device.importExternalTexture({ source: video })
   }
 
   /** RENDER TEXTURES **/

@@ -32,7 +32,6 @@ export class DOM3DObject {
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
       onPositionChanged: (boundingRect) => {
         this.size.document = boundingRect
-        console.log('position', this.size.document)
         this.updateSizeAndPosition()
       },
     })

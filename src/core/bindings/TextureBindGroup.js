@@ -5,14 +5,25 @@ export class TextureBindGroup extends BindGroup {
     super({ renderer, index, bindings })
 
     this.textures = textures
+    this.hasVideoTexture = false
   }
 
   addTexture(texture) {
     this.textures.push(texture)
-    this.bindings = [...this.bindings, ...texture.uniformGroup.bindings]
+    this.bindings = [...this.bindings, ...texture.bindings]
   }
 
   canCreateBindGroup() {
+    // return (
+    //   !this.bindGroup &&
+    //   !this.textures.find(
+    //     (texture) =>
+    //       !texture.sampler ||
+    //       (texture.options.sourceType !== 'video' && !texture.texture) ||
+    //       (texture.options.sourceType === 'video' && !texture.source)
+    //   )
+    // )
+
     return !this.bindGroup && !this.textures.find((texture) => !texture.sampler || !texture.texture)
   }
 
@@ -50,12 +61,44 @@ export class TextureBindGroup extends BindGroup {
         uniformBinding.bindIndex = this.entries.bindGroupLayout.length
         const texture = this.textures[Math.floor(textureIndex * 0.5)]
 
-        const bindingType = uniformBinding.type === 'sampler' ? 'sampler' : 'texture'
-        const bindingTypeValue = uniformBinding.type === 'texture' ? texture.texture.createView() : texture.sampler
+        //const bindingType = uniformBinding.type === 'sampler' ? 'sampler' : 'texture'
+        // const bindingType =
+        //   uniformBinding.type === 'texture'
+        //     ? texture.options.sourceType === 'video'
+        //       ? 'externalTexture'
+        //       : 'texture'
+        //     : 'sampler'
+
+        // const bindingTypeValue =
+        //   uniformBinding.type === 'texture'
+        //     ? texture.options.sourceType === 'video'
+        //       ? texture.texture
+        //       : texture.texture.createView()
+        //     : texture.sampler
+
+        const bindingTypeValue = (() => {
+          switch (uniformBinding.type) {
+            case 'texture':
+              return texture.texture.createView()
+            case 'externalTexture':
+              return texture.texture
+            case 'sampler':
+              return texture.sampler
+            default:
+              console.warn('No bind group layout type provided by', uniformBinding)
+              break
+          }
+        })()
+
+        uniformBinding.type === 'texture'
+          ? texture.options.sourceType === 'video'
+            ? texture.texture
+            : texture.texture.createView()
+          : texture.sampler
 
         this.entries.bindGroupLayout.push({
           binding: uniformBinding.bindIndex,
-          [bindingType]: bindingTypeValue,
+          [uniformBinding.type]: bindingTypeValue,
           visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
         })
 
@@ -70,11 +113,37 @@ export class TextureBindGroup extends BindGroup {
   }
 
   resetTextureBindGroup(textureIndex) {
+    const texture = this.textures[textureIndex]
     // texture bindGroup index is textureIndex * 3 + second position in bindings array
-    if (this.entries.bindGroup[textureIndex * 3 + 1] && this.textures[textureIndex].texture) {
-      this.entries.bindGroup[textureIndex * 3 + 1].resource = this.textures[textureIndex].texture.createView()
+    if (this.entries.bindGroup[textureIndex * 3 + 1] && texture) {
+      this.entries.bindGroup[textureIndex * 3 + 1].resource =
+        texture.options.sourceType === 'video' ? texture.texture : texture.texture.createView()
 
       this.setBindGroup()
+    }
+  }
+
+  updateVideoTextureBindGroup(textureIndex) {
+    const texture = this.textures[textureIndex]
+
+    // now we have to patch bindGroupLayout,  bindGroup entries and binding at index textureIndex * 3 + 1
+    const entryIndex = textureIndex * 3 + 1
+    if (texture && this.entries.bindGroupLayout[entryIndex] && this.entries.bindGroup[entryIndex]) {
+      this.entries.bindGroupLayout[entryIndex] = {
+        binding: this.entries.bindGroupLayout[entryIndex].binding,
+        [texture.bindings[1].type]: texture.texture,
+        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+      }
+
+      this.entries.bindGroup[entryIndex].resource = texture.texture
+
+      // patch binding as well
+      if (this.bindings[entryIndex]) {
+        this.bindings[entryIndex].wgslGroupFragment = texture.bindings[1].wgslGroupFragment
+      }
+
+      // bind group will be set later anyway
+      this.setBindGroupLayout()
     }
   }
 }
