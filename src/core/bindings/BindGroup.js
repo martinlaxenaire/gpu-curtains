@@ -19,6 +19,11 @@ export class BindGroup {
 
     this.bindGroupLayout = null
     this.bindGroup = null
+
+    // if we ever update our bind group layout
+    // we'll need to update the bind group as well
+    // and most importantly recreate the whole pipeline again
+    this.needsPipelineFlush = false
   }
 
   setIndex(index) {
@@ -44,36 +49,40 @@ export class BindGroup {
     }
   }
 
+  createBindingBuffer(binding) {
+    binding.bindIndex = this.entries.bindGroupLayout.length
+
+    const buffer = this.renderer.device.createBuffer({
+      label: ': Uniforms buffer from:' + binding.label, // TODO
+      size: binding.value.byteLength,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    })
+
+    this.bindingsBuffers.push({
+      uniformBinding: binding,
+      buffer,
+    })
+
+    this.entries.bindGroupLayout.push({
+      binding: binding.bindIndex,
+      buffer,
+      visibility: binding.visibility,
+    })
+
+    this.entries.bindGroup.push({
+      binding: binding.bindIndex,
+      resource: {
+        buffer,
+      },
+    })
+  }
+
   createBindingsBuffers() {
     this.bindings.forEach((uniformBinding) => {
       if (!uniformBinding.visibility) uniformBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
 
       if (!!uniformBinding.value) {
-        uniformBinding.bindIndex = this.entries.bindGroupLayout.length
-
-        const buffer = this.renderer.device.createBuffer({
-          label: ': Uniforms buffer from:' + uniformBinding.label, // TODO
-          size: uniformBinding.value.byteLength,
-          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        })
-
-        this.bindingsBuffers.push({
-          uniformBinding,
-          buffer,
-        })
-
-        this.entries.bindGroupLayout.push({
-          binding: uniformBinding.bindIndex,
-          buffer,
-          visibility: uniformBinding.visibility ?? GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-        })
-
-        this.entries.bindGroup.push({
-          binding: uniformBinding.bindIndex,
-          resource: {
-            buffer,
-          },
-        })
+        this.createBindingBuffer(uniformBinding)
       }
     })
   }

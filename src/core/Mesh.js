@@ -9,7 +9,6 @@ export class Mesh {
   ) {
     this.type = 'Mesh'
 
-    // TODO really needed here?
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 

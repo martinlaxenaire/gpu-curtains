@@ -225,6 +225,9 @@ export class GPURenderer {
 
     const commandBuffer = encoder.finish()
     this.device.queue.submit([commandBuffer])
+
+    // end of render, reset current pipeline ID
+    this.pipelineManager.currentPipelineId = null
   }
 
   destroy() {

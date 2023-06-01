@@ -178,7 +178,14 @@ export class Material {
   }
 
   updateBindGroups() {
-    this.state.bindGroups.forEach((bindGroup) => bindGroup.updateBindings())
+    this.state.bindGroups.forEach((bindGroup) => {
+      if (bindGroup.needsPipelineFlush) {
+        this.state.pipelineEntry.flushPipelineEntry(this.state.bindGroups)
+        bindGroup.needsPipelineFlush = false
+      }
+
+      bindGroup.updateBindings()
+    })
   }
 
   /** TEXTURES **/
@@ -216,13 +223,8 @@ export class Material {
       if (texture.shouldUpdate) {
         if (texture.options.sourceType === 'video') {
           texture.uploadVideoTexture()
-          // TODO better way to flush the pipeline?
-          if (!this.texturesBindGroup.hasVideoTexture) {
-            this.texturesBindGroup.updateVideoTextureBindGroup(textureIndex)
-
-            this.state.pipelineEntry.flushPipelineEntry(this.state.bindGroups)
-
-            this.texturesBindGroup.hasVideoTexture = true
+          if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
+            this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
           }
         } else {
           texture.uploadTexture()

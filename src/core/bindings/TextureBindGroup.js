@@ -12,7 +12,9 @@ export class TextureBindGroup extends BindGroup {
     super({ renderer, index, bindings })
 
     this.textures = textures
-    this.hasVideoTexture = false
+
+    // keep track of external textures to know when to flush
+    this.externalTexturesIndex = []
   }
 
   addTexture(texture) {
@@ -21,16 +23,6 @@ export class TextureBindGroup extends BindGroup {
   }
 
   canCreateBindGroup() {
-    // return (
-    //   !this.bindGroup &&
-    //   !this.textures.find(
-    //     (texture) =>
-    //       !texture.sampler ||
-    //       (texture.options.sourceType !== 'video' && !texture.texture) ||
-    //       (texture.options.sourceType === 'video' && !texture.source)
-    //   )
-    // )
-
     return !this.bindGroup && !this.textures.find((texture) => !texture.sampler || !texture.texture)
   }
 
@@ -41,31 +33,7 @@ export class TextureBindGroup extends BindGroup {
       if (!uniformBinding.visibility) uniformBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
 
       if (!!uniformBinding.value) {
-        uniformBinding.bindIndex = this.entries.bindGroupLayout.length
-
-        const buffer = this.renderer.device.createBuffer({
-          label: ': Uniforms buffer from:' + uniformBinding.label, // TODO
-          size: uniformBinding.value.byteLength,
-          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        })
-
-        this.bindingsBuffers.push({
-          uniformBinding,
-          buffer,
-        })
-
-        this.entries.bindGroupLayout.push({
-          binding: uniformBinding.bindIndex,
-          buffer,
-          visibility: uniformBinding.visibility,
-        })
-
-        this.entries.bindGroup.push({
-          binding: uniformBinding.bindIndex,
-          resource: {
-            buffer,
-          },
-        })
+        this.createBindingBuffer(uniformBinding)
       } else if (uniformBinding.type) {
         uniformBinding.bindIndex = this.entries.bindGroupLayout.length
         const texture = this.textures[Math.floor(textureIndex * 0.5)]
@@ -102,28 +70,44 @@ export class TextureBindGroup extends BindGroup {
 
   resetTextureBindGroup(textureIndex) {
     const texture = this.textures[textureIndex]
+
     // texture bindGroup index is textureIndex * 3 + second position in bindings array
-    if (this.entries.bindGroup[textureIndex * 3 + 1] && texture) {
-      this.entries.bindGroup[textureIndex * 3 + 1].resource =
+    const entryIndex = textureIndex * 3 + 1
+    if (this.entries.bindGroup[entryIndex] && texture) {
+      this.entries.bindGroup[entryIndex].resource =
         texture.options.sourceType === 'video' ? texture.texture : texture.texture.createView()
 
       this.setBindGroup()
     }
   }
 
-  updateVideoTextureBindGroup(textureIndex) {
+  shouldUpdateVideoTextureBindGroupLayout(textureIndex) {
+    const nbExternalTexture = this.entries.bindGroupLayout.filter((entry) => !!entry?.externalTexture).length
+
+    // if we're here it's because we've just uploaded an external texture
+    // we need to flush the pipeline if it's our first external texture or if the count changed
+
+    if (this.externalTexturesIndex.includes(textureIndex)) {
+      return false
+    } else {
+      this.externalTexturesIndex.push(textureIndex)
+      this.needsPipelineFlush = true
+      return this.needsPipelineFlush
+    }
+  }
+
+  updateVideoTextureBindGroupLayout(textureIndex) {
     const texture = this.textures[textureIndex]
 
-    // now we have to patch bindGroupLayout,  bindGroup entries and binding at index textureIndex * 3 + 1
+    // now we have to patch bindGroupLayout and binding at index textureIndex * 3 + 1
+    // bindGroup will be updated inside resetTextureBindGroup
     const entryIndex = textureIndex * 3 + 1
-    if (texture && this.entries.bindGroupLayout[entryIndex] && this.entries.bindGroup[entryIndex]) {
+    if (texture && this.entries.bindGroupLayout[entryIndex] && this.bindings[entryIndex]) {
       this.entries.bindGroupLayout[entryIndex] = {
         binding: this.entries.bindGroupLayout[entryIndex].binding,
         [texture.bindings[1].type]: texture.texture,
         visibility: this.entries.bindGroupLayout[entryIndex].visibility,
       }
-
-      this.entries.bindGroup[entryIndex].resource = texture.texture
 
       // patch binding as well
       if (this.bindings[entryIndex]) {
