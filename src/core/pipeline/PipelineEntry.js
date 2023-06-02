@@ -20,7 +20,6 @@ export class PipelineEntry {
 
     this.attributes = attributes
     this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups
-    console.log(this.bindGroups, this.renderer.cameraBindGroup)
 
     this.shaders = {
       vertex: {
@@ -53,12 +52,11 @@ export class PipelineEntry {
 
     // first add chunks
     for (const chunk in ShaderChunks.vertex) {
-      this.shaders.vertex.code = `${ShaderChunks.vertex[chunk]}\n ${this.shaders.vertex.code}`
-      console.log(ShaderChunks.vertex[chunk])
+      this.shaders.vertex.code = `\n${ShaderChunks.vertex[chunk]}\n ${this.shaders.vertex.code}`
     }
 
     for (const chunk in ShaderChunks.fragment) {
-      this.shaders.fragment.code = `${ShaderChunks.fragment[chunk]}\n ${this.shaders.fragment.code}`
+      this.shaders.fragment.code = `\n${ShaderChunks.fragment[chunk]}\n ${this.shaders.fragment.code}`
     }
 
     this.bindGroups.toReversed().forEach((bindGroup) => {
