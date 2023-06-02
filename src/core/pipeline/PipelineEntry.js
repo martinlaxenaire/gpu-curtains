@@ -1,4 +1,4 @@
-import { ShaderChunks } from '../../shaders/ShaderChunks'
+import { ShaderChunks } from '../shaders/ShaderChunks'
 
 let pipelineId = 0
 

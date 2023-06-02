@@ -114,28 +114,29 @@ export class Geometry {
         // on next iterations it is the same as previous top right values
         if (x === 0) {
           uv[uvOffset++] = u
-          uv[uvOffset++] = v
+          // remember on WebGPU, vec2(0, 0) for uv is the top left!
+          uv[uvOffset++] = 1 - v
 
           position[positionOffset++] = (u - 0.5) * 2
           position[positionOffset++] = (v - 0.5) * 2
           position[positionOffset++] = 0
 
           this.value[offset++] = u
-          this.value[offset++] = v
+          this.value[offset++] = 1 - v
           this.value[offset++] = (u - 0.5) * 2
           this.value[offset++] = (v - 0.5) * 2
           this.value[offset++] = 0
         }
 
         uv[uvOffset++] = u + 1 / this.definition.width
-        uv[uvOffset++] = v
+        uv[uvOffset++] = 1 - v
 
         position[positionOffset++] = (u + 1 / this.definition.width - 0.5) * 2
         position[positionOffset++] = (v - 0.5) * 2
         position[positionOffset++] = 0
 
         this.value[offset++] = u + 1 / this.definition.width
-        this.value[offset++] = v
+        this.value[offset++] = 1 - v
         this.value[offset++] = (u + 1 / this.definition.width - 0.5) * 2
         this.value[offset++] = (v - 0.5) * 2
         this.value[offset++] = 0

@@ -11,7 +11,7 @@ export class Texture {
       label: 'Texture',
       name: 'texture',
       generateMips: false,
-      flipY: true,
+      flipY: false,
       addressModeU: 'repeat',
       addressModeV: 'repeat',
       magFilter: 'linear',
@@ -34,7 +34,7 @@ export class Texture {
       label: '',
       name: '',
       generateMips: false,
-      flipY: true,
+      flipY: false,
       addressModeU: 'repeat',
       addressModeV: 'repeat',
       magFilter: 'linear',
@@ -291,7 +291,8 @@ export class Texture {
   uploadVideoTexture() {
     this.texture = this.renderer.importExternalTexture(this.source)
     this.shouldBindGroup = true
-    this.shouldUpdate = true
+    //this.shouldUpdate = true
+    this.shouldUpdate = false
   }
 
   createTexture() {
@@ -354,8 +355,16 @@ export class Texture {
     this.createTexture()
   }
 
+  onVideoFrameCallback() {
+    this.shouldUpdate = true
+  }
+
   async loadVideo(source) {
     this.options.source = source
+
+    if ('requestVideoFrameCallback' in HTMLVideoElement) {
+      this.videoFrameCallbackId = this.options.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
+    }
 
     await source.play()
 
@@ -378,6 +387,10 @@ export class Texture {
   }
 
   destroy() {
+    if (this.videoFrameCallbackId) {
+      this.options.source.cancelVideoFrameCallback(this.videoFrameCallbackId)
+    }
+
     this.texture?.destroy()
   }
 }

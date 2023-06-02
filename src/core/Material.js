@@ -1,6 +1,6 @@
 import { BindGroup } from './bindings/BindGroup'
 import { TextureBindGroup } from './bindings/TextureBindGroup'
-import { ShaderChunks } from '../shaders/ShaderChunks'
+import { ShaderChunks } from './shaders/ShaderChunks'
 
 export class Material {
   constructor(renderer, { label = 'Material', shaders = {}, uniformsBindings = [], geometry = {} }) {
@@ -220,6 +220,10 @@ export class Material {
 
     // update textures
     this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
+      if (texture.options.sourceType === 'video' && !texture.videoFrameCallbackId) {
+        texture.shouldUpdate = true
+      }
+
       if (texture.shouldUpdate) {
         if (texture.options.sourceType === 'video') {
           texture.uploadVideoTexture()
