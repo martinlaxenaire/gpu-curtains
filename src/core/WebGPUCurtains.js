@@ -1,6 +1,7 @@
 import { CurtainsGPURenderer } from './renderer/CurtainsGPURenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import ResizeManager from '../utils/ResizeManager'
+import { Vec3 } from '../math/Vec3'
 
 export class WebGPUCurtains {
   constructor({ container, pixelRatio, fov }) {
@@ -91,6 +92,10 @@ export class WebGPUCurtains {
 
   setPerspective(fov, near, far) {
     this.renderer?.setPerspective(fov, near, far)
+  }
+
+  setCameraPosition(position = new Vec3(0, 0, 1)) {
+    this.renderer?.setCameraPosition(position)
   }
 
   /**

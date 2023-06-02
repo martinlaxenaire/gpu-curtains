@@ -18,16 +18,26 @@ import { Mat4 } from '../math/Mat4.js'
  @this: our Mesh element
  ***/
 export class Camera {
-  constructor({ fov = 50, near = 0.01, far = 15, width, height, pixelRatio = 1, onBeforeUpdate = () => {} } = {}) {
+  constructor({
+    fov = 50,
+    near = 0.01,
+    far = 50,
+    width,
+    height,
+    pixelRatio = 1,
+    onBeforePerspectiveUpdate = () => {},
+    onPositionChanged = () => {},
+  } = {}) {
     // camera can't be at position (0, 0, 0), it needs some recoil
     // arbitrarily set to 1
-    this.position = new Vec3(0, 0, 1)
+    this.position = new Vec3(0, 0, 1).onChange(() => this.applyPosition())
     this.projectionMatrix = new Mat4()
 
-    this.worldMatrix = new Mat4()
+    this.modelMatrix = new Mat4()
     this.viewMatrix = new Mat4()
 
-    this.onBeforeUpdate = onBeforeUpdate
+    this.onBeforePerspectiveUpdate = onBeforePerspectiveUpdate
+    this.onPositionChanged = onPositionChanged
 
     this.shouldUpdate = false
 
@@ -54,7 +64,7 @@ export class Camera {
       this.shouldUpdate = true
     }
 
-    this.screenRatio = this.getScreenRatiosFromFov()
+    this.setScreenRatios()
     this.setCSSPerspective()
   }
 
@@ -123,7 +133,8 @@ export class Camera {
     this.width = width
     this.height = height
 
-    this.screenRatio = this.getScreenRatiosFromFov()
+    this.setScreenRatios()
+    this.setCSSPerspective()
   }
 
   /***
@@ -145,7 +156,7 @@ export class Camera {
     this.setNear(near)
     this.setFar(far)
 
-    this.onBeforeUpdate()
+    this.onBeforePerspectiveUpdate()
 
     if (this.shouldUpdate) {
       this.updateProjectionMatrix()
@@ -159,27 +170,23 @@ export class Camera {
   setPosition(position = this.position) {
     this.position.copy(position)
 
+    this.applyPosition()
+  }
+
+  applyPosition() {
     // update matrices
-    this.worldMatrix.setFromArray([
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      this.position.x,
-      this.position.y,
-      this.position.z,
-      1,
+    // prettier-ignore
+    this.modelMatrix.setFromArray([
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      this.position.x, this.position.y, this.position.z, 1,
     ])
 
-    this.viewMatrix = this.viewMatrix.copy(this.worldMatrix).getInverse()
+    this.viewMatrix = this.viewMatrix.copy(this.modelMatrix).getInverse()
+
+    this.setScreenRatios()
+    this.onPositionChanged()
   }
 
   /***
@@ -196,11 +203,11 @@ export class Camera {
   }
 
   /***
-   Returns visible width / height at a given z-depth from our camera parameters
+   Sets visible width / height at a given z-depth from our camera parameters
 
    Taken from: https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269
    ***/
-  getScreenRatiosFromFov(depth = 0) {
+  setScreenRatios(depth = 0) {
     // compensate for cameras not positioned at z=0
     const cameraOffset = this.position.z
     if (depth < cameraOffset) {
@@ -215,7 +222,7 @@ export class Camera {
     // Math.abs to ensure the result is always positive
     const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth)
 
-    return {
+    this.screenRatio = {
       width: (height * this.width) / this.height,
       height,
     }

@@ -166,12 +166,12 @@ export class DOM3DObject {
 
   initMatrices() {
     this.matrices = {
-      world: {
+      model: {
         matrix: new Mat4(),
         shouldUpdate: false,
         onUpdate: () => {
-          // compose our world transformation matrix from custom origin
-          this.worldMatrix = this.worldMatrix.composeFromOrigin(
+          // compose our model transformation matrix from custom origin
+          this.modelMatrix = this.modelMatrix.composeFromOrigin(
             this.position,
             this.quaternion,
             this.scale,
@@ -180,7 +180,7 @@ export class DOM3DObject {
 
           // we need to scale our planes, from a square to a right sized rectangle
           // we're doing this after our transformation matrix because this scale transformation always have the same origin
-          this.worldMatrix.scale({
+          this.modelMatrix.scale({
             x: this.size.world.width,
             y: this.size.world.height,
             z: 1,
@@ -191,9 +191,9 @@ export class DOM3DObject {
         matrix: new Mat4(),
         shouldUpdate: false,
         onUpdate: () => {
-          // our model view matrix is our world matrix multiplied with our camera view matrix
-          // in our case we're just subtracting the camera Z position to our world matrix
-          this.modelViewMatrix.copy(this.worldMatrix)
+          // our model view matrix is our model matrix multiplied with our camera view matrix
+          // in our case we're just subtracting the camera Z position to our model matrix
+          this.modelViewMatrix.copy(this.modelMatrix)
           this.modelViewMatrix.elements[14] -= this.camera.position.z
         },
       },
@@ -209,13 +209,13 @@ export class DOM3DObject {
     }
   }
 
-  get worldMatrix() {
-    return this.matrices.world.matrix
+  get modelMatrix() {
+    return this.matrices.model.matrix
   }
 
-  set worldMatrix(value) {
-    this.matrices.world.matrix = value
-    this.matrices.world.shouldUpdate = true
+  set modelMatrix(value) {
+    this.matrices.model.matrix = value
+    this.matrices.model.shouldUpdate = true
   }
 
   get modelViewMatrix() {
@@ -225,6 +225,10 @@ export class DOM3DObject {
   set modelViewMatrix(value) {
     this.matrices.modelView.matrix = value
     this.matrices.modelView.shouldUpdate = true
+  }
+
+  get viewMatrix() {
+    return this.camera.viewMatrix
   }
 
   get projectionMatrix() {
@@ -241,7 +245,7 @@ export class DOM3DObject {
   }
 
   updateModelMatrixStack(sizeChanged = false) {
-    this.matrices.world.shouldUpdate = true
+    this.matrices.model.shouldUpdate = true
     this.matrices.modelView.shouldUpdate = true
     this.matrices.modelViewProjection.shouldUpdate = true
   }

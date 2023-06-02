@@ -110,16 +110,16 @@ export class Plane extends DOM3DObject {
       label: 'Matrices',
       name: 'matrices',
       uniforms: {
-        world: {
-          name: 'world',
+        model: {
+          name: 'model',
           type: 'mat4x4f',
-          value: this.worldMatrix,
+          value: this.modelMatrix,
           onBeforeUpdate: () => {
-            this.matrixUniformBinding.uniforms.world.value = this.worldMatrix
+            this.matrixUniformBinding.uniforms.model.value = this.modelMatrix
           },
         },
         modelView: {
-          // model view matrix (world matrix multiplied by camera view matrix)
+          // model view matrix (model matrix multiplied by camera view matrix)
           name: 'modelView',
           type: 'mat4x4f',
           value: this.modelViewMatrix,
@@ -127,15 +127,24 @@ export class Plane extends DOM3DObject {
             this.matrixUniformBinding.uniforms.modelView.value = this.modelViewMatrix
           },
         },
-        projection: {
-          // camera projection matrix
-          name: 'projection',
-          type: 'mat4x4f',
-          value: this.projectionMatrix,
-          onBeforeUpdate: () => {
-            this.matrixUniformBinding.uniforms.projection.value = this.projectionMatrix
-          },
-        },
+        // view: {
+        //   // camera view matrix
+        //   name: 'view',
+        //   type: 'mat4x4f',
+        //   value: this.viewMatrix,
+        //   onBeforeUpdate: () => {
+        //     this.matrixUniformBinding.uniforms.view.value = this.viewMatrix
+        //   },
+        // },
+        // projection: {
+        //   // camera projection matrix
+        //   name: 'projection',
+        //   type: 'mat4x4f',
+        //   value: this.projectionMatrix,
+        //   onBeforeUpdate: () => {
+        //     this.matrixUniformBinding.uniforms.projection.value = this.projectionMatrix
+        //   },
+        // },
         modelViewProjection: {
           name: 'modelViewProjection',
           type: 'mat4x4f',
@@ -152,7 +161,7 @@ export class Plane extends DOM3DObject {
     super.updateModelMatrixStack(sizeChanged)
 
     if (this.matrixUniformBinding) {
-      this.matrixUniformBinding.shouldUpdateUniform('world')
+      this.matrixUniformBinding.shouldUpdateUniform('model')
       this.matrixUniformBinding.shouldUpdateUniform('modelView')
       this.matrixUniformBinding.shouldUpdateUniform('modelViewProjection')
     }
@@ -166,7 +175,8 @@ export class Plane extends DOM3DObject {
   updateProjectionMatrixStack() {
     super.updateProjectionMatrixStack()
 
-    this.matrixUniformBinding?.shouldUpdateUniform('projection')
+    //this.matrixUniformBinding?.shouldUpdateUniform('view')
+    //this.matrixUniformBinding?.shouldUpdateUniform('projection')
   }
 
   /** SOURCES **/

@@ -13,7 +13,13 @@
 // TODO lot of (unused at the time) methods are missing
 
 export class Mat4 {
-  constructor(elements = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])) {
+  // prettier-ignore
+  constructor(elements = new Float32Array([
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  ])) {
     this.type = 'Mat4'
     this.elements = elements
   }

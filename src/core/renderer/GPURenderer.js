@@ -224,7 +224,7 @@ export class GPURenderer {
     // make a render pass encoder to encode render specific commands
     const pass = encoder.beginRenderPass(this.renderPass.descriptor)
 
-    this.planes.forEach((plane) => plane.render(pass))
+    this.planes?.forEach((plane) => plane.render(pass))
 
     pass.end()
 

@@ -19,7 +19,8 @@ export class PipelineEntry {
     this.pipeline = null
 
     this.attributes = attributes
-    this.bindGroups = bindGroups
+    this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups
+    console.log(this.bindGroups, this.renderer.cameraBindGroup)
 
     this.shaders = {
       vertex: {
@@ -53,6 +54,7 @@ export class PipelineEntry {
     // first add chunks
     for (const chunk in ShaderChunks.vertex) {
       this.shaders.vertex.code = `${ShaderChunks.vertex[chunk]}\n ${this.shaders.vertex.code}`
+      console.log(ShaderChunks.vertex[chunk])
     }
 
     for (const chunk in ShaderChunks.fragment) {
@@ -65,8 +67,7 @@ export class PipelineEntry {
           binding.visibility === GPUShaderStage.VERTEX ||
           binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
         ) {
-          this.shaders.vertex.code = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex.code}`
-          this.shaders.vertex.code = `\n ${this.shaders.vertex.code}`
+          this.shaders.vertex.code = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex.code}\n`
 
           if (binding.wgslStructFragment) {
             this.shaders.vertex.code = `${binding.wgslStructFragment}\n ${this.shaders.vertex.code}`
@@ -77,8 +78,7 @@ export class PipelineEntry {
           binding.visibility === GPUShaderStage.FRAGMENT ||
           binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
         ) {
-          this.shaders.fragment.code = `@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.fragment.code}`
-          this.shaders.fragment.code = `\n ${this.shaders.fragment.code}`
+          this.shaders.fragment.code = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.fragment.code}\n`
 
           if (binding.wgslStructFragment) {
             this.shaders.fragment.code = `${binding.wgslStructFragment}\n ${this.shaders.fragment.code}`
@@ -150,7 +150,7 @@ export class PipelineEntry {
   }
 
   flushPipelineEntry(newBindGroups = []) {
-    this.bindGroups = newBindGroups
+    this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...newBindGroups] : newBindGroups
     this.setPipelineEntry()
   }
 

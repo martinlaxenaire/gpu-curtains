@@ -53,8 +53,10 @@ export class Material {
       this.createAttributesBuffers()
     }
 
+    // camera + model bind groups
+    const modelBindGroupLength = this.uniformsBindGroups.length
     const texturesBindGroupLength = 1
-    const bindGroupsReady = this.state.bindGroups.length === this.uniformsBindGroups.length + texturesBindGroupLength
+    const bindGroupsReady = this.state.bindGroups.length === modelBindGroupLength + texturesBindGroupLength
 
     // TODO cache bind groups and pipelines?
     // https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change
@@ -153,7 +155,7 @@ export class Material {
   createBindGroups() {
     // textures first
     if (this.texturesBindGroup.canCreateBindGroup()) {
-      this.texturesBindGroup.setIndex(this.state.bindGroups.length)
+      this.texturesBindGroup.setIndex(this.state.bindGroups.length + 1) // bindGroup 0 is our renderer camera
       this.texturesBindGroup.createBindingsBuffers()
       this.texturesBindGroup.setBindGroupLayout()
       this.texturesBindGroup.setBindGroup()
@@ -164,7 +166,7 @@ export class Material {
     // then uniforms
     this.uniformsBindGroups.forEach((bindGroup) => {
       if (bindGroup.canCreateBindGroup()) {
-        bindGroup.setIndex(this.state.bindGroups.length)
+        bindGroup.setIndex(this.state.bindGroups.length + 1)
         bindGroup.createBindingsBuffers()
         bindGroup.setBindGroupLayout()
         bindGroup.setBindGroup()
@@ -256,14 +258,14 @@ export class Material {
     // TODO this could be improved if we'd render meshes by pipelines order
     this.renderer.pipelineManager.setCurrentPipeline(pass, this.state.pipelineEntry)
 
-    // set attributes
-    pass.setVertexBuffer(0, this.state.attributesBuffers.vertexBuffer)
-    pass.setIndexBuffer(this.state.attributesBuffers.indexBuffer, this.attributes.indexBufferFormat)
-
     // set bind groups
     this.state.bindGroups.forEach((bindGroup) => {
       pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
     })
+
+    // set attributes
+    pass.setVertexBuffer(0, this.state.attributesBuffers.vertexBuffer)
+    pass.setIndexBuffer(this.state.attributesBuffers.indexBuffer, this.attributes.indexBufferFormat)
 
     // draw
     pass.drawIndexed(this.attributes.indexBufferLength)
