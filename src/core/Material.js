@@ -225,7 +225,7 @@ export class Material {
       // we need to update it at every tick, even if it hasn't changed
       // to ensure we're not sending a stale / destroyed texture
       //if (texture.options.sourceType === 'video' && !texture.videoFrameCallbackId) {
-      if (texture.options.sourceType === 'video') {
+      if (texture.options.sourceType === 'video' || texture.options.sourceType === 'canvas') {
         texture.shouldUpdate = true
       }
 

@@ -323,6 +323,15 @@ export class Texture {
     this.sampler = this.renderer.createSampler(this.options.sampler)
   }
 
+  /** SOURCES **/
+
+  setSourceSize() {
+    this.size = {
+      width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
+      height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
+    }
+  }
+
   async loadSource(source) {
     // this.options.source = source
     // this.source = await this.loadImageBitmap(this.options.source)
@@ -344,11 +353,7 @@ export class Texture {
 
     this.source = await this.loadImageBitmap(this.options.source)
 
-    this.size = {
-      width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
-      height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
-    }
-
+    this.setSourceSize()
     this.resize()
 
     this.sourceLoaded = true // TODO useful?
@@ -376,13 +381,9 @@ export class Texture {
         // reset texture bindings
         this.setBindings()
 
-        this.size = {
-          width: this.options.source.videoWidth,
-          height: this.options.source.videoHeight,
-        }
-
         this.source = source
 
+        this.setSourceSize()
         this.resize()
 
         if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
@@ -394,6 +395,20 @@ export class Texture {
       .catch((e) => {
         console.log(e)
       })
+  }
+
+  loadCanvas(source) {
+    this.options.source = source
+    this.options.sourceType = 'canvas'
+
+    //this.source = await this.loadImageBitmap(this.options.source)
+    this.source = source
+
+    this.setSourceSize()
+    this.resize()
+
+    this.sourceLoaded = true // TODO useful?
+    this.createTexture()
   }
 
   destroy() {

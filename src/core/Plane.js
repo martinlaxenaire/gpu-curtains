@@ -211,6 +211,17 @@ export class Plane extends DOM3DObject {
       // load canvases
       if (canvases.length) {
         //this.loadCanvases(canvases);
+
+        canvases.forEach((canvas) => {
+          //console.log(image.src)
+          const texture = this.createTexture({
+            // TODO index in texture for bindings
+            name: canvas.getAttribute('data-name') ?? 'texture' + this.textures.length,
+          })
+
+          //texture.loadSource(image.src)
+          texture.loadCanvas(canvas)
+        })
       }
 
       loaderSize = images.length + videos.length + canvases.length
