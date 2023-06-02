@@ -355,35 +355,45 @@ export class Texture {
     this.createTexture()
   }
 
+  // weirldy enough, we don't have to do anything in that callback
+  // it just somehow might give a hint to the GPU that we're going to do something on the next video frame
   onVideoFrameCallback() {
-    this.shouldUpdate = true
+    //this.shouldUpdate = true
+
+    if (this.videoFrameCallbackId) {
+      this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
+    }
   }
 
   async loadVideo(source) {
     this.options.source = source
 
-    if ('requestVideoFrameCallback' in HTMLVideoElement) {
-      this.videoFrameCallbackId = this.options.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
-    }
+    await source
+      .play()
+      .then(() => {
+        this.options.sourceType = 'video'
 
-    await source.play()
+        // reset texture bindings
+        this.setBindings()
 
-    this.options.sourceType = 'video'
+        this.size = {
+          width: this.options.source.videoWidth,
+          height: this.options.source.videoHeight,
+        }
 
-    // reset texture bindings
-    this.setBindings()
+        this.source = source
 
-    this.size = {
-      width: this.options.source.videoWidth,
-      height: this.options.source.videoHeight,
-    }
+        this.resize()
 
-    this.source = source
-    this.shouldUpdate = true
+        if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+          this.videoFrameCallbackId = this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
+        }
 
-    this.resize()
-
-    this.sourceLoaded = true // TODO useful?
+        this.sourceLoaded = true // TODO useful?
+      })
+      .catch((e) => {
+        console.log(e)
+      })
   }
 
   destroy() {

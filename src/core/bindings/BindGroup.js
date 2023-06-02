@@ -1,5 +1,5 @@
 export class BindGroup {
-  constructor({ renderer, index = 0, bindings = [] }) {
+  constructor({ label, renderer, index = 0, bindings = [] }) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
@@ -8,6 +8,9 @@ export class BindGroup {
     }
 
     this.renderer = renderer
+    this.options = {
+      label,
+    }
 
     this.index = index
 
@@ -53,7 +56,7 @@ export class BindGroup {
     binding.bindIndex = this.entries.bindGroupLayout.length
 
     const buffer = this.renderer.device.createBuffer({
-      label: ': Uniforms buffer from:' + binding.label, // TODO
+      label: this.options.label + ': Uniforms buffer from:' + binding.label,
       size: binding.value.byteLength,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     })
@@ -89,14 +92,14 @@ export class BindGroup {
 
   setBindGroupLayout() {
     this.bindGroupLayout = this.renderer.device.createBindGroupLayout({
-      label: ': Uniform bind group layout',
+      label: this.options.label + ': Uniform bind group layout',
       entries: this.entries.bindGroupLayout,
     })
   }
 
   setBindGroup() {
     this.bindGroup = this.renderer.device.createBindGroup({
-      label: ': Uniform bind group', // TODO
+      label: this.options.label + ': Uniform bind group',
       layout: this.bindGroupLayout,
       entries: this.entries.bindGroup,
     })

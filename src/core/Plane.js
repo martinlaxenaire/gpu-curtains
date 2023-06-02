@@ -45,6 +45,10 @@ export class Plane extends DOM3DObject {
 
     this.type = 'Plane'
 
+    this.options = {
+      label,
+    }
+
     this.renderer = renderer
     this.renderer.planes.push(this)
 

@@ -29,6 +29,7 @@ export class Mesh {
     })
 
     this.material = new Material(this.renderer, {
+      label,
       shaders,
       uniformsBindings,
       geometry: this.geometry,

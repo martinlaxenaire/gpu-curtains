@@ -133,6 +133,7 @@ export class Material {
     this.uniformsBindGroups = []
 
     const uniformsBindGroup = new BindGroup({
+      label: this.options.label + ': Uniform bind group',
       renderer: this.renderer,
     })
 
@@ -193,6 +194,7 @@ export class Material {
   setTextures() {
     this.textures = []
     this.texturesBindGroup = new TextureBindGroup({
+      label: this.options.label + ': Textures bind group',
       renderer: this.renderer,
     })
   }
@@ -218,15 +220,19 @@ export class Material {
     // pipeline is not ready yet
     if (!this.state.pipelineEntry || !this.state.pipelineEntry.pipeline) return
 
-    // update textures
     this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
-      if (texture.options.sourceType === 'video' && !texture.videoFrameCallbackId) {
+      // since external texture are destroyed as soon as JavaScript returns to the browser
+      // we need to update it at every tick, even if it hasn't changed
+      // to ensure we're not sending a stale / destroyed texture
+      //if (texture.options.sourceType === 'video' && !texture.videoFrameCallbackId) {
+      if (texture.options.sourceType === 'video') {
         texture.shouldUpdate = true
       }
 
       if (texture.shouldUpdate) {
         if (texture.options.sourceType === 'video') {
           texture.uploadVideoTexture()
+
           if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
             this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
           }
@@ -245,7 +251,7 @@ export class Material {
     this.updateBindGroups()
 
     // set current pipeline
-    // TODO this could be improved if we'd render mesh by pipelines order
+    // TODO this could be improved if we'd render meshes by pipelines order
     this.renderer.pipelineManager.setCurrentPipeline(pass, this.state.pipelineEntry)
 
     // set attributes

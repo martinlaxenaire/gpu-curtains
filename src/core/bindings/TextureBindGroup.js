@@ -1,7 +1,7 @@
 import { BindGroup } from './BindGroup'
 
 export class TextureBindGroup extends BindGroup {
-  constructor({ renderer, index = 0, bindings = [], textures = [] }) {
+  constructor({ label, renderer, index = 0, bindings = [], textures = [] }) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
@@ -9,12 +9,12 @@ export class TextureBindGroup extends BindGroup {
       return
     }
 
-    super({ renderer, index, bindings })
+    super({ label, renderer, index, bindings })
 
     this.textures = textures
 
     // keep track of external textures to know when to flush
-    this.externalTexturesIndex = []
+    this.externalTexturesIDs = []
   }
 
   addTexture(texture) {
@@ -82,15 +82,12 @@ export class TextureBindGroup extends BindGroup {
   }
 
   shouldUpdateVideoTextureBindGroupLayout(textureIndex) {
-    const nbExternalTexture = this.entries.bindGroupLayout.filter((entry) => !!entry?.externalTexture).length
-
     // if we're here it's because we've just uploaded an external texture
-    // we need to flush the pipeline if it's our first external texture or if the count changed
-
-    if (this.externalTexturesIndex.includes(textureIndex)) {
+    // we need to flush the pipeline if the textures is not already in the externalTexturesIDs array
+    if (this.externalTexturesIDs.includes(textureIndex)) {
       return false
     } else {
-      this.externalTexturesIndex.push(textureIndex)
+      this.externalTexturesIDs.push(textureIndex)
       this.needsPipelineFlush = true
       return this.needsPipelineFlush
     }
