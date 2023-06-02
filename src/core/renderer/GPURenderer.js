@@ -124,6 +124,11 @@ export class GPURenderer {
   }
 
   importExternalTexture(video) {
+    // WebCodecs may be the way to go when time comes!
+    // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
+    // see onVideoFrameCallback method in Texture class
+    // const videoFrame = new VideoFrame(video)
+    // return this.device.importExternalTexture({ source: videoFrame })
     return this.device.importExternalTexture({ source: video })
   }
 

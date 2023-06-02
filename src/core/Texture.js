@@ -361,10 +361,12 @@ export class Texture {
   }
 
   // weirldy enough, we don't have to do anything in that callback
-  // it just somehow might give a hint to the GPU that we're going to do something on the next video frame
+  // because the <video> is not visible in the viewport, the video playback is throttled
+  // and the rendering is janky
+  // using requestVideoFrameCallback helps preventing this but is unsupported in Firefox at the moment
+  // WebCodecs may be the way to go when time comes!
+  // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
   onVideoFrameCallback() {
-    //this.shouldUpdate = true
-
     if (this.videoFrameCallbackId) {
       this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
     }
