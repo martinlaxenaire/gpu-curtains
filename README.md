@@ -10,7 +10,6 @@ WIP
 - Scene class
 - RenderPass class
 - TextureLoader class
-- Geometry class base + PlaneGeometry class
 - getShaderCode + getAddedShaderCode methods
 - Proper uniform memory buffers layout management
 - Use async pipelines?

@@ -1,10 +1,10 @@
-import { DOMElement } from './DOMElement'
-import { Mat4 } from '../math/Mat4'
-import { Vec3 } from '../math/Vec3'
-import { Quat } from '../math/Quat'
-import { isCurtainsRenderer } from '../utils/renderer-utils'
+import { DOMElement } from '../DOMElement'
+import { Mat4 } from '../../math/Mat4'
+import { Vec3 } from '../../math/Vec3'
+import { Quat } from '../../math/Quat'
+import { isCurtainsRenderer } from '../../utils/renderer-utils'
 
-export class DOM3DObject {
+export class DOMObject3D {
   constructor(renderer, element) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer

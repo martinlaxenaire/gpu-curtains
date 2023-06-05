@@ -1,10 +1,10 @@
 import { Mesh } from './Mesh'
-import { DOM3DObject } from './DOM3DObject'
+import { DOMObject3D } from './objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../utils/renderer-utils'
 import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
 import { PlaneGeometry } from '../curtains/geometry/PlaneGeometry'
 
-export class Plane extends DOM3DObject {
+export class Plane extends DOMObject3D {
   constructor(
     renderer,
     element,
