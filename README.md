@@ -6,9 +6,7 @@ WIP
 
 - Typescript support
 - Core classes + Curtains classes separation for low level / high level APIs
-- CameraRenderer class
 - Object3D class (+ test textures rotation)
-- Use UnifornBinding class for textures
 - Scene class
 - RenderPass class
 - TextureLoader class

@@ -76,7 +76,7 @@ export class PipelineEntry {
           this.shaders.vertex.code = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex.code}\n`
 
           if (binding.wgslStructFragment) {
-            this.shaders.vertex.code = `${binding.wgslStructFragment}\n ${this.shaders.vertex.code}`
+            this.shaders.vertex.code = `\n${binding.wgslStructFragment}\n ${this.shaders.vertex.code}`
           }
         }
 

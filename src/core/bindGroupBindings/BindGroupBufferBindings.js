@@ -140,13 +140,12 @@ export class BindGroupBufferBindings extends BindGroupBinding {
   setWGSLFragment() {
     if (this.useStruct) {
       this.wgslStructFragment = `
-  struct ${this.label} {
-    ${this.bindingElements.map((uniform) => uniform.name + ': ' + uniform.type).join(',\n\t')}
-  };\n`
+struct ${this.label} {
+  ${this.bindingElements.map((uniform) => uniform.name + ': ' + uniform.type).join(',\n\t')}
+};`
 
       const varType = this.bindingType === 'storage' ? 'var<storage, read>' : 'var<uniform>'
-      this.wgslGroupFragment = `
-  ${varType} ${this.name}: ${this.label};`
+      this.wgslGroupFragment = `${varType} ${this.name}: ${this.label};`
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = `${this.bindingElements

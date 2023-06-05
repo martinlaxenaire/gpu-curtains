@@ -78,6 +78,23 @@ export class Material {
     })
   }
 
+  getShaderCode(shaderType = 'full') {
+    if (!this.state.pipelineEntry) return false
+
+    shaderType = (() => {
+      switch (shaderType) {
+        case 'vertex':
+        case 'fragment':
+        case 'full':
+          return shaderType
+        default:
+          return 'full'
+      }
+    })()
+
+    return this.state.pipelineEntry.shaders[shaderType].code
+  }
+
   /** ATTRIBUTES **/
 
   setAttributesFromGeometry(geometry) {
