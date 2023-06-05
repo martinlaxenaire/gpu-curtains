@@ -2,6 +2,7 @@ import { Mesh } from './Mesh'
 import { DOM3DObject } from './DOM3DObject'
 import { isCurtainsRenderer } from '../utils/renderer-utils'
 import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
+import { PlaneGeometry } from '../curtains/geometry/PlaneGeometry'
 
 export class Plane extends DOM3DObject {
   constructor(
@@ -83,6 +84,10 @@ export class Plane extends DOM3DObject {
       shaders,
       widthSegments,
       heightSegments,
+      geometry: new PlaneGeometry({
+        widthSegments,
+        heightSegments,
+      }),
       uniformsBindings: this.uniformsBindings,
     })
 

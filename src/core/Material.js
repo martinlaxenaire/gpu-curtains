@@ -3,7 +3,7 @@ import { TextureBindGroup } from './bindGroups/TextureBindGroup'
 import { isRenderer } from '../utils/renderer-utils'
 
 export class Material {
-  constructor(renderer, { label = 'Material', shaders = {}, uniformsBindings = [], geometry = {} }) {
+  constructor(renderer, { label = 'Material', shaders = {}, uniformsBindings = [] }) {
     this.type = 'Material'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -42,7 +42,6 @@ export class Material {
       bindGroups: [],
     }
 
-    this.setAttributesFromGeometry(geometry)
     this.setUniforms()
     this.setTextures()
   }
@@ -97,16 +96,15 @@ export class Material {
 
   /** ATTRIBUTES **/
 
+  // set from the mesh
   setAttributesFromGeometry(geometry) {
     this.attributes = {
       wgslStructFragment: geometry.wgslStructFragment,
-      vertexArray: geometry.value,
-      indexArray: geometry.indexData.array,
-      indexBufferFormat: geometry.indexData.bufferFormat,
-      indexBufferLength: geometry.indexData.bufferLength,
+      vertexArray: geometry.array,
+      vertexCount: geometry.verticesCount,
       pipelineBuffers: [
         {
-          arrayStride: geometry.arrayStride, // (2 + 3) floats, 4 bytes each
+          arrayStride: geometry.arrayStride * 4, // (2 + 3) floats, 4 bytes each
           attributes: Object.keys(geometry.attributes).map((attributeKey, index) => {
             const attribute = geometry.attributes[attributeKey]
 
@@ -119,6 +117,18 @@ export class Material {
         },
       ],
     }
+
+    if (geometry.isIndexed) {
+      this.attributes = {
+        ...this.attributes,
+        ...{
+          isIndexed: true,
+          indexArray: geometry.indexData.array,
+          indexBufferFormat: geometry.indexData.bufferFormat,
+          indexBufferLength: geometry.indexData.bufferLength,
+        },
+      }
+    }
   }
 
   createAttributesBuffers() {
@@ -128,15 +138,19 @@ export class Material {
         size: this.attributes.vertexArray.byteLength,
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
       }),
-      indexBuffer: this.renderer.device.createBuffer({
-        label: this.options.label + ': Index buffer vertices',
-        size: this.attributes.indexArray.byteLength,
-        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-      }),
     }
 
     this.renderer.device.queue.writeBuffer(this.state.attributesBuffers.vertexBuffer, 0, this.attributes.vertexArray)
-    this.renderer.device.queue.writeBuffer(this.state.attributesBuffers.indexBuffer, 0, this.attributes.indexArray)
+
+    if (this.attributes.isIndexed) {
+      this.state.attributesBuffers.indexBuffer = this.renderer.device.createBuffer({
+        label: this.options.label + ': Index buffer vertices',
+        size: this.attributes.indexArray.byteLength,
+        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+      })
+
+      this.renderer.device.queue.writeBuffer(this.state.attributesBuffers.indexBuffer, 0, this.attributes.indexArray)
+    }
   }
 
   destroyAttributeBuffers() {
@@ -281,10 +295,17 @@ export class Material {
 
     // set attributes
     pass.setVertexBuffer(0, this.state.attributesBuffers.vertexBuffer)
-    pass.setIndexBuffer(this.state.attributesBuffers.indexBuffer, this.attributes.indexBufferFormat)
+
+    if (this.state.attributesBuffers.indexBuffer) {
+      pass.setIndexBuffer(this.state.attributesBuffers.indexBuffer, this.attributes.indexBufferFormat)
+    }
 
     // draw
-    pass.drawIndexed(this.attributes.indexBufferLength)
+    if (this.attributes.indexBufferLength) {
+      pass.drawIndexed(this.attributes.indexBufferLength)
+    } else {
+      pass.draw(this.attributes.vertexCount)
+    }
   }
 
   destroy() {

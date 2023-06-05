@@ -1,13 +1,9 @@
-import { Geometry } from './Geometry'
 import { Texture } from './Texture'
 import { Material } from './Material'
 import { isRenderer } from '../utils/renderer-utils'
 
 export class Mesh {
-  constructor(
-    renderer,
-    { label = 'Mesh', shaders = {}, widthSegments = 1, heightSegments = 1, uniformsBindings = [] }
-  ) {
+  constructor(renderer, { label = 'Mesh', shaders = {}, geometry, uniformsBindings = [] }) {
     this.type = 'Mesh'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -25,19 +21,25 @@ export class Mesh {
       shaders,
     }
 
-    this.geometry = new Geometry({
-      widthSegments,
-      heightSegments,
+    this.geometry = geometry
+
+    this.setMaterial({
+      label,
+      shaders,
+      uniformsBindings,
     })
 
+    this.material.setAttributesFromGeometry(this.geometry)
+
+    this.uniforms = this.material.uniforms
+  }
+
+  setMaterial({ label, shaders, uniformsBindings }) {
     this.material = new Material(this.renderer, {
       label,
       shaders,
       uniformsBindings,
-      geometry: this.geometry,
     })
-
-    this.uniforms = this.material.uniforms
   }
 
   /** TEXTURES **/
