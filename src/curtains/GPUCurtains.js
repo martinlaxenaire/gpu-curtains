@@ -1,9 +1,9 @@
-import { CurtainsGPURenderer } from './renderer/CurtainsGPURenderer'
+import { GPUCurtainsRenderer } from './renderer/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import ResizeManager from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 
-export class WebGPUCurtains {
+export class GPUCurtains {
   constructor({ container, pixelRatio, fov }) {
     this.type = 'CurtainsGPU'
     this.container = container
@@ -55,10 +55,10 @@ export class WebGPUCurtains {
    * Set renderer
    */
   setRenderer() {
-    this.renderer = new CurtainsGPURenderer({
+    this.renderer = new GPUCurtainsRenderer({
       container: this.container,
       pixelRatio: this.pixelRatio,
-      fov: this.options.fov,
+      //fov: this.options.fov, // TODO
     })
 
     this.canvas = this.renderer.canvas

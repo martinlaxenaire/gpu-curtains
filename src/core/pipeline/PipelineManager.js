@@ -1,11 +1,15 @@
 import { PipelineEntry } from './PipelineEntry'
+import { isRenderer } from '../../utils/renderer-utils'
 
 export class PipelineManager {
   constructor({ renderer }) {
+    this.type = 'PipelineManager'
+
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+    if (!isRenderer(renderer, this.type)) {
+      console.warn('PipelineManager fail')
       return
     }
 

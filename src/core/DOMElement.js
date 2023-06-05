@@ -65,4 +65,8 @@ export class DOMElement {
       this.isResizing = false
     }, 50)
   }
+
+  destroy() {
+    // TODO use
+  }
 }

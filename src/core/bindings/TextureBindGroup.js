@@ -1,11 +1,13 @@
 import { BindGroup } from './BindGroup'
+import { isRenderer } from '../../utils/renderer-utils'
 
 export class TextureBindGroup extends BindGroup {
   constructor({ label, renderer, index = 0, bindings = [], textures = [] }) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+    if (!isRenderer(renderer, 'TextureBindGroup')) {
+      console.warn('TextureBindGroup fail')
       return
     }
 

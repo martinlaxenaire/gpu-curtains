@@ -3,6 +3,7 @@ import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
 import { UniformBinding } from './bindings/UniformBinding'
 import { Quat } from '../math/Quat'
+import { isRenderer } from '../utils/renderer-utils'
 
 export class Texture {
   constructor(
@@ -24,7 +25,8 @@ export class Texture {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+    if (!isRenderer(renderer, this.type)) {
+      console.warn('Texture fail')
       return
     }
 

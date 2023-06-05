@@ -1,39 +1,20 @@
 import { GPURenderer } from './GPURenderer'
-import { DOMElement } from '../DOMElement'
-import { Camera } from '../../camera/Camera'
-import { Vec3 } from '../../math/Vec3'
+import { Camera } from '../camera/Camera'
 import { UniformBinding } from '../bindings/UniformBinding'
 import { BindGroup } from '../bindings/BindGroup'
+import { Vec3 } from '../../math/Vec3'
 
-export class CurtainsGPURenderer extends GPURenderer {
+export class GPUCameraRenderer extends GPURenderer {
   constructor({ container, pixelRatio, renderingScale = 1, camera = {} }) {
-    super()
+    super({ container, pixelRatio, renderingScale })
 
-    this.type = 'CurtainsRenderer'
+    this.type = 'CameraRenderer'
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.renderingScale = renderingScale
 
-    // needed to get container bounding box
-    this.domElement = new DOMElement({
-      element: container,
-      // onSizeChanged: (boundingRect) => {
-      //   this.resize(boundingRect)
-      // },
-    })
-
     camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera }
     this.setCamera(camera)
-
-    this.setRendererObjects()
-
-    // needed to trigger resize
-    this.documentBody = new DOMElement({
-      element: document.body,
-      onSizeChanged: () => {
-        this.resize()
-      },
-    })
   }
 
   setCamera(camera) {
@@ -49,12 +30,15 @@ export class CurtainsGPURenderer extends GPURenderer {
       //   this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
       // },
       onPositionChanged: () => {
-        this.updateCameraMatrixStack()
-        this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
+        this.onCameraPositionChanged()
       },
     })
 
     this.setCameraUniformBinding()
+  }
+
+  onCameraPositionChanged() {
+    this.updateCameraMatrixStack()
   }
 
   setCameraUniformBinding() {
@@ -116,18 +100,6 @@ export class CurtainsGPURenderer extends GPURenderer {
     this.cameraUniformBinding?.shouldUpdateUniform('projection')
   }
 
-  setRendererObjects() {
-    // keep track of planes, textures, etc.
-    this.planes = []
-    this.textures = []
-  }
-
-  addTexture(texture) {
-    this.textures.push(texture)
-  }
-
-  /** CAMERA **/
-
   /***
    This will set our perspective matrix new parameters (fov, near plane and far plane)
    used internally but can be used externally as well to change fov for example
@@ -154,20 +126,30 @@ export class CurtainsGPURenderer extends GPURenderer {
   }
 
   resize(boundingRect) {
-    super.resize(boundingRect ?? this.domElement.element.getBoundingClientRect())
+    super.resize(boundingRect)
+  }
 
+  onResize() {
     this.updateCameraMatrixStack()
-
-    // force plane resize
-    // plane HTMLElement might not have changed
-    //this.planes?.forEach((plane) => plane.updateSizeAndPosition())
-    this.planes?.forEach((plane) => plane.resize())
   }
 
   /**
    * Called at each draw call to render our scene and its content
    * Also create shader modules if not already created
    */
+
+  onBeforeRenderPass() {
+    super.onBeforeRenderPass()
+  }
+
+  onBeginRenderPass(pass) {
+    super.onBeginRenderPass(pass)
+  }
+
+  onAfterRenderPass() {
+    super.onAfterRenderPass()
+  }
+
   render() {
     if (!this.ready) return
 
@@ -177,16 +159,6 @@ export class CurtainsGPURenderer extends GPURenderer {
 
     this.cameraBindGroup?.updateBindings()
 
-    this.textures.forEach((texture) => this.setTexture(texture))
-
     super.render()
-  }
-
-  destroy() {
-    this.planes.forEach((plane) => plane.destroy())
-
-    this.textures.forEach((texture) => texture.destroy())
-
-    super.destroy()
   }
 }

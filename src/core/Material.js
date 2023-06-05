@@ -1,6 +1,6 @@
 import { BindGroup } from './bindings/BindGroup'
 import { TextureBindGroup } from './bindings/TextureBindGroup'
-import { ShaderChunks } from './shaders/ShaderChunks'
+import { isRenderer } from '../utils/renderer-utils'
 
 export class Material {
   constructor(renderer, { label = 'Material', shaders = {}, uniformsBindings = [], geometry = {} }) {
@@ -9,7 +9,8 @@ export class Material {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+    if (!isRenderer(renderer, this.type)) {
+      console.warn('Material fail')
       return
     }
 
@@ -36,8 +37,6 @@ export class Material {
     }
 
     this.state = {
-      vertexShaderModule: null,
-      fragmentShaderModule: null,
       pipelineEntry: null,
       attributesBuffers: null,
       bindGroups: [],

@@ -1,5 +1,5 @@
-import { Vec3 } from '../math/Vec3.js'
-import { Mat4 } from '../math/Mat4.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { Mat4 } from '../../math/Mat4.js'
 
 /***
  Here we create our Camera object

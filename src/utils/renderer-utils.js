@@ -1,3 +1,36 @@
+import { GPURenderer } from '../core/renderer/GPURenderer'
+import { GPUCameraRenderer } from '../core/renderer/GPUCameraRenderer'
+import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
+
+export const isRenderer = (renderer, type) => {
+  const isRenderer =
+    renderer &&
+    (renderer instanceof GPURenderer ||
+      renderer instanceof GPUCameraRenderer ||
+      renderer instanceof GPUCurtainsRenderer)
+
+  if (!isRenderer && type) {
+    console.error(type + ': Unable to create a ' + type + ' because the Renderer is not defined')
+  }
+
+  return (
+    renderer &&
+    (renderer instanceof GPURenderer ||
+      renderer instanceof GPUCameraRenderer ||
+      renderer instanceof GPUCurtainsRenderer)
+  )
+}
+
+export const isCurtainsRenderer = (renderer, type) => {
+  const isCurtainsRenderer = renderer && renderer instanceof GPUCurtainsRenderer
+
+  if (!isCurtainsRenderer && type) {
+    console.error(type + ': Unable to create a ' + type + ' because the CurtainsRenderer is not defined')
+  }
+
+  return isCurtainsRenderer
+}
+
 export const generateMips = ((device) => {
   let sampler
   let module

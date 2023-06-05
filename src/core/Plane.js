@@ -1,6 +1,7 @@
 import { Mesh } from './Mesh'
 import { UniformBinding } from './bindings/UniformBinding'
 import { DOM3DObject } from './DOM3DObject'
+import { isCurtainsRenderer } from '../utils/renderer-utils'
 
 export class Plane extends DOM3DObject {
   constructor(
@@ -37,7 +38,8 @@ export class Plane extends DOM3DObject {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+    if (!isCurtainsRenderer(renderer, 'Plane')) {
+      console.warn('Plane fail')
       return
     }
 

@@ -1,13 +1,17 @@
 import { ShaderChunks } from '../shaders/ShaderChunks'
+import { isRenderer } from '../../utils/renderer-utils'
 
 let pipelineId = 0
 
 export class PipelineEntry {
   constructor({ renderer, label = 'Render Pipeline', attributes = {}, bindGroups = [], shaders = {} }) {
+    this.type = 'PipelineEntry'
+
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+    if (!isRenderer(renderer, this.type)) {
+      console.warn('PipelineEntry fail')
       return
     }
 
@@ -19,7 +23,7 @@ export class PipelineEntry {
     this.pipeline = null
 
     this.attributes = attributes
-    this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups
+    this.setPipelineEntryBindGroups(bindGroups)
 
     this.shaders = {
       vertex: {
@@ -42,6 +46,10 @@ export class PipelineEntry {
     }
 
     this.setPipelineEntry()
+  }
+
+  setPipelineEntryBindGroups(bindGroup) {
+    this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...bindGroup] : bindGroup
   }
 
   /** SHADERS **/
@@ -148,7 +156,7 @@ export class PipelineEntry {
   }
 
   flushPipelineEntry(newBindGroups = []) {
-    this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...newBindGroups] : newBindGroups
+    this.setPipelineEntryBindGroups(newBindGroups)
     this.setPipelineEntry()
   }
 

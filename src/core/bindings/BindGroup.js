@@ -1,9 +1,14 @@
+import { isRenderer } from '../../utils/renderer-utils'
+
 export class BindGroup {
   constructor({ label, renderer, index = 0, bindings = [] }) {
+    this.type = 'BindGroup'
+
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!renderer || !(renderer.type === 'Renderer' || renderer.type === 'CurtainsRenderer')) {
+    if (!isRenderer(renderer, this.type)) {
+      console.warn('BindGroup fail')
       return
     }
 

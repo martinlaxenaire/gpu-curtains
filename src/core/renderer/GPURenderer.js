@@ -1,8 +1,9 @@
 import { generateMips } from '../../utils/renderer-utils'
 import { PipelineManager } from '../pipeline/PipelineManager'
+import { DOMElement } from '../DOMElement'
 
 export class GPURenderer {
-  constructor() {
+  constructor({ container, pixelRatio, renderingScale = 1 }) {
     this.type = 'Renderer'
     this.ready = false
 
@@ -17,6 +18,19 @@ export class GPURenderer {
     this.canvas = document.createElement('canvas')
 
     this.setContext()
+
+    // needed to get container bounding box
+    this.domElement = new DOMElement({
+      element: container,
+      // onSizeChanged: (boundingRect) => {
+      //   this.resize(boundingRect)
+      // },
+    })
+
+    this.documentBody = new DOMElement({
+      element: document.body,
+      onSizeChanged: () => this.resize(),
+    })
   }
 
   /**
@@ -202,9 +216,20 @@ export class GPURenderer {
   }
 
   resize(boundingRect) {
-    this.setSize(boundingRect)
+    this.setSize(boundingRect ?? this.domElement.element.getBoundingClientRect())
     this.setRenderPassView()
+    this.onResize()
   }
+
+  onResize() {}
+
+  /** RENDER **/
+
+  onBeforeRenderPass() {}
+
+  onBeginRenderPass(pass) {}
+
+  onAfterRenderPass() {}
 
   /**
    * Called at each draw call to render our scene and its content
@@ -215,6 +240,8 @@ export class GPURenderer {
 
     // now render!
 
+    this.onBeforeRenderPass()
+
     // Get the current texture from the canvas context and
     // set it as the texture to render to.
     this.renderPass.descriptor.colorAttachments[0].resolveTarget = this.context.getCurrentTexture().createView()
@@ -224,7 +251,7 @@ export class GPURenderer {
     // make a render pass encoder to encode render specific commands
     const pass = encoder.beginRenderPass(this.renderPass.descriptor)
 
-    this.planes?.forEach((plane) => plane.render(pass))
+    this.onBeginRenderPass(pass)
 
     pass.end()
 
@@ -233,6 +260,8 @@ export class GPURenderer {
 
     // end of render, reset current pipeline ID
     this.pipelineManager.currentPipelineId = null
+
+    this.onAfterRenderPass()
   }
 
   destroy() {
