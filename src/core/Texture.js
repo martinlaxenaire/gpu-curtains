@@ -1,9 +1,11 @@
 import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
-import { UniformBinding } from './bindings/UniformBinding'
 import { Quat } from '../math/Quat'
 import { isRenderer } from '../utils/renderer-utils'
+import { BindGroupSamplerBinding } from './bindGroupBindings/BindGroupSamplerBinding'
+import { BindGroupTextureBinding } from './bindGroupBindings/BindGroupTextureBinding'
+import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
 
 export class Texture {
   constructor(
@@ -77,7 +79,7 @@ export class Texture {
     this.initTransforms()
 
     // we will always declare a texture matrix
-    this.textureMatrix = new UniformBinding({
+    this.textureMatrix = new BindGroupBufferBindings({
       label: 'TextureMatrix',
       name: this.options.name + 'Matrix',
       useStruct: false,
@@ -105,21 +107,18 @@ export class Texture {
 
   setBindings() {
     this.bindings = [
-      {
-        name: this.options.name + 'Sampler',
+      new BindGroupSamplerBinding({
+        label: this.options.label + ': ' + this.options.name,
+        name: this.options.name,
+        bindingType: 'sampler',
         resource: this.sampler,
-        type: 'sampler',
-        wgslGroupFragment: `var ${this.options.name}Sampler: sampler;`, // TODO
-      },
-      {
+      }),
+      new BindGroupTextureBinding({
+        label: this.options.label + ': ' + this.options.name + ' sampler',
         name: this.options.name,
         resource: this.texture,
-        type: this.options.sourceType === 'video' ? 'externalTexture' : 'texture',
-        wgslGroupFragment:
-          this.options.sourceType === 'video'
-            ? `var ${this.options.name}: texture_external;`
-            : `var ${this.options.name}: texture_2d<f32>;`, // TODO
-      },
+        bindingType: this.options.sourceType === 'video' ? 'externalTexture' : 'texture',
+      }),
       this.textureMatrix,
     ]
   }

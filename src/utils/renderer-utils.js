@@ -1,5 +1,5 @@
-import { GPURenderer } from '../core/renderer/GPURenderer'
-import { GPUCameraRenderer } from '../core/renderer/GPUCameraRenderer'
+import { GPURenderer } from '../core/renderers/GPURenderer'
+import { GPUCameraRenderer } from '../core/renderers/GPUCameraRenderer'
 import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
 
 export const isRenderer = (renderer, type) => {

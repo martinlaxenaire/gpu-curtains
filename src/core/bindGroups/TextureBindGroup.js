@@ -36,12 +36,12 @@ export class TextureBindGroup extends BindGroup {
 
       if (!!uniformBinding.value) {
         this.createBindingBuffer(uniformBinding)
-      } else if (uniformBinding.type) {
+      } else if (uniformBinding.bindingType) {
         uniformBinding.bindIndex = this.entries.bindGroupLayout.length
         const texture = this.textures[Math.floor(textureIndex * 0.5)]
 
         const bindingTypeValue = (() => {
-          switch (uniformBinding.type) {
+          switch (uniformBinding.bindingType) {
             case 'texture':
               return texture.texture.createView()
             case 'externalTexture':
@@ -56,9 +56,11 @@ export class TextureBindGroup extends BindGroup {
 
         this.entries.bindGroupLayout.push({
           binding: uniformBinding.bindIndex,
-          [uniformBinding.type]: bindingTypeValue,
+          [uniformBinding.bindingType]: bindingTypeValue,
           visibility: uniformBinding.visibility,
         })
+
+        if (uniformBinding.bindingType === 'externalTexture') console.log(uniformBinding.bindingType, this.entries)
 
         this.entries.bindGroup.push({
           binding: uniformBinding.bindIndex,
@@ -66,6 +68,8 @@ export class TextureBindGroup extends BindGroup {
         })
 
         textureIndex++
+      } else {
+        console.log('!!!!', uniformBinding)
       }
     })
   }
@@ -104,7 +108,7 @@ export class TextureBindGroup extends BindGroup {
     if (texture && this.entries.bindGroupLayout[entryIndex] && this.bindings[entryIndex]) {
       this.entries.bindGroupLayout[entryIndex] = {
         binding: this.entries.bindGroupLayout[entryIndex].binding,
-        [texture.bindings[1].type]: texture.texture,
+        [texture.bindings[1].bindingType]: texture.texture,
         visibility: this.entries.bindGroupLayout[entryIndex].visibility,
       }
 

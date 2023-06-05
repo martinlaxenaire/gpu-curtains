@@ -1,5 +1,5 @@
-import { BindGroup } from './bindings/BindGroup'
-import { TextureBindGroup } from './bindings/TextureBindGroup'
+import { BindGroup } from './bindGroups/BindGroup'
+import { TextureBindGroup } from './bindGroups/TextureBindGroup'
 import { isRenderer } from '../utils/renderer-utils'
 
 export class Material {

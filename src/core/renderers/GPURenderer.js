@@ -1,5 +1,5 @@
 import { generateMips } from '../../utils/renderer-utils'
-import { PipelineManager } from '../pipeline/PipelineManager'
+import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement } from '../DOMElement'
 
 export class GPURenderer {

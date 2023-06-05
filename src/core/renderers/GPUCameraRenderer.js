@@ -1,7 +1,7 @@
 import { GPURenderer } from './GPURenderer'
 import { Camera } from '../camera/Camera'
-import { UniformBinding } from '../bindings/UniformBinding'
-import { BindGroup } from '../bindings/BindGroup'
+import { UniformBinding } from '../bindGroups/UniformBinding'
+import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
 
 export class GPUCameraRenderer extends GPURenderer {

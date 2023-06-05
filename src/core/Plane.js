@@ -1,7 +1,7 @@
 import { Mesh } from './Mesh'
-import { UniformBinding } from './bindings/UniformBinding'
 import { DOM3DObject } from './DOM3DObject'
 import { isCurtainsRenderer } from '../utils/renderer-utils'
+import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
 
 export class Plane extends DOM3DObject {
   constructor(
@@ -68,7 +68,7 @@ export class Plane extends DOM3DObject {
     this.uniformsBindings = [
       this.matrixUniformBinding,
       ...bindings.map((binding, index) => {
-        return new UniformBinding({
+        return new BindGroupBufferBindings({
           label: binding.label || 'Uniforms' + index,
           name: binding.name || 'uniforms' + index,
           bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms

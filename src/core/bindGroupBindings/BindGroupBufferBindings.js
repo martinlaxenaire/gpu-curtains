@@ -1,24 +1,22 @@
-import { Mat4 } from '../../math/Mat4'
+import { BindGroupBinding } from './BindGroupBinding'
 
-export class UniformBinding {
-  constructor({ label = 'Uniform', name = 'uniform', bindIndex = 0, useStruct = true, uniforms = {}, visibility }) {
+export class BindGroupBufferBindings extends BindGroupBinding {
+  constructor({
+    label = 'Uniform',
+    name = 'uniform',
+    bindingType = 'uniform',
+    bindIndex = 0,
+    useStruct = true,
+    uniforms = {},
+    visibility,
+  }) {
+    super({ label, name, bindIndex, bindingType, visibility })
+
     this.label = label
     this.name = name
+    this.bindingType = bindingType
     this.bindIndex = bindIndex
     this.size = 0
-
-    this.visibility = visibility
-      ? (() => {
-          switch (visibility) {
-            case 'vertex':
-              return GPUShaderStage.VERTEX
-            case 'fragment':
-              return GPUShaderStage.FRAGMENT
-            default:
-              return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
-          }
-        })()
-      : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
 
     this.isActive = true
     this.shouldUpdate = false
@@ -51,11 +49,11 @@ export class UniformBinding {
       this.uniforms[uniformKey] = uniform
     })
 
-    this.setGroup()
+    this.setBufferGroup()
     this.setWGSLFragment()
   }
 
-  setGroup() {
+  setBufferGroup() {
     Object.keys(this.uniforms).forEach((uniformKey) => {
       const uniform = this.uniforms[uniformKey]
 
@@ -146,13 +144,15 @@ export class UniformBinding {
     ${this.bindingElements.map((uniform) => uniform.name + ': ' + uniform.type).join(',\n\t')}
   };\n`
 
+      const varType = this.bindingType === 'storage' ? 'var<storage, read>' : 'var<uniform>'
       this.wgslGroupFragment = `
-  var<uniform> ${this.name}: ${this.label};`
+  ${varType} ${this.name}: ${this.label};`
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = `${this.bindingElements
         .map((uniform, index) => {
-          return `var<uniform> ${uniform.name}: ${uniform.type};\n`
+          const varType = this.bindingType === 'storage' ? 'var<storage, read>' : 'var<uniform>'
+          return `${varType} ${uniform.name}: ${uniform.type};\n`
         })
         .join(',\n\t')}`
     }
