@@ -1,8 +1,8 @@
 import { GPURenderer } from './GPURenderer'
 import { Camera } from '../camera/Camera'
-import { UniformBinding } from '../bindGroups/UniformBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
+import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
 
 export class GPUCameraRenderer extends GPURenderer {
   constructor({ container, pixelRatio, renderingScale = 1, camera = {} }) {
@@ -42,7 +42,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   setCameraUniformBinding() {
-    this.cameraUniformBinding = new UniformBinding({
+    this.cameraUniformBinding = new BindGroupBufferBindings({
       label: 'Camera',
       name: 'camera',
       visibility: 'vertex',

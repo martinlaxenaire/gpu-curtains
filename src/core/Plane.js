@@ -108,7 +108,7 @@ export class Plane extends DOM3DObject {
    Init our plane model view and projection matrices and set their uniform locations
    ***/
   setMatricesUniformGroup() {
-    this.matrixUniformBinding = new UniformBinding({
+    this.matrixUniformBinding = new BindGroupBufferBindings({
       label: 'Matrices',
       name: 'matrices',
       uniforms: {

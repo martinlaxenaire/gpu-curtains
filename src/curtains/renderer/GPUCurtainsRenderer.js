@@ -1,9 +1,4 @@
 import { GPUCameraRenderer } from '../../core/renderers/GPUCameraRenderer'
-import { DOMElement } from '../../core/DOMElement'
-import { Camera } from '../../core/camera/Camera'
-import { Vec3 } from '../../math/Vec3'
-import { UniformBinding } from '../../core/bindGroups/UniformBinding'
-import { BindGroup } from '../../core/bindGroups/BindGroup'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
   constructor({ container, pixelRatio, renderingScale = 1, camera = {} }) {
