@@ -101,7 +101,7 @@ export class Material {
     this.attributes = {
       wgslStructFragment: geometry.wgslStructFragment,
       vertexArray: geometry.array,
-      vertexCount: geometry.verticesCount,
+      vertexCount: geometry.vertexCount,
       pipelineBuffers: [
         {
           arrayStride: geometry.arrayStride * 4, // (2 + 3) floats, 4 bytes each
