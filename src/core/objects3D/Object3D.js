@@ -8,41 +8,6 @@ export class Object3D {
     this.setMatrices()
   }
 
-  /** MATRICES **/
-
-  setMatrices() {
-    this.matrices = {
-      model: {
-        matrix: new Mat4(),
-        shouldUpdate: false,
-        onUpdate: () => this.updateModelMatrix(),
-      },
-    }
-  }
-
-  get modelMatrix() {
-    return this.matrices.model.matrix
-  }
-
-  set modelMatrix(value) {
-    this.matrices.model.matrix = value
-    this.matrices.model.shouldUpdate = true
-  }
-
-  shouldUpdateModelMatrix(sizeChanged = false) {
-    this.matrices.model.shouldUpdate = true
-  }
-
-  updateModelMatrix() {
-    // compose our model transformation matrix from custom origin
-    this.modelMatrix = this.modelMatrix.composeFromOrigin(
-      this.position,
-      this.quaternion,
-      this.scale,
-      this.transformOrigin
-    )
-  }
-
   /** TRANSFORMS **/
 
   setTransforms() {
@@ -96,7 +61,7 @@ export class Object3D {
 
   set scale(value) {
     // force scale to 1 on Z axis
-    value.z = 1
+    //value.z = 1
     this.transforms.scale = value
     this.applyScale()
   }
@@ -126,13 +91,45 @@ export class Object3D {
   }
 
   applyScale() {
-    // TODO update textures matrix...
-    //this.resize()
-
     this.shouldUpdateModelMatrix()
   }
 
   applyTransformOrigin() {
     this.shouldUpdateModelMatrix()
+  }
+
+  /** MATRICES **/
+
+  setMatrices() {
+    this.matrices = {
+      model: {
+        matrix: new Mat4(),
+        shouldUpdate: false,
+        onUpdate: () => this.updateModelMatrix(),
+      },
+    }
+  }
+
+  get modelMatrix() {
+    return this.matrices.model.matrix
+  }
+
+  set modelMatrix(value) {
+    this.matrices.model.matrix = value
+    this.matrices.model.shouldUpdate = true
+  }
+
+  shouldUpdateModelMatrix(sizeChanged = false) {
+    this.matrices.model.shouldUpdate = true
+  }
+
+  updateModelMatrix() {
+    // compose our model transformation matrix from custom origin
+    this.modelMatrix = this.modelMatrix.composeFromOrigin(
+      this.position,
+      this.quaternion,
+      this.scale,
+      this.transformOrigin
+    )
   }
 }

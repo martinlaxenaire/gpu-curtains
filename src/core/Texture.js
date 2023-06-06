@@ -6,8 +6,9 @@ import { isRenderer } from '../utils/renderer-utils'
 import { BindGroupSamplerBinding } from './bindGroupBindings/BindGroupSamplerBinding'
 import { BindGroupTextureBinding } from './bindGroupBindings/BindGroupTextureBinding'
 import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
+import { Object3D } from './objects3D/Object3D'
 
-export class Texture {
+export class Texture extends Object3D {
   constructor(
     renderer,
     options = {
@@ -22,6 +23,8 @@ export class Texture {
       mipmapFilter: 'linear',
     }
   ) {
+    super()
+
     this.type = 'Texture'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -76,8 +79,6 @@ export class Texture {
       height: 1,
     }
 
-    this.initTransforms()
-
     // we will always declare a texture matrix
     this.textureMatrix = new BindGroupBufferBindings({
       label: 'TextureMatrix',
@@ -87,7 +88,8 @@ export class Texture {
         matrix: {
           name: this.options.name + 'Matrix',
           type: 'mat4x4f',
-          value: new Mat4(),
+          //value: new Mat4(),
+          value: this.modelMatrix,
           onBeforeUpdate: () => this.updateTextureMatrix(),
         },
       },
@@ -132,80 +134,33 @@ export class Texture {
     this.resize()
   }
 
-  initTransforms() {
-    this.transforms = {
-      origin: new Vec3(0.5, 0.5, 0),
-      scale: new Vec3(1),
-      position: new Vec3(),
-      quaternion: new Quat(),
-      rotation: new Vec3(), // only along Z axis!
-    }
-
-    this.transformOrigin.onChange(() => this.resize())
-    this.scale.onChange(() => this.resize())
-    this.position.onChange(() => this.resize())
-  }
-
-  get transformOrigin() {
-    return this.transforms.origin
-  }
-
-  set transformOrigin(value) {
-    this.transforms.origin = value
-    this.transforms.origin.z = 0
-    this.resize()
-  }
-
-  get scale() {
-    return this.transforms.scale
-  }
-
-  set scale(value) {
-    this.transforms.scale = value
-    this.applyScale()
-  }
-
-  applyScale() {
-    this.transforms.scale.z = 1
-    this.resize()
-  }
-
-  get position() {
-    return this.transforms.position
-  }
-
-  set position(value) {
-    this.transforms.position = value
-    this.applyPosition()
-  }
-
   applyPosition() {
+    super.applyPosition()
+
     this.transforms.position.z = 0
     this.resize()
   }
 
-  get quaternion() {
-    return this.transforms.quaternion
-  }
-
-  set quaternion(value) {
-    this.transforms.quaternion = value
-  }
-
-  // rotation along Z axis is inverted relatively to the planes
-  get rotation() {
-    return -this.transforms.rotation.z
-  }
-
-  set rotation(value) {
-    this.transforms.rotation.z = -value
-    this.applyRotation()
-  }
-
   applyRotation() {
+    super.applyRotation()
+
     this.transforms.rotation.x = 0
     this.transforms.rotation.y = 0
     this.quaternion.setFromVec3(this.transforms.rotation)
+    this.resize()
+  }
+
+  applyScale() {
+    super.applyScale()
+
+    this.transforms.scale.z = 1
+    this.resize()
+  }
+
+  applyTransformOrigin() {
+    super.applyTransformOrigin()
+
+    this.transforms.origin.z = 0
     this.resize()
   }
 
@@ -217,11 +172,17 @@ export class Texture {
     const parentWidth = this.parent ? this.parent.size.document.width * scale.x : this.size.width
     const parentHeight = this.parent ? this.parent.size.document.height * scale.y : this.size.height
 
+    const rotatedWidth =
+      Math.abs(parentWidth * Math.cos(this.rotation.z)) + Math.abs(parentHeight * Math.sin(this.rotation.z))
+    const rotatedHeight =
+      Math.abs(parentHeight * Math.cos(this.rotation.z)) + Math.abs(parentWidth * Math.sin(this.rotation.z))
+
     const sourceWidth = this.size.width
     const sourceHeight = this.size.height
 
     const sourceRatio = sourceWidth / sourceHeight
     const parentRatio = parentWidth / parentHeight
+    const parentRotationRatio = rotatedWidth / rotatedHeight
 
     // center image in its container
     let xOffset = 0
@@ -236,36 +197,55 @@ export class Texture {
     }
 
     return {
-      parentWidth: parentWidth,
-      parentHeight: parentHeight,
-      sourceWidth: sourceWidth,
-      sourceHeight: sourceHeight,
-      xOffset: xOffset,
-      yOffset: yOffset,
+      parentWidth,
+      parentHeight,
+      rotatedWidth,
+      rotatedHeight,
+      sourceWidth,
+      sourceHeight,
+      parentRatio,
+      parentRotationRatio,
+      sourceRatio,
+      xOffset,
+      yOffset,
     }
   }
 
   updateTextureMatrix() {
     const sizes = this.computeSize()
 
-    // calculate scale to apply to the matrix
     const textureScale = new Vec3(
       sizes.parentWidth / (sizes.parentWidth - sizes.xOffset),
       sizes.parentHeight / (sizes.parentHeight - sizes.yOffset),
       1
     )
 
+    //textureScale.x *= sizes.parentWidth / sizes.rotatedWidth
+    //textureScale.x *= (sizes.rotatedWidth + sizes.rotatedHeight) / (sizes.parentWidth + sizes.parentHeight)
+    //textureScale.x *= sizes.parentRatio / sizes.parentRotationRatio
+    textureScale.x *= sizes.rotatedHeight / sizes.parentHeight
+    //textureScale.x /= sizes.parentRotationRatio
+
+    // if (this.rotation.z !== 0)
+    //   console.log(sizes.parentHeight, sizes.rotatedHeight / sizes.parentHeight, (this.rotation.z * 180) / Math.PI)
+
+    //textureScale.y *= sizes.parentHeight / sizes.rotatedHeight
+    //textureScale.y *= (sizes.parentWidth + sizes.parentHeight) / (sizes.rotatedWidth + sizes.rotatedHeight)
+    //textureScale.y *= sizes.parentRotationRatio / sizes.parentRatio
+    textureScale.y *= sizes.rotatedWidth / sizes.parentWidth
+    //textureScale.y /= sizes.parentRotationRatio
+
+    // textureScale.x -= Math.atan(this.rotation.z) * globalRotationScale
+    // textureScale.y -= Math.atan(this.rotation.z) * globalRotationScale
+
     // apply texture scale
     textureScale.x /= this.scale.x
     textureScale.y /= this.scale.y
 
+    // TODO it's working but rotation messes up with the scale
+
     // compose our texture transformation matrix with adapted scale
-    this.textureMatrix.uniforms.matrix.value.composeFromOrigin(
-      this.position,
-      this.quaternion,
-      textureScale,
-      this.transformOrigin
-    )
+    this.modelMatrix.composeFromOrigin(this.position, this.quaternion, textureScale, this.transformOrigin)
   }
 
   resize() {

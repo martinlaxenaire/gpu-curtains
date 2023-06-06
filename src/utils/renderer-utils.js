@@ -13,12 +13,18 @@ export const isRenderer = (renderer, type) => {
     console.error(type + ': Unable to create a ' + type + ' because the Renderer is not defined')
   }
 
-  return (
-    renderer &&
-    (renderer instanceof GPURenderer ||
-      renderer instanceof GPUCameraRenderer ||
-      renderer instanceof GPUCurtainsRenderer)
-  )
+  return isRenderer
+}
+
+export const isCameraRenderer = (renderer, type) => {
+  const isCameraRenderer =
+    renderer && (renderer instanceof GPUCameraRenderer || renderer instanceof GPUCurtainsRenderer)
+
+  if (!isCameraRenderer && type) {
+    console.error(type + ': Unable to create a ' + type + ' because the CameraRenderer is not defined')
+  }
+
+  return isCameraRenderer
 }
 
 export const isCurtainsRenderer = (renderer, type) => {

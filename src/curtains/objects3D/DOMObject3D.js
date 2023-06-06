@@ -1,10 +1,9 @@
-import { DOMElement } from '../DOMElement'
-import { Mat4 } from '../../math/Mat4'
+import { DOMElement } from '../../core/DOMElement'
 import { Vec3 } from '../../math/Vec3'
-import { Quat } from '../../math/Quat'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
+import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
 
-export class DOMObject3D {
+export class DOMObject3D extends ProjectedObject3D {
   constructor(renderer, element) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -13,6 +12,8 @@ export class DOMObject3D {
       console.warn('DOM3DObject fail')
       return
     }
+
+    super(renderer)
 
     this.renderer = renderer
 
@@ -31,8 +32,8 @@ export class DOMObject3D {
       },
     }
 
-    this.initTransforms()
-    this.initMatrices()
+    this.setTransforms()
+    this.setMatrices()
 
     this.camera = this.renderer.camera
 
@@ -77,47 +78,52 @@ export class DOMObject3D {
 
   /** TRANSFOMS **/
 
-  initTransforms() {
-    this.transforms = {
-      origin: {
-        model: new Vec3(0.5, 0.5, 0),
-        world: new Vec3(),
-      },
-      quaternion: new Quat(),
-      rotation: new Vec3(),
-      position: {
-        world: new Vec3(),
-        document: new Vec3(),
-      },
-      scale: new Vec3(1),
-    }
+  setTransforms() {
+    // this.transforms = {
+    //   origin: {
+    //     model: new Vec3(0.5, 0.5, 0),
+    //     world: new Vec3(),
+    //   },
+    //   quaternion: new Quat(),
+    //   rotation: new Vec3(),
+    //   position: {
+    //     world: new Vec3(),
+    //     document: new Vec3(),
+    //   },
+    //   scale: new Vec3(1),
+    // }
 
-    this.rotation.onChange(() => this.applyRotation())
+    super.setTransforms()
+
+    this.transforms.origin.world = new Vec3()
+    this.transforms.position.document = new Vec3()
+
+    //this.rotation.onChange(() => this.applyRotation())
     this.documentPosition.onChange(() => this.applyPosition())
-    this.scale.onChange(() => {
-      this.transforms.scale.z = 1
-      this.applyScale()
-    })
+    // this.scale.onChange(() => {
+    //   this.transforms.scale.z = 1
+    //   this.applyScale()
+    // })
     this.transformOrigin.onChange(() => this.setWorldTransformOrigin())
   }
 
   // transform getters / setters
-  get rotation() {
-    return this.transforms.rotation
-  }
-
-  set rotation(value) {
-    this.transforms.rotation = value
-    this.applyRotation()
-  }
-
-  get quaternion() {
-    return this.transforms.quaternion
-  }
-
-  set quaternion(value) {
-    this.transforms.quaternion = value
-  }
+  // get rotation() {
+  //   return this.transforms.rotation
+  // }
+  //
+  // set rotation(value) {
+  //   this.transforms.rotation = value
+  //   this.applyRotation()
+  // }
+  //
+  // get quaternion() {
+  //   return this.transforms.quaternion
+  // }
+  //
+  // set quaternion(value) {
+  //   this.transforms.quaternion = value
+  // }
 
   get documentPosition() {
     return this.transforms.position.document
@@ -128,24 +134,22 @@ export class DOMObject3D {
     this.applyPosition()
   }
 
-  get position() {
-    return this.transforms.position.world
-  }
-
-  set position(value) {
-    this.transforms.position.world = value
-  }
-
-  get scale() {
-    return this.transforms.scale
-  }
-
-  set scale(value) {
-    // force scale to 1 on Z axis
-    value.z = 1
-    this.transforms.scale = value
-    this.applyScale()
-  }
+  // get position() {
+  //   return this.transforms.position.world
+  // }
+  //
+  // set position(value) {
+  //   this.transforms.position.world = value
+  // }
+  //
+  // get scale() {
+  //   return this.transforms.scale
+  // }
+  //
+  // set scale(value) {
+  //   this.transforms.scale = value
+  //   this.applyScale()
+  // }
 
   get transformOrigin() {
     return this.transforms.origin.model
@@ -164,90 +168,72 @@ export class DOMObject3D {
     this.transforms.origin.world = value
   }
 
+  /***
+   This will apply our rotation and tells our model view matrix to update
+   ***/
+  applyRotation() {
+    super.applyRotation()
+
+    //this.quaternion.setFromVec3(this.rotation)
+
+    this.updateModelMatrixStack()
+  }
+
+  /***
+   This will set our plane position by adding plane computed bounding box values and computed relative position values
+   ***/
+  applyPosition() {
+    super.applyPosition()
+
+    // avoid unnecessary calculations if we don't have a users set relative position
+    let worldPosition = new Vec3(0, 0, 0)
+    if (!this.documentPosition.equals(worldPosition)) {
+      worldPosition = this.documentToWorldSpace(this.documentPosition)
+    }
+
+    this.position.set(
+      this.size.world.left + worldPosition.x,
+      this.size.world.top + worldPosition.y,
+      this.documentPosition.z / this.camera.CSSPerspective
+    )
+
+    this.updateModelMatrixStack()
+  }
+
+  applyScale() {
+    super.applyScale()
+
+    this.transforms.scale.z = 1
+    // TODO update textures matrix...
+    //this.resize()
+
+    this.updateModelMatrixStack(true)
+  }
+
+  applyTransformOrigin() {
+    super.applyTransformOrigin()
+
+    this.setWorldTransformOrigin()
+  }
+
   /** MATRICES **/
 
-  initMatrices() {
-    this.matrices = {
-      model: {
-        matrix: new Mat4(),
-        shouldUpdate: false,
-        onUpdate: () => {
-          // compose our model transformation matrix from custom origin
-          this.modelMatrix = this.modelMatrix.composeFromOrigin(
-            this.position,
-            this.quaternion,
-            this.scale,
-            this.worldTransformOrigin
-          )
+  // override for this special case
+  updateModelMatrix() {
+    // compose our model transformation matrix from custom origin
+    this.modelMatrix.composeFromOrigin(this.position, this.quaternion, this.scale, this.worldTransformOrigin)
 
-          // we need to scale our planes, from a square to a right sized rectangle
-          // we're doing this after our transformation matrix because this scale transformation always have the same origin
-          this.modelMatrix.scale({
-            x: this.size.world.width,
-            y: this.size.world.height,
-            z: 1,
-          })
-        },
-      },
-      modelView: {
-        matrix: new Mat4(),
-        shouldUpdate: false,
-        onUpdate: () => {
-          // our model view matrix is our model matrix multiplied with our camera view matrix
-          // in our case we're just subtracting the camera Z position to our model matrix
-          this.modelViewMatrix.copy(this.modelMatrix)
-          this.modelViewMatrix.elements[14] -= this.camera.position.z
-        },
-      },
-      modelViewProjection: {
-        matrix: new Mat4(),
-        shouldUpdate: false,
-        onUpdate: () => {
-          // our modelViewProjection matrix, useful for bounding box calculations and frustum culling
-          // this is the result of our projection matrix multiplied by our modelView matrix
-          this.modelViewProjectionMatrix = this.projectionMatrix.multiply(this.modelViewMatrix)
-        },
-      },
-    }
-  }
-
-  get modelMatrix() {
-    return this.matrices.model.matrix
-  }
-
-  set modelMatrix(value) {
-    this.matrices.model.matrix = value
-    this.matrices.model.shouldUpdate = true
-  }
-
-  get modelViewMatrix() {
-    return this.matrices.modelView.matrix
-  }
-
-  set modelViewMatrix(value) {
-    this.matrices.modelView.matrix = value
-    this.matrices.modelView.shouldUpdate = true
-  }
-
-  get viewMatrix() {
-    return this.camera.viewMatrix
-  }
-
-  get projectionMatrix() {
-    return this.camera.projectionMatrix
-  }
-
-  get modelViewProjectionMatrix() {
-    return this.matrices.modelViewProjection.matrix
-  }
-
-  set modelViewProjectionMatrix(value) {
-    this.matrices.modelViewProjection.matrix = value
-    this.matrices.modelViewProjection.shouldUpdate = true
+    // we need to scale our planes, from a square to a right sized rectangle
+    // we're doing this after our transformation matrix because this scale transformation always have the same origin
+    this.modelMatrix.scale({
+      x: this.size.world.width,
+      y: this.size.world.height,
+      z: 1,
+    })
   }
 
   updateModelMatrixStack(sizeChanged = false) {
-    this.matrices.model.shouldUpdate = true
+    //this.matrices.model.shouldUpdate = true
     this.matrices.modelView.shouldUpdate = true
     this.matrices.modelViewProjection.shouldUpdate = true
   }
@@ -316,41 +302,6 @@ export class DOMObject3D {
     this.updateModelMatrixStack()
   }
 
-  /***
-   This will apply our rotation and tells our model view matrix to update
-   ***/
-  applyRotation() {
-    this.quaternion.setFromVec3(this.rotation)
-
-    this.updateModelMatrixStack()
-  }
-
-  /***
-   This will set our plane position by adding plane computed bounding box values and computed relative position values
-   ***/
-  applyPosition() {
-    // avoid unnecessary calculations if we don't have a users set relative position
-    let worldPosition = new Vec3(0, 0, 0)
-    if (!this.documentPosition.equals(worldPosition)) {
-      worldPosition = this.documentToWorldSpace(this.documentPosition)
-    }
-
-    this.position.set(
-      this.size.world.left + worldPosition.x,
-      this.size.world.top + worldPosition.y,
-      this.documentPosition.z / this.camera.CSSPerspective
-    )
-
-    this.updateModelMatrixStack()
-  }
-
-  applyScale() {
-    // TODO update textures matrix...
-    //this.resize()
-
-    this.updateModelMatrixStack(true)
-  }
-
   // TODO setPosition, setRotation, setScale, etc.
 
   updateScrollPosition(lastXDelta, lastYDelta) {
@@ -361,17 +312,18 @@ export class DOMObject3D {
     }
   }
 
-  render() {
-    for (const matrixName in this.matrices) {
-      if (this.matrices[matrixName].shouldUpdate) {
-        this.matrices[matrixName].onUpdate()
-        this.matrices[matrixName].shouldUpdate = false
-      }
-    }
-
-    if (this.camera.shouldUpdate) {
-      this.updateProjectionMatrixStack()
-      this.camera.shouldUpdate = false
-    }
-  }
+  // render() {
+  //   super.render()
+  //   // for (const matrixName in this.matrices) {
+  //   //   if (this.matrices[matrixName].shouldUpdate) {
+  //   //     this.matrices[matrixName].onUpdate()
+  //   //     this.matrices[matrixName].shouldUpdate = false
+  //   //   }
+  //   // }
+  //
+  //   // if (this.camera.shouldUpdate) {
+  //   //   this.updateProjectionMatrixStack()
+  //   //   this.camera.shouldUpdate = false
+  //   // }
+  // }
 }
