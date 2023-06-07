@@ -1,7 +1,5 @@
 import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
-import { Mat4 } from '../math/Mat4'
-import { Quat } from '../math/Quat'
 import { isRenderer } from '../utils/renderer-utils'
 import { BindGroupSamplerBinding } from './bindGroupBindings/BindGroupSamplerBinding'
 import { BindGroupTextureBinding } from './bindGroupBindings/BindGroupTextureBinding'
@@ -14,13 +12,18 @@ export class Texture extends Object3D {
     options = {
       label: 'Texture',
       name: 'texture',
-      generateMips: false,
-      flipY: false,
-      addressModeU: 'repeat',
-      addressModeV: 'repeat',
-      magFilter: 'linear',
-      minFilter: 'linear',
-      mipmapFilter: 'linear',
+      texture: {
+        generateMips: false,
+        flipY: false,
+        placeholderColor: [0, 0, 0, 255], // default to black
+      },
+      sampler: {
+        addressModeU: 'repeat',
+        addressModeV: 'repeat',
+        magFilter: 'linear',
+        minFilter: 'linear',
+        mipmapFilter: 'linear',
+      },
     }
   ) {
     super()
@@ -40,34 +43,23 @@ export class Texture extends Object3D {
     const defaultOptions = {
       label: '',
       name: '',
-      generateMips: false,
-      flipY: false,
-      addressModeU: 'repeat',
-      addressModeV: 'repeat',
-      magFilter: 'linear',
-      minFilter: 'linear',
-      mipmapFilter: 'linear',
-    }
-
-    options = { ...defaultOptions, ...options }
-
-    this.options = {
-      label: options.label,
-      name: options.name,
-      sourceType: 'empty',
+      source: null,
+      sourceType: null,
       texture: {
-        generateMips: options.generateMips,
-        flipY: options.flipY,
+        generateMips: false,
+        flipY: false,
         placeholderColor: [0, 0, 0, 255], // default to black
       },
       sampler: {
-        addressModeU: options.addressModeU,
-        addressModeV: options.addressModeV,
-        magFilter: options.magFilter,
-        minFilter: options.minFilter,
-        mipmapFilter: options.mipmapFilter,
+        addressModeU: 'repeat',
+        addressModeV: 'repeat',
+        magFilter: 'linear',
+        minFilter: 'linear',
+        mipmapFilter: 'linear',
       },
     }
+
+    this.options = { ...defaultOptions, ...options }
 
     this.sampler = null
     this.texture = null
@@ -101,7 +93,7 @@ export class Texture extends Object3D {
 
     this.sourceLoaded = false
     this.shouldUpdate = false
-    this.shouldBindGroup = false
+    this.shouldUpdateBindGroup = false
 
     // add texture to renderer so it can creates a placeholder texture ASAP
     this.renderer.addTexture(this)
@@ -166,83 +158,46 @@ export class Texture extends Object3D {
 
   /*** TEXTURE MATRIX ***/
 
-  computeSize() {
+  computeScale() {
     const scale = this.parent && this.parent.scale ? this.parent.scale.clone() : new Vec2(1, 1)
 
     const parentWidth = this.parent ? this.parent.size.document.width * scale.x : this.size.width
     const parentHeight = this.parent ? this.parent.size.document.height * scale.y : this.size.height
 
-    const rotatedWidth =
-      Math.abs(parentWidth * Math.cos(this.rotation.z)) + Math.abs(parentHeight * Math.sin(this.rotation.z))
-    const rotatedHeight =
-      Math.abs(parentHeight * Math.cos(this.rotation.z)) + Math.abs(parentWidth * Math.sin(this.rotation.z))
-
-    const sourceWidth = this.size.width
-    const sourceHeight = this.size.height
-
-    const sourceRatio = sourceWidth / sourceHeight
     const parentRatio = parentWidth / parentHeight
-    const parentRotationRatio = rotatedWidth / rotatedHeight
+
+    const rotatedSourceWidth =
+      Math.abs(this.size.width * Math.cos(this.rotation.z)) + Math.abs(this.size.height * Math.sin(this.rotation.z))
+    const rotatedSourceHeight =
+      Math.abs(this.size.width * Math.sin(this.rotation.z)) + Math.abs(this.size.height * Math.cos(this.rotation.z))
+
+    const rotatedSourceRatio = rotatedSourceWidth / rotatedSourceHeight
 
     // center image in its container
     let xOffset = 0
     let yOffset = 0
 
-    if (parentRatio > sourceRatio) {
+    if (parentRatio > rotatedSourceRatio) {
       // means parent is larger
-      yOffset = Math.min(0, parentHeight - parentWidth * (1 / sourceRatio))
-    } else if (parentRatio < sourceRatio) {
+      yOffset = Math.min(0, parentHeight - parentWidth * (1 / rotatedSourceRatio))
+    } else {
       // means parent is taller
-      xOffset = Math.min(0, parentWidth - parentHeight * sourceRatio)
+      xOffset = Math.min(0, parentWidth - parentHeight * rotatedSourceRatio)
     }
 
-    return {
-      parentWidth,
-      parentHeight,
-      rotatedWidth,
-      rotatedHeight,
-      sourceWidth,
-      sourceHeight,
-      parentRatio,
-      parentRotationRatio,
-      sourceRatio,
-      xOffset,
-      yOffset,
-    }
+    const textureScale = new Vec3(parentWidth / (parentWidth - xOffset), parentHeight / (parentHeight - yOffset), 0)
+
+    return textureScale
   }
 
   updateTextureMatrix() {
-    const sizes = this.computeSize()
-
-    const textureScale = new Vec3(
-      sizes.parentWidth / (sizes.parentWidth - sizes.xOffset),
-      sizes.parentHeight / (sizes.parentHeight - sizes.yOffset),
-      1
-    )
-
-    //textureScale.x *= sizes.parentWidth / sizes.rotatedWidth
-    //textureScale.x *= (sizes.rotatedWidth + sizes.rotatedHeight) / (sizes.parentWidth + sizes.parentHeight)
-    //textureScale.x *= sizes.parentRatio / sizes.parentRotationRatio
-    textureScale.x *= sizes.rotatedHeight / sizes.parentHeight
-    //textureScale.x /= sizes.parentRotationRatio
-
-    // if (this.rotation.z !== 0)
-    //   console.log(sizes.parentHeight, sizes.rotatedHeight / sizes.parentHeight, (this.rotation.z * 180) / Math.PI)
-
-    //textureScale.y *= sizes.parentHeight / sizes.rotatedHeight
-    //textureScale.y *= (sizes.parentWidth + sizes.parentHeight) / (sizes.rotatedWidth + sizes.rotatedHeight)
-    //textureScale.y *= sizes.parentRotationRatio / sizes.parentRatio
-    textureScale.y *= sizes.rotatedWidth / sizes.parentWidth
-    //textureScale.y /= sizes.parentRotationRatio
-
-    // textureScale.x -= Math.atan(this.rotation.z) * globalRotationScale
-    // textureScale.y -= Math.atan(this.rotation.z) * globalRotationScale
+    const textureScale = this.computeScale()
 
     // apply texture scale
-    textureScale.x /= this.scale.x
-    textureScale.y /= this.scale.y
-
-    // TODO it's working but rotation messes up with the scale
+    textureScale.x /=
+      Math.abs(this.scale.x * Math.cos(this.rotation.z)) + Math.abs(this.scale.y * Math.sin(this.rotation.z))
+    textureScale.y /=
+      Math.abs(this.scale.x * Math.sin(this.rotation.z)) + Math.abs(this.scale.y * Math.cos(this.rotation.z))
 
     // compose our texture transformation matrix with adapted scale
     this.modelMatrix.composeFromOrigin(this.position, this.quaternion, textureScale, this.transformOrigin)
@@ -271,7 +226,7 @@ export class Texture extends Object3D {
 
   uploadVideoTexture() {
     this.texture = this.renderer.importExternalTexture(this.source)
-    this.shouldBindGroup = true
+    this.shouldUpdateBindGroup = true
     //this.shouldUpdate = true
     this.shouldUpdate = false
   }
@@ -294,7 +249,7 @@ export class Texture extends Object3D {
         usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
       })
 
-      this.shouldBindGroup = true
+      this.shouldUpdateBindGroup = true
     }
 
     this.shouldUpdate = true
@@ -313,23 +268,23 @@ export class Texture extends Object3D {
     }
   }
 
-  async loadSource(source) {
-    // this.options.source = source
-    // this.source = await this.loadImageBitmap(this.options.source)
-    //
-    // this.size = {
-    //   width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
-    //   height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
-    // }
-    //
-    // this.textureMatrix.shouldUpdateUniform(this.options.name + 'Matrix')
-    //
-    // this.sourceLoaded = true // TODO useful?
-    // this.createTexture()
-  }
+  //async loadSource(source) {
+  // this.options.source = source
+  // this.source = await this.loadImageBitmap(this.options.source)
+  //
+  // this.size = {
+  //   width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
+  //   height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
+  // }
+  //
+  // this.textureMatrix.shouldUpdateUniform(this.options.name + 'Matrix')
+  //
+  // this.sourceLoaded = true // TODO useful?
+  // this.createTexture()
+  //}
 
-  async loadImage(source) {
-    this.options.source = source
+  async loadImage(sourceUrl) {
+    this.options.source = sourceUrl
     this.options.sourceType = 'image'
 
     this.source = await this.loadImageBitmap(this.options.source)

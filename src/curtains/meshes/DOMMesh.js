@@ -17,17 +17,4 @@ export class DOMMesh extends MeshMixin(DOMObject3D) {
 
     this.type = 'DOMMesh'
   }
-
-  /** Render loop **/
-
-  /**
-   *
-   * @param pass
-   */
-  render(pass) {
-    // no point to render if the WebGPU device is not ready
-    if (!this.renderer.ready) return
-
-    super.render(pass)
-  }
 }

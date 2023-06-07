@@ -68,8 +68,6 @@ export class TextureBindGroup extends BindGroup {
         })
 
         textureIndex++
-      } else {
-        console.log('!!!!', uniformBinding)
       }
     })
   }

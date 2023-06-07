@@ -11,6 +11,8 @@
  returns :
  @this: our Vec3 class object
  ***/
+import { Mat4 } from './Mat4'
+import { Quat } from './Quat'
 
 // TODO lot of (unused at the time) methods are missing
 
@@ -30,24 +32,24 @@ export class Vec3 {
     return this._x
   }
 
-  get y() {
-    return this._y
-  }
-
-  get z() {
-    return this._z
-  }
-
   set x(value) {
     const changed = value !== this._x
     this._x = value
     changed && this._onChangeCallback && this._onChangeCallback()
   }
 
+  get y() {
+    return this._y
+  }
+
   set y(value) {
     const changed = value !== this._y
     this._y = value
     changed && this._onChangeCallback && this._onChangeCallback()
+  }
+
+  get z() {
+    return this._z
   }
 
   set z(value) {
@@ -75,7 +77,7 @@ export class Vec3 {
    returns:
    @this (Vec2): this vector after being set
    ***/
-  set(x, y, z) {
+  set(x = 0, y = 0, z = 0) {
     this._x = x
     this._y = y
     this._z = z
@@ -92,7 +94,7 @@ export class Vec3 {
    returns:
    @this (Vec3): this vector after addition
    ***/
-  add(vector) {
+  add(vector = new Vec3()) {
     this._x += vector.x
     this._y += vector.y
     this._z += vector.z
@@ -109,7 +111,7 @@ export class Vec3 {
    returns:
    @this (Vec3): this vector after addition
    ***/
-  addScalar(value) {
+  addScalar(value = 0) {
     this._x += value
     this._y += value
     this._z += value
@@ -126,7 +128,7 @@ export class Vec3 {
    returns:
    @this (Vec3): this vector after subtraction
    ***/
-  sub(vector) {
+  sub(vector = new Vec3()) {
     this._x -= vector.x
     this._y -= vector.y
     this._z -= vector.z
@@ -143,7 +145,7 @@ export class Vec3 {
    returns:
    @this (Vec3): this vector after subtraction
    ***/
-  subScalar(value) {
+  subScalar(value = 0) {
     this._x -= value
     this._y -= value
     this._z -= value
@@ -160,7 +162,7 @@ export class Vec3 {
    returns:
    @this (Vec3): this vector after multiplication
    ***/
-  multiply(vector) {
+  multiply(vector = new Vec3(1)) {
     this._x *= vector.x
     this._y *= vector.y
     this._z *= vector.z
@@ -177,7 +179,7 @@ export class Vec3 {
    returns:
    @this (Vec3): this vector after multiplication
    ***/
-  multiplyScalar(value) {
+  multiplyScalar(value = 1) {
     this._x *= value
     this._y *= value
     this._z *= value
@@ -194,7 +196,7 @@ export class Vec3 {
    returns:
    @this (Vec3): this vector after copy
    ***/
-  copy(vector) {
+  copy(vector = new Vec3()) {
     this._x = vector.x
     this._y = vector.y
     this._z = vector.z
@@ -221,7 +223,7 @@ export class Vec3 {
    returns:
    @vector (Vec3): sanitized vector
    ***/
-  sanitizeNaNValuesWith(vector) {
+  sanitizeNaNValuesWith(vector = new Vec3()) {
     this._x = isNaN(this._x) ? vector.x : parseFloat(this._x)
     this._y = isNaN(this._y) ? vector.y : parseFloat(this._y)
     this._z = isNaN(this._z) ? vector.z : parseFloat(this._z)
@@ -238,7 +240,7 @@ export class Vec3 {
    returns:
    @vector (Vec3): vector with max values applied
    ***/
-  max(vector) {
+  max(vector = new Vec3()) {
     this._x = Math.max(this._x, vector.x)
     this._y = Math.max(this._y, vector.y)
     this._z = Math.max(this._z, vector.z)
@@ -255,7 +257,7 @@ export class Vec3 {
    returns:
    @vector (Vec3): vector with min values applied
    ***/
-  min(vector) {
+  min(vector = new Vec3()) {
     this._x = Math.min(this._x, vector.x)
     this._y = Math.min(this._y, vector.y)
     this._z = Math.min(this._z, vector.z)
@@ -269,7 +271,7 @@ export class Vec3 {
    returns:
    @isEqual (bool): whether the vectors are equals or not
    ***/
-  equals(vector) {
+  equals(vector = new Vec3()) {
     return this._x === vector.x && this._y === vector.y && this._z === vector.z
   }
 
@@ -298,7 +300,7 @@ export class Vec3 {
    returns:
    @dotProduct (float): dot product of the 2 vectors
    ***/
-  dot(vector) {
+  dot(vector = new Vec3()) {
     return this._x * vector.x + this._y * vector.y + this._z * vector.z
   }
 
@@ -313,7 +315,7 @@ export class Vec3 {
    returns :
    @this (Vec3): this vector after matrix application
    ***/
-  applyMat4(matrix) {
+  applyMat4(matrix = new Mat4()) {
     const x = this._x,
       y = this._y,
       z = this._z
@@ -338,7 +340,7 @@ export class Vec3 {
    returns :
    @this (Vec3): this vector after applying the transformation
    ***/
-  applyQuat(quaternion) {
+  applyQuat(quaternion = new Quat()) {
     const x = this._x,
       y = this._y,
       z = this._z

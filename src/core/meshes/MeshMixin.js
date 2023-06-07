@@ -3,7 +3,6 @@ import { Material } from '../Material'
 import { Texture } from '../Texture'
 import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
 
-//export class MeshObject {
 export const MeshMixin = (superclass) =>
   class extends superclass {
     constructor(renderer, element, { label = 'Mesh', shaders = {}, geometry, bindings = [] }) {
@@ -171,5 +170,10 @@ export const MeshMixin = (superclass) =>
       })
 
       this.material.render(pass)
+    }
+
+    destroy() {
+      // TODO destroy anything else?
+      this.material?.destroy()
     }
   }

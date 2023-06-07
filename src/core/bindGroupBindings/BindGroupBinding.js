@@ -18,9 +18,15 @@ export class BindGroupBinding {
       : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
   }
 
-  setWGSLFragment() {}
+  setWGSLFragment() {
+    /* will be overridden */
+  }
 
-  shouldUpdateUniform(uniformName = '') {}
+  shouldUpdateUniform() {
+    /* will be overridden */
+  }
 
-  onBeforeRender() {}
+  onBeforeRender() {
+    /* will be overridden */
+  }
 }

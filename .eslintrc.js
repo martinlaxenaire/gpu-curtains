@@ -4,7 +4,9 @@ module.exports = {
     ecmaVersion: 11,
     sourceType: 'module',
   },
-  extends: ['prettier'],
+  parser: '@typescript-eslint/parser',
+  plugins: ['@typescript-eslint'],
+  extends: ['prettier', 'plugin:@typescript-eslint/recommended'],
   // add your custom rules here
   rules: {},
 }

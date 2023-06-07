@@ -24,9 +24,9 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     this.textures.push(texture)
   }
 
-  resize(boundingRect) {
-    super.resize(boundingRect)
-  }
+  // resize(boundingRect) {
+  //   super.resize(boundingRect)
+  // }
 
   onResize() {
     super.onResize()
@@ -37,9 +37,9 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
    * Called at each draw call to render our scene and its content
    * Also create shader modules if not already created
    */
-  onBeforeRenderPass() {
-    super.onBeforeRenderPass()
-  }
+  // onBeforeRenderPass() {
+  //   super.onBeforeRenderPass()
+  // }
 
   onBeginRenderPass(pass) {
     super.onBeginRenderPass(pass)
@@ -47,9 +47,9 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     this.planes?.forEach((plane) => plane.render(pass))
   }
 
-  onAfterRenderPass() {
-    super.onAfterRenderPass()
-  }
+  // onAfterRenderPass() {
+  //   super.onAfterRenderPass()
+  // }
 
   render() {
     if (!this.ready) return

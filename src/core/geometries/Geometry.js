@@ -2,7 +2,6 @@ export class Geometry {
   constructor() {
     this.vertexCount = null
     this.arrayStride = 0
-    this.arrayByteStride = 0
     this.bufferLength = 0
 
     this.attributes = []
@@ -42,7 +41,6 @@ export class Geometry {
 
     this.bufferLength += attribute.bufferLength
     this.arrayStride += attribute.size
-    this.arrayByteStride += attribute.size * 4
 
     this.attributes.push(attribute)
   }

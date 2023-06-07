@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "declaration": true,
+    "outDir": "./dist",
+    "typeRoots": [ "./node_modules/@webgpu/types", "./node_modules/@types"]
+  },
+  "include": [
+    "src/**/*"
+  ]
+}

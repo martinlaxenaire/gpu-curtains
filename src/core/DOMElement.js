@@ -1,7 +1,15 @@
 import ResizeManager from '../utils/ResizeManager'
 
 export class DOMElement {
-  constructor({ element, onSizeChanged = () => {}, onPositionChanged = () => {} } = {}) {
+  constructor({
+    element,
+    onSizeChanged = () => {
+      /* allow empty callback */
+    },
+    onPositionChanged = () => {
+      /* allow empty callback */
+    },
+  } = {}) {
     if (!element) return
 
     if (typeof element === 'string') {
@@ -67,6 +75,6 @@ export class DOMElement {
   }
 
   destroy() {
-    // TODO use
+    this.resizeManager.unobserve(this.element)
   }
 }

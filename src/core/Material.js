@@ -36,25 +36,27 @@ export class Material {
       uniformsBindings,
     }
 
-    this.state = {
-      pipelineEntry: null,
-      attributesBuffers: null,
-      bindGroups: [],
+    this.pipelineEntry = null
+    this.attributes = {
+      geometry: null,
+      buffers: null,
     }
+
+    this.bindGroups = []
 
     this.setUniforms()
     this.setTextures()
   }
 
   setMaterial() {
-    if (!this.state.attributesBuffers) {
+    if (!this.attributes.buffers) {
       this.createAttributesBuffers()
     }
 
     // camera + model bind groups
     const modelBindGroupLength = this.uniformsBindGroups.length
     const texturesBindGroupLength = 1
-    const bindGroupsReady = this.state.bindGroups.length === modelBindGroupLength + texturesBindGroupLength
+    const bindGroupsReady = this.bindGroups.length === modelBindGroupLength + texturesBindGroupLength
 
     // TODO cache bind groups and pipelines?
     // https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change
@@ -63,22 +65,22 @@ export class Material {
       return
     }
 
-    if (!this.state.pipelineEntry) {
+    if (!this.pipelineEntry) {
       this.setPipelineEntry()
     }
   }
 
   setPipelineEntry() {
-    this.state.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
+    this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
       label: this.options.label + ': Render pipeline',
-      attributes: this.attributes,
-      bindGroups: this.state.bindGroups,
+      geometryAttributes: this.attributes.geometry,
+      bindGroups: this.bindGroups,
       shaders: this.options.shaders,
     })
   }
 
   getShaderCode(shaderType = 'full') {
-    if (!this.state.pipelineEntry) return false
+    if (!this.pipelineEntry) return false
 
     shaderType = (() => {
       switch (shaderType) {
@@ -91,14 +93,14 @@ export class Material {
       }
     })()
 
-    return this.state.pipelineEntry.shaders[shaderType].code
+    return this.pipelineEntry.shaders[shaderType].code
   }
 
   /** ATTRIBUTES **/
 
   // set from the mesh
   setAttributesFromGeometry(geometry) {
-    this.attributes = {
+    this.attributes.geometry = {
       wgslStructFragment: geometry.wgslStructFragment,
       vertexArray: geometry.array,
       vertexCount: geometry.vertexCount,
@@ -119,8 +121,8 @@ export class Material {
     }
 
     if (geometry.isIndexed) {
-      this.attributes = {
-        ...this.attributes,
+      this.attributes.geometry = {
+        ...this.attributes.geometry,
         ...{
           isIndexed: true,
           indexArray: geometry.indexData.array,
@@ -132,30 +134,79 @@ export class Material {
   }
 
   createAttributesBuffers() {
-    this.state.attributesBuffers = {
+    this.attributes.buffers = {
       vertexBuffer: this.renderer.device.createBuffer({
         label: this.options.label + ': Vertex buffer vertices',
-        size: this.attributes.vertexArray.byteLength,
+        size: this.attributes.geometry.vertexArray.byteLength,
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
       }),
     }
 
-    this.renderer.device.queue.writeBuffer(this.state.attributesBuffers.vertexBuffer, 0, this.attributes.vertexArray)
+    this.renderer.device.queue.writeBuffer(
+      this.attributes.buffers?.vertexBuffer,
+      0,
+      this.attributes.geometry?.vertexArray
+    )
 
-    if (this.attributes.isIndexed) {
-      this.state.attributesBuffers.indexBuffer = this.renderer.device.createBuffer({
+    if (this.attributes.geometry.isIndexed) {
+      this.attributes.buffers.indexBuffer = this.renderer.device.createBuffer({
         label: this.options.label + ': Index buffer vertices',
-        size: this.attributes.indexArray.byteLength,
+        size: this.attributes.geometry.indexArray.byteLength,
         usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
       })
 
-      this.renderer.device.queue.writeBuffer(this.state.attributesBuffers.indexBuffer, 0, this.attributes.indexArray)
+      this.renderer.device.queue.writeBuffer(
+        this.attributes.buffers?.indexBuffer,
+        0,
+        this.attributes.geometry.indexArray
+      )
     }
   }
 
   destroyAttributeBuffers() {
-    this.state.attributesBuffers?.vertexBuffer?.destroy()
-    this.state.attributesBuffers?.indexBuffer?.destroy()
+    this.attributes.buffers?.vertexBuffer?.destroy()
+    this.attributes.buffers?.indexBuffer?.destroy()
+  }
+
+  /** Bind GROUPS **/
+
+  createBindGroups() {
+    // textures first
+    if (this.texturesBindGroup.canCreateBindGroup()) {
+      this.texturesBindGroup.setIndex(this.bindGroups.length + 1) // bindGroup 0 is our renderer camera
+      this.texturesBindGroup.createBindingsBuffers()
+      this.texturesBindGroup.setBindGroupLayout()
+      this.texturesBindGroup.setBindGroup()
+
+      this.bindGroups.push(this.texturesBindGroup)
+    }
+
+    // then uniforms
+    this.uniformsBindGroups.forEach((bindGroup) => {
+      if (bindGroup.canCreateBindGroup()) {
+        bindGroup.setIndex(this.bindGroups.length + 1)
+        bindGroup.createBindingsBuffers()
+        bindGroup.setBindGroupLayout()
+        bindGroup.setBindGroup()
+
+        this.bindGroups.push(bindGroup)
+      }
+    })
+  }
+
+  destroyBindGroups() {
+    this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
+  }
+
+  updateBindGroups() {
+    this.bindGroups.forEach((bindGroup) => {
+      if (bindGroup.needsPipelineFlush) {
+        this.pipelineEntry.flushPipelineEntry(this.bindGroups)
+        bindGroup.needsPipelineFlush = false
+      }
+
+      bindGroup.updateBindings()
+    })
   }
 
   /** UNIFORMS **/
@@ -169,7 +220,7 @@ export class Material {
       renderer: this.renderer,
     })
 
-    this.options.uniformsBindings.forEach((uniformBinding, index) => {
+    this.options.uniformsBindings.forEach((uniformBinding) => {
       this.uniforms = { ...this.uniforms, ...uniformBinding.uniforms }
 
       uniformBinding.isActive =
@@ -180,45 +231,6 @@ export class Material {
     })
 
     this.uniformsBindGroups.push(uniformsBindGroup)
-  }
-
-  createBindGroups() {
-    // textures first
-    if (this.texturesBindGroup.canCreateBindGroup()) {
-      this.texturesBindGroup.setIndex(this.state.bindGroups.length + 1) // bindGroup 0 is our renderer camera
-      this.texturesBindGroup.createBindingsBuffers()
-      this.texturesBindGroup.setBindGroupLayout()
-      this.texturesBindGroup.setBindGroup()
-
-      this.state.bindGroups.push(this.texturesBindGroup)
-    }
-
-    // then uniforms
-    this.uniformsBindGroups.forEach((bindGroup) => {
-      if (bindGroup.canCreateBindGroup()) {
-        bindGroup.setIndex(this.state.bindGroups.length + 1)
-        bindGroup.createBindingsBuffers()
-        bindGroup.setBindGroupLayout()
-        bindGroup.setBindGroup()
-
-        this.state.bindGroups.push(bindGroup)
-      }
-    })
-  }
-
-  destroyBindGroups() {
-    this.state.bindGroups.forEach((bindGroup) => bindGroup.destroy())
-  }
-
-  updateBindGroups() {
-    this.state.bindGroups.forEach((bindGroup) => {
-      if (bindGroup.needsPipelineFlush) {
-        this.state.pipelineEntry.flushPipelineEntry(this.state.bindGroups)
-        bindGroup.needsPipelineFlush = false
-      }
-
-      bindGroup.updateBindings()
-    })
   }
 
   /** TEXTURES **/
@@ -250,7 +262,7 @@ export class Material {
     this.setMaterial()
 
     // pipeline is not ready yet
-    if (!this.state.pipelineEntry || !this.state.pipelineEntry.pipeline) return
+    if (!this.pipelineEntry || !this.pipelineEntry.pipeline) return
 
     this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
       // since external texture are destroyed as soon as JavaScript returns to the browser
@@ -275,9 +287,9 @@ export class Material {
         }
       }
 
-      if (texture.shouldBindGroup) {
+      if (texture.shouldUpdateBindGroup) {
         this.texturesBindGroup.resetTextureBindGroup(textureIndex)
-        texture.shouldBindGroup = false
+        texture.shouldUpdateBindGroup = false
       }
     })
 
@@ -286,25 +298,25 @@ export class Material {
 
     // set current pipeline
     // TODO this could be improved if we'd render meshes by pipelines order
-    this.renderer.pipelineManager.setCurrentPipeline(pass, this.state.pipelineEntry)
+    this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry)
 
     // set bind groups
-    this.state.bindGroups.forEach((bindGroup) => {
+    this.bindGroups.forEach((bindGroup) => {
       pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
     })
 
     // set attributes
-    pass.setVertexBuffer(0, this.state.attributesBuffers.vertexBuffer)
+    pass.setVertexBuffer(0, this.attributes.buffers?.vertexBuffer)
 
-    if (this.state.attributesBuffers.indexBuffer) {
-      pass.setIndexBuffer(this.state.attributesBuffers.indexBuffer, this.attributes.indexBufferFormat)
+    if (this.attributes.buffers.indexBuffer) {
+      pass.setIndexBuffer(this.attributes.buffers?.indexBuffer, this.attributes.geometry?.indexBufferFormat)
     }
 
     // draw
-    if (this.attributes.indexBufferLength) {
-      pass.drawIndexed(this.attributes.indexBufferLength)
+    if (this.attributes.geometry.indexBufferLength) {
+      pass.drawIndexed(this.attributes.geometry?.indexBufferLength)
     } else {
-      pass.draw(this.attributes.vertexCount)
+      pass.draw(this.attributes.geometry?.vertexCount)
     }
   }
 

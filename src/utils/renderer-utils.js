@@ -37,12 +37,12 @@ export const isCurtainsRenderer = (renderer, type) => {
   return isCurtainsRenderer
 }
 
-export const generateMips = ((device) => {
+export const generateMips = ((device, texture) => {
   let sampler
   let module
   const pipelineByFormat = {}
 
-  return function generateMips(device) {
+  return function generateMips(device, texture) {
     if (!module) {
       module = device.createShaderModule({
         label: 'textured quad shaders for mip level generation',
@@ -88,8 +88,10 @@ export const generateMips = ((device) => {
       })
     }
 
-    if (!pipelineByFormat[this.texture.format]) {
-      pipelineByFormat[this.texture.format] = device.createRenderPipeline({
+    console.log(pipelineByFormat, texture)
+
+    if (!pipelineByFormat[texture.format]) {
+      pipelineByFormat[texture.format] = device.createRenderPipeline({
         label: 'mip level generator pipeline',
         layout: 'auto',
         vertex: {
@@ -99,18 +101,18 @@ export const generateMips = ((device) => {
         fragment: {
           module,
           entryPoint: 'fs',
-          targets: [{ format: this.texture.format }],
+          targets: [{ format: texture.format }],
         },
       })
     }
-    const pipeline = pipelineByFormat[this.texture.format]
+    const pipeline = pipelineByFormat[texture.format]
 
     const encoder = device.createCommandEncoder({
       label: 'mip gen encoder',
     })
 
-    let width = this.texture.width
-    let height = this.texture.height
+    let width = texture.width
+    let height = texture.height
     let baseMipLevel = 0
     while (width > 1 || height > 1) {
       width = Math.max(1, (width / 2) | 0)
@@ -122,7 +124,7 @@ export const generateMips = ((device) => {
           { binding: 0, resource: sampler },
           {
             binding: 1,
-            resource: this.texture.createView({
+            resource: texture.createView({
               baseMipLevel,
               mipLevelCount: 1,
             }),
@@ -136,7 +138,7 @@ export const generateMips = ((device) => {
         label: 'our basic canvas renderPass',
         colorAttachments: [
           {
-            view: this.texture.createView({ baseMipLevel, mipLevelCount: 1 }),
+            view: texture.createView({ baseMipLevel, mipLevelCount: 1 }),
             loadOp: 'clear',
             storeOp: 'store',
           },

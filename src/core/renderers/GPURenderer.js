@@ -3,7 +3,7 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement } from '../DOMElement'
 
 export class GPURenderer {
-  constructor({ container, pixelRatio, renderingScale = 1 }) {
+  constructor({ container, pixelRatio = 1, renderingScale = 1 }) {
     this.type = 'Renderer'
     this.ready = false
 
@@ -125,7 +125,7 @@ export class GPURenderer {
       )
 
       if (texture.texture.mipLevelCount > 1) {
-        generateMips(this.device)
+        generateMips(this.device, texture.texture)
       }
     } else {
       this.device.queue.writeTexture(
@@ -221,15 +221,23 @@ export class GPURenderer {
     this.onResize()
   }
 
-  onResize() {}
+  onResize() {
+    /* will be overridden */
+  }
 
   /** RENDER **/
 
-  onBeforeRenderPass() {}
+  onBeforeRenderPass() {
+    /* will be overridden */
+  }
 
-  onBeginRenderPass(pass) {}
+  onBeginRenderPass(pass) {
+    /* will be overridden */
+  }
 
-  onAfterRenderPass() {}
+  onAfterRenderPass() {
+    /* will be overridden */
+  }
 
   /**
    * Called at each draw call to render our scene and its content

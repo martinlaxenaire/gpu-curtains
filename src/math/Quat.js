@@ -10,6 +10,8 @@
  @this: our Quat class object
  ***/
 
+import { Vec3 } from './Vec3'
+
 // TODO lot of (unused at the time) methods are missing
 
 export class Quat {
@@ -29,7 +31,7 @@ export class Quat {
    returns:
    @this (Quat class object): this quaternion after being set
    ***/
-  setFromArray(array) {
+  setFromArray(array = new Float32Array([0, 0, 0, 1])) {
     this.elements[0] = array[0]
     this.elements[1] = array[1]
     this.elements[2] = array[2]
@@ -47,7 +49,7 @@ export class Quat {
    returns:
    @this (Quat class object): this quaternion after axis order has been set
    ***/
-  setAxisOrder(axisOrder) {
+  setAxisOrder(axisOrder = 'XYZ') {
     // force uppercase for strict equality tests
     axisOrder = axisOrder.toUpperCase()
 
@@ -77,7 +79,7 @@ export class Quat {
    returns:
    @this (Quat): this quaternion after copy
    ***/
-  copy(quaternion) {
+  copy(quaternion = new Quat()) {
     this.elements = quaternion.elements
     this.axisOrder = quaternion.axisOrder
 
@@ -100,7 +102,7 @@ export class Quat {
    returns:
    @isEqual (bool): whether the quaternions are equals or not
    ***/
-  equals(quaternion) {
+  equals(quaternion = new Quat()) {
     return (
       this.elements[0] === quaternion.elements[0] &&
       this.elements[1] === quaternion.elements[1] &&
@@ -119,7 +121,7 @@ export class Quat {
    returns :
    @this (Quat class object): quaternion after having applied the rotation
    ***/
-  setFromVec3(vector) {
+  setFromVec3(vector = new Vec3()) {
     const ax = vector.x * 0.5
     const ay = vector.y * 0.5
     const az = vector.z * 0.5

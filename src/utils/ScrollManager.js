@@ -25,7 +25,9 @@ export class ScrollManager {
 
     shouldWatch = true,
 
-    onScroll = () => {},
+    onScroll = () => {
+      /* allow empty callback */
+    },
   } = {}) {
     this.xOffset = xOffset
     this.yOffset = yOffset
@@ -76,9 +78,9 @@ export class ScrollManager {
   }
 
   /***
-   Dispose our scroll manager (just remove our event listner if it had been added previously)
+   Destroy our scroll manager (just remove our event listner if it had been added previously)
    ***/
-  dispose() {
+  destroy() {
     if (this.shouldWatch) {
       window.removeEventListener('scroll', this.handler, {
         passive: true,

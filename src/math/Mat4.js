@@ -9,6 +9,8 @@
  returns :
  @this: our Mat4 class object
  ***/
+import { Vec3 } from './Vec3'
+import { Quat } from './Quat'
 
 // TODO lot of (unused at the time) methods are missing
 
@@ -33,7 +35,13 @@ export class Mat4 {
    returns:
    @this (Mat4 class object): this matrix after being set
    ***/
-  setFromArray(array) {
+  // prettier-ignore
+  setFromArray(array = new Float32Array([
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  ])) {
     for (let i = 0; i < this.elements.length; i++) {
       this.elements[i] = array[i]
     }
@@ -50,7 +58,7 @@ export class Mat4 {
    returns:
    @this (Mat4 class object): this matrix after copy
    ***/
-  copy(matrix) {
+  copy(matrix = new Mat4()) {
     const array = matrix.elements
     this.elements[0] = array[0]
     this.elements[1] = array[1]
@@ -91,7 +99,7 @@ export class Mat4 {
    returns:
    @result (Mat4 class object): Mat4 after multiplication
    ***/
-  multiply(matrix) {
+  multiply(matrix = new Mat4()) {
     const a = this.elements
     const b = matrix.elements
 
@@ -201,7 +209,7 @@ export class Mat4 {
    returns :
    @result (Mat4 class object): Mat4 after scaling
    ***/
-  scale(vector) {
+  scale(vector = new Vec3()) {
     let a = this.elements
 
     a[0] *= vector.x
@@ -233,7 +241,7 @@ export class Mat4 {
    returns :
    @this (Mat4 class object): matrix after transformations
    ***/
-  compose(translation, quaternion, scale) {
+  compose(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1)) {
     let matrix = this.elements
 
     // Quaternion math
@@ -292,7 +300,7 @@ export class Mat4 {
    returns :
    @this (Mat4 class object): matrix after transformations
    ***/
-  composeFromOrigin(translation, quaternion, scale, origin) {
+  composeFromOrigin(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1), origin = new Vec3()) {
     let matrix = this.elements
 
     // Quaternion math

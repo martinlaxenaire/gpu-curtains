@@ -4,7 +4,7 @@ import { isRenderer } from '../../utils/renderer-utils'
 let pipelineId = 0
 
 export class PipelineEntry {
-  constructor({ renderer, label = 'Render Pipeline', attributes = {}, bindGroups = [], shaders = {} }) {
+  constructor({ renderer, label = 'Render Pipeline', geometryAttributes = {}, bindGroups = [], shaders = {} }) {
     this.type = 'PipelineEntry'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -22,7 +22,7 @@ export class PipelineEntry {
     this.layout = null
     this.pipeline = null
 
-    this.attributes = attributes
+    this.geometryAttributes = geometryAttributes
     this.setPipelineEntryBindGroups(bindGroups)
 
     this.shaders = {
@@ -48,8 +48,8 @@ export class PipelineEntry {
     this.setPipelineEntry()
   }
 
-  setPipelineEntryBindGroups(bindGroup) {
-    this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...bindGroup] : bindGroup
+  setPipelineEntryBindGroups(bindGroups) {
+    this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups
   }
 
   /** SHADERS **/
@@ -97,7 +97,7 @@ export class PipelineEntry {
     })
 
     // add attributes to vertex shader only
-    this.shaders.vertex.code = `${this.attributes.wgslStructFragment}\n ${this.shaders.vertex.code}`
+    this.shaders.vertex.code = `${this.geometryAttributes.wgslStructFragment}\n ${this.shaders.vertex.code}`
 
     this.shaders.full.code = this.shaders.vertex.code + '\n' + this.shaders.fragment.code
   }
@@ -140,7 +140,7 @@ export class PipelineEntry {
       vertex: {
         module: this.shaders.vertex.module,
         entryPoint: this.options.shaders.vertex.entryPoint, // TODO editable via options?
-        buffers: this.attributes.pipelineBuffers,
+        buffers: this.geometryAttributes.pipelineBuffers,
       },
       fragment: {
         module: this.shaders.fragment.module,

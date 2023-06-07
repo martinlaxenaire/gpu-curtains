@@ -1,7 +1,6 @@
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import { PlaneGeometry } from '../geometry/PlaneGeometry'
 import { DOMMesh } from './DOMMesh'
-import { Texture } from '../../core/Texture'
 
 export class Plane extends DOMMesh {
   constructor(
@@ -163,9 +162,6 @@ export class Plane extends DOMMesh {
 
   onTextureCreated(texture) {
     super.onTextureCreated(texture)
-
-    console.log('texture created')
-
     texture.parent = this
   }
 

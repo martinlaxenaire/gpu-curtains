@@ -28,14 +28,14 @@ export class Vec2 {
     return this._x
   }
 
-  get y() {
-    return this._y
-  }
-
   set x(value) {
     const changed = value !== this._x
     this._x = value
     changed && this._onChangeCallback && this._onChangeCallback()
+  }
+
+  get y() {
+    return this._y
   }
 
   set y(value) {
@@ -62,7 +62,7 @@ export class Vec2 {
    returns:
    @this (Vec2): this vector after being set
    ***/
-  set(x, y) {
+  set(x = 0, y = 0) {
     this._x = x
     this._y = y
 
@@ -78,7 +78,7 @@ export class Vec2 {
    returns:
    @this (Vec2): this vector after addition
    ***/
-  add(vector) {
+  add(vector = new Vec2()) {
     this._x += vector.x
     this._y += vector.y
 
@@ -94,7 +94,7 @@ export class Vec2 {
    returns:
    @this (Vec2): this vector after addition
    ***/
-  addScalar(value) {
+  addScalar(value = 0) {
     this._x += value
     this._y += value
 
@@ -110,7 +110,7 @@ export class Vec2 {
    returns:
    @this (Vec2): this vector after subtraction
    ***/
-  sub(vector) {
+  sub(vector = new Vec2()) {
     this._x -= vector.x
     this._y -= vector.y
 
@@ -126,7 +126,7 @@ export class Vec2 {
    returns:
    @this (Vec2): this vector after subtraction
    ***/
-  subScalar(value) {
+  subScalar(value = 0) {
     this._x -= value
     this._y -= value
 
@@ -142,7 +142,7 @@ export class Vec2 {
    returns:
    @this (Vec2): this vector after multiplication
    ***/
-  multiply(vector) {
+  multiply(vector = new Vec2(1)) {
     this._x *= vector.x
     this._y *= vector.y
 
@@ -158,7 +158,7 @@ export class Vec2 {
    returns:
    @this (Vec2): this vector after multiplication
    ***/
-  multiplyScalar(value) {
+  multiplyScalar(value = 1) {
     this._x *= value
     this._y *= value
 
@@ -174,7 +174,7 @@ export class Vec2 {
    returns:
    @this (Vec2): this vector after copy
    ***/
-  copy(vector) {
+  copy(vector = new Vec2()) {
     this._x = vector.x
     this._y = vector.y
 
@@ -200,7 +200,7 @@ export class Vec2 {
    returns:
    @vector (Vec2): sanitized vector
    ***/
-  sanitizeNaNValuesWith(vector) {
+  sanitizeNaNValuesWith(vector = new Vec2()) {
     this._x = isNaN(this._x) ? vector.x : parseFloat(this._x)
     this._y = isNaN(this._y) ? vector.y : parseFloat(this._y)
 
@@ -216,7 +216,7 @@ export class Vec2 {
    returns:
    @vector (Vec2): vector with max values applied
    ***/
-  max(vector) {
+  max(vector = new Vec2()) {
     this._x = Math.max(this._x, vector.x)
     this._y = Math.max(this._y, vector.y)
 
@@ -232,7 +232,7 @@ export class Vec2 {
    returns:
    @vector (Vec2): vector with min values applied
    ***/
-  min(vector) {
+  min(vector = new Vec2()) {
     this._x = Math.min(this._x, vector.x)
     this._y = Math.min(this._y, vector.y)
 
@@ -248,7 +248,7 @@ export class Vec2 {
    returns:
    @isEqual (bool): whether the vectors are equals or not
    ***/
-  equals(vector) {
+  equals(vector = new Vec2()) {
     return this._x === vector.x && this._y === vector.y
   }
 
@@ -279,7 +279,7 @@ export class Vec2 {
    returns:
    @dotProduct (float): dot product of the 2 vectors
    ***/
-  dot(vector) {
+  dot(vector = new Vec2()) {
     return this._x * vector.x + this._y * vector.y
   }
 }

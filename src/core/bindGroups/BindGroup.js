@@ -1,7 +1,7 @@
 import { isRenderer } from '../../utils/renderer-utils'
 
 export class BindGroup {
-  constructor({ label, renderer, index = 0, bindings = [] }) {
+  constructor({ label = 'BindGroup', renderer, index = 0, bindings = [] }) {
     this.type = 'BindGroup'
 
     // we could pass our curtains object OR our curtains renderer object

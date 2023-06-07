@@ -29,7 +29,7 @@ export class PipelineManager {
     })
   }
 
-  createRenderPipeline({ label = 'Render Pipeline', attributes = {}, bindGroups = [], shaders = {} }) {
+  createRenderPipeline({ label = 'Render Pipeline', geometryAttributes = {}, bindGroups = [], shaders = {} }) {
     const existingPipelineEntry = this.isSamePipeline(shaders)
 
     if (existingPipelineEntry) {
@@ -38,7 +38,7 @@ export class PipelineManager {
       const pipelineEntry = new PipelineEntry({
         renderer: this.renderer,
         label,
-        attributes,
+        geometryAttributes,
         bindGroups,
         shaders,
       })

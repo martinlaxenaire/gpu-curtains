@@ -71,6 +71,12 @@ export class ProjectedObject3D extends Object3D {
     this.matrices.modelViewProjection.shouldUpdate = true
   }
 
+  updateModelMatrixStack() {
+    //this.matrices.model.shouldUpdate = true
+    this.matrices.modelView.shouldUpdate = true
+    this.matrices.modelViewProjection.shouldUpdate = true
+  }
+
   render() {
     for (const matrixName in this.matrices) {
       if (this.matrices[matrixName].shouldUpdate) {

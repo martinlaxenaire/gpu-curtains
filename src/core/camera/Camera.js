@@ -25,8 +25,12 @@ export class Camera {
     width,
     height,
     pixelRatio = 1,
-    onBeforePerspectiveUpdate = () => {},
-    onPositionChanged = () => {},
+    onPerspectiveChanged = () => {
+      /* allow empty callback */
+    },
+    onPositionChanged = () => {
+      /* allow empty callback */
+    },
   } = {}) {
     // camera can't be at position (0, 0, 0), it needs some recoil
     // arbitrarily set to 1
@@ -36,7 +40,7 @@ export class Camera {
     this.modelMatrix = new Mat4()
     this.viewMatrix = new Mat4()
 
-    this.onBeforePerspectiveUpdate = onBeforePerspectiveUpdate
+    this.onPerspectiveChanged = onPerspectiveChanged
     this.onPositionChanged = onPositionChanged
 
     this.shouldUpdate = false
@@ -51,7 +55,7 @@ export class Camera {
    params:
    @fov (float, optional): field of view to use
    ***/
-  setFov(fov) {
+  setFov(fov = this.fov) {
     fov = isNaN(fov) ? this.fov : parseFloat(fov)
 
     // clamp between 1 and 179
@@ -75,7 +79,7 @@ export class Camera {
    params:
    @near (float, optional): near plane value to use
    ***/
-  setNear(near) {
+  setNear(near = this.near) {
     near = isNaN(near) ? this.near : parseFloat(near)
     near = Math.max(near, 0.01)
 
@@ -92,7 +96,7 @@ export class Camera {
    params:
    @far (float, optional): far plane value to use
    ***/
-  setFar(far) {
+  setFar(far = this.far) {
     far = isNaN(far) ? this.far : parseFloat(far)
     far = Math.max(far, 50)
 
@@ -109,7 +113,7 @@ export class Camera {
    params:
    @pixelRatio (float, optional): pixelRatio value to use
    ***/
-  setPixelRatio(pixelRatio) {
+  setPixelRatio(pixelRatio = this.pixelRatio) {
     if (pixelRatio !== this.pixelRatio) {
       this.shouldUpdate = true
     }
@@ -149,17 +153,23 @@ export class Camera {
    @height (float, optional): height value to use
    @pixelRatio (float, optional): pixelRatio value to use
    ***/
-  setPerspective(fov, near, far, width, height, pixelRatio) {
+  setPerspective(
+    fov = this.fov,
+    near = this.near,
+    far = this.far,
+    width = this.width,
+    height = this.height,
+    pixelRatio = this.pixelRatio
+  ) {
     this.setPixelRatio(pixelRatio)
     this.setSize(width, height)
     this.setFov(fov)
     this.setNear(near)
     this.setFar(far)
 
-    this.onBeforePerspectiveUpdate()
-
     if (this.shouldUpdate) {
       this.updateProjectionMatrix()
+      this.onPerspectiveChanged()
     }
   }
 
@@ -250,7 +260,13 @@ export class Camera {
     const c = -(this.far + this.near) / (this.far - this.near)
     const d = (-2 * this.far * this.near) / (this.far - this.near)
 
-    this.projectionMatrix.setFromArray([x, 0, 0, 0, 0, y, 0, 0, a, b, c, -1, 0, 0, d, 0])
+    // prettier-ignore
+    this.projectionMatrix.setFromArray([
+      x, 0, 0, 0,
+      0, y, 0, 0,
+      a, b, c, -1,
+      0, 0, d, 0
+    ])
   }
 
   /***

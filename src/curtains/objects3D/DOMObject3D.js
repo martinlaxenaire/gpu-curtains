@@ -73,57 +73,20 @@ export class DOMObject3D extends ProjectedObject3D {
    @boundingRectangle (obj): an object containing our plane HTML element bounding rectangle (width, height, top, bottom, right and left properties)
    ***/
   getBoundingRect() {
-    return this.size.document
+    return this.domElement.boundingRect
   }
 
   /** TRANSFOMS **/
 
   setTransforms() {
-    // this.transforms = {
-    //   origin: {
-    //     model: new Vec3(0.5, 0.5, 0),
-    //     world: new Vec3(),
-    //   },
-    //   quaternion: new Quat(),
-    //   rotation: new Vec3(),
-    //   position: {
-    //     world: new Vec3(),
-    //     document: new Vec3(),
-    //   },
-    //   scale: new Vec3(1),
-    // }
-
     super.setTransforms()
 
     this.transforms.origin.world = new Vec3()
     this.transforms.position.document = new Vec3()
 
-    //this.rotation.onChange(() => this.applyRotation())
     this.documentPosition.onChange(() => this.applyPosition())
-    // this.scale.onChange(() => {
-    //   this.transforms.scale.z = 1
-    //   this.applyScale()
-    // })
     this.transformOrigin.onChange(() => this.setWorldTransformOrigin())
   }
-
-  // transform getters / setters
-  // get rotation() {
-  //   return this.transforms.rotation
-  // }
-  //
-  // set rotation(value) {
-  //   this.transforms.rotation = value
-  //   this.applyRotation()
-  // }
-  //
-  // get quaternion() {
-  //   return this.transforms.quaternion
-  // }
-  //
-  // set quaternion(value) {
-  //   this.transforms.quaternion = value
-  // }
 
   get documentPosition() {
     return this.transforms.position.document
@@ -133,23 +96,6 @@ export class DOMObject3D extends ProjectedObject3D {
     this.transforms.position.document = value
     this.applyPosition()
   }
-
-  // get position() {
-  //   return this.transforms.position.world
-  // }
-  //
-  // set position(value) {
-  //   this.transforms.position.world = value
-  // }
-  //
-  // get scale() {
-  //   return this.transforms.scale
-  // }
-  //
-  // set scale(value) {
-  //   this.transforms.scale = value
-  //   this.applyScale()
-  // }
 
   get transformOrigin() {
     return this.transforms.origin.model
@@ -173,8 +119,6 @@ export class DOMObject3D extends ProjectedObject3D {
    ***/
   applyRotation() {
     super.applyRotation()
-
-    //this.quaternion.setFromVec3(this.rotation)
 
     this.updateModelMatrixStack()
   }
@@ -232,12 +176,7 @@ export class DOMObject3D extends ProjectedObject3D {
     })
   }
 
-  updateModelMatrixStack(sizeChanged = false) {
-    //this.matrices.model.shouldUpdate = true
-    this.matrices.modelView.shouldUpdate = true
-    this.matrices.modelViewProjection.shouldUpdate = true
-  }
-
+  // TODO useless?
   updateProjectionMatrixStack() {}
 
   /***
@@ -249,7 +188,7 @@ export class DOMObject3D extends ProjectedObject3D {
    returns :
    @worldPosition: plane's position in WebGL space
    ***/
-  documentToWorldSpace(vector) {
+  documentToWorldSpace(vector = new Vec3()) {
     return new Vec3(
       ((vector.x * this.renderer.pixelRatio) / this.renderer.domElement.boundingRect.width) *
         this.camera.screenRatio.width,
@@ -304,26 +243,11 @@ export class DOMObject3D extends ProjectedObject3D {
 
   // TODO setPosition, setRotation, setScale, etc.
 
-  updateScrollPosition(lastXDelta, lastYDelta) {
+  updateScrollPosition(lastXDelta = 0, lastYDelta = 0) {
     // actually update the plane position only if last X delta or last Y delta is not equal to 0
     if (lastXDelta || lastYDelta) {
       // set new positions based on our delta without triggering reflow
       this.domElement.updateScrollPosition(lastXDelta, lastYDelta)
     }
   }
-
-  // render() {
-  //   super.render()
-  //   // for (const matrixName in this.matrices) {
-  //   //   if (this.matrices[matrixName].shouldUpdate) {
-  //   //     this.matrices[matrixName].onUpdate()
-  //   //     this.matrices[matrixName].shouldUpdate = false
-  //   //   }
-  //   // }
-  //
-  //   // if (this.camera.shouldUpdate) {
-  //   //   this.updateProjectionMatrixStack()
-  //   //   this.camera.shouldUpdate = false
-  //   // }
-  // }
 }

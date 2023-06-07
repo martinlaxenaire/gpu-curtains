@@ -119,7 +119,7 @@ export class Object3D {
     this.matrices.model.shouldUpdate = true
   }
 
-  shouldUpdateModelMatrix(sizeChanged = false) {
+  shouldUpdateModelMatrix() {
     this.matrices.model.shouldUpdate = true
   }
 

@@ -26,7 +26,7 @@ export class GPUCameraRenderer extends GPURenderer {
       height: this.domElement.boundingRect.height,
       pixelRatio: this.pixelRatio,
       // TODO is this still needed after all?
-      // onBeforePerspectiveUpdate: () => {
+      // onPerspectiveChanged: () => {
       //   this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
       // },
       onPositionChanged: () => {
@@ -109,7 +109,7 @@ export class GPUCameraRenderer extends GPURenderer {
    @near (float): the nearest point where object are displayed
    @far (float): the farthest point where object are displayed
    ***/
-  setPerspective(fov, near, far) {
+  setPerspective(fov = 50, near = 0.01, far = 50) {
     const containerBoundingRect = this.domElement.boundingRect
     this.camera.setPerspective(
       fov,
@@ -138,17 +138,17 @@ export class GPUCameraRenderer extends GPURenderer {
    * Also create shader modules if not already created
    */
 
-  onBeforeRenderPass() {
-    super.onBeforeRenderPass()
-  }
-
-  onBeginRenderPass(pass) {
-    super.onBeginRenderPass(pass)
-  }
-
-  onAfterRenderPass() {
-    super.onAfterRenderPass()
-  }
+  // onBeforeRenderPass() {
+  //   super.onBeforeRenderPass()
+  // }
+  //
+  // onBeginRenderPass(pass) {
+  //   super.onBeginRenderPass(pass)
+  // }
+  //
+  // onAfterRenderPass() {
+  //   super.onAfterRenderPass()
+  // }
 
   render() {
     if (!this.ready) return

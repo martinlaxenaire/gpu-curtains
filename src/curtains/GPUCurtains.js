@@ -4,15 +4,12 @@ import ResizeManager from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 
 export class GPUCurtains {
-  constructor({ container, pixelRatio, fov }) {
+  constructor({ container, pixelRatio = 1, camera = {} }) {
     this.type = 'CurtainsGPU'
-    this.container = container
-    this.pixelRatio = pixelRatio
 
     this.options = {
-      container,
       pixelRatio,
-      fov,
+      camera,
     }
 
     if (container) {
@@ -30,7 +27,7 @@ export class GPUCurtains {
       let container = document.createElement('div')
       container.setAttribute('id', 'curtains-gpu-canvas')
       document.body.appendChild(container)
-      this.container = container
+      this.options.container = container
     } else {
       if (typeof container === 'string') {
         container = document.getElementById(container)
@@ -39,14 +36,16 @@ export class GPUCurtains {
           let container = document.createElement('div')
           container.setAttribute('id', 'curtains-gpu-canvas')
           document.body.appendChild(container)
-          this.container = container
+          this.options.container = container
         } else {
-          this.container = container
+          this.options.container = container
         }
       } else if (container instanceof Element) {
-        this.container = container
+        this.options.container = container
       }
     }
+
+    this.container = this.options.container
 
     this.setCurtains()
   }
@@ -56,9 +55,9 @@ export class GPUCurtains {
    */
   setRenderer() {
     this.renderer = new GPUCurtainsRenderer({
-      container: this.container,
-      pixelRatio: this.pixelRatio,
-      //fov: this.options.fov, // TODO
+      container: this.options.container,
+      pixelRatio: this.options.pixelRatio,
+      camera: this.options.camera,
     })
 
     this.canvas = this.renderer.canvas
@@ -79,6 +78,14 @@ export class GPUCurtains {
     this.animate()
   }
 
+  setPerspective(fov = 50, near = 0.01, far = 50) {
+    this.renderer?.setPerspective(fov, near, far)
+  }
+
+  setCameraPosition(position = new Vec3(0, 0, 1)) {
+    this.renderer?.setCameraPosition(position)
+  }
+
   initEvents() {
     ResizeManager.useObserver(true)
 
@@ -88,14 +95,6 @@ export class GPUCurtains {
   // called only if autoResize is set to false
   resize() {
     this.renderer?.resize()
-  }
-
-  setPerspective(fov, near, far) {
-    this.renderer?.setPerspective(fov, near, far)
-  }
-
-  setCameraPosition(position = new Vec3(0, 0, 1)) {
-    this.renderer?.setCameraPosition(position)
   }
 
   /**
@@ -115,7 +114,7 @@ export class GPUCurtains {
     })
   }
 
-  updateScroll(lastXDelta, lastYDelta) {
+  updateScroll(lastXDelta = 0, lastYDelta = 0) {
     for (let i = 0; i < this.renderer.planes.length; i++) {
       this.renderer.planes[i].updateScrollPosition(lastXDelta, lastYDelta)
     }
@@ -135,5 +134,6 @@ export class GPUCurtains {
 
   destroy() {
     this.renderer?.destroy()
+    this.scrollManager?.destroy()
   }
 }
