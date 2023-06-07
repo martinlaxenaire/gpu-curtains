@@ -215,7 +215,7 @@ export class GPURenderer {
       : renderingSize.height
   }
 
-  resize(boundingRect) {
+  resize(boundingRect = null) {
     this.setSize(boundingRect ?? this.domElement.element.getBoundingClientRect())
     this.setRenderPassView()
     this.onResize()

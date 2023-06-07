@@ -44,7 +44,7 @@ export class GPURenderer {
   setRenderPass()
 
   setSize(contentRect: DOMElementBoundingRect)
-  resize(boundingRect: DOMElementBoundingRect)
+  resize(boundingRect?: DOMElementBoundingRect | null)
   onResize()
 
   onBeforeRenderPass()

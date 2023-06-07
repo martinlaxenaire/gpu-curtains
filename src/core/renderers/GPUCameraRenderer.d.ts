@@ -26,7 +26,7 @@ export class GPUCameraRenderer extends GPURenderer {
   setPerspective(fov?: number, near?: number, far?: number)
   setCameraPosition(position?: Vec3)
 
-  resize(boundingRect: DOMElementBoundingRect | null)
+  resize(boundingRect?: DOMElementBoundingRect | null)
   onResize()
 
   render()

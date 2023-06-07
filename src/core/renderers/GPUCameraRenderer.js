@@ -125,7 +125,7 @@ export class GPUCameraRenderer extends GPURenderer {
     this.camera.setPosition(position)
   }
 
-  resize(boundingRect) {
+  resize(boundingRect = null) {
     super.resize(boundingRect)
   }
 
