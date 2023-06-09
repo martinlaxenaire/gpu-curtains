@@ -187,8 +187,14 @@ export class Texture extends Object3D {
     let xOffset = 0
     let yOffset = 0
 
-    const xAdjust = parentWidth - parentHeight * sourceRatio
-    const yAdjust = parentHeight - parentWidth * (1 / sourceRatio)
+    const rotationXRatio = sourceWidth / rotatedSourceWidth
+    const rotationYRatio = sourceHeight / rotatedSourceHeight
+
+    // const xAdjust = parentWidth - parentHeight * sourceRatio * rotationXRatio
+    // const yAdjust = parentHeight - parentWidth * (1 / (sourceRatio * rotationYRatio))
+
+    const xAdjust = parentWidth - parentHeight * sourceRatio * rotationRatio
+    const yAdjust = parentHeight - parentWidth * (1 / (sourceRatio * rotationRatio))
 
     if (parentRatio > sourceRatio) {
       // means parent is larger
@@ -242,9 +248,6 @@ export class Texture extends Object3D {
     const absCos = Math.abs(Math.cos(this.rotation.z))
     const absSin = Math.abs(Math.sin(this.rotation.z))
 
-    const rotationXRatio = sourceWidth / rotatedSourceWidth
-    const rotationYRatio = sourceHeight / rotatedSourceHeight
-
     textureScale.x = scaleX * absCos
     textureScale.y = scaleY * absCos
 
@@ -253,8 +256,8 @@ export class Texture extends Object3D {
 
     const angleDiff = Math.abs(Math.abs(Math.sin(this.rotation.z)) + Math.abs(Math.cos(this.rotation.z)))
 
-    textureScale.x *= rotationRatio
-    textureScale.y *= rotationRatio
+    // textureScale.x *= rotationRatio
+    // textureScale.y *= rotationRatio
 
     // textureScale.x += rotationRatio - 1
     // textureScale.y += rotationRatio - 1

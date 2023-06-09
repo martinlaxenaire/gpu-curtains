@@ -3,8 +3,8 @@ import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { CameraRenderer } from '../../utils/renderer-utils'
 import { MeshBindings, MeshProps } from './Mesh'
 import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
-import { Material, MaterialOptions } from '../Material'
-import { Texture } from '../Texture'
+import { Material, MaterialProps } from '../Material'
+import { Texture, TextureProps } from '../Texture'
 
 // type MeshMixinSuperClass = InstanceType<typeof ProjectedObject3D | typeof DOMObject3D>
 
@@ -42,15 +42,17 @@ export default function MeshMixin<TBase extends Constructor>(Base: TBase) {
 
     textures: Texture[]
 
+    visible: boolean
+
     constructor(
       renderer: CameraRenderer,
       element: HTMLElement | null,
       { label, shaders, geometry, bindings }: MeshProps
     )
 
-    setMaterial({ label, shaders, uniformsBindings }: MaterialOptions)
+    setMaterial({ label, shaders, uniformsBindings }: MaterialProps)
 
-    createTexture(options: any): Texture // TODO
+    createTexture(options: TextureProps): Texture
     onTextureCreated(texture: Texture)
 
     setMatricesUniformGroup()

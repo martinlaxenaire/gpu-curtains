@@ -41,6 +41,8 @@ export const MeshMixin = (superclass) =>
       this.uniforms = this.material.uniforms
 
       this.textures = []
+
+      this.visible = true // TODO
     }
 
     setMaterial({ label, shaders, uniformsBindings }) {

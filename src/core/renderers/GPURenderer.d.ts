@@ -35,10 +35,10 @@ export class GPURenderer {
   setAdapterAndDevice()
   setPipelineManager()
 
-  setTexture(texture: Texture) // TODO
-  createSampler(options: any): GPUSampler // TODO
-  createTexture(options: any): GPUTexture // TODO
-  uploadTexture(texture: Texture) // TODO
+  setTexture(texture: Texture)
+  createSampler(options: GPUSamplerDescriptor): GPUSampler
+  createTexture(options: GPUTextureDescriptor): GPUTexture
+  uploadTexture(texture: Texture)
   importExternalTexture(video: HTMLVideoElement): GPUExternalTexture
   setRenderPassView()
   setRenderPass()
