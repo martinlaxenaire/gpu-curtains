@@ -4,9 +4,7 @@ WIP
 
 ## Roadmap
 
-- Typescript support
 - Core classes + Curtains classes separation for low level / high level APIs
-- Object3D class (+ test textures rotation)
 - Scene class
 - RenderPass class
 - TextureLoader class

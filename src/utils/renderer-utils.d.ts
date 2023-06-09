@@ -2,11 +2,11 @@ import { GPURenderer } from '../core/renderers/GPURenderer'
 import { GPUCameraRenderer } from '../core/renderers/GPUCameraRenderer'
 import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
 
-type CameraRenderer = GPURenderer | GPUCameraRenderer
-type CurtainsRenderer = CameraRenderer | GPUCurtainsRenderer
+type CurtainsRenderer = GPUCurtainsRenderer
+type CameraRenderer = CurtainsRenderer | GPUCameraRenderer
 
-type isRenderer = (renderer: GPURenderer, type: string | null) => boolean
-type isCameraRenderer = (renderer: CameraRenderer, type: string | null) => boolean
-type isCurtainsRenderer = (renderer: CurtainsRenderer, type: string | null) => boolean
+export function isRenderer(renderer: GPURenderer | undefined, type: string | null): boolean
+export function isCameraRenderer(renderer: CameraRenderer | undefined, type: string | null): boolean
+export function isCurtainsRenderer(renderer: CurtainsRenderer | undefined, type: string | null): boolean
 
-type generateMips = (device: GPUDevice) => void
+export function generateMips(device: GPUDevice, texture: GPUTexture): void

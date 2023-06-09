@@ -6,6 +6,8 @@ import { BindGroupTextureBinding } from './bindGroupBindings/BindGroupTextureBin
 import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
 import { Object3D } from './objects3D/Object3D'
 
+const textureScale = new Vec3()
+
 export class Texture extends Object3D {
   constructor(
     renderer,
@@ -166,26 +168,109 @@ export class Texture extends Object3D {
 
     const parentRatio = parentWidth / parentHeight
 
+    const sourceWidth = this.size.width
+    const sourceHeight = this.size.height
+
+    const sourceRatio = sourceWidth / sourceHeight
+
     const rotatedSourceWidth =
-      Math.abs(this.size.width * Math.cos(this.rotation.z)) + Math.abs(this.size.height * Math.sin(this.rotation.z))
+      Math.abs(sourceWidth * Math.cos(this.rotation.z)) + Math.abs(sourceHeight * Math.sin(this.rotation.z))
     const rotatedSourceHeight =
-      Math.abs(this.size.width * Math.sin(this.rotation.z)) + Math.abs(this.size.height * Math.cos(this.rotation.z))
+      Math.abs(sourceWidth * Math.sin(this.rotation.z)) + Math.abs(sourceHeight * Math.cos(this.rotation.z))
 
     const rotatedSourceRatio = rotatedSourceWidth / rotatedSourceHeight
+
+    const rotationDiff = rotatedSourceRatio / sourceRatio
+    const rotationRatio = (sourceWidth + sourceHeight) / (rotatedSourceWidth + rotatedSourceHeight)
 
     // center image in its container
     let xOffset = 0
     let yOffset = 0
 
-    if (parentRatio > rotatedSourceRatio) {
+    const xAdjust = parentWidth - parentHeight * sourceRatio
+    const yAdjust = parentHeight - parentWidth * (1 / sourceRatio)
+
+    if (parentRatio > sourceRatio) {
       // means parent is larger
-      yOffset = Math.min(0, parentHeight - parentWidth * (1 / rotatedSourceRatio))
+      yOffset = yAdjust
     } else {
       // means parent is taller
-      xOffset = Math.min(0, parentWidth - parentHeight * rotatedSourceRatio)
+      xOffset = xAdjust
     }
 
-    const textureScale = new Vec3(parentWidth / (parentWidth - xOffset), parentHeight / (parentHeight - yOffset), 0)
+    // xOffset -= Math.sin(this.rotation.z) * (parentHeight - parentWidth * (1 / sourceRatio))
+    // yOffset -= Math.sin(this.rotation.z) * (parentWidth - parentHeight * sourceRatio)
+
+    // if (parentRatio > rotatedSourceRatio) {
+    //   // means parent is larger
+    //   yOffset = Math.min(0, parentHeight - parentWidth * (1 / rotatedSourceRatio))
+    // } else {
+    //   // means parent is taller
+    //   xOffset = Math.min(0, parentWidth - parentHeight * rotatedSourceRatio)
+    // }
+
+    //
+    // if (parentRatio > rotatedSourceRatio) {
+    //   // means parent is larger
+    //   yOffset = Math.min(0, yAdjust + Math.abs(xAdjust * Math.sin(this.rotation.z)) * rotationDiff)
+    //   xOffset = Math.abs(xAdjust * Math.sin(this.rotation.z)) * rotationDiff
+    // } else {
+    //   // means parent is taller
+    //   xOffset = Math.min(0, xAdjust + Math.abs(yAdjust * Math.sin(this.rotation.z)) * (rotationDiff - 1))
+    //   yOffset = Math.abs(yAdjust * Math.sin(this.rotation.z)) * (rotationDiff - 1)
+    // }
+    //
+    // if (this.options.name === 'planeRotationTexture') {
+    //   console.log(xOffset, yOffset, this.rotation.z)
+    // }
+
+    const scaleX = parentWidth / (parentWidth - xOffset)
+    const scaleY = parentHeight / (parentHeight - yOffset)
+
+    // if (this.options.name === 'planeRotationTexture') {
+    //   console.log(scaleX, scaleY, this.rotation.z, sourceRatio, 1 / sourceRatio, parentRatio)
+    // }
+
+    // textureScale.set(
+    //   scaleX * Math.cos(this.rotation.z) - scaleY * Math.sin(this.rotation.z),
+    //   scaleX * Math.sin(this.rotation.z) + scaleY * Math.cos(this.rotation.z),
+    //   0
+    // )
+
+    //textureScale.set(scaleX, scaleY, 0)
+
+    const absCos = Math.abs(Math.cos(this.rotation.z))
+    const absSin = Math.abs(Math.sin(this.rotation.z))
+
+    const rotationXRatio = sourceWidth / rotatedSourceWidth
+    const rotationYRatio = sourceHeight / rotatedSourceHeight
+
+    textureScale.x = scaleX * absCos
+    textureScale.y = scaleY * absCos
+
+    textureScale.x += scaleY * absSin * parentRatio
+    textureScale.y += scaleX * absSin * (1 / parentRatio)
+
+    const angleDiff = Math.abs(Math.abs(Math.sin(this.rotation.z)) + Math.abs(Math.cos(this.rotation.z)))
+
+    textureScale.x *= rotationRatio
+    textureScale.y *= rotationRatio
+
+    // textureScale.x += rotationRatio - 1
+    // textureScale.y += rotationRatio - 1
+
+    // if (this.rotation.z === -Math.PI / 4) {
+    //   textureScale.x *= 0.707
+    //   textureScale.y *= 0.707
+    //
+    //   // textureScale.x += absCos - 1
+    //   // textureScale.y += absCos - 1
+    //
+    //   textureScale.x = 1
+    //   textureScale.y = 1
+    //
+    //   console.log('-pi / 4!', rotationRatio, rotationRatio * rotationYRatio, rotationRatio * rotationXRatio)
+    // }
 
     return textureScale
   }
@@ -194,13 +279,17 @@ export class Texture extends Object3D {
     const textureScale = this.computeScale()
 
     // apply texture scale
-    textureScale.x /=
-      Math.abs(this.scale.x * Math.cos(this.rotation.z)) + Math.abs(this.scale.y * Math.sin(this.rotation.z))
-    textureScale.y /=
-      Math.abs(this.scale.x * Math.sin(this.rotation.z)) + Math.abs(this.scale.y * Math.cos(this.rotation.z))
+    textureScale.x /= this.scale.x
+    textureScale.y /= this.scale.y
 
     // compose our texture transformation matrix with adapted scale
     this.modelMatrix.composeFromOrigin(this.position, this.quaternion, textureScale, this.transformOrigin)
+
+    // this.modelMatrix.translate(this.transformOrigin)
+    // this.modelMatrix.rotateFromQuaternion(this.quaternion)
+    // this.modelMatrix.scale(textureScale)
+    // //this.modelMatrix.translate(this.transformOrigin.clone().multiplyScalar(-1))
+    // this.modelMatrix.translate(new Vec3(0 * this.transformOrigin.x, 0 * this.transformOrigin.y, 0))
   }
 
   resize() {

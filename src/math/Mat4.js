@@ -200,6 +200,15 @@ export class Mat4 {
     return out
   }
 
+  translate(vector = new Vec3()) {
+    let a = this.elements
+
+    a[12] = a[0] * vector.x + a[4] * vector.y + a[8] * vector.z + a[12]
+    a[13] = a[1] * vector.x + a[5] * vector.y + a[9] * vector.z + a[13]
+    a[14] = a[2] * vector.x + a[6] * vector.y + a[10] * vector.z + a[14]
+    a[15] = a[3] * vector.x + a[7] * vector.y + a[11] * vector.z + a[15]
+  }
+
   /***
    Simple Mat4 scaling helper
 
@@ -224,6 +233,46 @@ export class Mat4 {
     a[9] *= vector.z
     a[10] *= vector.z
     a[11] *= vector.z
+
+    return this
+  }
+
+  rotateFromQuaternion(quaternion = new Quat()) {
+    let matrix = this.elements
+
+    const x = quaternion.elements[0],
+      y = quaternion.elements[1],
+      z = quaternion.elements[2],
+      w = quaternion.elements[3]
+
+    let x2 = x + x
+    let y2 = y + y
+    let z2 = z + z
+    let xx = x * x2
+    let yx = y * x2
+    let yy = y * y2
+    let zx = z * x2
+    let zy = z * y2
+    let zz = z * z2
+    let wx = w * x2
+    let wy = w * y2
+    let wz = w * z2
+    matrix[0] = 1 - yy - zz
+    matrix[1] = yx + wz
+    matrix[2] = zx - wy
+    matrix[3] = 0
+    matrix[4] = yx - wz
+    matrix[5] = 1 - xx - zz
+    matrix[6] = zy + wx
+    matrix[7] = 0
+    matrix[8] = zx + wy
+    matrix[9] = zy - wx
+    matrix[10] = 1 - xx - yy
+    matrix[11] = 0
+    matrix[12] = 0
+    matrix[13] = 0
+    matrix[14] = 0
+    matrix[15] = 1
 
     return this
   }
