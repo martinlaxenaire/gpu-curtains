@@ -31,7 +31,9 @@ export class Plane extends DOMMesh {
       watchScroll = true,
 
       // events
-      onRender = () => {},
+      onRender = () => {
+        /* allow empty callback */
+      },
     } = {}
   ) {
     // we could pass our curtains object OR our curtains renderer object
@@ -52,15 +54,16 @@ export class Plane extends DOMMesh {
 
     this.type = 'Plane'
 
-    this.options = {
-      label,
-    }
+    // this.options = {
+    //   label,
+    // }
 
-    this.renderer = renderer
+    //this.renderer = renderer
+    // TODO this should also be handled by MeshMixin?
     this.renderer.planes.push(this)
 
     // TODO should be handled by meshes
-    this.textures = []
+    //this.textures = []
 
     this.alwaysDraw = alwaysDraw
     this.visible = visible
@@ -77,22 +80,23 @@ export class Plane extends DOMMesh {
     this.onRender = onRender
   }
 
-  resize(boundingRect) {
+  resize(boundingRect = null) {
     super.resize(boundingRect)
 
+    // TODO should be handled by meshes?
     this.textures && this.textures.forEach((texture) => texture.resize())
 
     // TODO onAfterResize callback
   }
 
-  updateModelMatrixStack(sizeChanged = false) {
-    super.updateModelMatrixStack()
-
-    // TODO ugly
-    // if (sizeChanged) {
-    //   this.textures?.forEach((texture) => texture.resize())
-    // }
-  }
+  // updateModelMatrixStack() {
+  //   super.updateModelMatrixStack()
+  //
+  //   // TODO ugly
+  //   // if (sizeChanged) {
+  //   //   this.textures?.forEach((texture) => texture.resize())
+  //   // }
+  // }
 
   // updateProjectionMatrixStack() {
   //   super.updateProjectionMatrixStack()
@@ -179,6 +183,6 @@ export class Plane extends DOMMesh {
   }
 
   destroy() {
-    this.mesh?.material?.destroy()
+    this.material?.destroy()
   }
 }

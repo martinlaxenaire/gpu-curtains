@@ -3,8 +3,14 @@ import { GPUCurtainsRenderer } from '../renderer/GPUCurtainsRenderer'
 import { Camera } from '../../core/camera/Camera'
 import { DOMElement, DOMElementBoundingRect } from '../../core/DOMElement'
 import { Vec3 } from '../../math/Vec3'
-import { Quat } from '../../math/Quat'
 import { Object3DTransforms } from '../../core/objects3D/Object3D'
+
+interface RectCoords {
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
 
 interface RectBBox {
   width: number
