@@ -21,13 +21,13 @@ export class GPURenderer {
   preferredFormat: null | GPUTextureFormat
   adapter: null | GPUAdapter
   device: null | GPUDevice
-  sampleCount: number
+
   renderPass: null | {
     descriptor: GPURenderPassDescriptor
     target: GPUTexture
     depth: GPUTexture
-    view: GPUTextureView
-  } // TODO
+    sampleCount: GPUSize32
+  }
 
   pipelineManager: PipelineManager
 

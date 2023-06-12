@@ -26,6 +26,28 @@ export class Mat4 {
     this.elements = elements
   }
 
+  /***
+   * Sets the matrix from 16 numbers
+   *
+   * @param n11 number
+   * @param n12 number
+   * @param n13 number
+   * @param n14 number
+   * @param n21 number
+   * @param n22 number
+   * @param n23 number
+   * @param n24 number
+   * @param n31 number
+   * @param n32 number
+   * @param n33 number
+   * @param n34 number
+   * @param n41 number
+   * @param n42 number
+   * @param n43 number
+   * @param n44 number
+   *
+   * @returns {Mat4}: this matrix after being set
+   */
   set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
     const te = this.elements
 
@@ -49,6 +71,11 @@ export class Mat4 {
     return this
   }
 
+  /***
+   Sets the matrix to an identity matrix
+
+   @returns {Mat4}: this matrix after being set
+   ***/
   identity() {
     // prettier-ignore
     this.set(
@@ -64,11 +91,9 @@ export class Mat4 {
   /***
    Sets the matrix values from an array
 
-   params:
-   @array (array): an array of at least 16 elements
+   @param {Float32Array}: an array of at least 16 elements
 
-   returns:
-   @this (Mat4 class object): this matrix after being set
+   @returns {Mat4}: this matrix after being set
    ***/
   // prettier-ignore
   setFromArray(array = new Float32Array([
@@ -85,14 +110,11 @@ export class Mat4 {
   }
 
   /***
-   Copy another Mat4
-
-   params:
-   @matrix (Mat4 class object): matrix to copy
-
-   returns:
-   @this (Mat4 class object): this matrix after copy
-   ***/
+   * Copy another Mat4
+   *
+   * @param matrix {Mat4}: matrix to copy
+   * @returns {Mat4}: this matrix after copy
+   */
   copy(matrix = new Mat4()) {
     const array = matrix.elements
     this.elements[0] = array[0]
@@ -116,11 +138,10 @@ export class Mat4 {
   }
 
   /***
-   Clone a matrix
-
-   returns:
-   @clonedMatrix (Mat4 object): cloned matrix
-   ***/
+   * Clone a matrix
+   *
+   * @returns {Mat4}: cloned matrix
+   */
   clone() {
     return new Mat4().copy(this)
   }

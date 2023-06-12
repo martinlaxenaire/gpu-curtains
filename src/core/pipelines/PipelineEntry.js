@@ -153,7 +153,7 @@ export class PipelineEntry {
         // Backface culling since the cube is solid piece of geometry.
         // Faces pointing away from the camera will be occluded by faces
         // pointing toward the camera.
-        //cullMode: 'back', // TODO
+        //cullMode: 'back', // TODO option
       },
       // Enable depth testing so that the fragment closest to the camera
       // is rendered in front.
@@ -162,9 +162,9 @@ export class PipelineEntry {
         depthCompare: 'less',
         format: 'depth24plus',
       },
-      ...(this.renderer.sampleCount > 1 && {
+      ...(this.renderer.renderPass.sampleCount > 1 && {
         multisample: {
-          count: this.renderer.sampleCount,
+          count: this.renderer.renderPass.sampleCount,
         },
       }),
     })

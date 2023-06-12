@@ -153,86 +153,81 @@ export class GPURenderer {
 
   /** RENDER TEXTURES **/
 
-  // TODO
   setRenderPassDepth() {
     if (!this.renderPass) return
 
     // set view
-    if (this.renderPass.depth !== undefined) {
-      // Destroy the previous render target
+    if (this.renderPass.depth) {
+      console.log('destroy depth')
+      // Destroy the previous depth target
       this.renderPass.depth.destroy()
     }
 
     this.renderPass.depth = this.createTexture({
+      label: 'GPURenderer depth attachment texture',
       size: [this.canvas.width, this.canvas.height],
       format: 'depth24plus',
       usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      sampleCount: this.sampleCount,
+      sampleCount: this.renderPass.sampleCount,
     })
 
-    if (this.renderPass.descriptor) {
-      this.renderPass.descriptor.depthStencilAttachment.view = this.renderPass.depth.createView()
-    }
+    this.renderPass.descriptor.depthStencilAttachment.view = this.renderPass.depth.createView()
   }
 
   setRenderPassView() {
     if (!this.renderPass) return
 
     // set view
-    if (this.renderPass.target !== undefined) {
+    if (this.renderPass.target) {
       // Destroy the previous render target
       this.renderPass.target.destroy()
     }
 
     this.renderPass.target = this.createTexture({
+      label: 'GPURenderer color attachment texture',
       size: [this.canvas.width, this.canvas.height],
-      sampleCount: this.sampleCount,
+      sampleCount: this.renderPass.sampleCount,
       format: this.preferredFormat,
       usage: GPUTextureUsage.RENDER_ATTACHMENT,
     })
 
-    this.renderPass.view = this.renderPass.target.createView()
-
-    this.renderPass.descriptor.colorAttachments[0].view = this.renderPass.view
+    this.renderPass.descriptor.colorAttachments[0].view = this.renderPass.target.createView()
   }
 
   setRenderPass() {
-    this.sampleCount = 4 // TODO
+    this.renderPass = {
+      sampleCount: 4, // TODO option
+      target: null,
+      depth: null,
+      descriptor: {
+        label: 'GPURenderer pass descriptor',
+        colorAttachments: [
+          {
+            // view: <- to be filled out when we set our render pass view
+            view: null,
+            // clear values
+            clearValue: [0, 0, 0, 0],
+            // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
+            // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what's already there.
+            loadOp: 'clear',
+            // storeOp: 'store' means store the result of what we draw.
+            // We could also pass 'discard' which would throw away what we draw.
+            // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
+            storeOp: 'store',
+          },
+        ],
+        depthStencilAttachment: {
+          view: null,
 
-    // TODO also
-
-    this.renderPass = {}
-
-    this.setRenderPassDepth()
-
-    this.renderPass.descriptor = {
-      label: 'Renderer canvas renderPass',
-      colorAttachments: [
-        {
-          // view: <- to be filled out when we set our render pass view
-          //view: this.renderPass.view,
-          // clear values
-          clearValue: [0, 0, 0, 0],
-          // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
-          // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what’s already there.
-          loadOp: 'clear',
-          // storeOp: 'store' means store the result of what we draw.
-          // We could also pass 'discard' which would throw away what we draw.
-          // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
-          storeOp: 'store',
+          depthClearValue: 1.0,
+          depthLoadOp: 'clear',
+          depthStoreOp: 'store',
         },
-      ],
-      depthStencilAttachment: {
-        // TODO
-        view: this.renderPass.depth.createView(),
-
-        depthClearValue: 1.0,
-        depthLoadOp: 'clear',
-        depthStoreOp: 'store',
       },
     }
 
     this.setRenderPassView()
+    this.setRenderPassDepth()
   }
 
   /**
@@ -258,6 +253,8 @@ export class GPURenderer {
   resize(boundingRect = null) {
     if (!this.domElement) return
     this.setSize(boundingRect ?? this.domElement.element.getBoundingClientRect())
+
+    // reset render textures
     this.setRenderPassView()
     this.setRenderPassDepth()
 
@@ -324,9 +321,9 @@ export class GPURenderer {
   }
 
   destroy() {
-    // TODO what's best?
-    //this.renderPass?.target?.destroy()
-    this.context?.getCurrentTexture()?.destroy()
+    this.renderPass?.target?.destroy()
+    this.renderPass?.depth?.destroy()
+    //this.context?.getCurrentTexture()?.destroy()
 
     this.device?.destroy()
     this.context?.unconfigure()

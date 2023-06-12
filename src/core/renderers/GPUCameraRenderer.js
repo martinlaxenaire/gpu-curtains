@@ -108,7 +108,7 @@ export class GPUCameraRenderer extends GPURenderer {
    ***/
   setPerspective(fov = 50, near = 0.01, far = 50) {
     const containerBoundingRect = this.domElement.boundingRect
-    this.camera.setPerspective(
+    this.camera?.setPerspective(
       fov,
       near,
       far,
@@ -127,6 +127,8 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   onResize() {
+    super.onResize()
+    this.setPerspective()
     this.updateCameraMatrixStack()
   }
 

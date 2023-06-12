@@ -4,11 +4,10 @@ WIP
 
 ## Roadmap
 
-- Core classes + Curtains classes separation for low level / high level APIs
 - Scene class
 - RenderPass class
 - TextureLoader class
-- getShaderCode + getAddedShaderCode methods
+- getShaderCode + getAddedShaderCode methods (PipelineEntry created on mesh creation, set up pipeline only when possible)
 - Proper uniform memory buffers layout management
 - Use async pipelines?
 - Plane isInView, raycasting
