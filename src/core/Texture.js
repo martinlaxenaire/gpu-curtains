@@ -5,8 +5,11 @@ import { BindGroupSamplerBinding } from './bindGroupBindings/BindGroupSamplerBin
 import { BindGroupTextureBinding } from './bindGroupBindings/BindGroupTextureBinding'
 import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
 import { Object3D } from './objects3D/Object3D'
+import { Mat4 } from '../math/Mat4'
+import { Quat } from '../math/Quat'
 
 const textureScale = new Vec3()
+const rotationMatrix = new Mat4()
 
 export class Texture extends Object3D {
   constructor(
@@ -128,6 +131,15 @@ export class Texture extends Object3D {
     this.resize()
   }
 
+  setTransforms() {
+    super.setTransforms()
+
+    this.transforms.quaternion.setAxisOrder('ZXY')
+
+    // reset our model transform origin to reflect CSS transform origins
+    this.transforms.origin.model = new Vec3(0.5, 0.5, 0)
+  }
+
   applyPosition() {
     super.applyPosition()
 
@@ -173,6 +185,160 @@ export class Texture extends Object3D {
 
     const sourceRatio = sourceWidth / sourceHeight
 
+    /**/
+
+    // now the rotation
+    const cos = Math.cos(this.rotation.z)
+    const sin = Math.sin(this.rotation.z)
+    const absCos = Math.abs(cos)
+    const absSin = Math.abs(sin)
+
+    const parentRotatedWidth = parentWidth * absCos + parentHeight * absSin
+    const parentRotatedHeight = parentWidth * absSin + parentHeight * absCos
+
+    const sourceRotatedWidth = sourceWidth * absCos + sourceHeight * absSin
+    const sourceRotatedHeight = sourceWidth * absSin + sourceHeight * absCos
+
+    const rotatedWidthRatio = parentRotatedWidth / parentWidth
+    const rotatedHeightRatio = parentRotatedHeight / parentHeight
+
+    // center image in its container
+    let xOffset = 0
+    let yOffset = 0
+
+    if (parentRatio > sourceRatio) {
+      // means parent is larger
+      yOffset = parentHeight - parentWidth * (1 / sourceRatio)
+    } else {
+      // means parent is taller
+      xOffset = parentWidth - parentHeight * sourceRatio
+    }
+
+    // now get initial scale
+    const initialScale = {
+      x: parentWidth / (parentWidth - xOffset),
+      y: parentHeight / (parentHeight - yOffset),
+    }
+
+    // textureScale.x = absCos * initialScale.x * rotatedWidthRatio + absSin * initialScale.y * rotatedHeightRatio
+    // textureScale.y = absSin * initialScale.x * rotatedWidthRatio + absCos * initialScale.y * rotatedHeightRatio
+
+    // no
+    textureScale.x = absCos * initialScale.x * rotatedWidthRatio + absSin * initialScale.y * rotatedHeightRatio
+    textureScale.y = (absSin * initialScale.x) / rotatedHeightRatio + (absCos * initialScale.y) / rotatedWidthRatio
+
+    // no
+    textureScale.x = absCos * initialScale.x * rotatedWidthRatio + (absSin * initialScale.y) / rotatedWidthRatio
+    textureScale.y = (absSin * initialScale.x) / rotatedHeightRatio + absCos * initialScale.y * rotatedHeightRatio
+
+    // no
+    textureScale.x = (absCos * initialScale.x) / rotatedHeightRatio + (absSin * initialScale.y) / rotatedWidthRatio
+    textureScale.y = absSin * initialScale.x * rotatedWidthRatio + absCos * initialScale.y * rotatedHeightRatio
+
+    const possibleRatios = [rotatedWidthRatio, 1 / rotatedWidthRatio, rotatedHeightRatio, 1 / rotatedHeightRatio]
+    const possibleRatios2 = [parentWidth / parentRotatedWidth, parentRotatedHeight / parentHeight]
+    const possibleRatiosHalf = [parentRotatedWidth / parentWidth, parentHeight / parentRotatedHeight]
+
+    const possibleSourceRatios2 = [sourceWidth / sourceRotatedWidth, sourceRotatedHeight / sourceHeight]
+    const possibleSourceRatiosHalf = [sourceRotatedWidth / sourceWidth, sourceHeight / sourceRotatedHeight]
+    const possibleSourceRatios = [...possibleSourceRatios2, ...possibleSourceRatiosHalf]
+
+    const r1 = Math.floor(Math.random() * 4)
+    const r2 = Math.floor(Math.random() * 2)
+    const r3 = Math.floor(Math.random() * 2)
+    const r4 = Math.floor(Math.random() * 4)
+
+    const cs1 = Math.floor(Math.random() * 2)
+    const cs2 = Math.floor(Math.random() * 2)
+    const cs3 = Math.floor(Math.random() * 2)
+    const cs4 = Math.floor(Math.random() * 2)
+
+    const f1 = Math.floor(Math.random() * 2)
+    const f2 = Math.floor(Math.random() * 2)
+
+    // correct values seems to be [1, 0, 1, 0]
+    // textureScale.x = absCos * initialScale.x * possibleRatios[r1] + absSin * initialScale.y * possibleRatios2[r2]
+    // textureScale.y = absSin * initialScale.x * possibleRatiosHalf[r3] + absCos * initialScale.y * possibleRatios[r4]
+
+    // textureScale.x =
+    //   absCos * initialScale.x * possibleSourceRatios[r1] + absSin * initialScale.y * possibleSourceRatiosHalf[r2]
+    // textureScale.y =
+    //   absSin * initialScale.x * possibleSourceRatios2[r3] + absCos * initialScale.y * possibleSourceRatios[r4]
+    //
+    // textureScale.x = absCos * initialScale.x * 0.5 + absSin * initialScale.y * possibleSourceRatiosHalf[r2] // 0.75
+    // textureScale.y = absSin * initialScale.x * 2 + absCos * initialScale.y * possibleSourceRatios[r4] // 1.5
+
+    // textureScale.x =
+    //   absCos * initialScale.x * possibleSourceRatiosHalf[r1] + absSin * initialScale.y * possibleSourceRatiosHalf[r2]
+    // textureScale.y =
+    //   absSin * initialScale.x * possibleSourceRatios2[r3] + absCos * initialScale.y * possibleSourceRatios2[r4]
+
+    // textureScale.x =
+    //   absCos * initialScale.x * possibleFixedRatios[f1] + absSin * initialScale.y * possibleFixedRatios[0]
+    // textureScale.y =
+    //   absSin * initialScale.x * possibleFixedRatios[1] + absCos * initialScale.y * possibleFixedRatios[f2]
+
+    // textureScale.x = absCos * initialScale.x * 0.5 + absSin * initialScale.y * possibleFixedRatios[0]
+    // textureScale.y = absSin * initialScale.x * possibleFixedRatios[1] + absCos * initialScale.y * 2
+
+    // textureScale.x =
+    //   (cos * (initialScale.x - 1) + 1) * possibleRatios[r1] - (sin * (initialScale.y - 1) + 1) * possibleRatios2[r2]
+    // textureScale.y =
+    //   (sin * (initialScale.x - 1) + 1) * possibleRatiosHalf[r3] + (cos * (initialScale.y - 1) + 1) * possibleRatios[r4]
+
+    if (sourceWidth !== 1 && this.options.name === 'planeRotationTexture') {
+      // const r1 = Math.floor(Math.random() * 4)
+      // const r2 = Math.floor(Math.random() * 4)
+      // const r3 = Math.floor(Math.random() * 4)
+      // const r4 = Math.floor(Math.random() * 4)
+      // textureScale.x =
+      //   absCos * initialScale.x * possibleRatios[r1] * cs1 + absSin * initialScale.y * possibleRatios2[r2] * cs2
+      // textureScale.y =
+      //   absSin * initialScale.x * possibleRatios[r3] * cs3 + absCos * initialScale.y * possibleRatiosHalf[r4] * cs4
+      // textureScale.x =
+      //   (absCos * (initialScale.x - 1) + 1) * possibleRatios[r1] +
+      //   (absSin * (initialScale.y - 1) + 1) * possibleRatios2[r2]
+      // textureScale.y =
+      //   (absSin * (initialScale.x - 1) + 1) * possibleRatios[r3] +
+      //   (absCos * (initialScale.y - 1) + 1) * possibleRatiosHalf[r4]
+      //console.log(f1, f2, textureScale)
+      //console.log(r1, r2, r3, r4)
+      // console.log(r1, r2, r3, r4, cs1, cs2, cs3, cs4)
+      //   console.log(
+      //     'rotation',
+      //     this.rotation.z,
+      //     'absCos',
+      //     absCos,
+      //     'absSin',
+      //     absSin,
+      //     'rotatedWidthRatio',
+      //     rotatedWidthRatio,
+      //     'rotatedHeightRatio',
+      //     rotatedHeightRatio,
+      //     'initialScale',
+      //     initialScale,
+      //     'textureScale',
+      //     textureScale
+      //   )
+    }
+
+    // textureScale.x *= absCos + absSin
+    // textureScale.y /= absCos + absSin
+
+    textureScale.x = initialScale.x
+    textureScale.y = initialScale.y
+    //
+    // textureScale.x = initialScale.x * absCos + initialScale.y * absSin
+    // textureScale.y = initialScale.y * absCos + initialScale.x * absSin
+
+    textureScale.x = ((initialScale.x - 1) * cos - (initialScale.y - 1) * sin + 1) * 0.75
+    textureScale.y = ((initialScale.y - 1) * cos + (initialScale.x - 1) * sin + 1) * 1.5
+
+    /**/
+
+    /*
+
+
     const rotatedSourceWidth =
       Math.abs(sourceWidth * Math.cos(this.rotation.z)) + Math.abs(sourceHeight * Math.sin(this.rotation.z))
     const rotatedSourceHeight =
@@ -182,10 +348,7 @@ export class Texture extends Object3D {
 
     const rotationDiff = rotatedSourceRatio / sourceRatio
     const rotationRatio = (sourceWidth + sourceHeight) / (rotatedSourceWidth + rotatedSourceHeight)
-
-    // center image in its container
-    let xOffset = 0
-    let yOffset = 0
+    const rotationRatio2 = (sourceWidth * sourceHeight) / (rotatedSourceWidth * rotatedSourceHeight)
 
     const rotationXRatio = sourceWidth / rotatedSourceWidth
     const rotationYRatio = sourceHeight / rotatedSourceHeight
@@ -193,8 +356,10 @@ export class Texture extends Object3D {
     // const xAdjust = parentWidth - parentHeight * sourceRatio * rotationXRatio
     // const yAdjust = parentHeight - parentWidth * (1 / (sourceRatio * rotationYRatio))
 
-    const xAdjust = parentWidth - parentHeight * sourceRatio * rotationRatio
-    const yAdjust = parentHeight - parentWidth * (1 / (sourceRatio * rotationRatio))
+    // const xAdjust = parentWidth - parentHeight * sourceRatio * rotationRatio
+    // const yAdjust = parentHeight - parentWidth * (1 / (sourceRatio * rotationRatio))
+    const xAdjust = parentWidth - parentHeight * sourceRatio
+    const yAdjust = parentHeight - parentWidth * (1 / sourceRatio)
 
     if (parentRatio > sourceRatio) {
       // means parent is larger
@@ -203,6 +368,36 @@ export class Texture extends Object3D {
       // means parent is taller
       xOffset = xAdjust
     }
+
+    // yOffset = yAdjust
+    // xOffset = xAdjust
+
+
+
+    // const newResolution =
+    //   parentRatio < rotatedSourceRatio
+    //     ? {
+    //         x: (absCos * (rotatedSourceWidth * parentHeight)) / rotatedSourceHeight + absSin * parentHeight,
+    //         y: absCos * parentHeight + (absSin * (rotatedSourceWidth * parentHeight)) / rotatedSourceHeight,
+    //       }
+    //     : {
+    //         x: absCos * parentWidth + (absSin * (rotatedSourceHeight * parentWidth)) / rotatedSourceWidth,
+    //         y: (absCos * (rotatedSourceHeight * parentWidth)) / rotatedSourceWidth + absSin * parentWidth,
+    //       }
+    //
+    // const scaleAdjust =
+    //   parentRatio < rotatedSourceRatio
+    //     ? {
+    //         x: parentWidth - newResolution.x,
+    //         y: 0,
+    //       }
+    //     : {
+    //         x: 0,
+    //         y: parentHeight - newResolution.y,
+    //       }
+
+    // scaleAdjust.x /= newResolution.x
+    // scaleAdjust.y /= newResolution.y
 
     // xOffset -= Math.sin(this.rotation.z) * (parentHeight - parentWidth * (1 / sourceRatio))
     // yOffset -= Math.sin(this.rotation.z) * (parentWidth - parentHeight * sourceRatio)
@@ -230,8 +425,19 @@ export class Texture extends Object3D {
     //   console.log(xOffset, yOffset, this.rotation.z)
     // }
 
+    // xOffset = absCos * xOffset + absSin * yOffset
+    // yOffset = absCos * yOffset + absSin * xOffset
+
     const scaleX = parentWidth / (parentWidth - xOffset)
     const scaleY = parentHeight / (parentHeight - yOffset)
+
+    // const scaleX = parentWidth / (parentWidth - scaleAdjust.x)
+    // const scaleY = parentHeight / (parentHeight - scaleAdjust.y)
+
+    // scaleAdjust.x =
+    //   parentWidth / (parentWidth - scaleAdjust.x * absCos) + parentHeight / (parentHeight - scaleAdjust.y * absSin)
+    // scaleAdjust.y =
+    //   parentHeight / (parentHeight - scaleAdjust.y * absCos) + parentWidth / (parentWidth - scaleAdjust.x * absSin)
 
     // if (this.options.name === 'planeRotationTexture') {
     //   console.log(scaleX, scaleY, this.rotation.z, sourceRatio, 1 / sourceRatio, parentRatio)
@@ -245,16 +451,75 @@ export class Texture extends Object3D {
 
     //textureScale.set(scaleX, scaleY, 0)
 
-    const absCos = Math.abs(Math.cos(this.rotation.z))
-    const absSin = Math.abs(Math.sin(this.rotation.z))
+    textureScale.x = scaleX
+    textureScale.y = scaleY
 
+    // apply scale based on rotation cos
     textureScale.x = scaleX * absCos
     textureScale.y = scaleY * absCos
 
+    // textureScale.x = scaleX * Math.cos(this.rotation.z)
+    // textureScale.y = scaleY * Math.cos(this.rotation.z)
+
+    // now adjust based on rotation sin
     textureScale.x += scaleY * absSin * parentRatio
     textureScale.y += scaleX * absSin * (1 / parentRatio)
 
-    const angleDiff = Math.abs(Math.abs(Math.sin(this.rotation.z)) + Math.abs(Math.cos(this.rotation.z)))
+    // textureScale.x += scaleY * rotationXRatio
+    // textureScale.y += scaleX * rotationYRatio
+
+    // textureScale.x -= scaleY * Math.sin(this.rotation.z) * parentRatio
+    // textureScale.y += scaleX * Math.sin(this.rotation.z) * (1 / parentRatio)
+
+    // textureScale.x -= (1 - sourceWidth / rotatedSourceWidth) * absCos
+    // textureScale.y -= (1 - rotationRatio) * absCos
+
+    // textureScale.x -= (rotationRatio - 1) * absCos + (1 - rotationRatio) * absSin
+    // textureScale.y -= (1 - rotationRatio) * absCos + (rotationRatio - 1) * absSin
+
+    // textureScale.x += (1 - rotationRatio2) * 0.5
+    // textureScale.y += (1 - rotationRatio2) * 0.5
+
+    // textureScale.x += (rotationRatio - 1) * 0.75 * absCos
+    // textureScale.y += (rotationRatio - 1) * 0.15 * absSin
+
+    //textureScale.y += (rotationRatio - 1) * 0.15 * absSin
+
+    // textureScale.x /= absCos + absSin
+    // textureScale.y /= absCos + absSin
+
+    //textureScale.x -= absCos * 0.15 + absSin * 0.15
+
+    // textureScale.x += (1 - rotationRatio) / rotationXRatio + (rotationRatio - 1) / rotationYRatio
+    // textureScale.y += (1 - rotationRatio) / rotationYRatio + (rotationRatio - 1) / rotationXRatio
+
+    // textureScale.x -= (1 - rotationRatio) * rotationXRatio
+    // textureScale.y -= (1 - rotationRatio) * rotationYRatio
+
+    if (this.rotation.z === -Math.PI / 4 && sourceWidth !== 1) {
+      console.log('scaleX', textureScale.x, textureScale.y, sourceRatio * absCos)
+
+      textureScale.x = absCos * Math.hypot(1, 1)
+      textureScale.y = (absSin * Math.hypot(1, 1)) / sourceRatio
+
+      // textureScale.x -= test
+      // textureScale.y -= test * 0.375
+      // textureScale.x *= 0.8
+      // textureScale.y *= 0.7
+    }
+
+    if (this.rotation.z === -Math.PI / 2 && sourceWidth !== 1) {
+      console.log(textureScale)
+    }
+
+    // textureScale.x = scaleX
+    // textureScale.y = scaleY
+
+    // textureScale.x += ((1 - rotationRatio) * sourceWidth) / rotatedSourceWidth
+    // textureScale.y += ((1 - rotationRatio) * sourceHeight) / rotatedSourceHeight
+
+    // textureScale.x -= ((1 - rotationRatio) * sourceWidth) / rotatedSourceWidth
+    // textureScale.y -= ((1 - rotationRatio) * sourceHeight) / rotatedSourceHeight
 
     // textureScale.x *= rotationRatio
     // textureScale.y *= rotationRatio
@@ -275,24 +540,54 @@ export class Texture extends Object3D {
     //   console.log('-pi / 4!', rotationRatio, rotationRatio * rotationYRatio, rotationRatio * rotationXRatio)
     // }
 
+    
+     */
+
     return textureScale
   }
 
   updateTextureMatrix() {
     const textureScale = this.computeScale()
 
+    // const p = new Vec3()
+    // const r = new Vec3()
+    // const center = new Vec3(0.5, 0.5, 0)
+    // p.x = textureScale.x - center.x
+    // p.y = textureScale.y - center.y
+    // p.z = textureScale.z - center.z
+    // //perform rotation
+    // r.x = p.x * Math.cos(this.rotation.z) - p.y * Math.sin(this.rotation.z)
+    // r.y = p.x * Math.sin(this.rotation.z) + p.y * Math.cos(this.rotation.z)
+    // r.z = p.z
+    // //translate to correct position
+    // textureScale.x = r.x + center.x
+    // textureScale.y = r.y + center.y
+    // textureScale.z = r.z + center.z
+
     // apply texture scale
     textureScale.x /= this.scale.x
     textureScale.y /= this.scale.y
 
     // compose our texture transformation matrix with adapted scale
-    this.modelMatrix.composeFromOrigin(this.position, this.quaternion, textureScale, this.transformOrigin)
+    //this.modelMatrix.composeFromOrigin(this.position, this.quaternion, textureScale, this.transformOrigin)
 
-    // this.modelMatrix.translate(this.transformOrigin)
-    // this.modelMatrix.rotateFromQuaternion(this.quaternion)
-    // this.modelMatrix.scale(textureScale)
-    // //this.modelMatrix.translate(this.transformOrigin.clone().multiplyScalar(-1))
-    // this.modelMatrix.translate(new Vec3(0 * this.transformOrigin.x, 0 * this.transformOrigin.y, 0))
+    const testMatrix = new Mat4().composeFromOrigin(this.position, this.quaternion, textureScale, this.transformOrigin)
+
+    rotationMatrix.setFromQuaternion(this.quaternion)
+
+    // rotate before scale?
+    // https://github.com/mrdoob/three.js/blob/master/examples/webgl_materials_texture_rotation.html#LL132C20-L132C20
+    this.modelMatrix
+      .identity()
+      .translate(this.transformOrigin)
+      .scale(textureScale)
+      .multiply(rotationMatrix)
+      .translate(this.transformOrigin.clone().multiplyScalar(-1))
+      .translate(this.position)
+
+    if (this.size.width !== 1 && this.rotation.z === -Math.PI / 2) {
+      console.log(textureScale, this.modelMatrix.elements, testMatrix.elements)
+    }
   }
 
   resize() {
