@@ -18,7 +18,7 @@ export class Vec3 {
   set(z: number)
   set(x?: number, y?: number, z?: number): Vec3
 
-  onChange(callback: void): Vec3
+  onChange(callback: () => void): Vec3
 
   add(vector?: Vec3): Vec3
   sub(vector?: Vec3): Vec3

@@ -48,17 +48,22 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   updateSizeAndPosition() {
+    //super.updateSizeAndPosition()
+
     this.setWorldSizes()
     this.applyPosition()
+
+    super.updateSizeAndPosition()
   }
 
   updateSizePositionAndProjection() {
     this.updateSizeAndPosition()
-    this.updateProjectionMatrixStack()
+
+    super.updateSizePositionAndProjection()
   }
 
-  resize(boundingRect) {
-    if (this.domElement?.isResizing) return
+  resize(boundingRect = null) {
+    if (!this.domElement || this.domElement?.isResizing) return
 
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
     this.updateSizePositionAndProjection()
@@ -81,6 +86,8 @@ export class DOMObject3D extends ProjectedObject3D {
   setTransforms() {
     super.setTransforms()
 
+    // reset our model transform origin to reflect CSS transform origins
+    this.transforms.origin.model = new Vec3(0.5, 0.5, 0)
     this.transforms.origin.world = new Vec3()
     this.transforms.position.document = new Vec3()
 
@@ -120,7 +127,8 @@ export class DOMObject3D extends ProjectedObject3D {
   applyRotation() {
     super.applyRotation()
 
-    this.updateModelMatrixStack()
+    this.updateModelMatrix()
+    this.updateProjectionMatrixStack()
   }
 
   /***
@@ -141,7 +149,8 @@ export class DOMObject3D extends ProjectedObject3D {
       this.documentPosition.z / this.camera.CSSPerspective
     )
 
-    this.updateModelMatrixStack()
+    this.updateModelMatrix()
+    this.updateProjectionMatrixStack()
   }
 
   applyScale() {
@@ -151,7 +160,8 @@ export class DOMObject3D extends ProjectedObject3D {
     // TODO update textures matrix...
     //this.resize()
 
-    this.updateModelMatrixStack(true)
+    this.updateModelMatrix()
+    this.updateProjectionMatrixStack()
   }
 
   applyTransformOrigin() {
@@ -175,9 +185,6 @@ export class DOMObject3D extends ProjectedObject3D {
       z: 1,
     })
   }
-
-  // TODO useless?
-  updateProjectionMatrixStack() {}
 
   /***
    This function takes pixel values along X and Y axis and convert them to world space coordinates
@@ -225,7 +232,9 @@ export class DOMObject3D extends ProjectedObject3D {
     }
 
     this.setWorldTransformOrigin()
-    this.updateModelMatrixStack(true)
+
+    this.updateModelMatrix()
+    this.updateProjectionMatrixStack()
   }
 
   setWorldTransformOrigin() {
@@ -238,7 +247,8 @@ export class DOMObject3D extends ProjectedObject3D {
       this.transforms.origin.model.z
     )
 
-    this.updateModelMatrixStack()
+    this.updateModelMatrix()
+    this.updateProjectionMatrixStack()
   }
 
   // TODO setPosition, setRotation, setScale, etc.

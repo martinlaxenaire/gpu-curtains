@@ -59,4 +59,6 @@ export class Object3D {
 
   shouldUpdateModelMatrix()
   updateModelMatrix()
+
+  updateSizeAndPosition()
 }

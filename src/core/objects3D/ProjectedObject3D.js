@@ -29,8 +29,9 @@ export class ProjectedObject3D extends Object3D {
         onUpdate: () => {
           // our model view matrix is our model matrix multiplied with our camera view matrix
           // in our case we're just subtracting the camera Z position to our model matrix
-          this.modelViewMatrix.copy(this.modelMatrix)
-          this.modelViewMatrix.elements[14] -= this.camera.position.z
+          // this.modelViewMatrix.copy(this.modelMatrix)
+          // this.modelViewMatrix.elements[14] -= this.camera.position.z
+          this.modelViewMatrix.multiply(this.modelMatrix)
         },
       },
       modelViewProjection: {
@@ -71,10 +72,14 @@ export class ProjectedObject3D extends Object3D {
     this.matrices.modelViewProjection.shouldUpdate = true
   }
 
-  updateModelMatrixStack() {
-    //this.matrices.model.shouldUpdate = true
+  updateProjectionMatrixStack() {
     this.matrices.modelView.shouldUpdate = true
     this.matrices.modelViewProjection.shouldUpdate = true
+  }
+
+  updateSizePositionAndProjection() {
+    this.updateModelMatrix()
+    this.updateProjectionMatrixStack()
   }
 
   render() {

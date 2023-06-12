@@ -68,7 +68,7 @@ export class Plane extends DOMMesh {
 
   onTextureCreated(texture: Texture)
 
-  render(pass: GPURenderPassEncoder)
+  //render(pass: GPURenderPassEncoder)
 
   destroy()
 }

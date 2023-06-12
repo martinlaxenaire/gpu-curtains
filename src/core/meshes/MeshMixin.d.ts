@@ -44,10 +44,13 @@ export default function MeshMixin<TBase extends Constructor>(Base: TBase) {
 
     visible: boolean
 
+    // callbacks
+    onRender: () => void
+
     constructor(
       renderer: CameraRenderer,
       element: HTMLElement | null,
-      { label, shaders, geometry, bindings }: MeshProps
+      { label, shaders, geometry, bindings, onRender }: MeshProps
     )
 
     setMaterial({ label, shaders, uniformsBindings }: MaterialProps)
@@ -57,6 +60,8 @@ export default function MeshMixin<TBase extends Constructor>(Base: TBase) {
 
     setMatricesUniformGroup()
     setUniformBindings(bindings: MeshBindings)
+
+    resize()
     updateModelMatrix()
 
     render(pass: GPURenderPassEncoder)

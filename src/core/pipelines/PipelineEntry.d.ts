@@ -1,6 +1,6 @@
-import { CurtainsRenderer } from '../../utils/renderer-utils'
 import { MaterialBindGroups, MaterialGeometryAttributes } from '../Material'
 import { ShadersType, MeshShadersOptions, FullShadersType } from '../meshes/Mesh'
+import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
 
 interface PipelineEntryShader {
   code: string
@@ -10,7 +10,7 @@ interface PipelineEntryShader {
 type PipelineEntryShaders = Record<FullShadersType, PipelineEntryShader>
 
 interface PipelineEntryProps {
-  renderer: CurtainsRenderer // TODO
+  renderer: GPUCurtainsRenderer
   label?: string | null
   geometryAttributes: MaterialGeometryAttributes
   bindGroups: MaterialBindGroups
@@ -19,7 +19,7 @@ interface PipelineEntryProps {
 
 export class PipelineEntry {
   type: string
-  renderer: CurtainsRenderer
+  renderer: GPUCurtainsRenderer
   id: number
   layout: GPUBindGroupLayout | null
   pipeline: GPUPipelineBase | null

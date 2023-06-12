@@ -5,19 +5,12 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     super({ container, pixelRatio, renderingScale, camera })
 
     this.type = 'CurtainsRenderer'
-
-    this.setRendererObjects()
   }
 
   onCameraPositionChanged() {
     super.onCameraPositionChanged()
-    this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
-  }
-
-  setRendererObjects() {
-    // keep track of planes, textures, etc.
-    this.planes = []
-    this.textures = []
+    console.log('resize meshes from cam pos change')
+    this.meshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
   }
 
   addTexture(texture) {
@@ -30,7 +23,14 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
   onResize() {
     super.onResize()
+    console.log('resize meshes from onResize')
     this.planes?.forEach((plane) => plane.resize())
+  }
+
+  setRendererObjects() {
+    super.setRendererObjects()
+
+    this.planes = []
   }
 
   /**
@@ -44,7 +44,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
   onBeginRenderPass(pass) {
     super.onBeginRenderPass(pass)
 
-    this.planes?.forEach((plane) => plane.render(pass))
+    this.meshes?.forEach((mesh) => mesh.render(pass))
   }
 
   // onAfterRenderPass() {
@@ -60,7 +60,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
   }
 
   destroy() {
-    this.planes.forEach((plane) => plane.destroy())
+    this.meshes.forEach((mesh) => mesh.destroy())
 
     this.textures.forEach((texture) => texture.destroy())
 

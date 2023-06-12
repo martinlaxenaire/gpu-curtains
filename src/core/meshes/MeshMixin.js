@@ -5,7 +5,7 @@ import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBin
 
 export const MeshMixin = (superclass) =>
   class extends superclass {
-    constructor(renderer, element, { label = 'Mesh', shaders = {}, geometry, bindings = [] }) {
+    constructor(renderer, element, { label = 'Mesh', shaders = {}, geometry, bindings = [], onRender = () => {} }) {
       super(renderer, element)
 
       this.type = 'MeshObject'
@@ -43,6 +43,10 @@ export const MeshMixin = (superclass) =>
       this.textures = []
 
       this.visible = true // TODO
+
+      this.onRender = onRender
+
+      this.renderer.meshes.push(this)
     }
 
     setMaterial({ label, shaders, uniformsBindings }) {
@@ -145,6 +149,11 @@ export const MeshMixin = (superclass) =>
       ]
     }
 
+    resize() {
+      super.resize()
+      /* will be overridden */
+    }
+
     updateModelMatrix() {
       super.updateModelMatrix()
 
@@ -163,7 +172,7 @@ export const MeshMixin = (superclass) =>
      */
     render(pass) {
       // no point to render if the WebGPU device is not ready
-      if (!this.renderer.ready) return
+      if (!this.renderer.ready || !this.visible) return
 
       super.render()
 
@@ -172,6 +181,8 @@ export const MeshMixin = (superclass) =>
       })
 
       this.material.render(pass)
+
+      this.onRender()
     }
 
     destroy() {

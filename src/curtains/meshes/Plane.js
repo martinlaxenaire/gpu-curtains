@@ -59,8 +59,6 @@ export class Plane extends DOMMesh {
     // }
 
     //this.renderer = renderer
-    // TODO this should also be handled by MeshMixin?
-    this.renderer.planes.push(this)
 
     // TODO should be handled by meshes
     //this.textures = []
@@ -72,12 +70,12 @@ export class Plane extends DOMMesh {
 
     this.watchScroll = watchScroll
 
-    console.log(this)
-
     this.setInitSources()
 
     // callbacks
     this.onRender = onRender
+
+    this.renderer.planes.push(this)
   }
 
   resize(boundingRect = null) {
@@ -171,7 +169,7 @@ export class Plane extends DOMMesh {
 
   render(pass) {
     // no point to render if the WebGPU device is not ready
-    if (!this.renderer.ready || !this.visible) return
+    if (!this.renderer.ready) return
 
     this.textures.forEach((texture) => {
       texture.textureMatrix.onBeforeRender()

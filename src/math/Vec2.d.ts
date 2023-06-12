@@ -11,7 +11,7 @@ export class Vec2 {
   set(y: number)
   set(x?: number, y?: number): Vec2
 
-  onChange(callback: void): Vec2
+  onChange(callback: () => void): Vec2
 
   add(vector?: Vec2): Vec2
   sub(vector?: Vec2): Vec2

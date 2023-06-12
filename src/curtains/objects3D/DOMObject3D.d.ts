@@ -65,9 +65,6 @@ export class DOMObject3D extends ProjectedObject3D {
   get worldTransformOrigin()
   set worldTransformOrigin(value: Vec3)
 
-  // TODO useless?
-  updateProjectionMatrixStack()
-
   documentToWorldSpace(vector?: Vec3): Vec3
 
   setWorldSizes()

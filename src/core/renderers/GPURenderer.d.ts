@@ -1,12 +1,16 @@
 import { DOMElement, DOMElementBoundingRect } from '../DOMElement'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { Texture } from '../Texture'
+import { Mesh } from '../meshes/Mesh'
+import { Plane } from '../../curtains/meshes/Plane'
 
 interface GPURendererProps {
   container: string | HTMLElement
   pixelRatio?: number
   renderingScale?: number
 }
+
+type MeshTypes = Mesh | Plane
 
 export class GPURenderer {
   type: string
@@ -21,11 +25,17 @@ export class GPURenderer {
   renderPass: null | {
     descriptor: GPURenderPassDescriptor
     target: GPUTexture
+    depth: GPUTexture
     view: GPUTextureView
   } // TODO
 
   pipelineManager: PipelineManager
 
+  meshes: MeshTypes[]
+  textures: Texture[]
+
+  pixelRatio: number
+  renderingScale: number
   domElement: DOMElement
   documentBody: DOMElement
 
@@ -46,6 +56,8 @@ export class GPURenderer {
   setSize(contentRect: DOMElementBoundingRect)
   resize(boundingRect?: DOMElementBoundingRect | null)
   onResize()
+
+  setRendererObjects()
 
   onBeforeRenderPass()
   onBeginRenderPass(pass: GPURenderPassEncoder)

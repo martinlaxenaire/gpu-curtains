@@ -71,7 +71,7 @@ export class Geometry {
     this.wgslStructFragment = `
 struct Attributes {
    ${this.attributes
-     .map((attribute, index) => '@location(' + index + ')' + attribute.name + ': ' + attribute.type)
+     .map((attribute, index) => '@location(' + index + ') ' + attribute.name + ': ' + attribute.type)
      .join(',\n\t')}
 };\n`
   }

@@ -9,6 +9,9 @@ export class GPURenderer {
 
     this.gpu = navigator.gpu
 
+    this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
+    this.renderingScale = renderingScale
+
     if (!this.gpu) {
       console.warn('WebGPU not supported!')
       return
@@ -31,6 +34,8 @@ export class GPURenderer {
       element: document.body,
       onSizeChanged: () => this.resize(),
     })
+
+    this.setRendererObjects()
   }
 
   /**
@@ -148,9 +153,32 @@ export class GPURenderer {
 
   /** RENDER TEXTURES **/
 
+  // TODO
+  setRenderPassDepth() {
+    if (!this.renderPass) return
+
+    // set view
+    if (this.renderPass.depth !== undefined) {
+      // Destroy the previous render target
+      this.renderPass.depth.destroy()
+    }
+
+    this.renderPass.depth = this.createTexture({
+      size: [this.canvas.width, this.canvas.height],
+      format: 'depth24plus',
+      usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      sampleCount: this.sampleCount,
+    })
+
+    if (this.renderPass.descriptor) {
+      this.renderPass.descriptor.depthStencilAttachment.view = this.renderPass.depth.createView()
+    }
+  }
+
   setRenderPassView() {
     if (!this.renderPass) return
 
+    // set view
     if (this.renderPass.target !== undefined) {
       // Destroy the previous render target
       this.renderPass.target.destroy()
@@ -171,24 +199,36 @@ export class GPURenderer {
   setRenderPass() {
     this.sampleCount = 4 // TODO
 
-    this.renderPass = {
-      descriptor: {
-        label: 'Renderer canvas renderPass',
-        colorAttachments: [
-          {
-            // view: <- to be filled out when we set our render pass view
-            //view: this.renderPass.view,
-            // clear values
-            clearValue: [0, 0, 0, 0],
-            // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
-            // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what’s already there.
-            loadOp: 'clear',
-            // storeOp: 'store' means store the result of what we draw.
-            // We could also pass 'discard' which would throw away what we draw.
-            // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
-            storeOp: 'store',
-          },
-        ],
+    // TODO also
+
+    this.renderPass = {}
+
+    this.setRenderPassDepth()
+
+    this.renderPass.descriptor = {
+      label: 'Renderer canvas renderPass',
+      colorAttachments: [
+        {
+          // view: <- to be filled out when we set our render pass view
+          //view: this.renderPass.view,
+          // clear values
+          clearValue: [0, 0, 0, 0],
+          // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
+          // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what’s already there.
+          loadOp: 'clear',
+          // storeOp: 'store' means store the result of what we draw.
+          // We could also pass 'discard' which would throw away what we draw.
+          // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
+          storeOp: 'store',
+        },
+      ],
+      depthStencilAttachment: {
+        // TODO
+        view: this.renderPass.depth.createView(),
+
+        depthClearValue: 1.0,
+        depthLoadOp: 'clear',
+        depthStoreOp: 'store',
       },
     }
 
@@ -216,13 +256,24 @@ export class GPURenderer {
   }
 
   resize(boundingRect = null) {
+    if (!this.domElement) return
     this.setSize(boundingRect ?? this.domElement.element.getBoundingClientRect())
     this.setRenderPassView()
+    this.setRenderPassDepth()
+
     this.onResize()
   }
 
   onResize() {
     /* will be overridden */
+  }
+
+  /** OBJECTS **/
+
+  setRendererObjects() {
+    // keep track of planes, textures, etc.
+    this.meshes = []
+    this.textures = []
   }
 
   /** RENDER **/

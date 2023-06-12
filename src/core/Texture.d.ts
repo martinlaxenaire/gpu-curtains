@@ -1,4 +1,3 @@
-import { CurtainsRenderer } from '../utils/renderer-utils'
 import { TextureBindingResource } from './bindGroupBindings/BindGroupTextureBinding'
 import { SamplerBindingResource } from './bindGroupBindings/BindGroupSamplerBinding'
 import { Object3D } from './objects3D/Object3D'
@@ -7,6 +6,7 @@ import { Mesh } from './meshes/Mesh'
 import { DOMMesh } from '../curtains/meshes/DOMMesh'
 import { BindGroupBindingElement } from './bindGroups/BindGroup'
 import { Vec3 } from '../math/Vec3'
+import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
 
 interface CurtainsTextureOptions {
   generateMips?: boolean
@@ -33,7 +33,7 @@ type TextureParent = null | Mesh | DOMMesh // TODO
 
 export class Texture extends Object3D {
   type: string
-  renderer: CurtainsRenderer
+  renderer: GPUCurtainsRenderer
 
   sampler: SamplerBindingResource
   texture: TextureBindingResource
@@ -55,14 +55,14 @@ export class Texture extends Object3D {
   shouldUpdate: boolean
   shouldUpdateBindGroup: boolean
 
-  constructor(renderer: CurtainsRenderer, options: TextureProps)
+  constructor(renderer: GPUCurtainsRenderer, options: TextureProps)
 
   setBindings()
 
   get parent(): TextureParent
   set parent(value: TextureParent)
 
-  computeScale(): Vec3
+  computeTextureScale()
   updateTextureMatrix()
   resize()
 

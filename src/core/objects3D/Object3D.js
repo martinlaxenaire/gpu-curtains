@@ -13,7 +13,7 @@ export class Object3D {
   setTransforms() {
     this.transforms = {
       origin: {
-        model: new Vec3(0.5, 0.5, 0),
+        model: new Vec3(),
       },
       quaternion: new Quat(),
       rotation: new Vec3(),
@@ -61,7 +61,6 @@ export class Object3D {
 
   set scale(value) {
     // force scale to 1 on Z axis
-    //value.z = 1
     this.transforms.scale = value
     this.applyScale()
   }
@@ -131,5 +130,9 @@ export class Object3D {
       this.scale,
       this.transformOrigin
     )
+  }
+
+  updateSizeAndPosition() {
+    this.shouldUpdateModelMatrix()
   }
 }

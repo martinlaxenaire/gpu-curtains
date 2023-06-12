@@ -10,9 +10,6 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.type = 'CameraRenderer'
 
-    this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
-    this.renderingScale = renderingScale
-
     camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera }
     this.setCamera(camera)
   }

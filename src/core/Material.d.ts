@@ -1,12 +1,12 @@
 import { Geometry } from './geometries/Geometry'
 import { IndexedGeometry, IndexedGeometryIndexData } from './geometries/IndexedGeometry'
-import { CurtainsRenderer } from '../utils/renderer-utils'
 import { FullShadersType, MeshShaders, MeshShadersOptions } from './meshes/Mesh'
 import { BindGroupBufferBindings, BindGroupBufferBindingsUniform } from './bindGroupBindings/BindGroupBufferBindings'
 import { PipelineEntry } from './pipelines/PipelineEntry'
 import { BindGroup } from './bindGroups/BindGroup'
 import { TextureBindGroup } from './bindGroups/TextureBindGroup'
 import { Texture } from './Texture'
+import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
 
 interface MaterialGeometryAttribute {
   wgslStructFragment: Geometry['wgslStructFragment']
@@ -43,7 +43,7 @@ type MaterialGeometryAttributes = Record<string, MaterialGeometryAttribute | Mat
 
 export class Material {
   type: string
-  renderer: CurtainsRenderer
+  renderer: GPUCurtainsRenderer
   options: {
     label: string
     shaders: MeshShaders
@@ -68,8 +68,7 @@ export class Material {
   textures: Texture[]
   texturesBindGroup: TextureBindGroup
 
-  // TODO could be curtains as well?,
-  constructor(renderer: CurtainsRenderer, { label, shaders, uniformBindings }: MaterialProps)
+  constructor(renderer: GPUCurtainsRenderer, { label, shaders, uniformBindings }: MaterialProps)
 
   setMaterial()
   setPipelineEntry()

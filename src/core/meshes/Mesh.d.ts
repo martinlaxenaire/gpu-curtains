@@ -45,8 +45,9 @@ interface MeshProps {
   shaders?: MeshShadersOptions
   bindings?: MeshBindings
   geometry: Geometry | IndexedGeometry
+  onRender?: () => void
 }
 
 export class Mesh extends MeshMixin(ProjectedObject3D) {
-  constructor(renderer: GPUCameraRenderer, { label, shaders, geometry, bindings }: MeshProps)
+  constructor(renderer: GPUCameraRenderer, { label, shaders, geometry, bindings, onRender }: MeshProps)
 }

@@ -147,6 +147,21 @@ export class PipelineEntry {
         entryPoint: this.options.shaders.fragment.entryPoint, // TODO editable via options?
         targets: [{ format: this.renderer.preferredFormat }],
       },
+      primitive: {
+        topology: 'triangle-list',
+
+        // Backface culling since the cube is solid piece of geometry.
+        // Faces pointing away from the camera will be occluded by faces
+        // pointing toward the camera.
+        //cullMode: 'back', // TODO
+      },
+      // Enable depth testing so that the fragment closest to the camera
+      // is rendered in front.
+      depthStencil: {
+        depthWriteEnabled: true,
+        depthCompare: 'less',
+        format: 'depth24plus',
+      },
       ...(this.renderer.sampleCount > 1 && {
         multisample: {
           count: this.renderer.sampleCount,

@@ -69,9 +69,11 @@ export class DOMElement {
     this.isResizing = true
     this.boundingRect = contentRect ?? this.element.getBoundingClientRect()
 
+    // TODO
+    this.isResizing = false
     setTimeout(() => {
       this.isResizing = false
-    }, 50)
+    }, 0)
   }
 
   destroy() {
