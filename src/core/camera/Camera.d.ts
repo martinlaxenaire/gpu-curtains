@@ -13,7 +13,7 @@ interface CameraPerspectiveOptions extends CameraBasePerspectiveOptions {
   pixelRatio?: number
 }
 
-interface CameraProps extends CameraPerspectiveOptions {
+interface CameraParams extends CameraPerspectiveOptions {
   onPerspectiveChanged?: () => void
   onPositionChanged?: () => void
 }
@@ -35,7 +35,7 @@ export class Camera {
 
   shouldUpdate: boolean
 
-  constructor({ fov, near, far, width, height, pixelRatio, onPerspectiveChanged, onPositionChanged }: CameraProps)
+  constructor({ fov, near, far, width, height, pixelRatio, onPerspectiveChanged, onPositionChanged }: CameraParams)
 
   setFov(fov?: number)
   setNear(near?: number)

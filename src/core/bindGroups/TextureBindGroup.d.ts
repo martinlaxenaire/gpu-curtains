@@ -1,7 +1,7 @@
-import { BindGroup, BindGroupProps } from './BindGroup'
+import { BindGroup, BindGroupParams } from './BindGroup'
 import { Texture } from '../Texture'
 
-interface TextureBindGroupProps extends BindGroupProps {
+interface TextureBindGroupParams extends BindGroupParams {
   textures: Texture[]
 }
 
@@ -9,7 +9,7 @@ export class TextureBindGroup extends BindGroup {
   textures: Texture[]
   externalTexturesIDs: Array<number>
 
-  constructor({ label, renderer, index, bindings, textures }: TextureBindGroupProps)
+  constructor({ label, renderer, index, bindings, textures }: TextureBindGroupParams)
 
   addTexture(texture: Texture)
 

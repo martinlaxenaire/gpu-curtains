@@ -10,7 +10,7 @@ interface BindGroupBindingBuffer {
   buffer: GPUBuffer
 }
 
-interface BindGroupProps {
+interface BindGroupParams {
   label?: string
   renderer: GPURenderer
   index?: number
@@ -38,7 +38,7 @@ export class BindGroup {
 
   needsPipelineFlush: boolean
 
-  constructor({ label, renderer, index, bindings }: BindGroupProps)
+  constructor({ label, renderer, index, bindings }: BindGroupParams)
 
   setIndex(index: number)
 

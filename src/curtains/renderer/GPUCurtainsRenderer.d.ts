@@ -1,11 +1,11 @@
-import { GPUCameraRenderer, GPUCameraRendererProps } from '../../core/renderers/GPUCameraRenderer'
+import { GPUCameraRenderer, GPUCameraRendererParams } from '../../core/renderers/GPUCameraRenderer'
 import { Texture } from '../../core/Texture'
 import { Plane } from '../meshes/Plane'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
   planes: Plane[]
 
-  constructor({ container, pixelRatio, renderingScale, camera }: GPUCameraRendererProps)
+  constructor({ container, pixelRatio, renderingScale, camera }: GPUCameraRendererParams)
 
   onCameraPositionChanged()
 

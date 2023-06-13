@@ -131,7 +131,7 @@ export class PipelineEntry {
 
     this.shaders.fragment.module = this.createShaderModule({
       code: this.shaders.fragment.code,
-      type: 'Vertex',
+      type: 'Fragment',
     })
   }
 
@@ -179,7 +179,8 @@ export class PipelineEntry {
       },
       depthStencil: {
         depthWriteEnabled: true, // TODO options
-        depthCompare: 'less',
+        //depthCompare: 'less',
+        depthCompare: 'always',
         format: 'depth24plus',
       },
       ...(this.renderer.renderPass.sampleCount > 1 && {

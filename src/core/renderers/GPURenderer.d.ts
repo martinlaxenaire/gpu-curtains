@@ -4,7 +4,7 @@ import { Texture } from '../Texture'
 import { Mesh } from '../meshes/Mesh'
 import { Plane } from '../../curtains/meshes/Plane'
 
-interface GPURendererProps {
+interface GPURendererParams {
   container: string | HTMLElement
   pixelRatio?: number
   renderingScale?: number
@@ -39,7 +39,7 @@ export class GPURenderer {
   domElement: DOMElement
   documentBody: DOMElement
 
-  constructor({ container, pixelRatio, renderingScale }: GPURendererProps)
+  constructor({ container, pixelRatio, renderingScale }: GPURendererParams)
 
   setContext()
   setAdapterAndDevice()

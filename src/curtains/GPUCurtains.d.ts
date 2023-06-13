@@ -3,7 +3,7 @@ import { GPUCurtainsRenderer } from './renderer/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import { Vec3 } from '../math/Vec3'
 
-interface GPUCurtainsProps {
+interface GPUCurtainsParams {
   container: string | HTMLElement | null
   pixelRatio?: number
   camera?: CameraBasePerspectiveOptions
@@ -11,7 +11,7 @@ interface GPUCurtainsProps {
 
 export class GPUCurtains {
   type: string
-  options: GPUCurtainsProps
+  options: GPUCurtainsParams
   container: HTMLElement
 
   renderer: GPUCurtainsRenderer
@@ -21,7 +21,7 @@ export class GPUCurtains {
 
   animationFrameID: null | number
 
-  constructor({ container, pixelRatio, camera }: GPUCurtainsProps)
+  constructor({ container, pixelRatio, camera }: GPUCurtainsParams)
 
   setContainer(container: string | HTMLElement)
   setRenderer()

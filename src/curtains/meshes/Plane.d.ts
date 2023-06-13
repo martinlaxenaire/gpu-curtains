@@ -1,12 +1,12 @@
 import { DOMMesh } from './DOMMesh'
-import { MeshBaseProps, MeshBindings, MeshShadersOptions } from '../../core/meshes/Mesh'
-import { PlaneGeometryProps } from '../geometry/PlaneGeometry'
+import { MeshBaseParams, MeshBindings, MeshShadersOptions } from '../../core/meshes/Mesh'
+import { PlaneGeometryParams } from '../geometry/PlaneGeometry'
 import { RectCoords } from '../objects3D/DOMObject3D'
 import { GPUCurtainsRenderer } from '../renderer/GPUCurtainsRenderer'
 import { DOMElementBoundingRect } from '../../core/DOMElement'
 import { Texture } from '../../core/Texture'
 
-interface PlaneProps extends MeshBaseProps, PlaneGeometryProps {
+interface PlaneParams extends MeshBaseParams, PlaneGeometryParams {
   // frustum / view culling
   alwaysDraw?: boolean
   drawCheckMargins?: RectCoords
@@ -50,7 +50,7 @@ export class Plane extends DOMMesh {
       autoloadSources,
       watchScroll,
       onRender,
-    }: PlaneProps
+    }: PlaneParams
   )
 
   resize(boundingRect?: DOMElementBoundingRect)

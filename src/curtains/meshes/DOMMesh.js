@@ -1,6 +1,6 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
-import MeshMixin from '../../core/meshes/MeshMixin'
+import { MeshMixin } from '../../core/meshes/MeshMixin'
 
 export class DOMMesh extends MeshMixin(DOMObject3D) {
   constructor(

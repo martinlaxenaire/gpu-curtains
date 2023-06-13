@@ -2,7 +2,7 @@ import { ShadersType } from '../meshes/Mesh'
 
 type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'sampler'
 
-interface BindGroupBindingProps {
+interface BindGroupBindingParams {
   label?: string
   name?: string
   bindingType?: BindingType
@@ -17,7 +17,7 @@ export class BindGroupBinding {
   bindIndex: number
   visibility: GPUShaderStageFlags
 
-  constructor({ label, name, bindingType, bindIndex, visibility }: BindGroupBindingProps)
+  constructor({ label, name, bindingType, bindIndex, visibility }: BindGroupBindingParams)
 
   setWGSLFragment()
   shouldUpdateUniform()

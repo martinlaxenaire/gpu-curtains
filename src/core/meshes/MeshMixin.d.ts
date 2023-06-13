@@ -1,10 +1,8 @@
-import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { CameraRenderer } from '../../utils/renderer-utils'
-import { MeshBindings, MeshProps } from './Mesh'
+import { MeshBindings, MeshParams } from './Mesh'
 import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
-import { Material, MaterialProps } from '../Material'
-import { Texture, TextureProps } from '../Texture'
+import { Material, MaterialParams } from '../Material'
+import { Texture, TextureParams } from '../Texture'
 
 // type MeshMixinSuperClass = InstanceType<typeof ProjectedObject3D | typeof DOMObject3D>
 
@@ -28,15 +26,15 @@ export default function MeshMixin<TBase extends Constructor>(Base: TBase) {
     renderer: CameraRenderer
 
     options: {
-      label: MeshProps['label']
-      shaders: MeshProps['shaders']
+      label: MeshParams['label']
+      shaders: MeshParams['shaders']
     }
 
     matrixUniformBinding: BindGroupBufferBindings
     uniformsBindings: BindGroupBufferBindings[]
 
     material: Material
-    geometry: MeshProps['geometry']
+    geometry: MeshParams['geometry']
 
     uniforms: Material['uniforms']
 
@@ -50,12 +48,12 @@ export default function MeshMixin<TBase extends Constructor>(Base: TBase) {
     constructor(
       renderer: CameraRenderer,
       element: HTMLElement | null,
-      { label, shaders, geometry, bindings, cullMode, visible, onRender }: MeshProps
+      { label, shaders, geometry, bindings, cullMode, visible, onRender }: MeshParams
     )
 
-    setMaterial({ label, shaders, cullMode, uniformsBindings }: MaterialProps)
+    setMaterial({ label, shaders, cullMode, uniformsBindings }: MaterialParams)
 
-    createTexture(options: TextureProps): Texture
+    createTexture(options: TextureParams): Texture
     onTextureCreated(texture: Texture)
 
     setMatricesUniformGroup()

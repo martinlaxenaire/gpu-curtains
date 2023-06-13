@@ -1,8 +1,8 @@
-import { BindGroupBinding, BindGroupBindingProps } from './BindGroupBinding'
+import { BindGroupBinding, BindGroupBindingParams } from './BindGroupBinding'
 
 type TextureBindingResource = GPUTextureView | GPUExternalTexture | null
 
-interface BindGroupTextureBindingProps extends BindGroupBindingProps {
+interface BindGroupTextureBindingParams extends BindGroupBindingParams {
   resource: TextureBindingResource
 }
 
@@ -10,5 +10,5 @@ export class BindGroupTextureBinding extends BindGroupBinding {
   resource: TextureBindingResource
   wgslGroupFragment: string
 
-  constructor({ label, name, bindingType, bindIndex, resource, visibility }: BindGroupTextureBindingProps)
+  constructor({ label, name, bindingType, bindIndex, resource, visibility }: BindGroupTextureBindingParams)
 }

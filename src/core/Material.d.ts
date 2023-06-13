@@ -33,15 +33,16 @@ interface MaterialIndexedGeometryAttributeBuffers extends MaterialGeometryAttrib
   indexBuffer: GPUBuffer
 }
 
-interface MaterialBaseProps {
+interface MaterialBaseParams {
   label?: string
   shaders?: MeshShadersOptions
   transparent?: boolean
-  depthTest?: boolean
+  depthWriteEnabled?: boolean
+  depthCompare?: GPUCompareFunction
   cullMode?: GPUCullMode
 }
 
-interface MaterialProps extends MaterialBaseProps {
+interface MaterialParams extends MaterialBaseParams {
   uniformBindings: Array<BindGroupBufferBindings>
 }
 
@@ -76,7 +77,7 @@ export class Material {
   textures: Texture[]
   texturesBindGroup: TextureBindGroup
 
-  constructor(renderer: GPUCurtainsRenderer, { label, shaders, uniformBindings, cullMode }: MaterialProps)
+  constructor(renderer: GPUCurtainsRenderer, { label, shaders, uniformBindings, cullMode }: MaterialParams)
 
   setMaterial()
   setPipelineEntry()

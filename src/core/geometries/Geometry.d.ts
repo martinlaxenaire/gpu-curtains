@@ -1,4 +1,4 @@
-interface GeometryProps {
+interface GeometryParams {
   verticesOrder?: GPUFrontFace
 }
 
@@ -8,15 +8,15 @@ export class Geometry {
   arrayStride: number
   bufferLength: number
 
-  attributes: CoreBufferProps[]
+  attributes: CoreBufferParams[]
 
   array: Float32Array
 
   wgslStructFragment: string
 
-  constructor({ verticesOrder }: GeometryProps)
+  constructor({ verticesOrder }: GeometryParams)
 
-  setAttribute({ name, type, bufferFormat, size, array }: CoreBufferPropsOption)
+  setAttribute({ name, type, bufferFormat, size, array }: CoreBufferParamsOption)
 
   computeGeometry()
 

@@ -14,7 +14,7 @@ interface CurtainsTextureOptions {
   placeholderColor?: Array<number>
 }
 
-interface TextureProps {
+interface TextureParams {
   label?: string
   name?: string
   texture: CurtainsTextureOptions
@@ -24,7 +24,7 @@ interface TextureProps {
 type TextureSource = HTMLVideoElement | HTMLCanvasElement | ImageBitmap | null
 type TextureSourceType = 'image' | 'video' | 'canvas' | null
 
-interface TextureOptions extends TextureProps {
+interface TextureOptions extends TextureParams {
   source: TextureSource | string // for image url
   sourceType: TextureSourceType
 }
@@ -55,7 +55,7 @@ export class Texture extends Object3D {
   shouldUpdate: boolean
   shouldUpdateBindGroup: boolean
 
-  constructor(renderer: GPUCurtainsRenderer, options: TextureProps)
+  constructor(renderer: GPUCurtainsRenderer, options: TextureParams)
 
   setBindings()
 

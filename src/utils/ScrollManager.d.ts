@@ -1,4 +1,4 @@
-interface ScrollManagerProps {
+interface ScrollManagerParams {
   xOffset?: number
   yOffset?: number
   lastXDelta?: number
@@ -17,7 +17,7 @@ export class ScrollManager {
 
   handler: void
 
-  constructor({ xOffset, yOffset, lastXDelta, lastYDelta, shouldWatch, onScroll }: ScrollManagerProps)
+  constructor({ xOffset, yOffset, lastXDelta, lastYDelta, shouldWatch, onScroll }: ScrollManagerParams)
 
   scroll()
   updateScrollValues(x: number, y: number)
