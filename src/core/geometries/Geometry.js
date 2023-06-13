@@ -1,6 +1,7 @@
 export class Geometry {
-  constructor() {
-    this.vertexCount = null
+  constructor({ verticesOrder = 'cw' } = {}) {
+    this.verticesCount = null
+    this.verticesOrder = verticesOrder
     this.arrayStride = 0
     this.bufferLength = 0
 
@@ -13,10 +14,10 @@ export class Geometry {
     if (!name) name = 'geometryAttribute' + attributesLength
 
     const attributeVerticesCount = array.length / size
-    if (this.vertexCount && this.vertexCount !== attributeVerticesCount) {
+    if (this.verticesCount && this.verticesCount !== attributeVerticesCount) {
       console.error(
         'Geometry vertices count error. Previous vertices count:',
-        this.vertexCount,
+        this.verticesCount,
         ', current given:',
         attributeVerticesCount
       )
@@ -24,7 +25,7 @@ export class Geometry {
       return
     }
 
-    this.vertexCount = attributeVerticesCount
+    this.verticesCount = attributeVerticesCount
 
     const attribute = {
       name,

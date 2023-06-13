@@ -11,7 +11,8 @@ import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
 interface MaterialGeometryAttribute {
   wgslStructFragment: Geometry['wgslStructFragment']
   vertexArray: Geometry['array']
-  vertexCount: Geometry['vertexCount']
+  verticesCount: Geometry['verticesCount']
+  verticesOrder: Geometry['verticesOrder']
   pipelineBuffers: GPUVertexState
 }
 

@@ -47,10 +47,12 @@ export class PipelineEntry {
       },
     }
 
+    // TODO use the options to compare 2 pipeline entries
     this.options = {
       label,
       shaders,
       cullMode,
+      verticesOrder: this.geometryAttributes.verticesOrder,
     }
 
     this.setPipelineEntry()
@@ -172,7 +174,7 @@ export class PipelineEntry {
       },
       primitive: {
         //topology: 'triangle-list', // default setting anyway
-        frontFace: 'cw',
+        frontFace: this.options.verticesOrder,
         cullMode: this.options.cullMode,
       },
       depthStencil: {

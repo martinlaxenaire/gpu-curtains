@@ -1,8 +1,8 @@
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 
 export class PlaneGeometry extends IndexedGeometry {
-  constructor({ widthSegments = 1, heightSegments = 1 }) {
-    super()
+  constructor({ widthSegments = 1, heightSegments = 1, verticesOrder = 'cw' }) {
+    super({ verticesOrder })
 
     // unique plane buffers id based on width and height
     // used to get a geometry from cache

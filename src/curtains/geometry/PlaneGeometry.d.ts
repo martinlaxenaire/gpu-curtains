@@ -1,6 +1,7 @@
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
+import { GeometryProps } from '../../core/geometries/Geometry'
 
-interface PlaneGeometryProps {
+interface PlaneGeometryProps extends GeometryProps {
   widthSegments?: number
   heightSegments?: number
 }
@@ -13,7 +14,7 @@ export class PlaneGeometry extends IndexedGeometry {
     count: number
   }
 
-  constructor({ widthSegments, heightSegments }: PlaneGeometryProps)
+  constructor({ widthSegments, heightSegments, verticesOrder }: PlaneGeometryProps)
 
   setIndexArray()
 

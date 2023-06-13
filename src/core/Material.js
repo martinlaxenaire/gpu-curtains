@@ -105,7 +105,8 @@ export class Material {
     this.attributes.geometry = {
       wgslStructFragment: geometry.wgslStructFragment,
       vertexArray: geometry.array,
-      vertexCount: geometry.vertexCount,
+      verticesCount: geometry.verticesCount,
+      verticesOrder: geometry.verticesOrder,
       pipelineBuffers: [
         {
           arrayStride: geometry.arrayStride * 4, // (2 + 3) floats, 4 bytes each
@@ -318,7 +319,7 @@ export class Material {
     if (this.attributes.geometry.indexBufferLength) {
       pass.drawIndexed(this.attributes.geometry?.indexBufferLength)
     } else {
-      pass.draw(this.attributes.geometry?.vertexCount)
+      pass.draw(this.attributes.geometry?.verticesCount)
     }
   }
 

@@ -1,8 +1,8 @@
 import { Geometry } from './Geometry'
 
 export class IndexedGeometry extends Geometry {
-  constructor() {
-    super()
+  constructor({ verticesOrder = 'cw' }) {
+    super({ verticesOrder })
 
     this.isIndexed = true
   }
