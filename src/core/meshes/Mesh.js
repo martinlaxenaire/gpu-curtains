@@ -3,20 +3,7 @@ import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import { MeshMixin } from './MeshMixin'
 
 export class Mesh extends MeshMixin(ProjectedObject3D) {
-  constructor(
-    renderer,
-    {
-      label = 'Mesh',
-      geometry,
-      shaders = {},
-      bindings = [],
-      cullMode = 'back',
-      visible = true,
-      onRender = () => {
-        /* allow empty callback */
-      },
-    }
-  ) {
+  constructor(renderer, parameters = {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
@@ -25,7 +12,7 @@ export class Mesh extends MeshMixin(ProjectedObject3D) {
       return
     }
 
-    super(renderer, null, { label, shaders, geometry, bindings, cullMode, visible, onRender })
+    super(renderer, null, parameters)
 
     this.type = 'Mesh'
   }

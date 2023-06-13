@@ -77,7 +77,7 @@ export class Material {
   textures: Texture[]
   texturesBindGroup: TextureBindGroup
 
-  constructor(renderer: GPUCurtainsRenderer, { label, shaders, uniformBindings, cullMode }: MaterialParams)
+  constructor(renderer: GPUCurtainsRenderer, parameters: MaterialParams)
 
   setMaterial()
   setPipelineEntry()

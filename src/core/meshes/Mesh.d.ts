@@ -54,8 +54,5 @@ interface MeshParams extends MeshBaseParams {
 }
 
 export class Mesh extends MeshMixin(ProjectedObject3D) {
-  constructor(
-    renderer: GPUCameraRenderer,
-    { label, geometry, shaders, bindings, cullMode, visible, onRender }: MeshParams
-  )
+  constructor(renderer: GPUCameraRenderer, parameters?: MeshParams)
 }

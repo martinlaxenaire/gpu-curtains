@@ -2,41 +2,28 @@ import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import { PlaneGeometry } from '../geometry/PlaneGeometry'
 import { DOMMesh } from './DOMMesh'
 
+const defaultPlaneParams = {
+  label: 'Plane',
+
+  // geometry
+  widthSegments: 1,
+  heightSegments: 1,
+
+  // Plane specific params
+  alwaysDraw: false,
+  //transparent = false,
+  drawCheckMargins: {
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  autoloadSources: true,
+  watchScroll: true,
+}
+
 export class Plane extends DOMMesh {
-  constructor(
-    renderer,
-    element,
-    {
-      label = 'Plane',
-
-      // geometry
-      widthSegments = 1,
-      heightSegments = 1,
-
-      // material
-      shaders = {},
-      bindings = [],
-      cullMode = 'back',
-
-      // Plane specific params
-      alwaysDraw = false,
-      visible = true,
-      //transparent = false,
-      drawCheckMargins = {
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-      },
-      autoloadSources = true,
-      watchScroll = true,
-
-      // events
-      onRender = () => {
-        /* allow empty callback */
-      },
-    } = {}
-  ) {
+  constructor(renderer, element, parameters = {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
@@ -45,13 +32,24 @@ export class Plane extends DOMMesh {
       return
     }
 
-    //super(renderer, element)
-    const geometry = new PlaneGeometry({
+    // assign default params if needed
+    const params = { ...defaultPlaneParams, ...parameters }
+
+    const {
       widthSegments,
       heightSegments,
-    })
+      alwaysDraw,
+      drawCheckMargins,
+      autoloadSources,
+      watchScroll,
+      ...domMeshParams
+    } = params
 
-    super(renderer, element, { label, geometry, shaders, bindings, cullMode, visible, onRender })
+    // create a plane geometry first
+    const geometry = new PlaneGeometry({ widthSegments, heightSegments })
+
+    // get DOMMesh params
+    super(renderer, element, { geometry, ...domMeshParams })
 
     this.type = 'Plane'
 
@@ -60,16 +58,10 @@ export class Plane extends DOMMesh {
     // }
 
     this.alwaysDraw = alwaysDraw
-    this.visible = visible
-
     this.autoloadSources = autoloadSources
-
     this.watchScroll = watchScroll
 
     this.setInitSources()
-
-    // callbacks
-    this.onRender = onRender
 
     this.renderer.planes.push(this)
   }

@@ -7,29 +7,27 @@ import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBind
 import { Object3D } from './objects3D/Object3D'
 import { Mat4 } from '../math/Mat4'
 
-const textureScale = new Vec3()
 const rotationMatrix = new Mat4()
 
+const defaultTextureParams = {
+  label: 'Texture',
+  name: 'texture',
+  texture: {
+    generateMips: false,
+    flipY: false,
+    placeholderColor: [0, 0, 0, 255], // default to black
+  },
+  sampler: {
+    addressModeU: 'repeat',
+    addressModeV: 'repeat',
+    magFilter: 'linear',
+    minFilter: 'linear',
+    mipmapFilter: 'linear',
+  },
+}
+
 export class Texture extends Object3D {
-  constructor(
-    renderer,
-    options = {
-      label: 'Texture',
-      name: 'texture',
-      texture: {
-        generateMips: false,
-        flipY: false,
-        placeholderColor: [0, 0, 0, 255], // default to black
-      },
-      sampler: {
-        addressModeU: 'repeat',
-        addressModeV: 'repeat',
-        magFilter: 'linear',
-        minFilter: 'linear',
-        mipmapFilter: 'linear',
-      },
-    }
-  ) {
+  constructor(renderer, parameters = defaultTextureParams) {
     super()
 
     this.type = 'Texture'
@@ -45,25 +43,12 @@ export class Texture extends Object3D {
     this.renderer = renderer
 
     const defaultOptions = {
-      label: '',
-      name: '',
+      ...defaultTextureParams,
       source: null,
       sourceType: null,
-      texture: {
-        generateMips: false,
-        flipY: false,
-        placeholderColor: [0, 0, 0, 255], // default to black
-      },
-      sampler: {
-        addressModeU: 'repeat',
-        addressModeV: 'repeat',
-        magFilter: 'linear',
-        minFilter: 'linear',
-        mipmapFilter: 'linear',
-      },
     }
 
-    this.options = { ...defaultOptions, ...options }
+    this.options = { ...defaultOptions, ...parameters }
 
     this.sampler = null
     this.texture = null

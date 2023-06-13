@@ -45,13 +45,9 @@ export default function MeshMixin<TBase extends Constructor>(Base: TBase) {
     // callbacks
     onRender: () => void
 
-    constructor(
-      renderer: CameraRenderer,
-      element: HTMLElement | null,
-      { label, shaders, geometry, bindings, cullMode, visible, onRender }: MeshParams
-    )
+    constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshParams)
 
-    setMaterial({ label, shaders, cullMode, uniformsBindings }: MaterialParams)
+    setMaterial(materialParameters: MaterialParams)
 
     createTexture(options: TextureParams): Texture
     onTextureCreated(texture: Texture)

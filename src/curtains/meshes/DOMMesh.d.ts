@@ -9,9 +9,5 @@ interface DOMMeshParams extends MeshBaseParams {
 }
 
 export class DOMMesh extends MeshMixin(DOMObject3D) {
-  constructor(
-    renderer: GPUCurtainsRenderer,
-    element: HTMLElement,
-    { label, geometry, shaders, bindings, cullMode, visible, onRender }: DOMMeshParams
-  )
+  constructor(renderer: GPUCurtainsRenderer, element: HTMLElement, parameters: DOMMeshParams)
 }

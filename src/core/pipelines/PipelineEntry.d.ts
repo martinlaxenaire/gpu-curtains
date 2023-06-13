@@ -9,11 +9,16 @@ interface PipelineEntryShader {
 
 type PipelineEntryShaders = Record<FullShadersType, PipelineEntryShader>
 
-interface PipelineEntryParams extends MaterialBaseParams {
-  renderer: GPUCurtainsRenderer
+interface PipelineEntryBaseParams extends MaterialBaseParams {
   geometryAttributes: MaterialGeometryAttributes
   bindGroups: MaterialBindGroups
   shaders: MeshShadersOptions
+  depthWriteEnabled: boolean
+  depthCompare: GPUCompareFunction
+}
+
+interface PipelineEntryParams extends PipelineEntryBaseParams {
+  renderer: GPUCurtainsRenderer
 }
 
 export class PipelineEntry {
@@ -30,7 +35,7 @@ export class PipelineEntry {
     cullMode: GPUCullMode
   }
 
-  constructor({ renderer, label, geometryAttributes, bindGroups, shaders, cullMode }: PipelineEntryParams)
+  constructor(parameters: PipelineEntryParams)
 
   setPipelineEntryBindGroups(bindGroups: MaterialBindGroups)
 

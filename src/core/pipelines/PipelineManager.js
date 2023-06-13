@@ -19,7 +19,10 @@ export class PipelineManager {
     this.pipelineEntries = []
   }
 
-  isSamePipeline(shaders) {
+  isSamePipeline(parameters) {
+    // TODO test for culling, depth etc
+    const { shaders } = parameters
+
     return this.pipelineEntries.find((pipelineEntry) => {
       const existingShaders = pipelineEntry.options.shaders
       return (
@@ -29,25 +32,15 @@ export class PipelineManager {
     })
   }
 
-  createRenderPipeline({
-    label = 'Render Pipeline',
-    geometryAttributes = {},
-    bindGroups = [],
-    shaders = {},
-    cullMode = 'back',
-  }) {
-    const existingPipelineEntry = this.isSamePipeline(shaders)
+  createRenderPipeline(parameters) {
+    const existingPipelineEntry = this.isSamePipeline(parameters)
 
     if (existingPipelineEntry) {
       return existingPipelineEntry
     } else {
       const pipelineEntry = new PipelineEntry({
         renderer: this.renderer,
-        label,
-        geometryAttributes,
-        bindGroups,
-        shaders,
-        cullMode,
+        ...parameters,
       })
 
       this.pipelineEntries.push(pipelineEntry)

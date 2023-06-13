@@ -35,23 +35,7 @@ export class Plane extends DOMMesh {
   // callbacks
   onRender: () => void
 
-  constructor(
-    renderer: GPUCurtainsRenderer,
-    element: HTMLElement | string,
-    {
-      label,
-      shaders,
-      bindings,
-      widthSegments,
-      heightSegments,
-      alwaysDraw,
-      visible,
-      drawCheckMargins,
-      autoloadSources,
-      watchScroll,
-      onRender,
-    }: PlaneParams
-  )
+  constructor(renderer: GPUCurtainsRenderer, element: HTMLElement | string, parameters?: PlaneParams)
 
   resize(boundingRect?: DOMElementBoundingRect)
 

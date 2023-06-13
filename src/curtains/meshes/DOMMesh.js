@@ -3,21 +3,7 @@ import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import { MeshMixin } from '../../core/meshes/MeshMixin'
 
 export class DOMMesh extends MeshMixin(DOMObject3D) {
-  constructor(
-    renderer,
-    element,
-    {
-      label = 'Mesh',
-      geometry,
-      shaders = {},
-      bindings = [],
-      cullMode = 'back',
-      visible = true,
-      onRender = () => {
-        /* allow empty callback */
-      },
-    }
-  ) {
+  constructor(renderer, element, parameters) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
@@ -26,7 +12,7 @@ export class DOMMesh extends MeshMixin(DOMObject3D) {
       return
     }
 
-    super(renderer, element, { label, geometry, shaders, bindings, cullMode, visible, onRender })
+    super(renderer, element, parameters)
 
     this.type = 'DOMMesh'
   }

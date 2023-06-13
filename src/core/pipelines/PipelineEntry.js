@@ -4,15 +4,11 @@ import { isRenderer } from '../../utils/renderer-utils'
 let pipelineId = 0
 
 export class PipelineEntry {
-  constructor({
-    renderer,
-    label = 'Render Pipeline',
-    geometryAttributes = {},
-    bindGroups = [],
-    shaders = {},
-    cullMode = 'back',
-  }) {
+  constructor(parameters) {
     this.type = 'PipelineEntry'
+
+    let { renderer } = parameters
+    const { label, geometryAttributes, bindGroups, shaders, cullMode, depthWriteEnabled, depthCompare } = parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -47,11 +43,12 @@ export class PipelineEntry {
       },
     }
 
-    // TODO use the options to compare 2 pipeline entries
     this.options = {
       label,
       shaders,
       cullMode,
+      depthWriteEnabled,
+      depthCompare,
       verticesOrder: this.geometryAttributes.verticesOrder,
     }
 
@@ -178,9 +175,8 @@ export class PipelineEntry {
         cullMode: this.options.cullMode,
       },
       depthStencil: {
-        depthWriteEnabled: true, // TODO options
-        //depthCompare: 'less',
-        depthCompare: 'always',
+        depthWriteEnabled: this.options.depthWriteEnabled, // TODO options
+        depthCompare: this.options.depthCompare,
         format: 'depth24plus',
       },
       ...(this.renderer.renderPass.sampleCount > 1 && {

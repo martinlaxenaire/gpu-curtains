@@ -2,24 +2,25 @@ import { isCameraRenderer } from '../../utils/renderer-utils'
 import { Material } from '../Material'
 import { Texture } from '../Texture'
 import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
+import { Geometry } from '../geometries/Geometry'
+
+const defaultMeshParams = {
+  label: 'Mesh',
+  geometry: new Geometry(),
+  shaders: {},
+  bindings: [],
+  cullMode: 'back',
+  depthWriteEnabled: true,
+  depthCompare: 'less',
+  visible: true,
+  onRender: () => {
+    /* allow empty callback */
+  },
+}
 
 export const MeshMixin = (superclass) =>
   class extends superclass {
-    constructor(
-      renderer,
-      element,
-      {
-        label = 'Mesh',
-        geometry,
-        shaders = {},
-        bindings = [],
-        cullMode = 'back',
-        visible = true,
-        onRender = () => {
-          /* allow empty callback */
-        },
-      }
-    ) {
+    constructor(renderer, element, parameters) {
       super(renderer, element)
 
       this.type = 'MeshObject'
@@ -33,6 +34,11 @@ export const MeshMixin = (superclass) =>
       }
 
       this.renderer = renderer
+
+      const params = { ...defaultMeshParams, ...parameters }
+
+      const { shaders, bindings, geometry, label, cullMode, depthWriteEnabled, depthCompare, visible, onRender } =
+        params
 
       this.options = {
         label,
@@ -48,6 +54,8 @@ export const MeshMixin = (superclass) =>
         label,
         shaders,
         cullMode,
+        depthWriteEnabled,
+        depthCompare,
         uniformsBindings: this.uniformsBindings,
       })
 
@@ -64,13 +72,8 @@ export const MeshMixin = (superclass) =>
       this.renderer.meshes.push(this)
     }
 
-    setMaterial({ label, shaders, cullMode, uniformsBindings }) {
-      this.material = new Material(this.renderer, {
-        label,
-        shaders,
-        cullMode,
-        uniformsBindings,
-      })
+    setMaterial(materialParameters) {
+      this.material = new Material(this.renderer, materialParameters)
     }
 
     /** TEXTURES **/
