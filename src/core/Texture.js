@@ -6,7 +6,6 @@ import { BindGroupTextureBinding } from './bindGroupBindings/BindGroupTextureBin
 import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
 import { Object3D } from './objects3D/Object3D'
 import { Mat4 } from '../math/Mat4'
-import { Quat } from '../math/Quat'
 
 const textureScale = new Vec3()
 const rotationMatrix = new Mat4()
@@ -172,11 +171,11 @@ export class Texture extends Object3D {
 
   /*** TEXTURE MATRIX ***/
 
-  computeTextureScale() {
-    const scale = this.parent && this.parent.scale ? this.parent.scale.clone() : new Vec2(1, 1)
+  updateTextureMatrix() {
+    const parentScale = this.parent && this.parent.scale ? this.parent.scale : new Vec3(1, 1, 1)
 
-    const parentWidth = this.parent ? this.parent.size.document.width * scale.x : this.size.width
-    const parentHeight = this.parent ? this.parent.size.document.height * scale.y : this.size.height
+    const parentWidth = this.parent ? this.parent.size.document.width * parentScale.x : this.size.width
+    const parentHeight = this.parent ? this.parent.size.document.height * parentScale.y : this.size.height
 
     const parentRatio = parentWidth / parentHeight
 
@@ -185,83 +184,48 @@ export class Texture extends Object3D {
 
     const sourceRatio = sourceWidth / sourceHeight
 
-    /**/
+    // Huge props to @grgrdvrt https://github.com/grgrdvrt for this solution!
+    const planeRatio = parentWidth > parentHeight ? new Vec3(parentRatio, 1, 1) : new Vec3(1, 1 / parentRatio, 1)
 
-    // now the rotation
-    const cos = Math.cos(this.rotation.z)
-    const sin = Math.sin(this.rotation.z)
-    const absCos = Math.abs(cos)
-    const absSin = Math.abs(sin)
+    const textureRatio =
+      parentWidth > parentHeight
+        ? new Vec3(1 / (sourceRatio * this.scale.x), 1 / this.scale.y, 1)
+        : new Vec3(1 / this.scale.x, sourceRatio / this.scale.y, 1)
 
-    // center image in its container
-    let xOffset = 0
-    let yOffset = 0
+    // cover ratio is a bit tricky!
+    // TODO more tests!
+    const coverRatio =
+      parentRatio > sourceRatio !== parentWidth > parentHeight
+        ? 1
+        : parentWidth > parentHeight
+        ? planeRatio.x * textureRatio.x
+        : textureRatio.y * planeRatio.y
 
-    if (parentRatio > sourceRatio) {
-      // means parent is larger
-      yOffset = parentHeight - parentWidth * (1 / sourceRatio)
-    } else {
-      // means parent is taller
-      xOffset = parentWidth - parentHeight * sourceRatio
-    }
+    const coverScale = new Vec3(1 / coverRatio, 1 / coverRatio, 1)
 
-    // Rotation with scaled textures result in distorted UVs
-    // Probably nothing we can do about it.
-    // See: https://stackoverflow.com/questions/60269433/how-to-preserve-threejs-texture-scale-while-applying-texture-rotation
+    rotationMatrix.rotateFromQuaternion(this.quaternion)
 
-    // initial texture scale calcs
-    // textureScale.x = parentWidth / (parentWidth - xOffset)
-    // textureScale.y = parentHeight / (parentHeight - yOffset)
+    // here we could create a matrix for each translations / scales and do:
+    // this.modelMatrix
+    //   .identity()
+    //   .multiply(negativeOriginMatrix, this.modelMatrix)
+    //   .multiply(coverScaleMatrix, this.modelMatrix)
+    //   .multiply(planeRatioMatrix, this.modelMatrix)
+    //   .multiply(rotationMatrix, this.modelMatrix)
+    //   .multiply(textureRatioMatrix, this.modelMatrix)
+    //   .multiply(originMatrix, this.modelMatrix)
+    //   .translate(this.position)
 
-    // we can at least have a small hacky way
-    // to display correctly scaled texture at angles like 0 or PI / 2
-    const rotatedParentWidth = parentWidth * absCos + parentHeight * absSin
-    const rotatedParentHeight = parentWidth * absSin + parentHeight * absCos
-
-    const rotatedSourceWidth = sourceWidth * absCos + sourceHeight * absSin
-    const rotatedSourceHeight = sourceWidth * absSin + sourceHeight * absCos
-
-    const initialScale = {
-      x: parentWidth / (parentWidth - xOffset),
-      y: parentHeight / (parentHeight - yOffset),
-    }
-
-    textureScale.x =
-      absCos * initialScale.x * (rotatedParentWidth / parentWidth) +
-      absSin * initialScale.y * (rotatedParentHeight / parentHeight)
-
-    textureScale.y =
-      absSin * initialScale.x * (rotatedParentWidth / parentWidth) +
-      absCos * initialScale.y * (parentHeight / rotatedParentHeight)
-
-    textureScale.x += (absCos + absSin - 1) * -(rotatedSourceHeight / sourceHeight)
-    textureScale.y += (absCos + absSin - 1) * -(rotatedSourceWidth / sourceWidth)
-  }
-
-  updateTextureMatrix() {
-    this.computeTextureScale()
-
-    // apply texture scale
-    textureScale.x /= this.scale.x
-    textureScale.y /= this.scale.y
-
-    // compose our texture transformation matrix with adapted scale
-    // could also be done like that:
-    /*
-    const rotationMatrix = new Mat4().setFromQuaternion(this.quaternion)
-
-    // rotate before scale
-    // https://github.com/mrdoob/three.js/blob/master/examples/webgl_materials_texture_rotation.html#LL132C20-L132C20
+    // but this is faster!
     this.modelMatrix
       .identity()
-      .translate(this.transformOrigin)
-      .multiply(rotationMatrix)
-      .scale(textureScale)
-      .translate(this.transformOrigin.clone().multiplyScalar(-1))
+      .premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1))
+      .premultiplyScale(coverScale)
+      .premultiplyScale(planeRatio)
+      .premultiply(rotationMatrix)
+      .premultiplyScale(textureRatio)
+      .premultiplyTranslate(this.transformOrigin)
       .translate(this.position)
-     */
-
-    this.modelMatrix.composeFromOrigin(this.position, this.quaternion, textureScale, this.transformOrigin)
   }
 
   resize() {

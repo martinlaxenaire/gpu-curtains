@@ -31,11 +31,13 @@ export class DOMElement {
 
     this.resizeManager.observe({
       element: this.element,
-      callback: () => this.setSize(),
+      callback: () => {
+        this.setSize()
+      },
     })
 
     // do it right away on init
-    this.setSize()
+    //this.setSize()
   }
 
   get boundingRect() {
@@ -70,10 +72,10 @@ export class DOMElement {
     this.boundingRect = contentRect ?? this.element.getBoundingClientRect()
 
     // TODO
-    this.isResizing = false
+    //this.isResizing = false
     setTimeout(() => {
       this.isResizing = false
-    }, 0)
+    }, 50)
   }
 
   destroy() {

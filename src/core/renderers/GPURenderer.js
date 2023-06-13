@@ -158,7 +158,6 @@ export class GPURenderer {
 
     // set view
     if (this.renderPass.depth) {
-      console.log('destroy depth')
       // Destroy the previous depth target
       this.renderPass.depth.destroy()
     }

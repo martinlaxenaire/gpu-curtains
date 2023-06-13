@@ -1,4 +1,4 @@
-import { MaterialBindGroups, MaterialGeometryAttributes } from '../Material'
+import { MaterialBaseProps, MaterialBindGroups, MaterialGeometryAttributes } from '../Material'
 import { ShadersType, MeshShadersOptions, FullShadersType } from '../meshes/Mesh'
 import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
 
@@ -9,9 +9,8 @@ interface PipelineEntryShader {
 
 type PipelineEntryShaders = Record<FullShadersType, PipelineEntryShader>
 
-interface PipelineEntryProps {
+interface PipelineEntryProps extends MaterialBaseProps {
   renderer: GPUCurtainsRenderer
-  label?: string | null
   geometryAttributes: MaterialGeometryAttributes
   bindGroups: MaterialBindGroups
   shaders: MeshShadersOptions
@@ -28,9 +27,10 @@ export class PipelineEntry {
   options: {
     label: string
     shaders: MeshShadersOptions
+    cullMode: GPUCullMode
   }
 
-  constructor({ renderer, label, geometryAttributes, bindGroups, shaders }: PipelineEntryProps)
+  constructor({ renderer, label, geometryAttributes, bindGroups, shaders, cullMode }: PipelineEntryProps)
 
   setPipelineEntryBindGroups(bindGroups: MaterialBindGroups)
 

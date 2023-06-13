@@ -186,14 +186,14 @@ export class Camera {
   applyPosition() {
     // update matrices
     // prettier-ignore
-    this.modelMatrix.setFromArray([
+    this.modelMatrix.set(
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1, 0,
       this.position.x, this.position.y, this.position.z, 1,
-    ])
+    )
 
-    this.viewMatrix = this.viewMatrix.copy(this.modelMatrix).getInverse()
+    this.viewMatrix = this.modelMatrix.clone().getInverse()
 
     this.setScreenRatios()
     this.onPositionChanged()
@@ -261,12 +261,12 @@ export class Camera {
     const d = (-2 * this.far * this.near) / (this.far - this.near)
 
     // prettier-ignore
-    this.projectionMatrix.setFromArray([
+    this.projectionMatrix.set(
       x, 0, 0, 0,
       0, y, 0, 0,
       a, b, c, -1,
       0, 0, d, 0
-    ])
+    )
   }
 
   /***

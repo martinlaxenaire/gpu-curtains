@@ -1,16 +1,12 @@
 import { DOMMesh } from './DOMMesh'
-import { MeshBindings, MeshShadersOptions } from '../../core/meshes/Mesh'
+import { MeshBaseProps, MeshBindings, MeshShadersOptions } from '../../core/meshes/Mesh'
 import { PlaneGeometryProps } from '../geometry/PlaneGeometry'
 import { RectCoords } from '../objects3D/DOMObject3D'
 import { GPUCurtainsRenderer } from '../renderer/GPUCurtainsRenderer'
 import { DOMElementBoundingRect } from '../../core/DOMElement'
 import { Texture } from '../../core/Texture'
 
-interface PlaneProps extends PlaneGeometryProps {
-  label?: string
-  shaders?: MeshShadersOptions
-  bindings?: MeshBindings
-
+interface PlaneProps extends MeshBaseProps, PlaneGeometryProps {
   // frustum / view culling
   alwaysDraw?: boolean
   visible?: boolean
@@ -21,9 +17,6 @@ interface PlaneProps extends PlaneGeometryProps {
 
   // scroll
   watchScroll?: boolean
-
-  // callbacks
-  onRender?: () => void
 }
 
 export class Plane extends DOMMesh {

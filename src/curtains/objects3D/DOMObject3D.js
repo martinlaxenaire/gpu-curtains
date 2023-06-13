@@ -146,7 +146,7 @@ export class DOMObject3D extends ProjectedObject3D {
     this.position.set(
       this.size.world.left + worldPosition.x,
       this.size.world.top + worldPosition.y,
-      this.documentPosition.z / this.camera.CSSPerspective
+      -this.documentPosition.z / this.camera.CSSPerspective
     )
 
     this.updateModelMatrix()

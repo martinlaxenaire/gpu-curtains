@@ -18,6 +18,26 @@ export class ProjectedObject3D extends Object3D {
     this.camera = this.renderer.camera
   }
 
+  applyPosition() {
+    super.applyPosition()
+    this.updateProjectionMatrixStack()
+  }
+
+  applyRotation() {
+    super.applyRotation()
+    this.updateProjectionMatrixStack()
+  }
+
+  applyScale() {
+    super.applyScale()
+    this.updateProjectionMatrixStack()
+  }
+
+  applyTransformOrigin() {
+    super.applyTransformOrigin()
+    this.updateProjectionMatrixStack()
+  }
+
   setMatrices() {
     super.setMatrices()
 
@@ -28,10 +48,7 @@ export class ProjectedObject3D extends Object3D {
         shouldUpdate: false,
         onUpdate: () => {
           // our model view matrix is our model matrix multiplied with our camera view matrix
-          // in our case we're just subtracting the camera Z position to our model matrix
-          // this.modelViewMatrix.copy(this.modelMatrix)
-          // this.modelViewMatrix.elements[14] -= this.camera.position.z
-          this.modelViewMatrix.multiply(this.modelMatrix)
+          this.modelViewMatrix.multiplyMatrices(this.camera.viewMatrix, this.modelMatrix)
         },
       },
       modelViewProjection: {
@@ -40,7 +57,7 @@ export class ProjectedObject3D extends Object3D {
         onUpdate: () => {
           // our modelViewProjection matrix, useful for bounding box calculations and frustum culling
           // this is the result of our projection matrix multiplied by our modelView matrix
-          this.modelViewProjectionMatrix = this.projectionMatrix.multiply(this.modelViewMatrix)
+          this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix)
         },
       },
     }

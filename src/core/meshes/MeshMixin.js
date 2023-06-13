@@ -5,7 +5,20 @@ import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBin
 
 export const MeshMixin = (superclass) =>
   class extends superclass {
-    constructor(renderer, element, { label = 'Mesh', shaders = {}, geometry, bindings = [], onRender = () => {} }) {
+    constructor(
+      renderer,
+      element,
+      {
+        label = 'Mesh',
+        geometry,
+        shaders = {},
+        bindings = [],
+        cullMode = 'back',
+        onRender = () => {
+          /* allow empty callback */
+        },
+      }
+    ) {
       super(renderer, element)
 
       this.type = 'MeshObject'
@@ -33,6 +46,7 @@ export const MeshMixin = (superclass) =>
       this.setMaterial({
         label,
         shaders,
+        cullMode,
         uniformsBindings: this.uniformsBindings,
       })
 
@@ -49,10 +63,11 @@ export const MeshMixin = (superclass) =>
       this.renderer.meshes.push(this)
     }
 
-    setMaterial({ label, shaders, uniformsBindings }) {
+    setMaterial({ label, shaders, cullMode, uniformsBindings }) {
       this.material = new Material(this.renderer, {
         label,
         shaders,
+        cullMode,
         uniformsBindings,
       })
     }

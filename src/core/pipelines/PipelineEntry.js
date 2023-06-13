@@ -4,7 +4,14 @@ import { isRenderer } from '../../utils/renderer-utils'
 let pipelineId = 0
 
 export class PipelineEntry {
-  constructor({ renderer, label = 'Render Pipeline', geometryAttributes = {}, bindGroups = [], shaders = {} }) {
+  constructor({
+    renderer,
+    label = 'Render Pipeline',
+    geometryAttributes = {},
+    bindGroups = [],
+    shaders = {},
+    cullMode = 'back',
+  }) {
     this.type = 'PipelineEntry'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -43,6 +50,7 @@ export class PipelineEntry {
     this.options = {
       label,
       shaders,
+      cullMode,
     }
 
     this.setPipelineEntry()
@@ -148,12 +156,9 @@ export class PipelineEntry {
         targets: [{ format: this.renderer.preferredFormat }],
       },
       primitive: {
-        topology: 'triangle-list',
-
-        // Backface culling since the cube is solid piece of geometry.
-        // Faces pointing away from the camera will be occluded by faces
-        // pointing toward the camera.
-        //cullMode: 'back', // TODO option
+        //topology: 'triangle-list', // default setting anyway
+        frontFace: 'cw',
+        cullMode: this.options.cullMode, // TODO options
       },
       // Enable depth testing so that the fragment closest to the camera
       // is rendered in front.

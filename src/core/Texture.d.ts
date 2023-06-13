@@ -62,7 +62,6 @@ export class Texture extends Object3D {
   get parent(): TextureParent
   set parent(value: TextureParent)
 
-  computeTextureScale()
   updateTextureMatrix()
   resize()
 

@@ -8,6 +8,11 @@ export class GPUCameraRenderer extends GPURenderer {
   constructor({ container, pixelRatio, renderingScale = 1, camera = {} }) {
     super({ container, pixelRatio, renderingScale })
 
+    this.options = {
+      ...this.options,
+      ...camera,
+    }
+
     this.type = 'CameraRenderer'
 
     camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera }
@@ -15,18 +20,22 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   setCamera(camera) {
+    const width = this.domElement && this.domElement.boundingRect ? this.domElement.boundingRect.width : 1
+    const height = this.domElement && this.domElement.boundingRect ? this.domElement.boundingRect.height : 1
+
     this.camera = new Camera({
       fov: camera.fov,
       near: camera.near,
       far: camera.far,
-      width: this.domElement.boundingRect.width,
-      height: this.domElement.boundingRect.height,
+      width,
+      height,
       pixelRatio: this.pixelRatio,
       // TODO is this still needed after all?
       // onPerspectiveChanged: () => {
       //   this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
       // },
       onPositionChanged: () => {
+        console.log('cam pos changed', this.camera?.position)
         this.onCameraPositionChanged()
       },
     })
@@ -35,7 +44,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   onCameraPositionChanged() {
-    this.updateCameraMatrixStack()
+    this.setPerspective()
   }
 
   setCameraUniformBinding() {

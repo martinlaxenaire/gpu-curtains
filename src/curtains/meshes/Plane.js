@@ -9,13 +9,14 @@ export class Plane extends DOMMesh {
     {
       label = 'Plane',
 
-      // material
-      shaders = {},
-      bindings = [],
-
       // geometry
       widthSegments = 1,
       heightSegments = 1,
+
+      // material
+      shaders = {},
+      bindings = [],
+      cullMode = 'back',
 
       // Plane specific params
       alwaysDraw = false,

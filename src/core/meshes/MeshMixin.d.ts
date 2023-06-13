@@ -53,7 +53,7 @@ export default function MeshMixin<TBase extends Constructor>(Base: TBase) {
       { label, shaders, geometry, bindings, onRender }: MeshProps
     )
 
-    setMaterial({ label, shaders, uniformsBindings }: MaterialProps)
+    setMaterial({ label, shaders, cullMode, uniformsBindings }: MaterialProps)
 
     createTexture(options: TextureProps): Texture
     onTextureCreated(texture: Texture)

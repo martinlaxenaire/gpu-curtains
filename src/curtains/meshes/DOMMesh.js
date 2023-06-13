@@ -4,7 +4,20 @@ import { MeshMixin } from '../../core/meshes/MeshMixin'
 
 // TODO find a way to avoid code duplication with Mesh class
 export class DOMMesh extends MeshMixin(DOMObject3D) {
-  constructor(renderer, element, { label = 'Mesh', shaders = {}, geometry, bindings = [] }) {
+  constructor(
+    renderer,
+    element,
+    {
+      label = 'Mesh',
+      geometry,
+      shaders = {},
+      bindings = [],
+      cullMode = 'back',
+      onRender = () => {
+        /* allow empty callback */
+      },
+    }
+  ) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
@@ -13,7 +26,7 @@ export class DOMMesh extends MeshMixin(DOMObject3D) {
       return
     }
 
-    super(renderer, element, { label, shaders, geometry, bindings })
+    super(renderer, element, { label, geometry, shaders, bindings, cullMode, onRender })
 
     this.type = 'DOMMesh'
   }

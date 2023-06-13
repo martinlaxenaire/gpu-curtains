@@ -3,7 +3,7 @@ import { TextureBindGroup } from './bindGroups/TextureBindGroup'
 import { isRenderer } from '../utils/renderer-utils'
 
 export class Material {
-  constructor(renderer, { label = 'Material', shaders = {}, uniformsBindings = [] }) {
+  constructor(renderer, { label = 'Material', shaders = {}, uniformsBindings = [], cullMode = 'back' }) {
     this.type = 'Material'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -34,6 +34,7 @@ export class Material {
       label,
       shaders,
       uniformsBindings,
+      cullMode,
     }
 
     this.pipelineEntry = null
@@ -76,6 +77,7 @@ export class Material {
       geometryAttributes: this.attributes.geometry,
       bindGroups: this.bindGroups,
       shaders: this.options.shaders,
+      cullMode: this.options.cullMode,
     })
   }
 

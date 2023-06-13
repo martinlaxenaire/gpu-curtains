@@ -51,21 +51,38 @@ export class Mat4 {
   set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
     const te = this.elements
 
+    // te[0] = n11
+    // te[4] = n12
+    // te[8] = n13
+    // te[12] = n14
+    // te[1] = n21
+    // te[5] = n22
+    // te[9] = n23
+    // te[13] = n24
+    // te[2] = n31
+    // te[6] = n32
+    // te[10] = n33
+    // te[14] = n34
+    // te[3] = n41
+    // te[7] = n42
+    // te[11] = n43
+    // te[15] = n44
+
     te[0] = n11
-    te[4] = n12
-    te[8] = n13
-    te[12] = n14
-    te[1] = n21
+    te[1] = n12
+    te[2] = n13
+    te[3] = n14
+    te[4] = n21
     te[5] = n22
-    te[9] = n23
-    te[13] = n24
-    te[2] = n31
-    te[6] = n32
+    te[6] = n23
+    te[7] = n24
+    te[8] = n31
+    te[9] = n32
     te[10] = n33
-    te[14] = n34
-    te[3] = n41
-    te[7] = n42
-    te[11] = n43
+    te[11] = n34
+    te[12] = n41
+    te[13] = n42
+    te[14] = n43
     te[15] = n44
 
     return this
@@ -156,8 +173,16 @@ export class Mat4 {
    @result (Mat4 class object): Mat4 after multiplication
    ***/
   multiply(matrix = new Mat4()) {
-    const ae = this.elements
-    const be = matrix.elements
+    return this.multiplyMatrices(this, matrix)
+  }
+
+  premultiply(matrix = new Mat4()) {
+    return this.multiplyMatrices(matrix, this)
+  }
+
+  multiplyMatrices(a = new Mat4(), b = new Mat4()) {
+    const ae = a.elements
+    const be = b.elements
     const te = this.elements
 
     const a11 = ae[0],
@@ -213,6 +238,119 @@ export class Mat4 {
     te[7] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42
     te[11] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43
     te[15] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44
+
+    return this
+  }
+
+  premultiplyTranslate(vector = new Vec3()) {
+    // premultiply by a translateMatrix, ie translateMatrix = new Mat4().translate(vector)
+    // where translateMatrix[0] = 1, translateMatrix[5] = 1, scaleMatrix[10] = 1, translateMatrix[15] = 1 from identity
+    // and translateMatrix[12] = vector.x, translateMatrix[13] = vector.y, translateMatrix[14] = vector.z from translation
+    // equivalent (but faster) to this.multiply(translateMatrix, this)
+
+    // from identity matrix
+    const a11 = 1
+    const a22 = 1
+    const a33 = 1
+    const a44 = 1
+
+    // from translation
+    const a14 = vector.x
+    const a24 = vector.y
+    const a34 = vector.z
+
+    const be = this.elements
+    const te = this.elements
+
+    const b11 = be[0],
+      b12 = be[4],
+      b13 = be[8],
+      b14 = be[12]
+    const b21 = be[1],
+      b22 = be[5],
+      b23 = be[9],
+      b24 = be[13]
+    const b31 = be[2],
+      b32 = be[6],
+      b33 = be[10],
+      b34 = be[14]
+    const b41 = be[3],
+      b42 = be[7],
+      b43 = be[11],
+      b44 = be[15]
+
+    te[0] = a11 * b11 + a14 * b41
+    te[4] = a11 * b12 + a14 * b42
+    te[8] = a11 * b13 + a14 * b43
+    te[12] = a11 * b14 + a14 * b44
+
+    te[1] = a22 * b21 + a24 * b41
+    te[5] = a22 * b22 + a24 * b42
+    te[9] = a22 * b23 + a24 * b43
+    te[13] = a22 * b24 + a24 * b44
+
+    te[2] = a33 * b31 + a34 * b41
+    te[6] = a33 * b32 + a34 * b42
+    te[10] = a33 * b33 + a34 * b43
+    te[14] = a33 * b34 + a34 * b44
+
+    te[3] = a44 * b41
+    te[7] = a44 * b42
+    te[11] = a44 * b43
+    te[15] = a44 * b44
+
+    return this
+  }
+
+  premultiplyScale(vector = new Vec3()) {
+    // premultiply by a scaleMatrix, ie scaleMatrix = new Mat4().scale(vector)
+    // where scaleMatrix[0] = vector.x, scaleMatrix[5] = vector.y, scaleMatrix[10] = vector.z, scaleMatrix[15] = 1
+    // equivalent (but faster) to this.multiply(scaleMatrix, this)
+
+    const be = this.elements
+    const te = this.elements
+
+    const a11 = vector.x
+    const a22 = vector.y
+    const a33 = vector.z
+    const a44 = 1
+
+    const b11 = be[0],
+      b12 = be[4],
+      b13 = be[8],
+      b14 = be[12]
+    const b21 = be[1],
+      b22 = be[5],
+      b23 = be[9],
+      b24 = be[13]
+    const b31 = be[2],
+      b32 = be[6],
+      b33 = be[10],
+      b34 = be[14]
+    const b41 = be[3],
+      b42 = be[7],
+      b43 = be[11],
+      b44 = be[15]
+
+    te[0] = a11 * b11
+    te[4] = a11 * b12
+    te[8] = a11 * b13
+    te[12] = a11 * b14
+
+    te[1] = a22 * b21
+    te[5] = a22 * b22
+    te[9] = a22 * b23
+    te[13] = a22 * b24
+
+    te[2] = a33 * b31
+    te[6] = a33 * b32
+    te[10] = a33 * b33
+    te[14] = a33 * b34
+
+    te[3] = a44 * b41
+    te[7] = a44 * b42
+    te[11] = a44 * b43
+    te[15] = a44 * b44
 
     return this
   }
@@ -328,15 +466,15 @@ export class Mat4 {
     return this
   }
 
-  setFromQuaternion(quaternion = new Quat()) {
-    let matrix = this.elements
+  rotateFromQuaternion(quaternion = new Quat()) {
+    let te = this.elements
 
     const x = quaternion.elements[0],
       y = quaternion.elements[1],
       z = quaternion.elements[2],
       w = quaternion.elements[3]
 
-    let x2 = x + x
+    /*let x2 = x + x
     let y2 = y + y
     let z2 = z + z
     let xx = x * x2
@@ -348,6 +486,7 @@ export class Mat4 {
     let wx = w * x2
     let wy = w * y2
     let wz = w * z2
+
     matrix[0] = 1 - yy - zz
     matrix[1] = yx + wz
     matrix[2] = zx - wy
@@ -364,6 +503,32 @@ export class Mat4 {
     matrix[13] = 0
     matrix[14] = 0
     matrix[15] = 1
+
+     */
+    var x2 = x + x,
+      y2 = y + y,
+      z2 = z + z
+    var xx = x * x2,
+      xy = x * y2,
+      xz = x * z2
+    var yy = y * y2,
+      yz = y * z2,
+      zz = z * z2
+    var wx = w * x2,
+      wy = w * y2,
+      wz = w * z2
+
+    te[0] = 1 - (yy + zz)
+    te[4] = xy - wz
+    te[8] = xz + wy
+
+    te[1] = xy + wz
+    te[5] = 1 - (xx + zz)
+    te[9] = yz - wx
+
+    te[2] = xz - wy
+    te[6] = yz + wx
+    te[10] = 1 - (xx + yy)
 
     return this
   }
@@ -382,7 +547,23 @@ export class Mat4 {
    @this (Mat4 class object): matrix after transformations
    ***/
   compose(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1)) {
-    let matrix = this.elements
+    var te = this.elements
+    var mRotation = new Mat4()
+    var mScale = new Mat4()
+
+    mRotation.identity()
+    mRotation.setFromQuaternion(quaternion)
+
+    mScale.scale(scale)
+
+    this.multiply(mRotation, mScale)
+
+    te[12] = translation.x
+    te[13] = translation.y
+    te[14] = translation.z
+
+    return this
+    /*let matrix = this.elements
 
     // Quaternion math
     const x = quaternion.elements[0],
@@ -423,7 +604,7 @@ export class Mat4 {
     matrix[14] = translation.z
     matrix[15] = 1
 
-    return this
+    return this*/
   }
 
   /***
