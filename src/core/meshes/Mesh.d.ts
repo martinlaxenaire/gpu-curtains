@@ -42,7 +42,7 @@ interface MeshBindings {
 }
 
 interface MeshBaseProps extends MaterialBaseProps {
-  bindings?: MeshBindings
+  bindings?: MeshBindings[]
   visible?: boolean
   // callbacks
   onRender?: () => void
@@ -54,5 +54,8 @@ interface MeshProps extends MeshBaseProps {
 }
 
 export class Mesh extends MeshMixin(ProjectedObject3D) {
-  constructor(renderer: GPUCameraRenderer, { label, geometry, shaders, bindings, cullMode, onRender }: MeshProps)
+  constructor(
+    renderer: GPUCameraRenderer,
+    { label, geometry, shaders, bindings, cullMode, visible, onRender }: MeshProps
+  )
 }

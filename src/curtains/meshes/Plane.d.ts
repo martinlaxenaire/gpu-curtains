@@ -9,7 +9,6 @@ import { Texture } from '../../core/Texture'
 interface PlaneProps extends MeshBaseProps, PlaneGeometryProps {
   // frustum / view culling
   alwaysDraw?: boolean
-  visible?: boolean
   drawCheckMargins?: RectCoords
 
   // sources
@@ -25,7 +24,6 @@ export class Plane extends DOMMesh {
   //   label: string
   // }
   alwaysDraw: boolean
-  visible: boolean
   drawCheckMargins: RectCoords
 
   // sources

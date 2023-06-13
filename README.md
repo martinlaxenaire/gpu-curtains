@@ -11,5 +11,5 @@ WIP
 - Proper uniform memory buffers layout management
 - Use async pipelines?
 - Plane isInView, raycasting
-- Depth, blend func and face culling
+- Depth, blend func
 - Errors / warning handling

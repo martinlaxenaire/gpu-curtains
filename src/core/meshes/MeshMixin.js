@@ -14,6 +14,7 @@ export const MeshMixin = (superclass) =>
         shaders = {},
         bindings = [],
         cullMode = 'back',
+        visible = true,
         onRender = () => {
           /* allow empty callback */
         },
@@ -56,7 +57,7 @@ export const MeshMixin = (superclass) =>
 
       this.textures = []
 
-      this.visible = true // TODO
+      this.visible = visible
 
       this.onRender = onRender
 
@@ -194,6 +195,7 @@ export const MeshMixin = (superclass) =>
      */
     render(pass) {
       // no point to render if the WebGPU device is not ready
+      // TODO shoud a mesh with visible set to false still update its uniforms?
       if (!this.renderer.ready || !this.visible) return
 
       super.render()

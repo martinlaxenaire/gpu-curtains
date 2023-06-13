@@ -50,7 +50,7 @@ export default function MeshMixin<TBase extends Constructor>(Base: TBase) {
     constructor(
       renderer: CameraRenderer,
       element: HTMLElement | null,
-      { label, shaders, geometry, bindings, onRender }: MeshProps
+      { label, shaders, geometry, bindings, cullMode, visible, onRender }: MeshProps
     )
 
     setMaterial({ label, shaders, cullMode, uniformsBindings }: MaterialProps)

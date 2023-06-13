@@ -51,18 +51,13 @@ export class Plane extends DOMMesh {
       heightSegments,
     })
 
-    super(renderer, element, { label, shaders, geometry, bindings })
+    super(renderer, element, { label, geometry, shaders, bindings, cullMode, visible, onRender })
 
     this.type = 'Plane'
 
     // this.options = {
     //   label,
     // }
-
-    //this.renderer = renderer
-
-    // TODO should be handled by meshes
-    //this.textures = []
 
     this.alwaysDraw = alwaysDraw
     this.visible = visible

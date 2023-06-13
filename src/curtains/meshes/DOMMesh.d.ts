@@ -12,6 +12,6 @@ export class DOMMesh extends MeshMixin(DOMObject3D) {
   constructor(
     renderer: GPUCurtainsRenderer,
     element: HTMLElement,
-    { label, geometry, shaders, bindings, cullMode, onRender }: DOMMeshProps
+    { label, geometry, shaders, bindings, cullMode, visible, onRender }: DOMMeshProps
   )
 }
