@@ -169,6 +169,13 @@ export const MeshMixin = (superclass) =>
       /* will be overridden */
     }
 
+    applyScale() {
+      super.applyScale()
+
+      // resize textures on scale change!
+      this.textures.forEach((texture) => texture.resize())
+    }
+
     updateModelMatrix() {
       super.updateModelMatrix()
 
@@ -195,9 +202,9 @@ export const MeshMixin = (superclass) =>
         uniformBinding.onBeforeRender()
       })
 
-      this.material.render(pass)
-
       this.onRender()
+
+      this.material.render(pass)
     }
 
     destroy() {

@@ -43,6 +43,7 @@ interface MeshBindings {
 
 interface MeshBaseProps extends MaterialBaseProps {
   bindings?: MeshBindings
+  visible?: boolean
   // callbacks
   onRender?: () => void
 }

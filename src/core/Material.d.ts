@@ -35,6 +35,8 @@ interface MaterialIndexedGeometryAttributeBuffers extends MaterialGeometryAttrib
 interface MaterialBaseProps {
   label?: string
   shaders?: MeshShadersOptions
+  transparent?: boolean
+  depthTest?: boolean
   cullMode?: GPUCullMode
 }
 

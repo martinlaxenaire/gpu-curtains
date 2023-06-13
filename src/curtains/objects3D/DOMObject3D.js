@@ -48,8 +48,6 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   updateSizeAndPosition() {
-    //super.updateSizeAndPosition()
-
     this.setWorldSizes()
     this.applyPosition()
 
@@ -122,21 +120,9 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /***
-   This will apply our rotation and tells our model view matrix to update
-   ***/
-  applyRotation() {
-    super.applyRotation()
-
-    this.updateModelMatrix()
-    this.updateProjectionMatrixStack()
-  }
-
-  /***
    This will set our plane position by adding plane computed bounding box values and computed relative position values
    ***/
   applyPosition() {
-    super.applyPosition()
-
     // avoid unnecessary calculations if we don't have a users set relative position
     let worldPosition = new Vec3(0, 0, 0)
     if (!this.documentPosition.equals(worldPosition)) {
@@ -149,25 +135,21 @@ export class DOMObject3D extends ProjectedObject3D {
       -this.documentPosition.z / this.camera.CSSPerspective
     )
 
-    this.updateModelMatrix()
-    this.updateProjectionMatrixStack()
+    super.applyPosition()
   }
 
   applyScale() {
-    super.applyScale()
-
     this.transforms.scale.z = 1
     // TODO update textures matrix...
     //this.resize()
 
-    this.updateModelMatrix()
-    this.updateProjectionMatrixStack()
+    super.applyScale()
   }
 
   applyTransformOrigin() {
-    super.applyTransformOrigin()
-
     this.setWorldTransformOrigin()
+
+    super.applyTransformOrigin()
   }
 
   /** MATRICES **/
@@ -233,8 +215,8 @@ export class DOMObject3D extends ProjectedObject3D {
 
     this.setWorldTransformOrigin()
 
-    this.updateModelMatrix()
-    this.updateProjectionMatrixStack()
+    // this.updateModelMatrix()
+    // this.updateProjectionMatrixStack()
   }
 
   setWorldTransformOrigin() {

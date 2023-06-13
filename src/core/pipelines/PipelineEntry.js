@@ -147,23 +147,36 @@ export class PipelineEntry {
       layout: this.layout,
       vertex: {
         module: this.shaders.vertex.module,
-        entryPoint: this.options.shaders.vertex.entryPoint, // TODO editable via options?
+        entryPoint: this.options.shaders.vertex.entryPoint,
         buffers: this.geometryAttributes.pipelineBuffers,
       },
       fragment: {
         module: this.shaders.fragment.module,
-        entryPoint: this.options.shaders.fragment.entryPoint, // TODO editable via options?
-        targets: [{ format: this.renderer.preferredFormat }],
+        entryPoint: this.options.shaders.fragment.entryPoint,
+        targets: [
+          {
+            format: this.renderer.preferredFormat,
+            blend: {
+              // TODO based on transparent option
+              color: {
+                srcFactor: 'src-alpha',
+                dstFactor: 'one-minus-src-alpha',
+              },
+              alpha: {
+                srcFactor: 'one',
+                dstFactor: 'one',
+              },
+            },
+          },
+        ],
       },
       primitive: {
         //topology: 'triangle-list', // default setting anyway
         frontFace: 'cw',
-        cullMode: this.options.cullMode, // TODO options
+        cullMode: this.options.cullMode,
       },
-      // Enable depth testing so that the fragment closest to the camera
-      // is rendered in front.
       depthStencil: {
-        depthWriteEnabled: true,
+        depthWriteEnabled: true, // TODO options
         depthCompare: 'less',
         format: 'depth24plus',
       },
