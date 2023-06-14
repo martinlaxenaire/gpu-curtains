@@ -5,10 +5,10 @@ export class Vec2 {
 
   constructor(x?: number, y?: number)
 
-  get(x: number): number
-  get(y: number): number
-  set(x: number)
-  set(y: number)
+  public get x(): number
+  public get y(): number
+  public set(x: number)
+  public set(y: number)
   set(x?: number, y?: number): Vec2
 
   onChange(callback: () => void): Vec2

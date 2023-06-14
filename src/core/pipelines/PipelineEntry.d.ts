@@ -21,6 +21,8 @@ interface PipelineEntryParams extends PipelineEntryBaseParams {
   renderer: GPUCurtainsRenderer
 }
 
+declare let pipelineId: number
+
 export class PipelineEntry {
   type: string
   renderer: GPUCurtainsRenderer

@@ -3,7 +3,7 @@ import { Camera } from '../camera/Camera'
 import { Mat4 } from '../../math/Mat4'
 import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
 
-type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' | 'modelViewProjection'
+export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' | 'modelViewProjection'
 type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>
 
 export class ProjectedObject3D extends Object3D {

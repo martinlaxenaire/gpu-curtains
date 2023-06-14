@@ -1,6 +1,7 @@
 import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
+import { ProjectedObject3DMatricesType } from './ProjectedObject3D'
 
 type Object3DMatricesType = 'model'
 
@@ -10,16 +11,18 @@ interface Object3DTransformMatrix {
   onUpdate: () => void
 }
 
-type Object3DMatrices = Record<Object3DMatricesType, Object3DTransformMatrix>
+type Object3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>
 
 interface Object3DTransforms {
   origin: {
     model: Vec3
+    world?: Vec3
   }
   quaternion: Quat
   rotation: Vec3
   position: {
     world: Vec3
+    document?: Vec3
   }
   scale: Vec3
 }

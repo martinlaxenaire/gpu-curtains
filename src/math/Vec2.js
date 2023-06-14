@@ -7,8 +7,7 @@
  @x (float): X component of our vector
  @y (float): Y component of our vector
 
- returns :
- @this: our Vec2 class object
+ @returns {Vec2}: our Vec2 class object
  ***/
 
 // TODO lot of (unused at the time) methods are missing
@@ -59,8 +58,7 @@ export class Vec2 {
    @x (float): X component of our vector
    @y (float): Y component of our vector
 
-   returns:
-   @this (Vec2): this vector after being set
+   @returns {Vec2}: this vector after being set
    ***/
   set(x = 0, y = 0) {
     this._x = x
@@ -75,8 +73,7 @@ export class Vec2 {
    params:
    @vector (Vec2): vector to add
 
-   returns:
-   @this (Vec2): this vector after addition
+   @returns {Vec2}: this vector after addition
    ***/
   add(vector = new Vec2()) {
     this._x += vector.x
@@ -91,8 +88,7 @@ export class Vec2 {
    params:
    @value (float): number to add
 
-   returns:
-   @this (Vec2): this vector after addition
+   @returns {Vec2}: this vector after addition
    ***/
   addScalar(value = 0) {
     this._x += value
@@ -107,8 +103,7 @@ export class Vec2 {
    params:
    @vector (Vec2): vector to use for subtraction
 
-   returns:
-   @this (Vec2): this vector after subtraction
+   @returns {Vec2}: this vector after subtraction
    ***/
   sub(vector = new Vec2()) {
     this._x -= vector.x
@@ -123,8 +118,7 @@ export class Vec2 {
    params:
    @value (float): number to use for subtraction
 
-   returns:
-   @this (Vec2): this vector after subtraction
+   @returns {Vec2}: this vector after subtraction
    ***/
   subScalar(value = 0) {
     this._x -= value
@@ -139,8 +133,7 @@ export class Vec2 {
    params:
    @vector (Vec2): vector to use for multiplication
 
-   returns:
-   @this (Vec2): this vector after multiplication
+   @returns {Vec2}: this vector after multiplication
    ***/
   multiply(vector = new Vec2(1)) {
     this._x *= vector.x
@@ -155,8 +148,7 @@ export class Vec2 {
    params:
    @value (float): number to use for multiplication
 
-   returns:
-   @this (Vec2): this vector after multiplication
+   @returns {Vec2}: this vector after multiplication
    ***/
   multiplyScalar(value = 1) {
     this._x *= value
@@ -171,8 +163,7 @@ export class Vec2 {
    params:
    @vector (Vec2): vector to copy
 
-   returns:
-   @this (Vec2): this vector after copy
+   @returns {Vec2}: this vector after copy
    ***/
   copy(vector = new Vec2()) {
     this._x = vector.x
@@ -184,27 +175,10 @@ export class Vec2 {
   /***
    Clone this vector
 
-   returns:
-   @vector (Vec2): cloned vector
+   @returns {Vec2}: cloned vector
    ***/
   clone() {
     return new Vec2(this._x, this._y)
-  }
-
-  /***
-   Merges this vector with a vector when values are NaN. Mostly used internally.
-
-   params:
-   @vector (Vec2): vector to use for sanitization
-
-   returns:
-   @vector (Vec2): sanitized vector
-   ***/
-  sanitizeNaNValuesWith(vector = new Vec2()) {
-    this._x = isNaN(this._x) ? vector.x : parseFloat(this._x)
-    this._y = isNaN(this._y) ? vector.y : parseFloat(this._y)
-
-    return this
   }
 
   /***
@@ -213,8 +187,7 @@ export class Vec2 {
    params:
    @vector (Vec2): vector representing max values
 
-   returns:
-   @vector (Vec2): vector with max values applied
+   @returns {Vec2}: vector with max values applied
    ***/
   max(vector = new Vec2()) {
     this._x = Math.max(this._x, vector.x)
@@ -229,8 +202,7 @@ export class Vec2 {
    params:
    @vector (Vec2): vector representing min values
 
-   returns:
-   @vector (Vec2): vector with min values applied
+   @returns {Vec2}: vector with min values applied
    ***/
   min(vector = new Vec2()) {
     this._x = Math.min(this._x, vector.x)
@@ -245,8 +217,7 @@ export class Vec2 {
    params:
    @vector (Vec2): vector to compare
 
-   returns:
-   @isEqual (bool): whether the vectors are equals or not
+   @returns {boolean}: whether the vectors are equals or not
    ***/
   equals(vector = new Vec2()) {
     return this._x === vector.x && this._y === vector.y
@@ -255,8 +226,7 @@ export class Vec2 {
   /***
    Normalize this vector
 
-   returns:
-   @this (Vec2): normalized vector
+   @returns {Vec2}: normalized vector
    ***/
   normalize() {
     // normalize
@@ -276,8 +246,7 @@ export class Vec2 {
    params:
    @vector (Vec2): vector to use for dot product
 
-   returns:
-   @dotProduct (float): dot product of the 2 vectors
+   @returns {number}: dot product of the 2 vectors
    ***/
   dot(vector = new Vec2()) {
     return this._x * vector.x + this._y * vector.y

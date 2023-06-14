@@ -6,17 +6,22 @@ import { Mesh } from './meshes/Mesh'
 import { DOMMesh } from '../curtains/meshes/DOMMesh'
 import { BindGroupBindingElement } from './bindGroups/BindGroup'
 import { Vec3 } from '../math/Vec3'
+import { Mat4 } from '../math/Mat4'
 import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
+import { Plane } from '../curtains/meshes/Plane'
 
 interface CurtainsTextureOptions {
   generateMips?: boolean
   flipY?: boolean
-  placeholderColor?: Array<number>
+  placeholderColor?: [number, number, number, number]
 }
 
-interface TextureParams {
+interface TextureBaseParams {
   label?: string
   name?: string
+}
+
+interface TextureParams extends TextureBaseParams {
   texture: CurtainsTextureOptions
   sampler: GPUSamplerDescriptor
 }
@@ -29,7 +34,14 @@ interface TextureOptions extends TextureParams {
   sourceType: TextureSourceType
 }
 
-type TextureParent = null | Mesh | DOMMesh // TODO
+type TextureParent = null | Mesh | DOMMesh | Plane
+
+declare const planeRatio: Vec3
+declare const textureRatio: Vec3
+declare const coverScale: Vec3
+declare const rotationMatrix: Mat4
+
+declare const defaultTextureParams: TextureParams
 
 export class Texture extends Object3D {
   type: string
@@ -55,7 +67,7 @@ export class Texture extends Object3D {
   shouldUpdate: boolean
   shouldUpdateBindGroup: boolean
 
-  constructor(renderer: GPUCurtainsRenderer, options: TextureParams)
+  constructor(renderer: GPUCurtainsRenderer, parameters?: TextureParams)
 
   setBindings()
 

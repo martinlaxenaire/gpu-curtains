@@ -9,7 +9,6 @@ export class GPUCameraRenderer extends GPURenderer {
     super({ container, pixelRatio, renderingScale })
 
     this.options = {
-      ...this.options,
       ...camera,
     }
 

@@ -12,13 +12,14 @@ const defaultMeshParams = {
   cullMode: 'back',
   depthWriteEnabled: true,
   depthCompare: 'less',
+  transparent: false,
   visible: true,
   onRender: () => {
     /* allow empty callback */
   },
 }
 
-export const MeshMixin = (superclass) =>
+const MeshMixin = (superclass) =>
   class extends superclass {
     constructor(renderer, element, parameters) {
       super(renderer, element)
@@ -37,8 +38,7 @@ export const MeshMixin = (superclass) =>
 
       const params = { ...defaultMeshParams, ...parameters }
 
-      const { shaders, bindings, geometry, label, cullMode, depthWriteEnabled, depthCompare, visible, onRender } =
-        params
+      const { shaders, bindings, geometry, label, visible, onRender, ...materialOptions } = params
 
       this.options = {
         label,
@@ -53,9 +53,7 @@ export const MeshMixin = (superclass) =>
       this.setMaterial({
         label,
         shaders,
-        cullMode,
-        depthWriteEnabled,
-        depthCompare,
+        ...materialOptions,
         uniformsBindings: this.uniformsBindings,
       })
 
@@ -217,3 +215,5 @@ export const MeshMixin = (superclass) =>
       this.material?.destroy()
     }
   }
+
+export default MeshMixin

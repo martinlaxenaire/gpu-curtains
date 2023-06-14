@@ -14,7 +14,7 @@ interface BindGroupParams {
   label?: string
   renderer: GPURenderer
   index?: number
-  bindings: BindGroupBindingElement[]
+  bindings?: BindGroupBindingElement[]
 }
 
 export class BindGroup {

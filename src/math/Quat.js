@@ -6,8 +6,7 @@
  params :
  @elements (Float32Array of length 4): our quaternion array. Default to identity quaternion.
 
- returns :
- @this: our Quat class object
+ @returns {Quat}: our Quat class object
  ***/
 
 import { Vec3 } from './Vec3'
@@ -28,8 +27,7 @@ export class Quat {
    params:
    @array (array): an array of at least 4 elements
 
-   returns:
-   @this (Quat class object): this quaternion after being set
+   @returns {Quat}: this quaternion after being set
    ***/
   setFromArray(array = new Float32Array([0, 0, 0, 1])) {
     this.elements[0] = array[0]
@@ -46,8 +44,7 @@ export class Quat {
    params:
    @axisOrder (string): an array of at least 4 elements
 
-   returns:
-   @this (Quat class object): this quaternion after axis order has been set
+   @returns {Quat}: this quaternion after axis order has been set
    ***/
   setAxisOrder(axisOrder = 'XYZ') {
     // force uppercase for strict equality tests
@@ -76,8 +73,7 @@ export class Quat {
    params:
    @vector (Quat): quaternion to copy
 
-   returns:
-   @this (Quat): this quaternion after copy
+   @returns {Quat}: this quaternion after copy
    ***/
   copy(quaternion = new Quat()) {
     this.elements = quaternion.elements
@@ -89,8 +85,7 @@ export class Quat {
   /***
    Clone a quaternion
 
-   returns:
-   @clonedQuaternion (Quat): cloned quaternion
+   @returns {Quat}: cloned quaternion
    ***/
   clone() {
     return new Quat().copy(this)
@@ -99,8 +94,7 @@ export class Quat {
   /***
    Checks if 2 quaternions are equal
 
-   returns:
-   @isEqual (bool): whether the quaternions are equals or not
+   @returns {boolean}: whether the quaternions are equals or not
    ***/
   equals(quaternion = new Quat()) {
     return (
@@ -118,8 +112,7 @@ export class Quat {
    params:
    @vector (Vec3 class object): rotation vector to set our quaternion from
 
-   returns :
-   @this (Quat class object): quaternion after having applied the rotation
+   @returns {Quat}: quaternion after having applied the rotation
    ***/
   setFromVec3(vector = new Vec3()) {
     const ax = vector.x * 0.5

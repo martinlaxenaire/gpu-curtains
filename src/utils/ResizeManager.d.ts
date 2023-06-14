@@ -3,7 +3,7 @@ interface ResizeManagerEntry {
   callback: () => void | null
 }
 
-export default class ResizeManager {
+export class ResizeManager {
   shouldWatch: boolean
   entries: ResizeManagerEntry[]
   resizeObserver: ResizeObserver
@@ -15,3 +15,5 @@ export default class ResizeManager {
 
   destroy()
 }
+
+export const resizeManager: ResizeManager

@@ -13,7 +13,7 @@ export class ScrollManager {
   lastXDelta?: number
   lastYDelta?: number
   shouldWatch?: boolean
-  onScroll?: () => void
+  onScroll?: (lastXDelta?: number, lastYDelta?: number) => void
 
   handler: void
 

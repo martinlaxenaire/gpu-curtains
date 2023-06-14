@@ -6,8 +6,7 @@
  params :
  @elements (Float32Array of length 16): our matrix array. Default to identity matrix.
 
- returns :
- @this: our Mat4 class object
+ @returns {Mat4}: our Mat4 class object
  ***/
 import { Vec3 } from './Vec3'
 import { Quat } from './Quat'
@@ -51,23 +50,6 @@ export class Mat4 {
   set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
     const te = this.elements
 
-    // te[0] = n11
-    // te[4] = n12
-    // te[8] = n13
-    // te[12] = n14
-    // te[1] = n21
-    // te[5] = n22
-    // te[9] = n23
-    // te[13] = n24
-    // te[2] = n31
-    // te[6] = n32
-    // te[10] = n33
-    // te[14] = n34
-    // te[3] = n41
-    // te[7] = n42
-    // te[11] = n43
-    // te[15] = n44
-
     te[0] = n11
     te[1] = n12
     te[2] = n13
@@ -108,7 +90,7 @@ export class Mat4 {
   /***
    Sets the matrix values from an array
 
-   @param {Float32Array}: an array of at least 16 elements
+   @param {Float32Array} array of at least 16 elements
 
    @returns {Mat4}: this matrix after being set
    ***/
@@ -169,8 +151,7 @@ export class Mat4 {
    params:
    @matrix (Mat4 class object): Mat4 to multiply with
 
-   returns:
-   @result (Mat4 class object): Mat4 after multiplication
+   @returns {Mat4}: Mat4 after multiplication
    ***/
   multiply(matrix = new Mat4()) {
     return this.multiplyMatrices(this, matrix)
@@ -358,8 +339,7 @@ export class Mat4 {
   /***
    Get matrix inverse
 
-   returns:
-   @result (Mat4 class object): inverted Mat4
+   @returns {Mat4}: inverted Mat4
    ***/
   getInverse() {
     const te = this.elements
@@ -444,8 +424,7 @@ export class Mat4 {
    params :
    @vector (Vec3 class object): Vec3 representing scale along X, Y and Z axis
 
-   returns :
-   @result (Mat4 class object): Mat4 after scaling
+   @returns {Mat4}: Mat4 after scaling
    ***/
   scale(vector = new Vec3()) {
     let a = this.elements
@@ -474,47 +453,16 @@ export class Mat4 {
       z = quaternion.elements[2],
       w = quaternion.elements[3]
 
-    /*let x2 = x + x
-    let y2 = y + y
-    let z2 = z + z
-    let xx = x * x2
-    let yx = y * x2
-    let yy = y * y2
-    let zx = z * x2
-    let zy = z * y2
-    let zz = z * z2
-    let wx = w * x2
-    let wy = w * y2
-    let wz = w * z2
-
-    matrix[0] = 1 - yy - zz
-    matrix[1] = yx + wz
-    matrix[2] = zx - wy
-    matrix[3] = 0
-    matrix[4] = yx - wz
-    matrix[5] = 1 - xx - zz
-    matrix[6] = zy + wx
-    matrix[7] = 0
-    matrix[8] = zx + wy
-    matrix[9] = zy - wx
-    matrix[10] = 1 - xx - yy
-    matrix[11] = 0
-    matrix[12] = 0
-    matrix[13] = 0
-    matrix[14] = 0
-    matrix[15] = 1
-
-     */
-    var x2 = x + x,
+    const x2 = x + x,
       y2 = y + y,
       z2 = z + z
-    var xx = x * x2,
+    const xx = x * x2,
       xy = x * y2,
       xz = x * z2
-    var yy = y * y2,
+    const yy = y * y2,
       yz = y * z2,
       zz = z * z2
-    var wx = w * x2,
+    const wx = w * x2,
       wy = w * y2,
       wz = w * z2
 
@@ -543,27 +491,10 @@ export class Mat4 {
    @quaternion (Quat class object): rotation quaternion
    @scale (Vec3 class object): scale vector
 
-   returns :
-   @this (Mat4 class object): matrix after transformations
+   @returns {Mat4}: matrix after transformations
    ***/
   compose(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1)) {
-    var te = this.elements
-    var mRotation = new Mat4()
-    var mScale = new Mat4()
-
-    mRotation.identity()
-    mRotation.setFromQuaternion(quaternion)
-
-    mScale.scale(scale)
-
-    this.multiply(mRotation, mScale)
-
-    te[12] = translation.x
-    te[13] = translation.y
-    te[14] = translation.z
-
-    return this
-    /*let matrix = this.elements
+    let matrix = this.elements
 
     // Quaternion math
     const x = quaternion.elements[0],
@@ -604,7 +535,7 @@ export class Mat4 {
     matrix[14] = translation.z
     matrix[15] = 1
 
-    return this*/
+    return this
   }
 
   /***
@@ -618,8 +549,7 @@ export class Mat4 {
    @scale (Vec3 class object): scale vector
    @origin (Vec3 class object): origin vector around which to scale and rotate
 
-   returns :
-   @this (Mat4 class object): matrix after transformations
+   @returns {Mat4}: matrix after transformations
    ***/
   composeFromOrigin(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1), origin = new Vec3()) {
     let matrix = this.elements

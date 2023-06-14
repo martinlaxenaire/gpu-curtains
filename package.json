@@ -15,5 +15,8 @@
   "author": "Martin Laxenaire",
   "license": "MIT",
   "private": true,
-  "dependencies": {}
+  "dependencies": {},
+  "scripts": {
+    "build:types": "tsc"
+  }
 }

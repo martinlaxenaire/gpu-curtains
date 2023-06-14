@@ -13,8 +13,7 @@
 
  @onScroll (function): callback to execute each time the scroll values changed
 
- returns:
- @this: our ScrollManager class object
+ @returns {ScrollManager}: our ScrollManager class object
  ***/
 export class ScrollManager {
   constructor({
@@ -25,7 +24,7 @@ export class ScrollManager {
 
     shouldWatch = true,
 
-    onScroll = () => {
+    onScroll = (lastXDelta = 0, lastYDelta = 0) => {
       /* allow empty callback */
     },
   } = {}) {
@@ -82,9 +81,13 @@ export class ScrollManager {
    ***/
   destroy() {
     if (this.shouldWatch) {
-      window.removeEventListener('scroll', this.handler, {
+      // passive triggers a typescript error
+      window.removeEventListener(
+        'scroll',
+        this.handler /*, {
         passive: true,
-      })
+      }*/
+      )
     }
   }
 }

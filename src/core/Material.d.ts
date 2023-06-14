@@ -49,6 +49,14 @@ interface MaterialParams extends MaterialBaseParams {
 type MaterialBindGroups = Array<BindGroup | TextureBindGroup>
 type MaterialGeometryAttributes = Record<string, MaterialGeometryAttribute | MaterialIndexedGeometryAttribute>
 
+interface MaterialAttributes {
+  geometry: MaterialGeometryAttributes | null
+  buffers: Record<
+    MaterialGeometryAttributeBuffersType,
+    MaterialGeometryAttributeBuffers | MaterialIndexedGeometryAttributeBuffers
+  > | null
+}
+
 export class Material {
   type: string
   renderer: GPUCurtainsRenderer
@@ -61,13 +69,7 @@ export class Material {
 
   pipelineEntry: PipelineEntry
 
-  attributes: {
-    geometry: MaterialGeometryAttributes | null
-    buffers: Record<
-      MaterialGeometryAttributeBuffersType,
-      MaterialGeometryAttributeBuffers | MaterialIndexedGeometryAttributeBuffers
-    > | null
-  }
+  attributes: MaterialAttributes
 
   bindGroups: MaterialBindGroups
 
@@ -79,24 +81,24 @@ export class Material {
 
   constructor(renderer: GPUCurtainsRenderer, parameters: MaterialParams)
 
-  setMaterial()
-  setPipelineEntry()
+  setMaterial(): void
+  setPipelineEntry(): void
   getShaderCode(shaderType: FullShadersType): string
 
-  setAttributesFromGeometry(geometry: Geometry | IndexedGeometry)
-  createAttributesBuffers()
-  destroyAttributeBuffers()
+  setAttributesFromGeometry(geometry: Geometry | IndexedGeometry): void
+  createAttributesBuffers(): void
+  destroyAttributeBuffers(): void
 
-  createBindGroups()
-  destroyBindGroups()
-  updateBindGroups()
+  createBindGroups(): void
+  destroyBindGroups(): void
+  updateBindGroups(): void
 
-  setUniforms()
+  setUniforms(): void
 
-  setTextures()
-  addTextureBinding(texture: Texture)
+  setTextures(): void
+  addTextureBinding(texture: Texture): void
 
-  render(pass: GPURenderPassEncoder)
+  render(pass: GPURenderPassEncoder): void
 
-  destroy()
+  destroy(): void
 }

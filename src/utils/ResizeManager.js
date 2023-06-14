@@ -43,4 +43,4 @@ class ResizeManager {
   }
 }
 
-export default new ResizeManager()
+export const resizeManager = new ResizeManager()

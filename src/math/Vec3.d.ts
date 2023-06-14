@@ -10,12 +10,12 @@ export class Vec3 {
 
   constructor(x?: number, y?: number, z?: number)
 
-  get(x: number): number
-  get(y: number): number
-  get(z: number): number
-  set(x: number)
-  set(y: number)
-  set(z: number)
+  public get x(): number
+  public get y(): number
+  public get z(): number
+  public set(x: number)
+  public set(y: number)
+  public set(z: number)
   set(x?: number, y?: number, z?: number): Vec3
 
   onChange(callback: () => void): Vec3

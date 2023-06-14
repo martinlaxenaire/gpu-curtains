@@ -314,7 +314,7 @@ export class GPURenderer {
     this.device.queue.submit([commandBuffer])
 
     // end of render, reset current pipeline ID
-    this.pipelineManager.currentPipelineId = null
+    this.pipelineManager.currentPipelineID = null
 
     this.onAfterRenderPass()
   }

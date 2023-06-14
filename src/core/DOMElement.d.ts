@@ -1,4 +1,4 @@
-import ResizeManager from '../utils/ResizeManager'
+import { resizeManager, ResizeManager } from '../utils/ResizeManager'
 
 interface DOMElementBoundingRect {
   top: number
@@ -12,11 +12,11 @@ interface DOMElementBoundingRect {
 }
 
 export class DOMElement {
-  element: null | undefined | string | HTMLElement
+  element: HTMLElement
   isResizing: boolean
   onSizeChanged: (boundingRect: DOMElementBoundingRect | null) => void | null
   onPositionChanged: (boundingRect: DOMElementBoundingRect | null) => void | null
-  resizeManager: ResizeManager // TODO
+  resizeManager: typeof ResizeManager // TODO
   _boundingRect: DOMElementBoundingRect
 
   get boundingRect(): DOMElementBoundingRect
@@ -34,6 +34,6 @@ export class DOMElement {
   }: {
     element: string | HTMLElement
     onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
-    renderingScale?: (boundingRect: DOMElementBoundingRect | null) => void | null
+    onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
   })
 }

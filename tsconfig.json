@@ -4,8 +4,13 @@
     "target": "es2020",
     "declaration": true,
     "outDir": "./dist",
-    "typeRoots": [ "./node_modules/@webgpu/types", "./node_modules/@types"]
+    "typeRoots": [ "./node_modules/@webgpu/types", "./node_modules/@types"],
+    "allowJs": true,
+    "checkJs": true
   },
+  "exclude": [
+    "node_modules"
+  ],
   "include": [
     "src/**/*"
   ]

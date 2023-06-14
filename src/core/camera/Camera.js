@@ -14,16 +14,15 @@ import { Mat4 } from '../../math/Mat4.js'
  @height (float, optional): height used to calculate the camera aspect ratio. Default to the renderer container's height.
  @pixelRatio (float, optional): pixel ratio used to calculate the camera aspect ratio. Default to the renderer's pixel ratio.
 
- returns:
- @this: our Mesh element
+ @returns {Camera}: our Camera element
  ***/
 export class Camera {
   constructor({
     fov = 50,
     near = 0.01,
     far = 50,
-    width,
-    height,
+    width = 1,
+    height = 1,
     pixelRatio = 1,
     onPerspectiveChanged = () => {
       /* allow empty callback */

@@ -8,7 +8,8 @@ export class PipelineEntry {
     this.type = 'PipelineEntry'
 
     let { renderer } = parameters
-    const { label, geometryAttributes, bindGroups, shaders, cullMode, depthWriteEnabled, depthCompare } = parameters
+    const { label, geometryAttributes, bindGroups, shaders, cullMode, depthWriteEnabled, depthCompare, transparent } =
+      parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -49,6 +50,7 @@ export class PipelineEntry {
       cullMode,
       depthWriteEnabled,
       depthCompare,
+      transparent,
       verticesOrder: this.geometryAttributes.verticesOrder,
     }
 
@@ -155,17 +157,29 @@ export class PipelineEntry {
         targets: [
           {
             format: this.renderer.preferredFormat,
-            blend: {
-              // TODO based on transparent option
-              color: {
-                srcFactor: 'src-alpha',
-                dstFactor: 'one-minus-src-alpha',
+            // we will assume our renderer alphaMode is set to 'premultiplied'
+            // based on how curtainsjs did that, we either disable blending if mesh if opaque
+            // or use this blend equation if mesh is transparent (see https://github.com/martinlaxenaire/curtainsjs/blob/master/src/core/Renderer.js#L589)
+            ...(this.options.transparent && {
+              blend: {
+                color: {
+                  srcFactor: 'one',
+                  dstFactor: 'one-minus-src-alpha',
+                },
+                alpha: {
+                  srcFactor: 'one',
+                  dstFactor: 'one-minus-src-alpha',
+                },
+                // color: {
+                //   srcFactor: 'src-alpha',
+                //   dstFactor: 'one-minus-src-alpha',
+                // },
+                // alpha: {
+                //   srcFactor: 'one',
+                //   dstFactor: 'one',
+                // },
               },
-              alpha: {
-                srcFactor: 'one',
-                dstFactor: 'one',
-              },
-            },
+            }),
           },
         ],
       },
@@ -175,7 +189,7 @@ export class PipelineEntry {
         cullMode: this.options.cullMode,
       },
       depthStencil: {
-        depthWriteEnabled: this.options.depthWriteEnabled, // TODO options
+        depthWriteEnabled: this.options.depthWriteEnabled,
         depthCompare: this.options.depthCompare,
         format: 'depth24plus',
       },

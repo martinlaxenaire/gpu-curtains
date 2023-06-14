@@ -15,8 +15,8 @@ export class PlaneGeometry extends IndexedGeometry {
 
     this.setIndexArray()
 
-    const vertexCount = this.definition.width * 2 + 2 + (this.definition.height - 1) * (this.definition.width + 1)
-    const attributes = this.getIndexedVerticesAndUVs(vertexCount)
+    const verticesCount = this.definition.width * 2 + 2 + (this.definition.height - 1) * (this.definition.width + 1)
+    const attributes = this.getIndexedVerticesAndUVs(verticesCount)
 
     Object.keys(attributes).forEach((attributeKey) => {
       this.setAttribute(attributes[attributeKey])
@@ -47,15 +47,15 @@ export class PlaneGeometry extends IndexedGeometry {
     })
   }
 
-  getIndexedVerticesAndUVs(vertexCount) {
+  getIndexedVerticesAndUVs(verticesCount) {
     // geometry vertices and UVs
     const uv = {
       name: 'uv',
       type: 'vec2f',
       bufferFormat: 'float32x2',
       size: 2,
-      bufferLength: this.vertexCount * 2,
-      array: new Float32Array(vertexCount * 2),
+      bufferLength: verticesCount * 2,
+      array: new Float32Array(verticesCount * 2),
     }
 
     const position = {
@@ -65,8 +65,8 @@ export class PlaneGeometry extends IndexedGeometry {
       // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
       //size: this.definition.width * this.definition.height * 3 * 3
       size: 3,
-      bufferLength: this.vertexCount * 3,
-      array: new Float32Array(vertexCount * 3),
+      bufferLength: verticesCount * 3,
+      array: new Float32Array(verticesCount * 3),
     }
 
     let positionOffset = 0

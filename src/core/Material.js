@@ -16,9 +16,9 @@ export class Material {
 
     this.renderer = renderer
 
-    const { label, uniformsBindings, cullMode, depthWriteEnabled, depthCompare } = parameters
+    let { shaders, label, uniformsBindings, ...renderingOptions } = parameters
 
-    const shaders = {
+    shaders = {
       ...{
         vertex: {
           code: '',
@@ -29,16 +29,14 @@ export class Material {
           entryPoint: 'main',
         },
       },
-      ...parameters.shaders,
+      ...shaders,
     }
 
     this.options = {
-      label,
       shaders,
+      label,
       uniformsBindings,
-      cullMode,
-      depthWriteEnabled,
-      depthCompare,
+      rendering: renderingOptions,
     }
 
     this.pipelineEntry = null
@@ -81,9 +79,7 @@ export class Material {
       geometryAttributes: this.attributes.geometry,
       bindGroups: this.bindGroups,
       shaders: this.options.shaders,
-      cullMode: this.options.cullMode,
-      depthWriteEnabled: this.options.depthWriteEnabled,
-      depthCompare: this.options.depthCompare,
+      ...this.options.rendering,
     })
   }
 
@@ -143,10 +139,30 @@ export class Material {
   }
 
   createAttributesBuffers() {
+    // this.attributes.buffers = {}
+    //
+    // const vertexBuffer = this.renderer.device.createBuffer({
+    //   label: this.options.label + ': Vertex buffer vertices',
+    //   size: this.attributes.geometry.vertexArray.byteLength,
+    //   //usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    //   usage: GPUBufferUsage.VERTEX,
+    //   mappedAtCreation: true,
+    // })
+    //
+    // const vertexBufferValues = vertexBuffer.getMappedRange()
+    //
+    // for (let i = 0; i < this.attributes.geometry?.vertexArray.length; i++) {
+    //   vertexBufferValues[i] = this.attributes.geometry?.vertexArray[i]
+    // }
+    //
+    // vertexBuffer.unmap()
+    //
+    // this.attributes.buffers.vertexBuffer = vertexBuffer
+
     this.attributes.buffers = {
       vertexBuffer: this.renderer.device.createBuffer({
         label: this.options.label + ': Vertex buffer vertices',
-        size: this.attributes.geometry.vertexArray.byteLength,
+        size: this.attributes.geometry.vertexArray.length * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
       }),
     }

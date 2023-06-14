@@ -24,7 +24,7 @@ interface DOMObject3DSize {
   document: RectBBox
 }
 
-interface DOMOBject3DTransforms extends Object3DTransforms {
+interface DOMObject3DTransforms extends Object3DTransforms {
   origin: {
     model: Vec3
     world: Vec3
@@ -35,6 +35,8 @@ interface DOMOBject3DTransforms extends Object3DTransforms {
   }
 }
 
+declare const DOMObjectWorldScale: Vec3
+
 export class DOMObject3D extends ProjectedObject3D {
   renderer: GPUCurtainsRenderer
   camera: Camera
@@ -42,7 +44,7 @@ export class DOMObject3D extends ProjectedObject3D {
   size: DOMObject3DSize
   domElement: DOMElement
 
-  transforms: DOMOBject3DTransforms
+  transforms: DOMObject3DTransforms
 
   constructor(renderer: GPUCurtainsRenderer, element: string | HTMLElement)
 
@@ -56,8 +58,8 @@ export class DOMObject3D extends ProjectedObject3D {
 
   setTransforms()
 
-  get documentPosition(): RectBBox
-  set documentPosition(value: RectBBox)
+  get documentPosition(): Vec3
+  set documentPosition(value: Vec3)
 
   get transformOrigin(): Vec3
   set transformOrigin(value: Vec3)

@@ -1,17 +1,15 @@
-import ResizeManager from '../utils/ResizeManager'
+import { resizeManager } from '../utils/ResizeManager'
 
 export class DOMElement {
   constructor({
-    element,
-    onSizeChanged = () => {
+    element = document.body,
+    onSizeChanged = (boundingRect = null) => {
       /* allow empty callback */
     },
-    onPositionChanged = () => {
+    onPositionChanged = (boundingRect = null) => {
       /* allow empty callback */
     },
   } = {}) {
-    if (!element) return
-
     if (typeof element === 'string') {
       this.element = document.querySelector(element)
 
@@ -27,7 +25,7 @@ export class DOMElement {
     this.onSizeChanged = onSizeChanged
     this.onPositionChanged = onPositionChanged
 
-    this.resizeManager = ResizeManager
+    this.resizeManager = resizeManager
 
     this.resizeManager.observe({
       element: this.element,

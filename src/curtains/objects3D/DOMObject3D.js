@@ -3,6 +3,8 @@ import { Vec3 } from '../../math/Vec3'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
 
+const DOMObjectWorldScale = new Vec3()
+
 export class DOMObject3D extends ProjectedObject3D {
   constructor(renderer, element) {
     // we could pass our curtains object OR our curtains renderer object
@@ -129,22 +131,18 @@ export class DOMObject3D extends ProjectedObject3D {
       worldPosition = this.documentToWorldSpace(this.documentPosition)
     }
 
-    this.position.set(
-      this.size.world.left + worldPosition.x,
-      this.size.world.top + worldPosition.y,
-      -this.documentPosition.z / this.camera.CSSPerspective
-    )
+    this.position.set(this.size.world.left + worldPosition.x, this.size.world.top + worldPosition.y, this.position.z)
 
     super.applyPosition()
   }
 
-  applyScale() {
-    this.transforms.scale.z = 1
-    // TODO update textures matrix...
-    //this.resize()
-
-    super.applyScale()
-  }
+  // applyScale() {
+  //   this.transforms.scale.z = 1
+  //   // TODO update textures matrix...
+  //   //this.resize()
+  //
+  //   super.applyScale()
+  // }
 
   applyTransformOrigin() {
     this.setWorldTransformOrigin()
@@ -161,11 +159,7 @@ export class DOMObject3D extends ProjectedObject3D {
 
     // we need to scale our planes, from a square to a right sized rectangle
     // we're doing this after our transformation matrix because this scale transformation always have the same origin
-    this.modelMatrix.scale({
-      x: this.size.world.width,
-      y: this.size.world.height,
-      z: 1,
-    })
+    this.modelMatrix.scale(DOMObjectWorldScale)
   }
 
   /***
@@ -212,6 +206,8 @@ export class DOMObject3D extends ProjectedObject3D {
       top: ((containerCenter.y - planeCenter.y) / containerBoundingRect.height) * this.camera.screenRatio.height,
       left: ((planeCenter.x - containerCenter.x) / containerBoundingRect.width) * this.camera.screenRatio.width,
     }
+
+    DOMObjectWorldScale.set(this.size.world.width, this.size.world.height, 1)
 
     this.setWorldTransformOrigin()
 

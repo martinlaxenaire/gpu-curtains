@@ -1,10 +1,10 @@
 import { GPUCurtainsRenderer } from './renderer/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
-import ResizeManager from '../utils/ResizeManager'
+import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 
 export class GPUCurtains {
-  constructor({ container, pixelRatio = 1, camera = {} }) {
+  constructor({ container, pixelRatio = 1, camera }) {
     this.type = 'CurtainsGPU'
 
     this.options = {
@@ -60,6 +60,7 @@ export class GPUCurtains {
       camera: this.options.camera,
     })
 
+    this.options.camera = this.renderer.camera
     this.canvas = this.renderer.canvas
   }
 
@@ -87,7 +88,7 @@ export class GPUCurtains {
   }
 
   initEvents() {
-    ResizeManager.useObserver(true)
+    resizeManager.useObserver(true)
 
     this.initScroll()
   }
@@ -115,9 +116,14 @@ export class GPUCurtains {
   }
 
   updateScroll(lastXDelta = 0, lastYDelta = 0) {
-    for (let i = 0; i < this.renderer.planes.length; i++) {
-      this.renderer.planes[i].updateScrollPosition(lastXDelta, lastYDelta)
-    }
+    // for (let i = 0; i < this.renderer.planes.length; i++) {
+    //   this.renderer.planes[i].updateScrollPosition(lastXDelta, lastYDelta)
+    // }
+    this.renderer.meshes.forEach((mesh) => {
+      if (mesh.domElement) {
+        mesh.updateScrollPosition(lastXDelta, lastYDelta)
+      }
+    })
   }
 
   /***

@@ -8,8 +8,8 @@ interface CameraBasePerspectiveOptions {
 }
 
 interface CameraPerspectiveOptions extends CameraBasePerspectiveOptions {
-  width: number
-  height: number
+  width?: number
+  height?: number
   pixelRatio?: number
 }
 

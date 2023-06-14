@@ -1,6 +1,6 @@
 import { isCameraRenderer } from '../../utils/renderer-utils'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import { MeshMixin } from './MeshMixin'
+import MeshMixin from './MeshMixin'
 
 export class Mesh extends MeshMixin(ProjectedObject3D) {
   constructor(renderer, parameters = {}) {

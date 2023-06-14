@@ -1,4 +1,3 @@
-import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { isRenderer } from '../utils/renderer-utils'
 import { BindGroupSamplerBinding } from './bindGroupBindings/BindGroupSamplerBinding'
@@ -7,6 +6,9 @@ import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBind
 import { Object3D } from './objects3D/Object3D'
 import { Mat4 } from '../math/Mat4'
 
+const planeRatio = new Vec3(1)
+const textureRatio = new Vec3(1)
+const coverScale = new Vec3(1)
 const rotationMatrix = new Mat4()
 
 const defaultTextureParams = {
@@ -148,9 +150,10 @@ export class Texture extends Object3D {
   }
 
   applyTransformOrigin() {
+    this.transformOrigin.z = 0
+
     super.applyTransformOrigin()
 
-    this.transforms.origin.z = 0
     this.resize()
   }
 
@@ -169,13 +172,15 @@ export class Texture extends Object3D {
 
     const sourceRatio = sourceWidth / sourceHeight
 
-    // Huge props to @grgrdvrt https://github.com/grgrdvrt for this solution!
-    const planeRatio = parentWidth > parentHeight ? new Vec3(parentRatio, 1, 1) : new Vec3(1, 1 / parentRatio, 1)
-
-    const textureRatio =
-      parentWidth > parentHeight
-        ? new Vec3(1 / (sourceRatio * this.scale.x), 1 / this.scale.y, 1)
-        : new Vec3(1 / this.scale.x, sourceRatio / this.scale.y, 1)
+    // handle the texture rotation
+    // huge props to @grgrdvrt https://github.com/grgrdvrt for this solution!
+    if (parentWidth > parentHeight) {
+      planeRatio.set(parentRatio, 1, 1)
+      textureRatio.set(1 / (sourceRatio * this.scale.x), 1 / this.scale.y, 1)
+    } else {
+      planeRatio.set(1, 1 / parentRatio, 1)
+      textureRatio.set(1 / this.scale.x, sourceRatio / this.scale.y, 1)
+    }
 
     // cover ratio is a bit tricky!
     // TODO more tests!
@@ -186,7 +191,7 @@ export class Texture extends Object3D {
         ? planeRatio.x * textureRatio.x
         : textureRatio.y * planeRatio.y
 
-    const coverScale = new Vec3(1 / coverRatio, 1 / coverRatio, 1)
+    coverScale.set(1 / coverRatio, 1 / coverRatio, 1)
 
     rotationMatrix.rotateFromQuaternion(this.quaternion)
 

@@ -1,7 +1,7 @@
 import { GPUCameraRenderer } from '../../core/renderers/GPUCameraRenderer'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
-  constructor({ container, pixelRatio, renderingScale = 1, camera = {} }) {
+  constructor({ container, pixelRatio, renderingScale = 1, camera }) {
     super({ container, pixelRatio, renderingScale, camera })
 
     this.type = 'CurtainsRenderer'
@@ -9,7 +9,6 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
   onCameraPositionChanged() {
     super.onCameraPositionChanged()
-    console.log('resize meshes from cam pos change')
     this.meshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
   }
 
@@ -23,8 +22,11 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
   onResize() {
     super.onResize()
-    console.log('resize meshes from onResize')
-    this.planes?.forEach((plane) => plane.resize())
+    this.meshes?.forEach((mesh) => {
+      if (mesh.domElement) {
+        mesh.resize()
+      }
+    })
   }
 
   setRendererObjects() {

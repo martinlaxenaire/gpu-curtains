@@ -9,7 +9,7 @@ export class ProjectedObject3D extends Object3D {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isCameraRenderer(renderer, this.type)) {
+    if (!isCameraRenderer(renderer, 'ProjectedObject3D')) {
       console.warn('ProjectedObject3D fail')
       return
     }

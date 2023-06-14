@@ -3,6 +3,7 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { Texture } from '../Texture'
 import { Mesh } from '../meshes/Mesh'
 import { Plane } from '../../curtains/meshes/Plane'
+import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 
 interface GPURendererParams {
   container: string | HTMLElement
@@ -10,7 +11,7 @@ interface GPURendererParams {
   renderingScale?: number
 }
 
-type MeshTypes = Mesh | Plane
+type MeshTypes = Mesh | DOMMesh | Plane
 
 export class GPURenderer {
   type: string

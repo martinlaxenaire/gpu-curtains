@@ -1,5 +1,5 @@
 import { DOMMesh } from './DOMMesh'
-import { MeshBaseParams, MeshBindings, MeshShadersOptions } from '../../core/meshes/Mesh'
+import { MeshBaseParams } from '../../core/meshes/Mesh'
 import { PlaneGeometryParams } from '../geometry/PlaneGeometry'
 import { RectCoords } from '../objects3D/DOMObject3D'
 import { GPUCurtainsRenderer } from '../renderer/GPUCurtainsRenderer'

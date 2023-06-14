@@ -1,6 +1,7 @@
 import { ShadersType } from '../meshes/Mesh'
 
-type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'sampler'
+// TODO ugly fix so typescript does not complain about BindingType being a string
+type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'sampler' | string
 
 interface BindGroupBindingParams {
   label?: string
@@ -16,6 +17,7 @@ export class BindGroupBinding {
   bindingType: BindingType
   bindIndex: number
   visibility: GPUShaderStageFlags
+  value?: Float32Array | null
 
   constructor({ label, name, bindingType, bindIndex, visibility }: BindGroupBindingParams)
 

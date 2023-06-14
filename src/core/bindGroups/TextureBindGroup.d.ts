@@ -2,7 +2,7 @@ import { BindGroup, BindGroupParams } from './BindGroup'
 import { Texture } from '../Texture'
 
 interface TextureBindGroupParams extends BindGroupParams {
-  textures: Texture[]
+  textures?: Texture[]
 }
 
 export class TextureBindGroup extends BindGroup {

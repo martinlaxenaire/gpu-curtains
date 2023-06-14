@@ -8,8 +8,7 @@
  @y (float): Y component of our vector
  @z (float): Z component of our vector
 
- returns :
- @this: our Vec3 class object
+ @returns {Vec3}: our Vec3 class object
  ***/
 import { Mat4 } from './Mat4'
 import { Quat } from './Quat'
@@ -74,8 +73,7 @@ export class Vec3 {
    @y (float): Y component of our vector
    @z (float): Z component of our vector
 
-   returns:
-   @this (Vec2): this vector after being set
+   @returns {Vec3}: this vector after being set
    ***/
   set(x = 0, y = 0, z = 0) {
     this._x = x
@@ -91,8 +89,7 @@ export class Vec3 {
    params:
    @vector (Vec3): vector to add
 
-   returns:
-   @this (Vec3): this vector after addition
+   @returns {Vec3}: this vector after addition
    ***/
   add(vector = new Vec3()) {
     this._x += vector.x
@@ -108,8 +105,7 @@ export class Vec3 {
    params:
    @value (float): number to add
 
-   returns:
-   @this (Vec3): this vector after addition
+   @returns {Vec3}: this vector after addition
    ***/
   addScalar(value = 0) {
     this._x += value
@@ -125,8 +121,7 @@ export class Vec3 {
    params:
    @vector (Vec3): vector to use for subtraction
 
-   returns:
-   @this (Vec3): this vector after subtraction
+   @returns {Vec3}: this vector after subtraction
    ***/
   sub(vector = new Vec3()) {
     this._x -= vector.x
@@ -142,8 +137,7 @@ export class Vec3 {
    params:
    @value (float): number to use for subtraction
 
-   returns:
-   @this (Vec3): this vector after subtraction
+   @returns {Vec3}: this vector after subtraction
    ***/
   subScalar(value = 0) {
     this._x -= value
@@ -159,8 +153,7 @@ export class Vec3 {
    params:
    @vector (Vec3): vector to use for multiplication
 
-   returns:
-   @this (Vec3): this vector after multiplication
+   @returns {Vec3}: this vector after multiplication
    ***/
   multiply(vector = new Vec3(1)) {
     this._x *= vector.x
@@ -176,8 +169,7 @@ export class Vec3 {
    params:
    @value (float): number to use for multiplication
 
-   returns:
-   @this (Vec3): this vector after multiplication
+   @returns {Vec3}: this vector after multiplication
    ***/
   multiplyScalar(value = 1) {
     this._x *= value
@@ -193,8 +185,7 @@ export class Vec3 {
    params:
    @vector (Vec3): vector to copy
 
-   returns:
-   @this (Vec3): this vector after copy
+   @returns {Vec3}: this vector after copy
    ***/
   copy(vector = new Vec3()) {
     this._x = vector.x
@@ -207,28 +198,10 @@ export class Vec3 {
   /***
    Clone this vector
 
-   returns:
-   @vector (Vec3): cloned vector
+   @returns {Vec3}: cloned vector
    ***/
   clone() {
     return new Vec3(this._x, this._y, this._z)
-  }
-
-  /***
-   Merges this vector with a vector when values are NaN. Mostly used internally.
-
-   params:
-   @vector (Vec3): vector to use for sanitization
-
-   returns:
-   @vector (Vec3): sanitized vector
-   ***/
-  sanitizeNaNValuesWith(vector = new Vec3()) {
-    this._x = isNaN(this._x) ? vector.x : parseFloat(this._x)
-    this._y = isNaN(this._y) ? vector.y : parseFloat(this._y)
-    this._z = isNaN(this._z) ? vector.z : parseFloat(this._z)
-
-    return this
   }
 
   /***
@@ -237,8 +210,7 @@ export class Vec3 {
    params:
    @vector (Vec3): vector representing max values
 
-   returns:
-   @vector (Vec3): vector with max values applied
+   @returns {Vec3}: vector with max values applied
    ***/
   max(vector = new Vec3()) {
     this._x = Math.max(this._x, vector.x)
@@ -254,8 +226,7 @@ export class Vec3 {
    params:
    @vector (Vec3): vector representing min values
 
-   returns:
-   @vector (Vec3): vector with min values applied
+   @returns {Vec3}: vector with min values applied
    ***/
   min(vector = new Vec3()) {
     this._x = Math.min(this._x, vector.x)
@@ -268,8 +239,7 @@ export class Vec3 {
   /***
    Checks if 2 vectors are equal
 
-   returns:
-   @isEqual (bool): whether the vectors are equals or not
+   @returns {boolean}: whether the vectors are equals or not
    ***/
   equals(vector = new Vec3()) {
     return this._x === vector.x && this._y === vector.y && this._z === vector.z
@@ -278,8 +248,7 @@ export class Vec3 {
   /***
    Normalize this vector
 
-   returns:
-   @this (Vec3): normalized vector
+   @returns {Vec3}: normalized vector
    ***/
   normalize() {
     // normalize
@@ -297,8 +266,7 @@ export class Vec3 {
   /***
    Calculates the dot product of 2 vectors
 
-   returns:
-   @dotProduct (float): dot product of the 2 vectors
+   @returns {number}: dot product of the 2 vectors
    ***/
   dot(vector = new Vec3()) {
     return this._x * vector.x + this._y * vector.y + this._z * vector.z
@@ -312,8 +280,7 @@ export class Vec3 {
    params :
    @matrix (array): 4x4 matrix used
 
-   returns :
-   @this (Vec3): this vector after matrix application
+   @returns {Vec3}: this vector after matrix application
    ***/
   applyMat4(matrix = new Mat4()) {
     const x = this._x,
@@ -337,8 +304,7 @@ export class Vec3 {
    params :
    @quaternion (Quat): quaternion to use
 
-   returns :
-   @this (Vec3): this vector after applying the transformation
+   @returns {Vec3}: this vector after applying the transformation
    ***/
   applyQuat(quaternion = new Quat()) {
     const x = this._x,
@@ -370,6 +336,8 @@ export class Vec3 {
 
    params:
    @camera (Camera): camera to use for projection
+
+   @returns {Vec3}
    ***/
   project(camera) {
     this.applyMat4(camera.viewMatrix).applyMat4(camera.projectionMatrix)
@@ -381,9 +349,11 @@ export class Vec3 {
 
    params:
    @camera (Camera): camera to use for projection
+
+   @returns {Vec3}
    ***/
   unproject(camera) {
-    this.applyMat4(camera.projectionMatrix.getInverse()).applyMat4(camera.worldMatrix)
+    this.applyMat4(camera.projectionMatrix.getInverse()).applyMat4(camera.modelMatrix)
     return this
   }
 }

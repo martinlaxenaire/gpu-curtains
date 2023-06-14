@@ -1,16 +1,14 @@
 import { PipelineEntry, PipelineEntryBaseParams } from './PipelineEntry'
-import { MeshShadersOptions } from '../meshes/Mesh'
-import { MaterialBindGroups, MaterialGeometryAttributes } from '../Material'
-import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
+import { GPURenderer } from '../renderers/GPURenderer'
 
 export class PipelineManager {
-  renderer: GPUCurtainsRenderer
+  renderer: GPURenderer
   currentPipelineID: number | null
   pipelineEntries: PipelineEntry[]
 
-  constructor({ renderer }: { renderer: GPUCurtainsRenderer })
+  constructor({ renderer }: { renderer: GPURenderer })
 
-  isSamePipeline(shaders: MeshShadersOptions): PipelineEntry | null
+  isSamePipeline(parameters: PipelineEntryBaseParams): PipelineEntry | null
 
   createRenderPipeline(parameters: PipelineEntryBaseParams): PipelineEntry
 

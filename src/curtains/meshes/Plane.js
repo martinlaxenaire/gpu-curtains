@@ -1,6 +1,7 @@
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import { PlaneGeometry } from '../geometry/PlaneGeometry'
 import { DOMMesh } from './DOMMesh'
+import { Vec3 } from '../../math/Vec3'
 
 const defaultPlaneParams = {
   label: 'Plane',
@@ -70,9 +71,33 @@ export class Plane extends DOMMesh {
     super.resize(boundingRect)
 
     // TODO should be handled by meshes?
-    this.textures && this.textures.forEach((texture) => texture.resize())
+    // this.textures && this.textures.forEach((texture) => texture.resize())
 
     // TODO onAfterResize callback
+  }
+
+  applyScale() {
+    this.transforms.scale.z = 1
+    super.applyScale()
+  }
+
+  /***
+   This will set our plane position by adding plane computed bounding box values and computed relative position values
+   ***/
+  applyPosition() {
+    // avoid unnecessary calculations if we don't have a users set relative position
+    let worldPosition = new Vec3(0, 0, 0)
+    if (!this.documentPosition.equals(worldPosition)) {
+      worldPosition = this.documentToWorldSpace(this.documentPosition)
+    }
+
+    this.position.set(
+      this.size.world.left + worldPosition.x,
+      this.size.world.top + worldPosition.y,
+      -this.documentPosition.z / this.camera.CSSPerspective
+    )
+
+    super.applyPosition()
   }
 
   // updateModelMatrixStack() {
