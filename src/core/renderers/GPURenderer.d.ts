@@ -13,6 +13,17 @@ interface GPURendererParams {
 
 type MeshTypes = Mesh | DOMMesh | Plane
 
+// interface CustomGPURenderPassDescriptor extends Omit<GPURenderPassDescriptor, 'colorAttachments'> {
+//   colorAttachments: Iterable<GPURenderPassColorAttachment>
+// }
+
+export interface RenderPass {
+  descriptor: GPURenderPassDescriptor
+  target: GPUTexture
+  depth: GPUTexture
+  sampleCount: GPUSize32
+}
+
 export class GPURenderer {
   type: string
   ready: boolean
@@ -23,14 +34,9 @@ export class GPURenderer {
   adapter: null | GPUAdapter
   device: null | GPUDevice
 
-  renderPass: null | {
-    descriptor: GPURenderPassDescriptor
-    target: GPUTexture
-    depth: GPUTexture
-    sampleCount: GPUSize32
-  }
+  renderPass: RenderPass
 
-  pipelineManager: PipelineManager
+  pipelineManager: typeof PipelineManager
 
   meshes: MeshTypes[]
   textures: Texture[]
@@ -47,10 +53,13 @@ export class GPURenderer {
   setPipelineManager()
 
   setTexture(texture: Texture)
-  createSampler(options: GPUSamplerDescriptor): GPUSampler
-  createTexture(options: GPUTextureDescriptor): GPUTexture
+  createSampler(options: GPUSamplerDescriptor): GPUSampler | boolean
+  createTexture(options: GPUTextureDescriptor): GPUTexture | boolean
   uploadTexture(texture: Texture)
   importExternalTexture(video: HTMLVideoElement): GPUExternalTexture
+
+  createDepthTexture(): GPUTexture
+  setRenderPassDepth()
   setRenderPassView()
   setRenderPass()
 

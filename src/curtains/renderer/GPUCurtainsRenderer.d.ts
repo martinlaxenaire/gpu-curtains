@@ -3,6 +3,7 @@ import { Texture } from '../../core/Texture'
 import { Plane } from '../meshes/Plane'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
+  //planes: (typeof Plane)[]
   planes: Plane[]
 
   constructor({ container, pixelRatio, renderingScale, camera }: GPUCameraRendererParams)
@@ -13,7 +14,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
   onResize()
 
-  onBeginRenderPass(pass: GPURenderPassEncoder)
+  //onBeginRenderPass(pass: GPURenderPassEncoder)
 
   render()
 

@@ -35,7 +35,7 @@ export class DOMElement {
     })
 
     // do it right away on init
-    //this.setSize()
+    this.setSize()
   }
 
   get boundingRect() {
@@ -66,11 +66,11 @@ export class DOMElement {
   }
 
   setSize(contentRect) {
-    this.isResizing = true
+    // only throttle if we have set our first value
+    this.isResizing = !!this.boundingRect
     this.boundingRect = contentRect ?? this.element.getBoundingClientRect()
 
     // TODO
-    //this.isResizing = false
     setTimeout(() => {
       this.isResizing = false
     }, 50)

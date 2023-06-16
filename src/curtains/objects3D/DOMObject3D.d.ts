@@ -24,7 +24,7 @@ interface DOMObject3DSize {
   document: RectBBox
 }
 
-interface DOMObject3DTransforms extends Object3DTransforms {
+interface DOMObject3DTransforms extends Omit<Object3DTransforms, 'origin' | 'position'> {
   origin: {
     model: Vec3
     world: Vec3
@@ -35,8 +35,7 @@ interface DOMObject3DTransforms extends Object3DTransforms {
   }
 }
 
-declare const DOMObjectWorldScale: Vec3
-
+//declare class DOMObject3DClass extends ProjectedObject3D {
 export class DOMObject3D extends ProjectedObject3D {
   renderer: GPUCurtainsRenderer
   camera: Camera
@@ -45,6 +44,9 @@ export class DOMObject3D extends ProjectedObject3D {
   domElement: DOMElement
 
   transforms: DOMObject3DTransforms
+
+  #DOMObjectWorldPosition: Vec3
+  #DOMObjectWorldScale: Vec3
 
   constructor(renderer: GPUCurtainsRenderer, element: string | HTMLElement)
 
@@ -74,3 +76,9 @@ export class DOMObject3D extends ProjectedObject3D {
 
   updateScrollPosition(lastXDelta?: number, lastYDelta?: number)
 }
+
+// TODO check https://stackoverflow.com/a/71359409/13354068
+// export const DOMObject3D: Omit<typeof ProjectedObject3D, 'transforms'> & {
+//   new (...args: ConstructorParameters<typeof ProjectedObject3D>): InstanceType<typeof DOMObject3DClass>
+//   transforms: DOMObject3DTransforms
+// }

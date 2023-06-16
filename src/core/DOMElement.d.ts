@@ -16,7 +16,7 @@ export class DOMElement {
   isResizing: boolean
   onSizeChanged: (boundingRect: DOMElementBoundingRect | null) => void | null
   onPositionChanged: (boundingRect: DOMElementBoundingRect | null) => void | null
-  resizeManager: typeof ResizeManager // TODO
+  resizeManager: typeof ResizeManager
   _boundingRect: DOMElementBoundingRect
 
   get boundingRect(): DOMElementBoundingRect

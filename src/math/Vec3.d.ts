@@ -4,18 +4,24 @@ import { Camera } from '../core/camera/Camera'
 
 export class Vec3 {
   type: string
-  _x: number
-  _y: number
-  _z: number
+
+  private _x: number
+  private _y: number
+  private _z: number
+
+  _onChangeCallback?(): void
 
   constructor(x?: number, y?: number, z?: number)
 
-  public get x(): number
-  public get y(): number
-  public get z(): number
-  public set(x: number)
-  public set(y: number)
-  public set(z: number)
+  get x(): number
+  set x(value: number)
+
+  get y(): number
+  set y(value: number)
+
+  get z(): number
+  set z(value: number)
+
   set(x?: number, y?: number, z?: number): Vec3
 
   onChange(callback: () => void): Vec3

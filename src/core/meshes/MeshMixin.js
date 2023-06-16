@@ -22,7 +22,7 @@ const defaultMeshParams = {
 const MeshMixin = (superclass) =>
   class extends superclass {
     constructor(renderer, element, parameters) {
-      super(renderer, element)
+      super(renderer, element, parameters)
 
       this.type = 'MeshObject'
 
@@ -43,6 +43,7 @@ const MeshMixin = (superclass) =>
       this.options = {
         label,
         shaders,
+        ...(this.options ?? {}), // merge possible lower options?
       }
 
       this.setMatricesUniformGroup()
@@ -169,6 +170,8 @@ const MeshMixin = (superclass) =>
     resize() {
       super.resize()
       /* will be overridden */
+
+      // TODO onAfterResize callback?
     }
 
     applyScale() {

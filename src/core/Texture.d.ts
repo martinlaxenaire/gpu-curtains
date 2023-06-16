@@ -36,11 +36,6 @@ interface TextureOptions extends TextureParams {
 
 type TextureParent = null | Mesh | DOMMesh | Plane
 
-declare const planeRatio: Vec3
-declare const textureRatio: Vec3
-declare const coverScale: Vec3
-declare const rotationMatrix: Mat4
-
 declare const defaultTextureParams: TextureParams
 
 export class Texture extends Object3D {
@@ -66,6 +61,11 @@ export class Texture extends Object3D {
   sourceLoaded: boolean
   shouldUpdate: boolean
   shouldUpdateBindGroup: boolean
+
+  #planeRatio: Vec3
+  #textureRatio: Vec3
+  #coverScale: Vec3
+  #rotationMatrix: Mat4
 
   constructor(renderer: GPUCurtainsRenderer, parameters?: TextureParams)
 

@@ -1,14 +1,19 @@
 export class Vec2 {
   type: string
-  _x: number
-  _y: number
+
+  private _x: number
+  private _y: number
+
+  _onChangeCallback?(): void
 
   constructor(x?: number, y?: number)
 
-  public get x(): number
-  public get y(): number
-  public set(x: number)
-  public set(y: number)
+  get x(): number
+  set x(value: number)
+
+  get y(): number
+  set y(value: number)
+
   set(x?: number, y?: number): Vec2
 
   onChange(callback: () => void): Vec2

@@ -1,7 +1,14 @@
 import { ShadersType } from '../meshes/Mesh'
 
 // TODO ugly fix so typescript does not complain about BindingType being a string
-type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'sampler' | string
+export type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'sampler' | string
+// declare enum BindingType {
+//   'uniform',
+//   'storage',
+//   'texture',
+//   'externalTexture',
+//   'sampler',
+// }
 
 interface BindGroupBindingParams {
   label?: string

@@ -64,57 +64,12 @@ export class Plane extends DOMMesh {
 
     this.setInitSources()
 
-    this.renderer.planes.push(this)
+    //this.renderer.planes.push(/** @type {Plane} **/ this)
   }
 
   resize(boundingRect = null) {
     super.resize(boundingRect)
-
-    // TODO should be handled by meshes?
-    // this.textures && this.textures.forEach((texture) => texture.resize())
-
-    // TODO onAfterResize callback
   }
-
-  applyScale() {
-    this.transforms.scale.z = 1
-    super.applyScale()
-  }
-
-  /***
-   This will set our plane position by adding plane computed bounding box values and computed relative position values
-   ***/
-  applyPosition() {
-    // avoid unnecessary calculations if we don't have a users set relative position
-    let worldPosition = new Vec3(0, 0, 0)
-    if (!this.documentPosition.equals(worldPosition)) {
-      worldPosition = this.documentToWorldSpace(this.documentPosition)
-    }
-
-    this.position.set(
-      this.size.world.left + worldPosition.x,
-      this.size.world.top + worldPosition.y,
-      -this.documentPosition.z / this.camera.CSSPerspective
-    )
-
-    super.applyPosition()
-  }
-
-  // updateModelMatrixStack() {
-  //   super.updateModelMatrixStack()
-  //
-  //   // TODO ugly
-  //   // if (sizeChanged) {
-  //   //   this.textures?.forEach((texture) => texture.resize())
-  //   // }
-  // }
-
-  // updateProjectionMatrixStack() {
-  //   super.updateProjectionMatrixStack()
-  //
-  //   //this.matrixUniformBinding?.shouldUpdateUniform('view')
-  //   //this.matrixUniformBinding?.shouldUpdateUniform('projection')
-  // }
 
   /** SOURCES **/
 

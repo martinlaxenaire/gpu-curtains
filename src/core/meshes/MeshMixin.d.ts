@@ -9,33 +9,6 @@ import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 
 declare const defaultMeshParams: MeshParams
 
-// https://stackoverflow.com/questions/65134811/es6-exporting-classes-with-typescript-mixins
-// https://www.typescriptlang.org/docs/handbook/mixins.html
-
-// To get started, we need a type which we'll use to extend
-// other classes from. The main responsibility is to declare
-// that the type being passed in is a class.
-
-declare class Mesh3D extends ProjectedObject3D {}
-declare class DOMMesh3D extends DOMObject3D {}
-
-type PossibleMesh3D = Mesh3D | DOMMesh3D // consumer
-type PossibleObject3D = DOMObject3D | ProjectedObject3D
-
-type Constructor = new (...args: any[]) => {}
-// type GConstructor<T = {}> = new (...args: any[]) => T
-//
-// type MixedMeshes = GConstructor<DOMObject3D | ProjectedObject3D>
-
-//declare type Constructor = new (...args: any[]) => PossibleObject3D
-//declare type Constructor = new (...args: any[]) => Record<never, unknown>
-
-// https://stackoverflow.com/a/58257148/13354068
-//type ReturnConstructor = new (...args: any[]) => Mesh | DOMMesh
-//type ReturnConstructor = new (...args: any[]) => DOMObject3D & ProjectedObject3D
-//type ReturnConstructor = new (...args: any[]) => PossibleMesh3D
-type ReturnConstructor = new (...args: any[]) => Record<never, unknown>
-
 export class MeshBase {
   type: string
   renderer: CameraRenderer
@@ -78,4 +51,14 @@ export class MeshBase {
   destroy()
 }
 
-export default function MeshMixin<TBase extends Constructor>(superclass: TBase): ReturnConstructor
+// https://stackoverflow.com/questions/65134811/es6-exporting-classes-with-typescript-mixins
+// https://www.typescriptlang.org/docs/handbook/mixins.html
+
+// our mixin constructor (superclass) is either ProjectedObject3D or DOMOBject3D
+type MixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D
+// our return constructor is our mixin constructor & MeshBase type (that defines the return of MeshMixin)
+type ReturnMixinConstructor = new (...args: any[]) => MixinConstructor extends ProjectedObject3D
+  ? ProjectedObject3D & MeshBase
+  : DOMObject3D & MeshBase
+
+export default function MeshMixin<TBase extends MixinConstructor>(superclass: TBase): ReturnMixinConstructor

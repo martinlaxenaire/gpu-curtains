@@ -3,9 +3,10 @@ import { Vec3 } from '../../math/Vec3'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
 
-const DOMObjectWorldScale = new Vec3()
-
 export class DOMObject3D extends ProjectedObject3D {
+  #DOMObjectWorldPosition = new Vec3()
+  #DOMObjectWorldScale = new Vec3()
+
   constructor(renderer, element) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -87,7 +88,8 @@ export class DOMObject3D extends ProjectedObject3D {
     super.setTransforms()
 
     // reset our model transform origin to reflect CSS transform origins
-    this.transforms.origin.model = new Vec3(0.5, 0.5, 0)
+    this.transforms.origin.model.set(0.5, 0.5, 0)
+
     this.transforms.origin.world = new Vec3()
     this.transforms.position.document = new Vec3()
 
@@ -125,24 +127,23 @@ export class DOMObject3D extends ProjectedObject3D {
    This will set our plane position by adding plane computed bounding box values and computed relative position values
    ***/
   applyPosition() {
+    this.applyDocumentPosition()
+    super.applyPosition()
+  }
+
+  applyDocumentPosition() {
     // avoid unnecessary calculations if we don't have a users set relative position
     let worldPosition = new Vec3(0, 0, 0)
     if (!this.documentPosition.equals(worldPosition)) {
       worldPosition = this.documentToWorldSpace(this.documentPosition)
     }
 
-    this.position.set(this.size.world.left + worldPosition.x, this.size.world.top + worldPosition.y, this.position.z)
-
-    super.applyPosition()
+    this.#DOMObjectWorldPosition.set(
+      this.position.x + this.size.world.left + worldPosition.x,
+      this.position.y + this.size.world.top + worldPosition.y,
+      this.position.z + this.documentPosition.z / this.camera.CSSPerspective
+    )
   }
-
-  // applyScale() {
-  //   this.transforms.scale.z = 1
-  //   // TODO update textures matrix...
-  //   //this.resize()
-  //
-  //   super.applyScale()
-  // }
 
   applyTransformOrigin() {
     this.setWorldTransformOrigin()
@@ -155,11 +156,16 @@ export class DOMObject3D extends ProjectedObject3D {
   // override for this special case
   updateModelMatrix() {
     // compose our model transformation matrix from custom origin
-    this.modelMatrix.composeFromOrigin(this.position, this.quaternion, this.scale, this.worldTransformOrigin)
+    this.modelMatrix.composeFromOrigin(
+      this.#DOMObjectWorldPosition,
+      this.quaternion,
+      this.scale,
+      this.worldTransformOrigin
+    )
 
     // we need to scale our planes, from a square to a right sized rectangle
     // we're doing this after our transformation matrix because this scale transformation always have the same origin
-    this.modelMatrix.scale(DOMObjectWorldScale)
+    this.modelMatrix.scale(this.#DOMObjectWorldScale)
   }
 
   /***
@@ -207,12 +213,9 @@ export class DOMObject3D extends ProjectedObject3D {
       left: ((planeCenter.x - containerCenter.x) / containerBoundingRect.width) * this.camera.screenRatio.width,
     }
 
-    DOMObjectWorldScale.set(this.size.world.width, this.size.world.height, 1)
+    this.#DOMObjectWorldScale.set(this.size.world.width, this.size.world.height, 1)
 
     this.setWorldTransformOrigin()
-
-    // this.updateModelMatrix()
-    // this.updateProjectionMatrixStack()
   }
 
   setWorldTransformOrigin() {
@@ -229,7 +232,7 @@ export class DOMObject3D extends ProjectedObject3D {
     this.updateProjectionMatrixStack()
   }
 
-  // TODO setPosition, setRotation, setScale, etc.
+  // TODO setPosition, setRotation, setScale, etc?
 
   updateScrollPosition(lastXDelta = 0, lastYDelta = 0) {
     // actually update the plane position only if last X delta or last Y delta is not equal to 0

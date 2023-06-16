@@ -1,3 +1,5 @@
+import { Vec3 } from '../../math/Vec3'
+
 export class Geometry {
   constructor({ verticesOrder = 'cw' } = {}) {
     this.verticesCount = null
@@ -6,6 +8,11 @@ export class Geometry {
     this.bufferLength = 0
 
     this.attributes = []
+
+    this.boundingBox = {
+      min: new Vec3(),
+      max: new Vec3(),
+    }
   }
 
   setAttribute({ name, type = 'vec3f', bufferFormat = 'float32x3', size = 3, array = new Float32Array(0) }) {
@@ -47,6 +54,17 @@ export class Geometry {
   }
 
   computeGeometry() {
+    const hasPositionAttribute = this.attributes.find((attribute) => attribute.name === 'position')
+    if (!hasPositionAttribute) {
+      console.error(`Geometry must have a 'position' attribute`)
+      return
+    }
+
+    if (hasPositionAttribute.type !== 'vec3f') {
+      console.error(`Geometry 'position' attribute must be of 'vec3f' type`)
+      return
+    }
+
     this.array = new Float32Array(this.bufferLength)
 
     let currentIndex = 0
@@ -57,7 +75,25 @@ export class Geometry {
         const attributeArray = this.attributes[j].array
 
         for (let s = 0; s < attributeSize; s++) {
-          this.array[currentIndex] = attributeArray[attributeIndex * attributeSize + s]
+          const attributeValue = attributeArray[attributeIndex * attributeSize + s]
+          this.array[currentIndex] = attributeValue
+
+          if (this.attributes[j].name === 'position') {
+            if (s % 3 === 0) {
+              // x
+              if (this.boundingBox.min.x > attributeValue) this.boundingBox.min.x = attributeValue
+              if (this.boundingBox.max.x < attributeValue) this.boundingBox.max.x = attributeValue
+            } else if (s % 3 === 1) {
+              // y
+              if (this.boundingBox.min.y > attributeValue) this.boundingBox.min.y = attributeValue
+              if (this.boundingBox.max.y < attributeValue) this.boundingBox.max.y = attributeValue
+            } else if (s % 3 === 2) {
+              // z
+              if (this.boundingBox.min.z > attributeValue) this.boundingBox.min.z = attributeValue
+              if (this.boundingBox.max.z < attributeValue) this.boundingBox.max.z = attributeValue
+            }
+          }
+
           currentIndex++
         }
       }

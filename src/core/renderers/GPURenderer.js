@@ -93,7 +93,7 @@ export class GPURenderer {
   /** PIPELINES **/
 
   setPipelineManager() {
-    this.pipelineManager = new PipelineManager({ renderer: this })
+    this.pipelineManager = new PipelineManager({ renderer: /** @type {GPURenderer} **/ this })
   }
 
   /** TEXTURES **/
@@ -109,13 +109,13 @@ export class GPURenderer {
     }
   }
 
-  createSampler(options = {}) {
+  createSampler(options) {
     if (!this.device) return false
 
     return this.device.createSampler(options)
   }
 
-  createTexture(options = {}) {
+  createTexture(options) {
     if (!this.device) return false
 
     return this.device.createTexture(options)
@@ -153,6 +153,16 @@ export class GPURenderer {
 
   /** RENDER TEXTURES **/
 
+  createDepthTexture() {
+    return this.device.createTexture({
+      label: 'GPURenderer depth attachment texture',
+      size: [this.canvas.width, this.canvas.height],
+      format: 'depth24plus',
+      usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      sampleCount: this.renderPass.sampleCount,
+    })
+  }
+
   setRenderPassDepth() {
     if (!this.renderPass) return
 
@@ -162,13 +172,7 @@ export class GPURenderer {
       this.renderPass.depth.destroy()
     }
 
-    this.renderPass.depth = this.createTexture({
-      label: 'GPURenderer depth attachment texture',
-      size: [this.canvas.width, this.canvas.height],
-      format: 'depth24plus',
-      usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      sampleCount: this.renderPass.sampleCount,
-    })
+    this.renderPass.depth = this.createDepthTexture()
 
     this.renderPass.descriptor.depthStencilAttachment.view = this.renderPass.depth.createView()
   }
@@ -196,8 +200,16 @@ export class GPURenderer {
   setRenderPass() {
     this.renderPass = {
       sampleCount: 4, // TODO option
+    }
+
+    if (!this.device) return
+
+    const depthTexture = this.createDepthTexture()
+
+    this.renderPass = {
+      ...this.renderPass,
       target: null,
-      depth: null,
+      depth: depthTexture,
       descriptor: {
         label: 'GPURenderer pass descriptor',
         colorAttachments: [
@@ -216,7 +228,7 @@ export class GPURenderer {
           },
         ],
         depthStencilAttachment: {
-          view: null,
+          view: depthTexture.createView(),
 
           depthClearValue: 1.0,
           depthLoadOp: 'clear',
@@ -226,7 +238,7 @@ export class GPURenderer {
     }
 
     this.setRenderPassView()
-    this.setRenderPassDepth()
+    //this.setRenderPassDepth()
   }
 
   /**
@@ -304,7 +316,8 @@ export class GPURenderer {
     const encoder = this.device.createCommandEncoder({ label: 'our encoder' })
 
     // make a render pass encoder to encode render specific commands
-    const pass = encoder.beginRenderPass(this.renderPass.descriptor)
+    /** @type {GPURenderPassEncoder} **/
+    const pass = encoder.beginRenderPass(/** @type {GPURenderPassDescriptor} **/ this.renderPass.descriptor)
 
     this.onBeginRenderPass(pass)
 

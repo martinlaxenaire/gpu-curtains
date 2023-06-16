@@ -27,7 +27,7 @@ export class Camera {
   onPerspectiveChanged: () => void
   onPositionChanged: () => void
 
-  CSSPerpective: number
+  CSSPerspective: number
   screenRatio: {
     width: number
     height: number

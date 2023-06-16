@@ -6,11 +6,6 @@ import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBind
 import { Object3D } from './objects3D/Object3D'
 import { Mat4 } from '../math/Mat4'
 
-const planeRatio = new Vec3(1)
-const textureRatio = new Vec3(1)
-const coverScale = new Vec3(1)
-const rotationMatrix = new Mat4()
-
 const defaultTextureParams = {
   label: 'Texture',
   name: 'texture',
@@ -29,6 +24,11 @@ const defaultTextureParams = {
 }
 
 export class Texture extends Object3D {
+  #planeRatio = new Vec3(1)
+  #textureRatio = new Vec3(1)
+  #coverScale = new Vec3(1)
+  #rotationMatrix = new Mat4()
+
   constructor(renderer, parameters = defaultTextureParams) {
     super()
 
@@ -123,37 +123,26 @@ export class Texture extends Object3D {
     this.transforms.quaternion.setAxisOrder('ZXY')
 
     // reset our model transform origin to reflect CSS transform origins
-    this.transforms.origin.model = new Vec3(0.5, 0.5, 0)
+    this.transforms.origin.model.set(0.5, 0.5, 0)
   }
 
   applyPosition() {
     super.applyPosition()
-
-    this.transforms.position.z = 0
     this.resize()
   }
 
   applyRotation() {
     super.applyRotation()
-
-    this.transforms.rotation.x = 0
-    this.transforms.rotation.y = 0
-    this.quaternion.setFromVec3(this.transforms.rotation)
     this.resize()
   }
 
   applyScale() {
     super.applyScale()
-
-    this.transforms.scale.z = 1
     this.resize()
   }
 
   applyTransformOrigin() {
-    this.transformOrigin.z = 0
-
     super.applyTransformOrigin()
-
     this.resize()
   }
 
@@ -175,11 +164,11 @@ export class Texture extends Object3D {
     // handle the texture rotation
     // huge props to @grgrdvrt https://github.com/grgrdvrt for this solution!
     if (parentWidth > parentHeight) {
-      planeRatio.set(parentRatio, 1, 1)
-      textureRatio.set(1 / (sourceRatio * this.scale.x), 1 / this.scale.y, 1)
+      this.#planeRatio.set(parentRatio, 1, 1)
+      this.#textureRatio.set(1 / (sourceRatio * this.scale.x), 1 / this.scale.y, 1)
     } else {
-      planeRatio.set(1, 1 / parentRatio, 1)
-      textureRatio.set(1 / this.scale.x, sourceRatio / this.scale.y, 1)
+      this.#planeRatio.set(1, 1 / parentRatio, 1)
+      this.#textureRatio.set(1 / this.scale.x, sourceRatio / this.scale.y, 1)
     }
 
     // cover ratio is a bit tricky!
@@ -188,32 +177,32 @@ export class Texture extends Object3D {
       parentRatio > sourceRatio !== parentWidth > parentHeight
         ? 1
         : parentWidth > parentHeight
-        ? planeRatio.x * textureRatio.x
-        : textureRatio.y * planeRatio.y
+        ? this.#planeRatio.x * this.#textureRatio.x
+        : this.#textureRatio.y * this.#planeRatio.y
 
-    coverScale.set(1 / coverRatio, 1 / coverRatio, 1)
+    this.#coverScale.set(1 / coverRatio, 1 / coverRatio, 1)
 
-    rotationMatrix.rotateFromQuaternion(this.quaternion)
+    this.#rotationMatrix.rotateFromQuaternion(this.quaternion)
 
     // here we could create a matrix for each translations / scales and do:
     // this.modelMatrix
     //   .identity()
-    //   .multiply(negativeOriginMatrix, this.modelMatrix)
-    //   .multiply(coverScaleMatrix, this.modelMatrix)
-    //   .multiply(planeRatioMatrix, this.modelMatrix)
-    //   .multiply(rotationMatrix, this.modelMatrix)
-    //   .multiply(textureRatioMatrix, this.modelMatrix)
-    //   .multiply(originMatrix, this.modelMatrix)
+    //   .premultiply(negativeOriginMatrix)
+    //   .premultiply(coverScaleMatrix)
+    //   .premultiply(planeRatioMatrix)
+    //   .premultiply(rotationMatrix)
+    //   .premultiply(textureRatioMatrix)
+    //   .premultiply(originMatrix)
     //   .translate(this.position)
 
     // but this is faster!
     this.modelMatrix
       .identity()
       .premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1))
-      .premultiplyScale(coverScale)
-      .premultiplyScale(planeRatio)
-      .premultiply(rotationMatrix)
-      .premultiplyScale(textureRatio)
+      .premultiplyScale(this.#coverScale)
+      .premultiplyScale(this.#planeRatio)
+      .premultiply(this.#rotationMatrix)
+      .premultiplyScale(this.#textureRatio)
       .premultiplyTranslate(this.transformOrigin)
       .translate(this.position)
   }

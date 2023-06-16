@@ -7,6 +7,7 @@ import { BindGroup } from './bindGroups/BindGroup'
 import { TextureBindGroup } from './bindGroups/TextureBindGroup'
 import { Texture } from './Texture'
 import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
+import { PlaneGeometry } from '../curtains/geometry/PlaneGeometry'
 
 interface MaterialGeometryAttribute {
   wgslStructFragment: Geometry['wgslStructFragment']
@@ -32,6 +33,8 @@ interface MaterialGeometryAttributeBuffers {
 interface MaterialIndexedGeometryAttributeBuffers extends MaterialGeometryAttributeBuffers {
   indexBuffer: GPUBuffer
 }
+
+export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry
 
 interface MaterialBaseParams {
   label?: string
@@ -85,7 +88,7 @@ export class Material {
   setPipelineEntry(): void
   getShaderCode(shaderType: FullShadersType): string
 
-  setAttributesFromGeometry(geometry: Geometry | IndexedGeometry): void
+  setAttributesFromGeometry(geometry: AllowedGeometries): void
   createAttributesBuffers(): void
   destroyAttributeBuffers(): void
 
