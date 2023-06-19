@@ -1,5 +1,5 @@
 import { Bindings, BindingsParams } from './Bindings'
-import { MeshUniformValue, MeshUniforms, MeshUniformsBase } from '../meshes/Mesh'
+import { MeshUniformValue, MeshUniformsBase, MeshUniforms } from '../meshes/MeshMixin'
 
 interface BufferBindingsUniform extends MeshUniformsBase {
   _value: MeshUniformValue

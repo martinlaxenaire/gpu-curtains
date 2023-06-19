@@ -6,38 +6,24 @@ import { DOMElementBoundingRect } from '../../core/DOMElement'
 import { Texture } from '../../core/Texture'
 
 // extends DOMMeshParams instead?
-interface PlaneParams extends DOMMeshBaseParams, PlaneGeometryParams {
-  // frustum / view culling
-  alwaysDraw?: boolean
-  drawCheckMargins?: RectCoords
-
-  // scroll
-  watchScroll?: boolean
-}
+interface PlaneParams extends DOMMeshBaseParams, PlaneGeometryParams {}
 
 export class Plane extends DOMMesh {
   type: string
   // options: {
   //   label: string
   // }
-  alwaysDraw: boolean
-  drawCheckMargins: RectCoords
-
-  // scroll
-  watchScroll: boolean
 
   // callbacks
-  onRender: () => void
+  //onRender: () => void
 
   constructor(renderer: GPUCurtainsRenderer, element: HTMLElement | string, parameters?: PlaneParams)
 
-  resize(boundingRect?: DOMElementBoundingRect)
+  //resize(boundingRect?: DOMElementBoundingRect)
 
   //setInitSources()
 
-  onTextureCreated(texture: Texture)
-
   //render(pass: GPURenderPassEncoder)
 
-  destroy()
+  //destroy()
 }

@@ -8,13 +8,23 @@ import { DOMFrustum } from '../frustum/DOMFrustum'
 
 const defaultMeshParams = {
   label: 'Mesh',
+  // geometry
   geometry: new Geometry(),
+  // material
   shaders: {},
   bindings: [],
   cullMode: 'back',
   depthWriteEnabled: true,
   depthCompare: 'less',
   transparent: false,
+  // frustum culling and visibility
+  frustumCulled: true,
+  DOMFrustumMargins: {
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
   visible: true,
   // callbacks / events
   onReady: () => {
@@ -23,11 +33,25 @@ const defaultMeshParams = {
   onRender: () => {
     /* allow empty callback */
   },
+  onAfterRender: () => {
+    /* allow empty callback */
+  },
+  onReEnterView: () => {
+    /* allow empty callback */
+  },
+  onLeaveView: () => {
+    /* allow empty callback */
+  },
+  onAfterResize: () => {
+    /* allow empty callback */
+  },
 }
 
 const MeshMixin = (superclass) =>
   class extends superclass {
     constructor(renderer, element, parameters) {
+      parameters = { ...defaultMeshParams, ...parameters }
+
       super(renderer, element, parameters)
 
       this.type = 'MeshObject'
@@ -42,15 +66,35 @@ const MeshMixin = (superclass) =>
 
       this.renderer = renderer
 
-      const params = { ...defaultMeshParams, ...parameters }
-
-      const { shaders, bindings, geometry, label, visible, onReady, onRender, ...materialOptions } = params
+      const {
+        shaders,
+        bindings,
+        geometry,
+        label,
+        frustumCulled,
+        DOMFrustumMargins,
+        visible,
+        onReady,
+        onRender,
+        onAfterRender,
+        onReEnterView,
+        onLeaveView,
+        onAfterResize,
+        ...materialOptions
+      } = parameters
 
       this.options = {
         label,
         shaders,
         ...(this.options ?? {}), // merge possible lower options?
       }
+
+      this.onReady = onReady
+      this.onRender = onRender
+      this.onAfterRender = onAfterRender
+      this.onReEnterView = onReEnterView
+      this.onLeaveView = onLeaveView
+      this.onAfterResize = onAfterResize
 
       this.setMatricesUniformGroup()
       this.setUniformBindings(bindings)
@@ -61,17 +105,20 @@ const MeshMixin = (superclass) =>
         boundingBox: this.geometry.boundingBox,
         modelViewProjectionMatrix: this.modelViewProjectionMatrix,
         containerBoundingRect: this.renderer.domElement.boundingRect,
+        DOMFrustumMargins,
         onReEnterView: () => {
           // TODO
           if (this.options.label === 'Cube') {
             console.log('Cube reentered view!')
           }
+          this.onReEnterView()
         },
         onLeaveView: () => {
           // TODO
           if (this.options.label === 'Cube') {
             console.log('Cube left view!')
           }
+          this.onLeaveView()
         },
       })
 
@@ -88,11 +135,12 @@ const MeshMixin = (superclass) =>
 
       this.textures = []
 
-      this.visible = visible
-      this.ready = false
+      this.frustumCulled = frustumCulled
+      this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
 
-      this.onReady = onReady
-      this.onRender = onRender
+      this.visible = visible
+
+      this.ready = false
 
       this.renderer.meshes.push(this)
     }
@@ -180,11 +228,10 @@ const MeshMixin = (superclass) =>
 
     resize(boundingRect = null) {
       super.resize(boundingRect)
-      /* will be overridden */
 
       if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.domElement.boundingRect)
 
-      // TODO onAfterResize callback?
+      this.onAfterResize && this.onAfterResize()
     }
 
     applyScale() {
@@ -194,44 +241,8 @@ const MeshMixin = (superclass) =>
       this.textures.forEach((texture) => texture.resize())
     }
 
-    getProjectedToDocumentCoords() {
-      if (!this.geometry) return
-
-      const { boundingBox } = this.geometry
-
-      const transformedBox = boundingBox.applyMat4(this.modelViewProjectionMatrix)
-
-      // normalize [-1, 1] coords to [0, 1]
-      transformedBox.min.x = (transformedBox.min.x + 1) * 0.5
-      transformedBox.max.x = (transformedBox.max.x + 1) * 0.5
-
-      transformedBox.min.y = 1 - (transformedBox.min.y + 1) * 0.5
-      transformedBox.max.y = 1 - (transformedBox.max.y + 1) * 0.5
-
-      const { width, height, top, left } = this.renderer.domElement.boundingRect
-
-      const documentBBox = {
-        left: transformedBox.min.x * width + left,
-        top: transformedBox.max.y * height + top,
-        //right: transformedBox.max.x * width + left,
-        //bottom: transformedBox.min.y * height + top,
-        width: transformedBox.max.x * width + left - (transformedBox.min.x * width + left),
-        height: transformedBox.min.y * height + top - (transformedBox.max.y * height + top),
-      }
-
-      //documentBBox.width = documentBBox.right - documentBBox.left
-      //documentBBox.height = documentBBox.bottom - documentBBox.top
-
-      if (
-        Math.round(documentBBox.right) <= left ||
-        Math.round(documentBBox.left) >= left + width ||
-        Math.round(documentBBox.bottom) <= top ||
-        Math.round(documentBBox.top) >= top + height
-      ) {
-        console.log(this.options.label, 'IS NOT IN VIEW')
-      } else {
-        console.log(this.options.label, 'IS IN VIEW')
-      }
+    get projectedBoundingRect() {
+      return this.domFrustum?.projectedBoundingRect
     }
 
     updateModelMatrix() {
@@ -265,7 +276,7 @@ const MeshMixin = (superclass) =>
 
       super.render()
 
-      if (this.domFrustum.shouldUpdate) {
+      if (this.domFrustum.shouldUpdate && this.frustumCulled) {
         this.domFrustum.computeProjectedToDocumentCoords()
         this.domFrustum.shouldUpdate = false
       }
@@ -282,13 +293,11 @@ const MeshMixin = (superclass) =>
       this.onRender()
 
       // TODO check if frustumCulled
-      if (this.domFrustum.isIntersecting) {
-        //console.log(this.options.label, 'IS NOT IN VIEW')
-      } else {
-        //console.log(this.options.label, 'IS NOT IN VIEW')
+      if (this.domFrustum.isIntersecting || !this.frustumCulled) {
+        this.material.render(pass)
       }
 
-      this.material.render(pass)
+      this.onAfterRender()
     }
 
     destroy() {

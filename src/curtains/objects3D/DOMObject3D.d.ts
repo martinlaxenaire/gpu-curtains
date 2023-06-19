@@ -38,6 +38,10 @@ interface DOMObject3DTransforms extends Omit<Object3DTransforms, 'origin' | 'pos
   }
 }
 
+interface DOMObject3DParams {
+  watchScroll: boolean
+}
+
 //declare class DOMObject3DClass extends ProjectedObject3D {
 export class DOMObject3D extends ProjectedObject3D {
   renderer: GPUCurtainsRenderer
@@ -46,12 +50,14 @@ export class DOMObject3D extends ProjectedObject3D {
   size: DOMObject3DSize
   domElement: DOMElement
 
+  watchScroll: boolean
+
   transforms: DOMObject3DTransforms
 
   #DOMObjectWorldPosition: Vec3
   #DOMObjectWorldScale: Vec3
 
-  constructor(renderer: GPUCurtainsRenderer, element: string | HTMLElement)
+  constructor(renderer: GPUCurtainsRenderer, element: string | HTMLElement, parameters: DOMObject3DParams)
 
   updateSizeAndPosition()
 

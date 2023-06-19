@@ -9,18 +9,6 @@ const defaultPlaneParams = {
   // geometry
   widthSegments: 1,
   heightSegments: 1,
-
-  // Plane specific params
-  alwaysDraw: false,
-  //transparent = false,
-  drawCheckMargins: {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
-  autoloadSources: true,
-  watchScroll: true,
 }
 
 export class Plane extends DOMMesh {
@@ -36,7 +24,7 @@ export class Plane extends DOMMesh {
     // assign default params if needed
     const params = { ...defaultPlaneParams, ...parameters }
 
-    const { widthSegments, heightSegments, alwaysDraw, drawCheckMargins, watchScroll, ...domMeshParams } = params
+    const { widthSegments, heightSegments, ...domMeshParams } = params
 
     // create a plane geometry first
     const geometry = new PlaneGeometry({ widthSegments, heightSegments })
@@ -50,15 +38,12 @@ export class Plane extends DOMMesh {
     //   label,
     // }
 
-    this.alwaysDraw = alwaysDraw
-    this.watchScroll = watchScroll
-
     //this.renderer.planes.push(/** @type {Plane} **/ this)
   }
 
-  resize(boundingRect = null) {
-    super.resize(boundingRect)
-  }
+  // resize(boundingRect = null) {
+  //   super.resize(boundingRect)
+  // }
 
   /** SOURCES **/
 
@@ -75,7 +60,7 @@ export class Plane extends DOMMesh {
   //   //this.onRender()
   // }
 
-  destroy() {
-    this.material?.destroy()
-  }
+  // destroy() {
+  //   this.material?.destroy()
+  // }
 }

@@ -1,4 +1,4 @@
-import { ShadersType } from '../meshes/Mesh'
+import { ShadersType } from '../meshes/MeshMixin'
 
 // TODO ugly fix so typescript does not complain about BindingType being a string
 export type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'sampler' | string

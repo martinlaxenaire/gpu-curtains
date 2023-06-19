@@ -1,6 +1,8 @@
 import { Vec3 } from './Vec3'
 import { Mat4 } from './Mat4'
 
+declare const points: Vec3[]
+
 export class Box3 {
   min: Vec3
   max: Vec3

@@ -7,7 +7,7 @@ export class DOMObject3D extends ProjectedObject3D {
   #DOMObjectWorldPosition = new Vec3()
   #DOMObjectWorldScale = new Vec3()
 
-  constructor(renderer, element) {
+  constructor(renderer, element, parameters) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
@@ -35,6 +35,9 @@ export class DOMObject3D extends ProjectedObject3D {
       },
     }
 
+    this.watchScroll = parameters.watchScroll
+    console.log(this.watchScroll)
+
     this.setTransforms()
     this.setMatrices()
 
@@ -44,8 +47,10 @@ export class DOMObject3D extends ProjectedObject3D {
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
       onPositionChanged: (boundingRect) => {
-        this.size.document = boundingRect
-        this.updateSizeAndPosition()
+        if (this.watchScroll) {
+          this.size.document = boundingRect
+          this.updateSizeAndPosition()
+        }
       },
     })
   }

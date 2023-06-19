@@ -2,8 +2,15 @@ import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import MeshMixin from '../../core/meshes/MeshMixin'
 
+const defaultDOMMeshParams = {
+  autoloadSources: true,
+  watchScroll: true,
+}
+
 export class DOMMesh extends MeshMixin(DOMObject3D) {
   constructor(renderer, element, parameters) {
+    parameters = { ...defaultDOMMeshParams, ...parameters }
+
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
@@ -16,9 +23,10 @@ export class DOMMesh extends MeshMixin(DOMObject3D) {
 
     this.type = 'DOMMesh'
 
-    const { autoloadSources } = parameters
+    const { autoloadSources, watchScroll } = parameters
 
     this.autoloadSources = autoloadSources
+    this.watchScroll = watchScroll
 
     this.setInitSources()
   }
