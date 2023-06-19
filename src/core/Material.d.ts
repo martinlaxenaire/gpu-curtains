@@ -86,6 +86,8 @@ export class Material {
 
   setMaterial(): void
   setPipelineEntry(): void
+  get ready(): boolean
+
   getShaderCode(shaderType: FullShadersType): string
 
   setAttributesFromGeometry(geometry: AllowedGeometries): void

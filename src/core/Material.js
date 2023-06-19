@@ -83,6 +83,10 @@ export class Material {
     })
   }
 
+  get ready() {
+    return !!(this.pipelineEntry && this.pipelineEntry.pipeline)
+  }
+
   getShaderCode(shaderType = 'full') {
     if (!this.pipelineEntry) return false
 
@@ -287,7 +291,7 @@ export class Material {
     this.setMaterial()
 
     // pipeline is not ready yet
-    if (!this.pipelineEntry || !this.pipelineEntry.pipeline) return
+    if (!this.ready) return
 
     this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
       // since external texture are destroyed as soon as JavaScript returns to the browser

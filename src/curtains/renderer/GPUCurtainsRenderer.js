@@ -23,7 +23,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
   onResize() {
     super.onResize()
     this.meshes?.forEach((mesh) => {
-      if (mesh.domElement) {
+      if (mesh.domElement && !mesh.domElement.isResizing) {
         mesh.resize()
       }
     })

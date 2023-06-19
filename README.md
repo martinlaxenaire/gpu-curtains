@@ -11,5 +11,4 @@ WIP
 - Proper uniform memory buffers layout management
 - Use async pipelines?
 - Plane isInView, raycasting
-- Depth, blend func
 - Errors / warning handling

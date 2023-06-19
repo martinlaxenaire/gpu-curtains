@@ -45,6 +45,7 @@ interface MeshBaseParams extends MaterialBaseParams {
   bindings?: MeshBindings[]
   visible?: boolean
   // callbacks
+  onReady?: () => void
   onRender?: () => void
 }
 

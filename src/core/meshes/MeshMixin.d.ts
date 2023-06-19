@@ -1,9 +1,8 @@
 import { CameraRenderer } from '../../types/renderer-utils'
-import { Mesh, MeshBindings, MeshParams } from './Mesh'
+import { MeshBindings, MeshParams } from './Mesh'
 import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
 import { Material, MaterialParams } from '../Material'
 import { Texture, TextureBaseParams } from '../Texture'
-import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 
@@ -29,8 +28,10 @@ export class MeshBase {
   textures: Texture[]
 
   visible: boolean
+  ready: boolean
 
   // callbacks
+  onReady: () => void
   onRender: () => void
 
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshParams)
@@ -43,7 +44,7 @@ export class MeshBase {
   setMatricesUniformGroup()
   setUniformBindings(bindings: MeshBindings)
 
-  resize()
+  //resize()
   updateModelMatrix()
 
   render(pass: GPURenderPassEncoder)

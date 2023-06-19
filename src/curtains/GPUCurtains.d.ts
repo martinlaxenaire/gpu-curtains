@@ -25,6 +25,7 @@ export class GPUCurtains {
 
   setContainer(container: string | HTMLElement)
   setRenderer()
+  setRendererContext(): Promise<void>
   setCurtains()
 
   setPerspective(fov?: number, near?: number, far?: number)

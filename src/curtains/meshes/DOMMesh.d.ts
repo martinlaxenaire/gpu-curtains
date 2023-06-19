@@ -6,10 +6,18 @@ import { PlaneGeometry } from '../geometry/PlaneGeometry'
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Geometry } from '../../core/geometries/Geometry'
 
-interface DOMMeshParams extends MeshBaseParams {
+interface DOMMeshBaseParams extends MeshBaseParams {
+  autoloadSources?: boolean
+}
+
+interface DOMMeshParams extends DOMMeshBaseParams {
   geometry: PlaneGeometry | IndexedGeometry | Geometry
 }
 
 export class DOMMesh extends MeshMixin(DOMObject3D) {
+  autoloadSources: boolean
+
   constructor(renderer: GPUCurtainsRenderer, element: HTMLElement, parameters: DOMMeshParams)
+
+  setInitSources()
 }

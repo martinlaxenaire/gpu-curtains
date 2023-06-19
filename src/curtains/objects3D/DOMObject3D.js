@@ -64,7 +64,7 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   resize(boundingRect = null) {
-    if (!this.domElement || this.domElement?.isResizing) return
+    if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return
 
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
     this.updateSizePositionAndProjection()
@@ -104,6 +104,10 @@ export class DOMObject3D extends ProjectedObject3D {
   set documentPosition(value) {
     this.transforms.position.document = value
     this.applyPosition()
+  }
+
+  get worldScale() {
+    return this.#DOMObjectWorldScale
   }
 
   get transformOrigin() {

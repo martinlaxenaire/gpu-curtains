@@ -14,6 +14,10 @@ const defaultMeshParams = {
   depthCompare: 'less',
   transparent: false,
   visible: true,
+  // callbacks / events
+  onReady: () => {
+    /* allow empty callback */
+  },
   onRender: () => {
     /* allow empty callback */
   },
@@ -38,7 +42,7 @@ const MeshMixin = (superclass) =>
 
       const params = { ...defaultMeshParams, ...parameters }
 
-      const { shaders, bindings, geometry, label, visible, onRender, ...materialOptions } = params
+      const { shaders, bindings, geometry, label, visible, onReady, onRender, ...materialOptions } = params
 
       this.options = {
         label,
@@ -65,7 +69,9 @@ const MeshMixin = (superclass) =>
       this.textures = []
 
       this.visible = visible
+      this.ready = false
 
+      this.onReady = onReady
       this.onRender = onRender
 
       this.renderer.meshes.push(this)
@@ -93,7 +99,10 @@ const MeshMixin = (superclass) =>
       return texture
     }
 
-    onTextureCreated(texture) {}
+    onTextureCreated(texture) {
+      /* will be overriden */
+      texture.parent = this
+    }
 
     /** UNIFORMS **/
 
@@ -167,12 +176,12 @@ const MeshMixin = (superclass) =>
       ]
     }
 
-    resize() {
-      super.resize()
-      /* will be overridden */
-
-      // TODO onAfterResize callback?
-    }
+    // resize() {
+    //   super.resize()
+    //   /* will be overridden */
+    //
+    //   // TODO onAfterResize callback?
+    // }
 
     applyScale() {
       super.applyScale()
@@ -203,6 +212,11 @@ const MeshMixin = (superclass) =>
       if (!this.renderer.ready || !this.visible) return
 
       super.render()
+
+      if (this.material && this.material.ready && !this.ready) {
+        this.ready = true
+        this.onReady()
+      }
 
       this.uniformsBindings.forEach((uniformBinding) => {
         uniformBinding.onBeforeRender()

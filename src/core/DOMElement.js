@@ -53,7 +53,7 @@ export class DOMElement {
       x: boundingRect.x,
       y: boundingRect.y,
     }
-    this.onSizeChanged(this._boundingRect)
+    this.onSizeChanged(this.boundingRect)
   }
 
   updateScrollPosition(lastXDelta, lastYDelta) {
@@ -62,12 +62,13 @@ export class DOMElement {
     this._boundingRect.top += lastYDelta
     this._boundingRect.left += lastXDelta
 
-    this.onPositionChanged(this._boundingRect)
+    this.onPositionChanged(this.boundingRect)
   }
 
   setSize(contentRect) {
     // only throttle if we have set our first value
     this.isResizing = !!this.boundingRect
+
     this.boundingRect = contentRect ?? this.element.getBoundingClientRect()
 
     // TODO

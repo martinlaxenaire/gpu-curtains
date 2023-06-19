@@ -48,8 +48,8 @@ export class GPURenderer {
 
   constructor({ container, pixelRatio, renderingScale }: GPURendererParams)
 
-  setContext()
-  setAdapterAndDevice()
+  setContext(): Promise<void>
+  setAdapterAndDevice(): Promise<void>
   setPipelineManager()
 
   setTexture(texture: Texture)

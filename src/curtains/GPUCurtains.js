@@ -64,6 +64,10 @@ export class GPUCurtains {
     this.canvas = this.renderer.canvas
   }
 
+  async setRendererContext() {
+    await this.renderer.setContext()
+  }
+
   /**
    * Set Curtains
    */

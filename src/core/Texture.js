@@ -165,10 +165,10 @@ export class Texture extends Object3D {
     // huge props to @grgrdvrt https://github.com/grgrdvrt for this solution!
     if (parentWidth > parentHeight) {
       this.#planeRatio.set(parentRatio, 1, 1)
-      this.#textureRatio.set(1 / (sourceRatio * this.scale.x), 1 / this.scale.y, 1)
+      this.#textureRatio.set(1 / sourceRatio, 1, 1)
     } else {
       this.#planeRatio.set(1, 1 / parentRatio, 1)
-      this.#textureRatio.set(1 / this.scale.x, sourceRatio / this.scale.y, 1)
+      this.#textureRatio.set(1, sourceRatio, 1)
     }
 
     // cover ratio is a bit tricky!
@@ -180,7 +180,7 @@ export class Texture extends Object3D {
         ? this.#planeRatio.x * this.#textureRatio.x
         : this.#textureRatio.y * this.#planeRatio.y
 
-    this.#coverScale.set(1 / coverRatio, 1 / coverRatio, 1)
+    this.#coverScale.set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1)
 
     this.#rotationMatrix.rotateFromQuaternion(this.quaternion)
 
@@ -271,21 +271,6 @@ export class Texture extends Object3D {
       height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
     }
   }
-
-  //async loadSource(source) {
-  // this.options.source = source
-  // this.source = await this.loadImageBitmap(this.options.source)
-  //
-  // this.size = {
-  //   width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
-  //   height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
-  // }
-  //
-  // this.textureMatrix.shouldUpdateUniform(this.options.name + 'Matrix')
-  //
-  // this.sourceLoaded = true // TODO useful?
-  // this.createTexture()
-  //}
 
   async loadImage(sourceUrl) {
     this.options.source = sourceUrl

@@ -20,14 +20,9 @@ export class GPURenderer {
     // create the canvas
     this.canvas = document.createElement('canvas')
 
-    this.setContext()
-
     // needed to get container bounding box
     this.domElement = new DOMElement({
       element: container,
-      // onSizeChanged: (boundingRect) => {
-      //   this.resize(boundingRect)
-      // },
     })
 
     this.documentBody = new DOMElement({
