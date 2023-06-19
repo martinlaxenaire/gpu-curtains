@@ -1,9 +1,9 @@
 import { GPURenderer } from '../renderers/GPURenderer'
-import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
-import { BindGroupSamplerBinding } from '../bindGroupBindings/BindGroupSamplerBinding'
-import { BindGroupTextureBinding } from '../bindGroupBindings/BindGroupTextureBinding'
+import { BufferBindings } from '../bindings/BufferBindings'
+import { SamplerBindings } from '../bindings/SamplerBindings'
+import { TextureBindings } from '../bindings/TextureBindings'
 
-type BindGroupBindingElement = BindGroupBufferBindings | BindGroupSamplerBinding | BindGroupTextureBinding
+type BindGroupBindingElement = BufferBindings | SamplerBindings | TextureBindings
 
 interface BindGroupBindingBuffer {
   uniformBinding: BindGroupBindingElement

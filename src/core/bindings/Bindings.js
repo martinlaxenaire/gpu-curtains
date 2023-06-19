@@ -1,4 +1,4 @@
-export class BindGroupBinding {
+export class Bindings {
   constructor({ label = 'Uniform', name = 'uniform', bindingType = 'uniform', bindIndex = 0, visibility }) {
     this.label = label
     this.name = name

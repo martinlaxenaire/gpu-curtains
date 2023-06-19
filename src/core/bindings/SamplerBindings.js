@@ -1,6 +1,6 @@
-import { BindGroupBinding } from './BindGroupBinding'
+import { Bindings } from './Bindings'
 
-export class BindGroupSamplerBinding extends BindGroupBinding {
+export class SamplerBindings extends Bindings {
   constructor({ label = 'Sampler', name = 'Texture', resource, bindingType = 'sampler', bindIndex = 0, visibility }) {
     super({ label, name, bindIndex, bindingType, visibility })
 

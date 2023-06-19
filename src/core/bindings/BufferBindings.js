@@ -1,6 +1,6 @@
-import { BindGroupBinding } from './BindGroupBinding'
+import { Bindings } from './Bindings'
 
-export class BindGroupBufferBindings extends BindGroupBinding {
+export class BufferBindings extends Bindings {
   constructor({
     label = 'Uniform',
     name = 'uniform',

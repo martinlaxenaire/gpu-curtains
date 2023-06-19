@@ -3,7 +3,7 @@ import { Camera } from '../camera/Camera'
 import { Vec3 } from '../../math/Vec3'
 import { DOMElementBoundingRect } from '../DOMElement'
 import { BindGroup } from '../bindGroups/BindGroup'
-import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
+import { BufferBindings } from '../bindings/BufferBindings'
 
 interface GPUCameraRendererParams extends GPURendererParams {
   camera: Camera
@@ -11,7 +11,7 @@ interface GPUCameraRendererParams extends GPURendererParams {
 
 export class GPUCameraRenderer extends GPURenderer {
   camera: Camera
-  cameraUniformBinding: BindGroupBufferBindings
+  cameraUniformBinding: BufferBindings
   cameraBindGroup: BindGroup
 
   constructor({ container, pixelRatio, renderingScale, camera }: GPUCameraRendererParams)

@@ -10,7 +10,7 @@ export type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' 
 //   'sampler',
 // }
 
-interface BindGroupBindingParams {
+interface BindingsParams {
   label?: string
   name?: string
   bindingType?: BindingType
@@ -18,7 +18,7 @@ interface BindGroupBindingParams {
   visibility?: ShadersType | null
 }
 
-export class BindGroupBinding {
+export class Bindings {
   label: string
   name: string
   bindingType: BindingType
@@ -26,7 +26,7 @@ export class BindGroupBinding {
   visibility: GPUShaderStageFlags
   value?: Float32Array | null
 
-  constructor({ label, name, bindingType, bindIndex, visibility }: BindGroupBindingParams)
+  constructor({ label, name, bindingType, bindIndex, visibility }: BindingsParams)
 
   setWGSLFragment()
   shouldUpdateUniform()

@@ -1,6 +1,6 @@
 import { CameraRenderer } from '../../types/renderer-utils'
 import { MeshBindings, MeshParams } from './Mesh'
-import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
+import { BufferBindings } from '../bindings/BufferBindings'
 import { Material, MaterialParams } from '../Material'
 import { Texture, TextureBaseParams } from '../Texture'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
@@ -17,8 +17,8 @@ export class MeshBase {
     shaders: MeshParams['shaders']
   }
 
-  matrixUniformBinding: BindGroupBufferBindings
-  uniformsBindings: BindGroupBufferBindings[]
+  matrixUniformBinding: BufferBindings
+  uniformsBindings: BufferBindings[]
 
   material: Material
   geometry: MeshParams['geometry']
@@ -46,6 +46,7 @@ export class MeshBase {
 
   //resize()
   updateModelMatrix()
+  updateProjectionMatrixStack()
 
   render(pass: GPURenderPassEncoder)
 

@@ -1,7 +1,7 @@
 import { Geometry } from './geometries/Geometry'
 import { IndexedGeometry, IndexedGeometryIndexData } from './geometries/IndexedGeometry'
 import { FullShadersType, MeshShaders, MeshShadersOptions } from './meshes/Mesh'
-import { BindGroupBufferBindings, BindGroupBufferBindingsUniform } from './bindGroupBindings/BindGroupBufferBindings'
+import { BufferBindings, BufferBindingsUniform } from './bindings/BufferBindings'
 import { PipelineEntry } from './pipelines/PipelineEntry'
 import { BindGroup } from './bindGroups/BindGroup'
 import { TextureBindGroup } from './bindGroups/TextureBindGroup'
@@ -46,7 +46,7 @@ interface MaterialBaseParams {
 }
 
 interface MaterialParams extends MaterialBaseParams {
-  uniformBindings: Array<BindGroupBufferBindings>
+  uniformBindings: Array<BufferBindings>
 }
 
 type MaterialBindGroups = Array<BindGroup | TextureBindGroup>
@@ -66,7 +66,7 @@ export class Material {
   options: {
     label: string
     shaders: MeshShaders
-    uniformBindings: Array<BindGroupBufferBindings>
+    uniformBindings: Array<BufferBindings>
     cullMode: GPUCullMode
   }
 
@@ -76,7 +76,7 @@ export class Material {
 
   bindGroups: MaterialBindGroups
 
-  uniforms: Record<string, BindGroupBufferBindingsUniform>
+  uniforms: Record<string, BufferBindingsUniform>
   uniformsBindGroups: BindGroup[]
 
   textures: Texture[]

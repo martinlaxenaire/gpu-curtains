@@ -1,7 +1,7 @@
 import { isCameraRenderer } from '../../utils/renderer-utils'
 import { Material } from '../Material'
 import { Texture } from '../Texture'
-import { BindGroupBufferBindings } from '../bindGroupBindings/BindGroupBufferBindings'
+import { BufferBindings } from '../bindings/BufferBindings'
 import { Geometry } from '../geometries/Geometry'
 
 const defaultMeshParams = {
@@ -110,7 +110,7 @@ const MeshMixin = (superclass) =>
    Init our plane model view and projection matrices and set their uniform locations
    ***/
     setMatricesUniformGroup() {
-      this.matrixUniformBinding = new BindGroupBufferBindings({
+      this.matrixUniformBinding = new BufferBindings({
         label: 'Matrices',
         name: 'matrices',
         uniforms: {
@@ -165,7 +165,7 @@ const MeshMixin = (superclass) =>
       this.uniformsBindings = [
         this.matrixUniformBinding,
         ...bindings.map((binding, index) => {
-          return new BindGroupBufferBindings({
+          return new BufferBindings({
             label: binding.label || 'Uniforms' + index,
             name: binding.name || 'uniforms' + index,
             bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms
@@ -198,6 +198,14 @@ const MeshMixin = (superclass) =>
         this.matrixUniformBinding.shouldUpdateUniform('modelView')
         this.matrixUniformBinding.shouldUpdateUniform('modelViewProjection')
       }
+
+      // TODO frustum culling
+    }
+
+    updateProjectionMatrixStack() {
+      super.updateProjectionMatrixStack()
+
+      // TODO frustum culling
     }
 
     /** Render loop **/

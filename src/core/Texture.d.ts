@@ -1,7 +1,7 @@
-import { TextureBindingResource } from './bindGroupBindings/BindGroupTextureBinding'
-import { SamplerBindingResource } from './bindGroupBindings/BindGroupSamplerBinding'
+import { TextureBindingResource } from './bindings/TextureBindings'
+import { SamplerBindingResource } from './bindings/SamplerBindings'
 import { Object3D } from './objects3D/Object3D'
-import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
+import { BufferBindings } from './bindings/BufferBindings'
 import { Mesh } from './meshes/Mesh'
 import { DOMMesh } from '../curtains/meshes/DOMMesh'
 import { BindGroupBindingElement } from './bindGroups/BindGroup'
@@ -53,7 +53,7 @@ export class Texture extends Object3D {
 
   options: TextureOptions
 
-  textureMatrix: BindGroupBufferBindings
+  textureMatrix: BufferBindings
   bindings: Array<BindGroupBindingElement>
 
   _parent: TextureParent

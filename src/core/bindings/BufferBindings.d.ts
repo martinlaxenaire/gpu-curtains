@@ -1,39 +1,39 @@
-import { BindGroupBinding, BindGroupBindingParams } from './BindGroupBinding'
+import { Bindings, BindingsParams } from './Bindings'
 import { MeshUniformValue, MeshUniforms, MeshUniformsBase } from '../meshes/Mesh'
 
-interface BindGroupBufferBindingsUniform extends MeshUniformsBase {
+interface BufferBindingsUniform extends MeshUniformsBase {
   _value: MeshUniformValue
   get(value: MeshUniformValue): MeshUniformValue
   set(value: MeshUniformValue)
   shouldUpdate: boolean
 }
 
-interface BindGroupBufferBindingsElement extends CoreBufferParams {
+interface BufferBindingsElement extends CoreBufferParams {
   bufferSize: number
   totalLength: number
   update: (value: MeshUniformValue) => void
   key: string
 }
 
-interface BindGroupBufferBindingsParams extends BindGroupBindingParams {
+interface BufferBindingsParams extends BindingsParams {
   useStruct?: boolean
   uniforms?: Record<string, MeshUniforms>
 }
 
-export class BindGroupBufferBindings extends BindGroupBinding {
+export class BufferBindings extends Bindings {
   useStruct: boolean
-  uniforms: Record<string, BindGroupBufferBindingsUniform>
+  uniforms: Record<string, BufferBindingsUniform>
 
   size: number
   shouldUpdate: boolean
-  bindingElements: BindGroupBufferBindingsElement[]
+  bindingElements: BufferBindingsElement[]
 
   value: Float32Array
 
   wgslStructFragment: string
   wgslGroupFragment: string
 
-  constructor({ label, name, bindingType, bindIndex, useStruct, uniforms, visibility }: BindGroupBufferBindingsParams)
+  constructor({ label, name, bindingType, bindIndex, useStruct, uniforms, visibility }: BufferBindingsParams)
 
   setBufferGroup()
   shouldUpdateUniform(uniformName?: string)

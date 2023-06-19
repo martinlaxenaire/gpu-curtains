@@ -1,8 +1,8 @@
 import { Vec3 } from '../math/Vec3'
 import { isRenderer } from '../utils/renderer-utils'
-import { BindGroupSamplerBinding } from './bindGroupBindings/BindGroupSamplerBinding'
-import { BindGroupTextureBinding } from './bindGroupBindings/BindGroupTextureBinding'
-import { BindGroupBufferBindings } from './bindGroupBindings/BindGroupBufferBindings'
+import { SamplerBindings } from './bindings/SamplerBindings'
+import { TextureBindings } from './bindings/TextureBindings'
+import { BufferBindings } from './bindings/BufferBindings'
 import { Object3D } from './objects3D/Object3D'
 import { Mat4 } from '../math/Mat4'
 
@@ -63,7 +63,7 @@ export class Texture extends Object3D {
     }
 
     // we will always declare a texture matrix
-    this.textureMatrix = new BindGroupBufferBindings({
+    this.textureMatrix = new BufferBindings({
       label: 'TextureMatrix',
       name: this.options.name + 'Matrix',
       useStruct: false,
@@ -92,13 +92,13 @@ export class Texture extends Object3D {
 
   setBindings() {
     this.bindings = [
-      new BindGroupSamplerBinding({
+      new SamplerBindings({
         label: this.options.label + ': ' + this.options.name,
         name: this.options.name,
         bindingType: 'sampler',
         resource: this.sampler,
       }),
-      new BindGroupTextureBinding({
+      new TextureBindings({
         label: this.options.label + ': ' + this.options.name + ' sampler',
         name: this.options.name,
         resource: this.texture,
