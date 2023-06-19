@@ -1,4 +1,5 @@
 import { Vec3 } from '../../math/Vec3'
+import { Box3 } from '../../math/Box3'
 
 export class Geometry {
   constructor({ verticesOrder = 'cw' } = {}) {
@@ -9,10 +10,12 @@ export class Geometry {
 
     this.attributes = []
 
-    this.boundingBox = {
-      min: new Vec3(),
-      max: new Vec3(),
-    }
+    // this.boundingBox = {
+    //   min: new Vec3(Infinity),
+    //   max: new Vec3(-Infinity),
+    // }
+
+    this.boundingBox = new Box3()
   }
 
   setAttribute({ name, type = 'vec3f', bufferFormat = 'float32x3', size = 3, array = new Float32Array(0) }) {

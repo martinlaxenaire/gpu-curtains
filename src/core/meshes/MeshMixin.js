@@ -3,6 +3,8 @@ import { Material } from '../Material'
 import { Texture } from '../Texture'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Geometry } from '../geometries/Geometry'
+import { Vec3 } from '../../math/Vec3'
+import { DOMFrustum } from '../frustum/DOMFrustum'
 
 const defaultMeshParams = {
   label: 'Mesh',
@@ -54,6 +56,24 @@ const MeshMixin = (superclass) =>
       this.setUniformBindings(bindings)
 
       this.geometry = geometry
+
+      this.domFrustum = new DOMFrustum({
+        boundingBox: this.geometry.boundingBox,
+        modelViewProjectionMatrix: this.modelViewProjectionMatrix,
+        containerBoundingRect: this.renderer.domElement.boundingRect,
+        onReEnterView: () => {
+          // TODO
+          if (this.options.label === 'Cube') {
+            console.log('Cube reentered view!')
+          }
+        },
+        onLeaveView: () => {
+          // TODO
+          if (this.options.label === 'Cube') {
+            console.log('Cube left view!')
+          }
+        },
+      })
 
       this.setMaterial({
         label,
@@ -131,24 +151,6 @@ const MeshMixin = (superclass) =>
               this.matrixUniformBinding.uniforms.modelView.value = this.modelViewMatrix
             },
           },
-          // view: {
-          //   // camera view matrix
-          //   name: 'view',
-          //   type: 'mat4x4f',
-          //   value: this.viewMatrix,
-          //   onBeforeUpdate: () => {
-          //     this.matrixUniformBinding.uniforms.view.value = this.viewMatrix
-          //   },
-          // },
-          // projection: {
-          //   // camera projection matrix
-          //   name: 'projection',
-          //   type: 'mat4x4f',
-          //   value: this.projectionMatrix,
-          //   onBeforeUpdate: () => {
-          //     this.matrixUniformBinding.uniforms.projection.value = this.projectionMatrix
-          //   },
-          // },
           modelViewProjection: {
             name: 'modelViewProjection',
             type: 'mat4x4f',
@@ -176,18 +178,60 @@ const MeshMixin = (superclass) =>
       ]
     }
 
-    // resize() {
-    //   super.resize()
-    //   /* will be overridden */
-    //
-    //   // TODO onAfterResize callback?
-    // }
+    resize(boundingRect = null) {
+      super.resize(boundingRect)
+      /* will be overridden */
+
+      if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.domElement.boundingRect)
+
+      // TODO onAfterResize callback?
+    }
 
     applyScale() {
       super.applyScale()
 
       // resize textures on scale change!
       this.textures.forEach((texture) => texture.resize())
+    }
+
+    getProjectedToDocumentCoords() {
+      if (!this.geometry) return
+
+      const { boundingBox } = this.geometry
+
+      const transformedBox = boundingBox.applyMat4(this.modelViewProjectionMatrix)
+
+      // normalize [-1, 1] coords to [0, 1]
+      transformedBox.min.x = (transformedBox.min.x + 1) * 0.5
+      transformedBox.max.x = (transformedBox.max.x + 1) * 0.5
+
+      transformedBox.min.y = 1 - (transformedBox.min.y + 1) * 0.5
+      transformedBox.max.y = 1 - (transformedBox.max.y + 1) * 0.5
+
+      const { width, height, top, left } = this.renderer.domElement.boundingRect
+
+      const documentBBox = {
+        left: transformedBox.min.x * width + left,
+        top: transformedBox.max.y * height + top,
+        //right: transformedBox.max.x * width + left,
+        //bottom: transformedBox.min.y * height + top,
+        width: transformedBox.max.x * width + left - (transformedBox.min.x * width + left),
+        height: transformedBox.min.y * height + top - (transformedBox.max.y * height + top),
+      }
+
+      //documentBBox.width = documentBBox.right - documentBBox.left
+      //documentBBox.height = documentBBox.bottom - documentBBox.top
+
+      if (
+        Math.round(documentBBox.right) <= left ||
+        Math.round(documentBBox.left) >= left + width ||
+        Math.round(documentBBox.bottom) <= top ||
+        Math.round(documentBBox.top) >= top + height
+      ) {
+        console.log(this.options.label, 'IS NOT IN VIEW')
+      } else {
+        console.log(this.options.label, 'IS IN VIEW')
+      }
     }
 
     updateModelMatrix() {
@@ -199,13 +243,13 @@ const MeshMixin = (superclass) =>
         this.matrixUniformBinding.shouldUpdateUniform('modelViewProjection')
       }
 
-      // TODO frustum culling
+      if (this.domFrustum) this.domFrustum.shouldUpdate = true
     }
 
     updateProjectionMatrixStack() {
       super.updateProjectionMatrixStack()
 
-      // TODO frustum culling
+      if (this.domFrustum) this.domFrustum.shouldUpdate = true
     }
 
     /** Render loop **/
@@ -221,6 +265,11 @@ const MeshMixin = (superclass) =>
 
       super.render()
 
+      if (this.domFrustum.shouldUpdate) {
+        this.domFrustum.computeProjectedToDocumentCoords()
+        this.domFrustum.shouldUpdate = false
+      }
+
       if (this.material && this.material.ready && !this.ready) {
         this.ready = true
         this.onReady()
@@ -231,6 +280,13 @@ const MeshMixin = (superclass) =>
       })
 
       this.onRender()
+
+      // TODO check if frustumCulled
+      if (this.domFrustum.isIntersecting) {
+        //console.log(this.options.label, 'IS NOT IN VIEW')
+      } else {
+        //console.log(this.options.label, 'IS NOT IN VIEW')
+      }
 
       this.material.render(pass)
     }

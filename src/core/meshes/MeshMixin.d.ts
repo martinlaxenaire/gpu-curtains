@@ -5,6 +5,8 @@ import { Material, MaterialParams } from '../Material'
 import { Texture, TextureBaseParams } from '../Texture'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
+import { DOMFrustum } from '../frustum/DOMFrustum'
+import { DOMElementBoundingRect } from '../DOMElement'
 
 declare const defaultMeshParams: MeshParams
 
@@ -22,6 +24,8 @@ export class MeshBase {
 
   material: Material
   geometry: MeshParams['geometry']
+
+  domFrustum: DOMFrustum
 
   uniforms: Material['uniforms']
 
@@ -44,7 +48,7 @@ export class MeshBase {
   setMatricesUniformGroup()
   setUniformBindings(bindings: MeshBindings)
 
-  //resize()
+  resize(boundingRect?: DOMElementBoundingRect)
   updateModelMatrix()
   updateProjectionMatrixStack()
 

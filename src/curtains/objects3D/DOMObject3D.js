@@ -107,7 +107,7 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   get worldScale() {
-    return this.#DOMObjectWorldScale
+    return this.#DOMObjectWorldScale.clone().multiply(this.scale)
   }
 
   get transformOrigin() {
@@ -167,7 +167,7 @@ export class DOMObject3D extends ProjectedObject3D {
       this.worldTransformOrigin
     )
 
-    // we need to scale our planes, from a square to a right sized rectangle
+    // we need to scale our meshes, from a square to a right sized rectangle
     // we're doing this after our transformation matrix because this scale transformation always have the same origin
     this.modelMatrix.scale(this.#DOMObjectWorldScale)
   }

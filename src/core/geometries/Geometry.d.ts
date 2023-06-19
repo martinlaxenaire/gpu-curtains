@@ -1,13 +1,9 @@
 import { Vec3 } from '../../math/Vec3'
+import { Box3 } from '../../math/Box3'
 
 interface GeometryParams {
   // TODO ugly fix so typescript does not complain about GPUFrontFace being a string
   verticesOrder?: GPUFrontFace | string
-}
-
-interface GeometryBoundingBox {
-  min: Vec3
-  max: Vec3
 }
 
 // interface GeometryProps {
@@ -31,7 +27,7 @@ export class Geometry {
 
   attributes: CoreBufferParams[]
 
-  boundingBox: GeometryBoundingBox
+  boundingBox: Box3
 
   array: Float32Array
 

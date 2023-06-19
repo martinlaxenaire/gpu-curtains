@@ -59,6 +59,7 @@ export class PipelineManager {
       pass.setPipeline(pipelineEntry.pipeline)
 
       // we changed our pipeline, reset the camera bind group
+      // TODO only if pipelineEntry has a camera
       if (this.renderer.cameraBindGroup) {
         pass.setBindGroup(this.renderer.cameraBindGroup.index, this.renderer.cameraBindGroup.bindGroup)
       }
