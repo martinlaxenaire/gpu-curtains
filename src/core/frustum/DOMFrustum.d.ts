@@ -3,6 +3,8 @@ import { Mat4 } from '../../math/Mat4'
 import { DOMElementBoundingRect } from '../DOMElement'
 import { RectCoords } from '../../curtains/objects3D/DOMObject3D'
 
+declare const defaultDOMFrustumMargins: RectCoords
+
 interface DOMFrustumParams {
   boundingBox?: Box3
   modelViewProjectionMatrix?: Mat4

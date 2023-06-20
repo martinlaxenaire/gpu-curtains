@@ -34,6 +34,10 @@ export class GPURenderer {
     this.setRendererObjects()
   }
 
+  get boundingRect() {
+    return this.domElement.boundingRect
+  }
+
   /**
    * Set Context
    *

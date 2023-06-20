@@ -19,8 +19,8 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   setCamera(camera) {
-    const width = this.domElement && this.domElement.boundingRect ? this.domElement.boundingRect.width : 1
-    const height = this.domElement && this.domElement.boundingRect ? this.domElement.boundingRect.height : 1
+    const width = this.boundingRect ? this.boundingRect.width : 1
+    const height = this.boundingRect ? this.boundingRect.height : 1
 
     this.camera = new Camera({
       fov: camera.fov,
@@ -34,7 +34,6 @@ export class GPUCameraRenderer extends GPURenderer {
       //   this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
       // },
       onPositionChanged: () => {
-        console.log('cam pos changed', this.camera?.position)
         this.onCameraPositionChanged()
       },
     })
@@ -115,15 +114,7 @@ export class GPUCameraRenderer extends GPURenderer {
    @far (float): the farthest point where object are displayed
    ***/
   setPerspective(fov = 50, near = 0.01, far = 50) {
-    const containerBoundingRect = this.domElement.boundingRect
-    this.camera?.setPerspective(
-      fov,
-      near,
-      far,
-      containerBoundingRect.width,
-      containerBoundingRect.height,
-      this.pixelRatio
-    )
+    this.camera?.setPerspective(fov, near, far, this.boundingRect.width, this.boundingRect.height, this.pixelRatio)
   }
 
   setCameraPosition(position = new Vec3(0, 0, 1)) {
@@ -139,23 +130,6 @@ export class GPUCameraRenderer extends GPURenderer {
     this.setPerspective()
     this.updateCameraMatrixStack()
   }
-
-  /**
-   * Called at each draw call to render our scene and its content
-   * Also create shader modules if not already created
-   */
-
-  // onBeforeRenderPass() {
-  //   super.onBeforeRenderPass()
-  // }
-  //
-  // onBeginRenderPass(pass) {
-  //   super.onBeginRenderPass(pass)
-  // }
-  //
-  // onAfterRenderPass() {
-  //   super.onAfterRenderPass()
-  // }
 
   render() {
     if (!this.ready) return

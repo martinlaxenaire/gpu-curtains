@@ -48,6 +48,8 @@ export class GPURenderer {
 
   constructor({ container, pixelRatio, renderingScale }: GPURendererParams)
 
+  get boundingRect(): DOMElementBoundingRect
+
   setContext(): Promise<void>
   setAdapterAndDevice(): Promise<void>
   setPipelineManager()

@@ -11,4 +11,5 @@ WIP
 - Proper uniform memory buffers layout management
 - Use async pipelines?
 - Plane raycasting
+- Plane remove()
 - Errors / warning handling

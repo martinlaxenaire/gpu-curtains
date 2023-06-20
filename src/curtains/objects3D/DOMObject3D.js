@@ -82,7 +82,7 @@ export class DOMObject3D extends ProjectedObject3D {
    returns :
    @boundingRectangle (obj): an object containing our plane HTML element bounding rectangle (width, height, top, bottom, right and left properties)
    ***/
-  getBoundingRect() {
+  get boundingRect() {
     return this.domElement.boundingRect
   }
 
@@ -112,6 +112,10 @@ export class DOMObject3D extends ProjectedObject3D {
 
   get worldScale() {
     return this.#DOMObjectWorldScale.clone().multiply(this.scale)
+  }
+
+  get worldPosition() {
+    return this.#DOMObjectWorldPosition
   }
 
   get transformOrigin() {
@@ -187,16 +191,14 @@ export class DOMObject3D extends ProjectedObject3D {
    ***/
   documentToWorldSpace(vector = new Vec3()) {
     return new Vec3(
-      ((vector.x * this.renderer.pixelRatio) / this.renderer.domElement.boundingRect.width) *
-        this.camera.screenRatio.width,
-      -((vector.y * this.renderer.pixelRatio) / this.renderer.domElement.boundingRect.height) *
-        this.camera.screenRatio.height,
+      ((vector.x * this.renderer.pixelRatio) / this.renderer.boundingRect.width) * this.camera.screenRatio.width,
+      -((vector.y * this.renderer.pixelRatio) / this.renderer.boundingRect.height) * this.camera.screenRatio.height,
       vector.z
     )
   }
 
   setWorldSizes() {
-    const containerBoundingRect = this.renderer.domElement.boundingRect
+    const containerBoundingRect = this.renderer.boundingRect
 
     // dimensions and positions of our plane in the document and clip spaces
     // don't forget positions in webgl space are referring to the center of our plane and canvas
@@ -229,11 +231,11 @@ export class DOMObject3D extends ProjectedObject3D {
   setWorldTransformOrigin() {
     // set transformation origin relative to world space as well
     this.transforms.origin.world = new Vec3(
-      (this.transforms.origin.model.x * 2 - 1) * // between -1 and 1
+      (this.transformOrigin.x * 2 - 1) * // between -1 and 1
         this.size.world.width,
-      -(this.transforms.origin.model.y * 2 - 1) * // between -1 and 1
+      -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
         this.size.world.height,
-      this.transforms.origin.model.z
+      this.transformOrigin.z
     )
 
     this.updateModelMatrix()

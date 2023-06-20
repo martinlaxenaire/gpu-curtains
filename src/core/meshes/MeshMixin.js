@@ -111,7 +111,7 @@ const MeshMixin = (superclass) =>
       this.domFrustum = new DOMFrustum({
         boundingBox: this.geometry.boundingBox,
         modelViewProjectionMatrix: this.modelViewProjectionMatrix,
-        containerBoundingRect: this.renderer.domElement.boundingRect,
+        containerBoundingRect: this.renderer.boundingRect,
         DOMFrustumMargins,
         onReEnterView: () => {
           // TODO
@@ -239,7 +239,7 @@ const MeshMixin = (superclass) =>
     resize(boundingRect = null) {
       super.resize(boundingRect)
 
-      if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.domElement.boundingRect)
+      if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect)
 
       this.onAfterResize && this.onAfterResize()
     }

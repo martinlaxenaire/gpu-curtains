@@ -120,9 +120,6 @@ export class GPUCurtains {
   }
 
   updateScroll(lastXDelta = 0, lastYDelta = 0) {
-    // for (let i = 0; i < this.renderer.planes.length; i++) {
-    //   this.renderer.planes[i].updateScrollPosition(lastXDelta, lastYDelta)
-    // }
     this.renderer.meshes.forEach((mesh) => {
       if (mesh.domElement) {
         mesh.updateScrollPosition(lastXDelta, lastYDelta)

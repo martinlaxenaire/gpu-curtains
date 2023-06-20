@@ -1,6 +1,13 @@
 import { Box3 } from '../../math/Box3'
 import { Mat4 } from '../../math/Mat4'
 
+const defaultDOMFrustumMargins = {
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+}
+
 export class DOMFrustum {
   constructor({
     boundingBox = new Box3(),
@@ -15,12 +22,7 @@ export class DOMFrustum {
       x: 0,
       y: 0,
     },
-    DOMFrustumMargins = {
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 0,
-    },
+    DOMFrustumMargins = defaultDOMFrustumMargins,
     onReEnterView = () => {
       /* allow empty callbacks */
     },
@@ -31,7 +33,7 @@ export class DOMFrustum {
     this.boundingBox = boundingBox
     this.modelViewProjectionMatrix = modelViewProjectionMatrix
     this.containerBoundingRect = containerBoundingRect
-    this.DOMFrustumMargins = DOMFrustumMargins
+    this.DOMFrustumMargins = { ...defaultDOMFrustumMargins, ...DOMFrustumMargins }
 
     this.projectedBoundingRect = {
       top: 0,

@@ -65,7 +65,7 @@ export class DOMObject3D extends ProjectedObject3D {
 
   resize(boundingRect?: DOMElementBoundingRect)
 
-  getBoundingRect(): DOMElementBoundingRect
+  get boundingRect(): DOMElementBoundingRect
 
   setTransforms()
 
@@ -73,6 +73,7 @@ export class DOMObject3D extends ProjectedObject3D {
   set documentPosition(value: Vec3)
 
   get worldScale(): Vec3
+  get worldPosition(): Vec3
 
   get transformOrigin(): Vec3
   set transformOrigin(value: Vec3)

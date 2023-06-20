@@ -106,10 +106,5 @@ export class ProjectedObject3D extends Object3D {
         this.matrices[matrixName].shouldUpdate = false
       }
     }
-
-    // if (this.camera.shouldUpdate) {
-    //   this.updateProjectionMatrixStack()
-    //   this.camera.shouldUpdate = false
-    // }
   }
 }
