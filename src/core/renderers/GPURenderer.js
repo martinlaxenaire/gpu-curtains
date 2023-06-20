@@ -1,6 +1,7 @@
 import { generateMips } from '../../utils/renderer-utils'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement } from '../DOMElement'
+import { Scene } from '../Scene'
 
 export class GPURenderer {
   constructor({ container, pixelRatio = 1, renderingScale = 1 }) {
@@ -54,7 +55,7 @@ export class GPURenderer {
     })
 
     this.setPipelineManager()
-
+    this.setScene()
     this.setRenderPass()
 
     // ready to start
@@ -91,7 +92,15 @@ export class GPURenderer {
     this.pipelineManager = new PipelineManager({ renderer: /** @type {GPURenderer} **/ this })
   }
 
+  setScene() {
+    this.scene = new Scene({ renderer: /** @type {GPURenderer} **/ this })
+  }
+
   /** TEXTURES **/
+
+  addTexture(texture) {
+    this.textures.push(texture)
+  }
 
   setTexture(texture) {
     if (!texture.sampler) {
@@ -286,7 +295,7 @@ export class GPURenderer {
   }
 
   onBeginRenderPass(pass) {
-    /* will be overridden */
+    this.scene.render(pass)
   }
 
   onAfterRenderPass() {
@@ -303,6 +312,8 @@ export class GPURenderer {
     // now render!
 
     this.onBeforeRenderPass()
+
+    this.textures.forEach((texture) => this.setTexture(texture))
 
     // Get the current texture from the canvas context and
     // set it as the texture to render to.
@@ -322,12 +333,17 @@ export class GPURenderer {
     this.device.queue.submit([commandBuffer])
 
     // end of render, reset current pipeline ID
-    this.pipelineManager.currentPipelineID = null
+    // TODO in scene class instead?
+    this.pipelineManager.resetCurrentPipeline()
 
     this.onAfterRenderPass()
   }
 
   destroy() {
+    this.meshes.forEach((mesh) => mesh.destroy())
+
+    this.textures.forEach((texture) => texture.destroy())
+
     this.renderPass?.target?.destroy()
     this.renderPass?.depth?.destroy()
     //this.context?.getCurrentTexture()?.destroy()

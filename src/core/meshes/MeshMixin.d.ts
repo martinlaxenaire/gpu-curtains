@@ -49,6 +49,7 @@ export interface MeshBaseParams extends MaterialBaseParams {
   visible?: boolean
   frustumCulled?: boolean
   DOMFrustumMargins?: RectCoords
+  renderOrder?: number
   // callbacks
   onReady?: () => void
   onRender?: () => void
@@ -58,15 +59,22 @@ export interface MeshBaseParams extends MaterialBaseParams {
   onAfterResize?: () => void
 }
 
-export interface MeshParams extends MeshBaseParams {
-  // geometry
-  geometry: Geometry | IndexedGeometry
-}
+// export interface MeshParams extends MeshBaseParams {
+//   // geometry
+//   geometry: Geometry | IndexedGeometry
+// }
+
+// TODO still needed that way?
+export type MeshParams = MeshBaseParams
+
+declare let index: number
 
 declare const defaultMeshParams: MeshParams
 
 export class MeshBase {
   type: string
+  readonly uuid: string
+  readonly index: number
   renderer: CameraRenderer
 
   options: {
@@ -85,6 +93,9 @@ export class MeshBase {
   uniforms: Material['uniforms']
 
   textures: Texture[]
+
+  renderOrder: number
+  transparent: boolean
 
   frustumCulled: boolean
   DOMFrustumMargins: RectCoords

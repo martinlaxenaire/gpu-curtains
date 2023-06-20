@@ -36,7 +36,6 @@ export class DOMObject3D extends ProjectedObject3D {
     }
 
     this.watchScroll = parameters.watchScroll
-    console.log(this.watchScroll)
 
     this.setTransforms()
     this.setMatrices()

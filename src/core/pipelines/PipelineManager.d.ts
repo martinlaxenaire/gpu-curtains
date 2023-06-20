@@ -1,10 +1,9 @@
 import { PipelineEntry, PipelineEntryBaseParams } from './PipelineEntry'
 import { GPURenderer } from '../renderers/GPURenderer'
-import { Renderer } from '../../types/renderer-utils'
 
 export class PipelineManager {
   renderer: GPURenderer
-  currentPipelineID: number | null
+  currentPipelineIndex: number | null
   pipelineEntries: PipelineEntry[]
 
   constructor({ renderer: GPURenderer })
@@ -14,4 +13,5 @@ export class PipelineManager {
   createRenderPipeline(parameters: PipelineEntryBaseParams): PipelineEntry
 
   setCurrentPipeline(pass: GPURenderPassEncoder, pipelineEntry: PipelineEntry)
+  resetCurrentPipeline()
 }

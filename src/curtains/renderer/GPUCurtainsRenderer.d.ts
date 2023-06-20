@@ -10,13 +10,9 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
   onCameraPositionChanged()
 
-  addTexture(texture: Texture)
-
   onResize()
 
-  //onBeginRenderPass(pass: GPURenderPassEncoder)
+  //render()
 
-  render()
-
-  destroy()
+  //destroy()
 }

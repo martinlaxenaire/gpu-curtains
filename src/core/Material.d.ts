@@ -43,6 +43,8 @@ interface MaterialBaseParams {
   depthWriteEnabled?: boolean
   depthCompare?: GPUCompareFunction
   cullMode?: GPUCullMode
+
+  geometry: AllowedGeometries
 }
 
 interface MaterialParams extends MaterialBaseParams {
@@ -84,26 +86,26 @@ export class Material {
 
   constructor(renderer: GPUCurtainsRenderer, parameters: MaterialParams)
 
-  setMaterial(): void
-  setPipelineEntry(): void
+  setMaterial()
+  setPipelineEntryBuffers()
   get ready(): boolean
 
   getShaderCode(shaderType: FullShadersType): string
 
-  setAttributesFromGeometry(geometry: AllowedGeometries): void
-  createAttributesBuffers(): void
-  destroyAttributeBuffers(): void
+  setAttributesFromGeometry(geometry: AllowedGeometries)
+  createAttributesBuffers()
+  destroyAttributeBuffers()
 
-  createBindGroups(): void
-  destroyBindGroups(): void
-  updateBindGroups(): void
+  createBindGroups()
+  destroyBindGroups()
+  updateBindGroups()
 
-  setUniforms(): void
+  setUniforms()
 
-  setTextures(): void
-  addTextureBinding(texture: Texture): void
+  setTextures()
+  addTextureBinding(texture: Texture)
 
-  render(pass: GPURenderPassEncoder): void
+  render(pass: GPURenderPassEncoder)
 
-  destroy(): void
+  destroy()
 }

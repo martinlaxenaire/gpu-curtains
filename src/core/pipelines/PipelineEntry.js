@@ -8,8 +8,10 @@ export class PipelineEntry {
     this.type = 'PipelineEntry'
 
     let { renderer } = parameters
-    const { label, geometryAttributes, bindGroups, shaders, cullMode, depthWriteEnabled, depthCompare, transparent } =
-      parameters
+    // const { label, geometryAttributes, bindGroups, shaders, cullMode, depthWriteEnabled, depthCompare, transparent } =
+    //   parameters
+
+    const { label, shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder } = parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -21,13 +23,10 @@ export class PipelineEntry {
 
     this.renderer = renderer
 
-    Object.defineProperty(this, 'id', { value: pipelineId++ })
+    Object.defineProperty(this, 'index', { value: pipelineId++ })
 
     this.layout = null
     this.pipeline = null
-
-    this.geometryAttributes = geometryAttributes
-    this.setPipelineEntryBindGroups(bindGroups)
 
     this.shaders = {
       vertex: {
@@ -51,14 +50,21 @@ export class PipelineEntry {
       depthWriteEnabled,
       depthCompare,
       transparent,
-      verticesOrder: this.geometryAttributes.verticesOrder,
+      verticesOrder,
     }
-
-    this.setPipelineEntry()
   }
 
   setPipelineEntryBindGroups(bindGroups) {
     this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups
+  }
+
+  setPipelineEntryBuffers(parameters) {
+    const { geometryAttributes, bindGroups } = parameters
+
+    this.geometryAttributes = geometryAttributes
+    this.setPipelineEntryBindGroups(bindGroups)
+
+    this.setPipelineEntry()
   }
 
   /** SHADERS **/

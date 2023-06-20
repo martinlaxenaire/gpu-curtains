@@ -15,12 +15,12 @@ export class PipelineManager {
 
     this.renderer = renderer
 
-    this.currentPipelineID = null
+    this.currentPipelineIndex = null
     this.pipelineEntries = []
   }
 
   isSamePipeline(parameters) {
-    const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, geometryAttributes } = parameters
+    const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder } = parameters
 
     return this.pipelineEntries.find((pipelineEntry) => {
       const { options } = pipelineEntry
@@ -32,7 +32,7 @@ export class PipelineManager {
         depthWriteEnabled === options.depthWriteEnabled &&
         depthCompare === options.depthCompare &&
         transparent === options.transparent &&
-        geometryAttributes.verticesOrder === options.verticesOrder
+        verticesOrder === options.verticesOrder
       )
     })
   }
@@ -55,7 +55,7 @@ export class PipelineManager {
   }
 
   setCurrentPipeline(pass, pipelineEntry) {
-    if (pipelineEntry.id !== this.currentPipelineID) {
+    if (pipelineEntry.index !== this.currentPipelineIndex) {
       pass.setPipeline(pipelineEntry.pipeline)
 
       // we changed our pipeline, reset the camera bind group
@@ -64,7 +64,11 @@ export class PipelineManager {
         pass.setBindGroup(this.renderer.cameraBindGroup.index, this.renderer.cameraBindGroup.bindGroup)
       }
 
-      this.currentPipelineID = pipelineEntry.id
+      this.currentPipelineIndex = pipelineEntry.index
     }
+  }
+
+  resetCurrentPipeline() {
+    this.currentPipelineIndex = null
   }
 }

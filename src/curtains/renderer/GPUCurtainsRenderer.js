@@ -12,10 +12,6 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     this.meshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
   }
 
-  addTexture(texture) {
-    this.textures.push(texture)
-  }
-
   // resize(boundingRect) {
   //   super.resize(boundingRect)
   // }
@@ -43,29 +39,27 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
   //   super.onBeforeRenderPass()
   // }
 
-  onBeginRenderPass(pass) {
-    super.onBeginRenderPass(pass)
-
-    this.meshes?.forEach((mesh) => mesh.render(pass))
-  }
+  // onBeginRenderPass(pass) {
+  //   super.onBeginRenderPass(pass)
+  // }
 
   // onAfterRenderPass() {
   //   super.onAfterRenderPass()
   // }
 
-  render() {
-    if (!this.ready) return
+  // render() {
+  //   if (!this.ready) return
+  //
+  //   this.textures.forEach((texture) => this.setTexture(texture))
+  //
+  //   super.render()
+  // }
 
-    this.textures.forEach((texture) => this.setTexture(texture))
-
-    super.render()
-  }
-
-  destroy() {
-    this.meshes.forEach((mesh) => mesh.destroy())
-
-    this.textures.forEach((texture) => texture.destroy())
-
-    super.destroy()
-  }
+  // destroy() {
+  //   this.meshes.forEach((mesh) => mesh.destroy())
+  //
+  //   this.textures.forEach((texture) => texture.destroy())
+  //
+  //   super.destroy()
+  // }
 }

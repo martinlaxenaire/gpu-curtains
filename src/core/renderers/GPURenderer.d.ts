@@ -52,6 +52,7 @@ export class GPURenderer {
   setAdapterAndDevice(): Promise<void>
   setPipelineManager()
 
+  addTexture(texture: Texture)
   setTexture(texture: Texture)
   createSampler(options: GPUSamplerDescriptor): GPUSampler | boolean
   createTexture(options: GPUTextureDescriptor): GPUTexture | boolean

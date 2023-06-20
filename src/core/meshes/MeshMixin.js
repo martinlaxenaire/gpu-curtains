@@ -3,8 +3,10 @@ import { Material } from '../Material'
 import { Texture } from '../Texture'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Geometry } from '../geometries/Geometry'
-import { Vec3 } from '../../math/Vec3'
 import { DOMFrustum } from '../frustum/DOMFrustum'
+import { generateUUID } from '../../utils/utils'
+
+let meshIndex = 0
 
 const defaultMeshParams = {
   label: 'Mesh',
@@ -26,6 +28,7 @@ const defaultMeshParams = {
     left: 0,
   },
   visible: true,
+  renderOrder: 0,
   // callbacks / events
   onReady: () => {
     /* allow empty callback */
@@ -56,6 +59,9 @@ const MeshMixin = (superclass) =>
 
       this.type = 'MeshObject'
 
+      this.uuid = generateUUID()
+      Object.defineProperty(this, 'index', { value: meshIndex++ })
+
       // we could pass our curtains object OR our curtains renderer object
       renderer = (renderer && renderer.renderer) || renderer
 
@@ -74,6 +80,7 @@ const MeshMixin = (superclass) =>
         frustumCulled,
         DOMFrustumMargins,
         visible,
+        renderOrder,
         onReady,
         onRender,
         onAfterRender,
@@ -127,9 +134,8 @@ const MeshMixin = (superclass) =>
         shaders,
         ...materialOptions,
         uniformsBindings: this.uniformsBindings,
+        geometry: this.geometry,
       })
-
-      this.material.setAttributesFromGeometry(this.geometry)
 
       this.uniforms = this.material.uniforms
 
@@ -140,9 +146,13 @@ const MeshMixin = (superclass) =>
 
       this.visible = visible
 
+      this.renderOrder = renderOrder
+      this.transparent = materialOptions.transparent
+
       this.ready = false
 
       this.renderer.meshes.push(this)
+      this.renderer.scene.addMesh(this)
     }
 
     setMaterial(materialParameters) {

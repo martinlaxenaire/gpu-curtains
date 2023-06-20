@@ -16,7 +16,7 @@ export class Material {
 
     this.renderer = renderer
 
-    let { shaders, label, uniformsBindings, ...renderingOptions } = parameters
+    let { shaders, label, uniformsBindings, geometry, ...renderingOptions } = parameters
 
     shaders = {
       ...{
@@ -36,10 +36,15 @@ export class Material {
       shaders,
       label,
       uniformsBindings,
-      rendering: renderingOptions,
+      rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
     }
 
-    this.pipelineEntry = null
+    this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
+      label: this.options.label + ': Render pipeline',
+      shaders: this.options.shaders,
+      ...this.options.rendering,
+    })
+
     this.attributes = {
       geometry: null,
       buffers: null,
@@ -47,6 +52,7 @@ export class Material {
 
     this.bindGroups = []
 
+    this.setAttributesFromGeometry(geometry)
     this.setUniforms()
     this.setTextures()
   }
@@ -68,18 +74,15 @@ export class Material {
       return
     }
 
-    if (!this.pipelineEntry) {
-      this.setPipelineEntry()
+    if (this.pipelineEntry && !this.pipelineEntry.pipeline) {
+      this.setPipelineEntryBuffers()
     }
   }
 
-  setPipelineEntry() {
-    this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
-      label: this.options.label + ': Render pipeline',
+  setPipelineEntryBuffers() {
+    this.pipelineEntry.setPipelineEntryBuffers({
       geometryAttributes: this.attributes.geometry,
       bindGroups: this.bindGroups,
-      shaders: this.options.shaders,
-      ...this.options.rendering,
     })
   }
 
