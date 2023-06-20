@@ -91,6 +91,7 @@ export class Material {
   get ready(): boolean
 
   getShaderCode(shaderType: FullShadersType): string
+  getAddedShaderCode(shaderType: FullShadersType): string
 
   setAttributesFromGeometry(geometry: AllowedGeometries)
   createAttributesBuffers()

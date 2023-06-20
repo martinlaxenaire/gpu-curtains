@@ -138,13 +138,13 @@ export class BufferBindings extends Bindings {
 
   setWGSLFragment() {
     if (this.useStruct) {
-      this.wgslStructFragment = `
-struct ${this.label} {
-  ${this.bindingElements.map((uniform) => uniform.name + ': ' + uniform.type).join(',\n\t')}
+      this.wgslStructFragment = `struct ${this.label} {\n\t${this.bindingElements
+        .map((uniform) => uniform.name + ': ' + uniform.type)
+        .join(',\n\t')}
 };`
 
       const varType = this.bindingType === 'storage' ? 'var<storage, read>' : 'var<uniform>'
-      this.wgslGroupFragment = `${varType} ${this.name}: ${this.label};`
+      this.wgslGroupFragment = `${varType} ${this.name}: ${this.label};\n`
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = `${this.bindingElements

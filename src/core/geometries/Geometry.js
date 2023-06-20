@@ -108,11 +108,9 @@ export class Geometry {
   }
 
   setWGSLFragment() {
-    this.wgslStructFragment = `
-struct Attributes {
-   ${this.attributes
-     .map((attribute, index) => '@location(' + index + ') ' + attribute.name + ': ' + attribute.type)
-     .join(',\n\t')}
-};\n`
+    this.wgslStructFragment = `struct Attributes {\n\t${this.attributes
+      .map((attribute, index) => '@location(' + index + ') ' + attribute.name + ': ' + attribute.type)
+      .join(',\n\t')}
+};`
   }
 }

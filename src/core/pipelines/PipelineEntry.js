@@ -30,10 +30,12 @@ export class PipelineEntry {
 
     this.shaders = {
       vertex: {
+        head: '',
         code: '',
         module: null,
       },
       fragment: {
+        head: '',
         code: '',
         module: null,
       },
@@ -70,16 +72,18 @@ export class PipelineEntry {
   /** SHADERS **/
 
   patchShaders() {
-    this.shaders.vertex.code = this.options.shaders.vertex.code
-    this.shaders.fragment.code = this.options.shaders.fragment.code
+    this.shaders.vertex.head = ''
+    this.shaders.vertex.code = ''
+    this.shaders.fragment.head = ''
+    this.shaders.fragment.code = ''
 
     // first add chunks
     for (const chunk in ShaderChunks.vertex) {
-      this.shaders.vertex.code = `\n${ShaderChunks.vertex[chunk]}\n ${this.shaders.vertex.code}`
+      this.shaders.vertex.head = `\n${ShaderChunks.vertex[chunk]}${this.shaders.vertex.head}`
     }
 
     for (const chunk in ShaderChunks.fragment) {
-      this.shaders.fragment.code = `\n${ShaderChunks.fragment[chunk]}\n ${this.shaders.fragment.code}`
+      this.shaders.fragment.head = `\n${ShaderChunks.fragment[chunk]}${this.shaders.fragment.head}`
     }
 
     this.bindGroups.toReversed().forEach((bindGroup) => {
@@ -88,10 +92,10 @@ export class PipelineEntry {
           binding.visibility === GPUShaderStage.VERTEX ||
           binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
         ) {
-          this.shaders.vertex.code = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex.code}\n`
+          this.shaders.vertex.head = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex.head}`
 
           if (binding.wgslStructFragment) {
-            this.shaders.vertex.code = `\n${binding.wgslStructFragment}\n ${this.shaders.vertex.code}`
+            this.shaders.vertex.head = `\n${binding.wgslStructFragment}\n${this.shaders.vertex.head}`
           }
         }
 
@@ -99,20 +103,23 @@ export class PipelineEntry {
           binding.visibility === GPUShaderStage.FRAGMENT ||
           binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
         ) {
-          this.shaders.fragment.code = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.fragment.code}\n`
+          this.shaders.fragment.head = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.fragment.head}`
 
           if (binding.wgslStructFragment) {
-            this.shaders.fragment.code = `${binding.wgslStructFragment}\n ${this.shaders.fragment.code}`
+            this.shaders.fragment.head = `${binding.wgslStructFragment}\n${this.shaders.fragment.head}`
           }
         }
       })
 
-      this.shaders.vertex.code = `\n ${this.shaders.vertex.code}`
-      this.shaders.fragment.code = `\n ${this.shaders.fragment.code}`
+      // this.shaders.vertex.head = `\n${this.shaders.vertex.head}`
+      // this.shaders.fragment.head = `\n${this.shaders.fragment.head}`
     })
 
     // add attributes to vertex shader only
-    this.shaders.vertex.code = `${this.geometryAttributes.wgslStructFragment}\n ${this.shaders.vertex.code}`
+    this.shaders.vertex.head = `${this.geometryAttributes.wgslStructFragment}\n${this.shaders.vertex.head}`
+
+    this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code
+    this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code
 
     this.shaders.full.code = this.shaders.vertex.code + '\n' + this.shaders.fragment.code
   }

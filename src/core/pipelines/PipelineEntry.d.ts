@@ -3,6 +3,7 @@ import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer
 import { ShadersType, FullShadersType, MeshShadersOptions } from '../meshes/MeshMixin'
 
 interface PipelineEntryShader {
+  head?: string
   code: string
   module: GPUShaderModule | null
 }

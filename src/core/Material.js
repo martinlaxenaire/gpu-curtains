@@ -91,7 +91,7 @@ export class Material {
   }
 
   getShaderCode(shaderType = 'full') {
-    if (!this.pipelineEntry) return false
+    if (!this.pipelineEntry) return ''
 
     shaderType = (() => {
       switch (shaderType) {
@@ -107,9 +107,24 @@ export class Material {
     return this.pipelineEntry.shaders[shaderType].code
   }
 
+  getAddedShaderCode(shaderType = 'vertex') {
+    if (!this.pipelineEntry) return ''
+
+    shaderType = (() => {
+      switch (shaderType) {
+        case 'vertex':
+        case 'fragment':
+          return shaderType
+        default:
+          return 'vertex'
+      }
+    })()
+
+    return this.pipelineEntry.shaders[shaderType].head
+  }
+
   /** ATTRIBUTES **/
 
-  // set from the mesh
   setAttributesFromGeometry(geometry) {
     this.attributes.geometry = {
       wgslStructFragment: geometry.wgslStructFragment,
@@ -146,26 +161,6 @@ export class Material {
   }
 
   createAttributesBuffers() {
-    // this.attributes.buffers = {}
-    //
-    // const vertexBuffer = this.renderer.device.createBuffer({
-    //   label: this.options.label + ': Vertex buffer vertices',
-    //   size: this.attributes.geometry.vertexArray.byteLength,
-    //   //usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    //   usage: GPUBufferUsage.VERTEX,
-    //   mappedAtCreation: true,
-    // })
-    //
-    // const vertexBufferValues = vertexBuffer.getMappedRange()
-    //
-    // for (let i = 0; i < this.attributes.geometry?.vertexArray.length; i++) {
-    //   vertexBufferValues[i] = this.attributes.geometry?.vertexArray[i]
-    // }
-    //
-    // vertexBuffer.unmap()
-    //
-    // this.attributes.buffers.vertexBuffer = vertexBuffer
-
     this.attributes.buffers = {
       vertexBuffer: this.renderer.device.createBuffer({
         label: this.options.label + ': Vertex buffer vertices',
