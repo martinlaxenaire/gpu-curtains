@@ -5,11 +5,10 @@ WIP
 ## Roadmap
 
 - Scene class (in progress)
-- RenderPass class
+- Render targets / post processing / RenderPass class (use fullscreen quad + copyTextureToTexture or compute pass?)
 - TextureLoader class
-- getShaderCode + getAddedShaderCode methods (PipelineEntry created on mesh creation, set up pipeline only when possible)
 - Proper uniform memory buffers layout management
 - Use async pipelines?
-- Plane raycasting
+- Plane raycasting (almost done)
 - Plane remove()
 - Errors / warning handling

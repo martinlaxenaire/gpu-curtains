@@ -120,7 +120,22 @@ export class GPURenderer {
   createSampler(options) {
     if (!this.device) return false
 
-    return this.device.createSampler(options)
+    const existingSampler = this.samplers.find((sampler) => {
+      return JSON.stringify(sampler.options) === JSON.stringify(options) && sampler.sampler
+    })
+
+    if (existingSampler) {
+      return existingSampler.sampler
+    } else {
+      const sampler = this.device.createSampler(options)
+
+      this.samplers.push({
+        sampler,
+        options,
+      })
+
+      return sampler
+    }
   }
 
   createTexture(options) {
@@ -289,6 +304,7 @@ export class GPURenderer {
   setRendererObjects() {
     // keep track of planes, textures, etc.
     this.meshes = []
+    this.samplers = []
     this.textures = []
   }
 

@@ -24,6 +24,11 @@ export interface RenderPass {
   sampleCount: GPUSize32
 }
 
+interface Sampler {
+  sampler: GPUSampler
+  options: GPUSamplerDescriptor
+}
+
 export class GPURenderer {
   type: string
   ready: boolean
@@ -39,6 +44,7 @@ export class GPURenderer {
   pipelineManager: typeof PipelineManager
 
   meshes: MeshTypes[]
+  samplers: Sampler[]
   textures: Texture[]
 
   pixelRatio: number
