@@ -1,4 +1,4 @@
-import { ShaderChunks } from '../shaders/ShaderChunks'
+import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
 import { isRenderer } from '../../utils/renderer-utils'
 
 let pipelineId = 0
@@ -11,7 +11,7 @@ export class PipelineEntry {
     // const { label, geometryAttributes, bindGroups, shaders, cullMode, depthWriteEnabled, depthCompare, transparent } =
     //   parameters
 
-    const { label, shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, hasCamera } =
+    const { label, shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, useProjection } =
       parameters
 
     // we could pass our curtains object OR our curtains renderer object
@@ -54,13 +54,13 @@ export class PipelineEntry {
       depthCompare,
       transparent,
       verticesOrder,
-      hasCamera, // TODO type!
+      useProjection,
     }
   }
 
   setPipelineEntryBindGroups(bindGroups) {
     this.bindGroups =
-      this.renderer.cameraBindGroup && this.options.hasCamera
+      this.renderer.cameraBindGroup && this.options.useProjection
         ? [this.renderer.cameraBindGroup, ...bindGroups]
         : bindGroups
   }
@@ -83,14 +83,21 @@ export class PipelineEntry {
     this.shaders.fragment.code = ''
 
     // first add chunks
-    // TODO!!!
-    if (this.options.hasCamera) {
-      for (const chunk in ShaderChunks.vertex) {
-        this.shaders.vertex.head = `\n${ShaderChunks.vertex[chunk]}${this.shaders.vertex.head}`
+    for (const chunk in ShaderChunks.vertex) {
+      this.shaders.vertex.head = `\n${ShaderChunks.vertex[chunk]}${this.shaders.vertex.head}`
+    }
+
+    for (const chunk in ShaderChunks.fragment) {
+      this.shaders.fragment.head = `\n${ShaderChunks.fragment[chunk]}${this.shaders.fragment.head}`
+    }
+
+    if (this.options.useProjection) {
+      for (const chunk in ProjectedShaderChunks.vertex) {
+        this.shaders.vertex.head = `\n${ProjectedShaderChunks.vertex[chunk]}${this.shaders.vertex.head}`
       }
 
-      for (const chunk in ShaderChunks.fragment) {
-        this.shaders.fragment.head = `\n${ShaderChunks.fragment[chunk]}${this.shaders.fragment.head}`
+      for (const chunk in ProjectedShaderChunks.fragment) {
+        this.shaders.fragment.head = `\n${ProjectedShaderChunks.fragment[chunk]}${this.shaders.fragment.head}`
       }
     }
 

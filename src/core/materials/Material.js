@@ -32,14 +32,11 @@ export class Material {
       ...shaders,
     }
 
-    // TODO!!
-    const hasCamera = !!uniformsBindings.find((uniformsBinding) => uniformsBinding.name === 'matrices')
-
     this.options = {
       shaders,
       label,
       uniformsBindings,
-      rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder, hasCamera },
+      rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
     }
 
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
@@ -201,10 +198,7 @@ export class Material {
   /** Bind GROUPS **/
 
   createBindGroups() {
-    // TODO!
-    const hasMatrices = !!this.options.uniformsBindings.find((uniformsBinding) => uniformsBinding.name === 'matrices')
-
-    const bindGroupStartIndex = hasMatrices ? 1 : 0
+    const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0
 
     // textures first
     if (this.texturesBindGroup.canCreateBindGroup()) {

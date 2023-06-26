@@ -39,6 +39,7 @@ export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry
 interface MaterialBaseParams {
   label?: string
   shaders?: MeshShadersOptions
+  useProjection?: boolean
   transparent?: boolean
   depthWriteEnabled?: boolean
   depthCompare?: GPUCompareFunction

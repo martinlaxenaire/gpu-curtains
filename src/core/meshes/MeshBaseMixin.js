@@ -15,6 +15,7 @@ const defaultMeshBaseParams = {
   // material
   shaders: {},
   bindings: [],
+  useProjection: false,
   cullMode: 'back',
   depthWriteEnabled: true,
   depthCompare: 'less',
@@ -109,9 +110,6 @@ const MeshBaseMixin = (superclass) =>
       })
 
       this.uniforms = this.material.uniforms
-
-      //this.renderer.meshes.push(this)
-      //this.renderer.scene.addMesh(this)
     }
 
     setMaterial(materialParameters) {

@@ -8,6 +8,7 @@ import { generateUUID } from '../../utils/utils'
 import MeshBaseMixin from './MeshBaseMixin'
 
 const defaultMeshParams = {
+  useProjection: true,
   // frustum culling and visibility
   frustumCulled: true,
   DOMFrustumMargins: {
