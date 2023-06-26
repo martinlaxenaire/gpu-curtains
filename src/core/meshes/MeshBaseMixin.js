@@ -156,7 +156,7 @@ const MeshBaseMixin = (superclass) =>
     }
 
     resize(boundingRect = null) {
-      super.resize(boundingRect)
+      if (super.resize) super.resize(boundingRect)
 
       this.onAfterResize && this.onAfterResize()
     }

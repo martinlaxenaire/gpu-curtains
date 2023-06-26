@@ -48,7 +48,7 @@ export class RenderPass {
       size: [this.size.width, this.size.height],
       sampleCount: this.sampleCount,
       format: this.renderer.preferredFormat,
-      usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
     })
   }
 

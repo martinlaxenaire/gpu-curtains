@@ -9,6 +9,9 @@ import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
 import { Plane } from '../../curtains/meshes/Plane'
 import { GPURenderer } from '../renderers/GPURenderer'
+import { ShaderPass } from '../renderPasses/ShaderPass'
+import { RenderPass } from '../renderPasses/RenderPass'
+import { FullscreenQuadMesh } from '../meshes/FullscreenQuadMesh'
 
 interface CurtainsTextureOptions {
   generateMips?: boolean
@@ -32,15 +35,15 @@ interface TextureParams extends TextureDefaultParams {
   sampler: GPUSamplerDescriptor
 }
 
-type TextureSource = HTMLVideoElement | HTMLCanvasElement | ImageBitmap | null
-type TextureSourceType = 'image' | 'video' | 'canvas' | null
+type TextureSource = HTMLVideoElement | HTMLCanvasElement | ImageBitmap | RenderPass | null
+type TextureSourceType = 'image' | 'video' | 'canvas' | 'renderPass' | null
 
 interface TextureOptions extends TextureParams {
   source: TextureSource | string // for image url
   sourceType: TextureSourceType
 }
 
-type TextureParent = null | Mesh | DOMMesh | Plane
+type TextureParent = null | Mesh | DOMMesh | Plane | ShaderPass | FullscreenQuadMesh
 
 declare const defaultTextureParams: TextureParams
 
@@ -73,7 +76,7 @@ export class Texture extends Object3D {
   #coverScale: Vec3
   #rotationMatrix: Mat4
 
-  constructor(renderer: GPURenderer, parameters?: TextureParams)
+  constructor(renderer: GPURenderer, parameters?: TextureDefaultParams)
 
   setBindings()
 
@@ -100,6 +103,8 @@ export class Texture extends Object3D {
   loadVideo(source: HTMLVideoElement): Promise<void>
 
   loadCanvas(source: HTMLCanvasElement)
+
+  loadRenderPass(source: RenderPass)
 
   destroy()
 }

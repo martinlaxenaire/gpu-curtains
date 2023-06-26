@@ -237,27 +237,28 @@ export class Texture extends Object3D {
   }
 
   createTexture() {
-    if (!this.source) {
-      this.texture = this.renderer.createTexture({
-        format: this.options.texture.format,
-        size: [this.size.width, this.size.height], // [1, 1]
-        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
-      })
-    } else if (this.options.sourceType !== 'video') {
-      // if we already have a texture, destroy it to free GPU memory
-      if (this.texture) this.texture.destroy()
-
-      this.texture = this.renderer.createTexture({
-        format: this.options.texture.format,
-        mipLevelCount: this.options.texture.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1,
-        size: [this.size.width, this.size.height],
-        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-      })
-
-      this.shouldUpdateBindGroup = true
+    const options = {
+      format: this.options.texture.format,
+      size: [this.size.width, this.size.height], // [1, 1]
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
     }
 
-    this.shouldUpdate = true
+    if (this.options.sourceType !== 'video') {
+      if (this.options.sourceType !== 'renderTexture') {
+        options.mipLevelCount = this.options.texture.generateMips
+          ? this.getNumMipLevels(this.size.width, this.size.height)
+          : 1
+      }
+
+      if (this.texture) this.texture.destroy()
+
+      this.texture = this.renderer.createTexture(options)
+
+      this.shouldUpdateBindGroup = !!this.source
+    }
+
+    // no need to upload render texture, they will be copied from current context during draw loop
+    this.shouldUpdate = this.options.sourceType !== 'renderPass'
   }
 
   createSampler() {
@@ -267,9 +268,16 @@ export class Texture extends Object3D {
   /** SOURCES **/
 
   setSourceSize() {
-    this.size = {
-      width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
-      height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
+    if (this.options.sourceType === 'renderPass') {
+      this.size = {
+        width: this.source.size.width,
+        height: this.source.size.height,
+      }
+    } else {
+      this.size = {
+        width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
+        height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
+      }
     }
   }
 
@@ -334,6 +342,17 @@ export class Texture extends Object3D {
 
     this.setSourceSize()
     this.resize()
+
+    this.sourceLoaded = true // TODO useful?
+    this.createTexture()
+  }
+
+  loadRenderPass(source) {
+    this.source = source
+    this.options.source = source
+    this.options.sourceType = 'renderPass'
+
+    this.setSourceSize()
 
     this.sourceLoaded = true // TODO useful?
     this.createTexture()

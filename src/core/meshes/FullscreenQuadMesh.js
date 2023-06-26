@@ -39,5 +39,6 @@ export class FullscreenQuadMesh extends MeshBaseMixin(class {}) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return
 
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
+    super.resize(boundingRect)
   }
 }

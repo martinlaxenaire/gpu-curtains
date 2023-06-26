@@ -1,5 +1,6 @@
 import { FullscreenQuadMesh } from '../meshes/FullscreenQuadMesh'
 import { RenderPass } from './RenderPass'
+import { Texture } from '../textures/Texture'
 
 export class ShaderPass extends FullscreenQuadMesh {
   constructor(renderer, parameters) {
@@ -7,18 +8,32 @@ export class ShaderPass extends FullscreenQuadMesh {
 
     this.renderPass = new RenderPass({ renderer })
 
-    this.renderTexture = this.createTexture({
+    this.renderTexture = new Texture(this.renderer, {
       name: 'renderTexture',
       texture: {
-        format: 'bgra8unorm',
+        format: this.renderer.preferredFormat,
       },
     })
 
-    // TODO FBO texture type
-    this.renderTexture.size.width = this.domElement.boundingRect.width
-    this.renderTexture.size.height = this.domElement.boundingRect.height
+    this.renderTexture.loadRenderPass(this.renderPass)
+    this.renderTexture.parent = this
 
+    this.material.addTextureBinding(this.renderTexture)
+
+    this.textures.push(this.renderTexture)
+
+    this.renderer.shaderPasses.push(this)
     this.renderer.scene.addShaderPass(this)
+  }
+
+  resize(boundingRect) {
+    super.resize(boundingRect)
+    this.renderPass?.resize(boundingRect)
+
+    if (this.renderTexture) {
+      this.renderTexture.setSourceSize()
+      this.renderTexture.createTexture()
+    }
   }
 
   destroy() {

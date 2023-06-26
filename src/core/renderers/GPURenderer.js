@@ -220,6 +220,8 @@ export class GPURenderer {
     //this.renderPasses?.forEach((renderPass) => renderPass.resize(boundingRect))
     this.renderPass?.resize(boundingRect)
 
+    this.shaderPasses.forEach((shaderPass) => shaderPass.resize(boundingRect))
+
     this.onResize()
   }
 
@@ -243,7 +245,12 @@ export class GPURenderer {
 
   setRenderPassCurrentTexture(renderPass) {
     const renderTexture = this.context.getCurrentTexture()
-    renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
+    if (this.sampleCount > 1) {
+      renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
+    } else {
+      renderPass.descriptor.colorAttachments[0].view = renderTexture.createView()
+    }
+
     return renderTexture
   }
 
