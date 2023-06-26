@@ -13,7 +13,10 @@ export class Scene {
   setStacks()
 
   addMesh(mesh: MeshTypes)
+  removeMesh(mesh: MeshTypes)
+
   addShaderPass(shaderPass: ShaderPass)
+  removeShaderPass(shaderPass: ShaderPass)
 
   //render(pass: GPURenderPassEncoder)
   render(commandEncoder: GPUCommandEncoder)

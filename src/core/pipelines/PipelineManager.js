@@ -56,13 +56,11 @@ export class PipelineManager {
 
   setCurrentPipeline(pass, pipelineEntry) {
     if (pipelineEntry.index !== this.currentPipelineIndex) {
-      pass.setPipeline(pipelineEntry.pipeline)
+      // pipelineEntry.bindGroups.forEach((bindGroup) => {
+      //   pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
+      // })
 
-      // we changed our pipeline, reset the camera bind group
-      // TODO only if pipelineEntry has a camera
-      if (this.renderer.cameraBindGroup) {
-        pass.setBindGroup(this.renderer.cameraBindGroup.index, this.renderer.cameraBindGroup.bindGroup)
-      }
+      pass.setPipeline(pipelineEntry.pipeline)
 
       this.currentPipelineIndex = pipelineEntry.index
     }

@@ -60,6 +60,7 @@ export class MeshTransformedBase {
 
   //render(pass: GPURenderPassEncoder)
 
+  remove()
   //destroy()
 }
 

@@ -86,29 +86,6 @@ const MeshTransformedMixin = (superclass) =>
       this.renderer.scene.addMesh(this)
     }
 
-    /** TEXTURES **/
-
-    // createTexture(options) {
-    //   if (!options.name) {
-    //     options.name = 'texture' + this.textures.length
-    //   }
-    //
-    //   const texture = new Texture(this.renderer, options)
-    //
-    //   this.material.addTextureBinding(texture)
-    //
-    //   this.textures.push(texture)
-    //
-    //   this.onTextureCreated(texture)
-    //
-    //   return texture
-    // }
-    //
-    // onTextureCreated(texture) {
-    //   /* will be overriden */
-    //   texture.parent = this
-    // }
-
     /** UNIFORMS **/
 
     /***
@@ -224,41 +201,14 @@ const MeshTransformedMixin = (superclass) =>
       }
     }
 
-    // onAfterRenderPass(pass) {
-    //   this.onAfterRender()
-    // }
-
-    // render(pass) {
-    //   // no point to render if the WebGPU device is not ready
-    //   // TODO shoud a mesh with visible set to false still update its uniforms?
-    //   //if (!this.renderer.ready || !this.visible) return
-    //
-    //   //this.onBeforeRenderPass(pass)
-    //
-    //   super.render(pass)
-    //
-    //   // if (this.domFrustum.shouldUpdate && this.frustumCulled) {
-    //   //   this.domFrustum.computeProjectedToDocumentCoords()
-    //   //   this.domFrustum.shouldUpdate = false
-    //   // }
-    //
-    //   // if (this.material && this.material.ready && !this.ready) {
-    //   //   this.ready = true
-    //   //   this.onReady()
-    //   // }
-    //   //
-    //   // this.uniformsBindings.forEach((uniformBinding) => {
-    //   //   uniformBinding.onBeforeRender()
-    //   // })
-    //
-    //   //this.onRender()
-    //
-    //   //this.onAfterRenderPass()
-    // }
+    remove() {
+      this.renderer.scene.removeMesh(this)
+      this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
+      super.remove()
+    }
 
     // destroy() {
-    //   // TODO destroy anything else?
-    //   this.material?.destroy()
+    //   super.destroy()
     // }
   }
 

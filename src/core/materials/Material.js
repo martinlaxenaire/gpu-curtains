@@ -328,7 +328,6 @@ export class Material {
     this.updateBindGroups()
 
     // set current pipeline
-    // TODO this could be improved if we'd render meshes by pipelines order
     this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry)
 
     // set bind groups

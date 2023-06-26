@@ -36,8 +36,14 @@ export class ShaderPass extends FullscreenQuadMesh {
     }
   }
 
+  remove() {
+    this.renderer.scene.removeShaderPass(this)
+    this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid)
+    super.remove()
+  }
+
   destroy() {
-    super.destroy()
     this.renderPass.destroy()
+    super.destroy()
   }
 }

@@ -233,7 +233,6 @@ export class GPURenderer {
 
   setRendererObjects() {
     // keep track of planes, textures, etc.
-    // TODO still needed?
     this.renderPasses = []
     this.shaderPasses = []
     this.meshes = []

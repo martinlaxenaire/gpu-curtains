@@ -11,4 +11,5 @@ WIP
 - Use async pipelines?
 - Plane raycasting (almost done)
 - Plane remove()
+- context lost handling
 - Errors / warning handling

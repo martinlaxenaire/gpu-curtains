@@ -12,5 +12,6 @@ export class ShaderPass extends FullscreenQuadMesh {
 
   constructor(renderer: GPURenderer, parameters: ShaderPassParams)
 
+  remove()
   destroy()
 }

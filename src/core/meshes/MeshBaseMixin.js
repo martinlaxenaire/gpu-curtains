@@ -204,9 +204,14 @@ const MeshBaseMixin = (superclass) =>
       this.onAfterRenderPass()
     }
 
+    remove() {
+      this.destroy()
+    }
+
     destroy() {
       // TODO destroy anything else?
       this.material?.destroy()
+      this.textures.forEach((texture) => texture.destroy())
     }
   }
 

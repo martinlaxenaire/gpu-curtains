@@ -110,6 +110,7 @@ export class MeshBase {
   onAfterRenderPass()
   render(pass: GPURenderPassEncoder)
 
+  remove()
   destroy()
 }
 

@@ -58,22 +58,32 @@ export class Scene {
     mesh.transparent ? (this.stacks.transparent = similarMeshesStack) : (this.stacks.opaque = similarMeshesStack)
   }
 
+  removeMesh(mesh) {
+    if (mesh.transparent) {
+      this.stacks.transparent = this.stacks.transparent.filter((m) => m.uuid !== mesh.uuid)
+    } else {
+      this.stacks.opaque = this.stacks.opaque.filter((m) => m.uuid !== mesh.uuid)
+    }
+  }
+
   addShaderPass(shaderPass) {
     this.stacks.shaderPasses.push(shaderPass)
   }
 
-  // render(pass) {
-  //   // render opaque meshes first
-  //   this.stacks.opaque.forEach((mesh) => mesh.render(pass))
-  //
-  //   this.stacks.transparent.forEach((mesh) => mesh.render(pass))
-  // }
+  removeShaderPass(shaderPass) {
+    this.stacks.shaderPasses = this.stacks.shaderPasses.filter((sP) => sP.uuid !== shaderPass.uuid)
+  }
 
   render(commandEncoder) {
     // draw our meshes first
     const renderTexture = this.renderer.setRenderPassCurrentTexture(this.renderer.renderPass)
 
     const pass = commandEncoder.beginRenderPass(this.renderer.renderPass.descriptor)
+
+    if (this.renderer.cameraBindGroup) {
+      // set camera bind group once
+      pass.setBindGroup(this.renderer.cameraBindGroup.index, this.renderer.cameraBindGroup.bindGroup)
+    }
 
     this.stacks.opaque.forEach((mesh) => mesh.render(pass))
     this.stacks.transparent.forEach((mesh) => mesh.render(pass))
