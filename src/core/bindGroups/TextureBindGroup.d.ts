@@ -1,5 +1,5 @@
 import { BindGroup, BindGroupParams } from './BindGroup'
-import { Texture } from '../Texture'
+import { Texture } from '../textures/Texture'
 
 interface TextureBindGroupParams extends BindGroupParams {
   textures?: Texture[]

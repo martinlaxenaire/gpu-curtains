@@ -17,6 +17,10 @@
   "private": true,
   "dependencies": {},
   "scripts": {
-    "build:types": "tsc"
-  }
+    "build:types": "tsc --allowJs -d --emitDeclarationOnly"
+  },
+  "files": [
+    "dist",
+    "src/**/*.d.ts"
+  ]
 }

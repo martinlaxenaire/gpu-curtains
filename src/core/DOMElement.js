@@ -66,6 +66,7 @@ export class DOMElement {
   }
 
   setSize(contentRect) {
+    if (!this.element) return
     // only throttle if we have set our first value
     this.isResizing = !!this.boundingRect
 

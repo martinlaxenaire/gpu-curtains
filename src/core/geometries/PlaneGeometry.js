@@ -1,4 +1,4 @@
-import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
+import { IndexedGeometry } from './IndexedGeometry'
 
 export class PlaneGeometry extends IndexedGeometry {
   constructor({ widthSegments = 1, heightSegments = 1, verticesOrder = 'cw' }) {

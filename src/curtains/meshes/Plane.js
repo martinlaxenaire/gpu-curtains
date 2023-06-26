@@ -1,5 +1,5 @@
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
-import { PlaneGeometry } from '../geometry/PlaneGeometry'
+import { PlaneGeometry } from '../../core/geometries/PlaneGeometry'
 import { DOMMesh } from './DOMMesh'
 import { Vec3 } from '../../math/Vec3'
 import { Vec2 } from '../../math/Vec2'

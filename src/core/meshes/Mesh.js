@@ -1,8 +1,8 @@
 import { isCameraRenderer } from '../../utils/renderer-utils'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import MeshMixin from './MeshMixin'
+import MeshTransformedMixin from './MeshTransformedMixin'
 
-export class Mesh extends MeshMixin(ProjectedObject3D) {
+export class Mesh extends MeshTransformedMixin(ProjectedObject3D) {
   constructor(renderer, parameters = {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer

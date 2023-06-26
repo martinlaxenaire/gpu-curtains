@@ -1,18 +1,19 @@
-import { TextureBindingResource } from './bindings/TextureBindings'
-import { SamplerBindingResource } from './bindings/SamplerBindings'
-import { Object3D } from './objects3D/Object3D'
-import { BufferBindings } from './bindings/BufferBindings'
-import { Mesh } from './meshes/Mesh'
-import { DOMMesh } from '../curtains/meshes/DOMMesh'
-import { BindGroupBindingElement } from './bindGroups/BindGroup'
-import { Vec3 } from '../math/Vec3'
-import { Mat4 } from '../math/Mat4'
-import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
-import { Plane } from '../curtains/meshes/Plane'
+import { TextureBindingResource } from '../bindings/TextureBindings'
+import { SamplerBindingResource } from '../bindings/SamplerBindings'
+import { Object3D } from '../objects3D/Object3D'
+import { BufferBindings } from '../bindings/BufferBindings'
+import { Mesh } from '../meshes/Mesh'
+import { DOMMesh } from '../../curtains/meshes/DOMMesh'
+import { BindGroupBindingElement } from '../bindGroups/BindGroup'
+import { Vec3 } from '../../math/Vec3'
+import { Mat4 } from '../../math/Mat4'
+import { Plane } from '../../curtains/meshes/Plane'
+import { GPURenderer } from '../renderers/GPURenderer'
 
 interface CurtainsTextureOptions {
   generateMips?: boolean
   flipY?: boolean
+  format?: GPUTextureFormat
   placeholderColor?: [number, number, number, number]
 }
 
@@ -21,7 +22,12 @@ interface TextureBaseParams {
   name?: string
 }
 
-interface TextureParams extends TextureBaseParams {
+interface TextureDefaultParams extends TextureBaseParams {
+  texture?: CurtainsTextureOptions
+  sampler?: GPUSamplerDescriptor
+}
+
+interface TextureParams extends TextureDefaultParams {
   texture: CurtainsTextureOptions
   sampler: GPUSamplerDescriptor
 }
@@ -40,7 +46,7 @@ declare const defaultTextureParams: TextureParams
 
 export class Texture extends Object3D {
   type: string
-  renderer: GPUCurtainsRenderer
+  renderer: GPURenderer
 
   sampler: SamplerBindingResource
   texture: TextureBindingResource
@@ -67,7 +73,7 @@ export class Texture extends Object3D {
   #coverScale: Vec3
   #rotationMatrix: Mat4
 
-  constructor(renderer: GPUCurtainsRenderer, parameters?: TextureParams)
+  constructor(renderer: GPURenderer, parameters?: TextureParams)
 
   setBindings()
 

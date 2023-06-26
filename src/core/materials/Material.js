@@ -1,6 +1,6 @@
-import { BindGroup } from './bindGroups/BindGroup'
-import { TextureBindGroup } from './bindGroups/TextureBindGroup'
-import { isRenderer } from '../utils/renderer-utils'
+import { BindGroup } from '../bindGroups/BindGroup'
+import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
+import { isRenderer } from '../../utils/renderer-utils'
 
 export class Material {
   constructor(renderer, parameters) {
@@ -32,11 +32,14 @@ export class Material {
       ...shaders,
     }
 
+    // TODO!!
+    const hasCamera = !!uniformsBindings.find((uniformsBinding) => uniformsBinding.name === 'matrices')
+
     this.options = {
       shaders,
       label,
       uniformsBindings,
-      rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
+      rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder, hasCamera },
     }
 
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
@@ -198,9 +201,14 @@ export class Material {
   /** Bind GROUPS **/
 
   createBindGroups() {
+    // TODO!
+    const hasMatrices = !!this.options.uniformsBindings.find((uniformsBinding) => uniformsBinding.name === 'matrices')
+
+    const bindGroupStartIndex = hasMatrices ? 1 : 0
+
     // textures first
     if (this.texturesBindGroup.canCreateBindGroup()) {
-      this.texturesBindGroup.setIndex(this.bindGroups.length + 1) // bindGroup 0 is our renderer camera
+      this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex) // bindGroup 0 is our renderer camera
       this.texturesBindGroup.createBindingsBuffers()
       this.texturesBindGroup.setBindGroupLayout()
       this.texturesBindGroup.setBindGroup()
@@ -211,7 +219,7 @@ export class Material {
     // then uniforms
     this.uniformsBindGroups.forEach((bindGroup) => {
       if (bindGroup.canCreateBindGroup()) {
-        bindGroup.setIndex(this.bindGroups.length + 1)
+        bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
         bindGroup.createBindingsBuffers()
         bindGroup.setBindGroupLayout()
         bindGroup.setBindGroup()
@@ -242,22 +250,24 @@ export class Material {
     this.uniforms = {}
     this.uniformsBindGroups = []
 
-    const uniformsBindGroup = new BindGroup({
-      label: this.options.label + ': Uniform bind group',
-      renderer: this.renderer,
-    })
+    if (this.options.uniformsBindings.length) {
+      const uniformsBindGroup = new BindGroup({
+        label: this.options.label + ': Uniform bind group',
+        renderer: this.renderer,
+      })
 
-    this.options.uniformsBindings.forEach((uniformBinding) => {
-      this.uniforms = { ...this.uniforms, ...uniformBinding.uniforms }
+      this.options.uniformsBindings.forEach((uniformBinding) => {
+        this.uniforms = { ...this.uniforms, ...uniformBinding.uniforms }
 
-      uniformBinding.isActive =
-        this.options.shaders.vertex.code.indexOf(uniformBinding.name + '.') !== -1 ||
-        this.options.shaders.fragment.code.indexOf(uniformBinding.name + '.') !== -1
+        uniformBinding.isActive =
+          this.options.shaders.vertex.code.indexOf(uniformBinding.name + '.') !== -1 ||
+          this.options.shaders.fragment.code.indexOf(uniformBinding.name + '.') !== -1
 
-      uniformsBindGroup.addBinding(uniformBinding)
-    })
+        uniformsBindGroup.addBinding(uniformBinding)
+      })
 
-    this.uniformsBindGroups.push(uniformsBindGroup)
+      this.uniformsBindGroups.push(uniformsBindGroup)
+    }
   }
 
   /** TEXTURES **/

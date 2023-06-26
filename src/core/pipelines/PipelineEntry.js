@@ -11,7 +11,8 @@ export class PipelineEntry {
     // const { label, geometryAttributes, bindGroups, shaders, cullMode, depthWriteEnabled, depthCompare, transparent } =
     //   parameters
 
-    const { label, shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder } = parameters
+    const { label, shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, hasCamera } =
+      parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -53,11 +54,15 @@ export class PipelineEntry {
       depthCompare,
       transparent,
       verticesOrder,
+      hasCamera, // TODO type!
     }
   }
 
   setPipelineEntryBindGroups(bindGroups) {
-    this.bindGroups = this.renderer.cameraBindGroup ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups
+    this.bindGroups =
+      this.renderer.cameraBindGroup && this.options.hasCamera
+        ? [this.renderer.cameraBindGroup, ...bindGroups]
+        : bindGroups
   }
 
   setPipelineEntryBuffers(parameters) {
@@ -78,12 +83,15 @@ export class PipelineEntry {
     this.shaders.fragment.code = ''
 
     // first add chunks
-    for (const chunk in ShaderChunks.vertex) {
-      this.shaders.vertex.head = `\n${ShaderChunks.vertex[chunk]}${this.shaders.vertex.head}`
-    }
+    // TODO!!!
+    if (this.options.hasCamera) {
+      for (const chunk in ShaderChunks.vertex) {
+        this.shaders.vertex.head = `\n${ShaderChunks.vertex[chunk]}${this.shaders.vertex.head}`
+      }
 
-    for (const chunk in ShaderChunks.fragment) {
-      this.shaders.fragment.head = `\n${ShaderChunks.fragment[chunk]}${this.shaders.fragment.head}`
+      for (const chunk in ShaderChunks.fragment) {
+        this.shaders.fragment.head = `\n${ShaderChunks.fragment[chunk]}${this.shaders.fragment.head}`
+      }
     }
 
     this.bindGroups.toReversed().forEach((bindGroup) => {
@@ -206,9 +214,9 @@ export class PipelineEntry {
         depthCompare: this.options.depthCompare,
         format: 'depth24plus',
       },
-      ...(this.renderer.renderPass.sampleCount > 1 && {
+      ...(this.renderer.sampleCount > 1 && {
         multisample: {
-          count: this.renderer.renderPass.sampleCount,
+          count: this.renderer.sampleCount,
         },
       }),
     })

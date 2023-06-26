@@ -1,14 +1,18 @@
 import { DOMElement, DOMElementBoundingRect } from '../DOMElement'
 import { PipelineManager } from '../pipelines/PipelineManager'
-import { Texture } from '../Texture'
+import { Texture } from '../textures/Texture'
 import { Mesh } from '../meshes/Mesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { DOMMesh } from '../../curtains/meshes/DOMMesh'
+import { RenderPass } from '../renderPasses/RenderPass'
+import { Scene } from '../scenes/Scene'
+import { ShaderPass } from '../renderPasses/ShaderPass'
 
 interface GPURendererParams {
   container: string | HTMLElement
   pixelRatio?: number
   renderingScale?: number
+  sampleCount?: GPUSize32
 }
 
 type MeshTypes = Mesh | DOMMesh | Plane
@@ -17,12 +21,12 @@ type MeshTypes = Mesh | DOMMesh | Plane
 //   colorAttachments: Iterable<GPURenderPassColorAttachment>
 // }
 
-export interface RenderPass {
-  descriptor: GPURenderPassDescriptor
-  target: GPUTexture
-  depth: GPUTexture
-  sampleCount: GPUSize32
-}
+// export interface RenderPass {
+//   descriptor: GPURenderPassDescriptor
+//   target: GPUTexture
+//   depth: GPUTexture
+//   sampleCount: GPUSize32
+// }
 
 interface Sampler {
   sampler: GPUSampler
@@ -40,13 +44,16 @@ export class GPURenderer {
   device: null | GPUDevice
 
   renderPass: RenderPass
+  pipelineManager: PipelineManager
+  scene: Scene
 
-  pipelineManager: typeof PipelineManager
-
+  renderPasses: RenderPass[]
+  shaderPasses: ShaderPass[]
   meshes: MeshTypes[]
   samplers: Sampler[]
   textures: Texture[]
 
+  sampleCount: GPUSize32
   pixelRatio: number
   renderingScale: number
   domElement: DOMElement
@@ -58,7 +65,10 @@ export class GPURenderer {
 
   setContext(): Promise<void>
   setAdapterAndDevice(): Promise<void>
+
+  setMainRenderPass()
   setPipelineManager()
+  setScene()
 
   addTexture(texture: Texture)
   setTexture(texture: Texture)
@@ -67,19 +77,15 @@ export class GPURenderer {
   uploadTexture(texture: Texture)
   importExternalTexture(video: HTMLVideoElement): GPUExternalTexture
 
-  createDepthTexture(): GPUTexture
-  setRenderPassDepth()
-  setRenderPassView()
-  setRenderPass()
-
   setSize(contentRect: DOMElementBoundingRect)
   resize(boundingRect?: DOMElementBoundingRect | null)
   onResize()
 
   setRendererObjects()
 
+  setRenderPassCurrentTexture(renderPass: RenderPass): GPUTexture
   onBeforeRenderPass()
-  onBeginRenderPass(pass: GPURenderPassEncoder)
+  //onBeginRenderPass(pass: GPURenderPassEncoder)
   onAfterRenderPass()
   render()
 

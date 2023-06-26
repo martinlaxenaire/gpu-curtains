@@ -1,4 +1,4 @@
-import { isRenderer } from '../utils/renderer-utils'
+import { isRenderer } from '../../utils/renderer-utils'
 
 export class Scene {
   constructor({ renderer }) {
@@ -6,11 +6,12 @@ export class Scene {
     renderer = (renderer && renderer.renderer) || renderer
 
     if (!isRenderer(renderer, 'Scene')) {
-      console.warn('PipelineManager fail')
+      console.warn('Scene fail')
       return
     }
 
     this.renderer = renderer
+    this.renderPasses = this.renderer.renderPasses
 
     this.setStacks()
   }
@@ -19,9 +20,11 @@ export class Scene {
     this.stacks = {
       opaque: [],
       transparent: [],
+      shaderPasses: [],
     }
   }
 
+  // TODO removeMesh
   addMesh(mesh) {
     // rebuild stack
     const similarMeshesStack = this.renderer.meshes.filter(
@@ -55,10 +58,44 @@ export class Scene {
     mesh.transparent ? (this.stacks.transparent = similarMeshesStack) : (this.stacks.opaque = similarMeshesStack)
   }
 
-  render(pass) {
-    // render opaque meshes first
-    this.stacks.opaque.forEach((mesh) => mesh.render(pass))
+  addShaderPass(shaderPass) {
+    this.stacks.shaderPasses.push(shaderPass)
+  }
 
+  // render(pass) {
+  //   // render opaque meshes first
+  //   this.stacks.opaque.forEach((mesh) => mesh.render(pass))
+  //
+  //   this.stacks.transparent.forEach((mesh) => mesh.render(pass))
+  // }
+
+  render(commandEncoder) {
+    // draw our meshes first
+    const renderTexture = this.renderer.setRenderPassCurrentTexture(this.renderer.renderPass)
+
+    const pass = commandEncoder.beginRenderPass(this.renderer.renderPass.descriptor)
+
+    this.stacks.opaque.forEach((mesh) => mesh.render(pass))
     this.stacks.transparent.forEach((mesh) => mesh.render(pass))
+
+    pass.end()
+
+    this.stacks.shaderPasses.forEach((shaderPass) => {
+      commandEncoder.copyTextureToTexture(
+        {
+          texture: renderTexture,
+        },
+        {
+          texture: shaderPass.renderTexture.texture,
+        },
+        [shaderPass.renderPass.size.width, shaderPass.renderPass.size.height]
+      )
+
+      this.renderer.setRenderPassCurrentTexture(shaderPass.renderPass)
+
+      const shaderPassRenderPass = commandEncoder.beginRenderPass(shaderPass.renderPass.descriptor)
+      shaderPass.render(shaderPassRenderPass)
+      shaderPassRenderPass.end()
+    })
   }
 }

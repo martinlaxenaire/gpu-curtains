@@ -1,16 +1,13 @@
 import { CameraRenderer } from '../../types/renderer-utils'
 import { BufferBindings } from '../bindings/BufferBindings'
-import { Material, MaterialBaseParams, MaterialParams } from '../Material'
-import { Texture, TextureBaseParams } from '../Texture'
-import { DOMObject3D, RectCoords } from '../../curtains/objects3D/DOMObject3D'
+import { Material, MaterialBaseParams, MaterialParams } from '../materials/Material'
+import { Texture, TextureBaseParams, TextureDefaultParams } from '../textures/Texture'
+import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import { DOMFrustum } from '../frustum/DOMFrustum'
 import { DOMElementBoundingRect } from '../DOMElement'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
-import { Geometry } from '../geometries/Geometry'
-import { IndexedGeometry } from '../geometries/IndexedGeometry'
 
 export type ShadersType = 'vertex' | 'fragment'
 export type FullShadersType = 'full' | ShadersType
@@ -44,32 +41,24 @@ export interface MeshBindings {
   uniforms: Record<string, MeshUniforms>
 }
 
+export interface MeshMaterialParameters extends MaterialParams {
+  bindings?: MeshBindings[]
+}
+
 export interface MeshBaseParams extends MaterialBaseParams {
   bindings?: MeshBindings[]
   visible?: boolean
-  frustumCulled?: boolean
-  DOMFrustumMargins?: RectCoords
   renderOrder?: number
   // callbacks
   onReady?: () => void
   onRender?: () => void
   onAfterRender?: () => void
-  onReEnterView?: () => void
-  onLeaveView?: () => void
   onAfterResize?: () => void
 }
 
-// export interface MeshParams extends MeshBaseParams {
-//   // geometry
-//   geometry: Geometry | IndexedGeometry
-// }
+declare let meshIndex: number
 
-// TODO still needed that way?
-export type MeshParams = MeshBaseParams
-
-declare let index: number
-
-declare const defaultMeshParams: MeshParams
+declare const defaultMeshBaseParams: MeshBaseParams
 
 export class MeshBase {
   type: string
@@ -78,17 +67,14 @@ export class MeshBase {
   renderer: CameraRenderer
 
   options: {
-    label: MeshParams['label']
-    shaders: MeshParams['shaders']
+    label: MeshBaseParams['label']
+    shaders: MeshBaseParams['shaders']
   }
 
-  matrixUniformBinding: BufferBindings
   uniformsBindings: BufferBindings[]
 
   material: Material
-  geometry: MeshParams['geometry']
-
-  domFrustum: DOMFrustum
+  geometry: MeshBaseParams['geometry']
 
   uniforms: Material['uniforms']
 
@@ -97,8 +83,6 @@ export class MeshBase {
   renderOrder: number
   transparent: boolean
 
-  frustumCulled: boolean
-  DOMFrustumMargins: RectCoords
   visible: boolean
   ready: boolean
 
@@ -106,41 +90,36 @@ export class MeshBase {
   onReady: () => void
   onRender: () => void
   onAfterRender: () => void
-  onReEnterView: () => void
-  onLeaveView: () => void
   onAfterResize: () => void
 
-  constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshParams)
+  constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
+
+  setMeshMaterial(meshParameters: MeshMaterialParameters)
 
   setMaterial(materialParameters: MaterialParams)
 
-  createTexture(options: TextureBaseParams): Texture
+  createTexture(options: TextureDefaultParams): Texture
   onTextureCreated(texture: Texture)
 
-  setMatricesUniformGroup()
   setUniformBindings(bindings: MeshBindings)
 
   resize(boundingRect?: DOMElementBoundingRect)
-  applyScale()
 
-  get projectedBoundingRect(): DOMElementBoundingRect
-
-  updateModelMatrix()
-  updateProjectionMatrixStack()
-
+  onBeforeRenderPass()
+  onRenderPass(pass: GPURenderPassEncoder)
+  onAfterRenderPass()
   render(pass: GPURenderPassEncoder)
 
   destroy()
 }
 
 // https://stackoverflow.com/questions/65134811/es6-exporting-classes-with-typescript-mixins
+// https://stackoverflow.com/questions/58256383/using-javascript-class-mixins-with-typescript-declaration-files
 // https://www.typescriptlang.org/docs/handbook/mixins.html
 
-// our mixin constructor (superclass) is either ProjectedObject3D or DOMOBject3D
-type MixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D
-// our return constructor is our mixin constructor & MeshBase type (that defines the return of MeshMixin)
-type ReturnMixinConstructor = new (...args: any[]) => MixinConstructor extends ProjectedObject3D
-  ? ProjectedObject3D & MeshBase
-  : DOMObject3D & MeshBase
+declare class EmptyClass {}
+export type MixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D | EmptyClass
 
-export default function MeshMixin<TBase extends MixinConstructor>(superclass: TBase): ReturnMixinConstructor
+export default function MeshBaseMixin<TBase extends MixinConstructor>(
+  superclass: TBase
+): new (...args: any[]) => MeshBase & InstanceType<TBase>

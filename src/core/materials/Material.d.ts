@@ -1,13 +1,13 @@
-import { Geometry } from './geometries/Geometry'
-import { IndexedGeometry, IndexedGeometryIndexData } from './geometries/IndexedGeometry'
-import { BufferBindings, BufferBindingsUniform } from './bindings/BufferBindings'
-import { PipelineEntry } from './pipelines/PipelineEntry'
-import { BindGroup } from './bindGroups/BindGroup'
-import { TextureBindGroup } from './bindGroups/TextureBindGroup'
-import { Texture } from './Texture'
-import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
-import { PlaneGeometry } from '../curtains/geometry/PlaneGeometry'
-import { FullShadersType, MeshShadersOptions, MeshShaders } from './meshes/MeshMixin'
+import { Geometry } from '../geometries/Geometry'
+import { IndexedGeometry, IndexedGeometryIndexData } from '../geometries/IndexedGeometry'
+import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings'
+import { PipelineEntry } from '../pipelines/PipelineEntry'
+import { BindGroup } from '../bindGroups/BindGroup'
+import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
+import { Texture } from '../textures/Texture'
+import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
+import { PlaneGeometry } from '../geometries/PlaneGeometry'
+import { FullShadersType, MeshShadersOptions, MeshShaders } from '../meshes/MeshBaseMixin'
 
 interface MaterialGeometryAttribute {
   wgslStructFragment: Geometry['wgslStructFragment']

@@ -4,11 +4,12 @@ import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 
 export class GPUCurtains {
-  constructor({ container, pixelRatio = 1, camera }) {
+  constructor({ container, pixelRatio = 1, sampleCount = 4, camera }) {
     this.type = 'CurtainsGPU'
 
     this.options = {
       pixelRatio,
+      sampleCount,
       camera,
     }
 
@@ -57,6 +58,7 @@ export class GPUCurtains {
     this.renderer = new GPUCurtainsRenderer({
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
+      sampleCount: this.options.sampleCount,
       camera: this.options.camera,
     })
 
@@ -120,7 +122,7 @@ export class GPUCurtains {
   }
 
   updateScroll(lastXDelta = 0, lastYDelta = 0) {
-    this.renderer.meshes.forEach((mesh) => {
+    this.renderer.domMeshes.forEach((mesh) => {
       if (mesh.domElement) {
         mesh.updateScrollPosition(lastXDelta, lastYDelta)
       }

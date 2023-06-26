@@ -1,35 +1,49 @@
 import { GPUCameraRenderer } from '../../core/renderers/GPUCameraRenderer'
+import { DOMMesh } from '../meshes/DOMMesh'
+import { Plane } from '../meshes/Plane'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
-  constructor({ container, pixelRatio, renderingScale = 1, camera }) {
-    super({ container, pixelRatio, renderingScale, camera })
+  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4, camera }) {
+    super({ container, pixelRatio, renderingScale, sampleCount, camera })
 
     this.type = 'CurtainsRenderer'
   }
 
   onCameraPositionChanged() {
     super.onCameraPositionChanged()
-    this.meshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
+    this.domMeshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
   }
 
   // resize(boundingRect) {
   //   super.resize(boundingRect)
   // }
 
+  // get domMeshes() {
+  //   return /** @type {Array<DOMMesh | Plane>} **/ this.meshes.filter(
+  //     (mesh) => mesh instanceof DOMMesh || mesh instanceof Plane
+  //   )
+  // }
+
+  setRendererObjects() {
+    super.setRendererObjects()
+
+    this.domMeshes = []
+  }
+
   onResize() {
     super.onResize()
-    this.meshes?.forEach((mesh) => {
+    this.domMeshes?.forEach((mesh) => {
       if (mesh.domElement && !mesh.domElement.isResizing) {
         mesh.resize()
       }
     })
   }
 
-  setRendererObjects() {
-    super.setRendererObjects()
-
-    this.planes = []
-  }
+  // setRendererObjects() {
+  //   super.setRendererObjects()
+  //
+  //   this.planes = []
+  // }
 
   /**
    * Called at each draw call to render our scene and its content

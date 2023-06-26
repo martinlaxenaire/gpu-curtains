@@ -1,10 +1,11 @@
 import { generateMips } from '../../utils/renderer-utils'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement } from '../DOMElement'
-import { Scene } from '../Scene'
+import { Scene } from '../scenes/Scene'
+import { RenderPass } from '../renderPasses/RenderPass'
 
 export class GPURenderer {
-  constructor({ container, pixelRatio = 1, renderingScale = 1 }) {
+  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4 }) {
     this.type = 'Renderer'
     this.ready = false
 
@@ -12,11 +13,14 @@ export class GPURenderer {
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.renderingScale = renderingScale
+    this.sampleCount = sampleCount
 
     if (!this.gpu) {
       console.warn('WebGPU not supported!')
       return
     }
+
+    this.setRendererObjects()
 
     // create the canvas
     this.canvas = document.createElement('canvas')
@@ -30,8 +34,6 @@ export class GPURenderer {
       element: document.body,
       onSizeChanged: () => this.resize(),
     })
-
-    this.setRendererObjects()
   }
 
   get boundingRect() {
@@ -53,14 +55,16 @@ export class GPURenderer {
     this.context.configure({
       device: this.device,
       format: this.preferredFormat,
+      // needed so we can copy textures for post processing usage
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
       // TODO
       alphaMode: 'premultiplied', // or "opaque"
       //viewFormats: []
     })
 
+    this.setMainRenderPass()
     this.setPipelineManager()
     this.setScene()
-    this.setRenderPass()
 
     // ready to start
     this.ready = true
@@ -90,7 +94,18 @@ export class GPURenderer {
     })
   }
 
-  /** PIPELINES **/
+  /** PIPELINES, SCENE & MAIN RENDER PASS **/
+
+  setMainRenderPass() {
+    // TODO is this.renderPass still needed?
+    this.renderPass = new RenderPass({
+      renderer: /** @type {GPURenderer} **/ this,
+      label: 'Main Render pass',
+      depth: true,
+    })
+
+    //this.renderPasses.push(this.renderPass)
+  }
 
   setPipelineManager() {
     this.pipelineManager = new PipelineManager({ renderer: /** @type {GPURenderer} **/ this })
@@ -174,96 +189,6 @@ export class GPURenderer {
     return this.device.importExternalTexture({ source: video })
   }
 
-  /** RENDER TEXTURES **/
-
-  createDepthTexture() {
-    return this.device.createTexture({
-      label: 'GPURenderer depth attachment texture',
-      size: [this.canvas.width, this.canvas.height],
-      format: 'depth24plus',
-      usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      sampleCount: this.renderPass.sampleCount,
-    })
-  }
-
-  setRenderPassDepth() {
-    if (!this.renderPass) return
-
-    // set view
-    if (this.renderPass.depth) {
-      // Destroy the previous depth target
-      this.renderPass.depth.destroy()
-    }
-
-    this.renderPass.depth = this.createDepthTexture()
-
-    this.renderPass.descriptor.depthStencilAttachment.view = this.renderPass.depth.createView()
-  }
-
-  setRenderPassView() {
-    if (!this.renderPass) return
-
-    // set view
-    if (this.renderPass.target) {
-      // Destroy the previous render target
-      this.renderPass.target.destroy()
-    }
-
-    this.renderPass.target = this.createTexture({
-      label: 'GPURenderer color attachment texture',
-      size: [this.canvas.width, this.canvas.height],
-      sampleCount: this.renderPass.sampleCount,
-      format: this.preferredFormat,
-      usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    })
-
-    this.renderPass.descriptor.colorAttachments[0].view = this.renderPass.target.createView()
-  }
-
-  setRenderPass() {
-    this.renderPass = {
-      sampleCount: 4, // TODO option
-    }
-
-    if (!this.device) return
-
-    const depthTexture = this.createDepthTexture()
-
-    this.renderPass = {
-      ...this.renderPass,
-      target: null,
-      depth: depthTexture,
-      descriptor: {
-        label: 'GPURenderer pass descriptor',
-        colorAttachments: [
-          {
-            // view: <- to be filled out when we set our render pass view
-            view: null,
-            // clear values
-            clearValue: [0, 0, 0, 0],
-            // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
-            // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what's already there.
-            loadOp: 'clear',
-            // storeOp: 'store' means store the result of what we draw.
-            // We could also pass 'discard' which would throw away what we draw.
-            // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
-            storeOp: 'store',
-          },
-        ],
-        depthStencilAttachment: {
-          view: depthTexture.createView(),
-
-          depthClearValue: 1.0,
-          depthLoadOp: 'clear',
-          depthStoreOp: 'store',
-        },
-      },
-    }
-
-    this.setRenderPassView()
-    //this.setRenderPassDepth()
-  }
-
   /**
    * Set Canvas size
    */
@@ -286,11 +211,14 @@ export class GPURenderer {
 
   resize(boundingRect = null) {
     if (!this.domElement) return
-    this.setSize(boundingRect ?? this.domElement.element.getBoundingClientRect())
 
-    // reset render textures
-    this.setRenderPassView()
-    this.setRenderPassDepth()
+    if (!boundingRect) boundingRect = this.domElement.element.getBoundingClientRect()
+
+    this.setSize(boundingRect)
+
+    // resize render passes
+    //this.renderPasses?.forEach((renderPass) => renderPass.resize(boundingRect))
+    this.renderPass?.resize(boundingRect)
 
     this.onResize()
   }
@@ -303,6 +231,9 @@ export class GPURenderer {
 
   setRendererObjects() {
     // keep track of planes, textures, etc.
+    // TODO still needed?
+    this.renderPasses = []
+    this.shaderPasses = []
     this.meshes = []
     this.samplers = []
     this.textures = []
@@ -310,13 +241,19 @@ export class GPURenderer {
 
   /** RENDER **/
 
+  setRenderPassCurrentTexture(renderPass) {
+    const renderTexture = this.context.getCurrentTexture()
+    renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
+    return renderTexture
+  }
+
   onBeforeRenderPass() {
     /* will be overridden */
   }
 
-  onBeginRenderPass(pass) {
-    this.scene.render(pass)
-  }
+  // onBeginRenderPass(pass) {
+  //   this.scene.render(pass)
+  // }
 
   onAfterRenderPass() {
     /* will be overridden */
@@ -335,21 +272,15 @@ export class GPURenderer {
 
     this.textures.forEach((texture) => this.setTexture(texture))
 
+    const commandEncoder = this.device.createCommandEncoder({ label: 'Renderer command encoder' })
+
     // Get the current texture from the canvas context and
     // set it as the texture to render to.
-    this.renderPass.descriptor.colorAttachments[0].resolveTarget = this.context.getCurrentTexture().createView()
+    // TODO each pass needs an access to the renderTexture and the commandEncoder
 
-    const encoder = this.device.createCommandEncoder({ label: 'our encoder' })
+    this.scene.render(commandEncoder)
 
-    // make a render pass encoder to encode render specific commands
-    /** @type {GPURenderPassEncoder} **/
-    const pass = encoder.beginRenderPass(/** @type {GPURenderPassDescriptor} **/ this.renderPass.descriptor)
-
-    this.onBeginRenderPass(pass)
-
-    pass.end()
-
-    const commandBuffer = encoder.finish()
+    const commandBuffer = commandEncoder.finish()
     this.device.queue.submit([commandBuffer])
 
     // end of render, reset current pipeline ID
@@ -364,9 +295,9 @@ export class GPURenderer {
 
     this.textures.forEach((texture) => texture.destroy())
 
-    this.renderPass?.target?.destroy()
-    this.renderPass?.depth?.destroy()
-    //this.context?.getCurrentTexture()?.destroy()
+    // destroy render passes
+    //this.renderPasses?.forEach((renderPass) => renderPass.destroy())
+    this.renderPass?.destroy()
 
     this.device?.destroy()
     this.context?.unconfigure()

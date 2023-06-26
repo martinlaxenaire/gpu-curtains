@@ -1,5 +1,5 @@
-import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
-import { GeometryParams } from '../../core/geometries/Geometry'
+import { IndexedGeometry } from './IndexedGeometry'
+import { GeometryParams } from './Geometry'
 
 interface PlaneGeometryParams extends GeometryParams {
   widthSegments?: number

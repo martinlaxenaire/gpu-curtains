@@ -1,9 +1,9 @@
 import { DOMMesh, DOMMeshBaseParams } from './DOMMesh'
-import { PlaneGeometryParams } from '../geometry/PlaneGeometry'
+import { PlaneGeometryParams } from '../../core/geometries/PlaneGeometry'
 import { RectCoords } from '../objects3D/DOMObject3D'
 import { GPUCurtainsRenderer } from '../renderer/GPUCurtainsRenderer'
 import { DOMElementBoundingRect } from '../../core/DOMElement'
-import { Texture } from '../../core/Texture'
+import { Texture } from '../../core/textures/Texture'
 import { Vec2 } from '../../math/Vec2'
 
 // extends DOMMeshParams instead?

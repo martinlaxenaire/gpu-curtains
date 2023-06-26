@@ -1,24 +1,13 @@
 import { isCameraRenderer } from '../../utils/renderer-utils'
-import { Material } from '../Material'
-import { Texture } from '../Texture'
+import { Material } from '../materials/Material'
+import { Texture } from '../textures/Texture'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Geometry } from '../geometries/Geometry'
 import { DOMFrustum } from '../frustum/DOMFrustum'
 import { generateUUID } from '../../utils/utils'
-
-let meshIndex = 0
+import MeshBaseMixin from './MeshBaseMixin'
 
 const defaultMeshParams = {
-  label: 'Mesh',
-  // geometry
-  geometry: new Geometry(),
-  // material
-  shaders: {},
-  bindings: [],
-  cullMode: 'back',
-  depthWriteEnabled: true,
-  depthCompare: 'less',
-  transparent: false,
   // frustum culling and visibility
   frustumCulled: true,
   DOMFrustumMargins: {
@@ -27,40 +16,23 @@ const defaultMeshParams = {
     bottom: 0,
     left: 0,
   },
-  visible: true,
-  renderOrder: 0,
   // callbacks / events
-  onReady: () => {
-    /* allow empty callback */
-  },
-  onRender: () => {
-    /* allow empty callback */
-  },
-  onAfterRender: () => {
-    /* allow empty callback */
-  },
   onReEnterView: () => {
     /* allow empty callback */
   },
   onLeaveView: () => {
     /* allow empty callback */
   },
-  onAfterResize: () => {
-    /* allow empty callback */
-  },
 }
 
-const MeshMixin = (superclass) =>
-  class extends superclass {
+const MeshTransformedMixin = (superclass) =>
+  class extends MeshBaseMixin(superclass) {
     constructor(renderer, element, parameters) {
       parameters = { ...defaultMeshParams, ...parameters }
 
       super(renderer, element, parameters)
 
       this.type = 'MeshObject'
-
-      this.uuid = generateUUID()
-      Object.defineProperty(this, 'index', { value: meshIndex++ })
 
       // we could pass our curtains object OR our curtains renderer object
       renderer = (renderer && renderer.renderer) || renderer
@@ -72,23 +44,7 @@ const MeshMixin = (superclass) =>
 
       this.renderer = renderer
 
-      const {
-        shaders,
-        bindings,
-        geometry,
-        label,
-        frustumCulled,
-        DOMFrustumMargins,
-        visible,
-        renderOrder,
-        onReady,
-        onRender,
-        onAfterRender,
-        onReEnterView,
-        onLeaveView,
-        onAfterResize,
-        ...materialOptions
-      } = parameters
+      const { label, geometry, shaders, onReEnterView, onLeaveView, ...meshParameters } = parameters
 
       this.options = {
         label,
@@ -96,17 +52,18 @@ const MeshMixin = (superclass) =>
         ...(this.options ?? {}), // merge possible lower options?
       }
 
-      this.onReady = onReady
-      this.onRender = onRender
-      this.onAfterRender = onAfterRender
       this.onReEnterView = onReEnterView
       this.onLeaveView = onLeaveView
-      this.onAfterResize = onAfterResize
 
-      this.setMatricesUniformGroup()
-      this.setUniformBindings(bindings)
-
+      // explicitly needed for DOM Frustum
       this.geometry = geometry
+    }
+
+    // totally override MeshBaseMixin setMesh
+    setMeshMaterial(meshParameters) {
+      const { frustumCulled, DOMFrustumMargins, ...meshMaterialOptions } = meshParameters
+
+      super.setMeshMaterial(meshMaterialOptions)
 
       this.domFrustum = new DOMFrustum({
         boundingBox: this.geometry.boundingBox,
@@ -114,73 +71,42 @@ const MeshMixin = (superclass) =>
         containerBoundingRect: this.renderer.boundingRect,
         DOMFrustumMargins,
         onReEnterView: () => {
-          // TODO
-          if (this.options.label === 'Cube') {
-            console.log('Cube reentered view!')
-          }
           this.onReEnterView()
         },
         onLeaveView: () => {
-          // TODO
-          if (this.options.label === 'Cube') {
-            console.log('Cube left view!')
-          }
           this.onLeaveView()
         },
       })
 
-      this.setMaterial({
-        label,
-        shaders,
-        ...materialOptions,
-        uniformsBindings: this.uniformsBindings,
-        geometry: this.geometry,
-      })
-
-      this.uniforms = this.material.uniforms
-
-      this.textures = []
-
       this.frustumCulled = frustumCulled
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
-
-      this.visible = visible
-
-      this.renderOrder = renderOrder
-      this.transparent = materialOptions.transparent
-
-      this.ready = false
 
       this.renderer.meshes.push(this)
       this.renderer.scene.addMesh(this)
     }
 
-    setMaterial(materialParameters) {
-      this.material = new Material(this.renderer, materialParameters)
-    }
-
     /** TEXTURES **/
 
-    createTexture(options) {
-      if (!options.name) {
-        options.name = 'texture' + this.textures.length
-      }
-
-      const texture = new Texture(this.renderer, options)
-
-      this.material.addTextureBinding(texture)
-
-      this.textures.push(texture)
-
-      this.onTextureCreated(texture)
-
-      return texture
-    }
-
-    onTextureCreated(texture) {
-      /* will be overriden */
-      texture.parent = this
-    }
+    // createTexture(options) {
+    //   if (!options.name) {
+    //     options.name = 'texture' + this.textures.length
+    //   }
+    //
+    //   const texture = new Texture(this.renderer, options)
+    //
+    //   this.material.addTextureBinding(texture)
+    //
+    //   this.textures.push(texture)
+    //
+    //   this.onTextureCreated(texture)
+    //
+    //   return texture
+    // }
+    //
+    // onTextureCreated(texture) {
+    //   /* will be overriden */
+    //   texture.parent = this
+    // }
 
     /** UNIFORMS **/
 
@@ -222,6 +148,8 @@ const MeshMixin = (superclass) =>
     }
 
     setUniformBindings(bindings) {
+      this.setMatricesUniformGroup()
+
       this.uniformsBindings = [
         this.matrixUniformBinding,
         ...bindings.map((binding, index) => {
@@ -237,11 +165,9 @@ const MeshMixin = (superclass) =>
     }
 
     resize(boundingRect = null) {
-      super.resize(boundingRect)
-
       if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect)
 
-      this.onAfterResize && this.onAfterResize()
+      super.resize(boundingRect)
     }
 
     applyScale() {
@@ -279,41 +205,60 @@ const MeshMixin = (superclass) =>
      *
      * @param pass
      */
-    render(pass) {
-      // no point to render if the WebGPU device is not ready
-      // TODO shoud a mesh with visible set to false still update its uniforms?
-      if (!this.renderer.ready || !this.visible) return
-
-      super.render()
-
+    onBeforeRenderPass() {
       if (this.domFrustum.shouldUpdate && this.frustumCulled) {
         this.domFrustum.computeProjectedToDocumentCoords()
         this.domFrustum.shouldUpdate = false
       }
 
-      if (this.material && this.material.ready && !this.ready) {
-        this.ready = true
-        this.onReady()
-      }
+      super.onBeforeRenderPass()
+    }
 
-      this.uniformsBindings.forEach((uniformBinding) => {
-        uniformBinding.onBeforeRender()
-      })
-
+    onRenderPass(pass) {
       this.onRender()
 
       // TODO check if frustumCulled
       if (this.domFrustum.isIntersecting || !this.frustumCulled) {
         this.material.render(pass)
       }
-
-      this.onAfterRender()
     }
 
-    destroy() {
-      // TODO destroy anything else?
-      this.material?.destroy()
-    }
+    // onAfterRenderPass(pass) {
+    //   this.onAfterRender()
+    // }
+
+    // render(pass) {
+    //   // no point to render if the WebGPU device is not ready
+    //   // TODO shoud a mesh with visible set to false still update its uniforms?
+    //   //if (!this.renderer.ready || !this.visible) return
+    //
+    //   //this.onBeforeRenderPass(pass)
+    //
+    //   super.render(pass)
+    //
+    //   // if (this.domFrustum.shouldUpdate && this.frustumCulled) {
+    //   //   this.domFrustum.computeProjectedToDocumentCoords()
+    //   //   this.domFrustum.shouldUpdate = false
+    //   // }
+    //
+    //   // if (this.material && this.material.ready && !this.ready) {
+    //   //   this.ready = true
+    //   //   this.onReady()
+    //   // }
+    //   //
+    //   // this.uniformsBindings.forEach((uniformBinding) => {
+    //   //   uniformBinding.onBeforeRender()
+    //   // })
+    //
+    //   //this.onRender()
+    //
+    //   //this.onAfterRenderPass()
+    // }
+
+    // destroy() {
+    //   // TODO destroy anything else?
+    //   this.material?.destroy()
+    // }
   }
 
-export default MeshMixin
+export default MeshTransformedMixin

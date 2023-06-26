@@ -1,13 +1,13 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
-import MeshMixin from '../../core/meshes/MeshMixin'
+import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
 
 const defaultDOMMeshParams = {
   autoloadSources: true,
   watchScroll: true,
 }
 
-export class DOMMesh extends MeshMixin(DOMObject3D) {
+export class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
   constructor(renderer, element, parameters) {
     parameters = { ...defaultDOMMeshParams, ...parameters }
 
@@ -23,12 +23,13 @@ export class DOMMesh extends MeshMixin(DOMObject3D) {
 
     this.type = 'DOMMesh'
 
-    const { autoloadSources, watchScroll } = parameters
+    const { autoloadSources } = parameters
 
     this.autoloadSources = autoloadSources
-    this.watchScroll = watchScroll
 
     this.setInitSources()
+
+    this.renderer.domMeshes.push(this)
   }
 
   setInitSources() {
@@ -92,10 +93,11 @@ export class DOMMesh extends MeshMixin(DOMObject3D) {
     // no point to render if the WebGPU device is not ready
     if (!this.renderer.ready) return
 
-    this.textures.forEach((texture) => {
-      texture.textureMatrix.onBeforeRender()
-    })
+    // this.textures.forEach((texture) => {
+    //   texture.textureMatrix.onBeforeRender()
+    // })
 
+    //super.render(pass)
     super.render(pass)
   }
 }

@@ -6,6 +6,7 @@ import { Vec3 } from '../math/Vec3'
 interface GPUCurtainsParams {
   container: string | HTMLElement | null
   pixelRatio?: number
+  sampleCount?: number
   camera?: CameraBasePerspectiveOptions
 }
 

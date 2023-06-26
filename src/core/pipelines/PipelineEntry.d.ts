@@ -1,6 +1,6 @@
-import { MaterialBaseParams, MaterialBindGroups, MaterialGeometryAttributes } from '../Material'
+import { MaterialBaseParams, MaterialBindGroups, MaterialGeometryAttributes } from '../materials/Material'
 import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
-import { ShadersType, FullShadersType, MeshShadersOptions } from '../meshes/MeshMixin'
+import { ShadersType, FullShadersType, MeshShadersOptions } from '../meshes/MeshBaseMixin'
 
 interface PipelineEntryShader {
   head?: string

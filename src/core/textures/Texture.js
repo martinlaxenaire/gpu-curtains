@@ -1,10 +1,10 @@
-import { Vec3 } from '../math/Vec3'
-import { isRenderer } from '../utils/renderer-utils'
-import { SamplerBindings } from './bindings/SamplerBindings'
-import { TextureBindings } from './bindings/TextureBindings'
-import { BufferBindings } from './bindings/BufferBindings'
-import { Object3D } from './objects3D/Object3D'
-import { Mat4 } from '../math/Mat4'
+import { Vec3 } from '../../math/Vec3'
+import { isRenderer } from '../../utils/renderer-utils'
+import { SamplerBindings } from '../bindings/SamplerBindings'
+import { TextureBindings } from '../bindings/TextureBindings'
+import { BufferBindings } from '../bindings/BufferBindings'
+import { Object3D } from '../objects3D/Object3D'
+import { Mat4 } from '../../math/Mat4'
 
 const defaultTextureParams = {
   label: 'Texture',
@@ -12,6 +12,7 @@ const defaultTextureParams = {
   texture: {
     generateMips: false,
     flipY: false,
+    format: 'rgba8unorm',
     placeholderColor: [0, 0, 0, 255], // default to black
   },
   sampler: {
@@ -238,7 +239,7 @@ export class Texture extends Object3D {
   createTexture() {
     if (!this.source) {
       this.texture = this.renderer.createTexture({
-        format: 'rgba8unorm',
+        format: this.options.texture.format,
         size: [this.size.width, this.size.height], // [1, 1]
         usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
       })
@@ -247,7 +248,7 @@ export class Texture extends Object3D {
       if (this.texture) this.texture.destroy()
 
       this.texture = this.renderer.createTexture({
-        format: 'rgba8unorm',
+        format: this.options.texture.format,
         mipLevelCount: this.options.texture.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1,
         size: [this.size.width, this.size.height],
         usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
