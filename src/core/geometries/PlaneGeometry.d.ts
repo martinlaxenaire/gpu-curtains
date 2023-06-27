@@ -1,5 +1,6 @@
 import { IndexedGeometry } from './IndexedGeometry'
 import { GeometryParams } from './Geometry'
+import {CoreBufferParamsOption} from "../../types/buffers-utils";
 
 interface PlaneGeometryParams extends GeometryParams {
   widthSegments?: number

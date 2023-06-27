@@ -1,4 +1,7 @@
 import { Bindings } from './Bindings'
+import { getBufferLayout } from '../../utils/buffers-utils'
+import { Vec2 } from '../../math/Vec2'
+import { Vec3 } from '../../math/Vec3'
 
 export class BufferBindings extends Bindings {
   constructor({
@@ -45,6 +48,10 @@ export class BufferBindings extends Bindings {
 
       uniform.value = uniforms[uniformKey].value
 
+      if (uniform.value instanceof Vec2 || uniform.value instanceof Vec3) {
+        uniform.value.onChange(() => (uniform.shouldUpdate = true))
+      }
+
       this.uniforms[uniformKey] = uniform
     })
 
@@ -56,66 +63,67 @@ export class BufferBindings extends Bindings {
     Object.keys(this.uniforms).forEach((uniformKey) => {
       const uniform = this.uniforms[uniformKey]
 
-      const uniformSize = (() => {
-        switch (uniform.type) {
-          case 'mat4x4f':
-            return 16
-          case 'mat3x3f':
-            return 9
-          case 'vec3f':
-            return 3
-          case 'vec2f':
-            return 2
-          case 'f32':
-            return 1
-          default:
-            console.warn('Uniform type is mandatory', uniform)
-            break
-        }
-      })()
-
-      const uniformBufferSize = (() => {
-        switch (uniform.type) {
-          case 'mat4x4f':
-            return 16
-          case 'mat3x3f':
-            return 16
-          case 'vec3f':
-            return 12
-          case 'vec2f':
-            return 8
-          case 'f32':
-            return 1
-          default:
-            console.warn('Uniform type is mandatory', uniform)
-            break
-        }
-      })()
-
-      this.size += uniformBufferSize
+      const bufferLayout = getBufferLayout(uniform.type)
 
       this.bindingElements.push({
         name: uniform.name ?? uniformKey,
         type: uniform.type,
         key: uniformKey,
-        size: uniformSize,
-        bufferSize: uniformBufferSize,
+        bufferLayout,
+        startOffset: 0, // will be changed later
+        endOffset: 0, // will be changed later
       })
     })
 
+    this.alignmentRows = 0
+    const bytesPerElement = Float32Array.BYTES_PER_ELEMENT
+    this.bindingElements.forEach((bindingElement, index) => {
+      const { numElements, align } = bindingElement.bufferLayout
+
+      // we gotta start somewhere!
+      if (index === 0) {
+        bindingElement.startOffset = 0
+
+        // set first alignment row(s)
+        this.alignmentRows += Math.max(1, numElements / bytesPerElement)
+      } else {
+        // our next space available
+        const nextSpaceAvailable =
+          this.bindingElements[index - 1].startOffset + this.bindingElements[index - 1].bufferLayout.numElements
+
+        // if it's just a float or an int, check if we have enough space on current alignment row
+        if (align <= bytesPerElement) {
+          if (nextSpaceAvailable + numElements <= this.alignmentRows * bytesPerElement) {
+            bindingElement.startOffset = nextSpaceAvailable
+          } else {
+            bindingElement.startOffset = this.alignmentRows * bytesPerElement
+            // increment alignmentRows
+            this.alignmentRows++
+          }
+        } else {
+          // if alignment is incompatible or there's not enough space on that alignment row,
+          // move to next row alignment
+          if (nextSpaceAvailable % align !== 0 || (nextSpaceAvailable + numElements) % bytesPerElement !== 0) {
+            bindingElement.startOffset = this.alignmentRows * bytesPerElement
+            this.alignmentRows++
+          } else {
+            bindingElement.startOffset = nextSpaceAvailable
+            this.alignmentRows += numElements / bytesPerElement
+          }
+        }
+      }
+
+      bindingElement.endOffset = bindingElement.startOffset + bindingElement.bufferLayout.numElements
+    })
+
+    // our array size is the number of alignmentRows * bytes per element
+    this.size = this.alignmentRows * bytesPerElement
     this.value = new Float32Array(this.size)
 
     this.bindingElements.forEach((bindingElement, index) => {
-      bindingElement.offset = index > 0 ? this.bindingElements[index - 1].totalLength : 0
-      bindingElement.totalLength = bindingElement.size + bindingElement.offset
-
-      bindingElement.bufferOffset = index > 0 ? this.bindingElements[index - 1].bufferSize : 0
-      bindingElement.bufferLength = bindingElement.size + bindingElement.bufferOffset
-
-      // console.log('old', bindingElement.size, bindingElement.offset, bindingElement.totalLength)
-      // console.log('new', bindingElement.size, bindingElement.bufferOffset, bindingElement.bufferLength)
-
-      bindingElement.array = new Float32Array(this.value.subarray(bindingElement.offset, bindingElement.totalLength))
+      bindingElement.array = new bindingElement.bufferLayout.View(
+        this.value.subarray(bindingElement.startOffset, bindingElement.endOffset)
+      )
 
       bindingElement.update = (value) => {
         if (bindingElement.type === 'f32') {
@@ -127,7 +135,7 @@ export class BufferBindings extends Bindings {
           bindingElement.array[0] = value.x
           bindingElement.array[1] = value.y
           bindingElement.array[2] = value.z
-        } else {
+        } else if (value.elements) {
           bindingElement.array = value.elements
         }
       }
@@ -170,10 +178,9 @@ export class BufferBindings extends Bindings {
       if (uniform.shouldUpdate && bindingElement) {
         uniform.onBeforeUpdate && uniform.onBeforeUpdate()
         bindingElement.update(uniform.value)
+        this.value.set(bindingElement.array, bindingElement.startOffset)
 
-        this.value.set(bindingElement.array, bindingElement.offset)
         this.shouldUpdate = true
-
         uniform.shouldUpdate = false
       }
     })

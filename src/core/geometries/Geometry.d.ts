@@ -1,5 +1,5 @@
-import { Vec3 } from '../../math/Vec3'
 import { Box3 } from '../../math/Box3'
+import { CoreBufferParams, CoreBufferParamsOption } from '../../types/buffers-utils'
 
 interface GeometryParams {
   // TODO ugly fix so typescript does not complain about GPUFrontFace being a string

@@ -8,6 +8,7 @@ import { DOMElementBoundingRect } from '../DOMElement'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
+import {CoreBufferParams} from "../../types/buffers-utils";
 
 export type ShadersType = 'vertex' | 'fragment'
 export type FullShadersType = 'full' | ShadersType

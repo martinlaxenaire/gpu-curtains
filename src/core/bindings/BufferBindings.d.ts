@@ -1,5 +1,6 @@
 import { Bindings, BindingsParams } from './Bindings'
 import { MeshUniformValue, MeshUniformsBase, MeshUniforms } from '../meshes/MeshBaseMixin'
+import { CoreBufferParams } from '../../types/buffers-utils'
 
 interface BufferBindingsUniform extends MeshUniformsBase {
   _value: MeshUniformValue
@@ -24,6 +25,7 @@ export class BufferBindings extends Bindings {
   useStruct: boolean
   uniforms: Record<string, BufferBindingsUniform>
 
+  alignmentRows: number
   size: number
   shouldUpdate: boolean
   bindingElements: BufferBindingsElement[]

@@ -38,6 +38,5 @@ export class Scene {
   addShaderPass(shaderPass: ShaderPass)
   removeShaderPass(shaderPass: ShaderPass)
 
-  //render(pass: GPURenderPassEncoder)
   render(commandEncoder: GPUCommandEncoder)
 }
