@@ -67,6 +67,8 @@ export class MeshTransformedBase {
 // https://stackoverflow.com/questions/65134811/es6-exporting-classes-with-typescript-mixins
 // https://www.typescriptlang.org/docs/handbook/mixins.html
 
-export default function MeshTransformedMixin<TBase extends MixinConstructor>(
+type TransformedMixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D
+
+export default function MeshTransformedMixin<TBase extends TransformedMixinConstructor>(
   superclass: TBase
 ): new (...args: any[]) => InstanceType<TBase> & MeshBase & MeshTransformedBase

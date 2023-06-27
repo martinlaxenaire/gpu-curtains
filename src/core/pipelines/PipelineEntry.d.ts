@@ -1,4 +1,4 @@
-import { MaterialBaseParams, MaterialBindGroups, MaterialGeometryAttributes } from '../materials/Material'
+import { MaterialBindGroups, MaterialGeometryAttributes, MaterialRenderingOptions } from '../materials/Material'
 import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
 import { ShadersType, FullShadersType, MeshShadersOptions } from '../meshes/MeshBaseMixin'
 
@@ -10,13 +10,9 @@ interface PipelineEntryShader {
 
 type PipelineEntryShaders = Record<FullShadersType, PipelineEntryShader>
 
-interface PipelineEntryBaseParams extends MaterialBaseParams {
+interface PipelineEntryBaseParams extends MaterialRenderingOptions {
+  label: string
   shaders: MeshShadersOptions
-  depthWriteEnabled: boolean
-  depthCompare: GPUCompareFunction
-  cullMode: GPUCullMode
-  transparent: boolean
-  verticesOrder: GPUFrontFace
 }
 
 interface PipelineEntryBuffersParams {
@@ -38,11 +34,7 @@ export class PipelineEntry {
   pipeline: GPUPipelineBase | null
   geometryAttributes: MaterialGeometryAttributes
   shaders: PipelineEntryShaders
-  options: {
-    label: string
-    shaders: MeshShadersOptions
-    cullMode: GPUCullMode
-  }
+  options: PipelineEntryBaseParams
 
   constructor(parameters: PipelineEntryParams)
 

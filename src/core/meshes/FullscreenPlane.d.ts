@@ -5,7 +5,7 @@ import { DOMElement, DOMElementBoundingRect } from '../DOMElement'
 
 declare class EmptyClass {}
 
-export class FullscreenQuadMesh extends MeshBaseMixin(EmptyClass) {
+export class FullscreenPlane extends MeshBaseMixin(EmptyClass) {
   type: string
 
   size: {

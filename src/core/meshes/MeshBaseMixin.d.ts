@@ -98,6 +98,9 @@ export class MeshBase {
 
   setMaterial(materialParameters: MaterialParams)
 
+  addToScene()
+  removeFromScene()
+
   createTexture(options: TextureDefaultParams): Texture
   onTextureCreated(texture: Texture)
 

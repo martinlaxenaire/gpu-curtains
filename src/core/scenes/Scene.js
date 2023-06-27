@@ -18,23 +18,31 @@ export class Scene {
 
   setStacks() {
     this.stacks = {
-      opaque: [],
-      transparent: [],
-      shaderPasses: [],
+      unprojected: {
+        opaque: [],
+        transparent: [],
+        shaderPasses: [],
+      },
+      projected: {
+        opaque: [],
+        transparent: [],
+      },
     }
   }
 
   // TODO removeMesh
   addMesh(mesh) {
+    const projectionStack = mesh.material.options.rendering.useProjection
+      ? this.stacks.projected
+      : this.stacks.unprojected
+
     // rebuild stack
-    const similarMeshesStack = this.renderer.meshes.filter(
-      (m) => m.transparent === mesh.transparent && m.uuid !== mesh.uuid
-    )
-    // find if there's already a plane with the same geometry with a findLastIndex function
+    const similarMeshes = this.renderer.meshes.filter((m) => m.transparent === mesh.transparent && m.uuid !== mesh.uuid)
+    // find if there's already a plane with the same pipeline with a findLastIndex function
     let siblingMeshIndex = -1
 
-    for (let i = similarMeshesStack.length - 1; i >= 0; i--) {
-      if (similarMeshesStack[i].material.pipelineEntry.index === mesh.material.pipelineEntry.index) {
+    for (let i = similarMeshes.length - 1; i >= 0; i--) {
+      if (similarMeshes[i].material.pipelineEntry.index === mesh.material.pipelineEntry.index) {
         siblingMeshIndex = i + 1
         break
       }
@@ -44,34 +52,42 @@ export class Scene {
     siblingMeshIndex = Math.max(0, siblingMeshIndex)
 
     // add it to our stack plane array
-    similarMeshesStack.splice(siblingMeshIndex, 0, mesh)
-    similarMeshesStack.sort((a, b) => a.index - b.index)
+    similarMeshes.splice(siblingMeshIndex, 0, mesh)
+    similarMeshes.sort((a, b) => a.index - b.index)
 
-    // sort by Z pos
+    // sort by Z pos if transparent
     if (mesh.transparent) {
-      similarMeshesStack.sort((a, b) => b.documentPosition.z - a.documentPosition.z)
+      similarMeshes.sort((a, b) => b.documentPosition.z - a.documentPosition.z)
     }
 
     // then sort by their render order
-    similarMeshesStack.sort((a, b) => b.renderOrder - a.renderOrder)
+    similarMeshes.sort((a, b) => b.renderOrder - a.renderOrder)
 
-    mesh.transparent ? (this.stacks.transparent = similarMeshesStack) : (this.stacks.opaque = similarMeshesStack)
+    mesh.transparent ? (projectionStack.transparent = similarMeshes) : (projectionStack.opaque = similarMeshes)
   }
 
   removeMesh(mesh) {
+    const projectionStack = mesh.material.options.rendering.useProjection
+      ? this.stacks.projected
+      : this.stacks.unprojected
+
     if (mesh.transparent) {
-      this.stacks.transparent = this.stacks.transparent.filter((m) => m.uuid !== mesh.uuid)
+      projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid)
     } else {
-      this.stacks.opaque = this.stacks.opaque.filter((m) => m.uuid !== mesh.uuid)
+      projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid)
     }
   }
 
   addShaderPass(shaderPass) {
-    this.stacks.shaderPasses.push(shaderPass)
+    this.stacks.unprojected.shaderPasses.push(shaderPass)
+    // sort by their render order
+    this.stacks.unprojected.shaderPasses.sort((a, b) => b.renderOrder - a.renderOrder)
   }
 
   removeShaderPass(shaderPass) {
-    this.stacks.shaderPasses = this.stacks.shaderPasses.filter((sP) => sP.uuid !== shaderPass.uuid)
+    this.stacks.unprojected.shaderPasses = this.stacks.unprojected.shaderPasses.filter(
+      (sP) => sP.uuid !== shaderPass.uuid
+    )
   }
 
   render(commandEncoder) {
@@ -80,17 +96,22 @@ export class Scene {
 
     const pass = commandEncoder.beginRenderPass(this.renderer.renderPass.descriptor)
 
+    // draw unprojected regular meshes first
+    this.stacks.unprojected.opaque.forEach((mesh) => mesh.render(pass))
+    this.stacks.unprojected.transparent.forEach((mesh) => mesh.render(pass))
+
+    // then draw projected meshes
     if (this.renderer.cameraBindGroup) {
       // set camera bind group once
       pass.setBindGroup(this.renderer.cameraBindGroup.index, this.renderer.cameraBindGroup.bindGroup)
     }
 
-    this.stacks.opaque.forEach((mesh) => mesh.render(pass))
-    this.stacks.transparent.forEach((mesh) => mesh.render(pass))
+    this.stacks.projected.opaque.forEach((mesh) => mesh.render(pass))
+    this.stacks.projected.transparent.forEach((mesh) => mesh.render(pass))
 
     pass.end()
 
-    this.stacks.shaderPasses.forEach((shaderPass) => {
+    this.stacks.unprojected.shaderPasses.forEach((shaderPass) => {
       commandEncoder.copyTextureToTexture(
         {
           texture: renderTexture,

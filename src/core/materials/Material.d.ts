@@ -36,15 +36,21 @@ interface MaterialIndexedGeometryAttributeBuffers extends MaterialGeometryAttrib
 
 export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry
 
-interface MaterialBaseParams {
+interface MaterialBaseRenderingOptions {
+  useProjection: boolean
+  transparent: boolean
+  depthWriteEnabled: boolean
+  depthCompare: GPUCompareFunction
+  cullMode: GPUCullMode
+}
+
+interface MaterialRenderingOptions extends MaterialBaseRenderingOptions {
+  verticesOrder: Geometry['verticesOrder']
+}
+
+interface MaterialBaseParams extends Partial<MaterialBaseRenderingOptions> {
   label?: string
   shaders?: MeshShadersOptions
-  useProjection?: boolean
-  transparent?: boolean
-  depthWriteEnabled?: boolean
-  depthCompare?: GPUCompareFunction
-  cullMode?: GPUCullMode
-
   geometry: AllowedGeometries
 }
 
@@ -63,15 +69,17 @@ interface MaterialAttributes {
   > | null
 }
 
+interface MaterialOptions {
+  label: string
+  shaders: MeshShadersOptions
+  uniformBindings: Array<BufferBindings>
+  rendering: MaterialRenderingOptions
+}
+
 export class Material {
   type: string
   renderer: GPUCurtainsRenderer
-  options: {
-    label: string
-    shaders: MeshShaders
-    uniformBindings: Array<BufferBindings>
-    cullMode: GPUCullMode
-  }
+  options: MaterialOptions
 
   pipelineEntry: PipelineEntry
 

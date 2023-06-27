@@ -2,8 +2,9 @@ import MeshBaseMixin from './MeshBaseMixin'
 import { isRenderer } from '../../utils/renderer-utils'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
 import { DOMElement } from '../DOMElement'
+import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
 
-export class FullscreenQuadMesh extends MeshBaseMixin(class {}) {
+export class FullscreenPlane extends MeshBaseMixin(class {}) {
   constructor(renderer, parameters = {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -15,6 +16,11 @@ export class FullscreenQuadMesh extends MeshBaseMixin(class {}) {
 
     // create a plane geometry first
     const geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 })
+
+    if (!parameters.shaders.vertex || !parameters.shaders.vertex.code) {
+      parameters.shaders.vertex.code = default_vsWgsl
+      parameters.shaders.vertex.entryPoint = 'main'
+    }
 
     super(renderer, null, { geometry, ...parameters })
 

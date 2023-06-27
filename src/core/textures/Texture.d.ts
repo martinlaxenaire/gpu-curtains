@@ -11,7 +11,7 @@ import { Plane } from '../../curtains/meshes/Plane'
 import { GPURenderer } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { RenderPass } from '../renderPasses/RenderPass'
-import { FullscreenQuadMesh } from '../meshes/FullscreenQuadMesh'
+import { FullscreenPlane } from '../meshes/FullscreenPlane'
 
 interface CurtainsTextureOptions {
   generateMips?: boolean
@@ -43,7 +43,7 @@ interface TextureOptions extends TextureParams {
   sourceType: TextureSourceType
 }
 
-type TextureParent = null | Mesh | DOMMesh | Plane | ShaderPass | FullscreenQuadMesh
+type TextureParent = null | Mesh | DOMMesh | Plane | ShaderPass | FullscreenPlane
 
 declare const defaultTextureParams: TextureParams
 

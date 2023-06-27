@@ -92,10 +92,13 @@ const MeshBaseMixin = (superclass) =>
       this.ready = false
 
       this.setMeshMaterial(meshParameters)
+
+      this.addToScene()
     }
 
     setMeshMaterial(meshParameters) {
       const { bindings, ...materialOptions } = meshParameters
+      const { transparent, useProjection, depthWriteEnabled, depthCompare, cullMode, verticesOrder } = materialOptions
 
       this.transparent = materialOptions.transparent
 
@@ -104,7 +107,12 @@ const MeshBaseMixin = (superclass) =>
       this.setMaterial({
         label: this.options.label,
         shaders: this.options.shaders,
-        ...materialOptions,
+        transparent,
+        useProjection,
+        depthWriteEnabled,
+        depthCompare,
+        cullMode,
+        verticesOrder,
         uniformsBindings: this.uniformsBindings,
         geometry: this.geometry,
       })
@@ -114,6 +122,16 @@ const MeshBaseMixin = (superclass) =>
 
     setMaterial(materialParameters) {
       this.material = new Material(this.renderer, materialParameters)
+    }
+
+    addToScene() {
+      this.renderer.meshes.push(this)
+      this.renderer.scene.addMesh(this)
+    }
+
+    removeFromScene() {
+      this.renderer.scene.removeMesh(this)
+      this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
     }
 
     /** TEXTURES **/
@@ -205,6 +223,7 @@ const MeshBaseMixin = (superclass) =>
     }
 
     remove() {
+      this.removeFromScene()
       this.destroy()
     }
 

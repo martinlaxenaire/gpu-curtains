@@ -1,13 +1,14 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
+import MeshBaseMixin from '../../core/meshes/MeshBaseMixin'
 
 const defaultDOMMeshParams = {
   autoloadSources: true,
   watchScroll: true,
 }
 
-export class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
+export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
   constructor(renderer, element, parameters) {
     parameters = { ...defaultDOMMeshParams, ...parameters }
 

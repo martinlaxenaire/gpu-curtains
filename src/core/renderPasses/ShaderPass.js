@@ -1,8 +1,8 @@
-import { FullscreenQuadMesh } from '../meshes/FullscreenQuadMesh'
+import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { RenderPass } from './RenderPass'
 import { Texture } from '../textures/Texture'
 
-export class ShaderPass extends FullscreenQuadMesh {
+export class ShaderPass extends FullscreenPlane {
   constructor(renderer, parameters) {
     super(renderer, parameters)
 
@@ -21,9 +21,6 @@ export class ShaderPass extends FullscreenQuadMesh {
     this.material.addTextureBinding(this.renderTexture)
 
     this.textures.push(this.renderTexture)
-
-    this.renderer.shaderPasses.push(this)
-    this.renderer.scene.addShaderPass(this)
   }
 
   resize(boundingRect) {
@@ -36,11 +33,19 @@ export class ShaderPass extends FullscreenQuadMesh {
     }
   }
 
-  remove() {
+  addToScene() {
+    this.renderer.shaderPasses.push(this)
+    this.renderer.scene.addShaderPass(this)
+  }
+
+  removeFromScene() {
     this.renderer.scene.removeShaderPass(this)
     this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid)
-    super.remove()
   }
+
+  // remove() {
+  //   super.remove()
+  // }
 
   destroy() {
     this.renderPass.destroy()

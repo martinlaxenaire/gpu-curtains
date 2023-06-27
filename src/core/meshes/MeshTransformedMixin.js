@@ -27,7 +27,7 @@ const defaultMeshParams = {
 }
 
 const MeshTransformedMixin = (superclass) =>
-  class extends MeshBaseMixin(superclass) {
+  class extends superclass {
     constructor(renderer, element, parameters) {
       parameters = { ...defaultMeshParams, ...parameters }
 
@@ -45,7 +45,7 @@ const MeshTransformedMixin = (superclass) =>
 
       this.renderer = renderer
 
-      const { label, geometry, shaders, onReEnterView, onLeaveView, ...meshParameters } = parameters
+      const { label, geometry, shaders, onReEnterView, onLeaveView } = parameters
 
       this.options = {
         label,
@@ -81,9 +81,6 @@ const MeshTransformedMixin = (superclass) =>
 
       this.frustumCulled = frustumCulled
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
-
-      this.renderer.meshes.push(this)
-      this.renderer.scene.addMesh(this)
     }
 
     /** UNIFORMS **/
@@ -202,8 +199,6 @@ const MeshTransformedMixin = (superclass) =>
     }
 
     remove() {
-      this.renderer.scene.removeMesh(this)
-      this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
       super.remove()
     }
 
