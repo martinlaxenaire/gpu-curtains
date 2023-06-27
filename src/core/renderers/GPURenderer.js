@@ -103,16 +103,48 @@ export class GPURenderer {
       label: 'Main Render pass',
       depth: true,
     })
-
-    //this.renderPasses.push(this.renderPass)
   }
 
   setPipelineManager() {
-    this.pipelineManager = new PipelineManager({ renderer: /** @type {GPURenderer} **/ this })
+    this.pipelineManager = /** @type {PipelineManager} **/ new PipelineManager({
+      renderer: /** @type {GPURenderer} **/ this,
+    })
   }
 
   setScene() {
-    this.scene = new Scene({ renderer: /** @type {GPURenderer} **/ this })
+    this.scene = /** @type {Scene} **/ new Scene({ renderer: /** @type {GPURenderer} **/ this })
+  }
+
+  /** BUFFERS & BINDINGS **/
+
+  createBuffer(bufferDescriptor) {
+    return this.device.createBuffer(bufferDescriptor)
+  }
+
+  queueWriteBuffer(buffer, bufferOffset, data) {
+    this.device.queue.writeBuffer(buffer, bufferOffset, data)
+  }
+
+  createBindGroupLayout(bindGroupLayoutDescriptor) {
+    return this.device.createBindGroupLayout(bindGroupLayoutDescriptor)
+  }
+
+  createBindGroup(bindGroupDescriptor) {
+    return this.device.createBindGroup(bindGroupDescriptor)
+  }
+
+  /** SHADERS & PIPELINES **/
+
+  createShaderModule(shaderModuleDescriptor) {
+    return this.device.createShaderModule(shaderModuleDescriptor)
+  }
+
+  createPipelineLayout(pipelineLayoutDescriptor) {
+    return this.device.createPipelineLayout(pipelineLayoutDescriptor)
+  }
+
+  createRenderPipeline(pipelineDescriptor) {
+    return this.device.createRenderPipeline(pipelineDescriptor)
   }
 
   /** TEXTURES **/
@@ -151,6 +183,10 @@ export class GPURenderer {
 
       return sampler
     }
+  }
+
+  forceCreateTexture(options) {
+    return this.device.createTexture(options)
   }
 
   createTexture(options) {

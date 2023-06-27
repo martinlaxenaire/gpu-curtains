@@ -70,9 +70,19 @@ export class GPURenderer {
   setPipelineManager()
   setScene()
 
+  createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer
+  queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource | SharedArrayBuffer)
+  createBindGroupLayout(bindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout
+  createBindGroup(bindGroupDescriptor: GPUBindGroupDescriptor): GPUBindGroup
+
+  createShaderModule(shaderModuleDescriptor: GPUShaderModuleDescriptor): GPUShaderModule
+  createPipelineLayout(pipelineLayoutDescriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout
+  createRenderPipeline(pipelineDescriptor: GPURenderPipelineDescriptor): GPURenderPipeline
+
   addTexture(texture: Texture)
   setTexture(texture: Texture)
   createSampler(options: GPUSamplerDescriptor): GPUSampler | boolean
+  forceCreateTexture(options: GPUTextureDescriptor): GPUTexture
   createTexture(options: GPUTextureDescriptor): GPUTexture | boolean
   uploadTexture(texture: Texture)
   importExternalTexture(video: HTMLVideoElement): GPUExternalTexture

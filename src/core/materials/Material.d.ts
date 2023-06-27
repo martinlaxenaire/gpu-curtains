@@ -63,10 +63,11 @@ type MaterialGeometryAttributes = Record<string, MaterialGeometryAttribute | Mat
 
 interface MaterialAttributes {
   geometry: MaterialGeometryAttributes | null
-  buffers: Record<
-    MaterialGeometryAttributeBuffersType,
-    MaterialGeometryAttributeBuffers | MaterialIndexedGeometryAttributeBuffers
-  > | null
+  // buffers: Record<
+  //   MaterialGeometryAttributeBuffersType,
+  //   MaterialGeometryAttributeBuffers | MaterialIndexedGeometryAttributeBuffers
+  // > | null
+  buffers: Record<MaterialGeometryAttributeBuffersType, GPUBuffer> | null
 }
 
 interface MaterialOptions {

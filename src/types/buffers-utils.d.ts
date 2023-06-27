@@ -1,22 +1,6 @@
+import { MeshUniformValue } from '../core/meshes/MeshBaseMixin'
+
 type CoreBufferType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
-
-// TODO we should correctly use types like GPUSize64 / GPUIndex32
-interface CoreBufferParamsOption {
-  name: string
-  type?: CoreBufferType
-  bufferFormat?: GPUVertexFormat
-  size?: number
-  array: Float32Array
-}
-
-interface CoreBufferParams extends CoreBufferParamsOption {
-  type: CoreBufferType
-  bufferFormat: GPUVertexFormat
-  size: number
-  bufferLength: number
-  offset: number
-  bufferOffset: GPUSize64
-}
 
 type TypedArrayConstructor =
   | Int8ArrayConstructor
@@ -28,13 +12,41 @@ type TypedArrayConstructor =
   | Float32ArrayConstructor
   | Float64ArrayConstructor
 
-type BufferLayout = {
+export type BufferLayout = {
   numElements: number
   align: number
   size: number
   type: CoreBufferType
   View: TypedArrayConstructor
   pad?: number[]
+}
+
+// TODO we should correctly use types like GPUSize64 / GPUIndex32
+interface BufferBindingsElement {
+  name: string
+  type: CoreBufferType
+  key: string
+  update: (value: MeshUniformValue) => void
+  bufferLayout: BufferLayout
+  startOffset: number
+  endOffset: number
+}
+
+interface AttributeBufferParamsOption {
+  name: string
+  type?: CoreBufferType
+  bufferFormat?: GPUVertexFormat
+  size?: number
+  array: Float32Array
+}
+
+interface AttributeBufferParams extends AttributeBufferParamsOption {
+  type: CoreBufferType
+  bufferFormat: GPUVertexFormat
+  size: number
+  bufferLength: number
+  offset: number
+  bufferOffset: GPUSize64
 }
 
 export function getBufferLayout(bufferType: CoreBufferType): BufferLayout

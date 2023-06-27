@@ -33,7 +33,7 @@ export class RenderPass {
   }
 
   createDepthTexture() {
-    this.depthTexture = this.renderer.device.createTexture({
+    this.depthTexture = this.renderer.forceCreateTexture({
       label: this.options.label + ' depth attachment texture',
       size: [this.size.width, this.size.height],
       format: 'depth24plus',
@@ -43,7 +43,7 @@ export class RenderPass {
   }
 
   createRenderTexture() {
-    this.renderTexture = this.renderer.device.createTexture({
+    this.renderTexture = this.renderer.forceCreateTexture({
       label: this.options.label + ' color attachment texture',
       size: [this.size.width, this.size.height],
       sampleCount: this.sampleCount,

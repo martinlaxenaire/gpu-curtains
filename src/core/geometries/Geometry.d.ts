@@ -1,5 +1,5 @@
 import { Box3 } from '../../math/Box3'
-import { CoreBufferParams, CoreBufferParamsOption } from '../../types/buffers-utils'
+import { AttributeBufferParams, AttributeBufferParamsOption } from '../../types/buffers-utils'
 
 interface GeometryParams {
   // TODO ugly fix so typescript does not complain about GPUFrontFace being a string
@@ -12,7 +12,7 @@ interface GeometryParams {
 //   arrayStride: number
 //   bufferLength: number
 //
-//   attributes: CoreBufferParams[]
+//   attributes: AttributeBufferParams[]
 //
 //   array: Float32Array
 //
@@ -25,7 +25,7 @@ export class Geometry {
   arrayStride: number
   bufferLength: number
 
-  attributes: CoreBufferParams[]
+  attributes: AttributeBufferParams[]
 
   boundingBox: Box3
 
@@ -35,7 +35,7 @@ export class Geometry {
 
   constructor({ verticesOrder }?: GeometryParams)
 
-  setAttribute({ name, type, bufferFormat, size, array }: CoreBufferParamsOption)
+  setAttribute({ name, type, bufferFormat, size, array }: AttributeBufferParamsOption)
 
   computeGeometry()
 

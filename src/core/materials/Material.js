@@ -162,31 +162,23 @@ export class Material {
 
   createAttributesBuffers() {
     this.attributes.buffers = {
-      vertexBuffer: this.renderer.device.createBuffer({
+      vertexBuffer: this.renderer.createBuffer({
         label: this.options.label + ': Vertex buffer vertices',
         size: this.attributes.geometry.vertexArray.length * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
       }),
     }
 
-    this.renderer.device.queue.writeBuffer(
-      this.attributes.buffers?.vertexBuffer,
-      0,
-      this.attributes.geometry?.vertexArray
-    )
+    this.renderer.queueWriteBuffer(this.attributes.buffers?.vertexBuffer, 0, this.attributes.geometry?.vertexArray)
 
     if (this.attributes.geometry.isIndexed) {
-      this.attributes.buffers.indexBuffer = this.renderer.device.createBuffer({
+      this.attributes.buffers.indexBuffer = this.renderer.createBuffer({
         label: this.options.label + ': Index buffer vertices',
         size: this.attributes.geometry.indexArray.byteLength,
         usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
       })
 
-      this.renderer.device.queue.writeBuffer(
-        this.attributes.buffers?.indexBuffer,
-        0,
-        this.attributes.geometry.indexArray
-      )
+      this.renderer.queueWriteBuffer(this.attributes.buffers?.indexBuffer, 0, this.attributes.geometry.indexArray)
     }
   }
 

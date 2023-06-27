@@ -1,19 +1,12 @@
 import { Bindings, BindingsParams } from './Bindings'
 import { MeshUniformValue, MeshUniformsBase, MeshUniforms } from '../meshes/MeshBaseMixin'
-import { CoreBufferParams } from '../../types/buffers-utils'
+import { BufferBindingsElement } from '../../types/buffers-utils'
 
 interface BufferBindingsUniform extends MeshUniformsBase {
   _value: MeshUniformValue
   get(value: MeshUniformValue): MeshUniformValue
   set(value: MeshUniformValue)
   shouldUpdate: boolean
-}
-
-interface BufferBindingsElement extends CoreBufferParams {
-  bufferSize: number
-  totalLength: number
-  update: (value: MeshUniformValue) => void
-  key: string
 }
 
 interface BufferBindingsParams extends BindingsParams {

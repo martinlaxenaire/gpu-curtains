@@ -60,7 +60,7 @@ export class BindGroup {
   createBindingBuffer(binding) {
     binding.bindIndex = this.entries.bindGroupLayout.length
 
-    const buffer = this.renderer.device.createBuffer({
+    const buffer = this.renderer.createBuffer({
       label: this.options.label + ': Uniforms buffer from:' + binding.label,
       size: binding.value.byteLength,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -96,14 +96,14 @@ export class BindGroup {
   }
 
   setBindGroupLayout() {
-    this.bindGroupLayout = this.renderer.device.createBindGroupLayout({
+    this.bindGroupLayout = this.renderer.createBindGroupLayout({
       label: this.options.label + ': Uniform bind group layout',
       entries: this.entries.bindGroupLayout,
     })
   }
 
   setBindGroup() {
-    this.bindGroup = this.renderer.device.createBindGroup({
+    this.bindGroup = this.renderer.createBindGroup({
       label: this.options.label + ': Uniform bind group',
       layout: this.bindGroupLayout,
       entries: this.entries.bindGroup,
@@ -114,7 +114,7 @@ export class BindGroup {
     this.bindingsBuffers.forEach((bindingBuffer) => {
       if (bindingBuffer.uniformBinding.shouldUpdate) {
         const bufferOffset = 0
-        this.renderer.device.queue.writeBuffer(bindingBuffer.buffer, bufferOffset, bindingBuffer.uniformBinding.value)
+        this.renderer.queueWriteBuffer(bindingBuffer.buffer, bufferOffset, bindingBuffer.uniformBinding.value)
       }
 
       bindingBuffer.uniformBinding.shouldUpdate = false

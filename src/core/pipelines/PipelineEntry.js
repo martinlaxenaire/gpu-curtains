@@ -140,7 +140,7 @@ export class PipelineEntry {
   }
 
   createShaderModule({ code = '', type = '' }) {
-    const shaderModule = this.renderer.device.createShaderModule({
+    const shaderModule = this.renderer.createShaderModule({
       label: this.options.label + ': ' + type + 'Shader module',
       code,
     })
@@ -191,7 +191,7 @@ export class PipelineEntry {
   }
 
   createPipelineLayout() {
-    this.layout = this.renderer.device.createPipelineLayout({
+    this.layout = this.renderer.createPipelineLayout({
       bindGroupLayouts: this.bindGroups.map((bindGroup) => bindGroup.bindGroupLayout),
     })
   }
@@ -199,7 +199,7 @@ export class PipelineEntry {
   createRenderPipeline() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
 
-    this.pipeline = this.renderer.device.createRenderPipeline({
+    this.pipeline = this.renderer.createRenderPipeline({
       label: this.options.label,
       layout: this.layout,
       vertex: {
