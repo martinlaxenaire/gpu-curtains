@@ -1,7 +1,9 @@
 import { Bindings } from './Bindings'
 
 export class TextureBindings extends Bindings {
-  constructor({ label = 'Texture', name = 'Texture', resource, bindingType = 'texture', bindIndex = 0, visibility }) {
+  constructor({ label = 'Texture', name = 'Texture', resource, bindingType, bindIndex = 0, visibility }) {
+    bindingType = bindingType ?? 'texture'
+
     super({ label, name, bindingType, bindIndex, visibility })
 
     this.resource = resource // should be a texture or an external texture

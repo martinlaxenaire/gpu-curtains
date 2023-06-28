@@ -24,9 +24,6 @@ interface DOMObject3DSize {
   document: RectBBox
 }
 
-// TODO this is not working if origin.world && position.document are not declared in Object3DTransforms
-// altho it seems to be working here?
-// https://www.typescriptlang.org/play?module=1#code/JYOwLgpgTgZghgYwgAgGoQQZmQbwLABQyxyAHgFzIgCuAtgEbSEnICelNDTRJAXh3UZRCAX0KFQkWIhQB5egCsMYTABEAKlDggAzjAD2UWjtzNkUfWDhhg+kJXRYzh4AHNQlfD2K19AEwgAGwcMTDMxHgAHfR1gGztPM2IAd0NAvxCnHgiIiXBoeCRkVVkAWXklBBUNLV0DIxMIUkgQPxNZWjiAHgrlNU1tPUNjABpkAHIXdxBx5AAfCejY+JmAPlMeKY8Nll8A4LRQpORUqHTMsOyzJbjbex2SU-PDrJY-fQQ6CHAL8NFxAgIQJwHTtRR9VQPYhgWpDBqUXpVfqw+rGAEsBB2HQw6hVQwACgAlFCWMgwAALYA6AB0MMGqJMAF4SaSSBYrCtEt5WTyKMgAAwjY480nsAVC7kilj8AXCnkiCVSkhbe5eJWsvZBLnqqV8wVynXEMX6yWG4gy-kGqURHUKq0sG6clnqp4ZZ1mvWKs2iygm72ki32+VB4g24Pc3Lc1wQMDIR13IkXd3mGPUKAgMmUml0urDGnxuzU13HHIAoEgkwABQslUgfkR1WQTRabWQDbUJLArEiEAA-JRsVBQK5kMzxtX9LWIH5xuiSJjdDi8VAicmdNQeyvCSX-gRCOXQcUyu3Ic3vq2J1P6+CkZC1SQc3DjABCSglco36oDXMNOfEBeDriYAEsS96suum5En+pIUlStIonm1IqkWaR+KOyYsJ6IZsL6XpKoGpqhtBLCwdmCENNSBYgNS7yfLQ3yxsyYG6rh2HGnhUoESKYZEXuUYxsgtFfOAlYxLcdiJi82DMSwUCpummZwY+DKUWJKw0R8wlgDuBCRgBsb6J+HbMiAEDJG2RmqFBgJYrG7y0Ce6GmeZ74ntZ+5YvogQQNSgT6K4+KGbWahjPZJ7wfSeaEkAA
 interface DOMObject3DTransforms extends Omit<Object3DTransforms, 'origin' | 'position'> {
   origin: {
     model: Vec3
@@ -88,9 +85,3 @@ export class DOMObject3D extends ProjectedObject3D {
 
   updateScrollPosition(lastXDelta?: number, lastYDelta?: number)
 }
-
-// TODO check https://stackoverflow.com/a/71359409/13354068
-// export const DOMObject3D: Omit<typeof ProjectedObject3D, 'transforms'> & {
-//   new (...args: ConstructorParameters<typeof ProjectedObject3D>): InstanceType<typeof DOMObject3DClass>
-//   transforms: DOMObject3DTransforms
-// }

@@ -2,21 +2,24 @@ import { Bindings } from './Bindings'
 import { getBufferLayout } from '../../utils/buffers-utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
+import { toCamelCase, toKebabCase } from '../../utils/utils'
 
 export class BufferBindings extends Bindings {
   constructor({
     label = 'Uniform',
     name = 'uniform',
-    bindingType = 'uniform',
+    bindingType,
     bindIndex = 0,
     useStruct = true,
     uniforms = {},
     visibility,
   }) {
+    bindingType = bindingType ?? 'uniform'
+
     super({ label, name, bindIndex, bindingType, visibility })
 
-    this.label = label
-    this.name = name
+    this.label = toKebabCase(label)
+    this.name = toCamelCase(name)
     this.bindingType = bindingType
     this.bindIndex = bindIndex
     this.size = 0
@@ -66,7 +69,7 @@ export class BufferBindings extends Bindings {
       const bufferLayout = getBufferLayout(uniform.type)
 
       this.bindingElements.push({
-        name: uniform.name ?? uniformKey,
+        name: toCamelCase(uniform.name ?? uniformKey),
         type: uniform.type,
         key: uniformKey,
         bufferLayout,
