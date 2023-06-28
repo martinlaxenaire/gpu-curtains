@@ -18,7 +18,7 @@ export class BufferBindings extends Bindings {
 
     super({ label, name, bindIndex, bindingType, visibility })
 
-    this.label = toKebabCase(label)
+    this.label = label
     this.name = toCamelCase(name)
     this.bindingType = bindingType
     this.bindIndex = bindIndex
@@ -149,13 +149,13 @@ export class BufferBindings extends Bindings {
 
   setWGSLFragment() {
     if (this.useStruct) {
-      this.wgslStructFragment = `struct ${this.label} {\n\t${this.bindingElements
+      this.wgslStructFragment = `struct ${toKebabCase(this.label)} {\n\t${this.bindingElements
         .map((uniform) => uniform.name + ': ' + uniform.type)
         .join(',\n\t')}
 };`
 
       const varType = this.bindingType === 'storage' ? 'var<storage, read>' : 'var<uniform>'
-      this.wgslGroupFragment = `${varType} ${this.name}: ${this.label};\n`
+      this.wgslGroupFragment = `${varType} ${this.name}: ${toKebabCase(this.label)};\n`
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = `${this.bindingElements
