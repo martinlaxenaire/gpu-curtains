@@ -13,6 +13,8 @@ export class TextureBindGroup extends BindGroup {
 
   addTexture(texture: Texture)
 
+  get shouldCreateBindGroup(): boolean
+
   resetTextureBindGroup(textureIndex: number)
   shouldUpdateVideoTextureBindGroupLayout(textureIndex: number)
   updateVideoTextureBindGroupLayout(textureIndex: number)

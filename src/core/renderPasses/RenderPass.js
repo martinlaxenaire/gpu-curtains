@@ -16,10 +16,7 @@ export class RenderPass {
       depth,
     }
 
-    this.size = {
-      width: this.renderer.boundingRect.width,
-      height: this.renderer.boundingRect.height,
-    }
+    this.setSize(this.renderer.pixelRatioBoundingRect)
 
     this.sampleCount = this.renderer.sampleCount
 
@@ -106,11 +103,15 @@ export class RenderPass {
     }
   }
 
-  resize(boundingRect) {
+  setSize(boundingRect) {
     this.size = {
       width: boundingRect.width,
       height: boundingRect.height,
     }
+  }
+
+  resize(boundingRect) {
+    this.setSize(boundingRect)
 
     // reset textures
     if (this.options.depth) this.resetRenderPassDepth()

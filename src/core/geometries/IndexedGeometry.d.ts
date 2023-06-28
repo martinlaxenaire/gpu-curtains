@@ -5,8 +5,8 @@ interface IndexedGeometryIndexDataOptions {
   array?: Uint32Array
 }
 
-interface IndexedGeometryIndexData extends IndexedGeometryIndexDataOptions {
-  bufferFormat: GPUVertexFormat
+interface IndexedGeometryIndexData extends Omit<IndexedGeometryIndexDataOptions, 'bufferFormat'> {
+  bufferFormat: GPUIndexFormat
   array: Uint32Array
   bufferLength: number
 }

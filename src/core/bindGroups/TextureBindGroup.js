@@ -24,7 +24,7 @@ export class TextureBindGroup extends BindGroup {
     this.bindings = [...this.bindings, ...texture.bindings]
   }
 
-  canCreateBindGroup() {
+  get shouldCreateBindGroup() {
     return !this.bindGroup && !this.textures.find((texture) => !texture.sampler || !texture.texture)
   }
 

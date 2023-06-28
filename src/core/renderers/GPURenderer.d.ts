@@ -52,7 +52,12 @@ export class GPURenderer {
 
   constructor({ container, pixelRatio, renderingScale }: GPURendererParams)
 
+  setSize(boundingRect: DOMElementBoundingRect)
+  resize(boundingRect?: DOMElementBoundingRect | null)
+  onResize()
+
   get boundingRect(): DOMElementBoundingRect
+  get pixelRatioBoundingRect(): DOMElementBoundingRect
 
   setContext(): Promise<void>
   setAdapterAndDevice(): Promise<void>
@@ -77,10 +82,6 @@ export class GPURenderer {
   createTexture(options: GPUTextureDescriptor): GPUTexture | boolean
   uploadTexture(texture: Texture)
   importExternalTexture(video: HTMLVideoElement): GPUExternalTexture
-
-  setSize(contentRect: DOMElementBoundingRect)
-  resize(boundingRect?: DOMElementBoundingRect | null)
-  onResize()
 
   setRendererObjects()
 

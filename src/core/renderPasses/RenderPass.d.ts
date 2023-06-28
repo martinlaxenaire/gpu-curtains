@@ -36,6 +36,7 @@ export class RenderPass {
 
   setRenderPassDescriptor()
 
+  setSize(boundingRect: DOMElementBoundingRect)
   resize(boundingRect: DOMElementBoundingRect)
 
   destroy()

@@ -46,7 +46,7 @@ export class BindGroup {
     this.bindings.push(binding)
   }
 
-  canCreateBindGroup() {
+  get shouldCreateBindGroup() {
     return !this.bindGroup
   }
 

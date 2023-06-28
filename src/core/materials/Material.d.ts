@@ -51,7 +51,7 @@ interface MaterialParams extends MaterialBaseParams {
 }
 
 type MaterialBindGroups = Array<BindGroup | TextureBindGroup>
-type MaterialGeometryAttributes = Record<string, MaterialGeometryAttribute | MaterialIndexedGeometryAttribute>
+type MaterialGeometryAttributes = MaterialGeometryAttribute | MaterialIndexedGeometryAttribute
 
 interface MaterialAttributes {
   geometry: MaterialGeometryAttributes | null

@@ -131,6 +131,7 @@ export class Material {
       vertexArray: geometry.array,
       verticesCount: geometry.verticesCount,
       verticesOrder: geometry.verticesOrder,
+      //isIndexed: !!geometry.isIndexed,
       pipelineBuffers: [
         {
           arrayStride: geometry.arrayStride * 4, // (2 + 3) floats, 4 bytes each
@@ -193,7 +194,7 @@ export class Material {
     const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0
 
     // textures first
-    if (this.texturesBindGroup.canCreateBindGroup()) {
+    if (this.texturesBindGroup.shouldCreateBindGroup) {
       this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex) // bindGroup 0 is our renderer camera
       this.texturesBindGroup.createBindingsBuffers()
       this.texturesBindGroup.setBindGroupLayout()
@@ -204,7 +205,7 @@ export class Material {
 
     // then uniforms
     this.uniformsBindGroups.forEach((bindGroup) => {
-      if (bindGroup.canCreateBindGroup()) {
+      if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
         bindGroup.createBindingsBuffers()
         bindGroup.setBindGroupLayout()
@@ -331,12 +332,12 @@ export class Material {
     pass.setVertexBuffer(0, this.attributes.buffers?.vertexBuffer)
 
     if (this.attributes.buffers.indexBuffer) {
-      pass.setIndexBuffer(this.attributes.buffers?.indexBuffer, this.attributes.geometry?.indexBufferFormat)
+      pass.setIndexBuffer(this.attributes.buffers.indexBuffer, this.attributes.geometry?.indexBufferFormat)
     }
 
     // draw
     if (this.attributes.geometry.indexBufferLength) {
-      pass.drawIndexed(this.attributes.geometry?.indexBufferLength)
+      pass.drawIndexed(this.attributes.geometry.indexBufferLength)
     } else {
       pass.draw(this.attributes.geometry?.verticesCount)
     }

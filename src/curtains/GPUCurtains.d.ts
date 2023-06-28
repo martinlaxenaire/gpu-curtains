@@ -11,7 +11,7 @@ interface GPUCurtainsOptions {
   production: boolean
 }
 
-interface GPUCurtainsParams extends Partial<GPUCurtainsOptions> {
+interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'container'>> {
   container?: string | HTMLElement | null
 }
 

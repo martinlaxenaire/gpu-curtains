@@ -90,7 +90,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   setCameraBindGroup() {
-    if (this.cameraBindGroup.canCreateBindGroup()) {
+    if (this.cameraBindGroup.shouldCreateBindGroup) {
       this.cameraBindGroup.setIndex(0)
       this.cameraBindGroup.createBindingsBuffers()
       this.cameraBindGroup.setBindGroupLayout()
@@ -119,10 +119,6 @@ export class GPUCameraRenderer extends GPURenderer {
 
   setCameraPosition(position = new Vec3(0, 0, 1)) {
     this.camera.setPosition(position)
-  }
-
-  resize(boundingRect = null) {
-    super.resize(boundingRect)
   }
 
   onResize() {

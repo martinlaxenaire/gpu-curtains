@@ -37,8 +37,68 @@ export class GPURenderer {
     })
   }
 
+  /**
+   * Set Canvas size
+   */
+  setSize(boundingRect) {
+    const devicePixelRatio = window.devicePixelRatio ?? 1
+    const scaleBoundingRect = this.pixelRatio / devicePixelRatio
+
+    this.canvas.style.width = Math.floor(boundingRect.width) + 'px'
+    this.canvas.style.height = Math.floor(boundingRect.height) + 'px'
+
+    const renderingSize = {
+      width: Math.floor(boundingRect.width * scaleBoundingRect * this.renderingScale),
+      height: Math.floor(boundingRect.height * scaleBoundingRect * this.renderingScale),
+    }
+
+    this.canvas.width = this.device
+      ? Math.min(renderingSize.width, this.device.limits.maxTextureDimension2D)
+      : renderingSize.width
+    this.canvas.height = this.device
+      ? Math.min(renderingSize.height, this.device.limits.maxTextureDimension2D)
+      : renderingSize.height
+  }
+
+  resize(boundingRect = null) {
+    if (!this.domElement) return
+
+    if (!boundingRect) boundingRect = this.domElement.element.getBoundingClientRect()
+
+    this.setSize(boundingRect)
+
+    this.onResize()
+  }
+
+  onResize() {
+    // resize render & shader passes
+    const pixelRatioBoundingRect = this.pixelRatioBoundingRect
+
+    this.renderPass?.resize(pixelRatioBoundingRect)
+    this.shaderPasses.forEach((shaderPass) => shaderPass.resize(pixelRatioBoundingRect))
+  }
+
   get boundingRect() {
     return this.domElement.boundingRect
+  }
+
+  get pixelRatioBoundingRect() {
+    const devicePixelRatio = window.devicePixelRatio ?? 1
+    const scaleBoundingRect = this.pixelRatio / devicePixelRatio
+
+    return Object.keys(this.domElement.boundingRect).reduce(
+      (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
+      {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+      }
+    )
   }
 
   /**
@@ -224,46 +284,6 @@ export class GPURenderer {
     // const videoFrame = new VideoFrame(video)
     // return this.device.importExternalTexture({ source: videoFrame })
     return this.device.importExternalTexture({ source: video })
-  }
-
-  /**
-   * Set Canvas size
-   */
-  setSize(contentRect) {
-    this.canvas.style.width = Math.floor(contentRect.width) + 'px'
-    this.canvas.style.height = Math.floor(contentRect.height) + 'px'
-
-    const renderingSize = {
-      width: Math.floor(contentRect.width * this.pixelRatio * this.renderingScale),
-      height: Math.floor(contentRect.height * this.pixelRatio * this.renderingScale),
-    }
-
-    this.canvas.width = this.device
-      ? Math.min(renderingSize.width, this.device.limits.maxTextureDimension2D)
-      : renderingSize.width
-    this.canvas.height = this.device
-      ? Math.min(renderingSize.height, this.device.limits.maxTextureDimension2D)
-      : renderingSize.height
-  }
-
-  resize(boundingRect = null) {
-    if (!this.domElement) return
-
-    if (!boundingRect) boundingRect = this.domElement.element.getBoundingClientRect()
-
-    this.setSize(boundingRect)
-
-    // resize render passes
-    //this.renderPasses?.forEach((renderPass) => renderPass.resize(boundingRect))
-    this.renderPass?.resize(boundingRect)
-
-    this.shaderPasses.forEach((shaderPass) => shaderPass.resize(boundingRect))
-
-    this.onResize()
-  }
-
-  onResize() {
-    /* will be overridden */
   }
 
   /** OBJECTS **/

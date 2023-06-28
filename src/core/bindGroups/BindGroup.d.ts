@@ -45,7 +45,7 @@ export class BindGroup {
   setBindings(bindings: BindGroupBindingElement[])
   addBinding(binding: BindGroupBindingElement)
 
-  canCreateBindGroup(): boolean
+  get shouldCreateBindGroup(): boolean
 
   resetEntries()
 
