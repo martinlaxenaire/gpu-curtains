@@ -5,7 +5,7 @@ import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
 
 export class GPURenderer {
-  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4 }) {
+  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4, production = false }) {
     this.type = 'Renderer'
     this.ready = false
 
@@ -14,6 +14,7 @@ export class GPURenderer {
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.renderingScale = renderingScale
     this.sampleCount = sampleCount
+    this.production = production
 
     if (!this.gpu) {
       console.warn('WebGPU not supported!')

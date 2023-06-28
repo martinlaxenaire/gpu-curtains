@@ -8,7 +8,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
   domMeshes: Array<DOMMesh | Plane>
 
-  constructor({ container, pixelRatio, renderingScale, camera }: GPUCameraRendererParams)
+  constructor({ container, pixelRatio, renderingScale, production, camera }: GPUCameraRendererParams)
 
   onCameraPositionChanged()
 

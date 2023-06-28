@@ -14,7 +14,7 @@ export class GPUCameraRenderer extends GPURenderer {
   cameraUniformBinding: BufferBindings
   cameraBindGroup: BindGroup
 
-  constructor({ container, pixelRatio, renderingScale, camera }: GPUCameraRendererParams)
+  constructor({ container, pixelRatio, renderingScale, production, camera }: GPUCameraRendererParams)
 
   setCamera(camera: Camera)
   onCameraPositionChanged()

@@ -3,8 +3,8 @@ import { DOMMesh } from '../meshes/DOMMesh'
 import { Plane } from '../meshes/Plane'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
-  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4, camera }) {
-    super({ container, pixelRatio, renderingScale, sampleCount, camera })
+  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4, production = false, camera }) {
+    super({ container, pixelRatio, renderingScale, sampleCount, production, camera })
 
     this.type = 'CurtainsRenderer'
   }

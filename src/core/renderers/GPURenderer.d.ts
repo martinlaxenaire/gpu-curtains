@@ -13,20 +13,10 @@ interface GPURendererParams {
   pixelRatio?: number
   renderingScale?: number
   sampleCount?: GPUSize32
+  production?: boolean
 }
 
 type MeshTypes = Mesh | DOMMesh | Plane
-
-// interface CustomGPURenderPassDescriptor extends Omit<GPURenderPassDescriptor, 'colorAttachments'> {
-//   colorAttachments: Iterable<GPURenderPassColorAttachment>
-// }
-
-// export interface RenderPass {
-//   descriptor: GPURenderPassDescriptor
-//   target: GPUTexture
-//   depth: GPUTexture
-//   sampleCount: GPUSize32
-// }
 
 interface Sampler {
   sampler: GPUSampler
@@ -56,6 +46,7 @@ export class GPURenderer {
   sampleCount: GPUSize32
   pixelRatio: number
   renderingScale: number
+  production: boolean
   domElement: DOMElement
   documentBody: DOMElement
 

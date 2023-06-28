@@ -18,8 +18,10 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
     const geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 })
 
     if (!parameters.shaders.vertex || !parameters.shaders.vertex.code) {
-      parameters.shaders.vertex.code = default_vsWgsl
-      parameters.shaders.vertex.entryPoint = 'main'
+      parameters.shaders.vertex = {
+        code: default_vsWgsl,
+        entryPoint: 'main',
+      }
     }
 
     super(renderer, null, { geometry, ...parameters })

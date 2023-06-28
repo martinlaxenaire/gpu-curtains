@@ -145,31 +145,32 @@ export class PipelineEntry {
       code,
     })
 
-    // TODO only if not production!
-    shaderModule.getCompilationInfo().then((compilationInfo) => {
-      for (const message of compilationInfo.messages) {
-        let formattedMessage = ''
-        if (message.lineNum) {
-          formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
-            message.offset,
-            message.offset + message.length
-          )}\n`
-        }
-        formattedMessage += message.message
+    if (!this.renderer.production) {
+      shaderModule.getCompilationInfo().then((compilationInfo) => {
+        for (const message of compilationInfo.messages) {
+          let formattedMessage = ''
+          if (message.lineNum) {
+            formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
+              message.offset,
+              message.offset + message.length
+            )}\n`
+          }
+          formattedMessage += message.message
 
-        switch (message.type) {
-          case 'error':
-            console.error(formattedMessage)
-            break
-          case 'warning':
-            console.warn(formattedMessage)
-            break
-          case 'info':
-            console.log(formattedMessage)
-            break
+          switch (message.type) {
+            case 'error':
+              console.error(formattedMessage)
+              break
+            case 'warning':
+              console.warn(formattedMessage)
+              break
+            case 'info':
+              console.log(formattedMessage)
+              break
+          }
         }
-      }
-    })
+      })
+    }
 
     return shaderModule
   }

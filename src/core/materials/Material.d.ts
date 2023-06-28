@@ -26,14 +26,6 @@ interface MaterialIndexedGeometryAttribute extends MaterialGeometryAttribute {
 
 type MaterialGeometryAttributeBuffersType = 'vertexBuffer' | 'indexBuffer'
 
-interface MaterialGeometryAttributeBuffers {
-  vertexBuffer: GPUBuffer
-}
-
-interface MaterialIndexedGeometryAttributeBuffers extends MaterialGeometryAttributeBuffers {
-  indexBuffer: GPUBuffer
-}
-
 export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry
 
 interface MaterialBaseRenderingOptions {
@@ -63,10 +55,6 @@ type MaterialGeometryAttributes = Record<string, MaterialGeometryAttribute | Mat
 
 interface MaterialAttributes {
   geometry: MaterialGeometryAttributes | null
-  // buffers: Record<
-  //   MaterialGeometryAttributeBuffersType,
-  //   MaterialGeometryAttributeBuffers | MaterialIndexedGeometryAttributeBuffers
-  // > | null
   buffers: Record<MaterialGeometryAttributeBuffersType, GPUBuffer> | null
 }
 
