@@ -1,5 +1,4 @@
 import { IndexedGeometry } from './IndexedGeometry'
-import { cacheManager } from '../../utils/CacheManager'
 
 export class PlaneGeometry extends IndexedGeometry {
   constructor({ widthSegments = 1, heightSegments = 1, verticesOrder = 'cw' }) {
@@ -12,13 +11,6 @@ export class PlaneGeometry extends IndexedGeometry {
       width: widthSegments,
       height: heightSegments,
       count: widthSegments * heightSegments,
-    }
-
-    const existingPlaneGeometry = cacheManager.getPlaneGeometry(this)
-    if (existingPlaneGeometry) {
-      return existingPlaneGeometry
-    } else {
-      cacheManager.addPlaneGeometry(this)
     }
 
     this.setIndexArray()

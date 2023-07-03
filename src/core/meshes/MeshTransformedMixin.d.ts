@@ -35,8 +35,6 @@ interface TransformedMeshMaterialParameters extends MeshMaterialParameters {
 declare const defaultMeshParams: TransformedMeshParams
 
 export class MeshTransformedBase {
-  matrixUniformBinding: BufferBindings
-
   domFrustum: DOMFrustum
   frustumCulled: boolean
   DOMFrustumMargins: RectCoords
@@ -48,8 +46,6 @@ export class MeshTransformedBase {
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
 
   setMeshMaterial(materialParameters: TransformedMeshMaterialParameters)
-
-  setMatricesUniformGroup()
 
   applyScale()
 

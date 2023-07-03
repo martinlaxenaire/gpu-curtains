@@ -64,6 +64,41 @@ const MeshTransformedMixin = (superclass) =>
     setMeshMaterial(meshParameters) {
       const { frustumCulled, DOMFrustumMargins, ...meshMaterialOptions } = meshParameters
 
+      // add matrices uniforms
+      const matrixUniformBinding = new BufferBindings({
+        label: 'Matrices',
+        name: 'matrices',
+        uniforms: {
+          model: {
+            name: 'model',
+            type: 'mat4x4f',
+            value: this.modelMatrix,
+            onBeforeUpdate: () => {
+              matrixUniformBinding.uniforms.model.value = this.modelMatrix
+            },
+          },
+          modelView: {
+            // model view matrix (model matrix multiplied by camera view matrix)
+            name: 'modelView',
+            type: 'mat4x4f',
+            value: this.modelViewMatrix,
+            onBeforeUpdate: () => {
+              matrixUniformBinding.uniforms.modelView.value = this.modelViewMatrix
+            },
+          },
+          modelViewProjection: {
+            name: 'modelViewProjection',
+            type: 'mat4x4f',
+            value: this.modelViewProjectionMatrix,
+            onBeforeUpdate: () => {
+              matrixUniformBinding.uniforms.modelViewProjection.value = this.modelViewProjectionMatrix
+            },
+          },
+        },
+      })
+
+      meshMaterialOptions.uniformsBindings = [matrixUniformBinding, ...meshMaterialOptions.uniformsBindings]
+
       super.setMeshMaterial(meshMaterialOptions)
 
       this.domFrustum = new DOMFrustum({
@@ -81,62 +116,6 @@ const MeshTransformedMixin = (superclass) =>
 
       this.frustumCulled = frustumCulled
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
-    }
-
-    /** UNIFORMS **/
-
-    /***
-   Init our plane model view and projection matrices and set their uniform locations
-   ***/
-    setMatricesUniformGroup() {
-      this.matrixUniformBinding = new BufferBindings({
-        label: 'Matrices',
-        name: 'matrices',
-        uniforms: {
-          model: {
-            name: 'model',
-            type: 'mat4x4f',
-            value: this.modelMatrix,
-            onBeforeUpdate: () => {
-              this.matrixUniformBinding.uniforms.model.value = this.modelMatrix
-            },
-          },
-          modelView: {
-            // model view matrix (model matrix multiplied by camera view matrix)
-            name: 'modelView',
-            type: 'mat4x4f',
-            value: this.modelViewMatrix,
-            onBeforeUpdate: () => {
-              this.matrixUniformBinding.uniforms.modelView.value = this.modelViewMatrix
-            },
-          },
-          modelViewProjection: {
-            name: 'modelViewProjection',
-            type: 'mat4x4f',
-            value: this.modelViewProjectionMatrix,
-            onBeforeUpdate: () => {
-              this.matrixUniformBinding.uniforms.modelViewProjection.value = this.modelViewProjectionMatrix
-            },
-          },
-        },
-      })
-    }
-
-    setUniformBindings(bindings) {
-      this.setMatricesUniformGroup()
-
-      this.uniformsBindings = [
-        this.matrixUniformBinding,
-        ...bindings.map((binding, index) => {
-          return new BufferBindings({
-            label: binding.label || 'Uniforms' + index,
-            name: binding.name || 'uniforms' + index,
-            bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms
-            uniforms: binding.uniforms,
-            visibility: binding.visibility,
-          })
-        }),
-      ]
     }
 
     resize(boundingRect = null) {
@@ -159,10 +138,8 @@ const MeshTransformedMixin = (superclass) =>
     updateModelMatrix() {
       super.updateModelMatrix()
 
-      if (this.matrixUniformBinding) {
-        this.matrixUniformBinding.shouldUpdateUniform('model')
-        this.matrixUniformBinding.shouldUpdateUniform('modelView')
-        this.matrixUniformBinding.shouldUpdateUniform('modelViewProjection')
+      if (this.material) {
+        this.material.shouldUpdateUniformsBindings('matrices')
       }
 
       if (this.domFrustum) this.domFrustum.shouldUpdate = true

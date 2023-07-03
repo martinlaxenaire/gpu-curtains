@@ -7,6 +7,7 @@ interface GPUCurtainsOptions {
   container: HTMLElement
   pixelRatio: number
   sampleCount: number
+  preferredFormat?: GPUTextureFormat
   camera: CameraBasePerspectiveOptions
   production: boolean
 }

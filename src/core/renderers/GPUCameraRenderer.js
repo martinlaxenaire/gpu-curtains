@@ -5,8 +5,16 @@ import { Vec3 } from '../../math/Vec3'
 import { BufferBindings } from '../bindings/BufferBindings'
 
 export class GPUCameraRenderer extends GPURenderer {
-  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4, production = false, camera = {} }) {
-    super({ container, pixelRatio, renderingScale, sampleCount, production })
+  constructor({
+    container,
+    pixelRatio = 1,
+    renderingScale = 1,
+    sampleCount = 4,
+    preferredFormat,
+    production = false,
+    camera = {},
+  }) {
+    super({ container, pixelRatio, renderingScale, sampleCount, preferredFormat, production })
 
     this.options = {
       ...camera,

@@ -21,6 +21,7 @@ export class Scene {
       unprojected: {
         opaque: [],
         transparent: [],
+        pingPongPlanes: [],
         shaderPasses: [],
       },
       projected: {
@@ -90,13 +91,51 @@ export class Scene {
     )
   }
 
+  addPingPongPlane(pingPongPlane) {
+    this.stacks.unprojected.pingPongPlanes.push(pingPongPlane)
+    // sort by their render order
+    this.stacks.unprojected.pingPongPlanes.sort((a, b) => b.renderOrder - a.renderOrder)
+  }
+
+  removePingPongPlane(pingPongPlane) {
+    this.stacks.unprojected.pingPongPlanes = this.stacks.unprojected.pingPongPlanes.filter(
+      (pPP) => pPP.uuid !== pingPongPlane.uuid
+    )
+  }
+
   render(commandEncoder) {
-    // draw our meshes first
-    const renderTexture = this.renderer.setRenderPassCurrentTexture(this.renderer.renderPass)
+    // ensure we always have fresh data
+    for (const mainStackTypes in this.stacks) {
+      const mainStackType = this.stacks[mainStackTypes]
+      for (const subStacksTypes in mainStackType) {
+        mainStackType[subStacksTypes].forEach((element) => element.onBeforeRenderPass())
+      }
+    }
+
+    const swapChainTexture = this.renderer.setRenderPassCurrentTexture(this.renderer.renderPass)
+
+    // draw ping pong planes first
+    this.stacks.unprojected.pingPongPlanes.forEach((pingPongPlane) => {
+      const pingPongRenderPass = commandEncoder.beginRenderPass(this.renderer.renderPass.descriptor)
+
+      pingPongPlane.render(pingPongRenderPass)
+      pingPongRenderPass.end()
+
+      // Copy the rendering results from the swapChainTexture into our |pingPongPlane|.
+      commandEncoder.copyTextureToTexture(
+        {
+          texture: swapChainTexture,
+        },
+        {
+          texture: pingPongPlane.renderTexture.texture,
+        },
+        [pingPongPlane.renderTexture.size.width, pingPongPlane.renderTexture.size.height]
+      )
+    })
 
     const pass = commandEncoder.beginRenderPass(this.renderer.renderPass.descriptor)
 
-    // draw unprojected regular meshes first
+    // then draw unprojected regular meshes
     this.stacks.unprojected.opaque.forEach((mesh) => mesh.render(pass))
     this.stacks.unprojected.transparent.forEach((mesh) => mesh.render(pass))
 
@@ -114,17 +153,30 @@ export class Scene {
     this.stacks.unprojected.shaderPasses.forEach((shaderPass) => {
       commandEncoder.copyTextureToTexture(
         {
-          texture: renderTexture,
+          texture: swapChainTexture,
         },
         {
           texture: shaderPass.renderTexture.texture,
         },
-        [shaderPass.renderPass.size.width, shaderPass.renderPass.size.height]
+        [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
       )
 
-      this.renderer.setRenderPassCurrentTexture(shaderPass.renderPass)
+      // should we copy other render textures?
+      // shaderPass.renderTextures.forEach((renderTexture) => {
+      //   if (renderTexture.options.sourceTexture) {
+      //     commandEncoder.copyTextureToTexture(
+      //       {
+      //         texture: renderTexture.options.sourceTexture.texture,
+      //       },
+      //       {
+      //         texture: renderTexture.texture,
+      //       },
+      //       [renderTexture.size.width, renderTexture.size.height]
+      //     )
+      //   }
+      // })
 
-      const shaderPassRenderPass = commandEncoder.beginRenderPass(shaderPass.renderPass.descriptor)
+      const shaderPassRenderPass = commandEncoder.beginRenderPass(this.renderer.renderPass.descriptor)
       shaderPass.render(shaderPassRenderPass)
       shaderPassRenderPass.end()
     })

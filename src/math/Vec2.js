@@ -251,4 +251,11 @@ export class Vec2 {
   dot(vector = new Vec2()) {
     return this._x * vector.x + this._y * vector.y
   }
+
+  lerp(vector = new Vec2(), alpha = 1) {
+    this.x += (vector.x - this.x) * alpha
+    this.y += (vector.y - this.y) * alpha
+
+    return this
+  }
 }

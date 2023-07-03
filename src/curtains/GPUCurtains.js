@@ -4,7 +4,14 @@ import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 
 export class GPUCurtains {
-  constructor({ container, pixelRatio = window.devicePixelRatio ?? 1, sampleCount = 4, camera, production = false }) {
+  constructor({
+    container,
+    pixelRatio = window.devicePixelRatio ?? 1,
+    sampleCount = 4,
+    preferredFormat,
+    camera,
+    production = false,
+  }) {
     this.type = 'CurtainsGPU'
 
     this.options = {
@@ -12,6 +19,7 @@ export class GPUCurtains {
       sampleCount,
       camera,
       production,
+      preferredFormat,
     }
 
     if (container) {
@@ -61,6 +69,7 @@ export class GPUCurtains {
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
       sampleCount: this.options.sampleCount,
+      preferredFormat: this.options.preferredFormat,
       camera: this.options.camera,
       production: this.options.production,
     })

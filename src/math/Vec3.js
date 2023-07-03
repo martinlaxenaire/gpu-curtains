@@ -272,6 +272,14 @@ export class Vec3 {
     return this._x * vector.x + this._y * vector.y + this._z * vector.z
   }
 
+  lerp(vector = new Vec3(), alpha = 1) {
+    this.x += (vector.x - this.x) * alpha
+    this.y += (vector.y - this.y) * alpha
+    this.z += (vector.z - this.z) * alpha
+
+    return this
+  }
+
   /***
    Apply a matrix 4 to a point (vec3)
    Useful to convert a point position from plane local world to webgl space using projection view matrix for example

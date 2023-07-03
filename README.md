@@ -1,4 +1,4 @@
-# curtains-gpu
+# gpu-curtains
 
 WIP
 
@@ -14,14 +14,15 @@ WIP
 - Scroll + resize, frustum culling check
 - Basic Texture class
 - GPUCurtains
+- Basic CacheManager
+- Shader passes + PingPong
 
 ## Roadmap / TODO
 
 - Scene class (in progress)
-- Render targets? (+ compute pass?), PingPong?
+- Render targets? (+ compute pass?), PingPong (does it really need a separate class?)
 - TextureLoader class
 - Use async pipelines?
 - Plane raycasting (almost done)
 - context lost handling
 - Errors / warning handling
-- production boolean

@@ -5,7 +5,7 @@ import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
 
 export class GPURenderer {
-  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4, production = false }) {
+  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4, production = false, preferredFormat }) {
     this.type = 'Renderer'
     this.ready = false
 
@@ -15,6 +15,7 @@ export class GPURenderer {
     this.renderingScale = renderingScale
     this.sampleCount = sampleCount
     this.production = production
+    this.preferredFormat = preferredFormat
 
     if (!this.gpu) {
       console.warn('WebGPU not supported!')
@@ -75,7 +76,8 @@ export class GPURenderer {
     const pixelRatioBoundingRect = this.pixelRatioBoundingRect
 
     this.renderPass?.resize(pixelRatioBoundingRect)
-    this.shaderPasses.forEach((shaderPass) => shaderPass.resize(pixelRatioBoundingRect))
+    this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
+    this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
   }
 
   get boundingRect() {
@@ -109,9 +111,9 @@ export class GPURenderer {
   async setContext() {
     this.context = this.canvas.getContext('webgpu')
 
-    this.preferredFormat = this.gpu?.getPreferredCanvasFormat()
-
     await this.setAdapterAndDevice()
+
+    this.preferredFormat = this.preferredFormat ?? this.gpu?.getPreferredCanvasFormat()
 
     this.context.configure({
       device: this.device,
@@ -226,8 +228,6 @@ export class GPURenderer {
   }
 
   createSampler(options) {
-    if (!this.device) return false
-
     const existingSampler = this.samplers.find((sampler) => {
       return JSON.stringify(sampler.options) === JSON.stringify(options) && sampler.sampler
     })
@@ -246,13 +246,7 @@ export class GPURenderer {
     }
   }
 
-  forceCreateTexture(options) {
-    return this.device.createTexture(options)
-  }
-
   createTexture(options) {
-    if (!this.device) return false
-
     return this.device.createTexture(options)
   }
 
@@ -291,6 +285,7 @@ export class GPURenderer {
   setRendererObjects() {
     // keep track of planes, textures, etc.
     this.renderPasses = []
+    this.pingPongPlanes = []
     this.shaderPasses = []
     this.meshes = []
     this.samplers = []

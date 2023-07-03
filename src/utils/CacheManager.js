@@ -8,6 +8,10 @@ class CacheManager {
     return this.planeGeometries.find((element) => element.definition.id === planeGeometry.definition.id)
   }
 
+  getPlaneGeometryByID(planeGeometryID) {
+    return this.planeGeometries.find((element) => element.definition.id === planeGeometryID)
+  }
+
   addPlaneGeometry(planeGeometry) {
     this.planeGeometries.push(planeGeometry)
   }

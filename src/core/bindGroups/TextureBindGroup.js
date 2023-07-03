@@ -21,6 +21,7 @@ export class TextureBindGroup extends BindGroup {
 
   addTexture(texture) {
     this.textures.push(texture)
+    // TODO avoid duplicate samplers in bindings? How to handle sampler names in shader?
     this.bindings = [...this.bindings, ...texture.bindings]
   }
 
@@ -72,14 +73,18 @@ export class TextureBindGroup extends BindGroup {
     })
   }
 
-  resetTextureBindGroup(textureIndex) {
-    const texture = this.textures[textureIndex]
+  resetTextureBindGroup() {
+    // reset all bind group texture entries
+    const texturesEntries = this.entries.bindGroup.filter(
+      (entry) => entry.resource instanceof GPUTextureView || entry.resource instanceof GPUExternalTexture
+    )
 
-    // texture bindGroup index is textureIndex * 3 + second position in bindings array
-    const entryIndex = textureIndex * 3 + 1
-    if (this.entries.bindGroup[entryIndex] && texture) {
-      this.entries.bindGroup[entryIndex].resource =
-        texture.options.sourceType === 'video' ? texture.texture : texture.texture.createView()
+    if (texturesEntries.length) {
+      texturesEntries.forEach((entry, index) => {
+        const texture = this.textures[index]
+        if (texture)
+          entry.resource = texture.options.sourceType === 'video' ? texture.texture : texture.texture.createView()
+      })
 
       this.setBindGroup()
     }

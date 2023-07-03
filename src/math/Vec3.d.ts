@@ -40,6 +40,7 @@ export class Vec3 {
   equals(vector?: Vec3): boolean
   normalize(): Vec3
   dot(vector?: Vec3): number
+  lerp(vector?: Vec3, alpha?: number): Vec3
 
   applyMat4(matrix?: Mat4): Vec3
   applyQuat(quaternion?: Quat): Vec3

@@ -3,6 +3,7 @@ import { PlaneGeometry } from '../../core/geometries/PlaneGeometry'
 import { DOMMesh } from './DOMMesh'
 import { Vec3 } from '../../math/Vec3'
 import { Vec2 } from '../../math/Vec2'
+import { cacheManager } from '../../utils/CacheManager'
 
 const defaultPlaneParams = {
   label: 'Plane',
@@ -27,8 +28,15 @@ export class Plane extends DOMMesh {
 
     const { widthSegments, heightSegments, ...domMeshParams } = params
 
-    // create a plane geometry first
-    const geometry = new PlaneGeometry({ widthSegments, heightSegments })
+    // can we get a cached geometry?
+    const geometryID = widthSegments * heightSegments + widthSegments
+    let geometry = cacheManager.getPlaneGeometryByID(geometryID)
+
+    if (!geometry) {
+      // we need to create a new plane geometry
+      geometry = new PlaneGeometry({ widthSegments, heightSegments })
+      cacheManager.addPlaneGeometry(geometry)
+    }
 
     // get DOMMesh params
     super(renderer, element, { geometry, ...domMeshParams })

@@ -43,7 +43,7 @@ export interface MeshBindings {
 }
 
 export interface MeshMaterialParameters extends MaterialParams {
-  bindings?: MeshBindings[]
+  uniformsBindings: BufferBindings[]
 }
 
 export interface MeshBaseParams extends MaterialBaseParams {
@@ -71,8 +71,6 @@ export class MeshBase {
     label: MeshBaseParams['label']
     shaders: MeshBaseParams['shaders']
   }
-
-  uniformsBindings: BufferBindings[]
 
   material: Material
   geometry: MeshBaseParams['geometry']
@@ -105,7 +103,7 @@ export class MeshBase {
   createTexture(options: TextureDefaultParams): Texture
   onTextureCreated(texture: Texture)
 
-  setUniformBindings(bindings: MeshBindings)
+  createUniformsBindings(bindings: MeshBindings): BufferBindings[]
 
   resize(boundingRect?: DOMElementBoundingRect)
 

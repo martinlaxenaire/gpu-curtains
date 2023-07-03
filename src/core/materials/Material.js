@@ -257,6 +257,19 @@ export class Material {
     }
   }
 
+  shouldUpdateUniformsBindings(bufferBindingName, uniformName) {
+    if (!bufferBindingName) return
+
+    const bufferBinding = this.options.uniformsBindings.find((bB) => bB.name === bufferBindingName)
+    if (bufferBinding) {
+      if (!uniformName) {
+        Object.keys(bufferBinding.uniforms).forEach((uniformKey) => bufferBinding.shouldUpdateUniform(uniformKey))
+      } else {
+        bufferBinding.shouldUpdateUniform('uniformName')
+      }
+    }
+  }
+
   /** TEXTURES **/
 
   setTextures() {
@@ -274,19 +287,9 @@ export class Material {
 
   /** Render loop **/
 
-  /**
-   *
-   * @param pass
-   */
-  render(pass) {
-    // no point to render if the WebGPU device is not ready
-    if (!this.renderer.ready) return
-
+  onBeforeRender() {
     // set our material if needed
     this.setMaterial()
-
-    // pipeline is not ready yet
-    if (!this.ready) return
 
     this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
       // since external texture are destroyed as soon as JavaScript returns to the browser
@@ -312,13 +315,34 @@ export class Material {
       }
 
       if (texture.shouldUpdateBindGroup) {
-        this.texturesBindGroup.resetTextureBindGroup(textureIndex)
+        this.texturesBindGroup.resetTextureBindGroup()
         texture.shouldUpdateBindGroup = false
       }
     })
 
+    // update uniforms values
+    this.textures.forEach((texture) => {
+      texture.textureMatrix?.onBeforeRender()
+    })
+
+    this.options.uniformsBindings.forEach((uniformBinding) => {
+      uniformBinding.onBeforeRender()
+    })
+
     // update uniforms buffers
     this.updateBindGroups()
+  }
+
+  /**
+   *
+   * @param pass
+   */
+  render(pass) {
+    // no point to render if the WebGPU device is not ready
+    if (!this.renderer.ready) return
+
+    // pipeline is not ready yet
+    if (!this.ready) return
 
     // set current pipeline
     this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry)

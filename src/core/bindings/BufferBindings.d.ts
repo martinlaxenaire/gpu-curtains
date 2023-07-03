@@ -4,8 +4,8 @@ import { BufferBindingsElement } from '../../types/buffers-utils'
 
 interface BufferBindingsUniform extends MeshUniformsBase {
   _value: MeshUniformValue
-  get(value: MeshUniformValue): MeshUniformValue
-  set(value: MeshUniformValue)
+  get value(): MeshUniformValue
+  set value(value: MeshUniformValue)
   shouldUpdate: boolean
 }
 

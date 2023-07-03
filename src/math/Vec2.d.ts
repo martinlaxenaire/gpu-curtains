@@ -32,4 +32,5 @@ export class Vec2 {
   equals(vector?: Vec2): boolean
   normalize(): Vec2
   dot(vector?: Vec2): number
+  lerp(vector?: Vec2, alpha?: number): Vec2
 }

@@ -15,7 +15,7 @@ export class TextureBindGroup extends BindGroup {
 
   get shouldCreateBindGroup(): boolean
 
-  resetTextureBindGroup(textureIndex: number)
+  resetTextureBindGroup()
   shouldUpdateVideoTextureBindGroupLayout(textureIndex: number)
   updateVideoTextureBindGroupLayout(textureIndex: number)
 }

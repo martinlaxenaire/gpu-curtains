@@ -238,13 +238,14 @@ export class Texture extends Object3D {
 
   createTexture() {
     const options = {
+      label: this.options.label,
       format: this.options.texture.format,
       size: [this.size.width, this.size.height], // [1, 1]
       usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
     }
 
     if (this.options.sourceType !== 'video') {
-      if (this.options.sourceType !== 'renderTexture') {
+      if (this.options.sourceType !== 'renderPass') {
         options.mipLevelCount = this.options.texture.generateMips
           ? this.getNumMipLevels(this.size.width, this.size.height)
           : 1

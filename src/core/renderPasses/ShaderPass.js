@@ -1,36 +1,41 @@
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { RenderPass } from './RenderPass'
 import { Texture } from '../textures/Texture'
+import { RenderTexture } from '../textures/RenderTexture'
 
 export class ShaderPass extends FullscreenPlane {
   constructor(renderer, parameters) {
     super(renderer, parameters)
 
-    this.renderPass = new RenderPass({ renderer })
+    this.renderTextures = []
 
-    this.renderTexture = new Texture(this.renderer, {
+    this.createRenderTexture({
+      label: parameters.label + ' Shader pass render texture',
       name: 'renderTexture',
-      texture: {
-        format: this.renderer.preferredFormat,
-      },
     })
+  }
 
-    this.renderTexture.loadRenderPass(this.renderPass)
-    this.renderTexture.parent = this
+  createRenderTexture(options) {
+    if (!options.name) {
+      options.name = 'texture' + this.textures.length
+    }
 
-    this.material.addTextureBinding(this.renderTexture)
+    const renderTexture = new RenderTexture(this.renderer, options)
 
-    this.textures.push(this.renderTexture)
+    this.material.addTextureBinding(renderTexture)
+    this.renderTextures.push(renderTexture)
+
+    return renderTexture
+  }
+
+  get renderTexture() {
+    return this.renderTextures[0] ?? null
   }
 
   resize(boundingRect) {
-    super.resize(boundingRect)
-    this.renderPass?.resize(boundingRect)
+    this.renderTextures?.forEach((renderTexture) => renderTexture.resize())
 
-    if (this.renderTexture) {
-      this.renderTexture.setSourceSize()
-      this.renderTexture.createTexture()
-    }
+    super.resize(boundingRect)
   }
 
   addToScene() {
@@ -41,14 +46,5 @@ export class ShaderPass extends FullscreenPlane {
   removeFromScene() {
     this.renderer.scene.removeShaderPass(this)
     this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid)
-  }
-
-  // remove() {
-  //   super.remove()
-  // }
-
-  destroy() {
-    this.renderPass.destroy()
-    super.destroy()
   }
 }

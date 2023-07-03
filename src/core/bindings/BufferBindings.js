@@ -94,8 +94,8 @@ export class BufferBindings extends Bindings {
         const nextSpaceAvailable =
           this.bindingElements[index - 1].startOffset + this.bindingElements[index - 1].bufferLayout.numElements
 
-        // if it's just a float or an int, check if we have enough space on current alignment row
-        if (align <= bytesPerElement) {
+        // if it's just a float an int or a vec2, check if we have enough space on current alignment row
+        if (align <= bytesPerElement * 2) {
           if (nextSpaceAvailable + numElements <= this.alignmentRows * bytesPerElement) {
             bindingElement.startOffset = nextSpaceAvailable
           } else {

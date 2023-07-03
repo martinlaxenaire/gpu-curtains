@@ -7,6 +7,7 @@ import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { RenderPass } from '../renderPasses/RenderPass'
 import { Scene } from '../scenes/Scene'
 import { ShaderPass } from '../renderPasses/ShaderPass'
+import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 
 interface GPURendererParams {
   container: string | HTMLElement
@@ -14,6 +15,7 @@ interface GPURendererParams {
   renderingScale?: number
   sampleCount?: GPUSize32
   production?: boolean
+  preferredFormat?: GPUTextureFormat
 }
 
 type MeshTypes = Mesh | DOMMesh | Plane
@@ -38,6 +40,7 @@ export class GPURenderer {
   scene: Scene
 
   renderPasses: RenderPass[]
+  pingPongPlanes: PingPongPlane[]
   shaderPasses: ShaderPass[]
   meshes: MeshTypes[]
   samplers: Sampler[]
@@ -77,9 +80,8 @@ export class GPURenderer {
 
   addTexture(texture: Texture)
   setTexture(texture: Texture)
-  createSampler(options: GPUSamplerDescriptor): GPUSampler | boolean
-  forceCreateTexture(options: GPUTextureDescriptor): GPUTexture
-  createTexture(options: GPUTextureDescriptor): GPUTexture | boolean
+  createSampler(options: GPUSamplerDescriptor): GPUSampler
+  createTexture(options: GPUTextureDescriptor): GPUTexture
   uploadTexture(texture: Texture)
   importExternalTexture(video: HTMLVideoElement): GPUExternalTexture
 

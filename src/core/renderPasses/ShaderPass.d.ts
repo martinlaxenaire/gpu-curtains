@@ -1,19 +1,20 @@
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
-import { RenderPass, RenderPassParams } from './RenderPass'
 import { MeshBaseParams } from '../meshes/MeshBaseMixin'
 import { GPURenderer } from '../renderers/GPURenderer'
 import { Texture } from '../textures/Texture'
-
-interface ShaderPassParams extends MeshBaseParams, RenderPassParams {}
+import { DOMElementBoundingRect } from '../DOMElement'
+import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
 
 export class ShaderPass extends FullscreenPlane {
-  renderPass: RenderPass
-  renderTexture: Texture
+  renderTextures: RenderTexture[]
 
-  constructor(renderer: GPURenderer, parameters: ShaderPassParams)
+  constructor(renderer: GPURenderer, parameters: MeshBaseParams)
+
+  createRenderTexture(options: RenderTextureParams): RenderTexture
+  get renderTexture(): RenderTexture | null
+
+  resize(boundingRect: DOMElementBoundingRect)
 
   addToScene()
   removeFromScene()
-
-  destroy()
 }

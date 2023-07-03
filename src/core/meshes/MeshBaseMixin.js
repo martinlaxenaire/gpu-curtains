@@ -65,6 +65,7 @@ const MeshBaseMixin = (superclass) =>
         label,
         shaders,
         geometry,
+        bindings,
         visible,
         renderOrder,
         onReady,
@@ -91,18 +92,17 @@ const MeshBaseMixin = (superclass) =>
       this.renderOrder = renderOrder
       this.ready = false
 
-      this.setMeshMaterial(meshParameters)
+      const uniformsBindings = this.createUniformsBindings(bindings)
+      this.setMeshMaterial({ ...meshParameters, uniformsBindings })
 
       this.addToScene()
     }
 
     setMeshMaterial(meshParameters) {
-      const { bindings, ...materialOptions } = meshParameters
+      const { uniformsBindings, ...materialOptions } = meshParameters
       const { transparent, useProjection, depthWriteEnabled, depthCompare, cullMode, verticesOrder } = materialOptions
 
       this.transparent = materialOptions.transparent
-
-      this.setUniformBindings(bindings)
 
       this.setMaterial({
         label: this.options.label,
@@ -113,7 +113,7 @@ const MeshBaseMixin = (superclass) =>
         depthCompare,
         cullMode,
         verticesOrder,
-        uniformsBindings: this.uniformsBindings,
+        uniformsBindings,
         geometry: this.geometry,
       })
 
@@ -159,8 +159,8 @@ const MeshBaseMixin = (superclass) =>
 
     /*** UNIFORMS ***/
 
-    setUniformBindings(bindings) {
-      this.uniformsBindings = [
+    createUniformsBindings(bindings) {
+      return [
         ...bindings.map((binding, index) => {
           return new BufferBindings({
             label: binding.label || 'Uniforms' + index,
@@ -184,18 +184,14 @@ const MeshBaseMixin = (superclass) =>
      * @param pass
      */
     onBeforeRenderPass() {
+      if (!this.renderer.ready) return
+
       if (this.material && this.material.ready && !this.ready) {
         this.ready = true
         this.onReady()
       }
 
-      this.textures.forEach((texture) => {
-        texture.textureMatrix.onBeforeRender()
-      })
-
-      this.uniformsBindings.forEach((uniformBinding) => {
-        uniformBinding.onBeforeRender()
-      })
+      this.material.onBeforeRender()
     }
 
     onRenderPass(pass) {
@@ -210,12 +206,9 @@ const MeshBaseMixin = (superclass) =>
 
     render(pass) {
       // no point to render if the WebGPU device is not ready
-      // TODO shoud a mesh with visible set to false still update its uniforms?
       if (!this.renderer.ready || !this.visible) return
 
       if (super.render) super.render()
-
-      this.onBeforeRenderPass()
 
       this.onRenderPass(pass)
 

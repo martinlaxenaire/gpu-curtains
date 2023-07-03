@@ -8,6 +8,7 @@ import { Texture } from '../textures/Texture'
 import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
 import { FullShadersType, MeshShadersOptions, MeshShaders } from '../meshes/MeshBaseMixin'
+import { RenderTexture } from '../textures/RenderTexture'
 
 interface MaterialGeometryAttribute {
   wgslStructFragment: Geometry['wgslStructFragment']
@@ -100,10 +101,12 @@ export class Material {
   updateBindGroups()
 
   setUniforms()
+  shouldUpdateUniformsBindings(bufferBindingName?: BufferBindings['name'], uniformName?: BufferBindingsUniform['name'])
 
   setTextures()
-  addTextureBinding(texture: Texture)
+  addTextureBinding(texture: Texture | RenderTexture)
 
+  onBeforeRender()
   render(pass: GPURenderPassEncoder)
 
   destroy()

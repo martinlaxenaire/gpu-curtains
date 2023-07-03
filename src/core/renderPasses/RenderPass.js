@@ -30,7 +30,7 @@ export class RenderPass {
   }
 
   createDepthTexture() {
-    this.depthTexture = this.renderer.forceCreateTexture({
+    this.depthTexture = this.renderer.createTexture({
       label: this.options.label + ' depth attachment texture',
       size: [this.size.width, this.size.height],
       format: 'depth24plus',
@@ -40,12 +40,16 @@ export class RenderPass {
   }
 
   createRenderTexture() {
-    this.renderTexture = this.renderer.forceCreateTexture({
+    this.renderTexture = this.renderer.createTexture({
       label: this.options.label + ' color attachment texture',
       size: [this.size.width, this.size.height],
       sampleCount: this.sampleCount,
       format: this.renderer.preferredFormat,
-      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
+      usage:
+        GPUTextureUsage.RENDER_ATTACHMENT |
+        GPUTextureUsage.COPY_SRC |
+        GPUTextureUsage.COPY_DST |
+        GPUTextureUsage.TEXTURE_BINDING,
     })
   }
 
@@ -105,8 +109,8 @@ export class RenderPass {
 
   setSize(boundingRect) {
     this.size = {
-      width: boundingRect.width,
-      height: boundingRect.height,
+      width: Math.floor(boundingRect.width),
+      height: Math.floor(boundingRect.height),
     }
   }
 

@@ -1,13 +1,17 @@
 import { GPURenderer, MeshTypes } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
+import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 
 type IsProjectedStacks = 'unprojected' | 'projected'
 type MeshStacksTypes = 'opaque' | 'transparent'
 type ShaderPassStacksTypes = 'shaderPasses'
-type StacksTypes = MeshStacksTypes | ShaderPassStacksTypes
+type PingPongPlaneStacksType = 'pingPongPlanes'
+type StacksTypes = MeshStacksTypes | ShaderPassStacksTypes | PingPongPlaneStacksType
 
 type StackContentStructure<T extends StacksTypes> = T extends ShaderPassStacksTypes
   ? ShaderPass[]
+  : T extends PingPongPlaneStacksType
+  ? PingPongPlane[]
   : T extends MeshStacksTypes
   ? MeshTypes[]
   : Array<MeshTypes | ShaderPass>
@@ -37,6 +41,9 @@ export class Scene {
 
   addShaderPass(shaderPass: ShaderPass)
   removeShaderPass(shaderPass: ShaderPass)
+
+  addPingPongPlane(pingPongPlane: PingPongPlane)
+  removePingPongPlane(pingPongPlane: PingPongPlane)
 
   render(commandEncoder: GPUCommandEncoder)
 }
