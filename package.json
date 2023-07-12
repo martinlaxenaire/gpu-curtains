@@ -5,22 +5,29 @@
     "@webgpu/types": "^0.1.32",
     "eslint": "^8.41.0",
     "eslint-config-prettier": "^8.8.0",
+    "microbundle": "^0.15.1",
     "prettier": "2.8.8",
     "typescript": "^5.1.3"
   },
-  "name": "curtains-gpu",
+  "name": "gpu-curtains",
   "version": "0.0.1",
-  "description": "curtains-gpu is attempt at porting curtainsjs library to WebGPU",
-  "main": "src/index.js",
+  "description": "gpu-curtains is attempt at porting curtainsjs library to WebGPU",
+  "source": "src/index.js",
+  "main": "dist/gpu-curtains.js",
+  "umd:main": "dist/gpu-curtains.umd.js",
+  "module": "dist/gpu-curtains.mjs",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    "types": "./dist/types/index.d.ts",
+    "require": "./dist/gpu-curtains.js",
+    "default": "./dist/gpu-curtains.modern.mjs"
+  },
   "author": "Martin Laxenaire",
   "license": "MIT",
   "private": true,
   "dependencies": {},
   "scripts": {
-    "build:types": "tsc --allowJs -d --emitDeclarationOnly"
-  },
-  "files": [
-    "dist",
-    "src/**/*.d.ts"
-  ]
+    "build:types": "tsc --allowJs -d --emitDeclarationOnly",
+    "build:dist": "microbundle build -i src/ --o ./dist --name GPUCurtains"
+  }
 }
