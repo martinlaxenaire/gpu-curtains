@@ -1,5 +1,5 @@
 import { CameraBasePerspectiveOptions } from '../core/camera/Camera'
-import { GPUCurtainsRenderer } from './renderer/GPUCurtainsRenderer'
+import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import { Vec3 } from '../math/Vec3'
 

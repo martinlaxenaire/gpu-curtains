@@ -1,7 +1,7 @@
 import { DOMMesh, DOMMeshBaseParams } from './DOMMesh'
 import { PlaneGeometryParams } from '../../core/geometries/PlaneGeometry'
 import { RectCoords } from '../objects3D/DOMObject3D'
-import { GPUCurtainsRenderer } from '../renderer/GPUCurtainsRenderer'
+import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { DOMElementBoundingRect } from '../../core/DOMElement'
 import { Texture } from '../../core/textures/Texture'
 import { Vec2 } from '../../math/Vec2'

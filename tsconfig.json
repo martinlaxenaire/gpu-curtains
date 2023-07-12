@@ -3,7 +3,7 @@
     "module": "commonjs",
     "target": "es2020",
     "declaration": true,
-    "outDir": "./dist",
+    "outDir": "./dist/types",
     "typeRoots": [ "./node_modules/@webgpu/types", "./node_modules/@types"],
     "allowJs": true,
     "checkJs": true
@@ -12,6 +12,6 @@
     "node_modules"
   ],
   "include": [
-    "src/**/*"
+    "src/**/*.d.ts"
   ]
 }

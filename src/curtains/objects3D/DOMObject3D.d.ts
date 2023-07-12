@@ -1,5 +1,5 @@
 import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
-import { GPUCurtainsRenderer } from '../renderer/GPUCurtainsRenderer'
+import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { Camera } from '../../core/camera/Camera'
 import { DOMElement, DOMElementBoundingRect } from '../../core/DOMElement'
 import { Vec3 } from '../../math/Vec3'

@@ -196,9 +196,7 @@ export class Material {
     // textures first
     if (this.texturesBindGroup.shouldCreateBindGroup) {
       this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex) // bindGroup 0 is our renderer camera
-      this.texturesBindGroup.createBindingsBuffers()
-      this.texturesBindGroup.setBindGroupLayout()
-      this.texturesBindGroup.setBindGroup()
+      this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
     }
@@ -207,9 +205,7 @@ export class Material {
     this.uniformsBindGroups.forEach((bindGroup) => {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
-        bindGroup.createBindingsBuffers()
-        bindGroup.setBindGroupLayout()
-        bindGroup.setBindGroup()
+        bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
       }
@@ -222,6 +218,11 @@ export class Material {
 
   updateBindGroups() {
     this.bindGroups.forEach((bindGroup) => {
+      if (bindGroup.needsReset) {
+        bindGroup.resetBindGroup()
+        bindGroup.needsReset = false
+      }
+
       if (bindGroup.needsPipelineFlush) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups)
         bindGroup.needsPipelineFlush = false
@@ -280,9 +281,23 @@ export class Material {
     })
   }
 
-  addTextureBinding(texture) {
+  addTexture(texture) {
     this.textures.push(texture)
-    this.texturesBindGroup.addTexture(texture)
+
+    // is it used in our shaders?
+    if (
+      this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 ||
+      this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1
+    ) {
+      this.texturesBindGroup.addTexture(texture)
+
+      if (this.ready) {
+        // we've added textures after the material pipeline has been created
+        // reset everything during next render call
+        this.texturesBindGroup.needsReset = true
+        this.texturesBindGroup.needsPipelineFlush = true
+      }
+    }
   }
 
   /** Render loop **/
@@ -292,6 +307,16 @@ export class Material {
     this.setMaterial()
 
     this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
+      // first, copy textures that need it on first init, but only when original texture is ready
+      if (
+        texture.type === 'Texture' &&
+        texture.options.fromTexture &&
+        texture.options.fromTexture.sourceLoaded &&
+        !texture.sourceLoaded
+      ) {
+        texture.copy(texture.options.fromTexture)
+      }
+
       // since external texture are destroyed as soon as JavaScript returns to the browser
       // we need to update it at every tick, even if it hasn't changed
       // to ensure we're not sending a stale / destroyed texture
@@ -314,7 +339,7 @@ export class Material {
         }
       }
 
-      if (texture.shouldUpdateBindGroup) {
+      if (texture.shouldUpdateBindGroup && texture.texture) {
         this.texturesBindGroup.resetTextureBindGroup()
         texture.shouldUpdateBindGroup = false
       }

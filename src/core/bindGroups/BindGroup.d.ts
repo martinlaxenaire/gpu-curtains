@@ -36,6 +36,7 @@ export class BindGroup {
   bindGroupLayout: null | GPUBindGroupLayout
   bindGroup: null | GPUBindGroup
 
+  needsReset: boolean
   needsPipelineFlush: boolean
 
   constructor({ label, renderer, index, bindings }: BindGroupParams)
@@ -48,6 +49,8 @@ export class BindGroup {
   get shouldCreateBindGroup(): boolean
 
   resetEntries()
+  createBindGroup()
+  resetBindGroup()
 
   createBindingBuffer(binding: BindGroupBindingElement)
   createBindingsBuffers()

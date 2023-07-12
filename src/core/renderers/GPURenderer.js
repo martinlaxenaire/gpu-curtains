@@ -214,6 +214,8 @@ export class GPURenderer {
 
   addTexture(texture) {
     this.textures.push(texture)
+
+    this.setTexture(texture)
   }
 
   setTexture(texture) {
@@ -327,8 +329,6 @@ export class GPURenderer {
     // now render!
 
     this.onBeforeRenderPass()
-
-    this.textures.forEach((texture) => this.setTexture(texture))
 
     const commandEncoder = this.device.createCommandEncoder({ label: 'Renderer command encoder' })
 

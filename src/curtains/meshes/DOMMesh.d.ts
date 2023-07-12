@@ -1,5 +1,5 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
-import { GPUCurtainsRenderer } from '../renderer/GPUCurtainsRenderer'
+import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { PlaneGeometry } from '../../core/geometries/PlaneGeometry'
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Geometry } from '../../core/geometries/Geometry'

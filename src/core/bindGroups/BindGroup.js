@@ -28,6 +28,10 @@ export class BindGroup {
     this.bindGroupLayout = null
     this.bindGroup = null
 
+    // we might want to rebuild the whole bind group sometimes
+    // like when we're adding textures after the bind group has already been created
+    this.needsReset = false
+
     // if we ever update our bind group layout
     // we'll need to update the bind group as well
     // and most importantly recreate the whole pipeline again
@@ -55,6 +59,17 @@ export class BindGroup {
       bindGroupLayout: [],
       bindGroup: [],
     }
+  }
+
+  createBindGroup() {
+    this.createBindingsBuffers()
+    this.setBindGroupLayout()
+    this.setBindGroup()
+  }
+
+  resetBindGroup() {
+    this.resetEntries()
+    this.createBindGroup()
   }
 
   createBindingBuffer(binding) {
@@ -113,8 +128,8 @@ export class BindGroup {
   updateBindings() {
     this.bindingsBuffers.forEach((bindingBuffer) => {
       if (bindingBuffer.uniformBinding.shouldUpdate) {
-        const bufferOffset = 0
-        this.renderer.queueWriteBuffer(bindingBuffer.buffer, bufferOffset, bindingBuffer.uniformBinding.value)
+        // bufferOffset is always equals to 0 in our case
+        this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.uniformBinding.value)
       }
 
       bindingBuffer.uniformBinding.shouldUpdate = false

@@ -8,12 +8,12 @@ interface RenderTextureBaseParams {
 
 interface RenderTextureDefaultParams extends RenderTextureBaseParams {
   sampler?: GPUSamplerDescriptor
-  sourceTexture?: RenderTexture
+  fromTexture?: RenderTexture
 }
 
 interface RenderTextureParams extends RenderTextureDefaultParams {
   sampler: GPUSamplerDescriptor
-  sourceTexture: RenderTexture | null
+  fromTexture: RenderTexture | null
 }
 
 declare const defaultRenderTextureParams: RenderTextureParams

@@ -22,6 +22,7 @@ const defaultTextureParams = {
     minFilter: 'linear',
     mipmapFilter: 'linear',
   },
+  fromTexture: null,
 }
 
 export class Texture extends Object3D {
@@ -65,7 +66,7 @@ export class Texture extends Object3D {
 
     // we will always declare a texture matrix
     this.textureMatrix = new BufferBindings({
-      label: 'TextureMatrix',
+      label: this.options.label + ': model matrix',
       name: this.options.name + 'Matrix',
       useStruct: false,
       uniforms: {
@@ -94,13 +95,13 @@ export class Texture extends Object3D {
   setBindings() {
     this.bindings = [
       new SamplerBindings({
-        label: this.options.label + ': ' + this.options.name,
+        label: this.options.label + ': sampler',
         name: this.options.name,
         bindingType: 'sampler',
         resource: this.sampler,
       }),
       new TextureBindings({
-        label: this.options.label + ': ' + this.options.name + ' sampler',
+        label: this.options.label + ': texture',
         name: this.options.name,
         resource: this.texture,
         bindingType: this.options.sourceType === 'video' ? 'externalTexture' : 'texture',
@@ -236,20 +237,40 @@ export class Texture extends Object3D {
     this.shouldUpdate = false
   }
 
+  copy(texture) {
+    this.options.fromTexture = texture
+
+    if (texture.texture && texture.sourceLoaded) {
+      this.size = texture.size
+      this.sampler = texture.sampler
+      this.source = texture.source
+
+      this.options.texture = texture.options.texture
+      this.options.sampler = texture.options.sampler
+
+      this.resize()
+    }
+
+    this.createTexture()
+    this.sourceLoaded = true
+  }
+
   createTexture() {
     const options = {
       label: this.options.label,
       format: this.options.texture.format,
       size: [this.size.width, this.size.height], // [1, 1]
-      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+      usage:
+        GPUTextureUsage.TEXTURE_BINDING |
+        GPUTextureUsage.COPY_SRC |
+        GPUTextureUsage.COPY_DST |
+        GPUTextureUsage.RENDER_ATTACHMENT,
     }
 
     if (this.options.sourceType !== 'video') {
-      if (this.options.sourceType !== 'renderPass') {
-        options.mipLevelCount = this.options.texture.generateMips
-          ? this.getNumMipLevels(this.size.width, this.size.height)
-          : 1
-      }
+      options.mipLevelCount = this.options.texture.generateMips
+        ? this.getNumMipLevels(this.size.width, this.size.height)
+        : 1
 
       if (this.texture) this.texture.destroy()
 
@@ -258,8 +279,7 @@ export class Texture extends Object3D {
       this.shouldUpdateBindGroup = !!this.source
     }
 
-    // no need to upload render texture, they will be copied from current context during draw loop
-    this.shouldUpdate = this.options.sourceType !== 'renderPass'
+    this.shouldUpdate = true
   }
 
   createSampler() {
@@ -269,16 +289,9 @@ export class Texture extends Object3D {
   /** SOURCES **/
 
   setSourceSize() {
-    if (this.options.sourceType === 'renderPass') {
-      this.size = {
-        width: this.source.size.width,
-        height: this.source.size.height,
-      }
-    } else {
-      this.size = {
-        width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
-        height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
-      }
+    this.size = {
+      width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
+      height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
     }
   }
 
@@ -343,17 +356,6 @@ export class Texture extends Object3D {
 
     this.setSourceSize()
     this.resize()
-
-    this.sourceLoaded = true // TODO useful?
-    this.createTexture()
-  }
-
-  loadRenderPass(source) {
-    this.source = source
-    this.options.source = source
-    this.options.sourceType = 'renderPass'
-
-    this.setSourceSize()
 
     this.sourceLoaded = true // TODO useful?
     this.createTexture()

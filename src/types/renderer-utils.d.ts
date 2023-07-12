@@ -1,6 +1,6 @@
 import { GPURenderer } from '../core/renderers/GPURenderer'
 import { GPUCameraRenderer } from '../core/renderers/GPUCameraRenderer'
-import { GPUCurtainsRenderer } from '../curtains/renderer/GPUCurtainsRenderer'
+import { GPUCurtainsRenderer } from '../curtains/renderers/GPUCurtainsRenderer'
 
 type Renderer = GPUCurtainsRenderer | GPUCameraRenderer | GPURenderer
 type CameraRenderer = GPUCurtainsRenderer | GPUCameraRenderer

@@ -1,4 +1,4 @@
-import { GPUCurtainsRenderer } from './renderer/GPUCurtainsRenderer'
+import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'

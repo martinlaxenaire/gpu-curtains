@@ -28,11 +28,13 @@ interface TextureBaseParams {
 interface TextureDefaultParams extends TextureBaseParams {
   texture?: CurtainsTextureOptions
   sampler?: GPUSamplerDescriptor
+  fromTexture?: Texture
 }
 
 interface TextureParams extends TextureDefaultParams {
   texture: CurtainsTextureOptions
   sampler: GPUSamplerDescriptor
+  fromTexture: Texture | null
 }
 
 type TextureSource = HTMLVideoElement | HTMLCanvasElement | ImageBitmap | RenderPass | null
@@ -92,6 +94,7 @@ export class Texture extends Object3D {
   uploadTexture()
   uploadVideoTexture()
 
+  copy(texture: Texture)
   createTexture()
   createSampler()
 

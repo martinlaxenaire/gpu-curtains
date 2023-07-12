@@ -143,7 +143,7 @@ const MeshBaseMixin = (superclass) =>
 
       const texture = new Texture(this.renderer, options)
 
-      this.material.addTextureBinding(texture)
+      this.material.addTexture(texture)
 
       this.textures.push(texture)
 

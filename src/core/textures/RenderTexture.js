@@ -12,7 +12,7 @@ const defaultRenderTextureParams = {
     minFilter: 'linear',
     mipmapFilter: 'linear',
   },
-  sourceTexture: null,
+  fromTexture: null,
 }
 
 export class RenderTexture {
@@ -58,8 +58,8 @@ export class RenderTexture {
   }
 
   createTexture() {
-    if (this.options.sourceTexture) {
-      this.texture = this.options.sourceTexture.texture
+    if (this.options.fromTexture) {
+      this.texture = this.options.fromTexture.texture
       return
     }
 

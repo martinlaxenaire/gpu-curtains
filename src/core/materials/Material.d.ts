@@ -5,7 +5,7 @@ import { PipelineEntry } from '../pipelines/PipelineEntry'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Texture } from '../textures/Texture'
-import { GPUCurtainsRenderer } from '../../curtains/renderer/GPUCurtainsRenderer'
+import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
 import { FullShadersType, MeshShadersOptions, MeshShaders } from '../meshes/MeshBaseMixin'
 import { RenderTexture } from '../textures/RenderTexture'
@@ -104,7 +104,7 @@ export class Material {
   shouldUpdateUniformsBindings(bufferBindingName?: BufferBindings['name'], uniformName?: BufferBindingsUniform['name'])
 
   setTextures()
-  addTextureBinding(texture: Texture | RenderTexture)
+  addTexture(texture: Texture | RenderTexture)
 
   onBeforeRender()
   render(pass: GPURenderPassEncoder)
