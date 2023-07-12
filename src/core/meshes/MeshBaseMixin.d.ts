@@ -1,7 +1,7 @@
 import { CameraRenderer } from '../../types/renderer-utils'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Material, MaterialBaseParams, MaterialParams } from '../materials/Material'
-import { Texture, TextureBaseParams, TextureDefaultParams } from '../textures/Texture'
+import { Texture, TextureDefaultParams } from '../textures/Texture'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import { DOMElementBoundingRect } from '../DOMElement'
@@ -50,16 +50,18 @@ export interface MeshBaseParams extends MaterialBaseParams {
   bindings?: MeshBindings[]
   visible?: boolean
   renderOrder?: number
-  // callbacks
-  onReady?: () => void
-  onRender?: () => void
-  onAfterRender?: () => void
-  onAfterResize?: () => void
 }
 
 declare let meshIndex: number
 
 declare const defaultMeshBaseParams: MeshBaseParams
+
+// https://stackoverflow.com/questions/65134811/es6-exporting-classes-with-typescript-mixins
+// https://stackoverflow.com/questions/58256383/using-javascript-class-mixins-with-typescript-declaration-files
+// https://www.typescriptlang.org/docs/handbook/mixins.html
+
+declare class EmptyClass {}
+export type MixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D | EmptyClass
 
 export class MeshBase {
   type: string
@@ -86,10 +88,14 @@ export class MeshBase {
   ready: boolean
 
   // callbacks
-  onReady: () => void
-  onRender: () => void
-  onAfterRender: () => void
-  onAfterResize: () => void
+  _onReadyCallback: () => void
+  _onRenderCallback: () => void
+  _onAfterRenderCallback: () => void
+  _onAfterResizeCallback: () => void
+  onReady: (callback: () => void) => new (...args: any[]) => MeshBase & InstanceType<MixinConstructor>
+  onRender: (callback: () => void) => new (...args: any[]) => MeshBase & InstanceType<MixinConstructor>
+  onAfterRender: (callback: () => void) => new (...args: any[]) => MeshBase & InstanceType<MixinConstructor>
+  onAfterResize: (callback: () => void) => new (...args: any[]) => MeshBase & InstanceType<MixinConstructor>
 
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
 
@@ -115,13 +121,6 @@ export class MeshBase {
   remove()
   destroy()
 }
-
-// https://stackoverflow.com/questions/65134811/es6-exporting-classes-with-typescript-mixins
-// https://stackoverflow.com/questions/58256383/using-javascript-class-mixins-with-typescript-declaration-files
-// https://www.typescriptlang.org/docs/handbook/mixins.html
-
-declare class EmptyClass {}
-export type MixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D | EmptyClass
 
 export default function MeshBaseMixin<TBase extends MixinConstructor>(
   superclass: TBase

@@ -34,14 +34,25 @@ interface TransformedMeshMaterialParameters extends MeshMaterialParameters {
 
 declare const defaultMeshParams: TransformedMeshParams
 
+// https://stackoverflow.com/questions/65134811/es6-exporting-classes-with-typescript-mixins
+// https://www.typescriptlang.org/docs/handbook/mixins.html
+
+type TransformedMixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D
+
 export class MeshTransformedBase {
   domFrustum: DOMFrustum
   frustumCulled: boolean
   DOMFrustumMargins: RectCoords
 
   // callbacks
-  onReEnterView: () => void
-  onLeaveView: () => void
+  _onReEnterViewCallback: () => void
+  _onLeaveViewCallback: () => void
+  onReEnterView: (
+    callback: () => void
+  ) => new (...args: any[]) => InstanceType<TransformedMixinConstructor> & MeshBase & MeshTransformedBase
+  onLeaveView: (
+    callback: () => void
+  ) => new (...args: any[]) => InstanceType<TransformedMixinConstructor> & MeshBase & MeshTransformedBase
 
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
 
@@ -55,15 +66,7 @@ export class MeshTransformedBase {
   updateProjectionMatrixStack()
 
   //render(pass: GPURenderPassEncoder)
-
-  remove()
-  //destroy()
 }
-
-// https://stackoverflow.com/questions/65134811/es6-exporting-classes-with-typescript-mixins
-// https://www.typescriptlang.org/docs/handbook/mixins.html
-
-type TransformedMixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D
 
 export default function MeshTransformedMixin<TBase extends TransformedMixinConstructor>(
   superclass: TBase

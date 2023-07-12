@@ -3,9 +3,6 @@ import { Plane } from '../meshes/Plane'
 import { DOMMesh } from '../meshes/DOMMesh'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
-  //planes: (typeof Plane)[]
-  //planes: Plane[]
-
   domMeshes: Array<DOMMesh | Plane>
 
   constructor({ container, pixelRatio, renderingScale, production, camera }: GPUCameraRendererParams)
@@ -13,8 +10,4 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
   onCameraPositionChanged()
 
   onResize()
-
-  //render()
-
-  //destroy()
 }

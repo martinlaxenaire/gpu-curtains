@@ -22,23 +22,24 @@ const defaultMeshBaseParams = {
   transparent: false,
   visible: true,
   renderOrder: 0,
-  // callbacks / events
-  onReady: () => {
-    /* allow empty callback */
-  },
-  onRender: () => {
-    /* allow empty callback */
-  },
-  onAfterRender: () => {
-    /* allow empty callback */
-  },
-  onAfterResize: () => {
-    /* allow empty callback */
-  },
 }
 
 const MeshBaseMixin = (superclass) =>
   class extends superclass {
+    // callbacks / events
+    _onReadyCallback = () => {
+      /* allow empty callback */
+    }
+    _onRenderCallback = () => {
+      /* allow empty callback */
+    }
+    _onAfterRenderCallback = () => {
+      /* allow empty callback */
+    }
+    _onAfterResizeCallback = () => {
+      /* allow empty callback */
+    }
+
     constructor(renderer, element, parameters) {
       parameters = { ...defaultMeshBaseParams, ...parameters }
 
@@ -61,19 +62,7 @@ const MeshBaseMixin = (superclass) =>
 
       this.textures = []
 
-      const {
-        label,
-        shaders,
-        geometry,
-        bindings,
-        visible,
-        renderOrder,
-        onReady,
-        onRender,
-        onAfterRender,
-        onAfterResize,
-        ...meshParameters
-      } = parameters
+      const { label, shaders, geometry, bindings, visible, renderOrder, ...meshParameters } = parameters
 
       this.options = {
         label,
@@ -82,11 +71,6 @@ const MeshBaseMixin = (superclass) =>
       }
 
       this.geometry = geometry
-
-      this.onReady = onReady
-      this.onRender = onRender
-      this.onAfterRender = onAfterRender
-      this.onAfterResize = onAfterResize
 
       this.visible = visible
       this.renderOrder = renderOrder
@@ -176,32 +160,64 @@ const MeshBaseMixin = (superclass) =>
     resize(boundingRect = null) {
       if (super.resize) super.resize(boundingRect)
 
-      this.onAfterResize && this.onAfterResize()
+      this._onAfterResizeCallback && this._onAfterResizeCallback()
+    }
+
+    /** EVENTS **/
+
+    onReady(callback) {
+      if (callback) {
+        this._onReadyCallback = callback
+      }
+
+      return this
+    }
+
+    onRender(callback) {
+      if (callback) {
+        this._onRenderCallback = callback
+      }
+
+      return this
+    }
+
+    onAfterRender(callback) {
+      if (callback) {
+        this._onAfterRenderCallback = callback
+      }
+
+      return this
+    }
+
+    onAfterResize(callback) {
+      if (callback) {
+        this._onAfterResizeCallback = callback
+      }
+
+      return this
     }
 
     /**
-     *
-     * @param pass
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
 
       if (this.material && this.material.ready && !this.ready) {
         this.ready = true
-        this.onReady()
+        this._onReadyCallback && this._onReadyCallback()
       }
 
       this.material.onBeforeRender()
     }
 
     onRenderPass(pass) {
-      this.onRender()
+      this._onRenderCallback && this._onRenderCallback()
 
       this.material.render(pass)
     }
 
     onAfterRenderPass() {
-      this.onAfterRender()
+      this._onAfterRenderCallback && this._onAfterRenderCallback()
     }
 
     render(pass) {

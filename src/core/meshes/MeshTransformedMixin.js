@@ -17,17 +17,18 @@ const defaultMeshParams = {
     bottom: 0,
     left: 0,
   },
-  // callbacks / events
-  onReEnterView: () => {
-    /* allow empty callback */
-  },
-  onLeaveView: () => {
-    /* allow empty callback */
-  },
 }
 
 const MeshTransformedMixin = (superclass) =>
   class extends superclass {
+    // callbacks / events
+    _onReEnterViewCallback = () => {
+      /* allow empty callback */
+    }
+    _onLeaveViewCallback = () => {
+      /* allow empty callback */
+    }
+
     constructor(renderer, element, parameters) {
       parameters = { ...defaultMeshParams, ...parameters }
 
@@ -52,9 +53,6 @@ const MeshTransformedMixin = (superclass) =>
         shaders,
         ...(this.options ?? {}), // merge possible lower options?
       }
-
-      this.onReEnterView = onReEnterView
-      this.onLeaveView = onLeaveView
 
       // explicitly needed for DOM Frustum
       this.geometry = geometry
@@ -107,10 +105,10 @@ const MeshTransformedMixin = (superclass) =>
         containerBoundingRect: this.renderer.boundingRect,
         DOMFrustumMargins,
         onReEnterView: () => {
-          this.onReEnterView()
+          this._onReEnterViewCallback && this._onReEnterViewCallback()
         },
         onLeaveView: () => {
-          this.onLeaveView()
+          this._onLeaveViewCallback && this._onLeaveViewCallback()
         },
       })
 
@@ -151,6 +149,24 @@ const MeshTransformedMixin = (superclass) =>
       if (this.domFrustum) this.domFrustum.shouldUpdate = true
     }
 
+    /** EVENTS **/
+
+    onReEnterView(callback) {
+      if (callback) {
+        this._onReEnterViewCallback = callback
+      }
+
+      return this
+    }
+
+    onLeaveView(callback) {
+      if (callback) {
+        this._onLeaveViewCallback = callback
+      }
+
+      return this
+    }
+
     /** Render loop **/
 
     /**
@@ -167,21 +183,13 @@ const MeshTransformedMixin = (superclass) =>
     }
 
     onRenderPass(pass) {
-      this.onRender()
+      this._onRenderCallback && this._onRenderCallback()
 
       // TODO check if frustumCulled
       if (this.domFrustum.isIntersecting || !this.frustumCulled) {
         this.material.render(pass)
       }
     }
-
-    remove() {
-      super.remove()
-    }
-
-    // destroy() {
-    //   super.destroy()
-    // }
   }
 
 export default MeshTransformedMixin
