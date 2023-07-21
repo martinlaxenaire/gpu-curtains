@@ -81,8 +81,6 @@ export const generateMips = ((device, texture) => {
       })
     }
 
-    console.log(pipelineByFormat, texture)
-
     if (!pipelineByFormat[texture.format]) {
       pipelineByFormat[texture.format] = device.createRenderPipeline({
         label: 'mip level generator pipeline',

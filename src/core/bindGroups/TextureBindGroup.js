@@ -82,6 +82,7 @@ export class TextureBindGroup extends BindGroup {
     if (texturesEntries.length) {
       texturesEntries.forEach((entry, index) => {
         const texture = this.textures[index]
+
         if (texture)
           entry.resource = texture.options.sourceType === 'video' ? texture.texture : texture.texture.createView()
       })

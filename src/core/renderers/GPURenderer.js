@@ -36,6 +36,8 @@ export class GPURenderer {
       element: document.body,
       onSizeChanged: () => this.resize(),
     })
+
+    this.texturesQueue = []
   }
 
   /**
@@ -263,6 +265,8 @@ export class GPURenderer {
       if (texture.texture.mipLevelCount > 1) {
         generateMips(this.device, texture.texture)
       }
+
+      this.texturesQueue.push(texture)
     } else {
       this.device.queue.writeTexture(
         { texture: texture.texture },
@@ -340,6 +344,15 @@ export class GPURenderer {
 
     const commandBuffer = commandEncoder.finish()
     this.device.queue.submit([commandBuffer])
+
+    this.device.queue.onSubmittedWorkDone().then(() => {
+      this.texturesQueue.forEach((texture) => {
+        texture.sourceUploaded = true
+      })
+
+      // clear texture queue
+      this.texturesQueue = []
+    })
 
     // end of render, reset current pipeline ID
     // TODO in scene class instead?

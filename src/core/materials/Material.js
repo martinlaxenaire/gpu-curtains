@@ -40,7 +40,7 @@ export class Material {
     }
 
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
-      label: this.options.label + ': Render pipeline',
+      label: this.options.label + ' render pipeline',
       shaders: this.options.shaders,
       ...this.options.rendering,
     })
@@ -290,13 +290,6 @@ export class Material {
       this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1
     ) {
       this.texturesBindGroup.addTexture(texture)
-
-      if (this.ready) {
-        // we've added textures after the material pipeline has been created
-        // reset everything during next render call
-        this.texturesBindGroup.needsReset = true
-        this.texturesBindGroup.needsPipelineFlush = true
-      }
     }
   }
 

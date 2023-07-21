@@ -42,12 +42,6 @@ export class Plane extends DOMMesh {
     super(renderer, element, { geometry, ...domMeshParams })
 
     this.type = 'Plane'
-
-    // this.options = {
-    //   label,
-    // }
-
-    //this.renderer.planes.push(/** @type {Plane} **/ this)
   }
 
   mouseToPlaneCoords(mouseCoords = new Vec2()) {

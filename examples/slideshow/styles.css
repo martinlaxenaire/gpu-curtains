@@ -1,6 +1,6 @@
 @media screen {
-
-  html, body {
+  html,
+  body {
     min-height: 100%;
   }
 
@@ -96,7 +96,6 @@
     justify-content: center;
     align-items: center;
     align-content: center;
-
   }
 
   .multi-textures img {
@@ -137,14 +136,10 @@
   .no-curtains.image-4 .multi-textures img:nth-child(6) {
     display: block;
   }
-
 }
 
-
 @media screen and (max-width: 1000px) {
-
   .multi-textures {
     font-size: 2em;
   }
-
 }

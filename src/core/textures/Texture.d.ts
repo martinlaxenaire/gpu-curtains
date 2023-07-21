@@ -69,7 +69,8 @@ export class Texture extends Object3D {
 
   _parent: TextureParent
 
-  sourceLoaded: boolean
+  _sourceLoaded: boolean
+  _sourceUploaded: boolean
   shouldUpdate: boolean
   shouldUpdateBindGroup: boolean
 
@@ -84,6 +85,12 @@ export class Texture extends Object3D {
 
   get parent(): TextureParent
   set parent(value: TextureParent)
+
+  get sourceLoaded(): boolean
+  set sourceLoaded(value: boolean)
+
+  get sourceUploaded(): boolean
+  set sourceUploaded(value: boolean)
 
   updateTextureMatrix()
   resize()
@@ -107,7 +114,11 @@ export class Texture extends Object3D {
 
   loadCanvas(source: HTMLCanvasElement)
 
-  loadRenderPass(source: RenderPass)
+  // callbacks
+  _onSourceLoadedCallback: () => void
+  _onSourceUploadedCallback: () => void
+  onSourceLoaded: (callback: () => void) => Texture
+  onSourceUploaded: (callback: () => void) => Texture
 
   destroy()
 }

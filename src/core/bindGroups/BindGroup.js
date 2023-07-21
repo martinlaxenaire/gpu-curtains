@@ -67,6 +67,7 @@ export class BindGroup {
     this.setBindGroup()
   }
 
+  // TODO not necessarily needed
   resetBindGroup() {
     this.resetEntries()
     this.createBindGroup()
@@ -129,7 +130,9 @@ export class BindGroup {
     this.bindingsBuffers.forEach((bindingBuffer) => {
       if (bindingBuffer.uniformBinding.shouldUpdate) {
         // bufferOffset is always equals to 0 in our case
-        this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.uniformBinding.value)
+
+        if (bindingBuffer.uniformBinding)
+          this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.uniformBinding.value)
       }
 
       bindingBuffer.uniformBinding.shouldUpdate = false

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <!-- Metas -->
     <title>gpu-curtains | Basic plane example</title>
-    <meta name="description" content="A basic WebGL plane bound to a HTML DOM element with gpu-curtains">
+    <meta name="description" content="A basic WebGL plane bound to a HTML DOM element with gpu-curtains" />
 
-    <link href="https://fonts.googleapis.com/css?family=PT+Sans:400" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=PT+Sans:400" rel="stylesheet" />
 
     <style>
       body {
@@ -82,42 +82,45 @@
         display: none;
       }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div id="canvas"></div>
 
-<div id="canvas"></div>
+    <a href="https://www.curtainsjs.com/" title="back to curtains.js website" id="back-to-lib-link" target="_blank"
+      >back to curtains.js website</a
+    >
 
-<a href="https://www.curtainsjs.com/" title="back to curtains.js website" id="back-to-lib-link" target="_blank">back to
-    curtains.js website</a>
-
-<div class="wrapper">
-    <div class="plane">
-        <img src="https://source.unsplash.com/featured/1920x1280/?nature" crossorigin=""/>
+    <div class="wrapper">
+      <div class="plane">
+        <img src="https://source.unsplash.com/featured/1920x1280/?nature" crossorigin="" />
+      </div>
     </div>
-</div>
 
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/basic-plane/index.html"
+      title="Show source code"
+      id="source-code-link"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
 
-<a href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/basic-plane/index.html"
-   title="Show source code" id="source-code-link" target="_blank">&lt;/ &gt;</a>
+    <script src="../../dist/gpu-curtains.umd.js"></script>
+    <script>
+      //import {GPUCurtains, Plane} from '../../dist/gpu-curtains.mjs';
 
+      window.addEventListener('load', async () => {
+        // set up our WebGL context and append the canvas to our wrapper
+        const gpuCurtains = new GPUCurtains.GPUCurtains({
+          container: 'canvas',
+          pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+        })
 
-<script src="../../dist/gpu-curtains.umd.js"></script>
-<script>
-  //import {GPUCurtains, Plane} from '../../dist/gpu-curtains.mjs';
+        await gpuCurtains.setRendererContext()
 
-  window.addEventListener("load", async () => {
-    // set up our WebGL context and append the canvas to our wrapper
-    const gpuCurtains = new GPUCurtains.GPUCurtains({
-      container: "canvas",
-      pixelRatio: Math.min(1.5, window.devicePixelRatio) // limit pixel ratio for performance
-    });
+        // get our plane element
+        const planeElements = document.getElementsByClassName('plane')
 
-    await gpuCurtains.setRendererContext()
-
-    // get our plane element
-    const planeElements = document.getElementsByClassName("plane");
-
-    const vertexShader = `
+        const vertexShader = `
         struct VSOutput {
             @builtin(position) position: vec4f,
             @location(1) uv: vec2f,
@@ -153,7 +156,7 @@
           }
     `
 
-    const fragmentShader = `
+        const fragmentShader = `
         struct VSOutput {
             @builtin(position) position: vec4f,
             @location(1) uv: vec2f,
@@ -166,39 +169,40 @@
           }
     `
 
-    // set our initial parameters (basic uniforms)
-    const params = {
-      widthSegments: 20,
-      shaders: {
-        vertex: {
-          code: vertexShader,
-          entryPoint: 'main'
-        },
-        fragment: {
-          code: fragmentShader,
-          entryPoint: 'main'
-        }
-      },
-      bindings: [
-        {
-          name: 'uniforms', // could be something else, like "frames"...
-          label: 'Uniforms',
-          uniforms: {
-            time: {
-              type: "f32", // this means our uniform is a float
-              value: 0,
+        // set our initial parameters (basic uniforms)
+        const params = {
+          widthSegments: 20,
+          shaders: {
+            vertex: {
+              code: vertexShader,
+              entryPoint: 'main',
             },
-          }
+            fragment: {
+              code: fragmentShader,
+              entryPoint: 'main',
+            },
+          },
+          bindings: [
+            {
+              name: 'uniforms', // could be something else, like "frames"...
+              label: 'Uniforms',
+              uniforms: {
+                time: {
+                  type: 'f32', // this means our uniform is a float
+                  value: 0,
+                },
+              },
+            },
+          ],
         }
-      ],
-      onRender: () => {
-        plane.uniforms.time.value++; // update our time uniform value
-      }
-    };
 
-    const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params);
-  });
-</script>
+        const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
 
-</body>
+        plane.onRender(() => {
+          // update our time uniform value
+          plane.uniforms.time.value++
+        })
+      })
+    </script>
+  </body>
 </html>

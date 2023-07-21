@@ -1,4 +1,6 @@
 window.addEventListener('DOMContentLoaded', async () => {
+  console.log(window)
+
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains.GPUCurtains({
     container: 'canvas',
@@ -22,39 +24,39 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   const vertexShader = `
-        struct VSOutput {
-            @builtin(position) position: vec4f,
-            @location(1) activeUv: vec2f,
-            @location(2) nextUv: vec2f,
-          };
-
-          @vertex fn main(
-            attributes: Attributes,
-          ) -> VSOutput {
-            var vsOutput: VSOutput;
-
-            vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
-
-            vsOutput.activeUv = getScaledUV(attributes.uv, activeTextureMatrix);
-            vsOutput.nextUv = getScaledUV(attributes.uv, nextTextureMatrix);
-
-            return vsOutput;
-          }
+      struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(1) activeUv: vec2f,
+        @location(2) nextUv: vec2f,
+      };
+      
+      @vertex fn main(
+        attributes: Attributes,
+      ) -> VSOutput {
+        var vsOutput: VSOutput;
+      
+        vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      
+        vsOutput.activeUv = getScaledUV(attributes.uv, activeTextureMatrix);
+        vsOutput.nextUv = getScaledUV(attributes.uv, nextTextureMatrix);
+      
+        return vsOutput;
+      }
     `
 
   const fragmentShader = `
-        struct VSOutput {
-            @builtin(position) position: vec4f,
-            @location(1) activeUv: vec2f,
-            @location(2) nextUv: vec2f,
-          };
-
-          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-            var activeColor: vec4f = textureSample(activeTexture, activeTextureSampler, fsInput.activeUv);
-            var nextColor: vec4f = textureSample(nextTexture, nextTextureSampler, fsInput.nextUv);
-
-            return mix(activeColor, nextColor, 1.0 - ((cos(transition.timer / (90.0 / 3.141592)) + 1.0) / 2.0));
-          }
+      struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(1) activeUv: vec2f,
+        @location(2) nextUv: vec2f,
+      };
+      
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var activeColor: vec4f = textureSample(activeTexture, activeTextureSampler, fsInput.activeUv);
+        var nextColor: vec4f = textureSample(nextTexture, nextTextureSampler, fsInput.nextUv);
+      
+        return mix(activeColor, nextColor, 1.0 - ((cos(transition.timer / (90.0 / 3.141592)) + 1.0) / 2.0));
+      }
     `
 
   // some basic parameters
@@ -81,7 +83,31 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
       },
     ],
-    onReady: () => {
+  }
+
+  const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
+
+  // the idea here is to create two additionnal textures
+  // the first one will contain our visible image
+  // the second one will contain our entering (next) image
+  // that way we will deal with only activeTex and nextTex samplers in the fragment shader
+  // and we could easily add more images in the slideshow...
+  // first we set our very first image as the active texture
+  const activeTex = plane.createTexture({
+    label: 'Active texture',
+    name: 'activeTexture',
+    fromTexture: plane.textures[slideshowState.activeTextureIndex],
+  })
+  // next we set the second image as next texture but this is not mandatory
+  // as we will reset the next texture on slide change
+  const nextTex = plane.createTexture({
+    label: 'Next texture',
+    name: 'nextTexture',
+    fromTexture: plane.textures[slideshowState.nextTextureIndex],
+  })
+
+  plane
+    .onReady(() => {
       planeElements[0].addEventListener('click', () => {
         if (!slideshowState.isChanging) {
           slideshowState.isChanging = true
@@ -95,21 +121,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 
           // apply it to our next texture
           //nextTex.setSource(multiTexturesPlane.images[slideshowState.nextTextureIndex])
-          nextTex.copy(multiTexturesPlane.textures[slideshowState.nextTextureIndex])
+          nextTex.copy(plane.textures[slideshowState.nextTextureIndex])
 
           setTimeout(() => {
             slideshowState.isChanging = false
             slideshowState.activeTextureIndex = slideshowState.nextTextureIndex
             // our next texture becomes our active texture
             //activeTex.setSource(multiTexturesPlane.images[slideshowState.activeTextureIndex])
-            activeTex.copy(multiTexturesPlane.textures[slideshowState.activeTextureIndex])
+            activeTex.copy(plane.textures[slideshowState.activeTextureIndex])
             // reset timer
             slideshowState.transitionTimer = 0
           }, 1700) // add a bit of margin to the timer
         }
       })
-    },
-    onRender: () => {
+    })
+    .onRender(() => {
       // increase or decrease our timer based on the active texture value
       if (slideshowState.isChanging) {
         // use damping to smoothen transition
@@ -122,30 +148,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
 
       // update our transition timer uniform
-      multiTexturesPlane.uniforms.timer.value = slideshowState.transitionTimer
-    },
-  }
-
-  const multiTexturesPlane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
-
-  // the idea here is to create two additionnal textures
-  // the first one will contain our visible image
-  // the second one will contain our entering (next) image
-  // that way we will deal with only activeTex and nextTex samplers in the fragment shader
-  // and we could easily add more images in the slideshow...
-  // first we set our very first image as the active texture
-  const activeTex = multiTexturesPlane.createTexture({
-    label: 'Active texture',
-    name: 'activeTexture',
-    fromTexture: multiTexturesPlane.textures[slideshowState.activeTextureIndex],
-  })
-  // next we set the second image as next texture but this is not mandatory
-  // as we will reset the next texture on slide change
-  const nextTex = multiTexturesPlane.createTexture({
-    label: 'Next texture',
-    name: 'nextTexture',
-    fromTexture: multiTexturesPlane.textures[slideshowState.nextTextureIndex],
-  })
-
-  console.log(multiTexturesPlane)
+      plane.uniforms.timer.value = slideshowState.transitionTimer
+    })
 })

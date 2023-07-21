@@ -89,16 +89,4 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
       loaderSize = images.length + videos.length + canvases.length
     }
   }
-
-  render(pass) {
-    // no point to render if the WebGPU device is not ready
-    if (!this.renderer.ready) return
-
-    // this.textures.forEach((texture) => {
-    //   texture.textureMatrix.onBeforeRender()
-    // })
-
-    //super.render(pass)
-    super.render(pass)
-  }
 }

@@ -4,6 +4,17 @@ import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 
 export class GPUCurtains {
+  // callbacks / events
+  _onRenderCallback = () => {
+    /* allow empty callback */
+  }
+  _onScrollCallback = () => {
+    /* allow empty callback */
+  }
+  _onAfterResizeCallback = () => {
+    /* allow empty callback */
+  }
+
   constructor({
     container,
     pixelRatio = window.devicePixelRatio ?? 1,
@@ -114,6 +125,8 @@ export class GPUCurtains {
   // called only if autoResize is set to false
   resize() {
     this.renderer?.resize()
+
+    this._onAfterResizeCallback && this._onAfterResizeCallback()
   }
 
   /**
@@ -139,6 +152,48 @@ export class GPUCurtains {
         mesh.updateScrollPosition(lastXDelta, lastYDelta)
       }
     })
+
+    this._onScrollCallback && this._onScrollCallback()
+  }
+
+  getScrollDeltas() {
+    return {
+      x: this.scrollManager.lastXDelta,
+      y: this.scrollManager.lastYDelta,
+    }
+  }
+
+  getScrollValues() {
+    return {
+      x: this.scrollManager.xOffset,
+      y: this.scrollManager.yOffset,
+    }
+  }
+
+  /** EVENTS **/
+
+  onRender(callback) {
+    if (callback) {
+      this._onRenderCallback = callback
+    }
+
+    return this
+  }
+
+  onScroll(callback) {
+    if (callback) {
+      this._onScrollCallback = callback
+    }
+
+    return this
+  }
+
+  onAfterResize(callback) {
+    if (callback) {
+      this._onAfterResizeCallback = callback
+    }
+
+    return this
   }
 
   /***
@@ -150,6 +205,8 @@ export class GPUCurtains {
   }
 
   render() {
+    this._onRenderCallback && this._onRenderCallback()
+
     this.renderer?.render()
   }
 

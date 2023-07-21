@@ -22,6 +22,10 @@ const defaultMeshBaseParams = {
   transparent: false,
   visible: true,
   renderOrder: 0,
+  texturesOptions: {
+    texture: {},
+    sampler: {},
+  },
 }
 
 const MeshBaseMixin = (superclass) =>
@@ -62,11 +66,13 @@ const MeshBaseMixin = (superclass) =>
 
       this.textures = []
 
-      const { label, shaders, geometry, bindings, visible, renderOrder, ...meshParameters } = parameters
+      const { label, shaders, geometry, bindings, visible, renderOrder, texturesOptions, ...meshParameters } =
+        parameters
 
       this.options = {
         label,
         shaders,
+        texturesOptions,
         ...(this.options ?? {}), // merge possible lower options?
       }
 
@@ -125,7 +131,11 @@ const MeshBaseMixin = (superclass) =>
         options.name = 'texture' + this.textures.length
       }
 
-      const texture = new Texture(this.renderer, options)
+      if (!options.label) {
+        options.label = this.options.label + ' ' + options.name
+      }
+
+      const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions })
 
       this.material.addTexture(texture)
 

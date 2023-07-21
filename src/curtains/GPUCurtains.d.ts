@@ -28,6 +28,13 @@ export class GPUCurtains {
 
   animationFrameID: null | number
 
+  _onRenderCallback: () => void
+  _onScrollCallback: () => void
+  _onAfterResizeCallback: () => void
+  onRender(callback: () => void): GPUCurtains
+  onScroll(callback: () => void): GPUCurtains
+  onAfterResize(callback: () => void): GPUCurtains
+
   constructor({ container, pixelRatio, camera }: GPUCurtainsParams)
 
   setContainer(container: string | HTMLElement)
@@ -43,6 +50,8 @@ export class GPUCurtains {
 
   initScroll()
   updateScroll(lastXDelta?: number, lastYDelta?: number)
+  getScrollDeltas(): { x: number; y: number }
+  getScrollValues(): { x: number; y: number }
 
   animate()
   render()

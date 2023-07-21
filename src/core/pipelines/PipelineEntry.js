@@ -193,6 +193,7 @@ export class PipelineEntry {
 
   createPipelineLayout() {
     this.layout = this.renderer.createPipelineLayout({
+      label: this.options.label + ' layout',
       bindGroupLayouts: this.bindGroups.map((bindGroup) => bindGroup.bindGroupLayout),
     })
   }

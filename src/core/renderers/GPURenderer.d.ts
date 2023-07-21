@@ -45,6 +45,7 @@ export class GPURenderer {
   meshes: MeshTypes[]
   samplers: Sampler[]
   textures: Texture[]
+  texturesQueue: Texture[]
 
   sampleCount: GPUSize32
   pixelRatio: number

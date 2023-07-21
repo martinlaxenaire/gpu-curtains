@@ -7,7 +7,6 @@ import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
 
 const defaultTextureParams = {
-  label: 'Texture',
   name: 'texture',
   texture: {
     generateMips: false,
@@ -31,6 +30,14 @@ export class Texture extends Object3D {
   #coverScale = new Vec3(1)
   #rotationMatrix = new Mat4()
 
+  // callbacks / events
+  _onSourceLoadedCallback = () => {
+    /* allow empty callback */
+  }
+  _onSourceUploadedCallback = () => {
+    /* allow empty callback */
+  }
+
   constructor(renderer, parameters = defaultTextureParams) {
     super()
 
@@ -53,6 +60,11 @@ export class Texture extends Object3D {
     }
 
     this.options = { ...defaultOptions, ...parameters }
+    // force merge of texture and sampler objects
+    this.options.texture = { ...defaultOptions.texture, ...parameters.texture }
+    this.options.sampler = { ...defaultOptions.sampler, ...parameters.sampler }
+
+    this.options.label = this.options.label ?? this.options.name
 
     this.sampler = null
     this.texture = null
@@ -85,6 +97,7 @@ export class Texture extends Object3D {
     this._parent = null
 
     this.sourceLoaded = false
+    this.sourceUploaded = false
     this.shouldUpdate = false
     this.shouldUpdateBindGroup = false
 
@@ -117,6 +130,28 @@ export class Texture extends Object3D {
   set parent(value) {
     this._parent = value
     this.resize()
+  }
+
+  get sourceLoaded() {
+    return this._sourceLoaded
+  }
+
+  set sourceLoaded(value) {
+    if (value && !this.sourceLoaded) {
+      this._onSourceLoadedCallback && this._onSourceLoadedCallback()
+    }
+    this._sourceLoaded = value
+  }
+
+  get sourceUploaded() {
+    return this._sourceUploaded
+  }
+
+  set sourceUploaded(value) {
+    if (value && !this.sourceUploaded) {
+      this._onSourceUploadedCallback && this._onSourceUploadedCallback()
+    }
+    this._sourceUploaded = value
   }
 
   setTransforms() {
@@ -219,12 +254,6 @@ export class Texture extends Object3D {
     return (1 + Math.log2(maxSize)) | 0
   }
 
-  async loadImageBitmap(url) {
-    const res = await fetch(url)
-    const blob = await res.blob()
-    return await createImageBitmap(blob, { colorSpaceConversion: 'none' })
-  }
-
   uploadTexture() {
     this.renderer.uploadTexture(this)
     this.shouldUpdate = false
@@ -233,8 +262,8 @@ export class Texture extends Object3D {
   uploadVideoTexture() {
     this.texture = this.renderer.importExternalTexture(this.source)
     this.shouldUpdateBindGroup = true
-    //this.shouldUpdate = true
     this.shouldUpdate = false
+    this.sourceUploaded = true
   }
 
   copy(texture) {
@@ -295,16 +324,24 @@ export class Texture extends Object3D {
     }
   }
 
+  async loadImageBitmap(url) {
+    const res = await fetch(url)
+    const blob = await res.blob()
+    return await createImageBitmap(blob, { colorSpaceConversion: 'none' })
+  }
+
   async loadImage(sourceUrl) {
     this.options.source = sourceUrl
     this.options.sourceType = 'image'
+    this.sourceLoaded = false
+    this.sourceUploaded = false
 
     this.source = await this.loadImageBitmap(this.options.source)
 
     this.setSourceSize()
     this.resize()
 
-    this.sourceLoaded = true // TODO useful?
+    this.sourceLoaded = true
     this.createTexture()
   }
 
@@ -322,6 +359,8 @@ export class Texture extends Object3D {
 
   async loadVideo(source) {
     this.options.source = source
+    this.sourceLoaded = false
+    this.sourceUploaded = false
 
     await source
       .play()
@@ -340,7 +379,7 @@ export class Texture extends Object3D {
           this.videoFrameCallbackId = this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
         }
 
-        this.sourceLoaded = true // TODO useful?
+        this.sourceLoaded = true
       })
       .catch((e) => {
         console.log(e)
@@ -350,6 +389,8 @@ export class Texture extends Object3D {
   loadCanvas(source) {
     this.options.source = source
     this.options.sourceType = 'canvas'
+    this.sourceLoaded = false
+    this.sourceUploaded = false
 
     //this.source = await this.loadImageBitmap(this.options.source)
     this.source = source
@@ -357,9 +398,29 @@ export class Texture extends Object3D {
     this.setSourceSize()
     this.resize()
 
-    this.sourceLoaded = true // TODO useful?
+    this.sourceLoaded = true
     this.createTexture()
   }
+
+  /** EVENTS **/
+
+  onSourceLoaded(callback) {
+    if (callback) {
+      this._onSourceLoadedCallback = callback
+    }
+
+    return this
+  }
+
+  onSourceUploaded(callback) {
+    if (callback) {
+      this._onSourceUploadedCallback = callback
+    }
+
+    return this
+  }
+
+  /** DESTROY **/
 
   destroy() {
     if (this.videoFrameCallbackId) {

@@ -140,6 +140,11 @@ export class BufferBindings extends Bindings {
           bindingElement.array[2] = value.z
         } else if (value.elements) {
           bindingElement.array = value.elements
+          //if (bindingElement.name === 'planeTextureMatrix') console.log(bindingElement, value.elements)
+        } else if (Array.isArray(value)) {
+          for (let i = 0; i < bindingElement.array.length; i++) {
+            bindingElement.array[i] = value[i] ? value[i] : 0
+          }
         }
       }
     })

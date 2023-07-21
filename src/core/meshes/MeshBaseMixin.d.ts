@@ -1,7 +1,7 @@
 import { CameraRenderer } from '../../types/renderer-utils'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Material, MaterialBaseParams, MaterialParams } from '../materials/Material'
-import { Texture, TextureDefaultParams } from '../textures/Texture'
+import { CurtainsTextureOptions, Texture, TextureDefaultParams } from '../textures/Texture'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import { DOMElementBoundingRect } from '../DOMElement'
@@ -50,6 +50,10 @@ export interface MeshBaseParams extends MaterialBaseParams {
   bindings?: MeshBindings[]
   visible?: boolean
   renderOrder?: number
+  texturesOptions?: {
+    textures: CurtainsTextureOptions
+    sampler: GPUSamplerDescriptor
+  }
 }
 
 declare let meshIndex: number
@@ -72,6 +76,10 @@ export class MeshBase {
   options: {
     label: MeshBaseParams['label']
     shaders: MeshBaseParams['shaders']
+    texturesOptions: {
+      texture: CurtainsTextureOptions
+      sampler: GPUSamplerDescriptor
+    }
   }
 
   material: Material
