@@ -180,6 +180,10 @@ export class Material {
   destroyAttributeBuffers() {
     this.attributes.buffers?.vertexBuffer?.destroy()
     this.attributes.buffers?.indexBuffer?.destroy()
+    this.attributes = {
+      geometry: null,
+      buffers: null,
+    }
   }
 
   /** Bind GROUPS **/
@@ -208,6 +212,9 @@ export class Material {
 
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
+    this.texturesBindGroup = null
+    this.uniformsBindGroups = []
+    this.bindGroups = []
   }
 
   updateBindGroups() {
@@ -285,6 +292,11 @@ export class Material {
     ) {
       this.texturesBindGroup.addTexture(texture)
     }
+  }
+
+  destroyTextures() {
+    this.textures?.forEach((texture) => texture.destroy())
+    this.textures = []
   }
 
   /** Render loop **/
@@ -371,5 +383,6 @@ export class Material {
     // destroy all buffers created with createBuffer
     this.destroyAttributeBuffers()
     this.destroyBindGroups()
+    this.destroyTextures()
   }
 }

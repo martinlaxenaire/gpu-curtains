@@ -348,8 +348,10 @@ export class Texture extends Object3D {
     return await createImageBitmap(blob, { colorSpaceConversion: 'none' })
   }
 
-  async loadImage(sourceUrl) {
-    this.options.source = sourceUrl
+  async loadImage(source) {
+    const image = typeof source === 'string' ? source : source.getAttribute('src')
+
+    this.options.source = image
     this.options.sourceType = 'image'
     this.sourceLoaded = false
     this.sourceUploaded = false
@@ -376,38 +378,70 @@ export class Texture extends Object3D {
     }
   }
 
-  async loadVideo(source) {
-    this.options.source = source
+  onVideoLoaded(video) {
+    if (!this.sourceLoaded) {
+      this.source = video
+
+      this.setSourceSize()
+      this.resize()
+
+      if (this.options.texture.useExternalTextures) {
+        this.options.sourceType = 'externalVideo'
+
+        // reset texture bindings
+        this.setBindings()
+      } else {
+        this.options.sourceType = 'video'
+        this.createTexture()
+      }
+
+      if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+        this.videoFrameCallbackId = this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
+      }
+
+      this.sourceLoaded = true
+    }
+  }
+
+  get isVideoSource() {
+    return this.source && (this.options.sourceType === 'video' || this.options.sourceType === 'externalVideo')
+  }
+
+  loadVideo(source) {
+    let video
+
+    if (typeof source === 'string') {
+      video = document.createElement('video')
+      video.src = source
+    } else {
+      video = source
+    }
+
+    video.preload = 'auto'
+    video.muted = true
+    video.loop = true
+    video.crossOrigin = 'anonymous'
+    video.setAttribute('playsinline', '')
+
+    this.options.source = video.src
     this.sourceLoaded = false
     this.sourceUploaded = false
 
-    await source
-      .play()
-      .then(() => {
-        this.source = source
-
-        this.setSourceSize()
-        this.resize()
-
-        if (this.options.texture.useExternalTextures) {
-          this.options.sourceType = 'externalVideo'
-
-          // reset texture bindings
-          this.setBindings()
-        } else {
-          this.options.sourceType = 'video'
-          this.createTexture()
-        }
-
-        if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
-          this.videoFrameCallbackId = this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
-        }
-
-        this.sourceLoaded = true
+    // If the video is in the cache of the browser,
+    // the 'canplaythrough' event might have been triggered
+    // before we registered the event handler.
+    if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+      this.onVideoLoaded(video)
+    } else {
+      video.addEventListener('canplaythrough', this.onVideoLoaded.bind(this, video), {
+        once: true,
       })
-      .catch((e) => {
-        console.log(e)
-      })
+    }
+
+    // if duration is not available, should mean our video has not started loading
+    if (isNaN(video.duration)) {
+      video.load()
+    }
   }
 
   loadCanvas(source) {
@@ -416,7 +450,6 @@ export class Texture extends Object3D {
     this.sourceLoaded = false
     this.sourceUploaded = false
 
-    //this.source = await this.loadImageBitmap(this.options.source)
     this.source = source
 
     this.setSourceSize()
@@ -458,6 +491,16 @@ export class Texture extends Object3D {
       this.shouldUpdate = true
     }
 
+    // if no videoFrameCallback check if the video is actually really playing
+    if (
+      this.isVideoSource &&
+      !this.videoFrameCallbackId &&
+      this.source.readyState >= this.source.HAVE_CURRENT_DATA &&
+      !this.source.paused
+    ) {
+      this.shouldUpdate = true
+    }
+
     if (this.shouldUpdate && this.options.sourceType && this.options.sourceType !== 'externalVideo') {
       this.uploadTexture()
     }
@@ -470,6 +513,13 @@ export class Texture extends Object3D {
       this.source.cancelVideoFrameCallback(this.videoFrameCallbackId)
     }
 
+    if (this.isVideoSource) {
+      this.source.removeEventListener('canplaythrough', this.onVideoLoaded, {
+        once: true,
+      })
+    }
+
     this.texture?.destroy()
+    this.texture = null
   }
 }

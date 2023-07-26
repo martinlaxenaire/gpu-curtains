@@ -280,7 +280,10 @@ const MeshBaseMixin = (superclass) =>
 
       // TODO destroy anything else?
       this.material?.destroy()
-      this.textures.forEach((texture) => texture.destroy())
+      this.geometry = null
+
+      this.renderTextures = []
+      this.textures = []
     }
   }
 

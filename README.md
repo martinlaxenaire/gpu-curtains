@@ -30,6 +30,7 @@ The library has been rewritten to the core, so it is not just a port of the exis
 
 - Errors / warning handling
 - Events / callbacks
+- Removing / destroying meshes
 
 ### Todo
 

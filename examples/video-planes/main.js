@@ -101,7 +101,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   const externalVideoPlane = new GPUCurtains.Plane(gpuCurtains, '#external-video-plane', externalVideoParams)
 
   externalVideoPlane
-    .onLoading((texture) => console.log('external texture loaded', texture))
+    .onLoading((texture) => {
+      texture.source.play()
+      console.log('external texture loaded', texture)
+    })
     .onReady(() => console.log('external video plane ready'))
     .onRender(() => {
       // update our time uniform value
@@ -133,7 +136,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   const videoPlane = new GPUCurtains.Plane(gpuCurtains, '#video-plane', videoParams)
 
   videoPlane
-    .onLoading((texture) => console.log('video texture loaded', texture))
+    .onLoading((texture) => {
+      texture.source.play()
+      console.log('video texture loaded', texture)
+    })
     .onReady(() => console.log('video plane ready'))
     .onRender(() => {
       // update our time uniform value

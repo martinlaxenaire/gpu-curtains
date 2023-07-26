@@ -100,5 +100,6 @@ export class RenderTexture {
 
   destroy() {
     this.texture?.destroy()
+    this.texture = null
   }
 }

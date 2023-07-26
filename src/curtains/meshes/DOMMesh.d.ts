@@ -32,6 +32,9 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
   set sourcesReady(value: boolean)
   get DOMMeshReady(): boolean
 
+  addToScene()
+  removeFromScene()
+
   setInitSources()
   resetDOMElement(element: string | HTMLElement)
 

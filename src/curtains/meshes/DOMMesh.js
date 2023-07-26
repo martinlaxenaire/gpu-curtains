@@ -33,8 +33,6 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
 
     this.sourcesReady = false
     this.setInitSources()
-
-    this.renderer.domMeshes.push(this)
   }
 
   get ready() {
@@ -63,6 +61,16 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
 
   get DOMMeshReady() {
     return this.ready && this.sourcesReady
+  }
+
+  addToScene() {
+    super.addToScene()
+    this.renderer.domMeshes.push(this)
+  }
+
+  removeFromScene() {
+    super.removeFromScene()
+    this.renderer.domMeshes = this.renderer.domMeshes.filter((m) => m.uuid !== this.uuid)
   }
 
   setInitSources() {

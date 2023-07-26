@@ -171,10 +171,18 @@ window.addEventListener('DOMContentLoaded', async () => {
           // apply it to our next texture
           nextTex.copy(plane.textures[slideshowState.nextTextureIndex])
 
+          if (nextTex.isVideoSource) {
+            nextTex.source.play()
+          }
+
           setTimeout(() => {
             document.body.classList.remove('is-waiting')
             slideshowState.isChanging = false
             slideshowState.activeTextureIndex = slideshowState.nextTextureIndex
+
+            if (activeTex.isVideoSource) {
+              activeTex.source.pause()
+            }
 
             // our next texture becomes our active texture
             activeTex.copy(plane.textures[slideshowState.activeTextureIndex])
@@ -202,4 +210,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       // update our transition timer uniform
       plane.uniforms.timer.value = slideshowState.transitionTimer
     })
+
+  setTimeout(() => {
+    plane.remove()
+    console.log(plane, gpuCurtains)
+  }, 5000)
 })

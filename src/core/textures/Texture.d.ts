@@ -108,10 +108,11 @@ export class Texture extends Object3D {
 
   setSourceSize()
 
-  loadImage(source: string): Promise<void>
+  loadImage(source: string | HTMLImageElement): Promise<void>
 
   onVideoFrameCallback()
-  loadVideo(source: HTMLVideoElement): Promise<void>
+  onVideoLoaded(video: HTMLVideoElement)
+  loadVideo(source: string | HTMLVideoElement)
 
   loadCanvas(source: HTMLCanvasElement)
 

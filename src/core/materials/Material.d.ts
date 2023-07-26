@@ -105,6 +105,7 @@ export class Material {
 
   setTextures()
   addTexture(texture: Texture | RenderTexture)
+  destroyTextures()
 
   onBeforeRender()
   render(pass: GPURenderPassEncoder)
