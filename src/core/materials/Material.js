@@ -9,10 +9,7 @@ export class Material {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, this.type)) {
-      console.warn('Material fail')
-      return
-    }
+    isRenderer(renderer, this.type)
 
     this.renderer = renderer
 
@@ -131,13 +128,10 @@ export class Material {
       vertexArray: geometry.array,
       verticesCount: geometry.verticesCount,
       verticesOrder: geometry.verticesOrder,
-      //isIndexed: !!geometry.isIndexed,
       pipelineBuffers: [
         {
           arrayStride: geometry.arrayStride * 4, // (2 + 3) floats, 4 bytes each
-          attributes: Object.keys(geometry.attributes).map((attributeKey, index) => {
-            const attribute = geometry.attributes[attributeKey]
-
+          attributes: geometry.attributes.map((attribute, index) => {
             return {
               shaderLocation: index,
               offset: attribute.bufferOffset, // previous attribute size * 4
@@ -223,7 +217,7 @@ export class Material {
         bindGroup.needsReset = false
       }
 
-      if (bindGroup.needsPipelineFlush) {
+      if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups)
         bindGroup.needsPipelineFlush = false
       }
@@ -266,7 +260,7 @@ export class Material {
       if (!uniformName) {
         Object.keys(bufferBinding.uniforms).forEach((uniformKey) => bufferBinding.shouldUpdateUniform(uniformKey))
       } else {
-        bufferBinding.shouldUpdateUniform('uniformName')
+        bufferBinding.shouldUpdateUniform(uniformName)
       }
     }
   }
@@ -299,36 +293,41 @@ export class Material {
     // set our material if needed
     this.setMaterial()
 
-    this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
-      // first, copy textures that need it on first init, but only when original texture is ready
-      if (
-        texture.type === 'Texture' &&
-        texture.options.fromTexture &&
-        texture.options.fromTexture.sourceLoaded &&
-        !texture.sourceLoaded
-      ) {
-        texture.copy(texture.options.fromTexture)
-      }
+    // first what needs to be done for all textures
+    this.textures.forEach((texture) => {
+      // update uniforms values
+      texture.textureMatrix?.onBeforeRender()
 
       // since external texture are destroyed as soon as JavaScript returns to the browser
       // we need to update it at every tick, even if it hasn't changed
       // to ensure we're not sending a stale / destroyed texture
       // anyway, external texture are cached so it is fined to call importExternalTexture at each tick
-      if (texture.options.sourceType === 'video') {
-        texture.shouldUpdate = true
-      } else if (texture.options.sourceType === 'canvas') {
+      if (texture.options.sourceType === 'externalVideo' || texture.options.sourceType === 'canvas') {
         texture.shouldUpdate = true
       }
 
-      if (texture.shouldUpdate) {
-        if (texture.options.sourceType === 'video') {
-          texture.uploadVideoTexture()
+      if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType !== 'externalVideo') {
+        texture.uploadTexture()
+      }
+    })
 
-          if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
-            this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
-          }
-        } else {
-          texture.uploadTexture()
+    // then what needs to be done only for textures actually used in our shaders
+    this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
+      // copy textures that need it on first init, but only when original texture is ready
+      if (
+        texture.type === 'Texture' &&
+        texture.options.fromTexture &&
+        texture.options.fromTexture.sourceUploaded &&
+        !texture.sourceUploaded
+      ) {
+        texture.copy(texture.options.fromTexture)
+      }
+
+      if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === 'externalVideo') {
+        texture.uploadVideoTexture()
+
+        if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
+          this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
         }
       }
 
@@ -336,11 +335,6 @@ export class Material {
         this.texturesBindGroup.resetTextureBindGroup()
         texture.shouldUpdateBindGroup = false
       }
-    })
-
-    // update uniforms values
-    this.textures.forEach((texture) => {
-      texture.textureMatrix?.onBeforeRender()
     })
 
     this.options.uniformsBindings.forEach((uniformBinding) => {

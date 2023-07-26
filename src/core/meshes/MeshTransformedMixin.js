@@ -34,15 +34,12 @@ const MeshTransformedMixin = (superclass) =>
 
       super(renderer, element, parameters)
 
-      this.type = 'MeshObject'
+      this.type = 'MeshTransformed'
 
       // we could pass our curtains object OR our curtains renderer object
       renderer = (renderer && renderer.renderer) || renderer
 
-      if (!isCameraRenderer(renderer, this.type)) {
-        console.warn('MeshMixin fail')
-        return
-      }
+      isCameraRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
       this.renderer = renderer
 

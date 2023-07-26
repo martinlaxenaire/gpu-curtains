@@ -93,19 +93,22 @@ export class MeshBase {
   transparent: boolean
 
   visible: boolean
-  ready: boolean
+  _ready: boolean
 
   // callbacks
   _onReadyCallback: () => void
   _onRenderCallback: () => void
   _onAfterRenderCallback: () => void
   _onAfterResizeCallback: () => void
-  onReady: (callback: () => void) => new (...args: any[]) => MeshBase & InstanceType<MixinConstructor>
-  onRender: (callback: () => void) => new (...args: any[]) => MeshBase & InstanceType<MixinConstructor>
-  onAfterRender: (callback: () => void) => new (...args: any[]) => MeshBase & InstanceType<MixinConstructor>
-  onAfterResize: (callback: () => void) => new (...args: any[]) => MeshBase & InstanceType<MixinConstructor>
+  onReady: (callback: () => void) => MeshBase
+  onRender: (callback: () => void) => MeshBase
+  onAfterRender: (callback: () => void) => MeshBase
+  onAfterResize: (callback: () => void) => MeshBase
 
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
+
+  get ready(): boolean
+  set ready(value: boolean)
 
   setMeshMaterial(meshParameters: MeshMaterialParameters)
 

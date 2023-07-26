@@ -1,6 +1,5 @@
 import { generateUUID } from '../../utils/utils'
 import { isCameraRenderer } from '../../utils/renderer-utils'
-import { DOMFrustum } from '../frustum/DOMFrustum'
 import { Material } from '../materials/Material'
 import { Texture } from '../textures/Texture'
 import { BufferBindings } from '../bindings/BufferBindings'
@@ -49,7 +48,7 @@ const MeshBaseMixin = (superclass) =>
 
       super(renderer, element, parameters)
 
-      this.type = 'MeshObject'
+      this.type = 'MeshBase'
 
       this.uuid = generateUUID()
       Object.defineProperty(this, 'index', { value: meshIndex++ })
@@ -57,10 +56,7 @@ const MeshBaseMixin = (superclass) =>
       // we could pass our curtains object OR our curtains renderer object
       renderer = (renderer && renderer.renderer) || renderer
 
-      if (!isCameraRenderer(renderer, this.type)) {
-        console.warn('MeshBaseMixin fail')
-        return
-      }
+      isCameraRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
       this.renderer = renderer
 
@@ -86,6 +82,17 @@ const MeshBaseMixin = (superclass) =>
       this.setMeshMaterial({ ...meshParameters, uniformsBindings })
 
       this.addToScene()
+    }
+
+    get ready() {
+      return this._ready
+    }
+
+    set ready(value) {
+      if (value) {
+        this._onReadyCallback && this._onReadyCallback()
+      }
+      this._ready = value
     }
 
     setMeshMaterial(meshParameters) {
@@ -214,7 +221,6 @@ const MeshBaseMixin = (superclass) =>
 
       if (this.material && this.material.ready && !this.ready) {
         this.ready = true
-        this._onReadyCallback && this._onReadyCallback()
       }
 
       this.material.onBeforeRender()
@@ -247,6 +253,8 @@ const MeshBaseMixin = (superclass) =>
     }
 
     destroy() {
+      if (super.destroy) super.destroy()
+
       // TODO destroy anything else?
       this.material?.destroy()
       this.textures.forEach((texture) => texture.destroy())

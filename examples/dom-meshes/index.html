@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | DOM Meshes example</title>
+    <meta name="description" content="DOM Meshes with gpu-curtains" />
+
+    <link href="https://fonts.googleapis.com/css?family=PT+Sans:400" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div id="page-wrap">
+      <div id="canvas"></div>
+
+      <a href="https://www.curtainsjs.com/" title="back to curtains.js website" id="back-to-lib-link" target="_blank"
+        >back to curtains.js website</a
+      >
+
+      <a
+        href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/slideshow/index.html"
+        title="Show source code"
+        id="source-code-link"
+        target="_blank"
+        >&lt;/ &gt;</a
+      >
+
+      <h1>DOM Meshes</h1>
+
+      <div id="mesh-container">
+        <div class="dom-mesh cube-mesh">
+          <h2><span>Cube mesh 1</span></h2>
+          <img
+            src="https://source.unsplash.com/featured/1920x1280/?nature&1"
+            crossorigin=""
+            data-texture-name="meshTexture"
+          />
+        </div>
+
+        <div class="dom-mesh sphere-mesh">
+          <h2><span>Sphere mesh 1</span></h2>
+          <img
+            src="https://source.unsplash.com/featured/1920x1280/?nature&2"
+            crossorigin=""
+            data-texture-name="meshTexture"
+          />
+        </div>
+
+        <div class="dom-mesh sphere-mesh">
+          <h2><span>Sphere mesh 2</span></h2>
+          <img
+            src="https://source.unsplash.com/featured/1920x1280/?nature&3"
+            crossorigin=""
+            data-texture-name="meshTexture"
+          />
+        </div>
+
+        <div class="dom-mesh cube-mesh">
+          <h2><span>Cube mesh 2</span></h2>
+          <img
+            src="https://source.unsplash.com/featured/1920x1280/?nature&4"
+            crossorigin=""
+            data-texture-name="meshTexture"
+          />
+        </div>
+
+        <div id="large-cube-mesh" class="dom-mesh cube-mesh">
+          <h2><span>Large cube mesh</span></h2>
+          <img
+            src="https://source.unsplash.com/featured/1920x1280/?nature&4"
+            crossorigin=""
+            data-texture-name="meshTexture"
+          />
+        </div>
+
+        <div class="dom-mesh sphere-mesh">
+          <h2><span>Sphere mesh 3</span></h2>
+          <img
+            src="https://source.unsplash.com/featured/1920x1280/?nature&3"
+            crossorigin=""
+            data-texture-name="meshTexture"
+          />
+        </div>
+
+        <div class="dom-mesh sphere-mesh">
+          <h2><span>Sphere mesh 4</span></h2>
+          <img
+            src="https://source.unsplash.com/featured/1920x1280/?nature&3"
+            crossorigin=""
+            data-texture-name="meshTexture"
+          />
+        </div>
+      </div>
+    </div>
+
+    <script src="../../dist/gpu-curtains.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>

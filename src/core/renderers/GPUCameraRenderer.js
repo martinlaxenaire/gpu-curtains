@@ -8,19 +8,26 @@ export class GPUCameraRenderer extends GPURenderer {
   constructor({
     container,
     pixelRatio = 1,
-    renderingScale = 1,
     sampleCount = 4,
     preferredFormat,
     production = false,
+    onError = () => {
+      /* allow empty callbacks */
+    },
     camera = {},
   }) {
-    super({ container, pixelRatio, renderingScale, sampleCount, preferredFormat, production })
+    super({ container, pixelRatio, sampleCount, preferredFormat, production, onError })
 
     this.options = {
-      ...camera,
+      container,
+      pixelRatio,
+      sampleCount,
+      preferredFormat,
+      production,
+      camera,
     }
 
-    this.type = 'CameraRenderer'
+    this.type = 'GPUCameraRenderer'
 
     camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera }
     this.setCamera(camera)
@@ -121,7 +128,7 @@ export class GPUCameraRenderer extends GPURenderer {
    @near (float): the nearest point where object are displayed
    @far (float): the farthest point where object are displayed
    ***/
-  setPerspective(fov = 50, near = 0.01, far = 50) {
+  setPerspective(fov, near, far) {
     this.camera?.setPerspective(fov, near, far, this.boundingRect.width, this.boundingRect.height, this.pixelRatio)
   }
 

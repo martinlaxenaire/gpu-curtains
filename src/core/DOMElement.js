@@ -1,6 +1,9 @@
 import { resizeManager } from '../utils/ResizeManager'
+import { throwError } from '../utils/utils'
 
 export class DOMElement {
+  #throttleResize = null
+
   constructor({
     element = document.body,
     onSizeChanged = (boundingRect = null) => {
@@ -14,7 +17,7 @@ export class DOMElement {
       this.element = document.querySelector(element)
 
       if (!this.element) {
-        return
+        throwError('DOMElement: ' + element + ' HTMLElement or selector not found.')
       }
     } else {
       this.element = element
@@ -38,11 +41,17 @@ export class DOMElement {
     this.setSize()
   }
 
+  compareBoundingRect(rect1, rect2) {
+    return !['x', 'y', 'left', 'top', 'right', 'bottom', 'width', 'height'].some((k) => rect1[k] !== rect2[k])
+  }
+
   get boundingRect() {
     return this._boundingRect
   }
 
   set boundingRect(boundingRect) {
+    const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect)
+
     this._boundingRect = {
       top: boundingRect.top,
       right: boundingRect.right,
@@ -53,7 +62,10 @@ export class DOMElement {
       x: boundingRect.x,
       y: boundingRect.y,
     }
-    this.onSizeChanged(this.boundingRect)
+
+    if (!isSameRect) {
+      this.onSizeChanged(this.boundingRect)
+    }
   }
 
   updateScrollPosition(lastXDelta, lastYDelta) {
@@ -62,10 +74,12 @@ export class DOMElement {
     this._boundingRect.top += lastYDelta
     this._boundingRect.left += lastXDelta
 
-    this.onPositionChanged(this.boundingRect)
+    if (lastXDelta || lastYDelta) {
+      this.onPositionChanged(this.boundingRect)
+    }
   }
 
-  setSize(contentRect) {
+  setSize(contentRect = null) {
     if (!this.element) return
     // only throttle if we have set our first value
     this.isResizing = !!this.boundingRect
@@ -73,12 +87,17 @@ export class DOMElement {
     this.boundingRect = contentRect ?? this.element.getBoundingClientRect()
 
     // TODO
-    setTimeout(() => {
+    this.#throttleResize = setTimeout(() => {
       this.isResizing = false
+      this.#throttleResize = null
     }, 50)
   }
 
   destroy() {
     this.resizeManager.unobserve(this.element)
+
+    if (this.#throttleResize) {
+      clearTimeout(this.#throttleResize)
+    }
   }
 }

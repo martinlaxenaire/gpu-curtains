@@ -12,10 +12,10 @@ import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 interface GPURendererParams {
   container: string | HTMLElement
   pixelRatio?: number
-  renderingScale?: number
   sampleCount?: GPUSize32
   production?: boolean
   preferredFormat?: GPUTextureFormat
+  onError?: () => void
 }
 
 type MeshTypes = Mesh | DOMMesh | Plane
@@ -34,6 +34,8 @@ export class GPURenderer {
   preferredFormat: null | GPUTextureFormat
   adapter: null | GPUAdapter
   device: null | GPUDevice
+
+  onError: () => void
 
   renderPass: RenderPass
   pipelineManager: PipelineManager
@@ -54,7 +56,7 @@ export class GPURenderer {
   domElement: DOMElement
   documentBody: DOMElement
 
-  constructor({ container, pixelRatio, renderingScale }: GPURendererParams)
+  constructor({ container, pixelRatio, sampleCount, production, preferredFormat, onError }: GPURendererParams)
 
   setSize(boundingRect: DOMElementBoundingRect)
   resize(boundingRect?: DOMElementBoundingRect | null)

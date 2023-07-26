@@ -35,17 +35,19 @@
 
   #page-wrap {
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
     overflow: hidden;
+    display: flex;
   }
 
   /*** canvas ***/
 
   #canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
     height: 100vh;
     width: 100vw;
-
-    z-index: 10;
   }
 
   #back-to-lib-link {
@@ -81,60 +83,47 @@
     background: black;
   }
 
-  .multi-textures {
-    position: absolute;
-    top: 5%;
-    right: 5%;
-    bottom: 5%;
-    left: 5%;
-    z-index: 15;
+  #videos {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 
-    cursor: pointer;
-    font-size: 3em;
-    color: white;
+  .video-wrapper {
+    flex-basis: 40%;
+    margin: 10vh 5%;
+  }
 
+  .video-wrapper h2 {
+    text-align: center;
+  }
+
+  .video-elements {
     justify-content: center;
     align-items: center;
     align-content: center;
+    aspect-ratio: 15 / 10;
   }
 
-  .multi-textures img,
-  .multi-textures video {
+  .video-elements video {
     display: none;
+    object-fit: cover;
     min-width: 100%;
     min-height: 100%;
-    object-fit: cover;
   }
 
   /*** handling errors ***/
 
-  .no-curtains .multi-textures {
+  .no-curtains .video-elements {
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .no-curtains .multi-textures span {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate3D(-50%, -50%, 0);
-  }
-
-  .no-curtains.image-1 .multi-textures img:nth-child(3) {
-    display: block;
-  }
-
-  .no-curtains.image-2 .multi-textures img:nth-child(4) {
-    display: block;
-  }
-
-  .no-curtains.image-3 .multi-textures img:nth-child(5) {
-    display: block;
-  }
-
-  .no-curtains.image-4 .multi-textures img:nth-child(6) {
+  .no-curtains .video-elements video {
     display: block;
   }
 }

@@ -1,30 +1,35 @@
+import { throwError } from './utils'
+
 export const isRenderer = (renderer, type) => {
   const isRenderer =
     renderer &&
-    (renderer.type === 'Renderer' || renderer.type === 'CameraRenderer' || renderer.type === 'CurtainsRenderer')
+    (renderer.type === 'GPURenderer' ||
+      renderer.type === 'GPUCameraRenderer' ||
+      renderer.type === 'GPUCurtainsRenderer')
 
   if (!isRenderer && type) {
-    console.error(type + ': Unable to create a ' + type + ' because the Renderer is not defined')
+    throwError(`Unable to create ${type} because the GPURenderer is not defined: ${renderer}`)
   }
 
   return isRenderer
 }
 
 export const isCameraRenderer = (renderer, type) => {
-  const isCameraRenderer = renderer && (renderer.type === 'CameraRenderer' || renderer.type === 'CurtainsRenderer')
+  const isCameraRenderer =
+    renderer && (renderer.type === 'GPUCameraRenderer' || renderer.type === 'GPUCurtainsRenderer')
 
   if (!isCameraRenderer && type) {
-    console.error(type + ': Unable to create a ' + type + ' because the CameraRenderer is not defined')
+    throwError(`Unable to create ${type} because the GPUCameraRenderer is not defined: ${renderer}`)
   }
 
   return isCameraRenderer
 }
 
 export const isCurtainsRenderer = (renderer, type) => {
-  const isCurtainsRenderer = renderer && renderer.type === 'CurtainsRenderer'
+  const isCurtainsRenderer = renderer && renderer.type === 'GPUCurtainsRenderer'
 
   if (!isCurtainsRenderer && type) {
-    console.error(type + ': Unable to create a ' + type + ' because the CurtainsRenderer is not defined')
+    throwError(`Unable to create ${type} because the GPUCurtainsRenderer is not defined: ${renderer}`)
   }
 
   return isCurtainsRenderer

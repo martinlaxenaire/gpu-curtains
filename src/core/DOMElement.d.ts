@@ -12,6 +12,8 @@ interface DOMElementBoundingRect {
 }
 
 export class DOMElement {
+  #throttleResize: null | ReturnType<typeof setTimeout>
+
   element: HTMLElement
   isResizing: boolean
   onSizeChanged: (boundingRect: DOMElementBoundingRect | null) => void | null
@@ -19,21 +21,22 @@ export class DOMElement {
   resizeManager: typeof ResizeManager
   _boundingRect: DOMElementBoundingRect
 
-  get boundingRect(): DOMElementBoundingRect
-  set boundingRect(boundingRect: DOMElementBoundingRect)
-
-  updateScrollPosition(lastXDelta: number, lastYDelta: number)
-  setSize(contentRect: DOMElementBoundingRect | null)
-
-  destroy()
-
   constructor({
     element,
     onSizeChanged,
     onPositionChanged,
-  }: {
-    element: string | HTMLElement
+  }?: {
+    element?: string | HTMLElement
     onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
     onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
   })
+
+  compareBoundingRect(rect1: DOMRect | DOMElementBoundingRect, rect2: DOMRect | DOMElementBoundingRect): boolean
+  get boundingRect(): DOMElementBoundingRect
+  set boundingRect(boundingRect: DOMElementBoundingRect)
+
+  updateScrollPosition(lastXDelta: number, lastYDelta: number)
+  setSize(contentRect?: DOMElementBoundingRect | null)
+
+  destroy()
 }

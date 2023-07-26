@@ -84,4 +84,6 @@ export class DOMObject3D extends ProjectedObject3D {
   setWorldTransformOrigin()
 
   updateScrollPosition(lastXDelta?: number, lastYDelta?: number)
+
+  destroy()
 }

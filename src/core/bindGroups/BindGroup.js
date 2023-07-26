@@ -7,10 +7,7 @@ export class BindGroup {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, this.type)) {
-      console.warn('BindGroup fail')
-      return
-    }
+    isRenderer(renderer, this.type)
 
     this.renderer = renderer
     this.options = {

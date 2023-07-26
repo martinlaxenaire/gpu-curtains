@@ -17,9 +17,10 @@
   "private": true,
   "dependencies": {},
   "scripts": {
-    "build:types": "tsc --allowJs -d --emitDeclarationOnly",
+    "compile:types": "tsc --allowJs -d --noEmit",
+    "build:types": "copyfiles --up 1 src/**/*.d.ts dist/types",
     "build:minified": "esbuild src/index.js --bundle --minify --outfile=dist/gpu-curtains.min.js --global-name=GPUCurtains",
     "build:iife": "esbuild src/index.js --bundle --outfile=dist/gpu-curtains.js --global-name=GPUCurtains",
-    "build:dist": "yarn build:minified && yarn build:iife"
+    "build:dist": "tsc --allowJs -d --noEmit && yarn build:types && yarn build:minified && yarn build:iife"
   }
 }

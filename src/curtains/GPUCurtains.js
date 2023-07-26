@@ -22,6 +22,12 @@ export class GPUCurtains {
     preferredFormat,
     camera,
     production = false,
+    autoRender = true,
+    autoResize = true,
+    watchScroll = true,
+    onError = () => {
+      /* allow empty callbacks */
+    },
   }) {
     this.type = 'CurtainsGPU'
 
@@ -31,6 +37,10 @@ export class GPUCurtains {
       camera,
       production,
       preferredFormat,
+      autoRender,
+      autoResize,
+      watchScroll,
+      onError,
     }
 
     if (container) {
@@ -83,9 +93,9 @@ export class GPUCurtains {
       preferredFormat: this.options.preferredFormat,
       camera: this.options.camera,
       production: this.options.production,
+      onError: this.options.onError,
     })
 
-    this.options.camera = this.renderer.camera
     this.canvas = this.renderer.canvas
   }
 
@@ -105,7 +115,9 @@ export class GPUCurtains {
     this.container.appendChild(this.canvas)
 
     // only if auto render
-    this.animate()
+    if (this.options.autoRender) {
+      this.animate()
+    }
   }
 
   setPerspective(fov = 50, near = 0.01, far = 50) {
@@ -117,9 +129,11 @@ export class GPUCurtains {
   }
 
   initEvents() {
-    resizeManager.useObserver(true)
+    resizeManager.useObserver(this.options.autoResize)
 
-    this.initScroll()
+    if (this.options.watchScroll) {
+      this.initScroll()
+    }
   }
 
   // called only if autoResize is set to false

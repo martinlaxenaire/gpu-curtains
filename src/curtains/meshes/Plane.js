@@ -18,10 +18,7 @@ export class Plane extends DOMMesh {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isCurtainsRenderer(renderer, 'Plane')) {
-      console.warn('Plane fail')
-      return
-    }
+    isCurtainsRenderer(renderer, parameters.label ? parameters.label + ' Plane' : 'Plane')
 
     // assign default params if needed
     const params = { ...defaultPlaneParams, ...parameters }

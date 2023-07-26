@@ -8,19 +8,13 @@ export class PipelineEntry {
     this.type = 'PipelineEntry'
 
     let { renderer } = parameters
-    // const { label, geometryAttributes, bindGroups, shaders, cullMode, depthWriteEnabled, depthCompare, transparent } =
-    //   parameters
-
     const { label, shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, useProjection } =
       parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, this.type)) {
-      console.warn('PipelineEntry fail')
-      return
-    }
+    isRenderer(renderer, label ? label + ' ' + this.type : this.type)
 
     this.renderer = renderer
 
@@ -28,6 +22,7 @@ export class PipelineEntry {
 
     this.layout = null
     this.pipeline = null
+    this.ready = false
 
     this.shaders = {
       vertex: {
@@ -69,6 +64,7 @@ export class PipelineEntry {
     const { geometryAttributes, bindGroups } = parameters
 
     this.geometryAttributes = geometryAttributes
+
     this.setPipelineEntryBindGroups(bindGroups)
 
     this.setPipelineEntry()
@@ -125,9 +121,6 @@ export class PipelineEntry {
           }
         }
       })
-
-      // this.shaders.vertex.head = `\n${this.shaders.vertex.head}`
-      // this.shaders.fragment.head = `\n${this.shaders.fragment.head}`
     })
 
     // add attributes to vertex shader only
@@ -145,32 +138,32 @@ export class PipelineEntry {
       code,
     })
 
-    if (!this.renderer.production) {
-      shaderModule.getCompilationInfo().then((compilationInfo) => {
-        for (const message of compilationInfo.messages) {
-          let formattedMessage = ''
-          if (message.lineNum) {
-            formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
-              message.offset,
-              message.offset + message.length
-            )}\n`
-          }
-          formattedMessage += message.message
-
-          switch (message.type) {
-            case 'error':
-              console.error(formattedMessage)
-              break
-            case 'warning':
-              console.warn(formattedMessage)
-              break
-            case 'info':
-              console.log(formattedMessage)
-              break
-          }
+    shaderModule.getCompilationInfo().then((compilationInfo) => {
+      for (const message of compilationInfo.messages) {
+        let formattedMessage = ''
+        if (message.lineNum) {
+          formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
+            message.offset,
+            message.offset + message.length
+          )}\n`
         }
-      })
-    }
+        formattedMessage += message.message
+
+        switch (message.type) {
+          case 'error':
+            // TODO mesh onError
+            !this.renderer.production && console.error(`${this.options.label} compilation error:\n${formattedMessage}`)
+            break
+          case 'warning':
+            !this.renderer.production && console.warn(`${this.options.label} compilation warning:\n${formattedMessage}`)
+            break
+          case 'info':
+            !this.renderer.production &&
+              console.log(`${this.options.label} compilation information:\n${formattedMessage}`)
+            break
+        }
+      }
+    })
 
     return shaderModule
   }
@@ -260,6 +253,7 @@ export class PipelineEntry {
   }
 
   flushPipelineEntry(newBindGroups = []) {
+    this.ready = false
     this.setPipelineEntryBindGroups(newBindGroups)
     this.setPipelineEntry()
   }
@@ -268,5 +262,6 @@ export class PipelineEntry {
     this.createShaders()
     this.createPipelineLayout()
     this.createRenderPipeline()
+    this.ready = true
   }
 }

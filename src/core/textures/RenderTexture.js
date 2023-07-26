@@ -20,10 +20,7 @@ export class RenderTexture {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, 'RenderTexture')) {
-      console.warn('RenderTexture fail')
-      return
-    }
+    isRenderer(renderer, parameters.label ? parameters.label + ' RenderTexture' : 'RenderTexture')
 
     this.renderer = renderer
 

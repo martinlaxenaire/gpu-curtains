@@ -8,10 +8,7 @@ export class Mesh extends MeshTransformedMixin(MeshBaseMixin(ProjectedObject3D))
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isCameraRenderer(renderer, 'Mesh')) {
-      console.warn('Mesh fail')
-      return
-    }
+    isCameraRenderer(renderer, parameters.label ? parameters.label + ' Mesh' : 'Mesh')
 
     super(renderer, null, parameters)
 

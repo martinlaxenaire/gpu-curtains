@@ -47,12 +47,8 @@ export class MeshTransformedBase {
   // callbacks
   _onReEnterViewCallback: () => void
   _onLeaveViewCallback: () => void
-  onReEnterView: (
-    callback: () => void
-  ) => new (...args: any[]) => InstanceType<TransformedMixinConstructor> & MeshBase & MeshTransformedBase
-  onLeaveView: (
-    callback: () => void
-  ) => new (...args: any[]) => InstanceType<TransformedMixinConstructor> & MeshBase & MeshTransformedBase
+  onReEnterView: (callback: () => void) => MeshTransformedBase
+  onLeaveView: (callback: () => void) => MeshTransformedBase
 
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
 

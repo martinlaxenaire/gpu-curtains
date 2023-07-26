@@ -180,6 +180,10 @@
 
   /*** handling errors ***/
 
+  .no-curtains #planes {
+    opacity: 1;
+  }
+
   .no-curtains .plane-title {
     z-index: 1;
   }

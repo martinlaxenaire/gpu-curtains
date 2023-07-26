@@ -17,17 +17,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   const slideshowState = {
     activeTextureIndex: 0,
     nextTextureIndex: 1, // does not care for now
-    maxTextures: planeElements[0].querySelectorAll('img').length - 1,
+    maxTextures: planeElements[0].querySelectorAll('img, video').length - 1,
 
     isChanging: false,
     transitionTimer: 0,
+    duration: 1.5, // 1.5s
   }
 
-  const vertexShader = `
+  const vertexShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
-        @location(1) activeUv: vec2f,
-        @location(2) nextUv: vec2f,
+        @location(1) uv: vec2f,
+        @location(2) activeUv: vec2f,
+        @location(3) nextUv: vec2f,
       };
       
       @vertex fn main(
@@ -37,25 +39,39 @@ window.addEventListener('DOMContentLoaded', async () => {
       
         vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
       
-        vsOutput.activeUv = getScaledUV(attributes.uv, activeTextureMatrix);
-        vsOutput.nextUv = getScaledUV(attributes.uv, nextTextureMatrix);
+        // used for the transition effect
+        vsOutput.uv = attributes.uv;
+        vsOutput.activeUv = getUVCover(attributes.uv, activeTextureMatrix);
+        vsOutput.nextUv = getUVCover(attributes.uv, nextTextureMatrix);
       
         return vsOutput;
       }
     `
 
-  const fragmentShader = `
+  const fragmentShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
-        @location(1) activeUv: vec2f,
-        @location(2) nextUv: vec2f,
+        @location(1) uv: vec2f,
+        @location(2) activeUv: vec2f,
+        @location(3) nextUv: vec2f,
       };
       
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
         var activeColor: vec4f = textureSample(activeTexture, activeTextureSampler, fsInput.activeUv);
         var nextColor: vec4f = textureSample(nextTexture, nextTextureSampler, fsInput.nextUv);
+        
+        // port of https://gl-transitions.com/editor/windowslice
+        var progress: f32 = transition.timer / transition.duration;
+        
+        var pr: f32 = smoothstep(
+          -1.0 * transition.smoothness,
+          0.0,
+          fsInput.uv.x - progress * (1.0 + transition.smoothness)
+        );
+        
+        var s: f32 = step(pr, fract(transition.colsCount * fsInput.uv.x));
       
-        return mix(activeColor, nextColor, 1.0 - ((cos(transition.timer / (90.0 / 3.141592)) + 1.0) / 2.0));
+        return mix(activeColor, nextColor, s);
       }
     `
 
@@ -71,6 +87,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
+    texturesOptions: {
+      texture: {
+        useExternalTextures: false,
+      },
+    },
     bindings: [
       {
         name: 'transition', // could be something else, like "frames"...
@@ -79,6 +100,18 @@ window.addEventListener('DOMContentLoaded', async () => {
           timer: {
             type: 'f32', // this means our uniform is a float
             value: 0,
+          },
+          duration: {
+            type: 'f32',
+            value: slideshowState.duration * 60, // duration * 60fps
+          },
+          colsCount: {
+            type: 'f32',
+            value: 15,
+          },
+          smoothness: {
+            type: 'f32',
+            value: 0.75,
           },
         },
       },
@@ -107,6 +140,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   plane
+    .onLoading((texture) => {
+      console.log('texture uploaded!', texture)
+    })
     .onReady(() => {
       planeElements[0].addEventListener('click', () => {
         if (!slideshowState.isChanging) {
@@ -131,19 +167,21 @@ window.addEventListener('DOMContentLoaded', async () => {
             activeTex.copy(plane.textures[slideshowState.activeTextureIndex])
             // reset timer
             slideshowState.transitionTimer = 0
-          }, 1700) // add a bit of margin to the timer
+          }, slideshowState.duration * 1000 + 100) // add a bit of margin to the timer
         }
       })
     })
     .onRender(() => {
       // increase or decrease our timer based on the active texture value
       if (slideshowState.isChanging) {
+        const fpsDuration = slideshowState.duration * 60 // duration * 60fps
+
         // use damping to smoothen transition
-        slideshowState.transitionTimer += (90 - slideshowState.transitionTimer) * 0.04
+        slideshowState.transitionTimer += (fpsDuration - slideshowState.transitionTimer) * 0.04
 
         // force end of animation as damping is slower the closer we get from the end value
-        if (slideshowState.transitionTimer >= 88.5 && slideshowState.transitionTimer !== 90) {
-          slideshowState.transitionTimer = 90
+        if (slideshowState.transitionTimer >= fpsDuration * 0.99 && slideshowState.transitionTimer !== fpsDuration) {
+          slideshowState.transitionTimer = fpsDuration
         }
       }
 

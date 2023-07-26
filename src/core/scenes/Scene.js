@@ -5,10 +5,7 @@ export class Scene {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, 'Scene')) {
-      console.warn('Scene fail')
-      return
-    }
+    isRenderer(renderer, 'Scene')
 
     this.renderer = renderer
     this.renderPasses = this.renderer.renderPasses

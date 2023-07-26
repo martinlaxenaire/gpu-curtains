@@ -3,23 +3,34 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement } from '../DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
+import { throwWarning, throwError, logError } from '../../utils/utils'
 
 export class GPURenderer {
-  constructor({ container, pixelRatio = 1, renderingScale = 1, sampleCount = 4, production = false, preferredFormat }) {
-    this.type = 'Renderer'
+  constructor({
+    container,
+    pixelRatio = 1,
+    sampleCount = 4,
+    production = false,
+    preferredFormat,
+    onError = () => {
+      /* allow empty callbacks */
+    },
+  }) {
+    this.type = 'GPURenderer'
     this.ready = false
 
     this.gpu = navigator.gpu
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
-    this.renderingScale = renderingScale
     this.sampleCount = sampleCount
     this.production = production
     this.preferredFormat = preferredFormat
 
+    this.onError = onError
+
     if (!this.gpu) {
-      console.warn('WebGPU not supported!')
-      return
+      this.onError()
+      throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
     }
 
     this.setRendererObjects()
@@ -51,8 +62,8 @@ export class GPURenderer {
     this.canvas.style.height = Math.floor(boundingRect.height) + 'px'
 
     const renderingSize = {
-      width: Math.floor(boundingRect.width * scaleBoundingRect * this.renderingScale),
-      height: Math.floor(boundingRect.height * scaleBoundingRect * this.renderingScale),
+      width: Math.floor(boundingRect.width * scaleBoundingRect),
+      height: Math.floor(boundingRect.height * scaleBoundingRect),
     }
 
     this.canvas.width = this.device
@@ -141,16 +152,18 @@ export class GPURenderer {
    * @returns {Promise<void>}
    */
   async setAdapterAndDevice() {
-    this.adapter = await this.gpu?.requestAdapter()
-    this.device = await this.adapter?.requestDevice()
+    this.adapter = await this.gpu?.requestAdapter().catch(() => {
+      this.onError()
+      throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
+    })
 
-    if (!this.device) {
-      console.warn('WebGPU not supported!')
-      return
-    }
+    this.device = await this.adapter?.requestDevice().catch(() => {
+      this.onError()
+      throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestDevice' failed.")
+    })
 
     this.device.lost.then((info) => {
-      console.error(`WebGPU device was lost: ${info.message}`)
+      throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`)
 
       // 'reason' will be 'destroyed' if we intentionally destroy the device.
       if (info.reason !== 'destroyed') {
@@ -256,17 +269,21 @@ export class GPURenderer {
 
   uploadTexture(texture) {
     if (texture.source) {
-      this.device.queue.copyExternalImageToTexture(
-        { source: texture.source, flipY: texture.options.texture.flipY },
-        { texture: texture.texture },
-        { width: texture.size.width, height: texture.size.height }
-      )
+      try {
+        this.device.queue.copyExternalImageToTexture(
+          { source: texture.source, flipY: texture.options.texture.flipY },
+          { texture: texture.texture },
+          { width: texture.size.width, height: texture.size.height }
+        )
 
-      if (texture.texture.mipLevelCount > 1) {
-        generateMips(this.device, texture.texture)
+        if (texture.texture.mipLevelCount > 1) {
+          generateMips(this.device, texture.texture)
+        }
+
+        this.texturesQueue.push(texture)
+      } catch ({ message }) {
+        throwError(`GPURenderer: could not upload texture: ${texture} because: ${message}`)
       }
-
-      this.texturesQueue.push(texture)
     } else {
       this.device.queue.writeTexture(
         { texture: texture.texture },
@@ -345,14 +362,15 @@ export class GPURenderer {
     const commandBuffer = commandEncoder.finish()
     this.device.queue.submit([commandBuffer])
 
-    this.device.queue.onSubmittedWorkDone().then(() => {
-      this.texturesQueue.forEach((texture) => {
-        texture.sourceUploaded = true
-      })
-
-      // clear texture queue
-      this.texturesQueue = []
+    // no need to use device.queue.onSubmittedWorkDone
+    // as Kai Ninomiya stated:
+    // "Anything you submit() after the copyExternalImageToTexture() is guaranteed to see the result of that call."
+    this.texturesQueue.forEach((texture) => {
+      texture.sourceUploaded = true
     })
+
+    // clear texture queue
+    this.texturesQueue = []
 
     // end of render, reset current pipeline ID
     // TODO in scene class instead?
@@ -362,6 +380,9 @@ export class GPURenderer {
   }
 
   destroy() {
+    this.domElement?.destroy()
+    this.documentBody?.destroy()
+
     this.meshes.forEach((mesh) => mesh.destroy())
 
     this.textures.forEach((texture) => texture.destroy())

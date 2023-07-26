@@ -8,10 +8,7 @@ export class PipelineManager {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, this.type)) {
-      console.warn('PipelineManager fail')
-      return
-    }
+    isRenderer(renderer, this.type)
 
     this.renderer = renderer
 

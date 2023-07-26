@@ -1,5 +1,5 @@
-import { Vec3 } from '../../math/Vec3'
 import { Box3 } from '../../math/Box3'
+import { throwError, throwWarning } from '../../utils/utils'
 
 export class Geometry {
   constructor({ verticesOrder = 'cw' } = {}) {
@@ -10,11 +10,6 @@ export class Geometry {
 
     this.attributes = []
 
-    // this.boundingBox = {
-    //   min: new Vec3(Infinity),
-    //   max: new Vec3(-Infinity),
-    // }
-
     this.boundingBox = new Box3()
   }
 
@@ -23,16 +18,20 @@ export class Geometry {
 
     if (!name) name = 'geometryAttribute' + attributesLength
 
+    if (name === 'position' && (type !== 'vec3f' || bufferFormat !== 'float32x3' || size !== 3)) {
+      throwWarning(
+        `Geometry 'position' attribute must have this exact properties set:\n\ttype: 'vec3f',\n\tbufferFormat: 'float32x3',\n\tsize: 3`
+      )
+      type = 'vec3f'
+      bufferFormat = 'float32x3'
+      size = 3
+    }
+
     const attributeVerticesCount = array.length / size
     if (this.verticesCount && this.verticesCount !== attributeVerticesCount) {
-      console.error(
-        'Geometry vertices count error. Previous vertices count:',
-        this.verticesCount,
-        ', current given:',
-        attributeVerticesCount
+      throwError(
+        `Geometry vertices count error. Previous vertices count: ${this.verticesCount}, current given: ${attributeVerticesCount}`
       )
-
-      return
     }
 
     this.verticesCount = attributeVerticesCount
@@ -59,13 +58,20 @@ export class Geometry {
   computeGeometry() {
     const hasPositionAttribute = this.attributes.find((attribute) => attribute.name === 'position')
     if (!hasPositionAttribute) {
-      console.error(`Geometry must have a 'position' attribute`)
-      return
+      throwError(`Geometry must have a 'position' attribute`)
     }
 
-    if (hasPositionAttribute.type !== 'vec3f') {
-      console.error(`Geometry 'position' attribute must be of 'vec3f' type`)
-      return
+    if (
+      hasPositionAttribute.type !== 'vec3f' ||
+      hasPositionAttribute.bufferFormat !== 'float32x3' ||
+      hasPositionAttribute.size !== 3
+    ) {
+      throwWarning(
+        `Geometry 'position' attribute must have this exact properties set:\n\ttype: 'vec3f',\n\tbufferFormat: 'float32x3',\n\tsize: 3`
+      )
+      hasPositionAttribute.type = 'vec3f'
+      hasPositionAttribute.bufferFormat = 'float32x3'
+      hasPositionAttribute.size = 3
     }
 
     this.array = new Float32Array(this.bufferLength)

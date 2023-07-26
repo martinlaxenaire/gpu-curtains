@@ -11,10 +11,7 @@ export class DOMObject3D extends ProjectedObject3D {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isCurtainsRenderer(renderer, 'DOM3DObject')) {
-      console.warn('DOM3DObject fail')
-      return
-    }
+    isCurtainsRenderer(renderer, 'DOM3DObject')
 
     super(renderer)
 
@@ -250,5 +247,9 @@ export class DOMObject3D extends ProjectedObject3D {
       // set new positions based on our delta without triggering reflow
       this.domElement.updateScrollPosition(lastXDelta, lastYDelta)
     }
+  }
+
+  destroy() {
+    this.domElement
   }
 }

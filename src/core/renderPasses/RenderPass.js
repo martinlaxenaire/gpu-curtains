@@ -5,10 +5,7 @@ export class RenderPass {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, 'RenderPass')) {
-      console.warn('RenderPass fail')
-      return
-    }
+    isRenderer(renderer, 'RenderPass')
 
     this.renderer = renderer
     this.options = {

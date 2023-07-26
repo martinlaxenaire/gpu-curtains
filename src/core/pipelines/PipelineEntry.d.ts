@@ -32,6 +32,7 @@ export class PipelineEntry {
   readonly index: number
   layout: GPUBindGroupLayout | null
   pipeline: GPUPipelineBase | null
+  ready: boolean
   geometryAttributes: MaterialGeometryAttributes
   shaders: PipelineEntryShaders
   options: PipelineEntryBaseParams

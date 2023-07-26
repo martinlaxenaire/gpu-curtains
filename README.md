@@ -1,28 +1,41 @@
 # gpu-curtains
 
-WIP
+> :warning: WIP
 
-## Implemented
+gpu-curtains is an attempt at rewriting [curtains.js](https://github.com/martinlaxenaire/curtainsjs) in WebGPU.
+
+The library has been rewritten to the core, so it is not just a port of the existing codebase but instead a new version based on the original concept.
+
+## Roadmap
+
+### Implemented
+
 - Renderers (GPURenderer, GPUCameraRenderer, GPUCurtainsRenderer)
 - Geometries
 - Material
 - Object3D, ProjectedObject3D, DOMObject3D
 - Uniforms, BindGroups
-- Pipelines
+- Render Pipelines
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
 - Basic Scene class
 - Scroll + resize, frustum culling check
-- Basic Texture class
-- GPUCurtains
+- Texture & RenderTexture classes
+- Shader passes 
+- PingPong
+- Plane raycasting
 - Basic CacheManager
-- Shader passes + PingPong
+- GPUCurtains
 
-## Roadmap / TODO
+### Work in progress
 
-- Scene class (in progress)
-- Render targets? (+ compute pass?), PingPong (does it really need a separate class?)
-- TextureLoader class
-- Use async pipelines?
-- Plane raycasting (almost done)
-- context lost handling
 - Errors / warning handling
+- Events / callbacks
+
+### Todo
+
+- Render targets?
+- Compute pass
+- TextureLoader class?
+- Use async pipelines?
+- Mesh raycasting?
+- context lost handling

@@ -11,10 +11,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, 'FullscreenQuadMesh')) {
-      console.warn('FullscreenQuadMesh fail')
-      return
-    }
+    isRenderer(renderer, parameters.label ? parameters.label + ' FullscreenQuadMesh' : 'FullscreenQuadMesh')
 
     // can we get a cached geometry?
     let geometry = cacheManager.getPlaneGeometryByID(2) // 1 * 1 + 1

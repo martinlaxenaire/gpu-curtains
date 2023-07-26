@@ -1,8 +1,11 @@
 import { IndexedGeometry } from './IndexedGeometry'
 
 export class PlaneGeometry extends IndexedGeometry {
-  constructor({ widthSegments = 1, heightSegments = 1, verticesOrder = 'cw' }) {
-    super({ verticesOrder })
+  constructor({ widthSegments = 1, heightSegments = 1 }) {
+    super({ verticesOrder: 'cw' })
+
+    widthSegments = Math.floor(widthSegments)
+    heightSegments = Math.floor(heightSegments)
 
     // unique plane buffers id based on width and height
     // used to get a geometry from cache
@@ -63,7 +66,6 @@ export class PlaneGeometry extends IndexedGeometry {
       type: 'vec3f',
       bufferFormat: 'float32x3',
       // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
-      //size: this.definition.width * this.definition.height * 3 * 3
       size: 3,
       bufferLength: verticesCount * 3,
       array: new Float32Array(verticesCount * 3),

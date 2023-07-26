@@ -5,7 +5,15 @@ import { DOMMesh } from '../meshes/DOMMesh'
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
   domMeshes: Array<DOMMesh | Plane>
 
-  constructor({ container, pixelRatio, renderingScale, production, camera }: GPUCameraRendererParams)
+  constructor({
+    container,
+    pixelRatio,
+    sampleCount,
+    production,
+    preferredFormat,
+    onError,
+    camera,
+  }: GPUCameraRendererParams)
 
   onCameraPositionChanged()
 

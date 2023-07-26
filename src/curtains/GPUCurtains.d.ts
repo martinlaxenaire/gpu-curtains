@@ -10,6 +10,10 @@ interface GPUCurtainsOptions {
   preferredFormat?: GPUTextureFormat
   camera: CameraBasePerspectiveOptions
   production: boolean
+  autoRender: boolean
+  autoResize: boolean
+  watchScroll: boolean
+  onError: () => void
 }
 
 interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'container'>> {

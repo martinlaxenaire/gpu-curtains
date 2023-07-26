@@ -21,8 +21,18 @@ interface DOMMeshParams extends DOMMeshBaseParams {
 
 export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
   autoloadSources: boolean
+  _sourcesReady: boolean
+
+  _onLoadingCallback: (texture: Texture) => void
 
   constructor(renderer: GPUCurtainsRenderer, element: HTMLElement, parameters: DOMMeshParams)
 
+  get ready(): boolean
+  set ready(value: boolean)
+  get sourcesReady(): boolean
+  set sourcesReady(value: boolean)
+  get DOMMeshReady(): boolean
+
   setInitSources()
+  onLoading: (callback: (texture: Texture) => void) => DOMMesh
 }

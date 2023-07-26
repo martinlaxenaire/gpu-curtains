@@ -6,10 +6,7 @@ export class TextureBindGroup extends BindGroup {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, 'TextureBindGroup')) {
-      console.warn('TextureBindGroup fail')
-      return
-    }
+    isRenderer(renderer, 'TextureBindGroup')
 
     super({ label, renderer, index, bindings })
 
@@ -84,7 +81,8 @@ export class TextureBindGroup extends BindGroup {
         const texture = this.textures[index]
 
         if (texture)
-          entry.resource = texture.options.sourceType === 'video' ? texture.texture : texture.texture.createView()
+          entry.resource =
+            texture.options.sourceType === 'externalVideo' ? texture.texture : texture.texture.createView()
       })
 
       this.setBindGroup()

@@ -1,10 +1,14 @@
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
-import { RenderPass } from './RenderPass'
-import { Texture } from '../textures/Texture'
 import { RenderTexture } from '../textures/RenderTexture'
+import { isRenderer } from '../../utils/renderer-utils'
 
 export class ShaderPass extends FullscreenPlane {
   constructor(renderer, parameters) {
+    // we could pass our curtains object OR our curtains renderer object
+    renderer = (renderer && renderer.renderer) || renderer
+
+    isRenderer(renderer, parameters.label ? parameters.label + ' ShaderPass' : 'ShaderPass')
+
     super(renderer, parameters)
 
     this.renderTextures = []

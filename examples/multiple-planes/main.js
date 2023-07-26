@@ -14,8 +14,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains.GPUCurtains({
     container: 'canvas',
-    watchScroll: false, // no need to listen for the scroll in this example
-    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
+    onError: () => {
+      document.body.classList.add('no-curtains')
+    },
   })
 
   await gpuCurtains.setRendererContext()
@@ -45,7 +47,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     })
 
-  const vertexShader = `
+  const vertexShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
         @location(1) uv: vec2f,
@@ -61,23 +63,20 @@ window.addEventListener('DOMContentLoaded', async () => {
         transformed.y += planeDeformation;
         
         vsOutput.position = getOutputPosition(camera, matrices, transformed);
-      
-        vsOutput.uv = getScaledUV(attributes.uv, planeTextureMatrix);
+        vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
       
         return vsOutput;
       }
     `
 
-  const fragmentShader = `
+  const fragmentShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
         @location(1) uv: vec2f,
       };
       
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var color: vec4f = textureSample(planeTexture, planeTextureSampler, fsInput.uv);
-      
-        return color;
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
+        return textureSample(planeTexture, planeTextureSampler, fsInput.uv);
       }
     `
 
@@ -146,6 +145,30 @@ window.addEventListener('DOMContentLoaded', async () => {
     handlePlane(plane, planeIndex)
   })
 
+  // now handle additional planes
+  const planeContainer = document.querySelector('#planes')
+
+  const mutationObserver = new MutationObserver(() => {
+    // reselect our plane elements
+    planeElements = document.querySelectorAll('.plane')
+
+    for (let i = planes.length; i < planeElements.length; i++) {
+      const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[i], params)
+      planes.push(plane)
+
+      handlePlane(plane, i)
+
+      // 30 planes are enough, right ?
+      if (planes.length >= 28) {
+        document.getElementById('add-more-planes').style.display = 'none'
+      }
+    }
+  })
+
+  mutationObserver.observe(planeContainer, {
+    childList: true,
+  })
+
   // this will simulate an ajax lazy load call
   // additionnalPlanes string could be the response of our AJAX call
   document.getElementById('add-more-planes').addEventListener('click', () => {
@@ -153,7 +176,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       return `
       <div class="plane-wrapper"><span class="plane-title">Title ${
         index + 1
-      }</span><div class="plane-inner"><div class="landscape-wrapper"><div class="landscape-inner"><div class="plane"><img src="https://source.unsplash.com/featured/1920x1280/?nature&${index}" crossorigin="" data-name="planeTexture" /></div></div></div></div></div>
+      }</span><div class="plane-inner"><div class="landscape-wrapper"><div class="landscape-inner"><div class="plane"><img src="https://source.unsplash.com/featured/1920x1280/?nature&${index}" crossorigin="" data-texture-name="planeTexture" /></div></div></div></div></div>
     `
     }
 
@@ -163,26 +186,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     // append the response
-    document.getElementById('planes').insertAdjacentHTML('beforeend', additionnalPlanes)
-
-    // reselect our plane elements
-    planeElements = document.querySelectorAll('.plane')
-
-    // we need a timeout because insertAdjacentHTML could take some time to append the content
-    setTimeout(() => {
-      // we will create the planes that don't already exist
-      // basically the same thing as above
-      for (let i = planes.length; i < planeElements.length; i++) {
-        const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[i], params)
-        planes.push(plane)
-
-        handlePlane(plane, i)
-
-        // 30 planes are enough, right ?
-        if (planes.length >= 28) {
-          document.getElementById('add-more-planes').style.display = 'none'
-        }
-      }
-    }, 50)
+    planeContainer.insertAdjacentHTML('beforeend', additionnalPlanes)
   })
 })

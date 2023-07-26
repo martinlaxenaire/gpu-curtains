@@ -4,15 +4,17 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
   constructor({
     container,
     pixelRatio = 1,
-    renderingScale = 1,
     sampleCount = 4,
     preferredFormat,
     production = false,
+    onError = () => {
+      /* allow empty callbacks */
+    },
     camera,
   }) {
-    super({ container, pixelRatio, renderingScale, sampleCount, preferredFormat, production, camera })
+    super({ container, pixelRatio, sampleCount, preferredFormat, production, onError, camera })
 
-    this.type = 'CurtainsRenderer'
+    this.type = 'GPUCurtainsRenderer'
   }
 
   onCameraPositionChanged() {
@@ -29,8 +31,8 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
   onResize() {
     super.onResize()
     this.domMeshes?.forEach((mesh) => {
-      if (mesh.domElement && !mesh.domElement.isResizing) {
-        mesh.resize()
+      if (mesh.domElement) {
+        mesh.domElement.setSize()
       }
     })
   }

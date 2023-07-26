@@ -18,6 +18,7 @@ interface CurtainsTextureOptions {
   flipY?: boolean
   format?: GPUTextureFormat
   placeholderColor?: [number, number, number, number]
+  useExternalTextures?: boolean
 }
 
 interface TextureBaseParams {
@@ -38,7 +39,7 @@ interface TextureParams extends TextureDefaultParams {
 }
 
 type TextureSource = HTMLVideoElement | HTMLCanvasElement | ImageBitmap | RenderPass | null
-type TextureSourceType = 'image' | 'video' | 'canvas' | 'renderPass' | null
+type TextureSourceType = 'image' | 'canvas' | 'video' | 'externalVideo' | null
 
 interface TextureOptions extends TextureParams {
   source: TextureSource | string // for image url

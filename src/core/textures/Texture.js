@@ -5,6 +5,7 @@ import { TextureBindings } from '../bindings/TextureBindings'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
+import { throwWarning } from '../../utils/utils'
 
 const defaultTextureParams = {
   name: 'texture',
@@ -13,6 +14,7 @@ const defaultTextureParams = {
     flipY: false,
     format: 'rgba8unorm',
     placeholderColor: [0, 0, 0, 255], // default to black
+    useExternalTextures: true,
   },
   sampler: {
     addressModeU: 'repeat',
@@ -20,6 +22,7 @@ const defaultTextureParams = {
     magFilter: 'linear',
     minFilter: 'linear',
     mipmapFilter: 'linear',
+    maxAnisotropy: 1,
   },
   fromTexture: null,
 }
@@ -46,17 +49,14 @@ export class Texture extends Object3D {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    if (!isRenderer(renderer, this.type)) {
-      console.warn('Texture fail')
-      return
-    }
+    isRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
     this.renderer = renderer
 
     const defaultOptions = {
       ...defaultTextureParams,
-      source: null,
-      sourceType: null,
+      source: parameters.fromTexture ? parameters.fromTexture.options.source : null,
+      sourceType: parameters.fromTexture ? parameters.fromTexture.options.sourceType : null,
     }
 
     this.options = { ...defaultOptions, ...parameters }
@@ -117,7 +117,7 @@ export class Texture extends Object3D {
         label: this.options.label + ': texture',
         name: this.options.name,
         resource: this.texture,
-        bindingType: this.options.sourceType === 'video' ? 'externalTexture' : 'texture',
+        bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
       }),
       this.textureMatrix,
     ]
@@ -267,21 +267,39 @@ export class Texture extends Object3D {
   }
 
   copy(texture) {
-    this.options.fromTexture = texture
-
-    if (texture.texture && texture.sourceLoaded) {
-      this.size = texture.size
-      this.sampler = texture.sampler
-      this.source = texture.source
-
-      this.options.texture = texture.options.texture
-      this.options.sampler = texture.options.sampler
-
-      this.resize()
+    if (this.options.sourceType === 'externalVideo' && texture.options.sourceType !== 'externalVideo') {
+      throwWarning(`${this.options.label}: cannot copy a GPUTexture to a GPUExternalTexture`)
+      return
+    } else if (this.options.sourceType !== 'externalVideo' && texture.options.sourceType === 'externalVideo') {
+      throwWarning(`${this.options.label}: cannot copy a GPUExternalTexture to a GPUTexture`)
+      return
     }
 
-    this.createTexture()
-    this.sourceLoaded = true
+    this.options.fromTexture = texture
+    this.options.sourceType = texture.options.sourceType
+
+    this.options.texture = texture.options.texture
+    this.options.sampler = texture.options.sampler
+
+    this.sourceLoaded = texture.sourceLoaded
+    this.sourceUploaded = texture.sourceUploaded
+
+    if (texture.texture) {
+      if (texture.sourceLoaded) {
+        this.size = texture.size
+        this.sampler = texture.sampler
+        this.source = texture.source
+
+        this.resize()
+      }
+
+      if (texture.sourceUploaded) {
+        this.texture = texture.texture
+        this.shouldUpdateBindGroup = true
+      } else {
+        this.createTexture()
+      }
+    }
   }
 
   createTexture() {
@@ -296,7 +314,7 @@ export class Texture extends Object3D {
         GPUTextureUsage.RENDER_ATTACHMENT,
     }
 
-    if (this.options.sourceType !== 'video') {
+    if (this.options.sourceType !== 'externalVideo') {
       options.mipLevelCount = this.options.texture.generateMips
         ? this.getNumMipLevels(this.size.width, this.size.height)
         : 1
@@ -353,6 +371,7 @@ export class Texture extends Object3D {
   // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
   onVideoFrameCallback() {
     if (this.videoFrameCallbackId) {
+      this.shouldUpdate = true
       this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
     }
   }
@@ -365,15 +384,20 @@ export class Texture extends Object3D {
     await source
       .play()
       .then(() => {
-        this.options.sourceType = 'video'
-
-        // reset texture bindings
-        this.setBindings()
-
         this.source = source
 
         this.setSourceSize()
         this.resize()
+
+        if (this.options.texture.useExternalTextures) {
+          this.options.sourceType = 'externalVideo'
+
+          // reset texture bindings
+          this.setBindings()
+        } else {
+          this.options.sourceType = 'video'
+          this.createTexture()
+        }
 
         if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
           this.videoFrameCallbackId = this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this))
