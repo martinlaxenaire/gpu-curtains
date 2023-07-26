@@ -11,35 +11,14 @@ export class ShaderPass extends FullscreenPlane {
 
     super(renderer, parameters)
 
-    this.renderTextures = []
-
     this.createRenderTexture({
       label: parameters.label + ' Shader pass render texture',
       name: 'renderTexture',
     })
   }
 
-  createRenderTexture(options) {
-    if (!options.name) {
-      options.name = 'texture' + this.textures.length
-    }
-
-    const renderTexture = new RenderTexture(this.renderer, options)
-
-    this.material.addTextureBinding(renderTexture)
-    this.renderTextures.push(renderTexture)
-
-    return renderTexture
-  }
-
   get renderTexture() {
     return this.renderTextures[0] ?? null
-  }
-
-  resize(boundingRect) {
-    this.renderTextures?.forEach((renderTexture) => renderTexture.resize())
-
-    super.resize(boundingRect)
   }
 
   addToScene() {

@@ -1,0 +1,10 @@
+@media screen {
+  #ping-pong-plane {
+    width: 100%;
+    height: 100vh;
+  }
+
+  #ping-pong-plane img {
+    display: none;
+  }
+}

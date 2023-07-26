@@ -4,6 +4,7 @@ import { Material } from '../materials/Material'
 import { Texture } from '../textures/Texture'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Geometry } from '../geometries/Geometry'
+import { RenderTexture } from '../textures/RenderTexture'
 
 let meshIndex = 0
 
@@ -61,6 +62,7 @@ const MeshBaseMixin = (superclass) =>
       this.renderer = renderer
 
       this.textures = []
+      this.renderTextures = []
 
       const { label, shaders, geometry, bindings, visible, renderOrder, texturesOptions, ...meshParameters } =
         parameters
@@ -158,6 +160,19 @@ const MeshBaseMixin = (superclass) =>
       texture.parent = this
     }
 
+    createRenderTexture(options) {
+      if (!options.name) {
+        options.name = 'texture' + this.textures.length
+      }
+
+      const renderTexture = new RenderTexture(this.renderer, options)
+
+      this.material.addTexture(renderTexture)
+      this.renderTextures.push(renderTexture)
+
+      return renderTexture
+    }
+
     /*** UNIFORMS ***/
 
     createUniformsBindings(bindings) {
@@ -175,6 +190,9 @@ const MeshBaseMixin = (superclass) =>
     }
 
     resize(boundingRect = null) {
+      // resize render textures first
+      this.renderTextures?.forEach((renderTexture) => renderTexture.resize())
+
       if (super.resize) super.resize(boundingRect)
 
       // resize textures

@@ -2,6 +2,7 @@ import { CameraRenderer } from '../../types/renderer-utils'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Material, MaterialBaseParams, MaterialParams } from '../materials/Material'
 import { CurtainsTextureOptions, Texture, TextureDefaultParams } from '../textures/Texture'
+import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import { DOMElementBoundingRect } from '../DOMElement'
@@ -87,6 +88,7 @@ export class MeshBase {
 
   uniforms: Material['uniforms']
 
+  renderTextures: RenderTexture[]
   textures: Texture[]
 
   renderOrder: number
@@ -119,6 +121,7 @@ export class MeshBase {
 
   createTexture(options: TextureDefaultParams): Texture
   onTextureCreated(texture: Texture)
+  createRenderTexture(options: RenderTextureParams): RenderTexture
 
   createUniformsBindings(bindings: MeshBindings): BufferBindings[]
 
