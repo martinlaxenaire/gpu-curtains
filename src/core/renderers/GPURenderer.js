@@ -384,9 +384,11 @@ export class GPURenderer {
     this.domElement?.destroy()
     this.documentBody?.destroy()
 
-    this.meshes.forEach((mesh) => mesh.destroy())
+    this.meshes.forEach((mesh) => mesh.remove())
 
-    this.textures.forEach((texture) => texture.destroy())
+    //this.textures.forEach((texture) => texture.destroy())
+    this.textures = []
+    this.texturesQueue = []
 
     // destroy render passes
     //this.renderPasses?.forEach((renderPass) => renderPass.destroy())

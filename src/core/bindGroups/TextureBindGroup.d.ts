@@ -18,4 +18,6 @@ export class TextureBindGroup extends BindGroup {
   resetTextureBindGroup()
   shouldUpdateVideoTextureBindGroupLayout(textureIndex: number)
   updateVideoTextureBindGroupLayout(textureIndex: number)
+
+  destroy()
 }

@@ -1,9 +1,8 @@
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../../core/renderers/GPUCameraRenderer'
-import { Plane } from '../meshes/Plane'
-import { DOMMesh } from '../meshes/DOMMesh'
+import { DOMMeshType } from '../../core/renderers/GPURenderer'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
-  domMeshes: Array<DOMMesh | Plane>
+  domMeshes: DOMMeshType[]
 
   constructor({
     container,

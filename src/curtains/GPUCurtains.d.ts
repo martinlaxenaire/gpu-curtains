@@ -2,6 +2,10 @@ import { CameraBasePerspectiveOptions } from '../core/camera/Camera'
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import { Vec3 } from '../math/Vec3'
+import { PingPongPlane } from './meshes/PingPongPlane'
+import { ShaderPass } from '../core/renderPasses/ShaderPass'
+import { MeshType, DOMMeshType } from '../core/renderers/GPURenderer'
+import { Plane } from './meshes/Plane'
 
 interface GPUCurtainsOptions {
   container: HTMLElement
@@ -45,6 +49,12 @@ export class GPUCurtains {
   setRenderer()
   setRendererContext(): Promise<void>
   setCurtains()
+
+  get pingPongPlanes(): PingPongPlane[]
+  get shaderPasses(): ShaderPass[]
+  get meshes(): MeshType[]
+  get domMeshes(): DOMMeshType[]
+  get planes(): Plane
 
   setPerspective(fov?: number, near?: number, far?: number)
   setCameraPosition(position: Vec3)

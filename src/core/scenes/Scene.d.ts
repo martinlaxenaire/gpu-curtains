@@ -1,4 +1,4 @@
-import { GPURenderer, MeshTypes } from '../renderers/GPURenderer'
+import { GPURenderer, MeshType } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 
@@ -13,8 +13,8 @@ type StackContentStructure<T extends StacksTypes> = T extends ShaderPassStacksTy
   : T extends PingPongPlaneStacksType
   ? PingPongPlane[]
   : T extends MeshStacksTypes
-  ? MeshTypes[]
-  : Array<MeshTypes | ShaderPass>
+  ? MeshType[]
+  : Array<MeshType | ShaderPass>
 
 type ProjectedStacks = Record<MeshStacksTypes, StackContentStructure<MeshStacksTypes>>
 type UnprojectedStacks = Record<StacksTypes, StackContentStructure<StacksTypes>>
@@ -36,8 +36,8 @@ export class Scene {
 
   setStacks()
 
-  addMesh(mesh: MeshTypes)
-  removeMesh(mesh: MeshTypes)
+  addMesh(mesh: MeshType)
+  removeMesh(mesh: MeshType)
 
   addShaderPass(shaderPass: ShaderPass)
   removeShaderPass(shaderPass: ShaderPass)

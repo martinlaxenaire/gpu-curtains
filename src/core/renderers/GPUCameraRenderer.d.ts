@@ -36,4 +36,6 @@ export class GPUCameraRenderer extends GPURenderer {
   onResize()
 
   render()
+
+  destroy()
 }

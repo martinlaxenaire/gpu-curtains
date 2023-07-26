@@ -18,7 +18,8 @@ interface GPURendererParams {
   onError?: () => void
 }
 
-type MeshTypes = Mesh | DOMMesh | Plane
+type DOMMeshType = DOMMesh | Plane
+type MeshType = Mesh | DOMMeshType
 
 interface Sampler {
   sampler: GPUSampler
@@ -44,7 +45,7 @@ export class GPURenderer {
   renderPasses: RenderPass[]
   pingPongPlanes: PingPongPlane[]
   shaderPasses: ShaderPass[]
-  meshes: MeshTypes[]
+  meshes: MeshType[]
   samplers: Sampler[]
   textures: Texture[]
   texturesQueue: Texture[]

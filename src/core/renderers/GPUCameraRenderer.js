@@ -153,4 +153,9 @@ export class GPUCameraRenderer extends GPURenderer {
 
     super.render()
   }
+
+  destroy() {
+    this.cameraBindGroup?.destroy()
+    super.destroy()
+  }
 }

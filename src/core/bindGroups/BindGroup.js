@@ -140,5 +140,8 @@ export class BindGroup {
     this.bindingsBuffers.forEach((bindingBuffer) => {
       bindingBuffer.buffer?.destroy()
     })
+
+    this.bindingsBuffers = []
+    this.bindings = []
   }
 }

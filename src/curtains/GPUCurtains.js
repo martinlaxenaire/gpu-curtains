@@ -120,6 +120,28 @@ export class GPUCurtains {
     }
   }
 
+  /** Renderer objects **/
+
+  get pingPongPlanes() {
+    return this.renderer?.pingPongPlanes
+  }
+
+  get shaderPasses() {
+    return this.renderer?.shaderPasses
+  }
+
+  get meshes() {
+    return this.renderer?.meshes
+  }
+
+  get domMeshes() {
+    return this.renderer?.domMeshes
+  }
+
+  get planes() {
+    return this.renderer?.domMeshes.filter((domMesh) => domMesh.type === 'Plane')
+  }
+
   setPerspective(fov = 50, near = 0.01, far = 50) {
     this.renderer?.setPerspective(fov, near, far)
   }
@@ -225,6 +247,10 @@ export class GPUCurtains {
   }
 
   destroy() {
+    if (this.animationFrameID) {
+      window.cancelAnimationFrame(this.animationFrameID)
+    }
+
     this.renderer?.destroy()
     this.scrollManager?.destroy()
   }

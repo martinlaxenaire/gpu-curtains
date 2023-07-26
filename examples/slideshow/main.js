@@ -194,6 +194,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       })
     })
     .onRender(() => {
+      console.log('render')
       // increase or decrease our timer based on the active texture value
       if (slideshowState.isChanging) {
         const fpsDuration = slideshowState.duration * 60 // duration * 60fps
@@ -212,7 +213,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
 
   setTimeout(() => {
-    plane.remove()
+    gpuCurtains.destroy()
     console.log(plane, gpuCurtains)
   }, 5000)
 })

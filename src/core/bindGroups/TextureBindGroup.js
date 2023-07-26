@@ -123,4 +123,9 @@ export class TextureBindGroup extends BindGroup {
       this.setBindGroupLayout()
     }
   }
+
+  destroy() {
+    super.destroy()
+    this.textures = []
+  }
 }
