@@ -121,5 +121,7 @@ export class Texture extends Object3D {
   onSourceLoaded: (callback: () => void) => Texture
   onSourceUploaded: (callback: () => void) => Texture
 
+  render()
+
   destroy()
 }

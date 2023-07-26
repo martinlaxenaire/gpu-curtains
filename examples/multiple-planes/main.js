@@ -174,9 +174,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('add-more-planes').addEventListener('click', () => {
     const createPlaneEl = (index) => {
       return `
-      <div class="plane-wrapper"><span class="plane-title">Title ${
-        index + 1
-      }</span><div class="plane-inner"><div class="landscape-wrapper"><div class="landscape-inner"><div class="plane"><img src="https://source.unsplash.com/featured/1920x1280/?nature&${index}" crossorigin="" data-texture-name="planeTexture" /></div></div></div></div></div>
+      <div class="plane-wrapper">
+        <h2 class="primary-button plane-title">Title ${index + 1}</h2>
+        <div class="plane-inner">
+          <div class="plane">
+            <img src="https://source.unsplash.com/featured/1920x1280/?nature&${index}" crossorigin="" data-texture-name="planeTexture" />
+          </div>
+        </div>
+      </div>
     `
     }
 

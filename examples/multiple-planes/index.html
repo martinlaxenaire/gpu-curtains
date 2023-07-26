@@ -8,104 +8,92 @@
     <title>gpu-curtains | Multiple planes example</title>
     <meta name="description" content="Multiple planes with gpu-curtains" />
 
-    <link href="https://fonts.googleapis.com/css?family=PT+Sans:400" rel="stylesheet" />
+    <link href="../common-styles.css" rel="stylesheet" />
     <link href="styles.css" rel="stylesheet" />
   </head>
 
   <body>
-    <div id="page-wrap">
-      <div id="canvas"></div>
+    <div id="canvas"></div>
 
-      <div id="content">
-        <h1>Multi planes + AJAX load simulation (+ performance test)</h1>
+    <div id="page">
+      <h1>Multi planes + AJAX load simulation</h1>
 
-        <a href="https://www.curtainsjs.com/" title="back to curtains.js website" id="back-to-lib-link" target="_blank"
-          >back to curtains.js website</a
-        >
-
-        <a
-          href="https://github.com/martinlaxenaire/curtainsjs/blob/master/examples/multiple-planes/js/multiple.planes.setup.js"
-          title="Show source code"
-          id="source-code-link"
-          target="_blank"
-          >&lt;/ &gt;</a
-        >
-
-        <div id="planes">
-          <div class="plane-wrapper">
-            <span class="plane-title">Title 1</span>
-            <div class="plane-inner">
-              <div class="landscape-wrapper">
-                <div class="landscape-inner">
-                  <div class="plane">
-                    <img
-                      src="https://source.unsplash.com/featured/1920x1280/?nature&1"
-                      crossorigin=""
-                      data-texture-name="planeTexture"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="plane-wrapper">
-            <span class="plane-title">Title 2</span>
-            <div class="plane-inner">
-              <div class="landscape-wrapper">
-                <div class="landscape-inner">
-                  <div class="plane">
-                    <img
-                      src="https://source.unsplash.com/featured/1920x1280/?nature&2"
-                      crossorigin=""
-                      data-texture-name="planeTexture"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="plane-wrapper">
-            <span class="plane-title">Title 3</span>
-            <div class="plane-inner">
-              <div class="landscape-wrapper">
-                <div class="landscape-inner">
-                  <div class="plane">
-                    <img
-                      src="https://source.unsplash.com/featured/1920x1280/?nature&3"
-                      crossorigin=""
-                      data-texture-name="planeTexture"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="plane-wrapper">
-            <span class="plane-title">Title 4</span>
-            <div class="plane-inner">
-              <div class="landscape-wrapper">
-                <div class="landscape-inner">
-                  <div class="plane">
-                    <img
-                      src="https://source.unsplash.com/featured/1920x1280/?nature&4"
-                      crossorigin=""
-                      data-texture-name="planeTexture"
-                    />
-                  </div>
-                </div>
-              </div>
+      <div id="planes">
+        <div class="plane-wrapper">
+          <h2 class="primary-button plane-title">Title 1</h2>
+          <div class="plane-inner">
+            <div class="plane">
+              <img
+                src="https://source.unsplash.com/featured/1920x1280/?nature&1"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
             </div>
           </div>
         </div>
 
-        <div id="add-more-planes-wrapper">
-          <span id="add-more-planes"> Add more planes (simulates AJAX lazy load) </span>
+        <div class="plane-wrapper">
+          <h2 class="primary-button plane-title">Title 2</h2>
+          <div class="plane-inner">
+            <div class="plane">
+              <img
+                src="https://source.unsplash.com/featured/1920x1280/?nature&2"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="plane-wrapper">
+          <h2 class="primary-button plane-title">Title 3</h2>
+          <div class="plane-inner">
+            <div class="plane">
+              <img
+                src="https://source.unsplash.com/featured/1920x1280/?nature&3"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="plane-wrapper">
+          <h2 class="primary-button plane-title">Title 4</h2>
+          <div class="plane-inner">
+            <div class="plane">
+              <img
+                src="https://source.unsplash.com/featured/1920x1280/?nature&4"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      <div id="add-more-planes-wrapper">
+        <button id="add-more-planes" class="primary-button">Add more planes (simulates AJAX lazy load)</button>
+      </div>
     </div>
+
+    <a
+      href="https://www.curtainsjs.com/"
+      title="back to curtains.js website"
+      id="back-to-lib-link"
+      class="primary-button"
+      target="_blank"
+      >back to curtains.js website</a
+    >
+
+    <a
+      href="https://github.com/martinlaxenaire/curtainsjs/blob/master/examples/multiple-planes/js/multiple.planes.setup.js"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
 
     <script src="../../dist/gpu-curtains.js"></script>
     <script src="main.js"></script>

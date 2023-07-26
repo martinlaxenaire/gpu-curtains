@@ -17,7 +17,8 @@ export class DOMElement {
       this.element = document.querySelector(element)
 
       if (!this.element) {
-        throwError('DOMElement: ' + element + ' HTMLElement or selector not found.')
+        const notFoundEl = typeof element === 'string' ? `'${element}' selector` : `${element} HTMLElement`
+        throwError(`DOMElement: corresponding ${notFoundEl} not found.`)
       }
     } else {
       this.element = element

@@ -2,6 +2,7 @@ import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
 import MeshBaseMixin from '../../core/meshes/MeshBaseMixin'
+import { throwWarning } from '../../utils/utils'
 
 const defaultDOMMeshParams = {
   autoloadSources: true,
@@ -119,6 +120,16 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
       }
     } else {
       this.sourcesReady = true
+    }
+  }
+
+  resetDOMElement(element) {
+    if (!!element) {
+      super.resetDOMElement(element)
+    } else if (!element && !this.renderer.production) {
+      throwWarning(
+        `${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`
+      )
     }
   }
 

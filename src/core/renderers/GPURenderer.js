@@ -43,6 +43,7 @@ export class GPURenderer {
       element: container,
     })
 
+    // now track any change in the document body size, and resize our scene
     this.documentBody = new DOMElement({
       element: document.body,
       onSizeChanged: () => this.resize(),
@@ -282,7 +283,7 @@ export class GPURenderer {
 
         this.texturesQueue.push(texture)
       } catch ({ message }) {
-        throwError(`GPURenderer: could not upload texture: ${texture} because: ${message}`)
+        throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`)
       }
     } else {
       this.device.queue.writeTexture(

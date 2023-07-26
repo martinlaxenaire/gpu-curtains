@@ -3,10 +3,9 @@ import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { PlaneGeometry } from '../../core/geometries/PlaneGeometry'
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Geometry } from '../../core/geometries/Geometry'
-import MeshBaseMixin, { MeshBaseParams, MeshBase } from '../../core/meshes/MeshBaseMixin'
-import MeshTransformedMixin, { MeshTransformedBase } from '../../core/meshes/MeshTransformedMixin'
-import { Texture, TextureBaseParams } from '../../core/textures/Texture'
-import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
+import MeshBaseMixin, { MeshBaseParams } from '../../core/meshes/MeshBaseMixin'
+import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
+import { Texture } from '../../core/textures/Texture'
 
 interface DOMMeshBaseParams extends MeshBaseParams {
   autoloadSources?: boolean
@@ -34,5 +33,7 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
   get DOMMeshReady(): boolean
 
   setInitSources()
+  resetDOMElement(element: string | HTMLElement)
+
   onLoading: (callback: (texture: Texture) => void) => DOMMesh
 }

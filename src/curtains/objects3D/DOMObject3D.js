@@ -39,6 +39,10 @@ export class DOMObject3D extends ProjectedObject3D {
 
     this.camera = this.renderer.camera
 
+    this.setDOMElement(element)
+  }
+
+  setDOMElement(element) {
     this.domElement = new DOMElement({
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
@@ -49,6 +53,14 @@ export class DOMObject3D extends ProjectedObject3D {
         }
       },
     })
+  }
+
+  resetDOMElement(element) {
+    if (this.domElement) {
+      this.domElement.destroy()
+    }
+
+    this.setDOMElement(element)
   }
 
   updateSizeAndPosition() {
@@ -250,6 +262,6 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   destroy() {
-    this.domElement
+    this.domElement?.destroy()
   }
 }

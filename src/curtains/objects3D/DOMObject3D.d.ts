@@ -39,7 +39,6 @@ interface DOMObject3DParams {
   watchScroll: boolean
 }
 
-//declare class DOMObject3DClass extends ProjectedObject3D {
 export class DOMObject3D extends ProjectedObject3D {
   renderer: GPUCurtainsRenderer
   camera: Camera
@@ -55,6 +54,9 @@ export class DOMObject3D extends ProjectedObject3D {
   #DOMObjectWorldScale: Vec3
 
   constructor(renderer: GPUCurtainsRenderer, element: string | HTMLElement, parameters: DOMObject3DParams)
+
+  setDOMElement(element: string | HTMLElement)
+  resetDOMElement(element: string | HTMLElement)
 
   updateSizeAndPosition()
 

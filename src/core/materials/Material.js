@@ -295,20 +295,8 @@ export class Material {
 
     // first what needs to be done for all textures
     this.textures.forEach((texture) => {
-      // update uniforms values
-      texture.textureMatrix?.onBeforeRender()
-
-      // since external texture are destroyed as soon as JavaScript returns to the browser
-      // we need to update it at every tick, even if it hasn't changed
-      // to ensure we're not sending a stale / destroyed texture
-      // anyway, external texture are cached so it is fined to call importExternalTexture at each tick
-      if (texture.options.sourceType === 'externalVideo' || texture.options.sourceType === 'canvas') {
-        texture.shouldUpdate = true
-      }
-
-      if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType !== 'externalVideo') {
-        texture.uploadTexture()
-      }
+      // RenderTextures does not have a render method
+      texture.render && texture.render()
     })
 
     // then what needs to be done only for textures actually used in our shaders

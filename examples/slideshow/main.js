@@ -6,22 +6,25 @@ window.addEventListener('DOMContentLoaded', async () => {
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    onError: () => {
+      document.body.classList.add('no-curtains')
+    },
   })
 
   await gpuCurtains.setRendererContext()
 
   // get our plane element
-  const planeElements = document.getElementsByClassName('multi-textures')
+  const planeElements = document.querySelector('#multi-textures-plane')
 
   // here we will handle which texture is visible and the timer to transition between images
   const slideshowState = {
     activeTextureIndex: 0,
     nextTextureIndex: 1, // does not care for now
-    maxTextures: planeElements[0].querySelectorAll('img, video').length - 1,
+    maxTextures: planeElements.querySelectorAll('img, video').length - 1,
 
     isChanging: false,
     transitionTimer: 0,
-    duration: 1.5, // 1.5s
+    duration: 1.5, // in seconds
   }
 
   const vertexShader = /* wgsl */ `
@@ -63,19 +66,18 @@ window.addEventListener('DOMContentLoaded', async () => {
         // port of https://gl-transitions.com/editor/windowslice
         var progress: f32 = transition.timer / transition.duration;
         
-        var pr: f32 = smoothstep(
+        var smoothProgress: f32 = smoothstep(
           -1.0 * transition.smoothness,
           0.0,
           fsInput.uv.x - progress * (1.0 + transition.smoothness)
         );
         
-        var s: f32 = step(pr, fract(transition.colsCount * fsInput.uv.x));
+        var effectMix: f32 = step(smoothProgress, fract(transition.colsCount * fsInput.uv.x));
       
-        return mix(activeColor, nextColor, s);
+        return mix(activeColor, nextColor, effectMix);
       }
     `
 
-  // some basic parameters
   const params = {
     shaders: {
       vertex: {
@@ -89,12 +91,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     texturesOptions: {
       texture: {
+        // do not use external textures for videos
+        // so we can copy them as regular textures
         useExternalTextures: false,
       },
     },
     bindings: [
       {
-        name: 'transition', // could be something else, like "frames"...
+        name: 'transition',
         label: 'Transition',
         uniforms: {
           timer: {
@@ -118,19 +122,23 @@ window.addEventListener('DOMContentLoaded', async () => {
     ],
   }
 
-  const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
+  document.body.classList.add('is-waiting')
 
-  // the idea here is to create two additionnal textures
+  const plane = new GPUCurtains.Plane(gpuCurtains, planeElements, params)
+
+  // the idea here is to create two additional textures
   // the first one will contain our visible image
   // the second one will contain our entering (next) image
-  // that way we will deal with only activeTex and nextTex samplers in the fragment shader
+  // that way we will deal with only activeTexture and nextTexture in the fragment shader
   // and we could easily add more images in the slideshow...
+
   // first we set our very first image as the active texture
   const activeTex = plane.createTexture({
     label: 'Active texture',
     name: 'activeTexture',
     fromTexture: plane.textures[slideshowState.activeTextureIndex],
   })
+
   // next we set the second image as next texture but this is not mandatory
   // as we will reset the next texture on slide change
   const nextTex = plane.createTexture({
@@ -144,8 +152,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       console.log('texture uploaded!', texture)
     })
     .onReady(() => {
-      planeElements[0].addEventListener('click', () => {
+      document.body.classList.remove('is-waiting')
+      const button = planeElements.querySelector('button')
+      button.classList.add('show')
+
+      button.addEventListener('click', () => {
         if (!slideshowState.isChanging) {
+          document.body.classList.add('is-waiting')
           slideshowState.isChanging = true
 
           // check what will be next image
@@ -156,18 +169,19 @@ window.addEventListener('DOMContentLoaded', async () => {
           }
 
           // apply it to our next texture
-          //nextTex.setSource(multiTexturesPlane.images[slideshowState.nextTextureIndex])
           nextTex.copy(plane.textures[slideshowState.nextTextureIndex])
 
           setTimeout(() => {
+            document.body.classList.remove('is-waiting')
             slideshowState.isChanging = false
             slideshowState.activeTextureIndex = slideshowState.nextTextureIndex
+
             // our next texture becomes our active texture
-            //activeTex.setSource(multiTexturesPlane.images[slideshowState.activeTextureIndex])
             activeTex.copy(plane.textures[slideshowState.activeTextureIndex])
+
             // reset timer
             slideshowState.transitionTimer = 0
-          }, slideshowState.duration * 1000 + 100) // add a bit of margin to the timer
+          }, slideshowState.duration * 1000 + 50) // add a bit of margin to the timer
         }
       })
     })

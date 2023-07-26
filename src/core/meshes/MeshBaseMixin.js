@@ -177,6 +177,11 @@ const MeshBaseMixin = (superclass) =>
     resize(boundingRect = null) {
       if (super.resize) super.resize(boundingRect)
 
+      // resize textures
+      this.textures?.forEach((texture) => {
+        texture.resize()
+      })
+
       this._onAfterResizeCallback && this._onAfterResizeCallback()
     }
 

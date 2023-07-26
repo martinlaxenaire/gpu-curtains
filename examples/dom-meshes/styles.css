@@ -1,73 +1,4 @@
 @media screen {
-  html,
-  body {
-    min-height: 100%;
-  }
-
-  body {
-    margin: 0;
-    font-size: 18px;
-    font-family: 'PT Sans', Verdana, sans-serif;
-    background: #ffffff;
-    line-height: 1.4;
-  }
-
-  /*** layout ***/
-
-  #page-wrap {
-    width: 100%;
-    min-height: 100vh;
-    overflow: hidden;
-  }
-
-  h1 {
-    text-align: center;
-    margin: 4rem 0;
-  }
-
-  /*** canvas ***/
-
-  #canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;
-  }
-
-  #back-to-lib-link {
-    display: inline-block;
-    position: fixed;
-    top: 0;
-    right: 0;
-    padding: 0.25em 0.5em;
-    background: #ee6557;
-    color: white;
-    text-decoration: none;
-    z-index: 20;
-    font-size: 0.85em;
-  }
-
-  #back-to-lib-link:hover {
-    background: black;
-  }
-
-  #source-code-link {
-    display: inline-block;
-    position: fixed;
-    bottom: 1em;
-    right: 1em;
-    padding: 0.25em 0.5em;
-    background: #ee6557;
-    color: white;
-    text-decoration: none;
-    z-index: 50;
-  }
-
-  #source-code-link:hover {
-    background: black;
-  }
-
   #mesh-container {
     position: relative;
     width: 100%;
@@ -82,7 +13,7 @@
     aspect-ratio: 1;
     margin: 10vh 5%;
     box-sizing: border-box;
-    border: 2px solid #ee6557;
+    border: 2px solid var(--primary-color);
     position: relative;
 
     justify-content: center;
@@ -91,7 +22,6 @@
   }
 
   .dom-mesh h2 {
-    color: white;
     position: absolute;
     top: 50%;
     right: 0;
@@ -99,12 +29,6 @@
     transform: translate3d(0, -50%, 0);
     margin: 0;
     text-align: center;
-  }
-
-  .dom-mesh h2 span {
-    display: inline-block;
-    padding: 0.25em 0.5em;
-    background: #ee6557;
   }
 
   #large-cube-mesh {

@@ -108,8 +108,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       externalVideoPlane.uniforms.time.value++
     })
 
-  console.log(externalVideoPlane, externalVideoPlane.textures)
-
   const videoParams = {
     ...params,
     ...{
@@ -141,6 +139,4 @@ window.addEventListener('DOMContentLoaded', async () => {
       // update our time uniform value
       videoPlane.uniforms.time.value++
     })
-
-  console.log(videoPlane, videoPlane.textures)
 })

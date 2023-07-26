@@ -8,25 +8,15 @@
     <title>gpu-curtains | Video planes example</title>
     <meta name="description" content="Video planes with gpu-curtains" />
 
-    <link href="https://fonts.googleapis.com/css?family=PT+Sans:400" rel="stylesheet" />
+    <link href="../common-styles.css" rel="stylesheet" />
     <link href="styles.css" rel="stylesheet" />
   </head>
 
   <body>
-    <div id="page-wrap">
-      <div id="canvas"></div>
+    <div id="canvas"></div>
 
-      <a href="https://www.curtainsjs.com/" title="back to curtains.js website" id="back-to-lib-link" target="_blank"
-        >back to curtains.js website</a
-      >
-
-      <a
-        href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/slideshow/index.html"
-        title="Show source code"
-        id="source-code-link"
-        target="_blank"
-        >&lt;/ &gt;</a
-      >
+    <div id="page">
+      <h1>Video textures: external and regular</h1>
 
       <div id="videos">
         <div class="video-wrapper">
@@ -60,6 +50,24 @@
         </div>
       </div>
     </div>
+
+    <a
+      href="https://www.curtainsjs.com/"
+      title="back to curtains.js website"
+      id="back-to-lib-link"
+      class="primary-button"
+      target="_blank"
+      >back to curtains.js website</a
+    >
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/slideshow/index.html"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
 
     <script src="../../dist/gpu-curtains.js"></script>
     <script src="main.js"></script>

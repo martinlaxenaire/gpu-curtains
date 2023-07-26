@@ -8,30 +8,21 @@
     <title>gpu-curtains | Slideshow example</title>
     <meta name="description" content="A slideshow with gpu-curtains" />
 
-    <link href="https://fonts.googleapis.com/css?family=PT+Sans:400" rel="stylesheet" />
+    <link href="../common-styles.css" rel="stylesheet" />
     <link href="styles.css" rel="stylesheet" />
   </head>
 
   <body>
-    <div id="page-wrap">
-      <div id="canvas"></div>
+    <div id="canvas"></div>
 
-      <a href="https://www.curtainsjs.com/" title="back to curtains.js website" id="back-to-lib-link" target="_blank"
-        >back to curtains.js website</a
-      >
-
-      <a
-        href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/slideshow/index.html"
-        title="Show source code"
-        id="source-code-link"
-        target="_blank"
-        >&lt;/ &gt;</a
-      >
-
-      <div class="flex-wrapper multi-textures">
-        <span>Click me !</span>
+    <div id="page">
+      <div id="multi-textures-plane">
+        <button>
+          <span class="primary-button"> Click me ! </span>
+        </button>
         <img src="https://source.unsplash.com/featured/1920x1280/?nature&1" crossorigin="" />
-        <img src="https://source.unsplash.com/featured/1920x1280/?nature&2" crossorigin="" />
+        <!-- this image will have a different size just to highlight that texture matrices work -->
+        <img src="https://source.unsplash.com/featured/1280x1280/?nature&2" crossorigin="" />
         <img src="https://source.unsplash.com/featured/1920x1280/?nature&3" crossorigin="" />
         <img src="https://source.unsplash.com/featured/1920x1280/?nature&4" crossorigin="" />
         <video
@@ -44,6 +35,24 @@
         ></video>
       </div>
     </div>
+
+    <a
+      href="https://www.curtainsjs.com/"
+      title="back to curtains.js website"
+      id="back-to-lib-link"
+      class="primary-button"
+      target="_blank"
+      >back to curtains.js website</a
+    >
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/slideshow/index.html"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
 
     <script src="../../dist/gpu-curtains.js"></script>
     <script src="main.js"></script>

@@ -444,11 +444,30 @@ export class Texture extends Object3D {
     return this
   }
 
+  /** RENDER **/
+
+  render() {
+    // update uniforms values
+    this.textureMatrix.onBeforeRender()
+
+    // since external texture are destroyed as soon as JavaScript returns to the browser
+    // we need to update it at every tick, even if it hasn't changed
+    // to ensure we're not sending a stale / destroyed texture
+    // anyway, external texture are cached so it is fined to call importExternalTexture at each tick
+    if (this.options.sourceType === 'externalVideo' || this.options.sourceType === 'canvas') {
+      this.shouldUpdate = true
+    }
+
+    if (this.shouldUpdate && this.options.sourceType && this.options.sourceType !== 'externalVideo') {
+      this.uploadTexture()
+    }
+  }
+
   /** DESTROY **/
 
   destroy() {
     if (this.videoFrameCallbackId) {
-      this.options.source.cancelVideoFrameCallback(this.videoFrameCallbackId)
+      this.source.cancelVideoFrameCallback(this.videoFrameCallbackId)
     }
 
     this.texture?.destroy()

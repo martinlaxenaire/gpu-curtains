@@ -8,31 +8,19 @@
     <title>gpu-curtains | DOM Meshes example</title>
     <meta name="description" content="DOM Meshes with gpu-curtains" />
 
-    <link href="https://fonts.googleapis.com/css?family=PT+Sans:400" rel="stylesheet" />
+    <link href="../common-styles.css" rel="stylesheet" />
     <link href="styles.css" rel="stylesheet" />
   </head>
 
   <body>
-    <div id="page-wrap">
-      <div id="canvas"></div>
+    <div id="canvas"></div>
 
-      <a href="https://www.curtainsjs.com/" title="back to curtains.js website" id="back-to-lib-link" target="_blank"
-        >back to curtains.js website</a
-      >
-
-      <a
-        href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/slideshow/index.html"
-        title="Show source code"
-        id="source-code-link"
-        target="_blank"
-        >&lt;/ &gt;</a
-      >
-
+    <div id="page">
       <h1>DOM Meshes</h1>
 
       <div id="mesh-container">
         <div class="dom-mesh cube-mesh">
-          <h2><span>Cube mesh 1</span></h2>
+          <h2><span class="primary-button">Cube mesh 1</span></h2>
           <img
             src="https://source.unsplash.com/featured/1920x1280/?nature&1"
             crossorigin=""
@@ -41,7 +29,7 @@
         </div>
 
         <div class="dom-mesh sphere-mesh">
-          <h2><span>Sphere mesh 1</span></h2>
+          <h2><span class="primary-button">Sphere mesh 1</span></h2>
           <img
             src="https://source.unsplash.com/featured/1920x1280/?nature&2"
             crossorigin=""
@@ -50,7 +38,7 @@
         </div>
 
         <div class="dom-mesh sphere-mesh">
-          <h2><span>Sphere mesh 2</span></h2>
+          <h2><span class="primary-button">Sphere mesh 2</span></h2>
           <img
             src="https://source.unsplash.com/featured/1920x1280/?nature&3"
             crossorigin=""
@@ -59,7 +47,7 @@
         </div>
 
         <div class="dom-mesh cube-mesh">
-          <h2><span>Cube mesh 2</span></h2>
+          <h2><span class="primary-button">Cube mesh 2</span></h2>
           <img
             src="https://source.unsplash.com/featured/1920x1280/?nature&4"
             crossorigin=""
@@ -68,7 +56,7 @@
         </div>
 
         <div id="large-cube-mesh" class="dom-mesh cube-mesh">
-          <h2><span>Large cube mesh</span></h2>
+          <h2><span class="primary-button">Large cube mesh</span></h2>
           <img
             src="https://source.unsplash.com/featured/1920x1280/?nature&4"
             crossorigin=""
@@ -77,7 +65,7 @@
         </div>
 
         <div class="dom-mesh sphere-mesh">
-          <h2><span>Sphere mesh 3</span></h2>
+          <h2><span class="primary-button">Sphere mesh 3</span></h2>
           <img
             src="https://source.unsplash.com/featured/1920x1280/?nature&3"
             crossorigin=""
@@ -86,7 +74,7 @@
         </div>
 
         <div class="dom-mesh sphere-mesh">
-          <h2><span>Sphere mesh 4</span></h2>
+          <h2><span class="primary-button">Sphere mesh 4</span></h2>
           <img
             src="https://source.unsplash.com/featured/1920x1280/?nature&3"
             crossorigin=""
@@ -95,6 +83,24 @@
         </div>
       </div>
     </div>
+
+    <a
+      href="https://www.curtainsjs.com/"
+      title="back to curtains.js website"
+      id="back-to-lib-link"
+      class="primary-button"
+      target="_blank"
+      >back to curtains.js website</a
+    >
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/slideshow/index.html"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
 
     <script src="../../dist/gpu-curtains.js"></script>
     <script src="main.js"></script>
