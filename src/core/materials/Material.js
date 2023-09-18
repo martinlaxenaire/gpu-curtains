@@ -15,18 +15,24 @@ export class Material {
 
     let { shaders, label, uniformsBindings, geometry, ...renderingOptions } = parameters
 
-    shaders = {
-      ...{
-        vertex: {
-          code: '',
-          entryPoint: 'main',
-        },
-        fragment: {
-          code: '',
-          entryPoint: 'main',
-        },
-      },
-      ...shaders,
+    // shaders = {
+    //   ...{
+    //     vertex: {
+    //       entryPoint: 'main',
+    //     },
+    //     fragment: {
+    //       entryPoint: 'main',
+    //     },
+    //   },
+    //   ...shaders,
+    // }
+
+    if (!shaders.vertex.entryPoint) {
+      shaders.vertex.entryPoint = 'main'
+    }
+
+    if (!shaders.fragment.entryPoint) {
+      shaders.fragment.entryPoint = 'main'
     }
 
     this.options = {

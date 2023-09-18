@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const videoVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(1) uv: vec2f,
+      @location(0) uv: vec2f,
     };
   
     @vertex fn main(
@@ -45,7 +45,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const videoFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(1) uv: vec2f,
+      @location(0) uv: vec2f,
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
@@ -56,7 +56,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const videoExternalFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(1) uv: vec2f,
+      @location(0) uv: vec2f,
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {

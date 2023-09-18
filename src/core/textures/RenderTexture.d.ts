@@ -20,6 +20,7 @@ declare const defaultRenderTextureParams: RenderTextureParams
 
 export class RenderTexture {
   renderer: GPURenderer
+  type: string
 
   sampler: GPUSampler
   texture: GPUTexture

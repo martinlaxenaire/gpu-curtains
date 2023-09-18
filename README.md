@@ -31,10 +31,10 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Errors / warning handling
 - Events / callbacks
 - Removing / destroying meshes
+- Render to textures (frame buffers)
 
 ### Todo
 
-- Render targets?
 - Compute pass
 - TextureLoader class?
 - Use async pipelines?

@@ -87,9 +87,8 @@ export class GPURenderer {
 
   onResize() {
     // resize render & shader passes
-    const pixelRatioBoundingRect = this.pixelRatioBoundingRect
-
-    this.renderPass?.resize(pixelRatioBoundingRect)
+    this.renderPass?.resize(this.pixelRatioBoundingRect)
+    this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
   }
@@ -133,7 +132,7 @@ export class GPURenderer {
       device: this.device,
       format: this.preferredFormat,
       // needed so we can copy textures for post processing usage
-      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
       // TODO
       alphaMode: 'premultiplied', // or "opaque"
       //viewFormats: []
@@ -177,8 +176,7 @@ export class GPURenderer {
 
   setMainRenderPass() {
     // TODO is this.renderPass still needed?
-    this.renderPass = new RenderPass({
-      renderer: /** @type {GPURenderer} **/ this,
+    this.renderPass = new RenderPass(/** @type {GPURenderer} **/ this, {
       label: 'Main Render pass',
       depth: true,
     })
@@ -308,9 +306,9 @@ export class GPURenderer {
 
   setRendererObjects() {
     // keep track of planes, textures, etc.
-    this.renderPasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []
+    this.renderTargets = []
     this.meshes = []
     this.samplers = []
     this.textures = []
@@ -318,8 +316,8 @@ export class GPURenderer {
 
   /** RENDER **/
 
-  setRenderPassCurrentTexture(renderPass) {
-    const renderTexture = this.context.getCurrentTexture()
+  setRenderPassCurrentTexture(renderPass, renderTexture) {
+    if (!renderTexture) renderTexture = this.context.getCurrentTexture()
     if (this.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
     } else {
@@ -391,8 +389,11 @@ export class GPURenderer {
     this.texturesQueue = []
 
     // destroy render passes
-    //this.renderPasses?.forEach((renderPass) => renderPass.destroy())
     this.renderPass?.destroy()
+
+    this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
+    this.shaderPasses.forEach((shaderPass) => shaderPass.remove())
+    this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.remove())
 
     this.device?.destroy()
     this.context?.unconfigure()

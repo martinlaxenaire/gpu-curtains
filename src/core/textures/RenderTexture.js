@@ -6,8 +6,8 @@ const defaultRenderTextureParams = {
   label: 'Texture',
   name: 'texture',
   sampler: {
-    addressModeU: 'repeat',
-    addressModeV: 'repeat',
+    addressModeU: 'mirror-repeat',
+    addressModeV: 'mirror-repeat',
     magFilter: 'linear',
     minFilter: 'linear',
     mipmapFilter: 'linear',
@@ -21,6 +21,8 @@ export class RenderTexture {
     renderer = (renderer && renderer.renderer) || renderer
 
     isRenderer(renderer, parameters.label ? parameters.label + ' RenderTexture' : 'RenderTexture')
+
+    this.type = 'RenderTexture'
 
     this.renderer = renderer
 

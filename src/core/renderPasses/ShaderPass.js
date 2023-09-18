@@ -1,5 +1,4 @@
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
-import { RenderTexture } from '../textures/RenderTexture'
 import { isRenderer } from '../../utils/renderer-utils'
 
 export class ShaderPass extends FullscreenPlane {
@@ -9,10 +8,15 @@ export class ShaderPass extends FullscreenPlane {
 
     isRenderer(renderer, parameters.label ? parameters.label + ' ShaderPass' : 'ShaderPass')
 
+    // force transparency to allow for correct blending between successive passes
+    parameters.transparent = true
+
     super(renderer, parameters)
 
+    this.type = 'ShaderPass'
+
     this.createRenderTexture({
-      label: parameters.label + ' Shader pass render texture',
+      label: parameters.label ? `${parameters.label} render texture` : 'Shader pass render texture',
       name: 'renderTexture',
     })
   }
@@ -27,6 +31,10 @@ export class ShaderPass extends FullscreenPlane {
   }
 
   removeFromScene() {
+    if (this.renderTarget) {
+      this.renderTarget.destroy()
+    }
+
     this.renderer.scene.removeShaderPass(this)
     this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid)
   }

@@ -10,6 +10,7 @@ import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
 import { AttributeBufferParams } from '../../types/buffers-utils'
+import { RenderTarget } from '../renderPasses/RenderTarget'
 
 export type ShadersType = 'vertex' | 'fragment'
 export type FullShadersType = 'full' | ShadersType
@@ -51,6 +52,7 @@ export interface MeshBaseParams extends MaterialBaseParams {
   bindings?: MeshBindings[]
   visible?: boolean
   renderOrder?: number
+  renderTarget?: RenderTarget
   texturesOptions?: {
     textures: CurtainsTextureOptions
     sampler: GPUSamplerDescriptor
@@ -91,6 +93,8 @@ export class MeshBase {
   renderTextures: RenderTexture[]
   textures: Texture[]
 
+  renderTarget: null | RenderTarget
+
   renderOrder: number
   transparent: boolean
 
@@ -122,6 +126,8 @@ export class MeshBase {
   createTexture(options: TextureDefaultParams): Texture
   onTextureCreated(texture: Texture)
   createRenderTexture(options: RenderTextureParams): RenderTexture
+
+  setRenderTarget(renderTarget: RenderTarget | null)
 
   createUniformsBindings(bindings: MeshBindings): BufferBindings[]
 

@@ -8,6 +8,7 @@ import { RenderPass } from '../renderPasses/RenderPass'
 import { Scene } from '../scenes/Scene'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
+import { RenderTarget } from '../renderPasses/RenderTarget'
 
 interface GPURendererParams {
   container: string | HTMLElement
@@ -42,9 +43,9 @@ export class GPURenderer {
   pipelineManager: PipelineManager
   scene: Scene
 
-  renderPasses: RenderPass[]
   pingPongPlanes: PingPongPlane[]
   shaderPasses: ShaderPass[]
+  renderTargets: RenderTarget[]
   meshes: MeshType[]
   samplers: Sampler[]
   textures: Texture[]
@@ -52,7 +53,6 @@ export class GPURenderer {
 
   sampleCount: GPUSize32
   pixelRatio: number
-  renderingScale: number
   production: boolean
   domElement: DOMElement
   documentBody: DOMElement
@@ -91,7 +91,7 @@ export class GPURenderer {
 
   setRendererObjects()
 
-  setRenderPassCurrentTexture(renderPass: RenderPass): GPUTexture
+  setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture): GPUTexture
   onBeforeRenderPass()
   //onBeginRenderPass(pass: GPURenderPassEncoder)
   onAfterRenderPass()

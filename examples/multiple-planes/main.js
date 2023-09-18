@@ -6,7 +6,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // we will keep track of all our planes in an array
   const planes = []
-  let planesDeformations = 0
+  let scrollEffect = 0
 
   // get our planes elements
   let planeElements = document.querySelectorAll('.plane')
@@ -26,7 +26,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     .onRender(() => {
       // update our planes deformation
       // increase/decrease the effect
-      planesDeformations = lerp(planesDeformations, 0, 0.075)
+      scrollEffect = lerp(scrollEffect, 0, 0.075)
     })
     .onScroll(() => {
       // get scroll deltas to apply the effect on scroll
@@ -42,15 +42,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         delta.y = -60
       }
 
-      if (Math.abs(delta.y) > Math.abs(planesDeformations)) {
-        planesDeformations = lerp(planesDeformations, delta.y, 0.5)
+      if (Math.abs(delta.y) > Math.abs(scrollEffect)) {
+        scrollEffect = lerp(scrollEffect, delta.y, 0.5)
       }
     })
 
   const vertexShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
-        @location(1) uv: vec2f,
+        @location(0) uv: vec2f,
       };
       
       @vertex fn main(
@@ -72,7 +72,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const fragmentShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
-        @location(1) uv: vec2f,
+        @location(0) uv: vec2f,
       };
       
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
@@ -133,7 +133,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       })
       .onRender(() => {
         // update the uniform
-        plane.uniforms.strength.value = planesDeformations
+        plane.uniforms.strength.value = scrollEffect
       })
   }
 

@@ -1,16 +1,22 @@
 import { isRenderer } from '../../utils/renderer-utils'
+import { generateUUID } from '../../utils/utils'
 
 export class RenderPass {
-  constructor({ renderer, label = 'Render Pass', depth = true }) {
+  constructor(renderer, { label = 'Render Pass', depth = true, loadOp = 'clear', clearValue = [0, 0, 0, 0] } = {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
     isRenderer(renderer, 'RenderPass')
 
+    this.type = 'RenderPass'
+    this.uuid = generateUUID()
+
     this.renderer = renderer
     this.options = {
       label,
       depth,
+      loadOp,
+      clearValue,
     }
 
     this.setSize(this.renderer.pixelRatioBoundingRect)
@@ -82,10 +88,10 @@ export class RenderPass {
           // view: <- to be filled out when we set our render pass view
           view: this.renderTexture.createView(),
           // clear values
-          clearValue: [0, 0, 0, 0],
+          clearValue: this.options.clearValue,
           // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
           // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what's already there.
-          loadOp: 'clear',
+          loadOp: this.options.loadOp,
           // storeOp: 'store' means store the result of what we draw.
           // We could also pass 'discard' which would throw away what we draw.
           // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
@@ -109,6 +115,17 @@ export class RenderPass {
       width: Math.floor(boundingRect.width),
       height: Math.floor(boundingRect.height),
     }
+  }
+
+  setLoadOp(loadOp = 'clear') {
+    this.options.loadOp = loadOp
+    if (this.descriptor && this.descriptor.colorAttachments) {
+      this.descriptor.colorAttachments[0].loadOp = loadOp
+    }
+
+    // if (this.descriptor && this.descriptor.depthStencilAttachment) {
+    //   this.descriptor.depthStencilAttachment.depthLoadOp = loadOp
+    // }
   }
 
   resize(boundingRect) {

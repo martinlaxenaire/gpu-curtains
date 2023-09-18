@@ -30,9 +30,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   const vertexShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
-        @location(1) uv: vec2f,
-        @location(2) activeUv: vec2f,
-        @location(3) nextUv: vec2f,
+        @location(0) uv: vec2f,
+        @location(1) activeUv: vec2f,
+        @location(2) nextUv: vec2f,
       };
       
       @vertex fn main(
@@ -54,9 +54,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   const fragmentShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
-        @location(1) uv: vec2f,
-        @location(2) activeUv: vec2f,
-        @location(3) nextUv: vec2f,
+        @location(0) uv: vec2f,
+        @location(1) activeUv: vec2f,
+        @location(2) nextUv: vec2f,
       };
       
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {

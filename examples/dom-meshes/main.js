@@ -13,8 +13,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const meshVs = /* wgsl */ `  
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(1) uv: vec2f,
-      @location(2) normal: vec3f,
+      @location(0) uv: vec2f,
+      @location(1) normal: vec3f,
     };
   
     @vertex fn main(
@@ -33,8 +33,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(1) uv: vec2f,
-      @location(2) normal: vec3f,
+      @location(0) uv: vec2f,
+      @location(1) normal: vec3f,
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {

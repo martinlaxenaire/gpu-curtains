@@ -209,26 +209,18 @@ export class PipelineEntry {
           {
             format: this.renderer.preferredFormat,
             // we will assume our renderer alphaMode is set to 'premultiplied'
-            // based on how curtainsjs did that, we either disable blending if mesh if opaque
-            // or use this blend equation if mesh is transparent (see https://github.com/martinlaxenaire/curtainsjs/blob/master/src/core/Renderer.js#L589)
+            // we either disable blending if mesh if opaque
+            // or use this blend equation if mesh is transparent (see https://limnu.com/webgl-blending-youre-probably-wrong/)
             ...(this.options.transparent && {
               blend: {
                 color: {
-                  srcFactor: 'one',
+                  srcFactor: 'src-alpha',
                   dstFactor: 'one-minus-src-alpha',
                 },
                 alpha: {
                   srcFactor: 'one',
                   dstFactor: 'one-minus-src-alpha',
                 },
-                // color: {
-                //   srcFactor: 'src-alpha',
-                //   dstFactor: 'one-minus-src-alpha',
-                // },
-                // alpha: {
-                //   srcFactor: 'one',
-                //   dstFactor: 'one',
-                // },
               },
             }),
           },

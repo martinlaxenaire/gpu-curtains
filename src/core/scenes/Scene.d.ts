@@ -1,17 +1,23 @@
 import { GPURenderer, MeshType } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
+import { RenderPass } from '../renderPasses/RenderPass'
+import { RenderTexture } from '../textures/RenderTexture'
+import { RenderTarget } from '../renderPasses/RenderTarget'
 
-type IsProjectedStacks = 'unprojected' | 'projected'
+type IsProjectedStacks = 'unProjected' | 'projected'
 type MeshStacksTypes = 'opaque' | 'transparent'
 type ShaderPassStacksTypes = 'shaderPasses'
-type PingPongPlaneStacksType = 'pingPongPlanes'
-type StacksTypes = MeshStacksTypes | ShaderPassStacksTypes | PingPongPlaneStacksType
+type RenderTargetStacksTypes = 'renderTargets'
+type PingPongPlaneStacksType = 'pingPong'
+type StacksTypes = MeshStacksTypes | ShaderPassStacksTypes | PingPongPlaneStacksType | RenderTargetStacksTypes
 
 type StackContentStructure<T extends StacksTypes> = T extends ShaderPassStacksTypes
   ? ShaderPass[]
   : T extends PingPongPlaneStacksType
   ? PingPongPlane[]
+  : T extends RenderTargetStacksTypes
+  ? MeshType[]
   : T extends MeshStacksTypes
   ? MeshType[]
   : Array<MeshType | ShaderPass>
@@ -28,13 +34,23 @@ type StackStructure<T extends IsProjectedStacks> = T extends 'unprojected'
 type StructureMappedStackType<T extends IsProjectedStacks> = { [K in T]: StackStructure<K> }
 type Stacks = StructureMappedStackType<IsProjectedStacks>
 
+interface RenderStack extends Stacks {
+  renderPass: RenderPass
+  renderTexture: RenderTexture
+}
+
 export class Scene {
   renderer: GPURenderer
   stacks: Stacks
+  renderStacks: RenderStack[]
 
   constructor({ renderer: GPURenderer })
 
-  setStacks()
+  addStack(renderPass: RenderPass, renderTexture?: RenderTexture | null): RenderStack
+  get toScreenStack(): RenderStack
+
+  addRenderTarget(renderTarget: RenderTarget)
+  removeRenderTarget(renderTarget: RenderTarget)
 
   addMesh(mesh: MeshType)
   removeMesh(mesh: MeshType)

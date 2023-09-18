@@ -53,12 +53,7 @@ export class PipelineManager {
 
   setCurrentPipeline(pass, pipelineEntry) {
     if (pipelineEntry.index !== this.currentPipelineIndex) {
-      // pipelineEntry.bindGroups.forEach((bindGroup) => {
-      //   pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
-      // })
-
       pass.setPipeline(pipelineEntry.pipeline)
-
       this.currentPipelineIndex = pipelineEntry.index
     }
   }

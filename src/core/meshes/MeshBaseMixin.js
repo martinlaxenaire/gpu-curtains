@@ -1,4 +1,4 @@
-import { generateUUID } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
 import { isCameraRenderer } from '../../utils/renderer-utils'
 import { Material } from '../materials/Material'
 import { Texture } from '../textures/Texture'
@@ -64,15 +64,27 @@ const MeshBaseMixin = (superclass) =>
       this.textures = []
       this.renderTextures = []
 
-      const { label, shaders, geometry, bindings, visible, renderOrder, texturesOptions, ...meshParameters } =
-        parameters
+      const {
+        label,
+        shaders,
+        geometry,
+        bindings,
+        visible,
+        renderOrder,
+        renderTarget,
+        texturesOptions,
+        ...meshParameters
+      } = parameters
 
       this.options = {
         label,
         shaders,
+        renderTarget,
         texturesOptions,
         ...(this.options ?? {}), // merge possible lower options?
       }
+
+      this.renderTarget = renderTarget ?? null
 
       this.geometry = geometry
 
@@ -162,7 +174,7 @@ const MeshBaseMixin = (superclass) =>
 
     createRenderTexture(options) {
       if (!options.name) {
-        options.name = 'texture' + this.textures.length
+        options.name = 'renderTexture' + this.renderTextures.length
       }
 
       const renderTexture = new RenderTexture(this.renderer, options)
@@ -171,6 +183,18 @@ const MeshBaseMixin = (superclass) =>
       this.renderTextures.push(renderTexture)
 
       return renderTexture
+    }
+
+    setRenderTarget(renderTarget) {
+      if (renderTarget && renderTarget.type !== 'RenderTarget') {
+        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
+        return
+      }
+
+      // ensure the mesh is in the correct scene stack
+      this.removeFromScene()
+      this.renderTarget = renderTarget
+      this.addToScene()
     }
 
     /*** UNIFORMS ***/
