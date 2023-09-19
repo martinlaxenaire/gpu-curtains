@@ -34,6 +34,9 @@ const MeshBaseMixin = (superclass) =>
     _onReadyCallback = () => {
       /* allow empty callback */
     }
+    _onBeforeRenderCallback = () => {
+      /* allow empty callback */
+    }
     _onRenderCallback = () => {
       /* allow empty callback */
     }
@@ -237,6 +240,14 @@ const MeshBaseMixin = (superclass) =>
       return this
     }
 
+    onBeforeRender(callback) {
+      if (callback) {
+        this._onBeforeRenderCallback = callback
+      }
+
+      return this
+    }
+
     onRender(callback) {
       if (callback) {
         this._onRenderCallback = callback
@@ -270,6 +281,8 @@ const MeshBaseMixin = (superclass) =>
         this.ready = true
       }
 
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+
       this.material.onBeforeRender()
     }
 
@@ -284,6 +297,8 @@ const MeshBaseMixin = (superclass) =>
     }
 
     render(pass) {
+      this.onBeforeRenderPass()
+
       // no point to render if the WebGPU device is not ready
       if (!this.renderer.ready || !this.visible) return
 

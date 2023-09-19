@@ -25,7 +25,7 @@ type StackContentStructure<T extends StacksTypes> = T extends ShaderPassStacksTy
 type ProjectedStacks = Record<MeshStacksTypes, StackContentStructure<MeshStacksTypes>>
 type UnprojectedStacks = Record<StacksTypes, StackContentStructure<StacksTypes>>
 
-type StackStructure<T extends IsProjectedStacks> = T extends 'unprojected'
+type StackStructure<T extends IsProjectedStacks> = T extends 'unProjected'
   ? UnprojectedStacks
   : T extends 'projected'
   ? ProjectedStacks
@@ -34,14 +34,14 @@ type StackStructure<T extends IsProjectedStacks> = T extends 'unprojected'
 type StructureMappedStackType<T extends IsProjectedStacks> = { [K in T]: StackStructure<K> }
 type Stacks = StructureMappedStackType<IsProjectedStacks>
 
-interface RenderStack extends Stacks {
+interface RenderStack {
   renderPass: RenderPass
   renderTexture: RenderTexture
+  stack: Stacks
 }
 
 export class Scene {
   renderer: GPURenderer
-  stacks: Stacks
   renderStacks: RenderStack[]
 
   constructor({ renderer: GPURenderer })

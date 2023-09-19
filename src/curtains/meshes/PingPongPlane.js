@@ -1,5 +1,6 @@
 import { ShaderPass } from '../../core/renderPasses/ShaderPass'
 import { isRenderer } from '../../utils/renderer-utils'
+import { RenderTarget } from '../../core/renderPasses/RenderTarget'
 
 export class PingPongPlane extends ShaderPass {
   constructor(renderer, parameters) {
@@ -7,7 +8,13 @@ export class PingPongPlane extends ShaderPass {
 
     isRenderer(renderer, parameters.label ? parameters.label + ' PingPongPlane' : 'PingPongPlane')
 
+    parameters.renderTarget = new RenderTarget(renderer, {
+      label: parameters.label ? parameters.label + ' PingPongPlane render target' : 'PingPongPlane render target',
+    })
+
     super(renderer, parameters)
+
+    this.type = 'PingPongPlane'
   }
 
   addToScene() {

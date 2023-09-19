@@ -11,21 +11,45 @@ export class Scene {
 
     this.renderStacks = []
     this.addStack(this.renderer.renderPass)
+
+    // TODO new idea
+    // this.renderPassesStack = {
+    //   pingPongs: [],
+    //   renderTargets: [],
+    //   screen: [
+    //     {
+    //       renderPass: this.renderer.renderPass,
+    //       renderTexture: null,
+    //       stack: {
+    //         unProjected: {
+    //           opaque: [],
+    //           transparent: [],
+    //         },
+    //         projected: {
+    //           opaque: [],
+    //           transparent: [],
+    //         },
+    //       },
+    //     },
+    //   ],
+    // }
   }
 
   addStack(renderPass, renderTexture = null) {
     const renderStack = {
       renderPass,
       renderTexture,
-      unProjected: {
-        opaque: [],
-        transparent: [],
-        pingPong: [],
-        shaderPasses: [],
-      },
-      projected: {
-        opaque: [],
-        transparent: [],
+      stack: {
+        unProjected: {
+          opaque: [],
+          transparent: [],
+          pingPong: [],
+          shaderPasses: [],
+        },
+        projected: {
+          opaque: [],
+          transparent: [],
+        },
       },
     }
 
@@ -79,8 +103,8 @@ export class Scene {
       this.addStack(mesh.renderTarget.renderPass, mesh.renderTarget.renderTexture)
 
     const projectionStack = mesh.material.options.rendering.useProjection
-      ? renderStack.projected
-      : renderStack.unProjected
+      ? renderStack.stack.projected
+      : renderStack.stack.unProjected
 
     // rebuild stack
     const similarMeshes = mesh.transparent ? [...projectionStack.transparent] : [...projectionStack.opaque]
@@ -119,8 +143,8 @@ export class Scene {
     const renderStack = this.renderStacks.find((renderStack) => renderStack.renderPass.uuid === renderPass.uuid)
 
     const projectionStack = mesh.material.options.rendering.useProjection
-      ? renderStack.projected
-      : renderStack.unProjected
+      ? renderStack.stack.projected
+      : renderStack.stack.unProjected
 
     if (mesh.transparent) {
       projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid)
@@ -130,9 +154,9 @@ export class Scene {
   }
 
   addShaderPass(shaderPass) {
-    this.toScreenStack.unProjected.shaderPasses.push(shaderPass)
+    this.toScreenStack.stack.unProjected.shaderPasses.push(shaderPass)
     // sort by their render order
-    this.toScreenStack.unProjected.shaderPasses
+    this.toScreenStack.stack.unProjected.shaderPasses
       .sort((a, b) => b.renderOrder - a.renderOrder)
       .sort((a, b) => {
         // render shader passes with render targets first
@@ -147,7 +171,7 @@ export class Scene {
   }
 
   removeShaderPass(shaderPass) {
-    this.toScreenStack.unProjected.shaderPasses = this.toScreenStack.unProjected.shaderPasses
+    this.toScreenStack.stack.unProjected.shaderPasses = this.toScreenStack.stack.unProjected.shaderPasses
       .filter((sP) => sP.uuid !== shaderPass.uuid)
       .sort((a, b) => {
         // render shader passes with render targets first
@@ -162,43 +186,56 @@ export class Scene {
   }
 
   addPingPongPlane(pingPongPlane) {
-    this.toScreenStack.unProjected.pingPong.push(pingPongPlane)
+    const renderStack = this.renderStacks.find(
+      (renderStack) => renderStack.renderPass.uuid === pingPongPlane.renderTarget.renderPass.uuid
+    )
+
+    renderStack.stack.unProjected.pingPong.push(pingPongPlane)
     // sort by their render order
-    this.toScreenStack.unProjected.pingPong.sort((a, b) => b.renderOrder - a.renderOrder)
+    renderStack.stack.unProjected.pingPong.sort((a, b) => b.renderOrder - a.renderOrder)
+
+    // this.toScreenStack.stack.unProjected.pingPong.push(pingPongPlane)
+    // // sort by their render order
+    // this.toScreenStack.stack.unProjected.pingPong.sort((a, b) => b.renderOrder - a.renderOrder)
   }
 
   removePingPongPlane(pingPongPlane) {
-    this.toScreenStack.unProjected.pingPong = this.toScreenStack.unProjected.pingPong.filter(
+    const renderStack = this.renderStacks.find(
+      (renderStack) => renderStack.renderPass.uuid === pingPongPlane.renderTarget.renderPass.uuid
+    )
+
+    renderStack.stack.unProjected.pingPong = renderStack.stack.unProjected.pingPong.filter(
       (pPP) => pPP.uuid !== pingPongPlane.uuid
     )
+
+    // this.toScreenStack.stack.unProjected.pingPong = this.toScreenStack.stack.unProjected.pingPong.filter(
+    //   (pPP) => pPP.uuid !== pingPongPlane.uuid
+    // )
   }
 
   // TODO test
   render(commandEncoder) {
     this.renderStacks.forEach((renderStack) => {
-      // start render pass with clear content
-      renderStack.renderPass.setLoadOp('clear')
+      // first update textures and uniforms
+      // for (const stackType in renderStack.stack.unProjected) {
+      //   renderStack.stack.unProjected[stackType].forEach((element) => element.onBeforeRenderPass())
+      // }
+      //
+      // for (const stackType in renderStack.stack.projected) {
+      //   renderStack.stack.projected[stackType].forEach((element) => element.onBeforeRenderPass())
+      // }
 
-      // ensure we always have fresh data
-      for (const stackType in renderStack.unProjected) {
-        renderStack.unProjected[stackType].forEach((element) => element.onBeforeRenderPass())
-      }
-
-      for (const stackType in renderStack.projected) {
-        renderStack.projected[stackType].forEach((element) => element.onBeforeRenderPass())
-      }
-
-      // set render texture and descriptor
+      // set the pass texture to render to
       const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
         renderStack.renderPass,
         renderStack.renderTexture?.texture
       )
 
-      renderStack.unProjected.pingPong.forEach((pingPongPlane) => {
-        const pingPongRenderPass = commandEncoder.beginRenderPass(renderStack.renderPass.descriptor)
+      // start pass with clear content
+      renderStack.renderPass.setLoadOp('clear')
 
-        pingPongPlane.render(pingPongRenderPass)
-        pingPongRenderPass.end()
+      renderStack.stack.unProjected.pingPong.forEach((pingPongPlane) => {
+        //renderStack.renderPass.setLoadOp('load')
 
         // Copy the rendering results from the swapChainTexture into our |pingPongPlane texture|.
         commandEncoder.copyTextureToTexture(
@@ -211,22 +248,25 @@ export class Scene {
           [pingPongPlane.renderTexture.size.width, pingPongPlane.renderTexture.size.height]
         )
 
-        // allow writing over render pass texture content
-        renderStack.renderPass.setLoadOp('load')
+        const pingPongRenderPass = commandEncoder.beginRenderPass(renderStack.renderPass.descriptor)
+        pingPongPlane.render(pingPongRenderPass)
+        pingPongRenderPass.end()
+
+        //renderStack.renderPass.setLoadOp('clear')
       })
 
       // now draw our regular meshes
       if (
-        renderStack.unProjected.opaque.length ||
-        renderStack.unProjected.transparent.length ||
-        renderStack.projected.opaque.length ||
-        renderStack.projected.transparent.length
+        renderStack.stack.unProjected.opaque.length ||
+        renderStack.stack.unProjected.transparent.length ||
+        renderStack.stack.projected.opaque.length ||
+        renderStack.stack.projected.transparent.length
       ) {
         const pass = commandEncoder.beginRenderPass(renderStack.renderPass.descriptor)
 
         // draw unProjected regular meshes
-        renderStack.unProjected.opaque.forEach((mesh) => mesh.render(pass))
-        renderStack.unProjected.transparent.forEach((mesh) => mesh.render(pass))
+        renderStack.stack.unProjected.opaque.forEach((mesh) => mesh.render(pass))
+        renderStack.stack.unProjected.transparent.forEach((mesh) => mesh.render(pass))
 
         // then draw projected meshes
         if (this.renderer.cameraBindGroup) {
@@ -234,18 +274,19 @@ export class Scene {
           pass.setBindGroup(this.renderer.cameraBindGroup.index, this.renderer.cameraBindGroup.bindGroup)
         }
 
-        renderStack.projected.opaque.forEach((mesh) => mesh.render(pass))
-        renderStack.projected.transparent.forEach((mesh) => mesh.render(pass))
+        renderStack.stack.projected.opaque.forEach((mesh) => mesh.render(pass))
+        renderStack.stack.projected.transparent.forEach((mesh) => mesh.render(pass))
 
         pass.end()
-        this.renderer.pipelineManager.resetCurrentPipeline()
+
+        //this.renderer.pipelineManager.resetCurrentPipeline()
 
         // allow writing over render pass texture content
         renderStack.renderPass.setLoadOp('load')
       }
 
       // finally, draw shader passes
-      renderStack.unProjected.shaderPasses.forEach((shaderPass) => {
+      renderStack.stack.unProjected.shaderPasses.forEach((shaderPass) => {
         // draw the content into our render texture
         commandEncoder.copyTextureToTexture(
           {
@@ -282,6 +323,8 @@ export class Scene {
           )
         }
       })
+
+      this.renderer.pipelineManager.resetCurrentPipeline()
     })
   }
 }

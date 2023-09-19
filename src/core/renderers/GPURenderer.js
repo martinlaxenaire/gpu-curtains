@@ -316,8 +316,9 @@ export class GPURenderer {
 
   /** RENDER **/
 
-  setRenderPassCurrentTexture(renderPass, renderTexture) {
+  setRenderPassCurrentTexture(renderPass, renderTexture = null) {
     if (!renderTexture) renderTexture = this.context.getCurrentTexture()
+
     if (this.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
     } else {

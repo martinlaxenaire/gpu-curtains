@@ -28,8 +28,6 @@ export class RenderPass {
     this.createRenderTexture()
 
     this.setRenderPassDescriptor()
-
-    //this.setRenderPassView()
   }
 
   createDepthTexture() {
@@ -122,10 +120,6 @@ export class RenderPass {
     if (this.descriptor && this.descriptor.colorAttachments) {
       this.descriptor.colorAttachments[0].loadOp = loadOp
     }
-
-    // if (this.descriptor && this.descriptor.depthStencilAttachment) {
-    //   this.descriptor.depthStencilAttachment.depthLoadOp = loadOp
-    // }
   }
 
   resize(boundingRect) {

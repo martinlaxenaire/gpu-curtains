@@ -27,25 +27,25 @@ window.addEventListener('DOMContentLoaded', async () => {
       
       // convert our mouse position from vertex coords to uv coords
       // thanks to the built-in 'getVertex2DToUVCoords' function
-      var mousePosition = getVertex2DToUVCoords(flowmap.mousePosition);
-            
+      var mousePosition: vec2f = getVertex2DToUVCoords(flowmap.mousePosition);
+
       /*** comment this whole block for a regular mouse flow effect ***/
-      
+
       // make the cursor grow with time
       uv -= mousePosition;
       uv /= flowmap.cursorGrow;
       uv += mousePosition;
-      
+
       /*** end of whole block commenting for a regular mouse flow effect ***/
-    
+
       var color: vec4f = textureSample(renderTexture, renderTextureSampler, uv) * flowmap.dissipation;
-      
+
       var cursor: vec2f = fsInput.uv - mousePosition;
       cursor.x = cursor.x * flowmap.aspect;
-  
+
       var stamp = vec3(flowmap.velocity * vec2(1.0, -1.0), 1.0 - pow(1.0 - min(1.0, length(flowmap.velocity)), 3.0));
       var cursorSize: f32 = smoothstep(flowmap.cursorSize, 0.0, length(cursor)) * flowmap.alpha;
-  
+
       color = vec4(vec3(mix(color.rgb, stamp, cursorSize)), color.a);
   
       return color;
@@ -188,7 +188,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       color = mix(color, textureBW, mixValue);
       
       //return flowMap;
-      return color;
+      return mix(flowMap, color, smoothstep(0.0, 0.5, fsInput.uv.x));
+      //return color;
     }
   `
 
@@ -205,6 +206,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     texturesOptions: {
+      texture: {
+        // display a redish color while textures are loading
+        placeholderColor: [238, 101, 87, 255],
+      },
       sampler: {
         addressModeU: 'mirror-repeat',
       },
@@ -219,5 +224,5 @@ window.addEventListener('DOMContentLoaded', async () => {
     fromTexture: flowMap.renderTexture,
   })
 
-  console.log(displacedPlane)
+  console.log(displacedPlane, gpuCurtains.renderer.scene)
 })

@@ -103,10 +103,12 @@ export class MeshBase {
 
   // callbacks
   _onReadyCallback: () => void
+  _onBeforeRenderCallback: () => void
   _onRenderCallback: () => void
   _onAfterRenderCallback: () => void
   _onAfterResizeCallback: () => void
   onReady: (callback: () => void) => MeshBase
+  onBeforeRender: (callback: () => void) => MeshBase
   onRender: (callback: () => void) => MeshBase
   onAfterRender: (callback: () => void) => MeshBase
   onAfterResize: (callback: () => void) => MeshBase

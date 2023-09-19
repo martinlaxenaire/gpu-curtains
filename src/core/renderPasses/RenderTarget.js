@@ -22,13 +22,13 @@ export class RenderTarget {
     }
 
     this.renderPass = new RenderPass(this.renderer, {
-      label: this.options.label,
+      label: this.options.label ? `${this.options.label} Render Pass` : 'Render Target Render Pass',
       depth: this.options.depth,
       loadOp: this.options.loadOp,
     })
 
     this.renderTexture = new RenderTexture(this.renderer, {
-      label: this.options.label ? `${this.options.label} render texture` : 'Shader pass render texture',
+      label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target Render Texture',
       name: 'renderTexture',
     })
 
