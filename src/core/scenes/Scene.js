@@ -216,15 +216,6 @@ export class Scene {
   // TODO test
   render(commandEncoder) {
     this.renderStacks.forEach((renderStack) => {
-      // first update textures and uniforms
-      // for (const stackType in renderStack.stack.unProjected) {
-      //   renderStack.stack.unProjected[stackType].forEach((element) => element.onBeforeRenderPass())
-      // }
-      //
-      // for (const stackType in renderStack.stack.projected) {
-      //   renderStack.stack.projected[stackType].forEach((element) => element.onBeforeRenderPass())
-      // }
-
       // set the pass texture to render to
       const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
         renderStack.renderPass,
@@ -235,7 +226,9 @@ export class Scene {
       renderStack.renderPass.setLoadOp('clear')
 
       renderStack.stack.unProjected.pingPong.forEach((pingPongPlane) => {
-        //renderStack.renderPass.setLoadOp('load')
+        const pingPongRenderPass = commandEncoder.beginRenderPass(renderStack.renderPass.descriptor)
+        pingPongPlane.render(pingPongRenderPass)
+        pingPongRenderPass.end()
 
         // Copy the rendering results from the swapChainTexture into our |pingPongPlane texture|.
         commandEncoder.copyTextureToTexture(
@@ -247,12 +240,6 @@ export class Scene {
           },
           [pingPongPlane.renderTexture.size.width, pingPongPlane.renderTexture.size.height]
         )
-
-        const pingPongRenderPass = commandEncoder.beginRenderPass(renderStack.renderPass.descriptor)
-        pingPongPlane.render(pingPongRenderPass)
-        pingPongRenderPass.end()
-
-        //renderStack.renderPass.setLoadOp('clear')
       })
 
       // now draw our regular meshes
@@ -278,11 +265,6 @@ export class Scene {
         renderStack.stack.projected.transparent.forEach((mesh) => mesh.render(pass))
 
         pass.end()
-
-        //this.renderer.pipelineManager.resetCurrentPipeline()
-
-        // allow writing over render pass texture content
-        renderStack.renderPass.setLoadOp('load')
       }
 
       // finally, draw shader passes
@@ -311,7 +293,7 @@ export class Scene {
           // use load operation for next render pass
           renderStack.renderPass.setLoadOp('load')
 
-          // TODO do we still need to get the outputted texture
+          // TODO do we still need to get the outputted texture?
           commandEncoder.copyTextureToTexture(
             {
               texture: swapChainTexture,

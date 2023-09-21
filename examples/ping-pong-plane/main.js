@@ -187,9 +187,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       var mixValue: f32 = clamp((abs(flowMap.r) + abs(flowMap.g) + abs(flowMap.b)) * 1.5, 0.0, 1.0);
       color = mix(color, textureBW, mixValue);
       
-      //return flowMap;
-      return mix(flowMap, color, smoothstep(0.0, 0.5, fsInput.uv.x));
-      //return color;
+      // output debug flowmap
+      //return vec4(vec3(flowMap.rgb), 1.0);
+      
+      return color;
     }
   `
 
@@ -212,6 +213,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
       sampler: {
         addressModeU: 'mirror-repeat',
+        addressModeV: 'mirror-repeat',
       },
     },
   })
