@@ -31,8 +31,6 @@ export class Scene {
 
   constructor({ renderer: GPURenderer })
 
-  addRenderPassEntry({ renderPassEntryType: RenderPassEntriesType, entry: RenderPassEntry })
-
   addRenderTarget(renderTarget: RenderTarget)
   removeRenderTarget(renderTarget: RenderTarget)
 
