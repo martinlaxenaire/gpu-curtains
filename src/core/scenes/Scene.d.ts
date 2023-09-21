@@ -16,13 +16,13 @@ type Stack = Record<ProjectionType, ProjectionStack>
 interface RenderPassEntry {
   renderPass: RenderPass
   renderTexture: RenderTexture | null
-  onBeforeRenderPass: ((commandEncoder: GPUCommandEncoder, swapChainTexture: GPUTexture) => void) | null
-  onAfterRenderPass: ((commandEncoder: GPUCommandEncoder, swapChainTexture: GPUTexture) => void) | null
+  onBeforeRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
+  onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
   element: MeshType | ShaderPass | PingPongPlane | null
   stack: Stack | null
 }
 
-type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'screen' | 'postProcessing'
+type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'screen'
 type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
 export class Scene {
@@ -36,6 +36,7 @@ export class Scene {
   addRenderTarget(renderTarget: RenderTarget)
   removeRenderTarget(renderTarget: RenderTarget)
 
+  getMeshProjectionStack(mesh: MeshType): ProjectionStack
   addMesh(mesh: MeshType)
   removeMesh(mesh: MeshType)
 

@@ -13,7 +13,6 @@ export class Scene {
       pingPong: [],
       renderTarget: [],
       screen: [],
-      postProcessing: [],
     }
 
     // add our scene render pass entry
@@ -23,7 +22,10 @@ export class Scene {
         renderPass: this.renderer.renderPass,
         renderTexture: null,
         onBeforeRenderPass: null,
-        onAfterRenderPass: null,
+        onAfterRenderPass: () => {
+          // allow post processing to load what we just draw
+          this.renderer.renderPass.setLoadOp('load')
+        },
         element: null, // explicitly set to null
         stack: {
           unProjected: {
@@ -74,8 +76,8 @@ export class Scene {
     )
   }
 
-  addMesh(mesh) {
-    // first get correct render stack
+  getMeshProjectionStack(mesh) {
+    // first get correct render pass enty and stack
     const renderPassEntry = mesh.renderTarget
       ? this.renderPassEntries.renderTarget.find(
           (passEntry) => passEntry.renderPass.uuid === mesh.renderTarget.renderPass.uuid
@@ -84,7 +86,11 @@ export class Scene {
 
     const { stack } = renderPassEntry
 
-    const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected
+    return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected
+  }
+
+  addMesh(mesh) {
+    const projectionStack = this.getMeshProjectionStack(mesh)
 
     // rebuild stack
     const similarMeshes = mesh.transparent ? [...projectionStack.transparent] : [...projectionStack.opaque]
@@ -118,15 +124,7 @@ export class Scene {
   }
 
   removeMesh(mesh) {
-    // first get correct render stack
-    const renderPassEntry = mesh.renderTarget
-      ? this.renderPassEntries.renderTarget.find(
-          (passEntry) => passEntry.renderPass.uuid === mesh.renderTarget.renderPass.uuid
-        )
-      : this.renderPassEntries.screen[0]
-    const { stack } = renderPassEntry
-
-    const projectionStack = mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected
+    const projectionStack = this.getMeshProjectionStack(mesh)
 
     if (mesh.transparent) {
       projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid)
@@ -137,21 +135,23 @@ export class Scene {
 
   addShaderPass(shaderPass) {
     this.addRenderPassEntry({
-      renderPassEntryType: 'postProcessing',
+      renderPassEntryType: 'screen',
       entry: {
         renderPass: this.renderer.renderPass, // post processing will render directly to screen
         renderTexture: null,
         onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
           // draw the content into our render texture
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: shaderPass.renderTarget ? shaderPass.renderTarget.renderTexture.texture : swapChainTexture,
-            },
-            {
-              texture: shaderPass.renderTexture.texture,
-            },
-            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-          )
+          if (shaderPass.renderTexture) {
+            commandEncoder.copyTextureToTexture(
+              {
+                texture: shaderPass.renderTarget ? shaderPass.renderTarget.renderTexture.texture : swapChainTexture,
+              },
+              {
+                texture: shaderPass.renderTexture.texture,
+              },
+              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+            )
+          }
 
           if (!shaderPass.renderTarget) {
             // if we render post process the whole scene, clear render pass content
@@ -180,25 +180,29 @@ export class Scene {
       },
     })
 
-    // sort by their render order & RTs (draw shader passes with a render target first!)
-    this.renderPassEntries.postProcessing
-      .sort((a, b) => b.element.renderOrder - a.element.renderOrder)
-      .sort((a, b) => {
-        // render shader passes with render targets first
-        if (!!a.element.renderTarget !== !!b.element.renderTarget) {
-          if (!!a.element.renderTarget) {
-            return -1
-          } else {
-            return 1
-          }
-        }
-      })
+    // screen passes are sorted by 2 criteria
+    // first we draw render passes that have a render target OR our scene pass, ordered by renderOrder
+    // then we draw our full post processing pass, ordered by renderOrder
+    this.renderPassEntries.screen.sort((a, b) => {
+      const renderOrderA = a.element ? a.element.renderOrder : 0
+      const isPostProA = a.element && !a.element.renderTarget
+
+      const renderOrderB = b.element ? b.element.renderOrder : 0
+      const isPostProB = b.element && !b.element.renderTarget
+
+      if (isPostProA && !isPostProB) {
+        return 1
+      } else if (!isPostProA && isPostProB) {
+        return -1
+      } else {
+        return renderOrderA - renderOrderB
+      }
+    })
   }
 
   removeShaderPass(shaderPass) {
-    // TODO need to sort again?
-    this.renderPassEntries.postProcessing = this.renderPassEntries.postProcessing.filter(
-      (entry) => entry.element.uuid !== shaderPass.uuid
+    this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
+      (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
     )
   }
 

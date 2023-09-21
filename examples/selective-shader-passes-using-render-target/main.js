@@ -103,6 +103,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const grayscalePass = new GPUCurtains.ShaderPass(gpuCurtains, {
     label: 'Large plane shader pass',
     //renderTarget: grayscaleTarget, // we could do that directly
+    //renderOrder: 1, // uncomment to draw large planes above small planes
     shaders: {
       fragment: {
         code: grayscaleFs,
@@ -131,7 +132,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // setTimeout(() => {
-  //   grayscaleTarget.remove()
+  //   grayscalePass.remove()
   //   console.log(gpuCurtains.renderer.scene)
   // }, 5000)
 
