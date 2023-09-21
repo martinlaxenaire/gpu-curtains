@@ -5,49 +5,33 @@ import { RenderPass } from '../renderPasses/RenderPass'
 import { RenderTexture } from '../textures/RenderTexture'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 
-type IsProjectedStacks = 'unProjected' | 'projected'
-type MeshStacksTypes = 'opaque' | 'transparent'
-type ShaderPassStacksTypes = 'shaderPasses'
-type RenderTargetStacksTypes = 'renderTargets'
-type PingPongPlaneStacksType = 'pingPong'
-type StacksTypes = MeshStacksTypes | ShaderPassStacksTypes | PingPongPlaneStacksType | RenderTargetStacksTypes
-
-type StackContentStructure<T extends StacksTypes> = T extends ShaderPassStacksTypes
-  ? ShaderPass[]
-  : T extends PingPongPlaneStacksType
-  ? PingPongPlane[]
-  : T extends RenderTargetStacksTypes
-  ? MeshType[]
-  : T extends MeshStacksTypes
-  ? MeshType[]
-  : Array<MeshType | ShaderPass>
-
-type ProjectedStacks = Record<MeshStacksTypes, StackContentStructure<MeshStacksTypes>>
-type UnprojectedStacks = Record<StacksTypes, StackContentStructure<StacksTypes>>
-
-type StackStructure<T extends IsProjectedStacks> = T extends 'unProjected'
-  ? UnprojectedStacks
-  : T extends 'projected'
-  ? ProjectedStacks
-  : never
-
-type StructureMappedStackType<T extends IsProjectedStacks> = { [K in T]: StackStructure<K> }
-type Stacks = StructureMappedStackType<IsProjectedStacks>
-
-interface RenderStack {
-  renderPass: RenderPass
-  renderTexture: RenderTexture
-  stack: Stacks
+type ProjectionType = 'unProjected' | 'projected'
+interface ProjectionStack {
+  opaque: MeshType[]
+  transparent: MeshType[]
 }
+
+type Stack = Record<ProjectionType, ProjectionStack>
+
+interface RenderPassEntry {
+  renderPass: RenderPass
+  renderTexture: RenderTexture | null
+  onBeforeRenderPass: ((commandEncoder: GPUCommandEncoder, swapChainTexture: GPUTexture) => void) | null
+  onAfterRenderPass: ((commandEncoder: GPUCommandEncoder, swapChainTexture: GPUTexture) => void) | null
+  element: MeshType | ShaderPass | PingPongPlane | null
+  stack: Stack | null
+}
+
+type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'screen' | 'postProcessing'
+type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
 export class Scene {
   renderer: GPURenderer
-  renderStacks: RenderStack[]
+  renderPassEntries: RenderPassEntries
 
   constructor({ renderer: GPURenderer })
 
-  addStack(renderPass: RenderPass, renderTexture?: RenderTexture | null): RenderStack
-  get toScreenStack(): RenderStack
+  addRenderPassEntry({ renderPassEntryType: RenderPassEntriesType, entry: RenderPassEntry })
 
   addRenderTarget(renderTarget: RenderTarget)
   removeRenderTarget(renderTarget: RenderTarget)
@@ -61,5 +45,6 @@ export class Scene {
   addPingPongPlane(pingPongPlane: PingPongPlane)
   removePingPongPlane(pingPongPlane: PingPongPlane)
 
+  renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry)
   render(commandEncoder: GPUCommandEncoder)
 }
