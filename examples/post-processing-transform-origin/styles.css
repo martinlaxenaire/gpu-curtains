@@ -1,0 +1,43 @@
+@media screen {
+  #scrolling-wheel {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100vh;
+  }
+
+  #scrolling-wheel h1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    z-index: 1;
+  }
+
+  .plane {
+    position: absolute;
+    top: 30vh;
+    right: 20vw;
+    bottom: 30vh;
+    left: 20vw;
+  }
+
+  .plane img {
+    display: none;
+  }
+}
+
+@media screen and (orientation: portrait) {
+  .plane {
+    position: absolute;
+    top: 40vh;
+    right: 10vw;
+    bottom: 40vh;
+    left: 10vw;
+  }
+}

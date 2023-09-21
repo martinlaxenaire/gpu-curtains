@@ -165,6 +165,10 @@ export class GPUCurtains {
     this._onAfterResizeCallback && this._onAfterResizeCallback()
   }
 
+  get boundingRect() {
+    return this.renderer?.boundingRect
+  }
+
   /**
    * SCROLL
    */

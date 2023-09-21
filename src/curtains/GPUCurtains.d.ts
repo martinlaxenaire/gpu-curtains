@@ -6,6 +6,7 @@ import { PingPongPlane } from './meshes/PingPongPlane'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
 import { MeshType, DOMMeshType } from '../core/renderers/GPURenderer'
 import { Plane } from './meshes/Plane'
+import { DOMElementBoundingRect } from '../core/DOMElement'
 
 interface GPUCurtainsOptions {
   container: HTMLElement
@@ -61,6 +62,7 @@ export class GPUCurtains {
 
   initEvents()
   resize()
+  get boundingRect(): DOMElementBoundingRect
 
   initScroll()
   updateScroll(lastXDelta?: number, lastYDelta?: number)
