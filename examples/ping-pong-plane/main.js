@@ -8,6 +8,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setRendererContext()
 
+  gpuCurtains.onError(() => {
+    // display original images
+    document.body.classList.add('no-curtains')
+  })
+
   const mouse = new GPUCurtains.Vec2()
   const velocity = new GPUCurtains.Vec2()
   // used for vector lerping

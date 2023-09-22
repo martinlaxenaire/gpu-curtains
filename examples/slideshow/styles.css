@@ -33,35 +33,12 @@
     opacity: 1;
   }
 
-  body.is-waiting {
+  body.is-waiting:not(.no-curtains) {
     cursor: wait;
   }
 
   body.is-waiting #multi-textures-plane button {
     pointer-events: none;
-  }
-
-  #multi-textures-plane img,
-  #multi-textures-plane video {
-    display: none;
-  }
-
-  /*** handling errors ***/
-
-  .no-curtains.image-1 .multi-textures img:nth-child(3) {
-    display: block;
-  }
-
-  .no-curtains.image-2 .multi-textures img:nth-child(4) {
-    display: block;
-  }
-
-  .no-curtains.image-3 .multi-textures img:nth-child(5) {
-    display: block;
-  }
-
-  .no-curtains.image-4 .multi-textures img:nth-child(6) {
-    display: block;
   }
 }
 

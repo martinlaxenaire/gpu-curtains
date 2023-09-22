@@ -29,8 +29,10 @@ export class GPURenderer {
     this.onError = onError
 
     if (!this.gpu) {
-      this.onError()
-      throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
+      setTimeout(() => {
+        this.onError()
+        throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
+      }, 0)
     }
 
     this.setRendererObjects()
@@ -126,24 +128,26 @@ export class GPURenderer {
 
     await this.setAdapterAndDevice()
 
-    this.preferredFormat = this.preferredFormat ?? this.gpu?.getPreferredCanvasFormat()
+    if (this.device) {
+      this.preferredFormat = this.preferredFormat ?? this.gpu?.getPreferredCanvasFormat()
 
-    this.context.configure({
-      device: this.device,
-      format: this.preferredFormat,
-      // needed so we can copy textures for post processing usage
-      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
-      // TODO
-      alphaMode: 'premultiplied', // or "opaque"
-      //viewFormats: []
-    })
+      this.context.configure({
+        device: this.device,
+        format: this.preferredFormat,
+        // needed so we can copy textures for post processing usage
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+        // TODO
+        alphaMode: 'premultiplied', // or "opaque"
+        //viewFormats: []
+      })
 
-    this.setMainRenderPass()
-    this.setPipelineManager()
-    this.setScene()
+      this.setMainRenderPass()
+      this.setPipelineManager()
+      this.setScene()
 
-    // ready to start
-    this.ready = true
+      // ready to start
+      this.ready = true
+    }
   }
 
   /**
@@ -153,16 +157,20 @@ export class GPURenderer {
    */
   async setAdapterAndDevice() {
     this.adapter = await this.gpu?.requestAdapter().catch(() => {
-      this.onError()
-      throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
+      setTimeout(() => {
+        this.onError()
+        throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
+      }, 0)
     })
 
     this.device = await this.adapter?.requestDevice().catch(() => {
-      this.onError()
-      throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestDevice' failed.")
+      setTimeout(() => {
+        this.onError()
+        throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestDevice' failed.")
+      }, 0)
     })
 
-    this.device.lost.then((info) => {
+    this.device?.lost.then((info) => {
       throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`)
 
       // 'reason' will be 'destroyed' if we intentionally destroy the device.

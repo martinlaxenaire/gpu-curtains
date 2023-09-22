@@ -9,6 +9,7 @@
   .video-wrapper {
     flex-basis: 40%;
     margin: 0 5%;
+    overflow: hidden;
   }
 
   .video-wrapper h2 {
@@ -20,26 +21,6 @@
     align-items: center;
     align-content: center;
     aspect-ratio: 15 / 10;
-  }
-
-  .video-elements video {
-    display: none;
-    object-fit: cover;
-    min-width: 100%;
-    min-height: 100%;
-  }
-
-  /*** handling errors ***/
-
-  .no-curtains .video-elements {
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .no-curtains .video-elements video {
-    display: block;
   }
 }
 

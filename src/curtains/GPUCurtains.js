@@ -14,6 +14,9 @@ export class GPUCurtains {
   _onAfterResizeCallback = () => {
     /* allow empty callback */
   }
+  _onErrorCallback = () => {
+    /* allow empty callback */
+  }
 
   constructor({
     container,
@@ -25,9 +28,6 @@ export class GPUCurtains {
     autoRender = true,
     autoResize = true,
     watchScroll = true,
-    onError = () => {
-      /* allow empty callbacks */
-    },
   }) {
     this.type = 'CurtainsGPU'
 
@@ -40,7 +40,6 @@ export class GPUCurtains {
       autoRender,
       autoResize,
       watchScroll,
-      onError,
     }
 
     if (container) {
@@ -93,7 +92,7 @@ export class GPUCurtains {
       preferredFormat: this.options.preferredFormat,
       camera: this.options.camera,
       production: this.options.production,
-      onError: this.options.onError,
+      onError: () => this._onErrorCallback && this._onErrorCallback(),
     })
 
     this.canvas = this.renderer.canvas
@@ -231,6 +230,14 @@ export class GPUCurtains {
   onAfterResize(callback) {
     if (callback) {
       this._onAfterResizeCallback = callback
+    }
+
+    return this
+  }
+
+  onError(callback) {
+    if (callback) {
+      this._onErrorCallback = callback
     }
 
     return this

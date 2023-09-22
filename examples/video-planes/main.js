@@ -7,6 +7,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setRendererContext()
 
+  gpuCurtains.onError(() => {
+    // display original videos
+    document.body.classList.add('no-curtains')
+  })
+
   const videoVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
@@ -127,7 +132,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
       texturesOptions: {
         texture: {
-          useExternalTextures: false,
+          useExternalTextures: false, // do not use external textures
         },
       },
     },

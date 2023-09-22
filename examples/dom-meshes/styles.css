@@ -43,19 +43,7 @@
     object-fit: cover;
   }
 
-  /*** handling errors ***/
-
-  .no-curtains .dom-mesh {
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .no-curtains .dom-mesh img {
-    display: block;
-    object-fit: cover;
-    min-width: 100%;
-    min-height: 100%;
+  .sphere-mesh {
+    border-radius: 50%;
   }
 }

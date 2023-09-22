@@ -18,7 +18,6 @@ interface GPUCurtainsOptions {
   autoRender: boolean
   autoResize: boolean
   watchScroll: boolean
-  onError: () => void
 }
 
 interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'container'>> {
@@ -40,9 +39,11 @@ export class GPUCurtains {
   _onRenderCallback: () => void
   _onScrollCallback: () => void
   _onAfterResizeCallback: () => void
+  _onErrorCallback: () => void
   onRender(callback: () => void): GPUCurtains
   onScroll(callback: () => void): GPUCurtains
   onAfterResize(callback: () => void): GPUCurtains
+  onError(callback: () => void): GPUCurtains
 
   constructor({ container, pixelRatio, camera }: GPUCurtainsParams)
 

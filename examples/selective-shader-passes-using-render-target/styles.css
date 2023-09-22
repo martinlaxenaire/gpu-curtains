@@ -2,7 +2,7 @@
   .planes-list {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0 0 2.25rem 0;
+    padding: 0 2.25rem 2.25rem 2.25rem;
     list-style: none;
   }
 
@@ -51,9 +51,42 @@
   .planes-list-item:nth-child(even) .small-plane {
     grid-column: col-start 2 / span 4;
   }
+}
 
-  .large-plane img,
-  .small-plane img {
-    display: none;
+@media screen and (max-width: 720px) {
+  #content {
+    padding: 0 1.125rem 2.25rem 1.125rem;
+  }
+
+  .planes-list-item {
+    margin: 0 0 7.5vh 0;
+  }
+
+  .planes-list-item:nth-child(even) {
+    margin: 7.5vh 0;
+  }
+
+  .planes-list-item h2 {
+    font-size: 1.5em;
+  }
+
+  .large-plane {
+    aspect-ratio: 1.75;
+  }
+
+  .planes-list-item .large-plane {
+    grid-column: col-start 1 / span 10;
+  }
+
+  .planes-list-item:nth-child(even) .large-plane {
+    grid-column: col-start 3 / span 10;
+  }
+
+  .small-plane {
+    grid-column: col-start 8 / span 5;
+  }
+
+  .planes-list-item:nth-child(even) .small-plane {
+    grid-column: col-start 1 / span 5;
   }
 }

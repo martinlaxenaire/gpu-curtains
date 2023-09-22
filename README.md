@@ -17,10 +17,11 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Uniforms, BindGroups
 - Render Pipelines
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
-- Basic Scene class
+- Scene class
 - Scroll + resize, frustum culling check
 - Texture & RenderTexture classes
 - Shader passes 
+- RenderTarget (render to textures)
 - PingPong
 - Plane raycasting
 - Basic CacheManager
@@ -31,12 +32,11 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Errors / warning handling
 - Events / callbacks
 - Removing / destroying meshes
-- Render to textures (frame buffers)
 
 ### Todo
 
 - Compute pass
-- TextureLoader class?
+- ~~TextureLoader class?~~
 - Use async pipelines?
 - Mesh raycasting?
 - context lost handling

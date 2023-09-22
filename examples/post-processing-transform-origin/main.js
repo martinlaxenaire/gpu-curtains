@@ -68,16 +68,17 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setRendererContext()
 
-  gpuCurtains.onRender(() => {
-    rotationEffect = lerp(rotationEffect, 0, 0.05)
-  })
-  /*.onError(() => {
-   // we will add a class to the document body to display original images
-   document.body.classList.add('no-curtains')
- }).onContextLost(() => {
- // on context lost, try to restore the context
- gpuCurtains.restoreContext();
-})*/
+  gpuCurtains
+    .onRender(() => {
+      rotationEffect = lerp(rotationEffect, 0, 0.05)
+    })
+    .onError(() => {
+      // display original images
+      document.body.classList.add('no-curtains')
+    }) /*.onContextLost(() => {
+     // on context lost, try to restore the context
+     gpuCurtains.restoreContext();
+    })*/
 
   // add the planes
   const planeVs = /* wgsl */ `

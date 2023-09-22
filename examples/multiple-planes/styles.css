@@ -25,13 +25,15 @@
     transition: opacity 0.5s ease-in;
   }
 
-  .planes-loaded #planes {
+  .planes-loaded #planes,
+  .no-curtains #planes {
     opacity: 1;
   }
 
   .plane-wrapper {
     flex-basis: 50%;
     position: relative;
+    overflow: hidden;
   }
 
   .plane-title {
@@ -40,6 +42,7 @@
     left: 0;
     font-size: 2em;
     margin: 0;
+    z-index: 1;
     padding: 0.125em 0.25em;
   }
 
@@ -52,27 +55,9 @@
     aspect-ratio: 15 / 10;
   }
 
-  .plane img {
-    display: none;
-  }
-
   #add-more-planes-wrapper {
     text-align: center;
     margin-top: 2.25rem;
-  }
-
-  /*** handling errors ***/
-
-  .no-curtains #planes {
-    opacity: 1;
-  }
-
-  .no-curtains .plane-title {
-    z-index: 1;
-  }
-
-  .no-curtains .plane img {
-    display: block;
   }
 }
 

@@ -10,6 +10,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setRendererContext()
 
+  gpuCurtains.onError(() => {
+    // display original images
+    document.body.classList.add('no-curtains')
+  })
+
   const meshVs = /* wgsl */ `  
     struct VSOutput {
       @builtin(position) position: vec4f,

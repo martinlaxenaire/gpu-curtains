@@ -46,6 +46,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         scrollEffect = lerp(scrollEffect, delta.y, 0.5)
       }
     })
+    .onError(() => {
+      // display original images
+      document.body.classList.add('no-curtains')
+    })
 
   const vertexShader = /* wgsl */ `
       struct VSOutput {

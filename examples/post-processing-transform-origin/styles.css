@@ -26,10 +26,6 @@
     bottom: 30vh;
     left: 20vw;
   }
-
-  .plane img {
-    display: none;
-  }
 }
 
 @media screen and (orientation: portrait) {

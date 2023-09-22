@@ -13,6 +13,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setRendererContext()
 
+  gpuCurtains.onError(() => {
+    // display original medias
+    document.body.classList.add('no-curtains')
+  })
+
   // get our plane element
   const planeElements = document.querySelector('#multi-textures-plane')
 
