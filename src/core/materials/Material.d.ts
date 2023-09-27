@@ -1,13 +1,13 @@
 import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings'
-import { BindGroup } from '../bindGroups/BindGroup'
+import { BindGroup, BindGroupBindingElement } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Texture } from '../textures/Texture'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 import { RenderTexture } from '../textures/RenderTexture'
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
 import { WorkBindGroup } from '../bindGroups/WorkBindGroup'
-import { WorkBindings } from '../bindings/WorkBindings'
 import { RenderMaterialRenderingOptions } from './RenderMaterial'
+import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 // shaders
 export type MaterialShadersType = 'vertex' | 'fragment' | 'compute'
@@ -41,7 +41,7 @@ interface MaterialOptions {
   shaders: MaterialShaders
   uniforms?: BufferBindings[]
   storages?: BufferBindings[]
-  workBindings?: Array<WorkBindings>
+  works?: WorkBufferBindings[]
   rendering?: RenderMaterialRenderingOptions
 }
 
@@ -57,7 +57,7 @@ export class Material {
   uniforms: Record<string, BufferBindingsUniform>
   storages: Record<string, BufferBindingsUniform>
   inputsBindGroups: BindGroup[]
-  inputsBindings: BufferBindings[]
+  inputsBindings: BindGroupBindingElement[]
 
   textures: Texture[]
   texturesBindGroup: TextureBindGroup

@@ -1,11 +1,13 @@
 import { Material, MaterialOptions } from './Material'
 import { BindGroupBindingBuffer } from '../bindGroups/BindGroup'
 import { WorkBindGroup } from '../bindGroups/WorkBindGroup'
+import { BufferBindingsUniform } from '../bindings/BufferBindings'
 
 export class ComputeMaterial extends Material {
   options: MaterialOptions
 
   workBindGroups: WorkBindGroup[]
+  works: Record<string, BufferBindingsUniform>
 
   setPipelineEntryBuffers()
 

@@ -16,8 +16,8 @@ export class ComputeMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    let { shaders, workGroups } = parameters
-    console.log(parameters)
+    let { shaders, works } = parameters
+    console.log(parameters, this)
 
     if (!shaders || !shaders.compute) {
       shaders = {
@@ -35,7 +35,7 @@ export class ComputeMaterial extends Material {
     }
 
     this.options.shaders = shaders
-    this.options.workBindings = workGroups
+    this.options.works = works
 
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       label: this.options.label + ' compute pipeline',
@@ -53,14 +53,18 @@ export class ComputeMaterial extends Material {
 
   setWorkGroups() {
     this.workBindGroups = []
+    this.works = {}
+    this.inputsBindings = [...this.inputsBindings, ...this.options.works]
 
-    if (this.options.workBindings.length) {
+    if (this.options.works.length) {
       const workBindGroup = new WorkBindGroup({
         label: this.options.label + ': Work bind group',
         renderer: this.renderer,
       })
 
-      this.options.workBindings.forEach((workBinding) => {
+      this.options.works.forEach((workBinding) => {
+        this.works = { ...this.works, ...workBinding.bindings }
+
         workBinding.isActive = this.options.shaders.compute.code.indexOf(workBinding.name) !== -1
 
         workBindGroup.addBinding(workBinding)
@@ -68,6 +72,8 @@ export class ComputeMaterial extends Material {
 
       this.workBindGroups.push(workBindGroup)
     }
+
+    this.inputsBindGroups = [...this.inputsBindGroups, ...this.workBindGroups]
   }
 
   setMaterial() {
@@ -158,7 +164,7 @@ export class ComputeMaterial extends Material {
   setBufferResult(bindingBuffer) {
     if (bindingBuffer.resultBuffer.mapState === 'unmapped') {
       bindingBuffer.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-        bindingBuffer.inputBinding.result = new Float32Array(bindingBuffer.resultBuffer.getMappedRange().slice())
+        bindingBuffer.inputBinding.result = new Float32Array(bindingBuffer.resultBuffer.getMappedRange().slice(0))
         bindingBuffer.resultBuffer.unmap()
       })
     }

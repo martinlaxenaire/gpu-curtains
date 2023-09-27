@@ -69,7 +69,7 @@ export class WorkBindGroup extends BindGroup {
 
   dispatchWorkGroups(pass) {
     this.bindings.forEach((binding) => {
-      console.log(binding.value.length)
+      //console.log(binding.value.length)
       pass.dispatchWorkgroups(binding.value.length)
     })
   }

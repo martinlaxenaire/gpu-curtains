@@ -1,5 +1,5 @@
 import { Bindings } from './Bindings'
-import { getBufferLayout } from '../../utils/buffers-utils'
+import { getBindingWgslVarType, getBufferLayout } from '../../utils/buffers-utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { toCamelCase, toKebabCase } from '../../utils/utils'
@@ -93,7 +93,7 @@ export class BufferBindings extends Bindings {
         bindingElement.startOffset = 0
 
         // set first alignment row(s)
-        this.alignmentRows += Math.max(1, numElements / bytesPerElement)
+        this.alignmentRows += Math.max(1, Math.ceil(numElements / bytesPerElement))
       } else {
         // our next space available
         const nextSpaceAvailable =
@@ -116,7 +116,7 @@ export class BufferBindings extends Bindings {
             this.alignmentRows++
           } else {
             bindingElement.startOffset = nextSpaceAvailable
-            this.alignmentRows += numElements / bytesPerElement
+            this.alignmentRows += Math.ceil(numElements / bytesPerElement)
           }
         }
       }
@@ -137,12 +137,12 @@ export class BufferBindings extends Bindings {
         if (bindingElement.type === 'f32') {
           bindingElement.array[0] = value
         } else if (bindingElement.type === 'vec2f') {
-          bindingElement.array[0] = value.x
-          bindingElement.array[1] = value.y
+          bindingElement.array[0] = value.x ?? value[0] ?? 0
+          bindingElement.array[1] = value.y ?? value[1] ?? 0
         } else if (bindingElement.type === 'vec3f') {
-          bindingElement.array[0] = value.x
-          bindingElement.array[1] = value.y
-          bindingElement.array[2] = value.z
+          bindingElement.array[0] = value.x ?? value[0] ?? 0
+          bindingElement.array[1] = value.y ?? value[1] ?? 0
+          bindingElement.array[2] = value.z ?? value[2] ?? 0
         } else if (value.elements) {
           bindingElement.array = value.elements
         } else if (ArrayBuffer.isView(value)) {
@@ -165,13 +165,13 @@ export class BufferBindings extends Bindings {
         .join(',\n\t')}
 };`
 
-      const varType = this.bindingType === 'storage' ? 'var<storage, read>' : 'var<uniform>'
+      const varType = getBindingWgslVarType(this.bindingType)
       this.wgslGroupFragment = `${varType} ${this.name}: ${toKebabCase(this.label)};\n`
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = `${this.bindingElements
         .map((binding, index) => {
-          const varType = this.bindingType === 'storage' ? 'var<storage, read>' : 'var<uniform>'
+          const varType = getBindingWgslVarType(this.bindingType)
           return `${varType} ${binding.name}: ${binding.type};\n`
         })
         .join(',\n\t')}`

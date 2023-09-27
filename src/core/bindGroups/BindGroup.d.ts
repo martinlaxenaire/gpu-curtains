@@ -2,9 +2,9 @@ import { GPURenderer } from '../renderers/GPURenderer'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { SamplerBindings } from '../bindings/SamplerBindings'
 import { TextureBindings } from '../bindings/TextureBindings'
-import { WorkBindings } from '../bindings/WorkBindings'
+import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
-type BindGroupBindingElement = BufferBindings | SamplerBindings | TextureBindings | WorkBindings
+type BindGroupBindingElement = BufferBindings | SamplerBindings | TextureBindings | WorkBufferBindings
 
 interface BindGroupBindingBuffer {
   inputBinding: BindGroupBindingElement

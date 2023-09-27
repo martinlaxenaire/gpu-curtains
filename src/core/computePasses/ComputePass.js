@@ -1,8 +1,8 @@
 import { isRenderer } from '../../utils/renderer-utils'
 import { generateUUID } from '../../utils/utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
-import { WorkBindings } from '../bindings/WorkBindings'
 import { BufferBindings } from '../bindings/BufferBindings'
+import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 let computePassIndex = 0
 
@@ -20,7 +20,7 @@ export class ComputePass {
     this.uuid = generateUUID()
     Object.defineProperty(this, 'index', { value: computePassIndex++ })
 
-    const { label, shaders, renderOrder, uniforms, storages, workGroups } = parameters
+    const { label, shaders, renderOrder, uniforms, storages, works } = parameters
 
     this.options = {
       label,
@@ -28,7 +28,7 @@ export class ComputePass {
       renderOrder,
       uniforms,
       storages,
-      workGroups,
+      works,
     }
 
     this.renderOrder = renderOrder ?? 0
@@ -36,7 +36,7 @@ export class ComputePass {
     const inputBindings = this.createBindings({
       uniforms: uniforms ?? [],
       storages: storages ?? [],
-      workGroups: workGroups ?? [],
+      works: works ?? [],
     })
 
     this.setComputeMaterial({
@@ -61,7 +61,7 @@ export class ComputePass {
     this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid)
   }
 
-  createBindings({ uniforms = [], storages = [], workGroups = [] }) {
+  createBindings({ uniforms = [], storages = [], workGroups = [], works = [] }) {
     const uniformsBindings = [
       ...uniforms.map((binding, index) => {
         return new BufferBindings({
@@ -89,14 +89,15 @@ export class ComputePass {
     ]
 
     const worksBindings = [
-      ...workGroups.map((binding, index) => {
-        return new WorkBindings({
+      ...works.map((binding, index) => {
+        return new WorkBufferBindings({
           label: binding.label || 'Works' + index,
           name: binding.name || 'works' + index,
           bindIndex: index,
-          type: binding.type,
-          value: binding.value,
-          visibility: binding.visibility,
+          type: 'storageWrite',
+          bindings: binding.bindings,
+          dispatchSize: binding.dispatchSize,
+          visibility: 'compute',
         })
       }),
     ]
@@ -104,7 +105,7 @@ export class ComputePass {
     return {
       uniforms: uniformsBindings,
       storages: storagesBindings,
-      workGroups: worksBindings,
+      works: worksBindings,
     }
   }
 
@@ -114,6 +115,10 @@ export class ComputePass {
 
   get storages() {
     return this.material?.storages
+  }
+
+  get works() {
+    return this.material?.works
   }
 
   /** EVENTS **/

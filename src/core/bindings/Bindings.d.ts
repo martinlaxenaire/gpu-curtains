@@ -1,6 +1,6 @@
 import { MaterialShadersType } from '../materials/Material'
 
-export type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'sampler'
+export type BindingType = 'uniform' | 'storage' | 'storageWrite' | 'texture' | 'externalTexture' | 'sampler'
 
 interface BindingsParams {
   label?: string

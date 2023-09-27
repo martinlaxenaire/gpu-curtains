@@ -1,4 +1,5 @@
 import { MeshUniformValue } from '../core/meshes/MeshBaseMixin'
+import { BindingType } from '../core/bindings/Bindings'
 
 type CoreBufferType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
 
@@ -50,3 +51,4 @@ interface AttributeBufferParams extends AttributeBufferParamsOption {
 }
 
 export function getBufferLayout(bufferType: CoreBufferType): BufferLayout
+export function getBindingWgslVarType(bindingType: BindingType): string

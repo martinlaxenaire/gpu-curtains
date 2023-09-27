@@ -42,3 +42,17 @@ export const getBufferLayout = (bufferType) => {
 
   return bufferLayouts[bufferType]
 }
+
+export const getBindingWgslVarType = (bindingType) => {
+  return (() => {
+    switch (bindingType) {
+      case 'storage':
+        return 'var<storage, read>'
+      case 'storageWrite':
+        return 'var<storage, read_write>'
+      case 'uniform':
+      default:
+        return 'var<uniform>'
+    }
+  })()
+}

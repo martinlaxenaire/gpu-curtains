@@ -11,7 +11,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     widthSegments: 20,
   })
 
-  console.log(planeGeometry.getAttribute('position'))
+  const verticesArray = planeGeometry.getAttribute('position').array
 
   // first our compute pass
   const computePass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -23,7 +23,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             @builtin(global_invocation_id) id: vec3<u32>
           ) {
             let i = id.x;
-            works[i] = works[i] + cos(uniforms.time * 0.01) * 0.001;
+            works.vertices[i] = works.vertices[i] + cos(uniforms.time * 0.01) * 0.001;
           }
           `,
       },
@@ -40,18 +40,17 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
       },
     ],
-    workGroups: [
+    works: [
       {
         name: 'works',
         label: 'Works',
-        type: 'array<f32>',
-        value: planeGeometry.getAttribute('position').array.slice(),
-        // entries: [
-        //   {
-        //     bufferType: 'storage',
-        //     value: [1, 2, 3],
-        //   },
-        // ],
+        dispatchSize: verticesArray.length / 64, // Note that we divide the vertex count by the workgroup_size!
+        bindings: {
+          vertices: {
+            type: 'array<f32>',
+            value: verticesArray.slice(),
+          },
+        },
       },
     ],
   })
@@ -150,7 +149,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         bindings: {
           displacement: {
             type: 'array<vec3f>',
-            value: planeGeometry.getAttribute('position').array.slice(),
+            value: verticesArray.slice(),
           },
         },
       },
@@ -164,8 +163,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     plane.uniforms.time.value++
 
     const result = computePass.getWorkGroupResult('works')
-    plane.storages.displacement.value.set(result)
-    plane.storages.displacement.shouldUpdate = true
+
+    if (result) {
+      plane.storages.displacement.value.set(result.slice(0, plane.storages.displacement.value.length))
+      plane.storages.displacement.shouldUpdate = true
+    }
   })
 
   // TEST

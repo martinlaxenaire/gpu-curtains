@@ -1,15 +1,20 @@
 import { Renderer } from '../../types/renderer-utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
-import { WorkBindings } from '../bindings/WorkBindings'
 import { MaterialShaders } from '../materials/Material'
 import { MeshBindings, MeshBindingsTypes } from '../meshes/MeshBaseMixin'
 import { BufferBindings } from '../bindings/BufferBindings'
+import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 interface WorkGroupParams {
   name: string
   label: string
   type: string
+  dispatchSize?: number | number[]
   value: number[] | Float32Array
+}
+
+interface WorkBindings extends MeshBindings {
+  dispatchSize?: number | number[]
 }
 
 interface ComputePassOptions {
@@ -18,12 +23,12 @@ interface ComputePassOptions {
   shaders: MaterialShaders
   uniforms: MeshBindings[]
   storages: MeshBindings[]
-  workGroups: WorkGroupParams[]
+  works: WorkBindings[]
 }
 
 type ComputePassParams = Partial<ComputePassOptions>
 
-type ComputeBindingsTypes = MeshBindingsTypes | 'workGroups'
+type ComputeBindingsTypes = MeshBindingsTypes | 'works'
 type ComputeBindingsParams = Record<ComputeBindingsTypes, MeshBindings[] | WorkGroupParams[]>
 
 export class ComputePass {
@@ -37,8 +42,6 @@ export class ComputePass {
 
   material: ComputeMaterial
 
-  uniforms: ComputeMaterial['uniforms']
-
   constructor(renderer: Renderer, parameters: ComputePassParams)
 
   setComputeMaterial(computeParameters)
@@ -49,8 +52,12 @@ export class ComputePass {
   createBindings({
     uniforms,
     storages,
-    workGroups,
-  }: ComputeBindingsParams): Record<MeshBindingsTypes, BufferBindings[] | WorkBindings[]>
+    works,
+  }: ComputeBindingsParams): Record<MeshBindingsTypes, BufferBindings[] | WorkBufferBindings[]>
+
+  get uniforms(): ComputeMaterial['uniforms']
+  get storages(): ComputeMaterial['storages']
+  get works(): ComputeMaterial['works']
 
   onBeforeRender: (callback: () => void) => ComputePass
   onRender: (callback: () => void) => ComputePass
