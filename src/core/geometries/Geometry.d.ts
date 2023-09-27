@@ -37,6 +37,8 @@ export class Geometry {
 
   setAttribute({ name, type, bufferFormat, size, array }: AttributeBufferParamsOption)
 
+  getAttribute(name: string): AttributeBufferParams | null
+
   computeGeometry()
 
   setWGSLFragment()

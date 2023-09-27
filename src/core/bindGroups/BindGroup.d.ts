@@ -2,12 +2,14 @@ import { GPURenderer } from '../renderers/GPURenderer'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { SamplerBindings } from '../bindings/SamplerBindings'
 import { TextureBindings } from '../bindings/TextureBindings'
+import { WorkBindings } from '../bindings/WorkBindings'
 
-type BindGroupBindingElement = BufferBindings | SamplerBindings | TextureBindings
+type BindGroupBindingElement = BufferBindings | SamplerBindings | TextureBindings | WorkBindings
 
 interface BindGroupBindingBuffer {
   uniformBinding: BindGroupBindingElement
   buffer: GPUBuffer
+  resultBuffer?: GPUBuffer // used for WorkBindGroup
 }
 
 interface BindGroupParams {

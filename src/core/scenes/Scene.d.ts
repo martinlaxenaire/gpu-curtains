@@ -4,6 +4,7 @@ import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 import { RenderPass } from '../renderPasses/RenderPass'
 import { RenderTexture } from '../textures/RenderTexture'
 import { RenderTarget } from '../renderPasses/RenderTarget'
+import { ComputePass } from '../computePasses/ComputePass'
 
 type ProjectionType = 'unProjected' | 'projected'
 interface ProjectionStack {
@@ -27,9 +28,13 @@ type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
 export class Scene {
   renderer: GPURenderer
+  computePassEntries: ComputePass[]
   renderPassEntries: RenderPassEntries
 
   constructor({ renderer: GPURenderer })
+
+  addComputePass(computePass: ComputePass)
+  removeComputePass(computePass: ComputePass)
 
   addRenderTarget(renderTarget: RenderTarget)
   removeRenderTarget(renderTarget: RenderTarget)
@@ -46,4 +51,5 @@ export class Scene {
 
   renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry)
   render(commandEncoder: GPUCommandEncoder)
+  onAfterCommandEncoder()
 }

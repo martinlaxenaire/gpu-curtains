@@ -1,6 +1,6 @@
 import { generateUUID, throwWarning } from '../../utils/utils'
 import { isCameraRenderer } from '../../utils/renderer-utils'
-import { Material } from '../materials/Material'
+import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Geometry } from '../geometries/Geometry'
@@ -95,7 +95,7 @@ const MeshBaseMixin = (superclass) =>
       this.renderOrder = renderOrder
       this.ready = false
 
-      const uniformsBindings = this.createUniformsBindings(bindings)
+      const uniformsBindings = this.createUniformsBindings(bindings ?? [])
       this.setMeshMaterial({ ...meshParameters, uniformsBindings })
 
       this.addToScene()
@@ -135,7 +135,7 @@ const MeshBaseMixin = (superclass) =>
     }
 
     setMaterial(materialParameters) {
-      this.material = new Material(this.renderer, materialParameters)
+      this.material = new RenderMaterial(this.renderer, materialParameters)
     }
 
     addToScene() {
@@ -209,6 +209,7 @@ const MeshBaseMixin = (superclass) =>
             label: binding.label || 'Uniforms' + index,
             name: binding.name || 'uniforms' + index,
             bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms
+            bindingType: binding.bindingType ?? 'uniform',
             uniforms: binding.uniforms,
             visibility: binding.visibility,
           })

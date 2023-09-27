@@ -1,4 +1,4 @@
-import { ShadersType } from '../meshes/MeshBaseMixin'
+import { MaterialShadersType } from '../materials/Material'
 
 export type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'sampler'
 
@@ -7,7 +7,7 @@ interface BindingsParams {
   name?: string
   bindingType?: BindingType
   bindIndex?: number
-  visibility?: ShadersType | null
+  visibility?: MaterialShadersType | null
 }
 
 export class Bindings {

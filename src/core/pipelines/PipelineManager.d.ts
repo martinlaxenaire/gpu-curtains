@@ -1,5 +1,9 @@
 import { PipelineEntry, PipelineEntryBaseParams } from './PipelineEntry'
+import { RenderPipelineEntry, RenderPipelineEntryBaseParams } from './RenderPipelineEntry'
+import { ComputePipelineEntry } from './ComputePipelineEntry'
 import { GPURenderer } from '../renderers/GPURenderer'
+
+type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
 
 export class PipelineManager {
   renderer: GPURenderer
@@ -8,10 +12,11 @@ export class PipelineManager {
 
   constructor({ renderer: GPURenderer })
 
-  isSamePipeline(parameters: PipelineEntryBaseParams): PipelineEntry | null
+  isSameRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry | null
+  createRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry
 
-  createRenderPipeline(parameters: PipelineEntryBaseParams): PipelineEntry
+  createComputePipeline(parameters: PipelineEntryBaseParams): ComputePipelineEntry
 
-  setCurrentPipeline(pass: GPURenderPassEncoder, pipelineEntry: PipelineEntry)
+  setCurrentPipeline(pass: GPURenderPassEncoder | GPUComputePassEncoder, pipelineEntry: AllowedPipelineEntries)
   resetCurrentPipeline()
 }

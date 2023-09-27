@@ -13,7 +13,7 @@ export class Material {
 
     this.renderer = renderer
 
-    let { shaders, label, uniformsBindings, geometry, ...renderingOptions } = parameters
+    let { shaders, label, uniformsBindings } = parameters
 
     // shaders = {
     //   ...{
@@ -27,44 +27,36 @@ export class Material {
     //   ...shaders,
     // }
 
-    if (!shaders.vertex.entryPoint) {
-      shaders.vertex.entryPoint = 'main'
-    }
+    // if (!shaders.vertex.entryPoint) {
+    //   shaders.vertex.entryPoint = 'main'
+    // }
+    //
+    // if (!shaders.fragment.entryPoint) {
+    //   shaders.fragment.entryPoint = 'main'
+    // }
 
-    if (!shaders.fragment.entryPoint) {
-      shaders.fragment.entryPoint = 'main'
-    }
+    if (!uniformsBindings) uniformsBindings = []
 
     this.options = {
       shaders,
       label,
       uniformsBindings,
-      rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
+      //rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
     }
 
-    this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
-      label: this.options.label + ' render pipeline',
-      shaders: this.options.shaders,
-      ...this.options.rendering,
-    })
-
-    this.attributes = {
-      geometry: null,
-      buffers: null,
-    }
+    // this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
+    //   label: this.options.label + ' render pipeline',
+    //   shaders: this.options.shaders,
+    //   ...this.options.rendering,
+    // })
 
     this.bindGroups = []
 
-    this.setAttributesFromGeometry(geometry)
     this.setUniforms()
     this.setTextures()
   }
 
   setMaterial() {
-    if (!this.attributes.buffers) {
-      this.createAttributesBuffers()
-    }
-
     // camera + model bind groups
     const modelBindGroupLength = this.uniformsBindGroups.length
     const texturesBindGroupLength = 1
@@ -77,17 +69,17 @@ export class Material {
       return
     }
 
-    if (this.pipelineEntry && !this.pipelineEntry.pipeline) {
-      this.setPipelineEntryBuffers()
-    }
+    // if (this.pipelineEntry && !this.pipelineEntry.pipeline) {
+    //   this.setPipelineEntryBuffers()
+    // }
   }
 
-  setPipelineEntryBuffers() {
-    this.pipelineEntry.setPipelineEntryBuffers({
-      geometryAttributes: this.attributes.geometry,
-      bindGroups: this.bindGroups,
-    })
-  }
+  // setPipelineEntryBuffers() {
+  //   this.pipelineEntry.setPipelineEntryBuffers({
+  //     geometryAttributes: this.attributes.geometry,
+  //     bindGroups: this.bindGroups,
+  //   })
+  // }
 
   get ready() {
     return !!(this.pipelineEntry && this.pipelineEntry.pipeline)
@@ -126,80 +118,12 @@ export class Material {
     return this.pipelineEntry.shaders[shaderType].head
   }
 
-  /** ATTRIBUTES **/
-
-  setAttributesFromGeometry(geometry) {
-    this.attributes.geometry = {
-      wgslStructFragment: geometry.wgslStructFragment,
-      vertexArray: geometry.array,
-      verticesCount: geometry.verticesCount,
-      verticesOrder: geometry.verticesOrder,
-      pipelineBuffers: [
-        {
-          arrayStride: geometry.arrayStride * 4, // (2 + 3) floats, 4 bytes each
-          attributes: geometry.attributes.map((attribute, index) => {
-            return {
-              shaderLocation: index,
-              offset: attribute.bufferOffset, // previous attribute size * 4
-              format: attribute.bufferFormat,
-            }
-          }),
-        },
-      ],
-    }
-
-    if (geometry.isIndexed) {
-      this.attributes.geometry = {
-        ...this.attributes.geometry,
-        ...{
-          isIndexed: true,
-          indexArray: geometry.indexData.array,
-          indexBufferFormat: geometry.indexData.bufferFormat,
-          indexBufferLength: geometry.indexData.bufferLength,
-        },
-      }
-    }
-  }
-
-  createAttributesBuffers() {
-    this.attributes.buffers = {
-      vertexBuffer: this.renderer.createBuffer({
-        label: this.options.label + ': Vertex buffer vertices',
-        size: this.attributes.geometry.vertexArray.length * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      }),
-    }
-
-    this.renderer.queueWriteBuffer(this.attributes.buffers?.vertexBuffer, 0, this.attributes.geometry?.vertexArray)
-
-    if (this.attributes.geometry.isIndexed) {
-      this.attributes.buffers.indexBuffer = this.renderer.createBuffer({
-        label: this.options.label + ': Index buffer vertices',
-        size: this.attributes.geometry.indexArray.byteLength,
-        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-      })
-
-      this.renderer.queueWriteBuffer(this.attributes.buffers?.indexBuffer, 0, this.attributes.geometry.indexArray)
-    }
-  }
-
-  destroyAttributeBuffers() {
-    this.attributes.buffers?.vertexBuffer?.destroy()
-    this.attributes.buffers?.indexBuffer?.destroy()
-    this.attributes = {
-      geometry: null,
-      buffers: null,
-    }
-  }
-
-  /** Bind GROUPS **/
+  /** BIND GROUPS **/
 
   createBindGroups() {
-    const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0
-
     // textures first
     if (this.texturesBindGroup.shouldCreateBindGroup) {
-      this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex) // bindGroup 0 is our renderer camera
+      this.texturesBindGroup.setIndex(this.bindGroups.length) // bindGroup 0 is our renderer camera
       this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
@@ -208,7 +132,7 @@ export class Material {
     // then uniforms
     this.uniformsBindGroups.forEach((bindGroup) => {
       if (bindGroup.shouldCreateBindGroup) {
-        bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
+        bindGroup.setIndex(this.bindGroups.length)
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
@@ -255,8 +179,10 @@ export class Material {
         this.uniforms = { ...this.uniforms, ...uniformBinding.uniforms }
 
         uniformBinding.isActive =
-          this.options.shaders.vertex.code.indexOf(uniformBinding.name + '.') !== -1 ||
-          this.options.shaders.fragment.code.indexOf(uniformBinding.name + '.') !== -1
+          (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(uniformBinding.name + '.') !== -1) ||
+          (this.options.shaders.fragment &&
+            this.options.shaders.fragment.code.indexOf(uniformBinding.name + '.') !== -1) ||
+          (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(uniformBinding.name + '.') !== -1)
 
         uniformsBindGroup.addBinding(uniformBinding)
       })
@@ -369,25 +295,10 @@ export class Material {
     this.bindGroups.forEach((bindGroup) => {
       pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
     })
-
-    // set attributes
-    pass.setVertexBuffer(0, this.attributes.buffers?.vertexBuffer)
-
-    if (this.attributes.buffers.indexBuffer) {
-      pass.setIndexBuffer(this.attributes.buffers.indexBuffer, this.attributes.geometry?.indexBufferFormat)
-    }
-
-    // draw
-    if (this.attributes.geometry.indexBufferLength) {
-      pass.drawIndexed(this.attributes.geometry.indexBufferLength)
-    } else {
-      pass.draw(this.attributes.geometry?.verticesCount)
-    }
   }
 
   destroy() {
     // destroy all buffers created with createBuffer
-    this.destroyAttributeBuffers()
     this.destroyBindGroups()
     this.destroyTextures()
   }

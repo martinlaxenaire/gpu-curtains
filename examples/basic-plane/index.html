@@ -56,6 +56,7 @@
       >&lt;/ &gt;</a
     >
 
+    <script src="https://cdn.jsdelivr.net/gh/brendan-duncan/webgpu_recorder/webgpu_recorder.js"></script>
     <script src="../../dist/gpu-curtains.js"></script>
     <script>
       //import {GPUCurtains, Plane} from '../../dist/gpu-curtains.mjs';
@@ -73,55 +74,55 @@
         const planeElements = document.getElementsByClassName('plane')
 
         const vertexShader = /* wgsl */ `
-        struct VSOutput {
-            @builtin(position) position: vec4f,
-            @location(0) uv: vec2f,
-          };
+          struct VSOutput {
+              @builtin(position) position: vec4f,
+              @location(0) uv: vec2f,
+            };
 
-          @vertex fn main(
-            attributes: Attributes,
-          ) -> VSOutput {
-            var vsOutput: VSOutput;
+            @vertex fn main(
+              attributes: Attributes,
+            ) -> VSOutput {
+              var vsOutput: VSOutput;
 
-            var strength: f32 = 0.05;
-            var nbWaves: f32 = 3.0;
+              var strength: f32 = 0.05;
+              var nbWaves: f32 = 3.0;
 
-            // map vertices coordinates to the 0->1 range on the X axis
-            var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
+              // map vertices coordinates to the 0->1 range on the X axis
+              var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
 
-            // notice how the "uniforms" struct name matches our bindings object name property
-            var time: f32 = uniforms.time * 0.0375;
+              // notice how the "uniforms" struct name matches our bindings object name property
+              var time: f32 = uniforms.time * 0.0375;
 
-            var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
+              var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
 
-            var transformed: vec3f = vec3(
-                attributes.position.x,
-                attributes.position.y,
-                attributes.position.z - waveSinusoid * strength
-            );
+              var transformed: vec3f = vec3(
+                  attributes.position.x,
+                  attributes.position.y,
+                  attributes.position.z - waveSinusoid * strength
+              );
 
-            // the library automatically also append utility functions to the shaders
-            // 'getOutputPosition' is used to compute the actual vertices positions based on camera and model matrices
-            vsOutput.position = getOutputPosition(camera, matrices, transformed);
-            // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
-            vsOutput.uv = getUVCover(attributes.uv, texture0Matrix);
+              // the library automatically also append utility functions to the shaders
+              // 'getOutputPosition' is used to compute the actual vertices positions based on camera and model matrices
+              vsOutput.position = getOutputPosition(camera, matrices, transformed);
+              // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
+              vsOutput.uv = getUVCover(attributes.uv, texture0Matrix);
 
-            return vsOutput;
-          }
-    `
+              return vsOutput;
+            }
+      `
 
         const fragmentShader = /* wgsl */ `
-        struct VSOutput {
-            @builtin(position) position: vec4f,
-            @location(1) uv: vec2f,
-          };
+          struct VSOutput {
+              @builtin(position) position: vec4f,
+              @location(0) uv: vec2f,
+            };
 
-          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-            var texture: vec4f = textureSample(texture0, texture0Sampler, fsInput.uv);
+            @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+              var texture: vec4f = textureSample(texture0, texture0Sampler, fsInput.uv);
 
-            return texture;
-          }
-    `
+              return texture;
+            }
+      `
 
         // set our initial parameters (basic uniforms)
         const params = {

@@ -9,6 +9,8 @@ export class Scene {
 
     this.renderer = renderer
 
+    this.computePassEntries = []
+
     this.renderPassEntries = {
       pingPong: [],
       renderTarget: [],
@@ -33,6 +35,21 @@ export class Scene {
         },
       ],
     }
+  }
+
+  addComputePass(computePass) {
+    this.computePassEntries.push(computePass)
+    this.computePassEntries.sort((a, b) => {
+      if (a.renderOrder !== b.renderOrder) {
+        return a.renderOrder - b.renderOrder
+      } else {
+        return a.index - b.index
+      }
+    })
+  }
+
+  removeComputePass(computePass) {
+    this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid)
   }
 
   addRenderTarget(renderTarget) {
@@ -262,6 +279,18 @@ export class Scene {
   }
 
   render(commandEncoder) {
+    this.computePassEntries.forEach((computePass) => {
+      if (!computePass.canComputePass) return
+
+      const pass = commandEncoder.beginComputePass()
+      computePass.render(pass)
+      pass.end()
+
+      computePass.copyBufferToResult(commandEncoder)
+
+      this.renderer.pipelineManager.resetCurrentPipeline()
+    })
+
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0
 
@@ -287,5 +316,11 @@ export class Scene {
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)
       })
     }
+  }
+
+  onAfterCommandEncoder() {
+    this.computePassEntries.forEach((computePass) => {
+      computePass.setWorkGroupsResult()
+    })
   }
 }

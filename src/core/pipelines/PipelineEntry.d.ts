@@ -1,6 +1,6 @@
-import { MaterialBindGroups, MaterialGeometryAttributes, MaterialRenderingOptions } from '../materials/Material'
+import { MaterialBindGroups, MaterialShaders, MaterialShadersType, FullShadersType } from '../materials/Material'
+import { RenderMaterialGeometryAttribute, RenderMaterialRenderingOptions } from '../materials/RenderMaterial'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
-import { ShadersType, FullShadersType, MeshShadersOptions } from '../meshes/MeshBaseMixin'
 
 interface PipelineEntryShader {
   head?: string
@@ -10,15 +10,12 @@ interface PipelineEntryShader {
 
 type PipelineEntryShaders = Record<FullShadersType, PipelineEntryShader>
 
-interface PipelineEntryBaseParams extends MaterialRenderingOptions {
+interface PipelineEntryOptions {
   label: string
-  shaders: MeshShadersOptions
+  shaders: MaterialShaders
 }
 
-interface PipelineEntryBuffersParams {
-  geometryAttributes: MaterialGeometryAttributes
-  bindGroups: MaterialBindGroups
-}
+export type PipelineEntryBaseParams = Partial<PipelineEntryOptions>
 
 interface PipelineEntryParams extends PipelineEntryBaseParams {
   renderer: GPUCurtainsRenderer
@@ -31,24 +28,21 @@ export class PipelineEntry {
   renderer: GPUCurtainsRenderer
   readonly index: number
   layout: GPUBindGroupLayout | null
-  pipeline: GPUPipelineBase | null
+  pipeline: GPURenderPipeline | GPUComputePipeline | null
   ready: boolean
-  geometryAttributes: MaterialGeometryAttributes
+
   shaders: PipelineEntryShaders
   options: PipelineEntryBaseParams
 
   constructor(parameters: PipelineEntryParams)
 
   setPipelineEntryBindGroups(bindGroups: MaterialBindGroups)
-  setPipelineEntryBuffers(parameters: PipelineEntryBuffersParams)
 
-  patchShaders()
-  createShaderModule({ code: string, type: ShadersType }): GPUShaderModule
+  createShaderModule({ code: string, type: MaterialShadersType }): GPUShaderModule
   createShaders()
 
   createPipelineLayout()
-  createRenderPipeline()
-  flushPipelineEntry(newBindGroups: MaterialBindGroups)
 
+  flushPipelineEntry(newBindGroups: MaterialBindGroups)
   setPipelineEntry()
 }

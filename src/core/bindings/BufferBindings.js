@@ -18,10 +18,6 @@ export class BufferBindings extends Bindings {
 
     super({ label, name, bindIndex, bindingType, visibility })
 
-    this.label = label
-    this.name = toCamelCase(name)
-    this.bindingType = bindingType
-    this.bindIndex = bindIndex
     this.size = 0
 
     this.shouldUpdate = false
@@ -66,11 +62,20 @@ export class BufferBindings extends Bindings {
     Object.keys(this.uniforms).forEach((uniformKey) => {
       const uniform = this.uniforms[uniformKey]
 
-      const bufferLayout = getBufferLayout(uniform.type)
+      const bufferLayout =
+        uniform.type && uniform.type.indexOf('array') === -1
+          ? getBufferLayout(uniform.type)
+          : {
+              numElements: uniform.value.length,
+              align: 16,
+              size: uniform.value.byteLength,
+              type: 'f32',
+              View: Float32Array,
+            }
 
       this.bindingElements.push({
         name: toCamelCase(uniform.name ?? uniformKey),
-        type: uniform.type,
+        type: uniform.type ?? 'array<f32>',
         key: uniformKey,
         bufferLayout,
         startOffset: 0, // will be changed later
@@ -140,6 +145,8 @@ export class BufferBindings extends Bindings {
           bindingElement.array[2] = value.z
         } else if (value.elements) {
           bindingElement.array = value.elements
+        } else if (ArrayBuffer.isView(value)) {
+          bindingElement.array.set(value.slice())
         } else if (Array.isArray(value)) {
           for (let i = 0; i < bindingElement.array.length; i++) {
             bindingElement.array[i] = value[i] ? value[i] : 0

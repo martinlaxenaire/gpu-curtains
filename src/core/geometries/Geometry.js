@@ -55,6 +55,10 @@ export class Geometry {
     this.attributes.push(attribute)
   }
 
+  getAttribute(name) {
+    return this.attributes.find((attribute) => attribute.name === name)
+  }
+
   computeGeometry() {
     const hasPositionAttribute = this.attributes.find((attribute) => attribute.name === 'position')
     if (!hasPositionAttribute) {

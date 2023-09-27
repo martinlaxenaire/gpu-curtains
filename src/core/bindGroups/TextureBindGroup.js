@@ -3,13 +3,16 @@ import { isRenderer } from '../../utils/renderer-utils'
 
 export class TextureBindGroup extends BindGroup {
   constructor({ label, renderer, index = 0, bindings = [], textures = [] }) {
+    const type = 'TextureBindGroup'
+
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
 
-    isRenderer(renderer, 'TextureBindGroup')
+    isRenderer(renderer, type)
 
     super({ label, renderer, index, bindings })
 
+    this.type = type
     this.textures = textures
 
     // keep track of external textures to know when to flush
@@ -23,7 +26,9 @@ export class TextureBindGroup extends BindGroup {
   }
 
   get shouldCreateBindGroup() {
-    return !this.bindGroup && !this.textures.find((texture) => !texture.sampler || !texture.texture)
+    return (
+      !this.bindGroup && this.textures.length && !this.textures.find((texture) => !texture.sampler || !texture.texture)
+    )
   }
 
   createBindingsBuffers() {

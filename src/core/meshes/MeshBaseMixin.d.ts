@@ -1,6 +1,7 @@
 import { CameraRenderer } from '../../types/renderer-utils'
 import { BufferBindings } from '../bindings/BufferBindings'
-import { Material, MaterialBaseParams, MaterialParams } from '../materials/Material'
+import { Material, MaterialParams, MaterialShadersType, FullShadersType } from '../materials/Material'
+import { RenderMaterial, RenderMaterialBaseParams } from '../materials/RenderMaterial'
 import { CurtainsTextureOptions, Texture, TextureDefaultParams } from '../textures/Texture'
 import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
@@ -12,20 +13,6 @@ import { Mat4 } from '../../math/Mat4'
 import { AttributeBufferParams } from '../../types/buffers-utils'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 
-export type ShadersType = 'vertex' | 'fragment'
-export type FullShadersType = 'full' | ShadersType
-
-export interface MeshShaderOption {
-  code: string
-  entryPoint: string
-}
-
-export interface MeshShaders {
-  vertex: MeshShaderOption
-  fragment: MeshShaderOption
-}
-
-export type MeshShadersOptions = Partial<MeshShaders>
 export type MeshUniformValue = number | Vec2 | Vec3 | Mat4 | Array<number>
 
 export interface MeshUniformsBase {
@@ -48,7 +35,7 @@ export interface MeshMaterialParameters extends MaterialParams {
   uniformsBindings: BufferBindings[]
 }
 
-export interface MeshBaseParams extends MaterialBaseParams {
+export interface MeshBaseParams extends RenderMaterialBaseParams {
   bindings?: MeshBindings[]
   visible?: boolean
   renderOrder?: number
@@ -85,10 +72,10 @@ export class MeshBase {
     }
   }
 
-  material: Material
+  material: RenderMaterial
   geometry: MeshBaseParams['geometry']
 
-  uniforms: Material['uniforms']
+  uniforms: RenderMaterial['uniforms']
 
   renderTextures: RenderTexture[]
   textures: Texture[]

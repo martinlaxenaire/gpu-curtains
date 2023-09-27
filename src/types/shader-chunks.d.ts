@@ -1,4 +1,4 @@
-import { ShadersType } from '../core/meshes/MeshBaseMixin'
+import { MaterialShadersType } from '../core/materials/Material'
 
-export type ShaderChunks = Record<ShadersType, Record<string, string>>
-export type ProjectedShaderChunks = Record<ShadersType, Record<string, string>>
+export type ShaderChunks = Record<MaterialShadersType, Record<string, string>>
+export type ProjectedShaderChunks = Record<MaterialShadersType, Record<string, string>>

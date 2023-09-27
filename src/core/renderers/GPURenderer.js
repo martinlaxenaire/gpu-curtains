@@ -232,6 +232,10 @@ export class GPURenderer {
     return this.device.createRenderPipeline(pipelineDescriptor)
   }
 
+  createComputePipeline(pipelineDescriptor) {
+    return this.device.createComputePipeline(pipelineDescriptor)
+  }
+
   /** TEXTURES **/
 
   addTexture(texture) {
@@ -313,7 +317,8 @@ export class GPURenderer {
   /** OBJECTS **/
 
   setRendererObjects() {
-    // keep track of planes, textures, etc.
+    // keep track of meshes, textures, etc.
+    this.computePasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []
     this.renderTargets = []
@@ -336,7 +341,7 @@ export class GPURenderer {
     return renderTexture
   }
 
-  onBeforeRenderPass() {
+  onBeforeCommandEncoder() {
     /* will be overridden */
   }
 
@@ -344,8 +349,9 @@ export class GPURenderer {
   //   this.scene.render(pass)
   // }
 
-  onAfterRenderPass() {
+  onAfterCommandEncoder() {
     /* will be overridden */
+    this.scene.onAfterCommandEncoder()
   }
 
   /**
@@ -357,7 +363,7 @@ export class GPURenderer {
 
     // now render!
 
-    this.onBeforeRenderPass()
+    this.onBeforeCommandEncoder()
 
     const commandEncoder = this.device.createCommandEncoder({ label: 'Renderer command encoder' })
 
@@ -380,11 +386,7 @@ export class GPURenderer {
     // clear texture queue
     this.texturesQueue = []
 
-    // end of render, reset current pipeline ID
-    // TODO in scene class instead?
-    this.pipelineManager.resetCurrentPipeline()
-
-    this.onAfterRenderPass()
+    this.onAfterCommandEncoder()
   }
 
   destroy() {

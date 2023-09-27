@@ -1,0 +1,12 @@
+@media screen {
+  #page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .plane {
+    width: 80%;
+    height: 80vh;
+  }
+}

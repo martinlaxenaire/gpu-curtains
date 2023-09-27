@@ -76,7 +76,10 @@ export class BindGroup {
     const buffer = this.renderer.createBuffer({
       label: this.options.label + ': Uniforms buffer from:' + binding.label,
       size: binding.value.byteLength,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      usage:
+        binding.bindingType === 'storage'
+          ? GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+          : GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     })
 
     this.bindingsBuffers.push({
@@ -86,7 +89,10 @@ export class BindGroup {
 
     this.entries.bindGroupLayout.push({
       binding: binding.bindIndex,
-      buffer,
+      buffer: {
+        type: binding.bindingType === 'storage' ? 'read-only-storage' : binding.bindingType,
+      },
+      //buffer,
       visibility: binding.visibility,
     })
 
@@ -125,11 +131,9 @@ export class BindGroup {
 
   updateBindings() {
     this.bindingsBuffers.forEach((bindingBuffer) => {
-      if (bindingBuffer.uniformBinding.shouldUpdate) {
+      if (bindingBuffer.uniformBinding && bindingBuffer.uniformBinding.shouldUpdate) {
         // bufferOffset is always equals to 0 in our case
-
-        if (bindingBuffer.uniformBinding)
-          this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.uniformBinding.value)
+        this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.uniformBinding.value)
       }
 
       bindingBuffer.uniformBinding.shouldUpdate = false

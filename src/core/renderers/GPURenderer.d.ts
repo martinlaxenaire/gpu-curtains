@@ -9,6 +9,7 @@ import { Scene } from '../scenes/Scene'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 import { RenderTarget } from '../renderPasses/RenderTarget'
+import { ComputePass } from '../computePasses/ComputePass'
 
 interface GPURendererParams {
   container: string | HTMLElement
@@ -43,6 +44,7 @@ export class GPURenderer {
   pipelineManager: PipelineManager
   scene: Scene
 
+  computePasses: ComputePass[]
   pingPongPlanes: PingPongPlane[]
   shaderPasses: ShaderPass[]
   renderTargets: RenderTarget[]
@@ -81,6 +83,7 @@ export class GPURenderer {
   createShaderModule(shaderModuleDescriptor: GPUShaderModuleDescriptor): GPUShaderModule
   createPipelineLayout(pipelineLayoutDescriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout
   createRenderPipeline(pipelineDescriptor: GPURenderPipelineDescriptor): GPURenderPipeline
+  createComputePipeline(pipelineDescriptor: GPUComputePipelineDescriptor): GPUComputePipeline
 
   addTexture(texture: Texture)
   setTexture(texture: Texture)
@@ -92,9 +95,9 @@ export class GPURenderer {
   setRendererObjects()
 
   setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture): GPUTexture
-  onBeforeRenderPass()
+  onBeforeCommandEncoder()
   //onBeginRenderPass(pass: GPURenderPassEncoder)
-  onAfterRenderPass()
+  onAfterCommandEncoder()
   render()
 
   destroy()
