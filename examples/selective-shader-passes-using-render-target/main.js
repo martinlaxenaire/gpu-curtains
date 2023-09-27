@@ -116,11 +116,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    bindings: [
+    uniforms: [
       {
         name: 'scrollEffect',
         label: 'ScrollEffect',
-        uniforms: {
+        bindings: {
           strength: {
             type: 'f32',
             value: 0,
@@ -192,11 +192,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    bindings: [
+    uniforms: [
       {
         name: 'scrollEffect',
         label: 'ScrollEffect',
-        uniforms: {
+        bindings: {
           strength: {
             type: 'f32',
             value: 0,
@@ -257,11 +257,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    bindings: [
+    uniforms: [
       {
         name: 'scrollEffect',
         label: 'ScrollEffect',
-        uniforms: {
+        bindings: {
           strength: {
             type: 'f32',
             value: 0,

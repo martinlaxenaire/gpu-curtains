@@ -72,11 +72,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   // set our initial parameters (basic uniforms)
   const params = {
     widthSegments: 20,
-    bindings: [
+    uniforms: [
       {
         name: 'uniforms', // could be something else, like "frames"...
         label: 'Uniforms',
-        uniforms: {
+        bindings: {
           time: {
             type: 'f32', // this means our uniform is a float
             value: 0,

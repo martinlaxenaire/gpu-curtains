@@ -83,7 +83,7 @@ export class BindGroup {
     })
 
     this.bindingsBuffers.push({
-      uniformBinding: binding,
+      inputBinding: binding,
       buffer,
     })
 
@@ -105,11 +105,11 @@ export class BindGroup {
   }
 
   createBindingsBuffers() {
-    this.bindings.forEach((uniformBinding) => {
-      if (!uniformBinding.visibility) uniformBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
+    this.bindings.forEach((inputBinding) => {
+      if (!inputBinding.visibility) inputBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
 
-      if (!!uniformBinding.value) {
-        this.createBindingBuffer(uniformBinding)
+      if (!!inputBinding.value) {
+        this.createBindingBuffer(inputBinding)
       }
     })
   }
@@ -131,12 +131,12 @@ export class BindGroup {
 
   updateBindings() {
     this.bindingsBuffers.forEach((bindingBuffer) => {
-      if (bindingBuffer.uniformBinding && bindingBuffer.uniformBinding.shouldUpdate) {
+      if (bindingBuffer.inputBinding && bindingBuffer.inputBinding.shouldUpdate) {
         // bufferOffset is always equals to 0 in our case
-        this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.uniformBinding.value)
+        this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.inputBinding.value)
       }
 
-      bindingBuffer.uniformBinding.shouldUpdate = false
+      bindingBuffer.inputBinding.shouldUpdate = false
     })
   }
 

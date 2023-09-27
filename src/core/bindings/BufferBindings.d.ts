@@ -1,8 +1,8 @@
 import { Bindings, BindingsParams } from './Bindings'
-import { MeshUniformValue, MeshUniformsBase, MeshUniforms } from '../meshes/MeshBaseMixin'
+import { MeshUniformValue, MeshInputsBase, MeshInputs } from '../meshes/MeshBaseMixin'
 import { BufferBindingsElement } from '../../types/buffers-utils'
 
-interface BufferBindingsUniform extends MeshUniformsBase {
+interface BufferBindingsUniform extends MeshInputsBase {
   _value: MeshUniformValue
   get value(): MeshUniformValue
   set value(value: MeshUniformValue)
@@ -11,12 +11,12 @@ interface BufferBindingsUniform extends MeshUniformsBase {
 
 interface BufferBindingsParams extends BindingsParams {
   useStruct?: boolean
-  uniforms?: Record<string, MeshUniforms>
+  bindings?: Record<string, MeshInputs>
 }
 
 export class BufferBindings extends Bindings {
   useStruct: boolean
-  uniforms: Record<string, BufferBindingsUniform>
+  bindings: Record<string, BufferBindingsUniform>
 
   alignmentRows: number
   size: number
@@ -28,8 +28,8 @@ export class BufferBindings extends Bindings {
   wgslStructFragment: string
   wgslGroupFragment: string
 
-  constructor({ label, name, bindingType, bindIndex, useStruct, uniforms, visibility }: BufferBindingsParams)
+  constructor({ label, name, bindingType, bindIndex, useStruct, bindings, visibility }: BufferBindingsParams)
 
   setBufferGroup()
-  shouldUpdateUniform(uniformName?: string)
+  shouldUpdateBinding(bindingName?: string)
 }

@@ -17,7 +17,7 @@ export class RenderMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    let { shaders, label, uniformsBindings, geometry, ...renderingOptions } = parameters
+    let { shaders, label, uniforms, storages, geometry, ...renderingOptions } = parameters
 
     // shaders = {
     //   ...{
@@ -42,7 +42,8 @@ export class RenderMaterial extends Material {
     this.options = {
       shaders,
       label,
-      uniformsBindings,
+      uniforms,
+      storages,
       rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
     }
 
@@ -66,7 +67,7 @@ export class RenderMaterial extends Material {
     }
 
     // camera + model bind groups
-    const modelBindGroupLength = this.uniformsBindGroups.length
+    const modelBindGroupLength = this.inputsBindGroups.length
     const texturesBindGroupLength = 1
     const bindGroupsReady = this.bindGroups.length === modelBindGroupLength + texturesBindGroupLength
 
@@ -173,7 +174,7 @@ export class RenderMaterial extends Material {
     }
 
     // then uniforms
-    this.uniformsBindGroups.forEach((bindGroup) => {
+    this.inputsBindGroups.forEach((bindGroup) => {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
         bindGroup.createBindGroup()

@@ -59,7 +59,8 @@ interface RenderMaterialBaseParams extends Partial<RenderMaterialBaseRenderingOp
 }
 
 interface RenderMaterialParams extends RenderMaterialBaseParams {
-  uniformBindings: Array<BufferBindings>
+  uniforms?: BufferBindings[]
+  storages?: BufferBindings[]
 }
 
 export class RenderMaterial extends Material {

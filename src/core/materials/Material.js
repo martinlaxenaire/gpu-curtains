@@ -13,7 +13,7 @@ export class Material {
 
     this.renderer = renderer
 
-    let { shaders, label, uniformsBindings } = parameters
+    let { shaders, label, uniforms, storages } = parameters
 
     // shaders = {
     //   ...{
@@ -35,12 +35,14 @@ export class Material {
     //   shaders.fragment.entryPoint = 'main'
     // }
 
-    if (!uniformsBindings) uniformsBindings = []
+    if (!uniforms) uniforms = []
+    if (!storages) storages = []
 
     this.options = {
       shaders,
       label,
-      uniformsBindings,
+      uniforms,
+      storages,
       //rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
     }
 
@@ -52,13 +54,13 @@ export class Material {
 
     this.bindGroups = []
 
-    this.setUniforms()
+    this.setBindings()
     this.setTextures()
   }
 
   setMaterial() {
     // camera + model bind groups
-    const modelBindGroupLength = this.uniformsBindGroups.length
+    const modelBindGroupLength = this.inputsBindGroups.length
     const texturesBindGroupLength = 1
     const bindGroupsReady = this.bindGroups.length === modelBindGroupLength + texturesBindGroupLength
 
@@ -130,7 +132,7 @@ export class Material {
     }
 
     // then uniforms
-    this.uniformsBindGroups.forEach((bindGroup) => {
+    this.inputsBindGroups.forEach((bindGroup) => {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length)
         bindGroup.createBindGroup()
@@ -143,7 +145,7 @@ export class Material {
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
     this.texturesBindGroup = null
-    this.uniformsBindGroups = []
+    this.inputsBindGroups = []
     this.bindGroups = []
   }
 
@@ -165,41 +167,44 @@ export class Material {
 
   /** UNIFORMS **/
 
-  setUniforms() {
+  setBindings() {
     this.uniforms = {}
-    this.uniformsBindGroups = []
+    this.storages = {}
+    this.inputsBindings = [...this.options.uniforms, ...this.options.storages]
+    this.inputsBindGroups = []
 
-    if (this.options.uniformsBindings.length) {
-      const uniformsBindGroup = new BindGroup({
-        label: this.options.label + ': Uniform bind group',
+    if (this.options.uniforms.length || this.options.storages.length) {
+      const inputsBindGroup = new BindGroup({
+        label: this.options.label + ': Bindings bind group',
         renderer: this.renderer,
       })
 
-      this.options.uniformsBindings.forEach((uniformBinding) => {
-        this.uniforms = { ...this.uniforms, ...uniformBinding.uniforms }
+      this.inputsBindings.forEach((inputBinding) => {
+        if (inputBinding.bindingType === 'uniform') this.uniforms = { ...this.uniforms, ...inputBinding.bindings }
+        if (inputBinding.bindingType === 'storage') this.storages = { ...this.storages, ...inputBinding.bindings }
 
-        uniformBinding.isActive =
-          (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(uniformBinding.name + '.') !== -1) ||
+        inputBinding.isActive =
+          (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(inputBinding.name + '.') !== -1) ||
           (this.options.shaders.fragment &&
-            this.options.shaders.fragment.code.indexOf(uniformBinding.name + '.') !== -1) ||
-          (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(uniformBinding.name + '.') !== -1)
+            this.options.shaders.fragment.code.indexOf(inputBinding.name + '.') !== -1) ||
+          (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(inputBinding.name + '.') !== -1)
 
-        uniformsBindGroup.addBinding(uniformBinding)
+        inputsBindGroup.addBinding(inputBinding)
       })
 
-      this.uniformsBindGroups.push(uniformsBindGroup)
+      this.inputsBindGroups.push(inputsBindGroup)
     }
   }
 
-  shouldUpdateUniformsBindings(bufferBindingName, uniformName) {
+  shouldUpdateInputsBindings(bufferBindingName, uniformName) {
     if (!bufferBindingName) return
 
-    const bufferBinding = this.options.uniformsBindings.find((bB) => bB.name === bufferBindingName)
+    const bufferBinding = this.inputsBindings.find((bB) => bB.name === bufferBindingName)
     if (bufferBinding) {
       if (!uniformName) {
-        Object.keys(bufferBinding.uniforms).forEach((uniformKey) => bufferBinding.shouldUpdateUniform(uniformKey))
+        Object.keys(bufferBinding.bindings).forEach((uniformKey) => bufferBinding.shouldUpdateBinding(uniformKey))
       } else {
-        bufferBinding.shouldUpdateUniform(uniformName)
+        bufferBinding.shouldUpdateBinding(uniformName)
       }
     }
   }
@@ -269,8 +274,8 @@ export class Material {
       }
     })
 
-    this.options.uniformsBindings.forEach((uniformBinding) => {
-      uniformBinding.onBeforeRender()
+    this.inputsBindings.forEach((inputBinding) => {
+      inputBinding.onBeforeRender()
     })
 
     // update uniforms buffers

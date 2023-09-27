@@ -15,24 +15,27 @@ import { RenderTarget } from '../renderPasses/RenderTarget'
 
 export type MeshUniformValue = number | Vec2 | Vec3 | Mat4 | Array<number>
 
-export interface MeshUniformsBase {
+export interface MeshInputsBase {
   type: AttributeBufferParams['type']
   name?: string
   onBeforeUpdate?: () => void
 }
 
-export interface MeshUniforms extends MeshUniformsBase {
+export interface MeshInputs extends MeshInputsBase {
   value: MeshUniformValue
 }
 
 export interface MeshBindings {
   name?: string
   label?: string
-  uniforms: Record<string, MeshUniforms>
+  bindings: Record<string, MeshInputs>
 }
 
+export type MeshBindingsTypes = 'uniforms' | 'storages'
+type MeshBindingsParams = Record<MeshBindingsTypes, MeshBindings[]>
+
 export interface MeshMaterialParameters extends MaterialParams {
-  uniformsBindings: BufferBindings[]
+  inputsBindings: BufferBindings[]
 }
 
 export interface MeshBaseParams extends RenderMaterialBaseParams {
@@ -75,8 +78,6 @@ export class MeshBase {
   material: RenderMaterial
   geometry: MeshBaseParams['geometry']
 
-  uniforms: RenderMaterial['uniforms']
-
   renderTextures: RenderTexture[]
   textures: Texture[]
 
@@ -118,7 +119,9 @@ export class MeshBase {
 
   setRenderTarget(renderTarget: RenderTarget | null)
 
-  createUniformsBindings(bindings: MeshBindings): BufferBindings[]
+  createBindings({ uniforms, storages }: MeshBindingsParams): Record<MeshBindingsTypes, BufferBindings[]>
+  get uniforms(): RenderMaterial['uniforms']
+  get storages(): RenderMaterial['storages']
 
   resize(boundingRect?: DOMElementBoundingRect)
 

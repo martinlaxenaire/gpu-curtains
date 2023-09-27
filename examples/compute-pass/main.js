@@ -28,11 +28,11 @@ window.addEventListener('DOMContentLoaded', async () => {
           `,
       },
     },
-    bindings: [
+    uniforms: [
       {
         name: 'uniforms',
         label: 'Uniforms',
-        uniforms: {
+        bindings: {
           time: {
             type: 'f32',
             value: 0,
@@ -130,23 +130,24 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    bindings: [
+    uniforms: [
       {
         name: 'uniforms', // could be something else, like "frames"...
         label: 'Uniforms',
-        uniforms: {
+        bindings: {
           time: {
             type: 'f32', // this means our uniform is a float
             value: 0,
           },
         },
       },
+    ],
+    storages: [
       {
         name: 'vertices', // could be something else, like "frames"...
         label: 'Vertices',
-        bindingType: 'storage',
         visibility: 'vertex',
-        uniforms: {
+        bindings: {
           displacement: {
             type: 'array<vec3f>',
             value: planeGeometry.getAttribute('position').array.slice(),
@@ -163,10 +164,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     plane.uniforms.time.value++
 
     const result = computePass.getWorkGroupResult('works')
-    plane.uniforms.displacement.value.set(result)
-    plane.uniforms.displacement.shouldUpdate = true
+    plane.storages.displacement.value.set(result)
+    plane.storages.displacement.shouldUpdate = true
   })
 
   // TEST
-  console.log(plane, gpuCurtains)
+  console.log(plane.material, gpuCurtains)
 })

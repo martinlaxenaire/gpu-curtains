@@ -63,13 +63,13 @@ const MeshTransformedMixin = (superclass) =>
       const matrixUniformBinding = new BufferBindings({
         label: 'Matrices',
         name: 'matrices',
-        uniforms: {
+        bindings: {
           model: {
             name: 'model',
             type: 'mat4x4f',
             value: this.modelMatrix,
             onBeforeUpdate: () => {
-              matrixUniformBinding.uniforms.model.value = this.modelMatrix
+              matrixUniformBinding.bindings.model.value = this.modelMatrix
             },
           },
           modelView: {
@@ -78,7 +78,7 @@ const MeshTransformedMixin = (superclass) =>
             type: 'mat4x4f',
             value: this.modelViewMatrix,
             onBeforeUpdate: () => {
-              matrixUniformBinding.uniforms.modelView.value = this.modelViewMatrix
+              matrixUniformBinding.bindings.modelView.value = this.modelViewMatrix
             },
           },
           modelViewProjection: {
@@ -86,13 +86,13 @@ const MeshTransformedMixin = (superclass) =>
             type: 'mat4x4f',
             value: this.modelViewProjectionMatrix,
             onBeforeUpdate: () => {
-              matrixUniformBinding.uniforms.modelViewProjection.value = this.modelViewProjectionMatrix
+              matrixUniformBinding.bindings.modelViewProjection.value = this.modelViewProjectionMatrix
             },
           },
         },
       })
 
-      meshMaterialOptions.uniformsBindings = [matrixUniformBinding, ...meshMaterialOptions.uniformsBindings]
+      meshMaterialOptions.uniforms = [matrixUniformBinding, ...meshMaterialOptions.uniforms]
 
       super.setMeshMaterial(meshMaterialOptions)
 
@@ -134,7 +134,7 @@ const MeshTransformedMixin = (superclass) =>
       super.updateModelMatrix()
 
       if (this.material) {
-        this.material.shouldUpdateUniformsBindings('matrices')
+        this.material.shouldUpdateInputsBindings('matrices')
       }
 
       if (this.domFrustum) this.domFrustum.shouldUpdate = true

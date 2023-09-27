@@ -137,11 +137,11 @@
               entryPoint: 'main',
             },
           },
-          bindings: [
+          uniforms: [
             {
               name: 'uniforms', // could be something else, like "frames"...
               label: 'Uniforms',
-              uniforms: {
+              bindings: {
                 time: {
                   type: 'f32', // this means our uniform is a float
                   value: 0,

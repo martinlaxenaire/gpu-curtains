@@ -2,7 +2,7 @@ import { Renderer } from '../../types/renderer-utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
 import { WorkBindings } from '../bindings/WorkBindings'
 import { MaterialShaders } from '../materials/Material'
-import { MeshBindings } from '../meshes/MeshBaseMixin'
+import { MeshBindings, MeshBindingsTypes } from '../meshes/MeshBaseMixin'
 import { BufferBindings } from '../bindings/BufferBindings'
 
 interface WorkGroupParams {
@@ -16,10 +16,15 @@ interface ComputePassOptions {
   label: string
   renderOrder: number
   shaders: MaterialShaders
+  uniforms: MeshBindings[]
+  storages: MeshBindings[]
   workGroups: WorkGroupParams[]
 }
 
 type ComputePassParams = Partial<ComputePassOptions>
+
+type ComputeBindingsTypes = MeshBindingsTypes | 'workGroups'
+type ComputeBindingsParams = Record<ComputeBindingsTypes, MeshBindings[] | WorkGroupParams[]>
 
 export class ComputePass {
   type: string
@@ -41,8 +46,11 @@ export class ComputePass {
   addToScene()
   removeFromScene()
 
-  createUniformsBindings(MeshBindings): BufferBindings[]
-  createWorksBindings(bindings): WorkBindings[]
+  createBindings({
+    uniforms,
+    storages,
+    workGroups,
+  }: ComputeBindingsParams): Record<MeshBindingsTypes, BufferBindings[] | WorkBindings[]>
 
   onBeforeRender: (callback: () => void) => ComputePass
   onRender: (callback: () => void) => ComputePass

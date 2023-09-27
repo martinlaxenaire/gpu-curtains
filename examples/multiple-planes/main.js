@@ -104,11 +104,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    bindings: [
+    uniforms: [
       {
         name: 'deformation', // could be something else, like "frames"...
         label: 'Deformation',
-        uniforms: {
+        bindings: {
           strength: {
             type: 'f32', // this means our uniform is a float
             value: 0,

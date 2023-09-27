@@ -65,11 +65,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'fs', // custom entry point
       },
     },
-    bindings: [
+    uniforms: [
       {
         name: 'flowmap',
         label: 'Flowmap',
-        uniforms: {
+        bindings: {
           mousePosition: {
             type: 'vec2f',
             value: mouse,

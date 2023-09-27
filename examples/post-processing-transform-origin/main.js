@@ -160,7 +160,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       var uv: vec2f = fsInput.uv;
       
       // calculate an effect that spreads from the left-center point
-      var rgbEffect: f32 = uniforms0.rotationEffect * distance(uv, vec2(0.0, 0.5));
+      // notice how we didn't name our uniform struct, so its default name is 'uniform0'
+      var rgbEffect: f32 = uniform0.rotationEffect * distance(uv, vec2(0.0, 0.5));
     
       var red: vec4f = textureSample(renderTexture, renderTextureSampler, uv + rgbEffect * 0.005);
       var green: vec4f = textureSample(renderTexture, renderTextureSampler, uv);
@@ -179,9 +180,9 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    bindings: [
+    uniforms: [
       {
-        uniforms: {
+        bindings: {
           rotationEffect: {
             type: 'f32',
             value: 0,

@@ -101,11 +101,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         useExternalTextures: false,
       },
     },
-    bindings: [
+    uniforms: [
       {
         name: 'transition',
         label: 'Transition',
-        uniforms: {
+        bindings: {
           timer: {
             type: 'f32', // this means our uniform is a float
             value: 0,
@@ -199,7 +199,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       })
     })
     .onRender(() => {
-      console.log('render')
       // increase or decrease our timer based on the active texture value
       if (slideshowState.isChanging) {
         const fpsDuration = slideshowState.duration * 60 // duration * 60fps
@@ -217,8 +216,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       plane.uniforms.timer.value = slideshowState.transitionTimer
     })
 
-  setTimeout(() => {
-    gpuCurtains.destroy()
-    console.log(plane, gpuCurtains)
-  }, 5000)
+  // setTimeout(() => {
+  //   gpuCurtains.destroy()
+  //   console.log(plane, gpuCurtains)
+  // }, 5000)
 })

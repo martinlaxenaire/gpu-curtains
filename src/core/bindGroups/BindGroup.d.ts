@@ -7,7 +7,7 @@ import { WorkBindings } from '../bindings/WorkBindings'
 type BindGroupBindingElement = BufferBindings | SamplerBindings | TextureBindings | WorkBindings
 
 interface BindGroupBindingBuffer {
-  uniformBinding: BindGroupBindingElement
+  inputBinding: BindGroupBindingElement
   buffer: GPUBuffer
   resultBuffer?: GPUBuffer // used for WorkBindGroup
 }

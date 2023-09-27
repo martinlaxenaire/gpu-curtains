@@ -20,33 +20,35 @@ export class ComputePass {
     this.uuid = generateUUID()
     Object.defineProperty(this, 'index', { value: computePassIndex++ })
 
-    const { label, shaders, renderOrder, bindings, workGroups } = parameters
+    const { label, shaders, renderOrder, uniforms, storages, workGroups } = parameters
 
     this.options = {
       label,
       shaders,
       renderOrder,
-      bindings,
+      uniforms,
+      storages,
       workGroups,
     }
 
     this.renderOrder = renderOrder ?? 0
 
-    const uniformsBindings = this.createUniformsBindings(bindings ?? [])
-    const workBindings = this.createWorksBindings(workGroups ?? [])
+    const inputBindings = this.createBindings({
+      uniforms: uniforms ?? [],
+      storages: storages ?? [],
+      workGroups: workGroups ?? [],
+    })
 
     this.setComputeMaterial({
       label: this.options.label,
       shaders: this.options.shaders,
-      uniformsBindings,
-      workBindings,
+      ...inputBindings,
     })
     this.addToScene()
   }
 
   setComputeMaterial(computeParameters) {
     this.material = new ComputeMaterial(this.renderer, computeParameters)
-    this.uniforms = this.material.uniforms
   }
 
   addToScene() {
@@ -59,35 +61,59 @@ export class ComputePass {
     this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid)
   }
 
-  createUniformsBindings(bindings) {
-    return [
-      ...bindings.map((binding, index) => {
+  createBindings({ uniforms = [], storages = [], workGroups = [] }) {
+    const uniformsBindings = [
+      ...uniforms.map((binding, index) => {
         return new BufferBindings({
-          label: binding.label || 'Uniforms' + index,
-          name: binding.name || 'uniforms' + index,
+          label: binding.label || 'Uniform' + index,
+          name: binding.name || 'uniform' + index,
           bindIndex: index,
-          bindingType: binding.bindingType ?? 'uniform',
-          uniforms: binding.uniforms,
+          bindingType: 'uniform',
+          bindings: binding.bindings,
           visibility: 'compute',
         })
       }),
     ]
-  }
 
-  createWorksBindings(bindings) {
-    return [
-      ...bindings.map((binding, index) => {
+    const storagesBindings = [
+      ...storages.map((binding, index) => {
+        return new BufferBindings({
+          label: binding.label || 'Storage' + index,
+          name: binding.name || 'storage' + index,
+          bindIndex: index,
+          bindingType: 'storage',
+          bindings: binding.bindings,
+          visibility: 'compute',
+        })
+      }),
+    ]
+
+    const worksBindings = [
+      ...workGroups.map((binding, index) => {
         return new WorkBindings({
           label: binding.label || 'Works' + index,
           name: binding.name || 'works' + index,
           bindIndex: index,
-          //uniforms: binding.uniforms,
           type: binding.type,
           value: binding.value,
           visibility: binding.visibility,
         })
       }),
     ]
+
+    return {
+      uniforms: uniformsBindings,
+      storages: storagesBindings,
+      workGroups: worksBindings,
+    }
+  }
+
+  get uniforms() {
+    return this.material?.uniforms
+  }
+
+  get storages() {
+    return this.material?.storages
   }
 
   /** EVENTS **/

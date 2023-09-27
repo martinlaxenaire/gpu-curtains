@@ -16,7 +16,8 @@ export class ComputeMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    let { shaders, workBindings } = parameters
+    let { shaders, workGroups } = parameters
+    console.log(parameters)
 
     if (!shaders || !shaders.compute) {
       shaders = {
@@ -34,7 +35,7 @@ export class ComputeMaterial extends Material {
     }
 
     this.options.shaders = shaders
-    this.options.workBindings = workBindings
+    this.options.workBindings = workGroups
 
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       label: this.options.label + ' compute pipeline',
@@ -157,7 +158,7 @@ export class ComputeMaterial extends Material {
   setBufferResult(bindingBuffer) {
     if (bindingBuffer.resultBuffer.mapState === 'unmapped') {
       bindingBuffer.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-        bindingBuffer.uniformBinding.result = new Float32Array(bindingBuffer.resultBuffer.getMappedRange().slice())
+        bindingBuffer.inputBinding.result = new Float32Array(bindingBuffer.resultBuffer.getMappedRange().slice())
         bindingBuffer.resultBuffer.unmap()
       })
     }
@@ -166,11 +167,11 @@ export class ComputeMaterial extends Material {
   getWorkGroupResult(name = '') {
     let bindingBuffer
     this.workBindGroups.forEach((workBindGroup) => {
-      bindingBuffer = workBindGroup.bindingsBuffers.find((bindingBuffer) => bindingBuffer.uniformBinding.name === name)
+      bindingBuffer = workBindGroup.bindingsBuffers.find((bindingBuffer) => bindingBuffer.inputBinding.name === name)
     })
 
     if (bindingBuffer) {
-      return bindingBuffer.uniformBinding.result
+      return bindingBuffer.inputBinding.result
     } else {
       return null
     }

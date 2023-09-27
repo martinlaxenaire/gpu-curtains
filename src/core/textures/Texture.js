@@ -81,7 +81,7 @@ export class Texture extends Object3D {
       label: this.options.label + ': model matrix',
       name: this.options.name + 'Matrix',
       useStruct: false,
-      uniforms: {
+      bindings: {
         matrix: {
           name: this.options.name + 'Matrix',
           type: 'mat4x4f',
@@ -246,7 +246,7 @@ export class Texture extends Object3D {
 
   resize() {
     if (!this.textureMatrix) return
-    this.textureMatrix.shouldUpdateUniform(this.options.name + 'Matrix')
+    this.textureMatrix.shouldUpdateBinding(this.options.name + 'Matrix')
   }
 
   getNumMipLevels(...sizes) {

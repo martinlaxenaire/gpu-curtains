@@ -34,17 +34,17 @@ export class TextureBindGroup extends BindGroup {
   createBindingsBuffers() {
     let textureIndex = 0
 
-    this.bindings.forEach((uniformBinding) => {
-      if (!uniformBinding.visibility) uniformBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
+    this.bindings.forEach((inputBinding) => {
+      if (!inputBinding.visibility) inputBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
 
-      if (!!uniformBinding.value) {
-        this.createBindingBuffer(uniformBinding)
-      } else if (uniformBinding.bindingType) {
-        uniformBinding.bindIndex = this.entries.bindGroupLayout.length
+      if (!!inputBinding.value) {
+        this.createBindingBuffer(inputBinding)
+      } else if (inputBinding.bindingType) {
+        inputBinding.bindIndex = this.entries.bindGroupLayout.length
         const texture = this.textures[Math.floor(textureIndex * 0.5)]
 
         const bindingTypeValue = (() => {
-          switch (uniformBinding.bindingType) {
+          switch (inputBinding.bindingType) {
             case 'texture':
               return texture.texture.createView()
             case 'externalTexture':
@@ -52,21 +52,21 @@ export class TextureBindGroup extends BindGroup {
             case 'sampler':
               return texture.sampler
             default:
-              console.warn('No bind group layout type provided by', uniformBinding)
+              console.warn('No bind group layout type provided by', inputBinding)
               break
           }
         })()
 
         this.entries.bindGroupLayout.push({
-          binding: uniformBinding.bindIndex,
-          [uniformBinding.bindingType]: bindingTypeValue,
-          visibility: uniformBinding.visibility,
+          binding: inputBinding.bindIndex,
+          [inputBinding.bindingType]: bindingTypeValue,
+          visibility: inputBinding.visibility,
         })
 
-        if (uniformBinding.bindingType === 'externalTexture') console.log(uniformBinding.bindingType, this.entries)
+        if (inputBinding.bindingType === 'externalTexture') console.log(inputBinding.bindingType, this.entries)
 
         this.entries.bindGroup.push({
-          binding: uniformBinding.bindIndex,
+          binding: inputBinding.bindIndex,
           resource: bindingTypeValue,
         })
 

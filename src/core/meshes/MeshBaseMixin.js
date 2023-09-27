@@ -71,7 +71,8 @@ const MeshBaseMixin = (superclass) =>
         label,
         shaders,
         geometry,
-        bindings,
+        uniforms,
+        storages,
         visible,
         renderOrder,
         renderTarget,
@@ -95,8 +96,11 @@ const MeshBaseMixin = (superclass) =>
       this.renderOrder = renderOrder
       this.ready = false
 
-      const uniformsBindings = this.createUniformsBindings(bindings ?? [])
-      this.setMeshMaterial({ ...meshParameters, uniformsBindings })
+      const inputBindings = this.createBindings({
+        uniforms: uniforms ?? [],
+        storages: storages ?? [],
+      })
+      this.setMeshMaterial({ ...meshParameters, ...inputBindings })
 
       this.addToScene()
     }
@@ -113,7 +117,7 @@ const MeshBaseMixin = (superclass) =>
     }
 
     setMeshMaterial(meshParameters) {
-      const { uniformsBindings, ...materialOptions } = meshParameters
+      const { uniforms, storages, ...materialOptions } = meshParameters
       const { transparent, useProjection, depthWriteEnabled, depthCompare, cullMode, verticesOrder } = materialOptions
 
       this.transparent = materialOptions.transparent
@@ -127,11 +131,10 @@ const MeshBaseMixin = (superclass) =>
         depthCompare,
         cullMode,
         verticesOrder,
-        uniformsBindings,
+        uniforms,
+        storages,
         geometry: this.geometry,
       })
-
-      this.uniforms = this.material.uniforms
     }
 
     setMaterial(materialParameters) {
@@ -200,21 +203,47 @@ const MeshBaseMixin = (superclass) =>
       this.addToScene()
     }
 
-    /*** UNIFORMS ***/
+    /*** BINDINGS ***/
 
-    createUniformsBindings(bindings) {
-      return [
-        ...bindings.map((binding, index) => {
+    createBindings({ uniforms = [], storages = [] }) {
+      const uniformsBindings = [
+        ...uniforms.map((binding, index) => {
           return new BufferBindings({
-            label: binding.label || 'Uniforms' + index,
-            name: binding.name || 'uniforms' + index,
+            label: binding.label || 'Uniform' + index,
+            name: binding.name || 'uniform' + index,
             bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms
-            bindingType: binding.bindingType ?? 'uniform',
-            uniforms: binding.uniforms,
+            bindingType: 'uniform',
+            bindings: binding.bindings,
             visibility: binding.visibility,
           })
         }),
       ]
+
+      const storagesBindings = [
+        ...storages.map((binding, index) => {
+          return new BufferBindings({
+            label: binding.label || 'Storage' + index,
+            name: binding.name || 'storage' + index,
+            bindIndex: index, // bindIndex 0 is already taken by matrix uniforms
+            bindingType: 'storage',
+            bindings: binding.bindings,
+            visibility: binding.visibility,
+          })
+        }),
+      ]
+
+      return {
+        uniforms: uniformsBindings,
+        storages: storagesBindings,
+      }
+    }
+
+    get uniforms() {
+      return this.material?.uniforms
+    }
+
+    get storages() {
+      return this.material?.storages
     }
 
     resize(boundingRect = null) {

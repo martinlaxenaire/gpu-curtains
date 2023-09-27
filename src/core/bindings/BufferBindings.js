@@ -11,7 +11,7 @@ export class BufferBindings extends Bindings {
     bindingType,
     bindIndex = 0,
     useStruct = true,
-    uniforms = {},
+    bindings = {},
     visibility,
   }) {
     bindingType = bindingType ?? 'uniform'
@@ -24,34 +24,34 @@ export class BufferBindings extends Bindings {
     this.useStruct = useStruct
 
     this.bindingElements = []
-    this.uniforms = {}
+    this.bindings = {}
 
-    Object.keys(uniforms).forEach((uniformKey) => {
-      const uniform = {}
+    Object.keys(bindings).forEach((bindingKey) => {
+      const binding = {}
 
-      for (const key in uniforms[uniformKey]) {
+      for (const key in bindings[bindingKey]) {
         if (key !== 'value') {
-          uniform[key] = uniforms[uniformKey][key]
+          binding[key] = bindings[bindingKey][key]
         }
       }
 
-      Object.defineProperty(uniform, 'value', {
+      Object.defineProperty(binding, 'value', {
         get() {
-          return uniform._value
+          return binding._value
         },
         set(v) {
-          uniform._value = v
-          uniform.shouldUpdate = true
+          binding._value = v
+          binding.shouldUpdate = true
         },
       })
 
-      uniform.value = uniforms[uniformKey].value
+      binding.value = bindings[bindingKey].value
 
-      if (uniform.value instanceof Vec2 || uniform.value instanceof Vec3) {
-        uniform.value.onChange(() => (uniform.shouldUpdate = true))
+      if (binding.value instanceof Vec2 || binding.value instanceof Vec3) {
+        binding.value.onChange(() => (binding.shouldUpdate = true))
       }
 
-      this.uniforms[uniformKey] = uniform
+      this.bindings[bindingKey] = binding
     })
 
     this.setBufferGroup()
@@ -59,24 +59,24 @@ export class BufferBindings extends Bindings {
   }
 
   setBufferGroup() {
-    Object.keys(this.uniforms).forEach((uniformKey) => {
-      const uniform = this.uniforms[uniformKey]
+    Object.keys(this.bindings).forEach((bindingKey) => {
+      const binding = this.bindings[bindingKey]
 
       const bufferLayout =
-        uniform.type && uniform.type.indexOf('array') === -1
-          ? getBufferLayout(uniform.type)
+        binding.type && binding.type.indexOf('array') === -1
+          ? getBufferLayout(binding.type)
           : {
-              numElements: uniform.value.length,
+              numElements: binding.value.length,
               align: 16,
-              size: uniform.value.byteLength,
+              size: binding.value.byteLength,
               type: 'f32',
               View: Float32Array,
             }
 
       this.bindingElements.push({
-        name: toCamelCase(uniform.name ?? uniformKey),
-        type: uniform.type ?? 'array<f32>',
-        key: uniformKey,
+        name: toCamelCase(binding.name ?? bindingKey),
+        type: binding.type ?? 'array<f32>',
+        key: bindingKey,
         bufferLayout,
         startOffset: 0, // will be changed later
         endOffset: 0, // will be changed later
@@ -161,7 +161,7 @@ export class BufferBindings extends Bindings {
   setWGSLFragment() {
     if (this.useStruct) {
       this.wgslStructFragment = `struct ${toKebabCase(this.label)} {\n\t${this.bindingElements
-        .map((uniform) => uniform.name + ': ' + uniform.type)
+        .map((binding) => binding.name + ': ' + binding.type)
         .join(',\n\t')}
 };`
 
@@ -170,32 +170,32 @@ export class BufferBindings extends Bindings {
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = `${this.bindingElements
-        .map((uniform, index) => {
+        .map((binding, index) => {
           const varType = this.bindingType === 'storage' ? 'var<storage, read>' : 'var<uniform>'
-          return `${varType} ${uniform.name}: ${uniform.type};\n`
+          return `${varType} ${binding.name}: ${binding.type};\n`
         })
         .join(',\n\t')}`
     }
   }
 
-  shouldUpdateUniform(uniformName = '') {
-    const uniformKey = Object.keys(this.uniforms).find((uniformKey) => this.uniforms[uniformKey].name === uniformName)
+  shouldUpdateBinding(bindingName = '') {
+    const bindingKey = Object.keys(this.bindings).find((bindingKey) => this.bindings[bindingKey].name === bindingName)
 
-    if (uniformKey) this.uniforms[uniformKey].shouldUpdate = true
+    if (bindingKey) this.bindings[bindingKey].shouldUpdate = true
   }
 
   onBeforeRender() {
-    Object.keys(this.uniforms).forEach((uniformKey) => {
-      const uniform = this.uniforms[uniformKey]
-      const bindingElement = this.bindingElements.find((bindingEl) => bindingEl.key === uniformKey)
+    Object.keys(this.bindings).forEach((bindingKey) => {
+      const binding = this.bindings[bindingKey]
+      const bindingElement = this.bindingElements.find((bindingEl) => bindingEl.key === bindingKey)
 
-      if (uniform.shouldUpdate && bindingElement) {
-        uniform.onBeforeUpdate && uniform.onBeforeUpdate()
-        bindingElement.update(uniform.value)
+      if (binding.shouldUpdate && bindingElement) {
+        binding.onBeforeUpdate && binding.onBeforeUpdate()
+        bindingElement.update(binding.value)
         this.value.set(bindingElement.array, bindingElement.startOffset)
 
         this.shouldUpdate = true
-        uniform.shouldUpdate = false
+        binding.shouldUpdate = false
       }
     })
   }

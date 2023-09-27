@@ -31,7 +31,7 @@ export class WorkBindGroup extends BindGroup {
     })
 
     this.bindingsBuffers.push({
-      uniformBinding: binding,
+      inputBinding: binding,
       buffer: workBuffer,
       resultBuffer: resultBuffer,
     })
@@ -57,12 +57,12 @@ export class WorkBindGroup extends BindGroup {
   }
 
   createBindingsBuffers() {
-    this.bindings.forEach((uniformBinding) => {
-      if (!uniformBinding.visibility) uniformBinding.visibility = GPUShaderStage.COMPUTE
-      uniformBinding.bindingType = 'storage'
+    this.bindings.forEach((inputBinding) => {
+      if (!inputBinding.visibility) inputBinding.visibility = GPUShaderStage.COMPUTE
+      inputBinding.bindingType = 'storage'
 
-      if (!!uniformBinding.value) {
-        this.createBindingBuffer(uniformBinding)
+      if (!!inputBinding.value) {
+        this.createBindingBuffer(inputBinding)
       }
     })
   }

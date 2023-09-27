@@ -30,7 +30,8 @@ interface MaterialBaseParams {
 }
 
 interface MaterialParams extends MaterialBaseParams {
-  uniformBindings: Array<BufferBindings>
+  uniforms: BufferBindings[]
+  storages: BufferBindings[]
 }
 
 type MaterialBindGroups = Array<BindGroup | TextureBindGroup | WorkBindGroup>
@@ -38,7 +39,8 @@ type MaterialBindGroups = Array<BindGroup | TextureBindGroup | WorkBindGroup>
 interface MaterialOptions {
   label: string
   shaders: MaterialShaders
-  uniformBindings: Array<BufferBindings>
+  uniforms?: BufferBindings[]
+  storages?: BufferBindings[]
   workBindings?: Array<WorkBindings>
   rendering?: RenderMaterialRenderingOptions
 }
@@ -53,7 +55,9 @@ export class Material {
   bindGroups: MaterialBindGroups
 
   uniforms: Record<string, BufferBindingsUniform>
-  uniformsBindGroups: BindGroup[]
+  storages: Record<string, BufferBindingsUniform>
+  inputsBindGroups: BindGroup[]
+  inputsBindings: BufferBindings[]
 
   textures: Texture[]
   texturesBindGroup: TextureBindGroup
@@ -71,8 +75,8 @@ export class Material {
   destroyBindGroups()
   updateBindGroups()
 
-  setUniforms()
-  shouldUpdateUniformsBindings(bufferBindingName?: BufferBindings['name'], uniformName?: BufferBindingsUniform['name'])
+  setBindings()
+  shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], uniformName?: BufferBindingsUniform['name'])
 
   setTextures()
   addTexture(texture: Texture | RenderTexture)

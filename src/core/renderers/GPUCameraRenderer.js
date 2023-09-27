@@ -65,14 +65,14 @@ export class GPUCameraRenderer extends GPURenderer {
       label: 'Camera',
       name: 'camera',
       visibility: 'vertex',
-      uniforms: {
+      bindings: {
         model: {
           // camera model matrix
           name: 'model',
           type: 'mat4x4f',
           value: this.camera.modelMatrix,
           onBeforeUpdate: () => {
-            this.cameraUniformBinding.uniforms.model.value = this.camera.modelMatrix
+            this.cameraUniformBinding.bindings.model.value = this.camera.modelMatrix
           },
         },
         view: {
@@ -81,7 +81,7 @@ export class GPUCameraRenderer extends GPURenderer {
           type: 'mat4x4f',
           value: this.camera.viewMatrix,
           onBeforeUpdate: () => {
-            this.cameraUniformBinding.uniforms.view.value = this.camera.viewMatrix
+            this.cameraUniformBinding.bindings.view.value = this.camera.viewMatrix
           },
         },
         projection: {
@@ -90,7 +90,7 @@ export class GPUCameraRenderer extends GPURenderer {
           type: 'mat4x4f',
           value: this.camera.projectionMatrix,
           onBeforeUpdate: () => {
-            this.cameraUniformBinding.uniforms.projection.value = this.camera.projectionMatrix
+            this.cameraUniformBinding.bindings.projection.value = this.camera.projectionMatrix
           },
         },
       },
@@ -114,9 +114,9 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   updateCameraMatrixStack() {
-    this.cameraUniformBinding?.shouldUpdateUniform('model')
-    this.cameraUniformBinding?.shouldUpdateUniform('view')
-    this.cameraUniformBinding?.shouldUpdateUniform('projection')
+    this.cameraUniformBinding?.shouldUpdateBinding('model')
+    this.cameraUniformBinding?.shouldUpdateBinding('view')
+    this.cameraUniformBinding?.shouldUpdateBinding('projection')
   }
 
   /***
