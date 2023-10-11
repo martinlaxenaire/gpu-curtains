@@ -41,14 +41,38 @@ export class ComputePipelineEntry extends PipelineEntry {
     this.shaders.compute.head = ''
     this.shaders.compute.code = ''
 
-    this.bindGroups.toReversed().forEach((bindGroup) => {
-      bindGroup.bindings.toReversed().forEach((binding) => {
-        this.shaders.compute.head = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.compute.head}`
+    const groupsBindings = []
+    this.bindGroups.forEach((bindGroup) => {
+      let bindIndex = 0
+      bindGroup.bindings.forEach((binding, bindingIndex) => {
+        binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
+          groupsBindings.push({
+            groupIndex: bindGroup.index,
+            visibility: binding.visibility,
+            bindIndex,
+            wgslStructFragment: binding.wgslStructFragment,
+            wgslGroupFragment: groupFragment,
+            newLine:
+              bindingIndex === bindGroup.bindings.length - 1 &&
+              groupFragmentIndex === binding.wgslGroupFragment.length - 1,
+          })
 
-        if (binding.wgslStructFragment) {
-          this.shaders.compute.head = `\n${binding.wgslStructFragment}\n${this.shaders.compute.head}`
-        }
+          bindIndex++
+        })
       })
+    })
+
+    groupsBindings.forEach((groupBinding) => {
+      if (
+        groupBinding.wgslStructFragment &&
+        this.shaders.compute.head.indexOf(groupBinding.wgslStructFragment) === -1
+      ) {
+        this.shaders.compute.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.compute.head}`
+      }
+
+      this.shaders.compute.head = `${this.shaders.compute.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
+
+      if (groupBinding.newLine) this.shaders.compute.head += `\n`
     })
 
     this.shaders.compute.code = this.shaders.compute.head + this.options.shaders.compute.code

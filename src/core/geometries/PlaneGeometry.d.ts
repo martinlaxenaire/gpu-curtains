@@ -1,7 +1,8 @@
 import { IndexedGeometry } from './IndexedGeometry'
 import { AttributeBufferParamsOption } from '../../types/buffers-utils'
+import { GeometryBaseParams } from './Geometry'
 
-interface PlaneGeometryParams {
+interface PlaneGeometryParams extends GeometryBaseParams {
   widthSegments?: number
   heightSegments?: number
 }
@@ -14,7 +15,7 @@ export class PlaneGeometry extends IndexedGeometry {
     count: number
   }
 
-  constructor({ widthSegments, heightSegments }: PlaneGeometryParams)
+  constructor({ widthSegments, heightSegments, instancesCount, vertexBuffers }: PlaneGeometryParams)
 
   setIndexArray()
 

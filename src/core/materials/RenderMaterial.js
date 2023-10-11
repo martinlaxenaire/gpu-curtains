@@ -19,18 +19,6 @@ export class RenderMaterial extends Material {
 
     let { shaders, label, uniforms, storages, geometry, ...renderingOptions } = parameters
 
-    // shaders = {
-    //   ...{
-    //     vertex: {
-    //       entryPoint: 'main',
-    //     },
-    //     fragment: {
-    //       entryPoint: 'main',
-    //     },
-    //   },
-    //   ...shaders,
-    // }
-
     if (!shaders.vertex.entryPoint) {
       shaders.vertex.entryPoint = 'main'
     }
@@ -53,10 +41,7 @@ export class RenderMaterial extends Material {
       ...this.options.rendering,
     })
 
-    this.attributes = {
-      geometry: null,
-      buffers: null,
-    }
+    this.attributes = {}
 
     this.setAttributesFromGeometry(geometry)
   }
@@ -85,7 +70,7 @@ export class RenderMaterial extends Material {
 
   setPipelineEntryBuffers() {
     this.pipelineEntry.setPipelineEntryBuffers({
-      geometryAttributes: this.attributes.geometry,
+      attributes: this.attributes,
       bindGroups: this.bindGroups,
     })
   }
@@ -97,67 +82,44 @@ export class RenderMaterial extends Material {
   /** ATTRIBUTES **/
 
   setAttributesFromGeometry(geometry) {
-    this.attributes.geometry = {
+    this.attributes = {
       wgslStructFragment: geometry.wgslStructFragment,
-      vertexArray: geometry.array,
       verticesCount: geometry.verticesCount,
+      instancesCount: geometry.instancesCount,
       verticesOrder: geometry.verticesOrder,
-      pipelineBuffers: [
-        {
-          arrayStride: geometry.arrayStride * 4, // (2 + 3) floats, 4 bytes each
-          attributes: geometry.attributes.map((attribute, index) => {
-            return {
-              shaderLocation: index,
-              offset: attribute.bufferOffset, // previous attribute size * 4
-              format: attribute.bufferFormat,
-            }
-          }),
-        },
-      ],
-    }
-
-    if (geometry.isIndexed) {
-      this.attributes.geometry = {
-        ...this.attributes.geometry,
-        ...{
-          isIndexed: true,
-          indexArray: geometry.indexData.array,
-          indexBufferFormat: geometry.indexData.bufferFormat,
-          indexBufferLength: geometry.indexData.bufferLength,
-        },
-      }
+      vertexBuffers: geometry.vertexBuffers,
     }
   }
 
   createAttributesBuffers() {
-    this.attributes.buffers = {
-      vertexBuffer: this.renderer.createBuffer({
+    this.attributes.vertexBuffers.forEach((vertexBuffer) => {
+      vertexBuffer.buffer = this.renderer.createBuffer({
         label: this.options.label + ': Vertex buffer vertices',
-        size: this.attributes.geometry.vertexArray.length * Float32Array.BYTES_PER_ELEMENT,
+        size: vertexBuffer.array.length * Float32Array.BYTES_PER_ELEMENT,
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      }),
-    }
-
-    this.renderer.queueWriteBuffer(this.attributes.buffers?.vertexBuffer, 0, this.attributes.geometry?.vertexArray)
-
-    if (this.attributes.geometry.isIndexed) {
-      this.attributes.buffers.indexBuffer = this.renderer.createBuffer({
-        label: this.options.label + ': Index buffer vertices',
-        size: this.attributes.geometry.indexArray.byteLength,
-        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
       })
 
-      this.renderer.queueWriteBuffer(this.attributes.buffers?.indexBuffer, 0, this.attributes.geometry.indexArray)
-    }
+      this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array)
+
+      if (vertexBuffer.indexBuffer) {
+        vertexBuffer.indexBuffer.buffer = this.renderer.createBuffer({
+          label: this.options.label + ': Index buffer vertices',
+          size: vertexBuffer.indexBuffer.array.byteLength,
+          usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+        })
+
+        this.renderer.queueWriteBuffer(vertexBuffer.indexBuffer.buffer, 0, vertexBuffer.indexBuffer.array)
+      }
+    })
   }
 
   destroyAttributeBuffers() {
-    this.attributes.buffers?.vertexBuffer?.destroy()
-    this.attributes.buffers?.indexBuffer?.destroy()
-    this.attributes = {
-      geometry: null,
-      buffers: null,
-    }
+    this.attributes.vertexBuffers.forEach((vertexBuffer) => {
+      vertexBuffer.buffer?.destroy()
+      vertexBuffer.indexBuffer?.buffer?.destroy()
+    })
+
+    this.attributes.vertexBuffers = []
   }
 
   /** BIND GROUPS **/
@@ -198,17 +160,19 @@ export class RenderMaterial extends Material {
     super.render(pass)
 
     // set attributes
-    pass.setVertexBuffer(0, this.attributes.buffers?.vertexBuffer)
+    this.attributes.vertexBuffers.forEach((vertexBuffer, index) => {
+      pass.setVertexBuffer(index, vertexBuffer.buffer)
 
-    if (this.attributes.buffers.indexBuffer) {
-      pass.setIndexBuffer(this.attributes.buffers.indexBuffer, this.attributes.geometry?.indexBufferFormat)
-    }
+      if (vertexBuffer.indexBuffer) {
+        pass.setIndexBuffer(vertexBuffer.indexBuffer.buffer, vertexBuffer.indexBuffer.bufferFormat)
+      }
+    })
 
     // draw
-    if (this.attributes.geometry.indexBufferLength) {
-      pass.drawIndexed(this.attributes.geometry.indexBufferLength)
+    if (this.attributes.vertexBuffers[0].indexBuffer) {
+      pass.drawIndexed(this.attributes.vertexBuffers[0].indexBuffer.bufferLength, this.attributes.instancesCount)
     } else {
-      pass.draw(this.attributes.geometry?.verticesCount)
+      pass.draw(this.attributes.verticesCount, this.attributes.instancesCount)
     }
   }
 

@@ -4,8 +4,8 @@ import { Mat4 } from '../../math/Mat4'
 
 export class Object3D {
   constructor() {
-    this.setTransforms()
     this.setMatrices()
+    this.setTransforms()
   }
 
   /** TRANSFORMS **/

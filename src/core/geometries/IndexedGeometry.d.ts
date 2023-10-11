@@ -1,19 +1,13 @@
-import { Geometry } from './Geometry'
+import { Geometry, VertexBuffer } from './Geometry'
 
-interface IndexedGeometryIndexDataOptions {
+interface IndexedGeometryIndexBufferOptions {
+  vertexBuffer?: VertexBuffer
   bufferFormat?: GPUVertexFormat
   array?: Uint32Array
 }
 
-interface IndexedGeometryIndexData extends Omit<IndexedGeometryIndexDataOptions, 'bufferFormat'> {
-  bufferFormat: GPUIndexFormat
-  array: Uint32Array
-  bufferLength: number
-}
-
 export class IndexedGeometry extends Geometry {
   isIndexed: boolean
-  indexData: IndexedGeometryIndexData
 
-  setIndexData({ bufferFormat, array }: IndexedGeometryIndexDataOptions)
+  setIndexBuffer({ vertexBuffer, bufferFormat, array }: IndexedGeometryIndexBufferOptions)
 }

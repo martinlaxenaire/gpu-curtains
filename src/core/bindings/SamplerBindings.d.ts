@@ -8,7 +8,7 @@ interface SamplerBindingsParams extends BindingsParams {
 
 export class SamplerBindings extends Bindings {
   resource: SamplerBindingResource
-  wgslGroupFragment: string
+  wgslGroupFragment: string[]
 
   constructor({ label, name, bindingType, bindIndex, resource, visibility }: SamplerBindingsParams)
 }

@@ -76,9 +76,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after being set
    ***/
   set(x = 0, y = 0, z = 0) {
-    this._x = x
-    this._y = y
-    this._z = z
+    this.x = x
+    this.y = y
+    this.z = z
 
     return this
   }
@@ -92,9 +92,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after addition
    ***/
   add(vector = new Vec3()) {
-    this._x += vector.x
-    this._y += vector.y
-    this._z += vector.z
+    this.x += vector.x
+    this.y += vector.y
+    this.z += vector.z
 
     return this
   }
@@ -108,9 +108,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after addition
    ***/
   addScalar(value = 0) {
-    this._x += value
-    this._y += value
-    this._z += value
+    this.x += value
+    this.y += value
+    this.z += value
 
     return this
   }
@@ -124,9 +124,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after subtraction
    ***/
   sub(vector = new Vec3()) {
-    this._x -= vector.x
-    this._y -= vector.y
-    this._z -= vector.z
+    this.x -= vector.x
+    this.y -= vector.y
+    this.z -= vector.z
 
     return this
   }
@@ -140,9 +140,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after subtraction
    ***/
   subScalar(value = 0) {
-    this._x -= value
-    this._y -= value
-    this._z -= value
+    this.x -= value
+    this.y -= value
+    this.z -= value
 
     return this
   }
@@ -156,9 +156,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after multiplication
    ***/
   multiply(vector = new Vec3(1)) {
-    this._x *= vector.x
-    this._y *= vector.y
-    this._z *= vector.z
+    this.x *= vector.x
+    this.y *= vector.y
+    this.z *= vector.z
 
     return this
   }
@@ -172,9 +172,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after multiplication
    ***/
   multiplyScalar(value = 1) {
-    this._x *= value
-    this._y *= value
-    this._z *= value
+    this.x *= value
+    this.y *= value
+    this.z *= value
 
     return this
   }
@@ -188,9 +188,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after copy
    ***/
   copy(vector = new Vec3()) {
-    this._x = vector.x
-    this._y = vector.y
-    this._z = vector.z
+    this.x = vector.x
+    this.y = vector.y
+    this.z = vector.z
 
     return this
   }
@@ -201,7 +201,7 @@ export class Vec3 {
    @returns {Vec3}: cloned vector
    ***/
   clone() {
-    return new Vec3(this._x, this._y, this._z)
+    return new Vec3(this.x, this.y, this.z)
   }
 
   /***
@@ -213,9 +213,9 @@ export class Vec3 {
    @returns {Vec3}: vector with max values applied
    ***/
   max(vector = new Vec3()) {
-    this._x = Math.max(this._x, vector.x)
-    this._y = Math.max(this._y, vector.y)
-    this._z = Math.max(this._z, vector.z)
+    this.x = Math.max(this.x, vector.x)
+    this.y = Math.max(this.y, vector.y)
+    this.z = Math.max(this.z, vector.z)
 
     return this
   }
@@ -229,9 +229,9 @@ export class Vec3 {
    @returns {Vec3}: vector with min values applied
    ***/
   min(vector = new Vec3()) {
-    this._x = Math.min(this._x, vector.x)
-    this._y = Math.min(this._y, vector.y)
-    this._z = Math.min(this._z, vector.z)
+    this.x = Math.min(this.x, vector.x)
+    this.y = Math.min(this.y, vector.y)
+    this.z = Math.min(this.z, vector.z)
 
     return this
   }
@@ -242,7 +242,7 @@ export class Vec3 {
    @returns {boolean}: whether the vectors are equals or not
    ***/
   equals(vector = new Vec3()) {
-    return this._x === vector.x && this._y === vector.y && this._z === vector.z
+    return this.x === vector.x && this.y === vector.y && this.z === vector.z
   }
 
   /***
@@ -252,13 +252,13 @@ export class Vec3 {
    ***/
   normalize() {
     // normalize
-    let len = this._x * this._x + this._y * this._y + this._z * this._z
+    let len = this.x * this.x + this.y * this.y + this.z * this.z
     if (len > 0) {
       len = 1 / Math.sqrt(len)
     }
-    this._x *= len
-    this._y *= len
-    this._z *= len
+    this.x *= len
+    this.y *= len
+    this.z *= len
 
     return this
   }
@@ -269,7 +269,7 @@ export class Vec3 {
    @returns {number}: dot product of the 2 vectors
    ***/
   dot(vector = new Vec3()) {
-    return this._x * vector.x + this._y * vector.y + this._z * vector.z
+    return this.x * vector.x + this.y * vector.y + this.z * vector.z
   }
 
   lerp(vector = new Vec3(), alpha = 1) {
@@ -299,9 +299,9 @@ export class Vec3 {
     let w = mArray[3] * x + mArray[7] * y + mArray[11] * z + mArray[15]
     w = w || 1
 
-    this._x = (mArray[0] * x + mArray[4] * y + mArray[8] * z + mArray[12]) / w
-    this._y = (mArray[1] * x + mArray[5] * y + mArray[9] * z + mArray[13]) / w
-    this._z = (mArray[2] * x + mArray[6] * y + mArray[10] * z + mArray[14]) / w
+    this.x = (mArray[0] * x + mArray[4] * y + mArray[8] * z + mArray[12]) / w
+    this.y = (mArray[1] * x + mArray[5] * y + mArray[9] * z + mArray[13]) / w
+    this.z = (mArray[2] * x + mArray[6] * y + mArray[10] * z + mArray[14]) / w
 
     return this
   }
@@ -315,9 +315,9 @@ export class Vec3 {
    @returns {Vec3}: this vector after applying the transformation
    ***/
   applyQuat(quaternion = new Quat()) {
-    const x = this._x,
-      y = this._y,
-      z = this._z
+    const x = this.x,
+      y = this.y,
+      z = this.z
     const qx = quaternion.elements[0],
       qy = quaternion.elements[1],
       qz = quaternion.elements[2],
@@ -332,9 +332,9 @@ export class Vec3 {
 
     // calculate result * inverse quat
 
-    this._x = ix * qw + iw * -qx + iy * -qz - iz * -qy
-    this._y = iy * qw + iw * -qy + iz * -qx - ix * -qz
-    this._z = iz * qw + iw * -qz + ix * -qy - iy * -qx
+    this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy
+    this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz
+    this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx
 
     return this
   }

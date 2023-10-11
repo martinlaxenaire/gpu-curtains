@@ -34,9 +34,6 @@ export class DOMObject3D extends ProjectedObject3D {
 
     this.watchScroll = parameters.watchScroll
 
-    this.setTransforms()
-    this.setMatrices()
-
     this.camera = this.renderer.camera
 
     this.setDOMElement(element)
@@ -167,6 +164,8 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   applyTransformOrigin() {
+    if (!this.size) return
+
     this.setWorldTransformOrigin()
 
     super.applyTransformOrigin()

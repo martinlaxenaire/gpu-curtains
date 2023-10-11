@@ -42,7 +42,12 @@ export class ComputePass {
 
   material: ComputeMaterial
 
+  _ready: boolean
+
   constructor(renderer: Renderer, parameters: ComputePassParams)
+
+  get ready(): boolean
+  set ready(value: boolean)
 
   setComputeMaterial(computeParameters)
 
@@ -59,9 +64,18 @@ export class ComputePass {
   get storages(): ComputeMaterial['storages']
   get works(): ComputeMaterial['works']
 
+  resize()
+
+  _onReadyCallback: () => void
+  _onBeforeRenderCallback: () => void
+  _onRenderCallback: () => void
+  _onAfterRenderCallback: () => void
+  _onAfterResizeCallback: () => void
+  onReady: (callback: () => void) => ComputePass
   onBeforeRender: (callback: () => void) => ComputePass
   onRender: (callback: () => void) => ComputePass
   onAfterRender: (callback: () => void) => ComputePass
+  onAfterResize: (callback: () => void) => ComputePass
 
   onBeforeRenderPass()
   onRenderPass(pass: GPUComputePassEncoder)
@@ -73,7 +87,7 @@ export class ComputePass {
 
   copyBufferToResult(commandEncoder: GPUCommandEncoder)
   setWorkGroupsResult()
-  getWorkGroupResult(name: string): Float32Array | null
+  getWorkGroupResult({ workGroupName, bindingName }: { workGroupName?: string; bindingName?: string }): Float32Array
 
   remove()
   destroy()

@@ -1,5 +1,5 @@
 import { isRenderer } from '../../utils/renderer-utils'
-import { generateUUID } from '../../utils/utils'
+import { generateUUID, toKebabCase } from '../../utils/utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
@@ -7,6 +7,23 @@ import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 let computePassIndex = 0
 
 export class ComputePass {
+  // callbacks / events
+  _onReadyCallback = () => {
+    /* allow empty callback */
+  }
+  _onBeforeRenderCallback = () => {
+    /* allow empty callback */
+  }
+  _onRenderCallback = () => {
+    /* allow empty callback */
+  }
+  _onAfterRenderCallback = () => {
+    /* allow empty callback */
+  }
+  _onAfterResizeCallback = () => {
+    /* allow empty callback */
+  }
+
   constructor(renderer, parameters) {
     const type = 'ComputePass'
 
@@ -32,6 +49,7 @@ export class ComputePass {
     }
 
     this.renderOrder = renderOrder ?? 0
+    this.ready = false
 
     const inputBindings = this.createBindings({
       uniforms: uniforms ?? [],
@@ -39,12 +57,29 @@ export class ComputePass {
       works: works ?? [],
     })
 
+    // TODO TEST
+    // for (const binding in parameters.bindings) {
+    //   console.log(binding, parameters.bindings[binding])
+    // }
+
     this.setComputeMaterial({
       label: this.options.label,
       shaders: this.options.shaders,
       ...inputBindings,
     })
+
     this.addToScene()
+  }
+
+  get ready() {
+    return this._ready
+  }
+
+  set ready(value) {
+    if (value) {
+      this._onReadyCallback && this._onReadyCallback()
+    }
+    this._ready = value
   }
 
   setComputeMaterial(computeParameters) {
@@ -61,46 +96,85 @@ export class ComputePass {
     this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid)
   }
 
-  createBindings({ uniforms = [], storages = [], workGroups = [], works = [] }) {
+  createBindings({ uniforms = [], storages = [], works = [] }) {
+    // TODO destructure bindings that don't use struct?
     const uniformsBindings = [
       ...uniforms.map((binding, index) => {
-        return new BufferBindings({
+        const bindingParams = {
           label: binding.label || 'Uniform' + index,
           name: binding.name || 'uniform' + index,
           bindIndex: index,
           bindingType: 'uniform',
+          useStruct: true,
           bindings: binding.bindings,
           visibility: 'compute',
-        })
+        }
+
+        return binding.useStruct !== false
+          ? new BufferBindings(bindingParams)
+          : Object.keys(binding.bindings).map((bindingKey) => {
+              bindingParams.label =
+                binding.label + toKebabCase(bindingKey) || 'Uniform' + toKebabCase(bindingKey) + index
+              bindingParams.name = binding.name + toKebabCase(bindingKey) || 'uniform' + toKebabCase(bindingKey) + index
+              bindingParams.useStruct = false
+              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
+
+              return new BufferBindings(bindingParams)
+            })
       }),
-    ]
+    ].flat()
 
     const storagesBindings = [
       ...storages.map((binding, index) => {
-        return new BufferBindings({
+        const bindingParams = {
           label: binding.label || 'Storage' + index,
           name: binding.name || 'storage' + index,
           bindIndex: index,
           bindingType: 'storage',
+          useStruct: true,
           bindings: binding.bindings,
           visibility: 'compute',
-        })
+        }
+
+        return binding.useStruct !== false
+          ? new BufferBindings(bindingParams)
+          : Object.keys(binding.bindings).map((bindingKey) => {
+              bindingParams.label =
+                binding.label + toKebabCase(bindingKey) || 'Storage' + toKebabCase(bindingKey) + index
+              bindingParams.name = binding.name + toKebabCase(bindingKey) || 'storage' + toKebabCase(bindingKey) + index
+              bindingParams.useStruct = false
+              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
+
+              return new BufferBindings(bindingParams)
+            })
       }),
-    ]
+    ].flat()
 
     const worksBindings = [
       ...works.map((binding, index) => {
-        return new WorkBufferBindings({
+        const bindingParams = {
           label: binding.label || 'Works' + index,
           name: binding.name || 'works' + index,
           bindIndex: index,
           type: 'storageWrite',
+          useStruct: true,
           bindings: binding.bindings,
           dispatchSize: binding.dispatchSize,
           visibility: 'compute',
-        })
+        }
+
+        return binding.useStruct !== false
+          ? new WorkBufferBindings(bindingParams)
+          : Object.keys(binding.bindings).map((bindingKey) => {
+              bindingParams.label = binding.label + toKebabCase(bindingKey) || 'Works' + toKebabCase(bindingKey) + index
+              bindingParams.name = binding.name + toKebabCase(bindingKey) || 'works' + toKebabCase(bindingKey) + index
+              bindingParams.useStruct = false
+              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
+
+              return new WorkBufferBindings(bindingParams)
+            })
       }),
-    ]
+    ].flat()
 
     return {
       uniforms: uniformsBindings,
@@ -121,7 +195,19 @@ export class ComputePass {
     return this.material?.works
   }
 
+  resize() {
+    this._onAfterResizeCallback && this._onAfterResizeCallback()
+  }
+
   /** EVENTS **/
+
+  onReady(callback) {
+    if (callback) {
+      this._onReadyCallback = callback
+    }
+
+    return this
+  }
 
   onBeforeRender(callback) {
     if (callback) {
@@ -142,6 +228,14 @@ export class ComputePass {
   onAfterRender(callback) {
     if (callback) {
       this._onAfterRenderCallback = callback
+    }
+
+    return this
+  }
+
+  onAfterResize(callback) {
+    if (callback) {
+      this._onAfterResizeCallback = callback
     }
 
     return this
@@ -192,8 +286,8 @@ export class ComputePass {
     this.material?.setWorkGroupsResult()
   }
 
-  getWorkGroupResult(name) {
-    return this.material?.getWorkGroupResult(name)
+  getWorkGroupResult({ workGroupName, bindingName }) {
+    return this.material?.getWorkGroupResult({ workGroupName, bindingName })
   }
 
   remove() {

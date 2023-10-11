@@ -61,8 +61,8 @@ export class Vec2 {
    @returns {Vec2}: this vector after being set
    ***/
   set(x = 0, y = 0) {
-    this._x = x
-    this._y = y
+    this.x = x
+    this.y = y
 
     return this
   }
@@ -76,8 +76,8 @@ export class Vec2 {
    @returns {Vec2}: this vector after addition
    ***/
   add(vector = new Vec2()) {
-    this._x += vector.x
-    this._y += vector.y
+    this.x += vector.x
+    this.y += vector.y
 
     return this
   }
@@ -91,8 +91,8 @@ export class Vec2 {
    @returns {Vec2}: this vector after addition
    ***/
   addScalar(value = 0) {
-    this._x += value
-    this._y += value
+    this.x += value
+    this.y += value
 
     return this
   }
@@ -106,8 +106,8 @@ export class Vec2 {
    @returns {Vec2}: this vector after subtraction
    ***/
   sub(vector = new Vec2()) {
-    this._x -= vector.x
-    this._y -= vector.y
+    this.x -= vector.x
+    this.y -= vector.y
 
     return this
   }
@@ -121,8 +121,8 @@ export class Vec2 {
    @returns {Vec2}: this vector after subtraction
    ***/
   subScalar(value = 0) {
-    this._x -= value
-    this._y -= value
+    this.x -= value
+    this.y -= value
 
     return this
   }
@@ -136,8 +136,8 @@ export class Vec2 {
    @returns {Vec2}: this vector after multiplication
    ***/
   multiply(vector = new Vec2(1)) {
-    this._x *= vector.x
-    this._y *= vector.y
+    this.x *= vector.x
+    this.y *= vector.y
 
     return this
   }
@@ -151,8 +151,8 @@ export class Vec2 {
    @returns {Vec2}: this vector after multiplication
    ***/
   multiplyScalar(value = 1) {
-    this._x *= value
-    this._y *= value
+    this.x *= value
+    this.y *= value
 
     return this
   }
@@ -166,8 +166,8 @@ export class Vec2 {
    @returns {Vec2}: this vector after copy
    ***/
   copy(vector = new Vec2()) {
-    this._x = vector.x
-    this._y = vector.y
+    this.x = vector.x
+    this.y = vector.y
 
     return this
   }
@@ -178,7 +178,7 @@ export class Vec2 {
    @returns {Vec2}: cloned vector
    ***/
   clone() {
-    return new Vec2(this._x, this._y)
+    return new Vec2(this.x, this.y)
   }
 
   /***
@@ -190,8 +190,8 @@ export class Vec2 {
    @returns {Vec2}: vector with max values applied
    ***/
   max(vector = new Vec2()) {
-    this._x = Math.max(this._x, vector.x)
-    this._y = Math.max(this._y, vector.y)
+    this.x = Math.max(this.x, vector.x)
+    this.y = Math.max(this.y, vector.y)
 
     return this
   }
@@ -205,8 +205,8 @@ export class Vec2 {
    @returns {Vec2}: vector with min values applied
    ***/
   min(vector = new Vec2()) {
-    this._x = Math.min(this._x, vector.x)
-    this._y = Math.min(this._y, vector.y)
+    this.x = Math.min(this.x, vector.x)
+    this.y = Math.min(this.y, vector.y)
 
     return this
   }
@@ -220,7 +220,7 @@ export class Vec2 {
    @returns {boolean}: whether the vectors are equals or not
    ***/
   equals(vector = new Vec2()) {
-    return this._x === vector.x && this._y === vector.y
+    return this.x === vector.x && this.y === vector.y
   }
 
   /***
@@ -230,12 +230,12 @@ export class Vec2 {
    ***/
   normalize() {
     // normalize
-    let len = this._x * this._x + this._y * this._y
+    let len = this.x * this.x + this.y * this.y
     if (len > 0) {
       len = 1 / Math.sqrt(len)
     }
-    this._x *= len
-    this._y *= len
+    this.x *= len
+    this.y *= len
 
     return this
   }
@@ -249,7 +249,7 @@ export class Vec2 {
    @returns {number}: dot product of the 2 vectors
    ***/
   dot(vector = new Vec2()) {
-    return this._x * vector.x + this._y * vector.y
+    return this.x * vector.x + this.y * vector.y
   }
 
   lerp(vector = new Vec2(), alpha = 1) {

@@ -26,7 +26,7 @@ export class BufferBindings extends Bindings {
   value: Float32Array
 
   wgslStructFragment: string
-  wgslGroupFragment: string
+  wgslGroupFragment: string[]
 
   constructor({ label, name, bindingType, bindIndex, useStruct, bindings, visibility }: BufferBindingsParams)
 

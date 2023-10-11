@@ -6,12 +6,12 @@ interface TextureBindGroupParams extends BindGroupParams {
 }
 
 export class TextureBindGroup extends BindGroup {
-  textures: Texture[]
   externalTexturesIDs: Array<number>
 
   constructor({ label, renderer, index, bindings, textures }: TextureBindGroupParams)
 
   addTexture(texture: Texture)
+  get textures(): Texture[]
 
   get shouldCreateBindGroup(): boolean
 

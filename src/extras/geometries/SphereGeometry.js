@@ -9,8 +9,12 @@ export class SphereGeometry extends IndexedGeometry {
     phiLength = Math.PI * 2,
     thetaStart = 0,
     thetaLength = Math.PI,
+    instancesCount = 1,
+    vertexBuffers = [],
   } = {}) {
-    super({ verticesOrder: 'ccw' })
+    super({ verticesOrder: 'ccw', instancesCount, vertexBuffers })
+
+    this.type = 'SphereGeometry'
 
     // taken from threejs
     // https://github.com/mrdoob/three.js/blob/dev/src/geometries/SphereGeometry.js
@@ -90,7 +94,7 @@ export class SphereGeometry extends IndexedGeometry {
       }
     }
 
-    this.setIndexData({
+    this.setIndexBuffer({
       array: new Uint32Array(indices),
     })
 

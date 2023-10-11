@@ -43,6 +43,20 @@ export const getBufferLayout = (bufferType) => {
   return bufferLayouts[bufferType]
 }
 
+export const getBufferArrayStride = (bindingElement) => {
+  return (() => {
+    switch (bindingElement.type) {
+      case 'array<vec3f>':
+        return 3
+      case 'array<vec2f>':
+        return 2
+      case 'array<f32>':
+      default:
+        return 1
+    }
+  })()
+}
+
 export const getBindingWgslVarType = (bindingType) => {
   return (() => {
     switch (bindingType) {
@@ -53,6 +67,20 @@ export const getBindingWgslVarType = (bindingType) => {
       case 'uniform':
       default:
         return 'var<uniform>'
+    }
+  })()
+}
+
+export const getBindGroupLayoutBindingType = (bindingType) => {
+  return (() => {
+    switch (bindingType) {
+      case 'storage':
+        return 'read-only-storage'
+      case 'storageWrite':
+        return 'storage'
+      case 'uniform':
+      default:
+        return 'uniform'
     }
   })()
 }

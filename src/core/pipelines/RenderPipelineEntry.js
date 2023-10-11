@@ -56,9 +56,9 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   setPipelineEntryBuffers(parameters) {
-    const { geometryAttributes, bindGroups } = parameters
+    const { attributes, bindGroups } = parameters
 
-    this.geometryAttributes = geometryAttributes
+    this.attributes = attributes
 
     this.setPipelineEntryBindGroups(bindGroups)
 
@@ -75,51 +75,74 @@ export class RenderPipelineEntry extends PipelineEntry {
 
     // first add chunks
     for (const chunk in ShaderChunks.vertex) {
-      this.shaders.vertex.head = `\n${ShaderChunks.vertex[chunk]}${this.shaders.vertex.head}`
+      this.shaders.vertex.head = `${ShaderChunks.vertex[chunk]}\n${this.shaders.vertex.head}`
     }
 
     for (const chunk in ShaderChunks.fragment) {
-      this.shaders.fragment.head = `\n${ShaderChunks.fragment[chunk]}${this.shaders.fragment.head}`
+      this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
     }
 
     if (this.options.useProjection) {
       for (const chunk in ProjectedShaderChunks.vertex) {
-        this.shaders.vertex.head = `\n${ProjectedShaderChunks.vertex[chunk]}${this.shaders.vertex.head}`
+        this.shaders.vertex.head = `${ProjectedShaderChunks.vertex[chunk]}\n${this.shaders.vertex.head}`
       }
 
       for (const chunk in ProjectedShaderChunks.fragment) {
-        this.shaders.fragment.head = `\n${ProjectedShaderChunks.fragment[chunk]}${this.shaders.fragment.head}`
+        this.shaders.fragment.head = `${ProjectedShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
       }
     }
 
-    this.bindGroups.toReversed().forEach((bindGroup) => {
-      bindGroup.bindings.toReversed().forEach((binding) => {
-        if (
-          binding.visibility === GPUShaderStage.VERTEX ||
-          binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
-        ) {
-          this.shaders.vertex.head = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.vertex.head}`
+    const groupsBindings = []
+    this.bindGroups.forEach((bindGroup) => {
+      let bindIndex = 0
+      bindGroup.bindings.forEach((binding, bindingIndex) => {
+        binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
+          groupsBindings.push({
+            groupIndex: bindGroup.index,
+            visibility: binding.visibility,
+            bindIndex,
+            wgslStructFragment: binding.wgslStructFragment,
+            wgslGroupFragment: groupFragment,
+            newLine:
+              bindingIndex === bindGroup.bindings.length - 1 &&
+              groupFragmentIndex === binding.wgslGroupFragment.length - 1,
+          })
 
-          if (binding.wgslStructFragment) {
-            this.shaders.vertex.head = `\n${binding.wgslStructFragment}\n${this.shaders.vertex.head}`
-          }
-        }
-
-        if (
-          binding.visibility === GPUShaderStage.FRAGMENT ||
-          binding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
-        ) {
-          this.shaders.fragment.head = `\n@group(${bindGroup.index}) @binding(${binding.bindIndex}) ${binding.wgslGroupFragment} ${this.shaders.fragment.head}`
-
-          if (binding.wgslStructFragment) {
-            this.shaders.fragment.head = `${binding.wgslStructFragment}\n${this.shaders.fragment.head}`
-          }
-        }
+          bindIndex++
+        })
       })
     })
 
+    groupsBindings.forEach((groupBinding) => {
+      if (
+        groupBinding.visibility === GPUShaderStage.VERTEX ||
+        groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
+      ) {
+        if (groupBinding.wgslStructFragment) {
+          this.shaders.vertex.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.vertex.head}`
+        }
+
+        this.shaders.vertex.head = `${this.shaders.vertex.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
+
+        if (groupBinding.newLine) this.shaders.vertex.head += `\n`
+      }
+
+      if (
+        groupBinding.visibility === GPUShaderStage.FRAGMENT ||
+        groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
+      ) {
+        if (groupBinding.wgslStructFragment) {
+          this.shaders.fragment.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.fragment.head}`
+        }
+
+        this.shaders.fragment.head = `${this.shaders.fragment.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
+
+        if (groupBinding.newLine) this.shaders.fragment.head += `\n`
+      }
+    })
+
     // add attributes to vertex shader only
-    this.shaders.vertex.head = `${this.geometryAttributes.wgslStructFragment}\n${this.shaders.vertex.head}`
+    this.shaders.vertex.head = `${this.attributes.wgslStructFragment}\n${this.shaders.vertex.head}`
 
     this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code
     this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code
@@ -146,13 +169,28 @@ export class RenderPipelineEntry extends PipelineEntry {
   createRenderPipeline() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
 
+    let vertexLocationIndex = -1
+
     this.pipeline = this.renderer.createRenderPipeline({
       label: this.options.label,
       layout: this.layout,
       vertex: {
         module: this.shaders.vertex.module,
         entryPoint: this.options.shaders.vertex.entryPoint,
-        buffers: this.geometryAttributes.pipelineBuffers,
+        buffers: this.attributes.vertexBuffers.map((vertexBuffer) => {
+          return {
+            stepMode: vertexBuffer.stepMode,
+            arrayStride: vertexBuffer.arrayStride * 4, // 4 bytes each
+            attributes: vertexBuffer.attributes.map((attribute) => {
+              vertexLocationIndex++
+              return {
+                shaderLocation: vertexLocationIndex,
+                offset: attribute.bufferOffset, // previous attribute size * 4
+                format: attribute.bufferFormat,
+              }
+            }),
+          }
+        }),
       },
       fragment: {
         module: this.shaders.fragment.module,

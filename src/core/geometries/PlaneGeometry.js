@@ -1,8 +1,10 @@
 import { IndexedGeometry } from './IndexedGeometry'
 
 export class PlaneGeometry extends IndexedGeometry {
-  constructor({ widthSegments = 1, heightSegments = 1 }) {
-    super({ verticesOrder: 'cw' })
+  constructor({ widthSegments = 1, heightSegments = 1, instancesCount = 1, vertexBuffers = [] }) {
+    super({ verticesOrder: 'cw', instancesCount, vertexBuffers })
+
+    this.type = 'PlaneGeometry'
 
     widthSegments = Math.floor(widthSegments)
     heightSegments = Math.floor(heightSegments)
@@ -45,7 +47,7 @@ export class PlaneGeometry extends IndexedGeometry {
       }
     }
 
-    this.setIndexData({
+    this.setIndexBuffer({
       array: indexArray,
     })
   }
@@ -112,6 +114,6 @@ export class PlaneGeometry extends IndexedGeometry {
       }
     }
 
-    return { uv, position }
+    return { position, uv }
   }
 }

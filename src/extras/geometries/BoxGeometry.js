@@ -2,8 +2,16 @@ import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Vec3 } from '../../math/Vec3'
 
 export class BoxGeometry extends IndexedGeometry {
-  constructor({ widthSegments = 1, heightSegments = 1, depthSegments = 1 } = {}) {
-    super({ verticesOrder: 'ccw' })
+  constructor({
+    widthSegments = 1,
+    heightSegments = 1,
+    depthSegments = 1,
+    instancesCount = 1,
+    vertexBuffers = [],
+  } = {}) {
+    super({ verticesOrder: 'ccw', instancesCount, vertexBuffers })
+
+    this.type = 'BoxGeometry'
 
     // taken from threejs
     // https://github.com/mrdoob/three.js/blob/dev/src/geometries/BoxGeometry.js
@@ -104,7 +112,7 @@ export class BoxGeometry extends IndexedGeometry {
     buildPlane('x', 'y', 'z', 1, -1, 2, 2, 2, widthSegments, heightSegments) // pz
     buildPlane('x', 'y', 'z', -1, -1, 2, 2, -2, widthSegments, heightSegments) // nz
 
-    this.setIndexData({
+    this.setIndexBuffer({
       array: new Uint32Array(indices),
     })
 

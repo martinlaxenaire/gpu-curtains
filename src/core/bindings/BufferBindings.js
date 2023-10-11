@@ -1,5 +1,5 @@
 import { Bindings } from './Bindings'
-import { getBindingWgslVarType, getBufferLayout } from '../../utils/buffers-utils'
+import { getBindingWgslVarType, getBufferArrayStride, getBufferLayout } from '../../utils/buffers-utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { toCamelCase, toKebabCase } from '../../utils/utils'
@@ -87,7 +87,6 @@ export class BufferBindings extends Bindings {
     const bytesPerElement = Float32Array.BYTES_PER_ELEMENT
     this.bindingElements.forEach((bindingElement, index) => {
       const { numElements, align } = bindingElement.bufferLayout
-
       // we gotta start somewhere!
       if (index === 0) {
         bindingElement.startOffset = 0
@@ -113,7 +112,8 @@ export class BufferBindings extends Bindings {
           // move to next row alignment
           if (nextSpaceAvailable % align !== 0 || (nextSpaceAvailable + numElements) % bytesPerElement !== 0) {
             bindingElement.startOffset = this.alignmentRows * bytesPerElement
-            this.alignmentRows++
+            //this.alignmentRows++
+            this.alignmentRows += Math.ceil(numElements / bytesPerElement)
           } else {
             bindingElement.startOffset = nextSpaceAvailable
             this.alignmentRows += Math.ceil(numElements / bytesPerElement)
@@ -160,21 +160,39 @@ export class BufferBindings extends Bindings {
 
   setWGSLFragment() {
     if (this.useStruct) {
-      this.wgslStructFragment = `struct ${toKebabCase(this.label)} {\n\t${this.bindingElements
-        .map((binding) => binding.name + ': ' + binding.type)
-        .join(',\n\t')}
+      const notAllArrays = Object.keys(this.bindings).find(
+        (bindingKey) => this.bindings[bindingKey].type.indexOf('array') === -1
+      )
+
+      if (!notAllArrays) {
+        const kebabCaseLabel = toKebabCase(this.label)
+
+        this.wgslStructFragment = `struct ${kebabCaseLabel} {\n\t${this.bindingElements
+          .map((binding) => binding.name + ': ' + binding.type.replace('array', '').replace('<', '').replace('>', ''))
+          .join(',\n\t')}
+};\n\n`
+
+        this.wgslStructFragment += `struct Child${kebabCaseLabel} {
+  child${kebabCaseLabel}: array<${kebabCaseLabel}>
 };`
 
-      const varType = getBindingWgslVarType(this.bindingType)
-      this.wgslGroupFragment = `${varType} ${this.name}: ${toKebabCase(this.label)};\n`
+        const varType = getBindingWgslVarType(this.bindingType)
+        this.wgslGroupFragment = [`${varType} ${this.name}: Child${kebabCaseLabel};`]
+      } else {
+        this.wgslStructFragment = `struct ${toKebabCase(this.label)} {\n\t${this.bindingElements
+          .map((binding) => binding.name + ': ' + binding.type)
+          .join(',\n\t')}
+};`
+
+        const varType = getBindingWgslVarType(this.bindingType)
+        this.wgslGroupFragment = [`${varType} ${this.name}: ${toKebabCase(this.label)};`]
+      }
     } else {
       this.wgslStructFragment = ''
-      this.wgslGroupFragment = `${this.bindingElements
-        .map((binding, index) => {
-          const varType = getBindingWgslVarType(this.bindingType)
-          return `${varType} ${binding.name}: ${binding.type};\n`
-        })
-        .join(',\n\t')}`
+      this.wgslGroupFragment = this.bindingElements.map((binding) => {
+        const varType = getBindingWgslVarType(this.bindingType)
+        return `${varType} ${binding.name}: ${binding.type};`
+      })
     }
   }
 
@@ -192,7 +210,29 @@ export class BufferBindings extends Bindings {
       if (binding.shouldUpdate && bindingElement) {
         binding.onBeforeUpdate && binding.onBeforeUpdate()
         bindingElement.update(binding.value)
-        this.value.set(bindingElement.array, bindingElement.startOffset)
+
+        const notAllArrays = Object.keys(this.bindings).find(
+          (bindingKey) => this.bindings[bindingKey].type.indexOf('array') === -1
+        )
+
+        if (notAllArrays) {
+          this.value.set(bindingElement.array, bindingElement.startOffset)
+        } else {
+          // now this is tricky cause we need to reorder value by strides
+          const arrayStride = getBufferArrayStride(bindingElement)
+
+          let totalArrayStride = 0
+          this.bindingElements.forEach((bindingEl) => {
+            totalArrayStride += getBufferArrayStride(bindingEl)
+          })
+
+          const startIndex = bindingElement.startOffset / this.alignmentRows
+
+          for (let i = 0, j = 0; j < bindingElement.array.length; i++, j += arrayStride) {
+            // fill portion of value array with portion of binding element array
+            this.value.set(bindingElement.array.subarray(j, j + arrayStride), i * totalArrayStride + startIndex)
+          }
+        }
 
         this.shouldUpdate = true
         binding.shouldUpdate = false

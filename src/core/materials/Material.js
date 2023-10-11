@@ -1,6 +1,7 @@
 import { BindGroup } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { isRenderer } from '../../utils/renderer-utils'
+import { toKebabCase } from '../../utils/utils'
 
 export class Material {
   constructor(renderer, parameters) {
@@ -43,16 +44,10 @@ export class Material {
       label,
       uniforms,
       storages,
-      //rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
     }
 
-    // this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
-    //   label: this.options.label + ' render pipeline',
-    //   shaders: this.options.shaders,
-    //   ...this.options.rendering,
-    // })
-
     this.bindGroups = []
+    this.clonedBindGroups = []
 
     this.setBindings()
     this.setTextures()
@@ -70,18 +65,7 @@ export class Material {
       this.createBindGroups()
       return
     }
-
-    // if (this.pipelineEntry && !this.pipelineEntry.pipeline) {
-    //   this.setPipelineEntryBuffers()
-    // }
   }
-
-  // setPipelineEntryBuffers() {
-  //   this.pipelineEntry.setPipelineEntryBuffers({
-  //     geometryAttributes: this.attributes.geometry,
-  //     bindGroups: this.bindGroups,
-  //   })
-  // }
 
   get ready() {
     return !!(this.pipelineEntry && this.pipelineEntry.pipeline)
@@ -94,6 +78,7 @@ export class Material {
       switch (shaderType) {
         case 'vertex':
         case 'fragment':
+        case 'compute':
         case 'full':
           return shaderType
         default:
@@ -111,6 +96,7 @@ export class Material {
       switch (shaderType) {
         case 'vertex':
         case 'fragment':
+        case 'compute':
           return shaderType
         default:
           return 'vertex'
@@ -142,11 +128,81 @@ export class Material {
     })
   }
 
+  cloneBindGroupAtIndex(index = 0) {
+    const originalBindGroup = this.bindGroups.find((bindGroup) => bindGroup.index === index)
+    if (originalBindGroup) {
+      const clone = originalBindGroup.clone()
+      this.clonedBindGroups.push(clone)
+      return clone
+    } else {
+      return null
+    }
+  }
+
+  // swapBindGroups(firstBindGroup, secondBindGroup) {
+  //
+  // }
+
+  swapBindGroupsAtIndex(index = 0) {
+    const originalBindGroupIndex = this.bindGroups.findIndex((bindGroup) => bindGroup.index === index)
+    const clonedBindGroupIndex = this.clonedBindGroups.findIndex((bindGroup) => bindGroup.index === index)
+
+    const originalBindGroup = originalBindGroupIndex !== -1 ? this.bindGroups[originalBindGroupIndex] : null
+    const clonedBindGroup = clonedBindGroupIndex !== -1 ? this.clonedBindGroups[clonedBindGroupIndex] : null
+
+    if (originalBindGroup && clonedBindGroup && originalBindGroup.type === clonedBindGroup.type) {
+      // swap
+      ;[this.bindGroups[originalBindGroupIndex], this.clonedBindGroups[clonedBindGroupIndex]] = [
+        this.clonedBindGroups[clonedBindGroupIndex],
+        this.bindGroups[originalBindGroupIndex],
+      ]
+    }
+  }
+
+  getBindingsBuffersByBindingName(bindingName = '') {
+    let bindings = []
+    this.bindGroups.forEach((bindGroup) => {
+      const binding = bindGroup.bindingsBuffers.filter((bindingBuffer) =>
+        bindingBuffer.inputBinding.useStruct
+          ? bindingBuffer.inputBinding.name === bindingName
+          : bindingBuffer.inputBinding.name ===
+            bindingName +
+              toKebabCase(
+                bindingBuffer.inputBinding.bindingElements.length
+                  ? bindingBuffer.inputBinding.bindingElements[0].name
+                  : ''
+              )
+      )
+
+      if (binding.length) {
+        bindings = [...bindings, ...binding]
+      }
+    })
+
+    return bindings
+  }
+
+  swapBindingsBuffers(firstBindings = [], secondBindings = []) {
+    firstBindings.forEach((firstBinding, index) => {
+      let secondBinding = secondBindings[index]
+      if (secondBinding) {
+        console.log(firstBinding, secondBinding)
+        const temp = firstBinding
+        firstBinding = secondBinding
+        secondBinding = temp
+
+        console.log(secondBinding.inputBinding.name, '->', firstBinding.inputBinding.name)
+      }
+    })
+  }
+
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
+    this.clonedBindGroups.forEach((bindGroup) => bindGroup.destroy())
     this.texturesBindGroup = null
     this.inputsBindGroups = []
     this.bindGroups = []
+    this.clonedBindGroups = []
   }
 
   updateBindGroups() {

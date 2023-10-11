@@ -2,14 +2,15 @@ import { BufferBindings } from './BufferBindings'
 
 export class WorkBufferBindings extends BufferBindings {
   constructor({
-    label = 'Uniform',
-    name = 'uniform',
+    label = 'Work',
+    name = 'work',
     bindingType,
     bindIndex = 0,
     useStruct = true,
     bindings = {},
     visibility,
     dispatchSize,
+    copyResult = false,
   }) {
     bindingType = 'storageWrite'
     visibility = 'compute'
@@ -27,6 +28,7 @@ export class WorkBufferBindings extends BufferBindings {
     }
 
     this.dispatchSize = dispatchSize
+    this.copyResult = copyResult
 
     this.result = new Float32Array(this.value.slice())
   }

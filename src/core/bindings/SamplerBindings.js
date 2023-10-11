@@ -12,6 +12,6 @@ export class SamplerBindings extends Bindings {
   }
 
   setWGSLFragment() {
-    this.wgslGroupFragment = `var ${this.name}Sampler: ${this.bindingType};`
+    this.wgslGroupFragment = [`var ${this.name}Sampler: ${this.bindingType};`]
   }
 }

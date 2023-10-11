@@ -1,12 +1,10 @@
 import { Material, MaterialOptions } from './Material'
 import { BindGroupBindingBuffer } from '../bindGroups/BindGroup'
-import { WorkBindGroup } from '../bindGroups/WorkBindGroup'
 import { BufferBindingsUniform } from '../bindings/BufferBindings'
 
 export class ComputeMaterial extends Material {
   options: MaterialOptions
 
-  workBindGroups: WorkBindGroup[]
   works: Record<string, BufferBindingsUniform>
 
   setPipelineEntryBuffers()
@@ -25,5 +23,5 @@ export class ComputeMaterial extends Material {
   copyBufferToResult(commandEncoder: GPUCommandEncoder)
   setWorkGroupsResult()
   setBufferResult(bindingBuffer: BindGroupBindingBuffer)
-  getWorkGroupResult(name?: string): Float32Array | null
+  getWorkGroupResult({ workGroupName, bindingName }: { workGroupName?: string; bindingName?: string }): Float32Array
 }

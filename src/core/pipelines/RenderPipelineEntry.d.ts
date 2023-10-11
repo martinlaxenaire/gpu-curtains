@@ -1,9 +1,9 @@
 import { PipelineEntry, PipelineEntryShaders } from './PipelineEntry'
-import { RenderMaterialGeometryAttribute, RenderMaterialRenderingOptions } from '../materials/RenderMaterial'
+import { RenderMaterialAttributes, RenderMaterialRenderingOptions } from '../materials/RenderMaterial'
 import { MaterialBindGroups, MaterialShaders } from '../materials/Material'
 
 interface RenderPipelineEntryBuffersParams {
-  geometryAttributes: RenderMaterialGeometryAttribute
+  attributes: RenderMaterialAttributes
   bindGroups: MaterialBindGroups
 }
 
@@ -18,7 +18,7 @@ interface RenderPipelineEntryOptions extends RenderMaterialRenderingOptions {
 }
 
 export class RenderPipelineEntry extends PipelineEntry {
-  geometryAttributes: RenderMaterialGeometryAttribute
+  attributes: RenderMaterialAttributes
   options: RenderPipelineEntryOptions
 
   constructor(parameters: RenderPipelineEntryBaseParams)

@@ -93,6 +93,11 @@ export class GPURenderer {
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
+    this.computePasses.forEach((computePass) => computePass.resize())
+    this.meshes.forEach((mesh) => {
+      // resize meshes that do not have a bound DOM element
+      if (!mesh.domElement) mesh.resize(this.boundingRect)
+    })
   }
 
   get boundingRect() {

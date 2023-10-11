@@ -1,11 +1,10 @@
 import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings'
-import { BindGroup, BindGroupBindingElement } from '../bindGroups/BindGroup'
+import { AllowedBindGroups, BindGroup, BindGroupBindingElement } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Texture } from '../textures/Texture'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 import { RenderTexture } from '../textures/RenderTexture'
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
-import { WorkBindGroup } from '../bindGroups/WorkBindGroup'
 import { RenderMaterialRenderingOptions } from './RenderMaterial'
 import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
@@ -34,7 +33,7 @@ interface MaterialParams extends MaterialBaseParams {
   storages: BufferBindings[]
 }
 
-type MaterialBindGroups = Array<BindGroup | TextureBindGroup | WorkBindGroup>
+type MaterialBindGroups = AllowedBindGroups[]
 
 interface MaterialOptions {
   label: string
@@ -53,6 +52,7 @@ export class Material {
   pipelineEntry: AllowedPipelineEntries
 
   bindGroups: MaterialBindGroups
+  clonedBindGroups: MaterialBindGroups
 
   uniforms: Record<string, BufferBindingsUniform>
   storages: Record<string, BufferBindingsUniform>
@@ -72,6 +72,8 @@ export class Material {
   getAddedShaderCode(shaderType: FullShadersType): string
 
   createBindGroups()
+  cloneBindGroupAtIndex(index?: number): AllowedBindGroups | null
+  swapBindGroupsAtIndex(index?: number)
   destroyBindGroups()
   updateBindGroups()
 

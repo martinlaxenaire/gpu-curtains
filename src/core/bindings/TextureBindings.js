@@ -17,9 +17,10 @@ export class TextureBindings extends Bindings {
   }
 
   setWGSLFragment() {
-    this.wgslGroupFragment =
+    this.wgslGroupFragment = [
       this.bindingType === 'externalTexture'
         ? `var ${this.name}: texture_external;`
-        : `var ${this.name}: texture_2d<f32>;`
+        : `var ${this.name}: texture_2d<f32>;`,
+    ]
   }
 }

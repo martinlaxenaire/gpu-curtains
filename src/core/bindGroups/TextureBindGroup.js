@@ -12,8 +12,9 @@ export class TextureBindGroup extends BindGroup {
 
     super({ label, renderer, index, bindings })
 
+    this.options.textures = textures
+
     this.type = type
-    this.textures = textures
 
     // keep track of external textures to know when to flush
     this.externalTexturesIDs = []
@@ -25,10 +26,12 @@ export class TextureBindGroup extends BindGroup {
     this.bindings = [...this.bindings, ...texture.bindings]
   }
 
+  get textures() {
+    return this.options.textures
+  }
+
   get shouldCreateBindGroup() {
-    return (
-      !this.bindGroup && this.textures.length && !this.textures.find((texture) => !texture.sampler || !texture.texture)
-    )
+    return !this.bindGroup && !this.textures.find((texture) => !texture.sampler || !texture.texture)
   }
 
   createBindingsBuffers() {
@@ -131,6 +134,6 @@ export class TextureBindGroup extends BindGroup {
 
   destroy() {
     super.destroy()
-    this.textures = []
+    this.options.textures = []
   }
 }

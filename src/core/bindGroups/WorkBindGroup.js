@@ -1,6 +1,8 @@
 import { BindGroup } from './BindGroup'
 import { isRenderer } from '../../utils/renderer-utils'
+import { getBindGroupLayoutBindingType } from '../../utils/buffers-utils'
 
+// TODO USELESS REMOVE!
 export class WorkBindGroup extends BindGroup {
   constructor({ label = 'WorkBindGroup', renderer, index = 0, bindings = [] }) {
     const type = 'WorkBindGroup'
@@ -15,18 +17,16 @@ export class WorkBindGroup extends BindGroup {
     this.type = type
   }
 
-  createBindingBuffer(binding) {
-    binding.bindIndex = this.entries.bindGroupLayout.length
-
+  createBindingBufferElement(binding, bindIndex, array) {
     const workBuffer = this.renderer.createBuffer({
       label: this.options.label + ': Work buffer from:' + binding.label,
-      size: binding.value.byteLength,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+      size: array.byteLength,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX,
     })
 
     const resultBuffer = this.renderer.createBuffer({
       label: this.options.label + ': Result buffer from:' + binding.label,
-      size: binding.value.byteLength,
+      size: array.byteLength,
       usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
     })
 
@@ -34,6 +34,7 @@ export class WorkBindGroup extends BindGroup {
       inputBinding: binding,
       buffer: workBuffer,
       resultBuffer: resultBuffer,
+      array,
     })
 
     // update right away
@@ -41,15 +42,15 @@ export class WorkBindGroup extends BindGroup {
 
     // https://developer.mozilla.org/en-US/docs/Web/API/GPUBindGroupLayout
     this.entries.bindGroupLayout.push({
-      binding: binding.bindIndex,
+      binding: bindIndex,
       buffer: {
-        type: 'storage',
+        type: getBindGroupLayoutBindingType(binding.bindingType),
       },
       visibility: binding.visibility,
     })
 
     this.entries.bindGroup.push({
-      binding: binding.bindIndex,
+      binding: bindIndex,
       resource: {
         buffer: workBuffer,
       },
@@ -59,7 +60,6 @@ export class WorkBindGroup extends BindGroup {
   createBindingsBuffers() {
     this.bindings.forEach((inputBinding) => {
       if (!inputBinding.visibility) inputBinding.visibility = GPUShaderStage.COMPUTE
-      inputBinding.bindingType = 'storage'
 
       if (!!inputBinding.value) {
         this.createBindingBuffer(inputBinding)
@@ -67,12 +67,11 @@ export class WorkBindGroup extends BindGroup {
     })
   }
 
-  dispatchWorkGroups(pass) {
-    this.bindings.forEach((binding) => {
-      //console.log(binding.value.length)
-      pass.dispatchWorkgroups(binding.value.length)
-    })
-  }
+  // dispatchWorkGroups(pass) {
+  //   this.bindings.forEach((binding) => {
+  //     pass.dispatchWorkgroups(binding.value.length)
+  //   })
+  // }
 
   destroy() {
     this.bindingsBuffers.forEach((bindingBuffer) => {

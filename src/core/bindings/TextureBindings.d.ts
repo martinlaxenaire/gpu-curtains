@@ -8,7 +8,7 @@ interface TextureBindingsParams extends BindingsParams {
 
 export class TextureBindings extends Bindings {
   resource: TextureBindingResource
-  wgslGroupFragment: string
+  wgslGroupFragment: string[]
 
   constructor({ label, name, bindingType, bindIndex, resource, visibility }: TextureBindingsParams)
 }

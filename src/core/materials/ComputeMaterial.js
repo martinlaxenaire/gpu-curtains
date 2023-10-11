@@ -1,6 +1,5 @@
 import { Material } from './Material'
 import { isRenderer } from '../../utils/renderer-utils'
-import { WorkBindGroup } from '../bindGroups/WorkBindGroup'
 
 export class ComputeMaterial extends Material {
   constructor(renderer, parameters) {
@@ -17,7 +16,6 @@ export class ComputeMaterial extends Material {
     this.renderer = renderer
 
     let { shaders, works } = parameters
-    console.log(parameters, this)
 
     if (!shaders || !shaders.compute) {
       shaders = {
@@ -52,15 +50,11 @@ export class ComputeMaterial extends Material {
   }
 
   setWorkGroups() {
-    this.workBindGroups = []
     this.works = {}
     this.inputsBindings = [...this.inputsBindings, ...this.options.works]
 
     if (this.options.works.length) {
-      const workBindGroup = new WorkBindGroup({
-        label: this.options.label + ': Work bind group',
-        renderer: this.renderer,
-      })
+      const workBindGroup = this.inputsBindGroups.at(-1)
 
       this.options.works.forEach((workBinding) => {
         this.works = { ...this.works, ...workBinding.bindings }
@@ -69,11 +63,7 @@ export class ComputeMaterial extends Material {
 
         workBindGroup.addBinding(workBinding)
       })
-
-      this.workBindGroups.push(workBindGroup)
     }
-
-    this.inputsBindGroups = [...this.inputsBindGroups, ...this.workBindGroups]
   }
 
   setMaterial() {
@@ -86,28 +76,12 @@ export class ComputeMaterial extends Material {
 
   /** BIND GROUPS **/
 
-  createBindGroups() {
-    super.createBindGroups()
-
-    this.workBindGroups.forEach((bindGroup) => {
-      if (bindGroup.shouldCreateBindGroup) {
-        bindGroup.setIndex(this.bindGroups.length)
-        bindGroup.createBindGroup()
-
-        this.bindGroups.push(bindGroup)
-      }
-    })
-  }
-
-  destroyBindGroups() {
-    super.destroyBindGroups()
-    this.workBindGroups = []
-  }
-
   get hasMappedBuffer() {
     // check if we have a buffer mapped or pending map
-    const hasMappedBuffer = this.workBindGroups.some((workBindGroup) => {
-      return workBindGroup.bindingsBuffers.some((bindingBuffer) => bindingBuffer.resultBuffer.mapState !== 'unmapped')
+    const hasMappedBuffer = this.bindGroups.some((bindGroup) => {
+      return bindGroup.bindingsBuffers.some(
+        (bindingBuffer) => bindingBuffer.resultBuffer && bindingBuffer.resultBuffer.mapState !== 'unmapped'
+      )
     })
 
     return !!hasMappedBuffer
@@ -131,32 +105,36 @@ export class ComputeMaterial extends Material {
     this.bindGroups.forEach((bindGroup) => {
       pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
 
-      if (bindGroup.type === 'WorkBindGroup') {
-        bindGroup.bindings.forEach((binding) => {
-          pass.dispatchWorkgroups(binding.value.length)
-        })
-      }
+      bindGroup.bindings.forEach((binding) => {
+        if (binding.dispatchSize) {
+          pass.dispatchWorkgroups(binding.dispatchSize[0], binding.dispatchSize[1], binding.dispatchSize[2])
+        }
+      })
     })
   }
 
   copyBufferToResult(commandEncoder) {
-    this.workBindGroups.forEach((workBindGroup) => {
-      workBindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-        commandEncoder.copyBufferToBuffer(
-          bindingBuffer.buffer,
-          0,
-          bindingBuffer.resultBuffer,
-          0,
-          bindingBuffer.resultBuffer.size
-        )
+    this.bindGroups.forEach((bindGroup) => {
+      bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
+        if (bindingBuffer.inputBinding.copyResult) {
+          commandEncoder.copyBufferToBuffer(
+            bindingBuffer.buffer,
+            0,
+            bindingBuffer.resultBuffer,
+            0,
+            bindingBuffer.resultBuffer.size
+          )
+        }
       })
     })
   }
 
   setWorkGroupsResult() {
-    this.workBindGroups.forEach((workBindGroup) => {
-      workBindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-        this.setBufferResult(bindingBuffer)
+    this.bindGroups.forEach((bindGroup) => {
+      bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
+        if (bindingBuffer.inputBinding.copyResult) {
+          this.setBufferResult(bindingBuffer)
+        }
       })
     })
   }
@@ -170,14 +148,28 @@ export class ComputeMaterial extends Material {
     }
   }
 
-  getWorkGroupResult(name = '') {
+  getWorkGroupResult({ workGroupName = '', bindingName = '' }) {
     let bindingBuffer
-    this.workBindGroups.forEach((workBindGroup) => {
-      bindingBuffer = workBindGroup.bindingsBuffers.find((bindingBuffer) => bindingBuffer.inputBinding.name === name)
+    this.bindGroups.forEach((bindGroup) => {
+      bindingBuffer = bindGroup.bindingsBuffers.find(
+        (bindingBuffer) => bindingBuffer.inputBinding.name === workGroupName
+      )
     })
 
     if (bindingBuffer) {
-      return bindingBuffer.inputBinding.result
+      if (bindingName) {
+        const bindingElement = bindingBuffer.inputBinding.bindingElements.find(
+          (bindingElement) => bindingElement.name === bindingName
+        )
+
+        if (bindingElement) {
+          return bindingBuffer.inputBinding.result.slice(bindingElement.startOffset, bindingElement.endOffset)
+        } else {
+          return bindingBuffer.inputBinding.result.slice()
+        }
+      } else {
+        return bindingBuffer.inputBinding.result.slice()
+      }
     } else {
       return null
     }

@@ -100,6 +100,7 @@ const MeshBaseMixin = (superclass) =>
         uniforms: uniforms ?? [],
         storages: storages ?? [],
       })
+
       this.setMeshMaterial({ ...meshParameters, ...inputBindings })
 
       this.addToScene()
@@ -208,29 +209,53 @@ const MeshBaseMixin = (superclass) =>
     createBindings({ uniforms = [], storages = [] }) {
       const uniformsBindings = [
         ...uniforms.map((binding, index) => {
-          return new BufferBindings({
+          const bindingParams = {
             label: binding.label || 'Uniform' + index,
             name: binding.name || 'uniform' + index,
-            bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms
+            bindIndex: index + 1,
             bindingType: 'uniform',
+            useStruct: true,
             bindings: binding.bindings,
             visibility: binding.visibility,
-          })
+          }
+
+          return binding.useStruct !== false
+            ? new BufferBindings(bindingParams)
+            : Object.keys(binding.bindings).map((bindingKey) => {
+                bindingParams.label = binding.label + bindingKey || 'Uniform' + bindingKey + index
+                bindingParams.name = binding.name + bindingKey || 'uniform' + bindingKey + index
+                bindingParams.useStruct = false
+                bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
+
+                return new BufferBindings(bindingParams)
+              })
         }),
-      ]
+      ].flat()
 
       const storagesBindings = [
         ...storages.map((binding, index) => {
-          return new BufferBindings({
+          const bindingParams = {
             label: binding.label || 'Storage' + index,
             name: binding.name || 'storage' + index,
-            bindIndex: index, // bindIndex 0 is already taken by matrix uniforms
+            bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms
             bindingType: 'storage',
+            useStruct: true,
             bindings: binding.bindings,
             visibility: binding.visibility,
-          })
+          }
+
+          return binding.useStruct !== false
+            ? new BufferBindings(bindingParams)
+            : Object.keys(binding.bindings).map((bindingKey) => {
+                bindingParams.label = binding.label + bindingKey || 'Storage' + bindingKey + index
+                bindingParams.name = binding.name + bindingKey || 'storage' + bindingKey + index
+                bindingParams.useStruct = false
+                bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
+
+                return new BufferBindings(bindingParams)
+              })
         }),
-      ]
+      ].flat()
 
       return {
         uniforms: uniformsBindings,

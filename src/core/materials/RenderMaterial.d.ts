@@ -1,6 +1,6 @@
 import { Material, MaterialOptions, MaterialShaders, ShaderOptions } from './Material'
 import { Geometry } from '../geometries/Geometry'
-import { IndexedGeometry, IndexedGeometryIndexData } from '../geometries/IndexedGeometry'
+import { IndexedGeometry } from '../geometries/IndexedGeometry'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
@@ -14,28 +14,12 @@ export interface RenderShaders {
 export type RenderShadersOptions = Partial<RenderShaders>
 
 // geometry
-interface RenderMaterialGeometryAttribute {
-  wgslStructFragment: Geometry['wgslStructFragment']
-  vertexArray: Geometry['array']
-  verticesCount: Geometry['verticesCount']
-  verticesOrder: Geometry['verticesOrder']
-  pipelineBuffers: GPUVertexState
-}
-
-interface RenderMaterialIndexedGeometryAttribute extends RenderMaterialGeometryAttribute {
-  isIndexed: boolean
-  indexArray: IndexedGeometryIndexData['array']
-  indexBufferFormat: IndexedGeometryIndexData['bufferFormat']
-  indexBufferLength: IndexedGeometryIndexData['bufferLength']
-}
-
-type RenderMaterialGeometryAttributeBuffersType = 'vertexBuffer' | 'indexBuffer'
-
-type RenderMaterialGeometryAttributes = RenderMaterialGeometryAttribute | RenderMaterialIndexedGeometryAttribute
-
 interface RenderMaterialAttributes {
-  geometry: RenderMaterialGeometryAttributes | null
-  buffers: Record<RenderMaterialGeometryAttributeBuffersType, GPUBuffer> | null
+  wgslStructFragment: Geometry['wgslStructFragment']
+  verticesCount: Geometry['verticesCount']
+  instancesCount: Geometry['instancesCount']
+  verticesOrder: Geometry['verticesOrder']
+  vertexBuffers: Geometry['vertexBuffers']
 }
 
 export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry
