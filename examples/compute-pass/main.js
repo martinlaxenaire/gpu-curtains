@@ -251,7 +251,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     // },
   })
 
-  let originalBindGroup, swappedBindGroup
   const particleBindGroups = []
   const particleBuffers = []
   let computeInstanceBuffer
@@ -263,11 +262,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       console.log(computePass.material)
       console.log(computePass.material.getAddedShaderCode('compute'))
 
-      // clone our simulation bind group
-      originalBindGroup = computePass.material.cloneBindGroupAtIndex(1)
+      // get our simulation bind group
+      const originalBindGroup = computePass.material.getBindGroupByBindingName('particlesA')
 
-      // now clone again but with buffer swapped
-      swappedBindGroup = originalBindGroup.cloneFromBindingsBuffers({
+      // now clone but with buffer swapped
+      const swappedBindGroup = originalBindGroup.cloneFromBindingsBuffers({
         // swap the buffers...
         bindingsBuffers: [
           originalBindGroup.bindingsBuffers[0],
@@ -400,118 +399,4 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
 
   console.log(sphereMesh, gpuCurtains)
-
-  // PLANE
-
-  // // get our plane element
-  // const planeElements = document.getElementsByClassName('plane')
-  //
-  // const vertexShader = /* wgsl */ `
-  //     struct VSOutput {
-  //       @builtin(position) position: vec4f,
-  //       @location(0) uv: vec2f,
-  //     };
-  //
-  //     struct VertexInput {
-  //       @builtin(vertex_index) vertexIndex : u32,
-  //       @location(0) position: vec3f,
-  //       @location(1) uv: vec2f,
-  //     }
-  //
-  //     @vertex fn main(
-  //       vertexInput: VertexInput,
-  //     ) -> VSOutput {
-  //       var vsOutput: VSOutput;
-  //
-  //       // var transformed: vec3f = vec3(
-  //       //     vertices.displacement[vertexInput.vertexIndex * 3],
-  //       //     vertices.displacement[vertexInput.vertexIndex * 3 + 1],
-  //       //     vertices.displacement[vertexInput.vertexIndex * 3 + 2]
-  //       // );
-  //
-  //       var transformed = vertices.displacement[vertexInput.vertexIndex];
-  //
-  //       vsOutput.position = getOutputPosition(camera, matrices, transformed);
-  //       vsOutput.uv = getUVCover(vertexInput.uv, planeTextureMatrix);
-  //
-  //       return vsOutput;
-  //     }
-  // `
-  //
-  // const fragmentShader = /* wgsl */ `
-  //   struct VSOutput {
-  //       @builtin(position) position: vec4f,
-  //       @location(0) uv: vec2f,
-  //     };
-  //
-  //     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-  //       var texture: vec4f = textureSample(planeTexture, planeTextureSampler, fsInput.uv);
-  //
-  //       return texture;
-  //     }
-  // `
-  //
-  // // set our initial parameters (basic uniforms)
-  // const params = {
-  //   widthSegments: 20,
-  //   shaders: {
-  //     vertex: {
-  //       code: vertexShader,
-  //       entryPoint: 'main',
-  //     },
-  //     fragment: {
-  //       code: fragmentShader,
-  //       entryPoint: 'main',
-  //     },
-  //   },
-  //   uniforms: [
-  //     {
-  //       name: 'uniforms', // could be something else, like "frames"...
-  //       label: 'Uniforms',
-  //       bindings: {
-  //         time: {
-  //           type: 'f32', // this means our uniform is a float
-  //           value: 0,
-  //         },
-  //       },
-  //     },
-  //   ],
-  //   storages: [
-  //     {
-  //       name: 'vertices', // could be something else, like "frames"...
-  //       label: 'Vertices',
-  //       visibility: 'vertex',
-  //       bindings: {
-  //         displacement: {
-  //           type: 'array<vec3f>',
-  //           value: verticesArray.slice(),
-  //         },
-  //       },
-  //     },
-  //   ],
-  // }
-  //
-  // const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
-  //
-  // plane
-  //   .onReady(() => {
-  //     //console.log(plane.material.getAddedShaderCode('vertex'))
-  //     //console.log(plane.material.getAddedShaderCode('fragment'))
-  //   })
-  //   .onRender(() => {
-  //     // update our time uniform value
-  //     plane.uniforms.time.value++
-  //
-  //     const result = computePass.getWorkGroupResult({ workGroupName: 'works', bindingName: 'vertices' })
-  //
-  //     if (result) {
-  //       plane.storages.displacement.value.set(result)
-  //       plane.storages.displacement.shouldUpdate = true
-  //     }
-  //
-  //     plane.rotation.y += 0.01
-  //   })
-  //
-  // // TEST
-  // console.log(plane.material, gpuCurtains)
 })

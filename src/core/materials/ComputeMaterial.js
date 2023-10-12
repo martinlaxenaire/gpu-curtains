@@ -116,7 +116,7 @@ export class ComputeMaterial extends Material {
   copyBufferToResult(commandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
       bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-        if (bindingBuffer.inputBinding.copyResult) {
+        if (bindingBuffer.inputBinding.shouldCopyResult) {
           commandEncoder.copyBufferToBuffer(
             bindingBuffer.buffer,
             0,
@@ -132,7 +132,7 @@ export class ComputeMaterial extends Material {
   setWorkGroupsResult() {
     this.bindGroups.forEach((bindGroup) => {
       bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-        if (bindingBuffer.inputBinding.copyResult) {
+        if (bindingBuffer.inputBinding.shouldCopyResult) {
           this.setBufferResult(bindingBuffer)
         }
       })

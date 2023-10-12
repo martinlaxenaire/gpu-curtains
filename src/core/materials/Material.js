@@ -128,73 +128,52 @@ export class Material {
     })
   }
 
-  cloneBindGroupAtIndex(index = 0) {
-    const originalBindGroup = this.bindGroups.find((bindGroup) => bindGroup.index === index)
-    if (originalBindGroup) {
-      const clone = originalBindGroup.clone()
-      this.clonedBindGroups.push(clone)
-      return clone
-    } else {
-      return null
-    }
-  }
-
-  // swapBindGroups(firstBindGroup, secondBindGroup) {
+  // cloneBindGroupAtIndex(index = 0) {
+  //   const originalBindGroup = this.bindGroups.find((bindGroup) => bindGroup.index === index)
+  //   if (originalBindGroup) {
+  //     const clone = originalBindGroup.clone()
+  //     this.clonedBindGroups.push(clone)
+  //     return clone
+  //   } else {
+  //     return null
+  //   }
+  // }
   //
+  // swapBindGroupsAtIndex(index = 0) {
+  //   const originalBindGroupIndex = this.bindGroups.findIndex((bindGroup) => bindGroup.index === index)
+  //   const clonedBindGroupIndex = this.clonedBindGroups.findIndex((bindGroup) => bindGroup.index === index)
+  //
+  //   const originalBindGroup = originalBindGroupIndex !== -1 ? this.bindGroups[originalBindGroupIndex] : null
+  //   const clonedBindGroup = clonedBindGroupIndex !== -1 ? this.clonedBindGroups[clonedBindGroupIndex] : null
+  //
+  //   if (originalBindGroup && clonedBindGroup && originalBindGroup.type === clonedBindGroup.type) {
+  //     // swap
+  //     ;[this.bindGroups[originalBindGroupIndex], this.clonedBindGroups[clonedBindGroupIndex]] = [
+  //       this.clonedBindGroups[clonedBindGroupIndex],
+  //       this.bindGroups[originalBindGroupIndex],
+  //     ]
+  //   }
   // }
 
-  swapBindGroupsAtIndex(index = 0) {
-    const originalBindGroupIndex = this.bindGroups.findIndex((bindGroup) => bindGroup.index === index)
-    const clonedBindGroupIndex = this.clonedBindGroups.findIndex((bindGroup) => bindGroup.index === index)
-
-    const originalBindGroup = originalBindGroupIndex !== -1 ? this.bindGroups[originalBindGroupIndex] : null
-    const clonedBindGroup = clonedBindGroupIndex !== -1 ? this.clonedBindGroups[clonedBindGroupIndex] : null
-
-    if (originalBindGroup && clonedBindGroup && originalBindGroup.type === clonedBindGroup.type) {
-      // swap
-      ;[this.bindGroups[originalBindGroupIndex], this.clonedBindGroups[clonedBindGroupIndex]] = [
-        this.clonedBindGroups[clonedBindGroupIndex],
-        this.bindGroups[originalBindGroupIndex],
-      ]
-    }
-  }
-
-  getBindingsBuffersByBindingName(bindingName = '') {
-    let bindings = []
-    this.bindGroups.forEach((bindGroup) => {
-      const binding = bindGroup.bindingsBuffers.filter((bindingBuffer) =>
-        bindingBuffer.inputBinding.useStruct
-          ? bindingBuffer.inputBinding.name === bindingName
-          : bindingBuffer.inputBinding.name ===
-            bindingName +
-              toKebabCase(
-                bindingBuffer.inputBinding.bindingElements.length
-                  ? bindingBuffer.inputBinding.bindingElements[0].name
-                  : ''
-              )
-      )
-
-      if (binding.length) {
-        bindings = [...bindings, ...binding]
-      }
-    })
-
-    return bindings
-  }
-
-  swapBindingsBuffers(firstBindings = [], secondBindings = []) {
-    firstBindings.forEach((firstBinding, index) => {
-      let secondBinding = secondBindings[index]
-      if (secondBinding) {
-        console.log(firstBinding, secondBinding)
-        const temp = firstBinding
-        firstBinding = secondBinding
-        secondBinding = temp
-
-        console.log(secondBinding.inputBinding.name, '->', firstBinding.inputBinding.name)
-      }
+  getBindGroupByBindingName(bindingName = '') {
+    return this.bindGroups.find((bindGroup) => {
+      return bindGroup.bindings.find((binding) => binding.name === bindingName)
     })
   }
+
+  // swapBindingsBuffers(firstBindings = [], secondBindings = []) {
+  //   firstBindings.forEach((firstBinding, index) => {
+  //     let secondBinding = secondBindings[index]
+  //     if (secondBinding) {
+  //       console.log(firstBinding, secondBinding)
+  //       const temp = firstBinding
+  //       firstBinding = secondBinding
+  //       secondBinding = temp
+  //
+  //       console.log(secondBinding.inputBinding.name, '->', firstBinding.inputBinding.name)
+  //     }
+  //   })
+  // }
 
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
@@ -265,6 +244,29 @@ export class Material {
     }
   }
 
+  getBindingsBuffersByBindingName(bindingName = '') {
+    let bindings = []
+    this.bindGroups.forEach((bindGroup) => {
+      const binding = bindGroup.bindingsBuffers.filter((bindingBuffer) =>
+        bindingBuffer.inputBinding.useStruct
+          ? bindingBuffer.inputBinding.name === bindingName
+          : bindingBuffer.inputBinding.name ===
+            bindingName +
+              toKebabCase(
+                bindingBuffer.inputBinding.bindingElements.length
+                  ? bindingBuffer.inputBinding.bindingElements[0].name
+                  : ''
+              )
+      )
+
+      if (binding.length) {
+        bindings = [...bindings, ...binding]
+      }
+    })
+
+    return bindings
+  }
+
   /** TEXTURES **/
 
   setTextures() {
@@ -281,7 +283,8 @@ export class Material {
     // is it used in our shaders?
     if (
       this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 ||
-      this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1
+      this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 ||
+      this.options.shaders.compute.code.indexOf(texture.options.name) !== -1
     ) {
       this.texturesBindGroup.addTexture(texture)
     }

@@ -13,9 +13,6 @@ export class ComputeMaterial extends Material {
 
   setMaterial()
 
-  createBindGroups()
-  destroyBindGroups()
-
   get hasMappedBuffer(): boolean
 
   render(pass: GPUComputePassEncoder)

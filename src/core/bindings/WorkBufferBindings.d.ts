@@ -2,12 +2,12 @@ import { BufferBindings, BufferBindingsParams } from './BufferBindings'
 
 interface WorkBufferBindingsParams extends BufferBindingsParams {
   dispatchSize?: number | number[]
-  copyResult?: boolean
+  shouldCopyResult?: boolean
 }
 
 export class WorkBufferBindings extends BufferBindings {
   dispatchSize: number[]
-  copyResult: boolean
+  shouldCopyResult: boolean
   result: Float32Array
 
   constructor({
@@ -19,5 +19,6 @@ export class WorkBufferBindings extends BufferBindings {
     bindings,
     visibility,
     dispatchSize,
+    shouldCopyResult,
   }: WorkBufferBindingsParams)
 }

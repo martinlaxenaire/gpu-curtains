@@ -78,18 +78,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         
         var transformed: vec3f = attributes.position;
         
-        //transformed.y += instanceIndex * scroll.strength * 0.025;
-        
-        // avoid depth overlapping issues
-        transformed.z -= 0.0001 * instanceIndex;
-        transformed.z -= instanceIndex * abs(scroll.strength) * 0.01;
-        
+        // rotate first
         var angle: f32 = 3.141592 * scroll.strength / scroll.max;
         
         var rotatedTransformed: vec4f = vec4(transformed, 1.0) * rotationMatrix(vec3(0.0, 0.0, 1.0), angle * instanceIndex / instances.count);
         
         transformed = rotatedTransformed.xyz;
-                
+        
+        //transformed.y += instanceIndex * scroll.strength * 0.025;
+        
+        // avoid depth overlapping issues
+        transformed.z -= 0.0001 * instanceIndex;
+        transformed.z -= instanceIndex * abs(scroll.strength) * 0.01;
+  
         vsOutput.position = getOutputPosition(camera, matrices, transformed);
         vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
         vsOutput.instanceIndex = instanceIndex;

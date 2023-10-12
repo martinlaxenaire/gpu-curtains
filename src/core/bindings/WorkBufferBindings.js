@@ -10,7 +10,7 @@ export class WorkBufferBindings extends BufferBindings {
     bindings = {},
     visibility,
     dispatchSize,
-    copyResult = false,
+    shouldCopyResult = false,
   }) {
     bindingType = 'storageWrite'
     visibility = 'compute'
@@ -28,7 +28,7 @@ export class WorkBufferBindings extends BufferBindings {
     }
 
     this.dispatchSize = dispatchSize
-    this.copyResult = copyResult
+    this.shouldCopyResult = shouldCopyResult
 
     this.result = new Float32Array(this.value.slice())
   }

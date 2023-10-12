@@ -72,13 +72,15 @@ export class Material {
   getAddedShaderCode(shaderType: FullShadersType): string
 
   createBindGroups()
-  cloneBindGroupAtIndex(index?: number): AllowedBindGroups | null
-  swapBindGroupsAtIndex(index?: number)
+  // cloneBindGroupAtIndex(index?: number): AllowedBindGroups | null
+  // swapBindGroupsAtIndex(index?: number)
+  getBindGroupByBindingName(bindingName?: BufferBindings['name']): AllowedBindGroups | null
   destroyBindGroups()
   updateBindGroups()
 
   setBindings()
   shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], uniformName?: BufferBindingsUniform['name'])
+  getBindingsBuffersByBindingName(bindingName?: BufferBindings['name']): BufferBindingsUniform[]
 
   setTextures()
   addTexture(texture: Texture | RenderTexture)
