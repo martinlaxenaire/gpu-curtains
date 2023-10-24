@@ -115,9 +115,8 @@ export class Material {
     this.inputsBindings = []
 
     if (this.options.inputs) {
-      const inputsBindGroup = new BindGroup({
+      const inputsBindGroup = new BindGroup(this.renderer, {
         label: this.options.label + ': Bindings bind group',
-        renderer: this.renderer,
         inputs: this.options.inputs,
       })
 
@@ -267,9 +266,8 @@ export class Material {
 
   setTextures() {
     this.textures = []
-    this.texturesBindGroup = new TextureBindGroup({
+    this.texturesBindGroup = new TextureBindGroup(this.renderer, {
       label: this.options.label + ': Textures bind group',
-      renderer: this.renderer,
     })
   }
 

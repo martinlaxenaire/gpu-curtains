@@ -367,9 +367,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     normalPositionArray[i + 2] = 1
   }
 
-  const computeBindGroup = new GPUCurtains.BindGroup({
+  const computeBindGroup = new GPUCurtains.BindGroup(gpuCurtains.renderer, {
     label: 'Cloth simulation compute bind group',
-    renderer: gpuCurtains.renderer,
     inputs: {
       uniforms: {
         dimension: {

@@ -1,4 +1,4 @@
-import { GPURenderer } from '../renderers/GPURenderer'
+import { Renderer } from '../../types/renderer-utils'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { SamplerBindings } from '../bindings/SamplerBindings'
 import { TextureBindings } from '../bindings/TextureBindings'
@@ -20,7 +20,6 @@ export type BindGroupInputs = Record<AllowedBindingsTypes, InputBindings>
 
 interface BindGroupParams {
   label?: string
-  renderer: GPURenderer
   index?: number
   bindings?: BindGroupBindingElement[]
   inputs?: BindGroupInputs
@@ -28,7 +27,7 @@ interface BindGroupParams {
 
 export class BindGroup {
   type: string
-  renderer: GPURenderer
+  renderer: Renderer
   options: {
     label: string
     index: number
@@ -52,7 +51,7 @@ export class BindGroup {
   needsReset: boolean
   needsPipelineFlush: boolean
 
-  constructor({ label, renderer, index, bindings, inputs }: BindGroupParams)
+  constructor(renderer: Renderer, { label, index, bindings, inputs }?: BindGroupParams)
 
   setIndex(index: number)
 

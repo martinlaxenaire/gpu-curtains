@@ -1,9 +1,8 @@
+import { Renderer } from '../../types/renderer-utils'
 import { Material, MaterialInputBindingsParams, MaterialOptions, MaterialShaders, ShaderOptions } from './Material'
 import { Geometry } from '../geometries/Geometry'
 import { IndexedGeometry } from '../geometries/IndexedGeometry'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
-import { BufferBindings } from '../bindings/BufferBindings'
-import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 
 // shaders
 export interface RenderShaders {
@@ -48,7 +47,7 @@ export class RenderMaterial extends Material {
   attributes: RenderMaterialAttributes
   options: MaterialOptions
 
-  constructor(renderer: GPUCurtainsRenderer, parameters: RenderMaterialParams)
+  constructor(renderer: Renderer, parameters: RenderMaterialParams)
 
   setMaterial()
   setPipelineEntryBuffers()

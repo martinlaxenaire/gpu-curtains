@@ -1,5 +1,5 @@
 import MeshBaseMixin, { MeshBaseParams } from './MeshBaseMixin'
-import { GPURenderer } from '../renderers/GPURenderer'
+import { Renderer } from '../../types/renderer-utils'
 import { RectBBox } from '../../curtains/objects3D/DOMObject3D'
 import { DOMElement, DOMElementBoundingRect } from '../DOMElement'
 import { Vec2 } from '../../math/Vec2'
@@ -14,7 +14,7 @@ export class FullscreenPlane extends MeshBaseMixin(EmptyClass) {
   }
   domElement: DOMElement
 
-  constructor(renderer: GPURenderer, parameters: MeshBaseParams)
+  constructor(renderer: Renderer, parameters: MeshBaseParams)
 
   resize(boundingRect: DOMElementBoundingRect)
 

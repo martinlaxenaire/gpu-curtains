@@ -1,4 +1,4 @@
-import { GPURenderer } from '../renderers/GPURenderer'
+import { Renderer } from '../../types/renderer-utils'
 import { DOMElementBoundingRect } from '../DOMElement'
 
 interface RenderPassParams {
@@ -9,7 +9,7 @@ interface RenderPassParams {
 }
 
 export class RenderPass {
-  renderer: GPURenderer
+  renderer: Renderer
   type: string
   uuid: string
 
@@ -25,13 +25,13 @@ export class RenderPass {
     height: number
   }
 
-  sampleCount: GPURenderer['sampleCount']
+  sampleCount: Renderer['sampleCount']
 
   depthTexture: GPUTexture | undefined
   renderTexture: GPUTexture
   descriptor: GPURenderPassDescriptor
 
-  constructor(renderer: GPURenderer, { label, depth, loadOp }: RenderPassParams)
+  constructor(renderer: Renderer, { label, depth, loadOp }: RenderPassParams)
 
   createDepthTexture()
   createRenderTexture()

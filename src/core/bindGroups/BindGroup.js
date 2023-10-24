@@ -5,7 +5,7 @@ import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 import { BufferBindings } from '../bindings/BufferBindings'
 
 export class BindGroup {
-  constructor({ label = 'BindGroup', renderer, index = 0, bindings = [], inputs }) {
+  constructor(renderer, { label = 'BindGroup', index = 0, bindings = [], inputs } = {}) {
     this.type = 'BindGroup'
 
     // we could pass our curtains object OR our curtains renderer object

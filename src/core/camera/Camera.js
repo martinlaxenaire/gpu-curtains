@@ -267,18 +267,4 @@ export class Camera {
       0, 0, d, 0
     )
   }
-
-  /***
-   Force the projection matrix to update (used in Plane class objects context restoration)
-   ***/
-  forceUpdate() {
-    this.shouldUpdate = true
-  }
-
-  /***
-   Cancel the projection matrix update (used in Plane class objects after the projection matrix has been updated)
-   ***/
-  cancelUpdate() {
-    this.shouldUpdate = false
-  }
 }

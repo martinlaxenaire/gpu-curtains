@@ -1,4 +1,4 @@
-import { MaterialBindGroups, MaterialShaders, MaterialShadersType, FullShadersType } from '../materials/Material'
+import { MaterialBindGroups, MaterialShaders, FullShadersType } from '../materials/Material'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 
 interface PipelineEntryShader {

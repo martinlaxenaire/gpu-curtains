@@ -2,7 +2,7 @@ import { BindGroup } from './BindGroup'
 import { isRenderer } from '../../utils/renderer-utils'
 
 export class TextureBindGroup extends BindGroup {
-  constructor({ label, renderer, index = 0, bindings = [], textures = [] }) {
+  constructor(renderer, { label, index = 0, bindings = [], inputs, textures = [] } = {}) {
     const type = 'TextureBindGroup'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -10,7 +10,7 @@ export class TextureBindGroup extends BindGroup {
 
     isRenderer(renderer, type)
 
-    super({ label, renderer, index, bindings })
+    super({ label, renderer, index, bindings, inputs })
 
     this.options.textures = textures
 

@@ -8,7 +8,7 @@ import { BindGroupBindingElement } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
 import { Plane } from '../../curtains/meshes/Plane'
-import { GPURenderer } from '../renderers/GPURenderer'
+import { Renderer } from '../../types/renderer-utils'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { RenderPass } from '../renderPasses/RenderPass'
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
@@ -52,7 +52,7 @@ declare const defaultTextureParams: TextureParams
 
 export class Texture extends Object3D {
   type: string
-  renderer: GPURenderer
+  renderer: Renderer
 
   sampler: SamplerBindingResource
   texture: TextureBindingResource
@@ -80,7 +80,7 @@ export class Texture extends Object3D {
   #coverScale: Vec3
   #rotationMatrix: Mat4
 
-  constructor(renderer: GPURenderer, parameters?: TextureDefaultParams)
+  constructor(renderer: Renderer, parameters?: TextureDefaultParams)
 
   setBindings()
 

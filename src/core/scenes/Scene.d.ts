@@ -1,4 +1,5 @@
-import { GPURenderer, MeshType } from '../renderers/GPURenderer'
+import { Renderer } from '../../types/renderer-utils'
+import { MeshType } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 import { RenderPass } from '../renderPasses/RenderPass'
@@ -27,11 +28,11 @@ type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'screen'
 type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
 export class Scene {
-  renderer: GPURenderer
+  renderer: Renderer
   computePassEntries: ComputePass[]
   renderPassEntries: RenderPassEntries
 
-  constructor({ renderer: GPURenderer })
+  constructor({ renderer: Renderer })
 
   addComputePass(computePass: ComputePass)
   removeComputePass(computePass: ComputePass)

@@ -1,16 +1,16 @@
 import { PipelineEntry, PipelineEntryBaseParams } from './PipelineEntry'
 import { RenderPipelineEntry, RenderPipelineEntryBaseParams } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
-import { GPURenderer } from '../renderers/GPURenderer'
+import { Renderer } from '../../types/renderer-utils'
 
 type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
 
 export class PipelineManager {
-  renderer: GPURenderer
+  renderer: Renderer
   currentPipelineIndex: number | null
   pipelineEntries: PipelineEntry[]
 
-  constructor({ renderer: GPURenderer })
+  constructor({ renderer: Renderer })
 
   isSameRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry | null
   createRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry

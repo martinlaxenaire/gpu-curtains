@@ -97,9 +97,8 @@ export class GPUCameraRenderer extends GPURenderer {
     })
 
     // now initialize bind group
-    this.cameraBindGroup = new BindGroup({
+    this.cameraBindGroup = new BindGroup(this, {
       label: 'Camera Uniform bind group',
-      renderer: this,
       bindings: [this.cameraUniformBinding],
     })
   }

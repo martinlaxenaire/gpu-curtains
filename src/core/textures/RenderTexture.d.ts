@@ -1,4 +1,4 @@
-import { GPURenderer } from '../renderers/GPURenderer'
+import { Renderer } from '../../types/renderer-utils'
 import { BindGroupBindingElement } from '../bindGroups/BindGroup'
 
 interface RenderTextureBaseParams {
@@ -19,7 +19,7 @@ interface RenderTextureParams extends RenderTextureDefaultParams {
 declare const defaultRenderTextureParams: RenderTextureParams
 
 export class RenderTexture {
-  renderer: GPURenderer
+  renderer: Renderer
   type: string
 
   sampler: GPUSampler
@@ -35,7 +35,7 @@ export class RenderTexture {
   bindings: Array<BindGroupBindingElement>
   shouldUpdateBindGroup: boolean
 
-  constructor(renderer: GPURenderer, parameters?: RenderTextureDefaultParams)
+  constructor(renderer: Renderer, parameters?: RenderTextureDefaultParams)
 
   setSourceSize()
 
