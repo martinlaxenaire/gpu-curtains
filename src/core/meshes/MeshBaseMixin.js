@@ -21,10 +21,7 @@ const defaultMeshBaseParams = {
   transparent: false,
   visible: true,
   renderOrder: 0,
-  texturesOptions: {
-    texture: {},
-    sampler: {},
-  },
+  texturesOptions: {},
 }
 
 const MeshBaseMixin = (superclass) =>
@@ -123,24 +120,12 @@ const MeshBaseMixin = (superclass) =>
     }
 
     setMeshMaterial(meshParameters) {
-      const { inputs, inputBindGroups, ...materialOptions } = meshParameters
-      const { useAsyncPipeline, transparent, useProjection, depthWriteEnabled, depthCompare, cullMode, verticesOrder } =
-        materialOptions
-
-      this.transparent = materialOptions.transparent
+      this.transparent = meshParameters.transparent
 
       this.setMaterial({
         label: this.options.label,
         shaders: this.options.shaders,
-        useAsyncPipeline,
-        transparent,
-        useProjection,
-        depthWriteEnabled,
-        depthCompare,
-        cullMode,
-        verticesOrder,
-        inputs,
-        inputBindGroups,
+        ...meshParameters,
         geometry: this.geometry,
       })
     }
@@ -176,7 +161,7 @@ const MeshBaseMixin = (superclass) =>
         options.label = this.options.label + ' ' + options.name
       }
 
-      const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions })
+      const texture = new Texture(this.renderer, { ...options, texture: this.options.texturesOptions })
 
       this.material.addTexture(texture)
 

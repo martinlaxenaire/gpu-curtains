@@ -7,12 +7,10 @@ interface RenderTextureBaseParams {
 }
 
 interface RenderTextureDefaultParams extends RenderTextureBaseParams {
-  sampler?: GPUSamplerDescriptor
   fromTexture?: RenderTexture
 }
 
 interface RenderTextureParams extends RenderTextureDefaultParams {
-  sampler: GPUSamplerDescriptor
   fromTexture: RenderTexture | null
 }
 
@@ -22,7 +20,6 @@ export class RenderTexture {
   renderer: Renderer
   type: string
 
-  sampler: GPUSampler
   texture: GPUTexture
 
   size: {
@@ -39,7 +36,6 @@ export class RenderTexture {
 
   setSourceSize()
 
-  createSampler()
   createTexture()
 
   setBindings()

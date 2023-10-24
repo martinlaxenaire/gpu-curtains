@@ -89,7 +89,7 @@ export class GPURenderer {
 
   addTexture(texture: Texture)
   setTexture(texture: Texture)
-  createSampler(options: GPUSamplerDescriptor): GPUSampler
+  createSampler(sampler: Sampler): GPUSampler
   createTexture(options: GPUTextureDescriptor): GPUTexture
   uploadTexture(texture: Texture)
   importExternalTexture(video: HTMLVideoElement): GPUExternalTexture

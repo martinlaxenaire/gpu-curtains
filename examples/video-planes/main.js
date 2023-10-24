@@ -54,7 +54,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      return textureSample(videoTexture, videoTextureSampler, fsInput.uv);
+      return textureSample(videoTexture, defaultSampler, fsInput.uv);
     }
   `
 
@@ -65,7 +65,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      return textureSampleBaseClampToEdge(videoTexture, videoTextureSampler, fsInput.uv);
+      return textureSampleBaseClampToEdge(videoTexture, defaultSampler, fsInput.uv);
     }
   `
 

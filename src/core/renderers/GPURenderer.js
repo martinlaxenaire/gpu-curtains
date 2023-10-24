@@ -4,6 +4,7 @@ import { DOMElement } from '../DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
 import { throwWarning, throwError, logError } from '../../utils/utils'
+import { Sampler } from '../samplers/Sampler'
 
 export class GPURenderer {
   _onBeforeRenderCallback = (commandEncoder) => {
@@ -265,32 +266,25 @@ export class GPURenderer {
   }
 
   setTexture(texture) {
-    if (!texture.sampler) {
-      texture.sampler = this.createSampler(texture.options.sampler)
-    }
-
     if (!texture.texture) {
       // call createTexture on texture class, that is then going to call the renderer createTexture method
       texture.createTexture()
     }
   }
 
-  createSampler(options) {
-    const existingSampler = this.samplers.find((sampler) => {
-      return JSON.stringify(sampler.options) === JSON.stringify(options) && sampler.sampler
+  createSampler(sampler) {
+    const existingSampler = this.samplers.find((existingSampler) => {
+      return JSON.stringify(existingSampler.options) === JSON.stringify(sampler.options) && existingSampler.sampler
     })
 
     if (existingSampler) {
       return existingSampler.sampler
     } else {
-      const sampler = this.device.createSampler(options)
+      const gpuSampler = this.device.createSampler({ label: sampler.label, ...sampler.options })
 
-      this.samplers.push({
-        sampler,
-        options,
-      })
+      this.samplers.push(sampler)
 
-      return sampler
+      return gpuSampler
     }
   }
 

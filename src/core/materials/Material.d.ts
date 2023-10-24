@@ -17,6 +17,7 @@ import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
 import { AttributeBufferParams } from '../../types/buffers-utils'
 import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
+import { Sampler } from '../samplers/Sampler'
 
 // shaders
 export type MaterialShadersType = 'vertex' | 'fragment' | 'compute'
@@ -71,6 +72,7 @@ type MaterialBindGroups = AllowedBindGroups[]
 interface MaterialInputBindingsParams {
   inputs?: BindGroupInputs
   inputBindGroups?: BindGroup[]
+  samplers?: Sampler[]
 }
 
 interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
@@ -81,6 +83,7 @@ interface MaterialOptions {
   useAsyncPipeline?: boolean
   inputs?: BindGroupInputs
   inputBindGroups?: BindGroup[]
+  samplers?: Sampler[]
   rendering?: RenderMaterialRenderingOptions
 }
 
@@ -136,6 +139,9 @@ export class Material {
   setTextures()
   addTexture(texture: Texture | RenderTexture)
   destroyTextures()
+
+  setSamplers()
+  addSampler(sampler: Sampler)
 
   onBeforeRender()
   render(pass: GPURenderPassEncoder | GPUComputePassEncoder)

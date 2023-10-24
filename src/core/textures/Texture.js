@@ -1,6 +1,5 @@
 import { Vec3 } from '../../math/Vec3'
 import { isRenderer } from '../../utils/renderer-utils'
-import { SamplerBindings } from '../bindings/SamplerBindings'
 import { TextureBindings } from '../bindings/TextureBindings'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Object3D } from '../objects3D/Object3D'
@@ -15,14 +14,6 @@ const defaultTextureParams = {
     format: 'rgba8unorm',
     placeholderColor: [0, 0, 0, 255], // default to black
     useExternalTextures: true,
-  },
-  sampler: {
-    addressModeU: 'repeat',
-    addressModeV: 'repeat',
-    magFilter: 'linear',
-    minFilter: 'linear',
-    mipmapFilter: 'linear',
-    maxAnisotropy: 1,
   },
   fromTexture: null,
 }
@@ -60,13 +51,11 @@ export class Texture extends Object3D {
     }
 
     this.options = { ...defaultOptions, ...parameters }
-    // force merge of texture and sampler objects
+    // force merge of texture object
     this.options.texture = { ...defaultOptions.texture, ...parameters.texture }
-    this.options.sampler = { ...defaultOptions.sampler, ...parameters.sampler }
 
     this.options.label = this.options.label ?? this.options.name
 
-    this.sampler = null
     this.texture = null
     this.source = null
 
@@ -107,12 +96,6 @@ export class Texture extends Object3D {
 
   setBindings() {
     this.bindings = [
-      new SamplerBindings({
-        label: this.options.label + ': sampler',
-        name: this.options.name,
-        bindingType: 'sampler',
-        resource: this.sampler,
-      }),
       new TextureBindings({
         label: this.options.label + ': texture',
         name: this.options.name,
@@ -279,7 +262,6 @@ export class Texture extends Object3D {
     this.options.sourceType = texture.options.sourceType
 
     this.options.texture = texture.options.texture
-    this.options.sampler = texture.options.sampler
 
     this.sourceLoaded = texture.sourceLoaded
     this.sourceUploaded = texture.sourceUploaded
@@ -287,7 +269,6 @@ export class Texture extends Object3D {
     if (texture.texture) {
       if (texture.sourceLoaded) {
         this.size = texture.size
-        this.sampler = texture.sampler
         this.source = texture.source
 
         this.resize()
@@ -327,10 +308,6 @@ export class Texture extends Object3D {
     }
 
     this.shouldUpdate = true
-  }
-
-  createSampler() {
-    this.sampler = this.renderer.createSampler(this.options.sampler)
   }
 
   /** SOURCES **/

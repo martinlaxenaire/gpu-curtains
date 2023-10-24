@@ -13,10 +13,7 @@ export interface MeshBaseParams extends RenderMaterialParams {
   visible?: boolean
   renderOrder?: number
   renderTarget?: RenderTarget
-  texturesOptions?: {
-    textures: CurtainsTextureOptions
-    sampler: GPUSamplerDescriptor
-  }
+  texturesOptions?: CurtainsTextureOptions
 }
 
 declare let meshIndex: number
@@ -40,10 +37,7 @@ export class MeshBase {
   options: {
     label: MeshBaseParams['label']
     shaders: MeshBaseParams['shaders']
-    texturesOptions: {
-      texture: CurtainsTextureOptions
-      sampler: GPUSamplerDescriptor
-    }
+    texturesOptions: CurtainsTextureOptions
   }
 
   material: RenderMaterial

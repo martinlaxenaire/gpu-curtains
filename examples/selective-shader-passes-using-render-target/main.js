@@ -66,7 +66,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      return textureSample(planeTexture, planeTextureSampler, fsInput.uv);
+      return textureSample(planeTexture, defaultSampler, fsInput.uv);
     }
   `
 
@@ -98,7 +98,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec4f = textureSample(renderTexture, renderTextureSampler, fsInput.uv);
+      var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
       var grayscale: vec3f = vec3(color.r * 0.3 + color.g * 0.59 + color.b * 0.11);
       var grayscaleColor: vec4f = vec4(grayscale, color.a);
     
@@ -175,9 +175,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
     
-      var red: vec4f = textureSample(renderTexture, renderTextureSampler, vec2(uv.x, uv.y - scrollEffect.strength / 500.0));
-      var green: vec4f = textureSample(renderTexture, renderTextureSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1000.0));
-      var blue: vec4f = textureSample(renderTexture, renderTextureSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1500.0));
+      var red: vec4f = textureSample(renderTexture, defaultSampler, vec2(uv.x, uv.y - scrollEffect.strength / 500.0));
+      var green: vec4f = textureSample(renderTexture, defaultSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1000.0));
+      var blue: vec4f = textureSample(renderTexture, defaultSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1500.0));
     
       var color = vec4(red.r, green.g, blue.b, min(1.0, red.a + blue.a + green.a));
       return color;
@@ -245,7 +245,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       uv.x = uv.x * (1.0 + scrollDeformation * 0.0035 * horizontalStretch * effectStrength);
       uv.x = (uv.x + 1.0) * 0.5;
 
-      var color: vec4f = textureSample(renderTexture, renderTextureSampler, uv);      
+      var color: vec4f = textureSample(renderTexture, defaultSampler, uv);      
 
       return color;
     }

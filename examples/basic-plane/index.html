@@ -118,7 +118,7 @@
             };
 
             @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-              var texture: vec4f = textureSample(texture0, texture0Sampler, fsInput.uv);
+              var texture: vec4f = textureSample(texture0, defaultSampler, fsInput.uv);
 
               return texture;
             }

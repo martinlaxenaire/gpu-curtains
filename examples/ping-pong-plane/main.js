@@ -43,7 +43,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       /*** end of whole block commenting for a regular mouse flow effect ***/
 
-      var color: vec4f = textureSample(renderTexture, renderTextureSampler, uv) * flowmap.dissipation;
+      var color: vec4f = textureSample(renderTexture, defaultSampler, uv) * flowmap.dissipation;
 
       var cursor: vec2f = fsInput.uv - mousePosition;
       cursor.x = cursor.x * flowmap.aspect;
@@ -181,10 +181,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {  
-      var flowMap: vec4f = textureSample(flowMapTexture, flowMapTextureSampler, fsInput.uv);
+      var flowMap: vec4f = textureSample(flowMapTexture, defaultSampler, fsInput.uv);
       
       var displacement: vec2f = vec2(-flowMap.r, flowMap.g);
-      var color: vec4f = textureSample(displacedTexture, displacedTextureSampler, fsInput.displacedUv + displacement * 0.1);
+      
+      // use our mirror sampler defined below
+      var color: vec4f = textureSample(displacedTexture, mirrorSampler, fsInput.displacedUv + displacement * 0.1);
       
       // get a B&W version of our image texture
       var grayscale: vec3f = vec3(color.r * 0.3 + color.g * 0.59 + color.b * 0.11);
@@ -213,15 +215,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    texturesOptions: {
-      texture: {
-        // display a redish color while textures are loading
-        placeholderColor: [238, 101, 87, 255],
-      },
-      sampler: {
+    samplers: [
+      // We don't want to see our media texture edges
+      // so we're going to use a custom sampler with mirror repeat
+      new GPUCurtains.Sampler(gpuCurtains, {
+        label: 'Mirror sampler',
+        name: 'mirrorSampler',
         addressModeU: 'mirror-repeat',
         addressModeV: 'mirror-repeat',
-      },
+      }),
+    ],
+    texturesOptions: {
+      // display a redish color while textures are loading
+      placeholderColor: [238, 101, 87, 255],
     },
   })
 

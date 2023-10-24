@@ -1,17 +1,9 @@
 import { isRenderer } from '../../utils/renderer-utils'
-import { SamplerBindings } from '../bindings/SamplerBindings'
 import { TextureBindings } from '../bindings/TextureBindings'
 
 const defaultRenderTextureParams = {
   label: 'Texture',
   name: 'texture',
-  sampler: {
-    addressModeU: 'mirror-repeat',
-    addressModeV: 'mirror-repeat',
-    magFilter: 'linear',
-    minFilter: 'linear',
-    mipmapFilter: 'linear',
-  },
   fromTexture: null,
 }
 
@@ -33,9 +25,6 @@ export class RenderTexture {
     // sizes
     this.setSourceSize()
 
-    // sampler
-    this.createSampler()
-
     // texture
     this.createTexture()
 
@@ -50,10 +39,6 @@ export class RenderTexture {
       width: rendererBoundingRect.width,
       height: rendererBoundingRect.height,
     }
-  }
-
-  createSampler() {
-    this.sampler = this.renderer.createSampler(this.options.sampler)
   }
 
   createTexture() {
@@ -78,14 +63,8 @@ export class RenderTexture {
 
   setBindings() {
     this.bindings = [
-      new SamplerBindings({
-        label: this.options.label + ': ' + this.options.name,
-        name: this.options.name,
-        bindingType: 'sampler',
-        resource: this.sampler,
-      }),
       new TextureBindings({
-        label: this.options.label + ': ' + this.options.name + ' sampler',
+        label: this.options.label + ': ' + this.options.name + ' texture',
         name: this.options.name,
         resource: this.texture,
         bindingType: 'texture',

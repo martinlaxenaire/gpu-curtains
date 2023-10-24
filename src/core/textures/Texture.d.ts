@@ -1,5 +1,4 @@
 import { TextureBindingResource } from '../bindings/TextureBindings'
-import { SamplerBindingResource } from '../bindings/SamplerBindings'
 import { Object3D } from '../objects3D/Object3D'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Mesh } from '../meshes/Mesh'
@@ -28,13 +27,11 @@ interface TextureBaseParams {
 
 interface TextureDefaultParams extends TextureBaseParams {
   texture?: CurtainsTextureOptions
-  sampler?: GPUSamplerDescriptor
   fromTexture?: Texture
 }
 
 interface TextureParams extends TextureDefaultParams {
   texture: CurtainsTextureOptions
-  sampler: GPUSamplerDescriptor
   fromTexture: Texture | null
 }
 
@@ -54,7 +51,6 @@ export class Texture extends Object3D {
   type: string
   renderer: Renderer
 
-  sampler: SamplerBindingResource
   texture: TextureBindingResource
 
   source: TextureSource
@@ -104,7 +100,6 @@ export class Texture extends Object3D {
 
   copy(texture: Texture)
   createTexture()
-  createSampler()
 
   setSourceSize()
 

@@ -62,8 +62,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       };
       
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var activeColor: vec4f = textureSample(activeTexture, activeTextureSampler, fsInput.activeUv);
-        var nextColor: vec4f = textureSample(nextTexture, nextTextureSampler, fsInput.nextUv);
+        var activeColor: vec4f = textureSample(activeTexture, defaultSampler, fsInput.activeUv);
+        var nextColor: vec4f = textureSample(nextTexture, defaultSampler, fsInput.nextUv);
         
         // port of https://gl-transitions.com/editor/windowslice
         var progress: f32 = transition.timer / transition.duration;

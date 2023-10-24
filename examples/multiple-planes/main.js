@@ -80,7 +80,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       };
       
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-        return textureSample(planeTexture, planeTextureSampler, fsInput.uv);
+        return textureSample(planeTexture, mipmapNearestSampler, fsInput.uv);
       }
     `
 
@@ -117,13 +117,16 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
       },
     },
-    texturesOptions: {
-      texture: {
-        generateMips: true,
-      },
-      sampler: {
+    samplers: [
+      // Use mipmap nearest filter
+      new GPUCurtains.Sampler(gpuCurtains, {
+        label: 'Nearest sampler',
+        name: 'mipmapNearestSampler',
         mipmapFilter: 'nearest',
-      },
+      }),
+    ],
+    texturesOptions: {
+      generateMips: true,
     },
   }
 

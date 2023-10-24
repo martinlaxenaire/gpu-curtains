@@ -2,7 +2,7 @@ import { BindGroup } from './BindGroup'
 import { isRenderer } from '../../utils/renderer-utils'
 
 export class TextureBindGroup extends BindGroup {
-  constructor(renderer, { label, index = 0, bindings = [], inputs, textures = [] } = {}) {
+  constructor(renderer, { label, index = 0, bindings = [], inputs, textures = [], samplers = [] } = {}) {
     const type = 'TextureBindGroup'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -12,7 +12,12 @@ export class TextureBindGroup extends BindGroup {
 
     super({ label, renderer, index, bindings, inputs })
 
-    this.options.textures = textures
+    //this.options.textures = textures
+    this.options = {
+      ...this.options,
+      textures,
+      samplers,
+    }
 
     this.type = type
 
@@ -30,8 +35,22 @@ export class TextureBindGroup extends BindGroup {
     return this.options.textures
   }
 
+  addSampler(sampler) {
+    this.samplers.push(sampler)
+
+    this.bindings = [...this.bindings, sampler.binding]
+  }
+
+  get samplers() {
+    return this.options.samplers
+  }
+
   get shouldCreateBindGroup() {
-    return !this.bindGroup && !this.textures.find((texture) => !texture.sampler || !texture.texture)
+    return (
+      !this.bindGroup &&
+      !this.textures.find((texture) => !texture.texture) &&
+      !this.samplers.find((sampler) => !sampler.sampler)
+    )
   }
 
   createBindingsBuffers() {
@@ -44,16 +63,19 @@ export class TextureBindGroup extends BindGroup {
         this.createBindingBuffer(inputBinding)
       } else if (inputBinding.bindingType) {
         inputBinding.bindIndex = this.entries.bindGroupLayout.length
-        const texture = this.textures[Math.floor(textureIndex * 0.5)]
+
+        const texture = this.textures[textureIndex]
 
         const bindingTypeValue = (() => {
           switch (inputBinding.bindingType) {
             case 'texture':
+              textureIndex++
               return texture.texture.createView()
             case 'externalTexture':
+              textureIndex++
               return texture.texture
             case 'sampler':
-              return texture.sampler
+              return inputBinding.resource
             default:
               console.warn('No bind group layout type provided by', inputBinding)
               break
@@ -73,7 +95,7 @@ export class TextureBindGroup extends BindGroup {
           resource: bindingTypeValue,
         })
 
-        textureIndex++
+        //textureIndex++
       }
     })
   }
@@ -114,17 +136,30 @@ export class TextureBindGroup extends BindGroup {
 
     // now we have to patch bindGroupLayout and binding at index textureIndex * 3 + 1
     // bindGroup will be updated inside resetTextureBindGroup
-    const entryIndex = textureIndex * 3 + 1
+    let entryIndex = 0
+    let countTextures = 0
+    this.entries.bindGroup.forEach((entry, index) => {
+      if (entry.resource instanceof GPUTextureView || entry.resource instanceof GPUExternalTexture) {
+        entryIndex = index
+
+        if (countTextures >= textureIndex) {
+          return
+        }
+
+        countTextures++
+      }
+    })
+
     if (texture && this.entries.bindGroupLayout[entryIndex] && this.bindings[entryIndex]) {
       this.entries.bindGroupLayout[entryIndex] = {
         binding: this.entries.bindGroupLayout[entryIndex].binding,
-        [texture.bindings[1].bindingType]: texture.texture,
+        [texture.bindings[0].bindingType]: texture.texture,
         visibility: this.entries.bindGroupLayout[entryIndex].visibility,
       }
 
       // patch binding as well
       if (this.bindings[entryIndex]) {
-        this.bindings[entryIndex].wgslGroupFragment = texture.bindings[1].wgslGroupFragment
+        this.bindings[entryIndex].wgslGroupFragment = texture.bindings[0].wgslGroupFragment
       }
 
       // bind group will be set later anyway
@@ -135,5 +170,6 @@ export class TextureBindGroup extends BindGroup {
   destroy() {
     super.destroy()
     this.options.textures = []
+    this.options.samplers = []
   }
 }

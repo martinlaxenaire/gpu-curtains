@@ -2,7 +2,7 @@ import { BindGroup } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { isRenderer } from '../../utils/renderer-utils'
 import { toKebabCase } from '../../utils/utils'
-import { BufferBindings } from '../bindings/BufferBindings'
+import { Sampler } from '../samplers/Sampler'
 
 export class Material {
   constructor(renderer, parameters) {
@@ -15,7 +15,7 @@ export class Material {
 
     this.renderer = renderer
 
-    let { shaders, label, useAsyncPipeline, inputs, inputBindGroups } = parameters
+    let { shaders, label, useAsyncPipeline, inputs, inputBindGroups, samplers } = parameters
 
     // shaders = {
     //   ...{
@@ -43,13 +43,16 @@ export class Material {
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       ...(inputs !== undefined && { inputs }),
       ...(inputBindGroups !== undefined && { inputBindGroups }),
+      ...(samplers !== undefined && { samplers }),
     }
 
     this.bindGroups = []
     this.clonedBindGroups = []
 
     this.setBindGroups()
+
     this.setTextures()
+    this.setSamplers()
   }
 
   setMaterial() {
@@ -262,7 +265,7 @@ export class Material {
     return bindings
   }
 
-  /** TEXTURES **/
+  /** SAMPLERS & TEXTURES **/
 
   setTextures() {
     this.textures = []
@@ -287,6 +290,34 @@ export class Material {
   destroyTextures() {
     this.textures?.forEach((texture) => texture.destroy())
     this.textures = []
+  }
+
+  setSamplers() {
+    this.samplers = []
+
+    this.options.samplers?.forEach((sampler) => {
+      this.addSampler(sampler)
+    })
+
+    // create our default sampler if needed
+    const hasDefaultSampler = this.samplers.find((sampler) => sampler.name === 'defaultSampler')
+    if (!hasDefaultSampler) {
+      const sampler = new Sampler(this.renderer)
+      this.addSampler(sampler)
+    }
+  }
+
+  addSampler(sampler) {
+    this.samplers.push(sampler)
+
+    // is it used in our shaders?
+    if (
+      (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(sampler.name) !== -1) ||
+      (this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(sampler.name) !== -1) ||
+      (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1)
+    ) {
+      this.texturesBindGroup.addSampler(sampler)
+    }
   }
 
   /** Render loop **/

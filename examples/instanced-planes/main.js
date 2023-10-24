@@ -107,7 +107,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
     
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
-      var color: vec4f = textureSample(planeTexture, planeTextureSampler, fsInput.uv);
+      var color: vec4f = textureSample(planeTexture, mipmapNearestSampler, fsInput.uv);
       
       var scrollEffect = scroll.strength / (scroll.max * 0.75);
       
@@ -167,13 +167,16 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
       },
     },
-    texturesOptions: {
-      texture: {
-        generateMips: true,
-      },
-      sampler: {
+    samplers: [
+      // Use mipmap nearest filter
+      new GPUCurtains.Sampler(gpuCurtains, {
+        label: 'Nearest sampler',
+        name: 'mipmapNearestSampler',
         mipmapFilter: 'nearest',
-      },
+      }),
+    ],
+    texturesOptions: {
+      generateMips: true,
     },
   }
 

@@ -106,7 +106,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      return textureSample(planeTexture, planeTextureSampler, fsInput.uv);
+      return textureSample(planeTexture, defaultSampler, fsInput.uv);
     }
   `
 
@@ -162,9 +162,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       // calculate an effect that spreads from the left-center point
       var rgbEffect: f32 = rotation.effect * distance(uv, vec2(0.0, 0.5));
     
-      var red: vec4f = textureSample(renderTexture, renderTextureSampler, uv + rgbEffect * 0.005);
-      var green: vec4f = textureSample(renderTexture, renderTextureSampler, uv);
-      var blue: vec4f = textureSample(renderTexture, renderTextureSampler, uv - rgbEffect * 0.005);
+      var red: vec4f = textureSample(renderTexture, defaultSampler, uv + rgbEffect * 0.005);
+      var green: vec4f = textureSample(renderTexture, defaultSampler, uv);
+      var blue: vec4f = textureSample(renderTexture, defaultSampler, uv - rgbEffect * 0.005);
     
       // use green channel alpha as this one does not have any displacement
       var color = vec4(red.r, green.g, blue.b, green.a);

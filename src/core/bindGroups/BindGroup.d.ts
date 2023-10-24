@@ -6,6 +6,7 @@ import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 import { Texture } from '../textures/Texture'
 import { TextureBindGroup } from './TextureBindGroup'
 import { AllowedBindingsTypes, InputBindings } from '../materials/Material'
+import { Sampler } from '../samplers/Sampler'
 
 type BindGroupBindingElement = BufferBindings | SamplerBindings | TextureBindings | WorkBufferBindings
 type AllowedBindGroups = BindGroup | TextureBindGroup
@@ -34,6 +35,7 @@ export class BindGroup {
     bindings: BindGroupBindingElement[]
     inputs?: BindGroupInputs
     textures?: Texture[]
+    samplers?: Sampler[]
   }
   index: number
 
