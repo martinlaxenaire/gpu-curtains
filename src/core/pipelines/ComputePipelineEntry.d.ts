@@ -7,6 +7,8 @@ interface PipelineEntryBuffersParams {
 }
 
 export class ComputePipelineEntry extends PipelineEntry {
+  descriptor: GPUComputePipelineDescriptor | null
+
   constructor(parameters: PipelineEntryBaseParams)
 
   setPipelineEntryBuffers(parameters: PipelineEntryBuffersParams)
@@ -14,6 +16,10 @@ export class ComputePipelineEntry extends PipelineEntry {
   patchShaders()
   createShaders()
 
+  createPipelineDescriptor()
+
   createComputePipeline()
+  createComputePipelineAsync(): Promise<void>
+
   setPipelineEntry()
 }

@@ -5,8 +5,7 @@ import { PipelineEntry } from './PipelineEntry'
 export class RenderPipelineEntry extends PipelineEntry {
   constructor(parameters) {
     let { renderer } = parameters
-    const { label, shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, useProjection } =
-      parameters
+    const { label, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, useProjection } = parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -36,9 +35,10 @@ export class RenderPipelineEntry extends PipelineEntry {
       },
     }
 
+    this.descriptor = null
+
     this.options = {
-      label,
-      shaders,
+      ...this.options,
       cullMode,
       depthWriteEnabled,
       depthCompare,
@@ -166,12 +166,12 @@ export class RenderPipelineEntry extends PipelineEntry {
     })
   }
 
-  createRenderPipeline() {
+  createPipelineDescriptor() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
 
     let vertexLocationIndex = -1
 
-    this.pipeline = this.renderer.createRenderPipeline({
+    this.descriptor = {
       label: this.options.label,
       layout: this.layout,
       vertex: {
@@ -231,12 +231,31 @@ export class RenderPipelineEntry extends PipelineEntry {
           count: this.renderer.sampleCount,
         },
       }),
-    })
+    }
+  }
+
+  createRenderPipeline() {
+    if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
+
+    this.pipeline = this.renderer.createRenderPipeline(this.descriptor)
+  }
+
+  async createRenderPipelineAsync() {
+    if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
+
+    this.pipeline = await this.renderer.createRenderPipelineAsync(this.descriptor)
   }
 
   setPipelineEntry() {
     super.setPipelineEntry()
-    this.createRenderPipeline()
-    this.ready = true
+
+    if (this.options.useAsync) {
+      this.createRenderPipelineAsync().then(() => {
+        this.ready = true
+      })
+    } else {
+      this.createRenderPipeline()
+      this.ready = true
+    }
   }
 }

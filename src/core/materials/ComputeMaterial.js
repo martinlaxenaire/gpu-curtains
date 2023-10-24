@@ -35,12 +35,21 @@ export class ComputeMaterial extends Material {
       shaders.compute.entryPoint = 'main'
     }
 
-    this.options.shaders = shaders
-    this.options.works = works
+    if (!works) works = {}
+
+    this.options = {
+      ...this.options,
+      shaders,
+      works,
+    }
+
+    //this.options.shaders = shaders
+    //this.options.works = works
 
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       label: this.options.label + ' compute pipeline',
       shaders: this.options.shaders,
+      useAsync: this.options.useAsyncPipeline,
     })
 
     this.setWorkInputBindings()

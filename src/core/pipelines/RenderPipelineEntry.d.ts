@@ -20,6 +20,7 @@ interface RenderPipelineEntryOptions extends RenderMaterialRenderingOptions {
 export class RenderPipelineEntry extends PipelineEntry {
   attributes: RenderMaterialAttributes
   options: RenderPipelineEntryOptions
+  descriptor: GPURenderPipelineDescriptor | null
 
   constructor(parameters: RenderPipelineEntryBaseParams)
 
@@ -28,6 +29,10 @@ export class RenderPipelineEntry extends PipelineEntry {
   patchShaders()
   createShaders()
 
+  createPipelineDescriptor()
+
   createRenderPipeline()
+  createRenderPipelineAsync(): Promise<void>
+
   setPipelineEntry()
 }

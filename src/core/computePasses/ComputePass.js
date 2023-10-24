@@ -37,13 +37,24 @@ export class ComputePass {
     this.uuid = generateUUID()
     Object.defineProperty(this, 'index', { value: computePassIndex++ })
 
-    const { label, shaders, renderOrder, uniforms, storages, works, inputBindGroups, autoAddToScene } = parameters
+    const {
+      label,
+      shaders,
+      renderOrder,
+      uniforms,
+      storages,
+      works,
+      inputBindGroups,
+      autoAddToScene,
+      useAsyncPipeline,
+    } = parameters
 
     this.options = {
       label,
       shaders,
-      renderOrder,
-      autoAddToScene,
+      ...(autoAddToScene !== undefined && { autoAddToScene }),
+      ...(renderOrder !== undefined && { renderOrder }),
+      ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
     }
 
     this.renderOrder = renderOrder ?? 0
@@ -61,6 +72,7 @@ export class ComputePass {
       storages,
       works,
       inputBindGroups,
+      useAsyncPipeline,
     })
 
     this.addToScene()

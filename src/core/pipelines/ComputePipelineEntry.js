@@ -1,11 +1,10 @@
 import { PipelineEntry } from './PipelineEntry'
 import { isRenderer } from '../../utils/renderer-utils'
-import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
 
 export class ComputePipelineEntry extends PipelineEntry {
   constructor(parameters) {
     let { renderer } = parameters
-    const { label, shaders } = parameters
+    const { label } = parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -25,6 +24,8 @@ export class ComputePipelineEntry extends PipelineEntry {
         module: null,
       },
     }
+
+    this.descriptor = null
   }
 
   setPipelineEntryBuffers(parameters) {
@@ -89,22 +90,39 @@ export class ComputePipelineEntry extends PipelineEntry {
     })
   }
 
-  createComputePipeline() {
+  createPipelineDescriptor() {
     if (!this.shaders.compute.module) return
 
-    this.pipeline = this.renderer.createComputePipeline({
+    this.descriptor = {
       label: this.options.label,
       layout: this.layout,
       compute: {
         module: this.shaders.compute.module,
         entryPoint: this.options.shaders.compute.entryPoint,
       },
-    })
+    }
+  }
+
+  createComputePipeline() {
+    if (!this.shaders.compute.module) return
+    this.pipeline = this.renderer.createComputePipeline(this.descriptor)
+  }
+
+  async createComputePipelineAsync() {
+    if (!this.shaders.compute.module) return
+    this.pipeline = await this.renderer.createComputePipelineAsync(this.descriptor)
   }
 
   setPipelineEntry() {
     super.setPipelineEntry()
-    this.createComputePipeline()
-    this.ready = true
+
+    if (this.options.useAsync) {
+      this.createComputePipelineAsync().then(() => {
+        this.ready = true
+      })
+    } else {
+      this.createComputePipeline()
+      this.ready = true
+    }
   }
 }

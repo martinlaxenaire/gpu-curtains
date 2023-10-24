@@ -85,12 +85,13 @@ const MeshBaseMixin = (superclass) =>
       } = parameters
 
       this.options = {
+        ...(this.options ?? {}), // merge possible lower options?
         label,
         shaders,
-        renderTarget,
         texturesOptions,
-        autoAddToScene,
-        ...(this.options ?? {}), // merge possible lower options?
+        ...(renderTarget !== undefined && { renderTarget }),
+        ...(autoAddToScene !== undefined && { autoAddToScene }),
+        ...(meshParameters.useAsyncPipeline !== undefined && { useAsyncPipeline: meshParameters.useAsyncPipeline }),
       }
 
       this.renderTarget = renderTarget ?? null
@@ -127,13 +128,15 @@ const MeshBaseMixin = (superclass) =>
 
     setMeshMaterial(meshParameters) {
       const { uniforms, storages, ...materialOptions } = meshParameters
-      const { transparent, useProjection, depthWriteEnabled, depthCompare, cullMode, verticesOrder } = materialOptions
+      const { useAsyncPipeline, transparent, useProjection, depthWriteEnabled, depthCompare, cullMode, verticesOrder } =
+        materialOptions
 
       this.transparent = materialOptions.transparent
 
       this.setMaterial({
         label: this.options.label,
         shaders: this.options.shaders,
+        useAsyncPipeline,
         transparent,
         useProjection,
         depthWriteEnabled,

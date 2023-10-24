@@ -484,6 +484,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     inputBindGroups: [clothSimBindGroup],
   })
 
+  console.log(computeSimPass, computeUpdatePass, computeNormalPass)
+
   // adjust dispatch sizes on render
   computeSimPass.onRender(() => {
     updateBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]

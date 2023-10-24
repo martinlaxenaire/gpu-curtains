@@ -11,6 +11,7 @@ type PipelineEntryShaders = Record<FullShadersType, PipelineEntryShader>
 
 interface PipelineEntryOptions {
   label: string
+  useAsync?: boolean
   shaders: MaterialShaders
   cullMode?: GPUCullMode
   depthCompare?: GPUCompareFunction
@@ -47,6 +48,7 @@ export class PipelineEntry {
   createShaders()
 
   createPipelineLayout()
+  createPipelineDescriptor()
 
   flushPipelineEntry(newBindGroups: MaterialBindGroups)
   setPipelineEntry()

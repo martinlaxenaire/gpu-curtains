@@ -7,7 +7,7 @@ export class PipelineEntry {
     this.type = 'PipelineEntry'
 
     let { renderer } = parameters
-    const { label, shaders } = parameters
+    const { label, shaders, useAsync } = parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -25,6 +25,7 @@ export class PipelineEntry {
     this.options = {
       label,
       shaders,
+      useAsync: useAsync !== undefined ? useAsync : true,
     }
   }
 
@@ -83,6 +84,10 @@ export class PipelineEntry {
     })
   }
 
+  createPipelineDescriptor() {
+    /* will be overriden */
+  }
+
   flushPipelineEntry(newBindGroups = []) {
     this.ready = false
     this.setPipelineEntryBindGroups(newBindGroups)
@@ -92,5 +97,6 @@ export class PipelineEntry {
   setPipelineEntry() {
     this.createShaders()
     this.createPipelineLayout()
+    this.createPipelineDescriptor()
   }
 }

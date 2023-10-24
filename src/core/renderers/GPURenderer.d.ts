@@ -83,7 +83,9 @@ export class GPURenderer {
   createShaderModule(shaderModuleDescriptor: GPUShaderModuleDescriptor): GPUShaderModule
   createPipelineLayout(pipelineLayoutDescriptor: GPUPipelineLayoutDescriptor): GPUPipelineLayout
   createRenderPipeline(pipelineDescriptor: GPURenderPipelineDescriptor): GPURenderPipeline
+  createRenderPipelineAsync(pipelineDescriptor: GPURenderPipelineDescriptor): Promise<GPURenderPipeline>
   createComputePipeline(pipelineDescriptor: GPUComputePipelineDescriptor): GPUComputePipeline
+  createComputePipelineAsync(pipelineDescriptor: GPUComputePipelineDescriptor): Promise<GPUComputePipeline>
 
   addTexture(texture: Texture)
   setTexture(texture: Texture)

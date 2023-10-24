@@ -15,7 +15,7 @@ export class Material {
 
     this.renderer = renderer
 
-    let { shaders, label, uniforms, storages, inputBindGroups } = parameters
+    let { shaders, label, useAsyncPipeline, uniforms, storages, inputBindGroups } = parameters
 
     // shaders = {
     //   ...{
@@ -44,6 +44,7 @@ export class Material {
     this.options = {
       shaders,
       label,
+      ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       uniforms,
       storages,
       inputBindGroups,

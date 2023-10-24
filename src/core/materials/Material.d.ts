@@ -30,6 +30,7 @@ export interface MaterialShaders {
 interface MaterialBaseParams {
   label?: string
   shaders?: MaterialShaders
+  useAsyncPipeline?: boolean
 }
 
 // inputs
@@ -73,6 +74,7 @@ interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams
 interface MaterialOptions {
   label: string
   shaders: MaterialShaders
+  useAsyncPipeline?: boolean
   uniforms?: InputBindings
   storages?: InputBindings
   works?: InputBindings

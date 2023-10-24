@@ -4,9 +4,10 @@ import { MaterialParams, MaterialShaders } from '../materials/Material'
 
 interface ComputePassOptions {
   label: string
-  renderOrder: number
-  autoAddToScene: boolean
+  renderOrder?: number
+  autoAddToScene?: boolean
   shaders: MaterialShaders
+  useAsyncPipeline?: boolean
 }
 
 interface ComputePassParams extends Partial<ComputePassOptions>, MaterialParams {}

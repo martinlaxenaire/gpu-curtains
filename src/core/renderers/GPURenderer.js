@@ -244,8 +244,16 @@ export class GPURenderer {
     return this.device.createRenderPipeline(pipelineDescriptor)
   }
 
+  async createRenderPipelineAsync(pipelineDescriptor) {
+    return await this.device.createRenderPipelineAsync(pipelineDescriptor)
+  }
+
   createComputePipeline(pipelineDescriptor) {
     return this.device.createComputePipeline(pipelineDescriptor)
+  }
+
+  async createComputePipelineAsync(pipelineDescriptor) {
+    return await this.device.createComputePipelineAsync(pipelineDescriptor)
   }
 
   /** TEXTURES **/

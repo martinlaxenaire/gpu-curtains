@@ -17,7 +17,7 @@ export class RenderMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    let { shaders, label, uniforms, storages, geometry, ...renderingOptions } = parameters
+    let { shaders, label, useAsyncPipeline, uniforms, storages, geometry, ...renderingOptions } = parameters
 
     if (!shaders.vertex.entryPoint) {
       shaders.vertex.entryPoint = 'main'
@@ -28,8 +28,10 @@ export class RenderMaterial extends Material {
     }
 
     this.options = {
+      ...this.options,
       shaders,
       label,
+      ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       uniforms,
       storages,
       rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
@@ -38,6 +40,7 @@ export class RenderMaterial extends Material {
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
       label: this.options.label + ' render pipeline',
       shaders: this.options.shaders,
+      useAsync: this.options.useAsyncPipeline,
       ...this.options.rendering,
     })
 
