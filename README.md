@@ -15,7 +15,7 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Material
 - Object3D, ProjectedObject3D, DOMObject3D
 - Uniforms, BindGroups
-- Render Pipelines
+- Render + Compute Pipelines (async by default)
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
 - Scene class
 - Scroll + resize, frustum culling check
@@ -38,6 +38,5 @@ The library has been rewritten to the core, so it is not just a port of the exis
 
 - ~~TextureLoader class?~~
 - Sampler class + handling samplers
-- Use async pipelines?
 - Mesh raycasting?
 - context lost handling

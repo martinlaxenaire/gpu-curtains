@@ -7,6 +7,7 @@ import { ShaderPass } from '../core/renderPasses/ShaderPass'
 import { MeshType, DOMMeshType } from '../core/renderers/GPURenderer'
 import { Plane } from './meshes/Plane'
 import { DOMElementBoundingRect } from '../core/DOMElement'
+import { ComputePass } from '../core/computePasses/ComputePass'
 
 interface GPUCurtainsOptions {
   container: HTMLElement
@@ -56,7 +57,8 @@ export class GPUCurtains {
   get shaderPasses(): ShaderPass[]
   get meshes(): MeshType[]
   get domMeshes(): DOMMeshType[]
-  get planes(): Plane
+  get planes(): Plane[]
+  get computePasses(): ComputePass[]
 
   get camera(): Camera | null
   setPerspective(fov?: number, near?: number, far?: number)

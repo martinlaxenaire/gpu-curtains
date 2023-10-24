@@ -65,43 +65,45 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'fs', // custom entry point
       },
     },
-    uniforms: {
-      flowmap: {
-        label: 'Flowmap',
-        bindings: {
-          mousePosition: {
-            type: 'vec2f',
-            value: mouse,
-          },
-          // how much the cursor must dissipate over time (ie trail length)
-          // closer to 1 = no dissipation
-          dissipation: {
-            type: 'f32',
-            value: 0.975,
-          },
-          cursorSize: {
-            type: 'f32',
-            value: 0.075, // size of the mouse cursor
-          },
-          // how much the cursor should grow with time
-          cursorGrow: {
-            type: 'f32',
-            value: 1.15,
-          },
-          // alpha of the cursor
-          alpha: {
-            type: 'f32',
-            value: 1,
-          },
-          // canvas aspect ratio, used to draw a circle shaped cursor
-          aspect: {
-            type: 'f32',
-            value: gpuCurtains.renderer.boundingRect.width / gpuCurtains.renderer.boundingRect.height,
-          },
-          // our velocity
-          velocity: {
-            type: 'vec2f',
-            value: velocity,
+    inputs: {
+      uniforms: {
+        flowmap: {
+          label: 'Flowmap',
+          bindings: {
+            mousePosition: {
+              type: 'vec2f',
+              value: mouse,
+            },
+            // how much the cursor must dissipate over time (ie trail length)
+            // closer to 1 = no dissipation
+            dissipation: {
+              type: 'f32',
+              value: 0.975,
+            },
+            cursorSize: {
+              type: 'f32',
+              value: 0.075, // size of the mouse cursor
+            },
+            // how much the cursor should grow with time
+            cursorGrow: {
+              type: 'f32',
+              value: 1.15,
+            },
+            // alpha of the cursor
+            alpha: {
+              type: 'f32',
+              value: 1,
+            },
+            // canvas aspect ratio, used to draw a circle shaped cursor
+            aspect: {
+              type: 'f32',
+              value: gpuCurtains.renderer.boundingRect.width / gpuCurtains.renderer.boundingRect.height,
+            },
+            // our velocity
+            velocity: {
+              type: 'vec2f',
+              value: velocity,
+            },
           },
         },
       },

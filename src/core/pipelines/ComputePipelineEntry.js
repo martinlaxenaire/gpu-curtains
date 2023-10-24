@@ -1,5 +1,6 @@
 import { PipelineEntry } from './PipelineEntry'
 import { isRenderer } from '../../utils/renderer-utils'
+import { throwError } from '../../utils/utils'
 
 export class ComputePipelineEntry extends PipelineEntry {
   constructor(parameters) {
@@ -105,24 +106,39 @@ export class ComputePipelineEntry extends PipelineEntry {
 
   createComputePipeline() {
     if (!this.shaders.compute.module) return
-    this.pipeline = this.renderer.createComputePipeline(this.descriptor)
+
+    try {
+      this.pipeline = this.renderer.createComputePipeline(this.descriptor)
+    } catch (error) {
+      this.status.error = error
+      throwError(error)
+    }
   }
 
   async createComputePipelineAsync() {
     if (!this.shaders.compute.module) return
-    this.pipeline = await this.renderer.createComputePipelineAsync(this.descriptor)
+
+    try {
+      this.pipeline = await this.renderer.createComputePipelineAsync(this.descriptor)
+      this.status.compiled = true
+      this.status.compiling = false
+      this.status.error = null
+    } catch (error) {
+      this.status.error = error
+      throwError(error)
+    }
   }
 
   setPipelineEntry() {
     super.setPipelineEntry()
 
     if (this.options.useAsync) {
-      this.createComputePipelineAsync().then(() => {
-        this.ready = true
-      })
+      this.createComputePipelineAsync()
     } else {
       this.createComputePipeline()
-      this.ready = true
+      this.status.compiled = true
+      this.status.compiling = false
+      this.status.error = null
     }
   }
 }

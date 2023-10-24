@@ -104,13 +104,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    uniforms: {
-      deformation: {
-        label: 'Deformation',
-        bindings: {
-          strength: {
-            type: 'f32',
-            value: 0,
+    inputs: {
+      uniforms: {
+        deformation: {
+          label: 'Deformation',
+          bindings: {
+            strength: {
+              type: 'f32',
+              value: 0,
+            },
           },
         },
       },

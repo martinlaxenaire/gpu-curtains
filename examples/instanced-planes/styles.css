@@ -11,22 +11,23 @@
   }
 
   .plane {
-    width: 75%;
+    width: 50%;
     aspect-ratio: 20 / 10;
-    margin: 7rem 0;
+    margin: 7rem 0 7rem 12.5%;
   }
 
   .plane:nth-child(odd) {
-    margin-left: 25%;
+    margin-left: 37.5%;
   }
 }
 
 @media screen and (orientation: portrait) {
   .plane {
-    width: 100%;
+    width: 75%;
+    margin: 7rem auto;
   }
 
   .plane:nth-child(odd) {
-    margin-left: 0;
+    margin-left: auto;
   }
 }

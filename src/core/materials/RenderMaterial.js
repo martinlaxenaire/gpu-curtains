@@ -17,7 +17,7 @@ export class RenderMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    let { shaders, label, useAsyncPipeline, uniforms, storages, geometry, ...renderingOptions } = parameters
+    let { shaders, label, useAsyncPipeline, inputs, inputBindGroups, geometry, ...renderingOptions } = parameters
 
     if (!shaders.vertex.entryPoint) {
       shaders.vertex.entryPoint = 'main'
@@ -32,8 +32,8 @@ export class RenderMaterial extends Material {
       shaders,
       label,
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
-      uniforms,
-      storages,
+      ...(inputs !== undefined && { inputs }),
+      ...(inputBindGroups !== undefined && { inputBindGroups }),
       rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
     }
 
@@ -66,7 +66,7 @@ export class RenderMaterial extends Material {
       return
     }
 
-    if (this.pipelineEntry && !this.pipelineEntry.pipeline) {
+    if (this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryBuffers()
     }
   }
@@ -79,7 +79,7 @@ export class RenderMaterial extends Material {
   }
 
   get ready() {
-    return !!(this.pipelineEntry && this.pipelineEntry.pipeline)
+    return !!(this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
   }
 
   /** ATTRIBUTES **/

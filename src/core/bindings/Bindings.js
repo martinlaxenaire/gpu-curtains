@@ -17,10 +17,10 @@ export class Bindings {
             case 'compute':
               return GPUShaderStage.COMPUTE
             default:
-              return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
+              return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE
           }
         })()
-      : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
+      : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE
   }
 
   setWGSLFragment() {

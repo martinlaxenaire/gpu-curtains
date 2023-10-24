@@ -37,17 +37,7 @@ export class ComputePass {
     this.uuid = generateUUID()
     Object.defineProperty(this, 'index', { value: computePassIndex++ })
 
-    const {
-      label,
-      shaders,
-      renderOrder,
-      uniforms,
-      storages,
-      works,
-      inputBindGroups,
-      autoAddToScene,
-      useAsyncPipeline,
-    } = parameters
+    const { label, shaders, renderOrder, inputs, inputBindGroups, autoAddToScene, useAsyncPipeline } = parameters
 
     this.options = {
       label,
@@ -68,9 +58,7 @@ export class ComputePass {
     this.setComputeMaterial({
       label: this.options.label,
       shaders: this.options.shaders,
-      uniforms,
-      storages,
-      works,
+      inputs,
       inputBindGroups,
       useAsyncPipeline,
     })

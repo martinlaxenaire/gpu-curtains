@@ -5,6 +5,7 @@ import { TextureBindings } from '../bindings/TextureBindings'
 import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 import { Texture } from '../textures/Texture'
 import { TextureBindGroup } from './TextureBindGroup'
+import { AllowedBindingsTypes, InputBindings } from '../materials/Material'
 
 type BindGroupBindingElement = BufferBindings | SamplerBindings | TextureBindings | WorkBufferBindings
 type AllowedBindGroups = BindGroup | TextureBindGroup
@@ -15,11 +16,14 @@ interface BindGroupBindingBuffer {
   resultBuffer?: GPUBuffer // used in WorkBufferBindings
 }
 
+export type BindGroupInputs = Record<AllowedBindingsTypes, InputBindings>
+
 interface BindGroupParams {
   label?: string
   renderer: GPURenderer
   index?: number
   bindings?: BindGroupBindingElement[]
+  inputs?: BindGroupInputs
 }
 
 export class BindGroup {
@@ -29,6 +33,7 @@ export class BindGroup {
     label: string
     index: number
     bindings: BindGroupBindingElement[]
+    inputs?: BindGroupInputs
     textures?: Texture[]
   }
   index: number
@@ -47,18 +52,23 @@ export class BindGroup {
   needsReset: boolean
   needsPipelineFlush: boolean
 
-  constructor({ label, renderer, index, bindings }: BindGroupParams)
+  constructor({ label, renderer, index, bindings, inputs }: BindGroupParams)
 
   setIndex(index: number)
 
   setBindings(bindings: BindGroupBindingElement[])
   addBinding(binding: BindGroupBindingElement)
 
+  createInputBindings(bindingType?: AllowedBindingsTypes, inputs?: InputBindings): BindGroupBindingElement[]
+  setInputBindings()
+
   get shouldCreateBindGroup(): boolean
 
   resetEntries()
   createBindGroup()
   resetBindGroup()
+
+  getBindingsByName(bindingName?: BufferBindings['name']): BindGroupBindingElement | null
 
   createBindingBuffer(binding: BindGroupBindingElement)
   createBindingsBuffers()

@@ -1,6 +1,7 @@
 import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
 import { isRenderer } from '../../utils/renderer-utils'
 import { PipelineEntry } from './PipelineEntry'
+import { throwError } from '../../utils/utils'
 
 export class RenderPipelineEntry extends PipelineEntry {
   constructor(parameters) {
@@ -116,7 +117,7 @@ export class RenderPipelineEntry extends PipelineEntry {
     groupsBindings.forEach((groupBinding) => {
       if (
         groupBinding.visibility === GPUShaderStage.VERTEX ||
-        groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
+        groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)
       ) {
         if (groupBinding.wgslStructFragment) {
           this.shaders.vertex.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.vertex.head}`
@@ -129,7 +130,7 @@ export class RenderPipelineEntry extends PipelineEntry {
 
       if (
         groupBinding.visibility === GPUShaderStage.FRAGMENT ||
-        groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT)
+        groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)
       ) {
         if (groupBinding.wgslStructFragment) {
           this.shaders.fragment.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.fragment.head}`
@@ -237,25 +238,38 @@ export class RenderPipelineEntry extends PipelineEntry {
   createRenderPipeline() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
 
-    this.pipeline = this.renderer.createRenderPipeline(this.descriptor)
+    try {
+      this.pipeline = this.renderer.createRenderPipeline(this.descriptor)
+    } catch (error) {
+      this.status.error = error
+      throwError(error)
+    }
   }
 
   async createRenderPipelineAsync() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
 
-    this.pipeline = await this.renderer.createRenderPipelineAsync(this.descriptor)
+    try {
+      this.pipeline = await this.renderer.createRenderPipelineAsync(this.descriptor)
+      this.status.compiled = true
+      this.status.compiling = false
+      this.status.error = null
+    } catch (error) {
+      this.status.error = error
+      throwError(error)
+    }
   }
 
   setPipelineEntry() {
     super.setPipelineEntry()
 
     if (this.options.useAsync) {
-      this.createRenderPipelineAsync().then(() => {
-        this.ready = true
-      })
+      this.createRenderPipelineAsync()
     } else {
       this.createRenderPipeline()
-      this.ready = true
+      this.status.compiled = true
+      this.status.compiling = false
+      this.status.error = null
     }
   }
 }

@@ -1,17 +1,10 @@
-import { AllowedBindingsTypes, AllowedBufferBindings, InputBindings, Material, MaterialOptions } from './Material'
-import { BindGroupBindingBuffer, BindGroupBindingElement } from '../bindGroups/BindGroup'
-import { BufferBindingsUniform } from '../bindings/BufferBindings'
+import { Material, MaterialOptions } from './Material'
+import { BindGroupBindingBuffer } from '../bindGroups/BindGroup'
 
 export class ComputeMaterial extends Material {
   options: MaterialOptions
 
-  works: Record<string, Record<string, BufferBindingsUniform>>
-
   setPipelineEntryBuffers()
-
-  createInputBindings(bindingType?: AllowedBindingsTypes, inputs?: InputBindings): BindGroupBindingElement[]
-
-  setWorkInputBindings()
 
   setMaterial()
 

@@ -137,14 +137,16 @@
               entryPoint: 'main',
             },
           },
-          uniforms: {
-            // key could be something else, like "frames"...
-            frames: {
-              //label: 'Uniforms',
-              bindings: {
-                elapsed: {
-                  type: 'f32', // this means our uniform is a float
-                  value: 0,
+          inputs: {
+            uniforms: {
+              // key could be something else, like "frames"...
+              frames: {
+                //label: 'Uniforms',
+                bindings: {
+                  elapsed: {
+                    type: 'f32', // this means our uniform is a float
+                    value: 0,
+                  },
                 },
               },
             },
@@ -152,6 +154,7 @@
         }
 
         const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
+        console.log(plane)
 
         plane.onRender(() => {
           // update our time uniform value

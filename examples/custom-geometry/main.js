@@ -176,26 +176,28 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    uniforms: {
-      frames: {
-        label: 'Frames',
-        bindings: {
-          elapsed: {
-            type: 'f32',
-            value: 0,
+    inputs: {
+      uniforms: {
+        frames: {
+          label: 'Frames',
+          bindings: {
+            elapsed: {
+              type: 'f32',
+              value: 0,
+            },
           },
         },
-      },
-      instances: {
-        label: 'Instances',
-        bindings: {
-          grid: {
-            type: 'vec3f',
-            value: instancesGrid,
-          },
-          gridGap: {
-            type: 'vec3f',
-            value: instancesGridGap,
+        instances: {
+          label: 'Instances',
+          bindings: {
+            grid: {
+              type: 'vec3f',
+              value: instancesGrid,
+            },
+            gridGap: {
+              type: 'vec3f',
+              value: instancesGridGap,
+            },
           },
         },
       },
@@ -204,7 +206,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const mesh = new GPUCurtains.Mesh(gpuCurtains, params)
 
-  console.log(geometry.getVertexBufferByName('defaultAttributes'), mesh)
+  console.log(geometry.getVertexBufferByName('attributes'), mesh)
 
   // move camera back
   gpuCurtains.camera.position.z = 50

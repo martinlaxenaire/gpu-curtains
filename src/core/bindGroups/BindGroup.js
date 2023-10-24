@@ -1,9 +1,11 @@
 import { isRenderer } from '../../utils/renderer-utils'
-import { generateUUID } from '../../utils/utils'
+import { generateUUID, toKebabCase } from '../../utils/utils'
 import { getBindGroupLayoutBindingType } from '../../utils/buffers-utils'
+import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
+import { BufferBindings } from '../bindings/BufferBindings'
 
 export class BindGroup {
-  constructor({ label = 'BindGroup', renderer, index = 0, bindings = [] }) {
+  constructor({ label = 'BindGroup', renderer, index = 0, bindings = [], inputs }) {
     this.type = 'BindGroup'
 
     // we could pass our curtains object OR our curtains renderer object
@@ -16,13 +18,15 @@ export class BindGroup {
       label,
       index,
       bindings,
+      ...(inputs && { inputs }),
     }
 
     this.index = index
     this.uuid = generateUUID()
 
     this.bindings = []
-    bindings && this.setBindings(bindings)
+    bindings.length && this.setBindings(bindings)
+    if (this.options.inputs) this.setInputBindings()
 
     this.resetEntries()
     this.bindingsBuffers = []
@@ -44,12 +48,53 @@ export class BindGroup {
     this.index = index
   }
 
-  setBindings(bindings) {
-    this.bindings = bindings
+  setBindings(bindings = []) {
+    this.bindings = [...this.bindings, ...bindings]
   }
 
   addBinding(binding) {
     this.bindings.push(binding)
+  }
+
+  createInputBindings(bindingType = 'uniform', inputs = {}) {
+    const inputBindings = [
+      ...Object.keys(inputs).map((inputKey) => {
+        const binding = inputs[inputKey]
+
+        const bindingParams = {
+          label: toKebabCase(binding.label || inputKey),
+          name: inputKey,
+          bindingType,
+          useStruct: true,
+          bindings: binding.bindings,
+          dispatchSize: binding.dispatchSize,
+          visibility: bindingType === 'storageWrite' ? 'compute' : binding.visibility,
+        }
+
+        const BufferBindingConstructor = bindingType === 'storageWrite' ? WorkBufferBindings : BufferBindings
+
+        return binding.useStruct !== false
+          ? new BufferBindingConstructor(bindingParams)
+          : Object.keys(binding.bindings).map((bindingKey) => {
+              bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey)
+              bindingParams.name = inputKey + bindingKey
+              bindingParams.useStruct = false
+              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
+
+              return new BufferBindingConstructor(bindingParams)
+            })
+      }),
+    ].flat()
+
+    return inputBindings
+  }
+
+  setInputBindings() {
+    this.setBindings([
+      ...this.createInputBindings('uniform', this.options.inputs.uniforms),
+      ...this.createInputBindings('storage', this.options.inputs.storages),
+      ...this.createInputBindings('storageWrite', this.options.inputs.works),
+    ])
   }
 
   get shouldCreateBindGroup() {
@@ -105,6 +150,10 @@ export class BindGroup {
         buffer,
       },
     })
+  }
+
+  getBindingsByName(bindingName = '') {
+    return this.bindings.find((binding) => binding.name === bindingName)
   }
 
   createBindingBuffer(binding) {

@@ -141,6 +141,10 @@ export class GPUCurtains {
     return this.renderer?.domMeshes.filter((domMesh) => domMesh.type === 'Plane')
   }
 
+  get computePass() {
+    return this.renderer?.computePasses
+  }
+
   get camera() {
     return this.renderer?.camera
   }

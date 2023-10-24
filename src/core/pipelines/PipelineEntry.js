@@ -20,13 +20,28 @@ export class PipelineEntry {
 
     this.layout = null
     this.pipeline = null
-    this.ready = false
+
+    this.status = {
+      compiling: false,
+      compiled: false,
+      error: null,
+    }
+
+    //this.ready = false
 
     this.options = {
       label,
       shaders,
       useAsync: useAsync !== undefined ? useAsync : true,
     }
+  }
+
+  get ready() {
+    return !this.status.compiling && this.status.compiled && !this.status.error
+  }
+
+  get canCompile() {
+    return !this.status.compiling && !this.status.compiled && !this.status.error
   }
 
   setPipelineEntryBindGroups(bindGroups) {
@@ -89,12 +104,17 @@ export class PipelineEntry {
   }
 
   flushPipelineEntry(newBindGroups = []) {
-    this.ready = false
+    this.status.compiling = false
+    this.status.compiled = false
+    this.status.error = null
+
     this.setPipelineEntryBindGroups(newBindGroups)
     this.setPipelineEntry()
   }
 
   setPipelineEntry() {
+    this.status.compiling = true
+
     this.createShaders()
     this.createPipelineLayout()
     this.createPipelineDescriptor()

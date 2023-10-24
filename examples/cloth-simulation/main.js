@@ -335,6 +335,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('no-curtains')
   })
 
+  const simulationSpeed = 4
+
   const clothDefinition = new GPUCurtains.Vec2(40)
 
   const clothGeometry = new GPUCurtains.PlaneGeometry({
@@ -365,100 +367,109 @@ window.addEventListener('DOMContentLoaded', async () => {
     normalPositionArray[i + 2] = 1
   }
 
-  // first our compute pass
-  const computeSimPass = new GPUCurtains.ComputePass(gpuCurtains, {
-    label: 'Compute force',
-    shaders: {
-      compute: {
-        code: computeClothSim,
-        entryPoint: 'calc_forces',
-      },
-    },
-    autoAddToScene: false,
-    uniforms: {
-      dimension: {
-        label: 'Dimension',
-        bindings: {
-          size: {
-            type: 'vec2f',
-            value: clothDefinition,
+  const computeBindGroup = new GPUCurtains.BindGroup({
+    label: 'Cloth simulation compute bind group',
+    renderer: gpuCurtains.renderer,
+    inputs: {
+      uniforms: {
+        dimension: {
+          label: 'Dimension',
+          bindings: {
+            size: {
+              type: 'vec2f',
+              value: clothDefinition,
+            },
+          },
+        },
+        params: {
+          label: '',
+          bindings: {
+            deltaTime: {
+              type: 'f32',
+              value: 0.001 * simulationSpeed,
+            },
+            mass: {
+              type: 'f32',
+              value: 1,
+            },
+            dampingConstant: {
+              type: 'f32',
+              value: 50,
+            },
+            gravity: {
+              type: 'vec3f',
+              value: new GPUCurtains.Vec3(0, -0.0981, 0),
+            },
+          },
+        },
+        interaction: {
+          label: 'Interaction',
+          bindings: {
+            pointerPosition: {
+              type: 'vec2f',
+              value: new GPUCurtains.Vec2(Infinity),
+            },
+            pointerVelocity: {
+              type: 'vec2f',
+              value: new GPUCurtains.Vec2(0),
+            },
+            pointerSize: {
+              type: 'f32',
+              value: 0.85, // 1 is full plane
+            },
+            pointerStrength: {
+              type: 'f32',
+              value: 0.25,
+            },
+            wind: {
+              type: 'vec3f',
+              value: new GPUCurtains.Vec3(0, 0, 0),
+            },
           },
         },
       },
-      params: {
-        label: '',
-        bindings: {
-          deltaTime: {
-            type: 'f32',
-            value: 0.002,
-          },
-          mass: {
-            type: 'f32',
-            value: 1,
-          },
-          dampingConstant: {
-            type: 'f32',
-            value: 50,
-          },
-          gravity: {
-            type: 'vec3f',
-            value: new GPUCurtains.Vec3(0, -0.0981, 0),
-          },
-        },
-      },
-      interaction: {
-        label: 'Interaction',
-        bindings: {
-          pointerPosition: {
-            type: 'vec2f',
-            value: new GPUCurtains.Vec2(Infinity),
-          },
-          pointerVelocity: {
-            type: 'vec2f',
-            value: new GPUCurtains.Vec2(0),
-          },
-          pointerSize: {
-            type: 'f32',
-            value: 0.85, // 1 is full plane
-          },
-          pointerStrength: {
-            type: 'f32',
-            value: 0.25,
-          },
-          wind: {
-            type: 'vec3f',
-            value: new GPUCurtains.Vec3(0, 0, 0),
-          },
-        },
-      },
-    },
-    works: {
-      clothVertex: {
-        label: 'ClothVertex',
-        bindings: {
-          position: {
-            type: 'array<vec4f>',
-            value: vertexPositionArray,
-          },
-          normal: {
-            type: 'array<vec4f>',
-            value: normalPositionArray,
-          },
-          force: {
-            type: 'array<vec4f>',
-            value: vertexForceArray,
-          },
-          velocity: {
-            type: 'array<vec4f>',
-            value: vertexVelocityArray,
+      works: {
+        clothVertex: {
+          label: 'ClothVertex',
+          bindings: {
+            position: {
+              type: 'array<vec4f>',
+              value: vertexPositionArray,
+            },
+            normal: {
+              type: 'array<vec4f>',
+              value: normalPositionArray,
+            },
+            force: {
+              type: 'array<vec4f>',
+              value: vertexForceArray,
+            },
+            velocity: {
+              type: 'array<vec4f>',
+              value: vertexVelocityArray,
+            },
           },
         },
       },
     },
   })
 
-  const clothSimBindGroup = computeSimPass.material.getBindGroupByBindingName('clothVertex')
-  const updateBinding = computeSimPass.material.getBindingsByName('clothVertex')
+  const computeBinding = computeBindGroup.getBindingsByName('clothVertex')
+
+  //console.log(computeBindGroup, computeBinding)
+
+  // first our compute pass
+  const computeForcesPass = new GPUCurtains.ComputePass(gpuCurtains, {
+    label: 'Compute forces',
+    shaders: {
+      compute: {
+        code: computeClothSim,
+        entryPoint: 'calc_forces',
+      },
+    },
+    autoAddToScene: false, // we will manually take care of rendering
+    inputBindGroups: [computeBindGroup],
+  })
 
   const computeUpdatePass = new GPUCurtains.ComputePass(gpuCurtains, {
     label: 'Compute update',
@@ -468,8 +479,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'update',
       },
     },
-    autoAddToScene: false,
-    inputBindGroups: [clothSimBindGroup],
+    autoAddToScene: false, // we will manually take care of rendering
+    inputBindGroups: [computeBindGroup],
   })
 
   const computeNormalPass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -480,33 +491,33 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'calc_normal',
       },
     },
-    autoAddToScene: false,
-    inputBindGroups: [clothSimBindGroup],
+    autoAddToScene: false, // we will manually take care of rendering
+    inputBindGroups: [computeBindGroup],
   })
 
-  console.log(computeSimPass, computeUpdatePass, computeNormalPass)
+  console.log(computeForcesPass, computeUpdatePass, computeNormalPass)
 
-  // adjust dispatch sizes on render
-  computeSimPass.onRender(() => {
-    updateBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]
+  // adjust various dispatch sizes on render
+  computeForcesPass.onRender(() => {
+    computeBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]
   })
 
   computeUpdatePass.onRender(() => {
-    updateBinding.dispatchSize = [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)]
+    computeBinding.dispatchSize = [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)]
   })
 
   computeNormalPass.onRender(() => {
-    updateBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]
+    computeBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]
   })
 
   // now use renderer onBeforeRender callback to render our compute passes
-  // nb sims compute per render is the speed at which the simulation runs
-  const nbSimsComputePerRender = 50
+  // nb sims compute per render impacts the speed at which the simulation runs
+  const nbSimsComputePerRender = Math.min(50, 100 / simulationSpeed)
 
   gpuCurtains.renderer.onBeforeRender((commandEncoder) => {
     for (let i = 0; i < nbSimsComputePerRender; i++) {
       const forcePass = commandEncoder.beginComputePass()
-      computeSimPass.render(forcePass)
+      computeForcesPass.render(forcePass)
       forcePass.end()
 
       const updatePass = commandEncoder.beginComputePass()
@@ -661,16 +672,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     pointer.set(e.clientX, e.clientY)
 
-    if (plane && computeSimPass) {
+    if (plane && computeForcesPass) {
       if (pointerTimer) clearTimeout(pointerTimer)
 
       const pointerVertexCoords = plane.mouseToPlaneCoords(pointer)
-      computeSimPass.uniforms.interaction.pointerPosition.value.copy(pointerVertexCoords)
-      computeSimPass.uniforms.interaction.pointerVelocity.value.copy(velocity)
+      computeForcesPass.uniforms.interaction.pointerPosition.value.copy(pointerVertexCoords)
+      computeForcesPass.uniforms.interaction.pointerVelocity.value.copy(velocity)
 
       pointerTimer = setTimeout(() => {
-        computeSimPass.uniforms.interaction.pointerPosition.value.set(Infinity)
-        computeSimPass.uniforms.interaction.pointerVelocity.value.set(0)
+        computeForcesPass.uniforms.interaction.pointerPosition.value.set(Infinity)
+        computeForcesPass.uniforms.interaction.pointerVelocity.value.set(0)
       }, 25)
     }
   })

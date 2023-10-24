@@ -40,9 +40,9 @@ const MeshTransformedMixin = (superclass) =>
       const { label, geometry, shaders } = parameters
 
       this.options = {
+        ...(this.options ?? {}), // merge possible lower options?
         label,
         shaders,
-        ...(this.options ?? {}), // merge possible lower options?
       }
 
       // explicitly needed for DOM Frustum
@@ -90,7 +90,9 @@ const MeshTransformedMixin = (superclass) =>
         },
       }
 
-      meshMaterialOptions.uniforms.matrices = matricesUniforms
+      if (!meshMaterialOptions.inputs) meshMaterialOptions.inputs = { uniforms: {} }
+
+      meshMaterialOptions.inputs.uniforms.matrices = matricesUniforms
 
       super.setMeshMaterial(meshMaterialOptions)
 

@@ -18,7 +18,7 @@ export class ComputeMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    let { shaders, works } = parameters
+    let { shaders } = parameters
 
     if (!shaders || !shaders.compute) {
       shaders = {
@@ -35,24 +35,16 @@ export class ComputeMaterial extends Material {
       shaders.compute.entryPoint = 'main'
     }
 
-    if (!works) works = {}
-
     this.options = {
       ...this.options,
       shaders,
-      works,
     }
-
-    //this.options.shaders = shaders
-    //this.options.works = works
 
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       label: this.options.label + ' compute pipeline',
       shaders: this.options.shaders,
       useAsync: this.options.useAsyncPipeline,
     })
-
-    this.setWorkInputBindings()
   }
 
   setPipelineEntryBuffers() {
@@ -61,63 +53,10 @@ export class ComputeMaterial extends Material {
     })
   }
 
-  /** INPUTS **/
-
-  createInputBindings(bindingType = 'uniform', inputs = {}) {
-    const inputBindings = [
-      ...Object.keys(inputs).map((inputKey) => {
-        const binding = inputs[inputKey]
-
-        const bindingParams = {
-          label: toKebabCase(binding.label || inputKey),
-          name: inputKey,
-          bindingType,
-          useStruct: true,
-          bindings: binding.bindings,
-          dispatchSize: binding.dispatchSize,
-          visibility: 'compute',
-        }
-
-        const BufferBindingConstructor = bindingType === 'storageWrite' ? WorkBufferBindings : BufferBindings
-
-        return binding.useStruct !== false
-          ? new BufferBindingConstructor(bindingParams)
-          : Object.keys(binding.bindings).map((bindingKey) => {
-              bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey)
-              bindingParams.name = inputKey + bindingKey
-              bindingParams.useStruct = false
-              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
-
-              return new BufferBindingConstructor(bindingParams)
-            })
-      }),
-    ].flat()
-
-    return inputBindings
-  }
-
-  setWorkInputBindings() {
-    this.works = {}
-    const workInputBindings = this.createInputBindings('storageWrite', this.options.works)
-    this.inputsBindings = [...this.inputsBindings, ...workInputBindings]
-
-    if (workInputBindings.length) {
-      const workBindGroup = this.inputsBindGroups.at(-1)
-
-      workInputBindings.forEach((workBinding) => {
-        this.works = { ...this.works, ...workBinding.bindings }
-
-        workBinding.isActive = this.options.shaders.compute.code.indexOf(workBinding.name) !== -1
-
-        workBindGroup.addBinding(workBinding)
-      })
-    }
-  }
-
   setMaterial() {
     super.setMaterial()
 
-    if (this.pipelineEntry && !this.pipelineEntry.pipeline) {
+    if (this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryBuffers()
     }
   }

@@ -113,190 +113,73 @@ window.addEventListener('DOMContentLoaded', async () => {
         code: computeBoids,
       },
     },
-    uniforms: {
-      params: {
-        //name: 'params',
-        label: 'SimParams',
-        bindings: {
-          systemSize: {
-            type: 'vec2f',
-            value: systemSize,
+    inputs: {
+      uniforms: {
+        params: {
+          //name: 'params',
+          label: 'SimParams',
+          bindings: {
+            systemSize: {
+              type: 'vec2f',
+              value: systemSize,
+            },
+            deltaT: {
+              type: 'f32',
+              value: 0.04,
+            },
+            rule1Distance: {
+              type: 'f32',
+              value: 0.2,
+            },
+            rule2Distance: {
+              type: 'f32',
+              value: 0.05,
+            },
+            rule3Distance: {
+              type: 'f32',
+              value: 0.05,
+            },
+            rule1Scale: {
+              type: 'f32',
+              value: 0.04,
+            },
+            rule2Scale: {
+              type: 'f32',
+              value: 0.1,
+            },
+            rule3Scale: {
+              type: 'f32',
+              value: 0.01,
+            },
           },
-          deltaT: {
-            type: 'f32',
-            value: 0.04,
-          },
-          rule1Distance: {
-            type: 'f32',
-            value: 0.2,
-          },
-          rule2Distance: {
-            type: 'f32',
-            value: 0.05,
-          },
-          rule3Distance: {
-            type: 'f32',
-            value: 0.05,
-          },
-          rule1Scale: {
-            type: 'f32',
-            value: 0.04,
-          },
-          rule2Scale: {
-            type: 'f32',
-            value: 0.1,
-          },
-          rule3Scale: {
-            type: 'f32',
-            value: 0.01,
+        },
+      },
+      works: {
+        particles: {
+          //name: 'particles',
+          label: 'Particle',
+          dispatchSize: Math.ceil(numParticles / 64), // Note that we divide the vertex count by the workgroup_size!
+          bindings: {
+            position: {
+              type: 'array<vec2f>',
+              value: initialParticlePosition,
+            },
+            velocity: {
+              type: 'array<vec2f>',
+              value: initialParticleVelocity,
+            },
           },
         },
       },
     },
-    // storages: {
-    //   particlesA: {
-    //     //name: 'particlesA',
-    //     label: 'Particle',
-    //     bindings: {
-    //       position: {
-    //         type: 'array<vec2f>',
-    //         value: initialParticlePosition,
-    //       },
-    //       velocity: {
-    //         type: 'array<vec2f>',
-    //         value: initialParticleVelocity,
-    //       },
-    //     },
-    //   },
-    // },
-    works: {
-      particles: {
-        //name: 'particles',
-        label: 'Particle',
-        dispatchSize: Math.ceil(numParticles / 64), // Note that we divide the vertex count by the workgroup_size!
-        bindings: {
-          position: {
-            type: 'array<vec2f>',
-            value: initialParticlePosition,
-          },
-          velocity: {
-            type: 'array<vec2f>',
-            value: initialParticleVelocity,
-          },
-        },
-      },
-    },
-    // TODO TEST
-    // bindings: {
-    //   simParams: {
-    //     bindingType: 'uniform',
-    //     struct: {
-    //       deltaT: {
-    //         type: 'f32',
-    //         value: 0.04,
-    //       },
-    //       rule1Distance: {
-    //         type: 'f32',
-    //         value: 0.1,
-    //       },
-    //       rule2Distance: {
-    //         type: 'f32',
-    //         value: 0.025,
-    //       },
-    //       rule3Distance: {
-    //         type: 'f32',
-    //         value: 0.025,
-    //       },
-    //       rule1Scale: {
-    //         type: 'f32',
-    //         value: 0.02,
-    //       },
-    //       rule2Scale: {
-    //         type: 'f32',
-    //         value: 0.05,
-    //       },
-    //       rule3Scale: {
-    //         type: 'f32',
-    //         value: 0.005,
-    //       },
-    //     },
-    //   },
-    //   particlesA: {
-    //     bindingType: 'storage',
-    //     struct: {
-    //       position: {
-    //         type: 'array<vec2f>',
-    //         value: initialParticlePosition,
-    //       },
-    //       velocity: {
-    //         type: 'array<vec2f>',
-    //         value: initialParticleVelocity,
-    //       },
-    //     },
-    //   },
-    //   particles: {
-    //     bindingType: 'storageWrite',
-    //     dispatchSize: Math.ceil(numParticles / 64), // Note that we divide the vertex count by the workgroup_size!
-    //     struct: {
-    //       positionWork: {
-    //         type: 'array<vec2f>',
-    //         value: initialParticlePosition,
-    //       },
-    //       velocityWork: {
-    //         type: 'array<vec2f>',
-    //         value: initialParticleVelocity,
-    //       },
-    //     },
-    //   },
-    // },
   })
 
-  const particleBindGroups = []
-  const particleBuffers = []
-  let computeInstanceBuffer
-
-  let bufferToUse = 0
+  console.log(computePass, computePass.material)
 
   computePass
     .onReady(() => {
       console.log(computePass.material)
       console.log(computePass.material.getAddedShaderCode('compute'))
-
-      // get our simulation bind group
-      // const originalBindGroup = computePass.material.getBindGroupByBindingName('particlesA')
-      //
-      // // now clone but with buffer swapped
-      // const swappedBindGroup = computePass.material.cloneBindGroup({
-      //   bindGroup: originalBindGroup,
-      //   // swap the buffers...
-      //   bindingsBuffers: [
-      //     originalBindGroup.bindingsBuffers[0],
-      //     originalBindGroup.bindingsBuffers[2],
-      //     originalBindGroup.bindingsBuffers[1],
-      //   ],
-      //   // ...but preserve original bind group layout
-      //   keepLayout: true,
-      // })
-      //
-      // particleBindGroups.push(originalBindGroup, swappedBindGroup)
-      //
-      // const storageBindingBuffer = computePass.material.getBindingsBuffersByBindingName('particlesA')
-      // const workBindingBuffer = computePass.material.getBindingsBuffersByBindingName('particles')
-      //
-      // particleBuffers.push(storageBindingBuffer[0].buffer, workBindingBuffer[0].buffer)
-      // console.log(particleBindGroups, particleBuffers)
-    })
-    .onRender(() => {
-      // if (particleBindGroups.length && particleBuffers.length) {
-      //   // swap the bind groups
-      //   computePass.material.bindGroups[1] = particleBindGroups[bufferToUse % 2]
-      //   // then swap the instance buffer to set later in our mesh onRender callback
-      //   computeInstanceBuffer = particleBuffers[(bufferToUse + 1) % 2]
-      //   bufferToUse++
-      // }
-
-      const particleBuffer = computePass.material.getBindingsBuffersByBindingName('particles')
-      computeInstanceBuffer = particleBuffer[0]?.buffer
     })
     .onAfterResize(() => {
       const cameraRatio = gpuCurtains.renderer.camera.screenRatio.height * particleShrinkScale
@@ -309,7 +192,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
-      //@location(2) velocity: vec2f,
     };
 
     @vertex fn main(
@@ -322,7 +204,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       vsOutput.position = getOutputPosition(camera, matrices, transformed);
       vsOutput.uv = attributes.uv;
       vsOutput.normal = attributes.normal;
-      //vsOutput.velocity = attributes.instanceVelocity;
       
       return vsOutput;
     }
@@ -333,12 +214,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
-      //@location(2) velocity: vec2f,
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // normals
-      //return vec4(fsInput.velocity * 0.5 + 0.5, 0.0, 1.0);
       return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
     }
   `
@@ -372,7 +251,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.log(sphereGeometry)
 
   const sphereMesh = new GPUCurtains.Mesh(gpuCurtains, {
-    label: 'Cube ',
+    label: 'Sphere mesh',
     geometry: sphereGeometry,
     shaders: {
       vertex: {
@@ -391,20 +270,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   sphereMesh.scale.y = 0.5 / particleShrinkScale
   sphereMesh.scale.z = 0.5 / particleShrinkScale
 
-  // move our cube along the Z axis so the front face lies at (0, 0, 0) instead of the cube's center
-  //cubeMesh.position.z = -1 * sphereGeometry.boundingBox.max.z * cubeMesh.scale.z
-
   sphereMesh
     .onReady(() => {
       //console.log(cubeMesh.material.getAddedShaderCode('vertex'))
     })
     .onRender(() => {
-      if (computeInstanceBuffer) {
-        const instanceVertexBuffer = sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
-        if (instanceVertexBuffer) {
-          instanceVertexBuffer.buffer = computeInstanceBuffer
-        }
-      }
+      const instanceVertexBuffer = sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
+      const particleBuffer = computePass.material.getBindingsBuffersByBindingName('particles')
+
+      instanceVertexBuffer.buffer = particleBuffer[0]?.buffer
     })
 
   console.log(sphereMesh, gpuCurtains)

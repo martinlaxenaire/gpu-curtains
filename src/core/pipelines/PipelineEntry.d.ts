@@ -27,6 +27,12 @@ interface PipelineEntryParams extends PipelineEntryBaseParams {
   renderer: GPUCurtainsRenderer
 }
 
+interface PipelineEntryStatus {
+  compiling: boolean
+  compiled: boolean
+  error: null | string
+}
+
 declare let pipelineId: number
 
 export class PipelineEntry {
@@ -35,7 +41,10 @@ export class PipelineEntry {
   readonly index: number
   layout: GPUBindGroupLayout | null
   pipeline: GPURenderPipeline | GPUComputePipeline | null
-  ready: boolean
+  status: PipelineEntryStatus
+
+  get ready(): boolean
+  get canCompile(): boolean
 
   shaders: PipelineEntryShaders
   options: PipelineEntryBaseParams

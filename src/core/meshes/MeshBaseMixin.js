@@ -13,8 +13,6 @@ const defaultMeshBaseParams = {
   geometry: new Geometry(),
   // material
   shaders: {},
-  uniforms: {},
-  storages: {},
   autoAddToScene: true,
   useProjection: false,
   cullMode: 'back',
@@ -74,8 +72,6 @@ const MeshBaseMixin = (superclass) =>
         label,
         shaders,
         geometry,
-        //uniforms,
-        //storages,
         visible,
         renderOrder,
         renderTarget,
@@ -127,7 +123,7 @@ const MeshBaseMixin = (superclass) =>
     }
 
     setMeshMaterial(meshParameters) {
-      const { uniforms, storages, ...materialOptions } = meshParameters
+      const { inputs, inputBindGroups, ...materialOptions } = meshParameters
       const { useAsyncPipeline, transparent, useProjection, depthWriteEnabled, depthCompare, cullMode, verticesOrder } =
         materialOptions
 
@@ -143,8 +139,8 @@ const MeshBaseMixin = (superclass) =>
         depthCompare,
         cullMode,
         verticesOrder,
-        uniforms,
-        storages,
+        inputs,
+        inputBindGroups,
         geometry: this.geometry,
       })
     }

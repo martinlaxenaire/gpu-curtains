@@ -1,5 +1,11 @@
 import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings'
-import { AllowedBindGroups, BindGroup, BindGroupBindingBuffer, BindGroupBindingElement } from '../bindGroups/BindGroup'
+import {
+  AllowedBindGroups,
+  BindGroup,
+  BindGroupBindingBuffer,
+  BindGroupBindingElement,
+  BindGroupInputs,
+} from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Texture } from '../textures/Texture'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
@@ -63,9 +69,7 @@ type AllowedBufferBindings = BufferBindings | WorkBufferBindings
 type MaterialBindGroups = AllowedBindGroups[]
 
 interface MaterialInputBindingsParams {
-  uniforms?: Record<string, InputBindingsParams>
-  storages?: Record<string, InputBindingsParams>
-  works?: Record<string, WorkInputBindingsParams>
+  inputs?: BindGroupInputs
   inputBindGroups?: BindGroup[]
 }
 
@@ -75,10 +79,8 @@ interface MaterialOptions {
   label: string
   shaders: MaterialShaders
   useAsyncPipeline?: boolean
-  uniforms?: InputBindings
-  storages?: InputBindings
-  works?: InputBindings
-  inputBindGroups: BindGroup[]
+  inputs?: BindGroupInputs
+  inputBindGroups?: BindGroup[]
   rendering?: RenderMaterialRenderingOptions
 }
 
@@ -94,6 +96,8 @@ export class Material {
 
   uniforms: Record<string, Record<string, BufferBindingsUniform>>
   storages: Record<string, Record<string, BufferBindingsUniform>>
+  works: Record<string, Record<string, BufferBindingsUniform>>
+
   inputsBindGroups: BindGroup[]
   inputsBindings: BindGroupBindingElement[]
 
@@ -109,6 +113,8 @@ export class Material {
   getShaderCode(shaderType: FullShadersType): string
   getAddedShaderCode(shaderType: FullShadersType): string
 
+  setBindGroups()
+  processBindGroupBindings(bindGroup: BindGroup)
   createBindGroups()
   cloneBindGroupFromBindingsBuffers({
     bindGroup,
@@ -123,11 +129,7 @@ export class Material {
   destroyBindGroups()
   updateBindGroups()
 
-  createInputBindings(bindingType?: AllowedBindingsTypes, inputs?: InputBindings): BindGroupBindingElement[]
-
-  setInputBindings()
-  setBindings()
-  shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], uniformName?: BufferBindingsUniform['name'])
+  shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], bindingName?: BufferBindingsUniform['name'])
   getBindingsByName(bindingName?: BufferBindings['name']): BufferBindings | null
   getBindingsBuffersByBindingName(bindingName?: BufferBindings['name']): BindGroupBindingBuffer[]
 
