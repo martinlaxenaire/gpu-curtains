@@ -116,9 +116,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    uniforms: [
-      {
-        name: 'scrollEffect',
+    uniforms: {
+      scrollEffect: {
         label: 'ScrollEffect',
         bindings: {
           strength: {
@@ -127,14 +126,14 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-    ],
+    },
   })
 
   grayscalePass.setRenderTarget(grayscaleTarget)
 
   grayscalePass.onRender(() => {
     // update the uniform
-    grayscalePass.uniforms.strength.value = scrollEffect
+    grayscalePass.uniforms.scrollEffect.strength.value = scrollEffect
   })
 
   // setTimeout(() => {
@@ -192,9 +191,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    uniforms: [
-      {
-        name: 'scrollEffect',
+    uniforms: {
+      scrollEffect: {
         label: 'ScrollEffect',
         bindings: {
           strength: {
@@ -203,12 +201,12 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-    ],
+    },
   })
 
   rgbShiftPass.onRender(() => {
     // update the uniform
-    rgbShiftPass.uniforms.strength.value = scrollEffect
+    rgbShiftPass.uniforms.scrollEffect.strength.value = scrollEffect
   })
 
   // add a final pass that distort the whole scene on scroll
@@ -257,9 +255,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    uniforms: [
-      {
-        name: 'scrollEffect',
+    uniforms: {
+      scrollEffect: {
         label: 'ScrollEffect',
         bindings: {
           strength: {
@@ -268,24 +265,12 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-    ],
+    },
   })
 
   finalShaderPass.onRender(() => {
-    finalShaderPass.uniforms.strength.value = scrollEffect
+    finalShaderPass.uniforms.scrollEffect.strength.value = scrollEffect
   })
-
-  // const largePlaneDebugTexture = finalShaderPass.createRenderTexture({
-  //   label: 'Large plane debug render texture',
-  //   name: 'largePlaneDebugTexture',
-  //   fromTexture: grayscalePass.renderTarget.renderTexture,
-  // })
-  //
-  // const smallPlaneDebugTexture = finalShaderPass.createRenderTexture({
-  //   label: 'Small plane debug render texture',
-  //   name: 'smallPlaneDebugTexture',
-  //   fromTexture: rgbShiftPass.renderTarget.renderTexture,
-  // })
 
   console.log(gpuCurtains.renderer.scene)
 })

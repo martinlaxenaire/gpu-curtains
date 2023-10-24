@@ -1,17 +1,17 @@
 import { Bindings, BindingsParams } from './Bindings'
-import { MeshUniformValue, MeshInputsBase, MeshInputs } from '../meshes/MeshBaseMixin'
 import { BufferBindingsElement } from '../../types/buffers-utils'
+import { Input, InputBase, InputValue } from '../materials/Material'
 
-interface BufferBindingsUniform extends MeshInputsBase {
-  _value: MeshUniformValue
-  get value(): MeshUniformValue
-  set value(value: MeshUniformValue)
+interface BufferBindingsUniform extends InputBase {
+  _value: InputValue
+  get value(): InputValue
+  set value(value: InputValue)
   shouldUpdate: boolean
 }
 
 interface BufferBindingsParams extends BindingsParams {
   useStruct?: boolean
-  bindings?: Record<string, MeshInputs>
+  bindings?: Record<string, Input>
 }
 
 export class BufferBindings extends Bindings {

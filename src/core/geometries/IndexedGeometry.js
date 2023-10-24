@@ -1,7 +1,7 @@
 import { Geometry } from './Geometry'
 
 export class IndexedGeometry extends Geometry {
-  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] }) {
+  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] } = {}) {
     super({ verticesOrder, instancesCount, vertexBuffers })
 
     this.type = 'IndexedGeometry'

@@ -32,11 +32,12 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Errors / warning handling
 - Events / callbacks
 - Removing / destroying meshes
+- Compute pass
 
 ### Todo
 
-- Compute pass
 - ~~TextureLoader class?~~
+- Sampler class + handling samplers
 - Use async pipelines?
 - Mesh raycasting?
 - context lost handling

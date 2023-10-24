@@ -1,4 +1,4 @@
-import { CameraBasePerspectiveOptions } from '../core/camera/Camera'
+import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera'
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import { Vec3 } from '../math/Vec3'
@@ -58,6 +58,7 @@ export class GPUCurtains {
   get domMeshes(): DOMMeshType[]
   get planes(): Plane
 
+  get camera(): Camera | null
   setPerspective(fov?: number, near?: number, far?: number)
   setCameraPosition(position: Vec3)
 

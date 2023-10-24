@@ -104,18 +104,17 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    uniforms: [
-      {
-        name: 'deformation', // could be something else, like "frames"...
+    uniforms: {
+      deformation: {
         label: 'Deformation',
         bindings: {
           strength: {
-            type: 'f32', // this means our uniform is a float
+            type: 'f32',
             value: 0,
           },
         },
       },
-    ],
+    },
     texturesOptions: {
       texture: {
         generateMips: true,
@@ -137,7 +136,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       })
       .onRender(() => {
         // update the uniform
-        plane.uniforms.strength.value = scrollEffect
+        plane.uniforms.deformation.strength.value = scrollEffect
       })
   }
 

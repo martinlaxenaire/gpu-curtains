@@ -1,35 +1,15 @@
 import { Renderer } from '../../types/renderer-utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
-import { MaterialShaders } from '../materials/Material'
-import { MeshBindings, MeshBindingsTypes } from '../meshes/MeshBaseMixin'
-import { BufferBindings } from '../bindings/BufferBindings'
-import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
-
-interface WorkGroupParams {
-  name: string
-  label: string
-  type: string
-  dispatchSize?: number | number[]
-  value: number[] | Float32Array
-}
-
-interface WorkBindings extends MeshBindings {
-  dispatchSize?: number | number[]
-}
+import { MaterialParams, MaterialShaders } from '../materials/Material'
 
 interface ComputePassOptions {
   label: string
   renderOrder: number
+  autoAddToScene: boolean
   shaders: MaterialShaders
-  uniforms: MeshBindings[]
-  storages: MeshBindings[]
-  works: WorkBindings[]
 }
 
-type ComputePassParams = Partial<ComputePassOptions>
-
-type ComputeBindingsTypes = MeshBindingsTypes | 'works'
-type ComputeBindingsParams = Record<ComputeBindingsTypes, MeshBindings[] | WorkGroupParams[]>
+interface ComputePassParams extends Partial<ComputePassOptions>, MaterialParams {}
 
 export class ComputePass {
   type: string
@@ -37,6 +17,7 @@ export class ComputePass {
   index: number
   renderer: Renderer
   renderOrder: number
+  #autoAddToScene: boolean
 
   options: ComputePassOptions
 
@@ -49,16 +30,10 @@ export class ComputePass {
   get ready(): boolean
   set ready(value: boolean)
 
-  setComputeMaterial(computeParameters)
+  setComputeMaterial(computeParameters: MaterialParams)
 
   addToScene()
   removeFromScene()
-
-  createBindings({
-    uniforms,
-    storages,
-    works,
-  }: ComputeBindingsParams): Record<MeshBindingsTypes, BufferBindings[] | WorkBufferBindings[]>
 
   get uniforms(): ComputeMaterial['uniforms']
   get storages(): ComputeMaterial['storages']

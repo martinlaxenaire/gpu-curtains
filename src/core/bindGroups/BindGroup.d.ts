@@ -69,6 +69,13 @@ export class BindGroup {
   updateBindings()
 
   clone(): AllowedBindGroups
+  cloneFromBindingsBuffers({
+    bindingsBuffers,
+    keepLayout,
+  }: {
+    bindingsBuffers?: BindGroupBindingBuffer[]
+    keepLayout?: boolean
+  }): AllowedBindGroups
 
   destroy()
 }

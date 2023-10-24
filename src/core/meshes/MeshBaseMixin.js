@@ -2,7 +2,6 @@ import { generateUUID, throwWarning } from '../../utils/utils'
 import { isCameraRenderer } from '../../utils/renderer-utils'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
-import { BufferBindings } from '../bindings/BufferBindings'
 import { Geometry } from '../geometries/Geometry'
 import { RenderTexture } from '../textures/RenderTexture'
 
@@ -14,7 +13,9 @@ const defaultMeshBaseParams = {
   geometry: new Geometry(),
   // material
   shaders: {},
-  bindings: [],
+  uniforms: {},
+  storages: {},
+  autoAddToScene: true,
   useProjection: false,
   cullMode: 'back',
   depthWriteEnabled: true,
@@ -30,6 +31,8 @@ const defaultMeshBaseParams = {
 
 const MeshBaseMixin = (superclass) =>
   class extends superclass {
+    #autoAddToScene = true
+
     // callbacks / events
     _onReadyCallback = () => {
       /* allow empty callback */
@@ -71,12 +74,13 @@ const MeshBaseMixin = (superclass) =>
         label,
         shaders,
         geometry,
-        uniforms,
-        storages,
+        //uniforms,
+        //storages,
         visible,
         renderOrder,
         renderTarget,
         texturesOptions,
+        autoAddToScene,
         ...meshParameters
       } = parameters
 
@@ -85,6 +89,7 @@ const MeshBaseMixin = (superclass) =>
         shaders,
         renderTarget,
         texturesOptions,
+        autoAddToScene,
         ...(this.options ?? {}), // merge possible lower options?
       }
 
@@ -92,18 +97,21 @@ const MeshBaseMixin = (superclass) =>
 
       this.geometry = geometry
 
+      if (autoAddToScene !== undefined) {
+        this.#autoAddToScene = autoAddToScene
+      }
+
       this.visible = visible
       this.renderOrder = renderOrder
       this.ready = false
 
-      const inputBindings = this.createBindings({
-        uniforms: uniforms ?? [],
-        storages: storages ?? [],
-      })
-
-      this.setMeshMaterial({ ...meshParameters, ...inputBindings })
+      this.setMeshMaterial(meshParameters)
 
       this.addToScene()
+    }
+
+    get autoAddToScene() {
+      return this.#autoAddToScene
     }
 
     get ready() {
@@ -144,11 +152,17 @@ const MeshBaseMixin = (superclass) =>
 
     addToScene() {
       this.renderer.meshes.push(this)
-      this.renderer.scene.addMesh(this)
+
+      if (this.#autoAddToScene) {
+        this.renderer.scene.addMesh(this)
+      }
     }
 
     removeFromScene() {
-      this.renderer.scene.removeMesh(this)
+      if (this.#autoAddToScene) {
+        this.renderer.scene.removeMesh(this)
+      }
+
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
     }
 
@@ -205,63 +219,6 @@ const MeshBaseMixin = (superclass) =>
     }
 
     /*** BINDINGS ***/
-
-    createBindings({ uniforms = [], storages = [] }) {
-      const uniformsBindings = [
-        ...uniforms.map((binding, index) => {
-          const bindingParams = {
-            label: binding.label || 'Uniform' + index,
-            name: binding.name || 'uniform' + index,
-            bindIndex: index + 1,
-            bindingType: 'uniform',
-            useStruct: true,
-            bindings: binding.bindings,
-            visibility: binding.visibility,
-          }
-
-          return binding.useStruct !== false
-            ? new BufferBindings(bindingParams)
-            : Object.keys(binding.bindings).map((bindingKey) => {
-                bindingParams.label = binding.label + bindingKey || 'Uniform' + bindingKey + index
-                bindingParams.name = binding.name + bindingKey || 'uniform' + bindingKey + index
-                bindingParams.useStruct = false
-                bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
-
-                return new BufferBindings(bindingParams)
-              })
-        }),
-      ].flat()
-
-      const storagesBindings = [
-        ...storages.map((binding, index) => {
-          const bindingParams = {
-            label: binding.label || 'Storage' + index,
-            name: binding.name || 'storage' + index,
-            bindIndex: index + 1, // bindIndex 0 is already taken by matrix uniforms
-            bindingType: 'storage',
-            useStruct: true,
-            bindings: binding.bindings,
-            visibility: binding.visibility,
-          }
-
-          return binding.useStruct !== false
-            ? new BufferBindings(bindingParams)
-            : Object.keys(binding.bindings).map((bindingKey) => {
-                bindingParams.label = binding.label + bindingKey || 'Storage' + bindingKey + index
-                bindingParams.name = binding.name + bindingKey || 'storage' + bindingKey + index
-                bindingParams.useStruct = false
-                bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
-
-                return new BufferBindings(bindingParams)
-              })
-        }),
-      ].flat()
-
-      return {
-        uniforms: uniformsBindings,
-        storages: storagesBindings,
-      }
-    }
 
     get uniforms() {
       return this.material?.uniforms

@@ -65,9 +65,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'fs', // custom entry point
       },
     },
-    uniforms: [
-      {
-        name: 'flowmap',
+    uniforms: {
+      flowmap: {
         label: 'Flowmap',
         bindings: {
           mousePosition: {
@@ -106,7 +105,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-    ],
+    },
   })
 
   flowMap
@@ -133,7 +132,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onRender(() => {
       // update mouse position
-      flowMap.uniforms.mousePosition.value = flowMap.mouseToPlaneCoords(mouse)
+      flowMap.uniforms.flowmap.mousePosition.value = flowMap.mouseToPlaneCoords(mouse)
 
       // update velocity
       if (!updateVelocity) {
@@ -141,10 +140,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
       updateVelocity = false
 
-      flowMap.uniforms.velocity.value = velocity.lerp(nullVector.set(0, 0), 0.1)
+      flowMap.uniforms.flowmap.velocity.value = velocity.lerp(nullVector.set(0, 0), 0.1)
     })
     .onAfterResize(() => {
-      flowMap.uniforms.aspect.value = gpuCurtains.renderer.boundingRect.width / gpuCurtains.renderer.boundingRect.height
+      flowMap.uniforms.flowmap.aspect.value =
+        gpuCurtains.renderer.boundingRect.width / gpuCurtains.renderer.boundingRect.height
     })
 
   console.log(flowMap)

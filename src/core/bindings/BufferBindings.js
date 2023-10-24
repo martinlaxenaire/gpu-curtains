@@ -95,12 +95,18 @@ export class BufferBindings extends Bindings {
         this.alignmentRows += Math.max(1, Math.ceil(numElements / bytesPerElement))
       } else {
         // our next space available
-        const nextSpaceAvailable =
+        let nextSpaceAvailable =
           this.bindingElements[index - 1].startOffset + this.bindingElements[index - 1].bufferLayout.numElements
 
         // if it's just a float an int or a vec2, check if we have enough space on current alignment row
         if (align <= bytesPerElement * 2) {
+          if (numElements === 2 && nextSpaceAvailable % 2 === 1) {
+            nextSpaceAvailable = nextSpaceAvailable + 1
+          }
+
           if (nextSpaceAvailable + numElements <= this.alignmentRows * bytesPerElement) {
+            // if it's a vec2 following a float, start at index 2
+            // if not, just fill next space available
             bindingElement.startOffset = nextSpaceAvailable
           } else {
             bindingElement.startOffset = this.alignmentRows * bytesPerElement
@@ -166,18 +172,18 @@ export class BufferBindings extends Bindings {
 
       if (!notAllArrays) {
         const kebabCaseLabel = toKebabCase(this.label)
+        const camelCaseLabel = toCamelCase(this.label)
 
         this.wgslStructFragment = `struct ${kebabCaseLabel} {\n\t${this.bindingElements
           .map((binding) => binding.name + ': ' + binding.type.replace('array', '').replace('<', '').replace('>', ''))
           .join(',\n\t')}
-};\n\n`
-
-        this.wgslStructFragment += `struct Child${kebabCaseLabel} {
-  child${kebabCaseLabel}: array<${kebabCaseLabel}>
 };`
 
+        //this.wgslStructFragment += `struct ${kebabCaseLabel}Array {\n\tdata: array<${kebabCaseLabel}>\n};`
+
         const varType = getBindingWgslVarType(this.bindingType)
-        this.wgslGroupFragment = [`${varType} ${this.name}: Child${kebabCaseLabel};`]
+        //this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel}Array;`]
+        this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`]
       } else {
         this.wgslStructFragment = `struct ${toKebabCase(this.label)} {\n\t${this.bindingElements
           .map((binding) => binding.name + ': ' + binding.type)
@@ -203,7 +209,7 @@ export class BufferBindings extends Bindings {
   }
 
   onBeforeRender() {
-    Object.keys(this.bindings).forEach((bindingKey) => {
+    Object.keys(this.bindings).forEach((bindingKey, bindingIndex) => {
       const binding = this.bindings[bindingKey]
       const bindingElement = this.bindingElements.find((bindingEl) => bindingEl.key === bindingKey)
 
@@ -222,11 +228,13 @@ export class BufferBindings extends Bindings {
           const arrayStride = getBufferArrayStride(bindingElement)
 
           let totalArrayStride = 0
-          this.bindingElements.forEach((bindingEl) => {
+          let startIndex = 0
+          this.bindingElements.forEach((bindingEl, index) => {
             totalArrayStride += getBufferArrayStride(bindingEl)
+            if (index < bindingIndex) {
+              startIndex += getBufferArrayStride(bindingEl)
+            }
           })
-
-          const startIndex = bindingElement.startOffset / this.alignmentRows
 
           for (let i = 0, j = 0; j < bindingElement.array.length; i++, j += arrayStride) {
             // fill portion of value array with portion of binding element array

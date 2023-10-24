@@ -95,7 +95,7 @@ export class RenderMaterial extends Material {
     this.attributes.vertexBuffers.forEach((vertexBuffer) => {
       vertexBuffer.buffer = this.renderer.createBuffer({
         label: this.options.label + ': Vertex buffer vertices',
-        size: vertexBuffer.array.length * Float32Array.BYTES_PER_ELEMENT,
+        size: vertexBuffer.array.byteLength,
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
       })
 

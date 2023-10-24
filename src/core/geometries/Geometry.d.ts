@@ -9,6 +9,7 @@ interface IndexBuffer {
 }
 
 interface VertexBuffer {
+  name: string
   stepMode: GPUVertexStepMode
   arrayStride: number
   bufferLength: number
@@ -20,6 +21,7 @@ interface VertexBuffer {
 
 interface VertexBufferParams {
   stepMode?: GPUVertexStepMode
+  name?: string
   attributes?: AttributeBufferParamsOption[]
 }
 
@@ -46,11 +48,13 @@ export class Geometry {
 
   constructor({ verticesOrder, instancesCount, vertexBuffers }?: GeometryParams)
 
-  setAttribute({ vertexBuffer, name, type, bufferFormat, size, array }: AttributeBufferParamsOption)
+  #addVertexBuffer({ stepMode, name, attributes }?: VertexBufferParams): VertexBuffer
+  getVertexBufferByName(name?: string): VertexBuffer | null
 
-  getAttribute(name: string): AttributeBufferParams | null
+  setAttribute({ vertexBuffer, name, type, bufferFormat, size, array, verticesUsed }: AttributeBufferParamsOption)
+  getAttributeByName(name: string): AttributeBufferParams | null
 
   computeGeometry()
 
-  setWGSLFragment()
+  #setWGSLFragment()
 }

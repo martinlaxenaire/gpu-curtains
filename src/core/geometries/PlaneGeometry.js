@@ -1,7 +1,7 @@
 import { IndexedGeometry } from './IndexedGeometry'
 
 export class PlaneGeometry extends IndexedGeometry {
-  constructor({ widthSegments = 1, heightSegments = 1, instancesCount = 1, vertexBuffers = [] }) {
+  constructor({ widthSegments = 1, heightSegments = 1, instancesCount = 1, vertexBuffers = [] } = {}) {
     super({ verticesOrder: 'cw', instancesCount, vertexBuffers })
 
     this.type = 'PlaneGeometry'

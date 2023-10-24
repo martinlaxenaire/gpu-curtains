@@ -1,5 +1,5 @@
 import { Box3 } from '../../math/Box3'
-import { throwError, throwWarning } from '../../utils/utils'
+import { throwError, throwWarning, toKebabCase } from '../../utils/utils'
 
 export class Geometry {
   constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] } = {}) {
@@ -13,7 +13,11 @@ export class Geometry {
 
     // TODO
     this.vertexBuffers = []
-    this.addVertexBuffer() // will contain our vertex position / uv data at least
+
+    // will contain our vertex position / uv data at least
+    this.#addVertexBuffer({
+      name: 'attributes',
+    })
 
     this.options = {
       verticesOrder,
@@ -21,19 +25,18 @@ export class Geometry {
       vertexBuffers,
     }
 
-    vertexBuffers.forEach((newVertexBuffer) => {
-      const vertexBuffer = this.addVertexBuffer(newVertexBuffer.stepMode ?? 'vertex')
-      newVertexBuffer.attributes?.forEach((attribute) => {
-        this.setAttribute({
-          vertexBuffer,
-          ...attribute,
-        })
+    vertexBuffers.forEach((vertexBuffer) => {
+      this.#addVertexBuffer({
+        stepMode: vertexBuffer.stepMode ?? 'vertex',
+        name: vertexBuffer.name,
+        attributes: vertexBuffer.attributes,
       })
     })
   }
 
-  addVertexBuffer(stepMode = 'vertex') {
+  #addVertexBuffer({ stepMode = 'vertex', name, attributes = [] } = {}) {
     const vertexBuffer = {
+      name: name ?? 'attributes' + this.vertexBuffers.length,
       stepMode,
       arrayStride: 0,
       bufferLength: 0,
@@ -41,9 +44,22 @@ export class Geometry {
       buffer: null,
       indexBuffer: null,
     }
+
+    // set attributes right away if possible
+    attributes?.forEach((attribute) => {
+      this.setAttribute({
+        vertexBuffer,
+        ...attribute,
+      })
+    })
+
     this.vertexBuffers.push(vertexBuffer)
 
     return vertexBuffer
+  }
+
+  getVertexBufferByName(name = '') {
+    return this.vertexBuffers.find((vertexBuffer) => vertexBuffer.name === name)
   }
 
   setAttribute({
@@ -53,6 +69,7 @@ export class Geometry {
     bufferFormat = 'float32x3',
     size = 3,
     array = new Float32Array(this.verticesCount * size),
+    verticesUsed = 1,
   }) {
     const attributes = vertexBuffer.attributes
     const attributesLength = attributes.length
@@ -74,7 +91,11 @@ export class Geometry {
       this.verticesCount = attributeCount
     }
 
-    if (vertexBuffer.stepMode === 'vertex' && this.verticesCount && this.verticesCount !== attributeCount) {
+    if (
+      vertexBuffer.stepMode === 'vertex' &&
+      this.verticesCount &&
+      this.verticesCount !== attributeCount * verticesUsed
+    ) {
       throwError(
         `Geometry vertex attribute error. Attribute array of size ${size} must be of length: ${
           this.verticesCount * size
@@ -94,23 +115,30 @@ export class Geometry {
       bufferFormat,
       size,
       bufferLength: array.length,
-      offset: attributesLength ? attributes[attributesLength - 1].bufferLength : 0,
+      offset: attributesLength
+        ? attributes.reduce((accumulator, currentValue) => {
+            return accumulator + currentValue.bufferLength
+          }, 0)
+        : 0,
       bufferOffset: attributesLength
         ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4
         : 0,
       array,
+      verticesUsed,
     }
 
-    vertexBuffer.bufferLength += attribute.bufferLength
+    vertexBuffer.bufferLength += attribute.bufferLength * verticesUsed
     vertexBuffer.arrayStride += attribute.size
     vertexBuffer.attributes.push(attribute)
   }
 
-  getAttribute(name) {
-    // TODO
-    return this.vertexBuffers.find((vertexBuffer) => {
-      return vertexBuffer.attributes.find((attribute) => attribute.name === name)
+  getAttributeByName(name) {
+    let attribute
+    this.vertexBuffers.forEach((vertexBuffer) => {
+      attribute = vertexBuffer.attributes.find((attribute) => attribute.name === name)
     })
+
+    return attribute
   }
 
   computeGeometry() {
@@ -141,15 +169,14 @@ export class Geometry {
       let attributeIndex = 0
       for (let i = 0; i < vertexBuffer.bufferLength; i += vertexBuffer.arrayStride) {
         for (let j = 0; j < vertexBuffer.attributes.length; j++) {
-          const attributeSize = vertexBuffer.attributes[j].size
-          const attributeArray = vertexBuffer.attributes[j].array
+          const { name, size, array, verticesUsed } = vertexBuffer.attributes[j]
 
-          for (let s = 0; s < attributeSize; s++) {
-            const attributeValue = attributeArray[attributeIndex * attributeSize + s]
+          for (let s = 0; s < size; s++) {
+            const attributeValue = array[Math.floor(attributeIndex / verticesUsed) * size + s]
             vertexBuffer.array[currentIndex] = attributeValue
 
             // compute bounding box
-            if (vertexBuffer.attributes[j].name === 'position') {
+            if (name === 'position') {
               if (s % 3 === 0) {
                 // x
                 if (this.boundingBox.min.x > attributeValue) this.boundingBox.min.x = attributeValue
@@ -173,10 +200,10 @@ export class Geometry {
       }
     })
 
-    this.setWGSLFragment()
+    this.#setWGSLFragment()
   }
 
-  setWGSLFragment() {
+  #setWGSLFragment() {
     let locationIndex = -1
     this.wgslStructFragment = `struct Attributes {\n\t@builtin(vertex_index) vertexIndex : u32,\n\t@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers
       .map((vertexBuffer) => {

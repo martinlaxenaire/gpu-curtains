@@ -1,12 +1,12 @@
 import { isRenderer } from '../../utils/renderer-utils'
-import { generateUUID, toKebabCase } from '../../utils/utils'
+import { generateUUID } from '../../utils/utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
-import { BufferBindings } from '../bindings/BufferBindings'
-import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 let computePassIndex = 0
 
 export class ComputePass {
+  #autoAddToScene = true
+
   // callbacks / events
   _onReadyCallback = () => {
     /* allow empty callback */
@@ -37,35 +37,30 @@ export class ComputePass {
     this.uuid = generateUUID()
     Object.defineProperty(this, 'index', { value: computePassIndex++ })
 
-    const { label, shaders, renderOrder, uniforms, storages, works } = parameters
+    const { label, shaders, renderOrder, uniforms, storages, works, inputBindGroups, autoAddToScene } = parameters
 
     this.options = {
       label,
       shaders,
       renderOrder,
-      uniforms,
-      storages,
-      works,
+      autoAddToScene,
     }
 
     this.renderOrder = renderOrder ?? 0
+
+    if (autoAddToScene !== undefined) {
+      this.#autoAddToScene = autoAddToScene
+    }
+
     this.ready = false
-
-    const inputBindings = this.createBindings({
-      uniforms: uniforms ?? [],
-      storages: storages ?? [],
-      works: works ?? [],
-    })
-
-    // TODO TEST
-    // for (const binding in parameters.bindings) {
-    //   console.log(binding, parameters.bindings[binding])
-    // }
 
     this.setComputeMaterial({
       label: this.options.label,
       shaders: this.options.shaders,
-      ...inputBindings,
+      uniforms,
+      storages,
+      works,
+      inputBindGroups,
     })
 
     this.addToScene()
@@ -88,99 +83,18 @@ export class ComputePass {
 
   addToScene() {
     this.renderer.computePasses.push(this)
-    this.renderer.scene.addComputePass(this)
+
+    if (this.#autoAddToScene) {
+      this.renderer.scene.addComputePass(this)
+    }
   }
 
   removeFromScene() {
-    this.renderer.scene.removeComputePass(this)
-    this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid)
-  }
-
-  createBindings({ uniforms = [], storages = [], works = [] }) {
-    // TODO destructure bindings that don't use struct?
-    const uniformsBindings = [
-      ...uniforms.map((binding, index) => {
-        const bindingParams = {
-          label: binding.label || 'Uniform' + index,
-          name: binding.name || 'uniform' + index,
-          bindIndex: index,
-          bindingType: 'uniform',
-          useStruct: true,
-          bindings: binding.bindings,
-          visibility: 'compute',
-        }
-
-        return binding.useStruct !== false
-          ? new BufferBindings(bindingParams)
-          : Object.keys(binding.bindings).map((bindingKey) => {
-              bindingParams.label =
-                binding.label + toKebabCase(bindingKey) || 'Uniform' + toKebabCase(bindingKey) + index
-              bindingParams.name = binding.name + toKebabCase(bindingKey) || 'uniform' + toKebabCase(bindingKey) + index
-              bindingParams.useStruct = false
-              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
-
-              return new BufferBindings(bindingParams)
-            })
-      }),
-    ].flat()
-
-    const storagesBindings = [
-      ...storages.map((binding, index) => {
-        const bindingParams = {
-          label: binding.label || 'Storage' + index,
-          name: binding.name || 'storage' + index,
-          bindIndex: index,
-          bindingType: 'storage',
-          useStruct: true,
-          bindings: binding.bindings,
-          visibility: 'compute',
-        }
-
-        return binding.useStruct !== false
-          ? new BufferBindings(bindingParams)
-          : Object.keys(binding.bindings).map((bindingKey) => {
-              bindingParams.label =
-                binding.label + toKebabCase(bindingKey) || 'Storage' + toKebabCase(bindingKey) + index
-              bindingParams.name = binding.name + toKebabCase(bindingKey) || 'storage' + toKebabCase(bindingKey) + index
-              bindingParams.useStruct = false
-              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
-
-              return new BufferBindings(bindingParams)
-            })
-      }),
-    ].flat()
-
-    const worksBindings = [
-      ...works.map((binding, index) => {
-        const bindingParams = {
-          label: binding.label || 'Works' + index,
-          name: binding.name || 'works' + index,
-          bindIndex: index,
-          type: 'storageWrite',
-          useStruct: true,
-          bindings: binding.bindings,
-          dispatchSize: binding.dispatchSize,
-          visibility: 'compute',
-        }
-
-        return binding.useStruct !== false
-          ? new WorkBufferBindings(bindingParams)
-          : Object.keys(binding.bindings).map((bindingKey) => {
-              bindingParams.label = binding.label + toKebabCase(bindingKey) || 'Works' + toKebabCase(bindingKey) + index
-              bindingParams.name = binding.name + toKebabCase(bindingKey) || 'works' + toKebabCase(bindingKey) + index
-              bindingParams.useStruct = false
-              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
-
-              return new WorkBufferBindings(bindingParams)
-            })
-      }),
-    ].flat()
-
-    return {
-      uniforms: uniformsBindings,
-      storages: storagesBindings,
-      works: worksBindings,
+    if (this.#autoAddToScene) {
+      this.renderer.scene.removeComputePass(this)
     }
+
+    this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid)
   }
 
   get uniforms() {

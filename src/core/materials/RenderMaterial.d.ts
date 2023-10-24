@@ -1,4 +1,4 @@
-import { Material, MaterialOptions, MaterialShaders, ShaderOptions } from './Material'
+import { Material, MaterialInputBindingsParams, MaterialOptions, MaterialShaders, ShaderOptions } from './Material'
 import { Geometry } from '../geometries/Geometry'
 import { IndexedGeometry } from '../geometries/IndexedGeometry'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
@@ -36,15 +36,12 @@ interface RenderMaterialRenderingOptions extends RenderMaterialBaseRenderingOpti
   verticesOrder: Geometry['verticesOrder']
 }
 
-interface RenderMaterialBaseParams extends Partial<RenderMaterialBaseRenderingOptions> {
+interface RenderMaterialBaseParams extends RenderMaterialRenderingOptions, MaterialInputBindingsParams {}
+
+interface RenderMaterialParams extends Partial<RenderMaterialBaseParams> {
   label?: string
   shaders?: MaterialShaders
   geometry: AllowedGeometries
-}
-
-interface RenderMaterialParams extends RenderMaterialBaseParams {
-  uniforms?: BufferBindings[]
-  storages?: BufferBindings[]
 }
 
 export class RenderMaterial extends Material {

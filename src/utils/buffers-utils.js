@@ -46,6 +46,8 @@ export const getBufferLayout = (bufferType) => {
 export const getBufferArrayStride = (bindingElement) => {
   return (() => {
     switch (bindingElement.type) {
+      case 'array<vec4f>':
+        return 4
       case 'array<vec3f>':
         return 3
       case 'array<vec2f>':

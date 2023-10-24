@@ -94,6 +94,10 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
         }
       }
 
+      if (!loaderSize) {
+        this.sourcesReady = true
+      }
+
       // load images
       if (images.length) {
         images.forEach((image) => {

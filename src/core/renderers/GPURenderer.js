@@ -6,6 +6,13 @@ import { RenderPass } from '../renderPasses/RenderPass'
 import { throwWarning, throwError, logError } from '../../utils/utils'
 
 export class GPURenderer {
+  _onBeforeRenderCallback = (commandEncoder) => {
+    /* allow empty callback */
+  }
+  _onAfterRenderCallback = (commandEncoder) => {
+    /* allow empty callback */
+  }
+
   constructor({
     container,
     pixelRatio = 1,
@@ -359,6 +366,22 @@ export class GPURenderer {
     this.scene.onAfterCommandEncoder()
   }
 
+  onBeforeRender(callback) {
+    if (callback) {
+      this._onBeforeRenderCallback = callback
+    }
+
+    return this
+  }
+
+  onAfterRender(callback) {
+    if (callback) {
+      this._onAfterRenderCallback = callback
+    }
+
+    return this
+  }
+
   /**
    * Called at each draw call to render our scene and its content
    * Also create shader modules if not already created
@@ -372,11 +395,11 @@ export class GPURenderer {
 
     const commandEncoder = this.device.createCommandEncoder({ label: 'Renderer command encoder' })
 
-    // Get the current texture from the canvas context and
-    // set it as the texture to render to.
-    // TODO each pass needs an access to the renderTexture and the commandEncoder
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
 
     this.scene.render(commandEncoder)
+
+    this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
 
     const commandBuffer = commandEncoder.finish()
     this.device.queue.submit([commandBuffer])

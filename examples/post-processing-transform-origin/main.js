@@ -160,8 +160,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var uv: vec2f = fsInput.uv;
       
       // calculate an effect that spreads from the left-center point
-      // notice how we didn't name our uniform struct, so its default name is 'uniform0'
-      var rgbEffect: f32 = uniform0.rotationEffect * distance(uv, vec2(0.0, 0.5));
+      var rgbEffect: f32 = rotation.effect * distance(uv, vec2(0.0, 0.5));
     
       var red: vec4f = textureSample(renderTexture, renderTextureSampler, uv + rgbEffect * 0.005);
       var green: vec4f = textureSample(renderTexture, renderTextureSampler, uv);
@@ -180,23 +179,23 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    uniforms: [
-      {
+    uniforms: {
+      rotation: {
         bindings: {
-          rotationEffect: {
+          effect: {
             type: 'f32',
             value: 0,
           },
         },
       },
-    ],
+    },
   }
 
   const shaderPass = new GPUCurtains.ShaderPass(gpuCurtains, shaderPassParams)
 
   shaderPass.onRender(() => {
     // update the uniform
-    shaderPass.uniforms.rotationEffect.value = rotationEffect
+    shaderPass.uniforms.rotation.effect.value = rotationEffect
   })
 
   console.log(shaderPass)

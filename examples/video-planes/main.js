@@ -30,7 +30,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
   
       // notice how the "uniforms" struct name matches our bindings object name property
-      var time: f32 = uniforms.time * 0.0375;
+      var time: f32 = frames.elapsed * 0.0375;
   
       var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
   
@@ -72,18 +72,17 @@ window.addEventListener('DOMContentLoaded', async () => {
   // set our initial parameters (basic uniforms)
   const params = {
     widthSegments: 20,
-    uniforms: [
-      {
-        name: 'uniforms', // could be something else, like "frames"...
-        label: 'Uniforms',
+    uniforms: {
+      frames: {
+        label: 'Frames',
         bindings: {
-          time: {
+          elapsed: {
             type: 'f32', // this means our uniform is a float
             value: 0,
           },
         },
       },
-    ],
+    },
   }
 
   const externalVideoParams = {
@@ -113,7 +112,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     .onReady(() => console.log('external video plane ready'))
     .onRender(() => {
       // update our time uniform value
-      externalVideoPlane.uniforms.time.value++
+      externalVideoPlane.uniforms.frames.elapsed.value++
     })
 
   const videoParams = {
@@ -148,6 +147,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     .onReady(() => console.log('video plane ready'))
     .onRender(() => {
       // update our time uniform value
-      videoPlane.uniforms.time.value++
+      videoPlane.uniforms.frames.elapsed.value++
     })
 })

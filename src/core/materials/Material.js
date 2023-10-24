@@ -2,6 +2,7 @@ import { BindGroup } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { isRenderer } from '../../utils/renderer-utils'
 import { toKebabCase } from '../../utils/utils'
+import { BufferBindings } from '../bindings/BufferBindings'
 
 export class Material {
   constructor(renderer, parameters) {
@@ -14,7 +15,7 @@ export class Material {
 
     this.renderer = renderer
 
-    let { shaders, label, uniforms, storages } = parameters
+    let { shaders, label, uniforms, storages, inputBindGroups } = parameters
 
     // shaders = {
     //   ...{
@@ -36,14 +37,16 @@ export class Material {
     //   shaders.fragment.entryPoint = 'main'
     // }
 
-    if (!uniforms) uniforms = []
-    if (!storages) storages = []
+    if (!uniforms) uniforms = {}
+    if (!storages) storages = {}
+    if (!inputBindGroups) inputBindGroups = []
 
     this.options = {
       shaders,
       label,
       uniforms,
       storages,
+      inputBindGroups,
     }
 
     this.bindGroups = []
@@ -117,6 +120,13 @@ export class Material {
       this.bindGroups.push(this.texturesBindGroup)
     }
 
+    this.options.inputBindGroups.forEach((bindGroup) => {
+      // it has not been added yet? add it!
+      if (!bindGroup.shouldCreateBindGroup) {
+        this.bindGroups.push(bindGroup)
+      }
+    })
+
     // then uniforms
     this.inputsBindGroups.forEach((bindGroup) => {
       if (bindGroup.shouldCreateBindGroup) {
@@ -128,52 +138,20 @@ export class Material {
     })
   }
 
-  // cloneBindGroupAtIndex(index = 0) {
-  //   const originalBindGroup = this.bindGroups.find((bindGroup) => bindGroup.index === index)
-  //   if (originalBindGroup) {
-  //     const clone = originalBindGroup.clone()
-  //     this.clonedBindGroups.push(clone)
-  //     return clone
-  //   } else {
-  //     return null
-  //   }
-  // }
-  //
-  // swapBindGroupsAtIndex(index = 0) {
-  //   const originalBindGroupIndex = this.bindGroups.findIndex((bindGroup) => bindGroup.index === index)
-  //   const clonedBindGroupIndex = this.clonedBindGroups.findIndex((bindGroup) => bindGroup.index === index)
-  //
-  //   const originalBindGroup = originalBindGroupIndex !== -1 ? this.bindGroups[originalBindGroupIndex] : null
-  //   const clonedBindGroup = clonedBindGroupIndex !== -1 ? this.clonedBindGroups[clonedBindGroupIndex] : null
-  //
-  //   if (originalBindGroup && clonedBindGroup && originalBindGroup.type === clonedBindGroup.type) {
-  //     // swap
-  //     ;[this.bindGroups[originalBindGroupIndex], this.clonedBindGroups[clonedBindGroupIndex]] = [
-  //       this.clonedBindGroups[clonedBindGroupIndex],
-  //       this.bindGroups[originalBindGroupIndex],
-  //     ]
-  //   }
-  // }
+  cloneBindGroup({ bindGroup, bindingsBuffers = [], keepLayout = true }) {
+    if (!bindGroup) return null
+
+    const clone = bindGroup.cloneFromBindingsBuffers({ bindingsBuffers, keepLayout })
+    this.clonedBindGroups.push(clone)
+
+    return clone
+  }
 
   getBindGroupByBindingName(bindingName = '') {
-    return this.bindGroups.find((bindGroup) => {
+    return (this.ready ? this.bindGroups : this.inputsBindGroups).find((bindGroup) => {
       return bindGroup.bindings.find((binding) => binding.name === bindingName)
     })
   }
-
-  // swapBindingsBuffers(firstBindings = [], secondBindings = []) {
-  //   firstBindings.forEach((firstBinding, index) => {
-  //     let secondBinding = secondBindings[index]
-  //     if (secondBinding) {
-  //       console.log(firstBinding, secondBinding)
-  //       const temp = firstBinding
-  //       firstBinding = secondBinding
-  //       secondBinding = temp
-  //
-  //       console.log(secondBinding.inputBinding.name, '->', firstBinding.inputBinding.name)
-  //     }
-  //   })
-  // }
 
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
@@ -200,23 +178,64 @@ export class Material {
     })
   }
 
-  /** UNIFORMS **/
+  /** INPUTS **/
+
+  createInputBindings(bindingType = 'uniform', inputs = {}) {
+    const inputBindings = [
+      ...Object.keys(inputs).map((inputKey) => {
+        const binding = inputs[inputKey]
+
+        const bindingParams = {
+          label: toKebabCase(binding.label || inputKey),
+          name: inputKey,
+          bindingType,
+          useStruct: true,
+          bindings: binding.bindings,
+          visibility: binding.visibility,
+        }
+
+        return binding.useStruct !== false
+          ? new BufferBindings(bindingParams)
+          : Object.keys(binding.bindings).map((bindingKey) => {
+              bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey)
+              bindingParams.name = inputKey + bindingKey
+              bindingParams.useStruct = false
+              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
+
+              return new BufferBindings(bindingParams)
+            })
+      }),
+    ].flat()
+
+    return inputBindings
+  }
+
+  setInputBindings() {
+    this.inputsBindings = [
+      ...this.createInputBindings('uniform', this.options.uniforms),
+      ...this.createInputBindings('storage', this.options.storages),
+    ]
+  }
 
   setBindings() {
     this.uniforms = {}
     this.storages = {}
-    this.inputsBindings = [...this.options.uniforms, ...this.options.storages]
+
+    this.setInputBindings()
+
     this.inputsBindGroups = []
 
-    if (this.options.uniforms.length || this.options.storages.length) {
+    if (this.inputsBindings.length) {
       const inputsBindGroup = new BindGroup({
         label: this.options.label + ': Bindings bind group',
         renderer: this.renderer,
       })
 
       this.inputsBindings.forEach((inputBinding) => {
-        if (inputBinding.bindingType === 'uniform') this.uniforms = { ...this.uniforms, ...inputBinding.bindings }
-        if (inputBinding.bindingType === 'storage') this.storages = { ...this.storages, ...inputBinding.bindings }
+        if (inputBinding.bindingType === 'uniform')
+          this.uniforms = { ...this.uniforms, [inputBinding.name]: inputBinding.bindings }
+        if (inputBinding.bindingType === 'storage')
+          this.storages = { ...this.storages, [inputBinding.name]: inputBinding.bindings }
 
         inputBinding.isActive =
           (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(inputBinding.name + '.') !== -1) ||
@@ -229,6 +248,20 @@ export class Material {
 
       this.inputsBindGroups.push(inputsBindGroup)
     }
+
+    this.options.inputBindGroups.forEach((bindGroup) => {
+      // TODO uniforms + inputsbindings
+      this.inputsBindGroups.push(bindGroup)
+
+      bindGroup.bindings.forEach((inputBinding) => {
+        if (inputBinding.bindingType === 'uniform')
+          this.uniforms = { ...this.uniforms, [inputBinding.name]: inputBinding.bindings }
+        if (inputBinding.bindingType === 'storage')
+          this.storages = { ...this.storages, [inputBinding.name]: inputBinding.bindings }
+        if (inputBinding.bindingType === 'storageWrite')
+          this.works = { ...this.works, [inputBinding.name]: inputBinding.bindings }
+      })
+    })
   }
 
   shouldUpdateInputsBindings(bufferBindingName, uniformName) {
@@ -244,9 +277,18 @@ export class Material {
     }
   }
 
+  getBindingsByName(bindingName = '') {
+    let binding
+    ;(this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
+      binding = bindGroup.bindings.find((binding) => binding.name === bindingName)
+    })
+
+    return binding
+  }
+
   getBindingsBuffersByBindingName(bindingName = '') {
     let bindings = []
-    this.bindGroups.forEach((bindGroup) => {
+    ;(this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
       const binding = bindGroup.bindingsBuffers.filter((bindingBuffer) =>
         bindingBuffer.inputBinding.useStruct
           ? bindingBuffer.inputBinding.name === bindingName
@@ -282,9 +324,9 @@ export class Material {
 
     // is it used in our shaders?
     if (
-      this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 ||
-      this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 ||
-      this.options.shaders.compute.code.indexOf(texture.options.name) !== -1
+      (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1) ||
+      (this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1) ||
+      (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1)
     ) {
       this.texturesBindGroup.addTexture(texture)
     }

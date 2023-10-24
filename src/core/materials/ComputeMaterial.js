@@ -1,5 +1,8 @@
 import { Material } from './Material'
 import { isRenderer } from '../../utils/renderer-utils'
+import { BufferBindings } from '../bindings/BufferBindings'
+import { toKebabCase } from '../../utils/utils'
+import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 export class ComputeMaterial extends Material {
   constructor(renderer, parameters) {
@@ -40,7 +43,7 @@ export class ComputeMaterial extends Material {
       shaders: this.options.shaders,
     })
 
-    this.setWorkGroups()
+    this.setWorkInputBindings()
   }
 
   setPipelineEntryBuffers() {
@@ -49,14 +52,50 @@ export class ComputeMaterial extends Material {
     })
   }
 
-  setWorkGroups() {
-    this.works = {}
-    this.inputsBindings = [...this.inputsBindings, ...this.options.works]
+  /** INPUTS **/
 
-    if (this.options.works.length) {
+  createInputBindings(bindingType = 'uniform', inputs = {}) {
+    const inputBindings = [
+      ...Object.keys(inputs).map((inputKey) => {
+        const binding = inputs[inputKey]
+
+        const bindingParams = {
+          label: toKebabCase(binding.label || inputKey),
+          name: inputKey,
+          bindingType,
+          useStruct: true,
+          bindings: binding.bindings,
+          dispatchSize: binding.dispatchSize,
+          visibility: 'compute',
+        }
+
+        const BufferBindingConstructor = bindingType === 'storageWrite' ? WorkBufferBindings : BufferBindings
+
+        return binding.useStruct !== false
+          ? new BufferBindingConstructor(bindingParams)
+          : Object.keys(binding.bindings).map((bindingKey) => {
+              bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey)
+              bindingParams.name = inputKey + bindingKey
+              bindingParams.useStruct = false
+              bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
+
+              return new BufferBindingConstructor(bindingParams)
+            })
+      }),
+    ].flat()
+
+    return inputBindings
+  }
+
+  setWorkInputBindings() {
+    this.works = {}
+    const workInputBindings = this.createInputBindings('storageWrite', this.options.works)
+    this.inputsBindings = [...this.inputsBindings, ...workInputBindings]
+
+    if (workInputBindings.length) {
       const workBindGroup = this.inputsBindGroups.at(-1)
 
-      this.options.works.forEach((workBinding) => {
+      workInputBindings.forEach((workBinding) => {
         this.works = { ...this.works, ...workBinding.bindings }
 
         workBinding.isActive = this.options.shaders.compute.code.indexOf(workBinding.name) !== -1

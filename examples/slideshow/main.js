@@ -6,9 +6,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
-    onError: () => {
-      document.body.classList.add('no-curtains')
-    },
   })
 
   await gpuCurtains.setRendererContext()
@@ -101,9 +98,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         useExternalTextures: false,
       },
     },
-    uniforms: [
-      {
-        name: 'transition',
+    uniforms: {
+      transition: {
         label: 'Transition',
         bindings: {
           timer: {
@@ -124,7 +120,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-    ],
+    },
   }
 
   document.body.classList.add('is-waiting')
@@ -213,7 +209,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
 
       // update our transition timer uniform
-      plane.uniforms.timer.value = slideshowState.transitionTimer
+      plane.uniforms.transition.timer.value = slideshowState.transitionTimer
     })
 
   // setTimeout(() => {

@@ -49,73 +49,73 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
 
   const vertexShader = /* wgsl */ `
-      struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-        @location(1) instanceIndex: f32,
-      };
-      
-      fn rotationMatrix(axis: vec3f, angle: f32) -> mat4x4f {
-        var nAxis: vec3f = normalize(axis);
-        var s: f32 = sin(angle);
-        var c: f32 = cos(angle);
-        var oc: f32 = 1.0 - c;
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+      @location(1) instanceIndex: f32,
+    };
+    
+    fn rotationMatrix(axis: vec3f, angle: f32) -> mat4x4f {
+      var nAxis: vec3f = normalize(axis);
+      var s: f32 = sin(angle);
+      var c: f32 = cos(angle);
+      var oc: f32 = 1.0 - c;
 
-        return mat4x4f(
-          oc * nAxis.x * nAxis.x + c, oc * nAxis.x * nAxis.y - nAxis.z * s,  oc * nAxis.z * nAxis.x + nAxis.y * s,  0.0,
-          oc * nAxis.x * nAxis.y + nAxis.z * s,  oc * nAxis.y * nAxis.y + c, oc * nAxis.y * nAxis.z - nAxis.x * s,  0.0,
-          oc * nAxis.z * nAxis.x - nAxis.y * s,  oc * nAxis.y * nAxis.z + nAxis.x * s,  oc * nAxis.z * nAxis.z + c, 0.0,
-          0.0, 0.0, 0.0, 1.0);
-      }
+      return mat4x4f(
+        oc * nAxis.x * nAxis.x + c, oc * nAxis.x * nAxis.y - nAxis.z * s,  oc * nAxis.z * nAxis.x + nAxis.y * s,  0.0,
+        oc * nAxis.x * nAxis.y + nAxis.z * s,  oc * nAxis.y * nAxis.y + c, oc * nAxis.y * nAxis.z - nAxis.x * s,  0.0,
+        oc * nAxis.z * nAxis.x - nAxis.y * s,  oc * nAxis.y * nAxis.z + nAxis.x * s,  oc * nAxis.z * nAxis.z + c, 0.0,
+        0.0, 0.0, 0.0, 1.0);
+    }
+    
+    @vertex fn main(
+      attributes: Attributes,
+    ) -> VSOutput {
+      var vsOutput: VSOutput;
       
-      @vertex fn main(
-        attributes: Attributes,
-      ) -> VSOutput {
-        var vsOutput: VSOutput;
-        
-        // get what instance is actually drawn
-        var instanceIndex: f32 = f32(attributes.instanceIndex);
-        
-        var transformed: vec3f = attributes.position;
-        
-        // rotate first
-        var angle: f32 = 3.141592 * scroll.strength / scroll.max;
-        
-        var rotatedTransformed: vec4f = vec4(transformed, 1.0) * rotationMatrix(vec3(0.0, 0.0, 1.0), angle * instanceIndex / instances.count);
-        
-        transformed = rotatedTransformed.xyz;
-        
-        //transformed.y += instanceIndex * scroll.strength * 0.025;
-        
-        // avoid depth overlapping issues
-        transformed.z -= 0.0001 * instanceIndex;
-        transformed.z -= instanceIndex * abs(scroll.strength) * 0.01;
-  
-        vsOutput.position = getOutputPosition(camera, matrices, transformed);
-        vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
-        vsOutput.instanceIndex = instanceIndex;
+      // get what instance is actually drawn
+      var instanceIndex: f32 = f32(attributes.instanceIndex);
       
-        return vsOutput;
-      }
-    `
+      var transformed: vec3f = attributes.position;
+      
+      // rotate first
+      var angle: f32 = 3.141592 * scroll.strength / scroll.max;
+      
+      var rotatedTransformed: vec4f = vec4(transformed, 1.0) * rotationMatrix(vec3(0.0, 0.0, 1.0), angle * instanceIndex / instances.count);
+      
+      transformed = rotatedTransformed.xyz;
+      
+      //transformed.y += instanceIndex * scroll.strength * 0.025;
+      
+      // avoid depth overlapping issues
+      transformed.z -= 0.0001 * instanceIndex;
+      transformed.z -= instanceIndex * abs(scroll.strength) * 0.01;
+
+      vsOutput.position = getOutputPosition(camera, matrices, transformed);
+      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      vsOutput.instanceIndex = instanceIndex;
+    
+      return vsOutput;
+    }
+  `
 
   const fragmentShader = /* wgsl */ `
-      struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-        @location(1) instanceIndex: f32,
-      };
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+      @location(1) instanceIndex: f32,
+    };
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
+      var color: vec4f = textureSample(planeTexture, planeTextureSampler, fsInput.uv);
       
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
-        var color: vec4f = textureSample(planeTexture, planeTextureSampler, fsInput.uv);
-        
-        var scrollEffect = scroll.strength / (scroll.max * 0.75);
-        
-        color.a -= select(0.0, (fsInput.instanceIndex / instances.count) - scrollEffect, fsInput.instanceIndex > 0.0);
-        
-        return color;
-      }
-    `
+      var scrollEffect = scroll.strength / (scroll.max * 0.75);
+      
+      color.a -= select(0.0, (fsInput.instanceIndex / instances.count) - scrollEffect, fsInput.instanceIndex > 0.0);
+      
+      return color;
+    }
+  `
 
   const instancesCount = 7
 
@@ -141,9 +141,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       bottom: 200,
       left: 0,
     },
-    uniforms: [
-      {
-        name: 'scroll',
+    uniforms: {
+      scroll: {
         label: 'Scroll',
         bindings: {
           strength: {
@@ -156,8 +155,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-      {
-        name: 'instances',
+      instances: {
         label: 'Instances',
         bindings: {
           count: {
@@ -166,7 +164,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-    ],
+    },
     texturesOptions: {
       texture: {
         generateMips: true,
@@ -182,10 +180,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     params.label = 'Plane' + planeIndex
     const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, params)
 
+    console.log(plane)
+
     // check if our plane is defined and use it
     plane.onRender(() => {
       // update the uniform
-      plane.uniforms.strength.value = scrollEffect
+      plane.uniforms.scroll.strength.value = scrollEffect
     })
   })
 })

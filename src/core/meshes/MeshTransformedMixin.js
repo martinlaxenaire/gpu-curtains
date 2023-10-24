@@ -1,11 +1,5 @@
 import { isCameraRenderer } from '../../utils/renderer-utils'
-import { Material } from '../materials/Material'
-import { Texture } from '../textures/Texture'
-import { BufferBindings } from '../bindings/BufferBindings'
-import { Geometry } from '../geometries/Geometry'
 import { DOMFrustum } from '../frustum/DOMFrustum'
-import { generateUUID } from '../../utils/utils'
-import MeshBaseMixin from './MeshBaseMixin'
 
 const defaultMeshParams = {
   useProjection: true,
@@ -43,7 +37,7 @@ const MeshTransformedMixin = (superclass) =>
 
       this.renderer = renderer
 
-      const { label, geometry, shaders, onReEnterView, onLeaveView } = parameters
+      const { label, geometry, shaders } = parameters
 
       this.options = {
         label,
@@ -53,6 +47,11 @@ const MeshTransformedMixin = (superclass) =>
 
       // explicitly needed for DOM Frustum
       this.geometry = geometry
+
+      // update model and projection matrices right away
+      // TODO is it the most performant way?
+      this.updateModelMatrix()
+      this.updateProjectionMatrixStack()
     }
 
     // totally override MeshBaseMixin setMesh
@@ -60,16 +59,15 @@ const MeshTransformedMixin = (superclass) =>
       const { frustumCulled, DOMFrustumMargins, ...meshMaterialOptions } = meshParameters
 
       // add matrices uniforms
-      const matrixUniformBinding = new BufferBindings({
+      const matricesUniforms = {
         label: 'Matrices',
-        name: 'matrices',
         bindings: {
           model: {
             name: 'model',
             type: 'mat4x4f',
             value: this.modelMatrix,
             onBeforeUpdate: () => {
-              matrixUniformBinding.bindings.model.value = this.modelMatrix
+              matricesUniforms.bindings.model.value = this.modelMatrix
             },
           },
           modelView: {
@@ -78,7 +76,7 @@ const MeshTransformedMixin = (superclass) =>
             type: 'mat4x4f',
             value: this.modelViewMatrix,
             onBeforeUpdate: () => {
-              matrixUniformBinding.bindings.modelView.value = this.modelViewMatrix
+              matricesUniforms.bindings.modelView.value = this.modelViewMatrix
             },
           },
           modelViewProjection: {
@@ -86,13 +84,13 @@ const MeshTransformedMixin = (superclass) =>
             type: 'mat4x4f',
             value: this.modelViewProjectionMatrix,
             onBeforeUpdate: () => {
-              matrixUniformBinding.bindings.modelViewProjection.value = this.modelViewProjectionMatrix
+              matricesUniforms.bindings.modelViewProjection.value = this.modelViewProjectionMatrix
             },
           },
         },
-      })
+      }
 
-      meshMaterialOptions.uniforms = [matrixUniformBinding, ...meshMaterialOptions.uniforms]
+      meshMaterialOptions.uniforms.matrices = matricesUniforms
 
       super.setMeshMaterial(meshMaterialOptions)
 

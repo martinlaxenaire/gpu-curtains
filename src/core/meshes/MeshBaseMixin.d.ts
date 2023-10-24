@@ -1,45 +1,15 @@
 import { CameraRenderer } from '../../types/renderer-utils'
-import { BufferBindings } from '../bindings/BufferBindings'
-import { Material, MaterialParams, MaterialShadersType, FullShadersType } from '../materials/Material'
-import { RenderMaterial, RenderMaterialBaseParams } from '../materials/RenderMaterial'
+import { RenderMaterial, RenderMaterialBaseParams, RenderMaterialParams } from '../materials/RenderMaterial'
 import { CurtainsTextureOptions, Texture, TextureDefaultParams } from '../textures/Texture'
 import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import { DOMElementBoundingRect } from '../DOMElement'
-import { Vec2 } from '../../math/Vec2'
-import { Vec3 } from '../../math/Vec3'
-import { Mat4 } from '../../math/Mat4'
-import { AttributeBufferParams } from '../../types/buffers-utils'
 import { RenderTarget } from '../renderPasses/RenderTarget'
+import { Material } from '../materials/Material'
 
-export type MeshUniformValue = number | Vec2 | Vec3 | Mat4 | Array<number>
-
-export interface MeshInputsBase {
-  type: AttributeBufferParams['type']
-  name?: string
-  onBeforeUpdate?: () => void
-}
-
-export interface MeshInputs extends MeshInputsBase {
-  value: MeshUniformValue
-}
-
-export interface MeshBindings {
-  name?: string
-  label?: string
-  bindings: Record<string, MeshInputs>
-}
-
-export type MeshBindingsTypes = 'uniforms' | 'storages'
-type MeshBindingsParams = Record<MeshBindingsTypes, MeshBindings[]>
-
-export interface MeshMaterialParameters extends MaterialParams {
-  inputsBindings: BufferBindings[]
-}
-
-export interface MeshBaseParams extends RenderMaterialBaseParams {
-  bindings?: MeshBindings[]
+export interface MeshBaseParams extends RenderMaterialParams {
+  autoAddToScene: boolean
   visible?: boolean
   renderOrder?: number
   renderTarget?: RenderTarget
@@ -61,6 +31,7 @@ declare class EmptyClass {}
 export type MixinConstructor = new (...args: any[]) => DOMObject3D | ProjectedObject3D | EmptyClass
 
 export class MeshBase {
+  #autoAddToScene: boolean
   type: string
   readonly uuid: string
   readonly index: number
@@ -103,12 +74,14 @@ export class MeshBase {
 
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
 
+  get autoAddToScene(): boolean // allow to read value from child classes
+
   get ready(): boolean
   set ready(value: boolean)
 
-  setMeshMaterial(meshParameters: MeshMaterialParameters)
+  setMeshMaterial(meshParameters: RenderMaterialBaseParams)
 
-  setMaterial(materialParameters: MaterialParams)
+  setMaterial(materialParameters: RenderMaterialParams)
 
   addToScene()
   removeFromScene()
@@ -119,9 +92,8 @@ export class MeshBase {
 
   setRenderTarget(renderTarget: RenderTarget | null)
 
-  createBindings({ uniforms, storages }: MeshBindingsParams): Record<MeshBindingsTypes, BufferBindings[]>
-  get uniforms(): RenderMaterial['uniforms']
-  get storages(): RenderMaterial['storages']
+  get uniforms(): Material['uniforms']
+  get storages(): Material['storages']
 
   resize(boundingRect?: DOMElementBoundingRect)
 

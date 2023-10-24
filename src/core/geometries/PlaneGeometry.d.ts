@@ -15,7 +15,7 @@ export class PlaneGeometry extends IndexedGeometry {
     count: number
   }
 
-  constructor({ widthSegments, heightSegments, instancesCount, vertexBuffers }: PlaneGeometryParams)
+  constructor({ widthSegments, heightSegments, instancesCount, vertexBuffers }?: PlaneGeometryParams)
 
   setIndexArray()
 

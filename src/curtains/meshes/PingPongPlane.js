@@ -32,7 +32,10 @@ export class PingPongPlane extends FullscreenPlane {
 
   addToScene() {
     this.renderer.pingPongPlanes.push(this)
-    this.renderer.scene.addPingPongPlane(this)
+
+    if (this.autoAddToScene) {
+      this.renderer.scene.addPingPongPlane(this)
+    }
   }
 
   removeFromScene() {
@@ -40,7 +43,10 @@ export class PingPongPlane extends FullscreenPlane {
       this.renderTarget.destroy()
     }
 
-    this.renderer.scene.removePingPongPlane(this)
+    if (this.autoAddToScene) {
+      this.renderer.scene.removePingPongPlane(this)
+    }
+
     this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid)
   }
 }

@@ -1,33 +1,16 @@
 import { CameraRenderer } from '../../types/renderer-utils'
-import { BufferBindings } from '../bindings/BufferBindings'
-import { Material, MaterialBaseParams, MaterialParams } from '../materials/Material'
-import { Texture, TextureBaseParams } from '../textures/Texture'
 import { DOMObject3D, RectCoords } from '../../curtains/objects3D/DOMObject3D'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import { DOMFrustum } from '../frustum/DOMFrustum'
-import { DOMElement, DOMElementBoundingRect } from '../DOMElement'
-import { Vec2 } from '../../math/Vec2'
-import { Vec3 } from '../../math/Vec3'
-import { Mat4 } from '../../math/Mat4'
-import { Geometry } from '../geometries/Geometry'
-import { IndexedGeometry } from '../geometries/IndexedGeometry'
-import MeshBaseMixin, {
-  MeshBase,
-  MeshBaseParams,
-  MeshBindings,
-  MeshMaterialParameters,
-  MixinConstructor,
-} from './MeshBaseMixin'
+import { DOMElementBoundingRect } from '../DOMElement'
+import { MeshBase, MeshBaseParams } from './MeshBaseMixin'
 
 export interface TransformedMeshParams {
   frustumCulled?: boolean
   DOMFrustumMargins?: RectCoords
-  // callbacks
-  onReEnterView?: () => void
-  onLeaveView?: () => void
 }
 
-interface TransformedMeshMaterialParameters extends MeshMaterialParameters {
+interface TransformedMeshMaterialParameters extends MeshBaseParams {
   frustumCulled: boolean
   DOMFrustumMargins: RectCoords
 }

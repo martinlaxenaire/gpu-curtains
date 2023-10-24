@@ -1,6 +1,6 @@
-import { MeshUniformValue } from '../core/meshes/MeshBaseMixin'
 import { BindingType } from '../core/bindings/Bindings'
 import { VertexBuffer } from '../core/geometries/Geometry'
+import { InputValue } from '../core/materials/Material'
 
 type CoreBufferType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
 
@@ -28,7 +28,7 @@ interface BufferBindingsElement {
   name: string
   type: CoreBufferType
   key: string
-  update: (value: MeshUniformValue) => void
+  update: (value: InputValue) => void
   bufferLayout: BufferLayout
   startOffset: number
   endOffset: number
@@ -41,6 +41,7 @@ interface AttributeBufferParamsOption {
   bufferFormat?: GPUVertexFormat
   size?: number
   array: Float32Array
+  verticesUsed?: number
 }
 
 interface AttributeBufferParams extends AttributeBufferParamsOption {
@@ -50,6 +51,7 @@ interface AttributeBufferParams extends AttributeBufferParamsOption {
   bufferLength: number
   offset: number
   bufferOffset: GPUSize64
+  verticesUsed: number
 }
 
 export function getBufferLayout(bufferType: CoreBufferType): BufferLayout

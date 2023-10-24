@@ -141,6 +141,10 @@ export class GPUCurtains {
     return this.renderer?.domMeshes.filter((domMesh) => domMesh.type === 'Plane')
   }
 
+  get camera() {
+    return this.renderer?.camera
+  }
+
   setPerspective(fov = 50, near = 0.01, far = 50) {
     this.renderer?.setPerspective(fov, near, far)
   }

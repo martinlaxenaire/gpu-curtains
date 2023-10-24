@@ -4,6 +4,8 @@ import { RenderTexture } from '../textures/RenderTexture'
 import { generateUUID } from '../../utils/utils'
 
 export class RenderTarget {
+  #autoAddToScene = true
+
   constructor(renderer, parameters) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && renderer.renderer) || renderer
@@ -14,11 +16,16 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, depth, loadOp } = parameters
+    const { label, depth, loadOp, autoAddToScene } = parameters
     this.options = {
       label,
       depth,
       loadOp,
+      autoAddToScene,
+    }
+
+    if (autoAddToScene !== undefined) {
+      this.#autoAddToScene = autoAddToScene
     }
 
     this.renderPass = new RenderPass(this.renderer, {
@@ -37,11 +44,17 @@ export class RenderTarget {
 
   addToScene() {
     this.renderer.renderTargets.push(this)
-    this.renderer.scene.addRenderTarget(this)
+
+    if (this.#autoAddToScene) {
+      this.renderer.scene.addRenderTarget(this)
+    }
   }
 
   removeFromScene() {
-    this.renderer.scene.removeRenderTarget(this)
+    if (this.#autoAddToScene) {
+      this.renderer.scene.removeRenderTarget(this)
+    }
+
     this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid)
   }
 

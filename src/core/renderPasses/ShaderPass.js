@@ -27,7 +27,10 @@ export class ShaderPass extends FullscreenPlane {
 
   addToScene() {
     this.renderer.shaderPasses.push(this)
-    this.renderer.scene.addShaderPass(this)
+
+    if (this.autoAddToScene) {
+      this.renderer.scene.addShaderPass(this)
+    }
   }
 
   removeFromScene() {
@@ -35,7 +38,10 @@ export class ShaderPass extends FullscreenPlane {
       this.renderTarget.destroy()
     }
 
-    this.renderer.scene.removeShaderPass(this)
+    if (this.autoAddToScene) {
+      this.renderer.scene.removeShaderPass(this)
+    }
+
     this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid)
   }
 }

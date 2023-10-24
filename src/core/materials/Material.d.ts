@@ -1,11 +1,15 @@
 import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings'
-import { AllowedBindGroups, BindGroup, BindGroupBindingElement } from '../bindGroups/BindGroup'
+import { AllowedBindGroups, BindGroup, BindGroupBindingBuffer, BindGroupBindingElement } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Texture } from '../textures/Texture'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 import { RenderTexture } from '../textures/RenderTexture'
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
 import { RenderMaterialRenderingOptions } from './RenderMaterial'
+import { Vec2 } from '../../math/Vec2'
+import { Vec3 } from '../../math/Vec3'
+import { Mat4 } from '../../math/Mat4'
+import { AttributeBufferParams } from '../../types/buffers-utils'
 import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 // shaders
@@ -28,19 +32,51 @@ interface MaterialBaseParams {
   shaders?: MaterialShaders
 }
 
-interface MaterialParams extends MaterialBaseParams {
-  uniforms: BufferBindings[]
-  storages: BufferBindings[]
+// inputs
+export type AllowedBindingsTypes = 'uniforms' | 'storages' | 'works'
+export type InputValue = number | Vec2 | Vec3 | Mat4 | Array<number>
+
+interface InputBase {
+  type: AttributeBufferParams['type']
+  name?: string
+  onBeforeUpdate?: () => void
 }
 
+interface Input extends InputBase {
+  value: InputValue
+}
+
+interface InputBindingsParams {
+  label?: string
+  useStruct?: boolean
+  bindings: Record<string, Input>
+}
+
+interface WorkInputBindingsParams extends InputBindingsParams {
+  dispatchSize?: number | number[]
+}
+
+export type InputBindings = Record<string, InputBindingsParams | WorkInputBindingsParams>
+
+type AllowedBufferBindings = BufferBindings | WorkBufferBindings
 type MaterialBindGroups = AllowedBindGroups[]
+
+interface MaterialInputBindingsParams {
+  uniforms?: Record<string, InputBindingsParams>
+  storages?: Record<string, InputBindingsParams>
+  works?: Record<string, WorkInputBindingsParams>
+  inputBindGroups?: BindGroup[]
+}
+
+interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
 
 interface MaterialOptions {
   label: string
   shaders: MaterialShaders
-  uniforms?: BufferBindings[]
-  storages?: BufferBindings[]
-  works?: WorkBufferBindings[]
+  uniforms?: InputBindings
+  storages?: InputBindings
+  works?: InputBindings
+  inputBindGroups: BindGroup[]
   rendering?: RenderMaterialRenderingOptions
 }
 
@@ -54,8 +90,8 @@ export class Material {
   bindGroups: MaterialBindGroups
   clonedBindGroups: MaterialBindGroups
 
-  uniforms: Record<string, BufferBindingsUniform>
-  storages: Record<string, BufferBindingsUniform>
+  uniforms: Record<string, Record<string, BufferBindingsUniform>>
+  storages: Record<string, Record<string, BufferBindingsUniform>>
   inputsBindGroups: BindGroup[]
   inputsBindings: BindGroupBindingElement[]
 
@@ -72,15 +108,26 @@ export class Material {
   getAddedShaderCode(shaderType: FullShadersType): string
 
   createBindGroups()
-  // cloneBindGroupAtIndex(index?: number): AllowedBindGroups | null
-  // swapBindGroupsAtIndex(index?: number)
+  cloneBindGroupFromBindingsBuffers({
+    bindGroup,
+    bindingsBuffers,
+    keepLayout,
+  }: {
+    bindGroup?: BindGroup
+    bindingsBuffers?: BindGroupBindingBuffer[]
+    keepLayout?: boolean
+  }): BindGroup | null
   getBindGroupByBindingName(bindingName?: BufferBindings['name']): AllowedBindGroups | null
   destroyBindGroups()
   updateBindGroups()
 
+  createInputBindings(bindingType?: AllowedBindingsTypes, inputs?: InputBindings): BindGroupBindingElement[]
+
+  setInputBindings()
   setBindings()
   shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], uniformName?: BufferBindingsUniform['name'])
-  getBindingsBuffersByBindingName(bindingName?: BufferBindings['name']): BufferBindingsUniform[]
+  getBindingsByName(bindingName?: BufferBindings['name']): BufferBindings | null
+  getBindingsBuffersByBindingName(bindingName?: BufferBindings['name']): BindGroupBindingBuffer[]
 
   setTextures()
   addTexture(texture: Texture | RenderTexture)

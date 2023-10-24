@@ -94,6 +94,11 @@ export class GPURenderer {
 
   setRendererObjects()
 
+  _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void
+  _onAfterRenderCallback: (commandEncoder: GPUCommandEncoder) => void
+  onBeforeRender: (commandEncoder: GPUCommandEncoder) => GPURenderer
+  onAfterRender: (commandEncoder: GPUCommandEncoder) => GPURenderer
+
   setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture): GPUTexture
   onBeforeCommandEncoder()
   //onBeginRenderPass(pass: GPURenderPassEncoder)
