@@ -1,5 +1,12 @@
 import { throwError } from './utils'
 
+const formatRendererError = (renderer, rendererType = 'GPURenderer', type) => {
+  const error = type
+    ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}`
+    : `The ${rendererType} is not defined: ${renderer}`
+  throwError(error)
+}
+
 export const isRenderer = (renderer, type) => {
   const isRenderer =
     renderer &&
@@ -7,8 +14,8 @@ export const isRenderer = (renderer, type) => {
       renderer.type === 'GPUCameraRenderer' ||
       renderer.type === 'GPUCurtainsRenderer')
 
-  if (!isRenderer && type) {
-    throwError(`Unable to create ${type} because the GPURenderer is not defined: ${renderer}`)
+  if (!isRenderer) {
+    formatRendererError(renderer, 'GPURenderer', type)
   }
 
   return isRenderer
@@ -18,8 +25,8 @@ export const isCameraRenderer = (renderer, type) => {
   const isCameraRenderer =
     renderer && (renderer.type === 'GPUCameraRenderer' || renderer.type === 'GPUCurtainsRenderer')
 
-  if (!isCameraRenderer && type) {
-    throwError(`Unable to create ${type} because the GPUCameraRenderer is not defined: ${renderer}`)
+  if (!isCameraRenderer) {
+    formatRendererError(renderer, 'GPUCameraRenderer', type)
   }
 
   return isCameraRenderer
@@ -28,8 +35,8 @@ export const isCameraRenderer = (renderer, type) => {
 export const isCurtainsRenderer = (renderer, type) => {
   const isCurtainsRenderer = renderer && renderer.type === 'GPUCurtainsRenderer'
 
-  if (!isCurtainsRenderer && type) {
-    throwError(`Unable to create ${type} because the GPUCurtainsRenderer is not defined: ${renderer}`)
+  if (!isCurtainsRenderer) {
+    formatRendererError(renderer, 'GPUCurtainsRenderer', type)
   }
 
   return isCurtainsRenderer

@@ -335,7 +335,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('no-curtains')
   })
 
-  const simulationSpeed = 4
+  const simulationSpeed = 2
 
   const clothDefinition = new GPUCurtains.Vec2(40)
 
@@ -419,7 +419,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           bindings: {
             deltaTime: {
               type: 'f32',
-              value: 0.001 * simulationSpeed,
+              value: 0.001 * simulationSpeed * 1.5,
             },
             mass: {
               type: 'f32',
@@ -431,7 +431,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             gravity: {
               type: 'vec3f',
-              value: new GPUCurtains.Vec3(0, -0.0981, 0),
+              //value: new GPUCurtains.Vec3(0, -0.0981, 0),
+              value: new GPUCurtains.Vec3(0, -0.0375, 0),
             },
           },
         },
@@ -546,6 +547,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   // now use renderer onBeforeRender callback to render our compute passes
   // nb sims compute per render impacts the speed at which the simulation runs
   const nbSimsComputePerRender = Math.min(50, 100 / simulationSpeed)
+
+  console.log(simulationSpeed, nbSimsComputePerRender)
 
   gpuCurtains.renderer.onBeforeRender((commandEncoder) => {
     for (let i = 0; i < nbSimsComputePerRender; i++) {

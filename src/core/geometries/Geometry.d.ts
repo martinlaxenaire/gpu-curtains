@@ -54,6 +54,7 @@ export class Geometry {
   setAttribute({ vertexBuffer, name, type, bufferFormat, size, array, verticesUsed }: AttributeBufferParamsOption)
   getAttributeByName(name: string): AttributeBufferParams | null
 
+  get shouldCompute(): boolean
   computeGeometry()
 
   #setWGSLFragment()

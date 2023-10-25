@@ -7,6 +7,7 @@ import { throwWarning, throwError, logError } from '../../utils/utils'
 import { Sampler } from '../samplers/Sampler'
 
 export class GPURenderer {
+  // callbacks / events
   _onBeforeRenderCallback = (commandEncoder) => {
     /* allow empty callback */
   }
@@ -216,45 +217,45 @@ export class GPURenderer {
   /** BUFFERS & BINDINGS **/
 
   createBuffer(bufferDescriptor) {
-    return this.device.createBuffer(bufferDescriptor)
+    return this.device?.createBuffer(bufferDescriptor)
   }
 
   queueWriteBuffer(buffer, bufferOffset, data) {
-    this.device.queue.writeBuffer(buffer, bufferOffset, data)
+    this.device?.queue.writeBuffer(buffer, bufferOffset, data)
   }
 
   createBindGroupLayout(bindGroupLayoutDescriptor) {
-    return this.device.createBindGroupLayout(bindGroupLayoutDescriptor)
+    return this.device?.createBindGroupLayout(bindGroupLayoutDescriptor)
   }
 
   createBindGroup(bindGroupDescriptor) {
-    return this.device.createBindGroup(bindGroupDescriptor)
+    return this.device?.createBindGroup(bindGroupDescriptor)
   }
 
   /** SHADERS & PIPELINES **/
 
   createShaderModule(shaderModuleDescriptor) {
-    return this.device.createShaderModule(shaderModuleDescriptor)
+    return this.device?.createShaderModule(shaderModuleDescriptor)
   }
 
   createPipelineLayout(pipelineLayoutDescriptor) {
-    return this.device.createPipelineLayout(pipelineLayoutDescriptor)
+    return this.device?.createPipelineLayout(pipelineLayoutDescriptor)
   }
 
   createRenderPipeline(pipelineDescriptor) {
-    return this.device.createRenderPipeline(pipelineDescriptor)
+    return this.device?.createRenderPipeline(pipelineDescriptor)
   }
 
   async createRenderPipelineAsync(pipelineDescriptor) {
-    return await this.device.createRenderPipelineAsync(pipelineDescriptor)
+    return await this.device?.createRenderPipelineAsync(pipelineDescriptor)
   }
 
   createComputePipeline(pipelineDescriptor) {
-    return this.device.createComputePipeline(pipelineDescriptor)
+    return this.device?.createComputePipeline(pipelineDescriptor)
   }
 
   async createComputePipelineAsync(pipelineDescriptor) {
-    return await this.device.createComputePipelineAsync(pipelineDescriptor)
+    return await this.device?.createComputePipelineAsync(pipelineDescriptor)
   }
 
   /** TEXTURES **/
@@ -280,7 +281,7 @@ export class GPURenderer {
     if (existingSampler) {
       return existingSampler.sampler
     } else {
-      const gpuSampler = this.device.createSampler({ label: sampler.label, ...sampler.options })
+      const gpuSampler = this.device?.createSampler({ label: sampler.label, ...sampler.options })
 
       this.samplers.push(sampler)
 
@@ -289,13 +290,13 @@ export class GPURenderer {
   }
 
   createTexture(options) {
-    return this.device.createTexture(options)
+    return this.device?.createTexture(options)
   }
 
   uploadTexture(texture) {
     if (texture.source) {
       try {
-        this.device.queue.copyExternalImageToTexture(
+        this.device?.queue.copyExternalImageToTexture(
           { source: texture.source, flipY: texture.options.texture.flipY },
           { texture: texture.texture },
           { width: texture.size.width, height: texture.size.height }
@@ -310,7 +311,7 @@ export class GPURenderer {
         throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`)
       }
     } else {
-      this.device.queue.writeTexture(
+      this.device?.queue.writeTexture(
         { texture: texture.texture },
         new Uint8Array(texture.options.texture.placeholderColor),
         { bytesPerRow: texture.size.width * 4 },
@@ -320,12 +321,12 @@ export class GPURenderer {
   }
 
   importExternalTexture(video) {
-    // WebCodecs may be the way to go when time comes!
+    // TODO WebCodecs may be the way to go when time comes!
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
     // see onVideoFrameCallback method in Texture class
     // const videoFrame = new VideoFrame(video)
     // return this.device.importExternalTexture({ source: videoFrame })
-    return this.device.importExternalTexture({ source: video })
+    return this.device?.importExternalTexture({ source: video })
   }
 
   /** OBJECTS **/
@@ -339,6 +340,24 @@ export class GPURenderer {
     this.meshes = []
     this.samplers = []
     this.textures = []
+  }
+
+  /** EVENTS **/
+
+  onBeforeRender(callback) {
+    if (callback) {
+      this._onBeforeRenderCallback = callback
+    }
+
+    return this
+  }
+
+  onAfterRender(callback) {
+    if (callback) {
+      this._onAfterRenderCallback = callback
+    }
+
+    return this
   }
 
   /** RENDER **/
@@ -359,29 +378,9 @@ export class GPURenderer {
     /* will be overridden */
   }
 
-  // onBeginRenderPass(pass) {
-  //   this.scene.render(pass)
-  // }
-
   onAfterCommandEncoder() {
     /* will be overridden */
     this.scene.onAfterCommandEncoder()
-  }
-
-  onBeforeRender(callback) {
-    if (callback) {
-      this._onBeforeRenderCallback = callback
-    }
-
-    return this
-  }
-
-  onAfterRender(callback) {
-    if (callback) {
-      this._onAfterRenderCallback = callback
-    }
-
-    return this
   }
 
   /**
@@ -395,7 +394,7 @@ export class GPURenderer {
 
     this.onBeforeCommandEncoder()
 
-    const commandEncoder = this.device.createCommandEncoder({ label: 'Renderer command encoder' })
+    const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer command encoder' })
 
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
 
@@ -404,7 +403,7 @@ export class GPURenderer {
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
 
     const commandBuffer = commandEncoder.finish()
-    this.device.queue.submit([commandBuffer])
+    this.device?.queue.submit([commandBuffer])
 
     // no need to use device.queue.onSubmittedWorkDone
     // as Kai Ninomiya stated:

@@ -272,5 +272,6 @@ export class GPUCurtains {
 
     this.renderer?.destroy()
     this.scrollManager?.destroy()
+    resizeManager.destroy()
   }
 }

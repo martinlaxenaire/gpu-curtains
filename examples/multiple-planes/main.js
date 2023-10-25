@@ -15,9 +15,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   const gpuCurtains = new GPUCurtains.GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
-    onError: () => {
-      document.body.classList.add('no-curtains')
-    },
   })
 
   await gpuCurtains.setRendererContext()
