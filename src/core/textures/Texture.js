@@ -171,8 +171,8 @@ export class Texture extends Object3D {
   updateTextureMatrix() {
     const parentScale = this.parent && this.parent.scale ? this.parent.scale : new Vec3(1, 1, 1)
 
-    const parentWidth = this.parent ? this.parent.size.document.width * parentScale.x : this.size.width
-    const parentHeight = this.parent ? this.parent.size.document.height * parentScale.y : this.size.height
+    const parentWidth = this.parent ? this.parent.boundingRect.width * parentScale.x : this.size.width
+    const parentHeight = this.parent ? this.parent.boundingRect.height * parentScale.y : this.size.height
 
     const parentRatio = parentWidth / parentHeight
 
@@ -229,6 +229,14 @@ export class Texture extends Object3D {
 
   resize() {
     if (!this.textureMatrix) return
+
+    // this should only happen with canvas textures
+    if (this.source && (this.source.width !== this.size.width || this.source.height !== this.size.height)) {
+      // since the source size has changed, we have to recreate a new texture
+      this.setSourceSize()
+      this.createTexture()
+    }
+
     this.textureMatrix.shouldUpdateBinding(this.options.name + 'Matrix')
   }
 
@@ -464,7 +472,7 @@ export class Texture extends Object3D {
     // we need to update it at every tick, even if it hasn't changed
     // to ensure we're not sending a stale / destroyed texture
     // anyway, external texture are cached so it is fined to call importExternalTexture at each tick
-    if (this.options.sourceType === 'externalVideo' || this.options.sourceType === 'canvas') {
+    if (this.options.sourceType === 'externalVideo') {
       this.shouldUpdate = true
     }
 

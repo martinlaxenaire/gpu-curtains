@@ -323,9 +323,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
-    camera: {
-      fov: 35,
-    },
   })
 
   await gpuCurtains.setRendererContext()
@@ -547,8 +544,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   // now use renderer onBeforeRender callback to render our compute passes
   // nb sims compute per render impacts the speed at which the simulation runs
   const nbSimsComputePerRender = Math.min(50, 100 / simulationSpeed)
-
-  console.log(simulationSpeed, nbSimsComputePerRender)
 
   gpuCurtains.renderer.onBeforeRender((commandEncoder) => {
     for (let i = 0; i < nbSimsComputePerRender; i++) {
