@@ -49,13 +49,6 @@ export class RenderPipelineEntry extends PipelineEntry {
     }
   }
 
-  setPipelineEntryBindGroups(bindGroups) {
-    this.bindGroups =
-      this.renderer.cameraBindGroup && this.options.useProjection
-        ? [this.renderer.cameraBindGroup, ...bindGroups]
-        : bindGroups
-  }
-
   setPipelineEntryBuffers(parameters) {
     const { attributes, bindGroups } = parameters
 

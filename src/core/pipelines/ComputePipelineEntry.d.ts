@@ -1,9 +1,8 @@
 import { PipelineEntry, PipelineEntryBaseParams } from './PipelineEntry'
-import { BindGroup } from '../bindGroups/BindGroup'
-import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
+import { MaterialBindGroups } from '../materials/Material'
 
 interface PipelineEntryBuffersParams {
-  bindGroups: Array<BindGroup | TextureBindGroup>
+  bindGroups: MaterialBindGroups[]
 }
 
 export class ComputePipelineEntry extends PipelineEntry {

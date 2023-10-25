@@ -54,17 +54,7 @@ export class RenderMaterial extends Material {
       this.createAttributesBuffers()
     }
 
-    // camera + model bind groups
-    const modelBindGroupLength = this.inputsBindGroups.length
-    const texturesBindGroupLength = 1
-    const bindGroupsReady = this.bindGroups.length === modelBindGroupLength + texturesBindGroupLength
-
-    // TODO cache bind groups and pipelines?
-    // https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change
-    if (!bindGroupsReady) {
-      this.createBindGroups()
-      return
-    }
+    super.setMaterial()
 
     if (this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryBuffers()
@@ -128,25 +118,12 @@ export class RenderMaterial extends Material {
   /** BIND GROUPS **/
 
   createBindGroups() {
-    const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0
-
-    // textures first
-    if (this.texturesBindGroup.shouldCreateBindGroup) {
-      this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex) // bindGroup 0 is our renderer camera
-      this.texturesBindGroup.createBindGroup()
-
-      this.bindGroups.push(this.texturesBindGroup)
+    // camera first!
+    if (this.renderer.cameraBindGroup && this.options.rendering.useProjection) {
+      this.bindGroups.push(this.renderer.cameraBindGroup)
     }
 
-    // then uniforms
-    this.inputsBindGroups.forEach((bindGroup) => {
-      if (bindGroup.shouldCreateBindGroup) {
-        bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
-        bindGroup.createBindGroup()
-
-        this.bindGroups.push(bindGroup)
-      }
-    })
+    super.createBindGroups()
   }
 
   /**

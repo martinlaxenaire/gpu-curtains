@@ -132,9 +132,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
       },
       texturesOptions: {
-        texture: {
-          useExternalTextures: false, // do not use external textures
-        },
+        useExternalTextures: false, // do not use external textures
       },
     },
   }

@@ -98,7 +98,7 @@ export class BindGroup {
   }
 
   get shouldCreateBindGroup() {
-    return !this.bindGroup
+    return !this.bindGroup && this.bindings.length
   }
 
   resetEntries() {
@@ -182,14 +182,14 @@ export class BindGroup {
 
   setBindGroupLayout() {
     this.bindGroupLayout = this.renderer.createBindGroupLayout({
-      label: this.options.label + ': bind group layout',
+      label: this.options.label + ' layout',
       entries: this.entries.bindGroupLayout,
     })
   }
 
   setBindGroup() {
     this.bindGroup = this.renderer.createBindGroup({
-      label: this.options.label + ': bind group',
+      label: this.options.label,
       layout: this.bindGroupLayout,
       entries: this.entries.bindGroup,
     })

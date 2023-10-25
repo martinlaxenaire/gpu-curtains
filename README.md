@@ -12,14 +12,16 @@ The library has been rewritten to the core, so it is not just a port of the exis
 
 - Renderers (GPURenderer, GPUCameraRenderer, GPUCurtainsRenderer)
 - Geometries
-- Material
+- Materials (Material, RenderMaterial, ComputeMaterial)
 - Object3D, ProjectedObject3D, DOMObject3D
-- Uniforms, BindGroups
+- Bindings & BindGroups
 - Render + Compute Pipelines (async by default)
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
+- Compute passes
 - Scene class
 - Scroll + resize, frustum culling check
 - Texture & RenderTexture classes
+- Sampler class
 - Shader passes 
 - RenderTarget (render to textures)
 - PingPong
@@ -32,11 +34,10 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Errors / warning handling
 - Events / callbacks
 - Removing / destroying meshes
-- Compute pass
 
 ### Todo
 
 - ~~TextureLoader class?~~
-- Sampler class + handling samplers
 - Mesh raycasting?
 - context lost handling
+- Tests! (removing, samplers, external video textures...)

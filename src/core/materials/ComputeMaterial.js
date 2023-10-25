@@ -1,8 +1,5 @@
 import { Material } from './Material'
 import { isRenderer } from '../../utils/renderer-utils'
-import { BufferBindings } from '../bindings/BufferBindings'
-import { toKebabCase } from '../../utils/utils'
-import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 export class ComputeMaterial extends Material {
   constructor(renderer, parameters) {

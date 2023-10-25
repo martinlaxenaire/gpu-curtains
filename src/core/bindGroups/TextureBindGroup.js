@@ -10,7 +10,7 @@ export class TextureBindGroup extends BindGroup {
 
     isRenderer(renderer, type)
 
-    super({ label, renderer, index, bindings, inputs })
+    super(renderer, { label, index, bindings, inputs })
 
     //this.options.textures = textures
     this.options = {
@@ -27,7 +27,6 @@ export class TextureBindGroup extends BindGroup {
 
   addTexture(texture) {
     this.textures.push(texture)
-    // TODO avoid duplicate samplers in bindings? How to handle sampler names in shader?
     this.bindings = [...this.bindings, ...texture.bindings]
   }
 
@@ -48,6 +47,7 @@ export class TextureBindGroup extends BindGroup {
   get shouldCreateBindGroup() {
     return (
       !this.bindGroup &&
+      this.bindings.length &&
       !this.textures.find((texture) => !texture.texture) &&
       !this.samplers.find((sampler) => !sampler.sampler)
     )
@@ -94,8 +94,6 @@ export class TextureBindGroup extends BindGroup {
           binding: inputBinding.bindIndex,
           resource: bindingTypeValue,
         })
-
-        //textureIndex++
       }
     })
   }

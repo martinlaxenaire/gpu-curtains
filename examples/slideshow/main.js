@@ -92,11 +92,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     texturesOptions: {
-      texture: {
-        // do not use external textures for videos
-        // so we can copy them as regular textures
-        useExternalTextures: false,
-      },
+      // do not use external textures for videos
+      // so we can copy them as regular textures
+      useExternalTextures: false,
     },
     inputs: {
       uniforms: {

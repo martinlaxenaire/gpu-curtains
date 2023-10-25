@@ -494,7 +494,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     inputBindGroups: [computeBindGroup],
   })
 
-  console.log(computeForcesPass, computeUpdatePass, computeNormalPass)
+  console.log(computeForcesPass.material, computeUpdatePass.material, computeNormalPass.material)
 
   // adjust various dispatch sizes on render
   computeForcesPass.onRender(() => {

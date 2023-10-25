@@ -56,10 +56,8 @@ export class Material {
   }
 
   setMaterial() {
-    // camera + model bind groups
-    const modelBindGroupLength = this.inputsBindGroups.length
-    const texturesBindGroupLength = 1
-    const bindGroupsReady = this.bindGroups.length === modelBindGroupLength + texturesBindGroupLength
+    const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0
+    const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength
 
     // TODO cache bind groups and pipelines?
     // https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change
@@ -154,15 +152,15 @@ export class Material {
   createBindGroups() {
     // textures first
     if (this.texturesBindGroup.shouldCreateBindGroup) {
-      this.texturesBindGroup.setIndex(this.bindGroups.length) // bindGroup 0 is our renderer camera
+      this.texturesBindGroup.setIndex(this.bindGroups.length)
       this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
     }
 
     this.options.inputBindGroups?.forEach((bindGroup) => {
-      // it has not been added yet? add it!
-      if (!bindGroup.shouldCreateBindGroup) {
+      // it has been created but not been added yet? add it!
+      if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         this.bindGroups.push(bindGroup)
       }
     })
@@ -302,7 +300,7 @@ export class Material {
     // create our default sampler if needed
     const hasDefaultSampler = this.samplers.find((sampler) => sampler.name === 'defaultSampler')
     if (!hasDefaultSampler) {
-      const sampler = new Sampler(this.renderer)
+      const sampler = new Sampler(this.renderer, { name: 'defaultSampler' })
       this.addSampler(sampler)
     }
   }
