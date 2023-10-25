@@ -367,6 +367,40 @@ window.addEventListener('DOMContentLoaded', async () => {
     normalPositionArray[i + 2] = 1
   }
 
+  clothGeometry.addVertexBuffer({
+    name: 'clothAttributes',
+    attributes: [
+      {
+        name: 'clothPosition',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+        array: vertexPositionArray,
+      },
+      {
+        name: 'clothNormal',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+        array: normalPositionArray,
+      },
+      {
+        name: 'clothForce',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+        array: vertexForceArray,
+      },
+      {
+        name: 'clothVelocity',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+        array: vertexVelocityArray,
+      },
+    ],
+  })
+
   const computeBindGroup = new GPUCurtains.BindGroup(gpuCurtains.renderer, {
     label: 'Cloth simulation compute bind group',
     inputs: {
@@ -410,7 +444,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             pointerVelocity: {
               type: 'vec2f',
-              value: new GPUCurtains.Vec2(0),
+              value: new GPUCurtains.Vec2(0), // pointer velocity divided by plane size
             },
             pointerSize: {
               type: 'f32',
@@ -418,7 +452,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             pointerStrength: {
               type: 'f32',
-              value: 0.25,
+              value: 250,
             },
             wind: {
               type: 'vec3f',
@@ -591,48 +625,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     `
 
-  const planeGeometry = new GPUCurtains.PlaneGeometry({
-    widthSegments: clothDefinition.x,
-    heightSegments: clothDefinition.y,
-    vertexBuffers: [
-      {
-        name: 'clothAttributes',
-        attributes: [
-          {
-            name: 'clothPosition',
-            type: 'vec4f',
-            bufferFormat: 'float32x4',
-            size: 4,
-            array: vertexPositionArray,
-          },
-          {
-            name: 'clothNormal',
-            type: 'vec4f',
-            bufferFormat: 'float32x4',
-            size: 4,
-            array: normalPositionArray,
-          },
-          {
-            name: 'clothForce',
-            type: 'vec4f',
-            bufferFormat: 'float32x4',
-            size: 4,
-            array: vertexForceArray,
-          },
-          {
-            name: 'clothVelocity',
-            type: 'vec4f',
-            bufferFormat: 'float32x4',
-            size: 4,
-            array: vertexVelocityArray,
-          },
-        ],
-      },
-    ],
-  })
-
   const params = {
-    geometry: planeGeometry,
+    geometry: clothGeometry,
     shaders: {
       vertex: {
         code: clothVs,
@@ -676,7 +670,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       const pointerVertexCoords = plane.mouseToPlaneCoords(pointer)
       computeForcesPass.uniforms.interaction.pointerPosition.value.copy(pointerVertexCoords)
-      computeForcesPass.uniforms.interaction.pointerVelocity.value.copy(velocity)
+      computeForcesPass.uniforms.interaction.pointerVelocity.value.set(
+        velocity.x / plane.boundingRect.width,
+        velocity.y / plane.boundingRect.height
+      )
 
       pointerTimer = setTimeout(() => {
         computeForcesPass.uniforms.interaction.pointerPosition.value.set(Infinity)

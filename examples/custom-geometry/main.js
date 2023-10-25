@@ -159,10 +159,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     size: 3,
     bufferLength: verticesColors.length,
     array: verticesColors,
-    verticesUsed: 3, // insert one face color for 3 vertices
+    verticesUsed: 3, // insert one face color for every 3 vertices
   })
-
-  geometry.computeGeometry()
 
   const params = {
     geometry,

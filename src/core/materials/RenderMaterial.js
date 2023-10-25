@@ -75,6 +75,10 @@ export class RenderMaterial extends Material {
   /** ATTRIBUTES **/
 
   setAttributesFromGeometry(geometry) {
+    if (geometry.shouldCompute) {
+      geometry.computeGeometry()
+    }
+
     this.attributes = {
       wgslStructFragment: geometry.wgslStructFragment,
       verticesCount: geometry.verticesCount,

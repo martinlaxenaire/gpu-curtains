@@ -26,8 +26,6 @@ export class PlaneGeometry extends IndexedGeometry {
     Object.keys(attributes).forEach((attributeKey) => {
       this.setAttribute(attributes[attributeKey])
     })
-
-    this.computeGeometry()
   }
 
   setIndexArray() {

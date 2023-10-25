@@ -121,7 +121,5 @@ export class SphereGeometry extends IndexedGeometry {
       size: 3,
       array: new Float32Array(normals),
     })
-
-    this.computeGeometry()
   }
 }

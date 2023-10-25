@@ -11,11 +11,10 @@ export class Geometry {
 
     this.type = 'Geometry'
 
-    // TODO
     this.vertexBuffers = []
 
     // will contain our vertex position / uv data at least
-    this.#addVertexBuffer({
+    this.addVertexBuffer({
       name: 'attributes',
     })
 
@@ -26,7 +25,7 @@ export class Geometry {
     }
 
     vertexBuffers.forEach((vertexBuffer) => {
-      this.#addVertexBuffer({
+      this.addVertexBuffer({
         stepMode: vertexBuffer.stepMode ?? 'vertex',
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
@@ -34,7 +33,7 @@ export class Geometry {
     })
   }
 
-  #addVertexBuffer({ stepMode = 'vertex', name, attributes = [] } = {}) {
+  addVertexBuffer({ stepMode = 'vertex', name, attributes = [] } = {}) {
     const vertexBuffer = {
       name: name ?? 'attributes' + this.vertexBuffers.length,
       stepMode,
@@ -141,7 +140,13 @@ export class Geometry {
     return attribute
   }
 
+  get shouldCompute() {
+    return !this.vertexBuffers[0].array
+  }
+
   computeGeometry() {
+    if (!this.shouldCompute) return
+
     this.vertexBuffers.forEach((vertexBuffer, index) => {
       if (index === 0) {
         const hasPositionAttribute = vertexBuffer.attributes.find((attribute) => attribute.name === 'position')

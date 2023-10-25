@@ -9,8 +9,8 @@ const defaultPlaneParams = {
   label: 'Plane',
 
   // geometry
-  widthSegments: 1,
-  heightSegments: 1,
+  //widthSegments: 1,
+  //heightSegments: 1,
   instancesCount: 1,
   vertexBuffers: [],
 }
@@ -25,25 +25,32 @@ export class Plane extends DOMMesh {
     // assign default params if needed
     const params = { ...defaultPlaneParams, ...parameters }
 
-    let { geometry } = params
-    const { widthSegments, heightSegments, instancesCount, vertexBuffers, ...domMeshParams } = params
+    let { geometry, widthSegments, heightSegments, instancesCount, vertexBuffers, ...materialParams } = params
 
     // can we get a cached geometry?
     if (!geometry || geometry.type !== 'PlaneGeometry') {
+      widthSegments = widthSegments ?? 1
+      heightSegments = heightSegments ?? 1
+
       const geometryID = widthSegments * heightSegments + widthSegments
-      geometry = !vertexBuffers.length && cacheManager.getPlaneGeometryByID(geometryID)
+
+      // if there's no additional vertex buffers, try to get a geometry from cache
+      if (!vertexBuffers.length) {
+        geometry = cacheManager.getPlaneGeometryByID(geometryID)
+      }
 
       if (!geometry) {
-        // we need to create a new plane geometry
+        // no cached plane geometry, we need to create a new one
         geometry = new PlaneGeometry({ widthSegments, heightSegments, instancesCount, vertexBuffers })
         cacheManager.addPlaneGeometry(geometry)
       } else {
+        // if geometry comes from cache, force instances count
         geometry.instancesCount = instancesCount
       }
     }
 
     // get DOMMesh params
-    super(renderer, element, { geometry, ...domMeshParams })
+    super(renderer, element, { geometry, ...materialParams })
 
     this.type = 'Plane'
   }
