@@ -1,5 +1,5 @@
 import { isCameraRenderer } from '../../utils/renderer-utils'
-import { DOMFrustum } from '../frustum/DOMFrustum'
+import { DOMFrustum } from '../DOM/DOMFrustum'
 
 const defaultMeshParams = {
   useProjection: true,
