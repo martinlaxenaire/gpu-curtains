@@ -296,10 +296,6 @@ export class GPURenderer {
   uploadTexture(texture) {
     if (texture.source) {
       try {
-        console.log(texture.source.width, texture.source.height, {
-          width: texture.size.width,
-          height: texture.size.height,
-        })
         this.device?.queue.copyExternalImageToTexture(
           { source: texture.source, flipY: texture.options.texture.flipY },
           { texture: texture.texture },

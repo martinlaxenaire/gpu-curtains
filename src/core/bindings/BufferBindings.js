@@ -172,17 +172,13 @@ export class BufferBindings extends Bindings {
 
       if (!notAllArrays) {
         const kebabCaseLabel = toKebabCase(this.label)
-        const camelCaseLabel = toCamelCase(this.label)
 
         this.wgslStructFragment = `struct ${kebabCaseLabel} {\n\t${this.bindingElements
           .map((binding) => binding.name + ': ' + binding.type.replace('array', '').replace('<', '').replace('>', ''))
           .join(',\n\t')}
 };`
 
-        //this.wgslStructFragment += `struct ${kebabCaseLabel}Array {\n\tdata: array<${kebabCaseLabel}>\n};`
-
         const varType = getBindingWgslVarType(this.bindingType)
-        //this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel}Array;`]
         this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`]
       } else {
         this.wgslStructFragment = `struct ${toKebabCase(this.label)} {\n\t${this.bindingElements

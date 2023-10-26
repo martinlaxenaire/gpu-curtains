@@ -134,6 +134,14 @@ export class BindGroup {
       inputBinding: binding,
       buffer,
       array,
+      // TODO useful?
+      ...(binding.bindingType === 'storageWrite' && {
+        resultBuffer: this.renderer.createBuffer({
+          label: this.options.label + ': Result buffer from: ' + binding.label,
+          size: binding.value.byteLength,
+          usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+        }),
+      }),
     })
 
     this.entries.bindGroupLayout.push({

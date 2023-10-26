@@ -124,7 +124,7 @@ export class ComputeMaterial extends Material {
   }
 
   setBufferResult(bindingBuffer) {
-    if (bindingBuffer.resultBuffer.mapState === 'unmapped') {
+    if (bindingBuffer.resultBuffer?.mapState === 'unmapped') {
       bindingBuffer.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
         bindingBuffer.inputBinding.result = new Float32Array(bindingBuffer.resultBuffer.getMappedRange().slice(0))
         bindingBuffer.resultBuffer.unmap()
