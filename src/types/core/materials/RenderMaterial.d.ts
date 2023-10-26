@@ -41,23 +41,5 @@ export interface RenderMaterialParams extends Partial<RenderMaterialBaseParams> 
   label?: string
   shaders?: MaterialShaders
   geometry: AllowedGeometries
+  useAsyncPipeline?: boolean
 }
-
-// export class RenderMaterial extends Material {
-//   attributes: RenderMaterialAttributes
-//   options: MaterialOptions
-//
-//   constructor(renderer: Renderer, parameters: RenderMaterialParams)
-//
-//   setMaterial()
-//   setPipelineEntryBuffers()
-//   get ready(): boolean
-//
-//   setAttributesFromGeometry(geometry: AllowedGeometries)
-//   createAttributesBuffers()
-//   destroyAttributeBuffers()
-//
-//   render(pass: GPURenderPassEncoder)
-//
-//   destroy()
-// }

@@ -1,4 +1,4 @@
-import { InputValue } from '../types/core/materials/Material'
+import { InputValue } from '../types/core/bindGroups/BindGroup'
 import { VertexBuffer } from '../types/core/geometries/Geometry'
 import { BindingType } from '../types/core/bindings/Bindings'
 

@@ -1,8 +1,11 @@
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { SamplerBindings } from '../bindings/SamplerBindings'
 import { throwWarning } from '../../utils/utils'
-import { SamplerParams } from '../../types/core/samplers/Sampler'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+
+export interface SamplerParams extends GPUSamplerDescriptor {
+  name: string
+}
 
 export class Sampler {
   type: string
@@ -25,7 +28,7 @@ export class Sampler {
       minFilter = 'linear',
       mipmapFilter = 'linear',
       maxAnisotropy = 1,
-    }?: SamplerParams = {}
+    } = {} as SamplerParams
   ) {
     this.type = 'Sampler'
 

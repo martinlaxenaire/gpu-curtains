@@ -15,6 +15,7 @@ import { GPURendererParams, MeshType } from '../../types/core/renderers/GPURende
 
 import '@webgpu/types'
 import { DOMElementBoundingRect } from '../../types/core/DOM/DOMElement'
+import { TextureExternalImageAllowedType } from '../../types/core/textures/Texture'
 
 export class GPURenderer {
   type: string
@@ -337,13 +338,16 @@ export class GPURenderer {
     if (texture.source) {
       try {
         this.device?.queue.copyExternalImageToTexture(
-          { source: texture.source, flipY: texture.options.texture.flipY },
-          { texture: texture.texture },
+          {
+            source: texture.source as TextureExternalImageAllowedType,
+            flipY: texture.options.texture.flipY,
+          } as GPUImageCopyExternalImage,
+          { texture: texture.texture as GPUTexture },
           { width: texture.size.width, height: texture.size.height }
         )
 
-        if (texture.texture.mipLevelCount > 1) {
-          generateMips(this.device, texture.texture)
+        if ((texture.texture as GPUTexture).mipLevelCount > 1) {
+          generateMips(this.device, texture.texture as GPUTexture)
         }
 
         this.texturesQueue.push(texture)
@@ -352,7 +356,7 @@ export class GPURenderer {
       }
     } else {
       this.device?.queue.writeTexture(
-        { texture: texture.texture },
+        { texture: texture.texture as GPUTexture },
         new Uint8Array(texture.options.texture.placeholderColor),
         { bytesPerRow: texture.size.width * 4 },
         { width: texture.size.width, height: texture.size.height }

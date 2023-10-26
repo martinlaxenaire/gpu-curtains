@@ -39,7 +39,7 @@ export class BindGroup {
 
   constructor(
     renderer: Renderer | GPUCurtains,
-    { label = 'BindGroup', index = 0, bindings = [], inputs }?: BindGroupParams = {}
+    { label = 'BindGroup', index = 0, bindings = [], inputs }: BindGroupParams = {}
   ) {
     this.type = 'BindGroup'
 
@@ -259,10 +259,12 @@ export class BindGroup {
     return this.cloneFromBindingsBuffers()
   }
 
-  cloneFromBindingsBuffers({
-    bindingsBuffers = [],
-    keepLayout = false,
-  }?: { bindingsBuffers: BindGroupBindingBuffer[]; keepLayout: boolean } = {}): AllowedBindGroups {
+  cloneFromBindingsBuffers(
+    { bindingsBuffers = [], keepLayout = false } = {} as {
+      bindingsBuffers?: BindGroupBindingBuffer[]
+      keepLayout?: boolean
+    }
+  ): AllowedBindGroups {
     const params = { ...this.options }
     params.label += ' (copy)'
 

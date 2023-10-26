@@ -1,5 +1,4 @@
-import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
-import { GeometryBaseParams, GeometryParams } from '../../core/geometries/Geometry'
+import { GeometryBaseParams } from '../../core/geometries/Geometry'
 
 export interface SphereGeometryParams extends GeometryBaseParams {
   widthSegments?: number
@@ -8,17 +7,4 @@ export interface SphereGeometryParams extends GeometryBaseParams {
   phiLength?: number
   thetaStart?: number
   thetaLength?: number
-}
-
-export class SphereGeometry extends IndexedGeometry {
-  constructor({
-    widthSegments,
-    heightSegments,
-    phiStart,
-    phiLength,
-    thetaStart,
-    thetaLength,
-    instancesCount,
-    vertexBuffers,
-  }?: SphereGeometryParams)
 }

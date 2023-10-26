@@ -35,7 +35,7 @@ export class RenderPass {
 
   constructor(
     renderer: Renderer | GPUCurtains,
-    { label = 'Render Pass', depth = true, loadOp = 'clear', clearValue = [0, 0, 0, 0] }: RenderPassParams = {}
+    { label = 'Render Pass', depth = true, loadOp = 'clear', clearValue = [0, 0, 0, 0] } = {} as RenderPassParams
   ) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)

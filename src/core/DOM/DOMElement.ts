@@ -13,19 +13,21 @@ export class DOMElement {
   resizeManager: ResizeManager
   _boundingRect: DOMElementBoundingRect
 
-  constructor({
-    element = document.body,
-    onSizeChanged = (boundingRect = null) => {
-      /* allow empty callback */
-    },
-    onPositionChanged = (boundingRect = null) => {
-      /* allow empty callback */
-    },
-  }?: {
-    element?: string | HTMLElement
-    onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
-    onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
-  } = {}) {
+  constructor(
+    {
+      element = document.body,
+      onSizeChanged = (boundingRect = null) => {
+        /* allow empty callback */
+      },
+      onPositionChanged = (boundingRect = null) => {
+        /* allow empty callback */
+      },
+    } = {} as {
+      element?: string | HTMLElement
+      onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
+      onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
+    }
+  ) {
     if (typeof element === 'string') {
       this.element = document.querySelector(element)
 

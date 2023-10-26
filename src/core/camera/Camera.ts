@@ -1,5 +1,5 @@
-import { Vec3 } from '../../math/Vec3.ts'
-import { Mat4 } from '../../math/Mat4.ts'
+import { Vec3 } from '../../math/Vec3'
+import { Mat4 } from '../../math/Mat4'
 import { CameraParams } from '../../types/core/camera/Camera'
 
 /***
@@ -42,20 +42,22 @@ export class Camera {
 
   shouldUpdate: boolean
 
-  constructor({
-    fov = 50,
-    near = 0.01,
-    far = 50,
-    width = 1,
-    height = 1,
-    pixelRatio = 1,
-    onPerspectiveChanged = () => {
-      /* allow empty callback */
-    },
-    onPositionChanged = () => {
-      /* allow empty callback */
-    },
-  }?: CameraParams = {}) {
+  constructor(
+    {
+      fov = 50,
+      near = 0.01,
+      far = 50,
+      width = 1,
+      height = 1,
+      pixelRatio = 1,
+      onPerspectiveChanged = () => {
+        /* allow empty callback */
+      },
+      onPositionChanged = () => {
+        /* allow empty callback */
+      },
+    } = {} as CameraParams
+  ) {
     // camera can't be at position (0, 0, 0), it needs some recoil
     // arbitrarily set to 1
     this.position = new Vec3(0, 0, 1).onChange(() => this.applyPosition())

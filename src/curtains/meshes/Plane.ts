@@ -25,7 +25,7 @@ export class Plane extends DOMMesh {
   constructor(
     renderer: GPUCurtainsRenderer | GPUCurtains,
     element: HTMLElement | string,
-    parameters: PlaneParams = {}
+    parameters = {} as PlaneParams
   ) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as GPUCurtainsRenderer)

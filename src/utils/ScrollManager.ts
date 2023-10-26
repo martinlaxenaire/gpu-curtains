@@ -1,5 +1,3 @@
-import { ScrollManagerParams } from '../types/utils/ScrollManager'
-
 /***
  Here we create a ScrollManager class object
  This keeps track of our scroll position, scroll deltas and triggers an onScroll callback
@@ -17,6 +15,16 @@ import { ScrollManagerParams } from '../types/utils/ScrollManager'
 
  @returns {ScrollManager}: our ScrollManager class object
  ***/
+
+export interface ScrollManagerParams {
+  xOffset?: number
+  yOffset?: number
+  lastXDelta?: number
+  lastYDelta?: number
+  shouldWatch?: boolean
+  onScroll?: () => void
+}
+
 export class ScrollManager {
   xOffset?: number
   yOffset?: number
@@ -38,7 +46,7 @@ export class ScrollManager {
     onScroll = (lastXDelta = 0, lastYDelta = 0) => {
       /* allow empty callback */
     },
-  }?: ScrollManagerParams = {}) {
+  }: ScrollManagerParams = {}) {
     this.xOffset = xOffset
     this.yOffset = yOffset
     this.lastXDelta = lastXDelta

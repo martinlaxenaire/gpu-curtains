@@ -5,7 +5,7 @@ import { IndexedGeometryIndexBufferOptions } from '../../types/core/geometries/I
 export class IndexedGeometry extends Geometry {
   isIndexed: boolean
 
-  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] }?: GeometryParams = {}) {
+  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] } = {} as GeometryParams) {
     super({ verticesOrder, instancesCount, vertexBuffers })
 
     this.type = 'IndexedGeometry'

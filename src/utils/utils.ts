@@ -47,7 +47,6 @@ export function logError() {
 /***
  Throw a javascript error with the passed arguments
  ***/
-export function throwError() {
-  const args = Array.prototype.slice.call(arguments)
-  throw new Error(args ?? '')
+export function throwError(error: string) {
+  throw new Error(error)
 }

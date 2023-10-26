@@ -16,7 +16,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
   }
   domElement: DOMElement
 
-  constructor(renderer: Renderer | GPUCurtains, parameters: MeshBaseParams = {}) {
+  constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseParams) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
 

@@ -1,4 +1,7 @@
-import { ResizeManagerEntry } from '../types/utils/ResizeManager'
+export interface ResizeManagerEntry {
+  element: HTMLElement
+  callback: () => void | null
+}
 
 export class ResizeManager {
   shouldWatch: boolean

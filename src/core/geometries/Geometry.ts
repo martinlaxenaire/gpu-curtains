@@ -15,7 +15,7 @@ export class Geometry {
 
   wgslStructFragment: string
 
-  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] }?: GeometryParams = {}) {
+  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] } = {} as GeometryParams) {
     this.verticesCount = 0
     this.verticesOrder = verticesOrder
     this.instancesCount = instancesCount
@@ -46,7 +46,7 @@ export class Geometry {
     })
   }
 
-  addVertexBuffer({ stepMode = 'vertex', name, attributes = [] }?: VertexBufferParams = {}): VertexBuffer {
+  addVertexBuffer({ stepMode = 'vertex', name, attributes = [] } = {} as VertexBufferParams): VertexBuffer {
     const vertexBuffer = {
       name: name ?? 'attributes' + this.vertexBuffers.length,
       stepMode,
@@ -55,7 +55,7 @@ export class Geometry {
       attributes: [],
       buffer: null,
       indexBuffer: null,
-    }
+    } as VertexBuffer
 
     // set attributes right away if possible
     attributes?.forEach((attribute) => {

@@ -9,18 +9,3 @@ export interface BindingsParams {
   bindIndex?: number
   visibility?: MaterialShadersType | null
 }
-
-// export class Bindings {
-//   label: string
-//   name: string
-//   bindingType: BindingType
-//   bindIndex: number
-//   visibility: GPUShaderStageFlags
-//   value?: Float32Array | null
-//
-//   constructor({ label, name, bindingType, bindIndex, visibility }: BindingsParams)
-//
-//   setWGSLFragment()
-//   shouldUpdateUniform()
-//   onBeforeRender()
-// }

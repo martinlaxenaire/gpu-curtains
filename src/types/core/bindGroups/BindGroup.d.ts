@@ -1,7 +1,3 @@
-// import { Renderer } from '../../utils/renderer-utils'
-// import { Sampler } from '../samplers/Sampler'
-//import { Texture } from '../textures/Texture'
-
 import { BindGroup } from '../../../core/bindGroups/BindGroup'
 import { TextureBindGroup } from '../../../core/bindGroups/TextureBindGroup'
 import { BufferBindings } from '../../../core/bindings/BufferBindings'
@@ -21,6 +17,7 @@ export type AllowedBindGroups = BindGroup | TextureBindGroup
 export type AllowedBindingsTypes = 'uniforms' | 'storages' | 'works'
 
 export interface BindGroupBindingBuffer {
+  array: Float32Array
   inputBinding: BindGroupBufferBindingElement
   buffer: GPUBuffer
   resultBuffer?: GPUBuffer // used in WorkBufferBindings
@@ -67,65 +64,3 @@ export interface WorkInputBindingsParams extends InputBindingsParams {
 export type AllowedInputBindingsParams = InputBindingsParams | WorkInputBindingsParams
 
 export type InputBindings = Record<string, AllowedInputBindingsParams>
-
-// export class BindGroup {
-//   type: string
-//   renderer: Renderer
-//   options: {
-//     label: string
-//     index: number
-//     bindings: BindGroupBindingElement[]
-//     inputs?: BindGroupInputs
-//     textures?: Texture[]
-//     samplers?: Sampler[]
-//   }
-//   index: number
-//
-//   bindings: BindGroupBindingElement[]
-//   bindingsBuffers: BindGroupBindingBuffer[]
-//
-//   entries: BindGroupEntries
-//
-//   bindGroupLayout: null | GPUBindGroupLayout
-//   bindGroup: null | GPUBindGroup
-//
-//   needsReset: boolean
-//   needsPipelineFlush: boolean
-//
-//   constructor(renderer: Renderer, { label, index, bindings, inputs }?: BindGroupParams)
-//
-//   setIndex(index: number)
-//
-//   setBindings(bindings: BindGroupBindingElement[])
-//   addBinding(binding: BindGroupBindingElement)
-//
-//   createInputBindings(bindingType?: AllowedBindingsTypes, inputs?: InputBindings): BindGroupBindingElement[]
-//   setInputBindings()
-//
-//   get shouldCreateBindGroup(): boolean
-//
-//   resetEntries()
-//   createBindGroup()
-//   resetBindGroup()
-//
-//   getBindingsByName(bindingName?: BufferBindings['name']): BindGroupBindingElement | null
-//
-//   createBindingBuffer(binding: BindGroupBindingElement)
-//   createBindingsBuffers()
-//
-//   setBindGroupLayout()
-//   setBindGroup()
-//
-//   updateBindings()
-//
-//   clone(): AllowedBindGroups
-//   cloneFromBindingsBuffers({
-//     bindingsBuffers,
-//     keepLayout,
-//   }: {
-//     bindingsBuffers?: BindGroupBindingBuffer[]
-//     keepLayout?: boolean
-//   }): AllowedBindGroups
-//
-//   destroy()
-// }

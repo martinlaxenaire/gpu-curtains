@@ -1,12 +1,11 @@
 import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
-import { Object3DTransforms } from '../../types/core/objects3D/Object3D'
-import { ProjectedObject3DMatrices } from '../../types/core/objects3D/ProjectedObject3D'
+import { Object3DMatrices, Object3DTransforms } from '../../types/core/objects3D/Object3D'
 
 export class Object3D {
   transforms: Object3DTransforms
-  matrices: ProjectedObject3DMatrices
+  matrices: Object3DMatrices
 
   constructor() {
     this.setMatrices()

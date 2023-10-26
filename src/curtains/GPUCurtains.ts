@@ -11,7 +11,7 @@ import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
 import { Camera } from '../core/camera/Camera'
 import { DOMElementBoundingRect } from '../types/core/DOM/DOMElement'
-import { ScrollManagerParams } from '../types/utils/ScrollManager'
+import { ScrollManagerParams } from '../utils/ScrollManager'
 
 export class GPUCurtains {
   type: string
@@ -159,7 +159,7 @@ export class GPUCurtains {
   }
 
   get planes(): Plane[] {
-    return this.renderer?.domMeshes.filter((domMesh) => domMesh.type === 'Plane')
+    return this.renderer?.domMeshes.filter((domMesh) => domMesh.type === 'Plane') as Plane[]
   }
 
   get computePass(): ComputePass[] {

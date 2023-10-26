@@ -4,11 +4,12 @@ import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
 import { GPUCurtains } from '../GPUCurtains'
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
 import { RenderTexture } from '../../core/textures/RenderTexture'
+import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 
 export class PingPongPlane extends FullscreenPlane {
   renderTarget: RenderTarget
 
-  constructor(renderer: Renderer | GPUCurtains, parameters) {
+  constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseParams) {
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
 
     isRenderer(renderer, parameters.label ? parameters.label + ' PingPongPlane' : 'PingPongPlane')

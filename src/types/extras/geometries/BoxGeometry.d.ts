@@ -1,5 +1,3 @@
-// import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
-// import { GeometryBaseParams, GeometryParams } from '../../core/geometries/Geometry'
 import { GeometryBaseParams } from '../../core/geometries/Geometry'
 
 export interface BoxGeometryParams extends GeometryBaseParams {
@@ -7,7 +5,3 @@ export interface BoxGeometryParams extends GeometryBaseParams {
   heightSegments?: number
   depthSegments?: number
 }
-
-// export class BoxGeometry extends IndexedGeometry {
-//   constructor({ widthSegments, heightSegments, depthSegments, instancesCount, vertexBuffers }?: BoxGeometryParams)
-// }

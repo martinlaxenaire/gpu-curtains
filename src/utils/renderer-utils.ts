@@ -48,7 +48,7 @@ export const isCurtainsRenderer = (renderer: GPUCurtainsRenderer | undefined, ty
   return isCurtainsRenderer
 }
 
-export const generateMips = ((device: GPUDevice, texture: GPUTexture) => {
+export const generateMips = ((device, texture) => {
   let sampler
   let module
   const pipelineByFormat = {}

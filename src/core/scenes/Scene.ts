@@ -1,12 +1,10 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { CameraRenderer, isRenderer, Renderer } from '../../utils/renderer-utils'
 import { MeshType } from '../../types/core/renderers/GPURenderer'
-import { RenderPass } from '../renderPasses/RenderPass'
-import { RenderTexture } from '../textures/RenderTexture'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 import { ComputePass } from '../computePasses/ComputePass'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { RenderTarget } from '../../types/core/renderPasses/RenderTarget'
+import { RenderTarget } from '../renderPasses/RenderTarget'
 import { ProjectionStack, RenderPassEntry, RenderPassEntries } from '../../types/core/scenes/Scene'
 
 export class Scene {
@@ -274,9 +272,12 @@ export class Scene {
 
       // then draw projected meshes
       if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-        if (this.renderer.cameraBindGroup) {
+        if ((this.renderer as CameraRenderer).cameraBindGroup) {
           // set camera bind group once
-          pass.setBindGroup(this.renderer.cameraBindGroup.index, this.renderer.cameraBindGroup.bindGroup)
+          pass.setBindGroup(
+            (this.renderer as CameraRenderer).cameraBindGroup.index,
+            (this.renderer as CameraRenderer).cameraBindGroup.bindGroup
+          )
         }
 
         renderPassEntry.stack.projected.opaque.forEach((mesh) => mesh.render(pass))

@@ -11,12 +11,9 @@ export class PlaneGeometry extends IndexedGeometry {
     count: number
   }
 
-  constructor({
-    widthSegments = 1,
-    heightSegments = 1,
-    instancesCount = 1,
-    vertexBuffers = [],
-  }?: PlaneGeometryParams = {}) {
+  constructor(
+    { widthSegments = 1, heightSegments = 1, instancesCount = 1, vertexBuffers = [] } = {} as PlaneGeometryParams
+  ) {
     super({ verticesOrder: 'cw', instancesCount, vertexBuffers })
 
     this.type = 'PlaneGeometry'

@@ -13,7 +13,7 @@ export class TextureBindGroup extends BindGroup {
 
   constructor(
     renderer: Renderer | GPUCurtains,
-    { label, index = 0, bindings = [], inputs, textures = [], samplers = [] }?: TextureBindGroupParams = {}
+    { label, index = 0, bindings = [], inputs, textures = [], samplers = [] }: TextureBindGroupParams = {}
   ) {
     const type = 'TextureBindGroup'
 
@@ -120,7 +120,9 @@ export class TextureBindGroup extends BindGroup {
 
         if (texture)
           entry.resource =
-            texture.options.sourceType === 'externalVideo' ? texture.texture : texture.texture.createView()
+            (texture as Texture).options?.sourceType === 'externalVideo'
+              ? (texture.texture as GPUExternalTexture)
+              : (texture.texture as GPUTexture).createView()
       })
 
       this.setBindGroup()

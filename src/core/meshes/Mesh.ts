@@ -6,7 +6,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 
 export class Mesh extends MeshTransformedMixin(MeshBaseMixin(ProjectedObject3D)) {
-  constructor(renderer: CameraRenderer | GPUCurtains, parameters: MeshBaseParams = {}) {
+  constructor(renderer: CameraRenderer | GPUCurtains, parameters = {} as MeshBaseParams) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
 
