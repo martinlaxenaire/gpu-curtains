@@ -12,12 +12,10 @@ import { RenderTarget } from '../renderPasses/RenderTarget'
 import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
 
-import '@webgpu/types'
 import { TextureExternalImageAllowedType } from '../../types/core/textures/Texture'
 import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
-import MeshBaseMixin from '../meshes/MeshBaseMixin'
 
 export interface GPURendererParams {
   container: string | HTMLElement

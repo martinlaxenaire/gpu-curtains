@@ -1,4 +1,3 @@
-import '@webgpu/types'
 import { toCamelCase } from '../../utils/utils'
 import { BindingsParams, BindingType } from '../../types/core/bindings/Bindings'
 

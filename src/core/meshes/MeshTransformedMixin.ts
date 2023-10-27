@@ -55,15 +55,13 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin<GCon
 
     constructor(...params: any) {
       super(
-        params.renderer as CameraRenderer | GPUCurtains,
-        params.element as HTMLElement | string,
-        { ...defaultMeshParams, ...params.parameters } as MeshBaseParams
+        params[0] as CameraRenderer | GPUCurtains,
+        params[1] as HTMLElement | string,
+        { ...defaultMeshParams, ...params[2] } as MeshBaseParams
       )
 
-      let { renderer } = params
-      const parameters = { ...defaultMeshParams, ...params.parameters } as MeshBaseParams
-
-      //parameters = { ...defaultMeshParams, ...parameters }
+      let renderer = params[0]
+      const parameters = { ...defaultMeshParams, ...params[2] } as MeshBaseParams
 
       this.type = 'MeshTransformed'
 

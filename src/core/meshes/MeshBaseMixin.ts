@@ -77,13 +77,13 @@ function MeshBaseMixin<TBase extends GConstructor>(Base: TBase) {
     //constructor(renderer: CameraRenderer | GPUCurtains, element: HTMLElement | string, parameters: MeshBaseParams) {
     constructor(...params: any) {
       super(
-        params.renderer as CameraRenderer | GPUCurtains,
-        params.element as HTMLElement | string,
-        { ...defaultMeshBaseParams, ...params.parameters } as MeshBaseParams
+        params[0] as CameraRenderer | GPUCurtains,
+        params[1] as HTMLElement | string,
+        { ...defaultMeshBaseParams, ...params[2] } as MeshBaseParams
       )
 
-      let { renderer } = params
-      const parameters = { ...defaultMeshBaseParams, ...params.parameters }
+      let renderer = params[0]
+      const parameters = { ...defaultMeshBaseParams, ...params[2] }
 
       this.type = 'MeshBase'
 
