@@ -12,7 +12,8 @@ export class Mesh extends MeshTransformedMixin(MeshBaseMixin(ProjectedObject3D))
 
     isCameraRenderer(renderer, parameters.label ? parameters.label + ' Mesh' : 'Mesh')
 
-    super(renderer, null, parameters)
+    // @ts-ignore
+    super({ renderer, element: null, parameters })
 
     this.type = 'Mesh'
   }

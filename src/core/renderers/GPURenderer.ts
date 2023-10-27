@@ -17,6 +17,7 @@ import { TextureExternalImageAllowedType } from '../../types/core/textures/Textu
 import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
+import MeshBaseMixin from '../meshes/MeshBaseMixin'
 
 export interface GPURendererParams {
   container: string | HTMLElement
@@ -30,6 +31,7 @@ export interface GPURendererParams {
 // TODO should be GPUCurtainsRenderer props?
 export type DOMMeshType = DOMMesh | Plane
 export type MeshType = Mesh | DOMMeshType
+//export type MeshType = Mesh | DOMMeshType | typeof MeshBaseMixin<any>
 
 export class GPURenderer {
   type: string

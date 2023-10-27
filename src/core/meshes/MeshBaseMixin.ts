@@ -1,4 +1,4 @@
-import { generateUUID, throwWarning } from '../../utils/utils'
+import { applyMixins, generateUUID, throwWarning } from '../../utils/utils'
 import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
@@ -6,7 +6,7 @@ import { Geometry } from '../geometries/Geometry'
 import { RenderTexture } from '../textures/RenderTexture'
 import { CurtainsTextureOptions, TextureDefaultParams, TextureParent } from '../../types/core/textures/Texture'
 import { RenderTarget } from '../renderPasses/RenderTarget'
-import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
+import { MeshBaseOptions, MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshType } from '../renderers/GPURenderer'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
@@ -42,26 +42,23 @@ const defaultMeshBaseParams = {
 // the class which this mixin is applied to
 export type GConstructor<T = {}> = new (...args: any[]) => T
 
-declare class EmptyClass {}
-export type ProjectedMeshBase = DOMObject3D | ProjectedObject3D
-export type AllowedMeshBase = ProjectedMeshBase | EmptyClass
-export type MixinConstructor = GConstructor<AllowedMeshBase>
+// declare class EmptyClass {}
+// export type ProjectedMeshBase = DOMObject3D | ProjectedObject3D
+// export type AllowedMeshBase = ProjectedMeshBase | EmptyClass
+// export type MixinConstructor = GConstructor<AllowedMeshBase>
+//
+// type Constructor = new (...args: any[]) => AllowedMeshBase
 
-function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase) {
+function MeshBaseMixin<TBase extends GConstructor>(Base: TBase) {
+  //function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase) {
+  //function MeshBaseMixin<TBase extends Constructor>(Base: TBase): TBase & Constructor {
   return class MeshBase extends Base {
     type: string
     readonly uuid: string
     readonly index: number
     renderer: CameraRenderer
 
-    options: {
-      label?: MeshBaseParams['label']
-      shaders: MeshBaseParams['shaders']
-      texturesOptions?: CurtainsTextureOptions
-      renderTarget?: RenderTarget | null
-      autoAddToScene?: boolean
-      useAsyncPipeline?: boolean
-    }
+    options: MeshBaseOptions
 
     material: RenderMaterial
     geometry: MeshBaseParams['geometry']
@@ -77,47 +74,16 @@ function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase)
     visible: boolean
     _ready: boolean
 
-    #autoAddToScene = true
-
-    // callbacks / events
-    _onReadyCallback: () => void = () => {
-      /* allow empty callback */
-    }
-    _onBeforeRenderCallback: () => void = () => {
-      /* allow empty callback */
-    }
-    _onRenderCallback: () => void = () => {
-      /* allow empty callback */
-    }
-    _onAfterRenderCallback: () => void = () => {
-      /* allow empty callback */
-    }
-    _onAfterResizeCallback: () => void = () => {
-      /* allow empty callback */
-    }
-
     //constructor(renderer: CameraRenderer | GPUCurtains, element: HTMLElement | string, parameters: MeshBaseParams) {
     constructor(...params: any) {
-      //super(renderer, element, { ...defaultMeshBaseParams, ...parameters })
       super(
-        ({
-          renderer,
-          element,
-          parameters: { ...defaultMeshBaseParams, ...parameters },
-        } = params as {
-          renderer: CameraRenderer | GPUCurtains
-          element: HTMLElement | string
-          parameters: MeshBaseParams
-        })
+        params.renderer as CameraRenderer | GPUCurtains,
+        params.element as HTMLElement | string,
+        { ...defaultMeshBaseParams, ...params.parameters } as MeshBaseParams
       )
 
-      let {
-        renderer,
-        element,
-        parameters,
-      }: { renderer: CameraRenderer | GPUCurtains; element: HTMLElement | string; parameters: MeshBaseParams } = params
-
-      parameters = { ...defaultMeshBaseParams, ...parameters }
+      let { renderer } = params
+      const parameters = { ...defaultMeshBaseParams, ...params.parameters }
 
       this.type = 'MeshBase'
 
@@ -169,9 +135,33 @@ function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase)
       this.renderOrder = renderOrder
       this.ready = false
 
-      this.setMeshMaterial(meshParameters as RenderMaterialBaseParams)
+      this.setMeshMaterial({
+        label: this.options.label,
+        shaders: this.options.shaders,
+        ...meshParameters,
+        geometry: this.geometry,
+      } as RenderMaterialParams)
 
       this.addToScene()
+    }
+
+    #autoAddToScene = true
+
+    // callbacks / events
+    _onReadyCallback: () => void = () => {
+      /* allow empty callback */
+    }
+    _onBeforeRenderCallback: () => void = () => {
+      /* allow empty callback */
+    }
+    _onRenderCallback: () => void = () => {
+      /* allow empty callback */
+    }
+    _onAfterRenderCallback: () => void = () => {
+      /* allow empty callback */
+    }
+    _onAfterResizeCallback: () => void = () => {
+      /* allow empty callback */
     }
 
     get autoAddToScene(): boolean {
@@ -189,15 +179,10 @@ function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase)
       this._ready = value
     }
 
-    setMeshMaterial(meshParameters: RenderMaterialBaseParams) {
+    setMeshMaterial(meshParameters: RenderMaterialParams) {
       this.transparent = meshParameters.transparent
 
-      this.setMaterial({
-        label: this.options.label,
-        shaders: this.options.shaders,
-        ...meshParameters,
-        geometry: this.geometry,
-      })
+      this.setMaterial(meshParameters)
     }
 
     setMaterial(materialParameters: RenderMaterialParams) {
@@ -205,16 +190,16 @@ function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase)
     }
 
     addToScene() {
-      this.renderer.meshes.push(this as MeshType)
+      this.renderer.meshes.push(this as unknown as MeshType)
 
       if (this.#autoAddToScene) {
-        this.renderer.scene.addMesh(this as MeshType)
+        this.renderer.scene.addMesh(this as unknown as MeshType)
       }
     }
 
     removeFromScene() {
       if (this.#autoAddToScene) {
-        this.renderer.scene.removeMesh(this as MeshType)
+        this.renderer.scene.removeMesh(this as unknown as MeshType)
       }
 
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
@@ -244,7 +229,7 @@ function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase)
 
     onTextureCreated(texture: Texture) {
       /* will be overriden */
-      texture.parent = this as TextureParent
+      texture.parent = this as unknown as TextureParent
     }
 
     createRenderTexture(options: RenderTextureParams): RenderTexture {
@@ -286,7 +271,11 @@ function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase)
       // resize render textures first
       this.renderTextures?.forEach((renderTexture) => renderTexture.resize())
 
-      if (super.resize) super.resize(boundingRect)
+      // @ts-ignore
+      if (super.resize) {
+        // @ts-ignore
+        super.resize(boundingRect)
+      }
 
       // resize textures
       this.textures?.forEach((texture) => {
@@ -368,7 +357,11 @@ function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase)
       // no point to render if the WebGPU device is not ready
       if (!this.renderer.ready || !this.visible) return
 
-      if (super.render) super.render()
+      // @ts-ignore
+      if (super.render) {
+        // @ts-ignore
+        super.render()
+      }
 
       this.onRenderPass(pass)
 
@@ -381,7 +374,11 @@ function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase)
     }
 
     destroy() {
-      if (Base.prototype.hasOwnProperty('destroy')) super.destroy()
+      // @ts-ignore
+      if (super.destroy) {
+        // @ts-ignore
+        super.destroy()
+      }
 
       // TODO destroy anything else?
       this.material?.destroy()

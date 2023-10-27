@@ -20,6 +20,15 @@ export interface MeshBaseParams extends RenderMaterialParams {
   texturesOptions?: CurtainsTextureOptions
 }
 
+export interface MeshBaseOptions {
+  label?: MeshBaseParams['label']
+  shaders: MeshBaseParams['shaders']
+  texturesOptions?: CurtainsTextureOptions
+  renderTarget?: RenderTarget | null
+  autoAddToScene?: boolean
+  useAsyncPipeline?: boolean
+}
+
 declare let meshIndex: number
 
 declare const defaultMeshBaseParams: MeshBaseParams

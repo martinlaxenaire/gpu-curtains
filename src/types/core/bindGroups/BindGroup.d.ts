@@ -23,7 +23,12 @@ export interface BindGroupBindingBuffer {
   resultBuffer?: GPUBuffer // used in WorkBufferBindings
 }
 
-export type BindGroupInputs = Record<AllowedBindingsTypes, InputBindings>
+//export type BindGroupInputs = Record<AllowedBindingsTypes, InputBindings>
+export interface BindGroupInputs {
+  uniforms?: InputBindings
+  storages?: InputBindings
+  works?: InputBindings
+}
 
 export interface BindGroupParams {
   label?: string

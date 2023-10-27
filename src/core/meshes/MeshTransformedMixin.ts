@@ -1,15 +1,16 @@
-// @ts-nocheck
-// TODO fix!
-
 import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
 import { DOMFrustum } from '../DOM/DOMFrustum'
 import { TransformedMeshMaterialParameters, TransformedMeshParams } from '../../types/core/meshes/MeshTransformedMixin'
-import MeshBaseMixin, { GConstructor, MixinConstructor } from './MeshBaseMixin'
-import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
-import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
+import MeshBaseMixin, { GConstructor } from './MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
-import { DOMElementBoundingRect } from '../DOM/DOMElement'
+import { MeshBaseOptions, MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
+import { DOMElementBoundingRect, RectCoords } from '../DOM/DOMElement'
+import { AllowedGeometries } from '../../types/core/materials/RenderMaterial'
+import { Mat4 } from '../../math/Mat4'
+import { ProjectedObject3DMatrices } from '../../types/core/objects3D/ProjectedObject3D'
+import { RenderTexture } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
+import { RenderMaterial } from '../materials/RenderMaterial'
 
 const defaultMeshParams = {
   useProjection: true,
@@ -23,13 +24,12 @@ const defaultMeshParams = {
   },
 } as TransformedMeshParams
 
-//type TransformedMixinConstructor = GConstructor<MeshBaseMixin<DOMObject3D | ProjectedObject3D>>
-
-//function MeshTransformedMixin<TBase extends TransformedMixinConstructor>(superclass: TBase) {
-function MeshTransformedMixin<
-  TBase extends ReturnType<typeof MeshBaseMixin<GConstructor<DOMObject3D | ProjectedObject3D>>>
->(Base: TBase) {
+function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin<GConstructor>>>(Base: TBase) {
   return class MeshTransformedBase extends Base {
+    domFrustum: DOMFrustum
+    frustumCulled: boolean
+    DOMFrustumMargins: RectCoords
+
     // callbacks / events
     _onReEnterViewCallback: () => void = () => {
       /* allow empty callback */
@@ -38,19 +38,30 @@ function MeshTransformedMixin<
       /* allow empty callback */
     }
 
-    //constructor(renderer: CameraRenderer | GPUCurtains, element: string | HTMLElement, parameters: MeshBaseParams) {
-    constructor(...params: any) {
-      let {
-        renderer,
-        element,
-        parameters: { ...defaultMeshParams, ...parameters },
-      }: {
-        renderer: CameraRenderer | GPUCurtains
-        element: HTMLElement | string
-        parameters: MeshBaseParams
-      } = params
+    // now force override of all missing properties
+    // because typescript gets all confused with the nested mixins
+    type: string
+    renderer: CameraRenderer
+    options: MeshBaseOptions
+    geometry: AllowedGeometries
+    matrices: ProjectedObject3DMatrices
+    modelMatrix: Mat4
+    modelViewMatrix: Mat4
+    modelViewProjectionMatrix: Mat4
+    renderTextures: RenderTexture[]
+    textures: Texture[]
+    material: RenderMaterial
+    _onRenderCallback: () => void
 
-      super(renderer, element, parameters)
+    constructor(...params: any) {
+      super(
+        params.renderer as CameraRenderer | GPUCurtains,
+        params.element as HTMLElement | string,
+        { ...defaultMeshParams, ...params.parameters } as MeshBaseParams
+      )
+
+      let { renderer } = params
+      const parameters = { ...defaultMeshParams, ...params.parameters } as MeshBaseParams
 
       //parameters = { ...defaultMeshParams, ...parameters }
 
@@ -120,6 +131,7 @@ function MeshTransformedMixin<
 
       meshMaterialOptions.inputs.uniforms.matrices = matricesUniforms
 
+      // @ts-ignore
       super.setMeshMaterial(meshMaterialOptions)
 
       this.domFrustum = new DOMFrustum({
@@ -142,10 +154,12 @@ function MeshTransformedMixin<
     resize(boundingRect: DOMElementBoundingRect | null = null) {
       if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect)
 
+      // @ts-ignore
       super.resize(boundingRect)
     }
 
     applyScale() {
+      // @ts-ignore
       super.applyScale()
 
       // resize textures on scale change!
@@ -157,6 +171,7 @@ function MeshTransformedMixin<
     }
 
     updateModelMatrix() {
+      // @ts-ignore
       super.updateModelMatrix()
 
       if (this.material) {
@@ -167,6 +182,7 @@ function MeshTransformedMixin<
     }
 
     updateProjectionMatrixStack() {
+      // @ts-ignore
       super.updateProjectionMatrixStack()
 
       if (this.domFrustum) this.domFrustum.shouldUpdate = true
@@ -202,6 +218,7 @@ function MeshTransformedMixin<
         this.domFrustum.shouldUpdate = false
       }
 
+      // @ts-ignore
       super.onBeforeRenderPass()
     }
 

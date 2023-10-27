@@ -82,12 +82,14 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
 
   addToScene() {
     super.addToScene()
-    this.renderer.domMeshes.push(this)
+    ;(this.renderer as GPUCurtainsRenderer).domMeshes.push(this)
   }
 
   removeFromScene() {
     super.removeFromScene()
-    this.renderer.domMeshes = this.renderer.domMeshes.filter((m) => m.uuid !== this.uuid)
+    ;(this.renderer as GPUCurtainsRenderer).domMeshes = (this.renderer as GPUCurtainsRenderer).domMeshes.filter(
+      (m) => m.uuid !== this.uuid
+    )
   }
 
   setInitSources() {
