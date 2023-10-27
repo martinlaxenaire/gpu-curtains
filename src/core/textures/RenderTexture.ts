@@ -44,11 +44,11 @@ export class RenderTexture {
     // sizes
     this.setSourceSize()
 
-    // texture
-    this.createTexture()
-
     // bindings
     this.setBindings()
+
+    // texture
+    this.createTexture()
   }
 
   setSourceSize() {
@@ -66,7 +66,7 @@ export class RenderTexture {
       return
     }
 
-    if (this.texture) this.texture.destroy()
+    this.texture?.destroy()
 
     this.texture = this.renderer.createTexture({
       label: this.options.label,
@@ -78,6 +78,9 @@ export class RenderTexture {
         GPUTextureUsage.COPY_DST |
         GPUTextureUsage.RENDER_ATTACHMENT, // TODO?
     })
+
+    // update texture binding
+    ;(this.bindings[0] as TextureBindings).resource = this.texture
   }
 
   setBindings() {

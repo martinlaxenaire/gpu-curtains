@@ -7,6 +7,7 @@ import { Sampler } from '../samplers/Sampler'
 import { BindGroupBufferBindingElement } from '../../types/core/bindGroups/BindGroup'
 import { SamplerBindings } from '../bindings/SamplerBindings'
 import { MaterialTexture } from '../../types/core/materials/Material'
+import { TextureSamplerBindings } from '../../types/core/bindings/Bindings'
 
 export class TextureBindGroup extends BindGroup {
   externalTexturesIDs: number[]
@@ -60,7 +61,7 @@ export class TextureBindGroup extends BindGroup {
     return (
       !this.bindGroup &&
       !!this.bindings.length &&
-      !this.textures.find((texture) => !texture.texture) &&
+      !this.textures.find((texture) => !(texture.texture || (texture as Texture).externalTexture)) &&
       !this.samplers.find((sampler) => !sampler.sampler)
     )
   }
@@ -76,18 +77,19 @@ export class TextureBindGroup extends BindGroup {
       } else if (inputBinding.bindingType) {
         inputBinding.bindIndex = this.entries.bindGroupLayout.length
 
-        const texture = this.textures[textureIndex]
+        //const texture = this.textures[textureIndex]
 
         const bindingTypeValue = (() => {
           switch (inputBinding.bindingType) {
             case 'texture':
               textureIndex++
-              return (texture.texture as GPUTexture).createView()
+              return ((inputBinding as TextureSamplerBindings).resource as GPUTexture).createView()
+            //return (texture.texture as GPUTexture).createView()
             case 'externalTexture':
               textureIndex++
-              return (texture as Texture).externalTexture
+              return (inputBinding as TextureSamplerBindings).resource
             case 'sampler':
-              return (inputBinding as SamplerBindings).resource
+              return (inputBinding as TextureSamplerBindings).resource
             default:
               console.warn('No bind group layout type provided by', inputBinding)
               break
@@ -118,11 +120,12 @@ export class TextureBindGroup extends BindGroup {
       texturesEntries.forEach((entry, index) => {
         const texture = this.textures[index]
 
-        if (texture)
+        if (texture) {
           entry.resource =
             (texture as Texture).options?.sourceType === 'externalVideo'
               ? (texture as Texture).externalTexture
               : texture.texture.createView()
+        }
       })
 
       this.setBindGroup()
@@ -163,7 +166,6 @@ export class TextureBindGroup extends BindGroup {
     if (texture && this.entries.bindGroupLayout[entryIndex] && this.bindings[entryIndex]) {
       this.entries.bindGroupLayout[entryIndex] = {
         binding: this.entries.bindGroupLayout[entryIndex].binding,
-        //[texture.bindings[0].bindingType]: texture.texture,
         [texture.bindings[0].bindingType]: (texture as Texture).externalTexture, // TODO check!!
         visibility: this.entries.bindGroupLayout[entryIndex].visibility,
       }

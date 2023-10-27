@@ -39,7 +39,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
     }
 
     // @ts-ignore
-    super({ renderer, element: null, parameters: { geometry, ...parameters } })
+    super(renderer, null, { geometry, ...parameters })
 
     this.size = {
       document: {

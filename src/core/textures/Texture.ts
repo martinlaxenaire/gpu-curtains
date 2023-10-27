@@ -271,8 +271,8 @@ export class Texture extends Object3D {
     // this should only happen with canvas textures
     if (
       this.source &&
-      ((this.source as HTMLCanvasElement).width !== this.size.width ||
-        (this.source as HTMLCanvasElement).height !== this.size.height)
+      this.source instanceof HTMLCanvasElement &&
+      (this.source.width !== this.size.width || this.source.height !== this.size.height)
     ) {
       // since the source size has changed, we have to recreate a new texture
       this.setSourceSize()
@@ -294,6 +294,7 @@ export class Texture extends Object3D {
 
   uploadVideoTexture() {
     this.externalTexture = this.renderer.importExternalTexture(this.source as HTMLVideoElement)
+    ;(this.bindings[0] as TextureBindings).resource = this.externalTexture
     this.shouldUpdateBindGroup = true
     this.shouldUpdate = false
     this.sourceUploaded = true
@@ -320,12 +321,14 @@ export class Texture extends Object3D {
       if (texture.sourceLoaded) {
         this.size = texture.size
         this.source = texture.source
+        //;(this.bindings[0] as TextureBindings).resource = (texture.bindings[0] as TextureBindings).resource
 
         this.resize()
       }
 
       if (texture.sourceUploaded) {
         this.texture = texture.texture
+
         this.shouldUpdateBindGroup = true
       } else {
         this.createTexture()
@@ -353,6 +356,9 @@ export class Texture extends Object3D {
       this.texture?.destroy()
 
       this.texture = this.renderer.createTexture(options)
+
+      // update texture binding
+      ;(this.bindings[0] as TextureBindings).resource = this.texture
 
       this.shouldUpdateBindGroup = !!this.source
     }
@@ -420,6 +426,9 @@ export class Texture extends Object3D {
 
       if (this.options.texture.useExternalTextures) {
         this.options.sourceType = 'externalVideo'
+
+        console.log('destroy texture from external vid texture creation', this.texture)
+        this.texture?.destroy()
 
         // reset texture bindings
         this.setBindings()

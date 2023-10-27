@@ -393,16 +393,19 @@ export class Material {
           texture.uploadVideoTexture()
 
           if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
+            console.log('update external video texture bind group')
             this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
           }
         }
+      }
 
-        // TODO CHECK!!!
-        //if (texture.shouldUpdateBindGroup && texture.texture) {
-        if (texture.shouldUpdateBindGroup && texture.externalTexture) {
-          this.texturesBindGroup.resetTextureBindGroup()
-          texture.shouldUpdateBindGroup = false
-        }
+      // reset texture bind group each time the texture changed:
+      // 1. texture media is loaded (switch from placeholder 1x1 texture to media texture)
+      // 2. external texture at each tick
+      // 3. render texture has changed (on resize)
+      if (texture.shouldUpdateBindGroup && (texture.texture || (texture as Texture).externalTexture)) {
+        this.texturesBindGroup.resetTextureBindGroup()
+        texture.shouldUpdateBindGroup = false
       }
     })
 

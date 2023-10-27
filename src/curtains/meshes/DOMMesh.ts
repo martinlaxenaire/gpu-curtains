@@ -33,7 +33,7 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
   }
 
   constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: string | HTMLElement, parameters: DOMMeshParams) {
-    super(renderer, element, parameters)
+    super(renderer, element, { ...defaultDOMMeshParams, ...parameters })
 
     parameters = { ...defaultDOMMeshParams, ...parameters }
 
