@@ -1,21 +1,18 @@
-import { applyMixins, generateUUID, throwWarning } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
 import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
 import { Geometry } from '../geometries/Geometry'
 import { RenderTexture } from '../textures/RenderTexture'
-import { CurtainsTextureOptions, TextureDefaultParams, TextureParent } from '../../types/core/textures/Texture'
+import { TextureDefaultParams, TextureParent } from '../../types/core/textures/Texture'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { MeshBaseOptions, MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshType } from '../renderers/GPURenderer'
-import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
-import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import { RenderMaterialBaseParams, RenderMaterialParams } from '../../types/core/materials/RenderMaterial'
+import { RenderMaterialParams } from '../../types/core/materials/RenderMaterial'
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
 import { Material } from '../materials/Material'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
-import { BufferBindingsUniform } from '../../types/core/bindings/BufferBindings'
 
 let meshIndex = 0
 
@@ -43,13 +40,8 @@ const defaultMeshBaseParams = {
 // the class which this mixin is applied to
 export type GConstructor<T = {}> = new (...args: any[]) => T
 
-// declare class EmptyClass {}
-// export type ProjectedMeshBase = DOMObject3D | ProjectedObject3D
-// export type AllowedMeshBase = ProjectedMeshBase | EmptyClass
-// export type MixinConstructor = GConstructor<AllowedMeshBase>
-//
-// type Constructor = new (...args: any[]) => AllowedMeshBase
-
+// based on https://stackoverflow.com/a/75673107/13354068
+// we declare first a class, and then the mixin with a return type
 export declare class MeshBaseClass {
   //#autoAddToScene: boolean
   type: string
@@ -120,8 +112,6 @@ export declare class MeshBaseClass {
 }
 
 function MeshBaseMixin<TBase extends GConstructor>(Base: TBase): GConstructor<MeshBaseClass> & TBase {
-  //function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase) {
-  //function MeshBaseMixin<TBase extends Constructor>(Base: TBase): TBase & Constructor {
   return class MeshBase extends Base {
     type: string
     readonly uuid: string

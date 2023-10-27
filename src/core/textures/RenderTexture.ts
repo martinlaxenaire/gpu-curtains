@@ -63,6 +63,8 @@ export class RenderTexture {
   createTexture() {
     if (this.options.fromTexture) {
       this.texture = this.options.fromTexture.texture
+      // update texture binding
+      ;(this.bindings[0] as TextureBindings).resource = this.texture
       return
     }
 
