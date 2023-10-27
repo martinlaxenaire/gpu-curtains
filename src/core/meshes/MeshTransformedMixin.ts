@@ -1,7 +1,7 @@
 import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
 import { DOMFrustum } from '../DOM/DOMFrustum'
 import { TransformedMeshMaterialParameters, TransformedMeshParams } from '../../types/core/meshes/MeshTransformedMixin'
-import MeshBaseMixin, { GConstructor } from './MeshBaseMixin'
+import MeshBaseMixin, { GConstructor, MeshBaseClass } from './MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseOptions, MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 import { DOMElementBoundingRect, RectCoords } from '../DOM/DOMElement'
@@ -24,7 +24,37 @@ const defaultMeshParams = {
   },
 } as TransformedMeshParams
 
-function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin<GConstructor>>>(Base: TBase) {
+export declare class MeshTransformedBaseClass extends MeshBaseClass {
+  domFrustum: DOMFrustum
+  frustumCulled: boolean
+  DOMFrustumMargins: RectCoords
+
+  // callbacks
+  _onReEnterViewCallback: () => void
+  _onLeaveViewCallback: () => void
+
+  constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
+
+  setMeshMaterial(materialParameters: TransformedMeshMaterialParameters): void
+
+  resize(boundingRect: DOMElementBoundingRect | null): void
+  applyScale(): void
+
+  get projectedBoundingRect(): DOMElementBoundingRect
+
+  updateModelMatrix(): void
+  updateProjectionMatrixStack(): void
+
+  onReEnterView: (callback: () => void) => MeshTransformedBaseClass
+  onLeaveView: (callback: () => void) => MeshTransformedBaseClass
+
+  onBeforeRenderPass(): void
+  onRenderPass(pass: GPURenderPassEncoder): void
+}
+
+function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin<GConstructor>>>(
+  Base: TBase
+): GConstructor<MeshTransformedBaseClass> & TBase {
   return class MeshTransformedBase extends Base {
     domFrustum: DOMFrustum
     frustumCulled: boolean

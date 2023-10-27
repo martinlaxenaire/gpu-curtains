@@ -393,7 +393,6 @@ export class Material {
           texture.uploadVideoTexture()
 
           if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
-            console.log('update external video texture bind group')
             this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
           }
         }

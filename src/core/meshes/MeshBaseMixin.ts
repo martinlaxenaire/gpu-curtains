@@ -15,6 +15,7 @@ import { RenderMaterialBaseParams, RenderMaterialParams } from '../../types/core
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
 import { Material } from '../materials/Material'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
+import { BufferBindingsUniform } from '../../types/core/bindings/BufferBindings'
 
 let meshIndex = 0
 
@@ -49,7 +50,76 @@ export type GConstructor<T = {}> = new (...args: any[]) => T
 //
 // type Constructor = new (...args: any[]) => AllowedMeshBase
 
-function MeshBaseMixin<TBase extends GConstructor>(Base: TBase) {
+export declare class MeshBaseClass {
+  //#autoAddToScene: boolean
+  type: string
+  readonly uuid: string
+  readonly index: number
+  renderer: CameraRenderer
+
+  options: MeshBaseOptions
+
+  material: RenderMaterial
+  geometry: MeshBaseParams['geometry']
+
+  renderTextures: RenderTexture[]
+  textures: Texture[]
+
+  renderTarget: null | RenderTarget
+
+  renderOrder: number
+  transparent: boolean
+
+  visible: boolean
+  _ready: boolean
+
+  // callbacks
+  _onReadyCallback: () => void
+  _onBeforeRenderCallback: () => void
+  _onRenderCallback: () => void
+  _onAfterRenderCallback: () => void
+  _onAfterResizeCallback: () => void
+  onReady: (callback: () => void) => MeshBaseClass
+  onBeforeRender: (callback: () => void) => MeshBaseClass
+  onRender: (callback: () => void) => MeshBaseClass
+  onAfterRender: (callback: () => void) => MeshBaseClass
+  onAfterResize: (callback: () => void) => MeshBaseClass
+
+  constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
+
+  get autoAddToScene(): boolean // allow to read value from child classes
+
+  get ready(): boolean
+  set ready(value: boolean)
+
+  setMeshMaterial(meshParameters: RenderMaterialParams): void
+
+  setMaterial(materialParameters: RenderMaterialParams): void
+
+  addToScene(): void
+  removeFromScene(): void
+
+  createTexture(options: TextureDefaultParams): Texture
+  onTextureCreated(texture: Texture): void
+  createRenderTexture(options: RenderTextureParams): RenderTexture
+
+  setRenderTarget(renderTarget: RenderTarget | null): void
+
+  get uniforms(): Material['uniforms']
+  get storages(): Material['storages']
+
+  resize(boundingRect?: DOMElementBoundingRect): void
+
+  onBeforeRenderPass(): void
+  onRenderPass(pass: GPURenderPassEncoder): void
+  onAfterRenderPass(): void
+  render(pass: GPURenderPassEncoder): void
+
+  remove(): void
+  destroy(): void
+}
+
+function MeshBaseMixin<TBase extends GConstructor>(Base: TBase): GConstructor<MeshBaseClass> & TBase {
   //function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase) {
   //function MeshBaseMixin<TBase extends Constructor>(Base: TBase): TBase & Constructor {
   return class MeshBase extends Base {
@@ -319,7 +389,7 @@ function MeshBaseMixin<TBase extends GConstructor>(Base: TBase) {
       return this
     }
 
-    onAfterResize(callback: () => void): MeshBase {
+    onAfterResize(callback: () => void): MeshBaseClass {
       if (callback) {
         this._onAfterResizeCallback = callback
       }
