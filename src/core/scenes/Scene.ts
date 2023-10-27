@@ -1,11 +1,13 @@
 import { CameraRenderer, isRenderer, Renderer } from '../../utils/renderer-utils'
-import { MeshType } from '../../types/core/renderers/GPURenderer'
+import { DOMMeshType, MeshType } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 import { ComputePass } from '../computePasses/ComputePass'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { ProjectionStack, RenderPassEntry, RenderPassEntries } from '../../types/core/scenes/Scene'
+import { DOMMesh } from '../../curtains/meshes/DOMMesh'
+import { Plane } from '../../curtains/meshes/Plane'
 
 export class Scene {
   renderer: Renderer
@@ -128,8 +130,8 @@ export class Scene {
     similarMeshes.sort((a, b) => a.index - b.index)
 
     // sort by Z pos if transparent
-    if (mesh.transparent) {
-      similarMeshes.sort((a, b) => b.documentPosition.z - a.documentPosition.z)
+    if ((mesh instanceof DOMMesh || mesh instanceof Plane) && mesh.transparent) {
+      similarMeshes.sort((a, b) => (b as DOMMeshType).documentPosition.z - (a as DOMMeshType).documentPosition.z)
     }
 
     // then sort by their render order

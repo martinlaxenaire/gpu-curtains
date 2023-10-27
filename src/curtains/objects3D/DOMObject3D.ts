@@ -2,11 +2,30 @@ import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
-import { DOMElement } from '../../core/DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect, RectBBox } from '../../core/DOM/DOMElement'
 import { Vec3 } from '../../math/Vec3'
 import { Camera } from '../../core/camera/Camera'
-import { DOMObject3DParams, DOMObject3DSize, DOMObject3DTransforms } from '../../types/curtains/objects3D/DOMObject3D'
-import { DOMElementBoundingRect } from '../../types/core/DOM/DOMElement'
+import { Object3DTransforms } from '../../types/core/objects3D/Object3D'
+
+export interface DOMObject3DSize {
+  world: RectBBox
+  document: RectBBox
+}
+
+export interface DOMObject3DTransforms extends Omit<Object3DTransforms, 'origin' | 'position'> {
+  origin: {
+    model: Vec3
+    world: Vec3
+  }
+  position: {
+    world: Vec3
+    document: Vec3
+  }
+}
+
+export interface DOMObject3DParams {
+  watchScroll?: boolean
+}
 
 export class DOMObject3D extends ProjectedObject3D {
   renderer: GPUCurtainsRenderer

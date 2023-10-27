@@ -7,7 +7,7 @@ import { Vec2 } from '../../math/Vec2'
 import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
-import { DOMElementBoundingRect, RectBBox } from '../../types/core/DOM/DOMElement'
+import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
 
 export class FullscreenPlane extends MeshBaseMixin(class {}) {
   type: string

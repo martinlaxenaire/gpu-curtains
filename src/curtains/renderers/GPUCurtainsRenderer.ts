@@ -1,6 +1,5 @@
-import { GPUCameraRenderer } from '../../core/renderers/GPUCameraRenderer'
-import { DOMMeshType } from '../../types/core/renderers/GPURenderer'
-import { GPUCameraRendererParams } from '../../types/core/renderers/GPUCameraRenderer'
+import { GPUCameraRenderer, GPUCameraRendererParams } from '../../core/renderers/GPUCameraRenderer'
+import { DOMMeshType } from '../../core/renderers/GPURenderer'
 
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
   domMeshes: DOMMeshType[]

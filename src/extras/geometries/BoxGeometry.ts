@@ -1,15 +1,23 @@
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Vec3 } from '../../math/Vec3'
-import { BoxGeometryParams } from '../../types/extras/geometries/BoxGeometry'
+import { GeometryBaseParams } from '../../types/core/geometries/Geometry'
+
+interface BoxGeometryParams extends GeometryBaseParams {
+  widthSegments?: number
+  heightSegments?: number
+  depthSegments?: number
+}
 
 export class BoxGeometry extends IndexedGeometry {
-  constructor({
-    widthSegments = 1,
-    heightSegments = 1,
-    depthSegments = 1,
-    instancesCount = 1,
-    vertexBuffers = [],
-  }?: BoxGeometryParams = {}) {
+  constructor(
+    {
+      widthSegments = 1,
+      heightSegments = 1,
+      depthSegments = 1,
+      instancesCount = 1,
+      vertexBuffers = [],
+    } = {} as BoxGeometryParams
+  ) {
     super({ verticesOrder: 'ccw', instancesCount, vertexBuffers })
 
     this.type = 'BoxGeometry'

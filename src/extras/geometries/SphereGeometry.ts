@@ -1,18 +1,29 @@
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Vec3 } from '../../math/Vec3'
-import { SphereGeometryParams } from '../../types/extras/geometries/SphereGeometry'
+import { GeometryBaseParams } from '../../types/core/geometries/Geometry'
+
+interface SphereGeometryParams extends GeometryBaseParams {
+  widthSegments?: number
+  heightSegments?: number
+  phiStart?: number
+  phiLength?: number
+  thetaStart?: number
+  thetaLength?: number
+}
 
 export class SphereGeometry extends IndexedGeometry {
-  constructor({
-    widthSegments = 32,
-    heightSegments = 16,
-    phiStart = 0,
-    phiLength = Math.PI * 2,
-    thetaStart = 0,
-    thetaLength = Math.PI,
-    instancesCount = 1,
-    vertexBuffers = [],
-  }?: SphereGeometryParams = {}) {
+  constructor(
+    {
+      widthSegments = 32,
+      heightSegments = 16,
+      phiStart = 0,
+      phiLength = Math.PI * 2,
+      thetaStart = 0,
+      thetaLength = Math.PI,
+      instancesCount = 1,
+      vertexBuffers = [],
+    } = {} as SphereGeometryParams
+  ) {
     super({ verticesOrder: 'ccw', instancesCount, vertexBuffers })
 
     this.type = 'SphereGeometry'

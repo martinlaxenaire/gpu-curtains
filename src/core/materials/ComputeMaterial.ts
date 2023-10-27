@@ -100,12 +100,8 @@ export class ComputeMaterial extends Material {
       pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
 
       bindGroup.bindings.forEach((binding) => {
-        if ((binding as WorkInputBindingsParams).dispatchSize) {
-          pass.dispatchWorkgroups(
-            (binding as WorkInputBindingsParams).dispatchSize[0],
-            (binding as WorkInputBindingsParams).dispatchSize[1],
-            (binding as WorkInputBindingsParams).dispatchSize[2]
-          )
+        if ('dispatchSize' in binding) {
+          pass.dispatchWorkgroups(binding.dispatchSize[0], binding.dispatchSize[1], binding.dispatchSize[2])
         }
       })
     })
@@ -114,7 +110,7 @@ export class ComputeMaterial extends Material {
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
       bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-        if ((bindingBuffer.inputBinding as WorkBufferBindings).shouldCopyResult) {
+        if ('shouldCopyResult' in bindingBuffer.inputBinding && bindingBuffer.inputBinding.shouldCopyResult) {
           commandEncoder.copyBufferToBuffer(
             bindingBuffer.buffer,
             0,

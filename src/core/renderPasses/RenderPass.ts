@@ -1,7 +1,7 @@
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMElementBoundingRect } from '../../types/core/DOM/DOMElement'
+import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
 export interface RenderPassParams {
   label?: string

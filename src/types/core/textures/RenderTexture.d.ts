@@ -10,5 +10,5 @@ export interface RenderTextureDefaultParams extends RenderTextureBaseParams {
 }
 
 export interface RenderTextureParams extends RenderTextureDefaultParams {
-  fromTexture: RenderTexture | null
+  fromTexture?: RenderTexture | null
 }

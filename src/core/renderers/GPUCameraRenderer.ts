@@ -3,8 +3,12 @@ import { Camera } from '../camera/Camera'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
-import { GPUCameraRendererParams } from '../../types/core/renderers/GPUCameraRenderer'
-import { CameraBasePerspectiveOptions } from '../../types/core/camera/Camera'
+import { CameraBasePerspectiveOptions } from '../camera/Camera'
+import { GPURendererParams } from './GPURenderer'
+
+export interface GPUCameraRendererParams extends GPURendererParams {
+  camera: CameraBasePerspectiveOptions
+}
 
 export class GPUCameraRenderer extends GPURenderer {
   camera: Camera

@@ -1,6 +1,11 @@
 import { Geometry } from './Geometry'
-import { GeometryParams } from '../../types/core/geometries/Geometry'
-import { IndexedGeometryIndexBufferOptions } from '../../types/core/geometries/IndexedGeometry'
+import { GeometryParams, VertexBuffer } from '../../types/core/geometries/Geometry'
+
+export interface IndexedGeometryIndexBufferOptions {
+  vertexBuffer?: VertexBuffer
+  bufferFormat?: GPUIndexFormat
+  array?: Uint32Array
+}
 
 export class IndexedGeometry extends Geometry {
   isIndexed: boolean

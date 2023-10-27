@@ -38,7 +38,7 @@ export interface BindGroupEntries {
 }
 
 // inputs
-export type InputValue = number | Vec2 | Vec3 | Mat4 | Array<number>
+export type InputValue = number | Vec2 | Vec3 | Mat4 | number[]
 
 export interface InputBase {
   type: AttributeBufferParams['type']

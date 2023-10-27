@@ -85,7 +85,7 @@ export class TextureBindGroup extends BindGroup {
               return (texture.texture as GPUTexture).createView()
             case 'externalTexture':
               textureIndex++
-              return texture.texture
+              return (texture as Texture).externalTexture
             case 'sampler':
               return (inputBinding as SamplerBindings).resource
             default:
@@ -121,8 +121,8 @@ export class TextureBindGroup extends BindGroup {
         if (texture)
           entry.resource =
             (texture as Texture).options?.sourceType === 'externalVideo'
-              ? (texture.texture as GPUExternalTexture)
-              : (texture.texture as GPUTexture).createView()
+              ? (texture as Texture).externalTexture
+              : texture.texture.createView()
       })
 
       this.setBindGroup()
@@ -163,7 +163,8 @@ export class TextureBindGroup extends BindGroup {
     if (texture && this.entries.bindGroupLayout[entryIndex] && this.bindings[entryIndex]) {
       this.entries.bindGroupLayout[entryIndex] = {
         binding: this.entries.bindGroupLayout[entryIndex].binding,
-        [texture.bindings[0].bindingType]: texture.texture,
+        //[texture.bindings[0].bindingType]: texture.texture,
+        [texture.bindings[0].bindingType]: (texture as Texture).externalTexture, // TODO check!!
         visibility: this.entries.bindGroupLayout[entryIndex].visibility,
       }
 

@@ -3,9 +3,9 @@ import { RenderPass } from './RenderPass'
 import { RenderTexture } from '../textures/RenderTexture'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { RenderPassParams } from '../../types/core/renderPasses/RenderPass'
+import { RenderPassParams } from './RenderPass'
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
-import { DOMElementBoundingRect } from '../../types/core/DOM/DOMElement'
+import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
 export interface RenderTargetParams extends RenderPassParams {
   autoAddToScene?: boolean

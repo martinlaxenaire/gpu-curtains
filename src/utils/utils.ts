@@ -23,14 +23,13 @@ export const toKebabCase = (string: string): string => {
 
 let warningThrown = 0
 
-export function throwWarning() {
+export const throwWarning = (warning: string) => {
   if (warningThrown > 100) {
     return
   } else if (warningThrown === 100) {
     console.warn('GPUCurtains: too many warnings thrown, stop logging.')
   } else {
-    const args = Array.prototype.slice.call(arguments)
-    console.warn.apply(console, args)
+    console.warn(warning)
   }
 
   warningThrown++
@@ -39,14 +38,25 @@ export function throwWarning() {
 /***
  Log a console error with the passed arguments
  ***/
-export function logError() {
-  const args = Array.prototype.slice.call(arguments)
-  console.error.apply(console, args ?? '')
+export const logError = (error: string) => {
+  console.error(error)
 }
 
 /***
  Throw a javascript error with the passed arguments
  ***/
-export function throwError(error: string) {
+export const throwError = (error: string) => {
   throw new Error(error)
+}
+
+/***
+ * Typescript mixins the old way
+ */
+//applying mixing which iterates through properties of baseCtors classes  and copy them to the target class (derivedCtor)
+export function applyMixins(derivedCtor: any, baseCtors: any[]) {
+  baseCtors.forEach((baseCtor) => {
+    Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
+      Object.defineProperty(derivedCtor.prototype, name, Object.getOwnPropertyDescriptor(baseCtor.prototype, name))
+    })
+  })
 }

@@ -9,6 +9,7 @@ import { TextureBindingsParams } from '../../types/core/bindings/TextureBindings
 import { BindGroupBindingElement } from '../../types/core/bindGroups/BindGroup'
 import { TextureOptions, TextureParams, TextureParent, TextureSource } from '../../types/core/textures/Texture'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { DOMMeshType } from '../renderers/GPURenderer'
 
 const defaultTextureParams: TextureParams = {
   name: 'texture',
@@ -26,7 +27,8 @@ export class Texture extends Object3D {
   type: string
   renderer: Renderer
 
-  texture: null | GPUTexture | GPUExternalTexture
+  texture: null | GPUTexture
+  externalTexture: null | GPUExternalTexture
 
   source: TextureSource
   size: {
@@ -86,6 +88,7 @@ export class Texture extends Object3D {
     this.options.label = this.options.label ?? this.options.name
 
     this.texture = null
+    this.externalTexture = null
     this.source = null
 
     // sizes
@@ -128,7 +131,7 @@ export class Texture extends Object3D {
       new TextureBindings({
         label: this.options.label + ': texture',
         name: this.options.name,
-        resource: this.texture,
+        resource: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
       } as TextureBindingsParams),
       this.textureMatrix,
@@ -198,10 +201,16 @@ export class Texture extends Object3D {
   /*** TEXTURE MATRIX ***/
 
   updateTextureMatrix() {
-    const parentScale = this.parent && this.parent.scale ? this.parent.scale : new Vec3(1, 1, 1)
+    if (!this.parent) return
 
-    const parentWidth = this.parent ? this.parent.boundingRect.width * parentScale.x : this.size.width
-    const parentHeight = this.parent ? this.parent.boundingRect.height * parentScale.y : this.size.height
+    const parentScale = (this.parent as DOMMeshType).scale ? (this.parent as DOMMeshType).scale : new Vec3(1, 1, 1)
+
+    const parentWidth = (this.parent as DOMMeshType).boundingRect
+      ? (this.parent as DOMMeshType).boundingRect.width * parentScale.x
+      : this.size.width
+    const parentHeight = (this.parent as DOMMeshType).boundingRect
+      ? (this.parent as DOMMeshType).boundingRect.height * parentScale.y
+      : this.size.height
 
     const parentRatio = parentWidth / parentHeight
 
@@ -284,7 +293,7 @@ export class Texture extends Object3D {
   }
 
   uploadVideoTexture() {
-    this.texture = this.renderer.importExternalTexture(this.source as HTMLVideoElement)
+    this.externalTexture = this.renderer.importExternalTexture(this.source as HTMLVideoElement)
     this.shouldUpdateBindGroup = true
     this.shouldUpdate = false
     this.sourceUploaded = true
@@ -341,9 +350,7 @@ export class Texture extends Object3D {
         ? this.getNumMipLevels(this.size.width, this.size.height)
         : 1
 
-      if (this.texture && this.texture instanceof GPUTexture) {
-        this.texture.destroy()
-      }
+      this.texture?.destroy()
 
       this.texture = this.renderer.createTexture(options)
 
@@ -544,16 +551,14 @@ export class Texture extends Object3D {
     if (this.isVideoSource) {
       ;(this.source as HTMLVideoElement).removeEventListener(
         'canplaythrough',
-        this.onVideoLoaded as EventListener,
+        this.onVideoLoaded.bind(this, this.source),
         {
           once: true,
         } as AddEventListenerOptions & EventListenerOptions
       )
     }
 
-    if (this.texture && this.texture instanceof GPUTexture) {
-      this.texture.destroy()
-    }
+    this.texture?.destroy()
 
     this.texture = null
   }

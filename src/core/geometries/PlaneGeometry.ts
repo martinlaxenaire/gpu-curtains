@@ -1,7 +1,12 @@
 import { IndexedGeometry } from './IndexedGeometry'
-import { PlaneGeometryParams } from '../../types/core/geometries/PlaneGeometry'
 import { Geometry } from './Geometry'
 import { AttributeBufferParamsOption } from '../../utils/buffers-utils'
+import { GeometryBaseParams } from '../../types/core/geometries/Geometry'
+
+export interface PlaneGeometryParams extends GeometryBaseParams {
+  widthSegments?: number
+  heightSegments?: number
+}
 
 export class PlaneGeometry extends IndexedGeometry {
   definition: {

@@ -1,4 +1,4 @@
-import { MeshType } from '../renderers/GPURenderer'
+import { MeshType } from '../../../core/renderers/GPURenderer'
 import { ShaderPass } from '../../../core/renderPasses/ShaderPass'
 import { PingPongPlane } from '../../../curtains/meshes/PingPongPlane'
 import { RenderPass } from '../../../core/renderPasses/RenderPass'

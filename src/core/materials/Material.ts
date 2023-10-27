@@ -374,39 +374,35 @@ export class Material {
     this.setMaterial()
 
     // first what needs to be done for all textures
-    // TODO super ugly typescript type assertion
     this.textures.forEach((texture) => {
       // RenderTextures does not have a render method
-      ;(texture as Texture).render && (texture as Texture).render()
+      if ('render' in texture) {
+        texture.render()
+      }
     })
 
     // then what needs to be done only for textures actually used in our shaders
     this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
       // copy textures that need it on first init, but only when original texture is ready
-      if (
-        (texture as Texture).type === 'Texture' &&
-        (texture as Texture).options.fromTexture &&
-        (texture as Texture).options.fromTexture.sourceUploaded &&
-        !(texture as Texture).sourceUploaded
-      ) {
-        ;(texture as Texture).copy((texture as Texture).options.fromTexture)
-      }
-
-      if (
-        (texture as Texture).shouldUpdate &&
-        (texture as Texture).options.sourceType &&
-        (texture as Texture).options.sourceType === 'externalVideo'
-      ) {
-        ;(texture as Texture).uploadVideoTexture()
-
-        if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
-          this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
+      if (texture instanceof Texture) {
+        if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
+          texture.copy(texture.options.fromTexture)
         }
-      }
 
-      if (texture.shouldUpdateBindGroup && texture.texture) {
-        this.texturesBindGroup.resetTextureBindGroup()
-        texture.shouldUpdateBindGroup = false
+        if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === 'externalVideo') {
+          texture.uploadVideoTexture()
+
+          if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
+            this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
+          }
+        }
+
+        // TODO CHECK!!!
+        //if (texture.shouldUpdateBindGroup && texture.texture) {
+        if (texture.shouldUpdateBindGroup && texture.externalTexture) {
+          this.texturesBindGroup.resetTextureBindGroup()
+          texture.shouldUpdateBindGroup = false
+        }
       }
     })
 

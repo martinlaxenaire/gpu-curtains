@@ -5,6 +5,7 @@ import { Plane } from '../../../curtains/meshes/Plane'
 import { ShaderPass } from '../../../core/renderPasses/ShaderPass'
 import { RenderPass } from '../../../core/renderPasses/RenderPass'
 import { FullscreenPlane } from '../../../core/meshes/FullscreenPlane'
+import { DOMMeshType } from '../../../core/renderers/GPURenderer'
 
 export interface CurtainsTextureOptions {
   generateMips?: boolean
@@ -26,10 +27,10 @@ export interface TextureDefaultParams extends TextureBaseParams {
 
 export interface TextureParams extends TextureDefaultParams {
   texture: CurtainsTextureOptions
-  fromTexture: Texture | null
+  fromTexture?: Texture | null
 }
 
-export type TextureExternalImageAllowedType = HTMLImageElement | HTMLVideoElement | ImageBitmap
+export type TextureExternalImageAllowedType = HTMLImageElement | HTMLVideoElement | ImageBitmap | HTMLCanvasElement
 export type TextureSource = TextureExternalImageAllowedType | RenderPass | null
 export type TextureSourceType = 'image' | 'canvas' | 'video' | 'externalVideo' | null
 
@@ -38,4 +39,5 @@ export interface TextureOptions extends TextureParams {
   sourceType: TextureSourceType
 }
 
-export type TextureParent = null | Mesh | DOMMesh | Plane | ShaderPass | FullscreenPlane
+//export type TextureParent = null | Mesh | DOMMesh | Plane | ShaderPass | FullscreenPlane
+export type TextureParent = null | DOMMeshType | ShaderPass | FullscreenPlane

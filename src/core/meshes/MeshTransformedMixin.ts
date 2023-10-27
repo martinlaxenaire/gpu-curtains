@@ -1,5 +1,15 @@
-import { isCameraRenderer } from '../../utils/renderer-utils'
+// @ts-nocheck
+// TODO fix!
+
+import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
 import { DOMFrustum } from '../DOM/DOMFrustum'
+import { TransformedMeshMaterialParameters, TransformedMeshParams } from '../../types/core/meshes/MeshTransformedMixin'
+import MeshBaseMixin, { GConstructor, MixinConstructor } from './MeshBaseMixin'
+import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
+import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
+import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
 const defaultMeshParams = {
   useProjection: true,
@@ -11,27 +21,43 @@ const defaultMeshParams = {
     bottom: 0,
     left: 0,
   },
-}
+} as TransformedMeshParams
 
-const MeshTransformedMixin = (superclass) =>
-  class extends superclass {
+//type TransformedMixinConstructor = GConstructor<MeshBaseMixin<DOMObject3D | ProjectedObject3D>>
+
+//function MeshTransformedMixin<TBase extends TransformedMixinConstructor>(superclass: TBase) {
+function MeshTransformedMixin<
+  TBase extends ReturnType<typeof MeshBaseMixin<GConstructor<DOMObject3D | ProjectedObject3D>>>
+>(Base: TBase) {
+  return class MeshTransformedBase extends Base {
     // callbacks / events
-    _onReEnterViewCallback = () => {
+    _onReEnterViewCallback: () => void = () => {
       /* allow empty callback */
     }
-    _onLeaveViewCallback = () => {
+    _onLeaveViewCallback: () => void = () => {
       /* allow empty callback */
     }
 
-    constructor(renderer, element, parameters) {
-      parameters = { ...defaultMeshParams, ...parameters }
+    //constructor(renderer: CameraRenderer | GPUCurtains, element: string | HTMLElement, parameters: MeshBaseParams) {
+    constructor(...params: any) {
+      let {
+        renderer,
+        element,
+        parameters: { ...defaultMeshParams, ...parameters },
+      }: {
+        renderer: CameraRenderer | GPUCurtains
+        element: HTMLElement | string
+        parameters: MeshBaseParams
+      } = params
 
       super(renderer, element, parameters)
+
+      //parameters = { ...defaultMeshParams, ...parameters }
 
       this.type = 'MeshTransformed'
 
       // we could pass our curtains object OR our curtains renderer object
-      renderer = (renderer && renderer.renderer) || renderer
+      renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
 
       isCameraRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
@@ -55,7 +81,7 @@ const MeshTransformedMixin = (superclass) =>
     }
 
     // totally override MeshBaseMixin setMesh
-    setMeshMaterial(meshParameters) {
+    setMeshMaterial(meshParameters: TransformedMeshMaterialParameters) {
       const { frustumCulled, DOMFrustumMargins, ...meshMaterialOptions } = meshParameters
 
       // add matrices uniforms
@@ -113,7 +139,7 @@ const MeshTransformedMixin = (superclass) =>
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
     }
 
-    resize(boundingRect = null) {
+    resize(boundingRect: DOMElementBoundingRect | null = null) {
       if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect)
 
       super.resize(boundingRect)
@@ -126,7 +152,7 @@ const MeshTransformedMixin = (superclass) =>
       this.textures.forEach((texture) => texture.resize())
     }
 
-    get projectedBoundingRect() {
+    get projectedBoundingRect(): DOMElementBoundingRect {
       return this.domFrustum?.projectedBoundingRect
     }
 
@@ -148,7 +174,7 @@ const MeshTransformedMixin = (superclass) =>
 
     /** EVENTS **/
 
-    onReEnterView(callback) {
+    onReEnterView(callback: () => void): MeshTransformedBase {
       if (callback) {
         this._onReEnterViewCallback = callback
       }
@@ -156,7 +182,7 @@ const MeshTransformedMixin = (superclass) =>
       return this
     }
 
-    onLeaveView(callback) {
+    onLeaveView(callback: () => void): MeshTransformedBase {
       if (callback) {
         this._onLeaveViewCallback = callback
       }
@@ -179,7 +205,7 @@ const MeshTransformedMixin = (superclass) =>
       super.onBeforeRenderPass()
     }
 
-    onRenderPass(pass) {
+    onRenderPass(pass: GPURenderPassEncoder) {
       this._onRenderCallback && this._onRenderCallback()
 
       // TODO check if frustumCulled
@@ -188,5 +214,6 @@ const MeshTransformedMixin = (superclass) =>
       }
     }
   }
+}
 
 export default MeshTransformedMixin

@@ -1,7 +1,25 @@
 import { resizeManager } from '../../utils/ResizeManager'
 import { throwError } from '../../utils/utils'
-import { DOMElementBoundingRect } from '../../types/core/DOM/DOMElement'
 import { ResizeManager } from '../../utils/ResizeManager'
+
+export interface RectCoords {
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
+
+export interface RectBBox {
+  width: number
+  height: number
+  top: number
+  left: number
+}
+
+export interface DOMElementBoundingRect extends RectCoords, RectBBox {
+  x: number
+  y: number
+}
 
 export class DOMElement {
   #throttleResize: null | ReturnType<typeof setTimeout> = null

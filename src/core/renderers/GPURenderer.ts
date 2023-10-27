@@ -1,6 +1,6 @@
 import { generateMips } from '../../utils/renderer-utils'
 import { PipelineManager } from '../pipelines/PipelineManager'
-import { DOMElement } from '../DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
 import { throwWarning, throwError } from '../../utils/utils'
@@ -11,11 +11,25 @@ import { ShaderPass } from '../renderPasses/ShaderPass'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
-import { GPURendererParams, MeshType } from '../../types/core/renderers/GPURenderer'
 
 import '@webgpu/types'
-import { DOMElementBoundingRect } from '../../types/core/DOM/DOMElement'
 import { TextureExternalImageAllowedType } from '../../types/core/textures/Texture'
+import { DOMMesh } from '../../curtains/meshes/DOMMesh'
+import { Plane } from '../../curtains/meshes/Plane'
+import { Mesh } from '../meshes/Mesh'
+
+export interface GPURendererParams {
+  container: string | HTMLElement
+  pixelRatio?: number
+  sampleCount?: GPUSize32
+  production?: boolean
+  preferredFormat?: GPUTextureFormat
+  onError?: () => void
+}
+
+// TODO should be GPUCurtainsRenderer props?
+export type DOMMeshType = DOMMesh | Plane
+export type MeshType = Mesh | DOMMeshType
 
 export class GPURenderer {
   type: string
@@ -25,7 +39,7 @@ export class GPURenderer {
   context: null | GPUCanvasContext
   preferredFormat: null | GPUTextureFormat
   adapter: GPUAdapter | void
-  device: null | GPUDevice
+  device: GPUDevice | null
 
   onError: () => void
 
@@ -146,7 +160,7 @@ export class GPURenderer {
     this.computePasses.forEach((computePass) => computePass.resize())
     this.meshes.forEach((mesh) => {
       // resize meshes that do not have a bound DOM element
-      if (!mesh.domElement) mesh.resize(this.boundingRect)
+      if (!('domElement' in mesh)) mesh.resize(this.boundingRect)
     })
   }
 
@@ -218,12 +232,14 @@ export class GPURenderer {
       }, 0)
     })
 
-    this.device = await this.adapter?.requestDevice().catch(() => {
+    try {
+      this.device = await (this.adapter as GPUAdapter)?.requestDevice()
+    } catch (error) {
       setTimeout(() => {
         this.onError()
-        throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestDevice' failed.")
+        throwError(`GPURenderer: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
       }, 0)
-    })
+    }
 
     this.device?.lost.then((info) => {
       throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`)

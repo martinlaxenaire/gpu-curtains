@@ -1,9 +1,20 @@
 import { generateUUID, throwWarning } from '../../utils/utils'
-import { isCameraRenderer } from '../../utils/renderer-utils'
+import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
 import { Geometry } from '../geometries/Geometry'
 import { RenderTexture } from '../textures/RenderTexture'
+import { CurtainsTextureOptions, TextureDefaultParams, TextureParent } from '../../types/core/textures/Texture'
+import { RenderTarget } from '../renderPasses/RenderTarget'
+import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { MeshType } from '../renderers/GPURenderer'
+import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
+import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
+import { RenderMaterialBaseParams, RenderMaterialParams } from '../../types/core/materials/RenderMaterial'
+import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
+import { Material } from '../materials/Material'
+import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
 let meshIndex = 0
 
@@ -22,41 +33,99 @@ const defaultMeshBaseParams = {
   visible: true,
   renderOrder: 0,
   texturesOptions: {},
-}
+} as MeshBaseParams
 
-const MeshBaseMixin = (superclass) =>
-  class extends superclass {
+// To get started, we need a type which we'll use to extend
+// other classes from. The main responsibility is to declare
+// that the type being passed in is a class.
+// We use a generic version which can apply a constraint on
+// the class which this mixin is applied to
+export type GConstructor<T = {}> = new (...args: any[]) => T
+
+declare class EmptyClass {}
+export type ProjectedMeshBase = DOMObject3D | ProjectedObject3D
+export type AllowedMeshBase = ProjectedMeshBase | EmptyClass
+export type MixinConstructor = GConstructor<AllowedMeshBase>
+
+function MeshBaseMixin<TBase extends GConstructor<AllowedMeshBase>>(Base: TBase) {
+  return class MeshBase extends Base {
+    type: string
+    readonly uuid: string
+    readonly index: number
+    renderer: CameraRenderer
+
+    options: {
+      label?: MeshBaseParams['label']
+      shaders: MeshBaseParams['shaders']
+      texturesOptions?: CurtainsTextureOptions
+      renderTarget?: RenderTarget | null
+      autoAddToScene?: boolean
+      useAsyncPipeline?: boolean
+    }
+
+    material: RenderMaterial
+    geometry: MeshBaseParams['geometry']
+
+    renderTextures: RenderTexture[]
+    textures: Texture[]
+
+    renderTarget: null | RenderTarget
+
+    renderOrder: number
+    transparent: boolean
+
+    visible: boolean
+    _ready: boolean
+
     #autoAddToScene = true
 
     // callbacks / events
-    _onReadyCallback = () => {
+    _onReadyCallback: () => void = () => {
       /* allow empty callback */
     }
-    _onBeforeRenderCallback = () => {
+    _onBeforeRenderCallback: () => void = () => {
       /* allow empty callback */
     }
-    _onRenderCallback = () => {
+    _onRenderCallback: () => void = () => {
       /* allow empty callback */
     }
-    _onAfterRenderCallback = () => {
+    _onAfterRenderCallback: () => void = () => {
       /* allow empty callback */
     }
-    _onAfterResizeCallback = () => {
+    _onAfterResizeCallback: () => void = () => {
       /* allow empty callback */
     }
 
-    constructor(renderer, element, parameters) {
+    //constructor(renderer: CameraRenderer | GPUCurtains, element: HTMLElement | string, parameters: MeshBaseParams) {
+    constructor(...params: any) {
+      //super(renderer, element, { ...defaultMeshBaseParams, ...parameters })
+      super(
+        ({
+          renderer,
+          element,
+          parameters: { ...defaultMeshBaseParams, ...parameters },
+        } = params as {
+          renderer: CameraRenderer | GPUCurtains
+          element: HTMLElement | string
+          parameters: MeshBaseParams
+        })
+      )
+
+      let {
+        renderer,
+        element,
+        parameters,
+      }: { renderer: CameraRenderer | GPUCurtains; element: HTMLElement | string; parameters: MeshBaseParams } = params
+
       parameters = { ...defaultMeshBaseParams, ...parameters }
-
-      super(renderer, element, parameters)
 
       this.type = 'MeshBase'
 
       this.uuid = generateUUID()
-      Object.defineProperty(this, 'index', { value: meshIndex++ })
+      Object.defineProperty(this as MeshBase, 'index', { value: meshIndex++ })
 
       // we could pass our curtains object OR our curtains renderer object
-      renderer = (renderer && renderer.renderer) || renderer
+      renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
 
       isCameraRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
@@ -74,6 +143,7 @@ const MeshBaseMixin = (superclass) =>
         renderTarget,
         texturesOptions,
         autoAddToScene,
+        verticesOrder,
         ...meshParameters
       } = parameters
 
@@ -99,27 +169,27 @@ const MeshBaseMixin = (superclass) =>
       this.renderOrder = renderOrder
       this.ready = false
 
-      this.setMeshMaterial(meshParameters)
+      this.setMeshMaterial(meshParameters as RenderMaterialBaseParams)
 
       this.addToScene()
     }
 
-    get autoAddToScene() {
+    get autoAddToScene(): boolean {
       return this.#autoAddToScene
     }
 
-    get ready() {
+    get ready(): boolean {
       return this._ready
     }
 
-    set ready(value) {
+    set ready(value: boolean) {
       if (value) {
         this._onReadyCallback && this._onReadyCallback()
       }
       this._ready = value
     }
 
-    setMeshMaterial(meshParameters) {
+    setMeshMaterial(meshParameters: RenderMaterialBaseParams) {
       this.transparent = meshParameters.transparent
 
       this.setMaterial({
@@ -130,21 +200,21 @@ const MeshBaseMixin = (superclass) =>
       })
     }
 
-    setMaterial(materialParameters) {
+    setMaterial(materialParameters: RenderMaterialParams) {
       this.material = new RenderMaterial(this.renderer, materialParameters)
     }
 
     addToScene() {
-      this.renderer.meshes.push(this)
+      this.renderer.meshes.push(this as MeshType)
 
       if (this.#autoAddToScene) {
-        this.renderer.scene.addMesh(this)
+        this.renderer.scene.addMesh(this as MeshType)
       }
     }
 
     removeFromScene() {
       if (this.#autoAddToScene) {
-        this.renderer.scene.removeMesh(this)
+        this.renderer.scene.removeMesh(this as MeshType)
       }
 
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
@@ -152,7 +222,7 @@ const MeshBaseMixin = (superclass) =>
 
     /** TEXTURES **/
 
-    createTexture(options) {
+    createTexture(options: TextureDefaultParams): Texture {
       if (!options.name) {
         options.name = 'texture' + this.textures.length
       }
@@ -172,12 +242,12 @@ const MeshBaseMixin = (superclass) =>
       return texture
     }
 
-    onTextureCreated(texture) {
+    onTextureCreated(texture: Texture) {
       /* will be overriden */
-      texture.parent = this
+      texture.parent = this as TextureParent
     }
 
-    createRenderTexture(options) {
+    createRenderTexture(options: RenderTextureParams): RenderTexture {
       if (!options.name) {
         options.name = 'renderTexture' + this.renderTextures.length
       }
@@ -190,7 +260,7 @@ const MeshBaseMixin = (superclass) =>
       return renderTexture
     }
 
-    setRenderTarget(renderTarget) {
+    setRenderTarget(renderTarget: RenderTarget | null) {
       if (renderTarget && renderTarget.type !== 'RenderTarget') {
         throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
         return
@@ -204,15 +274,15 @@ const MeshBaseMixin = (superclass) =>
 
     /*** BINDINGS ***/
 
-    get uniforms() {
+    get uniforms(): Material['uniforms'] {
       return this.material?.uniforms
     }
 
-    get storages() {
+    get storages(): Material['storages'] {
       return this.material?.storages
     }
 
-    resize(boundingRect = null) {
+    resize(boundingRect: DOMElementBoundingRect | null = null) {
       // resize render textures first
       this.renderTextures?.forEach((renderTexture) => renderTexture.resize())
 
@@ -228,7 +298,7 @@ const MeshBaseMixin = (superclass) =>
 
     /** EVENTS **/
 
-    onReady(callback) {
+    onReady(callback: () => void): MeshBase {
       if (callback) {
         this._onReadyCallback = callback
       }
@@ -236,7 +306,7 @@ const MeshBaseMixin = (superclass) =>
       return this
     }
 
-    onBeforeRender(callback) {
+    onBeforeRender(callback: () => void): MeshBase {
       if (callback) {
         this._onBeforeRenderCallback = callback
       }
@@ -244,7 +314,7 @@ const MeshBaseMixin = (superclass) =>
       return this
     }
 
-    onRender(callback) {
+    onRender(callback: () => void): MeshBase {
       if (callback) {
         this._onRenderCallback = callback
       }
@@ -252,7 +322,7 @@ const MeshBaseMixin = (superclass) =>
       return this
     }
 
-    onAfterRender(callback) {
+    onAfterRender(callback: () => void): MeshBase {
       if (callback) {
         this._onAfterRenderCallback = callback
       }
@@ -260,7 +330,7 @@ const MeshBaseMixin = (superclass) =>
       return this
     }
 
-    onAfterResize(callback) {
+    onAfterResize(callback: () => void): MeshBase {
       if (callback) {
         this._onAfterResizeCallback = callback
       }
@@ -282,7 +352,7 @@ const MeshBaseMixin = (superclass) =>
       this.material.onBeforeRender()
     }
 
-    onRenderPass(pass) {
+    onRenderPass(pass: GPURenderPassEncoder) {
       this._onRenderCallback && this._onRenderCallback()
 
       this.material.render(pass)
@@ -292,7 +362,7 @@ const MeshBaseMixin = (superclass) =>
       this._onAfterRenderCallback && this._onAfterRenderCallback()
     }
 
-    render(pass) {
+    render(pass: GPURenderPassEncoder) {
       this.onBeforeRenderPass()
 
       // no point to render if the WebGPU device is not ready
@@ -311,7 +381,7 @@ const MeshBaseMixin = (superclass) =>
     }
 
     destroy() {
-      if (super.destroy) super.destroy()
+      if (Base.prototype.hasOwnProperty('destroy')) super.destroy()
 
       // TODO destroy anything else?
       this.material?.destroy()
@@ -321,5 +391,6 @@ const MeshBaseMixin = (superclass) =>
       this.textures = []
     }
   }
+}
 
 export default MeshBaseMixin

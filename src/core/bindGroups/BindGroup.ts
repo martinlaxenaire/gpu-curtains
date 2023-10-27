@@ -18,6 +18,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { TextureBindGroupParams } from '../../types/core/bindGroups/TextureBindGroup'
 import { BindingType } from '../../types/core/bindings/Bindings'
 import { WorkBufferBindingsParams } from '../../types/core/bindings/WorkBufferBindings'
+import { TextureBindGroup } from './TextureBindGroup'
 
 export class BindGroup {
   type: string
@@ -268,7 +269,7 @@ export class BindGroup {
     const params = { ...this.options }
     params.label += ' (copy)'
 
-    const bindGroupCopy = new this.constructor(this.renderer, {
+    const bindGroupCopy = new (this.constructor as typeof BindGroup)(this.renderer, {
       label: params.label,
     })
 

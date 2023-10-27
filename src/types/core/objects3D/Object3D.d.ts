@@ -11,12 +11,11 @@ export interface Object3DTransformMatrix {
   onUpdate: () => void
 }
 
-export interface Object3DMatrices {
-  model: Object3DTransformMatrix
-}
+// export interface Object3DMatrices {
+//   model: Object3DTransformMatrix
+// }
 
-//type Object3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>
-//interface Object3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>
+export type Object3DMatrices = Record<Object3DMatricesType, Object3DTransformMatrix>
 
 export interface Object3DTransforms {
   origin: {

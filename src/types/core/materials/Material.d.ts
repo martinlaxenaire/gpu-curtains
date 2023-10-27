@@ -6,7 +6,9 @@ import { RenderMaterialRenderingOptions } from './RenderMaterial'
 import { Sampler } from '../../../core/samplers/Sampler'
 
 // shaders
-export type MaterialShadersType = 'vertex' | 'fragment' | 'compute'
+export type RenderMaterialShadersType = 'vertex' | 'fragment'
+export type ComputeMaterialShadersType = 'compute'
+export type MaterialShadersType = RenderMaterialShadersType | ComputeMaterialShadersType
 export type FullShadersType = 'full' | MaterialShadersType
 
 export interface ShaderOptions {

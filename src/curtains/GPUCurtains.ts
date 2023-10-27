@@ -2,16 +2,26 @@ import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
 import { ScrollManager } from '../utils/ScrollManager'
 import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
-import { GPUCurtainsOptions, GPUCurtainsParams } from '../types/curtains/GPUCurtains'
 import { PingPongPlane } from './meshes/PingPongPlane'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
-import { MeshType } from '../types/core/renderers/GPURenderer'
+import { MeshType } from '../core/renderers/GPURenderer'
 import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
 import { Camera } from '../core/camera/Camera'
-import { DOMElementBoundingRect } from '../types/core/DOM/DOMElement'
+import { DOMElementBoundingRect } from '../core/DOM/DOMElement'
 import { ScrollManagerParams } from '../utils/ScrollManager'
+import { GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
+
+interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'onError'> {
+  autoRender?: boolean
+  autoResize?: boolean
+  watchScroll?: boolean
+}
+
+interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'container'>> {
+  container?: string | HTMLElement | null
+}
 
 export class GPUCurtains {
   type: string
@@ -53,6 +63,7 @@ export class GPUCurtains {
     this.type = 'CurtainsGPU'
 
     this.options = {
+      container,
       pixelRatio,
       sampleCount,
       camera,

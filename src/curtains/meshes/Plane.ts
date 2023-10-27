@@ -4,7 +4,7 @@ import { DOMMesh, DOMMeshBaseParams, DOMMeshParams } from './DOMMesh'
 import { Vec3 } from '../../math/Vec3'
 import { Vec2 } from '../../math/Vec2'
 import { cacheManager } from '../../utils/CacheManager'
-import { PlaneGeometryParams } from '../../types/core/geometries/PlaneGeometry'
+import { PlaneGeometryParams } from '../../core/geometries/PlaneGeometry'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 

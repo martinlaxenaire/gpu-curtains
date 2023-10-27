@@ -1,6 +1,22 @@
 import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
-import { CameraParams } from '../../types/core/camera/Camera'
+
+export interface CameraBasePerspectiveOptions {
+  fov?: number
+  near?: number
+  far?: number
+}
+
+export interface CameraPerspectiveOptions extends CameraBasePerspectiveOptions {
+  width?: number
+  height?: number
+  pixelRatio?: number
+}
+
+export interface CameraParams extends CameraPerspectiveOptions {
+  onPerspectiveChanged?: () => void
+  onPositionChanged?: () => void
+}
 
 /***
  Here we create our Camera object

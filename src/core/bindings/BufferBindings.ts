@@ -85,15 +85,15 @@ export class BufferBindings extends Bindings {
       const binding = this.bindings[bindingKey]
 
       const bufferLayout =
-        binding.type && binding.type.indexOf('array') === -1
-          ? getBufferLayout(binding.type)
-          : {
-              numElements: (binding.value as TypedArray).length,
+        binding.type && binding.type.indexOf('array') !== -1 && binding.value instanceof Float32Array
+          ? {
+              numElements: binding.value.length,
               align: 16,
-              size: (binding.value as TypedArray).byteLength,
+              size: binding.value.byteLength,
               type: 'f32',
               View: Float32Array,
             }
+          : getBufferLayout(binding.type)
 
       this.bindingElements.push({
         name: toCamelCase(binding.name ?? bindingKey),
@@ -173,8 +173,8 @@ export class BufferBindings extends Bindings {
           bindingElement.array[2] = (value as Vec3).z ?? value[2] ?? 0
         } else if ((value as Quat | Mat4).elements) {
           bindingElement.array = (value as Quat | Mat4).elements
-        } else if (ArrayBuffer.isView(value)) {
-          bindingElement.array.set((value as TypedArray).slice())
+        } else if (value instanceof Float32Array) {
+          bindingElement.array.set(value.slice())
         } else if (Array.isArray(value)) {
           for (let i = 0; i < bindingElement.array.length; i++) {
             bindingElement.array[i] = value[i] ? value[i] : 0
