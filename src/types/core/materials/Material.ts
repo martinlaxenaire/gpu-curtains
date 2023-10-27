@@ -29,7 +29,7 @@ export interface MaterialBaseParams {
   useAsyncPipeline?: boolean
 }
 
-type MaterialBindGroups = AllowedBindGroups[]
+export type MaterialBindGroups = AllowedBindGroups[]
 
 export interface MaterialInputBindingsParams {
   inputs?: BindGroupInputs

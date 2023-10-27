@@ -14,7 +14,7 @@ export interface TransformedMeshParams {
   DOMFrustumMargins?: RectCoords
 }
 
-interface TransformedMeshMaterialParameters extends MeshBaseParams {
+export interface TransformedMeshMaterialParameters extends MeshBaseParams {
   frustumCulled: boolean
   DOMFrustumMargins: RectCoords
 }
