@@ -55,7 +55,7 @@ export class ComputePass {
 
   /**
    * ComputePass constructor
-   * @param {Renderer | GPUCurtains} renderer - our renderer class object
+   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
    * @param {ComputePassParams=} parameters - parameters used to create our compute pass
    * @param {string=} parameters.label - compute pass label
    * @param {boolean=} parameters.autoAddToScene - whether we should add this compute pass to our {@see Scene} to let it handle the rendering process automatically
@@ -207,7 +207,7 @@ export class ComputePass {
 
   /**
    * Assign a callback function to _onBeforeRenderCallback
-   * @param {function=} callback - callback to run just before {@see ComputePass} has been rendered
+   * @param {function=} callback - callback to run just before {@see ComputePass} will be rendered
    * @returns {ComputePass}
    */
   onBeforeRender(callback: () => void): ComputePass {
@@ -258,7 +258,7 @@ export class ComputePass {
   }
 
   /**
-   * Called before rendering the compute pass
+   * Called before rendering the ComputePass
    * Checks if the material is ready and eventually update its bindings
    */
   onBeforeRenderPass() {
@@ -284,7 +284,7 @@ export class ComputePass {
   }
 
   /**
-   * Called after having rendered the compute pass
+   * Called after having rendered the ComputePass
    */
   onAfterRenderPass() {
     this._onAfterRenderCallback && this._onAfterRenderCallback()
@@ -293,7 +293,7 @@ export class ComputePass {
   /**
    * Render our compute pass
    * Basically just check if our {@see GPURenderer} is ready, and then render our {@see ComputeMaterial}
-   * @param pass
+   * @param {GPUComputePassEncoder} pass
    */
   render(pass: GPUComputePassEncoder) {
     this.onBeforeRenderPass()
@@ -341,7 +341,7 @@ export class ComputePass {
   }
 
   /**
-   * Remove the compute pass from the scene and destroy it
+   * Remove the ComputePass from the scene and destroy it
    */
   remove() {
     this.removeFromScene()
@@ -349,7 +349,7 @@ export class ComputePass {
   }
 
   /**
-   * Destroy the compute pass
+   * Destroy the ComputePass
    */
   destroy() {
     this.material?.destroy()

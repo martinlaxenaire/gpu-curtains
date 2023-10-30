@@ -21,7 +21,7 @@ export class RenderMaterial extends Material {
 
   /**
    * RenderMaterial constructor
-   * @param {Renderer | GPUCurtains} renderer - our renderer class object
+   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
    * @param {MaterialParams} parameters - parameters used to create our Material
    * @param {string} parameters.label - RenderMaterial label
    * @param {AllowedGeometries} parameters.geometry - geometry to draw

@@ -21,7 +21,7 @@ export class TextureBindGroup extends BindGroup {
 
   /**
    * TextureBindGroup constructor
-   * @param {Renderer | GPUCurtains} renderer - our renderer class object
+   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
    * @param {TextureBindGroupParams=} parameters - parameters used to create our texture bind group
    * @param {string=} parameters.label - bind group label
    * @param {number=} parameters.index - bind group index (used to generate shader code)

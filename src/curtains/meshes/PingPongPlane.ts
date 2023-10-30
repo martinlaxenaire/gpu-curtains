@@ -4,7 +4,7 @@ import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
 import { GPUCurtains } from '../GPUCurtains'
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
 import { RenderTexture } from '../../core/textures/RenderTexture'
-import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
+import { MeshBaseParams } from '../../core/meshes/MeshBaseMixin'
 
 export class PingPongPlane extends FullscreenPlane {
   renderTarget: RenderTarget

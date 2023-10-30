@@ -1,4 +1,4 @@
-import MeshBaseMixin from './MeshBaseMixin'
+import MeshBaseMixin, { MeshBaseParams } from './MeshBaseMixin'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
 import { DOMElement } from '../DOM/DOMElement'
@@ -6,9 +6,15 @@ import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
 import { Vec2 } from '../../math/Vec2'
 import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
 
+/**
+ * FullscreenPlane class:
+ * Create a fullscreen quad, useful for post processing or background effects.
+ * TODO!
+ * @extends MeshBaseMixin
+ * @mixes {class {}}
+ */
 export class FullscreenPlane extends MeshBaseMixin(class {}) {
   type: string
   size: {
@@ -16,6 +22,11 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
   }
   domElement: DOMElement
 
+  /**
+   * FullscreenPlane constructor
+   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
+   * @param {MeshBaseParams} parameters - our Mesh base parameters
+   */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseParams) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
@@ -58,7 +69,11 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
     this.type = 'FullscreenQuadMesh'
   }
 
-  resize(boundingRect: DOMElementBoundingRect) {
+  /**
+   * Resize our FullscreenPlane
+   * @param {?DOMElementBoundingRect} boundingRect - the new bounding rectangle
+   */
+  resize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return
 
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
@@ -66,6 +81,11 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
     super.resize(boundingRect)
   }
 
+  /**
+   * Convert a mouse coordinate to plane coordinates ranging from [-1, 1]
+   * @param {?Vec2} mouseCoords - mouse or pointer coordinates as a Vec2
+   * @returns {Vec2} - the mapped coordinates in the [-1, 1] range
+   */
   mouseToPlaneCoords(mouseCoords: Vec2 = new Vec2()): Vec2 {
     // mouse position conversion from document to plane space
     return new Vec2(

@@ -44,7 +44,7 @@ export class Material {
 
   /**
    * Material constructor
-   * @param {Renderer | GPUCurtains} renderer - our renderer class object
+   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
    * @param {MaterialParams} parameters - parameters used to create our Material
    * @param {string} parameters.label - Material label
    * @param {boolean} parameters.useAsyncPipeline - whether the pipeline should be compiled asynchronously

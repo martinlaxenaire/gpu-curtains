@@ -4,9 +4,8 @@ import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
 import { Geometry } from '../geometries/Geometry'
 import { RenderTexture } from '../textures/RenderTexture'
-import { TextureDefaultParams, TextureParent } from '../../types/core/textures/Texture'
+import { CurtainsTextureOptions, TextureDefaultParams, TextureParent } from '../../types/core/textures/Texture'
 import { RenderTarget } from '../renderPasses/RenderTarget'
-import { MeshBaseOptions, MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshType } from '../renderers/GPURenderer'
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
@@ -15,6 +14,23 @@ import { DOMElementBoundingRect } from '../DOM/DOMElement'
 import { RenderMaterialParams } from '../../types/Materials'
 
 let meshIndex = 0
+
+export interface MeshBaseParams extends RenderMaterialParams {
+  autoAddToScene: boolean
+  visible?: boolean
+  renderOrder?: number
+  renderTarget?: RenderTarget
+  texturesOptions?: CurtainsTextureOptions
+}
+
+export interface MeshBaseOptions {
+  label?: MeshBaseParams['label']
+  shaders: MeshBaseParams['shaders']
+  texturesOptions?: CurtainsTextureOptions
+  renderTarget?: RenderTarget | null
+  autoAddToScene?: boolean
+  useAsyncPipeline?: boolean
+}
 
 const defaultMeshBaseParams = {
   label: 'Mesh',
@@ -111,7 +127,19 @@ export declare class MeshBaseClass {
   destroy(): void
 }
 
+/**
+ * MeshBase Mixin:
+ * Used to mix basic Mesh properties and methods defined in {@see MeshBaseClass} with a given Base of type {@see Object3D}, {@see ProjectedObject3D} or an empty class.
+ * @exports MeshBaseMixin
+ * @param {*} Base - the class to mix onto
+ * @returns {module:MeshBaseMixin~MeshBase} - the mixin class.
+ */
 function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstructor<MeshBaseClass> & TBase {
+  /**
+   * MeshBase defines our base properties and methods
+   * @mixin
+   * @alias MeshBase
+   */
   return class MeshBase extends Base implements MeshBaseClass {
     type: string
     readonly uuid: string
@@ -153,10 +181,36 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       /* allow empty callback */
     }
 
+    /**
+     * MeshBase constructor
+     * @typedef {MeshBaseParams} MeshBaseParams
+     * @property {string=} label - MeshBase label
+     * @property {boolean=} autoAddToScene - whether we should add this MeshBase to our {@see Scene} to let it handle the rendering process automatically
+     * @property {AllowedGeometries} geometry - geometry to draw
+     * @property {boolean=} useAsyncPipeline - whether the {@see RenderPipelineEntry} should be compiled asynchronously
+     * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
+     * @property {BindGroupInputs=} inputs - our MeshBase {@see BindGroup} inputs
+     * @property {BindGroup[]=} bindGroups - already created {@see BindGroup} to use
+     * @property {boolean=} transparent - impacts the {@see RenderPipelineEntry} blend properties
+     * @property {GPUCullMode=} cullMode - cull mode to use
+     * @property {boolean=} visible - whether this Mesh should be visible (drawn) or not
+     * @property {number=} renderOrder - controls the order in which this Mesh should be rendered by our {@see Scene}
+     * @property {RenderTarget=} renderTarget - {@see RenderTarget} to render onto if any
+     * @property {CurtainsTextureOptions=} texturesOptions - textures options to apply
+     * @property {Sampler[]=} samplers - array of {@see Sampler}
+     *
+     * @typedef MeshBaseArrayParams
+     * @type {array}
+     * @property {(CameraRenderer|GPUCurtains)} 0 - our renderer class object
+     * @property {(string|HTMLElement|null)} 1 - the DOM HTML Element that can be bound to a Mesh
+     * @property {MeshBaseParams} 2 - Mesh parameters
+
+     * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
+     */
     constructor(...params: any[]) {
       super(
         params[0] as CameraRenderer | GPUCurtains,
-        params[1] as HTMLElement | string,
+        params[1] as HTMLElement | string | null,
         { ...defaultMeshBaseParams, ...params[2] } as MeshBaseParams
       )
 
@@ -223,10 +277,20 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.addToScene()
     }
 
+    /**
+     * Get private #autoAddToScene value
+     * @readonly
+     * @type {boolean}
+     */
     get autoAddToScene(): boolean {
       return this.#autoAddToScene
     }
 
+    /**
+     * Get/set whether a Mesh is ready or not
+     * @readonly
+     * @type {boolean}
+     */
     get ready(): boolean {
       return this._ready
     }
@@ -238,16 +302,27 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this._ready = value
     }
 
+    /**
+     * Set a Mesh transparent property, then set its material
+     * @param {RenderMaterialParams} meshParameters
+     */
     setMeshMaterial(meshParameters: RenderMaterialParams) {
       this.transparent = meshParameters.transparent
 
       this.setMaterial(meshParameters)
     }
 
+    /**
+     * Set a Mesh material
+     * @param {RenderMaterialParams} materialParameters
+     */
     setMaterial(materialParameters: RenderMaterialParams) {
       this.material = new RenderMaterial(this.renderer, materialParameters)
     }
 
+    /**
+     * Add a Mesh to the renderer and the {@see Scene}
+     */
     addToScene() {
       this.renderer.meshes.push(this as unknown as MeshType)
 
@@ -256,6 +331,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       }
     }
 
+    /**
+     * Remove a Mesh from the renderer and the {@see Scene}
+     */
     removeFromScene() {
       if (this.#autoAddToScene) {
         this.renderer.scene.removeMesh(this as unknown as MeshType)
@@ -266,6 +344,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /** TEXTURES **/
 
+    /**
+     * Create a new {@see Texture}
+     * @param {TextureDefaultParams} options - Texture options
+     * @returns {Texture} - newly created Texture
+     */
     createTexture(options: TextureDefaultParams): Texture {
       if (!options.name) {
         options.name = 'texture' + this.textures.length
@@ -286,11 +369,20 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       return texture
     }
 
+    /**
+     * Callback run when a new {@see Texture} has been created
+     * @param {Texture} texture - newly created Texture
+     */
     onTextureCreated(texture: Texture) {
       /* will be overriden */
       texture.parent = this as unknown as TextureParent
     }
 
+    /**
+     * Create a new {@see RenderTexture}
+     * @param {RenderTextureParams} options - RenderTexture options
+     * @returns {RenderTexture} - newly created RenderTexture
+     */
     createRenderTexture(options: RenderTextureParams): RenderTexture {
       if (!options.name) {
         options.name = 'renderTexture' + this.renderTextures.length
@@ -304,6 +396,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       return renderTexture
     }
 
+    /**
+     * Assign or remove a {@see RenderTarget} to this Mesh
+     * Since this manipulates the {@see Scene} stacks, it can be used to remove a RenderTarget as well.
+     * @param {?RenderTarget} renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     */
     setRenderTarget(renderTarget: RenderTarget | null) {
       if (renderTarget && renderTarget.type !== 'RenderTarget') {
         throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
@@ -318,14 +415,28 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /*** BINDINGS ***/
 
+    /**
+     * Get the current {@see RenderMaterial} uniforms
+     * @readonly
+     * @type {Material['uniforms']}
+     */
     get uniforms(): Material['uniforms'] {
       return this.material?.uniforms
     }
 
+    /**
+     * Get the current {@see RenderMaterial} storages
+     * @readonly
+     * @type {Material['storages']}
+     */
     get storages(): Material['storages'] {
       return this.material?.storages
     }
 
+    /**
+     * Resize the Mesh's textures
+     * @param {?DOMElementBoundingRect} boundingRect
+     */
     resize(boundingRect: DOMElementBoundingRect | null = null) {
       // resize render textures first
       this.renderTextures?.forEach((renderTexture) => renderTexture.resize())
@@ -346,6 +457,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /** EVENTS **/
 
+    /**
+     * Assign a callback function to _onReadyCallback
+     * @param {function=} callback - callback to run when {@see MeshBase} is ready
+     * @returns {MeshBase}
+     */
     onReady(callback: () => void): MeshBase {
       if (callback) {
         this._onReadyCallback = callback
@@ -354,6 +470,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       return this
     }
 
+    /**
+     * Assign a callback function to _onBeforeRenderCallback
+     * @param {function=} callback - callback to run just before {@see MeshBase} will be rendered
+     * @returns {MeshBase}
+     */
     onBeforeRender(callback: () => void): MeshBase {
       if (callback) {
         this._onBeforeRenderCallback = callback
@@ -362,6 +483,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       return this
     }
 
+    /**
+     * Assign a callback function to _onRenderCallback
+     * @param {function=} callback - callback to run when {@see MeshBase} is rendered
+     * @returns {MeshBase}
+     */
     onRender(callback: () => void): MeshBase {
       if (callback) {
         this._onRenderCallback = callback
@@ -370,6 +496,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       return this
     }
 
+    /**
+     * Assign a callback function to _onAfterRenderCallback
+     * @param {function=} callback - callback to run just after {@see MeshBase} has been rendered
+     * @returns {MeshBase}
+     */
     onAfterRender(callback: () => void): MeshBase {
       if (callback) {
         this._onAfterRenderCallback = callback
@@ -378,7 +509,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       return this
     }
 
-    onAfterResize(callback: () => void): MeshBaseClass {
+    /**
+     * Assign a callback function to _onBeforeRenderCallback
+     * @param {function=} callback - callback to run just after {@see MeshBase} has been resized
+     * @returns {MeshBase}
+     */
+    onAfterResize(callback: () => void): MeshBase {
       if (callback) {
         this._onAfterResizeCallback = callback
       }
@@ -387,6 +523,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
+     * Called before rendering the Mesh
+     * Checks if the material is ready and eventually update its bindings
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
@@ -400,16 +538,28 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.material.onBeforeRender()
     }
 
+    /**
+     * Render our {@see MeshBase}
+     * @param {GPURenderPassEncoder} pass - current render pass encoder
+     */
     onRenderPass(pass: GPURenderPassEncoder) {
       this._onRenderCallback && this._onRenderCallback()
 
       this.material.render(pass)
     }
 
+    /**
+     * Called after having rendered the Mesh
+     */
     onAfterRenderPass() {
       this._onAfterRenderCallback && this._onAfterRenderCallback()
     }
 
+    /**
+     * Render our Mesh
+     * Basically just check if our {@see GPURenderer} is ready, and then render our {@see RenderMaterial}
+     * @param {GPURenderPassEncoder} pass
+     */
     render(pass: GPURenderPassEncoder) {
       this.onBeforeRenderPass()
 
@@ -427,11 +577,17 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.onAfterRenderPass()
     }
 
+    /**
+     * Remove the Mesh from the scene and destroy it
+     */
     remove() {
       this.removeFromScene()
       this.destroy()
     }
 
+    /**
+     * Destroy the Mesh
+     */
     destroy() {
       // @ts-ignore
       if (super.destroy) {

@@ -16,7 +16,7 @@ export class ComputeMaterial extends Material {
 
   /**
    * ComputeMaterial constructor
-   * @param {Renderer | GPUCurtains} renderer - our renderer class object
+   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
    * @param {MaterialParams} parameters - parameters used to create our Material
    * @param {string} parameters.label - ComputeMaterial label
    * @param {boolean} parameters.useAsyncPipeline - whether the {@see ComputePipelineEntry} should be compiled asynchronously
