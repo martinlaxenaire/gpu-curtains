@@ -4,11 +4,11 @@ import MeshBaseMixin, { MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinCon
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectCoords } from '../DOM/DOMElement'
 import { Mat4 } from '../../math/Mat4'
-import { ProjectedObject3DMatrices } from '../../types/core/objects3D/ProjectedObject3D'
 import { RenderTexture } from '../textures/RenderTexture'
 import { Texture } from '../textures/Texture'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { AllowedGeometries } from '../../types/Materials'
+import { ProjectedObject3DMatrices } from '../objects3D/ProjectedObject3D'
 
 export interface TransformedMeshParams {
   frustumCulled?: boolean

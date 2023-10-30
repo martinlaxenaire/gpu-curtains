@@ -5,7 +5,7 @@ import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import { DOMElement, DOMElementBoundingRect, RectBBox } from '../../core/DOM/DOMElement'
 import { Vec3 } from '../../math/Vec3'
 import { Camera } from '../../core/camera/Camera'
-import { Object3DTransforms } from '../../types/core/objects3D/Object3D'
+import { Object3DTransforms } from '../../core/objects3D/Object3D'
 
 export interface DOMObject3DSize {
   world: RectBBox

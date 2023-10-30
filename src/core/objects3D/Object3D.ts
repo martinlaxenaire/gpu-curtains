@@ -1,12 +1,42 @@
 import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
-import { Object3DMatrices, Object3DTransforms } from '../../types/core/objects3D/Object3D'
 
+export type Object3DMatricesType = 'model'
+
+export interface Object3DTransformMatrix {
+  matrix: Mat4
+  shouldUpdate: boolean
+  onUpdate: () => void
+}
+
+export type Object3DMatrices = Record<Object3DMatricesType, Object3DTransformMatrix>
+
+export interface Object3DTransforms {
+  origin: {
+    model: Vec3
+    world?: Vec3
+  }
+  quaternion: Quat
+  rotation: Vec3
+  position: {
+    world: Vec3
+    document?: Vec3
+  }
+  scale: Vec3
+}
+
+/**
+ * Object3D class:
+ * Used to create an object with transformation properties and a model matrix
+ */
 export class Object3D {
   transforms: Object3DTransforms
   matrices: Object3DMatrices
 
+  /**
+   * Object3D constructor
+   */
   constructor() {
     this.setMatrices()
     this.setTransforms()
@@ -14,6 +44,9 @@ export class Object3D {
 
   /** TRANSFORMS **/
 
+  /**
+   * Set our transforms properties and onChange callbacks
+   */
   setTransforms() {
     this.transforms = {
       origin: {
@@ -33,7 +66,11 @@ export class Object3D {
     this.transformOrigin.onChange(() => this.applyTransformOrigin())
   }
 
-  // transform getters / setters
+  /**
+   * Get/set our rotation vector
+   * @readonly
+   * @type {Vec3}
+   */
   get rotation(): Vec3 {
     return this.transforms.rotation
   }
@@ -43,6 +80,11 @@ export class Object3D {
     this.applyRotation()
   }
 
+  /**
+   * Get/set our quaternion
+   * @readonly
+   * @type {Quat}
+   */
   get quaternion(): Quat {
     return this.transforms.quaternion
   }
@@ -51,6 +93,11 @@ export class Object3D {
     this.transforms.quaternion = value
   }
 
+  /**
+   * Get/set our position vector
+   * @readonly
+   * @type {Vec3}
+   */
   get position(): Vec3 {
     return this.transforms.position.world
   }
@@ -59,6 +106,11 @@ export class Object3D {
     this.transforms.position.world = value
   }
 
+  /**
+   * Get/set our scale vector
+   * @readonly
+   * @type {Vec3}
+   */
   get scale(): Vec3 {
     return this.transforms.scale
   }
@@ -69,6 +121,11 @@ export class Object3D {
     this.applyScale()
   }
 
+  /**
+   * Get/set our transform origin vector
+   * @readonly
+   * @type {Vec3}
+   */
   get transformOrigin(): Vec3 {
     return this.transforms.origin.model
   }
@@ -77,32 +134,41 @@ export class Object3D {
     this.transforms.origin.model = value
   }
 
-  /***
-   This will apply our rotation and tells our model view matrix to update
-   ***/
+  /**
+   * Apply our rotation and tell our model matrix to update
+   */
   applyRotation() {
     this.quaternion.setFromVec3(this.rotation)
 
     this.shouldUpdateModelMatrix()
   }
 
-  /***
-   This will set our plane position by adding plane computed bounding box values and computed relative position values
-   ***/
+  /**
+   * Tell our model matrix to update
+   */
   applyPosition() {
     this.shouldUpdateModelMatrix()
   }
 
+  /**
+   * Tell our model matrix to update
+   */
   applyScale() {
     this.shouldUpdateModelMatrix()
   }
 
+  /**
+   * Tell our model matrix to update
+   */
   applyTransformOrigin() {
     this.shouldUpdateModelMatrix()
   }
 
   /** MATRICES **/
 
+  /**
+   * Set our model matrix
+   */
   setMatrices() {
     this.matrices = {
       model: {
@@ -113,6 +179,11 @@ export class Object3D {
     }
   }
 
+  /**
+   * Get/set our model matrix
+   * @readonly
+   * @type {Mat4}
+   */
   get modelMatrix(): Mat4 {
     return this.matrices.model.matrix
   }
@@ -122,10 +193,16 @@ export class Object3D {
     this.matrices.model.shouldUpdate = true
   }
 
+  /**
+   * Set our model matrix shouldUpdate flag to true (tell it to update)
+   */
   shouldUpdateModelMatrix() {
     this.matrices.model.shouldUpdate = true
   }
 
+  /**
+   * Update our model matrix
+   */
   updateModelMatrix() {
     // compose our model transformation matrix from custom origin
     this.modelMatrix = this.modelMatrix.composeFromOrigin(
@@ -136,7 +213,22 @@ export class Object3D {
     )
   }
 
+  /**
+   * Tell our model matrix to update
+   */
   updateSizeAndPosition() {
     this.shouldUpdateModelMatrix()
+  }
+
+  /**
+   * Check at each render whether we should update our matrices, and update them if needed
+   */
+  render() {
+    for (const matrixName in this.matrices) {
+      if (this.matrices[matrixName].shouldUpdate) {
+        this.matrices[matrixName].onUpdate()
+        this.matrices[matrixName].shouldUpdate = false
+      }
+    }
   }
 }
