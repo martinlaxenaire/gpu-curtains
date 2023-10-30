@@ -18,21 +18,10 @@ export interface CameraParams extends CameraPerspectiveOptions {
   onPositionChanged?: () => void
 }
 
-/***
- Here we create our Camera object
- Creates a perspective camera and its projection matrix (which is used by Plane's class objects)
- Uses a dirty shouldUpdate flag used to determine if we should update the matrix
-
- params:
- @fov (float, optional): the perspective field of view. Should be greater than 0 and lower than 180. Default to 50.
- @near (float, optional): near plane, the closest point where a mesh vertex is drawn. Default to 0.1.
- @far (float, optional): far plane, farthest point where a mesh vertex is drawn. Default to 150.
- @width (float, optional): width used to calculate the camera aspect ratio. Default to the renderer container's width.
- @height (float, optional): height used to calculate the camera aspect ratio. Default to the renderer container's height.
- @pixelRatio (float, optional): pixel ratio used to calculate the camera aspect ratio. Default to the renderer's pixel ratio.
-
- @returns {Camera}: our Camera element
- ***/
+/**
+ * Camera class:
+ * Used to create a perspective camera and its matrices (projection, model, etc).
+ */
 export class Camera {
   position: Vec3
   projectionMatrix: Mat4
@@ -58,6 +47,18 @@ export class Camera {
 
   shouldUpdate: boolean
 
+  /**
+   * Camera constructor
+   * @param {CameraParams=} parameters - parameters used to create our Camera
+   * @param {number=} parameters.fov - the perspective field of view. Should be greater than 0 and lower than 180. Default to 50.
+   * @param {number=} parameters.near - near plane, the closest point where a mesh vertex is drawn. Default to 0.1.
+   * @param {number=} parameters.far - far plane, farthest point where a mesh vertex is drawn. Default to 150.
+   * @param {number=} parameters.width - width used to calculate the camera aspect ratio. Default to 1.
+   * @param {number=} parameters.height - height used to calculate the camera aspect ratio. Default to 1.
+   * @param {number=} parameters.pixelRatio - pixel ratio used to calculate the camera aspect ratio. Default to 1.
+   * @param {function=} parameters.onPerspectiveChanged - callback to execute when the camera perspective changed.
+   * @param {function=} parameters.onPositionChanged - callback to execute when the camera position changed.
+   */
   constructor(
     {
       fov = 50,
@@ -90,13 +91,10 @@ export class Camera {
     this.setPerspective(fov, near, far, width, height, pixelRatio)
   }
 
-  /***
-   Sets the camera field of view
-   Update the camera projection matrix only if the fov actually changed
-
-   params:
-   @fov (float, optional): field of view to use
-   ***/
+  /**
+   * Sets the camera field of view. Update the camera projection matrix only if the fov actually changed
+   * @param {number=} fov - new field of view
+   */
   setFov(fov: number = this.fov) {
     // clamp between 1 and 179
     fov = Math.max(1, Math.min(fov, 179))
@@ -112,13 +110,10 @@ export class Camera {
     this.setCSSPerspective()
   }
 
-  /***
-   Sets the camera near plane value
-   Update the camera projection matrix only if the near plane actually changed
-
-   params:
-   @near (float, optional): near plane value to use
-   ***/
+  /**
+   * Sets the camera near plane value. Update the camera projection matrix only if the near plane actually changed
+   * @param {number=} near - near plane value to use
+   */
   setNear(near: number = this.near) {
     near = Math.max(near, 0.01)
 
@@ -128,13 +123,10 @@ export class Camera {
     }
   }
 
-  /***
-   Sets the camera far plane value
-   Update the camera projection matrix only if the far plane actually changed
-
-   params:
-   @far (float, optional): far plane value to use
-   ***/
+  /**
+   * Sets the camera far plane value. Update the camera projection matrix only if the far plane actually changed
+   * @param {number=} far - far plane value to use
+   */
   setFar(far: number = this.far) {
     far = Math.max(far, 50)
 
@@ -144,13 +136,10 @@ export class Camera {
     }
   }
 
-  /***
-   Sets the camera pixel ratio value
-   Update the camera projection matrix only if the pixel ratio actually changed
-
-   params:
-   @pixelRatio (float, optional): pixelRatio value to use
-   ***/
+  /**
+   * Sets the camera pixel ratio value. Update the camera projection matrix only if the pixel ratio actually changed
+   * @param {number=} pixelRatio - pixel ratio value to use
+   */
   setPixelRatio(pixelRatio: number = this.pixelRatio) {
     if (pixelRatio !== this.pixelRatio) {
       this.shouldUpdate = true
@@ -159,14 +148,11 @@ export class Camera {
     this.pixelRatio = pixelRatio
   }
 
-  /***
-   Sets the camera width and height
-   Update the camera projection matrix only if the width or height actually changed
-
-   params:
-   @width (float, optional): width value to use
-   @height (float, optional): height value to use
-   ***/
+  /**
+   * Sets the camera width and height. Update the camera projection matrix only if the width or height actually changed
+   * @param {number=} width - width value to use
+   * @param {number=} height - height value to use
+   */
   setSize(width: number, height: number) {
     if (width !== this.width || height !== this.height) {
       this.shouldUpdate = true
@@ -179,18 +165,16 @@ export class Camera {
     this.setCSSPerspective()
   }
 
-  /***
-   Sets the camera perspective
-   Update the camera projection matrix if our shouldUpdate flag is true
-
-   params:
-   @fov (float, optional): field of view to use
-   @near (float, optional): near plane value to use
-   @far (float, optional): far plane value to use
-   @width (float, optional): width value to use
-   @height (float, optional): height value to use
-   @pixelRatio (float, optional): pixelRatio value to use
-   ***/
+  /**
+   * Sets the camera perspective. Update the camera projection matrix if our shouldUpdate flag is true
+   * @param {number=} fov - field of view to use
+   * @param {number=} near - near plane value to use
+   * @param {number=} far - far plane value to use
+   * @param {number=} width - width value to use
+   * @param {number=} height - height value to use
+   * @param {number=} pixelRatio - pixel ratio value to use
+   */
+  // TODO use a parameter object instead?
   setPerspective(
     fov: number = this.fov,
     near: number = this.near,
@@ -211,16 +195,19 @@ export class Camera {
     }
   }
 
-  /***
-   Sets the camera position based on its fov
-   Used by the Plane class objects to scale the planes with the right amount
-   ***/
+  /**
+   * Sets the camera position and update the model and view matrices.
+   * @param {Vec3=} position - new camera position
+   */
   setPosition(position: Vec3 = this.position) {
     this.position.copy(position)
 
     this.applyPosition()
   }
 
+  /**
+   * Update the model and view matrices.
+   */
   applyPosition() {
     // update matrices
     // prettier-ignore
@@ -237,11 +224,11 @@ export class Camera {
     this.onPositionChanged()
   }
 
-  /***
-   Sets a CSSPerspective property based on width, height, pixelRatio and fov
-   Used to translate planes along the Z axis using pixel units as CSS would do
-   Taken from: https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value
-   ***/
+  /**
+   * Sets a CSSPerspective property based on width, height, pixelRatio and fov
+   * Used to translate planes along the Z axis using pixel units as CSS would do
+   * Taken from {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value}
+   */
   setCSSPerspective() {
     this.CSSPerspective =
       Math.pow(
@@ -250,11 +237,11 @@ export class Camera {
       ) / Math.tan((this.fov * 0.5 * Math.PI) / 180)
   }
 
-  /***
-   Sets visible width / height at a given z-depth from our camera parameters
-
-   Taken from: https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269
-   ***/
+  /**
+   * Sets visible width / height at a given z-depth from our camera parameters
+   * Taken from {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269}
+   * @param {number=} depth
+   */
   setScreenRatios(depth = 0) {
     // compensate for cameras not positioned at z=0
     const cameraOffset = this.position.z
@@ -276,9 +263,9 @@ export class Camera {
     }
   }
 
-  /***
-   Updates the camera projection matrix
-   ***/
+  /**
+   * Updates the camera projection matrix
+   */
   updateProjectionMatrix() {
     const aspect = this.width / this.height
 

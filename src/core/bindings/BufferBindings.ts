@@ -1,18 +1,38 @@
-import { Bindings } from './Bindings'
+import { Bindings, BindingsParams } from './Bindings'
 import {
   BufferBindingsElement,
-  TypedArray,
   getBindingWgslVarType,
   getBufferArrayStride,
   getBufferLayout,
 } from '../../utils/buffers-utils'
 import { toCamelCase, toKebabCase } from '../../utils/utils'
-import { BufferBindingsParams, BufferBindingsUniform } from '../../types/core/bindings/BufferBindings'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
 import { Quat } from '../../math/Quat'
+import { Input, InputBase, InputValue } from '../../types/BindGroups'
 
+export interface BufferBindingsUniform extends InputBase {
+  _value: InputValue
+
+  get value(): InputValue
+
+  set value(value: InputValue)
+
+  shouldUpdate: boolean
+}
+
+export interface BufferBindingsParams extends BindingsParams {
+  useStruct?: boolean
+  bindings?: Record<string, Input>
+}
+
+/**
+ * BufferBindings class:
+ * Used to format inputs bindings and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
+ * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
+ * @extends Bindings
+ */
 export class BufferBindings extends Bindings {
   useStruct: boolean
   bindings: Record<string, BufferBindingsUniform>
@@ -27,14 +47,25 @@ export class BufferBindings extends Bindings {
   wgslStructFragment: string
   wgslGroupFragment: string[]
 
+  /**
+   * BufferBindings constructor
+   * @param {BufferBindingsParams} parameters - parameters used to create our BufferBindings
+   * @param {string=} parameters.label - binding label
+   * @param {string=} parameters.name - binding name
+   * @param {BindingType="uniform"} parameters.bindingType - binding type
+   * @param {number=} parameters.bindIndex - bind index inside the bind group
+   * @param {MaterialShadersType=} parameters.visibility - shader visibility
+   * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
+   * @param {Object.<string, Input>} parameters.bindings - bindings inputs
+   */
   constructor({
     label = 'Uniform',
     name = 'uniform',
     bindingType,
     bindIndex = 0,
+    visibility,
     useStruct = true,
     bindings = {},
-    visibility,
   }: BufferBindingsParams) {
     bindingType = bindingType ?? 'uniform'
 
@@ -48,6 +79,16 @@ export class BufferBindings extends Bindings {
     this.bindingElements = []
     this.bindings = {}
 
+    this.setBindings(bindings)
+    this.setBufferAttributes()
+    this.setWGSLFragment()
+  }
+
+  /**
+   * Format and set our bindings
+   * @param {Object.<string, Input>} bindings - bindings inputs
+   */
+  setBindings(bindings: Record<string, Input>) {
     Object.keys(bindings).forEach((bindingKey) => {
       const binding = {} as BufferBindingsUniform
 
@@ -57,6 +98,7 @@ export class BufferBindings extends Bindings {
         }
       }
 
+      // define a "value" getter/setter so we can now when to update the buffer binding
       Object.defineProperty(binding, 'value', {
         get() {
           return binding._value
@@ -75,12 +117,13 @@ export class BufferBindings extends Bindings {
 
       this.bindings[bindingKey] = binding
     })
-
-    this.setBufferGroup()
-    this.setWGSLFragment()
   }
 
-  setBufferGroup() {
+  /**
+   * Set our buffer attributes:
+   * Takes all the bindings and adds them to the bindingElements array with the correct start and end offsets (padded), then fill our value typed array accordingly.
+   */
+  setBufferAttributes() {
     Object.keys(this.bindings).forEach((bindingKey) => {
       const binding = this.bindings[bindingKey]
 
@@ -186,6 +229,9 @@ export class BufferBindings extends Bindings {
     this.shouldUpdate = this.size > 0
   }
 
+  /**
+   * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
+   */
   setWGSLFragment() {
     if (this.useStruct) {
       const notAllArrays = Object.keys(this.bindings).find(
@@ -220,12 +266,20 @@ export class BufferBindings extends Bindings {
     }
   }
 
+  /**
+   * Set a binding shouldUpdate flag to true to update our value array during next render.
+   * @param {string} bindingName - the binding name/key to update
+   */
   shouldUpdateBinding(bindingName = '') {
     const bindingKey = Object.keys(this.bindings).find((bindingKey) => this.bindings[bindingKey].name === bindingName)
 
     if (bindingKey) this.bindings[bindingKey].shouldUpdate = true
   }
 
+  /**
+   * Executed at the beginning of a Material render call to update our value array if any of the bindings has changed.
+   * Also sets the shouldUpdate property to true so the {@link BindGroup} knows it will need to update the GPUBuffer.
+   */
   onBeforeRender() {
     Object.keys(this.bindings).forEach((bindingKey, bindingIndex) => {
       const binding = this.bindings[bindingKey]

@@ -1,17 +1,37 @@
-import { Bindings } from './Bindings'
-import { SamplerBindingResource, SamplerBindingsParams } from '../../types/core/bindings/SamplerBindings'
+import { Bindings, BindingsParams } from './Bindings'
 
+export type SamplerBindingResource = GPUSampler | null
+
+export interface SamplerBindingsParams extends BindingsParams {
+  resource: SamplerBindingResource
+}
+
+/**
+ * SamplerBindings class:
+ * Used to handle GPUSampler bindings
+ * @extends Bindings
+ */
 export class SamplerBindings extends Bindings {
   resource: SamplerBindingResource
   wgslGroupFragment: string[]
 
+  /**
+   * SamplerBindings constructor
+   * @param {SamplerBindingsParams} parameters - parameters used to create our SamplerBindings
+   * @param {string=} parameters.label - binding label
+   * @param {string=} parameters.name - binding name
+   * @param {BindingType="uniform"} parameters.bindingType - binding type
+   * @param {number=} parameters.bindIndex - bind index inside the bind group
+   * @param {MaterialShadersType=} parameters.visibility - shader visibility
+   * @param {SamplerBindingResource=} parameters.resource - a GPUSampler
+   */
   constructor({
     label = 'Sampler',
-    name = 'Texture',
-    resource,
+    name = 'sampler',
     bindingType,
     bindIndex = 0,
     visibility,
+    resource,
   }: SamplerBindingsParams) {
     bindingType = bindingType ?? 'sampler'
 
@@ -22,6 +42,9 @@ export class SamplerBindings extends Bindings {
     this.setWGSLFragment()
   }
 
+  /**
+   * Set the correct WGSL code snippet.
+   */
   setWGSLFragment() {
     this.wgslGroupFragment = [`var ${this.name}: ${this.bindingType};`]
   }

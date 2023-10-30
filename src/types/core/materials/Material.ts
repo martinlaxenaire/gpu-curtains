@@ -1,4 +1,4 @@
-import { AllowedBindGroups, BindGroupInputs } from '../bindGroups/BindGroup'
+import { AllowedBindGroups, BindGroupInputs } from '../../BindGroups'
 import { BindGroup } from '../../../core/bindGroups/BindGroup'
 import { Texture } from '../../../core/textures/Texture'
 import { RenderTexture } from '../../../core/textures/RenderTexture'

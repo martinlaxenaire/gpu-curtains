@@ -5,7 +5,7 @@ import {
   PipelineEntryStatus,
 } from '../../types/core/pipelines/PipelineEntry'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { AllowedBindGroups } from '../../types/core/bindGroups/BindGroup'
+import { AllowedBindGroups } from '../../types/BindGroups'
 import { MaterialShadersType } from '../../types/core/materials/Material'
 
 let pipelineId = 0

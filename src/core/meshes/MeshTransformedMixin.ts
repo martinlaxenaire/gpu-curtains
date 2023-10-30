@@ -1,7 +1,7 @@
 import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
 import { DOMFrustum } from '../DOM/DOMFrustum'
 import { TransformedMeshMaterialParameters, TransformedMeshParams } from '../../types/core/meshes/MeshTransformedMixin'
-import MeshBaseMixin, { GConstructor, MeshBaseClass } from './MeshBaseMixin'
+import MeshBaseMixin, { MixinConstructor, MeshBaseClass } from './MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseOptions, MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 import { DOMElementBoundingRect, RectCoords } from '../DOM/DOMElement'
@@ -52,9 +52,12 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
   onRenderPass(pass: GPURenderPassEncoder): void
 }
 
-function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin<GConstructor>>>(
+// using ReturnType of the previous mixin
+// https://stackoverflow.com/a/65417255/13354068
+// that seems to work as well: function MeshTransformedMixin<TBase extends MixinConstructor<MeshBaseClass>>
+function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
   Base: TBase
-): GConstructor<MeshTransformedBaseClass> & TBase {
+): MixinConstructor<MeshTransformedBaseClass> & TBase {
   return class MeshTransformedBase extends Base {
     domFrustum: DOMFrustum
     frustumCulled: boolean
@@ -68,7 +71,8 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin<GCon
       /* allow empty callback */
     }
 
-    // now force override of all missing properties
+    // TODO
+    // now force ugly override of all missing properties
     // because typescript gets all confused with the nested mixins
     type: string
     renderer: CameraRenderer
@@ -83,7 +87,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin<GCon
     material: RenderMaterial
     _onRenderCallback: () => void
 
-    constructor(...params: any) {
+    constructor(...params: any[]) {
       super(
         params[0] as CameraRenderer | GPUCurtains,
         params[1] as HTMLElement | string,

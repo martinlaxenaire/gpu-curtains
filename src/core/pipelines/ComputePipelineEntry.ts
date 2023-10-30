@@ -3,7 +3,7 @@ import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { throwError } from '../../utils/utils'
 import { PipelineEntryBuffersParams } from '../../types/core/pipelines/ComputePipelineEntry'
 import { PipelineEntryShaders, PipelineEntryParams } from '../../types/core/pipelines/PipelineEntry'
-import { BindGroupBufferBindingElement } from '../../types/core/bindGroups/BindGroup'
+import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 export class ComputePipelineEntry extends PipelineEntry {

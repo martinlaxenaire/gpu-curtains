@@ -3,7 +3,7 @@ import { MaterialParams } from '../../types/core/materials/Material'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
-import { BindGroupBindingBuffer, WorkInputBindingsParams } from '../../types/core/bindGroups/BindGroup'
+import { BindGroupBindingBuffer, WorkInputBindingsParams } from '../../types/BindGroups'
 import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 export class ComputeMaterial extends Material {

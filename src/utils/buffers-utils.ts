@@ -1,6 +1,6 @@
-import { InputValue } from '../types/core/bindGroups/BindGroup'
+import { InputValue } from '../types/BindGroups'
 import { VertexBuffer } from '../types/core/geometries/Geometry'
-import { BindingType } from '../types/core/bindings/Bindings'
+import { BindingType } from '../core/bindings/Bindings'
 
 export type TypedArray =
   | Int8Array

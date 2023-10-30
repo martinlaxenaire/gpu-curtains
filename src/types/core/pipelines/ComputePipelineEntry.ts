@@ -1,4 +1,4 @@
-import { AllowedBindGroups } from '../bindGroups/BindGroup'
+import { AllowedBindGroups } from '../../BindGroups'
 
 export interface PipelineEntryBuffersParams {
   bindGroups: AllowedBindGroups[]

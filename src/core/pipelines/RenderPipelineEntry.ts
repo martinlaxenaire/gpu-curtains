@@ -6,7 +6,7 @@ import { PipelineEntryParams, PipelineEntryShaders } from '../../types/core/pipe
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderPipelineEntryBuffersParams } from '../../types/core/pipelines/RenderPipelineEntry'
 import { RenderMaterialAttributes } from '../../types/core/materials/RenderMaterial'
-import { BindGroupBufferBindingElement } from '../../types/core/bindGroups/BindGroup'
+import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 
 export class RenderPipelineEntry extends PipelineEntry {
   shaders: PipelineEntryShaders

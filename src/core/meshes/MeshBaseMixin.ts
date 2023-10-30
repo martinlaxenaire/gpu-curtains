@@ -38,7 +38,7 @@ const defaultMeshBaseParams = {
 // that the type being passed in is a class.
 // We use a generic version which can apply a constraint on
 // the class which this mixin is applied to
-export type GConstructor<T = {}> = new (...args: any[]) => T
+export type MixinConstructor<T = {}> = new (...args: any[]) => T
 
 // based on https://stackoverflow.com/a/75673107/13354068
 // we declare first a class, and then the mixin with a return type
@@ -111,8 +111,8 @@ export declare class MeshBaseClass {
   destroy(): void
 }
 
-function MeshBaseMixin<TBase extends GConstructor>(Base: TBase): GConstructor<MeshBaseClass> & TBase {
-  return class MeshBase extends Base {
+function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstructor<MeshBaseClass> & TBase {
+  return class MeshBase extends Base implements MeshBaseClass {
     type: string
     readonly uuid: string
     readonly index: number
@@ -134,8 +134,26 @@ function MeshBaseMixin<TBase extends GConstructor>(Base: TBase): GConstructor<Me
     visible: boolean
     _ready: boolean
 
-    //constructor(renderer: CameraRenderer | GPUCurtains, element: HTMLElement | string, parameters: MeshBaseParams) {
-    constructor(...params: any) {
+    #autoAddToScene = true
+
+    // callbacks / events
+    _onReadyCallback: () => void = () => {
+      /* allow empty callback */
+    }
+    _onBeforeRenderCallback: () => void = () => {
+      /* allow empty callback */
+    }
+    _onRenderCallback: () => void = () => {
+      /* allow empty callback */
+    }
+    _onAfterRenderCallback: () => void = () => {
+      /* allow empty callback */
+    }
+    _onAfterResizeCallback: () => void = () => {
+      /* allow empty callback */
+    }
+
+    constructor(...params: any[]) {
       super(
         params[0] as CameraRenderer | GPUCurtains,
         params[1] as HTMLElement | string,
@@ -203,25 +221,6 @@ function MeshBaseMixin<TBase extends GConstructor>(Base: TBase): GConstructor<Me
       } as RenderMaterialParams)
 
       this.addToScene()
-    }
-
-    #autoAddToScene = true
-
-    // callbacks / events
-    _onReadyCallback: () => void = () => {
-      /* allow empty callback */
-    }
-    _onBeforeRenderCallback: () => void = () => {
-      /* allow empty callback */
-    }
-    _onRenderCallback: () => void = () => {
-      /* allow empty callback */
-    }
-    _onAfterRenderCallback: () => void = () => {
-      /* allow empty callback */
-    }
-    _onAfterResizeCallback: () => void = () => {
-      /* allow empty callback */
     }
 
     get autoAddToScene(): boolean {

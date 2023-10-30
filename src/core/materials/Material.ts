@@ -4,14 +4,13 @@ import { BindGroup } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Sampler } from '../samplers/Sampler'
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
-import { BufferBindings } from '../bindings/BufferBindings'
-import { BufferBindingsUniform } from '../../types/core/bindings/BufferBindings'
+import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings'
 import {
   AllowedBindGroups,
   BindGroupBindingBuffer,
   BindGroupBindingElement,
   BindGroupBufferBindingElement,
-} from '../../types/core/bindGroups/BindGroup'
+} from '../../types/BindGroups'
 import { Texture } from '../textures/Texture'
 import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/core/materials/Material'
 import { GPUCurtains } from '../../curtains/GPUCurtains'

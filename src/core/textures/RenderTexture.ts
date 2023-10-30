@@ -1,9 +1,8 @@
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
-import { TextureBindings } from '../bindings/TextureBindings'
-import { BindGroupBindingElement } from '../../types/core/bindGroups/BindGroup'
+import { TextureBindings, TextureBindingsParams } from '../bindings/TextureBindings'
+import { BindGroupBindingElement } from '../../types/BindGroups'
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { TextureBindingsParams } from '../../types/core/bindings/TextureBindings'
 
 const defaultRenderTextureParams: RenderTextureParams = {
   label: 'Texture',
