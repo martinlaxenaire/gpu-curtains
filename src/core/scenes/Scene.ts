@@ -296,7 +296,7 @@ export class Scene {
 
   render(commandEncoder: GPUCommandEncoder) {
     this.computePassEntries.forEach((computePass) => {
-      if (!computePass.canComputePass) return
+      if (!computePass.canRender) return
 
       const pass = commandEncoder.beginComputePass()
       computePass.render(pass)

@@ -27,7 +27,7 @@ export class RenderMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    const { shaders, label, useAsyncPipeline, inputs, inputBindGroups, geometry, ...renderingOptions } = parameters
+    const { shaders, label, useAsyncPipeline, inputs, bindGroups, geometry, ...renderingOptions } = parameters
 
     if (!shaders.vertex.entryPoint) {
       shaders.vertex.entryPoint = 'main'
@@ -43,7 +43,7 @@ export class RenderMaterial extends Material {
       label,
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       ...(inputs !== undefined && { inputs }),
-      ...(inputBindGroups !== undefined && { inputBindGroups }),
+      ...(bindGroups !== undefined && { bindGroups }),
       rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
     } as MaterialOptions
 

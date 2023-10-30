@@ -16,11 +16,17 @@ export interface RectBBox {
   left: number
 }
 
-export interface DOMElementBoundingRect extends RectCoords, RectBBox {
+export interface DOMPosition {
   x: number
   y: number
 }
 
+export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPosition {}
+
+/**
+ * DOMElement class:
+ * Used to track a DOM Element size and position by using a resize observer provided by {@see ResizeManager}
+ */
 export class DOMElement {
   #throttleResize: null | ReturnType<typeof setTimeout> = null
 
@@ -31,6 +37,13 @@ export class DOMElement {
   resizeManager: ResizeManager
   _boundingRect: DOMElementBoundingRect
 
+  /**
+   * DOMElement constructor
+   * @param {Object=} parameters - parameters used to create our DOMElement
+   * @param {HTMLElement=} parameters.element - DOM HTML element to track
+   * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
+   * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
+   */
   constructor(
     {
       element = document.body,
@@ -75,10 +88,21 @@ export class DOMElement {
     this.setSize()
   }
 
+  /**
+   * Check whether 2 bounding rectangles are equals
+   * @param {(DOMRect | DOMElementBoundingRect)} rect1 - first bounding rectangle
+   * @param {(DOMRect | DOMElementBoundingRect)} rect2 - second bounding rectangle
+   * @returns {boolean}
+   */
   compareBoundingRect(rect1: DOMRect | DOMElementBoundingRect, rect2: DOMRect | DOMElementBoundingRect): boolean {
     return !['x', 'y', 'left', 'top', 'right', 'bottom', 'width', 'height'].some((k) => rect1[k] !== rect2[k])
   }
 
+  /**
+   * Get or set our element's bounding rectangle
+   * @readonly
+   * @type {DOMElementBoundingRect}
+   */
   get boundingRect(): DOMElementBoundingRect {
     return this._boundingRect
   }
@@ -102,6 +126,12 @@ export class DOMElement {
     }
   }
 
+  /**
+   * Update our element bounding rectangle because the scroll position has changed
+   * @param {number} lastXDelta - delta along X axis
+   * @param {number} lastYDelta - delta along Y axis
+   */
+  // TODO use DOMPosition object instead!
   updateScrollPosition(lastXDelta: number, lastYDelta: number) {
     if (this.isResizing) return
 
@@ -113,12 +143,16 @@ export class DOMElement {
     }
   }
 
-  setSize(contentRect: DOMElementBoundingRect | null = null) {
+  /**
+   * Set our element bounding rectangle, either by a value or a getBoundingClientRect call
+   * @param {DOMElementBoundingRect=} boundingRect - new bounding rectangle
+   */
+  setSize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!this.element) return
     // only throttle if we have set our first value
     this.isResizing = !!this.boundingRect
 
-    this.boundingRect = contentRect ?? this.element.getBoundingClientRect()
+    this.boundingRect = boundingRect ?? this.element.getBoundingClientRect()
 
     // TODO
     this.#throttleResize = setTimeout(() => {
@@ -127,6 +161,9 @@ export class DOMElement {
     }, 50)
   }
 
+  /**
+   * Destroy our DOMElement - remove from resize observer and clear throttle timeout
+   */
   destroy() {
     this.resizeManager.unobserve(this.element)
 

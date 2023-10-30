@@ -20,7 +20,7 @@ export interface CameraParams extends CameraPerspectiveOptions {
 
 /**
  * Camera class:
- * Used to create a perspective camera and its matrices (projection, model, etc).
+ * Used to create a perspective camera and its matricess (projection, model, view).
  */
 export class Camera {
   position: Vec3

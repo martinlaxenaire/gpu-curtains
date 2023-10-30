@@ -18,6 +18,12 @@ const defaultDOMFrustumMargins: RectCoords = {
   left: 0,
 }
 
+/**
+ * DOMFrustum class:
+ * Used to check if a {@see Projected3DObject} is currently contained inside a DOM bounding rectangle.
+ * Uses a modelViewProjectionMatrix that contains both 3D Object and Camera useful transformation and projection informations.
+ * The DOM bounding rectangle to check against usually is the {@see GPURenderer}'s {@see DOMElement} bounding rectangle, unless frustum margins are specified.
+ */
 export class DOMFrustum {
   boundingBox: Box3
   modelViewProjectionMatrix: Mat4
@@ -32,6 +38,16 @@ export class DOMFrustum {
   isIntersecting: boolean
   shouldUpdate: boolean
 
+  /**
+   * DOMFrustum constructor
+   * @param {DOMFrustumParams} parameters - parameters used to create our DOMFrustum
+   * @param {Box3=} parameters.boundingBox - our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@see Geometry}
+   * @param {Mat4=} parameters.modelViewProjectionMatrix - {@see Projected3DObject} model view projection matrix to use for frustum calculations
+   * @param {DOMElementBoundingRect=} parameters.containerBoundingRect - the bounding rectangle to check against
+   * @param {RectCoords=} parameters.DOMFrustumMargins - additional margins to add to containerBoundingRect
+   * @param {function=} parameters.onReEnterView - callback to run when the {@see Projected3DObject} re enters the view frustum
+   * @param {function=} parameters.onLeaveView - callback to run when the {@see Projected3DObject} leaves the view frustum
+   */
   constructor({
     boundingBox = new Box3(),
     modelViewProjectionMatrix = new Mat4(),
@@ -76,10 +92,19 @@ export class DOMFrustum {
     this.shouldUpdate = false
   }
 
+  /**
+   * Set our container bounding rectangle (called on resize)
+   * @param {DOMElementBoundingRect} boundingRect - new bounding rectangle
+   */
   setContainerBoundingRect(boundingRect: DOMElementBoundingRect) {
     this.containerBoundingRect = boundingRect
   }
 
+  /**
+   * Get our DOM frustum bounding rectangle, i.e. our container bounding rectangle with the DOM frustum margins applied
+   * @readonly
+   * @type {RectCoords}
+   */
   get DOMFrustumBoundingRect(): RectCoords {
     return {
       top: this.projectedBoundingRect.top - this.DOMFrustumMargins.top,
@@ -89,6 +114,9 @@ export class DOMFrustum {
     }
   }
 
+  /**
+   * Applies all model view projection matrix transformation to our bounding box and then check against intersections
+   */
   computeProjectedToDocumentCoords() {
     const projectedBox = this.boundingBox.applyMat4(this.modelViewProjectionMatrix)
 
@@ -115,6 +143,9 @@ export class DOMFrustum {
     this.intersectsContainer()
   }
 
+  /**
+   * Check whether our projected bounding rectangle intersects with our DOM frustum bounding rectangle
+   */
   intersectsContainer() {
     if (
       Math.round(this.DOMFrustumBoundingRect.right) <= this.containerBoundingRect.left ||

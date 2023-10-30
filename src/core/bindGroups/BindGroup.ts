@@ -44,7 +44,7 @@ export class BindGroup {
   /**
    * BindGroup constructor
    * @param {Renderer | GPUCurtains} renderer - our renderer class object
-   * @param {BindGroupParams=} parameters - parameters used to create our bind group
+   * @param {BindGroupParams=} parameters - parameters used to create our BindGroup
    * @param {string=} parameters.label - bind group label
    * @param {number=} parameters.index - bind group index (used to generate shader code)
    * @param {BindGroupBindingElement[]=} parameters.bindings - array of already created bindings (buffers, texture, etc.)

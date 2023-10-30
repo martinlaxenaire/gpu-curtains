@@ -33,8 +33,8 @@ export type MaterialBindGroups = AllowedBindGroups[]
 
 export interface MaterialInputBindingsParams {
   inputs?: BindGroupInputs
-  inputBindGroups?: BindGroup[]
-  samplers?: Sampler[]
+  bindGroups?: BindGroup[]
+  samplers?: Sampler[] // TODO render material property or not?
 }
 
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
@@ -44,7 +44,7 @@ export interface MaterialOptions {
   shaders: MaterialShaders
   useAsyncPipeline?: boolean
   inputs?: BindGroupInputs
-  inputBindGroups?: BindGroup[]
+  bindGroups?: BindGroup[]
   samplers?: Sampler[]
   rendering?: RenderMaterialRenderingOptions
 }

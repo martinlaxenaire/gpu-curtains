@@ -499,7 +499,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     autoAddToScene: false, // we will manually take care of rendering
-    inputBindGroups: [computeBindGroup],
+    bindGroups: [computeBindGroup],
   })
 
   const computeUpdatePass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -511,7 +511,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     autoAddToScene: false, // we will manually take care of rendering
-    inputBindGroups: [computeBindGroup],
+    bindGroups: [computeBindGroup],
   })
 
   const computeNormalPass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -523,7 +523,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     autoAddToScene: false, // we will manually take care of rendering
-    inputBindGroups: [computeBindGroup],
+    bindGroups: [computeBindGroup],
   })
 
   console.log(computeForcesPass.material, computeUpdatePass.material, computeNormalPass.material)

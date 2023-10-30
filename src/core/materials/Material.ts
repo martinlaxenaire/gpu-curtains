@@ -47,7 +47,7 @@ export class Material {
 
     this.renderer = renderer
 
-    const { shaders, label, useAsyncPipeline, inputs, inputBindGroups, samplers } = parameters
+    const { shaders, label, useAsyncPipeline, inputs, bindGroups, samplers } = parameters
 
     // shaders = {
     //   ...{
@@ -74,7 +74,7 @@ export class Material {
       label,
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       ...(inputs !== undefined && { inputs }),
-      ...(inputBindGroups !== undefined && { inputBindGroups }),
+      ...(bindGroups !== undefined && { bindGroups }),
       ...(samplers !== undefined && { samplers }),
     }
 
@@ -157,7 +157,7 @@ export class Material {
       this.inputsBindGroups.push(inputsBindGroup)
     }
 
-    this.options.inputBindGroups?.forEach((bindGroup) => {
+    this.options.bindGroups?.forEach((bindGroup) => {
       this.processBindGroupBindings(bindGroup)
       this.inputsBindGroups.push(bindGroup)
     })
@@ -196,7 +196,7 @@ export class Material {
       this.bindGroups.push(this.texturesBindGroup)
     }
 
-    this.options.inputBindGroups?.forEach((bindGroup) => {
+    this.options.bindGroups?.forEach((bindGroup) => {
       // it has been created but not been added yet? add it!
       if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         this.bindGroups.push(bindGroup)
