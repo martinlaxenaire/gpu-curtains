@@ -1,5 +1,5 @@
 import { toCamelCase } from '../../utils/utils'
-import { MaterialShadersType } from '../../types/core/materials/Material'
+import { MaterialShadersType } from '../../types/Materials'
 import { TextureBindings } from './TextureBindings'
 import { SamplerBindings } from './SamplerBindings'
 

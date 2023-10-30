@@ -5,12 +5,12 @@ import MeshBaseMixin, { MixinConstructor, MeshBaseClass } from './MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseOptions, MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 import { DOMElementBoundingRect, RectCoords } from '../DOM/DOMElement'
-import { AllowedGeometries } from '../../types/core/materials/RenderMaterial'
 import { Mat4 } from '../../math/Mat4'
 import { ProjectedObject3DMatrices } from '../../types/core/objects3D/ProjectedObject3D'
 import { RenderTexture } from '../textures/RenderTexture'
 import { Texture } from '../textures/Texture'
 import { RenderMaterial } from '../materials/RenderMaterial'
+import { AllowedGeometries } from '../../types/Materials'
 
 const defaultMeshParams = {
   useProjection: true,

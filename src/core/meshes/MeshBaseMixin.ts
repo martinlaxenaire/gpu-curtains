@@ -9,10 +9,10 @@ import { RenderTarget } from '../renderPasses/RenderTarget'
 import { MeshBaseOptions, MeshBaseParams } from '../../types/core/meshes/MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshType } from '../renderers/GPURenderer'
-import { RenderMaterialParams } from '../../types/core/materials/RenderMaterial'
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
 import { Material } from '../materials/Material'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
+import { RenderMaterialParams } from '../../types/Materials'
 
 let meshIndex = 0
 

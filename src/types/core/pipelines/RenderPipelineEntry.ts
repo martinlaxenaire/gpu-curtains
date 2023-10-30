@@ -1,5 +1,9 @@
-import { RenderMaterialAttributes, RenderMaterialRenderingOptions } from '../materials/RenderMaterial'
-import { MaterialBindGroups, MaterialShaders } from '../materials/Material'
+import {
+  MaterialBindGroups,
+  MaterialShaders,
+  RenderMaterialAttributes,
+  RenderMaterialRenderingOptions,
+} from '../../Materials'
 
 export interface RenderPipelineEntryBuffersParams {
   attributes: RenderMaterialAttributes

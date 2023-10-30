@@ -4,7 +4,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
 import { BindGroupBufferBindingElement, BindGroupParams } from '../../types/BindGroups'
-import { MaterialTexture } from '../../types/core/materials/Material'
+import { MaterialTexture } from '../../types/Materials'
 
 export interface TextureBindGroupParams extends BindGroupParams {
   textures?: MaterialTexture[]

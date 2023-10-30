@@ -1,5 +1,5 @@
 import { InputValue } from '../types/BindGroups'
-import { VertexBuffer } from '../types/core/geometries/Geometry'
+import { VertexBuffer } from '../types/Geometries'
 import { BindingType } from '../core/bindings/Bindings'
 
 export type TypedArray =

@@ -8,7 +8,7 @@ import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
 import { AttributeBufferParams } from '../utils/buffers-utils'
-import { MaterialShadersType } from './core/materials/Material'
+import { MaterialShadersType } from './Materials'
 
 export type BindGroupBufferBindingElement = BufferBindings | WorkBufferBindings
 export type BindGroupBindingElement = BindGroupBufferBindingElement | SamplerBindings | TextureBindings

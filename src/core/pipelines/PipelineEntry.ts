@@ -6,7 +6,7 @@ import {
 } from '../../types/core/pipelines/PipelineEntry'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { AllowedBindGroups } from '../../types/BindGroups'
-import { MaterialShadersType } from '../../types/core/materials/Material'
+import { MaterialShadersType } from '../../types/Materials'
 
 let pipelineId = 0
 

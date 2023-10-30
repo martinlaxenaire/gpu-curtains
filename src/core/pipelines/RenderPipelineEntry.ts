@@ -5,8 +5,8 @@ import { throwError } from '../../utils/utils'
 import { PipelineEntryParams, PipelineEntryShaders } from '../../types/core/pipelines/PipelineEntry'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderPipelineEntryBuffersParams } from '../../types/core/pipelines/RenderPipelineEntry'
-import { RenderMaterialAttributes } from '../../types/core/materials/RenderMaterial'
 import { BindGroupBufferBindingElement } from '../../types/BindGroups'
+import { RenderMaterialAttributes } from '../../types/Materials'
 
 export class RenderPipelineEntry extends PipelineEntry {
   shaders: PipelineEntryShaders

@@ -1,6 +1,6 @@
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Vec3 } from '../../math/Vec3'
-import { GeometryBaseParams } from '../../types/core/geometries/Geometry'
+import { GeometryBaseParams } from '../../types/Geometries'
 
 interface SphereGeometryParams extends GeometryBaseParams {
   widthSegments?: number

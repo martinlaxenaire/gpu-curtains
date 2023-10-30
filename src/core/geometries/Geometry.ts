@@ -1,8 +1,13 @@
 import { Box3 } from '../../math/Box3'
 import { AttributeBufferParams, AttributeBufferParamsOption } from '../../utils/buffers-utils'
 import { throwError, throwWarning } from '../../utils/utils'
-import { GeometryOptions, GeometryParams, VertexBuffer, VertexBufferParams } from '../../types/core/geometries/Geometry'
+import { GeometryOptions, GeometryParams, VertexBuffer, VertexBufferParams } from '../../types/Geometries'
 
+/**
+ * Geometry class:
+ * Used to create a Geometry from given parameters like instances count or geometry attributes.
+ * Holds all attributes arrays, bounding box and handle WGSL code snippet for the vertex shader input attributes.
+ */
 export class Geometry {
   verticesCount: number
   verticesOrder: GPUFrontFace
@@ -15,7 +20,14 @@ export class Geometry {
 
   wgslStructFragment: string
 
-  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] } = {} as GeometryParams) {
+  /**
+   * Geometry constructor
+   * @param {GeometryParams} [parameters={}] - parameters used to create our Geometry
+   * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
+   * @param {number} [parameters.instancesCount=1] - number of instances to draw
+   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+   */
+  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] }: GeometryParams = {}) {
     this.verticesCount = 0
     this.verticesOrder = verticesOrder
     this.instancesCount = instancesCount
@@ -26,7 +38,7 @@ export class Geometry {
 
     this.vertexBuffers = []
 
-    // will contain our vertex position / uv data at least
+    // should contain our vertex position / uv data at least
     this.addVertexBuffer({
       name: 'attributes',
     })
@@ -46,7 +58,15 @@ export class Geometry {
     })
   }
 
-  addVertexBuffer({ stepMode = 'vertex', name, attributes = [] } = {} as VertexBufferParams): VertexBuffer {
+  /**
+   * Add a vertex buffer to our Geometry, set its attributes and return it
+   * @param {VertexBufferParams} [parameters={}] - vertex buffer parameters
+   * @param {GPUVertexStepMode} [parameters.stepMode="vertex"] - GPU vertex step mode
+   * @param {string} [parameters.name] - vertex buffer name
+   * @param {AttributeBufferParamsOption[]} [parameters.attributes=[]] - vertex buffer attributes
+   * @returns {VertexBuffer}
+   */
+  addVertexBuffer({ stepMode = 'vertex', name, attributes = [] }: VertexBufferParams = {}): VertexBuffer {
     const vertexBuffer = {
       name: name ?? 'attributes' + this.vertexBuffers.length,
       stepMode,
@@ -70,10 +90,26 @@ export class Geometry {
     return vertexBuffer
   }
 
+  /**
+   * Get a vertex buffer by name
+   * @param {string} name - our vertex buffer name
+   * @returns {?VertexBuffer} - found vertex buffer or null if not found
+   */
   getVertexBufferByName(name = ''): VertexBuffer | null {
     return this.vertexBuffers.find((vertexBuffer) => vertexBuffer.name === name)
   }
 
+  /**
+   * Set a vertex buffer attribute
+   * @param {AttributeBufferParamsOption} parameters - attributes parameters
+   * @param {VertexBuffer=} parameters.vertexBuffer - vertex buffer holding this attribute
+   * @param {string} parameters.name - attribute name
+   * @param {CoreBufferType} [parameters.type="vec3f"] - attribute type
+   * @param {GPUVertexFormat} [parameters.bufferFormat="float32x3"] - attribute buffer format
+   * @param {number} [parameters.size=3] - attribute size
+   * @param {Float32Array} [parameters.array=Float32Array] - attribute array
+   * @param {number} [parameters.verticesUsed=1] - number of vertices used by this attribute, i.e. insert one for every X vertices
+   */
   setAttribute({
     vertexBuffer = this.vertexBuffers[0],
     name,
@@ -144,6 +180,11 @@ export class Geometry {
     vertexBuffer.attributes.push(attribute)
   }
 
+  /**
+   * Get an attribute by name
+   * @param {string} name - name of the attribute to find
+   * @returns {?AttributeBufferParams} - found attribute or null if not found
+   */
   getAttributeByName(name: string): AttributeBufferParams | null {
     let attribute
     this.vertexBuffers.forEach((vertexBuffer) => {
@@ -153,10 +194,19 @@ export class Geometry {
     return attribute
   }
 
+  /**
+   * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+   * @readonly
+   * @type {boolean}
+   */
   get shouldCompute(): boolean {
     return !this.vertexBuffers[0].array
   }
 
+  /**
+   * Compute a Geometry, which means iterate through all vertex buffers and create the attributes array that will be sent as buffers.
+   * Also compute the Geometry bounding box.
+   */
   computeGeometry() {
     if (!this.shouldCompute) return
 
@@ -224,6 +274,10 @@ export class Geometry {
     this.#setWGSLFragment()
   }
 
+  /**
+   * Set the WGSL code snippet that will be appended to the vertex shader.
+   * @private
+   */
   #setWGSLFragment() {
     let locationIndex = -1
     this.wgslStructFragment = `struct Attributes {\n\t@builtin(vertex_index) vertexIndex : u32,\n\t@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers

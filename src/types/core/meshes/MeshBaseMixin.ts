@@ -8,9 +8,9 @@ import { DOMElementBoundingRect } from '../../../core/DOM/DOMElement'
 import { Texture } from '../../../core/textures/Texture'
 import { RenderTexture } from '../../../core/textures/RenderTexture'
 
-import { RenderMaterialBaseParams, RenderMaterialParams } from '../materials/RenderMaterial'
 import { CurtainsTextureOptions, TextureDefaultParams } from '../textures/Texture'
 import { RenderTextureParams } from '../textures/RenderTexture'
+import { RenderMaterialBaseParams, RenderMaterialParams } from '../../Materials'
 
 export interface MeshBaseParams extends RenderMaterialParams {
   autoAddToScene: boolean

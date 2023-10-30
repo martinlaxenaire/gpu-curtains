@@ -1,4 +1,4 @@
-import { MaterialShaders, FullShadersType } from '../materials/Material'
+import { MaterialShaders, FullShadersType } from '../../Materials'
 import { Renderer } from '../../../utils/renderer-utils'
 import { GPUCurtains } from '../../../curtains/GPUCurtains'
 

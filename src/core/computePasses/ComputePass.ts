@@ -1,7 +1,7 @@
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { generateUUID } from '../../utils/utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
-import { MaterialParams, MaterialShaders } from '../../types/core/materials/Material'
+import { MaterialParams, MaterialShaders } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 export interface ComputePassOptions {

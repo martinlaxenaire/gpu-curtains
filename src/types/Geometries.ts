@@ -1,4 +1,4 @@
-import { AttributeBufferParams, AttributeBufferParamsOption } from '../../../utils/buffers-utils'
+import { AttributeBufferParams, AttributeBufferParamsOption } from '../utils/buffers-utils'
 
 export interface IndexBuffer {
   bufferFormat: GPUIndexFormat

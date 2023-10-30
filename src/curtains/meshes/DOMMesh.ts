@@ -7,7 +7,7 @@ import { throwWarning } from '../../utils/utils'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 import { Texture } from '../../core/textures/Texture'
-import { AllowedGeometries } from '../../types/core/materials/RenderMaterial'
+import { AllowedGeometries } from '../../types/Materials'
 
 export interface DOMMeshBaseParams extends MeshBaseParams {
   autoloadSources?: boolean

@@ -5,15 +5,39 @@ import { CameraRenderer, isRenderer, Renderer } from '../../utils/renderer-utils
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import {
   AllowedGeometries,
+  MaterialOptions,
   RenderMaterialAttributes,
   RenderMaterialParams,
-} from '../../types/core/materials/RenderMaterial'
-import { MaterialOptions } from '../../types/core/materials/Material'
+} from '../../types/Materials'
 import { RenderPipelineEntryBaseParams } from '../../types/core/pipelines/RenderPipelineEntry'
 
+/**
+ * RenderMaterial class:
+ * Create a Material specifically built to draw vertices
+ * @extends Material
+ */
 export class RenderMaterial extends Material {
   attributes: RenderMaterialAttributes | null
 
+  /**
+   * RenderMaterial constructor
+   * @param {Renderer | GPUCurtains} renderer - our renderer class object
+   * @param {MaterialParams} parameters - parameters used to create our Material
+   * @param {string} parameters.label - RenderMaterial label
+   * @param {AllowedGeometries} parameters.geometry - geometry to draw
+   * @param {boolean} parameters.useAsyncPipeline - whether the {@see RenderPipelineEntry} should be compiled asynchronously
+   * @param {MaterialShaders} parameters.shaders - our RenderMaterial shader codes and entry points
+   * @param {BindGroupInputs} parameters.inputs - our RenderMaterial {@see BindGroup} inputs
+   * @param {BindGroup[]} parameters.bindGroups - already created {@see BindGroup} to use
+   * @param {Sampler[]} parameters.samplers - array of {@see Sampler}
+   * @param {RenderMaterialRenderingOptions} parameters.rendering - RenderMaterial rendering options to pass to the {@see RenderPipelineEntry}
+   * @param {boolean} parameters.rendering.useProjection - whether to use the Camera bind group with this material
+   * @param {boolean} parameters.rendering.transparent - impacts the {@see RenderPipelineEntry} blend properties
+   * @param {boolean} parameters.rendering.depthWriteEnabled - whether to write to the depth buffer or not
+   * @param {GPUCompareFunction} parameters.rendering.depthCompare - depth compare function to use
+   * @param {GPUCullMode} parameters.rendering.cullMode - cull mode to use
+   * @param {Geometry["verticesOrder"]} parameters.rendering.verticesOrder - vertices order to use
+   */
   constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
@@ -59,6 +83,19 @@ export class RenderMaterial extends Material {
     this.setAttributesFromGeometry(geometry)
   }
 
+  /**
+   * When all bind groups and attributes are created, add them to the {@see ComputePipelineEntry} and compile it
+   */
+  setPipelineEntryBuffers() {
+    this.pipelineEntry.setPipelineEntryBuffers({
+      attributes: this.attributes,
+      bindGroups: this.bindGroups,
+    })
+  }
+
+  /**
+   * Create the attributes buffers, check if all bind groups are ready, create them if needed and set {@see RenderPipelineEntry} bind group buffers
+   */
   setMaterial() {
     if (!this.attributes?.vertexBuffers[0].buffer) {
       this.createAttributesBuffers()
@@ -71,19 +108,16 @@ export class RenderMaterial extends Material {
     }
   }
 
-  setPipelineEntryBuffers() {
-    this.pipelineEntry.setPipelineEntryBuffers({
-      attributes: this.attributes,
-      bindGroups: this.bindGroups,
-    })
-  }
-
-  get ready(): boolean {
-    return !!(this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
-  }
+  // get ready(): boolean {
+  //   return !!(this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
+  // }
 
   /** ATTRIBUTES **/
 
+  /**
+   * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
+   * @param {AllowedGeometries} geometry - the geometry to draw
+   */
   setAttributesFromGeometry(geometry: AllowedGeometries) {
     if (geometry.shouldCompute) {
       geometry.computeGeometry()
@@ -98,6 +132,9 @@ export class RenderMaterial extends Material {
     }
   }
 
+  /**
+   * Create and write attribute buffers
+   */
   createAttributesBuffers() {
     this.attributes.vertexBuffers.forEach((vertexBuffer) => {
       vertexBuffer.buffer = this.renderer.createBuffer({
@@ -120,6 +157,9 @@ export class RenderMaterial extends Material {
     })
   }
 
+  /**
+   * Destroy the attribute buffers
+   */
   destroyAttributeBuffers() {
     this.attributes.vertexBuffers.forEach((vertexBuffer) => {
       vertexBuffer.buffer?.destroy()
@@ -131,6 +171,9 @@ export class RenderMaterial extends Material {
 
   /** BIND GROUPS **/
 
+  /**
+   * Create the bind groups if they need to be created, but first add Camera bind group if needed
+   */
   createBindGroups() {
     // camera first!
     if ((this.renderer as CameraRenderer).cameraBindGroup && this.options.rendering.useProjection) {
@@ -141,8 +184,9 @@ export class RenderMaterial extends Material {
   }
 
   /**
-   *
-   * @param pass
+   * Render the material if it is ready:
+   * Set the current pipeline, set the bind groups, set the vertex buffers and then draw!
+   * @param {GPURenderPassEncoder} pass
    */
   render(pass: GPURenderPassEncoder) {
     // no point to render if the WebGPU device is not ready
@@ -170,6 +214,9 @@ export class RenderMaterial extends Material {
     }
   }
 
+  /**
+   * Destroy the RenderMaterial
+   */
   destroy() {
     super.destroy()
     // destroy attributes buffers

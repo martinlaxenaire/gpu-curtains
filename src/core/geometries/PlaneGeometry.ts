@@ -1,13 +1,18 @@
 import { IndexedGeometry } from './IndexedGeometry'
 import { Geometry } from './Geometry'
 import { AttributeBufferParamsOption } from '../../utils/buffers-utils'
-import { GeometryBaseParams } from '../../types/core/geometries/Geometry'
+import { GeometryBaseParams } from '../../types/Geometries'
 
 export interface PlaneGeometryParams extends GeometryBaseParams {
   widthSegments?: number
   heightSegments?: number
 }
 
+/**
+ * PlaneGeometry class:
+ * Used to create an indexed plane geometry based on the number of segments along the X and Y axis.
+ * @extends IndexedGeometry
+ */
 export class PlaneGeometry extends IndexedGeometry {
   definition: {
     id: number
@@ -16,9 +21,20 @@ export class PlaneGeometry extends IndexedGeometry {
     count: number
   }
 
-  constructor(
-    { widthSegments = 1, heightSegments = 1, instancesCount = 1, vertexBuffers = [] } = {} as PlaneGeometryParams
-  ) {
+  /**
+   * PlaneGeometry constructor
+   * @param {PlaneGeometryParams} [parameters={}] - parameters used to create our PlaneGeometry
+   * @param {number} [parameters.instancesCount=1] - number of instances to draw
+   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+   * @param {number} [parameters.widthSegments=1] - number of segments along the X axis
+   * @param {number} [parameters.heightSegments=1] - number of segments along the Y axis
+   */
+  constructor({
+    widthSegments = 1,
+    heightSegments = 1,
+    instancesCount = 1,
+    vertexBuffers = [],
+  }: PlaneGeometryParams = {}) {
     super({ verticesOrder: 'cw', instancesCount, vertexBuffers })
 
     this.type = 'PlaneGeometry'
@@ -45,6 +61,9 @@ export class PlaneGeometry extends IndexedGeometry {
     })
   }
 
+  /**
+   * Set our PlaneGeometry index array
+   */
   setIndexArray() {
     const indexArray = new Uint32Array(this.definition.count * 6)
 
@@ -67,6 +86,11 @@ export class PlaneGeometry extends IndexedGeometry {
     })
   }
 
+  /**
+   * Compute the UV and position arrays based on our plane widthSegments and heightSegments values and return the corresponding attributes
+   * @param {Geometry['verticesCount']} verticesCount
+   * @returns {Object.<string, AttributeBufferParamsOption>}
+   */
   getIndexedVerticesAndUVs(verticesCount: Geometry['verticesCount']): Record<string, AttributeBufferParamsOption> {
     // geometry vertices and UVs
     const uv = {
@@ -91,7 +115,7 @@ export class PlaneGeometry extends IndexedGeometry {
     let positionOffset = 0
     let uvOffset = 0
 
-    // this is how it will look for a 3x3 quad
+    // this is how it will look for a 3x2 quad
     // indexing will take care of drawing the right vertices at the right time
     // 0---1---2---3
     // | //| //| //|
