@@ -16,14 +16,38 @@ export interface BindingsParams {
 
 /**
  * Bindings class:
- * This one is just a shell to build actual bindings on
+ * Used as a shell to build actual bindings upon, like {@link BufferBindings}, {@link WorkBufferBindings}, {@link TextureBindings} and {@link SamplerBindings}
  */
 export class Bindings {
+  /**
+   * The label of the {@link Bindings}
+   * @type {string}
+   */
   label: string
+  /**
+   * The name/key of the {@link Bindings}
+   * @type {string}
+   */
   name: string
+  /**
+   * The binding type of the {@link Bindings}
+   * @type {BindingType}
+   */
   bindingType: BindingType
+  /**
+   * The binding index of the {@link Bindings}, used to link bindings in the shaders
+   * @type {number}
+   */
   bindIndex: number
+  /**
+   * The visibility of the {@link Bindings} in the shaders
+   * @type {GPUShaderStageFlags}
+   */
   visibility: GPUShaderStageFlags
+  /**
+   * The padded value array that will be sent to the GPUBuffer
+   * @type {Float32Array}
+   */
   value?: Float32Array | null
 
   /**
@@ -62,13 +86,6 @@ export class Bindings {
         })()
       : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE
   }
-
-  /**
-   * Set binding WGSL fragment to be appended to the shader's code. Will be overriden.
-   */
-  // setWGSLFragment() {
-  //   /* will be overridden */
-  // }
 
   /**
    * To update our buffers before at each render. Will be overriden.

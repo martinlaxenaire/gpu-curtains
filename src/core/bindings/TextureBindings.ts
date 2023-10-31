@@ -13,7 +13,15 @@ export interface TextureBindingsParams extends BindingsParams {
  * @extends Bindings
  */
 export class TextureBindings extends Bindings {
+  /**
+   * Our {@link TextureBindings} resource, i.e. a GPUTexture or GPUExternalTexture
+   * @type {TextureBindingResource}
+   */
   resource: TextureBindingResource
+  /**
+   * An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link TextureBindings}
+   * @type {string[]}
+   */
   wgslGroupFragment: string[]
 
   /**
@@ -44,12 +52,14 @@ export class TextureBindings extends Bindings {
   }
 
   /**
-   * Set or update our binding type and our WGSL code snippet
+   * Set or update our {@link Bindings#bindingType} and our WGSL code snippet
    * @param {BindingType} bindingType - the new binding type
    */
   setBindingType(bindingType: BindingType) {
-    this.bindingType = bindingType
-    this.setWGSLFragment()
+    if (bindingType !== this.bindingType) {
+      this.bindingType = bindingType
+      this.setWGSLFragment()
+    }
   }
 
   /**

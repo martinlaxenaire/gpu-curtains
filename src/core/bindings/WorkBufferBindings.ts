@@ -11,8 +11,20 @@ export interface WorkBufferBindingsParams extends BufferBindingsParams {
  * @extends BufferBindings
  */
 export class WorkBufferBindings extends BufferBindings {
+  /**
+   * An array of number describing how we must dispatch the work group
+   * @type {number[]}
+   */
   dispatchSize: number[]
+  /**
+   * Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our {@link result} array
+   * @type {boolean}
+   */
   shouldCopyResult: boolean
+  /**
+   * Array specifically designed to handle the result of our resultBuffer GPUBuffer if needed
+   * @type {Float32Array}
+   */
   result: Float32Array
 
   /**

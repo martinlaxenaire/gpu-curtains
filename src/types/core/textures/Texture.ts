@@ -1,7 +1,4 @@
 import { Texture } from '../../../core/textures/Texture'
-import { Mesh } from '../../../core/meshes/Mesh'
-import { DOMMesh } from '../../../curtains/meshes/DOMMesh'
-import { Plane } from '../../../curtains/meshes/Plane'
 import { ShaderPass } from '../../../core/renderPasses/ShaderPass'
 import { RenderPass } from '../../../core/renderPasses/RenderPass'
 import { FullscreenPlane } from '../../../core/meshes/FullscreenPlane'

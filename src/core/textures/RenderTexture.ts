@@ -63,7 +63,7 @@ export class RenderTexture {
     if (this.options.fromTexture) {
       this.texture = this.options.fromTexture.texture
       // update texture binding
-      ;(this.bindings[0] as TextureBindings).resource = this.texture
+      this.textureBinding.resource = this.texture
       return
     }
 
@@ -81,7 +81,7 @@ export class RenderTexture {
     })
 
     // update texture binding
-    ;(this.bindings[0] as TextureBindings).resource = this.texture
+    this.textureBinding.resource = this.texture
   }
 
   setBindings() {
@@ -93,6 +93,10 @@ export class RenderTexture {
         bindingType: 'texture',
       } as TextureBindingsParams),
     ]
+  }
+
+  get textureBinding(): TextureBindings {
+    return this.bindings[0] as TextureBindings
   }
 
   resize() {

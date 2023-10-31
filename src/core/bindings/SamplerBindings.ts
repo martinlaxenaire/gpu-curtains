@@ -12,7 +12,15 @@ export interface SamplerBindingsParams extends BindingsParams {
  * @extends Bindings
  */
 export class SamplerBindings extends Bindings {
+  /**
+   * Our {@link SamplerBindings} resource, i.e. a GPUSampler
+   * @type {SamplerBindingResource}
+   */
   resource: SamplerBindingResource
+  /**
+   * An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link SamplerBindings}
+   * @type {string[]}
+   */
   wgslGroupFragment: string[]
 
   /**

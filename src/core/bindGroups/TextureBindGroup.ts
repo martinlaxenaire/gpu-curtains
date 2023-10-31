@@ -17,6 +17,10 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * @extends BindGroup
  */
 export class TextureBindGroup extends BindGroup {
+  /**
+   * An array containing all the already created external textures ID
+   * @type {number[]}
+   */
   externalTexturesIDs: number[]
 
   /**
@@ -94,7 +98,7 @@ export class TextureBindGroup extends BindGroup {
 
   /**
    * Get whether the GPU bind group is ready to be created
-   * It can be created if it has bindings and has not been created yet and all GPU textures and samplers are created
+   * It can be created if it has {@link BindGroup#bindings} and has not been created yet and all GPU textures and samplers are created
    * @readonly
    * @type {boolean}
    */
@@ -108,7 +112,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Creates bindings for buffers, textures and samplers
+   * Creates {@link BindGroup#bindings} for buffers, textures and samplers
    */
   createBindingsBuffers() {
     //let textureIndex = 0
@@ -156,7 +160,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Reset our texture bind group, first by reassigning correct entries resources, then by recreating the GPUBindGroup.
+   * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
    * Called each time a GPUTexture or GPUExternalTexture has changed:
    * - A texture media has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
    * - GPUExternalTexture at each tick
@@ -186,8 +190,8 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Get whether we should update our video texture bind group.
-   * Happens when a GPUExternalTexture is created, we need to rebuild the bind group and bind group layout from scratch. We might even need to recreate the whole pipeline (it it has already been created).
+   * Get whether we should update our video {@link TextureBindGroup}.
+   * Happens when a GPUExternalTexture is created, we need to rebuild the {@link BindGroup#bindGroup} and {@link BindGroup#bindGroupLayout} from scratch. We might even need to recreate the whole pipeline (it it has already been created).
    * @param {number} textureIndex - the texture index in the bind group textures array
    * @returns {boolean}
    */
@@ -204,40 +208,34 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Called if the result of {@link shouldUpdateVideoTextureBindGroupLayout} is true. Updates our bind group layout entries on the fly, then recreates GPUBindGroupLayout. Will also call {@link resetTextureBindGroup} afterwhile to recreate the GPUBindGroup.
+   * Called if the result of {@link shouldUpdateVideoTextureBindGroupLayout} is true. Updates our {@link BindGroup#bindGroupLayout} {@link BindGroup#entries} on the fly, then recreates GPUBindGroupLayout.
+   * Will also call {@link resetTextureBindGroup} afterwhile to recreate the GPUBindGroup.
    * @param {number} textureIndex - the texture index in the bind group textures array
    */
   updateVideoTextureBindGroupLayout(textureIndex: number) {
-    // TODO might refactor for something simpler?
     const texture = this.textures[textureIndex]
 
-    // now we have to patch bindGroupLayout and binding at index textureIndex?
-    // bindGroup will be updated inside resetTextureBindGroup
-    let entryIndex = 0
-    let countTextures = 0
-    this.entries.bindGroup.forEach((entry, index) => {
-      if (entry.resource instanceof GPUTextureView || entry.resource instanceof GPUExternalTexture) {
-        entryIndex = index
+    // find the indexes of all bindings that have 'externalTexture' as bindingType
+    const externalTexturesIndexes = [...this.bindings].reduce(
+      (foundIndexes, binding, index) => (
+        binding.bindingType === 'externalTexture' && foundIndexes.push(index), foundIndexes
+      ),
+      []
+    )
 
-        if (countTextures >= textureIndex) {
-          return
+    if (externalTexturesIndexes.length) {
+      externalTexturesIndexes.forEach((bindingIndex) => {
+        this.entries.bindGroupLayout[bindingIndex] = {
+          binding: this.entries.bindGroupLayout[bindingIndex].binding,
+          externalTexture: (texture as Texture).externalTexture,
+          visibility: this.entries.bindGroupLayout[bindingIndex].visibility,
         }
 
-        countTextures++
-      }
-    })
-
-    if (texture && this.entries.bindGroupLayout[entryIndex] && this.bindings[entryIndex]) {
-      this.entries.bindGroupLayout[entryIndex] = {
-        binding: this.entries.bindGroupLayout[entryIndex].binding,
-        [texture.bindings[0].bindingType]: (texture as Texture).externalTexture, // TODO check!!
-        visibility: this.entries.bindGroupLayout[entryIndex].visibility,
-      }
-
-      // patch binding as well
-      if (this.bindings[entryIndex]) {
-        this.bindings[entryIndex].wgslGroupFragment = texture.bindings[0].wgslGroupFragment
-      }
+        // patch binding as well
+        if (this.bindings[bindingIndex]) {
+          this.bindings[bindingIndex].wgslGroupFragment = texture.textureBinding.wgslGroupFragment
+        }
+      })
 
       // bind group will be set later anyway
       this.setBindGroupLayout()
@@ -245,7 +243,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Destroy our texture bind group
+   * Destroy our {@link TextureBindGroup}
    */
   destroy() {
     super.destroy()

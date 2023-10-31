@@ -136,6 +136,10 @@ export class Texture extends Object3D {
     ]
   }
 
+  get textureBinding(): TextureBindings {
+    return this.bindings[0] as TextureBindings
+  }
+
   get parent(): TextureParent {
     return this._parent
   }
@@ -292,7 +296,8 @@ export class Texture extends Object3D {
 
   uploadVideoTexture() {
     this.externalTexture = this.renderer.importExternalTexture(this.source as HTMLVideoElement)
-    ;(this.bindings[0] as TextureBindings).resource = this.externalTexture
+    this.textureBinding.resource = this.externalTexture
+    this.textureBinding.setBindingType('externalTexture')
     this.shouldUpdateBindGroup = true
     this.shouldUpdate = false
     this.sourceUploaded = true
@@ -319,7 +324,6 @@ export class Texture extends Object3D {
       if (texture.sourceLoaded) {
         this.size = texture.size
         this.source = texture.source
-        //;(this.bindings[0] as TextureBindings).resource = (texture.bindings[0] as TextureBindings).resource
 
         this.resize()
       }
@@ -356,7 +360,7 @@ export class Texture extends Object3D {
       this.texture = this.renderer.createTexture(options)
 
       // update texture binding
-      ;(this.bindings[0] as TextureBindings).resource = this.texture
+      this.textureBinding.resource = this.texture
 
       this.shouldUpdateBindGroup = !!this.source
     }
@@ -425,11 +429,9 @@ export class Texture extends Object3D {
       if (this.options.texture.useExternalTextures) {
         this.options.sourceType = 'externalVideo'
 
-        console.log('destroy texture from external vid texture creation', this.texture)
+        // texture bindings will be set when uploading external texture
+        // meanwhile, destroy previous texture
         this.texture?.destroy()
-
-        // reset texture bindings
-        this.setBindings()
       } else {
         this.options.sourceType = 'video'
         this.createTexture()
