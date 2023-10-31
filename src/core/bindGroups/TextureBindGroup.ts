@@ -6,6 +6,13 @@ import { Sampler } from '../samplers/Sampler'
 import { BindGroupBufferBindingElement, BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
 
+/**
+ * An object defining all possible {@link TextureBindGroup} instancing parameters
+ * @interface {object} TextureBindGroupParams
+ * @extends BindGroupParams
+ * @property {MaterialTexture[]} [textures=[]] - array of [textures]{@link MaterialTexture} to add to a {@link TextureBindGroup}
+ * @property {Sampler[]} [samplers=[]] - array of {@link Sampler} to add to a {@link TextureBindGroup}
+ */
 export interface TextureBindGroupParams extends BindGroupParams {
   textures?: MaterialTexture[]
   samplers?: Sampler[]
@@ -13,7 +20,7 @@ export interface TextureBindGroupParams extends BindGroupParams {
 
 /**
  * TextureBindGroup class:
- * Used to regroup all bindings related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
+ * Used to regroup all [bindings]{@link BindGroupBindingElement} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
  * @extends BindGroup
  */
 export class TextureBindGroup extends BindGroup {
@@ -25,14 +32,8 @@ export class TextureBindGroup extends BindGroup {
 
   /**
    * TextureBindGroup constructor
-   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
-   * @param {TextureBindGroupParams=} parameters - parameters used to create our texture bind group
-   * @param {string=} parameters.label - bind group label
-   * @param {number=} parameters.index - bind group index (used to generate shader code)
-   * @param {BindGroupBindingElement[]=} parameters.bindings - array of already created bindings (buffers, texture, etc.)
-   * @param {BindGroupInputs} parameters.inputs - inputs that will be used to create additional bindings
-   * @param {MaterialTexture[]=} parameters.textures - array of textures to add to this texture bind group
-   * @param {Sampler[]=} parameters.samplers - array of samplers to add to this texture bind group
+   * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+   * @param {TextureBindGroupParams=} parameters - [parameters]{@link TextureBindGroupParams} used to create our {@link TextureBindGroup}
    */
   constructor(
     renderer: Renderer | GPUCurtains,

@@ -3,9 +3,20 @@ import { MaterialShadersType } from '../../types/Materials'
 import { TextureBindings } from './TextureBindings'
 import { SamplerBindings } from './SamplerBindings'
 
+/**
+ * Defines all kind of binding types
+ * @type {BindingType}
+ */
 export type BindingType = 'uniform' | 'storage' | 'storageWrite' | 'texture' | 'externalTexture' | 'sampler'
+/**
+ * Defines all kind of {@link Bindings} that are related to textures or samplers
+ * @type {TextureSamplerBindings}
+ */
 export type TextureSamplerBindings = TextureBindings | SamplerBindings
 
+/**
+ * @typedef {BindingsParams}
+ */
 export interface BindingsParams {
   label?: string
   name?: string

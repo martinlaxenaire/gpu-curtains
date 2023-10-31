@@ -450,7 +450,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             pointerStrength: {
               type: 'f32',
-              value: 250,
+              value: 200,
             },
             wind: {
               type: 'vec3f',

@@ -35,7 +35,7 @@ export class BindGroup {
    */
   uuid: string
   /**
-   * The renderer used
+   * The {@link Renderer} used
    * @type {Renderer}
    */
   renderer: Renderer
@@ -51,19 +51,18 @@ export class BindGroup {
   index: number
 
   /**
-   * List of {@link Bindings} (buffers, texture, etc.) handled by this {@link BindGroup}
+   * List of [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup}
    * @type {BindGroupBindingElement[]}
    */
   bindings: BindGroupBindingElement[]
   /**
-   * List of bindings buffers handled by this {@link BindGroup}.
-   * A {@link BindGroupBindingBuffer} is composed of a typed array and its associated GPUBuffer, a reference binding and eventually a result GPUBuffer
+   * List of [bindingsBuffers]{@link BindGroupBindingBuffer} handled by this {@link BindGroup}.
    * @type {BindGroupBindingBuffer[]}
    */
   bindingsBuffers: BindGroupBindingBuffer[]
 
   /**
-   * An object containing arrays of GPUBindGroupLayoutEntry and GPUBindGroupEntry
+   * Our {@link BindGroup} [entries]{@link BindGroupEntries} objects
    * @type {BindGroupEntries}
    */
   entries: BindGroupEntries
@@ -92,12 +91,8 @@ export class BindGroup {
 
   /**
    * BindGroup constructor
-   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
-   * @param {BindGroupParams=} parameters - parameters used to create our BindGroup
-   * @param {string=} parameters.label - bind group label
-   * @param {number=} parameters.index - bind group index (used to generate shader code)
-   * @param {BindGroupBindingElement[]=} parameters.bindings - array of already created bindings (buffers, texture, etc.)
-   * @param {BindGroupInputs} parameters.inputs - inputs that will be used to create additional bindings
+   * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+   * @param {BindGroupParams=} parameters - [parameters]{@link BindGroupParams} used to create our {@link BindGroup}
    */
   constructor(
     renderer: Renderer | GPUCurtains,

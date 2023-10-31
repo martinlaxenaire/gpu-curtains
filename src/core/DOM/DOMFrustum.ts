@@ -2,6 +2,16 @@ import { Box3 } from '../../math/Box3'
 import { Mat4 } from '../../math/Mat4'
 import { DOMElementBoundingRect, RectCoords } from './DOMElement'
 
+/**
+ * An object defining all possible {@link DOMFrustum} instancing parameters
+ * @typedef {DOMFrustumParams}
+ * @property {?Box3} boundingBox - our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link Geometry}
+ * @property {?Mat4} modelViewProjectionMatrix - {@link ProjectedObject3D} model view projection matrix to use for frustum calculations
+ * @property {?DOMElementBoundingRect} containerBoundingRect - the bounding rectangle to check against
+ * @property {?RectCoords} DOMFrustumMargins - additional margins to add to [containerBoundingRect]{@link DOMFrustumParams#containerBoundingRect}
+ * @property {?function} onReEnterView - callback to run when the {@link ProjectedObject3D} reenters the view frustum
+ * @property {?function} onLeaveView - callback to run when the {@link ProjectedObject3D} leaves the view frustum
+ */
 export interface DOMFrustumParams {
   boundingBox?: Box3
   modelViewProjectionMatrix?: Mat4
@@ -11,6 +21,7 @@ export interface DOMFrustumParams {
   onLeaveView?: () => void
 }
 
+/** @constant {RectCoords} - default [DOMFrustumMargins]{@link DOMFrustum#DOMFrustumMargins} */
 const defaultDOMFrustumMargins: RectCoords = {
   top: 0,
   right: 0,
@@ -76,13 +87,7 @@ export class DOMFrustum {
 
   /**
    * DOMFrustum constructor
-   * @param {DOMFrustumParams} parameters - parameters used to create our DOMFrustum
-   * @param {Box3=} parameters.boundingBox - our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@see Geometry}
-   * @param {Mat4=} parameters.modelViewProjectionMatrix - {@see Projected3DObject} model view projection matrix to use for frustum calculations
-   * @param {DOMElementBoundingRect=} parameters.containerBoundingRect - the bounding rectangle to check against
-   * @param {RectCoords=} parameters.DOMFrustumMargins - additional margins to add to containerBoundingRect
-   * @param {function=} parameters.onReEnterView - callback to run when the {@see Projected3DObject} reenters the view frustum
-   * @param {function=} parameters.onLeaveView - callback to run when the {@see Projected3DObject} leaves the view frustum
+   * @param {DOMFrustumParams} parameters - [parameters]{@link DOMFrustumParams} used to create our {@link DOMFrustum}
    */
   constructor({
     boundingBox = new Box3(),

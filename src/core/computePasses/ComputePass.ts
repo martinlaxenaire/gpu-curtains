@@ -22,18 +22,54 @@ let computePassIndex = 0
  * A compute pass is basically made of a {@see ComputeMaterial} that handles most of the process.
  */
 export class ComputePass {
+  /**
+   * The type of the {@link ComputePass}
+   * @type {string}
+   */
   type: string
+  /**
+   * The universal unique id of the {@link ComputePass}
+   * @type {string}
+   */
   uuid: string
+  /**
+   * The index of the {@link ComputePass}, incremented each time a new one is instanced
+   * @type {string}
+   */
   index: number
+  /**
+   * The {@link Renderer} used
+   * @type {Renderer}
+   */
   renderer: Renderer
+  /**
+   * Controls the order in which this {@link ComputePass} should be rendered by our {@link Scene}
+   * @type {number}
+   */
   renderOrder: number
 
+  /**
+   * Options used to create this {@link ComputePass}
+   */
   options: ComputePassOptions
 
+  /**
+   * {@link ComputeMaterial} used by this {@link ComputePass}
+   * @type {ComputeMaterial}
+   */
   material: ComputeMaterial
 
+  /**
+   * Flag indicating whether this {@link ComputePass} is ready to be rendered
+   * @type {boolean}
+   */
   _ready: boolean
 
+  /**
+   * Whether this {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically
+   * @type {boolean}
+   * @private
+   */
   #autoAddToScene = true
 
   // callbacks / events
@@ -55,16 +91,16 @@ export class ComputePass {
 
   /**
    * ComputePass constructor
-   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
+   * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
    * @param {ComputePassParams=} parameters - parameters used to create our compute pass
    * @param {string=} parameters.label - compute pass label
-   * @param {boolean=} parameters.autoAddToScene - whether we should add this compute pass to our {@see Scene} to let it handle the rendering process automatically
-   * @param {number=} parameters.renderOrder - controls the order in which this compute pass should be rendered by our {@see Scene}
+   * @param {boolean=} parameters.autoAddToScene - whether we should add this compute pass to our {@link Scene} to let it handle the rendering process automatically
+   * @param {number=} parameters.renderOrder - controls the order in which this compute pass should be rendered by our {@link Scene}
    * @param {boolean=} parameters.useAsyncPipeline - whether the compute pipeline should be compiled asynchronously
    * @param {MaterialShaders=} parameters.shaders - our compute shader code and entry point
-   * @param {BindGroupInputs=} parameters.inputs - our {@see BindGroup} inputs
-   * @param {BindGroup[]=} parameters.bindGroups - already created {@see BindGroup} to use
-   * @param {Sampler[]=} parameters.samplers - array of {@see Sampler}
+   * @param {BindGroupInputs=} parameters.inputs - our {@link BindGroup} inputs
+   * @param {BindGroup[]=} parameters.bindGroups - already created {@link BindGroup} to use
+   * @param {Sampler[]=} parameters.samplers - array of {@link Sampler}
    */
   // TODO do we need samplers here? What about textures?
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputePassParams = {}) {

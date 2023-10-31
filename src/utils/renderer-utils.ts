@@ -3,7 +3,15 @@ import { GPURenderer } from '../core/renderers/GPURenderer'
 import { GPUCameraRenderer } from '../core/renderers/GPUCameraRenderer'
 import { GPUCurtainsRenderer } from '../curtains/renderers/GPUCurtainsRenderer'
 
+/**
+ * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}
+ * @type {Renderer}
+ */
 export type Renderer = GPUCurtainsRenderer | GPUCameraRenderer | GPURenderer
+/**
+ * A CameraRenderer could be either a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}
+ * @type {CameraRenderer}
+ */
 export type CameraRenderer = GPUCurtainsRenderer | GPUCameraRenderer
 
 const formatRendererError = (renderer: Renderer, rendererType = 'GPURenderer', type: string | null): void => {
