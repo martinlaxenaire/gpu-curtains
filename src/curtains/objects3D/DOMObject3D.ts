@@ -284,8 +284,8 @@ export class DOMObject3D extends ProjectedObject3D {
       this.transformOrigin.z
     )
 
-    this.updateModelMatrix()
-    this.updateProjectionMatrixStack()
+    this.shouldUpdateModelMatrix()
+    this.shouldUpdateProjectionMatrixStack()
   }
 
   // TODO setPosition, setRotation, setScale, etc?

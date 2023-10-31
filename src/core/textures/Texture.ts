@@ -105,7 +105,6 @@ export class Texture extends Object3D {
         matrix: {
           name: this.options.name + 'Matrix',
           type: 'mat4x4f',
-          //value: new Mat4(),
           value: this.modelMatrix,
           onBeforeUpdate: () => this.updateTextureMatrix(),
         },

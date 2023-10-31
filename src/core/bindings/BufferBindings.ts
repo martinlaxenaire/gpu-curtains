@@ -277,7 +277,8 @@ export class BufferBindings extends Bindings {
   }
 
   /**
-   * Executed at the beginning of a Material render call to update our value array if any of the bindings has changed.
+   * Executed at the beginning of a Material render call.
+   * If any of the bindings has changed, run its onBeforeUpdate callback then updates our value array.
    * Also sets the shouldUpdate property to true so the {@link BindGroup} knows it will need to update the GPUBuffer.
    */
   onBeforeRender() {

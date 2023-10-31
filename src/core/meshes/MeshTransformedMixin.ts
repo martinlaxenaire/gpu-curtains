@@ -50,8 +50,9 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
 
   get projectedBoundingRect(): DOMElementBoundingRect
 
-  updateModelMatrix(): void
-  updateProjectionMatrixStack(): void
+  updateSizePositionAndProjection(): void
+  updateMatrixStack(): void
+  onAfterMatrixStackUpdate(): void
 
   onReEnterView: (callback: () => void) => MeshTransformedBaseClass
   onLeaveView: (callback: () => void) => MeshTransformedBaseClass
@@ -98,6 +99,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
     renderer: CameraRenderer
     options: MeshBaseOptions
     geometry: AllowedGeometries
+    visible: boolean
     matrices: ProjectedObject3DMatrices
     modelMatrix: Mat4
     modelViewMatrix: Mat4
@@ -152,10 +154,8 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
       // explicitly needed for DOM Frustum
       this.geometry = geometry
 
-      // update model and projection matrices right away
-      // TODO is it the most performant way?
-      this.updateModelMatrix()
-      this.updateProjectionMatrixStack()
+      // tell the model and projection matrices to update right away
+      this.updateSizePositionAndProjection()
     }
 
     /**
@@ -253,25 +253,30 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
     }
 
     /**
-     * Update the model matrix and update according uniforms
+     * Tell the model and projection matrices to update.
+     * Here because else typescript is confused
      */
-    updateModelMatrix() {
+    updateSizePositionAndProjection() {
       // @ts-ignore
-      super.updateModelMatrix()
-
-      if (this.material) {
-        this.material.shouldUpdateInputsBindings('matrices')
-      }
-
-      if (this.domFrustum) this.domFrustum.shouldUpdate = true
+      super.updateSizePositionAndProjection()
     }
 
     /**
-     * Update projection matrices
+     * Update the model and projection matrices if needed.
+     * Here because else typescript is confused
      */
-    updateProjectionMatrixStack() {
+    updateMatrixStack() {
       // @ts-ignore
-      super.updateProjectionMatrixStack()
+      super.updateMatrixStack()
+    }
+
+    /**
+     * At least one of the matrix has been updated, update according uniforms and frustum
+     */
+    onAfterMatrixStackUpdate() {
+      if (this.material) {
+        this.material.shouldUpdateInputsBindings('matrices')
+      }
 
       if (this.domFrustum) this.domFrustum.shouldUpdate = true
     }
@@ -307,9 +312,13 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
     /** Render loop **/
 
     /**
-     * Called before rendering the Mesh to update the {@see DOMFrustum} projected bounding rectangle
+     * Called before rendering the Mesh to update matrices and {@see DOMFrustum}.
+     * First, we update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
+     * Then we check if we need to update the {@see DOMFrustum} projected bounding rectangle.
      */
     onBeforeRenderPass() {
+      this.updateMatrixStack()
+
       if (this.domFrustum.shouldUpdate && this.frustumCulled) {
         this.domFrustum.computeProjectedToDocumentCoords()
         this.domFrustum.shouldUpdate = false
@@ -320,7 +329,8 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
     }
 
     /**
-     * Only render the Mesh if it is in view frustum
+     * Only render the Mesh if it is in view frustum.
+     * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
      * @param {GPURenderPassEncoder} pass
      */
     onRenderPass(pass: GPURenderPassEncoder) {

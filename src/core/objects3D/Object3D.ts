@@ -213,6 +213,10 @@ export class Object3D {
     )
   }
 
+  onAfterMatrixStackUpdate() {
+    /* allow empty callback */
+  }
+
   /**
    * Tell our model matrix to update
    */
@@ -223,12 +227,18 @@ export class Object3D {
   /**
    * Check at each render whether we should update our matrices, and update them if needed
    */
-  render() {
+  updateMatrixStack() {
+    // check if at least one matrix should update
+    const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate)
+
     for (const matrixName in this.matrices) {
       if (this.matrices[matrixName].shouldUpdate) {
         this.matrices[matrixName].onUpdate()
         this.matrices[matrixName].shouldUpdate = false
       }
     }
+
+    // callback to run if at least one matrix of the stack has been updated
+    if (matrixShouldUpdate) this.onAfterMatrixStackUpdate()
   }
 }

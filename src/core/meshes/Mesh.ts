@@ -5,7 +5,11 @@ import MeshBaseMixin, { MeshBaseParams } from './MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
- *
+ * Mesh class:
+ * Create a Mesh, with model and projection matrices.
+ * TODO!
+ * @extends MeshTransformedMixin
+ * @mixes {MeshBaseMixin~ProjectedObject3D}
  */
 export class Mesh extends MeshTransformedMixin(MeshBaseMixin(ProjectedObject3D)) {
   constructor(renderer: CameraRenderer | GPUCurtains, parameters = {} as MeshBaseParams) {

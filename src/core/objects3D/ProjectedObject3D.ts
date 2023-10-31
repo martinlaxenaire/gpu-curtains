@@ -40,7 +40,7 @@ export class ProjectedObject3D extends Object3D {
    */
   applyPosition() {
     super.applyPosition()
-    this.updateProjectionMatrixStack()
+    this.shouldUpdateProjectionMatrixStack()
   }
 
   /**
@@ -48,7 +48,7 @@ export class ProjectedObject3D extends Object3D {
    */
   applyRotation() {
     super.applyRotation()
-    this.updateProjectionMatrixStack()
+    this.shouldUpdateProjectionMatrixStack()
   }
 
   /**
@@ -56,7 +56,7 @@ export class ProjectedObject3D extends Object3D {
    */
   applyScale() {
     super.applyScale()
-    this.updateProjectionMatrixStack()
+    this.shouldUpdateProjectionMatrixStack()
   }
 
   /**
@@ -64,7 +64,7 @@ export class ProjectedObject3D extends Object3D {
    */
   applyTransformOrigin() {
     super.applyTransformOrigin()
-    this.updateProjectionMatrixStack()
+    this.shouldUpdateProjectionMatrixStack()
   }
 
   /**
@@ -142,19 +142,18 @@ export class ProjectedObject3D extends Object3D {
   }
 
   /**
-   * Set our model matrices shouldUpdate flags to true (tell them to update)
+   * Set our projection matrices shouldUpdate flags to true (tell them to update)
    */
-  // TODO rename as shouldUpdateProjectionMatrixStack?
-  updateProjectionMatrixStack() {
+  shouldUpdateProjectionMatrixStack() {
     this.matrices.modelView.shouldUpdate = true
     this.matrices.modelViewProjection.shouldUpdate = true
   }
 
   /**
-   * Update our matrices
+   * Tell all our matrices to update
    */
   updateSizePositionAndProjection() {
     this.shouldUpdateModelMatrix()
-    this.updateProjectionMatrixStack()
+    this.shouldUpdateProjectionMatrixStack()
   }
 }
