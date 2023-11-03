@@ -1,8 +1,13 @@
 import { Bindings, BindingsParams } from './Bindings'
 
+/** Defines a {@link SamplerBindings} [resource]{@link SamplerBindings#resource} */
 export type SamplerBindingResource = GPUSampler | null
 
+/**
+ * An object defining all possible {@link SamplerBindings} class instancing parameters
+ */
 export interface SamplerBindingsParams extends BindingsParams {
+  /** {@link SamplerBindings} [bind group]{@link GPUBindGroup} resource */
   resource: SamplerBindingResource
 }
 
@@ -12,15 +17,9 @@ export interface SamplerBindingsParams extends BindingsParams {
  * @extends Bindings
  */
 export class SamplerBindings extends Bindings {
-  /**
-   * Our {@link SamplerBindings} resource, i.e. a GPUSampler
-   * @type {SamplerBindingResource}
-   */
+  /** Our {@link SamplerBindings} resource, i.e. a {@link GPUSampler} */
   resource: SamplerBindingResource
-  /**
-   * An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link SamplerBindings}
-   * @type {string[]}
-   */
+  /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link SamplerBindings} */
   wgslGroupFragment: string[]
 
   /**

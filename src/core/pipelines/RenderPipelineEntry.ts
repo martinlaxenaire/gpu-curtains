@@ -1,6 +1,6 @@
 import { PipelineEntry } from './PipelineEntry'
 import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer, CameraRenderer } from '../../utils/renderer-utils'
 import { throwError } from '../../utils/utils'
 import { PipelineEntryParams, PipelineEntryShaders } from '../../types/core/pipelines/PipelineEntry'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
@@ -56,6 +56,16 @@ export class RenderPipelineEntry extends PipelineEntry {
       verticesOrder,
       useProjection,
     }
+  }
+
+  // TODO!
+  // need to chose whether we should siltently add the camera bind group here
+  // or explicitly in the RenderMaterial class createBindGroups() method
+  setPipelineEntryBindGroups(bindGroups) {
+    this.bindGroups =
+      'cameraBindGroup' in this.renderer && this.options.useProjection
+        ? [this.renderer.cameraBindGroup, ...bindGroups]
+        : bindGroups
   }
 
   setPipelineEntryBuffers(parameters: RenderPipelineEntryBuffersParams) {

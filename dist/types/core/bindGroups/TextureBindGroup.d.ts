@@ -5,66 +5,52 @@ import { Sampler } from '../samplers/Sampler';
 import { BindGroupParams } from '../../types/BindGroups';
 import { MaterialTexture } from '../../types/Materials';
 /**
- * An object defining all possible {@link TextureBindGroup} instancing parameters
- * @typedef {TextureBindGroupParams}
- * @extends BindGroupParams
- * @property {MaterialTexture[]} [textures=[]] - array of [textures]{@link MaterialTexture} to add to a {@link TextureBindGroup}
- * @property {Sampler[]} [samplers=[]] - array of {@link Sampler} to add to a {@link TextureBindGroup}
+ * An object defining all possible {@link TextureBindGroup} class instancing parameters
  */
 export interface TextureBindGroupParams extends BindGroupParams {
+    /** array of [textures]{@link MaterialTexture} to add to a {@link TextureBindGroup} */
     textures?: MaterialTexture[];
+    /** array of {@link Sampler} to add to a {@link TextureBindGroup} */
     samplers?: Sampler[];
 }
 /**
  * TextureBindGroup class:
- * Used to regroup all bindings related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
+ * Used to regroup all [bindings]{@link BindGroupBindingElement} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
  * @extends BindGroup
  */
 export declare class TextureBindGroup extends BindGroup {
-    /**
-     * An array containing all the already created external textures ID
-     * @type {number[]}
-     */
+    /** An array containing all the already created external textures ID */
     externalTexturesIDs: number[];
     /**
      * TextureBindGroup constructor
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param {TextureBindGroupParams=} parameters - parameters used to create our texture bind group
-     * @param {string=} parameters.label - bind group label
-     * @param {number=} parameters.index - bind group index (used to generate shader code)
-     * @param {BindGroupBindingElement[]=} parameters.bindings - array of already created bindings (buffers, texture, etc.)
-     * @param {BindGroupInputs} parameters.inputs - inputs that will be used to create additional bindings
-     * @param {MaterialTexture[]=} parameters.textures - array of textures to add to this texture bind group
-     * @param {Sampler[]=} parameters.samplers - array of samplers to add to this texture bind group
+     * @param {TextureBindGroupParams=} parameters - [parameters]{@link TextureBindGroupParams} used to create our {@link TextureBindGroup}
      */
     constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, inputs, textures, samplers }?: TextureBindGroupParams);
     /**
      * Adds a texture to the textures array and the bindings
-     * @param {MaterialTexture} texture - texture to add
+     * @param texture - texture to add
      */
     addTexture(texture: MaterialTexture): void;
     /**
      * Get the current textures array
      * @readonly
-     * @type {MaterialTexture[]}
      */
     get textures(): MaterialTexture[];
     /**
      * Adds a sampler to the samplers array and the bindings
-     * @param {Sampler} sampler
+     * @param sampler
      */
     addSampler(sampler: Sampler): void;
     /**
      * Get the current samplers array
      * @readonly
-     * @type {Sampler[]}
      */
     get samplers(): Sampler[];
     /**
      * Get whether the GPU bind group is ready to be created
      * It can be created if it has {@link BindGroup#bindings} and has not been created yet and all GPU textures and samplers are created
      * @readonly
-     * @type {boolean}
      */
     get shouldCreateBindGroup(): boolean;
     /**
@@ -80,16 +66,16 @@ export declare class TextureBindGroup extends BindGroup {
      */
     resetTextureBindGroup(): void;
     /**
-     * Get whether we should update our video {@link TextureBindGroup}.
+     * Get whether we should update our video [bind group layout]{@link GPUBindGroupLayout}.
      * Happens when a GPUExternalTexture is created, we need to rebuild the {@link BindGroup#bindGroup} and {@link BindGroup#bindGroupLayout} from scratch. We might even need to recreate the whole pipeline (it it has already been created).
-     * @param {number} textureIndex - the texture index in the bind group textures array
-     * @returns {boolean}
+     * @param textureIndex - the texture index in the bind group textures array
+     * @returns - whether we should update the [bind group layout]{@link GPUBindGroupLayout}
      */
     shouldUpdateVideoTextureBindGroupLayout(textureIndex: number): boolean;
     /**
      * Called if the result of {@link shouldUpdateVideoTextureBindGroupLayout} is true. Updates our {@link BindGroup#bindGroupLayout} {@link BindGroup#entries} on the fly, then recreates GPUBindGroupLayout.
      * Will also call {@link resetTextureBindGroup} afterwhile to recreate the GPUBindGroup.
-     * @param {number} textureIndex - the texture index in the bind group textures array
+     * @param textureIndex - the texture index in the bind group textures array
      */
     updateVideoTextureBindGroupLayout(textureIndex: number): void;
     /**

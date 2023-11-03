@@ -3,90 +3,72 @@ import { Renderer } from '../../utils/renderer-utils';
 import { ComputeMaterial } from '../materials/ComputeMaterial';
 import { MaterialParams, MaterialShaders } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
+/** Defines {@link ComputePass} options */
 export interface ComputePassOptions {
+    /** The label of the {@link ComputePass} */
     label: string;
+    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link Scene} */
     renderOrder?: number;
+    /** Whether the {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically */
     autoAddToScene?: boolean;
+    /** Compute shader passed to the {@link ComputePass} following the [shader object]{@link ShaderOptions} notation */
     shaders: MaterialShaders;
+    /** whether the [compute pipeline]{@link ComputePipelineEntry#pipeline} should be compiled asynchronously */
     useAsyncPipeline?: boolean;
 }
+/**
+ * An object defining all possible {@link ComputePass} class instancing parameters
+ */
 export interface ComputePassParams extends Partial<ComputePassOptions>, MaterialParams {
 }
 /**
  * ComputePass class:
  * Used to create a compute pass, i.e. run computations on the GPU.
- * A compute pass is basically made of a {@see ComputeMaterial} that handles most of the process.
+ * A compute pass is basically made of a {@link ComputeMaterial} that handles most of the process.
  */
 export declare class ComputePass {
     #private;
-    /**
-     * The type of the {@link ComputePass}
-     * @type {string}
-     */
+    /** The type of the {@link ComputePass} */
     type: string;
-    /**
-     * The universal unique id of the {@link ComputePass}
-     * @type {string}
-     */
+    /** The universal unique id of the {@link ComputePass} */
     uuid: string;
-    /**
-     * The index of the {@link ComputePass}, incremented each time a new one is instanced
-     * @type {string}
-     */
+    /** The index of the {@link ComputePass}, incremented each time a new one is instanced */
     index: number;
-    /**
-     * The {@link Renderer} used
-     * @type {Renderer}
-     */
+    /** The {@link Renderer} used */
     renderer: Renderer;
-    /**
-     * Controls the order in which this {@link ComputePass} should be rendered by our {@link Scene}
-     * @type {number}
-     */
+    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link Scene} */
     renderOrder: number;
-    /**
-     * Options used to create this {@link ComputePass}
-     */
+    /** Options used to create this {@link ComputePass} */
     options: ComputePassOptions;
-    /**
-     * {@link ComputeMaterial} used by this {@link ComputePass}
-     * @type {ComputeMaterial}
-     */
+    /** {@link ComputeMaterial} used by this {@link ComputePass} */
     material: ComputeMaterial;
-    /**
-     * Flag indicating whether this {@link ComputePass} is ready to be rendered
-     * @type {boolean}
-     */
+    /** Flag indicating whether this {@link ComputePass} is ready to be rendered */
     _ready: boolean;
+    /** function assigned to the [onReady]{@link ComputePass#onReady} callback */
     _onReadyCallback: () => void;
+    /** function assigned to the [onBeforeRender]{@link ComputePass#onBeforeRender} callback */
     _onBeforeRenderCallback: () => void;
+    /** function assigned to the [onRender]{@link ComputePass#onRender} callback */
     _onRenderCallback: () => void;
+    /** function assigned to the [onAfterRender]{@link ComputePass#onAfterRender} callback */
     _onAfterRenderCallback: () => void;
+    /** function assigned to the [onAfterResize]{@link ComputePass#onAfterResize} callback */
     _onAfterResizeCallback: () => void;
     /**
      * ComputePass constructor
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param {ComputePassParams=} parameters - parameters used to create our compute pass
-     * @param {string=} parameters.label - compute pass label
-     * @param {boolean=} parameters.autoAddToScene - whether we should add this compute pass to our {@link Scene} to let it handle the rendering process automatically
-     * @param {number=} parameters.renderOrder - controls the order in which this compute pass should be rendered by our {@link Scene}
-     * @param {boolean=} parameters.useAsyncPipeline - whether the compute pipeline should be compiled asynchronously
-     * @param {MaterialShaders=} parameters.shaders - our compute shader code and entry point
-     * @param {BindGroupInputs=} parameters.inputs - our {@link BindGroup} inputs
-     * @param {BindGroup[]=} parameters.bindGroups - already created {@link BindGroup} to use
-     * @param {Sampler[]=} parameters.samplers - array of {@link Sampler}
+     * @param {ComputePassParams=} parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: ComputePassParams);
     /**
      * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
      * @readonly
-     * @type {boolean}
      */
     get ready(): boolean;
     set ready(value: boolean);
     /**
      * Create the compute pass material
-     * @param {MaterialParams} computeParameters - {@see ComputeMaterial} parameters
+     * @param computeParameters - {@link ComputeMaterial} parameters
      */
     setComputeMaterial(computeParameters: MaterialParams): void;
     /**
@@ -98,21 +80,18 @@ export declare class ComputePass {
      */
     removeFromScene(): void;
     /**
-     * Get our {@see ComputeMaterial} uniforms
+     * Get our {@link ComputeMaterial} uniforms
      * @readonly
-     * @type {ComputeMaterial['uniforms']}
      */
     get uniforms(): ComputeMaterial['uniforms'];
     /**
-     * Get our {@see ComputeMaterial} storages
+     * Get our {@link ComputeMaterial} storages
      * @readonly
-     * @type {ComputeMaterial['storages']}
      */
     get storages(): ComputeMaterial['storages'];
     /**
-     * Get our {@see ComputeMaterial} works
+     * Get our {@link ComputeMaterial} works
      * @readonly
-     * @type {ComputeMaterial['works']}
      */
     get works(): ComputeMaterial['works'];
     /**
@@ -121,33 +100,28 @@ export declare class ComputePass {
     resize(): void;
     /** EVENTS **/
     /**
-     * Assign a callback function to _onReadyCallback
-     * @param {function=} callback - callback to run when {@see ComputePass} is ready
-     * @returns {ComputePass}
+     * Callback to run when the {@link ComputePass} is ready
+     * @param callback - callback to run when {@link ComputePass} is ready
      */
     onReady(callback: () => void): ComputePass;
     /**
-     * Assign a callback function to _onBeforeRenderCallback
-     * @param {function=} callback - callback to run just before {@see ComputePass} will be rendered
-     * @returns {ComputePass}
+     * Callback to run before the {@link ComputePass} is rendered
+     * @param callback - callback to run just before {@link ComputePass} will be rendered
      */
     onBeforeRender(callback: () => void): ComputePass;
     /**
-     * Assign a callback function to _onRenderCallback
-     * @param {function=} callback - callback to run when {@see ComputePass} is rendered
-     * @returns {ComputePass}
+     * Callback to run when the {@link ComputePass} is rendered
+     * @param callback - callback to run when {@link ComputePass} is rendered
      */
     onRender(callback: () => void): ComputePass;
     /**
-     * Assign a callback function to _onAfterRenderCallback
-     * @param {function=} callback - callback to run just after {@see ComputePass} has been rendered
-     * @returns {ComputePass}
+     * Callback to run after the {@link ComputePass} has been rendered
+     * @param callback - callback to run just after {@link ComputePass} has been rendered
      */
     onAfterRender(callback: () => void): ComputePass;
     /**
-     * Assign a callback function to _onBeforeRenderCallback
-     * @param {function=} callback - callback to run just after {@see GPURenderer} has been resized
-     * @returns {ComputePass}
+     * Callback to run after the {@link Renderer} has been resized
+     * @param callback - callback to run just after {@link GPURenderer} has been resized
      */
     onAfterResize(callback: () => void): ComputePass;
     /**
@@ -156,8 +130,8 @@ export declare class ComputePass {
      */
     onBeforeRenderPass(): void;
     /**
-     * Render our {@see ComputeMaterial}
-     * @param {GPUComputePassEncoder} pass - current compute pass encoder
+     * Render our {@link ComputeMaterial}
+     * @param pass - current compute pass encoder
      */
     onRenderPass(pass: GPUComputePassEncoder): void;
     /**
@@ -166,30 +140,29 @@ export declare class ComputePass {
     onAfterRenderPass(): void;
     /**
      * Render our compute pass
-     * Basically just check if our {@see GPURenderer} is ready, and then render our {@see ComputeMaterial}
-     * @param {GPUComputePassEncoder} pass
+     * Basically just check if our {@link GPURenderer} is ready, and then render our {@link ComputeMaterial}
+     * @param pass
      */
     render(pass: GPUComputePassEncoder): void;
     /**
-     * Check whether we're currently accessing one of the {@see ComputeMaterial} buffer and therefore can't render our compute pass
+     * Check whether we're currently accessing one of the {@link ComputeMaterial} buffer and therefore can't render our compute pass
      * @readonly
-     * @type {boolean}
      */
     get canRender(): boolean;
     /**
      * Copy the result of our read/write GPUBuffer into our result binding array
-     * @param {GPUCommandEncoder} commandEncoder - current GPU command encoder
+     * @param commandEncoder - current GPU command encoder
      */
     copyBufferToResult(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Set {@see ComputeMaterial} work groups result
+     * Set {@link ComputeMaterial} work groups result
      */
     setWorkGroupsResult(): void;
     /**
      * Get the result of a work group by binding name
-     * @param {string=} workGroupName - name/key of the work group
-     * @param {string=} bindingName - name/key of the input binding
-     * @returns {Float32Array} - the corresponding binding result array
+     * @param workGroupName - name/key of the work group
+     * @param bindingName - name/key of the input binding
+     * @returns - the corresponding binding result array
      */
     getWorkGroupResult({ workGroupName, bindingName }: {
         workGroupName?: string;

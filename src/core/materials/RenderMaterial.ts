@@ -176,11 +176,35 @@ export class RenderMaterial extends Material {
    */
   createBindGroups() {
     // camera first!
-    if ((this.renderer as CameraRenderer).cameraBindGroup && this.options.rendering.useProjection) {
-      this.bindGroups.push((this.renderer as CameraRenderer).cameraBindGroup)
+    // if ((this.renderer as CameraRenderer).cameraBindGroup && this.options.rendering.useProjection) {
+    //   this.bindGroups.push((this.renderer as CameraRenderer).cameraBindGroup)
+    // }
+    //
+    // super.createBindGroups()
+
+    // TODO!
+    // need to chose whether we should add the camera bind group here
+    // in such case we need to find a way not to bind it inside the render call
+    // because it is already bound by the scene class at each render to avoid extra WebGPU commands
+    const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0
+
+    // textures first
+    if (this.texturesBindGroup.shouldCreateBindGroup) {
+      this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex) // bindGroup 0 is our renderer camera
+      this.texturesBindGroup.createBindGroup()
+
+      this.bindGroups.push(this.texturesBindGroup)
     }
 
-    super.createBindGroups()
+    // then uniforms
+    this.inputsBindGroups.forEach((bindGroup) => {
+      if (bindGroup.shouldCreateBindGroup) {
+        bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
+        bindGroup.createBindGroup()
+
+        this.bindGroups.push(bindGroup)
+      }
+    })
   }
 
   /**

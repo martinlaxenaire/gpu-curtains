@@ -3,21 +3,20 @@ import { Mat4 } from '../../math/Mat4'
 import { DOMElementBoundingRect, RectCoords } from './DOMElement'
 
 /**
- * An object defining all possible {@link DOMFrustum} instancing parameters
- * @typedef {DOMFrustumParams}
- * @property {?Box3} boundingBox - our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link Geometry}
- * @property {?Mat4} modelViewProjectionMatrix - {@link ProjectedObject3D} model view projection matrix to use for frustum calculations
- * @property {?DOMElementBoundingRect} containerBoundingRect - the bounding rectangle to check against
- * @property {?RectCoords} DOMFrustumMargins - additional margins to add to [containerBoundingRect]{@link DOMFrustumParams#containerBoundingRect}
- * @property {?function} onReEnterView - callback to run when the {@link ProjectedObject3D} reenters the view frustum
- * @property {?function} onLeaveView - callback to run when the {@link ProjectedObject3D} leaves the view frustum
+ * An object defining all possible {@link DOMFrustum} class instancing parameters
  */
 export interface DOMFrustumParams {
+  /** our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link Geometry} */
   boundingBox?: Box3
+  /** [model view projection matrix]{@link ProjectedObject3D#modelViewProjectionMatrix} to use for frustum calculations */
   modelViewProjectionMatrix?: Mat4
+  /** the [bounding rectangle]{@link DOMElementBoundingRect} to check against */
   containerBoundingRect?: DOMElementBoundingRect
+  /** additional margins to add to [containerBoundingRect]{@link DOMFrustumParams#containerBoundingRect} */
   DOMFrustumMargins?: RectCoords
+  /** callback to run when the [projectedBoundingRect]{@link DOMFrustumParams#projectedBoundingRect} reenters the view frustum */
   onReEnterView?: () => void
+  /** callback to run when the [projectedBoundingRect]{@link DOMFrustumParams#projectedBoundingRect} leaves the view frustum */
   onLeaveView?: () => void
 }
 
@@ -31,58 +30,31 @@ const defaultDOMFrustumMargins: RectCoords = {
 
 /**
  * DOMFrustum class:
- * Used to check if a {@see Projected3DObject} is currently contained inside a DOM bounding rectangle.
+ * Used to check if a {@link ProjectedObject3D} is currently contained inside a DOM bounding rectangle.
  * Uses a modelViewProjectionMatrix that contains both 3D Object and Camera useful transformation and projection informations.
- * The DOM bounding rectangle to check against usually is the {@see GPURenderer}'s {@see DOMElement} bounding rectangle, unless frustum margins are specified.
+ * The DOM bounding rectangle to check against usually is the {@link GPURenderer}'s {@link DOMElement} bounding rectangle, unless frustum margins are specified.
  */
 export class DOMFrustum {
-  /**
-   * Our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@see Geometry}
-   * @type {Box3}
-   */
+  /** Our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link Geometry} */
   boundingBox: Box3
-  /**
-   * A model view projection matrix defining transformations, usually from a {@see Projected3DObject}, to use for frustum calculations
-   * @type {Mat4}
-   */
+  /** A model view projection matrix defining transformations, usually from a {@link ProjectedObject3D}, to use for frustum calculations */
   modelViewProjectionMatrix: Mat4
 
-  /**
-   * The DOM bounding rectangle to check against, usually the renderer DOM Element bounding rectangle
-   * @type {DOMElementBoundingRect}
-   */
+  /** The DOM bounding rectangle to check against, usually the renderer DOM Element bounding rectangle */
   containerBoundingRect: DOMElementBoundingRect
-  /**
-   * Additional margins to add to {@link containerBoundingRect}
-   * @type {RectCoords}
-   */
+  /** Additional margins to add to {@link containerBoundingRect} */
   DOMFrustumMargins: RectCoords
-  /**
-   * A DOM Element bounding rectangle representing the result of our {@link boundingBox} with the {@link modelViewProjectionMatrix} applied
-   * @type {DOMElementBoundingRect}
-   */
+  /** A DOM Element bounding rectangle representing the result of our {@link boundingBox} with the {@link modelViewProjectionMatrix} applied */
   projectedBoundingRect: DOMElementBoundingRect
 
-  /**
-   * Callback to run when the transformed {@link boundingBox} reenters the view frustum
-   * @type {function}
-   */
+  /** Callback to run when the {@link projectedBoundingRect} reenters the view frustum */
   onReEnterView: () => void
-  /**
-   * Callback to run when the transformed {@link boundingBox} leaves the view frustum
-   * @type {function}
-   */
+  /** Callback to run when the {@link projectedBoundingRect} leaves the view frustum */
   onLeaveView: () => void
 
-  /**
-   * Flag to indicate whether the given transformed {@link boundingBox} is intersecting our view frustum
-   * @type {boolean}
-   */
+  /** Flag to indicate whether the given {@link projectedBoundingRect} is intersecting our view frustum */
   isIntersecting: boolean
-  /**
-   * Flag to indicate whether we should update our {@link projectedBoundingRect}
-   * @type {boolean}
-   */
+  /** Flag to indicate whether we should update our {@link projectedBoundingRect} */
   shouldUpdate: boolean
 
   /**
@@ -135,7 +107,7 @@ export class DOMFrustum {
 
   /**
    * Set our {@link containerBoundingRect} (called on resize)
-   * @param {DOMElementBoundingRect} boundingRect - new bounding rectangle
+   * @param boundingRect - new bounding rectangle
    */
   setContainerBoundingRect(boundingRect: DOMElementBoundingRect) {
     this.containerBoundingRect = boundingRect
@@ -144,7 +116,6 @@ export class DOMFrustum {
   /**
    * Get our DOM frustum bounding rectangle, i.e. our {@link containerBoundingRect} with the {@link DOMFrustumMargins} applied
    * @readonly
-   * @type {RectCoords}
    */
   get DOMFrustumBoundingRect(): RectCoords {
     return {

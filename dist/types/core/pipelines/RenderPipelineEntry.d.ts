@@ -8,6 +8,7 @@ export declare class RenderPipelineEntry extends PipelineEntry {
     attributes: RenderMaterialAttributes;
     descriptor: GPURenderPipelineDescriptor | null;
     constructor(parameters: PipelineEntryParams);
+    setPipelineEntryBindGroups(bindGroups: any): void;
     setPipelineEntryBuffers(parameters: RenderPipelineEntryBuffersParams): void;
     /** SHADERS **/
     patchShaders(): void;

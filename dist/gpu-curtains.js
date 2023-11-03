@@ -319,12 +319,7 @@ var GPUCurtains = (() => {
   var Bindings = class {
     /**
      * Bindings constructor
-     * @param {BindingsParams} parameters - parameters used to create our Bindings
-     * @param {string=} parameters.label - binding label
-     * @param {string=} parameters.name - binding name
-     * @param {BindingType="uniform"} parameters.bindingType - binding type
-     * @param {number=} parameters.bindIndex - bind index inside the bind group
-     * @param {MaterialShadersType=} parameters.visibility - shader visibility
+     * @param {BindingsParams} parameters - [parameters]{@link BindingsParams} used to create our {@link Bindings}
      */
     constructor({
       label = "Uniform",
@@ -1691,16 +1686,7 @@ var GPUCurtains = (() => {
   var WorkBufferBindings = class extends BufferBindings {
     /**
      * WorkBufferBindings constructor
-     * @param {WorkBufferBindingsParams} parameters - parameters used to create our WorkBufferBindings
-     * @param {string=} parameters.label - binding label
-     * @param {string=} parameters.name - binding name
-     * @param {BindingType=} parameters.bindingType - binding type
-     * @param {number=} parameters.bindIndex - bind index inside the bind group
-     * @param {MaterialShadersType=} parameters.visibility - shader visibility
-     * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
-     * @param {Object.<string, Input>} parameters.bindings - bindings inputs
-     * @param {(number|number[])=} parameters.dispatchSize - work group dispatch size
-     * @param {boolean=} parameters.shouldCopyResult - whether we should copy the buffer result at each render call
+     * @param {WorkBufferBindingsParams} parameters - [parameters]{@link WorkBufferBindingsParams} used to create our {@link WorkBufferBindings}
      */
     constructor({
       label = "Work",
@@ -1763,31 +1749,31 @@ var GPUCurtains = (() => {
       this.needsPipelineFlush = false;
     }
     /**
-     * Sets our {@link BindGroup} {@link index}
-     * @param {number} index
+     * Sets our [BindGroup index]{@link BindGroup#index}
+     * @param index - [BindGroup index]{@link BindGroup#index}
      */
     setIndex(index) {
       this.index = index;
     }
     /**
      * Adds an array of already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array
-     * @param {BindGroupBindingElement[]} bindings - bindings to add
+     * @param bindings - {@link bindings} to add
      */
     addBindings(bindings = []) {
       this.bindings = [...this.bindings, ...bindings];
     }
     /**
      * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array
-     * @param {BindGroupBindingElement} binding - binding to add
+     * @param binding - binding to add
      */
     addBinding(binding) {
       this.bindings.push(binding);
     }
     /**
      * Creates Bindings based on a list of inputs
-     * @param {BindingType} bindingType - binding type
-     * @param {InputBindings} inputs - inputs that will be used to create the binding
-     * @returns {BindGroupBindingElement[]} - bindings array
+     * @param bindingType - [binding type]{@link Bindings#bindingType}
+     * @param inputs - [inputs]{@link InputBindings} that will be used to create the binding
+     * @returns - a {@link bindings} array
      */
     createInputBindings(bindingType = "uniform", inputs = {}) {
       return [
@@ -1828,7 +1814,6 @@ var GPUCurtains = (() => {
      * Get whether the GPU bind group is ready to be created
      * It can be created if it has {@link bindings} and has not been created yet
      * @readonly
-     * @type {boolean}
      */
     get shouldCreateBindGroup() {
       return !this.bindGroup && !!this.bindings.length;
@@ -1860,9 +1845,9 @@ var GPUCurtains = (() => {
     }
     /**
      * Creates a GPUBuffer from a bind group binding and add bindGroup and bindGroupLayout {@link entries}
-     * @param {BindGroupBufferBindingElement} binding - the binding element
-     * @param {number} bindIndex - the bind index
-     * @param {TypedArray} array - the binding value array
+     * @param binding - the binding element
+     * @param bindIndex - the bind index
+     * @param array - the binding value array
      */
     createBindingBufferElement(binding, bindIndex, array) {
       const buffer = this.renderer.createBuffer({
@@ -1899,7 +1884,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Creates binding buffer with correct params
-     * @param {BindGroupBufferBindingElement} binding - the binding element
+     * @param binding - the binding element
      */
     createBindingBuffer(binding) {
       if (!binding.useStruct) {
@@ -1926,8 +1911,8 @@ var GPUCurtains = (() => {
     }
     /**
      * Get a bind group binding by name/key
-     * @param {string} bindingName - the binding name or key
-     * @returns {BindGroupBindingElement | null} - the found binding, or null if not found
+     * @param bindingName - the binding name or key
+     * @returns - the found binding, or null if not found
      */
     getBindingsByName(bindingName = "") {
       return this.bindings.find((binding) => binding.name === bindingName);
@@ -1970,9 +1955,9 @@ var GPUCurtains = (() => {
     /**
      * Clones a {@link BindGroup} from a list of {@link bindingsBuffers}
      * Useful to create a new bind group with already created buffers, but swapped
-     * @param {BindGroupBindingBuffer[]} bindingsBuffers - our input {@link bindingsBuffers}
-     * @param {boolean} keepLayout - whether we should keep original {@link bindGroupLayout} or not
-     * @returns {AllowedBindGroups} - the cloned {@link BindGroup}
+     * @param bindingsBuffers - our input {@link bindingsBuffers}
+     * @param keepLayout - whether we should keep original {@link bindGroupLayout} or not
+     * @returns - the cloned {@link BindGroup}
      */
     cloneFromBindingsBuffers({
       bindingsBuffers = [],
@@ -2013,7 +1998,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Clones a bind group with all its {@link bindings} and original {@link bindingsBuffers}
-     * @returns {AllowedBindGroups} - the cloned BindGroup
+     * @returns - the cloned BindGroup
      */
     clone() {
       return this.cloneFromBindingsBuffers();
@@ -2039,13 +2024,7 @@ var GPUCurtains = (() => {
     /**
      * TextureBindGroup constructor
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param {TextureBindGroupParams=} parameters - parameters used to create our texture bind group
-     * @param {string=} parameters.label - bind group label
-     * @param {number=} parameters.index - bind group index (used to generate shader code)
-     * @param {BindGroupBindingElement[]=} parameters.bindings - array of already created bindings (buffers, texture, etc.)
-     * @param {BindGroupInputs} parameters.inputs - inputs that will be used to create additional bindings
-     * @param {MaterialTexture[]=} parameters.textures - array of textures to add to this texture bind group
-     * @param {Sampler[]=} parameters.samplers - array of samplers to add to this texture bind group
+     * @param {TextureBindGroupParams=} parameters - [parameters]{@link TextureBindGroupParams} used to create our {@link TextureBindGroup}
      */
     constructor(renderer, { label, index = 0, bindings = [], inputs, textures = [], samplers = [] } = {}) {
       const type = "TextureBindGroup";
@@ -2062,7 +2041,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Adds a texture to the textures array and the bindings
-     * @param {MaterialTexture} texture - texture to add
+     * @param texture - texture to add
      */
     addTexture(texture) {
       this.textures.push(texture);
@@ -2071,14 +2050,13 @@ var GPUCurtains = (() => {
     /**
      * Get the current textures array
      * @readonly
-     * @type {MaterialTexture[]}
      */
     get textures() {
       return this.options.textures;
     }
     /**
      * Adds a sampler to the samplers array and the bindings
-     * @param {Sampler} sampler
+     * @param sampler
      */
     addSampler(sampler) {
       this.samplers.push(sampler);
@@ -2087,7 +2065,6 @@ var GPUCurtains = (() => {
     /**
      * Get the current samplers array
      * @readonly
-     * @type {Sampler[]}
      */
     get samplers() {
       return this.options.samplers;
@@ -2096,7 +2073,6 @@ var GPUCurtains = (() => {
      * Get whether the GPU bind group is ready to be created
      * It can be created if it has {@link BindGroup#bindings} and has not been created yet and all GPU textures and samplers are created
      * @readonly
-     * @type {boolean}
      */
     get shouldCreateBindGroup() {
       return !this.bindGroup && !!this.bindings.length && !this.textures.find((texture) => !(texture.texture || texture.externalTexture)) && !this.samplers.find((sampler) => !sampler.sampler);
@@ -2159,10 +2135,10 @@ var GPUCurtains = (() => {
       }
     }
     /**
-     * Get whether we should update our video {@link TextureBindGroup}.
+     * Get whether we should update our video [bind group layout]{@link GPUBindGroupLayout}.
      * Happens when a GPUExternalTexture is created, we need to rebuild the {@link BindGroup#bindGroup} and {@link BindGroup#bindGroupLayout} from scratch. We might even need to recreate the whole pipeline (it it has already been created).
-     * @param {number} textureIndex - the texture index in the bind group textures array
-     * @returns {boolean}
+     * @param textureIndex - the texture index in the bind group textures array
+     * @returns - whether we should update the [bind group layout]{@link GPUBindGroupLayout}
      */
     shouldUpdateVideoTextureBindGroupLayout(textureIndex) {
       if (this.externalTexturesIDs.includes(textureIndex)) {
@@ -2176,7 +2152,7 @@ var GPUCurtains = (() => {
     /**
      * Called if the result of {@link shouldUpdateVideoTextureBindGroupLayout} is true. Updates our {@link BindGroup#bindGroupLayout} {@link BindGroup#entries} on the fly, then recreates GPUBindGroupLayout.
      * Will also call {@link resetTextureBindGroup} afterwhile to recreate the GPUBindGroup.
-     * @param {number} textureIndex - the texture index in the bind group textures array
+     * @param textureIndex - the texture index in the bind group textures array
      */
     updateVideoTextureBindGroupLayout(textureIndex) {
       const texture = this.textures[textureIndex];
@@ -2267,8 +2243,8 @@ var GPUCurtains = (() => {
       this.setWGSLFragment();
     }
     /**
-     * Set or update our {@link Bindings#bindingType} and our WGSL code snippet
-     * @param {BindingType} bindingType - the new binding type
+     * Set or update our [bindingType]{@link Bindings#bindingType} and our WGSL code snippet
+     * @param bindingType - the new [binding type]{@link Bindings#bindingType}
      */
     setBindingType(bindingType) {
       if (bindingType !== this.bindingType) {
@@ -2290,15 +2266,7 @@ var GPUCurtains = (() => {
   var Camera = class {
     /**
      * Camera constructor
-     * @param {CameraParams=} parameters - parameters used to create our {@link Camera}
-     * @param {number} [parameters.fov=50] - the perspective [field of view]{@link fov}. Should be greater than 0 and lower than 180.
-     * @param {number} [parameters.near=0.01] - {@link near} plane, the closest point where a mesh vertex is drawn.
-     * @param {number} [parameters.far=150] - {@link far} plane, farthest point where a mesh vertex is drawn.
-     * @param {number} [parameters.width=1] - {@link width} used to calculate the {@link Camera} aspect ratio.
-     * @param {number} [parameters.height=1] - {@link height} used to calculate the {@link Camera} aspect ratio.
-     * @param {number} [parameters.pixelRatio=1] - [pixel ratio]{@link pixelRatio} used to calculate the {@link Camera} aspect ratio.
-     * @param {function=} parameters.onPerspectiveChanged - callback to execute when the {@link Camera} perspective changed.
-     * @param {function=} parameters.onPositionChanged - callback to execute when the {@link Camera} {@link position} changed.
+     * @param {CameraParams=} parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
      */
     constructor({
       fov = 50,
@@ -2323,7 +2291,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Sets the {@link Camera} {@link fov}. Update the {@link projectionMatrix} only if the field of view actually changed
-     * @param {number=} fov - new {@link fov}
+     * @param fov - new {@link fov}
      */
     setFov(fov = this.fov) {
       fov = Math.max(1, Math.min(fov, 179));
@@ -2337,7 +2305,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Sets the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-     * @param {number=} near - {@link near} plane value to use
+     * @param near - {@link near} plane value to use
      */
     setNear(near = this.near) {
       near = Math.max(near, 0.01);
@@ -2348,7 +2316,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Sets the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-     * @param {number=} far - {@link far} plane value to use
+     * @param far - {@link far} plane value to use
      */
     setFar(far = this.far) {
       far = Math.max(far, 50);
@@ -2359,7 +2327,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Sets the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
-     * @param {number=} pixelRatio - {@link pixelRatio} value to use
+     * @param pixelRatio - {@link pixelRatio} value to use
      */
     setPixelRatio(pixelRatio = this.pixelRatio) {
       if (pixelRatio !== this.pixelRatio) {
@@ -2369,8 +2337,8 @@ var GPUCurtains = (() => {
     }
     /**
      * Sets the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
-     * @param {number=} width - {@link width} value to use
-     * @param {number=} height - {@link height} value to use
+     * @param width - {@link width} value to use
+     * @param height - {@link height} value to use
      */
     setSize(width, height) {
       if (width !== this.width || height !== this.height) {
@@ -2383,12 +2351,12 @@ var GPUCurtains = (() => {
     }
     /**
      * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if our {@link shouldUpdate} flag is true
-     * @param {number=} fov - field of view to use
-     * @param {number=} near - near plane value to use
-     * @param {number=} far - far plane value to use
-     * @param {number=} width - width value to use
-     * @param {number=} height - height value to use
-     * @param {number=} pixelRatio - pixel ratio value to use
+     * @param fov - field of view to use
+     * @param near - near plane value to use
+     * @param far - far plane value to use
+     * @param width - width value to use
+     * @param height - height value to use
+     * @param pixelRatio - pixel ratio value to use
      */
     // TODO use a parameter object instead?
     setPerspective(fov = this.fov, near = this.near, far = this.far, width = this.width, height = this.height, pixelRatio = this.pixelRatio) {
@@ -2404,7 +2372,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Sets the {@link Camera} {@link position} and update the {@link modelMatrix} and {@link viewMatrix}.
-     * @param {Vec3=} position - new {@link Camera}  {@link position}
+     * @param position - new {@link Camera}  {@link position}
      */
     setPosition(position = this.position) {
       this.position.copy(position);
@@ -2450,7 +2418,7 @@ var GPUCurtains = (() => {
     /**
      * Sets visible width / height at a given z-depth from our {@link Camera} parameters
      * Taken from {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269}
-     * @param {number=} depth
+     * @param depth - depth to use for calcs
      */
     setScreenRatios(depth = 0) {
       const cameraOffset = this.position.z;
@@ -3252,6 +3220,9 @@ var GPUCurtains = (() => {
           this.bindGroups.push(bindGroup);
         }
       });
+      this.bindGroups.forEach((bindGroup) => {
+        console.log(bindGroup.options.label);
+      });
     }
     /**
      * Clones a {@see BindGroup} from a list of buffers
@@ -3656,33 +3627,29 @@ var GPUCurtains = (() => {
     /**
      * ComputePass constructor
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param {ComputePassParams=} parameters - parameters used to create our compute pass
-     * @param {string=} parameters.label - compute pass label
-     * @param {boolean=} parameters.autoAddToScene - whether we should add this compute pass to our {@link Scene} to let it handle the rendering process automatically
-     * @param {number=} parameters.renderOrder - controls the order in which this compute pass should be rendered by our {@link Scene}
-     * @param {boolean=} parameters.useAsyncPipeline - whether the compute pipeline should be compiled asynchronously
-     * @param {MaterialShaders=} parameters.shaders - our compute shader code and entry point
-     * @param {BindGroupInputs=} parameters.inputs - our {@link BindGroup} inputs
-     * @param {BindGroup[]=} parameters.bindGroups - already created {@link BindGroup} to use
-     * @param {Sampler[]=} parameters.samplers - array of {@link Sampler}
+     * @param {ComputePassParams=} parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
      */
     // TODO do we need samplers here? What about textures?
     constructor(renderer, parameters = {}) {
       /**
        * Whether this {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically
-       * @type {boolean}
        * @private
        */
       this.#autoAddToScene = true;
       // callbacks / events
+      /** function assigned to the [onReady]{@link ComputePass#onReady} callback */
       this._onReadyCallback = () => {
       };
+      /** function assigned to the [onBeforeRender]{@link ComputePass#onBeforeRender} callback */
       this._onBeforeRenderCallback = () => {
       };
+      /** function assigned to the [onRender]{@link ComputePass#onRender} callback */
       this._onRenderCallback = () => {
       };
+      /** function assigned to the [onAfterRender]{@link ComputePass#onAfterRender} callback */
       this._onAfterRenderCallback = () => {
       };
+      /** function assigned to the [onAfterResize]{@link ComputePass#onAfterResize} callback */
       this._onAfterResizeCallback = () => {
       };
       const type = "ComputePass";
@@ -3718,7 +3685,6 @@ var GPUCurtains = (() => {
     /**
      * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
      * @readonly
-     * @type {boolean}
      */
     get ready() {
       return this._ready;
@@ -3731,7 +3697,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Create the compute pass material
-     * @param {MaterialParams} computeParameters - {@see ComputeMaterial} parameters
+     * @param computeParameters - {@link ComputeMaterial} parameters
      */
     setComputeMaterial(computeParameters) {
       this.material = new ComputeMaterial(this.renderer, computeParameters);
@@ -3755,25 +3721,22 @@ var GPUCurtains = (() => {
       this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
     }
     /**
-     * Get our {@see ComputeMaterial} uniforms
+     * Get our {@link ComputeMaterial} uniforms
      * @readonly
-     * @type {ComputeMaterial['uniforms']}
      */
     get uniforms() {
       return this.material?.uniforms;
     }
     /**
-     * Get our {@see ComputeMaterial} storages
+     * Get our {@link ComputeMaterial} storages
      * @readonly
-     * @type {ComputeMaterial['storages']}
      */
     get storages() {
       return this.material?.storages;
     }
     /**
-     * Get our {@see ComputeMaterial} works
+     * Get our {@link ComputeMaterial} works
      * @readonly
-     * @type {ComputeMaterial['works']}
      */
     get works() {
       return this.material?.works;
@@ -3786,9 +3749,8 @@ var GPUCurtains = (() => {
     }
     /** EVENTS **/
     /**
-     * Assign a callback function to _onReadyCallback
-     * @param {function=} callback - callback to run when {@see ComputePass} is ready
-     * @returns {ComputePass}
+     * Callback to run when the {@link ComputePass} is ready
+     * @param callback - callback to run when {@link ComputePass} is ready
      */
     onReady(callback) {
       if (callback) {
@@ -3797,9 +3759,8 @@ var GPUCurtains = (() => {
       return this;
     }
     /**
-     * Assign a callback function to _onBeforeRenderCallback
-     * @param {function=} callback - callback to run just before {@see ComputePass} will be rendered
-     * @returns {ComputePass}
+     * Callback to run before the {@link ComputePass} is rendered
+     * @param callback - callback to run just before {@link ComputePass} will be rendered
      */
     onBeforeRender(callback) {
       if (callback) {
@@ -3808,9 +3769,8 @@ var GPUCurtains = (() => {
       return this;
     }
     /**
-     * Assign a callback function to _onRenderCallback
-     * @param {function=} callback - callback to run when {@see ComputePass} is rendered
-     * @returns {ComputePass}
+     * Callback to run when the {@link ComputePass} is rendered
+     * @param callback - callback to run when {@link ComputePass} is rendered
      */
     onRender(callback) {
       if (callback) {
@@ -3819,9 +3779,8 @@ var GPUCurtains = (() => {
       return this;
     }
     /**
-     * Assign a callback function to _onAfterRenderCallback
-     * @param {function=} callback - callback to run just after {@see ComputePass} has been rendered
-     * @returns {ComputePass}
+     * Callback to run after the {@link ComputePass} has been rendered
+     * @param callback - callback to run just after {@link ComputePass} has been rendered
      */
     onAfterRender(callback) {
       if (callback) {
@@ -3830,9 +3789,8 @@ var GPUCurtains = (() => {
       return this;
     }
     /**
-     * Assign a callback function to _onBeforeRenderCallback
-     * @param {function=} callback - callback to run just after {@see GPURenderer} has been resized
-     * @returns {ComputePass}
+     * Callback to run after the {@link Renderer} has been resized
+     * @param callback - callback to run just after {@link GPURenderer} has been resized
      */
     onAfterResize(callback) {
       if (callback) {
@@ -3854,8 +3812,8 @@ var GPUCurtains = (() => {
       this.material.onBeforeRender();
     }
     /**
-     * Render our {@see ComputeMaterial}
-     * @param {GPUComputePassEncoder} pass - current compute pass encoder
+     * Render our {@link ComputeMaterial}
+     * @param pass - current compute pass encoder
      */
     onRenderPass(pass) {
       this._onRenderCallback && this._onRenderCallback();
@@ -3869,8 +3827,8 @@ var GPUCurtains = (() => {
     }
     /**
      * Render our compute pass
-     * Basically just check if our {@see GPURenderer} is ready, and then render our {@see ComputeMaterial}
-     * @param {GPUComputePassEncoder} pass
+     * Basically just check if our {@link GPURenderer} is ready, and then render our {@link ComputeMaterial}
+     * @param pass
      */
     render(pass) {
       this.onBeforeRenderPass();
@@ -3880,31 +3838,30 @@ var GPUCurtains = (() => {
       this.onAfterRenderPass();
     }
     /**
-     * Check whether we're currently accessing one of the {@see ComputeMaterial} buffer and therefore can't render our compute pass
+     * Check whether we're currently accessing one of the {@link ComputeMaterial} buffer and therefore can't render our compute pass
      * @readonly
-     * @type {boolean}
      */
     get canRender() {
       return this.material ? !this.material.hasMappedBuffer : false;
     }
     /**
      * Copy the result of our read/write GPUBuffer into our result binding array
-     * @param {GPUCommandEncoder} commandEncoder - current GPU command encoder
+     * @param commandEncoder - current GPU command encoder
      */
     copyBufferToResult(commandEncoder) {
       this.material?.copyBufferToResult(commandEncoder);
     }
     /**
-     * Set {@see ComputeMaterial} work groups result
+     * Set {@link ComputeMaterial} work groups result
      */
     setWorkGroupsResult() {
       this.material?.setWorkGroupsResult();
     }
     /**
      * Get the result of a work group by binding name
-     * @param {string=} workGroupName - name/key of the work group
-     * @param {string=} bindingName - name/key of the input binding
-     * @returns {Float32Array} - the corresponding binding result array
+     * @param workGroupName - name/key of the work group
+     * @param bindingName - name/key of the input binding
+     * @returns - the corresponding binding result array
      */
     getWorkGroupResult({ workGroupName, bindingName }) {
       return this.material?.getWorkGroupResult({ workGroupName, bindingName });
@@ -4023,7 +3980,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Set our {@link containerBoundingRect} (called on resize)
-     * @param {DOMElementBoundingRect} boundingRect - new bounding rectangle
+     * @param boundingRect - new bounding rectangle
      */
     setContainerBoundingRect(boundingRect) {
       this.containerBoundingRect = boundingRect;
@@ -4031,7 +3988,6 @@ var GPUCurtains = (() => {
     /**
      * Get our DOM frustum bounding rectangle, i.e. our {@link containerBoundingRect} with the {@link DOMFrustumMargins} applied
      * @readonly
-     * @type {RectCoords}
      */
     get DOMFrustumBoundingRect() {
       return {
@@ -4579,10 +4535,19 @@ var GPUCurtains = (() => {
      * Create the bind groups if they need to be created, but first add Camera bind group if needed
      */
     createBindGroups() {
-      if (this.renderer.cameraBindGroup && this.options.rendering.useProjection) {
-        this.bindGroups.push(this.renderer.cameraBindGroup);
+      const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0;
+      if (this.texturesBindGroup.shouldCreateBindGroup) {
+        this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
+        this.texturesBindGroup.createBindGroup();
+        this.bindGroups.push(this.texturesBindGroup);
       }
-      super.createBindGroups();
+      this.inputsBindGroups.forEach((bindGroup) => {
+        if (bindGroup.shouldCreateBindGroup) {
+          bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
+          bindGroup.createBindGroup();
+          this.bindGroups.push(bindGroup);
+        }
+      });
     }
     /**
      * Render the material if it is ready:
@@ -5833,6 +5798,12 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         verticesOrder,
         useProjection
       };
+    }
+    // TODO!
+    // need to chose whether we should siltently add the camera bind group here
+    // or explicitly in the RenderMaterial class createBindGroups() method
+    setPipelineEntryBindGroups(bindGroups) {
+      this.bindGroups = "cameraBindGroup" in this.renderer && this.options.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
     }
     setPipelineEntryBuffers(parameters) {
       const { attributes, bindGroups } = parameters;

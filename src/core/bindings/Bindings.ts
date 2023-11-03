@@ -5,23 +5,26 @@ import { SamplerBindings } from './SamplerBindings'
 
 /**
  * Defines all kind of binding types
- * @type {BindingType}
  */
 export type BindingType = 'uniform' | 'storage' | 'storageWrite' | 'texture' | 'externalTexture' | 'sampler'
 /**
  * Defines all kind of {@link Bindings} that are related to textures or samplers
- * @type {TextureSamplerBindings}
  */
 export type TextureSamplerBindings = TextureBindings | SamplerBindings
 
 /**
- * @typedef {BindingsParams}
+ * An object defining all possible {@link Bindings} class instancing parameters
  */
 export interface BindingsParams {
+  /** {@link Bindings} label */
   label?: string
+  /** {@link Bindings} name/key */
   name?: string
+  /** [bindingType]{@link BindingType} to use with this {@link Bindings} */
   bindingType?: BindingType
+  /** binding index inside the [bind group]{@link GPUBindGroup} */
   bindIndex?: number
+  /** {@link Bindings} variables shaders visibility */
   visibility?: MaterialShadersType | null
 }
 
@@ -30,45 +33,22 @@ export interface BindingsParams {
  * Used as a shell to build actual bindings upon, like {@link BufferBindings}, {@link WorkBufferBindings}, {@link TextureBindings} and {@link SamplerBindings}
  */
 export class Bindings {
-  /**
-   * The label of the {@link Bindings}
-   * @type {string}
-   */
+  /** The label of the {@link Bindings} */
   label: string
-  /**
-   * The name/key of the {@link Bindings}
-   * @type {string}
-   */
+  /** The name/key of the {@link Bindings} */
   name: string
-  /**
-   * The binding type of the {@link Bindings}
-   * @type {BindingType}
-   */
+  /** The binding type of the {@link Bindings} */
   bindingType: BindingType
-  /**
-   * The binding index of the {@link Bindings}, used to link bindings in the shaders
-   * @type {number}
-   */
+  /** The binding index of the {@link Bindings}, used to link bindings in the shaders */
   bindIndex: number
-  /**
-   * The visibility of the {@link Bindings} in the shaders
-   * @type {GPUShaderStageFlags}
-   */
+  /** The visibility of the {@link Bindings} in the shaders */
   visibility: GPUShaderStageFlags
-  /**
-   * The padded value array that will be sent to the GPUBuffer
-   * @type {Float32Array}
-   */
+  /** The padded value array that will be sent to the GPUBuffer */
   value?: Float32Array | null
 
   /**
    * Bindings constructor
-   * @param {BindingsParams} parameters - parameters used to create our Bindings
-   * @param {string=} parameters.label - binding label
-   * @param {string=} parameters.name - binding name
-   * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {number=} parameters.bindIndex - bind index inside the bind group
-   * @param {MaterialShadersType=} parameters.visibility - shader visibility
+   * @param {BindingsParams} parameters - [parameters]{@link BindingsParams} used to create our {@link Bindings}
    */
   constructor({
     label = 'Uniform',

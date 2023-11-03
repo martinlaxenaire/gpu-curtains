@@ -256,6 +256,10 @@ export class Material {
         this.bindGroups.push(bindGroup)
       }
     })
+
+    this.bindGroups.forEach((bindGroup) => {
+      console.log(bindGroup.options.label)
+    })
   }
 
   /**

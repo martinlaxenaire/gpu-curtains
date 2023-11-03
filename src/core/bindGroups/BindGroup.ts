@@ -24,69 +24,33 @@ import { BindingType } from '../bindings/Bindings'
  * It creates GPUBuffer, GPUBindGroup and GPUBindGroupLayout that are used by the GPU Pipelines.
  */
 export class BindGroup {
-  /**
-   * The type of the {@link BindGroup}
-   * @type {string}
-   */
+  /**  The type of the {@link BindGroup} */
   type: string
-  /**
-   * The universal unique id of the {@link BindGroup}
-   * @type {string}
-   */
+  /** The universal unique id of the {@link BindGroup} */
   uuid: string
-  /**
-   * The {@link Renderer} used
-   * @type {Renderer}
-   */
+  /** The {@link Renderer} used */
   renderer: Renderer
-  /**
-   * Options used to create this {@link BindGroup}
-   * @type {TextureBindGroupParams}
-   */
+  /** Options used to create this {@link BindGroup} */
   options: TextureBindGroupParams
-  /**
-   * Index of this {@link BindGroup}, used to link bindings in the shaders
-   * @type {number}
-   */
+  /** Index of this {@link BindGroup}, used to link bindings in the shaders */
   index: number
 
-  /**
-   * List of [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup}
-   * @type {BindGroupBindingElement[]}
-   */
+  /** List of [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup} */
   bindings: BindGroupBindingElement[]
-  /**
-   * List of [bindingsBuffers]{@link BindGroupBindingBuffer} handled by this {@link BindGroup}.
-   * @type {BindGroupBindingBuffer[]}
-   */
+  /** List of [bindingsBuffers]{@link BindGroupBindingBuffer} handled by this {@link BindGroup}. */
   bindingsBuffers: BindGroupBindingBuffer[]
 
-  /**
-   * Our {@link BindGroup} [entries]{@link BindGroupEntries} objects
-   * @type {BindGroupEntries}
-   */
+  /** Our {@link BindGroup} [entries]{@link BindGroupEntries} objects */
   entries: BindGroupEntries
 
-  /**
-   * Our {@link BindGroup} GPUBindGroupLayout
-   * @type {?GPUBindGroupLayout}
-   */
+  /** Our {@link BindGroup} GPUBindGroupLayout */
   bindGroupLayout: null | GPUBindGroupLayout
-  /**
-   * Our {@link BindGroup} GPUBindGroup
-   * @type {?GPUBindGroup}
-   */
+  /** Our {@link BindGroup} GPUBindGroup */
   bindGroup: null | GPUBindGroup
 
-  /**
-   * Flag indicating whether we need to totally reset this {@link BindGroup}
-   * @type {boolean}
-   */
+  /** Flag indicating whether we need to totally reset this {@link BindGroup} */
   needsReset: boolean
-  /**
-   * Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup}
-   * @type {boolean}
-   */
+  /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
   needsPipelineFlush: boolean
 
   /**
@@ -137,8 +101,8 @@ export class BindGroup {
   }
 
   /**
-   * Sets our {@link BindGroup} {@link index}
-   * @param {number} index
+   * Sets our [BindGroup index]{@link BindGroup#index}
+   * @param index - [BindGroup index]{@link BindGroup#index}
    */
   setIndex(index: number) {
     this.index = index
@@ -146,7 +110,7 @@ export class BindGroup {
 
   /**
    * Adds an array of already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array
-   * @param {BindGroupBindingElement[]} bindings - bindings to add
+   * @param bindings - {@link bindings} to add
    */
   addBindings(bindings: BindGroupBindingElement[] = []) {
     this.bindings = [...this.bindings, ...bindings]
@@ -154,7 +118,7 @@ export class BindGroup {
 
   /**
    * Adds an already created {@link bindings} (buffers, texture, etc.) to the {@link bindings} array
-   * @param {BindGroupBindingElement} binding - binding to add
+   * @param binding - binding to add
    */
   addBinding(binding: BindGroupBindingElement) {
     this.bindings.push(binding)
@@ -162,9 +126,9 @@ export class BindGroup {
 
   /**
    * Creates Bindings based on a list of inputs
-   * @param {BindingType} bindingType - binding type
-   * @param {InputBindings} inputs - inputs that will be used to create the binding
-   * @returns {BindGroupBindingElement[]} - bindings array
+   * @param bindingType - [binding type]{@link Bindings#bindingType}
+   * @param inputs - [inputs]{@link InputBindings} that will be used to create the binding
+   * @returns - a {@link bindings} array
    */
   createInputBindings(bindingType: BindingType = 'uniform', inputs: InputBindings = {}): BindGroupBindingElement[] {
     return [
@@ -212,7 +176,6 @@ export class BindGroup {
    * Get whether the GPU bind group is ready to be created
    * It can be created if it has {@link bindings} and has not been created yet
    * @readonly
-   * @type {boolean}
    */
   get shouldCreateBindGroup(): boolean {
     return !this.bindGroup && !!this.bindings.length
@@ -248,9 +211,9 @@ export class BindGroup {
 
   /**
    * Creates a GPUBuffer from a bind group binding and add bindGroup and bindGroupLayout {@link entries}
-   * @param {BindGroupBufferBindingElement} binding - the binding element
-   * @param {number} bindIndex - the bind index
-   * @param {TypedArray} array - the binding value array
+   * @param binding - the binding element
+   * @param bindIndex - the bind index
+   * @param array - the binding value array
    */
   createBindingBufferElement(binding: BindGroupBufferBindingElement, bindIndex: number, array: TypedArray) {
     const buffer = this.renderer.createBuffer({
@@ -294,7 +257,7 @@ export class BindGroup {
 
   /**
    * Creates binding buffer with correct params
-   * @param {BindGroupBufferBindingElement} binding - the binding element
+   * @param binding - the binding element
    */
   createBindingBuffer(binding: BindGroupBufferBindingElement) {
     if (!binding.useStruct) {
@@ -325,8 +288,8 @@ export class BindGroup {
 
   /**
    * Get a bind group binding by name/key
-   * @param {string} bindingName - the binding name or key
-   * @returns {BindGroupBindingElement | null} - the found binding, or null if not found
+   * @param bindingName - the binding name or key
+   * @returns - the found binding, or null if not found
    */
   getBindingsByName(bindingName = ''): BindGroupBindingElement | null {
     return this.bindings.find((binding) => binding.name === bindingName)
@@ -378,9 +341,9 @@ export class BindGroup {
   /**
    * Clones a {@link BindGroup} from a list of {@link bindingsBuffers}
    * Useful to create a new bind group with already created buffers, but swapped
-   * @param {BindGroupBindingBuffer[]} bindingsBuffers - our input {@link bindingsBuffers}
-   * @param {boolean} keepLayout - whether we should keep original {@link bindGroupLayout} or not
-   * @returns {AllowedBindGroups} - the cloned {@link BindGroup}
+   * @param bindingsBuffers - our input {@link bindingsBuffers}
+   * @param keepLayout - whether we should keep original {@link bindGroupLayout} or not
+   * @returns - the cloned {@link BindGroup}
    */
   cloneFromBindingsBuffers({
     bindingsBuffers = [],
@@ -437,7 +400,7 @@ export class BindGroup {
 
   /**
    * Clones a bind group with all its {@link bindings} and original {@link bindingsBuffers}
-   * @returns {AllowedBindGroups} - the cloned BindGroup
+   * @returns - the cloned BindGroup
    */
   clone(): AllowedBindGroups {
     return this.cloneFromBindingsBuffers()

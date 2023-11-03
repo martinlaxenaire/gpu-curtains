@@ -14,16 +14,18 @@ import { Input, InputBase, InputValue } from '../../types/BindGroups'
 
 export interface BufferBindingsUniform extends InputBase {
   _value: InputValue
-
   get value(): InputValue
-
   set value(value: InputValue)
-
   shouldUpdate: boolean
 }
 
+/**
+ * An object defining all possible {@link BufferBindings} class instancing parameters
+ */
 export interface BufferBindingsParams extends BindingsParams {
+  /** Whether this {@link BufferBindings} should use structured WGSL variables */
   useStruct?: boolean
+  /** Object containing one or multiple [input bindings]{@link Input} */
   bindings?: Record<string, Input>
 }
 

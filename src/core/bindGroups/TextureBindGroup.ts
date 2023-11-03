@@ -7,14 +7,12 @@ import { BindGroupBufferBindingElement, BindGroupParams } from '../../types/Bind
 import { MaterialTexture } from '../../types/Materials'
 
 /**
- * An object defining all possible {@link TextureBindGroup} instancing parameters
- * @interface {object} TextureBindGroupParams
- * @extends BindGroupParams
- * @property {MaterialTexture[]} [textures=[]] - array of [textures]{@link MaterialTexture} to add to a {@link TextureBindGroup}
- * @property {Sampler[]} [samplers=[]] - array of {@link Sampler} to add to a {@link TextureBindGroup}
+ * An object defining all possible {@link TextureBindGroup} class instancing parameters
  */
 export interface TextureBindGroupParams extends BindGroupParams {
+  /** array of [textures]{@link MaterialTexture} to add to a {@link TextureBindGroup} */
   textures?: MaterialTexture[]
+  /** array of {@link Sampler} to add to a {@link TextureBindGroup} */
   samplers?: Sampler[]
 }
 
@@ -24,10 +22,7 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * @extends BindGroup
  */
 export class TextureBindGroup extends BindGroup {
-  /**
-   * An array containing all the already created external textures ID
-   * @type {number[]}
-   */
+  /** An array containing all the already created external textures ID */
   externalTexturesIDs: number[]
 
   /**
@@ -63,7 +58,7 @@ export class TextureBindGroup extends BindGroup {
 
   /**
    * Adds a texture to the textures array and the bindings
-   * @param {MaterialTexture} texture - texture to add
+   * @param texture - texture to add
    */
   addTexture(texture: MaterialTexture) {
     this.textures.push(texture)
@@ -73,7 +68,6 @@ export class TextureBindGroup extends BindGroup {
   /**
    * Get the current textures array
    * @readonly
-   * @type {MaterialTexture[]}
    */
   get textures(): MaterialTexture[] {
     return this.options.textures
@@ -81,7 +75,7 @@ export class TextureBindGroup extends BindGroup {
 
   /**
    * Adds a sampler to the samplers array and the bindings
-   * @param {Sampler} sampler
+   * @param sampler
    */
   addSampler(sampler: Sampler) {
     this.samplers.push(sampler)
@@ -91,7 +85,6 @@ export class TextureBindGroup extends BindGroup {
   /**
    * Get the current samplers array
    * @readonly
-   * @type {Sampler[]}
    */
   get samplers(): Sampler[] {
     return this.options.samplers
@@ -101,7 +94,6 @@ export class TextureBindGroup extends BindGroup {
    * Get whether the GPU bind group is ready to be created
    * It can be created if it has {@link BindGroup#bindings} and has not been created yet and all GPU textures and samplers are created
    * @readonly
-   * @type {boolean}
    */
   get shouldCreateBindGroup(): boolean {
     return (
@@ -191,10 +183,10 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Get whether we should update our video {@link TextureBindGroup}.
+   * Get whether we should update our video [bind group layout]{@link GPUBindGroupLayout}.
    * Happens when a GPUExternalTexture is created, we need to rebuild the {@link BindGroup#bindGroup} and {@link BindGroup#bindGroupLayout} from scratch. We might even need to recreate the whole pipeline (it it has already been created).
-   * @param {number} textureIndex - the texture index in the bind group textures array
-   * @returns {boolean}
+   * @param textureIndex - the texture index in the bind group textures array
+   * @returns - whether we should update the [bind group layout]{@link GPUBindGroupLayout}
    */
   shouldUpdateVideoTextureBindGroupLayout(textureIndex: number) {
     // if we're here it's because we've just uploaded an external texture
@@ -211,7 +203,7 @@ export class TextureBindGroup extends BindGroup {
   /**
    * Called if the result of {@link shouldUpdateVideoTextureBindGroupLayout} is true. Updates our {@link BindGroup#bindGroupLayout} {@link BindGroup#entries} on the fly, then recreates GPUBindGroupLayout.
    * Will also call {@link resetTextureBindGroup} afterwhile to recreate the GPUBindGroup.
-   * @param {number} textureIndex - the texture index in the bind group textures array
+   * @param textureIndex - the texture index in the bind group textures array
    */
   updateVideoTextureBindGroupLayout(textureIndex: number) {
     const texture = this.textures[textureIndex]

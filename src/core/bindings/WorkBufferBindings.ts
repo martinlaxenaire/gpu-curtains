@@ -1,7 +1,9 @@
 import { BufferBindings, BufferBindingsParams } from './BufferBindings'
 
 export interface WorkBufferBindingsParams extends BufferBindingsParams {
+  /** Work group dispatch size to use */
   dispatchSize?: number | number[]
+  /** Whether whe should automatically copy the [resultBuffer]{@link BindGroupBindingBuffer#resultBuffer} GPUBuffer content into our [result]{@link WorkBufferBindings#result} array */
   shouldCopyResult?: boolean
 }
 
@@ -11,34 +13,16 @@ export interface WorkBufferBindingsParams extends BufferBindingsParams {
  * @extends BufferBindings
  */
 export class WorkBufferBindings extends BufferBindings {
-  /**
-   * An array of number describing how we must dispatch the work group
-   * @type {number[]}
-   */
+  /** An array of number describing how we must dispatch the work group */
   dispatchSize: number[]
-  /**
-   * Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our {@link result} array
-   * @type {boolean}
-   */
+  /** Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our {@link result} array */
   shouldCopyResult: boolean
-  /**
-   * Array specifically designed to handle the result of our resultBuffer GPUBuffer if needed
-   * @type {Float32Array}
-   */
+  /** Array specifically designed to handle the result of our [resultBuffer]{@link BindGroupBindingBuffer#resultBuffer} GPUBuffer if needed */
   result: Float32Array
 
   /**
    * WorkBufferBindings constructor
-   * @param {WorkBufferBindingsParams} parameters - parameters used to create our WorkBufferBindings
-   * @param {string=} parameters.label - binding label
-   * @param {string=} parameters.name - binding name
-   * @param {BindingType=} parameters.bindingType - binding type
-   * @param {number=} parameters.bindIndex - bind index inside the bind group
-   * @param {MaterialShadersType=} parameters.visibility - shader visibility
-   * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
-   * @param {Object.<string, Input>} parameters.bindings - bindings inputs
-   * @param {(number|number[])=} parameters.dispatchSize - work group dispatch size
-   * @param {boolean=} parameters.shouldCopyResult - whether we should copy the buffer result at each render call
+   * @param {WorkBufferBindingsParams} parameters - [parameters]{@link WorkBufferBindingsParams} used to create our {@link WorkBufferBindings}
    */
   constructor({
     label = 'Work',
