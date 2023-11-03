@@ -645,9 +645,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   plane.onRender(() => {
     // update cloth vertex buffer with resulting buffer from compute passes
     const vertexBuffer = plane.geometry.getVertexBufferByName('clothAttributes')
-    const clothBuffer = computeNormalPass.material.getBindingsBuffersByBindingName('clothVertex')
+    const clothBuffer = computeNormalPass.material.getBindingsByName('clothVertex')
 
-    vertexBuffer.buffer = clothBuffer[0]?.buffer
+    vertexBuffer.buffer = clothBuffer?.buffer
   })
 
   const pointer = new GPUCurtains.Vec2(Infinity)

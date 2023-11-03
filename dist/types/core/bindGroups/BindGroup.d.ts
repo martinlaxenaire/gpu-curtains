@@ -1,7 +1,7 @@
 /// <reference types="dist" />
 import { Renderer } from '../../utils/renderer-utils';
 import { TypedArray } from '../../utils/buffers-utils';
-import { AllowedBindGroups, BindGroupBindingBuffer, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, InputBindings } from '../../types/BindGroups';
+import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, InputBindings } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { TextureBindGroupParams } from './TextureBindGroup';
 import { BindingType } from '../bindings/Bindings';
@@ -23,8 +23,6 @@ export declare class BindGroup {
     index: number;
     /** List of [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup} */
     bindings: BindGroupBindingElement[];
-    /** List of [bindingsBuffers]{@link BindGroupBindingBuffer} handled by this {@link BindGroup}. */
-    bindingsBuffers: BindGroupBindingBuffer[];
     /** Our {@link BindGroup} [entries]{@link BindGroupEntries} objects */
     entries: BindGroupEntries;
     /** Our {@link BindGroup} GPUBindGroupLayout */
@@ -121,18 +119,18 @@ export declare class BindGroup {
      */
     updateBindings(): void;
     /**
-     * Clones a {@link BindGroup} from a list of {@link bindingsBuffers}
+     * Clones a {@link BindGroup} from a list of {@link bindings}
      * Useful to create a new bind group with already created buffers, but swapped
-     * @param bindingsBuffers - our input {@link bindingsBuffers}
+     * @param bindings - our input {@link bindings}
      * @param keepLayout - whether we should keep original {@link bindGroupLayout} or not
      * @returns - the cloned {@link BindGroup}
      */
-    cloneFromBindingsBuffers({ bindingsBuffers, keepLayout, }?: {
-        bindingsBuffers?: BindGroupBindingBuffer[];
+    cloneFromBindings({ bindings, keepLayout, }?: {
+        bindings?: BindGroupBindingElement[];
         keepLayout?: boolean;
     }): AllowedBindGroups;
     /**
-     * Clones a bind group with all its {@link bindings} and original {@link bindingsBuffers}
+     * Clones a bind group with all its {@link bindings}
      * @returns - the cloned BindGroup
      */
     clone(): AllowedBindGroups;

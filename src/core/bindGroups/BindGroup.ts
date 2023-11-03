@@ -6,13 +6,13 @@ import { BufferBindings } from '../bindings/BufferBindings'
 import {
   AllowedBindGroups,
   AllowedInputBindingsParams,
-  BindGroupBindingBuffer,
   BindGroupBindingElement,
   BindGroupBufferBindingElement,
   BindGroupEntries,
   BindGroupParams,
   WorkInputBindingsParams,
   InputBindings,
+  BindGroupTextureSamplerElement,
 } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { TextureBindGroupParams } from './TextureBindGroup'
@@ -36,9 +36,8 @@ export class BindGroup {
   index: number
 
   /** List of [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup} */
+  // TODO BindGroupBufferBindingElement[] instead??
   bindings: BindGroupBindingElement[]
-  /** List of [bindingsBuffers]{@link BindGroupBindingBuffer} handled by this {@link BindGroup}. */
-  bindingsBuffers: BindGroupBindingBuffer[]
 
   /** Our {@link BindGroup} [entries]{@link BindGroupEntries} objects */
   entries: BindGroupEntries
@@ -85,7 +84,7 @@ export class BindGroup {
     if (this.options.inputs) this.setInputBindings()
 
     this.resetEntries()
-    this.bindingsBuffers = []
+    //this.bindingsBuffers = []
 
     this.bindGroupLayout = null
     this.bindGroup = null
@@ -217,7 +216,7 @@ export class BindGroup {
    */
   createBindingBufferElement(binding: BindGroupBufferBindingElement, bindIndex: number, array: TypedArray) {
     const buffer = this.renderer.createBuffer({
-      label: this.options.label + ': ' + binding.bindingType + ' buffer from:' + binding.label,
+      label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
       size: array.byteLength,
       usage:
         binding.bindingType === 'uniform'
@@ -225,19 +224,14 @@ export class BindGroup {
           : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX,
     })
 
-    this.bindingsBuffers.push({
-      inputBinding: binding,
-      buffer,
-      array,
-      // TODO useful?
-      ...(binding.bindingType === 'storageWrite' && {
-        resultBuffer: this.renderer.createBuffer({
-          label: this.options.label + ': Result buffer from: ' + binding.label,
-          size: binding.value.byteLength,
-          usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-        }),
-      }),
-    } as BindGroupBindingBuffer)
+    binding.buffer = buffer
+    if ('resultBuffer' in binding) {
+      binding.resultBuffer = this.renderer.createBuffer({
+        label: this.options.label + ': Result buffer from: ' + binding.label,
+        size: binding.value.byteLength,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+      })
+    }
 
     this.entries.bindGroupLayout.push({
       binding: bindIndex,
@@ -321,35 +315,37 @@ export class BindGroup {
    * Called at each render from Material
    */
   updateBindings() {
-    this.bindingsBuffers.forEach((bindingBuffer) => {
-      if (bindingBuffer.inputBinding && bindingBuffer.inputBinding.shouldUpdate) {
-        // bufferOffset is always equals to 0 in our case
-        if (!bindingBuffer.inputBinding.useStruct && bindingBuffer.inputBinding.bindingElements.length > 1) {
-          // we're in a non struct buffer binding with multiple entries
-          // that should not happen but that way we're covered
-          this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.array)
-        } else {
-          this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.inputBinding.value)
+    this.bindings.forEach((binding, index) => {
+      if ('shouldUpdate' in binding) {
+        if ('buffer' in binding && binding.shouldUpdate) {
+          // bufferOffset is always equals to 0 in our case
+          if (!binding.useStruct && binding.bindingElements.length > 1) {
+            // we're in a non struct buffer binding with multiple entries
+            // that should not happen but that way we're covered
+            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array)
+          } else {
+            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
+          }
         }
-      }
 
-      // reset update flag
-      bindingBuffer.inputBinding.shouldUpdate = false
+        // reset update flag
+        binding.shouldUpdate = false
+      }
     })
   }
 
   /**
-   * Clones a {@link BindGroup} from a list of {@link bindingsBuffers}
+   * Clones a {@link BindGroup} from a list of {@link bindings}
    * Useful to create a new bind group with already created buffers, but swapped
-   * @param bindingsBuffers - our input {@link bindingsBuffers}
+   * @param bindings - our input {@link bindings}
    * @param keepLayout - whether we should keep original {@link bindGroupLayout} or not
    * @returns - the cloned {@link BindGroup}
    */
-  cloneFromBindingsBuffers({
-    bindingsBuffers = [],
+  cloneFromBindings({
+    bindings = [],
     keepLayout = false,
   }: {
-    bindingsBuffers?: BindGroupBindingBuffer[]
+    bindings?: BindGroupBindingElement[]
     keepLayout?: boolean
   } = {}): AllowedBindGroups {
     const params = { ...this.options }
@@ -361,30 +357,45 @@ export class BindGroup {
 
     bindGroupCopy.setIndex(this.index)
 
-    const bindingsBuffersRef = bindingsBuffers.length ? bindingsBuffers : this.bindingsBuffers
+    const bindingsRef = bindings.length ? bindings : this.bindings
 
-    bindingsBuffersRef.forEach((bindingBuffer, index) => {
-      bindGroupCopy.addBinding(bindingBuffer.inputBinding)
+    bindingsRef.forEach((binding, index) => {
+      bindGroupCopy.addBinding(binding)
 
-      bindGroupCopy.bindingsBuffers.push({ ...bindingBuffer })
+      //bindGroupCopy.bindings.push(binding)
 
       // if we should create a new bind group layout, fill it
       if (!keepLayout) {
         bindGroupCopy.entries.bindGroupLayout.push({
           binding: bindGroupCopy.entries.bindGroupLayout.length,
           buffer: {
-            type: getBindGroupLayoutBindingType(bindingBuffer.inputBinding.bindingType),
+            type: getBindGroupLayoutBindingType(binding.bindingType),
           },
-          visibility: bindingBuffer.inputBinding.visibility,
+          visibility: binding.visibility,
         })
       }
 
+      // TODO
+      const bindingTypeValue = (() => {
+        switch (binding.bindingType) {
+          case 'texture':
+            return ((binding as BindGroupTextureSamplerElement).resource as GPUTexture).createView()
+          case 'externalTexture':
+          case 'sampler':
+            return (binding as BindGroupTextureSamplerElement).resource
+          default:
+            return 'buffer' in binding
+              ? {
+                  buffer: (binding as BindGroupBufferBindingElement).buffer,
+                }
+              : null
+        }
+      })()
+
       bindGroupCopy.entries.bindGroup.push({
         binding: bindGroupCopy.entries.bindGroup.length,
-        resource: {
-          buffer: bindingBuffer.buffer,
-        },
-      })
+        resource: bindingTypeValue,
+      } as GPUBindGroupEntry)
     })
 
     // if we should copy the given bind group layout
@@ -399,11 +410,11 @@ export class BindGroup {
   }
 
   /**
-   * Clones a bind group with all its {@link bindings} and original {@link bindingsBuffers}
+   * Clones a bind group with all its {@link bindings}
    * @returns - the cloned BindGroup
    */
   clone(): AllowedBindGroups {
-    return this.cloneFromBindingsBuffers()
+    return this.cloneFromBindings()
   }
 
   /**
@@ -411,12 +422,17 @@ export class BindGroup {
    * Most important is to destroy the GPUBuffers to free the memory
    */
   destroy() {
-    this.bindingsBuffers.forEach((bindingBuffer) => {
-      bindingBuffer.buffer?.destroy()
-      bindingBuffer.resultBuffer?.destroy()
+    this.bindings.forEach((binding) => {
+      if ('buffer' in binding) {
+        binding.buffer?.destroy()
+      }
+
+      if ('resultBuffer' in binding) {
+        binding.resultBuffer?.destroy()
+      }
     })
 
-    this.bindingsBuffers = []
+    this.bindings = []
     // TODO keep the bindings in case we want to recreate it later?
     //this.bindings = []
     this.bindGroupLayout = null

@@ -15,26 +15,17 @@ import { MaterialShadersType } from './Materials';
  */
 export type BindGroupBufferBindingElement = BufferBindings | WorkBufferBindings;
 /**
+ * Defines all kind of possible textures/ samplers {@link Bindings}
+ */
+export type BindGroupTextureSamplerElement = SamplerBindings | TextureBindings;
+/**
  * Defines all kind of possible {@link Bindings}
  */
-export type BindGroupBindingElement = BindGroupBufferBindingElement | SamplerBindings | TextureBindings;
+export type BindGroupBindingElement = BindGroupBufferBindingElement | BindGroupTextureSamplerElement;
 /**
  * Defines all kind of possible {@link BindGroup}
  */
 export type AllowedBindGroups = BindGroup | TextureBindGroup;
-/**
- * Defines an object composed of a {@link Float32Array} and its associated [buffer]{@link BindGroupBindingBuffer#buffer}, a reference to the original [inputBinding]{@link BindGroupBufferBindingElement} and eventually a [result buffer]{@link BindGroupBindingBuffer#resultBuffer}
-s */
-export interface BindGroupBindingBuffer {
-    /** {@link Float32Array} holding the [binding buffer]{@link BindGroupBindingBuffer} data */
-    array: Float32Array;
-    /** {@link GPUBuffer} associated to the [array]{@link BindGroupBindingBuffer#array} */
-    buffer: GPUBuffer;
-    /** reference to the original [input binding]{@link BindGroupBufferBindingElement} */
-    inputBinding: BindGroupBufferBindingElement;
-    /** {@link GPUBuffer} eventually holding the result of writable storages bindings */
-    resultBuffer?: GPUBuffer;
-}
 /**
  * An object defining all possible [bind group]{@link AllowedBindGroups} inputs
  */

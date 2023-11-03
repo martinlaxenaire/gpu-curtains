@@ -3,7 +3,7 @@ import { BufferBindings, BufferBindingsParams } from './BufferBindings'
 export interface WorkBufferBindingsParams extends BufferBindingsParams {
   /** Work group dispatch size to use */
   dispatchSize?: number | number[]
-  /** Whether whe should automatically copy the [resultBuffer]{@link BindGroupBindingBuffer#resultBuffer} GPUBuffer content into our [result]{@link WorkBufferBindings#result} array */
+  /** Whether whe should automatically copy the [resultBuffer]{@link bindings#resultBuffer} GPUBuffer content into our [result]{@link WorkBufferBindings#result} array */
   shouldCopyResult?: boolean
 }
 
@@ -17,8 +17,11 @@ export class WorkBufferBindings extends BufferBindings {
   dispatchSize: number[]
   /** Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our {@link result} array */
   shouldCopyResult: boolean
-  /** Array specifically designed to handle the result of our [resultBuffer]{@link BindGroupBindingBuffer#resultBuffer} GPUBuffer if needed */
+  /** Array specifically designed to handle the result of our [resultBuffer]{@link bindings#resultBuffer} GPUBuffer if needed */
   result: Float32Array
+  /** The result GPUBuffer */
+  // TODO!!
+  resultBuffer: GPUBuffer | null
 
   /**
    * WorkBufferBindings constructor
@@ -54,5 +57,7 @@ export class WorkBufferBindings extends BufferBindings {
     this.shouldCopyResult = shouldCopyResult
 
     this.result = new Float32Array(this.value.slice())
+    // TODO
+    this.resultBuffer = null
   }
 }

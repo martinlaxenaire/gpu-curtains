@@ -3,7 +3,7 @@ import { MaterialParams } from '../../types/Materials'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
-import { BindGroupBindingBuffer, WorkInputBindingsParams } from '../../types/BindGroups'
+import { WorkInputBindingsParams } from '../../types/BindGroups'
 import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 /**
@@ -100,8 +100,9 @@ export class ComputeMaterial extends Material {
   get hasMappedBuffer(): boolean {
     // check if we have a buffer mapped or pending map
     const hasMappedBuffer = this.bindGroups.some((bindGroup) => {
-      return bindGroup.bindingsBuffers.some(
-        (bindingBuffer) => bindingBuffer.resultBuffer && bindingBuffer.resultBuffer.mapState !== 'unmapped'
+      return bindGroup.bindings.some(
+        (bindingBuffer: WorkBufferBindings) =>
+          bindingBuffer.resultBuffer && bindingBuffer.resultBuffer.mapState !== 'unmapped'
       )
     })
 
@@ -141,15 +142,9 @@ export class ComputeMaterial extends Material {
    */
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-        if ('shouldCopyResult' in bindingBuffer.inputBinding && bindingBuffer.inputBinding.shouldCopyResult) {
-          commandEncoder.copyBufferToBuffer(
-            bindingBuffer.buffer,
-            0,
-            bindingBuffer.resultBuffer,
-            0,
-            bindingBuffer.resultBuffer.size
-          )
+      bindGroup.bindings.forEach((binding: WorkBufferBindings) => {
+        if ('shouldCopyResult' in binding && binding.shouldCopyResult) {
+          commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
         }
       })
     })
@@ -160,9 +155,9 @@ export class ComputeMaterial extends Material {
    */
   setWorkGroupsResult() {
     this.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-        if ((bindingBuffer.inputBinding as WorkBufferBindings).shouldCopyResult) {
-          this.setBufferResult(bindingBuffer)
+      bindGroup.bindings.forEach((binding: WorkBufferBindings) => {
+        if (binding.shouldCopyResult) {
+          this.setBufferResult(binding)
         }
       })
     })
@@ -170,15 +165,13 @@ export class ComputeMaterial extends Material {
 
   /**
    * Copy the result buffer into our result array
-   * @param {BindGroupBindingBuffer} bindingBuffer
+   * @param {WorkBufferBindings} binding
    */
-  setBufferResult(bindingBuffer: BindGroupBindingBuffer) {
-    if (bindingBuffer.resultBuffer?.mapState === 'unmapped') {
-      bindingBuffer.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-        ;(bindingBuffer.inputBinding as WorkBufferBindings).result = new Float32Array(
-          bindingBuffer.resultBuffer.getMappedRange().slice(0)
-        )
-        bindingBuffer.resultBuffer.unmap()
+  setBufferResult(binding: WorkBufferBindings) {
+    if (binding.resultBuffer?.mapState === 'unmapped') {
+      binding.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
+        binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0))
+        binding.resultBuffer.unmap()
       })
     }
   }
@@ -196,26 +189,22 @@ export class ComputeMaterial extends Material {
     workGroupName?: string
     bindingName?: string
   }): Float32Array {
-    let bindingBuffer
+    let binding
     this.bindGroups.forEach((bindGroup) => {
-      bindingBuffer = bindGroup.bindingsBuffers.find(
-        (bindingBuffer) => bindingBuffer.inputBinding.name === workGroupName
-      )
+      binding = bindGroup.bindings.find((binding) => binding.name === workGroupName)
     })
 
-    if (bindingBuffer) {
+    if (binding) {
       if (bindingName) {
-        const bindingElement = bindingBuffer.inputBinding.bindingElements.find(
-          (bindingElement) => bindingElement.name === bindingName
-        )
+        const bindingElement = binding.bindingElements.find((bindingElement) => bindingElement.name === bindingName)
 
         if (bindingElement) {
-          return bindingBuffer.inputBinding.result.slice(bindingElement.startOffset, bindingElement.endOffset)
+          return binding.result.slice(bindingElement.startOffset, bindingElement.endOffset)
         } else {
-          return bindingBuffer.inputBinding.result.slice()
+          return binding.result.slice()
         }
       } else {
-        return bindingBuffer.inputBinding.result.slice()
+        return binding.result.slice()
       }
     } else {
       return null

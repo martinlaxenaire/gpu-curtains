@@ -5,12 +5,7 @@ import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Sampler } from '../samplers/Sampler'
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
 import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings'
-import {
-  AllowedBindGroups,
-  BindGroupBindingBuffer,
-  BindGroupBindingElement,
-  BindGroupBufferBindingElement,
-} from '../../types/BindGroups'
+import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { Texture } from '../textures/Texture'
 import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
@@ -266,22 +261,22 @@ export class Material {
    * Clones a {@see BindGroup} from a list of buffers
    * Useful to create a new bind group with already created buffers, but swapped
    * @param {BindGroup} bindGroup - the BindGroup to clone
-   * @param {BindGroupBindingBuffer[]} bindingsBuffers - our input binding buffers
+   * @param {BindGroupBufferBindingElement[]} bindings - our input binding buffers
    * @param {boolean} keepLayout - whether we should keep original bind group layout or not
    * @returns {AllowedBindGroups} - the cloned BindGroup
    */
   cloneBindGroup({
     bindGroup,
-    bindingsBuffers = [],
+    bindings = [],
     keepLayout = true,
   }: {
     bindGroup?: BindGroup
-    bindingsBuffers?: BindGroupBindingBuffer[]
+    bindings?: BindGroupBufferBindingElement[]
     keepLayout?: boolean
   }): BindGroup | null {
     if (!bindGroup) return null
 
-    const clone = bindGroup.cloneFromBindingsBuffers({ bindingsBuffers, keepLayout })
+    const clone = bindGroup.cloneFromBindings({ bindings, keepLayout })
     this.clonedBindGroups.push(clone)
 
     return clone
@@ -371,28 +366,24 @@ export class Material {
    * @param {string} bindingName - the binding name or key
    * @returns {BindGroupBindingBuffer[]} - the found binding buffers, or an empty array if not found
    */
-  getBindingsBuffersByBindingName(bindingName: BufferBindings['name'] = ''): BindGroupBindingBuffer[] {
-    let bindings = []
-    ;(this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
-      const binding = bindGroup.bindingsBuffers.filter((bindingBuffer) =>
-        bindingBuffer.inputBinding.useStruct
-          ? bindingBuffer.inputBinding.name === bindingName
-          : bindingBuffer.inputBinding.name ===
-            bindingName +
-              toKebabCase(
-                bindingBuffer.inputBinding.bindingElements.length
-                  ? bindingBuffer.inputBinding.bindingElements[0].name
-                  : ''
-              )
-      )
-
-      if (binding.length) {
-        bindings = [...bindings, ...binding]
-      }
-    })
-
-    return bindings
-  }
+  // TODO rename getBindingsByName!
+  // getBindingsBuffersByBindingName(bindingName: BufferBindings['name'] = ''): BindGroupBindingBuffer[] {
+  //   let bindings = []
+  //   ;(this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
+  //     const binding = bindGroup.bindings.filter((binding: BindGroupBufferBindingElement) =>
+  //       binding.useStruct
+  //         ? binding.name === bindingName
+  //         : binding.name ===
+  //           bindingName + toKebabCase(binding.bindingElements.length ? binding.bindingElements[0].name : '')
+  //     )
+  //
+  //     if (binding.length) {
+  //       bindings = [...bindings, ...binding]
+  //     }
+  //   })
+  //
+  //   return bindings
+  // }
 
   /** SAMPLERS & TEXTURES **/
 

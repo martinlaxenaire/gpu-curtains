@@ -36,52 +36,30 @@ export interface BufferBindingsParams extends BindingsParams {
  * @extends Bindings
  */
 export class BufferBindings extends Bindings {
-  /**
-   * Flag to indicate whether these {@link BufferBindings} should use structured data
-   * @type {boolean}
-   */
+  /** Flag to indicate whether these {@link BufferBindings} should use structured data */
   useStruct: boolean
-  /**
-   * All the {@link BufferBindings} data inputs
-   * @type {Object.<string, BufferBindingsUniform>}
-   */
+  /** All the {@link BufferBindings} data inputs */
   bindings: Record<string, BufferBindingsUniform>
 
-  /**
-   * Number of rows (each row has a byteLength of 16) used to build our padded {@link value} array
-   * @type {number}
-   */
+  /** Number of rows (each row has a byteLength of 16) used to build our padded {@link value} array */
   alignmentRows: number
-  /**
-   * Total size of our {@link value} array in bytes, so {@link alignmentRows} * 16
-   */
+  /** Total size of our {@link value} array in bytes, so {@link alignmentRows} * 16 */
   size: number
-  /**
-   * Flag to indicate whether one of the {@link bindings} value has changed and we need to update the GPUBuffer linked to the {@link value} array
-   * @type {boolean}
-   */
+  /** Flag to indicate whether one of the {@link bindings} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
   shouldUpdate: boolean
-  /**
-   * An array describing how each corresponding {@link bindings} should be inserted into our {@link value} array
-   * @type {BufferBindingsElement[]}
-   */
+  /** An array describing how each corresponding {@link bindings} should be inserted into our {@link value} array
+   * @type {BufferBindingsElement[]} */
   bindingElements: BufferBindingsElement[]
 
-  /**
-   * The padded value array that will be sent to the GPUBuffer
-   * @type {Float32Array}
-   */
+  /** The padded value array that will be sent to the GPUBuffer */
   value: Float32Array
+  /** The GPUBuffer */
+  // TODO!!
+  buffer: GPUBuffer | null
 
-  /**
-   * A string to append to our shaders code describing the WGSL structure representing this {@link BufferBindings}
-   * @type {string}
-   */
+  /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBindings} */
   wgslStructFragment: string
-  /**
-   * An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link BufferBindings}
-   * @type {string[]}
-   */
+  /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link BufferBindings} */
   wgslGroupFragment: string[]
 
   /**
@@ -115,6 +93,7 @@ export class BufferBindings extends Bindings {
 
     this.bindingElements = []
     this.bindings = {}
+    this.buffer = null // TODO
 
     this.setBindings(bindings)
     this.setBufferAttributes()

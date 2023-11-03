@@ -147,6 +147,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, params)
     planes.push(plane)
 
+    console.log(plane)
+
     handlePlane(plane, planeIndex)
   })
 

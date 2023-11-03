@@ -1488,6 +1488,7 @@ var GPUCurtains = (() => {
       this.useStruct = useStruct;
       this.bindingElements = [];
       this.bindings = {};
+      this.buffer = null;
       this.setBindings(bindings);
       this.setBufferAttributes();
       this.setWGSLFragment();
@@ -1714,6 +1715,7 @@ var GPUCurtains = (() => {
       this.dispatchSize = dispatchSize;
       this.shouldCopyResult = shouldCopyResult;
       this.result = new Float32Array(this.value.slice());
+      this.resultBuffer = null;
     }
   };
 
@@ -1742,7 +1744,6 @@ var GPUCurtains = (() => {
       if (this.options.inputs)
         this.setInputBindings();
       this.resetEntries();
-      this.bindingsBuffers = [];
       this.bindGroupLayout = null;
       this.bindGroup = null;
       this.needsReset = false;
@@ -1851,23 +1852,18 @@ var GPUCurtains = (() => {
      */
     createBindingBufferElement(binding, bindIndex, array) {
       const buffer = this.renderer.createBuffer({
-        label: this.options.label + ": " + binding.bindingType + " buffer from:" + binding.label,
+        label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
         size: array.byteLength,
         usage: binding.bindingType === "uniform" ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
       });
-      this.bindingsBuffers.push({
-        inputBinding: binding,
-        buffer,
-        array,
-        // TODO useful?
-        ...binding.bindingType === "storageWrite" && {
-          resultBuffer: this.renderer.createBuffer({
-            label: this.options.label + ": Result buffer from: " + binding.label,
-            size: binding.value.byteLength,
-            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
-          })
-        }
-      });
+      binding.buffer = buffer;
+      if ("resultBuffer" in binding) {
+        binding.resultBuffer = this.renderer.createBuffer({
+          label: this.options.label + ": Result buffer from: " + binding.label,
+          size: binding.value.byteLength,
+          usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+        });
+      }
       this.entries.bindGroupLayout.push({
         binding: bindIndex,
         buffer: {
@@ -1941,26 +1937,28 @@ var GPUCurtains = (() => {
      * Called at each render from Material
      */
     updateBindings() {
-      this.bindingsBuffers.forEach((bindingBuffer) => {
-        if (bindingBuffer.inputBinding && bindingBuffer.inputBinding.shouldUpdate) {
-          if (!bindingBuffer.inputBinding.useStruct && bindingBuffer.inputBinding.bindingElements.length > 1) {
-            this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.array);
-          } else {
-            this.renderer.queueWriteBuffer(bindingBuffer.buffer, 0, bindingBuffer.inputBinding.value);
+      this.bindings.forEach((binding, index) => {
+        if ("shouldUpdate" in binding) {
+          if ("buffer" in binding && binding.shouldUpdate) {
+            if (!binding.useStruct && binding.bindingElements.length > 1) {
+              this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array);
+            } else {
+              this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value);
+            }
           }
+          binding.shouldUpdate = false;
         }
-        bindingBuffer.inputBinding.shouldUpdate = false;
       });
     }
     /**
-     * Clones a {@link BindGroup} from a list of {@link bindingsBuffers}
+     * Clones a {@link BindGroup} from a list of {@link bindings}
      * Useful to create a new bind group with already created buffers, but swapped
-     * @param bindingsBuffers - our input {@link bindingsBuffers}
+     * @param bindings - our input {@link bindings}
      * @param keepLayout - whether we should keep original {@link bindGroupLayout} or not
      * @returns - the cloned {@link BindGroup}
      */
-    cloneFromBindingsBuffers({
-      bindingsBuffers = [],
+    cloneFromBindings({
+      bindings = [],
       keepLayout = false
     } = {}) {
       const params = { ...this.options };
@@ -1969,24 +1967,34 @@ var GPUCurtains = (() => {
         label: params.label
       });
       bindGroupCopy.setIndex(this.index);
-      const bindingsBuffersRef = bindingsBuffers.length ? bindingsBuffers : this.bindingsBuffers;
-      bindingsBuffersRef.forEach((bindingBuffer, index) => {
-        bindGroupCopy.addBinding(bindingBuffer.inputBinding);
-        bindGroupCopy.bindingsBuffers.push({ ...bindingBuffer });
+      const bindingsRef = bindings.length ? bindings : this.bindings;
+      bindingsRef.forEach((binding, index) => {
+        bindGroupCopy.addBinding(binding);
         if (!keepLayout) {
           bindGroupCopy.entries.bindGroupLayout.push({
             binding: bindGroupCopy.entries.bindGroupLayout.length,
             buffer: {
-              type: getBindGroupLayoutBindingType(bindingBuffer.inputBinding.bindingType)
+              type: getBindGroupLayoutBindingType(binding.bindingType)
             },
-            visibility: bindingBuffer.inputBinding.visibility
+            visibility: binding.visibility
           });
         }
+        const bindingTypeValue = (() => {
+          switch (binding.bindingType) {
+            case "texture":
+              return binding.resource.createView();
+            case "externalTexture":
+            case "sampler":
+              return binding.resource;
+            default:
+              return "buffer" in binding ? {
+                buffer: binding.buffer
+              } : null;
+          }
+        })();
         bindGroupCopy.entries.bindGroup.push({
           binding: bindGroupCopy.entries.bindGroup.length,
-          resource: {
-            buffer: bindingBuffer.buffer
-          }
+          resource: bindingTypeValue
         });
       });
       if (keepLayout) {
@@ -1997,22 +2005,26 @@ var GPUCurtains = (() => {
       return bindGroupCopy;
     }
     /**
-     * Clones a bind group with all its {@link bindings} and original {@link bindingsBuffers}
+     * Clones a bind group with all its {@link bindings}
      * @returns - the cloned BindGroup
      */
     clone() {
-      return this.cloneFromBindingsBuffers();
+      return this.cloneFromBindings();
     }
     /**
      * Destroy our {@link BindGroup}
      * Most important is to destroy the GPUBuffers to free the memory
      */
     destroy() {
-      this.bindingsBuffers.forEach((bindingBuffer) => {
-        bindingBuffer.buffer?.destroy();
-        bindingBuffer.resultBuffer?.destroy();
+      this.bindings.forEach((binding) => {
+        if ("buffer" in binding) {
+          binding.buffer?.destroy();
+        }
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer?.destroy();
+        }
       });
-      this.bindingsBuffers = [];
+      this.bindings = [];
       this.bindGroupLayout = null;
       this.bindGroup = null;
       this.resetEntries();
@@ -3228,18 +3240,18 @@ var GPUCurtains = (() => {
      * Clones a {@see BindGroup} from a list of buffers
      * Useful to create a new bind group with already created buffers, but swapped
      * @param {BindGroup} bindGroup - the BindGroup to clone
-     * @param {BindGroupBindingBuffer[]} bindingsBuffers - our input binding buffers
+     * @param {BindGroupBufferBindingElement[]} bindings - our input binding buffers
      * @param {boolean} keepLayout - whether we should keep original bind group layout or not
      * @returns {AllowedBindGroups} - the cloned BindGroup
      */
     cloneBindGroup({
       bindGroup,
-      bindingsBuffers = [],
+      bindings = [],
       keepLayout = true
     }) {
       if (!bindGroup)
         return null;
-      const clone = bindGroup.cloneFromBindingsBuffers({ bindingsBuffers, keepLayout });
+      const clone = bindGroup.cloneFromBindings({ bindings, keepLayout });
       this.clonedBindGroups.push(clone);
       return clone;
     }
@@ -3319,20 +3331,24 @@ var GPUCurtains = (() => {
      * @param {string} bindingName - the binding name or key
      * @returns {BindGroupBindingBuffer[]} - the found binding buffers, or an empty array if not found
      */
-    getBindingsBuffersByBindingName(bindingName = "") {
-      let bindings = [];
-      (this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
-        const binding = bindGroup.bindingsBuffers.filter(
-          (bindingBuffer) => bindingBuffer.inputBinding.useStruct ? bindingBuffer.inputBinding.name === bindingName : bindingBuffer.inputBinding.name === bindingName + toKebabCase(
-            bindingBuffer.inputBinding.bindingElements.length ? bindingBuffer.inputBinding.bindingElements[0].name : ""
-          )
-        );
-        if (binding.length) {
-          bindings = [...bindings, ...binding];
-        }
-      });
-      return bindings;
-    }
+    // TODO rename getBindingsByName!
+    // getBindingsBuffersByBindingName(bindingName: BufferBindings['name'] = ''): BindGroupBindingBuffer[] {
+    //   let bindings = []
+    //   ;(this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
+    //     const binding = bindGroup.bindings.filter((binding: BindGroupBufferBindingElement) =>
+    //       binding.useStruct
+    //         ? binding.name === bindingName
+    //         : binding.name ===
+    //           bindingName + toKebabCase(binding.bindingElements.length ? binding.bindingElements[0].name : '')
+    //     )
+    //
+    //     if (binding.length) {
+    //       bindings = [...bindings, ...binding]
+    //     }
+    //   })
+    //
+    //   return bindings
+    // }
     /** SAMPLERS & TEXTURES **/
     /**
      * Prepare our textures array and set the {@see TextureBindGroup}
@@ -3514,7 +3530,7 @@ var GPUCurtains = (() => {
      */
     get hasMappedBuffer() {
       const hasMappedBuffer = this.bindGroups.some((bindGroup) => {
-        return bindGroup.bindingsBuffers.some(
+        return bindGroup.bindings.some(
           (bindingBuffer) => bindingBuffer.resultBuffer && bindingBuffer.resultBuffer.mapState !== "unmapped"
         );
       });
@@ -3546,15 +3562,9 @@ var GPUCurtains = (() => {
      */
     copyBufferToResult(commandEncoder) {
       this.bindGroups.forEach((bindGroup) => {
-        bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-          if ("shouldCopyResult" in bindingBuffer.inputBinding && bindingBuffer.inputBinding.shouldCopyResult) {
-            commandEncoder.copyBufferToBuffer(
-              bindingBuffer.buffer,
-              0,
-              bindingBuffer.resultBuffer,
-              0,
-              bindingBuffer.resultBuffer.size
-            );
+        bindGroup.bindings.forEach((binding) => {
+          if ("shouldCopyResult" in binding && binding.shouldCopyResult) {
+            commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size);
           }
         });
       });
@@ -3564,25 +3574,22 @@ var GPUCurtains = (() => {
      */
     setWorkGroupsResult() {
       this.bindGroups.forEach((bindGroup) => {
-        bindGroup.bindingsBuffers.forEach((bindingBuffer) => {
-          if (bindingBuffer.inputBinding.shouldCopyResult) {
-            this.setBufferResult(bindingBuffer);
+        bindGroup.bindings.forEach((binding) => {
+          if (binding.shouldCopyResult) {
+            this.setBufferResult(binding);
           }
         });
       });
     }
     /**
      * Copy the result buffer into our result array
-     * @param {BindGroupBindingBuffer} bindingBuffer
+     * @param {WorkBufferBindings} binding
      */
-    setBufferResult(bindingBuffer) {
-      if (bindingBuffer.resultBuffer?.mapState === "unmapped") {
-        bindingBuffer.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-          ;
-          bindingBuffer.inputBinding.result = new Float32Array(
-            bindingBuffer.resultBuffer.getMappedRange().slice(0)
-          );
-          bindingBuffer.resultBuffer.unmap();
+    setBufferResult(binding) {
+      if (binding.resultBuffer?.mapState === "unmapped") {
+        binding.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
+          binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0));
+          binding.resultBuffer.unmap();
         });
       }
     }
@@ -3596,24 +3603,20 @@ var GPUCurtains = (() => {
       workGroupName = "",
       bindingName = ""
     }) {
-      let bindingBuffer;
+      let binding;
       this.bindGroups.forEach((bindGroup) => {
-        bindingBuffer = bindGroup.bindingsBuffers.find(
-          (bindingBuffer2) => bindingBuffer2.inputBinding.name === workGroupName
-        );
+        binding = bindGroup.bindings.find((binding2) => binding2.name === workGroupName);
       });
-      if (bindingBuffer) {
+      if (binding) {
         if (bindingName) {
-          const bindingElement = bindingBuffer.inputBinding.bindingElements.find(
-            (bindingElement2) => bindingElement2.name === bindingName
-          );
+          const bindingElement = binding.bindingElements.find((bindingElement2) => bindingElement2.name === bindingName);
           if (bindingElement) {
-            return bindingBuffer.inputBinding.result.slice(bindingElement.startOffset, bindingElement.endOffset);
+            return binding.result.slice(bindingElement.startOffset, bindingElement.endOffset);
           } else {
-            return bindingBuffer.inputBinding.result.slice();
+            return binding.result.slice();
           }
         } else {
-          return bindingBuffer.inputBinding.result.slice();
+          return binding.result.slice();
         }
       } else {
         return null;

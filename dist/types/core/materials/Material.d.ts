@@ -5,7 +5,7 @@ import { TextureBindGroup } from '../bindGroups/TextureBindGroup';
 import { Sampler } from '../samplers/Sampler';
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager';
 import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings';
-import { AllowedBindGroups, BindGroupBindingBuffer, BindGroupBindingElement } from '../../types/BindGroups';
+import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups';
 import { Texture } from '../textures/Texture';
 import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
@@ -82,13 +82,13 @@ export declare class Material {
      * Clones a {@see BindGroup} from a list of buffers
      * Useful to create a new bind group with already created buffers, but swapped
      * @param {BindGroup} bindGroup - the BindGroup to clone
-     * @param {BindGroupBindingBuffer[]} bindingsBuffers - our input binding buffers
+     * @param {BindGroupBufferBindingElement[]} bindings - our input binding buffers
      * @param {boolean} keepLayout - whether we should keep original bind group layout or not
      * @returns {AllowedBindGroups} - the cloned BindGroup
      */
-    cloneBindGroup({ bindGroup, bindingsBuffers, keepLayout, }: {
+    cloneBindGroup({ bindGroup, bindings, keepLayout, }: {
         bindGroup?: BindGroup;
-        bindingsBuffers?: BindGroupBindingBuffer[];
+        bindings?: BindGroupBufferBindingElement[];
         keepLayout?: boolean;
     }): BindGroup | null;
     /**
@@ -124,7 +124,6 @@ export declare class Material {
      * @param {string} bindingName - the binding name or key
      * @returns {BindGroupBindingBuffer[]} - the found binding buffers, or an empty array if not found
      */
-    getBindingsBuffersByBindingName(bindingName?: BufferBindings['name']): BindGroupBindingBuffer[];
     /** SAMPLERS & TEXTURES **/
     /**
      * Prepare our textures array and set the {@see TextureBindGroup}

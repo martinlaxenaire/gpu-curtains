@@ -4,7 +4,7 @@ import { MaterialParams } from '../../types/Materials';
 import { Renderer } from '../../utils/renderer-utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry';
-import { BindGroupBindingBuffer } from '../../types/BindGroups';
+import { WorkBufferBindings } from '../bindings/WorkBufferBindings';
 /**
  * ComputeMaterial class:
  * Create a Material specifically built to run computations on the GPU with a {@see ComputePass}
@@ -56,9 +56,9 @@ export declare class ComputeMaterial extends Material {
     setWorkGroupsResult(): void;
     /**
      * Copy the result buffer into our result array
-     * @param {BindGroupBindingBuffer} bindingBuffer
+     * @param {WorkBufferBindings} binding
      */
-    setBufferResult(bindingBuffer: BindGroupBindingBuffer): void;
+    setBufferResult(binding: WorkBufferBindings): void;
     /**
      * Get the result of work group by work group and binding names
      * @param {string=} workGroupName
