@@ -1,4 +1,5 @@
 import { Bindings, BindingsParams, BindingType } from './Bindings'
+import { SamplerBindingResource } from './SamplerBindings'
 
 /** Defines a {@link TextureBindings} [resource]{@link TextureBindings#resource} */
 export type TextureBindingResource = GPUTexture | GPUExternalTexture | null
@@ -9,7 +10,7 @@ export type TextureBindingResource = GPUTexture | GPUExternalTexture | null
  */
 export interface TextureBindingsParams extends BindingsParams {
   /** {@link TextureBindings} [resource]{@link TextureBindings#resource} */
-  resource: TextureBindingResource
+  texture: TextureBindingResource
 }
 
 /**
@@ -19,7 +20,7 @@ export interface TextureBindingsParams extends BindingsParams {
  */
 export class TextureBindings extends Bindings {
   /** Our {@link TextureBindings} resource, i.e. a {@link GPUTexture} or {@link GPUExternalTexture} */
-  resource: TextureBindingResource
+  texture: TextureBindingResource
   /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link TextureBindings} */
   wgslGroupFragment: string[]
 
@@ -36,7 +37,7 @@ export class TextureBindings extends Bindings {
   constructor({
     label = 'Texture',
     name = 'texture',
-    resource,
+    texture,
     bindingType,
     bindIndex = 0,
     visibility,
@@ -45,9 +46,35 @@ export class TextureBindings extends Bindings {
 
     super({ label, name, bindingType, bindIndex, visibility })
 
-    this.resource = resource // should be a texture or an external texture
+    this.resource = texture // should be a texture or an external texture
 
     this.setWGSLFragment()
+  }
+
+  /**
+   * Get bind group layout entry resource, either for [texture]{@link GPUBindGroupLayoutEntry#texture} or [externalTexture]{@link GPUBindGroupLayoutEntry#externalTexture}
+   */
+  get resourceLayout(): GPUTextureBindingLayout | GPUExternalTextureBindingLayout | null {
+    return this.texture instanceof GPUExternalTexture
+      ? { externalTexture: {} }
+      : this.texture instanceof GPUTexture
+      ? { texture: {} } // TODO?
+      : null
+  }
+
+  /**
+   * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+   */
+  get resource(): GPUExternalTexture | GPUTextureView | null {
+    return this.texture instanceof GPUExternalTexture
+      ? this.texture
+      : this.texture instanceof GPUTexture
+      ? this.texture.createView()
+      : null
+  }
+
+  set resource(value: TextureBindingResource) {
+    this.texture = value
   }
 
   /**
@@ -55,6 +82,7 @@ export class TextureBindings extends Bindings {
    * @param bindingType - the new [binding type]{@link Bindings#bindingType}
    */
   setBindingType(bindingType: BindingType) {
+    // TODO if the binding type change (probably switching from 'texture' to 'externalTexture'), maybe we should tell the parent bind group to reset from here?
     if (bindingType !== this.bindingType) {
       this.bindingType = bindingType
       this.setWGSLFragment()

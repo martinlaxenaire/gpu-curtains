@@ -129,7 +129,7 @@ export class Texture extends Object3D {
       new TextureBindings({
         label: this.options.label + ': texture',
         name: this.options.name,
-        resource: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
+        texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
       } as TextureBindingsParams),
       this.textureMatrix,

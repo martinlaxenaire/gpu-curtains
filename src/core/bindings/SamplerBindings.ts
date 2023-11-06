@@ -8,7 +8,7 @@ export type SamplerBindingResource = GPUSampler | null
  */
 export interface SamplerBindingsParams extends BindingsParams {
   /** {@link SamplerBindings} [bind group]{@link GPUBindGroup} resource */
-  resource: SamplerBindingResource
+  sampler: SamplerBindingResource
 }
 
 /**
@@ -18,7 +18,7 @@ export interface SamplerBindingsParams extends BindingsParams {
  */
 export class SamplerBindings extends Bindings {
   /** Our {@link SamplerBindings} resource, i.e. a {@link GPUSampler} */
-  resource: SamplerBindingResource
+  sampler: SamplerBindingResource
   /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link SamplerBindings} */
   wgslGroupFragment: string[]
 
@@ -38,15 +38,37 @@ export class SamplerBindings extends Bindings {
     bindingType,
     bindIndex = 0,
     visibility,
-    resource,
+    sampler,
   }: SamplerBindingsParams) {
     bindingType = bindingType ?? 'sampler'
 
     super({ label, name, bindIndex, bindingType, visibility })
 
-    this.resource = resource // should be a sampler
+    this.resource = sampler // should be a sampler
 
     this.setWGSLFragment()
+  }
+
+  /**
+   * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#sampler}
+   */
+  get resourceLayout(): { sampler: GPUSamplerBindingLayout } {
+    return {
+      sampler: {
+        type: 'filtering', // TODO let user chose?
+      },
+    }
+  }
+
+  /**
+   * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+   */
+  get resource(): SamplerBindingResource {
+    return this.sampler
+  }
+
+  set resource(value: SamplerBindingResource) {
+    this.sampler = value
   }
 
   /**

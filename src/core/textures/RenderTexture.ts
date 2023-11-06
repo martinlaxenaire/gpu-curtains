@@ -89,7 +89,7 @@ export class RenderTexture {
       new TextureBindings({
         label: this.options.label + ': ' + this.options.name + ' texture',
         name: this.options.name,
-        resource: this.texture,
+        texture: this.texture,
         bindingType: 'texture',
       } as TextureBindingsParams),
     ]

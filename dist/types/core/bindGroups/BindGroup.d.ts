@@ -1,6 +1,5 @@
 /// <reference types="dist" />
 import { Renderer } from '../../utils/renderer-utils';
-import { TypedArray } from '../../utils/buffers-utils';
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, InputBindings } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { TextureBindGroupParams } from './TextureBindGroup';
@@ -84,21 +83,19 @@ export declare class BindGroup {
      */
     resetBindGroup(): void;
     /**
-     * Creates a GPUBuffer from a bind group binding and add bindGroup and bindGroupLayout {@link entries}
-     * @param binding - the binding element
-     * @param bindIndex - the bind index
-     * @param array - the binding value array
+     * Get all bindings that handle a GPUBuffer
      */
-    createBindingBufferElement(binding: BindGroupBufferBindingElement, bindIndex: number, array: TypedArray): void;
+    get bufferBindings(): BindGroupBufferBindingElement[];
     /**
-     * Creates binding buffer with correct params
+     * Creates binding GPUBuffer with correct params
      * @param binding - the binding element
      */
-    createBindingBuffer(binding: BindGroupBufferBindingElement): void;
+    createBindingBuffer(binding: any): void;
     /**
-     * Loop through all {@link bindings}, and create bindings buffers if they need one
+     * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.
+     * For buffer bindings, create a GPUBuffer first if needed
      */
-    createBindingsBuffers(): void;
+    fillEntries(): void;
     /**
      * Get a bind group binding by name/key
      * @param bindingName - the binding name or key

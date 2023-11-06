@@ -57,7 +57,7 @@ export class Sampler {
       minFilter,
       mipmapFilter,
       maxAnisotropy,
-    }
+    } as GPUSamplerDescriptor
 
     this.createSampler()
     this.createBinding()
@@ -72,7 +72,7 @@ export class Sampler {
       label: this.label,
       name: this.name,
       bindingType: 'sampler',
-      resource: this.sampler,
+      sampler: this.sampler,
     })
   }
 }

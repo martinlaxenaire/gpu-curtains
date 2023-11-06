@@ -232,6 +232,43 @@ var GPUCurtains = (() => {
     };
   })();
 
+  // src/core/bindings/Bindings.ts
+  var Bindings = class {
+    /**
+     * Bindings constructor
+     * @param {BindingsParams} parameters - [parameters]{@link BindingsParams} used to create our {@link Bindings}
+     */
+    constructor({
+      label = "Uniform",
+      name = "uniform",
+      bindingType = "uniform",
+      bindIndex = 0,
+      visibility
+    }) {
+      this.label = label;
+      this.name = toCamelCase(name);
+      this.bindingType = bindingType;
+      this.bindIndex = bindIndex;
+      this.visibility = visibility ? (() => {
+        switch (visibility) {
+          case "vertex":
+            return GPUShaderStage.VERTEX;
+          case "fragment":
+            return GPUShaderStage.FRAGMENT;
+          case "compute":
+            return GPUShaderStage.COMPUTE;
+          default:
+            return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
+        }
+      })() : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
+    }
+    /**
+     * To update our buffers before at each render. Will be overriden.
+     */
+    onBeforeRender() {
+    }
+  };
+
   // src/utils/buffers-utils.ts
   var getBufferLayout = (bufferType) => {
     const bufferLayouts = {
@@ -313,43 +350,6 @@ var GPUCurtains = (() => {
           return "uniform";
       }
     })();
-  };
-
-  // src/core/bindings/Bindings.ts
-  var Bindings = class {
-    /**
-     * Bindings constructor
-     * @param {BindingsParams} parameters - [parameters]{@link BindingsParams} used to create our {@link Bindings}
-     */
-    constructor({
-      label = "Uniform",
-      name = "uniform",
-      bindingType = "uniform",
-      bindIndex = 0,
-      visibility
-    }) {
-      this.label = label;
-      this.name = toCamelCase(name);
-      this.bindingType = bindingType;
-      this.bindIndex = bindIndex;
-      this.visibility = visibility ? (() => {
-        switch (visibility) {
-          case "vertex":
-            return GPUShaderStage.VERTEX;
-          case "fragment":
-            return GPUShaderStage.FRAGMENT;
-          case "compute":
-            return GPUShaderStage.COMPUTE;
-          default:
-            return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
-        }
-      })() : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
-    }
-    /**
-     * To update our buffers before at each render. Will be overriden.
-     */
-    onBeforeRender() {
-    }
   };
 
   // src/math/Vec2.ts
@@ -1494,6 +1494,22 @@ var GPUCurtains = (() => {
       this.setWGSLFragment();
     }
     /**
+     * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
+     */
+    get resourceLayout() {
+      return {
+        buffer: {
+          type: getBindGroupLayoutBindingType(this.bindingType)
+        }
+      };
+    }
+    /**
+     * Get [bind group resource]{@link GPUBindGroupEntry#resource}
+     */
+    get resource() {
+      return { buffer: this.buffer };
+    }
+    /**
      * Format input bindings and set our {@link bindings}
      * @param {Object.<string, Input>} bindings - bindings inputs
      */
@@ -1832,7 +1848,7 @@ var GPUCurtains = (() => {
      * Create buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
      */
     createBindGroup() {
-      this.createBindingsBuffers();
+      this.fillEntries();
       this.setBindGroupLayout();
       this.setBindGroup();
     }
@@ -1845,18 +1861,23 @@ var GPUCurtains = (() => {
       this.createBindGroup();
     }
     /**
-     * Creates a GPUBuffer from a bind group binding and add bindGroup and bindGroupLayout {@link entries}
-     * @param binding - the binding element
-     * @param bindIndex - the bind index
-     * @param array - the binding value array
+     * Get all bindings that handle a GPUBuffer
      */
-    createBindingBufferElement(binding, bindIndex, array) {
-      const buffer = this.renderer.createBuffer({
+    get bufferBindings() {
+      return this.bindings.filter(
+        (binding) => binding instanceof BufferBindings || binding instanceof WorkBufferBindings
+      );
+    }
+    /**
+     * Creates binding GPUBuffer with correct params
+     * @param binding - the binding element
+     */
+    createBindingBuffer(binding) {
+      binding.buffer = this.renderer.createBuffer({
         label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
-        size: array.byteLength,
+        size: binding.value.byteLength,
         usage: binding.bindingType === "uniform" ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
       });
-      binding.buffer = buffer;
       if ("resultBuffer" in binding) {
         binding.resultBuffer = this.renderer.createBuffer({
           label: this.options.label + ": Result buffer from: " + binding.label,
@@ -1864,45 +1885,28 @@ var GPUCurtains = (() => {
           usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
         });
       }
-      this.entries.bindGroupLayout.push({
-        binding: bindIndex,
-        buffer: {
-          type: getBindGroupLayoutBindingType(binding.bindingType)
-        },
-        visibility: binding.visibility
-      });
-      this.entries.bindGroup.push({
-        binding: bindIndex,
-        resource: {
-          buffer
-        }
-      });
     }
     /**
-     * Creates binding buffer with correct params
-     * @param binding - the binding element
+     * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.
+     * For buffer bindings, create a GPUBuffer first if needed
      */
-    createBindingBuffer(binding) {
-      if (!binding.useStruct) {
-        binding.bindingElements.forEach((bindingElement) => {
-          const bindIndex = this.entries.bindGroupLayout.length;
-          this.createBindingBufferElement(binding, bindIndex, bindingElement.array);
+    fillEntries() {
+      this.bindings.forEach((binding) => {
+        if (!binding.visibility) {
+          binding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
+        }
+        if ("buffer" in binding && !binding.buffer) {
+          this.createBindingBuffer(binding);
+        }
+        this.entries.bindGroupLayout.push({
+          binding: this.entries.bindGroupLayout.length,
+          ...binding.resourceLayout,
+          visibility: binding.visibility
         });
-      } else {
-        binding.bindIndex = this.entries.bindGroupLayout.length;
-        this.createBindingBufferElement(binding, binding.bindIndex, binding.value);
-      }
-    }
-    /**
-     * Loop through all {@link bindings}, and create bindings buffers if they need one
-     */
-    createBindingsBuffers() {
-      this.bindings.forEach((inputBinding) => {
-        if (!inputBinding.visibility)
-          inputBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT;
-        if (!!inputBinding.value) {
-          this.createBindingBuffer(inputBinding);
-        }
+        this.entries.bindGroup.push({
+          binding: this.entries.bindGroup.length,
+          resource: binding.resource
+        });
       });
     }
     /**
@@ -1937,17 +1941,15 @@ var GPUCurtains = (() => {
      * Called at each render from Material
      */
     updateBindings() {
-      this.bindings.forEach((binding, index) => {
-        if ("shouldUpdate" in binding) {
-          if ("buffer" in binding && binding.shouldUpdate) {
-            if (!binding.useStruct && binding.bindingElements.length > 1) {
-              this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array);
-            } else {
-              this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value);
-            }
+      this.bufferBindings.forEach((binding, index) => {
+        if (binding.shouldUpdate) {
+          if (!binding.useStruct && binding.bindingElements.length > 1) {
+            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array);
+          } else {
+            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value);
           }
-          binding.shouldUpdate = false;
         }
+        binding.shouldUpdate = false;
       });
     }
     /**
@@ -1973,28 +1975,13 @@ var GPUCurtains = (() => {
         if (!keepLayout) {
           bindGroupCopy.entries.bindGroupLayout.push({
             binding: bindGroupCopy.entries.bindGroupLayout.length,
-            buffer: {
-              type: getBindGroupLayoutBindingType(binding.bindingType)
-            },
+            ...binding.resourceLayout,
             visibility: binding.visibility
           });
         }
-        const bindingTypeValue = (() => {
-          switch (binding.bindingType) {
-            case "texture":
-              return binding.resource.createView();
-            case "externalTexture":
-            case "sampler":
-              return binding.resource;
-            default:
-              return "buffer" in binding ? {
-                buffer: binding.buffer
-              } : null;
-          }
-        })();
         bindGroupCopy.entries.bindGroup.push({
           binding: bindGroupCopy.entries.bindGroup.length,
-          resource: bindingTypeValue
+          resource: binding.resource
         });
       });
       if (keepLayout) {
@@ -2028,6 +2015,66 @@ var GPUCurtains = (() => {
       this.bindGroupLayout = null;
       this.bindGroup = null;
       this.resetEntries();
+    }
+  };
+
+  // src/core/bindings/TextureBindings.ts
+  var TextureBindings = class extends Bindings {
+    /**
+     * TextureBindings constructor
+     * @param {TextureBindingsParams} parameters - parameters used to create our TextureBindings
+     * @param {string=} parameters.label - binding label
+     * @param {string=} parameters.name - binding name
+     * @param {BindingType="uniform"} parameters.bindingType - binding type
+     * @param {number=} parameters.bindIndex - bind index inside the bind group
+     * @param {MaterialShadersType=} parameters.visibility - shader visibility
+     * @param {TextureBindingResource=} parameters.resource - a GPUTexture or GPUExternalTexture
+     */
+    constructor({
+      label = "Texture",
+      name = "texture",
+      texture,
+      bindingType,
+      bindIndex = 0,
+      visibility
+    }) {
+      bindingType = bindingType ?? "texture";
+      super({ label, name, bindingType, bindIndex, visibility });
+      this.resource = texture;
+      this.setWGSLFragment();
+    }
+    /**
+     * Get bind group layout entry resource, either for [texture]{@link GPUBindGroupLayoutEntry#texture} or [externalTexture]{@link GPUBindGroupLayoutEntry#externalTexture}
+     */
+    get resourceLayout() {
+      return this.texture instanceof GPUExternalTexture ? { externalTexture: {} } : this.texture instanceof GPUTexture ? { texture: {} } : null;
+    }
+    /**
+     * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+     */
+    get resource() {
+      return this.texture instanceof GPUExternalTexture ? this.texture : this.texture instanceof GPUTexture ? this.texture.createView() : null;
+    }
+    set resource(value) {
+      this.texture = value;
+    }
+    /**
+     * Set or update our [bindingType]{@link Bindings#bindingType} and our WGSL code snippet
+     * @param bindingType - the new [binding type]{@link Bindings#bindingType}
+     */
+    setBindingType(bindingType) {
+      if (bindingType !== this.bindingType) {
+        this.bindingType = bindingType;
+        this.setWGSLFragment();
+      }
+    }
+    /**
+     * Set the correct WGSL code snippet.
+     */
+    setWGSLFragment() {
+      this.wgslGroupFragment = [
+        this.bindingType === "externalTexture" ? `var ${this.name}: texture_external;` : `var ${this.name}: texture_2d<f32>;`
+      ];
     }
   };
 
@@ -2090,42 +2137,6 @@ var GPUCurtains = (() => {
       return !this.bindGroup && !!this.bindings.length && !this.textures.find((texture) => !(texture.texture || texture.externalTexture)) && !this.samplers.find((sampler) => !sampler.sampler);
     }
     /**
-     * Creates {@link BindGroup#bindings} for buffers, textures and samplers
-     */
-    createBindingsBuffers() {
-      this.bindings.forEach((inputBinding) => {
-        if (!inputBinding.visibility)
-          inputBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT;
-        if (!!inputBinding.value) {
-          this.createBindingBuffer(inputBinding);
-        } else if ("resource" in inputBinding && inputBinding.resource && inputBinding.bindingType) {
-          inputBinding.bindIndex = this.entries.bindGroupLayout.length;
-          const bindingTypeValue = (() => {
-            switch (inputBinding.bindingType) {
-              case "texture":
-                return inputBinding.resource.createView();
-              case "externalTexture":
-                return inputBinding.resource;
-              case "sampler":
-                return inputBinding.resource;
-              default:
-                return inputBinding.resource;
-                break;
-            }
-          })();
-          this.entries.bindGroupLayout.push({
-            binding: inputBinding.bindIndex,
-            [inputBinding.bindingType]: bindingTypeValue,
-            visibility: inputBinding.visibility
-          });
-          this.entries.bindGroup.push({
-            binding: inputBinding.bindIndex,
-            resource: bindingTypeValue
-          });
-        }
-      });
-    }
-    /**
      * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
      * Called each time a GPUTexture or GPUExternalTexture has changed:
      * - A texture media has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
@@ -2133,15 +2144,13 @@ var GPUCurtains = (() => {
      * - A render texture GPUTexture has changed (on resize)
      */
     resetTextureBindGroup() {
-      const texturesEntries = this.entries.bindGroup.filter(
-        (entry) => entry.resource instanceof GPUTextureView || entry.resource instanceof GPUExternalTexture
+      const textureBindingsIndexes = [...this.bindings].reduce(
+        (foundIndexes, binding, index) => (binding instanceof TextureBindings && foundIndexes.push(index), foundIndexes),
+        []
       );
-      if (texturesEntries.length) {
-        texturesEntries.forEach((entry, index) => {
-          const texture = this.textures[index];
-          if (texture) {
-            entry.resource = texture.options?.sourceType === "externalVideo" ? texture.externalTexture : texture.texture.createView();
-          }
+      if (textureBindingsIndexes.length) {
+        textureBindingsIndexes.forEach((index) => {
+          this.entries.bindGroup[index].resource = this.bindings[index].resource;
         });
         this.setBindGroup();
       }
@@ -2214,63 +2223,38 @@ var GPUCurtains = (() => {
       bindingType,
       bindIndex = 0,
       visibility,
-      resource
+      sampler
     }) {
       bindingType = bindingType ?? "sampler";
       super({ label, name, bindIndex, bindingType, visibility });
-      this.resource = resource;
+      this.resource = sampler;
       this.setWGSLFragment();
+    }
+    /**
+     * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#sampler}
+     */
+    get resourceLayout() {
+      return {
+        sampler: {
+          type: "filtering"
+          // TODO let user chose?
+        }
+      };
+    }
+    /**
+     * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+     */
+    get resource() {
+      return this.sampler;
+    }
+    set resource(value) {
+      this.sampler = value;
     }
     /**
      * Set the correct WGSL code snippet.
      */
     setWGSLFragment() {
       this.wgslGroupFragment = [`var ${this.name}: ${this.bindingType};`];
-    }
-  };
-
-  // src/core/bindings/TextureBindings.ts
-  var TextureBindings = class extends Bindings {
-    /**
-     * TextureBindings constructor
-     * @param {TextureBindingsParams} parameters - parameters used to create our TextureBindings
-     * @param {string=} parameters.label - binding label
-     * @param {string=} parameters.name - binding name
-     * @param {BindingType="uniform"} parameters.bindingType - binding type
-     * @param {number=} parameters.bindIndex - bind index inside the bind group
-     * @param {MaterialShadersType=} parameters.visibility - shader visibility
-     * @param {TextureBindingResource=} parameters.resource - a GPUTexture or GPUExternalTexture
-     */
-    constructor({
-      label = "Texture",
-      name = "texture",
-      resource,
-      bindingType,
-      bindIndex = 0,
-      visibility
-    }) {
-      bindingType = bindingType ?? "texture";
-      super({ label, name, bindingType, bindIndex, visibility });
-      this.resource = resource;
-      this.setWGSLFragment();
-    }
-    /**
-     * Set or update our [bindingType]{@link Bindings#bindingType} and our WGSL code snippet
-     * @param bindingType - the new [binding type]{@link Bindings#bindingType}
-     */
-    setBindingType(bindingType) {
-      if (bindingType !== this.bindingType) {
-        this.bindingType = bindingType;
-        this.setWGSLFragment();
-      }
-    }
-    /**
-     * Set the correct WGSL code snippet.
-     */
-    setWGSLFragment() {
-      this.wgslGroupFragment = [
-        this.bindingType === "externalTexture" ? `var ${this.name}: texture_external;` : `var ${this.name}: texture_2d<f32>;`
-      ];
     }
   };
 
@@ -2527,7 +2511,7 @@ var GPUCurtains = (() => {
         label: this.label,
         name: this.name,
         bindingType: "sampler",
-        resource: this.sampler
+        sampler: this.sampler
       });
     }
   };
@@ -2784,7 +2768,7 @@ var GPUCurtains = (() => {
         new TextureBindings({
           label: this.options.label + ": texture",
           name: this.options.name,
-          resource: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
+          texture: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
           bindingType: this.options.sourceType === "externalVideo" ? "externalTexture" : "texture"
         }),
         this.textureMatrix
@@ -4630,7 +4614,7 @@ var GPUCurtains = (() => {
         new TextureBindings({
           label: this.options.label + ": " + this.options.name + " texture",
           name: this.options.name,
-          resource: this.texture,
+          texture: this.texture,
           bindingType: "texture"
         })
       ];
@@ -7321,9 +7305,7 @@ ${this.shaders.compute.head}`;
     setCameraBindGroup() {
       if (this.cameraBindGroup.shouldCreateBindGroup) {
         this.cameraBindGroup.setIndex(0);
-        this.cameraBindGroup.createBindingsBuffers();
-        this.cameraBindGroup.setBindGroupLayout();
-        this.cameraBindGroup.setBindGroup();
+        this.cameraBindGroup.createBindGroup();
       }
     }
     updateCameraMatrixStack() {

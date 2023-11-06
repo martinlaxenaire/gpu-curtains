@@ -20,7 +20,6 @@ export class WorkBufferBindings extends BufferBindings {
   /** Array specifically designed to handle the result of our [resultBuffer]{@link bindings#resultBuffer} GPUBuffer if needed */
   result: Float32Array
   /** The result GPUBuffer */
-  // TODO!!
   resultBuffer: GPUBuffer | null
 
   /**
@@ -57,7 +56,6 @@ export class WorkBufferBindings extends BufferBindings {
     this.shouldCopyResult = shouldCopyResult
 
     this.result = new Float32Array(this.value.slice())
-    // TODO
     this.resultBuffer = null
   }
 }

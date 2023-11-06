@@ -54,10 +54,6 @@ export declare class TextureBindGroup extends BindGroup {
      */
     get shouldCreateBindGroup(): boolean;
     /**
-     * Creates {@link BindGroup#bindings} for buffers, textures and samplers
-     */
-    createBindingsBuffers(): void;
-    /**
      * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
      * Called each time a GPUTexture or GPUExternalTexture has changed:
      * - A texture media has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)

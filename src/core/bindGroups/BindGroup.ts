@@ -194,7 +194,7 @@ export class BindGroup {
    * Create buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
    */
   createBindGroup() {
-    this.createBindingsBuffers()
+    this.fillEntries()
     this.setBindGroupLayout()
     this.setBindGroup()
   }
@@ -209,22 +209,28 @@ export class BindGroup {
   }
 
   /**
-   * Creates a GPUBuffer from a bind group binding and add bindGroup and bindGroupLayout {@link entries}
-   * @param binding - the binding element
-   * @param bindIndex - the bind index
-   * @param array - the binding value array
+   * Get all bindings that handle a GPUBuffer
    */
-  createBindingBufferElement(binding: BindGroupBufferBindingElement, bindIndex: number, array: TypedArray) {
-    const buffer = this.renderer.createBuffer({
+  get bufferBindings(): BindGroupBufferBindingElement[] {
+    return this.bindings.filter(
+      (binding) => binding instanceof BufferBindings || binding instanceof WorkBufferBindings
+    ) as BindGroupBufferBindingElement[]
+  }
+
+  /**
+   * Creates binding GPUBuffer with correct params
+   * @param binding - the binding element
+   */
+  createBindingBuffer(binding) {
+    binding.buffer = this.renderer.createBuffer({
       label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
-      size: array.byteLength,
+      size: binding.value.byteLength,
       usage:
         binding.bindingType === 'uniform'
           ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
           : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX,
     })
 
-    binding.buffer = buffer
     if ('resultBuffer' in binding) {
       binding.resultBuffer = this.renderer.createBuffer({
         label: this.options.label + ': Result buffer from: ' + binding.label,
@@ -232,51 +238,35 @@ export class BindGroup {
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
       })
     }
-
-    this.entries.bindGroupLayout.push({
-      binding: bindIndex,
-      buffer: {
-        type: getBindGroupLayoutBindingType(binding.bindingType),
-      },
-      visibility: binding.visibility,
-    })
-
-    this.entries.bindGroup.push({
-      binding: bindIndex,
-      resource: {
-        buffer,
-      },
-    })
   }
 
   /**
-   * Creates binding buffer with correct params
-   * @param binding - the binding element
+   * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.
+   * For buffer bindings, create a GPUBuffer first if needed
    */
-  createBindingBuffer(binding: BindGroupBufferBindingElement) {
-    if (!binding.useStruct) {
-      binding.bindingElements.forEach((bindingElement) => {
-        const bindIndex = this.entries.bindGroupLayout.length
-
-        this.createBindingBufferElement(binding, bindIndex, bindingElement.array)
-      })
-    } else {
-      binding.bindIndex = this.entries.bindGroupLayout.length
-
-      this.createBindingBufferElement(binding, binding.bindIndex, binding.value)
-    }
-  }
-
-  /**
-   * Loop through all {@link bindings}, and create bindings buffers if they need one
-   */
-  createBindingsBuffers() {
-    this.bindings.forEach((inputBinding) => {
-      if (!inputBinding.visibility) inputBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
-
-      if (!!inputBinding.value) {
-        this.createBindingBuffer(inputBinding as BindGroupBufferBindingElement)
+  fillEntries() {
+    this.bindings.forEach((binding) => {
+      // if no visibility specified, just set it to the maximum default capabilities
+      if (!binding.visibility) {
+        binding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE
       }
+
+      // if it's a buffer binding, create the GPUBuffer
+      if ('buffer' in binding && !binding.buffer) {
+        this.createBindingBuffer(binding)
+      }
+
+      // now that everything is ready, fill our entries
+      this.entries.bindGroupLayout.push({
+        binding: this.entries.bindGroupLayout.length,
+        ...binding.resourceLayout,
+        visibility: binding.visibility,
+      })
+
+      this.entries.bindGroup.push({
+        binding: this.entries.bindGroup.length,
+        resource: binding.resource,
+      })
     })
   }
 
@@ -315,22 +305,20 @@ export class BindGroup {
    * Called at each render from Material
    */
   updateBindings() {
-    this.bindings.forEach((binding, index) => {
-      if ('shouldUpdate' in binding) {
-        if ('buffer' in binding && binding.shouldUpdate) {
-          // bufferOffset is always equals to 0 in our case
-          if (!binding.useStruct && binding.bindingElements.length > 1) {
-            // we're in a non struct buffer binding with multiple entries
-            // that should not happen but that way we're covered
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array)
-          } else {
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
-          }
+    this.bufferBindings.forEach((binding, index) => {
+      if (binding.shouldUpdate) {
+        // bufferOffset is always equals to 0 in our case
+        if (!binding.useStruct && binding.bindingElements.length > 1) {
+          // we're in a non struct buffer binding with multiple entries
+          // that should not happen but that way we're covered
+          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array)
+        } else {
+          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
         }
-
-        // reset update flag
-        binding.shouldUpdate = false
       }
+
+      // reset update flag
+      binding.shouldUpdate = false
     })
   }
 
@@ -368,33 +356,14 @@ export class BindGroup {
       if (!keepLayout) {
         bindGroupCopy.entries.bindGroupLayout.push({
           binding: bindGroupCopy.entries.bindGroupLayout.length,
-          buffer: {
-            type: getBindGroupLayoutBindingType(binding.bindingType),
-          },
+          ...binding.resourceLayout,
           visibility: binding.visibility,
         })
       }
 
-      // TODO
-      const bindingTypeValue = (() => {
-        switch (binding.bindingType) {
-          case 'texture':
-            return ((binding as BindGroupTextureSamplerElement).resource as GPUTexture).createView()
-          case 'externalTexture':
-          case 'sampler':
-            return (binding as BindGroupTextureSamplerElement).resource
-          default:
-            return 'buffer' in binding
-              ? {
-                  buffer: (binding as BindGroupBufferBindingElement).buffer,
-                }
-              : null
-        }
-      })()
-
       bindGroupCopy.entries.bindGroup.push({
         binding: bindGroupCopy.entries.bindGroup.length,
-        resource: bindingTypeValue,
+        resource: binding.resource,
       } as GPUBindGroupEntry)
     })
 

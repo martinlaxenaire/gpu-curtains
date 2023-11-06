@@ -58,6 +58,18 @@ export declare class BufferBindings extends Bindings {
      */
     constructor({ label, name, bindingType, bindIndex, visibility, useStruct, bindings, }: BufferBindingsParams);
     /**
+     * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
+     */
+    get resourceLayout(): {
+        buffer: GPUBufferBindingLayout;
+    };
+    /**
+     * Get [bind group resource]{@link GPUBindGroupEntry#resource}
+     */
+    get resource(): {
+        buffer: GPUBuffer | null;
+    };
+    /**
      * Format input bindings and set our {@link bindings}
      * @param {Object.<string, Input>} bindings - bindings inputs
      */

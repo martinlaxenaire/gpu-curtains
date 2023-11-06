@@ -116,9 +116,7 @@ export class GPUCameraRenderer extends GPURenderer {
   setCameraBindGroup() {
     if (this.cameraBindGroup.shouldCreateBindGroup) {
       this.cameraBindGroup.setIndex(0)
-      this.cameraBindGroup.createBindingsBuffers()
-      this.cameraBindGroup.setBindGroupLayout()
-      this.cameraBindGroup.setBindGroup()
+      this.cameraBindGroup.createBindGroup()
     }
   }
 

@@ -5,6 +5,7 @@ import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
 import { BindGroupBufferBindingElement, BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
+import { TextureBindings } from '../bindings/TextureBindings'
 
 /**
  * An object defining all possible {@link TextureBindGroup} class instancing parameters
@@ -105,54 +106,6 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Creates {@link BindGroup#bindings} for buffers, textures and samplers
-   */
-  createBindingsBuffers() {
-    //let textureIndex = 0
-
-    this.bindings.forEach((inputBinding) => {
-      if (!inputBinding.visibility) inputBinding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
-
-      // if it's a buffer binding, use base class method
-      if (!!inputBinding.value) {
-        this.createBindingBuffer(inputBinding as BindGroupBufferBindingElement)
-      } else if ('resource' in inputBinding && inputBinding.resource && inputBinding.bindingType) {
-        inputBinding.bindIndex = this.entries.bindGroupLayout.length
-
-        //const texture = this.textures[textureIndex]
-
-        const bindingTypeValue = (() => {
-          switch (inputBinding.bindingType) {
-            case 'texture':
-              //textureIndex++
-              return (inputBinding.resource as GPUTexture).createView()
-            //return (texture.texture as GPUTexture).createView()
-            case 'externalTexture':
-              //textureIndex++
-              return inputBinding.resource
-            case 'sampler':
-              return inputBinding.resource
-            default:
-              return inputBinding.resource
-              break
-          }
-        })()
-
-        this.entries.bindGroupLayout.push({
-          binding: inputBinding.bindIndex,
-          [inputBinding.bindingType]: bindingTypeValue,
-          visibility: inputBinding.visibility,
-        })
-
-        this.entries.bindGroup.push({
-          binding: inputBinding.bindIndex,
-          resource: bindingTypeValue,
-        } as GPUBindGroupEntry)
-      }
-    })
-  }
-
-  /**
    * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
    * Called each time a GPUTexture or GPUExternalTexture has changed:
    * - A texture media has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
@@ -160,22 +113,16 @@ export class TextureBindGroup extends BindGroup {
    * - A render texture GPUTexture has changed (on resize)
    */
   resetTextureBindGroup() {
-    // reset all bind group texture entries
-    const texturesEntries = this.entries.bindGroup.filter(
-      (entry) => entry.resource instanceof GPUTextureView || entry.resource instanceof GPUExternalTexture
+    // find the indexes of all texture bindings
+    const textureBindingsIndexes = [...this.bindings].reduce(
+      (foundIndexes, binding, index) => (binding instanceof TextureBindings && foundIndexes.push(index), foundIndexes),
+      []
     )
 
-    if (texturesEntries.length) {
-      texturesEntries.forEach((entry, index) => {
-        const texture = this.textures[index]
-
-        // assign correct resource
-        if (texture) {
-          entry.resource =
-            (texture as Texture).options?.sourceType === 'externalVideo'
-              ? (texture as Texture).externalTexture
-              : texture.texture.createView()
-        }
+    // now update the entries bindGroup array resources if needed
+    if (textureBindingsIndexes.length) {
+      textureBindingsIndexes.forEach((index) => {
+        this.entries.bindGroup[index].resource = this.bindings[index].resource
       })
 
       this.setBindGroup()

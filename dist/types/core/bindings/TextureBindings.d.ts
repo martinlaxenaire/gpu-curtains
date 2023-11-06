@@ -7,7 +7,7 @@ export type TextureBindingResource = GPUTexture | GPUExternalTexture | null;
  */
 export interface TextureBindingsParams extends BindingsParams {
     /** {@link TextureBindings} [resource]{@link TextureBindings#resource} */
-    resource: TextureBindingResource;
+    texture: TextureBindingResource;
 }
 /**
  * TextureBindings class:
@@ -16,7 +16,7 @@ export interface TextureBindingsParams extends BindingsParams {
  */
 export declare class TextureBindings extends Bindings {
     /** Our {@link TextureBindings} resource, i.e. a {@link GPUTexture} or {@link GPUExternalTexture} */
-    resource: TextureBindingResource;
+    texture: TextureBindingResource;
     /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link TextureBindings} */
     wgslGroupFragment: string[];
     /**
@@ -29,7 +29,16 @@ export declare class TextureBindings extends Bindings {
      * @param {MaterialShadersType=} parameters.visibility - shader visibility
      * @param {TextureBindingResource=} parameters.resource - a GPUTexture or GPUExternalTexture
      */
-    constructor({ label, name, resource, bindingType, bindIndex, visibility, }: TextureBindingsParams);
+    constructor({ label, name, texture, bindingType, bindIndex, visibility, }: TextureBindingsParams);
+    /**
+     * Get bind group layout entry resource, either for [texture]{@link GPUBindGroupLayoutEntry#texture} or [externalTexture]{@link GPUBindGroupLayoutEntry#externalTexture}
+     */
+    get resourceLayout(): GPUTextureBindingLayout | GPUExternalTextureBindingLayout | null;
+    /**
+     * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+     */
+    get resource(): GPUExternalTexture | GPUTextureView | null;
+    set resource(value: TextureBindingResource);
     /**
      * Set or update our [bindingType]{@link Bindings#bindingType} and our WGSL code snippet
      * @param bindingType - the new [binding type]{@link Bindings#bindingType}

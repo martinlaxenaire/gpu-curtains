@@ -1,6 +1,7 @@
 import { Bindings, BindingsParams } from './Bindings'
 import {
   BufferBindingsElement,
+  getBindGroupLayoutBindingType,
   getBindingWgslVarType,
   getBufferArrayStride,
   getBufferLayout,
@@ -54,7 +55,6 @@ export class BufferBindings extends Bindings {
   /** The padded value array that will be sent to the GPUBuffer */
   value: Float32Array
   /** The GPUBuffer */
-  // TODO!!
   buffer: GPUBuffer | null
 
   /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBindings} */
@@ -93,11 +93,29 @@ export class BufferBindings extends Bindings {
 
     this.bindingElements = []
     this.bindings = {}
-    this.buffer = null // TODO
+    this.buffer = null
 
     this.setBindings(bindings)
     this.setBufferAttributes()
     this.setWGSLFragment()
+  }
+
+  /**
+   * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
+   */
+  get resourceLayout(): { buffer: GPUBufferBindingLayout } {
+    return {
+      buffer: {
+        type: getBindGroupLayoutBindingType(this.bindingType),
+      },
+    }
+  }
+
+  /**
+   * Get [bind group resource]{@link GPUBindGroupEntry#resource}
+   */
+  get resource(): { buffer: GPUBuffer | null } {
+    return { buffer: this.buffer }
   }
 
   /**
