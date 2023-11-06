@@ -64,6 +64,7 @@ export interface RenderMaterialAttributes {
   instancesCount?: Geometry['instancesCount']
   verticesOrder?: Geometry['verticesOrder']
   vertexBuffers?: Geometry['vertexBuffers']
+  indexBuffer?: IndexedGeometry['indexBuffer']
 }
 
 // TODO this should instead check if it has Geometry as deep parent

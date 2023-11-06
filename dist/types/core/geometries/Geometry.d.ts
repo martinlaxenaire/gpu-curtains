@@ -69,4 +69,20 @@ export declare class Geometry {
      * Also compute the Geometry bounding box.
      */
     computeGeometry(): void;
+    /** RENDER **/
+    /**
+     * Set our render pass geometry vertex buffers
+     * @param pass - current render pass
+     */
+    setGeometryBuffers(pass: GPURenderPassEncoder): void;
+    /**
+     * Draw our geometry
+     * @param pass - current render pass
+     */
+    drawGeometry(pass: GPURenderPassEncoder): void;
+    /**
+     * Set our vertex buffers then draw the geometry
+     * @param pass - current render pass
+     */
+    render(pass: GPURenderPassEncoder): void;
 }

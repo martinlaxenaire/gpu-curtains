@@ -331,14 +331,17 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
     /**
      * Only render the Mesh if it is in view frustum.
      * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
-     * @param {GPURenderPassEncoder} pass
+     * @param pass - current render pass
      */
     onRenderPass(pass: GPURenderPassEncoder) {
       this._onRenderCallback && this._onRenderCallback()
 
       // TODO check if frustumCulled
       if (this.domFrustum.isIntersecting || !this.frustumCulled) {
+        // render ou material
         this.material.render(pass)
+        // then render our geometry
+        this.geometry.render(pass)
       }
     }
   }

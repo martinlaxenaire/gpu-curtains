@@ -4255,6 +4255,31 @@ var GPUCurtains = (() => {
       }).join(",")}
 };`;
     }
+    /** RENDER **/
+    /**
+     * Set our render pass geometry vertex buffers
+     * @param pass - current render pass
+     */
+    setGeometryBuffers(pass) {
+      this.vertexBuffers.forEach((vertexBuffer, index) => {
+        pass.setVertexBuffer(index, vertexBuffer.buffer);
+      });
+    }
+    /**
+     * Draw our geometry
+     * @param pass - current render pass
+     */
+    drawGeometry(pass) {
+      pass.draw(this.verticesCount, this.instancesCount);
+    }
+    /**
+     * Set our vertex buffers then draw the geometry
+     * @param pass - current render pass
+     */
+    render(pass) {
+      this.setGeometryBuffers(pass);
+      this.drawGeometry(pass);
+    }
   };
 
   // src/core/geometries/IndexedGeometry.ts
@@ -4269,26 +4294,37 @@ var GPUCurtains = (() => {
     constructor({ verticesOrder = "cw", instancesCount = 1, vertexBuffers = [] } = {}) {
       super({ verticesOrder, instancesCount, vertexBuffers });
       this.type = "IndexedGeometry";
-      this.isIndexed = true;
     }
     /**
      *
      * @param {IndexedGeometryIndexBufferOptions} parameters - parameters used to create our index buffer
-     * @param {VertexBuffer=} parameters.vertexBuffer
      * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
      * @param {Uint32Array} [parameters.array=Uint32Array]
      */
-    setIndexBuffer({
-      vertexBuffer = this.vertexBuffers[0],
-      bufferFormat = "uint32",
-      array = new Uint32Array(0)
-    }) {
-      vertexBuffer.indexBuffer = {
+    setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0) }) {
+      this.indexBuffer = {
         array,
         bufferFormat,
         bufferLength: array.length,
         buffer: null
       };
+    }
+    /** RENDER **/
+    /**
+     * First, set our render pass geometry vertex buffers
+     * Then, set our render pass geometry index buffer
+     * @param pass - current render pass
+     */
+    setGeometryBuffers(pass) {
+      super.setGeometryBuffers(pass);
+      pass.setIndexBuffer(this.indexBuffer.buffer, this.indexBuffer.bufferFormat);
+    }
+    /**
+     * Override the parent draw method to draw indexed geometry
+     * @param pass - current render pass
+     */
+    drawGeometry(pass) {
+      pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount);
     }
   };
 
@@ -4483,7 +4519,8 @@ var GPUCurtains = (() => {
         verticesCount: geometry.verticesCount,
         instancesCount: geometry.instancesCount,
         verticesOrder: geometry.verticesOrder,
-        vertexBuffers: geometry.vertexBuffers
+        vertexBuffers: geometry.vertexBuffers,
+        ..."indexBuffer" in geometry && geometry.indexBuffer && { indexBuffer: geometry.indexBuffer }
       };
     }
     /**
@@ -4497,15 +4534,15 @@ var GPUCurtains = (() => {
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
         });
         this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
-        if (vertexBuffer.indexBuffer) {
-          vertexBuffer.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + ": Index buffer vertices",
-            size: vertexBuffer.indexBuffer.array.byteLength,
-            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
-          });
-          this.renderer.queueWriteBuffer(vertexBuffer.indexBuffer.buffer, 0, vertexBuffer.indexBuffer.array);
-        }
       });
+      if (this.attributes.indexBuffer) {
+        this.attributes.indexBuffer.buffer = this.renderer.createBuffer({
+          label: this.options.label + ": Index buffer vertices",
+          size: this.attributes.indexBuffer.array.byteLength,
+          usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+        });
+        this.renderer.queueWriteBuffer(this.attributes.indexBuffer.buffer, 0, this.attributes.indexBuffer.array);
+      }
     }
     /**
      * Destroy the attribute buffers
@@ -4513,8 +4550,8 @@ var GPUCurtains = (() => {
     destroyAttributeBuffers() {
       this.attributes.vertexBuffers.forEach((vertexBuffer) => {
         vertexBuffer.buffer?.destroy();
-        vertexBuffer.indexBuffer?.buffer?.destroy();
       });
+      this.attributes.indexBuffer?.buffer?.destroy();
       this.attributes.vertexBuffers = [];
     }
     /** BIND GROUPS **/
@@ -4547,17 +4584,6 @@ var GPUCurtains = (() => {
       if (!this.ready)
         return;
       super.render(pass);
-      this.attributes.vertexBuffers.forEach((vertexBuffer, index) => {
-        pass.setVertexBuffer(index, vertexBuffer.buffer);
-        if (vertexBuffer.indexBuffer) {
-          pass.setIndexBuffer(vertexBuffer.indexBuffer.buffer, vertexBuffer.indexBuffer.bufferFormat);
-        }
-      });
-      if (this.attributes.vertexBuffers[0].indexBuffer) {
-        pass.drawIndexed(this.attributes.vertexBuffers[0].indexBuffer.bufferLength, this.attributes.instancesCount);
-      } else {
-        pass.draw(this.attributes.verticesCount, this.attributes.instancesCount);
-      }
     }
     /**
      * Destroy the RenderMaterial
@@ -4962,6 +4988,7 @@ var GPUCurtains = (() => {
       onRenderPass(pass) {
         this._onRenderCallback && this._onRenderCallback();
         this.material.render(pass);
+        this.geometry.render(pass);
       }
       /**
        * Called after having rendered the Mesh
@@ -5577,12 +5604,13 @@ struct VertexOutput {
       /**
        * Only render the Mesh if it is in view frustum.
        * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
-       * @param {GPURenderPassEncoder} pass
+       * @param pass - current render pass
        */
       onRenderPass(pass) {
         this._onRenderCallback && this._onRenderCallback();
         if (this.domFrustum.isIntersecting || !this.frustumCulled) {
           this.material.render(pass);
+          this.geometry.render(pass);
         }
       }
     };

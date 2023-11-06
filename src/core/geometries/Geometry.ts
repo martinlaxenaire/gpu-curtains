@@ -289,4 +289,33 @@ export class Geometry {
       })
       .join(',')}\n};`
   }
+
+  /** RENDER **/
+
+  /**
+   * Set our render pass geometry vertex buffers
+   * @param pass - current render pass
+   */
+  setGeometryBuffers(pass: GPURenderPassEncoder) {
+    this.vertexBuffers.forEach((vertexBuffer, index) => {
+      pass.setVertexBuffer(index, vertexBuffer.buffer)
+    })
+  }
+
+  /**
+   * Draw our geometry
+   * @param pass - current render pass
+   */
+  drawGeometry(pass: GPURenderPassEncoder) {
+    pass.draw(this.verticesCount, this.instancesCount)
+  }
+
+  /**
+   * Set our vertex buffers then draw the geometry
+   * @param pass - current render pass
+   */
+  render(pass: GPURenderPassEncoder) {
+    this.setGeometryBuffers(pass)
+    this.drawGeometry(pass)
+  }
 }

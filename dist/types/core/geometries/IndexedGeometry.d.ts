@@ -1,8 +1,7 @@
 /// <reference types="dist" />
 import { Geometry } from './Geometry';
-import { GeometryParams, VertexBuffer } from '../../types/Geometries';
+import { GeometryParams, IndexBuffer } from '../../types/Geometries';
 export interface IndexedGeometryIndexBufferOptions {
-    vertexBuffer?: VertexBuffer;
     bufferFormat?: GPUIndexFormat;
     array?: Uint32Array;
 }
@@ -12,7 +11,7 @@ export interface IndexedGeometryIndexBufferOptions {
  * @extends Geometry
  */
 export declare class IndexedGeometry extends Geometry {
-    isIndexed: boolean;
+    indexBuffer: IndexBuffer;
     /**
      * IndexedGeometry constructor
      * @param {GeometryParams} [parameters={}] - parameters used to create our IndexedGeometry
@@ -24,9 +23,20 @@ export declare class IndexedGeometry extends Geometry {
     /**
      *
      * @param {IndexedGeometryIndexBufferOptions} parameters - parameters used to create our index buffer
-     * @param {VertexBuffer=} parameters.vertexBuffer
      * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
      * @param {Uint32Array} [parameters.array=Uint32Array]
      */
-    setIndexBuffer({ vertexBuffer, bufferFormat, array, }: IndexedGeometryIndexBufferOptions): void;
+    setIndexBuffer({ bufferFormat, array }: IndexedGeometryIndexBufferOptions): void;
+    /** RENDER **/
+    /**
+     * First, set our render pass geometry vertex buffers
+     * Then, set our render pass geometry index buffer
+     * @param pass - current render pass
+     */
+    setGeometryBuffers(pass: GPURenderPassEncoder): void;
+    /**
+     * Override the parent draw method to draw indexed geometry
+     * @param pass - current render pass
+     */
+    drawGeometry(pass: GPURenderPassEncoder): void;
 }

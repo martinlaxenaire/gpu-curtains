@@ -14,7 +14,6 @@ export interface VertexBuffer {
     attributes: AttributeBufferParams[];
     array?: Float32Array;
     buffer?: GPUBuffer;
-    indexBuffer?: IndexBuffer;
 }
 export interface VertexBufferParams {
     stepMode?: GPUVertexStepMode;

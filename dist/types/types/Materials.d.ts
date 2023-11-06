@@ -50,6 +50,7 @@ export interface RenderMaterialAttributes {
     instancesCount?: Geometry['instancesCount'];
     verticesOrder?: Geometry['verticesOrder'];
     vertexBuffers?: Geometry['vertexBuffers'];
+    indexBuffer?: IndexedGeometry['indexBuffer'];
 }
 export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry;
 export interface RenderMaterialBaseRenderingOptions {

@@ -1,8 +1,7 @@
 import { Geometry } from './Geometry'
-import { GeometryParams, VertexBuffer } from '../../types/Geometries'
+import { GeometryParams, IndexBuffer } from '../../types/Geometries'
 
 export interface IndexedGeometryIndexBufferOptions {
-  vertexBuffer?: VertexBuffer
   bufferFormat?: GPUIndexFormat
   array?: Uint32Array
 }
@@ -13,7 +12,7 @@ export interface IndexedGeometryIndexBufferOptions {
  * @extends Geometry
  */
 export class IndexedGeometry extends Geometry {
-  isIndexed: boolean
+  indexBuffer: IndexBuffer
 
   /**
    * IndexedGeometry constructor
@@ -26,27 +25,41 @@ export class IndexedGeometry extends Geometry {
     super({ verticesOrder, instancesCount, vertexBuffers })
 
     this.type = 'IndexedGeometry'
-
-    this.isIndexed = true
   }
 
   /**
    *
    * @param {IndexedGeometryIndexBufferOptions} parameters - parameters used to create our index buffer
-   * @param {VertexBuffer=} parameters.vertexBuffer
    * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
    * @param {Uint32Array} [parameters.array=Uint32Array]
    */
-  setIndexBuffer({
-    vertexBuffer = this.vertexBuffers[0],
-    bufferFormat = 'uint32',
-    array = new Uint32Array(0),
-  }: IndexedGeometryIndexBufferOptions) {
-    vertexBuffer.indexBuffer = {
+  setIndexBuffer({ bufferFormat = 'uint32', array = new Uint32Array(0) }: IndexedGeometryIndexBufferOptions) {
+    this.indexBuffer = {
       array,
       bufferFormat,
       bufferLength: array.length,
       buffer: null,
     }
+  }
+
+  /** RENDER **/
+
+  /**
+   * First, set our render pass geometry vertex buffers
+   * Then, set our render pass geometry index buffer
+   * @param pass - current render pass
+   */
+  setGeometryBuffers(pass: GPURenderPassEncoder) {
+    super.setGeometryBuffers(pass)
+
+    pass.setIndexBuffer(this.indexBuffer.buffer, this.indexBuffer.bufferFormat)
+  }
+
+  /**
+   * Override the parent draw method to draw indexed geometry
+   * @param pass - current render pass
+   */
+  drawGeometry(pass: GPURenderPassEncoder) {
+    pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount)
   }
 }

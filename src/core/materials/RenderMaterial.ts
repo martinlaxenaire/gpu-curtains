@@ -129,6 +129,7 @@ export class RenderMaterial extends Material {
       instancesCount: geometry.instancesCount,
       verticesOrder: geometry.verticesOrder,
       vertexBuffers: geometry.vertexBuffers,
+      ...('indexBuffer' in geometry && geometry.indexBuffer && { indexBuffer: geometry.indexBuffer }),
     }
   }
 
@@ -144,17 +145,17 @@ export class RenderMaterial extends Material {
       })
 
       this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array)
-
-      if (vertexBuffer.indexBuffer) {
-        vertexBuffer.indexBuffer.buffer = this.renderer.createBuffer({
-          label: this.options.label + ': Index buffer vertices',
-          size: vertexBuffer.indexBuffer.array.byteLength,
-          usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-        })
-
-        this.renderer.queueWriteBuffer(vertexBuffer.indexBuffer.buffer, 0, vertexBuffer.indexBuffer.array)
-      }
     })
+
+    if (this.attributes.indexBuffer) {
+      this.attributes.indexBuffer.buffer = this.renderer.createBuffer({
+        label: this.options.label + ': Index buffer vertices',
+        size: this.attributes.indexBuffer.array.byteLength,
+        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+      })
+
+      this.renderer.queueWriteBuffer(this.attributes.indexBuffer.buffer, 0, this.attributes.indexBuffer.array)
+    }
   }
 
   /**
@@ -163,8 +164,9 @@ export class RenderMaterial extends Material {
   destroyAttributeBuffers() {
     this.attributes.vertexBuffers.forEach((vertexBuffer) => {
       vertexBuffer.buffer?.destroy()
-      vertexBuffer.indexBuffer?.buffer?.destroy()
     })
+
+    this.attributes.indexBuffer?.buffer?.destroy()
 
     this.attributes.vertexBuffers = []
   }
@@ -222,20 +224,20 @@ export class RenderMaterial extends Material {
     super.render(pass)
 
     // set attributes
-    this.attributes.vertexBuffers.forEach((vertexBuffer, index) => {
-      pass.setVertexBuffer(index, vertexBuffer.buffer)
-
-      if (vertexBuffer.indexBuffer) {
-        pass.setIndexBuffer(vertexBuffer.indexBuffer.buffer, vertexBuffer.indexBuffer.bufferFormat)
-      }
-    })
-
-    // draw
-    if (this.attributes.vertexBuffers[0].indexBuffer) {
-      pass.drawIndexed(this.attributes.vertexBuffers[0].indexBuffer.bufferLength, this.attributes.instancesCount)
-    } else {
-      pass.draw(this.attributes.verticesCount, this.attributes.instancesCount)
-    }
+    // this.attributes.vertexBuffers.forEach((vertexBuffer, index) => {
+    //   pass.setVertexBuffer(index, vertexBuffer.buffer)
+    // })
+    //
+    // if (this.attributes.indexBuffer) {
+    //   pass.setIndexBuffer(this.attributes.indexBuffer.buffer, this.attributes.indexBuffer.bufferFormat)
+    // }
+    //
+    // // draw
+    // if (this.attributes.indexBuffer) {
+    //   pass.drawIndexed(this.attributes.indexBuffer.bufferLength, this.attributes.instancesCount)
+    // } else {
+    //   pass.draw(this.attributes.verticesCount, this.attributes.instancesCount)
+    // }
   }
 
   /**

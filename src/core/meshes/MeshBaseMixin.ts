@@ -545,7 +545,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     onRenderPass(pass: GPURenderPassEncoder) {
       this._onRenderCallback && this._onRenderCallback()
 
+      // render ou material
       this.material.render(pass)
+      // then render our geometry
+      this.geometry.render(pass)
     }
 
     /**
