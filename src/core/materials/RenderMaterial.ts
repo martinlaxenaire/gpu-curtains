@@ -51,7 +51,7 @@ export class RenderMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    const { shaders, label, useAsyncPipeline, inputs, bindGroups, geometry, ...renderingOptions } = parameters
+    const { shaders, label, useAsyncPipeline, inputs, bindGroups, ...renderingOptions } = parameters
 
     if (!shaders.vertex.entryPoint) {
       shaders.vertex.entryPoint = 'main'
@@ -68,7 +68,7 @@ export class RenderMaterial extends Material {
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       ...(inputs !== undefined && { inputs }),
       ...(bindGroups !== undefined && { bindGroups }),
-      rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder },
+      rendering: renderingOptions,
     } as MaterialOptions
 
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
@@ -79,8 +79,6 @@ export class RenderMaterial extends Material {
     } as RenderPipelineEntryBaseParams)
 
     this.attributes = null
-
-    this.setAttributesFromGeometry(geometry)
   }
 
   /**
@@ -97,81 +95,27 @@ export class RenderMaterial extends Material {
    * Create the attributes buffers, check if all bind groups are ready, create them if needed and set {@see RenderPipelineEntry} bind group buffers
    */
   setMaterial() {
-    if (!this.attributes?.vertexBuffers[0].buffer) {
-      this.createAttributesBuffers()
-    }
-
     super.setMaterial()
 
-    if (this.pipelineEntry && this.pipelineEntry.canCompile) {
+    if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryBuffers()
     }
   }
 
-  // get ready(): boolean {
-  //   return !!(this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
-  // }
-
-  /** ATTRIBUTES **/
+  /* ATTRIBUTES */
 
   /**
    * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
-   * @param {AllowedGeometries} geometry - the geometry to draw
+   * @param geometry - the geometry to draw
    */
   setAttributesFromGeometry(geometry: AllowedGeometries) {
-    if (geometry.shouldCompute) {
-      geometry.computeGeometry()
-    }
-
     this.attributes = {
       wgslStructFragment: geometry.wgslStructFragment,
-      verticesCount: geometry.verticesCount,
-      instancesCount: geometry.instancesCount,
-      verticesOrder: geometry.verticesOrder,
       vertexBuffers: geometry.vertexBuffers,
-      ...('indexBuffer' in geometry && geometry.indexBuffer && { indexBuffer: geometry.indexBuffer }),
     }
   }
 
-  /**
-   * Create and write attribute buffers
-   */
-  createAttributesBuffers() {
-    this.attributes.vertexBuffers.forEach((vertexBuffer) => {
-      vertexBuffer.buffer = this.renderer.createBuffer({
-        label: this.options.label + ': Vertex buffer vertices',
-        size: vertexBuffer.array.byteLength,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      })
-
-      this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array)
-    })
-
-    if (this.attributes.indexBuffer) {
-      this.attributes.indexBuffer.buffer = this.renderer.createBuffer({
-        label: this.options.label + ': Index buffer vertices',
-        size: this.attributes.indexBuffer.array.byteLength,
-        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-      })
-
-      this.renderer.queueWriteBuffer(this.attributes.indexBuffer.buffer, 0, this.attributes.indexBuffer.array)
-    }
-  }
-
-  /**
-   * Destroy the attribute buffers
-   */
-  destroyAttributeBuffers() {
-    this.attributes.vertexBuffers.forEach((vertexBuffer) => {
-      vertexBuffer.buffer?.destroy()
-    })
-
-    this.attributes.indexBuffer?.buffer?.destroy()
-
-    this.attributes.vertexBuffers = []
-  }
-
-  /** BIND GROUPS **/
+  /* BIND GROUPS */
 
   /**
    * Create the bind groups if they need to be created, but first add Camera bind group if needed
@@ -207,45 +151,5 @@ export class RenderMaterial extends Material {
         this.bindGroups.push(bindGroup)
       }
     })
-  }
-
-  /**
-   * Render the material if it is ready:
-   * Set the current pipeline, set the bind groups, set the vertex buffers and then draw!
-   * @param {GPURenderPassEncoder} pass
-   */
-  render(pass: GPURenderPassEncoder) {
-    // no point to render if the WebGPU device is not ready
-    if (!this.renderer.ready) return
-
-    // pipeline is not ready yet
-    if (!this.ready) return
-
-    super.render(pass)
-
-    // set attributes
-    // this.attributes.vertexBuffers.forEach((vertexBuffer, index) => {
-    //   pass.setVertexBuffer(index, vertexBuffer.buffer)
-    // })
-    //
-    // if (this.attributes.indexBuffer) {
-    //   pass.setIndexBuffer(this.attributes.indexBuffer.buffer, this.attributes.indexBuffer.bufferFormat)
-    // }
-    //
-    // // draw
-    // if (this.attributes.indexBuffer) {
-    //   pass.drawIndexed(this.attributes.indexBuffer.bufferLength, this.attributes.instancesCount)
-    // } else {
-    //   pass.draw(this.attributes.verticesCount, this.attributes.instancesCount)
-    // }
-  }
-
-  /**
-   * Destroy the RenderMaterial
-   */
-  destroy() {
-    super.destroy()
-    // destroy attributes buffers
-    this.destroyAttributeBuffers()
   }
 }

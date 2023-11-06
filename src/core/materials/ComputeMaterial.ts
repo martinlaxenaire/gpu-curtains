@@ -8,7 +8,7 @@ import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 /**
  * ComputeMaterial class:
- * Create a Material specifically built to run computations on the GPU with a {@see ComputePass}
+ * Create a Material specifically built to run computations on the GPU with a {@link ComputePass}
  * @extends Material
  */
 export class ComputeMaterial extends Material {
@@ -19,11 +19,11 @@ export class ComputeMaterial extends Material {
    * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
    * @param {MaterialParams} parameters - parameters used to create our Material
    * @param {string} parameters.label - ComputeMaterial label
-   * @param {boolean} parameters.useAsyncPipeline - whether the {@see ComputePipelineEntry} should be compiled asynchronously
+   * @param {boolean} parameters.useAsyncPipeline - whether the {@link ComputePipelineEntry} should be compiled asynchronously
    * @param {MaterialShaders} parameters.shaders - our ComputeMaterial shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our ComputeMaterial {@see BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@see BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@see Sampler}
+   * @param {BindGroupInputs} parameters.inputs - our ComputeMaterial {@link BindGroup} inputs
+   * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
+   * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams) {
     // we could pass our curtains object OR our curtains renderer object
@@ -71,7 +71,7 @@ export class ComputeMaterial extends Material {
   }
 
   /**
-   * When all bind groups are created, add them to the {@see ComputePipelineEntry} and compile it
+   * When all bind groups are created, add them to the {@link ComputePipelineEntry} and compile it
    */
   setPipelineEntryBuffers() {
     this.pipelineEntry.setPipelineEntryBuffers({
@@ -80,7 +80,7 @@ export class ComputeMaterial extends Material {
   }
 
   /**
-   * Check if all bind groups are ready, create them if needed and set {@see ComputePipelineEntry} bind group buffers
+   * Check if all bind groups are ready, create them if needed and set {@link ComputePipelineEntry} bind group buffers
    */
   setMaterial() {
     super.setMaterial()
@@ -90,7 +90,7 @@ export class ComputeMaterial extends Material {
     }
   }
 
-  /** BIND GROUPS **/
+  /* BIND GROUPS */
 
   /**
    * Check whether we're currently accessing one of the buffer and therefore can't render our material
@@ -109,10 +109,12 @@ export class ComputeMaterial extends Material {
     return !!hasMappedBuffer
   }
 
+  /* RENDER */
+
   /**
    * Render the material if it is ready:
    * Set the current pipeline, set the bind groups and dispatch the work groups
-   * @param {GPUComputePassEncoder} pass
+   * @param pass - current compute pass encoder
    */
   render(pass: GPUComputePassEncoder) {
     // no point to render if the WebGPU device is not ready
@@ -136,9 +138,11 @@ export class ComputeMaterial extends Material {
     })
   }
 
+  /* RESULT BUFFER */
+
   /**
    * Copy all writable binding buffers that need it
-   * @param {GPUCommandEncoder} commandEncoder
+   * @param commandEncoder - current command encoder
    */
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
@@ -165,7 +169,7 @@ export class ComputeMaterial extends Material {
 
   /**
    * Copy the result buffer into our result array
-   * @param {WorkBufferBindings} binding
+   * @param binding - buffer binding to set the result from
    */
   setBufferResult(binding: WorkBufferBindings) {
     if (binding.resultBuffer?.mapState === 'unmapped') {
@@ -178,9 +182,9 @@ export class ComputeMaterial extends Material {
 
   /**
    * Get the result of work group by work group and binding names
-   * @param {string=} workGroupName
-   * @param {string=} bindingName
-   * @returns {?Float32Array} - the result of our GPU compute pass
+   * @param workGroupName - work group name/key
+   * @param bindingName - binding name/key
+   * @returns - the result of our GPU compute pass
    */
   getWorkGroupResult({
     workGroupName = '',

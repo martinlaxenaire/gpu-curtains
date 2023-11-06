@@ -115,7 +115,6 @@ export class Material {
   /**
    * Get whether our pipeline entry and pipeline have been created and successfully compiled
    * @readonly
-   * @type {boolean}
    */
   get ready(): boolean {
     return !!(this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
@@ -123,8 +122,8 @@ export class Material {
 
   /**
    * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
-   * @param {FullShadersType} [shaderType="full"] - shader to get the code from
-   * @returns {string} - The corresponding shader code
+   * @param [shaderType="full"] - shader to get the code from
+   * @returns - The corresponding shader code
    */
   getShaderCode(shaderType: FullShadersType = 'full'): string {
     if (!this.pipelineEntry) return ''
@@ -146,8 +145,8 @@ export class Material {
 
   /**
    * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-   * @param {FullShadersType} [shaderType="full"] - shader to get the code from
-   * @returns {string} - The corresponding shader code
+   * @param [shaderType="full"] - shader to get the code from
+   * @returns - The corresponding shader code
    */
   getAddedShaderCode(shaderType: FullShadersType = 'vertex'): string {
     if (!this.pipelineEntry) return ''
@@ -166,7 +165,7 @@ export class Material {
     return this.pipelineEntry.shaders[shaderType].head
   }
 
-  /** BIND GROUPS **/
+  /* BIND GROUPS */
 
   /**
    * Prepare and set our bind groups based on inputs and bindGroups Material parameters
@@ -197,7 +196,7 @@ export class Material {
 
   /**
    * Process all {@see BindGroup} bindings and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to bindings.
-   * @param {BindGroup} bindGroup
+   * @param bindGroup - The {@see BindGroup} to process
    */
   processBindGroupBindings(bindGroup: BindGroup) {
     bindGroup.bindings.forEach((inputBinding) => {
@@ -251,19 +250,15 @@ export class Material {
         this.bindGroups.push(bindGroup)
       }
     })
-
-    this.bindGroups.forEach((bindGroup) => {
-      console.log(bindGroup.options.label)
-    })
   }
 
   /**
    * Clones a {@see BindGroup} from a list of buffers
    * Useful to create a new bind group with already created buffers, but swapped
-   * @param {BindGroup} bindGroup - the BindGroup to clone
-   * @param {BindGroupBufferBindingElement[]} bindings - our input binding buffers
-   * @param {boolean} keepLayout - whether we should keep original bind group layout or not
-   * @returns {AllowedBindGroups} - the cloned BindGroup
+   * @param bindGroup - the BindGroup to clone
+   * @param bindings - our input binding buffers
+   * @param keepLayout - whether we should keep original bind group layout or not
+   * @returns - the cloned BindGroup
    */
   cloneBindGroup({
     bindGroup,
@@ -271,7 +266,7 @@ export class Material {
     keepLayout = true,
   }: {
     bindGroup?: BindGroup
-    bindings?: BindGroupBufferBindingElement[]
+    bindings?: BindGroupBindingElement[]
     keepLayout?: boolean
   }): BindGroup | null {
     if (!bindGroup) return null
@@ -284,8 +279,8 @@ export class Material {
 
   /**
    * Get a corresponding {@see BindGroup} or {@see TextureBindGroup} from one of its binding name/key
-   * @param {BufferBindings['name']=} bindingName - the binding name/key to look for
-   * @returns {?AllowedBindGroups} - bind group found or null if not found
+   * @param bindingName - the binding name/key to look for
+   * @returns - bind group found or null if not found
    */
   getBindGroupByBindingName(bindingName: BufferBindings['name'] = ''): AllowedBindGroups | null {
     return (this.ready ? this.bindGroups : this.inputsBindGroups).find((bindGroup) => {
@@ -325,12 +320,12 @@ export class Material {
     })
   }
 
-  /** INPUTS **/
+  /* INPUTS */
 
   /**
    * Force a given buffer binding update flag to update it at next render
-   * @param {BufferBindings['name']=} bufferBindingName - the buffer binding name
-   * @param {BufferBindingsUniform['name']=} bindingName - the binding name
+   * @param bufferBindingName - the buffer binding name
+   * @param bindingName - the binding name
    */
   shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], bindingName?: BufferBindingsUniform['name']) {
     if (!bufferBindingName) return
@@ -349,8 +344,8 @@ export class Material {
 
   /**
    * Look for a binding by name/key in all bind groups
-   * @param {string} bindingName - the binding name or key
-   * @returns {BindGroupBindingElement | null} - the found binding, or null if not found
+   * @param bindingName - the binding name or key
+   * @returns - the found binding, or null if not found
    */
   getBindingsByName(bindingName: BufferBindings['name'] = ''): BindGroupBindingElement | null {
     let binding
@@ -361,31 +356,7 @@ export class Material {
     return binding
   }
 
-  /**
-   * Look for a binding buffer by name/key in all bind groups
-   * @param {string} bindingName - the binding name or key
-   * @returns {BindGroupBindingBuffer[]} - the found binding buffers, or an empty array if not found
-   */
-  // TODO rename getBindingsByName!
-  // getBindingsBuffersByBindingName(bindingName: BufferBindings['name'] = ''): BindGroupBindingBuffer[] {
-  //   let bindings = []
-  //   ;(this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
-  //     const binding = bindGroup.bindings.filter((binding: BindGroupBufferBindingElement) =>
-  //       binding.useStruct
-  //         ? binding.name === bindingName
-  //         : binding.name ===
-  //           bindingName + toKebabCase(binding.bindingElements.length ? binding.bindingElements[0].name : '')
-  //     )
-  //
-  //     if (binding.length) {
-  //       bindings = [...bindings, ...binding]
-  //     }
-  //   })
-  //
-  //   return bindings
-  // }
-
-  /** SAMPLERS & TEXTURES **/
+  /* SAMPLERS & TEXTURES */
 
   /**
    * Prepare our textures array and set the {@see TextureBindGroup}
@@ -399,7 +370,7 @@ export class Material {
 
   /**
    * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
-   * @param {Texture | RenderTexture} texture - texture to add
+   * @param texture - texture to add
    */
   addTexture(texture: Texture | RenderTexture) {
     this.textures.push(texture)
@@ -442,7 +413,7 @@ export class Material {
 
   /**
    * Add a sampler to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
-   * @param {Sampler} sampler - sampler to add
+   * @param sampler - sampler to add
    */
   addSampler(sampler: Sampler) {
     this.samplers.push(sampler)
@@ -457,7 +428,7 @@ export class Material {
     }
   }
 
-  /** Render loop **/
+  /* RENDER */
 
   /**
    * Called before rendering the Material.
@@ -515,7 +486,7 @@ export class Material {
   /**
    * Render the material if it is ready:
    * Set the current pipeline and set the bind groups
-   * @param {GPURenderPassEncoder | GPUComputePassEncoder} pass
+   * @param pass - current pass encoder
    */
   render(pass: GPURenderPassEncoder | GPUComputePassEncoder) {
     // no point to render if the WebGPU device is not ready

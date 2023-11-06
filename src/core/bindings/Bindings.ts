@@ -49,7 +49,7 @@ export class Bindings {
 
   /**
    * Bindings constructor
-   * @param {BindingsParams} parameters - [parameters]{@link BindingsParams} used to create our {@link Bindings}
+   * @param parameters - [parameters]{@link BindingsParams} used to create our {@link Bindings}
    */
   constructor({
     label = 'Uniform',

@@ -1,7 +1,7 @@
 /// <reference types="dist" />
 import { CameraRenderer } from '../../utils/renderer-utils';
 import { DOMFrustum } from '../DOM/DOMFrustum';
-import MeshBaseMixin, { MeshBaseClass, MeshBaseParams, MixinConstructor } from './MeshBaseMixin';
+import MeshBaseMixin, { MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin';
 import { DOMElementBoundingRect, RectCoords } from '../DOM/DOMElement';
 export interface TransformedMeshParams {
     frustumCulled?: boolean;
@@ -11,6 +11,10 @@ export interface TransformedMeshBaseParameters extends MeshBaseParams {
     frustumCulled: boolean;
     DOMFrustumMargins: RectCoords;
 }
+export interface TransformedMeshBaseOptions extends MeshBaseOptions {
+    frustumCulled?: boolean;
+    DOMFrustumMargins?: RectCoords;
+}
 export declare class MeshTransformedBaseClass extends MeshBaseClass {
     domFrustum: DOMFrustum;
     frustumCulled: boolean;
@@ -18,7 +22,8 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
     _onReEnterViewCallback: () => void;
     _onLeaveViewCallback: () => void;
     constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams);
-    setMeshMaterial(materialParameters: TransformedMeshBaseParameters): void;
+    computeGeometry(): void;
+    setMaterial(materialParameters: MeshBaseParams): void;
     resize(boundingRect: DOMElementBoundingRect | null): void;
     applyScale(): void;
     get projectedBoundingRect(): DOMElementBoundingRect;

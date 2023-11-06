@@ -428,8 +428,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             gravity: {
               type: 'vec3f',
-              //value: new GPUCurtains.Vec3(0, -0.0981, 0),
-              value: new GPUCurtains.Vec3(0, -0.0375, 0),
+              value: new GPUCurtains.Vec3(0, -0.0981, 0),
+              //value: new GPUCurtains.Vec3(0, -0.0375, 0),
             },
           },
         },

@@ -32,6 +32,11 @@ const defaultMeshParams = {
   },
 } as TransformedMeshParams
 
+export interface TransformedMeshBaseOptions extends MeshBaseOptions {
+  frustumCulled?: boolean
+  DOMFrustumMargins?: RectCoords
+}
+
 export declare class MeshTransformedBaseClass extends MeshBaseClass {
   domFrustum: DOMFrustum
   frustumCulled: boolean
@@ -43,7 +48,8 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
 
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
 
-  setMeshMaterial(materialParameters: TransformedMeshBaseParameters): void
+  computeGeometry(): void
+  setMaterial(materialParameters: MeshBaseParams): void
 
   resize(boundingRect: DOMElementBoundingRect | null): void
   applyScale(): void
@@ -97,7 +103,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
     // because typescript gets all confused with the nested mixins
     type: string
     renderer: CameraRenderer
-    options: MeshBaseOptions
+    options: TransformedMeshBaseOptions
     geometry: AllowedGeometries
     visible: boolean
     matrices: ProjectedObject3DMatrices
@@ -143,12 +149,14 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
 
       this.renderer = renderer
 
-      const { label, geometry, shaders } = parameters
+      const { label, geometry, shaders, frustumCulled, DOMFrustumMargins } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
         label,
         shaders,
+        frustumCulled,
+        DOMFrustumMargins,
       }
 
       // explicitly needed for DOM Frustum
@@ -158,13 +166,41 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
       this.updateSizePositionAndProjection()
     }
 
+    /* GEOMETRY */
+
+    /**
+     * Override to compute the Mesh geometry and add the domFrustum
+     */
+    computeGeometry() {
+      if (this.geometry.shouldCompute) {
+        this.geometry.computeGeometry()
+
+        this.domFrustum = new DOMFrustum({
+          boundingBox: this.geometry.boundingBox,
+          modelViewProjectionMatrix: this.modelViewProjectionMatrix,
+          containerBoundingRect: this.renderer.boundingRect,
+          DOMFrustumMargins: this.options.DOMFrustumMargins,
+          onReEnterView: () => {
+            this._onReEnterViewCallback && this._onReEnterViewCallback()
+          },
+          onLeaveView: () => {
+            this._onLeaveViewCallback && this._onLeaveViewCallback()
+          },
+        })
+
+        this.frustumCulled = this.options.frustumCulled
+        this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
+        this.domFrustum.shouldUpdate = this.frustumCulled
+      }
+    }
+
+    /* MATERIAL */
+
     /**
      * Set a Mesh transparent property, set its matrices uniforms inputs, material and then set its {@see DOMFrustum}
      * @param {TransformedMeshBaseParameters} meshParameters
      */
-    setMeshMaterial(meshParameters: TransformedMeshBaseParameters) {
-      const { frustumCulled, DOMFrustumMargins, ...meshMaterialOptions } = meshParameters
-
+    setMaterial(meshParameters: MeshBaseParams) {
       // add matrices uniforms
       const matricesUniforms = {
         label: 'Matrices',
@@ -197,28 +233,12 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
         },
       }
 
-      if (!meshMaterialOptions.inputs) meshMaterialOptions.inputs = { uniforms: {} }
+      if (!meshParameters.inputs) meshParameters.inputs = { uniforms: {} }
 
-      meshMaterialOptions.inputs.uniforms.matrices = matricesUniforms
+      meshParameters.inputs.uniforms.matrices = matricesUniforms
 
       // @ts-ignore
-      super.setMeshMaterial(meshMaterialOptions)
-
-      this.domFrustum = new DOMFrustum({
-        boundingBox: this.geometry.boundingBox,
-        modelViewProjectionMatrix: this.modelViewProjectionMatrix,
-        containerBoundingRect: this.renderer.boundingRect,
-        DOMFrustumMargins,
-        onReEnterView: () => {
-          this._onReEnterViewCallback && this._onReEnterViewCallback()
-        },
-        onLeaveView: () => {
-          this._onLeaveViewCallback && this._onLeaveViewCallback()
-        },
-      })
-
-      this.frustumCulled = frustumCulled
-      this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
+      super.setMaterial(meshParameters)
     }
 
     /**
@@ -319,7 +339,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
     onBeforeRenderPass() {
       this.updateMatrixStack()
 
-      if (this.domFrustum.shouldUpdate && this.frustumCulled) {
+      if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
         this.domFrustum.computeProjectedToDocumentCoords()
         this.domFrustum.shouldUpdate = false
       }
@@ -337,11 +357,11 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
       this._onRenderCallback && this._onRenderCallback()
 
       // TODO check if frustumCulled
-      if (this.domFrustum.isIntersecting || !this.frustumCulled) {
+      if ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulled) {
         // render ou material
         this.material.render(pass)
-        // then render our geometry
-        this.geometry.render(pass)
+        // then render our geometry, only if material is ready
+        if (this.material.ready) this.geometry.render(pass)
       }
     }
   }

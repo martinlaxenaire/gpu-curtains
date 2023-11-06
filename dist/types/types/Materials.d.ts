@@ -7,9 +7,6 @@ import { Sampler } from '../core/samplers/Sampler';
 import { Geometry } from '../core/geometries/Geometry';
 import { IndexedGeometry } from '../core/geometries/IndexedGeometry';
 import { PlaneGeometry } from '../core/geometries/PlaneGeometry';
-/**
- * Material
- */
 export type RenderMaterialShadersType = 'vertex' | 'fragment';
 export type ComputeMaterialShadersType = 'compute';
 export type MaterialShadersType = RenderMaterialShadersType | ComputeMaterialShadersType;
@@ -36,9 +33,6 @@ export interface MaterialInputBindingsParams {
 }
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {
 }
-/**
- * RenderMaterial
- */
 export interface RenderShaders {
     vertex: ShaderOptions;
     fragment: ShaderOptions;
@@ -46,11 +40,7 @@ export interface RenderShaders {
 export type RenderShadersOptions = Partial<RenderShaders>;
 export interface RenderMaterialAttributes {
     wgslStructFragment?: Geometry['wgslStructFragment'];
-    verticesCount?: Geometry['verticesCount'];
-    instancesCount?: Geometry['instancesCount'];
-    verticesOrder?: Geometry['verticesOrder'];
     vertexBuffers?: Geometry['vertexBuffers'];
-    indexBuffer?: IndexedGeometry['indexBuffer'];
 }
 export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry;
 export interface RenderMaterialBaseRenderingOptions {
@@ -68,7 +58,6 @@ export interface RenderMaterialBaseParams extends RenderMaterialRenderingOptions
 export interface RenderMaterialParams extends Partial<RenderMaterialBaseParams> {
     label?: string;
     shaders?: MaterialShaders;
-    geometry: AllowedGeometries;
     useAsyncPipeline?: boolean;
 }
 export interface MaterialOptions {

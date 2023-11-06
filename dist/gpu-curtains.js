@@ -3216,9 +3216,6 @@ var GPUCurtains = (() => {
           this.bindGroups.push(bindGroup);
         }
       });
-      this.bindGroups.forEach((bindGroup) => {
-        console.log(bindGroup.options.label);
-      });
     }
     /**
      * Clones a {@see BindGroup} from a list of buffers
@@ -4057,6 +4054,20 @@ var GPUCurtains = (() => {
       });
     }
     /**
+     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+     * @readonly
+     */
+    get shouldCompute() {
+      return !this.vertexBuffers[0].array;
+    }
+    /**
+     * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
+     * @readonly
+     */
+    get ready() {
+      return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer);
+    }
+    /**
      * Add a vertex buffer to our Geometry, set its attributes and return it
      * @param {VertexBufferParams} [parameters={}] - vertex buffer parameters
      * @param {GPUVertexStepMode} [parameters.stepMode="vertex"] - GPU vertex step mode
@@ -4169,14 +4180,6 @@ var GPUCurtains = (() => {
       return attribute;
     }
     /**
-     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
-     * @readonly
-     * @type {boolean}
-     */
-    get shouldCompute() {
-      return !this.vertexBuffers[0].array;
-    }
-    /**
      * Compute a Geometry, which means iterate through all vertex buffers and create the attributes array that will be sent as buffers.
      * Also compute the Geometry bounding box.
      */
@@ -4277,8 +4280,19 @@ var GPUCurtains = (() => {
      * @param pass - current render pass
      */
     render(pass) {
+      if (!this.ready)
+        return;
       this.setGeometryBuffers(pass);
       this.drawGeometry(pass);
+    }
+    /**
+     * Destroy our geometry vertex buffers
+     */
+    destroy() {
+      this.vertexBuffers.forEach((vertexBuffer) => {
+        vertexBuffer.buffer?.destroy();
+      });
+      this.vertexBuffers = [];
     }
   };
 
@@ -4294,6 +4308,13 @@ var GPUCurtains = (() => {
     constructor({ verticesOrder = "cw", instancesCount = 1, vertexBuffers = [] } = {}) {
       super({ verticesOrder, instancesCount, vertexBuffers });
       this.type = "IndexedGeometry";
+    }
+    /**
+     * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
+     * @readonly
+     */
+    get ready() {
+      return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer) && this.indexBuffer && !!this.indexBuffer.buffer;
     }
     /**
      *
@@ -4325,6 +4346,14 @@ var GPUCurtains = (() => {
      */
     drawGeometry(pass) {
       pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount);
+    }
+    /**
+     * Destroy our indexed geometry vertex buffers and index buffer
+     */
+    destroy() {
+      super.destroy();
+      this.indexBuffer?.buffer?.destroy();
+      this.indexBuffer = null;
     }
   };
 
@@ -4456,7 +4485,7 @@ var GPUCurtains = (() => {
       super(renderer, parameters);
       this.type = type;
       this.renderer = renderer;
-      const { shaders, label, useAsyncPipeline, inputs, bindGroups, geometry, ...renderingOptions } = parameters;
+      const { shaders, label, useAsyncPipeline, inputs, bindGroups, ...renderingOptions } = parameters;
       if (!shaders.vertex.entryPoint) {
         shaders.vertex.entryPoint = "main";
       }
@@ -4470,7 +4499,7 @@ var GPUCurtains = (() => {
         ...useAsyncPipeline !== void 0 && { useAsyncPipeline },
         ...inputs !== void 0 && { inputs },
         ...bindGroups !== void 0 && { bindGroups },
-        rendering: { ...renderingOptions, verticesOrder: geometry.verticesOrder }
+        rendering: renderingOptions
       };
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
         label: this.options.label + " render pipeline",
@@ -4479,7 +4508,6 @@ var GPUCurtains = (() => {
         ...this.options.rendering
       });
       this.attributes = null;
-      this.setAttributesFromGeometry(geometry);
     }
     /**
      * When all bind groups and attributes are created, add them to the {@see ComputePipelineEntry} and compile it
@@ -4494,67 +4522,23 @@ var GPUCurtains = (() => {
      * Create the attributes buffers, check if all bind groups are ready, create them if needed and set {@see RenderPipelineEntry} bind group buffers
      */
     setMaterial() {
-      if (!this.attributes?.vertexBuffers[0].buffer) {
-        this.createAttributesBuffers();
-      }
       super.setMaterial();
-      if (this.pipelineEntry && this.pipelineEntry.canCompile) {
+      if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
         this.setPipelineEntryBuffers();
       }
     }
-    // get ready(): boolean {
-    //   return !!(this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
-    // }
-    /** ATTRIBUTES **/
+    /* ATTRIBUTES */
     /**
      * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
      * @param {AllowedGeometries} geometry - the geometry to draw
      */
     setAttributesFromGeometry(geometry) {
-      if (geometry.shouldCompute) {
-        geometry.computeGeometry();
-      }
       this.attributes = {
         wgslStructFragment: geometry.wgslStructFragment,
-        verticesCount: geometry.verticesCount,
-        instancesCount: geometry.instancesCount,
-        verticesOrder: geometry.verticesOrder,
-        vertexBuffers: geometry.vertexBuffers,
-        ..."indexBuffer" in geometry && geometry.indexBuffer && { indexBuffer: geometry.indexBuffer }
+        vertexBuffers: geometry.vertexBuffers
       };
     }
-    /**
-     * Create and write attribute buffers
-     */
-    createAttributesBuffers() {
-      this.attributes.vertexBuffers.forEach((vertexBuffer) => {
-        vertexBuffer.buffer = this.renderer.createBuffer({
-          label: this.options.label + ": Vertex buffer vertices",
-          size: vertexBuffer.array.byteLength,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
-        });
-        this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
-      });
-      if (this.attributes.indexBuffer) {
-        this.attributes.indexBuffer.buffer = this.renderer.createBuffer({
-          label: this.options.label + ": Index buffer vertices",
-          size: this.attributes.indexBuffer.array.byteLength,
-          usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
-        });
-        this.renderer.queueWriteBuffer(this.attributes.indexBuffer.buffer, 0, this.attributes.indexBuffer.array);
-      }
-    }
-    /**
-     * Destroy the attribute buffers
-     */
-    destroyAttributeBuffers() {
-      this.attributes.vertexBuffers.forEach((vertexBuffer) => {
-        vertexBuffer.buffer?.destroy();
-      });
-      this.attributes.indexBuffer?.buffer?.destroy();
-      this.attributes.vertexBuffers = [];
-    }
-    /** BIND GROUPS **/
+    /* BIND GROUPS */
     /**
      * Create the bind groups if they need to be created, but first add Camera bind group if needed
      */
@@ -4572,25 +4556,6 @@ var GPUCurtains = (() => {
           this.bindGroups.push(bindGroup);
         }
       });
-    }
-    /**
-     * Render the material if it is ready:
-     * Set the current pipeline, set the bind groups, set the vertex buffers and then draw!
-     * @param {GPURenderPassEncoder} pass
-     */
-    render(pass) {
-      if (!this.renderer.ready)
-        return;
-      if (!this.ready)
-        return;
-      super.render(pass);
-    }
-    /**
-     * Destroy the RenderMaterial
-     */
-    destroy() {
-      super.destroy();
-      this.destroyAttributeBuffers();
     }
   };
 
@@ -4763,11 +4728,11 @@ var GPUCurtains = (() => {
         this.visible = visible;
         this.renderOrder = renderOrder;
         this.ready = false;
-        this.setMeshMaterial({
+        this.computeGeometry();
+        this.setMaterial({
           label: this.options.label,
           shaders: this.options.shaders,
-          ...meshParameters,
-          geometry: this.geometry
+          ...{ ...meshParameters, verticesOrder: verticesOrder ?? geometry.verticesOrder }
         });
         this.addToScene();
       }
@@ -4794,21 +4759,7 @@ var GPUCurtains = (() => {
         }
         this._ready = value;
       }
-      /**
-       * Set a Mesh transparent property, then set its material
-       * @param {RenderMaterialParams} meshParameters
-       */
-      setMeshMaterial(meshParameters) {
-        this.transparent = meshParameters.transparent;
-        this.setMaterial(meshParameters);
-      }
-      /**
-       * Set a Mesh material
-       * @param {RenderMaterialParams} materialParameters
-       */
-      setMaterial(materialParameters) {
-        this.material = new RenderMaterial(this.renderer, materialParameters);
-      }
+      /* SCENE */
       /**
        * Add a Mesh to the renderer and the {@see Scene}
        */
@@ -4827,7 +4778,67 @@ var GPUCurtains = (() => {
         }
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
       }
-      /** TEXTURES **/
+      /* GEOMETRY */
+      /**
+       * Compute the Mesh geometry if needed
+       */
+      computeGeometry() {
+        if (this.geometry.shouldCompute) {
+          this.geometry.computeGeometry();
+        }
+      }
+      /**
+       * Create the Mesh Geometry vertex and index buffers if needed
+       */
+      createGeometryBuffers() {
+        if (!this.geometry.ready) {
+          this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+            if (!vertexBuffer.buffer) {
+              vertexBuffer.buffer = this.renderer.createBuffer({
+                label: this.options.label + ": Vertex buffer vertices",
+                size: vertexBuffer.array.byteLength,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+              });
+              this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
+            }
+          });
+          if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
+            this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
+              label: this.options.label + ": Index buffer vertices",
+              size: this.geometry.indexBuffer.array.byteLength,
+              usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+            });
+            this.renderer.queueWriteBuffer(this.geometry.indexBuffer.buffer, 0, this.geometry.indexBuffer.array);
+          }
+        }
+      }
+      /**
+       * Set our Mesh geometry: create buffers and add attributes to material
+       */
+      setGeometry() {
+        if (this.geometry && this.renderer.ready) {
+          this.createGeometryBuffers();
+          this.setMaterialGeometryAttributes();
+        }
+      }
+      /* MATERIAL */
+      /**
+       * Set a Mesh transparent property, then set its material
+       * @param {RenderMaterialParams} meshParameters
+       */
+      setMaterial(meshParameters) {
+        this.transparent = meshParameters.transparent;
+        this.material = new RenderMaterial(this.renderer, meshParameters);
+      }
+      /**
+       * Set Mesh material attributes
+       */
+      setMaterialGeometryAttributes() {
+        if (this.material && !this.material.attributes) {
+          this.material.setAttributesFromGeometry(this.geometry);
+        }
+      }
+      /* TEXTURES */
       /**
        * Create a new {@see Texture}
        * @param {TextureDefaultParams} options - Texture options
@@ -4881,7 +4892,7 @@ var GPUCurtains = (() => {
         this.renderTarget = renderTarget;
         this.addToScene();
       }
-      /*** BINDINGS ***/
+      /* BINDINGS */
       /**
        * Get the current {@see RenderMaterial} uniforms
        * @readonly
@@ -4912,7 +4923,7 @@ var GPUCurtains = (() => {
         });
         this._onAfterResizeCallback && this._onAfterResizeCallback();
       }
-      /** EVENTS **/
+      /* EVENTS */
       /**
        * Assign a callback function to _onReadyCallback
        * @param {function=} callback - callback to run when {@see MeshBase} is ready
@@ -4968,6 +4979,7 @@ var GPUCurtains = (() => {
         }
         return this;
       }
+      /* RENDER */
       /**
        * Called before rendering the Mesh
        * Checks if the material is ready and eventually update its bindings
@@ -4975,9 +4987,10 @@ var GPUCurtains = (() => {
       onBeforeRenderPass() {
         if (!this.renderer.ready)
           return;
-        if (this.material && this.material.ready && !this.ready) {
+        if (this.material && this.material.ready && this.geometry && this.geometry.ready && !this.ready) {
           this.ready = true;
         }
+        this.setGeometry();
         this._onBeforeRenderCallback && this._onBeforeRenderCallback();
         this.material.onBeforeRender();
       }
@@ -4988,7 +5001,8 @@ var GPUCurtains = (() => {
       onRenderPass(pass) {
         this._onRenderCallback && this._onRenderCallback();
         this.material.render(pass);
-        this.geometry.render(pass);
+        if (this.material.ready)
+          this.geometry.render(pass);
       }
       /**
        * Called after having rendered the Mesh
@@ -5011,6 +5025,7 @@ var GPUCurtains = (() => {
         this.onRenderPass(pass);
         this.onAfterRenderPass();
       }
+      /* DESTROY */
       /**
        * Remove the Mesh from the scene and destroy it
        */
@@ -5026,7 +5041,7 @@ var GPUCurtains = (() => {
           super.destroy();
         }
         this.material?.destroy();
-        this.geometry = null;
+        this.geometry?.destroy();
         this.renderTextures = [];
         this.textures = [];
       }
@@ -5451,22 +5466,48 @@ struct VertexOutput {
         renderer = renderer && renderer.renderer || renderer;
         isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
-        const { label, geometry, shaders } = parameters;
+        const { label, geometry, shaders, frustumCulled, DOMFrustumMargins } = parameters;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
           label,
-          shaders
+          shaders,
+          frustumCulled,
+          DOMFrustumMargins
         };
         this.geometry = geometry;
         this.updateSizePositionAndProjection();
       }
+      /* GEOMETRY */
+      /**
+       * Override to compute the Mesh geometry and add the domFrustum
+       */
+      computeGeometry() {
+        if (this.geometry.shouldCompute) {
+          this.geometry.computeGeometry();
+          this.domFrustum = new DOMFrustum({
+            boundingBox: this.geometry.boundingBox,
+            modelViewProjectionMatrix: this.modelViewProjectionMatrix,
+            containerBoundingRect: this.renderer.boundingRect,
+            DOMFrustumMargins: this.options.DOMFrustumMargins,
+            onReEnterView: () => {
+              this._onReEnterViewCallback && this._onReEnterViewCallback();
+            },
+            onLeaveView: () => {
+              this._onLeaveViewCallback && this._onLeaveViewCallback();
+            }
+          });
+          this.frustumCulled = this.options.frustumCulled;
+          this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
+          this.domFrustum.shouldUpdate = this.frustumCulled;
+        }
+      }
+      /* MATERIAL */
       /**
        * Set a Mesh transparent property, set its matrices uniforms inputs, material and then set its {@see DOMFrustum}
        * @param {TransformedMeshBaseParameters} meshParameters
        */
-      setMeshMaterial(meshParameters) {
-        const { frustumCulled, DOMFrustumMargins, ...meshMaterialOptions } = meshParameters;
+      setMaterial(meshParameters) {
         const matricesUniforms = {
           label: "Matrices",
           bindings: {
@@ -5497,24 +5538,10 @@ struct VertexOutput {
             }
           }
         };
-        if (!meshMaterialOptions.inputs)
-          meshMaterialOptions.inputs = { uniforms: {} };
-        meshMaterialOptions.inputs.uniforms.matrices = matricesUniforms;
-        super.setMeshMaterial(meshMaterialOptions);
-        this.domFrustum = new DOMFrustum({
-          boundingBox: this.geometry.boundingBox,
-          modelViewProjectionMatrix: this.modelViewProjectionMatrix,
-          containerBoundingRect: this.renderer.boundingRect,
-          DOMFrustumMargins,
-          onReEnterView: () => {
-            this._onReEnterViewCallback && this._onReEnterViewCallback();
-          },
-          onLeaveView: () => {
-            this._onLeaveViewCallback && this._onLeaveViewCallback();
-          }
-        });
-        this.frustumCulled = frustumCulled;
-        this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
+        if (!meshParameters.inputs)
+          meshParameters.inputs = { uniforms: {} };
+        meshParameters.inputs.uniforms.matrices = matricesUniforms;
+        super.setMaterial(meshParameters);
       }
       /**
        * Resize our MeshTransformedBase
@@ -5595,7 +5622,7 @@ struct VertexOutput {
        */
       onBeforeRenderPass() {
         this.updateMatrixStack();
-        if (this.domFrustum.shouldUpdate && this.frustumCulled) {
+        if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
           this.domFrustum.computeProjectedToDocumentCoords();
           this.domFrustum.shouldUpdate = false;
         }
@@ -5608,9 +5635,10 @@ struct VertexOutput {
        */
       onRenderPass(pass) {
         this._onRenderCallback && this._onRenderCallback();
-        if (this.domFrustum.isIntersecting || !this.frustumCulled) {
+        if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled) {
           this.material.render(pass);
-          this.geometry.render(pass);
+          if (this.material.ready)
+            this.geometry.render(pass);
         }
       }
     };

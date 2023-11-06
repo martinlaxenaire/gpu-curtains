@@ -21,6 +21,11 @@ export declare class IndexedGeometry extends Geometry {
      */
     constructor({ verticesOrder, instancesCount, vertexBuffers }?: GeometryParams);
     /**
+     * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
+     * @readonly
+     */
+    get ready(): boolean;
+    /**
      *
      * @param {IndexedGeometryIndexBufferOptions} parameters - parameters used to create our index buffer
      * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
@@ -39,4 +44,8 @@ export declare class IndexedGeometry extends Geometry {
      * @param pass - current render pass
      */
     drawGeometry(pass: GPURenderPassEncoder): void;
+    /**
+     * Destroy our indexed geometry vertex buffers and index buffer
+     */
+    destroy(): void;
 }

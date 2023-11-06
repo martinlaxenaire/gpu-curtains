@@ -26,6 +26,16 @@ export declare class Geometry {
      */
     constructor({ verticesOrder, instancesCount, vertexBuffers }?: GeometryParams);
     /**
+     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+     * @readonly
+     */
+    get shouldCompute(): boolean;
+    /**
+     * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
+     * @readonly
+     */
+    get ready(): boolean;
+    /**
      * Add a vertex buffer to our Geometry, set its attributes and return it
      * @param {VertexBufferParams} [parameters={}] - vertex buffer parameters
      * @param {GPUVertexStepMode} [parameters.stepMode="vertex"] - GPU vertex step mode
@@ -59,12 +69,6 @@ export declare class Geometry {
      */
     getAttributeByName(name: string): AttributeBufferParams | null;
     /**
-     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
-     * @readonly
-     * @type {boolean}
-     */
-    get shouldCompute(): boolean;
-    /**
      * Compute a Geometry, which means iterate through all vertex buffers and create the attributes array that will be sent as buffers.
      * Also compute the Geometry bounding box.
      */
@@ -85,4 +89,8 @@ export declare class Geometry {
      * @param pass - current render pass
      */
     render(pass: GPURenderPassEncoder): void;
+    /**
+     * Destroy our geometry vertex buffers
+     */
+    destroy(): void;
 }

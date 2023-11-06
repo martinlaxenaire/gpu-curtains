@@ -1,4 +1,3 @@
-/// <reference types="dist" />
 import { Material } from './Material';
 import { Renderer } from '../../utils/renderer-utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
@@ -38,33 +37,13 @@ export declare class RenderMaterial extends Material {
      * Create the attributes buffers, check if all bind groups are ready, create them if needed and set {@see RenderPipelineEntry} bind group buffers
      */
     setMaterial(): void;
-    /** ATTRIBUTES **/
     /**
      * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
      * @param {AllowedGeometries} geometry - the geometry to draw
      */
     setAttributesFromGeometry(geometry: AllowedGeometries): void;
     /**
-     * Create and write attribute buffers
-     */
-    createAttributesBuffers(): void;
-    /**
-     * Destroy the attribute buffers
-     */
-    destroyAttributeBuffers(): void;
-    /** BIND GROUPS **/
-    /**
      * Create the bind groups if they need to be created, but first add Camera bind group if needed
      */
     createBindGroups(): void;
-    /**
-     * Render the material if it is ready:
-     * Set the current pipeline, set the bind groups, set the vertex buffers and then draw!
-     * @param {GPURenderPassEncoder} pass
-     */
-    render(pass: GPURenderPassEncoder): void;
-    /**
-     * Destroy the RenderMaterial
-     */
-    destroy(): void;
 }

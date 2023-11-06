@@ -8,8 +8,9 @@ import { RenderTarget } from '../renderPasses/RenderTarget';
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture';
 import { Material } from '../materials/Material';
 import { DOMElementBoundingRect } from '../DOM/DOMElement';
-import { RenderMaterialParams } from '../../types/Materials';
+import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials';
 export interface MeshBaseParams extends RenderMaterialParams {
+    geometry: AllowedGeometries;
     autoAddToScene: boolean;
     visible?: boolean;
     renderOrder?: number;
@@ -54,8 +55,7 @@ export declare class MeshBaseClass {
     get autoAddToScene(): boolean;
     get ready(): boolean;
     set ready(value: boolean);
-    setMeshMaterial(meshParameters: RenderMaterialParams): void;
-    setMaterial(materialParameters: RenderMaterialParams): void;
+    setMaterial(meshParameters: RenderMaterialParams): void;
     addToScene(): void;
     removeFromScene(): void;
     createTexture(options: TextureDefaultParams): Texture;

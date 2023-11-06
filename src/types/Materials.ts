@@ -7,9 +7,7 @@ import { Geometry } from '../core/geometries/Geometry'
 import { IndexedGeometry } from '../core/geometries/IndexedGeometry'
 import { PlaneGeometry } from '../core/geometries/PlaneGeometry'
 
-/**
- * Material
- */
+/* MATERIAL */
 
 // shaders
 export type RenderMaterialShadersType = 'vertex' | 'fragment'
@@ -45,9 +43,7 @@ export interface MaterialInputBindingsParams {
 
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
 
-/**
- * RenderMaterial
- */
+/* RENDER MATERIAL */
 
 // shaders
 export interface RenderShaders {
@@ -60,11 +56,7 @@ export type RenderShadersOptions = Partial<RenderShaders>
 // geometry
 export interface RenderMaterialAttributes {
   wgslStructFragment?: Geometry['wgslStructFragment']
-  verticesCount?: Geometry['verticesCount']
-  instancesCount?: Geometry['instancesCount']
-  verticesOrder?: Geometry['verticesOrder']
   vertexBuffers?: Geometry['vertexBuffers']
-  indexBuffer?: IndexedGeometry['indexBuffer']
 }
 
 // TODO this should instead check if it has Geometry as deep parent
@@ -87,7 +79,7 @@ export interface RenderMaterialBaseParams extends RenderMaterialRenderingOptions
 export interface RenderMaterialParams extends Partial<RenderMaterialBaseParams> {
   label?: string
   shaders?: MaterialShaders
-  geometry: AllowedGeometries
+  //geometry: AllowedGeometries
   useAsyncPipeline?: boolean
 }
 

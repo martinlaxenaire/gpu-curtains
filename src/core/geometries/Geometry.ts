@@ -59,6 +59,22 @@ export class Geometry {
   }
 
   /**
+   * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+   * @readonly
+   */
+  get shouldCompute(): boolean {
+    return !this.vertexBuffers[0].array
+  }
+
+  /**
+   * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
+   * @readonly
+   */
+  get ready(): boolean {
+    return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer)
+  }
+
+  /**
    * Add a vertex buffer to our Geometry, set its attributes and return it
    * @param {VertexBufferParams} [parameters={}] - vertex buffer parameters
    * @param {GPUVertexStepMode} [parameters.stepMode="vertex"] - GPU vertex step mode
@@ -195,15 +211,6 @@ export class Geometry {
   }
 
   /**
-   * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
-   * @readonly
-   * @type {boolean}
-   */
-  get shouldCompute(): boolean {
-    return !this.vertexBuffers[0].array
-  }
-
-  /**
    * Compute a Geometry, which means iterate through all vertex buffers and create the attributes array that will be sent as buffers.
    * Also compute the Geometry bounding box.
    */
@@ -315,7 +322,21 @@ export class Geometry {
    * @param pass - current render pass
    */
   render(pass: GPURenderPassEncoder) {
+    if (!this.ready) return
+
     this.setGeometryBuffers(pass)
     this.drawGeometry(pass)
+  }
+
+  /**
+   * Destroy our geometry vertex buffers
+   */
+  destroy() {
+    this.vertexBuffers.forEach((vertexBuffer) => {
+      vertexBuffer.buffer?.destroy()
+    })
+
+    // explicitly free the memory from potentially big arrays
+    this.vertexBuffers = []
   }
 }
