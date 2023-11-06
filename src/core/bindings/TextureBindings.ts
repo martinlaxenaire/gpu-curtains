@@ -26,7 +26,7 @@ export class TextureBindings extends Bindings {
 
   /**
    * TextureBindings constructor
-   * @param {TextureBindingsParams} parameters - parameters used to create our TextureBindings
+   * @param parameters - parameters used to create our TextureBindings
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
    * @param {BindingType="uniform"} parameters.bindingType - binding type

@@ -81,8 +81,8 @@ export class ComputePass {
 
   /**
    * ComputePass constructor
-   * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param {ComputePassParams=} parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
+   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+   * @param parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
    */
   // TODO do we need samplers here? What about textures?
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputePassParams = {}) {

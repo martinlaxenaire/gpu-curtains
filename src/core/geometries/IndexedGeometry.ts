@@ -1,9 +1,28 @@
 import { Geometry } from './Geometry'
-import { GeometryParams, IndexBuffer } from '../../types/Geometries'
+import { GeometryParams } from '../../types/Geometries'
 
+/**
+ * Defines the available options to create an [index buffer]{@link IndexedGeometry#indexBuffer}
+ */
 export interface IndexedGeometryIndexBufferOptions {
+  /** index buffer format */
   bufferFormat?: GPUIndexFormat
+  /** index buffer array */
   array?: Uint32Array
+}
+
+/**
+ * Defines an [index buffer]{@link IndexedGeometry#indexBuffer}
+ */
+export interface IndexBuffer {
+  /** index buffer format */
+  bufferFormat: GPUIndexFormat
+  /** index buffer array */
+  array: Uint32Array
+  /** index buffer length */
+  bufferLength: number
+  /** index buffer {@link GPUBuffer} */
+  buffer?: GPUBuffer
 }
 
 /**
@@ -12,6 +31,7 @@ export interface IndexedGeometryIndexBufferOptions {
  * @extends Geometry
  */
 export class IndexedGeometry extends Geometry {
+  /** Object containing our index buffer format & length, array and GPUBuffer */
   indexBuffer: IndexBuffer
 
   /**
@@ -42,7 +62,7 @@ export class IndexedGeometry extends Geometry {
 
   /**
    *
-   * @param {IndexedGeometryIndexBufferOptions} parameters - parameters used to create our index buffer
+   * @param parameters - parameters used to create our index buffer
    * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
    * @param {Uint32Array} [parameters.array=Uint32Array]
    */

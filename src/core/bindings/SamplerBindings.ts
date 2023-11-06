@@ -24,7 +24,7 @@ export class SamplerBindings extends Bindings {
 
   /**
    * SamplerBindings constructor
-   * @param {SamplerBindingsParams} parameters - parameters used to create our SamplerBindings
+   * @param parameters - parameters used to create our SamplerBindings
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
    * @param {BindingType="uniform"} parameters.bindingType - binding type

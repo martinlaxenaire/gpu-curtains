@@ -7,8 +7,8 @@ import { WorkBufferBindings } from '../core/bindings/WorkBufferBindings'
 import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
-import { AttributeBufferParams } from '../utils/buffers-utils'
 import { MaterialShadersType } from './Materials'
+import { VertexBufferAttribute } from './Geometries'
 
 /**
  * Defines a specific type of {@link Bindings} that handles a {@link BufferBindings#value} array to be sent to a {@link GPUBuffer}
@@ -76,7 +76,7 @@ export type InputValue = number | Vec2 | Vec3 | Mat4 | number[]
  */
 export interface InputBase {
   /** {@link InputBase} type - could be 'f32', 'vec2f', etc. */
-  type: AttributeBufferParams['type']
+  type: VertexBufferAttribute['type']
   /** {@link InputBase} name */
   name?: string
   /** callback to run before updating the [binding]{@link BindGroupBufferBindingElement} using this {@link InputBase} */

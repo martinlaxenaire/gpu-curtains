@@ -2,25 +2,47 @@ import { resizeManager } from '../../utils/ResizeManager'
 import { throwError } from '../../utils/utils'
 import { ResizeManager } from '../../utils/ResizeManager'
 
+/**
+ * Defines a rectangular coordinates object
+ */
 export interface RectCoords {
+  /** top position */
   top: number
+  /** right position */
   right: number
+  /** bottom position */
   bottom: number
+  /** left position */
   left: number
 }
 
+/**
+ * Defines a rectangular bounding box object
+ */
 export interface RectBBox {
+  /** width of the bounding box */
   width: number
+  /** height of the bounding box */
   height: number
+  /** top position of the bounding box */
   top: number
+  /** left position of the bounding box */
   left: number
 }
 
+/**
+ * Defines a DOM position object
+ */
 export interface DOMPosition {
+  /** X position */
   x: number
+  /** Y position */
   y: number
 }
 
+/**
+ * Defines a complete DOM Element bounding rect object, similar to a {@link DOMRect}
+ */
 export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPosition {}
 
 /**
@@ -28,18 +50,25 @@ export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPositio
  * Used to track a DOM Element size and position by using a resize observer provided by {@see ResizeManager}
  */
 export class DOMElement {
+  /** Timeout ID to throttle our resize events */
   #throttleResize: null | ReturnType<typeof setTimeout> = null
 
+  /** The HTML element to track */
   element: HTMLElement
+  /** Flag indicating whether the timeout is still running and we should avoid a new computation */
   isResizing: boolean
+  /** Callback to run whenever the {@link element} size changed */
   onSizeChanged: (boundingRect: DOMElementBoundingRect | null) => void | null
+  /** Callback to run whenever the {@link element} position changed */
   onPositionChanged: (boundingRect: DOMElementBoundingRect | null) => void | null
+  /** The {@link ResizeManager} used, basically a wrapper around a {@link ResizeObserver} */
   resizeManager: ResizeManager
+  /** Current  {@link element} bounding rectangle */
   _boundingRect: DOMElementBoundingRect
 
   /**
    * DOMElement constructor
-   * @param {Object=} parameters - parameters used to create our DOMElement
+   * @param parameters - parameters used to create our DOMElement
    * @param {HTMLElement=} parameters.element - DOM HTML element to track
    * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
    * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
@@ -90,9 +119,9 @@ export class DOMElement {
 
   /**
    * Check whether 2 bounding rectangles are equals
-   * @param {(DOMRect | DOMElementBoundingRect)} rect1 - first bounding rectangle
-   * @param {(DOMRect | DOMElementBoundingRect)} rect2 - second bounding rectangle
-   * @returns {boolean}
+   * @param rect1 - first bounding rectangle
+   * @param rect2 - second bounding rectangle
+   * @returns - whether the rectangles are equals or not
    */
   compareBoundingRect(rect1: DOMRect | DOMElementBoundingRect, rect2: DOMRect | DOMElementBoundingRect): boolean {
     return !['x', 'y', 'left', 'top', 'right', 'bottom', 'width', 'height'].some((k) => rect1[k] !== rect2[k])
@@ -101,7 +130,6 @@ export class DOMElement {
   /**
    * Get or set our element's bounding rectangle
    * @readonly
-   * @type {DOMElementBoundingRect}
    */
   get boundingRect(): DOMElementBoundingRect {
     return this._boundingRect
@@ -128,8 +156,8 @@ export class DOMElement {
 
   /**
    * Update our element bounding rectangle because the scroll position has changed
-   * @param {number} lastXDelta - delta along X axis
-   * @param {number} lastYDelta - delta along Y axis
+   * @param lastXDelta - delta along X axis
+   * @param lastYDelta - delta along Y axis
    */
   // TODO use DOMPosition object instead!
   updateScrollPosition(lastXDelta: number, lastYDelta: number) {
@@ -145,7 +173,7 @@ export class DOMElement {
 
   /**
    * Set our element bounding rectangle, either by a value or a getBoundingClientRect call
-   * @param {DOMElementBoundingRect=} boundingRect - new bounding rectangle
+   * @param boundingRect - new bounding rectangle
    */
   setSize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!this.element) return

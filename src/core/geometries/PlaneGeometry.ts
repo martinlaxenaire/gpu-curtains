@@ -1,7 +1,6 @@
 import { IndexedGeometry } from './IndexedGeometry'
 import { Geometry } from './Geometry'
-import { AttributeBufferParamsOption } from '../../utils/buffers-utils'
-import { GeometryBaseParams } from '../../types/Geometries'
+import { VertexBufferAttributeParams, GeometryBaseParams } from '../../types/Geometries'
 
 export interface PlaneGeometryParams extends GeometryBaseParams {
   widthSegments?: number
@@ -14,10 +13,17 @@ export interface PlaneGeometryParams extends GeometryBaseParams {
  * @extends IndexedGeometry
  */
 export class PlaneGeometry extends IndexedGeometry {
+  /**
+   * Defines our {@link PlaneGeometry} definition based on the provided [parameters]{@link PlaneGeometryParams}
+   */
   definition: {
+    /** unique id based on width and height, used to get {@link PlaneGeometry} from cache */
     id: number
+    /** number of segments along the X axis */
     width: number
+    /** number of segments along the Y axis */
     height: number
+    /** total number of segments */
     count: number
   }
 
@@ -42,7 +48,7 @@ export class PlaneGeometry extends IndexedGeometry {
     widthSegments = Math.floor(widthSegments)
     heightSegments = Math.floor(heightSegments)
 
-    // unique plane buffers id based on width and height
+    // unique plane geometry id based on width and height
     // used to get a geometry from cache
     this.definition = {
       id: widthSegments * heightSegments + widthSegments,
@@ -57,7 +63,7 @@ export class PlaneGeometry extends IndexedGeometry {
     const attributes = this.getIndexedVerticesAndUVs(verticesCount)
 
     Object.keys(attributes).forEach((attributeKey) => {
-      this.setAttribute(attributes[attributeKey] as AttributeBufferParamsOption)
+      this.setAttribute(attributes[attributeKey] as VertexBufferAttributeParams)
     })
   }
 
@@ -88,10 +94,10 @@ export class PlaneGeometry extends IndexedGeometry {
 
   /**
    * Compute the UV and position arrays based on our plane widthSegments and heightSegments values and return the corresponding attributes
-   * @param {Geometry['verticesCount']} verticesCount
-   * @returns {Object.<string, AttributeBufferParamsOption>}
+   * @param verticesCount - [number of vertices]{@link Geometry#verticesCount} of our {@link PlaneGeometry}
+   * @returns - our position and uv [attributes]{@link VertexBufferAttributeParams}
    */
-  getIndexedVerticesAndUVs(verticesCount: Geometry['verticesCount']): Record<string, AttributeBufferParamsOption> {
+  getIndexedVerticesAndUVs(verticesCount: Geometry['verticesCount']): Record<string, VertexBufferAttributeParams> {
     // geometry vertices and UVs
     const uv = {
       name: 'uv',
@@ -153,6 +159,6 @@ export class PlaneGeometry extends IndexedGeometry {
       }
     }
 
-    return { position, uv } as Record<string, AttributeBufferParamsOption>
+    return { position, uv } as Record<string, VertexBufferAttributeParams>
   }
 }

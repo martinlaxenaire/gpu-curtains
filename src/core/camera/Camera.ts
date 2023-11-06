@@ -81,7 +81,7 @@ export class Camera {
 
   /**
    * Camera constructor
-   * @param {CameraParams=} parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
+   * @param parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
    */
   constructor(
     {

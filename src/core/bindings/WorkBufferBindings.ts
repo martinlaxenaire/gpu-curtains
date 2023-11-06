@@ -24,7 +24,7 @@ export class WorkBufferBindings extends BufferBindings {
 
   /**
    * WorkBufferBindings constructor
-   * @param {WorkBufferBindingsParams} parameters - [parameters]{@link WorkBufferBindingsParams} used to create our {@link WorkBufferBindings}
+   * @param parameters - [parameters]{@link WorkBufferBindingsParams} used to create our {@link WorkBufferBindings}
    */
   constructor({
     label = 'Work',

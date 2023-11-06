@@ -1,10 +1,23 @@
-import { AttributeBufferParams, AttributeBufferParamsOption } from '../utils/buffers-utils'
+import { CoreBufferType } from '../utils/buffers-utils'
 
-export interface IndexBuffer {
-  bufferFormat: GPUIndexFormat
-  array: Uint32Array
+export interface VertexBufferAttributeParams {
+  vertexBuffer?: VertexBuffer
+  name: string
+  type?: CoreBufferType
+  bufferFormat?: GPUVertexFormat
+  size?: number
+  array: Float32Array
+  verticesUsed?: number
+}
+
+export interface VertexBufferAttribute extends VertexBufferAttributeParams {
+  type: CoreBufferType
+  bufferFormat: GPUVertexFormat
+  size: number
   bufferLength: number
-  buffer?: GPUBuffer
+  offset: number
+  bufferOffset: GPUSize64
+  verticesUsed: number
 }
 
 export interface VertexBuffer {
@@ -12,7 +25,7 @@ export interface VertexBuffer {
   stepMode: GPUVertexStepMode
   arrayStride: number
   bufferLength: number
-  attributes: AttributeBufferParams[]
+  attributes: VertexBufferAttribute[]
   array?: Float32Array
   buffer?: GPUBuffer
 }
@@ -20,7 +33,7 @@ export interface VertexBuffer {
 export interface VertexBufferParams {
   stepMode?: GPUVertexStepMode
   name?: string
-  attributes?: AttributeBufferParamsOption[]
+  attributes?: VertexBufferAttributeParams[]
 }
 
 export interface GeometryOptions {

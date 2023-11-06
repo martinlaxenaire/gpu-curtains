@@ -64,7 +64,7 @@ export class BufferBindings extends Bindings {
 
   /**
    * BufferBindings constructor
-   * @param {BufferBindingsParams} parameters - parameters used to create our BufferBindings
+   * @param parameters - parameters used to create our BufferBindings
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
    * @param {BindingType="uniform"} parameters.bindingType - binding type
@@ -120,7 +120,7 @@ export class BufferBindings extends Bindings {
 
   /**
    * Format input bindings and set our {@link bindings}
-   * @param {Object.<string, Input>} bindings - bindings inputs
+   * @param bindings - bindings inputs
    */
   setBindings(bindings: Record<string, Input>) {
     Object.keys(bindings).forEach((bindingKey) => {
@@ -302,7 +302,7 @@ export class BufferBindings extends Bindings {
 
   /**
    * Set a binding shouldUpdate flag to true to update our {@link value} array during next render.
-   * @param {string} bindingName - the binding name/key to update
+   * @param bindingName - the binding name/key to update
    */
   shouldUpdateBinding(bindingName = '') {
     const bindingKey = Object.keys(this.bindings).find((bindingKey) => this.bindings[bindingKey].name === bindingName)

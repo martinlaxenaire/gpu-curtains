@@ -1,7 +1,13 @@
 import { Box3 } from '../../math/Box3'
-import { AttributeBufferParams, AttributeBufferParamsOption } from '../../utils/buffers-utils'
 import { throwError, throwWarning } from '../../utils/utils'
-import { GeometryOptions, GeometryParams, VertexBuffer, VertexBufferParams } from '../../types/Geometries'
+import {
+  VertexBufferAttribute,
+  VertexBufferAttributeParams,
+  GeometryOptions,
+  GeometryParams,
+  VertexBuffer,
+  VertexBufferParams,
+} from '../../types/Geometries'
 
 /**
  * Geometry class:
@@ -9,20 +15,28 @@ import { GeometryOptions, GeometryParams, VertexBuffer, VertexBufferParams } fro
  * Holds all attributes arrays, bounding box and handle WGSL code snippet for the vertex shader input attributes.
  */
 export class Geometry {
+  /** Number of vertices defined by this geometry */
   verticesCount: number
+  /** Vertices order to be drawn by the [render pipeline]{@link RenderPipelineEntry} */
   verticesOrder: GPUFrontFace
+  /** Number of instances of this geometry to draw */
   instancesCount: number
+  /** Array of [vertex buffers]{@link VertexBuffer} to use with this geometry */
   vertexBuffers: VertexBuffer[]
+  /** Options used to create this geometry */
   options: GeometryOptions
+  /** The type of the geometry */
   type: string
 
+  /** The bounding box of the geometry, i.e. two {@link Vec3} defining the min and max positions to wrap this geometry in a cube */
   boundingBox: Box3
 
+  /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
   wgslStructFragment: string
 
   /**
    * Geometry constructor
-   * @param {GeometryParams} [parameters={}] - parameters used to create our Geometry
+   * @param [parameters={}] - parameters used to create our Geometry
    * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
    * @param {number} [parameters.instancesCount=1] - number of instances to draw
    * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
@@ -76,11 +90,11 @@ export class Geometry {
 
   /**
    * Add a vertex buffer to our Geometry, set its attributes and return it
-   * @param {VertexBufferParams} [parameters={}] - vertex buffer parameters
-   * @param {GPUVertexStepMode} [parameters.stepMode="vertex"] - GPU vertex step mode
-   * @param {string} [parameters.name] - vertex buffer name
-   * @param {AttributeBufferParamsOption[]} [parameters.attributes=[]] - vertex buffer attributes
-   * @returns {VertexBuffer}
+   * @param [parameters={}] - vertex buffer parameters
+   * @param [parameters.stepMode="vertex"] - GPU vertex step mode
+   * @param [parameters.name] - vertex buffer name
+   * @param [parameters.attributes=[]] - vertex buffer attributes
+   * @returns - newly created [vertex buffer]{@link VertexBuffer}
    */
   addVertexBuffer({ stepMode = 'vertex', name, attributes = [] }: VertexBufferParams = {}): VertexBuffer {
     const vertexBuffer = {
@@ -98,7 +112,7 @@ export class Geometry {
       this.setAttribute({
         vertexBuffer,
         ...attribute,
-      } as AttributeBufferParamsOption)
+      } as VertexBufferAttributeParams)
     })
 
     this.vertexBuffers.push(vertexBuffer)
@@ -108,8 +122,8 @@ export class Geometry {
 
   /**
    * Get a vertex buffer by name
-   * @param {string} name - our vertex buffer name
-   * @returns {?VertexBuffer} - found vertex buffer or null if not found
+   * @param name - our vertex buffer name
+   * @returns - found [vertex buffer]{@link VertexBuffer} or null if not found
    */
   getVertexBufferByName(name = ''): VertexBuffer | null {
     return this.vertexBuffers.find((vertexBuffer) => vertexBuffer.name === name)
@@ -117,7 +131,7 @@ export class Geometry {
 
   /**
    * Set a vertex buffer attribute
-   * @param {AttributeBufferParamsOption} parameters - attributes parameters
+   * @param parameters - attributes parameters
    * @param {VertexBuffer=} parameters.vertexBuffer - vertex buffer holding this attribute
    * @param {string} parameters.name - attribute name
    * @param {CoreBufferType} [parameters.type="vec3f"] - attribute type
@@ -134,7 +148,7 @@ export class Geometry {
     size = 3,
     array = new Float32Array(this.verticesCount * size),
     verticesUsed = 1,
-  }: AttributeBufferParamsOption) {
+  }: VertexBufferAttributeParams) {
     const attributes = vertexBuffer.attributes
     const attributesLength = attributes.length
 
@@ -198,10 +212,10 @@ export class Geometry {
 
   /**
    * Get an attribute by name
-   * @param {string} name - name of the attribute to find
-   * @returns {?AttributeBufferParams} - found attribute or null if not found
+   * @param name - name of the attribute to find
+   * @returns - found [attribute]{@link VertexBufferAttribute} or null if not found
    */
-  getAttributeByName(name: string): AttributeBufferParams | null {
+  getAttributeByName(name: string): VertexBufferAttribute | null {
     let attribute
     this.vertexBuffers.forEach((vertexBuffer) => {
       attribute = vertexBuffer.attributes.find((attribute) => attribute.name === name)
@@ -221,7 +235,7 @@ export class Geometry {
       if (index === 0) {
         const hasPositionAttribute = vertexBuffer.attributes.find(
           (attribute) => attribute.name === 'position'
-        ) as AttributeBufferParams | null
+        ) as VertexBufferAttribute | null
 
         if (!hasPositionAttribute) {
           throwError(`Geometry must have a 'position' attribute`)

@@ -1,5 +1,4 @@
 import { InputValue } from '../types/BindGroups'
-import { VertexBuffer } from '../types/Geometries'
 import { BindingType } from '../core/bindings/Bindings'
 
 export type TypedArray =
@@ -13,7 +12,7 @@ export type TypedArray =
   | Float32Array
   | Float64Array
 
-type CoreBufferType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
+export type CoreBufferType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
 
 type TypedArrayConstructor =
   | Int8ArrayConstructor
@@ -44,26 +43,6 @@ export interface BufferBindingsElement {
   startOffset: number
   endOffset: number
   array?: TypedArray
-}
-
-export interface AttributeBufferParamsOption {
-  vertexBuffer?: VertexBuffer
-  name: string
-  type?: CoreBufferType
-  bufferFormat?: GPUVertexFormat
-  size?: number
-  array: Float32Array
-  verticesUsed?: number
-}
-
-export interface AttributeBufferParams extends AttributeBufferParamsOption {
-  type: CoreBufferType
-  bufferFormat: GPUVertexFormat
-  size: number
-  bufferLength: number
-  offset: number
-  bufferOffset: GPUSize64
-  verticesUsed: number
 }
 
 // from https://github.com/greggman/webgpu-utils/blob/main/src/buffer-views.ts
