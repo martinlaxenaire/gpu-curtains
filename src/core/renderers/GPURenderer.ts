@@ -466,7 +466,7 @@ export class GPURenderer {
     this.device?.queue.submit([commandBuffer])
 
     // no need to use device.queue.onSubmittedWorkDone
-    // as Kai Ninomiya stated:
+    // as [Kai Ninomiya](https://github.com/kainino0x) stated:
     // "Anything you submit() after the copyExternalImageToTexture() is guaranteed to see the result of that call."
     this.texturesQueue.forEach((texture) => {
       texture.sourceUploaded = true

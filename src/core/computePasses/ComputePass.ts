@@ -287,6 +287,8 @@ export class ComputePass {
    * @param pass - current compute pass encoder
    */
   onRenderPass(pass: GPUComputePassEncoder) {
+    if (!this.material.ready) return
+
     this._onRenderCallback && this._onRenderCallback()
 
     this.material.render(pass)

@@ -12,12 +12,13 @@ import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
  * @extends Material
  */
 export class ComputeMaterial extends Material {
+  /** [Compute pipeline entry]{@link ComputePipelineEntry} used by this {@link ComputeMaterial} */
   pipelineEntry: ComputePipelineEntry
 
   /**
    * ComputeMaterial constructor
-   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
-   * @param {MaterialParams} parameters - parameters used to create our Material
+   * @param renderer - our renderer class object
+   * @param parameters - parameters used to create our Material
    * @param {string} parameters.label - ComputeMaterial label
    * @param {boolean} parameters.useAsyncPipeline - whether the {@link ComputePipelineEntry} should be compiled asynchronously
    * @param {MaterialShaders} parameters.shaders - our ComputeMaterial shader codes and entry points
@@ -95,7 +96,6 @@ export class ComputeMaterial extends Material {
   /**
    * Check whether we're currently accessing one of the buffer and therefore can't render our material
    * @readonly
-   * @type {boolean}
    */
   get hasMappedBuffer(): boolean {
     // check if we have a buffer mapped or pending map
@@ -117,10 +117,9 @@ export class ComputeMaterial extends Material {
    * @param pass - current compute pass encoder
    */
   render(pass: GPUComputePassEncoder) {
-    // no point to render if the WebGPU device is not ready
-    if (!this.renderer.ready) return
-
-    // pipeline is not ready yet
+    // renderer or pipeline are not ready yet
+    // not really needed since compute passes do already check it beforehand
+    // mostly here as a safeguard
     if (!this.ready) return
 
     // set current pipeline

@@ -2,27 +2,47 @@ import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
 
+/** Defines all kind of possible {@link Object3D} matrix types */
 export type Object3DMatricesType = 'model'
 
+/**
+ * Defines an {@link Object3D} matrix object
+ */
 export interface Object3DTransformMatrix {
+  /** The [matrix]{@link Mat4} used */
   matrix: Mat4
+  /** Whether we should update the [matrix]{@link Mat4} */
   shouldUpdate: boolean
+  /** Function to update our [matrix]{@link Mat4} */
   onUpdate: () => void
 }
 
+/** Defines all possible [matrix object]{@link Object3DTransformMatrix} used by our {@link Object3D} */
 export type Object3DMatrices = Record<Object3DMatricesType, Object3DTransformMatrix>
 
+/**
+ * Defines all necessary vectors/quaternions to compute a 3D model [matrix]{@link Mat4}
+ */
 export interface Object3DTransforms {
+  /** Transformation origin object */
   origin: {
+    /** Transformation origin [vector]{@link Vec3} relative to the {@link Object3D} */
     model: Vec3
+    /** Transformation origin [vector]{@link Vec3} relative to the 3D world */
     world?: Vec3
   }
+  /** Model [quaternion]{@link Quat} defining its rotation in 3D space */
   quaternion: Quat
+  /** Model rotation [vector]{@link Vec3} used to compute its [quaternion]{@link Quat} */
   rotation: Vec3
+  /** Position object */
   position: {
+    /** Position [vector]{@link Vec3} relative to the 3D world */
     world: Vec3
+    /** Position [vector]{@link Vec3} relative to the DOM document */
     document?: Vec3
   }
+  /** Model 3D scale [vector]{@link Vec3} */
   scale: Vec3
 }
 
@@ -31,7 +51,9 @@ export interface Object3DTransforms {
  * Used to create an object with transformation properties and a model matrix
  */
 export class Object3D {
+  /** [Transformation object]{@link Object3DTransforms} of the {@link Object3D} */
   transforms: Object3DTransforms
+  /** [Matrices object]{@link Object3DMatrices} of the {@link Object3D} */
   matrices: Object3DMatrices
 
   /**
@@ -42,7 +64,7 @@ export class Object3D {
     this.setTransforms()
   }
 
-  /** TRANSFORMS **/
+  /* TRANSFORMS */
 
   /**
    * Set our transforms properties and onChange callbacks
@@ -69,7 +91,6 @@ export class Object3D {
   /**
    * Get/set our rotation vector
    * @readonly
-   * @type {Vec3}
    */
   get rotation(): Vec3 {
     return this.transforms.rotation
@@ -83,7 +104,6 @@ export class Object3D {
   /**
    * Get/set our quaternion
    * @readonly
-   * @type {Quat}
    */
   get quaternion(): Quat {
     return this.transforms.quaternion
@@ -96,7 +116,6 @@ export class Object3D {
   /**
    * Get/set our position vector
    * @readonly
-   * @type {Vec3}
    */
   get position(): Vec3 {
     return this.transforms.position.world
@@ -109,7 +128,6 @@ export class Object3D {
   /**
    * Get/set our scale vector
    * @readonly
-   * @type {Vec3}
    */
   get scale(): Vec3 {
     return this.transforms.scale
@@ -124,7 +142,6 @@ export class Object3D {
   /**
    * Get/set our transform origin vector
    * @readonly
-   * @type {Vec3}
    */
   get transformOrigin(): Vec3 {
     return this.transforms.origin.model
@@ -164,7 +181,7 @@ export class Object3D {
     this.shouldUpdateModelMatrix()
   }
 
-  /** MATRICES **/
+  /* MATRICES */
 
   /**
    * Set our model matrix
@@ -182,7 +199,6 @@ export class Object3D {
   /**
    * Get/set our model matrix
    * @readonly
-   * @type {Mat4}
    */
   get modelMatrix(): Mat4 {
     return this.matrices.model.matrix
@@ -213,6 +229,9 @@ export class Object3D {
     )
   }
 
+  /**
+   * Callback to run if at least one matrix of the stack has been updated
+   */
   onAfterMatrixStackUpdate() {
     /* allow empty callback */
   }

@@ -77,7 +77,7 @@ export class RenderTexture {
         GPUTextureUsage.TEXTURE_BINDING |
         GPUTextureUsage.COPY_SRC |
         GPUTextureUsage.COPY_DST |
-        GPUTextureUsage.RENDER_ATTACHMENT, // TODO?
+        GPUTextureUsage.RENDER_ATTACHMENT, // TODO let user chose?
     })
 
     // update texture binding

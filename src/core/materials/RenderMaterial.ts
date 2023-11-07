@@ -1,7 +1,6 @@
 import { Material } from './Material'
 import { BindGroup } from '../bindGroups/BindGroup'
-import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
-import { CameraRenderer, isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import {
   AllowedGeometries,
@@ -10,6 +9,7 @@ import {
   RenderMaterialParams,
 } from '../../types/Materials'
 import { RenderPipelineEntryBaseParams } from '../../types/core/pipelines/RenderPipelineEntry'
+import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 
 /**
  * RenderMaterial class:
@@ -17,22 +17,25 @@ import { RenderPipelineEntryBaseParams } from '../../types/core/pipelines/Render
  * @extends Material
  */
 export class RenderMaterial extends Material {
+  /** [Render pipeline entry]{@link RenderPipelineEntry} used by this {@link RenderMaterial} */
+  pipelineEntry: RenderPipelineEntry
+  /** Mandatory [geometry attributes]{@link RenderMaterialAttributes} to pass to the [render pipeline entry]{@link RenderPipelineEntry} */
   attributes: RenderMaterialAttributes | null
 
   /**
    * RenderMaterial constructor
-   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
-   * @param {MaterialParams} parameters - parameters used to create our Material
+   * @param renderer - our renderer class object
+   * @param parameters - parameters used to create our Material
    * @param {string} parameters.label - RenderMaterial label
    * @param {AllowedGeometries} parameters.geometry - geometry to draw
-   * @param {boolean} parameters.useAsyncPipeline - whether the {@see RenderPipelineEntry} should be compiled asynchronously
+   * @param {boolean} parameters.useAsyncPipeline - whether the {@link RenderPipelineEntry} should be compiled asynchronously
    * @param {MaterialShaders} parameters.shaders - our RenderMaterial shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our RenderMaterial {@see BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@see BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@see Sampler}
-   * @param {RenderMaterialRenderingOptions} parameters.rendering - RenderMaterial rendering options to pass to the {@see RenderPipelineEntry}
+   * @param {BindGroupInputs} parameters.inputs - our RenderMaterial {@link BindGroup} inputs
+   * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
+   * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
+   * @param {RenderMaterialRenderingOptions} parameters.rendering - RenderMaterial rendering options to pass to the {@link RenderPipelineEntry}
    * @param {boolean} parameters.rendering.useProjection - whether to use the Camera bind group with this material
-   * @param {boolean} parameters.rendering.transparent - impacts the {@see RenderPipelineEntry} blend properties
+   * @param {boolean} parameters.rendering.transparent - impacts the {@link RenderPipelineEntry} blend properties
    * @param {boolean} parameters.rendering.depthWriteEnabled - whether to write to the depth buffer or not
    * @param {GPUCompareFunction} parameters.rendering.depthCompare - depth compare function to use
    * @param {GPUCullMode} parameters.rendering.cullMode - cull mode to use
@@ -82,7 +85,7 @@ export class RenderMaterial extends Material {
   }
 
   /**
-   * When all bind groups and attributes are created, add them to the {@see ComputePipelineEntry} and compile it
+   * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry} and compile it
    */
   setPipelineEntryBuffers() {
     this.pipelineEntry.setPipelineEntryBuffers({
@@ -92,7 +95,7 @@ export class RenderMaterial extends Material {
   }
 
   /**
-   * Create the attributes buffers, check if all bind groups are ready, create them if needed and set {@see RenderPipelineEntry} bind group buffers
+   * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers
    */
   setMaterial() {
     super.setMaterial()

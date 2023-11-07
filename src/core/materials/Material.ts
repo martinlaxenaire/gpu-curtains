@@ -17,24 +17,38 @@ import { RenderTexture } from '../textures/RenderTexture'
  * The goal of material is to create and update the bind groups (including textures and samplers), create a pipeline and use them to render.
  */
 export class Material {
+  /** The type of the {@link Material} */
   type: string
+  /** The {@link Renderer} used */
   renderer: Renderer
+  /** Options used to create this {@link Material} */
   options: MaterialOptions
 
+  /** Pipeline entry used by this {@link Material} */
   pipelineEntry: AllowedPipelineEntries
 
+  /** Array of [bind groups]{@link BindGroup} used by this {@link Material} */
   bindGroups: AllowedBindGroups[]
+  /** Array of [cloned bind groups]{@link BindGroup} created by this {@link Material} */
   clonedBindGroups: AllowedBindGroups[]
 
+  /** Object containing all uniforms inputs handled by this {@link Material} */
   uniforms: Record<string, Record<string, BufferBindingsUniform>>
+  /** Object containing all readonly storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingsUniform>>
+  /** Object containing all read/write storages inputs handled by this {@link Material} */
   works: Record<string, Record<string, BufferBindingsUniform>>
 
+  /** Array of [bind groups]{@link BindGroup} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
   inputsBindGroups: BindGroup[]
+  /** Array of [bindings]{@link Bindings} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
   inputsBindings: BindGroupBindingElement[]
 
+  /** Array of [textures]{@link MaterialTexture} handled by this {@link Material} */
   textures: MaterialTexture[]
+  /** Array of [samplers]{@link Sampler} handled by this {@link Material} */
   samplers: Sampler[]
+  /** Specific [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related bindings */
   texturesBindGroup: TextureBindGroup
 
   /**
@@ -113,11 +127,11 @@ export class Material {
   }
 
   /**
-   * Get whether our pipeline entry and pipeline have been created and successfully compiled
+   * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled
    * @readonly
    */
   get ready(): boolean {
-    return !!(this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
+    return !!(this.renderer.ready && this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready)
   }
 
   /**
@@ -489,10 +503,9 @@ export class Material {
    * @param pass - current pass encoder
    */
   render(pass: GPURenderPassEncoder | GPUComputePassEncoder) {
-    // no point to render if the WebGPU device is not ready
-    if (!this.renderer.ready) return
-
-    // pipeline is not ready yet
+    // renderer or pipeline are not ready yet
+    // not really needed since meshes/compute passes do already check it beforehand
+    // mostly here as a safeguard
     if (!this.ready) return
 
     // set current pipeline

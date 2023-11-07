@@ -31,7 +31,7 @@ const defaultDOMFrustumMargins: RectCoords = {
 /**
  * DOMFrustum class:
  * Used to check if a {@link ProjectedObject3D} is currently contained inside a DOM bounding rectangle.
- * Uses a modelViewProjectionMatrix that contains both 3D Object and Camera useful transformation and projection informations.
+ * Uses a [model view projection matrix]{@link ProjectedObject3D#modelViewProjectionMatrix} that contains both 3D Object and Camera useful transformation and projection information.
  * The DOM bounding rectangle to check against usually is the {@link GPURenderer}'s {@link DOMElement} bounding rectangle, unless frustum margins are specified.
  */
 export class DOMFrustum {

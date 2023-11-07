@@ -16,16 +16,20 @@ import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
  * @mixes {class {}}
  */
 export class FullscreenPlane extends MeshBaseMixin(class {}) {
+  /** The type of the {@link FullscreenPlane} */
   type: string
+  /** Object defining the  {@link FullscreenPlane} size */
   size: {
+    /** document HTML size */
     document: RectBBox
   }
+  /** DOM Element (in fact, the renderer [DOM Element]{@link GPURenderer#domElement}) used to set the [document size]{@link FullscreenPlane#size.document} */
   domElement: DOMElement
 
   /**
    * FullscreenPlane constructor
-   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
-   * @param {MeshBaseParams} parameters - our Mesh base parameters
+   * @param renderer - our renderer class object
+   * @param parameters - our Mesh base parameters
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseParams) {
     // we could pass our curtains object OR our curtains renderer object
@@ -71,7 +75,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
 
   /**
    * Resize our FullscreenPlane
-   * @param {?DOMElementBoundingRect} boundingRect - the new bounding rectangle
+   * @param boundingRect - the new bounding rectangle
    */
   resize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return
@@ -83,8 +87,8 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
 
   /**
    * Convert a mouse coordinate to plane coordinates ranging from [-1, 1]
-   * @param {?Vec2} mouseCoords - mouse or pointer coordinates as a Vec2
-   * @returns {Vec2} - the mapped coordinates in the [-1, 1] range
+   * @param mouseCoords - mouse or pointer coordinates as a Vec2
+   * @returns - the mapped coordinates in the [-1, 1] range
    */
   mouseToPlaneCoords(mouseCoords: Vec2 = new Vec2()): Vec2 {
     // mouse position conversion from document to plane space

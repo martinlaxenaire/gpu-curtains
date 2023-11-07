@@ -24,7 +24,7 @@ import { BindingType } from '../bindings/Bindings'
  * It creates GPUBuffer, GPUBindGroup and GPUBindGroupLayout that are used by the GPU Pipelines.
  */
 export class BindGroup {
-  /**  The type of the {@link BindGroup} */
+  /** The type of the {@link BindGroup} */
   type: string
   /** The universal unique id of the {@link BindGroup} */
   uuid: string
@@ -222,6 +222,9 @@ export class BindGroup {
    * @param binding - the binding element
    */
   createBindingBuffer(binding) {
+    // TODO user defined usage?
+    // [Kangz](https://github.com/Kangz) said:
+    // "In general though COPY_SRC/DST is free (at least in Dawn / Chrome because we add it all the time for our own purpose)."
     binding.buffer = this.renderer.createBuffer({
       label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
       size: binding.value.byteLength,

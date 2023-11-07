@@ -4,7 +4,9 @@ import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
 import { Mat4 } from '../../math/Mat4'
 import { Camera } from '../camera/Camera'
 
+/** Defines all kind of possible {@link ProjectedObject3D} matrix types */
 export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' | 'modelViewProjection'
+/** Defines all possible [matrix object]{@link Object3DTransformMatrix} used by our {@link ProjectedObject3D} */
 export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>
 
 /**
@@ -13,14 +15,15 @@ export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Ob
  * @extends Object3D
  */
 export class ProjectedObject3D extends Object3D {
-  renderer: CameraRenderer
+  /** [Camera]{@link Camera} object used to compute [modelView]{@link ProjectedObject3D#modelViewMatrix} and [modelViewProjection]{@link ProjectedObject3D#modelViewProjectionMatrix} matrices */
   camera: Camera
 
+  /** [Matrices object]{@link ProjectedObject3DMatrices} of the {@link ProjectedObject3D} */
   matrices: ProjectedObject3DMatrices
 
   /**
    * ProjectedObject3D constructor
-   * @param {(CameraRenderer|GPUCurtains)} renderer - our renderer class object
+   * @param renderer - our renderer class object
    */
   // TODO just use the Camera instead?
   constructor(renderer: CameraRenderer | GPUCurtains) {
@@ -31,8 +34,7 @@ export class ProjectedObject3D extends Object3D {
 
     isCameraRenderer(renderer, 'ProjectedObject3D')
 
-    this.renderer = renderer
-    this.camera = this.renderer.camera
+    this.camera = renderer.camera
   }
 
   /**
@@ -98,7 +100,6 @@ export class ProjectedObject3D extends Object3D {
   /**
    * Get/set our model view matrix
    * @readonly
-   * @type {Mat4}
    */
   get modelViewMatrix(): Mat4 {
     return this.matrices.modelView.matrix
@@ -112,7 +113,6 @@ export class ProjectedObject3D extends Object3D {
   /**
    * Get our camera view matrix
    * @readonly
-   * @type {Mat4}
    */
   get viewMatrix(): Mat4 {
     return this.camera.viewMatrix
@@ -121,7 +121,6 @@ export class ProjectedObject3D extends Object3D {
   /**
    * Get our camera projection matrix
    * @readonly
-   * @type {Mat4}
    */
   get projectionMatrix(): Mat4 {
     return this.camera.projectionMatrix
@@ -130,7 +129,6 @@ export class ProjectedObject3D extends Object3D {
   /**
    * Get/set our model view projection matrix
    * @readonly
-   * @type {Mat4}
    */
   get modelViewProjectionMatrix(): Mat4 {
     return this.matrices.modelViewProjection.matrix

@@ -4,7 +4,7 @@ import { RenderPass } from '../../../core/renderPasses/RenderPass'
 import { FullscreenPlane } from '../../../core/meshes/FullscreenPlane'
 import { DOMMeshType } from '../../../core/renderers/GPURenderer'
 
-export interface CurtainsTextureOptions {
+export interface MeshTextureParams {
   generateMips?: boolean
   flipY?: boolean
   format?: GPUTextureFormat
@@ -18,12 +18,12 @@ export interface TextureBaseParams {
 }
 
 export interface TextureDefaultParams extends TextureBaseParams {
-  texture?: CurtainsTextureOptions
+  texture?: MeshTextureParams
   fromTexture?: Texture
 }
 
 export interface TextureParams extends TextureDefaultParams {
-  texture: CurtainsTextureOptions
+  texture: MeshTextureParams
   fromTexture?: Texture | null
 }
 

@@ -342,12 +342,10 @@ export class Texture extends Object3D {
     const options = {
       label: this.options.label,
       format: this.options.texture.format,
-      size: [this.size.width, this.size.height], // [1, 1]
-      usage:
-        GPUTextureUsage.TEXTURE_BINDING |
-        GPUTextureUsage.COPY_SRC |
-        GPUTextureUsage.COPY_DST |
-        GPUTextureUsage.RENDER_ATTACHMENT,
+      size: [this.size.width, this.size.height], // [1, 1] if no source
+      usage: !!this.source
+        ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
+        : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
     } as GPUTextureDescriptor
 
     if (this.options.sourceType !== 'externalVideo') {

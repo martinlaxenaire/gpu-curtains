@@ -546,6 +546,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const nbSimsComputePerRender = Math.min(50, 100 / simulationSpeed)
 
   gpuCurtains.renderer.onBeforeRender((commandEncoder) => {
+    gpuCurtains.renderer.pipelineManager.resetCurrentPipeline()
+
     for (let i = 0; i < nbSimsComputePerRender; i++) {
       const forcePass = commandEncoder.beginComputePass()
       computeForcesPass.render(forcePass)
