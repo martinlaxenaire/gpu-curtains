@@ -2,8 +2,7 @@ import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { RenderPipelineEntryBaseParams } from '../../types/core/pipelines/RenderPipelineEntry'
-import { PipelineEntryBaseParams } from '../../types/core/pipelines/PipelineEntry'
+import { PipelineEntryBaseParams, RenderPipelineEntryBaseParams } from '../../types/PipelineEntries'
 
 /** Defines all types of allowed {@link PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry

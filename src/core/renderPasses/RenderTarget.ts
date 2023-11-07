@@ -7,22 +7,42 @@ import { RenderPassParams } from './RenderPass'
 import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
+/**
+ * Parameters used to create a {@link RenderTarget}
+ */
 export interface RenderTargetParams extends RenderPassParams {
+  /** Whether we should add this {@link RenderTarget} to our {@link Scene} to let it handle the rendering process automatically */
   autoAddToScene?: boolean
 }
 
+/**
+ * RenderTarget class:
+ * Used to render meshes to a [render pass]{@link RenderPass} [render texture]{@link RenderTexture} instead of directly to screen
+ */
 export class RenderTarget {
+  /** [renderer]{@link Renderer} used by this {@link RenderTarget} */
   renderer: Renderer
+  /** The type of the {@link RenderTarget} */
   type: string
-  uuid: string
+  /** The universal unique id of this {@link RenderTarget} */
+  readonly uuid: string
 
+  /** Options used to create this {@link RenderTarget} */
   options: RenderTargetParams
 
+  /** {@link RenderPass} used by this {@link RenderTarget} */
   renderPass: RenderPass
+  /** {@link RenderTexture} that will be resolved by the {@link RenderTarget#renderPass} when [setting the current texture]{@link GPURenderer#setRenderPassCurrentTexture} */
   renderTexture: RenderTexture
 
+  /** Whether we should add this {@link RenderTarget} to our {@link Scene} to let it handle the rendering process automatically */
   #autoAddToScene = true
 
+  /**
+   * RenderTarget constructor
+   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
+   * @param parameters - [parameters]{@link RenderTargetParams} use to create this {@link RenderTarget}
+   */
   constructor(renderer: Renderer | GPUCurtains, parameters: RenderTargetParams) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
@@ -54,6 +74,7 @@ export class RenderTarget {
       clearValue: this.options.clearValue,
     })
 
+    // this is the texture that will be resolved when setting the current render pass texture
     this.renderTexture = new RenderTexture(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target Render Texture',
       name: 'renderTexture',
@@ -62,6 +83,9 @@ export class RenderTarget {
     this.addToScene()
   }
 
+  /**
+   * Add the {@link RenderTarget} to the renderer and the {@link Scene}
+   */
   addToScene() {
     this.renderer.renderTargets.push(this)
 
@@ -70,6 +94,9 @@ export class RenderTarget {
     }
   }
 
+  /**
+   * Remove the {@link RenderTarget} from the renderer and the {@link Scene}
+   */
   removeFromScene() {
     if (this.#autoAddToScene) {
       this.renderer.scene.removeRenderTarget(this)
@@ -78,16 +105,26 @@ export class RenderTarget {
     this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid)
   }
 
+  /**
+   * Resize our [render pass]{@link RenderTarget#renderPass} and [render texture]{@link RenderTarget#renderTexture}
+   * @param boundingRect - new [bounding rectangle]{@link DOMElementBoundingRect}
+   */
   resize(boundingRect: DOMElementBoundingRect) {
     this.renderPass?.resize(boundingRect)
     this.renderTexture?.resize()
   }
 
   // alias
+  /**
+   * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
+   */
   remove() {
     this.destroy()
   }
 
+  /**
+   * Destroy our {@link RenderTarget}
+   */
   destroy() {
     // release mesh bindings
     this.renderer.meshes.forEach((mesh) => {

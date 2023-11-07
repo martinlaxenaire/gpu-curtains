@@ -78,7 +78,7 @@ export interface MaterialParams extends MaterialBaseParams, MaterialInputBinding
 // GEOMETRY
 
 /**
- * Defines what Geometry attributes a {@link RenderMaterial} should send to the [render pipeline]{@link RenderPipelineEntry#pipeline}
+ * Defines the geometry attributes that a {@link RenderMaterial} should send to the [render pipeline]{@link RenderPipelineEntry#pipeline}
  */
 export interface RenderMaterialAttributes {
   /** WGSL structure code fragment containing the attributes to use as vertex shader inputs */

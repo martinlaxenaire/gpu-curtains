@@ -1,15 +1,25 @@
 import { PipelineEntry } from './PipelineEntry'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { throwError } from '../../utils/utils'
-import { PipelineEntryBuffersParams } from '../../types/core/pipelines/ComputePipelineEntry'
-import { PipelineEntryShaders, PipelineEntryParams } from '../../types/core/pipelines/PipelineEntry'
+import { PipelineEntryShaders, PipelineEntryParams, PipelineEntryPropertiesParams } from '../../types/PipelineEntries'
 import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
+/**
+ * ComputePipelineEntry class:
+ * Used to create a pipeline entry specifically designed to handle compute passes.
+ * @extends PipelineEntry
+ */
 export class ComputePipelineEntry extends PipelineEntry {
+  /** Shaders to use with this {@link ComputePipelineEntry} */
   shaders: PipelineEntryShaders
+  /** [Compute pipeline descriptor]{@link GPUComputePipelineDescriptor} based on [layout]{@link ComputePipelineEntry#layout} and [shaders]{@link ComputePipelineEntry#shaders} */
   descriptor: GPUComputePipelineDescriptor | null
 
+  /**
+   * ComputePipelineEntry constructor
+   * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link ComputePipelineEntry}
+   */
   constructor(parameters: PipelineEntryParams) {
     let { renderer } = parameters
     const { label } = parameters
@@ -36,7 +46,11 @@ export class ComputePipelineEntry extends PipelineEntry {
     this.descriptor = null
   }
 
-  setPipelineEntryBuffers(parameters: PipelineEntryBuffersParams) {
+  /**
+   * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups}) and create the [pipeline]{@link ComputePipelineEntry#pipeline} itself
+   * @param parameters - the [bind groups]{@link ComputeMaterial#bindGroups} to use
+   */
+  setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams) {
     const { bindGroups } = parameters
 
     this.setPipelineEntryBindGroups(bindGroups)
@@ -44,8 +58,11 @@ export class ComputePipelineEntry extends PipelineEntry {
     this.setPipelineEntry()
   }
 
-  /** SHADERS **/
+  /* SHADERS */
 
+  /**
+   * Patch the shaders by appending all the [bind groups]{@link ComputePipelineEntry#bindGroups}) WGSL code fragments to the given [parameter shader code]{@link PipelineEntryParams#shaders}
+   */
   patchShaders() {
     this.shaders.compute.head = ''
     this.shaders.compute.code = ''
@@ -87,8 +104,11 @@ export class ComputePipelineEntry extends PipelineEntry {
     this.shaders.compute.code = this.shaders.compute.head + this.options.shaders.compute.code
   }
 
-  /** SETUP **/
+  /* SETUP */
 
+  /**
+   * Create the [shaders]{@link ComputePipelineEntry#shaders}: patch them and create the {@link GPUShaderModule}
+   */
   createShaders() {
     this.patchShaders()
 
@@ -98,6 +118,9 @@ export class ComputePipelineEntry extends PipelineEntry {
     })
   }
 
+  /**
+   * Create the [compute pipeline descriptor]{@link ComputePipelineEntry#descriptor}
+   */
   createPipelineDescriptor() {
     if (!this.shaders.compute.module) return
 
@@ -111,6 +134,9 @@ export class ComputePipelineEntry extends PipelineEntry {
     }
   }
 
+  /**
+   * Create the [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   */
   createComputePipeline() {
     if (!this.shaders.compute.module) return
 
@@ -122,6 +148,11 @@ export class ComputePipelineEntry extends PipelineEntry {
     }
   }
 
+  /**
+   * Asynchronously create the [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * @async
+   * @returns - void promise result
+   */
   async createComputePipelineAsync(): Promise<void> {
     if (!this.shaders.compute.module) return
 
@@ -136,6 +167,9 @@ export class ComputePipelineEntry extends PipelineEntry {
     }
   }
 
+  /**
+   * Call [super setPipelineEntry]{@link PipelineEntry#setPipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   */
   setPipelineEntry() {
     super.setPipelineEntry()
 

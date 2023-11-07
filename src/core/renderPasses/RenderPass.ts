@@ -3,36 +3,63 @@ import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
-export interface RenderPassParams {
-  label?: string
-  depth?: boolean
-  loadOp?: GPULoadOp
-  clearValue?: GPUColor
+/**
+ * Options used to create this {@link RenderPass}
+ */
+export interface RenderPassOptions {
+  /** The label of the {@link RenderPass}, sent to various GPU objects for debugging purpose */
+  label: string
+  /** Whether this {@link RenderPass} should handle a depth texture */
+  depth: boolean
+  /** The [load operation]{@link GPULoadOp} to perform while drawing this {@link RenderPass} */
+  loadOp: GPULoadOp
+  /** The [color values]{@link GPUColor} to clear before drawing this {@link RenderPass} */
+  clearValue: GPUColor
 }
 
+/**
+ * Parameters used to create a {@link RenderPass}
+ */
+export type RenderPassParams = Partial<RenderPassOptions>
+
+/**
+ * RenderPass class:
+ * Used by [render targets]{@link RenderTarget} and the [renderer]{@link Renderer} to render to a specific [pass descriptor]{@link GPURenderPassDescriptor}
+ */
 export class RenderPass {
+  /** [renderer]{@link Renderer} used by this {@link RenderPass} */
   renderer: Renderer
+  /** The type of the {@link RenderPass} */
   type: string
-  uuid: string
+  /** The universal unique id of this {@link RenderPass} */
+  readonly uuid: string
 
-  options: {
-    label: string
-    depth: boolean
-    loadOp: GPULoadOp
-    clearValue: GPUColor
-  }
+  /** Options used to create this {@link RenderPass} */
+  options: RenderPassOptions
 
+  /** Size of the textures sources */
   size: {
+    /** width of the textures sources */
     width: number
+    /** height of the textures sources */
     height: number
   }
 
+  /** Whether the [renderer]{@link Renderer} is using multisampling */
   sampleCount: Renderer['sampleCount']
 
+  /** Depth [texture]{@link GPUTexture} to use with this {@link RenderPass} if it handles depth */
   depthTexture: GPUTexture | undefined
+  /** Render [texture]{@link GPUTexture} to use with this {@link RenderPass} */
   renderTexture: GPUTexture
+  /** The {@link RenderPass} [descriptor]{@link GPURenderPassDescriptor} */
   descriptor: GPURenderPassDescriptor
 
+  /**
+   * RenderPass constructor
+   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
+   * @param parameters - [parameters]{@link RenderPassParams} used to create this {@link RenderPass}
+   */
   constructor(
     renderer: Renderer | GPUCurtains,
     { label = 'Render Pass', depth = true, loadOp = 'clear', clearValue = [0, 0, 0, 0] } = {} as RenderPassParams
@@ -51,7 +78,7 @@ export class RenderPass {
       depth,
       loadOp,
       clearValue,
-    }
+    } as RenderPassOptions
 
     this.setSize(this.renderer.pixelRatioBoundingRect)
 
@@ -64,6 +91,9 @@ export class RenderPass {
     this.setRenderPassDescriptor()
   }
 
+  /**
+   * Set our [render pass depth texture]{@link RenderPass#depthTexture}
+   */
   createDepthTexture() {
     this.depthTexture = this.renderer.createTexture({
       label: this.options.label + ' depth attachment texture',
@@ -74,6 +104,9 @@ export class RenderPass {
     })
   }
 
+  /**
+   * Set our [render pass render texture]{@link RenderPass#renderTexture}
+   */
   createRenderTexture() {
     this.renderTexture = this.renderer.createTexture({
       label: this.options.label + ' color attachment texture',
@@ -88,6 +121,9 @@ export class RenderPass {
     })
   }
 
+  /**
+   * Reset our [render pass depth texture]{@link RenderPass#depthTexture}
+   */
   resetRenderPassDepth() {
     if (this.depthTexture) {
       // Destroy the previous depth target
@@ -100,6 +136,9 @@ export class RenderPass {
     this.descriptor.depthStencilAttachment.view = this.depthTexture.createView()
   }
 
+  /**
+   * Reset our [render pass render texture]{@link RenderPass#renderTexture}
+   */
   resetRenderPassView() {
     // set view
     if (this.renderTexture) {
@@ -112,6 +151,9 @@ export class RenderPass {
     this.descriptor.colorAttachments[0].view = this.renderTexture.createView()
   }
 
+  /**
+   * Set our [render pass descriptor]{@link RenderPass#descriptor}
+   */
   setRenderPassDescriptor() {
     this.descriptor = {
       label: this.options.label + ' descriptor',
@@ -142,6 +184,10 @@ export class RenderPass {
     } as GPURenderPassDescriptor
   }
 
+  /**
+   * Set our [render pass size]{@link RenderPass#size}
+   * @param boundingRect - [bounding rectangle]{@link DOMElementBoundingRect} from which to get the width and height
+   */
   setSize(boundingRect: DOMElementBoundingRect) {
     this.size = {
       width: Math.floor(boundingRect.width),
@@ -149,6 +195,10 @@ export class RenderPass {
     }
   }
 
+  /**
+   * Resize our {@link RenderPass}: set its size and recreate the textures
+   * @param boundingRect - new [bounding rectangle]{@link DOMElementBoundingRect}
+   */
   resize(boundingRect: DOMElementBoundingRect) {
     this.setSize(boundingRect)
 
@@ -157,6 +207,10 @@ export class RenderPass {
     this.resetRenderPassView()
   }
 
+  /**
+   * Set our [load operation]{@link GPULoadOp}
+   * @param loadOp - new [load operation]{@link GPULoadOp} to use
+   */
   setLoadOp(loadOp: GPULoadOp = 'clear') {
     this.options.loadOp = loadOp
     if (this.descriptor && this.descriptor.colorAttachments) {
@@ -164,6 +218,9 @@ export class RenderPass {
     }
   }
 
+  /**
+   * Destroy our {@link RenderPass}
+   */
   destroy() {
     this.renderTexture?.destroy()
     this.depthTexture?.destroy()

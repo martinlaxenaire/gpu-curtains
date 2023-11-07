@@ -6,15 +6,31 @@ import { Vec3 } from '../../math/Vec3'
 import { CameraBasePerspectiveOptions } from '../camera/Camera'
 import { GPURendererParams } from './GPURenderer'
 
+/**
+ * Parameters used to create a {@link GPUCameraRenderer}
+ */
 export interface GPUCameraRendererParams extends GPURendererParams {
+  /** An object defining [camera perspective parameters]{@link CameraBasePerspectiveOptions} */
   camera: CameraBasePerspectiveOptions
 }
 
+/**
+ * GPUCameraRenderer class:
+ * This renderer also creates a {@link Camera} and its associated [bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [bind group]{@link GPUCameraRenderer#cameraBindGroup}
+ * @extends GPURenderer
+ */
 export class GPUCameraRenderer extends GPURenderer {
+  /** {@link Camera} used by this {@link GPUCameraRenderer} */
   camera: Camera
-  cameraUniformBinding: BufferBindings
+  /** [bindings]{@link BufferBindings} handling the [camera]{@link GPUCameraRenderer#camera} matrices */
+  cameraBufferBinding: BufferBindings
+  /** [bind group]{@link BindGroup} handling the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} */
   cameraBindGroup: BindGroup
 
+  /**
+   * GPUCameraRenderer constructor
+   * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
+   */
   constructor({
     container,
     pixelRatio = 1,
@@ -43,14 +59,18 @@ export class GPUCameraRenderer extends GPURenderer {
     this.setCamera(camera)
   }
 
-  setCamera(camera: CameraBasePerspectiveOptions) {
+  /**
+   * Set the [camera]{@link GPUCameraRenderer#camera}
+   * @param cameraParameters - [parameters]{@link CameraBasePerspectiveOptions} used to create the [camera]{@link GPUCameraRenderer#camera}
+   */
+  setCamera(cameraParameters: CameraBasePerspectiveOptions) {
     const width = this.boundingRect ? this.boundingRect.width : 1
     const height = this.boundingRect ? this.boundingRect.height : 1
 
     this.camera = new Camera({
-      fov: camera.fov,
-      near: camera.near,
-      far: camera.far,
+      fov: cameraParameters.fov,
+      near: cameraParameters.near,
+      far: cameraParameters.far,
       width,
       height,
       pixelRatio: this.pixelRatio,
@@ -63,15 +83,21 @@ export class GPUCameraRenderer extends GPURenderer {
       },
     })
 
-    this.setCameraUniformBinding()
+    this.setCameraBufferBinding()
   }
 
+  /**
+   * Callback to run each time the [camera]{@link GPUCameraRenderer#camera} position changes
+   */
   onCameraPositionChanged() {
     this.setPerspective()
   }
 
-  setCameraUniformBinding() {
-    this.cameraUniformBinding = new BufferBindings({
+  /**
+   * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
+   */
+  setCameraBufferBinding() {
+    this.cameraBufferBinding = new BufferBindings({
       label: 'Camera',
       name: 'camera',
       visibility: 'vertex',
@@ -82,7 +108,7 @@ export class GPUCameraRenderer extends GPURenderer {
           type: 'mat4x4f',
           value: this.camera.modelMatrix,
           onBeforeUpdate: () => {
-            this.cameraUniformBinding.bindings.model.value = this.camera.modelMatrix
+            this.cameraBufferBinding.bindings.model.value = this.camera.modelMatrix
           },
         },
         view: {
@@ -91,7 +117,7 @@ export class GPUCameraRenderer extends GPURenderer {
           type: 'mat4x4f',
           value: this.camera.viewMatrix,
           onBeforeUpdate: () => {
-            this.cameraUniformBinding.bindings.view.value = this.camera.viewMatrix
+            this.cameraBufferBinding.bindings.view.value = this.camera.viewMatrix
           },
         },
         projection: {
@@ -100,7 +126,7 @@ export class GPUCameraRenderer extends GPURenderer {
           type: 'mat4x4f',
           value: this.camera.projectionMatrix,
           onBeforeUpdate: () => {
-            this.cameraUniformBinding.bindings.projection.value = this.camera.projectionMatrix
+            this.cameraBufferBinding.bindings.projection.value = this.camera.projectionMatrix
           },
         },
       },
@@ -109,10 +135,13 @@ export class GPUCameraRenderer extends GPURenderer {
     // now initialize bind group
     this.cameraBindGroup = new BindGroup(this, {
       label: 'Camera Uniform bind group',
-      bindings: [this.cameraUniformBinding],
+      bindings: [this.cameraBufferBinding],
     })
   }
 
+  /**
+   * Create the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} buffers
+   */
   setCameraBindGroup() {
     if (this.cameraBindGroup.shouldCreateBindGroup) {
       this.cameraBindGroup.setIndex(0)
@@ -120,39 +149,49 @@ export class GPUCameraRenderer extends GPURenderer {
     }
   }
 
+  /**
+   * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
+   */
   updateCameraMatrixStack() {
-    this.cameraUniformBinding?.shouldUpdateBinding('model')
-    this.cameraUniformBinding?.shouldUpdateBinding('view')
-    this.cameraUniformBinding?.shouldUpdateBinding('projection')
+    this.cameraBufferBinding?.shouldUpdateBinding('model')
+    this.cameraBufferBinding?.shouldUpdateBinding('view')
+    this.cameraBufferBinding?.shouldUpdateBinding('projection')
   }
 
-  /***
-   This will set our perspective matrix new parameters (fov, near plane and far plane)
-   used internally but can be used externally as well to change fov for example
-
-   params :
-   @fov (float): the field of view
-   @near (float): the nearest point where object are displayed
-   @far (float): the farthest point where object are displayed
-   ***/
+  /**
+   * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
+   * @param fov - new [field of view]{@link Camera#fov}
+   * @param near - new [near plane]{@link Camera#near}
+   * @param far - new [far plane]{@link Camera#far}
+   */
   setPerspective(fov?: number, near?: number, far?: number) {
     this.camera?.setPerspective(fov, near, far, this.boundingRect.width, this.boundingRect.height, this.pixelRatio)
   }
 
+  /**
+   * Set our [camera]{@link GPUCameraRenderer#camera} position
+   * @param position - new [position]{@link Camera#position}
+   */
   setCameraPosition(position: Vec3 = new Vec3(0, 0, 1)) {
     this.camera.setPosition(position)
   }
 
+  /**
+   * Call our [super onResize method]{@link GPURenderer#onResize} and resize our [camera]{@link GPUCameraRenderer#camera} as well
+   */
   onResize() {
     super.onResize()
     this.setPerspective()
     this.updateCameraMatrixStack()
   }
 
+  /**
+   * Handle the camera [bind group]{@link GPUCameraRenderer#cameraBindGroup} and [bindings]{@link GPUCameraRenderer#cameraBufferBinding}, then call our [super render method]{@link GPURenderer#render}
+   */
   render() {
     if (!this.ready) return
 
-    this.cameraUniformBinding?.onBeforeRender()
+    this.cameraBufferBinding?.onBeforeRender()
 
     this.setCameraBindGroup()
 
@@ -161,6 +200,9 @@ export class GPUCameraRenderer extends GPURenderer {
     super.render()
   }
 
+  /**
+   * Destroy our {@link GPUCameraRenderer}
+   */
   destroy() {
     this.cameraBindGroup?.destroy()
     super.destroy()

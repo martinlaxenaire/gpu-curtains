@@ -8,8 +8,8 @@ import {
   RenderMaterialAttributes,
   RenderMaterialParams,
 } from '../../types/Materials'
-import { RenderPipelineEntryBaseParams } from '../../types/core/pipelines/RenderPipelineEntry'
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
+import { RenderPipelineEntryBaseParams } from '../../types/PipelineEntries'
 
 /**
  * RenderMaterial class:
@@ -87,8 +87,8 @@ export class RenderMaterial extends Material {
   /**
    * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry} and compile it
    */
-  setPipelineEntryBuffers() {
-    this.pipelineEntry.setPipelineEntryBuffers({
+  setPipelineEntryProperties() {
+    this.pipelineEntry.setPipelineEntryProperties({
       attributes: this.attributes,
       bindGroups: this.bindGroups,
     })
@@ -101,7 +101,7 @@ export class RenderMaterial extends Material {
     super.setMaterial()
 
     if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
-      this.setPipelineEntryBuffers()
+      this.setPipelineEntryProperties()
     }
   }
 

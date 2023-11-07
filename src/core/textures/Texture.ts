@@ -4,7 +4,7 @@ import { TextureBindings, TextureBindingsParams } from '../bindings/TextureBindi
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
-import { throwWarning } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { TextureOptions, TextureParams, TextureParent, TextureSource } from '../../types/core/textures/Texture'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
@@ -24,6 +24,7 @@ const defaultTextureParams: TextureParams = {
 
 export class Texture extends Object3D {
   type: string
+  readonly uuid: string
   renderer: Renderer
 
   texture: null | GPUTexture
@@ -73,6 +74,8 @@ export class Texture extends Object3D {
     isRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
     this.renderer = renderer
+
+    this.uuid = generateUUID()
 
     const defaultOptions = {
       ...defaultTextureParams,
@@ -564,6 +567,8 @@ export class Texture extends Object3D {
         } as AddEventListenerOptions & EventListenerOptions
       )
     }
+
+    this.renderer.removeTexture(this)
 
     this.texture?.destroy()
 

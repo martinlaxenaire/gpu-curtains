@@ -74,8 +74,8 @@ export class ComputeMaterial extends Material {
   /**
    * When all bind groups are created, add them to the {@link ComputePipelineEntry} and compile it
    */
-  setPipelineEntryBuffers() {
-    this.pipelineEntry.setPipelineEntryBuffers({
+  setPipelineEntryProperties() {
+    this.pipelineEntry.setPipelineEntryProperties({
       bindGroups: this.bindGroups,
     })
   }
@@ -87,7 +87,7 @@ export class ComputeMaterial extends Material {
     super.setMaterial()
 
     if (this.pipelineEntry && this.pipelineEntry.canCompile) {
-      this.setPipelineEntryBuffers()
+      this.setPipelineEntryProperties()
     }
   }
 
