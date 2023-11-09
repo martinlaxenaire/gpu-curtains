@@ -2470,6 +2470,11 @@ var GPUCurtains = (() => {
 
   // src/core/samplers/Sampler.ts
   var Sampler = class {
+    /**
+     * Sampler constructor
+     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
+     * @param parameters - [parameters]{@link SamplerParams} used to create this {@link Sampler}
+     */
     constructor(renderer, {
       label = "Sampler",
       name,
@@ -2503,9 +2508,15 @@ var GPUCurtains = (() => {
       this.createSampler();
       this.createBinding();
     }
+    /**
+     * Set the {@link GPUSampler}
+     */
     createSampler() {
       this.sampler = this.renderer.createSampler(this);
     }
+    /**
+     * Set the [binding]{@link SamplerBindings}
+     */
     createBinding() {
       this.binding = new SamplerBindings({
         label: this.label,
@@ -2705,15 +2716,26 @@ var GPUCurtains = (() => {
     fromTexture: null
   };
   var Texture = class extends Object3D {
+    /**
+     * Texture constructor
+     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+     * @param parameters - [parameters]{@link TextureParams} used to create this {@link Texture}
+     */
     constructor(renderer, parameters = defaultTextureParams) {
       super();
-      this.#planeRatio = new Vec3(1);
-      this.#textureRatio = new Vec3(1);
+      /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
+      this.#parentRatio = new Vec3(1);
+      /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [source size]{@link Texture#size} */
+      this.#sourceRatio = new Vec3(1);
+      /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [#parentRatio]{@link Texture##parentRatio} and [#sourceRatio]{@link Texture##sourceRatio} */
       this.#coverScale = new Vec3(1);
+      /** Private rotation [matrix]{@link Mat4} based on [texture quaternion]{@link Texture#quaternion} */
       this.#rotationMatrix = new Mat4();
       // callbacks / events
+      /** function assigned to the [onSourceLoaded]{@link Texture#onSourceLoaded} callback */
       this._onSourceLoadedCallback = () => {
       };
+      /** function assigned to the [onSourceUploaded]{@link Texture#onSourceUploaded} callback */
       this._onSourceUploadedCallback = () => {
       };
       this.type = "Texture";
@@ -2744,8 +2766,8 @@ var GPUCurtains = (() => {
           matrix: {
             name: this.options.name + "Matrix",
             type: "mat4x4f",
-            value: this.modelMatrix,
-            onBeforeUpdate: () => this.updateTextureMatrix()
+            value: this.modelMatrix
+            //onBeforeUpdate: () => this.updateTextureMatrix(),
           }
         }
       });
@@ -2757,10 +2779,13 @@ var GPUCurtains = (() => {
       this.shouldUpdateBindGroup = false;
       this.renderer.addTexture(this);
     }
-    #planeRatio;
-    #textureRatio;
+    #parentRatio;
+    #sourceRatio;
     #coverScale;
     #rotationMatrix;
+    /**
+     * Set our [bindings]{@link Texture#bindings}
+     */
     setBindings() {
       this.bindings = [
         new TextureBindings({
@@ -2772,9 +2797,17 @@ var GPUCurtains = (() => {
         this.textureMatrix
       ];
     }
+    /**
+     * Get our [texture binding]{@link TextureBindings}
+     * @readonly
+     */
     get textureBinding() {
       return this.bindings[0];
     }
+    /**
+     * Get/set our [texture parent]{@link Texture#_parent}
+     * @readonly
+     */
     get parent() {
       return this._parent;
     }
@@ -2782,6 +2815,10 @@ var GPUCurtains = (() => {
       this._parent = value;
       this.resize();
     }
+    /**
+     * Get/set whether our [texture source]{@link Texture#source} has loaded
+     * @readonly
+     */
     get sourceLoaded() {
       return this._sourceLoaded;
     }
@@ -2791,6 +2828,10 @@ var GPUCurtains = (() => {
       }
       this._sourceLoaded = value;
     }
+    /**
+     * Get/set whether our [texture source]{@link Texture#source} has been uploaded
+     * @readonly
+     */
     get sourceUploaded() {
       return this._sourceUploaded;
     }
@@ -2800,29 +2841,19 @@ var GPUCurtains = (() => {
       }
       this._sourceUploaded = value;
     }
+    /**
+     * Set our [texture transforms object]{@link Texture#transforms}
+     */
     setTransforms() {
       super.setTransforms();
       this.transforms.quaternion.setAxisOrder("ZXY");
       this.transforms.origin.model.set(0.5, 0.5, 0);
     }
-    applyPosition() {
-      super.applyPosition();
-      this.resize();
-    }
-    applyRotation() {
-      super.applyRotation();
-      this.resize();
-    }
-    applyScale() {
-      super.applyScale();
-      this.resize();
-    }
-    applyTransformOrigin() {
-      super.applyTransformOrigin();
-      this.resize();
-    }
-    /*** TEXTURE MATRIX ***/
-    updateTextureMatrix() {
+    /* TEXTURE MATRIX */
+    /**
+     * Update the [texture model matrix]{@link Texture#modelMatrix}
+     */
+    updateModelMatrix() {
       if (!this.parent)
         return;
       const parentScale = this.parent.scale ? this.parent.scale : new Vec3(1, 1, 1);
@@ -2833,34 +2864,52 @@ var GPUCurtains = (() => {
       const sourceHeight = this.size.height;
       const sourceRatio = sourceWidth / sourceHeight;
       if (parentWidth > parentHeight) {
-        this.#planeRatio.set(parentRatio, 1, 1);
-        this.#textureRatio.set(1 / sourceRatio, 1, 1);
+        this.#parentRatio.set(parentRatio, 1, 1);
+        this.#sourceRatio.set(1 / sourceRatio, 1, 1);
       } else {
-        this.#planeRatio.set(1, 1 / parentRatio, 1);
-        this.#textureRatio.set(1, sourceRatio, 1);
+        this.#parentRatio.set(1, 1 / parentRatio, 1);
+        this.#sourceRatio.set(1, sourceRatio, 1);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? this.#planeRatio.x * this.#textureRatio.x : this.#textureRatio.y * this.#planeRatio.y;
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? this.#parentRatio.x * this.#sourceRatio.x : this.#sourceRatio.y * this.#parentRatio.y;
       this.#coverScale.set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
       this.#rotationMatrix.rotateFromQuaternion(this.quaternion);
-      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(this.#coverScale).premultiplyScale(this.#planeRatio).premultiply(this.#rotationMatrix).premultiplyScale(this.#textureRatio).premultiplyTranslate(this.transformOrigin).translate(this.position);
+      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(this.#coverScale).premultiplyScale(this.#parentRatio).premultiply(this.#rotationMatrix).premultiplyScale(this.#sourceRatio).premultiplyTranslate(this.transformOrigin).translate(this.position);
     }
+    /**
+     * Our [model matrix]{@link Texture#modelMatrix} has been updated, tell the [texture matrix binding]{@link Texture#textureMatrix} to update as well
+     */
+    onAfterMatrixStackUpdate() {
+      this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
+    }
+    /**
+     * Resize our {@link Texture}
+     */
     resize() {
-      if (!this.textureMatrix)
-        return;
       if (this.source && this.source instanceof HTMLCanvasElement && (this.source.width !== this.size.width || this.source.height !== this.size.height)) {
         this.setSourceSize();
         this.createTexture();
       }
-      this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
+      this.shouldUpdateModelMatrix();
     }
+    /**
+     * Get the number of mip levels create based on [texture source size]{@link Texture#size}
+     * @param sizes
+     * @returns - number of mip levels
+     */
     getNumMipLevels(...sizes) {
       const maxSize = Math.max(...sizes);
       return 1 + Math.log2(maxSize) | 0;
     }
+    /**
+     * Tell the {@link Renderer} to upload or texture
+     */
     uploadTexture() {
       this.renderer.uploadTexture(this);
       this.shouldUpdate = false;
     }
+    /**
+     * Import an [external texture]{@link GPUExternalTexture} from the {@link Renderer}, update the [texture binding]{@link Texture#textureBinding} and its [bind group]{@link BindGroup}
+     */
     uploadVideoTexture() {
       this.externalTexture = this.renderer.importExternalTexture(this.source);
       this.textureBinding.resource = this.externalTexture;
@@ -2869,6 +2918,10 @@ var GPUCurtains = (() => {
       this.shouldUpdate = false;
       this.sourceUploaded = true;
     }
+    /**
+     * Copy a [texture]{@link Texture}
+     * @param texture - [texture]{@link Texture} to copy
+     */
     copy(texture) {
       if (this.options.sourceType === "externalVideo" && texture.options.sourceType !== "externalVideo") {
         throwWarning(`${this.options.label}: cannot copy a GPUTexture to a GPUExternalTexture`);
@@ -2896,6 +2949,9 @@ var GPUCurtains = (() => {
         }
       }
     }
+    /**
+     * Set the [texture]{@link Texture#texture}
+     */
     createTexture() {
       const options = {
         label: this.options.label,
@@ -2913,18 +2969,33 @@ var GPUCurtains = (() => {
       }
       this.shouldUpdate = true;
     }
-    /** SOURCES **/
+    /* SOURCES */
+    /**
+     * Set the [size]{@link Texture#size} based on [texture source]{@link Texture#source}
+     */
     setSourceSize() {
       this.size = {
         width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
         height: this.source.naturalHeight || this.source.height || this.source.videoHeight
       };
     }
+    /**
+     * Load an [image]{@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a [texture source]{@link Texture#source}
+     * @async
+     * @param url - URL of the image to load
+     * @returns - the newly created {@link ImageBitmap}
+     */
     async loadImageBitmap(url) {
       const res = await fetch(url);
       const blob = await res.blob();
       return await createImageBitmap(blob, { colorSpaceConversion: "none" });
     }
+    /**
+     * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
+     * @async
+     * @param source - the image URL or {@link HTMLImageElement} to load
+     * @returns - the newly created {@link ImageBitmap}
+     */
     async loadImage(source) {
       const image = typeof source === "string" ? source : source.getAttribute("src");
       this.options.source = image;
@@ -2943,12 +3014,20 @@ var GPUCurtains = (() => {
     // using requestVideoFrameCallback helps preventing this but is unsupported in Firefox at the moment
     // WebCodecs may be the way to go when time comes!
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
+    /**
+     * Set our [shouldUpdate]{@link Texture#shouldUpdate} flag to true at each new video frame
+     */
     onVideoFrameCallback() {
       if (this.videoFrameCallbackId) {
         this.shouldUpdate = true;
         this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this));
       }
     }
+    /**
+     * Callback to run when a [video]{@link HTMLVideoElement} has loaded (when it has enough data to play).
+     * Set the [video]{@link HTMLVideoElement} as a [texture source]{@link Texture#source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
+     * @param video - the newly loaded [video]{@link HTMLVideoElement}
+     */
     onVideoLoaded(video) {
       if (!this.sourceLoaded) {
         this.source = video;
@@ -2969,9 +3048,17 @@ var GPUCurtains = (() => {
         this.sourceLoaded = true;
       }
     }
+    /**
+     * Get whether the [texture source]{@link Texture#source} is a video
+     * @readonly
+     */
     get isVideoSource() {
       return this.source && (this.options.sourceType === "video" || this.options.sourceType === "externalVideo");
     }
+    /**
+     * Load a video from a URL or {@link HTMLVideoElement} and register [onVideoLoaded]{@link Texture#onVideoLoaded} callback
+     * @param source - the video URL or {@link HTMLVideoElement} to load
+     */
     loadVideo(source) {
       let video;
       if (typeof source === "string") {
@@ -2999,6 +3086,10 @@ var GPUCurtains = (() => {
         video.load();
       }
     }
+    /**
+     * Load a [canvas]{@link HTMLCanvasElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
+     * @param source
+     */
     loadCanvas(source) {
       this.options.source = source;
       this.options.sourceType = "canvas";
@@ -3010,21 +3101,35 @@ var GPUCurtains = (() => {
       this.sourceLoaded = true;
       this.createTexture();
     }
-    /** EVENTS **/
+    /* EVENTS */
+    /**
+     * Callback to run when the [texture source]{@link Texture#source} has loaded
+     * @param callback - callback to run when the [texture source]{@link Texture#source} has loaded
+     */
     onSourceLoaded(callback) {
       if (callback) {
         this._onSourceLoadedCallback = callback;
       }
       return this;
     }
+    /**
+     * Callback to run when the [texture source]{@link Texture#source} has been uploaded
+     * @param callback - callback to run when the [texture source]{@link Texture#source} been uploaded
+     */
     onSourceUploaded(callback) {
       if (callback) {
         this._onSourceUploadedCallback = callback;
       }
       return this;
     }
-    /** RENDER **/
+    /* RENDER */
+    /**
+     * Render a {@link Texture}:
+     * - Update its [model matrix]{@link Texture#modelMatrix} and [bindings]{@link Texture#bindings} if needed
+     * - Upload the texture if it needs to be done
+     */
     render() {
+      this.updateMatrixStack();
       this.textureMatrix.onBeforeRender();
       if (this.options.sourceType === "externalVideo") {
         this.shouldUpdate = true;
@@ -3036,7 +3141,10 @@ var GPUCurtains = (() => {
         this.uploadTexture();
       }
     }
-    /** DESTROY **/
+    /* DESTROY */
+    /**
+     * Destroy the {@link Texture}
+     */
     destroy() {
       if (this.videoFrameCallbackId) {
         ;
@@ -4540,6 +4648,11 @@ var GPUCurtains = (() => {
     fromTexture: null
   };
   var RenderTexture = class {
+    /**
+     * RenderTexture constructor
+     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
+     * @param parameters - [parameters]{@link RenderTextureParams} used to create this {@link RenderTexture}
+     */
     constructor(renderer, parameters = defaultRenderTextureParams) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " RenderTexture" : "RenderTexture");
@@ -4551,6 +4664,9 @@ var GPUCurtains = (() => {
       this.setBindings();
       this.createTexture();
     }
+    /**
+     * Set the [size]{@link RenderTexture#size}
+     */
     setSourceSize() {
       const rendererBoundingRect = this.renderer.pixelRatioBoundingRect;
       this.size = {
@@ -4558,9 +4674,13 @@ var GPUCurtains = (() => {
         height: rendererBoundingRect.height
       };
     }
+    /**
+     * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBindings#resource}
+     */
     createTexture() {
       if (this.options.fromTexture) {
         this.texture = this.options.fromTexture.texture;
+        this.size = this.options.fromTexture.size;
         this.textureBinding.resource = this.texture;
         return;
       }
@@ -4574,6 +4694,9 @@ var GPUCurtains = (() => {
       });
       this.textureBinding.resource = this.texture;
     }
+    /**
+     * Set our [bindings]{@link RenderTexture#bindings}
+     */
     setBindings() {
       this.bindings = [
         new TextureBindings({
@@ -4584,14 +4707,24 @@ var GPUCurtains = (() => {
         })
       ];
     }
+    /**
+     * Get our [texture binding]{@link TextureBindings}
+     * @readonly
+     */
     get textureBinding() {
       return this.bindings[0];
     }
+    /**
+     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
+     */
     resize() {
       this.setSourceSize();
       this.createTexture();
       this.shouldUpdateBindGroup = true;
     }
+    /**
+     * Destroy our {@link RenderTexture}
+     */
     destroy() {
       this.texture?.destroy();
       this.texture = null;
@@ -5033,6 +5166,9 @@ var GPUCurtains = (() => {
 
   // src/utils/ResizeManager.ts
   var ResizeManager = class {
+    /**
+     * ResizeManager constructor
+     */
     constructor() {
       this.shouldWatch = true;
       this.entries = [];
@@ -5045,9 +5181,17 @@ var GPUCurtains = (() => {
         });
       });
     }
+    /**
+     * Set [shouldWatch]{@link ResizeManager#shouldWatch}
+     * @param shouldWatch - whether to watch or not
+     */
     useObserver(shouldWatch = true) {
       this.shouldWatch = shouldWatch;
     }
+    /**
+     * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
+     * @param entry - [entry]{@link ResizeManagerEntry} to watch
+     */
     observe({ element, callback }) {
       if (!element || !this.shouldWatch)
         return;
@@ -5058,10 +5202,17 @@ var GPUCurtains = (() => {
       };
       this.entries.push(entry);
     }
+    /**
+     * Unobserve an [element]{@link HTMLElement} and remove it from our [entries array]{@link ResizeManager#entries}
+     * @param element - [element]{@link HTMLElement} to unobserve
+     */
     unobserve(element) {
       this.resizeObserver.unobserve(element);
       this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
     }
+    /**
+     * Destroy our {@link ResizeManager}
+     */
     destroy() {
       this.resizeObserver.disconnect();
     }
@@ -5142,16 +5293,14 @@ var GPUCurtains = (() => {
     }
     /**
      * Update our element bounding rectangle because the scroll position has changed
-     * @param lastXDelta - delta along X axis
-     * @param lastYDelta - delta along Y axis
+     * @param delta - scroll delta values along X and Y axis
      */
-    // TODO use DOMPosition object instead!
-    updateScrollPosition(lastXDelta, lastYDelta) {
+    updateScrollPosition(delta = { x: 0, y: 0 }) {
       if (this.isResizing)
         return;
-      this._boundingRect.top += lastYDelta;
-      this._boundingRect.left += lastXDelta;
-      if (lastXDelta || lastYDelta) {
+      this._boundingRect.top += delta.y;
+      this._boundingRect.left += delta.x;
+      if (delta.x || delta.y) {
         this.onPositionChanged(this.boundingRect);
       }
     }
@@ -5814,18 +5963,26 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 
   // src/core/shaders/ShaderChunks.ts
   var ShaderChunks = {
+    /** WGSL code chunks added to the vertex shader */
     vertex: {
-      get_scaled_uv: get_uv_cover_wgsl_default
+      /** Applies given texture matrix to given uv coordinates */
+      get_uv_cover: get_uv_cover_wgsl_default
     },
+    /** WGSL code chunks added to the fragment shader */
     fragment: {
-      get_scaled_uv: get_uv_cover_wgsl_default,
+      /** Applies given texture matrix to given uv coordinates */
+      get_uv_cover: get_uv_cover_wgsl_default,
+      /** Convert vertex position to uv coordinates */
       get_vertex_to_uv_coords: get_vertex_to_uv_coords_wgsl_default
     }
   };
   var ProjectedShaderChunks = {
+    /** WGSL code chunks added to the vertex shader */
     vertex: {
+      /** Get output vec4f position vector by applying model view projection matrix to vec3f attribute position vector */
       get_output_position: get_output_position_wgsl_default
     },
+    /** WGSL code chunks added to the fragment shader */
     fragment: {}
   };
 
@@ -6505,9 +6662,9 @@ ${this.shaders.compute.head}`;
       this.shouldUpdateProjectionMatrixStack();
     }
     // TODO setPosition, setRotation, setScale, etc?
-    updateScrollPosition(lastXDelta = 0, lastYDelta = 0) {
-      if (lastXDelta || lastYDelta) {
-        this.domElement.updateScrollPosition(lastXDelta, lastYDelta);
+    updateScrollPosition(delta = { x: 0, y: 0 }) {
+      if (delta.x || delta.y) {
+        this.domElement.updateScrollPosition(delta);
       }
     }
     destroy() {
@@ -6698,14 +6855,21 @@ ${this.shaders.compute.head}`;
 
   // src/core/scenes/Scene.ts
   var Scene = class {
+    /**
+     * Scene constructor
+     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
+     */
     constructor({ renderer }) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "Scene");
       this.renderer = renderer;
       this.computePassEntries = [];
       this.renderPassEntries = {
+        /** Array of [render pass entries]{@link RenderPassEntry} that will handle [ping pong planes]{@link PingPongPlane}. Each [ping pong plane]{@link PingPongPlane} will be added as a distinct [render pass entry]{@link RenderPassEntry} here */
         pingPong: [],
+        /** Array of [render pass entries]{@link RenderPassEntry} that will render to a specific [render target]{@link RenderTarget}. Each [render target]{@link RenderTarget} will be added as a distinct [render pass entry]{@link RenderPassEntry} here */
         renderTarget: [],
+        /** Array of [render pass entries]{@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any [render target]{@link RenderTarget} assigned. Following entries will be created for every global [post processing passes]{@link ShaderPass} */
         screen: [
           // add our basic scene entry
           {
@@ -6729,6 +6893,10 @@ ${this.shaders.compute.head}`;
         ]
       };
     }
+    /**
+     * Add a [compute pass]{@link ComputePass} to our scene [computePassEntries array]{@link Scene#computePassEntries}
+     * @param computePass - [compute pass]{@link ComputePass} to add
+     */
     addComputePass(computePass) {
       this.computePassEntries.push(computePass);
       this.computePassEntries.sort((a, b) => {
@@ -6739,9 +6907,18 @@ ${this.shaders.compute.head}`;
         }
       });
     }
+    /**
+     * Remove a [compute pass]{@link ComputePass} from our scene [computePassEntries array]{@link Scene#computePassEntries}
+     * @param computePass - [compute pass]{@link ComputePass} to remove
+     */
     removeComputePass(computePass) {
       this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
     }
+    /**
+     * Add a [render target]{@link RenderTarget} to our scene [renderPassEntries renderTarget array]{@link Scene#renderPassEntries.renderTarget}.
+     * Every Meshes later added to this [render target]{@link RenderTarget} will be rendered to the [render target render texture]{@link RenderTarget#renderTexture} using the [render target render pass descriptor]{@link RenderTarget#renderPass.descriptor}
+     * @param renderTarget - [render target]{@link RenderTarget} to add
+     */
     addRenderTarget(renderTarget) {
       if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
         this.renderPassEntries.renderTarget.push({
@@ -6763,11 +6940,20 @@ ${this.shaders.compute.head}`;
           }
         });
     }
+    /**
+     * Remove a [render target]{@link RenderTarget} from our scene [renderPassEntries renderTarget array]{@link Scene#renderPassEntries.renderTarget}.
+     * @param renderTarget - [render target]{@link RenderTarget} to add
+     */
     removeRenderTarget(renderTarget) {
       this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
         (entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid
       );
     }
+    /**
+     * Get the correct [render pass entry]{@link Scene#renderPassEntries} (either [renderTarget]{@link Scene#renderPassEntries.renderTarget} or [screen]{@link Scene#renderPassEntries.screen}) [stack]{@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+     * @param mesh - Mesh to check
+     * @returns - the corresponding [render pass entry stack]{@link Stack}
+     */
     getMeshProjectionStack(mesh) {
       const renderPassEntry = mesh.renderTarget ? this.renderPassEntries.renderTarget.find(
         (passEntry) => passEntry.renderPass.uuid === mesh.renderTarget.renderPass.uuid
@@ -6775,6 +6961,11 @@ ${this.shaders.compute.head}`;
       const { stack } = renderPassEntry;
       return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
     }
+    /**
+     * Add a Mesh to the correct [render pass entry]{@link Scene#renderPassEntries} [stack]{@link Stack} array.
+     * Meshes are then ordered by their [indexes (order of creation]){@link MeshBase#index}, position along the Z axis in case they are transparent and then [renderOrder]{@link MeshBase#renderOrder}
+     * @param mesh - Mesh to add
+     */
     addMesh(mesh) {
       const projectionStack = this.getMeshProjectionStack(mesh);
       const similarMeshes = mesh.transparent ? [...projectionStack.transparent] : [...projectionStack.opaque];
@@ -6794,6 +6985,10 @@ ${this.shaders.compute.head}`;
       similarMeshes.sort((a, b) => a.renderOrder - b.renderOrder);
       mesh.transparent ? projectionStack.transparent = similarMeshes : projectionStack.opaque = similarMeshes;
     }
+    /**
+     * Remove a Mesh from our {@link Scene}
+     * @param mesh - Mesh to remove
+     */
     removeMesh(mesh) {
       const projectionStack = this.getMeshProjectionStack(mesh);
       if (mesh.transparent) {
@@ -6802,6 +6997,12 @@ ${this.shaders.compute.head}`;
         projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
       }
     }
+    /**
+     * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
+     * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}
+     * This also handles the [renderPassEntries screen array]{@link Scene#renderPassEntries.screen} entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
+     * @param shaderPass - [shader pass]{@link ShaderPass} to add
+     */
     addShaderPass(shaderPass) {
       this.renderPassEntries.screen.push({
         renderPass: this.renderer.renderPass,
@@ -6858,11 +7059,20 @@ ${this.shaders.compute.head}`;
         }
       });
     }
+    /**
+     * Remove a [shader pass]{@link ShaderPass} from our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}
+     * @param shaderPass - [shader pass]{@link ShaderPass} to remove
+     */
     removeShaderPass(shaderPass) {
       this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
         (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
       );
     }
+    /**
+     * Add a [ping pong plane]{@link PingPongPlane} to our scene [renderPassEntries pingPong array]{@link Scene#renderPassEntries.pingPong}.
+     * After rendering the [ping pong plane]{@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture} so we'll be able to use it as an input for the next pass
+     * @param pingPongPlane
+     */
     addPingPongPlane(pingPongPlane) {
       this.renderPassEntries.pingPong.push({
         renderPass: pingPongPlane.renderTarget.renderPass,
@@ -6885,11 +7095,27 @@ ${this.shaders.compute.head}`;
       });
       this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);
     }
+    /**
+     * Remove a [ping pong plane]{@link PingPongPlane} from our scene [renderPassEntries pingPong array]{@link Scene#renderPassEntries.pingPong}.
+     * @param pingPongPlane - [ping pong plane]{@link PingPongPlane} to remove
+     */
     removePingPongPlane(pingPongPlane) {
       this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
         (entry) => entry.element.uuid !== pingPongPlane.uuid
       );
     }
+    /**
+     * Here we render a [render pass entry]{@link RenderPassEntry}:
+     * - Set its [render pass descriptor]{@link RenderPass#descriptor} resolve target and get it at as swap chain texture
+     * - Execute [onBeforeRenderPass]{@link RenderPassEntry#onBeforeRenderPass} callback if specified
+     * - Begin the [render pass]{@link GPURenderPassEncoder} using our [render pass descriptor]{@link RenderPass#descriptor}
+     * - Render the single element if specified or the [render pass entry stack]{@link Stack}: draw unprojected opaque / transparent meshes first, then set [camera bind group]{@link CameraRenderer#cameraBindGroup} and draw projected opaque / transparent meshes
+     * - End the [render pass]{@link GPURenderPassEncoder}
+     * - Execute [onAfterRenderPass]{@link RenderPassEntry#onAfterRenderPass} callback if specified
+     * - Reset [pipeline manager current pipeline]{@link PipelineManager#currentPipelineIndex}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * @param renderPassEntry - [entry]{@link RenderPassEntry} to render
+     */
     renderSinglePassEntry(commandEncoder, renderPassEntry) {
       const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
         renderPassEntry.renderPass,
@@ -6917,6 +7143,12 @@ ${this.shaders.compute.head}`;
       renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
       this.renderer.pipelineManager.resetCurrentPipeline();
     }
+    /**
+     * Render our {@link Scene}
+     * - Render [compute pass entries]{@link Scene#computePassEntries} first
+     * - Then our [render pass entries]{@link Scene#renderPassEntries}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     */
     render(commandEncoder) {
       this.computePassEntries.forEach((computePass) => {
         if (!computePass.canRender)
@@ -6940,6 +7172,10 @@ ${this.shaders.compute.head}`;
         });
       }
     }
+    /**
+     * Execute this at each render after our [command encoder]{@link GPUCommandEncoder} has been submitted.
+     * Used to map writable storages buffers if needed.
+     */
     onAfterCommandEncoder() {
       this.computePassEntries.forEach((computePass) => {
         computePass.setWorkGroupsResult();
@@ -7931,55 +8167,54 @@ ${this.shaders.compute.head}`;
 
   // src/utils/ScrollManager.ts
   var ScrollManager = class {
+    /**
+     * ScrollManager constructor
+     * @param parameters - [parameters]{@link ScrollManagerParams} used to create this {@link ScrollManager}
+     */
     constructor({
-      xOffset = 0,
-      yOffset = 0,
-      lastXDelta = 0,
-      lastYDelta = 0,
+      scroll = { x: 0, y: 0 },
+      delta = { x: 0, y: 0 },
       shouldWatch = true,
-      onScroll = (lastXDelta2 = 0, lastYDelta2 = 0) => {
+      onScroll = (delta2 = { x: 0, y: 0 }) => {
       }
     } = {}) {
-      this.xOffset = xOffset;
-      this.yOffset = yOffset;
-      this.lastXDelta = lastXDelta;
-      this.lastYDelta = lastYDelta;
+      this.scroll = scroll;
+      this.delta = delta;
       this.shouldWatch = shouldWatch;
       this.onScroll = onScroll;
-      this.handler = this.scroll.bind(this, true);
+      this.handler = this.scrollHandler.bind(this, true);
       if (this.shouldWatch) {
         window.addEventListener("scroll", this.handler, { passive: true });
       }
     }
-    /***
-     Called by the scroll event listener
-     ***/
-    scroll() {
-      this.updateScrollValues(window.pageXOffset, window.pageYOffset);
+    /**
+     * Called by the scroll event listener
+     */
+    scrollHandler() {
+      this.updateScrollValues({ x: window.pageXOffset, y: window.pageYOffset });
     }
-    /***
-       Updates the scroll manager X and Y scroll values as well as last X and Y deltas
-       Internally called by the scroll handler
-       Could be called externally as well if the user wants to handle the scroll by himself
-    
-       params:
-       @x (float): scroll value along X axis
-       @y (float): scroll value along Y axis
-       ***/
-    updateScrollValues(x, y) {
-      const lastScrollXValue = this.xOffset;
-      this.xOffset = x;
-      this.lastXDelta = lastScrollXValue - this.xOffset;
-      const lastScrollYValue = this.yOffset;
-      this.yOffset = y;
-      this.lastYDelta = lastScrollYValue - this.yOffset;
+    /**
+     * Updates the scroll manager X and Y scroll values as well as last X and Y deltas
+     * Internally called by the scroll handler
+     * Could be called externally as well if the user wants to handle the scroll by himself
+     * @param parameters - scroll values
+     * @param parameters.x - scroll value along X axis
+     * @param parameters.y - scroll value along Y axis
+     */
+    updateScrollValues({ x, y }) {
+      const lastScroll = this.scroll;
+      this.scroll = { x, y };
+      this.delta = {
+        x: lastScroll.x - this.scroll.x,
+        y: lastScroll.y - this.scroll.y
+      };
       if (this.onScroll) {
-        this.onScroll(this.lastXDelta, this.lastYDelta);
+        this.onScroll(this.delta);
       }
     }
-    /***
-     Destroy our scroll manager (just remove our event listner if it had been added previously)
-     ***/
+    /**
+     * Destroy our scroll manager (just remove our event listner if it had been added previously)
+     */
     destroy() {
       if (this.shouldWatch) {
         window.removeEventListener("scroll", this.handler, { passive: true });
@@ -8114,9 +8349,7 @@ ${this.shaders.compute.head}`;
     }
     initEvents() {
       resizeManager.useObserver(this.options.autoResize);
-      if (this.options.watchScroll) {
-        this.initScroll();
-      }
+      this.initScroll();
     }
     // called only if autoResize is set to false
     resize() {
@@ -8132,33 +8365,34 @@ ${this.shaders.compute.head}`;
     initScroll() {
       this.scrollManager = new ScrollManager({
         // init values
-        xOffset: window.pageXOffset,
-        yOffset: window.pageYOffset,
-        lastXDelta: 0,
-        lastYDelta: 0,
-        shouldWatch: true,
-        onScroll: (lastXDelta, lastYDelta) => this.updateScroll(lastXDelta, lastYDelta)
+        scroll: {
+          x: window.pageXOffset,
+          y: window.pageYOffset
+        },
+        delta: {
+          x: 0,
+          y: 0
+        },
+        shouldWatch: this.options.watchScroll,
+        onScroll: (delta) => this.updateScroll(delta)
       });
     }
-    updateScroll(lastXDelta = 0, lastYDelta = 0) {
+    updateScroll(delta = { x: 0, y: 0 }) {
       this.renderer.domMeshes.forEach((mesh) => {
         if (mesh.domElement) {
-          mesh.updateScrollPosition(lastXDelta, lastYDelta);
+          mesh.updateScrollPosition(delta);
         }
       });
       this._onScrollCallback && this._onScrollCallback();
     }
+    updateScrollValues(scroll = { x: 0, y: 0 }) {
+      this.scrollManager.updateScrollValues(scroll);
+    }
     getScrollDeltas() {
-      return {
-        x: this.scrollManager.lastXDelta,
-        y: this.scrollManager.lastYDelta
-      };
+      return this.scrollManager.delta;
     }
     getScrollValues() {
-      return {
-        x: this.scrollManager.xOffset,
-        y: this.scrollManager.yOffset
-      };
+      return this.scrollManager.scroll;
     }
     /** EVENTS **/
     onRender(callback) {

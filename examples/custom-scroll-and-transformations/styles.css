@@ -1,0 +1,29 @@
+@media screen {
+  /*** content ***/
+
+  #page {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 2.25rem 0;
+  }
+
+  #planes {
+    --nb-planes-per-row: 4;
+    display: grid;
+    grid-template-columns: repeat(var(--nb-planes-per-row), [col-start] 1fr);
+    gap: 2rem;
+    padding: 0 0 calc(50vh - (0.5 * 100vw / var(--nb-planes-per-row))) 0;
+  }
+
+  .plane {
+    grid-column: span 1;
+    aspect-ratio: 1;
+    margin: 0;
+  }
+}
+
+@media screen and (orientation: portrait) {
+  #planes {
+    --nb-planes-per-row: 2;
+  }
+}

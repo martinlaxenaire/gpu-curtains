@@ -2,7 +2,7 @@ import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
-import { DOMElement, DOMElementBoundingRect, RectBBox } from '../../core/DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect, DOMPosition, RectBBox } from '../../core/DOM/DOMElement'
 import { Vec3 } from '../../math/Vec3'
 import { Camera } from '../../core/camera/Camera'
 import { Object3DTransforms } from '../../core/objects3D/Object3D'
@@ -290,11 +290,11 @@ export class DOMObject3D extends ProjectedObject3D {
 
   // TODO setPosition, setRotation, setScale, etc?
 
-  updateScrollPosition(lastXDelta = 0, lastYDelta = 0) {
+  updateScrollPosition(delta: DOMPosition = { x: 0, y: 0 }) {
     // actually update the plane position only if last X delta or last Y delta is not equal to 0
-    if (lastXDelta || lastYDelta) {
+    if (delta.x || delta.y) {
       // set new positions based on our delta without triggering reflow
-      this.domElement.updateScrollPosition(lastXDelta, lastYDelta)
+      this.domElement.updateScrollPosition(delta)
     }
   }
 

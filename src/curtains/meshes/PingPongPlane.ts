@@ -2,8 +2,7 @@ import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { RenderTarget } from '../../core/renderPasses/RenderTarget'
 import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
 import { GPUCurtains } from '../GPUCurtains'
-import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
-import { RenderTexture } from '../../core/textures/RenderTexture'
+import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture'
 import { MeshBaseParams } from '../../core/meshes/MeshBaseMixin'
 
 export class PingPongPlane extends FullscreenPlane {

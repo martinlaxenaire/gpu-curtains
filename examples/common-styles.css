@@ -6,7 +6,7 @@
     --font-size: 18px;
 
     --light-color: #ffffff;
-    --dark-color: #000000;
+    --dark-color: #101010;
     --primary-color: #ee6557;
   }
 
@@ -21,8 +21,8 @@
     margin: 0;
     font-family: var(--text-font);
     font-size: var(--font-size);
-    background: var(--light-color);
-    color: var(--dark-color);
+    background: var(--dark-color);
+    color: var(--light-color);
     line-height: 1.4;
   }
 
@@ -83,7 +83,8 @@
 
   a.primary-button:hover,
   button.primary-button:hover {
-    background: var(--dark-color);
+    color: var(--dark-color);
+    background: var(--light-color);
   }
 
   #back-to-lib-link {

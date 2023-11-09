@@ -5,7 +5,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseParams } from '../meshes/MeshBaseMixin'
 
 /**
- * Parameters used to create this {@link ShaderPass}
+ * Parameters used to create a {@link ShaderPass}
  */
 interface ShaderPassParams extends MeshBaseParams {
   renderTarget?: RenderTarget

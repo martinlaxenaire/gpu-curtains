@@ -9,7 +9,7 @@ import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
 import { Camera } from '../core/camera/Camera'
-import { DOMElementBoundingRect } from '../core/DOM/DOMElement'
+import { DOMElementBoundingRect, DOMPosition } from '../core/DOM/DOMElement'
 import { ScrollManagerParams } from '../utils/ScrollManager'
 import { GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
 
@@ -192,9 +192,7 @@ export class GPUCurtains {
   initEvents() {
     resizeManager.useObserver(this.options.autoResize)
 
-    if (this.options.watchScroll) {
-      this.initScroll()
-    }
+    this.initScroll()
   }
 
   // called only if autoResize is set to false
@@ -215,38 +213,39 @@ export class GPUCurtains {
   initScroll() {
     this.scrollManager = new ScrollManager({
       // init values
-      xOffset: window.pageXOffset,
-      yOffset: window.pageYOffset,
-      lastXDelta: 0,
-      lastYDelta: 0,
-      shouldWatch: true,
-
-      onScroll: (lastXDelta, lastYDelta) => this.updateScroll(lastXDelta, lastYDelta),
+      scroll: {
+        x: window.pageXOffset,
+        y: window.pageYOffset,
+      },
+      delta: {
+        x: 0,
+        y: 0,
+      },
+      shouldWatch: this.options.watchScroll,
+      onScroll: (delta) => this.updateScroll(delta),
     } as ScrollManagerParams)
   }
 
-  updateScroll(lastXDelta = 0, lastYDelta = 0) {
+  updateScroll(delta: DOMPosition = { x: 0, y: 0 }) {
     this.renderer.domMeshes.forEach((mesh) => {
       if (mesh.domElement) {
-        mesh.updateScrollPosition(lastXDelta, lastYDelta)
+        mesh.updateScrollPosition(delta)
       }
     })
 
     this._onScrollCallback && this._onScrollCallback()
   }
 
-  getScrollDeltas(): { x: number; y: number } {
-    return {
-      x: this.scrollManager.lastXDelta,
-      y: this.scrollManager.lastYDelta,
-    }
+  updateScrollValues(scroll: DOMPosition = { x: 0, y: 0 }) {
+    this.scrollManager.updateScrollValues(scroll)
   }
 
-  getScrollValues(): { x: number; y: number } {
-    return {
-      x: this.scrollManager.xOffset,
-      y: this.scrollManager.yOffset,
-    }
+  getScrollDeltas(): DOMPosition {
+    return this.scrollManager.delta
+  }
+
+  getScrollValues(): DOMPosition {
+    return this.scrollManager.scroll
   }
 
   /** EVENTS **/

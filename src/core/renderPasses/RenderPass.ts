@@ -1,7 +1,7 @@
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMElementBoundingRect } from '../DOM/DOMElement'
+import { DOMElementBoundingRect, RectSize } from '../DOM/DOMElement'
 
 /**
  * Options used to create this {@link RenderPass}
@@ -38,12 +38,7 @@ export class RenderPass {
   options: RenderPassOptions
 
   /** Size of the textures sources */
-  size: {
-    /** width of the textures sources */
-    width: number
-    /** height of the textures sources */
-    height: number
-  }
+  size: RectSize
 
   /** Whether the [renderer]{@link Renderer} is using multisampling */
   sampleCount: Renderer['sampleCount']

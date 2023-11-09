@@ -1,10 +1,9 @@
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { RenderPass } from './RenderPass'
-import { RenderTexture } from '../textures/RenderTexture'
+import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderPassParams } from './RenderPass'
-import { RenderTextureParams } from '../../types/core/textures/RenderTexture'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
 /**

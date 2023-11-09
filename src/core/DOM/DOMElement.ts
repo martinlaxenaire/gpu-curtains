@@ -16,14 +16,17 @@ export interface RectCoords {
   left: number
 }
 
+export interface RectSize {
+  /** width of the rectangle */
+  width: number
+  /** height of the rectangle */
+  height: number
+}
+
 /**
  * Defines a rectangular bounding box object
  */
-export interface RectBBox {
-  /** width of the bounding box */
-  width: number
-  /** height of the bounding box */
-  height: number
+export interface RectBBox extends RectSize {
   /** top position of the bounding box */
   top: number
   /** left position of the bounding box */
@@ -156,17 +159,15 @@ export class DOMElement {
 
   /**
    * Update our element bounding rectangle because the scroll position has changed
-   * @param lastXDelta - delta along X axis
-   * @param lastYDelta - delta along Y axis
+   * @param delta - scroll delta values along X and Y axis
    */
-  // TODO use DOMPosition object instead!
-  updateScrollPosition(lastXDelta: number, lastYDelta: number) {
+  updateScrollPosition(delta: DOMPosition = { x: 0, y: 0 }) {
     if (this.isResizing) return
 
-    this._boundingRect.top += lastYDelta
-    this._boundingRect.left += lastXDelta
+    this._boundingRect.top += delta.y
+    this._boundingRect.left += delta.x
 
-    if (lastXDelta || lastYDelta) {
+    if (delta.x || delta.y) {
       this.onPositionChanged(this.boundingRect)
     }
   }

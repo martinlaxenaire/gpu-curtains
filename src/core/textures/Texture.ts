@@ -6,10 +6,12 @@ import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
 import { generateUUID, throwWarning } from '../../utils/utils'
 import { BindGroupBindingElement } from '../../types/BindGroups'
-import { TextureOptions, TextureParams, TextureParent, TextureSource } from '../../types/core/textures/Texture'
+import { TextureOptions, TextureParams, TextureParent, TextureSource } from '../../types/Textures'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMMeshType } from '../renderers/GPURenderer'
+import { RectSize } from '../DOM/DOMElement'
 
+/** @const - default [texture]{@link Texture} parameters */
 const defaultTextureParams: TextureParams = {
   name: 'texture',
   texture: {
@@ -22,47 +24,77 @@ const defaultTextureParams: TextureParams = {
   fromTexture: null,
 }
 
+/**
+ * Texture class:
+ * Used to create [textures]{@link GPUTexture} or [external textures]{@link GPUExternalTexture} from different kinds of [sources]{@link TextureSource}.
+ * Handles the various sources loading and uploading, GPU textures creation, [texture matrix binding]{@link BufferBindings} and [texture binding]{@link TextureBindings}
+ * @extends Object3D
+ */
 export class Texture extends Object3D {
+  /** The type of the {@link Texture} */
   type: string
+  /** The universal unique id of this {@link Texture} */
   readonly uuid: string
+  /** [renderer]{@link Renderer} used by this {@link Texture} */
   renderer: Renderer
 
+  /** The {@link GPUTexture} used if any */
   texture: null | GPUTexture
+  /** The {@link GPUExternalTexture} used if any */
   externalTexture: null | GPUExternalTexture
 
+  /** The {@link Texture} [source]{@link TextureSource} to use */
   source: TextureSource
-  size: {
-    width: number
-    height: number
-  }
+  /** The {@link Texture} [source]{@link TextureSource} size */
+  size: RectSize
 
+  /** Options used to create this {@link Texture} */
   options: TextureOptions
 
+  /** A [buffer binding]{@link BufferBindings} that will hold the texture matrix */
   textureMatrix: BufferBindings
-  bindings: Array<BindGroupBindingElement>
+  /** The bindings used by this {@link Texture}, i.e. its [texture matrix buffer binding]{@link Texture#textureMatrix} and its [texture binding]{@link TextureBindings} */
+  bindings: BindGroupBindingElement[]
 
-  _parent: TextureParent
+  /** {@link Texture} parent if any */
+  private _parent: TextureParent
 
-  _sourceLoaded: boolean
-  _sourceUploaded: boolean
+  /** Whether the source has been loaded */
+  private _sourceLoaded: boolean
+  /** Whether the source has been uploaded to the GPU, handled by the [renderer textures queue array]{@link Renderer#texturesQueue} */
+  private _sourceUploaded: boolean
+  /** Whether the texture should be uploaded to the GPU */
   shouldUpdate: boolean
+  /** Whether the {@link BindGroup} handling this [texture bindings]{@link Texture#bindings} should be updated (i.e. each time a texture is uploaded to the GPU) */
   shouldUpdateBindGroup: boolean
 
+  /** [video frame callback]{@link requestVideoFrameCallback} returned id if used */
   videoFrameCallbackId: null | number
 
-  #planeRatio: Vec3 = new Vec3(1)
-  #textureRatio: Vec3 = new Vec3(1)
+  /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
+  #parentRatio: Vec3 = new Vec3(1)
+  /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [source size]{@link Texture#size} */
+  #sourceRatio: Vec3 = new Vec3(1)
+  /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [#parentRatio]{@link Texture##parentRatio} and [#sourceRatio]{@link Texture##sourceRatio} */
   #coverScale: Vec3 = new Vec3(1)
+  /** Private rotation [matrix]{@link Mat4} based on [texture quaternion]{@link Texture#quaternion} */
   #rotationMatrix: Mat4 = new Mat4()
 
   // callbacks / events
+  /** function assigned to the [onSourceLoaded]{@link Texture#onSourceLoaded} callback */
   _onSourceLoadedCallback = () => {
     /* allow empty callback */
   }
+  /** function assigned to the [onSourceUploaded]{@link Texture#onSourceUploaded} callback */
   _onSourceUploadedCallback = () => {
     /* allow empty callback */
   }
 
+  /**
+   * Texture constructor
+   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+   * @param parameters - [parameters]{@link TextureParams} used to create this {@link Texture}
+   */
   constructor(renderer: Renderer | GPUCurtains, parameters = defaultTextureParams) {
     super()
 
@@ -109,7 +141,7 @@ export class Texture extends Object3D {
           name: this.options.name + 'Matrix',
           type: 'mat4x4f',
           value: this.modelMatrix,
-          onBeforeUpdate: () => this.updateTextureMatrix(),
+          //onBeforeUpdate: () => this.updateTextureMatrix(),
         },
       },
     })
@@ -127,6 +159,9 @@ export class Texture extends Object3D {
     this.renderer.addTexture(this)
   }
 
+  /**
+   * Set our [bindings]{@link Texture#bindings}
+   */
   setBindings() {
     this.bindings = [
       new TextureBindings({
@@ -139,10 +174,18 @@ export class Texture extends Object3D {
     ]
   }
 
+  /**
+   * Get our [texture binding]{@link TextureBindings}
+   * @readonly
+   */
   get textureBinding(): TextureBindings {
     return this.bindings[0] as TextureBindings
   }
 
+  /**
+   * Get/set our [texture parent]{@link Texture#_parent}
+   * @readonly
+   */
   get parent(): TextureParent {
     return this._parent
   }
@@ -152,6 +195,10 @@ export class Texture extends Object3D {
     this.resize()
   }
 
+  /**
+   * Get/set whether our [texture source]{@link Texture#source} has loaded
+   * @readonly
+   */
   get sourceLoaded(): boolean {
     return this._sourceLoaded
   }
@@ -163,6 +210,10 @@ export class Texture extends Object3D {
     this._sourceLoaded = value
   }
 
+  /**
+   * Get/set whether our [texture source]{@link Texture#source} has been uploaded
+   * @readonly
+   */
   get sourceUploaded(): boolean {
     return this._sourceUploaded
   }
@@ -174,6 +225,9 @@ export class Texture extends Object3D {
     this._sourceUploaded = value
   }
 
+  /**
+   * Set our [texture transforms object]{@link Texture#transforms}
+   */
   setTransforms() {
     super.setTransforms()
 
@@ -183,29 +237,12 @@ export class Texture extends Object3D {
     this.transforms.origin.model.set(0.5, 0.5, 0)
   }
 
-  applyPosition() {
-    super.applyPosition()
-    this.resize()
-  }
+  /* TEXTURE MATRIX */
 
-  applyRotation() {
-    super.applyRotation()
-    this.resize()
-  }
-
-  applyScale() {
-    super.applyScale()
-    this.resize()
-  }
-
-  applyTransformOrigin() {
-    super.applyTransformOrigin()
-    this.resize()
-  }
-
-  /*** TEXTURE MATRIX ***/
-
-  updateTextureMatrix() {
+  /**
+   * Update the [texture model matrix]{@link Texture#modelMatrix}
+   */
+  updateModelMatrix() {
     if (!this.parent) return
 
     const parentScale = (this.parent as DOMMeshType).scale ? (this.parent as DOMMeshType).scale : new Vec3(1, 1, 1)
@@ -225,13 +262,13 @@ export class Texture extends Object3D {
     const sourceRatio = sourceWidth / sourceHeight
 
     // handle the texture rotation
-    // huge props to @grgrdvrt https://github.com/grgrdvrt for this solution!
+    // huge props to [@grgrdvrt](https://github.com/grgrdvrt) for this solution!
     if (parentWidth > parentHeight) {
-      this.#planeRatio.set(parentRatio, 1, 1)
-      this.#textureRatio.set(1 / sourceRatio, 1, 1)
+      this.#parentRatio.set(parentRatio, 1, 1)
+      this.#sourceRatio.set(1 / sourceRatio, 1, 1)
     } else {
-      this.#planeRatio.set(1, 1 / parentRatio, 1)
-      this.#textureRatio.set(1, sourceRatio, 1)
+      this.#parentRatio.set(1, 1 / parentRatio, 1)
+      this.#sourceRatio.set(1, sourceRatio, 1)
     }
 
     // cover ratio is a bit tricky!
@@ -240,8 +277,8 @@ export class Texture extends Object3D {
       parentRatio > sourceRatio !== parentWidth > parentHeight
         ? 1
         : parentWidth > parentHeight
-        ? this.#planeRatio.x * this.#textureRatio.x
-        : this.#textureRatio.y * this.#planeRatio.y
+        ? this.#parentRatio.x * this.#sourceRatio.x
+        : this.#sourceRatio.y * this.#parentRatio.y
 
     this.#coverScale.set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1)
 
@@ -252,7 +289,7 @@ export class Texture extends Object3D {
     //   .identity()
     //   .premultiply(negativeOriginMatrix)
     //   .premultiply(coverScaleMatrix)
-    //   .premultiply(planeRatioMatrix)
+    //   .premultiply(parentRatioMatrix)
     //   .premultiply(rotationMatrix)
     //   .premultiply(textureRatioMatrix)
     //   .premultiply(originMatrix)
@@ -263,16 +300,24 @@ export class Texture extends Object3D {
       .identity()
       .premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1))
       .premultiplyScale(this.#coverScale)
-      .premultiplyScale(this.#planeRatio)
+      .premultiplyScale(this.#parentRatio)
       .premultiply(this.#rotationMatrix)
-      .premultiplyScale(this.#textureRatio)
+      .premultiplyScale(this.#sourceRatio)
       .premultiplyTranslate(this.transformOrigin)
       .translate(this.position)
   }
 
-  resize() {
-    if (!this.textureMatrix) return
+  /**
+   * Our [model matrix]{@link Texture#modelMatrix} has been updated, tell the [texture matrix binding]{@link Texture#textureMatrix} to update as well
+   */
+  onAfterMatrixStackUpdate() {
+    this.textureMatrix.shouldUpdateBinding(this.options.name + 'Matrix')
+  }
 
+  /**
+   * Resize our {@link Texture}
+   */
+  resize() {
     // this should only happen with canvas textures
     if (
       this.source &&
@@ -284,19 +329,31 @@ export class Texture extends Object3D {
       this.createTexture()
     }
 
-    this.textureMatrix.shouldUpdateBinding(this.options.name + 'Matrix')
+    // tell our model matrix to update
+    this.shouldUpdateModelMatrix()
   }
 
+  /**
+   * Get the number of mip levels create based on [texture source size]{@link Texture#size}
+   * @param sizes
+   * @returns - number of mip levels
+   */
   getNumMipLevels(...sizes: number[]): number {
     const maxSize = Math.max(...sizes)
     return (1 + Math.log2(maxSize)) | 0
   }
 
+  /**
+   * Tell the {@link Renderer} to upload or texture
+   */
   uploadTexture() {
     this.renderer.uploadTexture(this)
     this.shouldUpdate = false
   }
 
+  /**
+   * Import an [external texture]{@link GPUExternalTexture} from the {@link Renderer}, update the [texture binding]{@link Texture#textureBinding} and its [bind group]{@link BindGroup}
+   */
   uploadVideoTexture() {
     this.externalTexture = this.renderer.importExternalTexture(this.source as HTMLVideoElement)
     this.textureBinding.resource = this.externalTexture
@@ -306,6 +363,10 @@ export class Texture extends Object3D {
     this.sourceUploaded = true
   }
 
+  /**
+   * Copy a [texture]{@link Texture}
+   * @param texture - [texture]{@link Texture} to copy
+   */
   copy(texture: Texture) {
     if (this.options.sourceType === 'externalVideo' && texture.options.sourceType !== 'externalVideo') {
       throwWarning(`${this.options.label}: cannot copy a GPUTexture to a GPUExternalTexture`)
@@ -323,6 +384,7 @@ export class Texture extends Object3D {
     this.sourceLoaded = texture.sourceLoaded
     this.sourceUploaded = texture.sourceUploaded
 
+    // TODO external texture?
     if (texture.texture) {
       if (texture.sourceLoaded) {
         this.size = texture.size
@@ -341,6 +403,9 @@ export class Texture extends Object3D {
     }
   }
 
+  /**
+   * Set the [texture]{@link Texture#texture}
+   */
   createTexture() {
     const options = {
       label: this.options.label,
@@ -369,8 +434,11 @@ export class Texture extends Object3D {
     this.shouldUpdate = true
   }
 
-  /** SOURCES **/
+  /* SOURCES */
 
+  /**
+   * Set the [size]{@link Texture#size} based on [texture source]{@link Texture#source}
+   */
   setSourceSize() {
     this.size = {
       width:
@@ -384,12 +452,24 @@ export class Texture extends Object3D {
     }
   }
 
+  /**
+   * Load an [image]{@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a [texture source]{@link Texture#source}
+   * @async
+   * @param url - URL of the image to load
+   * @returns - the newly created {@link ImageBitmap}
+   */
   async loadImageBitmap(url: string): Promise<ImageBitmap> {
     const res = await fetch(url)
     const blob = await res.blob()
     return await createImageBitmap(blob, { colorSpaceConversion: 'none' })
   }
 
+  /**
+   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
+   * @async
+   * @param source - the image URL or {@link HTMLImageElement} to load
+   * @returns - the newly created {@link ImageBitmap}
+   */
   async loadImage(source: string | HTMLImageElement): Promise<void> {
     const image = typeof source === 'string' ? source : source.getAttribute('src')
 
@@ -413,6 +493,9 @@ export class Texture extends Object3D {
   // using requestVideoFrameCallback helps preventing this but is unsupported in Firefox at the moment
   // WebCodecs may be the way to go when time comes!
   // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
+  /**
+   * Set our [shouldUpdate]{@link Texture#shouldUpdate} flag to true at each new video frame
+   */
   onVideoFrameCallback() {
     if (this.videoFrameCallbackId) {
       this.shouldUpdate = true
@@ -420,6 +503,11 @@ export class Texture extends Object3D {
     }
   }
 
+  /**
+   * Callback to run when a [video]{@link HTMLVideoElement} has loaded (when it has enough data to play).
+   * Set the [video]{@link HTMLVideoElement} as a [texture source]{@link Texture#source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
+   * @param video - the newly loaded [video]{@link HTMLVideoElement}
+   */
   onVideoLoaded(video: HTMLVideoElement) {
     if (!this.sourceLoaded) {
       this.source = video
@@ -448,10 +536,18 @@ export class Texture extends Object3D {
     }
   }
 
+  /**
+   * Get whether the [texture source]{@link Texture#source} is a video
+   * @readonly
+   */
   get isVideoSource() {
     return this.source && (this.options.sourceType === 'video' || this.options.sourceType === 'externalVideo')
   }
 
+  /**
+   * Load a video from a URL or {@link HTMLVideoElement} and register [onVideoLoaded]{@link Texture#onVideoLoaded} callback
+   * @param source - the video URL or {@link HTMLVideoElement} to load
+   */
   loadVideo(source: string | HTMLVideoElement) {
     let video
 
@@ -489,6 +585,10 @@ export class Texture extends Object3D {
     }
   }
 
+  /**
+   * Load a [canvas]{@link HTMLCanvasElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
+   * @param source
+   */
   loadCanvas(source: HTMLCanvasElement) {
     this.options.source = source
     this.options.sourceType = 'canvas'
@@ -504,8 +604,12 @@ export class Texture extends Object3D {
     this.createTexture()
   }
 
-  /** EVENTS **/
+  /* EVENTS */
 
+  /**
+   * Callback to run when the [texture source]{@link Texture#source} has loaded
+   * @param callback - callback to run when the [texture source]{@link Texture#source} has loaded
+   */
   onSourceLoaded(callback: () => void): Texture {
     if (callback) {
       this._onSourceLoadedCallback = callback
@@ -514,6 +618,10 @@ export class Texture extends Object3D {
     return this
   }
 
+  /**
+   * Callback to run when the [texture source]{@link Texture#source} has been uploaded
+   * @param callback - callback to run when the [texture source]{@link Texture#source} been uploaded
+   */
   onSourceUploaded(callback: () => void): Texture {
     if (callback) {
       this._onSourceUploadedCallback = callback
@@ -522,9 +630,17 @@ export class Texture extends Object3D {
     return this
   }
 
-  /** RENDER **/
+  /* RENDER */
 
+  /**
+   * Render a {@link Texture}:
+   * - Update its [model matrix]{@link Texture#modelMatrix} and [bindings]{@link Texture#bindings} if needed
+   * - Upload the texture if it needs to be done
+   */
   render() {
+    // update our model matrix if needed
+    this.updateMatrixStack()
+
     // update uniforms values
     this.textureMatrix.onBeforeRender()
 
@@ -551,8 +667,11 @@ export class Texture extends Object3D {
     }
   }
 
-  /** DESTROY **/
+  /* DESTROY */
 
+  /**
+   * Destroy the {@link Texture}
+   */
   destroy() {
     if (this.videoFrameCallbackId) {
       ;(this.source as HTMLVideoElement).cancelVideoFrameCallback(this.videoFrameCallbackId)

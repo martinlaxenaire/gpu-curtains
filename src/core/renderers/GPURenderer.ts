@@ -12,7 +12,6 @@ import { RenderTarget } from '../renderPasses/RenderTarget'
 import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
 
-import { TextureExternalImageAllowedType } from '../../types/core/textures/Texture'
 import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
@@ -489,7 +488,7 @@ export class GPURenderer {
       try {
         this.device?.queue.copyExternalImageToTexture(
           {
-            source: texture.source as TextureExternalImageAllowedType,
+            source: texture.source as GPUImageCopyExternalImageSource,
             flipY: texture.options.texture.flipY,
           } as GPUImageCopyExternalImage,
           { texture: texture.texture as GPUTexture },
