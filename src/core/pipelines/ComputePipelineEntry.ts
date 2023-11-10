@@ -1,7 +1,7 @@
 import { PipelineEntry } from './PipelineEntry'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { throwError } from '../../utils/utils'
-import { PipelineEntryShaders, PipelineEntryParams, PipelineEntryPropertiesParams } from '../../types/PipelineEntries'
+import { PipelineEntryParams, PipelineEntryPropertiesParams, PipelineEntryShaders } from '../../types/PipelineEntries'
 import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 

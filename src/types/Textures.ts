@@ -1,6 +1,5 @@
 import { Texture } from '../core/textures/Texture'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
-import { RenderPass } from '../core/renderPasses/RenderPass'
 import { FullscreenPlane } from '../core/meshes/FullscreenPlane'
 import { DOMMeshType } from '../core/renderers/GPURenderer'
 import { Mesh } from '../core/meshes/Mesh'

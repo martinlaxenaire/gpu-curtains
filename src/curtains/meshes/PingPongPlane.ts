@@ -3,12 +3,22 @@ import { RenderTarget } from '../../core/renderPasses/RenderTarget'
 import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
 import { GPUCurtains } from '../GPUCurtains'
 import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture'
-import { MeshBaseParams } from '../../core/meshes/MeshBaseMixin'
+import { MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin'
 
+/**
+ * PingPongPlane class:
+ * Used to create a special type of [fullscreen quad]{@link FullscreenPlane} that allows to use the previous frame fragment shader output as an input texture.
+ */
 export class PingPongPlane extends FullscreenPlane {
+  /** {@link RenderTarget} content to use as an input */
   renderTarget: RenderTarget
 
-  constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseParams) {
+  /**
+   * PingPongPlane constructor
+   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
+   * @param parameters - [parameters]{@link MeshBaseRenderParams} use to create this {@link PingPongPlane}
+   */
+  constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseRenderParams) {
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
 
     isRenderer(renderer, parameters.label ? parameters.label + ' PingPongPlane' : 'PingPongPlane')
@@ -31,10 +41,17 @@ export class PingPongPlane extends FullscreenPlane {
     } as RenderTextureParams)
   }
 
+  /**
+   * Get our main [render texture]{@link RenderTexture}, the one that contains our ping pong content
+   * @readonly
+   */
   get renderTexture(): RenderTexture | null {
     return this.renderTextures[0] ?? null
   }
 
+  /**
+   * Add the {@link PingPongPlane} to the renderer and the {@link Scene}
+   */
   addToScene() {
     this.renderer.pingPongPlanes.push(this)
 
@@ -43,6 +60,9 @@ export class PingPongPlane extends FullscreenPlane {
     }
   }
 
+  /**
+   * Remove the {@link PingPongPlane} from the renderer and the {@link Scene}
+   */
   removeFromScene() {
     if (this.renderTarget) {
       this.renderTarget.destroy()

@@ -1,12 +1,11 @@
-import MeshBaseMixin, { MeshBaseParams } from './MeshBaseMixin'
+import MeshBaseMixin, { MeshBaseRenderParams } from './MeshBaseMixin'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
-import { DOMElement } from '../DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
 import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
 import { Vec2 } from '../../math/Vec2'
 import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
 
 /**
  * FullscreenPlane class:
@@ -28,10 +27,10 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
 
   /**
    * FullscreenPlane constructor
-   * @param renderer - our renderer class object
-   * @param parameters - our Mesh base parameters
+   * @param renderer- [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
+   * @param parameters - [parameters]{@link MeshBaseRenderParams} use to create this {@link FullscreenPlane}
    */
-  constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseParams) {
+  constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseRenderParams) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
 
@@ -86,9 +85,10 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
   }
 
   /**
-   * Convert a mouse coordinate to plane coordinates ranging from [-1, 1]
-   * @param mouseCoords - mouse or pointer coordinates as a Vec2
-   * @returns - the mapped coordinates in the [-1, 1] range
+   * Take the pointer [vector]{@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}
+   * It ranges from -1 to 1 on both axis
+   * @param mouseCoords - pointer [vector]{@link Vec2} coordinates
+   * @returns - the mapped [vector]{@link Vec2} coordinates in the [-1, 1] range
    */
   mouseToPlaneCoords(mouseCoords: Vec2 = new Vec2()): Vec2 {
     // mouse position conversion from document to plane space

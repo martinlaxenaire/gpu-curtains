@@ -1,36 +1,62 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../../utils/renderer-utils'
 import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
-import MeshBaseMixin, { MeshBaseParams } from '../../core/meshes/MeshBaseMixin'
+import MeshBaseMixin, { MeshBaseParams, MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin'
 import { throwWarning } from '../../utils/utils'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 import { Texture } from '../../core/textures/Texture'
 import { AllowedGeometries } from '../../types/Materials'
 
-export interface DOMMeshBaseParams extends MeshBaseParams {
+/**
+ * Base parameters to create a {@link DOMMesh}
+ */
+export interface DOMMeshBaseParams extends MeshBaseRenderParams {
+  /** Whether to automatically create a {@link Texture} for all [images]{@link HTMLImageElement}, [videos]{@link HTMLVideoElement} and [canvases]{@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
   autoloadSources?: boolean
+  /** Whether to automatically update the {@link DOMMesh} position on scroll */
   watchScroll?: boolean
 }
 
+/**
+ * Parameters to create a {@link DOMMesh}
+ */
 export interface DOMMeshParams extends DOMMeshBaseParams {
+  /** {@link Geometry} to use with the {@link DOMMesh} */
   geometry: AllowedGeometries
 }
 
+/** @const - default {@link DOMMesh} parameters */
 const defaultDOMMeshParams = {
   autoloadSources: true,
   watchScroll: true,
 } as DOMMeshBaseParams
 
+/**
+ * DOMMesh class:
+ * Create a {@link Mesh} based on a {@link DOMObject3D}, which allow the {@link Mesh} to be scaled and positioned based on a {@link HTMLElement} [bounding rectangle]{@link DOMElementBoundingRect}
+ * TODO!
+ * @extends MeshTransformedMixin
+ * @mixes {MeshBaseMixin}
+ */
 export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
+  /** Whether to automatically create a {@link Texture} for all [images]{@link HTMLImageElement}, [videos]{@link HTMLVideoElement} and [canvases]{@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
   autoloadSources: boolean
+  /** Whether all the sources have been successfully loaded */
   _sourcesReady: boolean
 
   // callbacks / events
+  /** function assigned to the [onLoading]{@link DOMMesh#onLoading} callback */
   _onLoadingCallback = (texture: Texture): void => {
     /* allow empty callback */
   }
 
+  /**
+   * DOMMesh constructor
+   * @param renderer - [Curtains renderer]{@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
+   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}
+   * @param parameters - [parameters]{@link DOMMeshParams} used to create this {@link DOMMesh}
+   */
   constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: string | HTMLElement, parameters: DOMMeshParams) {
     super(renderer, element, { ...defaultDOMMeshParams, ...parameters })
 
@@ -51,6 +77,10 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
     this.setInitSources()
   }
 
+  /**
+   * Get/set whether our [material]{@link DOMMesh#material} and [geometry]{@link DOMMesh#geometry} are ready
+   * @readonly
+   */
   get ready(): boolean {
     return this._ready
   }
@@ -63,6 +93,10 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
     }
   }
 
+  /**
+   * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded
+   * @readonly
+   */
   get sourcesReady(): boolean {
     return this._sourcesReady
   }
@@ -75,15 +109,25 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
     }
   }
 
+  /**
+   * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its [sources are ready]{@link DOMMesh#sourcesReady} and its [material]{@link DOMMesh#material} and [geometry]{@link DOMMesh#geometry} are ready.
+   * @readonly
+   */
   get DOMMeshReady(): boolean {
     return this.ready && this.sourcesReady
   }
 
+  /**
+   * Add a {@link DOMMesh} to the renderer and the {@link Scene}
+   */
   addToScene() {
     super.addToScene()
     ;(this.renderer as GPUCurtainsRenderer).domMeshes.push(this)
   }
 
+  /**
+   * Remove a {@link DOMMesh} from the renderer and the {@link Scene}
+   */
   removeFromScene() {
     super.removeFromScene()
     ;(this.renderer as GPUCurtainsRenderer).domMeshes = (this.renderer as GPUCurtainsRenderer).domMeshes.filter(
@@ -91,6 +135,9 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
     )
   }
 
+  /**
+   * Load initial {@link DOMMesh} sources if needed and create associated [textures]{@link Texture}
+   */
   setInitSources() {
     let loaderSize = 0
     let sourcesLoaded = 0
@@ -153,6 +200,10 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
     }
   }
 
+  /**
+   * Reset/change a [DOMMesh element]{@link DOMMesh#domElement}
+   * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+   */
   resetDOMElement(element: string | HTMLElement) {
     if (!!element) {
       super.resetDOMElement(element)
@@ -163,8 +214,13 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
     }
   }
 
-  /** EVENTS **/
+  /* EVENTS */
 
+  /**
+   * Called each time one of the initial sources associated [texture]{@link Texture} has been uploaded to the GPU
+   * @param callback - callback to call each time a [texture]{@link Texture} has been uploaded to the GPU
+   * @returns - our {@link DOMMesh}
+   */
   onLoading(callback: (texture: Texture) => void): DOMMesh {
     if (callback) {
       this._onLoadingCallback = callback

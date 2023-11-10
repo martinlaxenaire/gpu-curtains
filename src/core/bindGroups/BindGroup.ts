@@ -1,6 +1,5 @@
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { generateUUID, toKebabCase } from '../../utils/utils'
-import { getBindGroupLayoutBindingType, TypedArray } from '../../utils/buffers-utils'
 import { WorkBufferBindings, WorkBufferBindingsParams } from '../bindings/WorkBufferBindings'
 import { BufferBindings } from '../bindings/BufferBindings'
 import {
@@ -10,9 +9,8 @@ import {
   BindGroupBufferBindingElement,
   BindGroupEntries,
   BindGroupParams,
-  WorkInputBindingsParams,
   InputBindings,
-  BindGroupTextureSamplerElement,
+  WorkInputBindingsParams,
 } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { TextureBindGroupParams } from './TextureBindGroup'

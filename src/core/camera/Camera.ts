@@ -239,7 +239,7 @@ export class Camera {
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1, 0,
-      this.position.x, this.position.y, this.position.z, 1,
+      this.position.x, this.position.y, this.position.z, 1
     )
 
     this.viewMatrix = this.modelMatrix.clone().getInverse()

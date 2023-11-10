@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onScroll(() => {
       // get scroll deltas to apply the effect on scroll
-      const delta = gpuCurtains.getScrollDeltas()
+      const delta = gpuCurtains.scrollDelta
 
       // invert value for the effect
       delta.y = -delta.y

@@ -1,10 +1,8 @@
-import { GPURenderer } from './GPURenderer'
-import { Camera } from '../camera/Camera'
+import { GPURenderer, GPURendererParams } from './GPURenderer'
+import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
-import { CameraBasePerspectiveOptions } from '../camera/Camera'
-import { GPURendererParams } from './GPURenderer'
 
 /**
  * Parameters used to create a {@link GPUCameraRenderer}

@@ -2,15 +2,29 @@ import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Vec3 } from '../../math/Vec3'
 import { GeometryBaseParams } from '../../types/Geometries'
 
+/**
+ * Parameters used to create a {@link SphereGeometry}
+ */
 interface SphereGeometryParams extends GeometryBaseParams {
+  /** Number of horizontal segments */
   widthSegments?: number
+  /** Number of vertical segments */
   heightSegments?: number
+  /** Horizontal starting angle */
   phiStart?: number
+  /** Horizontal sweep angle size */
   phiLength?: number
+  /** Vertical starting angle */
   thetaStart?: number
+  /** Vertical sweep angle size */
   thetaLength?: number
 }
 
+/**
+ * SphereGeometry class:
+ * Helper to easily create 3D sphere indexed geometries.
+ * @extends IndexedGeometry
+ */
 export class SphereGeometry extends IndexedGeometry {
   constructor(
     {

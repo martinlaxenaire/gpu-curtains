@@ -1,25 +1,25 @@
-/***
- Here we create a Quat class object
- This is a really basic Quaternion class used for rotation calculations
- Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Quaternion.js
-
- params :
- @elements (Float32Array of length 4): our quaternion array. Default to identity quaternion.
-
- @returns {Quat}: our Quat class object
- ***/
-
 import { Vec3 } from './Vec3'
 
 type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX'
 
-// TODO lot of (unused at the time) methods are missing
-
+/**
+ * Quat class:
+ * Really basic Quaternion class used for 3D rotation calculations
+ * Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Quaternion.js
+ */
 export class Quat {
+  /** The type of the {@link Quat} */
   type: string
+  /** Our quaternion array */
   elements: Float32Array
+  /** Rotation axis order */
   axisOrder: AxisOrder
 
+  /**
+   * Quat constructor
+   * @param elements - initial array to use
+   * @param axisOrder='XYZ' - axis order to use
+   */
   constructor(elements: Float32Array = new Float32Array([0, 0, 0, 1]), axisOrder: AxisOrder = 'XYZ') {
     this.type = 'Quat'
     this.elements = elements
@@ -27,14 +27,11 @@ export class Quat {
     this.axisOrder = axisOrder
   }
 
-  /***
-   Sets the quaternion values from an array
-
-   params:
-   @array (array): an array of at least 4 elements
-
-   @returns {Quat}: this quaternion after being set
-   ***/
+  /**
+   * Sets the [quaternion]{@link Quat} values from an array
+   * @param array - an array of at least 4 elements
+   * @returns - this [quaternion]{@link Quat} after being set
+   */
   setFromArray(array: Float32Array | number[] = new Float32Array([0, 0, 0, 1])): Quat {
     this.elements[0] = array[0]
     this.elements[1] = array[1]
@@ -44,14 +41,11 @@ export class Quat {
     return this
   }
 
-  /***
-   Sets the quaternion axis order
-
-   params:
-   @axisOrder (string): an array of at least 4 elements
-
-   @returns {Quat}: this quaternion after axis order has been set
-   ***/
+  /**
+   * Sets the [quaternion]{@link Quat} axis order
+   * @param axisOrder - axis order to use
+   * @returns - this [quaternion]{@link Quat} after axis order has been set
+   */
   setAxisOrder(axisOrder: AxisOrder | string = 'XYZ'): Quat {
     // force uppercase for strict equality tests
     axisOrder = axisOrder.toUpperCase()
@@ -73,14 +67,11 @@ export class Quat {
     return this
   }
 
-  /***
-   Copy a quaternion into this quaternion
-
-   params:
-   @vector (Quat): quaternion to copy
-
-   @returns {Quat}: this quaternion after copy
-   ***/
+  /**
+   * Copy a [quaternion]{@link Quat} into this [quaternion]{@link Quat}
+   * @param quaternion - [quaternion]{@link Quat} to copy
+   * @returns - this [quaternion]{@link Quat} after copy
+   */
   copy(quaternion: Quat = new Quat()): Quat {
     this.elements = quaternion.elements
     this.axisOrder = quaternion.axisOrder
@@ -88,20 +79,19 @@ export class Quat {
     return this
   }
 
-  /***
-   Clone a quaternion
-
-   @returns {Quat}: cloned quaternion
-   ***/
+  /**
+   * Clone a [quaternion]{@link Quat}
+   * @returns - cloned [quaternion]{@link Quat}
+   */
   clone(): Quat {
     return new Quat().copy(this)
   }
 
-  /***
-   Checks if 2 quaternions are equal
-
-   @returns {boolean}: whether the quaternions are equals or not
-   ***/
+  /**
+   * Check if 2 [quaternions]{@link Quat} are equal
+   * @param quaternion - [quaternion]{@link Quat} to check against
+   * @returns - whether the [quaternions]{@link Quat} are equal or not
+   */
   equals(quaternion: Quat = new Quat()): boolean {
     return (
       this.elements[0] === quaternion.elements[0] &&
@@ -112,14 +102,11 @@ export class Quat {
     )
   }
 
-  /***
-   Sets a rotation quaternion using Euler angles and its axis order
-
-   params:
-   @vector (Vec3 class object): rotation vector to set our quaternion from
-
-   @returns {Quat}: quaternion after having applied the rotation
-   ***/
+  /**
+   * Sets a rotation [quaternion]{@link Quat} using Euler angles [vector]{@link Vec3} and its axis order
+   * @param vector - rotation [vector]{@link Vec3} to set our [quaternion]{@link Quat} from
+   * @returns - [quaternion]{@link Quat} after having applied the rotation
+   */
   setFromVec3(vector: Vec3 = new Vec3()): Quat {
     const ax = vector.x * 0.5
     const ay = vector.y * 0.5

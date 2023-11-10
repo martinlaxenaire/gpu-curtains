@@ -1,11 +1,11 @@
 import { Box3 } from '../../math/Box3'
 import { throwError, throwWarning } from '../../utils/utils'
 import {
-  VertexBufferAttribute,
-  VertexBufferAttributeParams,
   GeometryOptions,
   GeometryParams,
   VertexBuffer,
+  VertexBufferAttribute,
+  VertexBufferAttributeParams,
   VertexBufferParams,
 } from '../../types/Geometries'
 
@@ -134,7 +134,7 @@ export class Geometry {
    * @param parameters - attributes parameters
    * @param {VertexBuffer=} parameters.vertexBuffer - vertex buffer holding this attribute
    * @param {string} parameters.name - attribute name
-   * @param {CoreBufferType} [parameters.type="vec3f"] - attribute type
+   * @param {WGSLVariableType} [parameters.type="vec3f"] - attribute type
    * @param {GPUVertexFormat} [parameters.bufferFormat="float32x3"] - attribute buffer format
    * @param {number} [parameters.size=3] - attribute size
    * @param {Float32Array} [parameters.array=Float32Array] - attribute array

@@ -1,10 +1,9 @@
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
-import { toKebabCase } from '../../utils/utils'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Sampler } from '../samplers/Sampler'
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
-import { BufferBindings, BufferBindingsUniform } from '../bindings/BufferBindings'
+import { BufferBindings, BufferBindingsInput } from '../bindings/BufferBindings'
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { Texture } from '../textures/Texture'
 import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/Materials'
@@ -33,11 +32,11 @@ export class Material {
   clonedBindGroups: AllowedBindGroups[]
 
   /** Object containing all uniforms inputs handled by this {@link Material} */
-  uniforms: Record<string, Record<string, BufferBindingsUniform>>
+  uniforms: Record<string, Record<string, BufferBindingsInput>>
   /** Object containing all readonly storages inputs handled by this {@link Material} */
-  storages: Record<string, Record<string, BufferBindingsUniform>>
+  storages: Record<string, Record<string, BufferBindingsInput>>
   /** Object containing all read/write storages inputs handled by this {@link Material} */
-  works: Record<string, Record<string, BufferBindingsUniform>>
+  works: Record<string, Record<string, BufferBindingsInput>>
 
   /** Array of [bind groups]{@link BindGroup} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
   inputsBindGroups: BindGroup[]
@@ -341,7 +340,7 @@ export class Material {
    * @param bufferBindingName - the buffer binding name
    * @param bindingName - the binding name
    */
-  shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], bindingName?: BufferBindingsUniform['name']) {
+  shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], bindingName?: BufferBindingsInput['name']) {
     if (!bufferBindingName) return
 
     const bufferBinding = this.inputsBindings.find((bB) => bB.name === bufferBindingName)

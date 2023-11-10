@@ -1,8 +1,8 @@
 import { Bindings, BindingsParams, BindingType } from './Bindings'
-import { SamplerBindingResource } from './SamplerBindings'
 
 /** Defines a {@link TextureBindings} [resource]{@link TextureBindings#resource} */
 export type TextureBindingResource = GPUTexture | GPUExternalTexture | null
+
 //export type TextureBindingResource = GPUTextureView | GPUExternalTexture | null
 
 /**

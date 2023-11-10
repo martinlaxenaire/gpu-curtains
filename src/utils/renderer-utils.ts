@@ -14,6 +14,12 @@ export type Renderer = GPUCurtainsRenderer | GPUCameraRenderer | GPURenderer
  */
 export type CameraRenderer = GPUCurtainsRenderer | GPUCameraRenderer
 
+/**
+ * Format a renderer error based on given renderer, renderer type and object type
+ * @param renderer - renderer that failed the test
+ * @param rendererType - expected renderer type
+ * @param type - object type
+ */
 const formatRendererError = (renderer: Renderer, rendererType = 'GPURenderer', type: string | null): void => {
   const error = type
     ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}`
@@ -21,6 +27,12 @@ const formatRendererError = (renderer: Renderer, rendererType = 'GPURenderer', t
   throwError(error)
 }
 
+/**
+ * Check if the given renderer is a {@link Renderer}
+ * @param renderer - renderer to test
+ * @param type - object type used to format the error if needed
+ * @returns - whether the given renderer is a {@link Renderer}
+ */
 export const isRenderer = (renderer: Renderer | undefined, type: string | null): boolean => {
   const isRenderer =
     renderer &&
@@ -35,6 +47,12 @@ export const isRenderer = (renderer: Renderer | undefined, type: string | null):
   return isRenderer
 }
 
+/**
+ * Check if the given renderer is a {@link CameraRenderer}
+ * @param renderer - renderer to test
+ * @param type - object type used to format the error if needed
+ * @returns - whether the given renderer is a {@link CameraRenderer}
+ */
 export const isCameraRenderer = (renderer: CameraRenderer | undefined, type: string | null): boolean => {
   const isCameraRenderer =
     renderer && (renderer.type === 'GPUCameraRenderer' || renderer.type === 'GPUCurtainsRenderer')
@@ -46,6 +64,12 @@ export const isCameraRenderer = (renderer: CameraRenderer | undefined, type: str
   return isCameraRenderer
 }
 
+/**
+ * Check if the given renderer is a {@link GPUCurtainsRenderer}
+ * @param renderer - renderer to test
+ * @param type - object type used to format the error if needed
+ * @returns - whether the given renderer is a {@link GPUCurtainsRenderer}
+ */
 export const isCurtainsRenderer = (renderer: GPUCurtainsRenderer | undefined, type: string | null): boolean => {
   const isCurtainsRenderer = renderer && renderer.type === 'GPUCurtainsRenderer'
 
@@ -56,7 +80,11 @@ export const isCurtainsRenderer = (renderer: GPUCurtainsRenderer | undefined, ty
   return isCurtainsRenderer
 }
 
-export const generateMips = ((device, texture) => {
+/**
+ * Helper to generate mips on the GPU
+ * Taken from https://webgpufundamentals.org/webgpu/lessons/webgpu-importing-textures.html
+ */
+export const generateMips = (() => {
   let sampler
   let module
   const pipelineByFormat = {}

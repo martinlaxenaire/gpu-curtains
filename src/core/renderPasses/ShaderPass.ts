@@ -2,12 +2,12 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { RenderTarget } from './RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { MeshBaseParams } from '../meshes/MeshBaseMixin'
+import { MeshBaseRenderParams } from '../meshes/MeshBaseMixin'
 
 /**
  * Parameters used to create a {@link ShaderPass}
  */
-interface ShaderPassParams extends MeshBaseParams {
+interface ShaderPassParams extends MeshBaseRenderParams {
   renderTarget?: RenderTarget
 }
 

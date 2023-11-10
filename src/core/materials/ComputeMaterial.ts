@@ -3,7 +3,6 @@ import { MaterialParams } from '../../types/Materials'
 import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
-import { WorkInputBindingsParams } from '../../types/BindGroups'
 import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
 
 /**

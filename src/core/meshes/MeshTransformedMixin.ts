@@ -80,6 +80,7 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
    * @param boundingRect - the new bounding rectangle
    */
   resize(boundingRect: DOMElementBoundingRect | null): void
+
   /**
    * Apply scale and resize textures
    */
@@ -95,10 +96,12 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
    * Tell the model and projection matrices to update.
    */
   updateSizePositionAndProjection(): void
+
   /**
    * Update the model and projection matrices if needed.
    */
   updateMatrixStack(): void
+
   /**
    * At least one of the matrix has been updated, update according uniforms and frustum
    */
@@ -124,6 +127,7 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
    * Finally we call [Mesh base onBeforeRenderPass]{@link MeshBaseClass#onBeforeRenderPass} super
    */
   onBeforeRenderPass(): void
+
   /**
    * Only render the Mesh if it is in view frustum.
    * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
@@ -191,7 +195,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
      * @extends MeshBaseParams
      * @property {boolean} frustumCulled - whether to use frustum culling
      * @property {RectCoords} DOMFrustumMargins - frustum margins to apply when frustum culling
-     * 
+     *
      * @typedef MeshBaseArrayParams
      * @type {array}
      * @property {(CameraRenderer|GPUCurtains)} 0 - our renderer class object

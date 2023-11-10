@@ -21,7 +21,7 @@ export interface Object3DTransformMatrix {
 export type Object3DMatrices = Record<Object3DMatricesType, Object3DTransformMatrix>
 
 /**
- * Defines all necessary vectors/quaternions to compute a 3D model [matrix]{@link Mat4}
+ * Defines all necessary [vectors]{@link Vec3}/[quaternions]{@link Quat} to compute a 3D [model matrix]{@link Mat4}
  */
 export interface Object3DTransforms {
   /** Transformation origin object */
@@ -29,7 +29,7 @@ export interface Object3DTransforms {
     /** Transformation origin [vector]{@link Vec3} relative to the {@link Object3D} */
     model: Vec3
     /** Transformation origin [vector]{@link Vec3} relative to the 3D world */
-    world?: Vec3
+    //world?: Vec3
   }
   /** Model [quaternion]{@link Quat} defining its rotation in 3D space */
   quaternion: Quat
@@ -40,7 +40,7 @@ export interface Object3DTransforms {
     /** Position [vector]{@link Vec3} relative to the 3D world */
     world: Vec3
     /** Position [vector]{@link Vec3} relative to the DOM document */
-    document?: Vec3
+    //document?: Vec3
   }
   /** Model 3D scale [vector]{@link Vec3} */
   scale: Vec3
@@ -67,7 +67,7 @@ export class Object3D {
   /* TRANSFORMS */
 
   /**
-   * Set our transforms properties and onChange callbacks
+   * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
    */
   setTransforms() {
     this.transforms = {

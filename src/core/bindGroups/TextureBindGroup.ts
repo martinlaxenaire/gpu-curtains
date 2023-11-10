@@ -3,7 +3,7 @@ import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
-import { BindGroupBufferBindingElement, BindGroupParams } from '../../types/BindGroups'
+import { BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
 import { TextureBindings } from '../bindings/TextureBindings'
 

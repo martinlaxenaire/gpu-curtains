@@ -7,40 +7,73 @@ import { Vec3 } from '../../math/Vec3'
 import { Camera } from '../../core/camera/Camera'
 import { Object3DTransforms } from '../../core/objects3D/Object3D'
 
+/** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */
 export interface DOMObject3DSize {
+  /** The {@link DOMObject3D} bounding box in world space */
   world: RectBBox
+  /** The {@link DOMObject3D} bounding box in document space */
   document: RectBBox
 }
 
+/**
+ * Defines all necessary [vectors]{@link Vec3}/[quaternions]{@link Quat} to compute a 3D [model matrix]{@link Mat4} based on a DOM [HTML Element]{@link HTMLElement}
+ */
 export interface DOMObject3DTransforms extends Omit<Object3DTransforms, 'origin' | 'position'> {
+  /** Transformation origin object */
   origin: {
+    /** Transformation origin [vector]{@link Vec3} relative to the {@link DOMObject3D} */
     model: Vec3
+    /** Transformation origin [vector]{@link Vec3} relative to the 3D world */
     world: Vec3
   }
+  /** Position object */
   position: {
+    /** Position [vector]{@link Vec3} relative to the 3D world */
     world: Vec3
+    /** Additional translation [vector]{@link Vec3} relative to the DOM document */
     document: Vec3
   }
 }
 
+/**
+ * Parameters used to create a {@link DOMObject3D}
+ */
 export interface DOMObject3DParams {
+  /** Whether to automatically update the {@link DOMObject3D} document and world positions on scroll */
   watchScroll?: boolean
 }
 
+/**
+ * DOMObject3D class:
+ * Used to create 3D objects with transform and projection matrices based on a {@link Camera} and an [HTML Element]{@link HTMLElement}
+ * @extends ProjectedObject3D
+ */
 export class DOMObject3D extends ProjectedObject3D {
+  /** [Curtains renderer]{@link GPUCurtainsRenderer} used to create this {@link DOMObject3D} */
   renderer: GPUCurtainsRenderer
-  camera: Camera
 
+  /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */
   size: DOMObject3DSize
+  /** {@link DOMElement} used to track the given [HTML Element]{@link HTMLElement} size change */
   domElement: DOMElement
 
+  /** Whether to automatically update the {@link DOMObject3D} document and world positions on scroll */
   watchScroll: boolean
 
+  /** [Transformation object]{@link DOMObject3DTransforms} of the {@link DOMObject3D} */
   transforms: DOMObject3DTransforms
 
+  /** Private [vector]{@link Vec3} used to keep track of the actual [world position]{@link DOMObject3DTransforms#position.world} accounting the [additional document translation]{@link DOMObject3DTransforms#position.document} converted into world space */
   #DOMObjectWorldPosition: Vec3 = new Vec3()
+  /** Private [vector]{@link Vec3} used to keep track of the actual {@link DOMObject3D} world scale accounting the [DOMObject3D world size]{@link DOMObject3D#size.world} */
   #DOMObjectWorldScale: Vec3 = new Vec3()
 
+  /**
+   * DOMObject3D constructor
+   * @param renderer - [Curtains renderer]{@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link Plane}
+   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
+   * @param parameters - [parameters]{@link DOMObject3DParams} used to create this {@link DOMObject3D}
+   */
   constructor(
     renderer: GPUCurtainsRenderer | GPUCurtains,
     element: string | HTMLElement,
@@ -77,6 +110,10 @@ export class DOMObject3D extends ProjectedObject3D {
     this.setDOMElement(element)
   }
 
+  /**
+   * Set the [DOMElement]{@link DOMObject3D#domElement}
+   * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+   */
   setDOMElement(element: string | HTMLElement) {
     this.domElement = new DOMElement({
       element,
@@ -90,6 +127,10 @@ export class DOMObject3D extends ProjectedObject3D {
     })
   }
 
+  /**
+   * Reset the [DOMElement]{@link DOMObject3D#domElement}
+   * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+   */
   resetDOMElement(element: string | HTMLElement) {
     if (this.domElement) {
       this.domElement.destroy()
@@ -98,6 +139,9 @@ export class DOMObject3D extends ProjectedObject3D {
     this.setDOMElement(element)
   }
 
+  /**
+   * Update the {@link DOMObject3D} sizes and position
+   */
   updateSizeAndPosition() {
     this.setWorldSizes()
     this.applyPosition()
@@ -105,12 +149,19 @@ export class DOMObject3D extends ProjectedObject3D {
     super.updateSizeAndPosition()
   }
 
+  /**
+   * Update the {@link DOMObject3D} sizes, position and projection
+   */
   updateSizePositionAndProjection() {
     this.updateSizeAndPosition()
 
     super.updateSizePositionAndProjection()
   }
 
+  /**
+   * Resize the {@link DOMObject3D}
+   * @param boundingRect - new [DOM Element]{@link DOMObject3D#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+   */
   resize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return
 
@@ -118,20 +169,21 @@ export class DOMObject3D extends ProjectedObject3D {
     this.updateSizePositionAndProjection()
   }
 
-  /*** BOUNDING BOXES GETTERS ***/
+  /* BOUNDING BOXES GETTERS */
 
-  /***
-   Useful to get our plane HTML element bounding rectangle without triggering a reflow/layout
-
-   returns :
-   @boundingRectangle (obj): an object containing our plane HTML element bounding rectangle (width, height, top, bottom, right and left properties)
-   ***/
+  /**
+   * Get the [DOM Element]{@link DOMObject3D#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+   * @readonly
+   */
   get boundingRect(): DOMElementBoundingRect {
     return this.domElement.boundingRect
   }
 
-  /** TRANSFOMS **/
+  /* TRANSFOMS */
 
+  /**
+   * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+   */
   setTransforms() {
     super.setTransforms()
 
@@ -145,6 +197,9 @@ export class DOMObject3D extends ProjectedObject3D {
     this.transformOrigin.onChange(() => this.setWorldTransformOrigin())
   }
 
+  /**
+   * Get/set the [additional translation relative to the document]{@link DOMObject3DTransforms#position.document}
+   */
   get documentPosition(): Vec3 {
     return this.transforms.position.document
   }
@@ -154,14 +209,23 @@ export class DOMObject3D extends ProjectedObject3D {
     this.applyPosition()
   }
 
+  /**
+   * Get the {@link DOMObject3D} scale in world space
+   */
   get worldScale(): Vec3 {
     return this.#DOMObjectWorldScale.clone().multiply(this.scale)
   }
 
+  /**
+   * Get the {@link DOMObject3D} position in world space
+   */
   get worldPosition(): Vec3 {
     return this.#DOMObjectWorldPosition
   }
 
+  /**
+   * Get/set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+   */
   get transformOrigin(): Vec3 {
     return this.transforms.origin.model
   }
@@ -171,6 +235,9 @@ export class DOMObject3D extends ProjectedObject3D {
     this.setWorldTransformOrigin()
   }
 
+  /**
+   * Get/set the {@link DOMObject3D} transform origin in world space
+   */
   get worldTransformOrigin(): Vec3 {
     return this.transforms.origin.world
   }
@@ -179,14 +246,17 @@ export class DOMObject3D extends ProjectedObject3D {
     this.transforms.origin.world = value
   }
 
-  /***
-   This will set our plane position by adding plane computed bounding box values and computed relative position values
-   ***/
+  /**
+   * Set the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} using its world position and document translation converted to world space
+   */
   applyPosition() {
     this.applyDocumentPosition()
     super.applyPosition()
   }
 
+  /**
+   * Compute the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} using its world position and document translation converted to world space
+   */
   applyDocumentPosition() {
     // avoid unnecessary calculations if we don't have a users set relative position
     let worldPosition = new Vec3(0, 0, 0)
@@ -201,6 +271,9 @@ export class DOMObject3D extends ProjectedObject3D {
     )
   }
 
+  /**
+   * Apply the transform origin and set the {@link DOMObject3D} world transform origin
+   */
   applyTransformOrigin() {
     if (!this.size) return
 
@@ -209,10 +282,13 @@ export class DOMObject3D extends ProjectedObject3D {
     super.applyTransformOrigin()
   }
 
-  /** MATRICES **/
+  /* MATRICES */
 
-  // override for this special case
+  /**
+   * Update the [model matrix]{@link DOMObject3D#modelMatrix} accounting the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} and [DOMObject3D world scale]{@link DOMObject3D##DOMObjectWorldScale}
+   */
   updateModelMatrix() {
+    // override for this special case
     // compose our model transformation matrix from custom origin
     this.modelMatrix.composeFromOrigin(
       this.#DOMObjectWorldPosition,
@@ -226,15 +302,10 @@ export class DOMObject3D extends ProjectedObject3D {
     this.modelMatrix.scale(this.#DOMObjectWorldScale)
   }
 
-  /***
-   This function takes pixel values along X and Y axis and convert them to world space coordinates
-
-   params :
-   @vector (Vec3): position to convert on X, Y and Z axes
-
-   returns :
-   @worldPosition: plane's position in WebGL space
-   ***/
+  /**
+   * Convert a document position [vector]{@link Vec3} to a world position [vector]{@link Vec3}
+   * @param vector - document position [vector]{@link Vec3} converted to world space
+   */
   documentToWorldSpace(vector: Vec3 = new Vec3()): Vec3 {
     return new Vec3(
       ((vector.x * this.renderer.pixelRatio) / this.renderer.boundingRect.width) * this.camera.screenRatio.width,
@@ -243,6 +314,9 @@ export class DOMObject3D extends ProjectedObject3D {
     )
   }
 
+  /**
+   * Set the [DOMOBject3D world size]{@link DOMObject3D#size.world} and set the {@link DOMObject3D} world transform origin
+   */
   setWorldSizes() {
     const containerBoundingRect = this.renderer.boundingRect
 
@@ -274,6 +348,9 @@ export class DOMObject3D extends ProjectedObject3D {
     this.setWorldTransformOrigin()
   }
 
+  /**
+   * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
+   */
   setWorldTransformOrigin() {
     // set transformation origin relative to world space as well
     this.transforms.origin.world = new Vec3(
@@ -288,8 +365,10 @@ export class DOMObject3D extends ProjectedObject3D {
     this.shouldUpdateProjectionMatrixStack()
   }
 
-  // TODO setPosition, setRotation, setScale, etc?
-
+  /**
+   * Update the [DOMOBject3D DOMElement]{@link DOMObject3D#domElement} scroll position
+   * @param delta - last [scroll delta values]{@link ScrollManager#delta}
+   */
   updateScrollPosition(delta: DOMPosition = { x: 0, y: 0 }) {
     // actually update the plane position only if last X delta or last Y delta is not equal to 0
     if (delta.x || delta.y) {
@@ -298,6 +377,9 @@ export class DOMObject3D extends ProjectedObject3D {
     }
   }
 
+  /**
+   * Destroy our {@link DOMObject3D}
+   */
   destroy() {
     this.domElement?.destroy()
   }

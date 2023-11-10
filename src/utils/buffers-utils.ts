@@ -1,6 +1,7 @@
-import { InputValue } from '../types/BindGroups'
 import { BindingType } from '../core/bindings/Bindings'
+import { BufferBindingsElement } from '../core/bindings/BufferBindings'
 
+/** Defines a typed array */
 export type TypedArray =
   | Int8Array
   | Uint8Array
@@ -12,8 +13,7 @@ export type TypedArray =
   | Float32Array
   | Float64Array
 
-export type CoreBufferType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
-
+/** Defines a typed array constructor */
 type TypedArrayConstructor =
   | Int8ArrayConstructor
   | Uint8ArrayConstructor
@@ -24,29 +24,34 @@ type TypedArrayConstructor =
   | Float32ArrayConstructor
   | Float64ArrayConstructor
 
+/** Defines the possible WGSL variable types */
+export type WGSLVariableType = string // TODO 'mat4x4f', 'mat3x3f', 'vec3f', 'vec2f', 'f32' etc
+
+/**
+ * Defines a {@link BufferLayout} object used to pad our {@link GPUBuffer} arrays
+ */
 export type BufferLayout = {
+  /** Number of elements hold by this variable type */
   numElements: number
+  /** Required alignment by this variable type */
   align: number
+  /** Size of this variable type */
   size: number
-  type: CoreBufferType
+  /** Variable type */
+  type: WGSLVariableType
+  /** Typed array constructor required by this variable type */
   View: TypedArrayConstructor
+  /** Pad values required by this variable type */
   pad?: number[]
 }
 
-// TODO we should correctly use types like GPUSize64 / GPUIndex32
-export interface BufferBindingsElement {
-  name: string
-  type: CoreBufferType
-  key: string
-  update: (value: InputValue) => void
-  bufferLayout: BufferLayout
-  startOffset: number
-  endOffset: number
-  array?: TypedArray
-}
-
 // from https://github.com/greggman/webgpu-utils/blob/main/src/buffer-views.ts
-export const getBufferLayout = (bufferType: CoreBufferType): BufferLayout => {
+/**
+ * Get the correct [buffer layout]{@link BufferLayout} for given [variable type]{@link WGSLVariableType}
+ * @param bufferType - [variable type]{@link WGSLVariableType} to use
+ * @returns - the [buffer layout]{@link BufferLayout}
+ */
+export const getBufferLayout = (bufferType: WGSLVariableType): BufferLayout => {
   const bufferLayouts = {
     i32: { numElements: 1, align: 4, size: 4, type: 'i32', View: Int32Array },
     u32: { numElements: 1, align: 4, size: 4, type: 'u32', View: Uint32Array },
@@ -90,6 +95,11 @@ export const getBufferLayout = (bufferType: CoreBufferType): BufferLayout => {
   return bufferLayouts[bufferType]
 }
 
+/**
+ * Get the correct buffer array stride for the given [binding element]{@link BufferBindingsElement}
+ * @param bindingElement - [binding element]{@link BufferBindingsElement} to use
+ * @returns - buffer array stride value
+ */
 export const getBufferArrayStride = (bindingElement: BufferBindingsElement): number => {
   return (() => {
     switch (bindingElement.type) {
@@ -106,7 +116,12 @@ export const getBufferArrayStride = (bindingElement: BufferBindingsElement): num
   })()
 }
 
-export const getBindingWgslVarType = (bindingType: BindingType): string => {
+/**
+ * Get the correct WGSL variable declaration code fragment based on the given [binding type]{@link BindingType}
+ * @param bindingType - [binding type]{@link BindingType} to use
+ * @returns - WGSL variable declaration code fragment
+ */
+export const getBindingWGSLVarType = (bindingType: BindingType): string => {
   return (() => {
     switch (bindingType) {
       case 'storage':
@@ -120,6 +135,11 @@ export const getBindingWgslVarType = (bindingType: BindingType): string => {
   })()
 }
 
+/**
+ * Get the correct [bind group layout]{@link GPUBindGroupLayout} resource type based on the given [binding type]{@link BindingType}
+ * @param bindingType - [binding type]{@link BindingType} to use
+ * @returns - [bind group layout]{@link GPUBindGroupLayout} resource type
+ */
 export const getBindGroupLayoutBindingType = (bindingType: BindingType): GPUBufferBindingType => {
   return (() => {
     switch (bindingType) {

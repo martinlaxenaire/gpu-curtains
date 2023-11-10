@@ -1,4 +1,4 @@
-import { CoreBufferType } from '../utils/buffers-utils'
+import { WGSLVariableType } from '../utils/buffers-utils'
 
 /**
  * Parameters used to create a {@link VertexBufferAttribute}
@@ -9,7 +9,7 @@ export interface VertexBufferAttributeParams {
   /** The name of the [attribute]{@link VertexBufferAttribute} */
   name: string
   /** The WGSL type of the [attribute]{@link VertexBufferAttribute}, i.e. 'f32', 'vec2f', 'vec3f', etc. */
-  type?: CoreBufferType
+  type?: WGSLVariableType
   /** The buffer format of the [attribute]{@link VertexBufferAttribute}, i.e. 'float32', 'float32x2', 'float32x3', etc. */
   bufferFormat?: GPUVertexFormat
   /** The size of the [attribute]{@link VertexBufferAttribute}. A 'f32' is of size 1, a 'vec2f' of size 2, a 'vec3f' of size 3, etc. */
@@ -25,7 +25,7 @@ export interface VertexBufferAttributeParams {
  */
 export interface VertexBufferAttribute extends VertexBufferAttributeParams {
   /** The WGSL type of the [attribute]{@link VertexBufferAttribute}, i.e. 'f32', 'vec2f', 'vec3f', etc. */
-  type: CoreBufferType
+  type: WGSLVariableType
   /** The buffer format of the [attribute]{@link VertexBufferAttribute}, i.e. 'float32', 'float32x2', 'float32x3', etc. */
   bufferFormat: GPUVertexFormat
   /** The length of the [attribute array]{@link VertexBufferAttributeParams#array} */

@@ -1,5 +1,5 @@
 import { generateUUID, throwWarning } from '../../utils/utils'
-import { Renderer, isRenderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../../utils/renderer-utils'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
 import { Geometry } from '../geometries/Geometry'
@@ -14,12 +14,7 @@ import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
 
 let meshIndex = 0
 
-/**
- * Base parameters used to create a Mesh
- */
-export interface MeshBaseParams extends RenderMaterialParams {
-  /** Geometry to use */
-  geometry: AllowedGeometries
+export interface MeshBaseRenderParams extends RenderMaterialParams {
   /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
   autoAddToScene: boolean
   /** Flag indicating whether to draw this Mesh or not */
@@ -30,6 +25,14 @@ export interface MeshBaseParams extends RenderMaterialParams {
   renderTarget?: RenderTarget
   /** Parameters used by this Mesh to create a [texture]{@link Texture} */
   texturesOptions?: MeshTextureParams
+}
+
+/**
+ * Base parameters used to create a Mesh
+ */
+export interface MeshBaseParams extends MeshBaseRenderParams {
+  /** Geometry to use */
+  geometry: AllowedGeometries
 }
 
 /**
@@ -183,6 +186,7 @@ export declare class MeshBaseClass {
    * Add a Mesh to the renderer and the {@link Scene}
    */
   addToScene(): void
+
   /**
    * Remove a Mesh from the renderer and the {@link Scene}
    */
@@ -192,10 +196,12 @@ export declare class MeshBaseClass {
    * Compute the Mesh geometry if needed
    */
   computeGeometry(): void
+
   /**
    * Create the Mesh Geometry vertex and index buffers if needed
    */
   createGeometryBuffers(): void
+
   /**
    * Set our Mesh geometry: create buffers and add attributes to material
    */
@@ -206,6 +212,7 @@ export declare class MeshBaseClass {
    * @param meshParameters - [RenderMaterial parameters]{@link RenderMaterialParams}
    */
   setMaterial(meshParameters: RenderMaterialParams): void
+
   /**
    * Set Mesh material attributes
    */
@@ -217,11 +224,13 @@ export declare class MeshBaseClass {
    * @returns - newly created Texture
    */
   createTexture(options: TextureDefaultParams): Texture
+
   /**
    * Callback run when a new {@link Texture} has been created
    * @param texture - newly created Texture
    */
   onTextureCreated(texture: Texture): void
+
   /**
    * Create a new {@link RenderTexture}
    * @param  options - [RenderTexture options]{@link RenderTextureParams}
@@ -241,6 +250,7 @@ export declare class MeshBaseClass {
    * @readonly
    */
   get uniforms(): Material['uniforms']
+
   /**
    * Get the current {@link RenderMaterial} storages
    * @readonly
@@ -259,15 +269,18 @@ export declare class MeshBaseClass {
    * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
    */
   onBeforeRenderPass(): void
+
   /**
    * Render our {@link MeshBaseClass} if the {@link RenderMaterial} is ready
    * @param pass - current render pass encoder
    */
   onRenderPass(pass: GPURenderPassEncoder): void
+
   /**
    * Called after having rendered the Mesh
    */
   onAfterRenderPass(): void
+
   /**
    * Render our Mesh
    * - Execute [onBeforeRenderPass]{@link MeshBaseClass#onBeforeRenderPass}
@@ -283,6 +296,7 @@ export declare class MeshBaseClass {
    * Remove the Mesh from the {@link Scene} and destroy it
    */
   remove(): void
+
   /**
    * Destroy the Mesh
    */

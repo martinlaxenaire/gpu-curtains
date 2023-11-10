@@ -11,7 +11,7 @@ export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Ob
 
 /**
  * ProjectedObject3D class:
- * Used to create 3D objects with transform and projection matrices based on a {@see Camera}
+ * Used to create 3D objects with transform and projection matrices based on a {@link Camera}
  * @extends Object3D
  */
 export class ProjectedObject3D extends Object3D {

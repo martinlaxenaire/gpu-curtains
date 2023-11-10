@@ -39,7 +39,7 @@ export class RenderMaterial extends Material {
    * @param {boolean} parameters.rendering.depthWriteEnabled - whether to write to the depth buffer or not
    * @param {GPUCompareFunction} parameters.rendering.depthCompare - depth compare function to use
    * @param {GPUCullMode} parameters.rendering.cullMode - cull mode to use
-   * @param {Geometry["verticesOrder"]} parameters.rendering.verticesOrder - vertices order to use
+   * @param {Geometry['verticesOrder']} parameters.rendering.verticesOrder - vertices order to use
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams) {
     // we could pass our curtains object OR our curtains renderer object

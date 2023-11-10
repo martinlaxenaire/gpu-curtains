@@ -68,14 +68,14 @@ export class Texture extends Object3D {
   /** Whether the {@link BindGroup} handling this [texture bindings]{@link Texture#bindings} should be updated (i.e. each time a texture is uploaded to the GPU) */
   shouldUpdateBindGroup: boolean
 
-  /** [video frame callback]{@link requestVideoFrameCallback} returned id if used */
+  /** [Video frame callback]{@link requestVideoFrameCallback} returned id if used */
   videoFrameCallbackId: null | number
 
-  /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
+  /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
   #parentRatio: Vec3 = new Vec3(1)
-  /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [source size]{@link Texture#size} */
+  /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [source size]{@link Texture#size} */
   #sourceRatio: Vec3 = new Vec3(1)
-  /** private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [#parentRatio]{@link Texture##parentRatio} and [#sourceRatio]{@link Texture##sourceRatio} */
+  /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [#parentRatio]{@link Texture##parentRatio} and [#sourceRatio]{@link Texture##sourceRatio} */
   #coverScale: Vec3 = new Vec3(1)
   /** Private rotation [matrix]{@link Mat4} based on [texture quaternion]{@link Texture#quaternion} */
   #rotationMatrix: Mat4 = new Mat4()
@@ -609,6 +609,7 @@ export class Texture extends Object3D {
   /**
    * Callback to run when the [texture source]{@link Texture#source} has loaded
    * @param callback - callback to run when the [texture source]{@link Texture#source} has loaded
+   * @returns - our {@link Texture}
    */
   onSourceLoaded(callback: () => void): Texture {
     if (callback) {
@@ -621,6 +622,7 @@ export class Texture extends Object3D {
   /**
    * Callback to run when the [texture source]{@link Texture#source} has been uploaded
    * @param callback - callback to run when the [texture source]{@link Texture#source} been uploaded
+   * @returns - our {@link Texture}
    */
   onSourceUploaded(callback: () => void): Texture {
     if (callback) {

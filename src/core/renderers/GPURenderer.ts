@@ -3,7 +3,7 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
-import { throwWarning, throwError } from '../../utils/utils'
+import { throwError, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
@@ -37,6 +37,7 @@ export interface GPURendererParams {
 // TODO should be GPUCurtainsRenderer props?
 export type DOMMeshType = DOMMesh | Plane
 export type MeshType = Mesh | DOMMeshType
+
 //export type MeshType = Mesh | DOMMeshType | typeof MeshBaseMixin<any>
 
 /**

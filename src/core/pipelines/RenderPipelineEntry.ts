@@ -1,6 +1,6 @@
 import { PipelineEntry } from './PipelineEntry'
 import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
-import { isRenderer, Renderer, CameraRenderer } from '../../utils/renderer-utils'
+import { CameraRenderer, isRenderer, Renderer } from '../../utils/renderer-utils'
 import { throwError } from '../../utils/utils'
 import {
   PipelineEntryParams,

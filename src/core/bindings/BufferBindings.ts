@@ -1,10 +1,12 @@
 import { Bindings, BindingsParams } from './Bindings'
 import {
-  BufferBindingsElement,
+  BufferLayout,
   getBindGroupLayoutBindingType,
-  getBindingWgslVarType,
+  getBindingWGSLVarType,
   getBufferArrayStride,
   getBufferLayout,
+  TypedArray,
+  WGSLVariableType,
 } from '../../utils/buffers-utils'
 import { toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
@@ -13,21 +15,55 @@ import { Mat4 } from '../../math/Mat4'
 import { Quat } from '../../math/Quat'
 import { Input, InputBase, InputValue } from '../../types/BindGroups'
 
-export interface BufferBindingsUniform extends InputBase {
+/**
+ * Defines a {@link BufferBindings} input object that can set a value and run a callback function when this happens
+ */
+export interface BufferBindingsInput extends InputBase {
+  /** Original [input value]{@link InputValue} */
   _value: InputValue
+
+  /**
+   * Get/set the [input value]{@link InputValue}
+   * @readonly
+   */
   get value(): InputValue
   set value(value: InputValue)
+
+  /** Whether the [input value]{@link InputValue} has changed and we should update the [buffer binding array]{@link BufferBindings#value} */
   shouldUpdate: boolean
 }
 
 /**
- * An object defining all possible {@link BufferBindings} class instancing parameters
+ * Parameters used to create a {@link BufferBindings}
  */
 export interface BufferBindingsParams extends BindingsParams {
   /** Whether this {@link BufferBindings} should use structured WGSL variables */
   useStruct?: boolean
   /** Object containing one or multiple [input bindings]{@link Input} */
   bindings?: Record<string, Input>
+}
+
+// TODO we should correctly use types like GPUSize64 / GPUIndex32
+/**
+ * Defines a {@link BufferBindingsElement}
+ */
+export interface BufferBindingsElement {
+  /** The name of the {@link BufferBindingsElement} */
+  name: string
+  /** The WGSL variable type of the {@link BufferBindingsElement} */
+  type: WGSLVariableType
+  /** The key of the {@link BufferBindingsElement} */
+  key: string
+  /** Callback used to fill the [buffer binding array]{@link BufferBindings#value} with the [array values]{@link BufferBindingsElement#array} */
+  update: (value: InputValue) => void
+  /** [Buffer layout]{@link BufferLayout} used to fill the [buffer binding array]{@link BufferBindings#value} at the right offsets */
+  bufferLayout: BufferLayout
+  /** Start offset at which we should fill the [buffer binding array]{@link BufferBindings#value} */
+  startOffset: number
+  /** End offset at which we should fill the [buffer binding array]{@link BufferBindings#value} */
+  endOffset: number
+  /** Array containing the {@link BufferBindingsElement} values */
+  array?: TypedArray
 }
 
 /**
@@ -40,7 +76,7 @@ export class BufferBindings extends Bindings {
   /** Flag to indicate whether these {@link BufferBindings} should use structured data */
   useStruct: boolean
   /** All the {@link BufferBindings} data inputs */
-  bindings: Record<string, BufferBindingsUniform>
+  bindings: Record<string, BufferBindingsInput>
 
   /** Number of rows (each row has a byteLength of 16) used to build our padded {@link value} array */
   alignmentRows: number
@@ -124,7 +160,7 @@ export class BufferBindings extends Bindings {
    */
   setBindings(bindings: Record<string, Input>) {
     Object.keys(bindings).forEach((bindingKey) => {
-      const binding = {} as BufferBindingsUniform
+      const binding = {} as BufferBindingsInput
 
       for (const key in bindings[bindingKey]) {
         if (key !== 'value') {
@@ -280,7 +316,7 @@ export class BufferBindings extends Bindings {
           .join(',\n\t')}
 };`
 
-        const varType = getBindingWgslVarType(this.bindingType)
+        const varType = getBindingWGSLVarType(this.bindingType)
         this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`]
       } else {
         this.wgslStructFragment = `struct ${toKebabCase(this.label)} {\n\t${this.bindingElements
@@ -288,13 +324,13 @@ export class BufferBindings extends Bindings {
           .join(',\n\t')}
 };`
 
-        const varType = getBindingWgslVarType(this.bindingType)
+        const varType = getBindingWGSLVarType(this.bindingType)
         this.wgslGroupFragment = [`${varType} ${this.name}: ${toKebabCase(this.label)};`]
       }
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = this.bindingElements.map((binding) => {
-        const varType = getBindingWgslVarType(this.bindingType)
+        const varType = getBindingWGSLVarType(this.bindingType)
         return `${varType} ${binding.name}: ${binding.type};`
       })
     }

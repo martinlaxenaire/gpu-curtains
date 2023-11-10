@@ -1,9 +1,14 @@
 import { IndexedGeometry } from './IndexedGeometry'
 import { Geometry } from './Geometry'
-import { VertexBufferAttributeParams, GeometryBaseParams } from '../../types/Geometries'
+import { GeometryBaseParams, VertexBufferAttributeParams } from '../../types/Geometries'
 
+/**
+ * Parameters used to create a {@link PlaneGeometry}
+ */
 export interface PlaneGeometryParams extends GeometryBaseParams {
+  /** Number of segments along the X axis */
   widthSegments?: number
+  /** Number of segments along the Y axis */
   heightSegments?: number
 }
 
@@ -17,7 +22,7 @@ export class PlaneGeometry extends IndexedGeometry {
    * Defines our {@link PlaneGeometry} definition based on the provided [parameters]{@link PlaneGeometryParams}
    */
   definition: {
-    /** unique id based on width and height, used to get {@link PlaneGeometry} from cache */
+    /** unique id based on width and height segments, used to get {@link PlaneGeometry} from cache */
     id: number
     /** number of segments along the X axis */
     width: number
