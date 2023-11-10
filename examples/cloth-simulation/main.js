@@ -428,8 +428,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             gravity: {
               type: 'vec3f',
-              //value: new GPUCurtains.Vec3(0, -0.0981, 0),
-              value: new GPUCurtains.Vec3(0, -0.0375, 0),
+              value: new GPUCurtains.Vec3(0, -0.0981, 0),
+              //value: new GPUCurtains.Vec3(0, -0.0375, 0),
             },
           },
         },
@@ -450,7 +450,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             pointerStrength: {
               type: 'f32',
-              value: 250,
+              value: 200,
             },
             wind: {
               type: 'vec3f',
@@ -499,7 +499,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     autoAddToScene: false, // we will manually take care of rendering
-    inputBindGroups: [computeBindGroup],
+    bindGroups: [computeBindGroup],
   })
 
   const computeUpdatePass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -511,7 +511,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     autoAddToScene: false, // we will manually take care of rendering
-    inputBindGroups: [computeBindGroup],
+    bindGroups: [computeBindGroup],
   })
 
   const computeNormalPass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -523,7 +523,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     autoAddToScene: false, // we will manually take care of rendering
-    inputBindGroups: [computeBindGroup],
+    bindGroups: [computeBindGroup],
   })
 
   console.log(computeForcesPass.material, computeUpdatePass.material, computeNormalPass.material)
@@ -546,6 +546,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const nbSimsComputePerRender = Math.min(50, 100 / simulationSpeed)
 
   gpuCurtains.renderer.onBeforeRender((commandEncoder) => {
+    gpuCurtains.renderer.pipelineManager.resetCurrentPipeline()
+
     for (let i = 0; i < nbSimsComputePerRender; i++) {
       const forcePass = commandEncoder.beginComputePass()
       computeForcesPass.render(forcePass)
@@ -645,9 +647,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   plane.onRender(() => {
     // update cloth vertex buffer with resulting buffer from compute passes
     const vertexBuffer = plane.geometry.getVertexBufferByName('clothAttributes')
-    const clothBuffer = computeNormalPass.material.getBindingsBuffersByBindingName('clothVertex')
+    const clothBuffer = computeNormalPass.material.getBindingsByName('clothVertex')
 
-    vertexBuffer.buffer = clothBuffer[0]?.buffer
+    vertexBuffer.buffer = clothBuffer?.buffer
   })
 
   const pointer = new GPUCurtains.Vec2(Infinity)

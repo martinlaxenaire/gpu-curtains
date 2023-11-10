@@ -14,9 +14,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   const gpuCurtains = new GPUCurtains.GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
-    onError: () => {
-      document.body.classList.add('no-curtains')
-    },
   })
 
   await gpuCurtains.setRendererContext()
@@ -29,7 +26,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onScroll(() => {
       // get scroll deltas to apply the effect on scroll
-      const delta = gpuCurtains.getScrollDeltas()
+      const delta = gpuCurtains.scrollDelta
 
       // invert value for the effect
       delta.y = -delta.y

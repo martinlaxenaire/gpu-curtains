@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onScroll(() => {
       // get scroll deltas to apply the effect on scroll
-      const delta = gpuCurtains.getScrollDeltas()
+      const delta = gpuCurtains.scrollDelta
 
       // invert value for the effect
       delta.y = -delta.y
@@ -146,6 +146,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   planeElements.forEach((planeEl, planeIndex) => {
     const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, params)
     planes.push(plane)
+
+    console.log(plane)
 
     handlePlane(plane, planeIndex)
   })

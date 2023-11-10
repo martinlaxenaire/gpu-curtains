@@ -276,9 +276,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onRender(() => {
       const instanceVertexBuffer = sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
-      const particleBuffer = computePass.material.getBindingsBuffersByBindingName('particles')
+      const particleBuffer = computePass.material.getBindingsByName('particles')
 
-      instanceVertexBuffer.buffer = particleBuffer[0]?.buffer
+      instanceVertexBuffer.buffer = particleBuffer?.buffer
     })
 
   console.log(sphereMesh, gpuCurtains)
