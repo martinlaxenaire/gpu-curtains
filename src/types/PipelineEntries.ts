@@ -4,7 +4,7 @@ import {
   RenderMaterialAttributes,
   RenderMaterialRenderingOptions,
 } from './Materials'
-import { Renderer } from '../utils/renderer-utils'
+import { Renderer } from '../core/renderers/utils'
 import { GPUCurtains } from '../curtains/GPUCurtains'
 import { AllowedBindGroups } from './BindGroups'
 

@@ -1,4 +1,4 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../../core/renderers/utils'
 import { RenderTarget } from '../../core/renderPasses/RenderTarget'
 import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
 import { GPUCurtains } from '../GPUCurtains'

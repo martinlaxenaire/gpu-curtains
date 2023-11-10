@@ -1,5 +1,5 @@
-import { BindingType } from '../core/bindings/Bindings'
-import { BufferBindingsElement } from '../core/bindings/BufferBindings'
+import { BindingType } from './Bindings'
+import { BufferBindingsElement } from './BufferBindings'
 
 /** Defines a typed array */
 export type TypedArray =

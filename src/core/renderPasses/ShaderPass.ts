@@ -1,5 +1,5 @@
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { RenderTarget } from './RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseRenderParams } from '../meshes/MeshBaseMixin'

@@ -98,7 +98,7 @@ var GPUCurtains = (() => {
     throw new Error(error);
   };
 
-  // src/utils/renderer-utils.ts
+  // src/core/renderers/utils.ts
   var formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
     const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
     throwError(error);
@@ -269,7 +269,7 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/utils/buffers-utils.ts
+  // src/core/bindings/utils.ts
   var getBufferLayout = (bufferType) => {
     const bufferLayouts = {
       i32: { numElements: 1, align: 4, size: 4, type: "i32", View: Int32Array },

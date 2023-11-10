@@ -1,4 +1,4 @@
-import { generateMips } from '../../utils/renderer-utils'
+import { generateMips } from './utils'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'

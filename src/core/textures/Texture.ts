@@ -1,5 +1,5 @@
 import { Vec3 } from '../../math/Vec3'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { TextureBindings, TextureBindingsParams } from '../bindings/TextureBindings'
 import { BufferBindings } from '../bindings/BufferBindings'
 import { Object3D } from '../objects3D/Object3D'

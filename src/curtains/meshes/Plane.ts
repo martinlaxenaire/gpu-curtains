@@ -1,4 +1,4 @@
-import { isCurtainsRenderer } from '../../utils/renderer-utils'
+import { isCurtainsRenderer } from '../../core/renderers/utils'
 import { PlaneGeometry, PlaneGeometryParams } from '../../core/geometries/PlaneGeometry'
 import { DOMMesh, DOMMeshBaseParams, DOMMeshParams } from './DOMMesh'
 import { Vec3 } from '../../math/Vec3'

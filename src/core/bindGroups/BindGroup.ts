@@ -1,4 +1,4 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID, toKebabCase } from '../../utils/utils'
 import { WorkBufferBindings, WorkBufferBindingsParams } from '../bindings/WorkBufferBindings'
 import { BufferBindings } from '../bindings/BufferBindings'

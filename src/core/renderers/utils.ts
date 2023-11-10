@@ -1,7 +1,7 @@
-import { throwError } from './utils'
-import { GPURenderer } from '../core/renderers/GPURenderer'
-import { GPUCameraRenderer } from '../core/renderers/GPUCameraRenderer'
-import { GPUCurtainsRenderer } from '../curtains/renderers/GPUCurtainsRenderer'
+import { throwError } from '../../utils/utils'
+import { GPURenderer } from './GPURenderer'
+import { GPUCameraRenderer } from './GPUCameraRenderer'
+import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
 
 /**
  * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}

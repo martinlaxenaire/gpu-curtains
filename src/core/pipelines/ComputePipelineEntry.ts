@@ -1,5 +1,5 @@
 import { PipelineEntry } from './PipelineEntry'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { throwError } from '../../utils/utils'
 import { PipelineEntryParams, PipelineEntryPropertiesParams, PipelineEntryShaders } from '../../types/PipelineEntries'
 import { BindGroupBufferBindingElement } from '../../types/BindGroups'

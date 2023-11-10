@@ -1,4 +1,4 @@
-import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
+import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import MeshTransformedMixin from './MeshTransformedMixin'
 import MeshBaseMixin, { MeshBaseParams } from './MeshBaseMixin'

@@ -1,5 +1,5 @@
 import { BindGroup } from './BindGroup'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'

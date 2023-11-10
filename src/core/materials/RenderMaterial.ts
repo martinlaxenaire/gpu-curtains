@@ -1,6 +1,6 @@
 import { Material } from './Material'
 import { BindGroup } from '../bindGroups/BindGroup'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import {
   AllowedGeometries,

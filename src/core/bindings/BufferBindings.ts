@@ -7,7 +7,7 @@ import {
   getBufferLayout,
   TypedArray,
   WGSLVariableType,
-} from '../../utils/buffers-utils'
+} from './utils'
 import { toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'

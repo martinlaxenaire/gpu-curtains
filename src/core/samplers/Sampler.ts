@@ -1,4 +1,4 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { SamplerBindings } from '../bindings/SamplerBindings'
 import { throwWarning } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'

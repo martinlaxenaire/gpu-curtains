@@ -1,5 +1,5 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
-import { isCurtainsRenderer } from '../../utils/renderer-utils'
+import { isCurtainsRenderer } from '../../core/renderers/utils'
 import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
 import MeshBaseMixin, { MeshBaseParams, MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin'
 import { throwWarning } from '../../utils/utils'

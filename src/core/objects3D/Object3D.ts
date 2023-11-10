@@ -28,8 +28,6 @@ export interface Object3DTransforms {
   origin: {
     /** Transformation origin [vector]{@link Vec3} relative to the {@link Object3D} */
     model: Vec3
-    /** Transformation origin [vector]{@link Vec3} relative to the 3D world */
-    //world?: Vec3
   }
   /** Model [quaternion]{@link Quat} defining its rotation in 3D space */
   quaternion: Quat
@@ -39,8 +37,6 @@ export interface Object3DTransforms {
   position: {
     /** Position [vector]{@link Vec3} relative to the 3D world */
     world: Vec3
-    /** Position [vector]{@link Vec3} relative to the DOM document */
-    //document?: Vec3
   }
   /** Model 3D scale [vector]{@link Vec3} */
   scale: Vec3

@@ -1,6 +1,6 @@
 import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { PipelineEntryBaseParams, RenderPipelineEntryBaseParams } from '../../types/PipelineEntries'
 
