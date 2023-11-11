@@ -1,0 +1,69 @@
+@media screen {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 5s;
+  }
+
+  #loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 1;
+    background: var(--light-color);
+    font-size: 3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s;
+  }
+
+  .images-loaded #loader {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #navigation {
+    display: flex;
+    justify-content: center;
+    margin: 3.5rem;
+  }
+
+  #navigation a {
+    margin: 0 1rem;
+    color: var(--dark-color);
+  }
+
+  #navigation a.active {
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+
+  #navigation a:hover {
+    text-decoration: none;
+  }
+
+  #content {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  #content-images {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .plane {
+    width: calc(50% - 2.25rem);
+    margin: 2.25rem 0;
+    aspect-ratio: 1.5;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .plane img {
+    display: none;
+  }
+}

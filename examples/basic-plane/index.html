@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | Basic plane example</title>
+    <meta name="description" content="A basic WebGL plane bound to a HTML DOM element with gpu-curtains" />
+
+    <link href="../common-styles.css" rel="stylesheet" />
+
+    <style>
+      #page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .plane {
+        /* define the size of your plane */
+        width: 80%;
+        height: 80vh;
+      }
+
+      .plane img {
+        /* hide the img element */
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="canvas"></div>
+
+    <div id="page">
+      <div class="plane">
+        <img src="https://source.unsplash.com/featured/1920x1280/?nature" crossorigin="" />
+      </div>
+    </div>
+
+    <a
+      href="https://www.curtainsjs.com/"
+      title="back to curtains.js website"
+      id="back-to-lib-link"
+      class="primary-button"
+      target="_blank"
+      >back to curtains.js website</a
+    >
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/basic-plane/index.html"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script src="https://cdn.jsdelivr.net/gh/brendan-duncan/webgpu_recorder/webgpu_recorder.js"></script>
+    <script src="../../dist/gpu-curtains.js"></script>
+    <script>
+      //import {GPUCurtains, Plane} from '../../dist/gpu-curtains.mjs';
+
+      window.addEventListener('DOMContentLoaded', async () => {
+        // set up our WebGL context and append the canvas to our wrapper
+        const gpuCurtains = new GPUCurtains.GPUCurtains({
+          container: 'canvas',
+          pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+        })
+
+        await gpuCurtains.setRendererContext()
+
+        // get our plane element
+        const planeElements = document.getElementsByClassName('plane')
+
+        const vertexShader = /* wgsl */ `
+          struct VSOutput {
+              @builtin(position) position: vec4f,
+              @location(0) uv: vec2f,
+            };
+
+            @vertex fn main(
+              attributes: Attributes,
+            ) -> VSOutput {
+              var vsOutput: VSOutput;
+
+              var strength: f32 = 0.05;
+              var nbWaves: f32 = 3.0;
+
+              // map vertices coordinates to the 0->1 range on the X axis
+              var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
+
+              // notice how the "uniforms" struct name matches our bindings object name property
+              var time: f32 = frames.elapsed * 0.0375;
+
+              var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
+
+              var transformed: vec3f = vec3(
+                  attributes.position.x,
+                  attributes.position.y,
+                  attributes.position.z - waveSinusoid * strength
+              );
+
+              // the library automatically also append utility functions to the shaders
+              // 'getOutputPosition' is used to compute the actual vertices positions based on camera and model matrices
+              vsOutput.position = getOutputPosition(camera, matrices, transformed);
+
+              // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
+              vsOutput.uv = getUVCover(attributes.uv, texture0Matrix);
+
+              return vsOutput;
+            }
+      `
+
+        const fragmentShader = /* wgsl */ `
+          struct VSOutput {
+              @builtin(position) position: vec4f,
+              @location(0) uv: vec2f,
+            };
+
+            @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+              var texture: vec4f = textureSample(texture0, defaultSampler, fsInput.uv);
+
+              return texture;
+            }
+      `
+
+        // set our initial parameters (basic uniforms)
+        const params = {
+          widthSegments: 20,
+          shaders: {
+            vertex: {
+              code: vertexShader,
+              entryPoint: 'main',
+            },
+            fragment: {
+              code: fragmentShader,
+              entryPoint: 'main',
+            },
+          },
+          inputs: {
+            uniforms: {
+              // key could be something else, like "frames"...
+              frames: {
+                //label: 'Uniforms',
+                bindings: {
+                  elapsed: {
+                    type: 'f32', // this means our uniform is a float
+                    value: 0,
+                  },
+                },
+              },
+            },
+          },
+        }
+
+        const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
+        console.log(plane)
+
+        plane.onRender(() => {
+          // update our time uniform value
+          plane.uniforms.frames.elapsed.value++
+        })
+      })
+    </script>
+  </body>
+</html>

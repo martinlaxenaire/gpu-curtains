@@ -1,0 +1,96 @@
+@media screen {
+  /*** canvas ***/
+
+  #canvas {
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
+  }
+
+  .planes-loaded #canvas {
+    opacity: 1;
+  }
+
+  /*** content ***/
+
+  #page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2.25rem 0;
+  }
+
+  #planes {
+    display: flex;
+    flex-wrap: wrap;
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
+  }
+
+  .planes-loaded #planes,
+  .no-curtains #planes {
+    opacity: 1;
+  }
+
+  .plane-wrapper {
+    flex-basis: 50%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .plane-title {
+    position: absolute;
+    top: 0.25em;
+    left: 0;
+    font-size: 2em;
+    margin: 0;
+    z-index: 1;
+    padding: 0.125em 0.25em;
+  }
+
+  .plane-inner {
+    padding: 2.25rem;
+    box-sizing: border-box;
+  }
+
+  .plane {
+    aspect-ratio: 15 / 10;
+  }
+
+  #add-more-planes-wrapper {
+    text-align: center;
+    margin-top: 2.25rem;
+  }
+}
+
+@media screen and (max-width: 1320px) {
+  #page {
+    margin: 0 1.125rem;
+  }
+
+  .plane-title {
+    top: 0;
+    font-size: 1.5em;
+  }
+
+  .plane-inner {
+    padding: 1.125rem;
+  }
+
+  #add-more-planes-wrapper {
+    margin-top: 1.125rem;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  #page {
+    margin: 0 0.625rem;
+  }
+
+  .plane-wrapper {
+    flex-basis: 100%;
+    margin-bottom: 0.625rem;
+  }
+
+  .plane-inner {
+    padding: 0.625rem;
+  }
+}

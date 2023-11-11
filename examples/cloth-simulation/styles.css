@@ -1,0 +1,16 @@
+@media screen {
+  #page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #cloth {
+    position: relative;
+    overflow: hidden;
+    /*width: calc(100% - 4rem);
+    height: calc(100vh - 4rem);*/
+    width: 90%;
+    height: 90vh;
+  }
+}

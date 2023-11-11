@@ -1,0 +1,39 @@
+@media screen {
+  #videos {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .video-wrapper {
+    flex-basis: 40%;
+    margin: 0 5%;
+    overflow: hidden;
+  }
+
+  .video-wrapper h2 {
+    text-align: center;
+  }
+
+  .video-elements {
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    aspect-ratio: 15 / 10;
+  }
+}
+
+@media screen and (max-width: 1000px) {
+  .multi-textures {
+    font-size: 2em;
+  }
+
+  .video-wrapper {
+    flex-basis: 90%;
+  }
+
+  .video-elements {
+    aspect-ratio: 10 / 15;
+  }
+}
