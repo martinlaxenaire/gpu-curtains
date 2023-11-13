@@ -138,7 +138,6 @@ export class BindGroup {
           bindingType,
           useStruct: true, // by default
           bindings: binding.bindings,
-          dispatchSize: (binding as WorkInputBindingsParams).dispatchSize,
           visibility: bindingType === 'storageWrite' ? 'compute' : binding.visibility,
         }
 

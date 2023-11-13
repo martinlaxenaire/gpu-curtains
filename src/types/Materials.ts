@@ -73,6 +73,54 @@ export interface MaterialInputBindingsParams {
 /** Parameters used to create a {@link Material} */
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
 
+/** Options used to create this {@link Material} */
+export interface MaterialOptions {
+  /** The label of the {@link Material}, sent to various GPU objects for debugging purpose */
+  label: string
+  /** Shaders to use with this {@link Material} */
+  shaders: MaterialShaders
+  /** Whether to compile the {@link Material} [pipeline]{@link GPUPipelineBase} asynchronously or not */
+  useAsyncPipeline?: boolean
+  /** [Inputs]{@link BindGroupInputs} used by this {@link Material} to create [bind groups]{@link BindGroup} internally */
+  inputs?: BindGroupInputs
+  /** Array of already created [bind groups]{@link BindGroup} to be used by this {@link Material} */
+  bindGroups?: BindGroup[]
+  /** Array of already created [samplers]{@link Sampler} to be used by this {@link Material} */
+  samplers?: Sampler[]
+}
+
+/* COMPUTE MATERIAL */
+
+/** Parameters used to create a {@link ComputeMaterial} */
+export interface ComputeMaterialParams extends MaterialParams {
+  /** Main/first work group dispatch size to use with this {@link ComputeMaterial} */
+  dispatchSize?: number | number[]
+}
+
+/** Options used to create this {@link ComputeMaterial} */
+export interface ComputeMaterialOptions extends MaterialOptions {
+  /** Main/first work group dispatch size to use with this {@link ComputeMaterial} */
+  dispatchSize?: number | number[]
+}
+
+/** Parameters used to add a [work group]{@link ComputeMaterial#workGroups} */
+export interface ComputeMaterialWorkGroupParams {
+  /** Bind groups to use with this [work group]{@link ComputeMaterial#workGroups} */
+  bindGroups: MaterialBindGroups
+  /** Optional [work group]{@link ComputeMaterial#workGroups} dispatch size  */
+  dispatchSize?: number | number[]
+}
+
+/**
+ * Defines a {@link ComputeMaterial} work group.
+ * At each render call, each of the [compute material work groups]{@link ComputeMaterial#workGroups} bind groups will be set, then we will dispatch the work group using its dispatch size.
+ * Allow for custom compute work group dispatch process.
+ */
+export interface ComputeMaterialWorkGroup extends ComputeMaterialWorkGroupParams {
+  /** [Work group]{@link ComputeMaterial#workGroups} dispatch size  */
+  dispatchSize: number[]
+}
+
 /* RENDER MATERIAL */
 
 // GEOMETRY
@@ -127,20 +175,8 @@ export interface RenderMaterialParams extends Partial<RenderMaterialBaseParams> 
   //geometry: AllowedGeometries
 }
 
-/** Options used to create this {@link Material} */
-export interface MaterialOptions {
-  /** The label of the {@link Material}, sent to various GPU objects for debugging purpose */
-  label: string
-  /** Shaders to use with this {@link Material} */
-  shaders: MaterialShaders
-  /** Whether to compile the {@link Material} [pipeline]{@link GPUPipelineBase} asynchronously or not */
-  useAsyncPipeline?: boolean
-  /** [Inputs]{@link BindGroupInputs} used by this {@link Material} to create [bind groups]{@link BindGroup} internally */
-  inputs?: BindGroupInputs
-  /** Array of already created [bind groups]{@link BindGroup} to be used by this {@link Material} */
-  bindGroups?: BindGroup[]
-  /** Array of already created [samplers]{@link Sampler} to be used by this {@link Material} */
-  samplers?: Sampler[]
+/** Options used to create this {@link RenderMaterial} */
+export interface RenderMaterialOptions extends MaterialOptions {
   /** [Rendering options]{@link RenderMaterialRenderingOptions} to send to the [pipeline]{@link GPUPipelineBase} */
   rendering?: RenderMaterialRenderingOptions
 }

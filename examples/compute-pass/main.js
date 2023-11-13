@@ -113,6 +113,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         code: computeBoids,
       },
     },
+    dispatchSize: Math.ceil(numParticles / 64), // Note that we divide the vertex count by the workgroup_size!
     inputs: {
       uniforms: {
         params: {
@@ -158,7 +159,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         particles: {
           //name: 'particles',
           label: 'Particle',
-          dispatchSize: Math.ceil(numParticles / 64), // Note that we divide the vertex count by the workgroup_size!
           bindings: {
             position: {
               type: 'array<vec2f>',

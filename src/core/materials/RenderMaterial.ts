@@ -6,6 +6,7 @@ import {
   AllowedGeometries,
   MaterialOptions,
   RenderMaterialAttributes,
+  RenderMaterialOptions,
   RenderMaterialParams,
 } from '../../types/Materials'
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
@@ -21,6 +22,8 @@ export class RenderMaterial extends Material {
   pipelineEntry: RenderPipelineEntry
   /** Mandatory [geometry attributes]{@link RenderMaterialAttributes} to pass to the [render pipeline entry]{@link RenderPipelineEntry} */
   attributes: RenderMaterialAttributes | null
+  /** Options used to create this {@link RenderMaterial} */
+  options: RenderMaterialOptions
 
   /**
    * RenderMaterial constructor
@@ -72,7 +75,7 @@ export class RenderMaterial extends Material {
       ...(inputs !== undefined && { inputs }),
       ...(bindGroups !== undefined && { bindGroups }),
       rendering: renderingOptions,
-    } as MaterialOptions
+    } as RenderMaterialOptions
 
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
       label: this.options.label + ' render pipeline',

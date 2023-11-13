@@ -1,7 +1,7 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID } from '../../utils/utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
-import { MaterialParams, MaterialShaders } from '../../types/Materials'
+import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /** Defines {@link ComputePass} options */
@@ -16,6 +16,8 @@ export interface ComputePassOptions {
   shaders: MaterialShaders
   /** whether the [compute pipeline]{@link ComputePipelineEntry#pipeline} should be compiled asynchronously */
   useAsyncPipeline?: boolean
+  /** Main/first {@link ComputeMaterial} work group dispatch size to use with this {@link ComputePass} */
+  dispatchSize?: number | number[]
 }
 
 /**
@@ -98,7 +100,8 @@ export class ComputePass {
     this.uuid = generateUUID()
     Object.defineProperty(this as ComputePass, 'index', { value: computePassIndex++ })
 
-    const { label, shaders, renderOrder, inputs, bindGroups, autoAddToScene, useAsyncPipeline } = parameters
+    const { label, shaders, renderOrder, inputs, bindGroups, autoAddToScene, useAsyncPipeline, dispatchSize } =
+      parameters
 
     this.options = {
       label,
@@ -106,6 +109,7 @@ export class ComputePass {
       ...(autoAddToScene !== undefined && { autoAddToScene }),
       ...(renderOrder !== undefined && { renderOrder }),
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
+      ...(dispatchSize !== undefined && { dispatchSize }),
     }
 
     this.renderOrder = renderOrder ?? 0
@@ -123,6 +127,7 @@ export class ComputePass {
       inputs,
       bindGroups,
       useAsyncPipeline,
+      dispatchSize,
     })
 
     this.addToScene()
@@ -147,7 +152,7 @@ export class ComputePass {
    * Create the compute pass material
    * @param computeParameters - {@link ComputeMaterial} parameters
    */
-  setComputeMaterial(computeParameters: MaterialParams) {
+  setComputeMaterial(computeParameters: ComputeMaterialParams) {
     this.material = new ComputeMaterial(this.renderer, computeParameters)
   }
 
