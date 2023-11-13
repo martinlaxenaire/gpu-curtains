@@ -1694,22 +1694,11 @@ var GPUCurtains = (() => {
       useStruct = true,
       bindings = {},
       visibility,
-      dispatchSize,
       shouldCopyResult = false
     }) {
       bindingType = "storageWrite";
       visibility = "compute";
       super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility });
-      if (!dispatchSize) {
-        dispatchSize = [1, 1, 1];
-      } else if (Array.isArray(dispatchSize)) {
-        dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1);
-        dispatchSize[1] = Math.ceil(dispatchSize[1] ?? 1);
-        dispatchSize[2] = Math.ceil(dispatchSize[2] ?? 1);
-      } else if (!isNaN(dispatchSize)) {
-        dispatchSize = [Math.ceil(dispatchSize), 1, 1];
-      }
-      this.dispatchSize = dispatchSize;
       this.shouldCopyResult = shouldCopyResult;
       this.result = new Float32Array(this.value.slice());
       this.resultBuffer = null;
@@ -1784,7 +1773,6 @@ var GPUCurtains = (() => {
             useStruct: true,
             // by default
             bindings: binding.bindings,
-            dispatchSize: binding.dispatchSize,
             visibility: bindingType === "storageWrite" ? "compute" : binding.visibility
           };
           const BufferBindingConstructor = bindingType === "storageWrite" ? WorkBufferBindings : BufferBindings;
@@ -3542,8 +3530,14 @@ var GPUCurtains = (() => {
       }
       this.options = {
         ...this.options,
-        shaders
+        shaders,
+        ...parameters.dispatchSize !== void 0 && { dispatchSize: parameters.dispatchSize }
       };
+      this.workGroups = [];
+      this.addWorkGroup({
+        bindGroups: this.bindGroups,
+        dispatchSize: this.options.dispatchSize
+      });
       this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
         label: this.options.label + " compute pipeline",
         shaders: this.options.shaders,
@@ -3580,23 +3574,43 @@ var GPUCurtains = (() => {
       });
       return !!hasMappedBuffer;
     }
+    /* WORK GROUPS */
+    addWorkGroup({ bindGroups = [], dispatchSize = 1 }) {
+      if (Array.isArray(dispatchSize)) {
+        dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1);
+        dispatchSize[1] = Math.ceil(dispatchSize[1] ?? 1);
+        dispatchSize[2] = Math.ceil(dispatchSize[2] ?? 1);
+      } else if (!isNaN(dispatchSize)) {
+        dispatchSize = [Math.ceil(dispatchSize), 1, 1];
+      }
+      this.workGroups.push({
+        bindGroups,
+        dispatchSize
+      });
+    }
     /* RENDER */
     /**
+     * Render a [work group]{@link ComputeMaterial#workGroups}: set its bind groups and then dispatch using its dispatch size
+     * @param pass
+     * @param workGroup
+     */
+    renderWorkGroup(pass, workGroup) {
+      workGroup.bindGroups.forEach((bindGroup) => {
+        pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
+      });
+      pass.dispatchWorkgroups(workGroup.dispatchSize[0], workGroup.dispatchSize[1], workGroup.dispatchSize[2]);
+    }
+    /**
      * Render the material if it is ready:
-     * Set the current pipeline, set the bind groups and dispatch the work groups
+     * Set the current pipeline, and render all the [work groups]{@link ComputeMaterial#workGroups}
      * @param pass - current compute pass encoder
      */
     render(pass) {
       if (!this.ready)
         return;
       this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
-      this.bindGroups.forEach((bindGroup) => {
-        pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-        bindGroup.bindings.forEach((binding) => {
-          if ("dispatchSize" in binding) {
-            pass.dispatchWorkgroups(binding.dispatchSize[0], binding.dispatchSize[1], binding.dispatchSize[2]);
-          }
-        });
+      this.workGroups.forEach((workGroup) => {
+        this.renderWorkGroup(pass, workGroup);
       });
     }
     /* RESULT BUFFER */
@@ -3706,13 +3720,14 @@ var GPUCurtains = (() => {
       this.type = type;
       this.uuid = generateUUID();
       Object.defineProperty(this, "index", { value: computePassIndex++ });
-      const { label, shaders, renderOrder, inputs, bindGroups, autoAddToScene, useAsyncPipeline } = parameters;
+      const { label, shaders, renderOrder, inputs, bindGroups, autoAddToScene, useAsyncPipeline, dispatchSize } = parameters;
       this.options = {
         label,
         shaders,
         ...autoAddToScene !== void 0 && { autoAddToScene },
         ...renderOrder !== void 0 && { renderOrder },
-        ...useAsyncPipeline !== void 0 && { useAsyncPipeline }
+        ...useAsyncPipeline !== void 0 && { useAsyncPipeline },
+        ...dispatchSize !== void 0 && { dispatchSize }
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoAddToScene !== void 0) {
@@ -3724,7 +3739,8 @@ var GPUCurtains = (() => {
         shaders: this.options.shaders,
         inputs,
         bindGroups,
-        useAsyncPipeline
+        useAsyncPipeline,
+        dispatchSize
       });
       this.addToScene();
     }
@@ -5591,7 +5607,7 @@ struct VertexOutput {
     }
   };
   function MeshTransformedMixin(Base) {
-    return class MeshTransformedBase extends Base {
+    return class MeshTransformedBase extends MeshBaseMixin_default(Base) {
       /**
            * MeshTransformedBase constructor
            * @typedef {TransformedMeshParameters} TransformedMeshBaseParameters
@@ -5614,10 +5630,10 @@ struct VertexOutput {
           { ...defaultTransformedMeshParams, ...params[2], ...{ useProjection: true } }
         );
         // callbacks / events
-        /** function assigned to the [onReEnterView]{@link MeshTransformedBase#onReEnterView} callback */
+        /** function assigned to the [onReEnterView]{@link MeshTransformedBaseClass#onReEnterView} callback */
         this._onReEnterViewCallback = () => {
         };
-        /** function assigned to the [onLeaveView]{@link MeshTransformedBase#onLeaveView} callback */
+        /** function assigned to the [onLeaveView]{@link MeshTransformedBaseClass#onLeaveView} callback */
         this._onLeaveViewCallback = () => {
         };
         let renderer = params[0];
@@ -5709,7 +5725,7 @@ struct VertexOutput {
       }
       /* SIZE & TRANSFORMS */
       /**
-       * Resize our MeshTransformedBase
+       * Resize our {@link MeshTransformedBaseClass}
        * @param boundingRect - the new bounding rectangle
        */
       resize(boundingRect = null) {
@@ -5758,7 +5774,7 @@ struct VertexOutput {
       /* EVENTS */
       /**
        * Assign a callback function to _onReEnterViewCallback
-       * @param callback - callback to run when {@link MeshTransformedBase} is reentering the view frustum
+       * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
        * @returns - our Mesh
        */
       onReEnterView(callback) {
@@ -5769,7 +5785,7 @@ struct VertexOutput {
       }
       /**
        * Assign a callback function to _onLeaveViewCallback
-       * @param callback - callback to run when {@link MeshTransformedBase} is leaving the view frustum
+       * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
        * @returns - our Mesh
        */
       onLeaveView(callback) {
@@ -5812,7 +5828,7 @@ struct VertexOutput {
   var MeshTransformedMixin_default = MeshTransformedMixin;
 
   // src/core/meshes/Mesh.ts
-  var Mesh = class extends MeshTransformedMixin_default(MeshBaseMixin_default(ProjectedObject3D)) {
+  var Mesh = class extends MeshTransformedMixin_default(ProjectedObject3D) {
     constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
@@ -6766,7 +6782,7 @@ ${this.shaders.compute.head}`;
     autoloadSources: true,
     watchScroll: true
   };
-  var DOMMesh = class extends MeshTransformedMixin_default(MeshBaseMixin_default(DOMObject3D)) {
+  var DOMMesh = class extends MeshTransformedMixin_default(DOMObject3D) {
     /**
      * DOMMesh constructor
      * @param renderer - [Curtains renderer]{@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}

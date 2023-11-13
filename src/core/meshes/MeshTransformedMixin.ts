@@ -8,7 +8,8 @@ import { RenderTexture } from '../textures/RenderTexture'
 import { Texture } from '../textures/Texture'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
-import { ProjectedObject3DMatrices } from '../objects3D/ProjectedObject3D'
+import { ProjectedObject3D, ProjectedObject3DMatrices } from '../objects3D/ProjectedObject3D'
+import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
 
 /**
  * Base parameters used to create a TransformedMesh
@@ -136,17 +137,30 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
   onRenderPass(pass: GPURenderPassEncoder): void
 }
 
+// export type TransformedObject3D = ProjectedObject3D | DOMObject3D
+// export type MeshTransformedMixinBaseType<T extends TransformedObject3D> = T extends DOMObject3D
+//   ? DOMObject3D
+//   : ProjectedObject3D
+//
+// export type MeshTransformedMixinReturn<T extends TransformedObject3D> = T extends DOMObject3D
+//   ? MeshTransformedBaseClass & DOMObject3D
+//   : MeshTransformedBaseClass & ProjectedObject3D
+
 /**
  * MeshBase Mixin:
- * Used to mix Mesh properties and methods defined in {@link MeshTransformedBaseClass} with a {@link MeshBaseMixin} mixed with a given Base of type {@link Object3D}, {@link ProjectedObject3D}, {@link DOMObject3D} or an empty class.
+ * Used to mix Mesh properties and methods defined in {@link MeshTransformedBaseClass} with a {@link MeshBaseMixin} mixed with a given Base of type {@link ProjectedObject3D} or {@link DOMObject3D}.
  * @exports MeshTransformedMixin
- * @param {*} Base - the class to mix onto
+ * @param {*} Base - the class to mix onto, should be of {@link ProjectedObject3D} or {@link DOMObject3D} type
  * @returns {module:MeshTransformedMixin~MeshTransformedBase} - the mixin class.
  */
 // using ReturnType of the previous mixin
 // https://stackoverflow.com/a/65417255/13354068
 // that seems to work as well: function MeshTransformedMixin<TBase extends MixinConstructor<MeshBaseClass>>
-function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
+
+// function MeshTransformedMixin<TBase extends new (...args: any[]) => TransformedObject3D>(
+//   Base: TBase
+// ): new (...args: any[]) => MeshTransformedMixinReturn<TBase> {
+function MeshTransformedMixin<TBase extends MixinConstructor>(
   Base: TBase
 ): MixinConstructor<MeshTransformedBaseClass> & TBase {
   /**
@@ -154,7 +168,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
    * @mixin
    * @alias MeshTransformedBase
    */
-  return class MeshTransformedBase extends Base {
+  return class MeshTransformedBase extends MeshBaseMixin(Base) {
     /** The TransformedMesh [DOM Frustum]{@link DOMFrustum} class object */
     domFrustum: DOMFrustum
     /** Whether this TransformedMesh should be frustum culled (not drawn when outside of [camera]{@link CameraRenderer#camera} frustum) */
@@ -162,32 +176,23 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
     /** Margins (in pixels) to applied to the [DOM Frustum]{@link MeshTransformedBaseClass#domFrustum} to determine if this TransformedMesh should be frustum culled or not */
     DOMFrustumMargins: RectCoords
 
+    /** Options used to create this {@link MeshTransformedBaseClass} */
+    options: TransformedMeshBaseOptions
+
     // callbacks / events
-    /** function assigned to the [onReEnterView]{@link MeshTransformedBase#onReEnterView} callback */
+    /** function assigned to the [onReEnterView]{@link MeshTransformedBaseClass#onReEnterView} callback */
     _onReEnterViewCallback: () => void = () => {
       /* allow empty callback */
     }
-    /** function assigned to the [onLeaveView]{@link MeshTransformedBase#onLeaveView} callback */
+    /** function assigned to the [onLeaveView]{@link MeshTransformedBaseClass#onLeaveView} callback */
     _onLeaveViewCallback: () => void = () => {
       /* allow empty callback */
     }
 
-    // TODO
-    // now force ugly override of all missing properties
-    // because typescript gets all confused with the nested mixins
-    type: string
-    renderer: CameraRenderer
-    options: TransformedMeshBaseOptions
-    geometry: AllowedGeometries
-    visible: boolean
-    matrices: ProjectedObject3DMatrices
+    // TODO we need to find a way to tell typescript that this mixin can only use ProjectedObject3D | DOMObject3D as Base!
     modelMatrix: Mat4
     modelViewMatrix: Mat4
     modelViewProjectionMatrix: Mat4
-    renderTextures: RenderTexture[]
-    textures: Texture[]
-    material: RenderMaterial
-    _onRenderCallback: () => void
 
     /**
      * MeshTransformedBase constructor
@@ -317,20 +322,18 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
 
       meshParameters.inputs.uniforms.matrices = matricesUniforms
 
-      // @ts-ignore
       super.setMaterial(meshParameters)
     }
 
     /* SIZE & TRANSFORMS */
 
     /**
-     * Resize our MeshTransformedBase
+     * Resize our {@link MeshTransformedBaseClass}
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect: DOMElementBoundingRect | null = null) {
       if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect)
 
-      // @ts-ignore
       super.resize(boundingRect)
     }
 
@@ -386,7 +389,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
 
     /**
      * Assign a callback function to _onReEnterViewCallback
-     * @param callback - callback to run when {@link MeshTransformedBase} is reentering the view frustum
+     * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
      * @returns - our Mesh
      */
     onReEnterView(callback: () => void): MeshTransformedBase {
@@ -399,7 +402,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
 
     /**
      * Assign a callback function to _onLeaveViewCallback
-     * @param callback - callback to run when {@link MeshTransformedBase} is leaving the view frustum
+     * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
      * @returns - our Mesh
      */
     onLeaveView(callback: () => void): MeshTransformedBase {
@@ -426,7 +429,6 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
         this.domFrustum.shouldUpdate = false
       }
 
-      // @ts-ignore
       super.onBeforeRenderPass()
     }
 
@@ -448,7 +450,7 @@ function MeshTransformedMixin<TBase extends ReturnType<typeof MeshBaseMixin>>(
         this.geometry.render(pass)
       }
     }
-  }
+  } /* as MixinConstructor<MeshTransformedBaseClass & InstanceType<TBase>>*/
 }
 
 export default MeshTransformedMixin

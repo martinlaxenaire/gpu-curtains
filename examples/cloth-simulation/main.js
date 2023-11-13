@@ -531,19 +531,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   console.log(computeForcesPass.material, computeUpdatePass.material, computeNormalPass.material)
 
-  // adjust various dispatch sizes on render
-  // computeForcesPass.onRender(() => {
-  //   computeBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]
-  // })
-  //
-  // computeUpdatePass.onRender(() => {
-  //   computeBinding.dispatchSize = [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)]
-  // })
-  //
-  // computeNormalPass.onRender(() => {
-  //   computeBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]
-  // })
-
   // now use renderer onBeforeRender callback to render our compute passes
   // nb sims compute per render impacts the speed at which the simulation runs
   const nbSimsComputePerRender = Math.min(50, 100 / simulationSpeed)

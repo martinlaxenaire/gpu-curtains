@@ -1,6 +1,6 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../../core/renderers/utils'
-import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
+import MeshTransformedMixin, { MeshTransformedBaseClass } from '../../core/meshes/MeshTransformedMixin'
 import MeshBaseMixin, { MeshBaseParams, MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin'
 import { throwWarning } from '../../utils/utils'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
@@ -39,7 +39,7 @@ const defaultDOMMeshParams = {
  * @extends MeshTransformedMixin
  * @mixes {MeshBaseMixin}
  */
-export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
+export class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
   /** Whether to automatically create a {@link Texture} for all [images]{@link HTMLImageElement}, [videos]{@link HTMLVideoElement} and [canvases]{@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
   autoloadSources: boolean
   /** Whether all the sources have been successfully loaded */

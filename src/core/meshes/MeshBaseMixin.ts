@@ -11,6 +11,8 @@ import { MeshType } from '../renderers/GPURenderer'
 import { Material } from '../materials/Material'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
+//import { TransformedObject3D } from './MeshTransformedMixin'
+import { Object3D } from '../objects3D/Object3D'
 
 let meshIndex = 0
 
@@ -70,13 +72,6 @@ const defaultMeshBaseParams = {
   renderOrder: 0,
   texturesOptions: {},
 } as MeshBaseParams
-
-// To get started, we need a type which we'll use to extend
-// other classes from. The main responsibility is to declare
-// that the type being passed in is a class.
-// We use a generic version which can apply a constraint on
-// the class which this mixin is applied to
-export type MixinConstructor<T = {}> = new (...args: any[]) => T
 
 // based on https://stackoverflow.com/a/75673107/13354068
 // we declare first a class, and then the mixin with a return type
@@ -302,6 +297,19 @@ export declare class MeshBaseClass {
    */
   destroy(): void
 }
+
+// To get started, we need a type which we'll use to extend
+// other classes from. The main responsibility is to declare
+// that the type being passed in is a class.
+// We use a generic version which can apply a constraint on
+// the class which this mixin is applied to
+export type MixinConstructor<T = {}> = new (...args: any[]) => T
+// declare type EmptyClass = Record<never, unknown>
+//
+// export type MeshBaseMixinParam = TransformedObject3D | EmptyClass
+// export type MeshBaseMixinReturn<T extends MeshBaseMixinParam> = T extends Object3D
+//   ? MixinConstructor<MeshBaseClass> & T
+//   : MixinConstructor<MeshBaseClass>
 
 /**
  * MeshBase Mixin:
