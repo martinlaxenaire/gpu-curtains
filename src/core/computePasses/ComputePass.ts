@@ -195,14 +195,6 @@ export class ComputePass {
   }
 
   /**
-   * Get our {@link ComputeMaterial} works
-   * @readonly
-   */
-  get works(): ComputeMaterial['works'] {
-    return this.material?.works
-  }
-
-  /**
    * Called from the renderer, useful to trigger an after resize callback.
    */
   resize() {

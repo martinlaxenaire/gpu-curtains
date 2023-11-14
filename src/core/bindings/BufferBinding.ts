@@ -1,4 +1,4 @@
-import { Binding, BindingParams } from './Binding'
+import { Binding, BindingParams, BufferBindingMemoryAccessType } from './Binding'
 import {
   BufferLayout,
   getBindGroupLayoutBindingType,
@@ -39,6 +39,8 @@ export interface BufferBindingInput extends InputBase {
 export interface BufferBindingParams extends BindingParams {
   /** Whether this {@link BufferBinding} should use structured WGSL variables */
   useStruct?: boolean
+  /** {@link BufferBinding} memory access types (read only or read/write) */
+  access?: BufferBindingMemoryAccessType
   /** Object containing one or multiple [input bindings]{@link Input} */
   bindings?: Record<string, Input>
 }
@@ -118,6 +120,7 @@ export class BufferBinding extends Binding {
     bindIndex = 0,
     visibility,
     useStruct = true,
+    access = 'read',
     bindings = {},
   }: BufferBindingParams) {
     bindingType = bindingType ?? 'uniform'
@@ -127,6 +130,7 @@ export class BufferBinding extends Binding {
     this.options = {
       ...this.options,
       useStruct,
+      access,
       bindings,
     }
 
@@ -150,7 +154,7 @@ export class BufferBinding extends Binding {
   get resourceLayout(): { buffer: GPUBufferBindingLayout } {
     return {
       buffer: {
-        type: getBindGroupLayoutBindingType(this.bindingType),
+        type: getBindGroupLayoutBindingType(this),
       },
     }
   }
@@ -324,7 +328,7 @@ export class BufferBinding extends Binding {
           .join(',\n\t')}
 };`
 
-        const varType = getBindingWGSLVarType(this.bindingType)
+        const varType = getBindingWGSLVarType(this)
         this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`]
       } else {
         this.wgslStructFragment = `struct ${toKebabCase(this.label)} {\n\t${this.bindingElements
@@ -332,13 +336,13 @@ export class BufferBinding extends Binding {
           .join(',\n\t')}
 };`
 
-        const varType = getBindingWGSLVarType(this.bindingType)
+        const varType = getBindingWGSLVarType(this)
         this.wgslGroupFragment = [`${varType} ${this.name}: ${toKebabCase(this.label)};`]
       }
     } else {
       this.wgslStructFragment = ''
       this.wgslGroupFragment = this.bindingElements.map((binding) => {
-        const varType = getBindingWGSLVarType(this.bindingType)
+        const varType = getBindingWGSLVarType(this)
         return `${varType} ${binding.name}: ${binding.type};`
       })
     }

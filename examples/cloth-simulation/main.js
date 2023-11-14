@@ -460,9 +460,10 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-      works: {
+      storages: {
         clothVertex: {
           label: 'ClothVertex',
+          access: 'read_write', // we want a readable AND writable buffer!
           bindings: {
             position: {
               type: 'array<vec4f>',

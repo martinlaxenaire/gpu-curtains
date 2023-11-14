@@ -9,6 +9,7 @@ import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
 import { MaterialShadersType } from './Materials'
 import { VertexBufferAttribute } from './Geometries'
+import { BufferBindingMemoryAccessType } from '../core/bindings/Binding'
 
 // INPUTS
 
@@ -47,6 +48,8 @@ export interface InputBindingsParams {
   useStruct?: boolean
   /** {@link Binding} variables shaders visibility */
   visibility?: MaterialShadersType
+  /** {@link BufferBinding} memory access type (read only or read/write) */
+  access?: BufferBindingMemoryAccessType
   /** Object containing one or multiple [input bindings]{@link Input} */
   bindings: Record<string, Input>
 }
@@ -73,7 +76,7 @@ export type BindGroupBindingElement = BindGroupBufferBindingElement | BindGroupT
  */
 export type AllowedBindGroups = BindGroup | TextureBindGroup
 
-//export type AllowedBindingsTypes = 'uniforms' | 'storages' | 'works'
+//export type AllowedBindingsTypes = 'uniforms' | 'storages'
 //export type BindGroupInputs = Record<AllowedBindingsTypes, InputBindings>
 /**
  * An object defining all possible [bind group]{@link AllowedBindGroups} inputs
@@ -81,10 +84,8 @@ export type AllowedBindGroups = BindGroup | TextureBindGroup
 export interface BindGroupInputs {
   /** uniforms input to pass to a {@link BindGroup} */
   uniforms?: InputBindings
-  /** read storages input to pass to a {@link BindGroup} */
+  /** read only or read/write storages input to pass to a {@link BindGroup} */
   storages?: InputBindings
-  /** read/write storages input to pass to a {@link BindGroup} */
-  works?: InputBindings
 }
 
 /**

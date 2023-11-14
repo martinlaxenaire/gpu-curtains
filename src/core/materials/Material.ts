@@ -33,10 +33,8 @@ export class Material {
 
   /** Object containing all uniforms inputs handled by this {@link Material} */
   uniforms: Record<string, Record<string, BufferBindingInput>>
-  /** Object containing all readonly storages inputs handled by this {@link Material} */
+  /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingInput>>
-  /** Object containing all read/write storages inputs handled by this {@link Material} */
-  works: Record<string, Record<string, BufferBindingInput>>
 
   /** Array of [bind groups]{@link BindGroup} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
   inputsBindGroups: BindGroup[]
@@ -186,7 +184,6 @@ export class Material {
   setBindGroups() {
     this.uniforms = {}
     this.storages = {}
-    this.works = {}
 
     this.inputsBindGroups = []
     this.inputsBindings = []
@@ -223,8 +220,6 @@ export class Material {
           ...this.storages,
           [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).bindings,
         }
-      if (inputBinding.bindingType === 'storageWrite')
-        this.works = { ...this.works, [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).bindings }
 
       // inputBinding.isActive =
       //   (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(inputBinding.name + '.') !== -1) ||

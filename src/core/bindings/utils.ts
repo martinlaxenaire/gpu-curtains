@@ -1,5 +1,5 @@
 import { BindingType } from './Binding'
-import { BufferBindingElement } from './BufferBinding'
+import { BufferBinding, BufferBindingElement } from './BufferBinding'
 import { TextureBinding } from './TextureBinding'
 
 /** Defines a typed array */
@@ -118,17 +118,15 @@ export const getBufferArrayStride = (bindingElement: BufferBindingElement): numb
 }
 
 /**
- * Get the correct WGSL variable declaration code fragment based on the given [binding type]{@link BindingType}
- * @param bindingType - [binding type]{@link BindingType} to use
+ * Get the correct WGSL variable declaration code fragment based on the given [buffer binding]{@link BufferBinding}
+ * @param binding - [buffer binding]{@link BufferBinding} to use
  * @returns - WGSL variable declaration code fragment
  */
-export const getBindingWGSLVarType = (bindingType: BindingType): string => {
+export const getBindingWGSLVarType = (binding: BufferBinding): string => {
   return (() => {
-    switch (bindingType) {
+    switch (binding.bindingType) {
       case 'storage':
-        return 'var<storage, read>'
-      case 'storageWrite':
-        return 'var<storage, read_write>'
+        return `var<${binding.bindingType}, ${binding.options.access}>`
       case 'uniform':
       default:
         return 'var<uniform>'
@@ -157,21 +155,17 @@ export const getTextureBindingWGSLVarType = (binding: TextureBinding): string =>
 
 /**
  * Get the correct [bind group layout]{@link GPUBindGroupLayout} resource type based on the given [binding type]{@link BindingType}
- * @param bindingType - [binding type]{@link BindingType} to use
+ * @param binding - [buffer binding]{@link BufferBinding} to use
  * @returns - [bind group layout]{@link GPUBindGroupLayout} resource type
  */
-export const getBindGroupLayoutBindingType = (bindingType: BindingType): GPUBufferBindingType => {
-  return (() => {
-    switch (bindingType) {
-      case 'storage':
-        return 'read-only-storage'
-      case 'storageWrite':
-        return 'storage'
-      case 'uniform':
-      default:
-        return 'uniform'
-    }
-  })()
+export const getBindGroupLayoutBindingType = (binding: BufferBinding): GPUBufferBindingType => {
+  if (binding.bindingType === 'storage' && binding.options.access === 'read_write') {
+    return 'storage'
+  } else if (binding.bindingType === 'storage') {
+    return 'read-only-storage'
+  } else {
+    return 'uniform'
+  }
 }
 
 /**

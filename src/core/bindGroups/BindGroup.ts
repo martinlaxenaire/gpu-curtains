@@ -142,11 +142,12 @@ export class BindGroup {
           name: inputKey,
           bindingType,
           useStruct: true, // by default
+          visibility: binding.access === 'read_write' ? 'compute' : binding.visibility,
+          access: binding.access ?? 'read', // read by default
           bindings: binding.bindings,
-          visibility: bindingType === 'storageWrite' ? 'compute' : binding.visibility,
         }
 
-        const BufferBindingConstructor = bindingType === 'storageWrite' ? WritableBufferBinding : BufferBinding
+        const BufferBindingConstructor = bindingParams.access === 'read_write' ? WritableBufferBinding : BufferBinding
 
         return binding.useStruct !== false
           ? new BufferBindingConstructor(bindingParams as WritableBufferBindingParams)
@@ -169,7 +170,6 @@ export class BindGroup {
     this.addBindings([
       ...this.createInputBindings('uniform', this.options.inputs.uniforms),
       ...this.createInputBindings('storage', this.options.inputs.storages),
-      ...this.createInputBindings('storageWrite', this.options.inputs.works),
     ])
   }
 

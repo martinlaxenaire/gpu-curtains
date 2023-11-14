@@ -332,13 +332,11 @@ var GPUCurtains = (() => {
       }
     })();
   };
-  var getBindingWGSLVarType = (bindingType) => {
+  var getBindingWGSLVarType = (binding) => {
     return (() => {
-      switch (bindingType) {
+      switch (binding.bindingType) {
         case "storage":
-          return "var<storage, read>";
-        case "storageWrite":
-          return "var<storage, read_write>";
+          return `var<${binding.bindingType}, ${binding.options.access}>`;
         case "uniform":
         default:
           return "var<uniform>";
@@ -358,18 +356,14 @@ var GPUCurtains = (() => {
       }
     })();
   };
-  var getBindGroupLayoutBindingType = (bindingType) => {
-    return (() => {
-      switch (bindingType) {
-        case "storage":
-          return "read-only-storage";
-        case "storageWrite":
-          return "storage";
-        case "uniform":
-        default:
-          return "uniform";
-      }
-    })();
+  var getBindGroupLayoutBindingType = (binding) => {
+    if (binding.bindingType === "storage" && binding.options.access === "read_write") {
+      return "storage";
+    } else if (binding.bindingType === "storage") {
+      return "read-only-storage";
+    } else {
+      return "uniform";
+    }
   };
   var getBindGroupLayoutTextureBindingType = (binding) => {
     return (() => {
@@ -1505,6 +1499,7 @@ var GPUCurtains = (() => {
       bindIndex = 0,
       visibility,
       useStruct = true,
+      access = "read",
       bindings = {}
     }) {
       bindingType = bindingType ?? "uniform";
@@ -1512,6 +1507,7 @@ var GPUCurtains = (() => {
       this.options = {
         ...this.options,
         useStruct,
+        access,
         bindings
       };
       this.size = 0;
@@ -1530,7 +1526,7 @@ var GPUCurtains = (() => {
     get resourceLayout() {
       return {
         buffer: {
-          type: getBindGroupLayoutBindingType(this.bindingType)
+          type: getBindGroupLayoutBindingType(this)
         }
       };
     }
@@ -1666,19 +1662,19 @@ var GPUCurtains = (() => {
           this.wgslStructFragment = `struct ${kebabCaseLabel} {
 	${this.bindingElements.map((binding) => binding.name + ": " + binding.type.replace("array", "").replace("<", "").replace(">", "")).join(",\n	")}
 };`;
-          const varType = getBindingWGSLVarType(this.bindingType);
+          const varType = getBindingWGSLVarType(this);
           this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`];
         } else {
           this.wgslStructFragment = `struct ${toKebabCase(this.label)} {
 	${this.bindingElements.map((binding) => binding.name + ": " + binding.type).join(",\n	")}
 };`;
-          const varType = getBindingWGSLVarType(this.bindingType);
+          const varType = getBindingWGSLVarType(this);
           this.wgslGroupFragment = [`${varType} ${this.name}: ${toKebabCase(this.label)};`];
         }
       } else {
         this.wgslStructFragment = "";
         this.wgslGroupFragment = this.bindingElements.map((binding) => {
-          const varType = getBindingWGSLVarType(this.bindingType);
+          const varType = getBindingWGSLVarType(this);
           return `${varType} ${binding.name}: ${binding.type};`;
         });
       }
@@ -1744,11 +1740,12 @@ var GPUCurtains = (() => {
       useStruct = true,
       bindings = {},
       visibility,
+      access = "read_write",
       shouldCopyResult = false
     }) {
-      bindingType = "storageWrite";
+      bindingType = "storage";
       visibility = "compute";
-      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility });
+      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility, access });
       this.options = {
         ...this.options,
         shouldCopyResult
@@ -1826,10 +1823,12 @@ var GPUCurtains = (() => {
             bindingType,
             useStruct: true,
             // by default
-            bindings: binding.bindings,
-            visibility: bindingType === "storageWrite" ? "compute" : binding.visibility
+            visibility: binding.access === "read_write" ? "compute" : binding.visibility,
+            access: binding.access ?? "read",
+            // read by default
+            bindings: binding.bindings
           };
-          const BufferBindingConstructor = bindingType === "storageWrite" ? WritableBufferBinding : BufferBinding;
+          const BufferBindingConstructor = bindingParams.access === "read_write" ? WritableBufferBinding : BufferBinding;
           return binding.useStruct !== false ? new BufferBindingConstructor(bindingParams) : Object.keys(binding.bindings).map((bindingKey) => {
             bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey);
             bindingParams.name = inputKey + bindingKey;
@@ -1846,8 +1845,7 @@ var GPUCurtains = (() => {
     setInputBindings() {
       this.addBindings([
         ...this.createInputBindings("uniform", this.options.inputs.uniforms),
-        ...this.createInputBindings("storage", this.options.inputs.storages),
-        ...this.createInputBindings("storageWrite", this.options.inputs.works)
+        ...this.createInputBindings("storage", this.options.inputs.storages)
       ]);
     }
     /**
@@ -3293,7 +3291,6 @@ var GPUCurtains = (() => {
     setBindGroups() {
       this.uniforms = {};
       this.storages = {};
-      this.works = {};
       this.inputsBindGroups = [];
       this.inputsBindings = [];
       if (this.options.inputs) {
@@ -3325,8 +3322,6 @@ var GPUCurtains = (() => {
             ...this.storages,
             [inputBinding.name]: inputBinding.bindings
           };
-        if (inputBinding.bindingType === "storageWrite")
-          this.works = { ...this.works, [inputBinding.name]: inputBinding.bindings };
         this.inputsBindings.push(inputBinding);
       });
     }
@@ -3860,13 +3855,6 @@ var GPUCurtains = (() => {
      */
     get storages() {
       return this.material?.storages;
-    }
-    /**
-     * Get our {@link ComputeMaterial} works
-     * @readonly
-     */
-    get works() {
-      return this.material?.works;
     }
     /**
      * Called from the renderer, useful to trigger an after resize callback.
