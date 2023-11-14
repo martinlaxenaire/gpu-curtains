@@ -4724,6 +4724,8 @@ var GPUCurtains = (() => {
   var defaultRenderTextureParams = {
     label: "RenderTexture",
     name: "renderTexture",
+    usage: "texture",
+    access: "write",
     fromTexture: null
   };
   var RenderTexture = class {
@@ -4738,20 +4740,25 @@ var GPUCurtains = (() => {
       this.type = "RenderTexture";
       this.renderer = renderer;
       this.options = { ...defaultRenderTextureParams, ...parameters };
+      if (!this.options.format) {
+        this.options.format = this.renderer.preferredFormat;
+      }
       this.shouldUpdateBindGroup = false;
-      this.setSourceSize();
+      this.setSize(this.options.size);
       this.setBindings();
       this.createTexture();
     }
     /**
      * Set the [size]{@link RenderTexture#size}
      */
-    setSourceSize() {
-      const rendererBoundingRect = this.renderer.pixelRatioBoundingRect;
-      this.size = {
-        width: rendererBoundingRect.width,
-        height: rendererBoundingRect.height
-      };
+    setSize(size = null) {
+      if (!size) {
+        size = {
+          width: this.renderer.pixelRatioBoundingRect.width,
+          height: this.renderer.pixelRatioBoundingRect.height
+        };
+      }
+      this.size = size;
     }
     /**
      * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
@@ -4766,9 +4773,9 @@ var GPUCurtains = (() => {
       this.texture?.destroy();
       this.texture = this.renderer.createTexture({
         label: this.options.label,
-        format: this.renderer.preferredFormat,
+        format: this.options.format,
         size: [this.size.width, this.size.height],
-        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
+        usage: this.options.usage === "texture" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
         // TODO let user chose?
       });
       this.textureBinding.resource = this.texture;
@@ -4782,7 +4789,7 @@ var GPUCurtains = (() => {
           label: this.options.label + ": " + this.options.name + " render texture",
           name: this.options.name,
           texture: this.texture,
-          bindingType: "texture"
+          bindingType: this.options.usage
         })
       ];
     }
@@ -4797,7 +4804,7 @@ var GPUCurtains = (() => {
      * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
      */
     resize() {
-      this.setSourceSize();
+      this.setSize();
       this.createTexture();
       this.shouldUpdateBindGroup = true;
     }

@@ -157,7 +157,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
       storages: {
         particles: {
-          //name: 'particles',
           label: 'Particle',
           access: 'read_write', // we want a readable AND writable buffer!
           bindings: {

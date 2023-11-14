@@ -3,15 +3,15 @@ import { MaterialShadersType } from '../../types/Materials'
 import { TextureBinding } from './TextureBinding'
 import { SamplerBinding } from './SamplerBinding'
 
-/**
- * Defines all kind of binding types
- */
-export type BindingType = 'uniform' | 'storage' | 'texture' | 'externalTexture' | 'storageTexture' | 'sampler'
+/** Defines all kind of texture binding types */
+export type TextureBindingType = 'texture' | 'externalTexture' | 'storageTexture'
+/** Defines all kind of binding types  */
+export type BindingType = 'uniform' | 'storage' | TextureBindingType | 'sampler'
 
 // see https://www.w3.org/TR/WGSL/#memory-access-mode
-/** Defines buffer bindings memory access types (read only or read/write) */
+/** Defines buffer binding memory access types (read only or read/write) */
 export type BufferBindingMemoryAccessType = 'read' | 'read_write'
-/** Defines texture buffer bindings memory access types (read only, write only or read/write) */
+/** Defines texture binding memory access types (read only, write only or read/write) */
 export type BindingMemoryAccessType = BufferBindingMemoryAccessType | 'write'
 
 /**

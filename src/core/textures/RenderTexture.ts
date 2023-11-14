@@ -3,6 +3,9 @@ import { TextureBinding, TextureBindingParams } from '../bindings/TextureBinding
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RectSize } from '../DOM/DOMElement'
+import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
+
+export type RenderTextureBindingType = Exclude<TextureBindingType, 'externalTexture'>
 
 /**
  * Base parameters used to create a {@link RenderTexture}
@@ -12,6 +15,15 @@ export interface RenderTextureBaseParams {
   label?: string
   /** Name of the {@link RenderTexture} to use in the [binding]{@link TextureBinding} */
   name?: string
+
+  /** Optional size of the [texture]{@link RenderTexture#texture} */
+  size?: RectSize
+  /** Whether to use this [texture]{@link RenderTexture} as a regular or storage texture */
+  usage?: RenderTextureBindingType
+  /** Optional format of the [texture]{@link RenderTexture#texture}, mainly used for storage textures */
+  format?: GPUTextureFormat
+  /** Optional texture binding memory access type, mainly used for storage textures */
+  access?: BindingMemoryAccessType
 }
 
 /**
@@ -26,6 +38,8 @@ export interface RenderTextureParams extends RenderTextureBaseParams {
 const defaultRenderTextureParams: RenderTextureParams = {
   label: 'RenderTexture',
   name: 'renderTexture',
+  usage: 'texture',
+  access: 'write',
   fromTexture: null,
 }
 
@@ -71,10 +85,14 @@ export class RenderTexture {
 
     this.options = { ...defaultRenderTextureParams, ...parameters }
 
+    if (!this.options.format) {
+      this.options.format = this.renderer.preferredFormat
+    }
+
     this.shouldUpdateBindGroup = false
 
     // sizes
-    this.setSourceSize()
+    this.setSize(this.options.size)
 
     // bindings
     this.setBindings()
@@ -85,14 +103,17 @@ export class RenderTexture {
 
   /**
    * Set the [size]{@link RenderTexture#size}
+   * @param size - [size]{@link RectSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height if null
    */
-  setSourceSize() {
-    const rendererBoundingRect = this.renderer.pixelRatioBoundingRect
-
-    this.size = {
-      width: rendererBoundingRect.width,
-      height: rendererBoundingRect.height,
+  setSize(size: RectSize | null = null) {
+    if (!size) {
+      size = {
+        width: this.renderer.pixelRatioBoundingRect.width,
+        height: this.renderer.pixelRatioBoundingRect.height,
+      }
     }
+
+    this.size = size
   }
 
   /**
@@ -112,13 +133,15 @@ export class RenderTexture {
 
     this.texture = this.renderer.createTexture({
       label: this.options.label,
-      format: this.renderer.preferredFormat,
+      format: this.options.format,
       size: [this.size.width, this.size.height],
       usage:
-        GPUTextureUsage.TEXTURE_BINDING |
-        GPUTextureUsage.COPY_SRC |
-        GPUTextureUsage.COPY_DST |
-        GPUTextureUsage.RENDER_ATTACHMENT, // TODO let user chose?
+        this.options.usage === 'texture'
+          ? GPUTextureUsage.TEXTURE_BINDING |
+            GPUTextureUsage.COPY_SRC |
+            GPUTextureUsage.COPY_DST |
+            GPUTextureUsage.RENDER_ATTACHMENT
+          : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST, // TODO let user chose?
     })
 
     // update texture binding
@@ -134,7 +157,7 @@ export class RenderTexture {
         label: this.options.label + ': ' + this.options.name + ' render texture',
         name: this.options.name,
         texture: this.texture,
-        bindingType: 'texture',
+        bindingType: this.options.usage,
       } as TextureBindingParams),
     ]
   }
@@ -149,9 +172,10 @@ export class RenderTexture {
 
   /**
    * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
+   * @param size - the optional new [size]{@link RectSize} to set
    */
-  resize() {
-    this.setSourceSize()
+  resize(size: RectSize | null = null) {
+    this.setSize(size)
 
     this.createTexture()
     this.shouldUpdateBindGroup = true
