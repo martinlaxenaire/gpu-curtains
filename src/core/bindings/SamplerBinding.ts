@@ -1,29 +1,31 @@
-import { Bindings, BindingsParams } from './Bindings'
+import { Binding, BindingParams } from './Binding'
 
-/** Defines a {@link SamplerBindings} [resource]{@link SamplerBindings#resource} */
+/** Defines a {@link SamplerBinding} [resource]{@link SamplerBinding#resource} */
 export type SamplerBindingResource = GPUSampler | null
 
 /**
- * An object defining all possible {@link SamplerBindings} class instancing parameters
+ * An object defining all possible {@link SamplerBinding} class instancing parameters
  */
-export interface SamplerBindingsParams extends BindingsParams {
-  /** {@link SamplerBindings} [bind group]{@link GPUBindGroup} resource */
+export interface SamplerBindingParams extends BindingParams {
+  /** {@link SamplerBinding} [bind group]{@link GPUBindGroup} resource */
   sampler: SamplerBindingResource
 }
 
 /**
- * SamplerBindings class:
+ * SamplerBinding class:
  * Used to handle GPUSampler bindings
- * @extends Bindings
+ * @extends Binding
  */
-export class SamplerBindings extends Bindings {
-  /** Our {@link SamplerBindings} resource, i.e. a {@link GPUSampler} */
+export class SamplerBinding extends Binding {
+  /** Our {@link SamplerBinding} resource, i.e. a {@link GPUSampler} */
   sampler: SamplerBindingResource
-  /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link SamplerBindings} */
+  /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link SamplerBinding} */
   wgslGroupFragment: string[]
+  /** Options used to create this {@link SamplerBinding} */
+  options: SamplerBindingParams
 
   /**
-   * SamplerBindings constructor
+   * SamplerBinding constructor
    * @param parameters - parameters used to create our SamplerBindings
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
@@ -39,10 +41,15 @@ export class SamplerBindings extends Bindings {
     bindIndex = 0,
     visibility,
     sampler,
-  }: SamplerBindingsParams) {
+  }: SamplerBindingParams) {
     bindingType = bindingType ?? 'sampler'
 
     super({ label, name, bindIndex, bindingType, visibility })
+
+    this.options = {
+      ...this.options,
+      sampler,
+    }
 
     this.resource = sampler // should be a sampler
 

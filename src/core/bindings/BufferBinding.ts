@@ -1,4 +1,4 @@
-import { Bindings, BindingsParams } from './Bindings'
+import { Binding, BindingParams } from './Binding'
 import {
   BufferLayout,
   getBindGroupLayoutBindingType,
@@ -16,9 +16,9 @@ import { Quat } from '../../math/Quat'
 import { Input, InputBase, InputValue } from '../../types/BindGroups'
 
 /**
- * Defines a {@link BufferBindings} input object that can set a value and run a callback function when this happens
+ * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
  */
-export interface BufferBindingsInput extends InputBase {
+export interface BufferBindingInput extends InputBase {
   /** Original [input value]{@link InputValue} */
   _value: InputValue
 
@@ -29,15 +29,15 @@ export interface BufferBindingsInput extends InputBase {
   get value(): InputValue
   set value(value: InputValue)
 
-  /** Whether the [input value]{@link InputValue} has changed and we should update the [buffer binding array]{@link BufferBindings#value} */
+  /** Whether the [input value]{@link InputValue} has changed and we should update the [buffer binding array]{@link BufferBinding#value} */
   shouldUpdate: boolean
 }
 
 /**
- * Parameters used to create a {@link BufferBindings}
+ * Parameters used to create a {@link BufferBinding}
  */
-export interface BufferBindingsParams extends BindingsParams {
-  /** Whether this {@link BufferBindings} should use structured WGSL variables */
+export interface BufferBindingParams extends BindingParams {
+  /** Whether this {@link BufferBinding} should use structured WGSL variables */
   useStruct?: boolean
   /** Object containing one or multiple [input bindings]{@link Input} */
   bindings?: Record<string, Input>
@@ -45,38 +45,38 @@ export interface BufferBindingsParams extends BindingsParams {
 
 // TODO we should correctly use types like GPUSize64 / GPUIndex32
 /**
- * Defines a {@link BufferBindingsElement}
+ * Defines a {@link BufferBindingElement}
  */
-export interface BufferBindingsElement {
-  /** The name of the {@link BufferBindingsElement} */
+export interface BufferBindingElement {
+  /** The name of the {@link BufferBindingElement} */
   name: string
-  /** The WGSL variable type of the {@link BufferBindingsElement} */
+  /** The WGSL variable type of the {@link BufferBindingElement} */
   type: WGSLVariableType
-  /** The key of the {@link BufferBindingsElement} */
+  /** The key of the {@link BufferBindingElement} */
   key: string
-  /** Callback used to fill the [buffer binding array]{@link BufferBindings#value} with the [array values]{@link BufferBindingsElement#array} */
+  /** Callback used to fill the [buffer binding array]{@link BufferBinding#value} with the [array values]{@link BufferBindingElement#array} */
   update: (value: InputValue) => void
-  /** [Buffer layout]{@link BufferLayout} used to fill the [buffer binding array]{@link BufferBindings#value} at the right offsets */
+  /** [Buffer layout]{@link BufferLayout} used to fill the [buffer binding array]{@link BufferBinding#value} at the right offsets */
   bufferLayout: BufferLayout
-  /** Start offset at which we should fill the [buffer binding array]{@link BufferBindings#value} */
+  /** Start offset at which we should fill the [buffer binding array]{@link BufferBinding#value} */
   startOffset: number
-  /** End offset at which we should fill the [buffer binding array]{@link BufferBindings#value} */
+  /** End offset at which we should fill the [buffer binding array]{@link BufferBinding#value} */
   endOffset: number
-  /** Array containing the {@link BufferBindingsElement} values */
+  /** Array containing the {@link BufferBindingElement} values */
   array?: TypedArray
 }
 
 /**
- * BufferBindings class:
+ * BufferBinding class:
  * Used to format inputs bindings and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
- * @extends Bindings
+ * @extends Binding
  */
-export class BufferBindings extends Bindings {
-  /** Flag to indicate whether these {@link BufferBindings} should use structured data */
+export class BufferBinding extends Binding {
+  /** Flag to indicate whether these {@link BufferBinding} should use structured data */
   useStruct: boolean
-  /** All the {@link BufferBindings} data inputs */
-  bindings: Record<string, BufferBindingsInput>
+  /** All the {@link BufferBinding} data inputs */
+  bindings: Record<string, BufferBindingInput>
 
   /** Number of rows (each row has a byteLength of 16) used to build our padded {@link value} array */
   alignmentRows: number
@@ -85,21 +85,23 @@ export class BufferBindings extends Bindings {
   /** Flag to indicate whether one of the {@link bindings} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
   shouldUpdate: boolean
   /** An array describing how each corresponding {@link bindings} should be inserted into our {@link value} array
-   * @type {BufferBindingsElement[]} */
-  bindingElements: BufferBindingsElement[]
+   * @type {BufferBindingElement[]} */
+  bindingElements: BufferBindingElement[]
 
   /** The padded value array that will be sent to the GPUBuffer */
   value: Float32Array
   /** The GPUBuffer */
   buffer: GPUBuffer | null
 
-  /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBindings} */
+  /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
   wgslStructFragment: string
-  /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link BufferBindings} */
+  /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link BufferBinding} */
   wgslGroupFragment: string[]
+  /** Options used to create this {@link BufferBinding} */
+  options: BufferBindingParams
 
   /**
-   * BufferBindings constructor
+   * BufferBinding constructor
    * @param parameters - parameters used to create our BufferBindings
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
@@ -117,10 +119,16 @@ export class BufferBindings extends Bindings {
     visibility,
     useStruct = true,
     bindings = {},
-  }: BufferBindingsParams) {
+  }: BufferBindingParams) {
     bindingType = bindingType ?? 'uniform'
 
     super({ label, name, bindIndex, bindingType, visibility })
+
+    this.options = {
+      ...this.options,
+      useStruct,
+      bindings,
+    }
 
     this.size = 0
 
@@ -160,7 +168,7 @@ export class BufferBindings extends Bindings {
    */
   setBindings(bindings: Record<string, Input>) {
     Object.keys(bindings).forEach((bindingKey) => {
-      const binding = {} as BufferBindingsInput
+      const binding = {} as BufferBindingInput
 
       for (const key in bindings[bindingKey]) {
         if (key !== 'value') {
@@ -215,7 +223,7 @@ export class BufferBindings extends Bindings {
         bufferLayout,
         startOffset: 0, // will be changed later
         endOffset: 0, // will be changed later
-      } as BufferBindingsElement)
+      } as BufferBindingElement)
     })
 
     this.alignmentRows = 0

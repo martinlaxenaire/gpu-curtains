@@ -1,5 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { TextureBindings, TextureBindingsParams } from '../bindings/TextureBindings'
+import { TextureBinding, TextureBindingParams } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RectSize } from '../DOM/DOMElement'
@@ -10,7 +10,7 @@ import { RectSize } from '../DOM/DOMElement'
 export interface RenderTextureBaseParams {
   /** The label of the {@link RenderTexture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link RenderTexture} to use in the [binding]{@link TextureBindings} */
+  /** Name of the {@link RenderTexture} to use in the [binding]{@link TextureBinding} */
   name?: string
 }
 
@@ -24,8 +24,8 @@ export interface RenderTextureParams extends RenderTextureBaseParams {
 
 /** @const - default {@link RenderTexture} parameters */
 const defaultRenderTextureParams: RenderTextureParams = {
-  label: 'Texture',
-  name: 'texture',
+  label: 'RenderTexture',
+  name: 'renderTexture',
   fromTexture: null,
 }
 
@@ -49,9 +49,9 @@ export class RenderTexture {
   /** Options used to create this {@link RenderTexture} */
   options: RenderTextureParams
 
-  /** Array of [bindings]{@link Bindings} that will actually only hold one [texture binding]{@link TextureBindings} */
+  /** Array of [bindings]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
   bindings: BindGroupBindingElement[]
-  /** Whether to update the [bind group]{@link BindGroup} to which the [texture binding]{@link TextureBindings} belongs */
+  /** Whether to update the [bind group]{@link BindGroup} to which the [texture binding]{@link TextureBinding} belongs */
   shouldUpdateBindGroup: boolean
 
   /**
@@ -96,7 +96,7 @@ export class RenderTexture {
   }
 
   /**
-   * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBindings#resource}
+   * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
    */
   createTexture() {
     if (this.options.fromTexture) {
@@ -130,21 +130,21 @@ export class RenderTexture {
    */
   setBindings() {
     this.bindings = [
-      new TextureBindings({
-        label: this.options.label + ': ' + this.options.name + ' texture',
+      new TextureBinding({
+        label: this.options.label + ': ' + this.options.name + ' render texture',
         name: this.options.name,
         texture: this.texture,
         bindingType: 'texture',
-      } as TextureBindingsParams),
+      } as TextureBindingParams),
     ]
   }
 
   /**
-   * Get our [texture binding]{@link TextureBindings}
+   * Get our [texture binding]{@link TextureBinding}
    * @readonly
    */
-  get textureBinding(): TextureBindings {
-    return this.bindings[0] as TextureBindings
+  get textureBinding(): TextureBinding {
+    return this.bindings[0] as TextureBinding
   }
 
   /**

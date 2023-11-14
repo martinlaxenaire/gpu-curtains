@@ -27,7 +27,7 @@ export interface MeshTextureParams {
 export interface TextureBaseParams {
   /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link Texture} to use in the [bindings]{@link Bindings} */
+  /** Name of the {@link Texture} to use in the [bindings]{@link Binding} */
   name?: string
 }
 

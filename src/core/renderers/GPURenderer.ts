@@ -15,6 +15,7 @@ import { Sampler } from '../samplers/Sampler'
 import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
+import { TasksQueueManager } from '../../utils/TasksQueueManager'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -107,6 +108,12 @@ export class GPURenderer {
   /** Document [body]{@link HTMLBodyElement} [DOM Element]{@link DOMElement} used to trigger resize when the document body size changes */
   documentBody: DOMElement
 
+  // TODO
+  onBeforeCommandEncoderCreation: TasksQueueManager
+  onBeforeRenderScene: TasksQueueManager
+  onAfterRenderScene: TasksQueueManager
+  onAfterCommandEncoderSubmission: TasksQueueManager
+
   // callbacks / events
   /** function assigned to the [onBeforeRender]{@link GPURenderer#onBeforeRender} callback */
   _onBeforeRenderCallback = (commandEncoder: GPUCommandEncoder) => {
@@ -150,6 +157,7 @@ export class GPURenderer {
       }, 0)
     }
 
+    this.setTasksQueues()
     this.setRendererObjects()
 
     // create the canvas
@@ -551,7 +559,15 @@ export class GPURenderer {
     }
   }
 
-  /* OBJECTS */
+  /* OBJECTS & TASKS */
+
+  setTasksQueues() {
+    // TODO
+    this.onBeforeCommandEncoderCreation = new TasksQueueManager()
+    this.onBeforeRenderScene = new TasksQueueManager()
+    this.onAfterRenderScene = new TasksQueueManager()
+    this.onAfterCommandEncoderSubmission = new TasksQueueManager()
+  }
 
   /**
    * Set all objects arrays that we'll keep track of
@@ -638,14 +654,17 @@ export class GPURenderer {
 
     // now render!
     this.onBeforeCommandEncoder()
+    this.onBeforeCommandEncoderCreation.execute()
 
     const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer command encoder' })
 
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
+    this.onBeforeRenderScene.execute(commandEncoder)
 
     this.scene.render(commandEncoder)
 
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
+    this.onAfterRenderScene.execute(commandEncoder)
 
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
@@ -661,6 +680,7 @@ export class GPURenderer {
     this.texturesQueue = []
 
     this.onAfterCommandEncoder()
+    this.onAfterCommandEncoderSubmission.execute()
   }
 
   /**

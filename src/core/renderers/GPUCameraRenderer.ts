@@ -1,6 +1,6 @@
 import { GPURenderer, GPURendererParams } from './GPURenderer'
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
-import { BufferBindings } from '../bindings/BufferBindings'
+import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
 
@@ -20,8 +20,8 @@ export interface GPUCameraRendererParams extends GPURendererParams {
 export class GPUCameraRenderer extends GPURenderer {
   /** {@link Camera} used by this {@link GPUCameraRenderer} */
   camera: Camera
-  /** [bindings]{@link BufferBindings} handling the [camera]{@link GPUCameraRenderer#camera} matrices */
-  cameraBufferBinding: BufferBindings
+  /** [bindings]{@link BufferBinding} handling the [camera]{@link GPUCameraRenderer#camera} matrices */
+  cameraBufferBinding: BufferBinding
   /** [bind group]{@link BindGroup} handling the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} */
   cameraBindGroup: BindGroup
 
@@ -95,7 +95,7 @@ export class GPUCameraRenderer extends GPURenderer {
    * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
    */
   setCameraBufferBinding() {
-    this.cameraBufferBinding = new BufferBindings({
+    this.cameraBufferBinding = new BufferBinding({
       label: 'Camera',
       name: 'camera',
       visibility: 'vertex',

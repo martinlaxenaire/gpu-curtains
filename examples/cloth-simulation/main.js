@@ -312,7 +312,7 @@ const computeClothSim = /* wgsl */ `
             
     setVelocity(offset, pointVelocity + a * params.deltaTime);
     
-    let pos = pointPosition + pointVelocity * params.deltaTime;
+    let pos = pointPosition + getVelocity(offset) * params.deltaTime;
     setPosition(offset, vec4<f32>(pos.x, max(pos.y, -1.0), pos.zw));
   }
 `
@@ -332,7 +332,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('no-curtains')
   })
 
-  const simulationSpeed = 2
+  const simulationSpeed = 3
 
   const clothDefinition = new GPUCurtains.Vec2(40)
 
@@ -356,7 +356,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     //const xFixed = (Math.ceil(Math.abs(positionArray[j]) * (clothDefinition.x + 1)) / 2) % 5 === 0
     const xFixed = Math.abs(positionArray[j]) === 1
 
-    vertexPositionArray[i + 3] = positionArray[j + 1] === 1 && xFixed ? -1 : 0 // fixed point
+    //vertexPositionArray[i + 3] = positionArray[j + 1] === 1 && xFixed ? -1 : 0 // fixed point
+    vertexPositionArray[i + 3] = positionArray[j + 1] === 1 ? -1 : 0 // fixed point
 
     // explicitly set normals
     normalPositionArray[i] = 0
@@ -416,7 +417,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           bindings: {
             deltaTime: {
               type: 'f32',
-              value: 0.001 * simulationSpeed * 1.5,
+              value: 0.001 * simulationSpeed,
             },
             mass: {
               type: 'f32',
@@ -450,7 +451,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             pointerStrength: {
               type: 'f32',
-              value: 200,
+              value: 250,
             },
             wind: {
               type: 'vec3f',
@@ -484,10 +485,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
   })
-
-  const computeBinding = computeBindGroup.getBindingsByName('clothVertex')
-
-  //console.log(computeBindGroup, computeBinding)
 
   // first our compute pass
   const computeForcesPass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -529,15 +526,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
   })
 
-  console.log(computeForcesPass.material, computeUpdatePass.material, computeNormalPass.material)
+  console.log({ computeForcesPass, computeUpdatePass, computeNormalPass })
 
   // now use renderer onBeforeRender callback to render our compute passes
   // nb sims compute per render impacts the speed at which the simulation runs
-  const nbSimsComputePerRender = Math.min(50, 100 / simulationSpeed)
+  const nbSimsComputePerRender = Math.min(75, Math.ceil(200 / simulationSpeed))
 
-  gpuCurtains.renderer.onBeforeRender((commandEncoder) => {
-    gpuCurtains.renderer.pipelineManager.resetCurrentPipeline()
-
+  // add a task to our renderer onBeforeRenderScene tasks queue manager
+  gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
     for (let i = 0; i < nbSimsComputePerRender; i++) {
       const forcePass = commandEncoder.beginComputePass()
       computeForcesPass.render(forcePass)
@@ -599,11 +595,12 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
       
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var color: vec4f;
+      
         var shading: vec3f = vec3(0.5);
         
-        var shadedColor: vec3f = applyLightning(shading, fsInput.normal, vec3(0.3, 0.3, 1.0));
-        
-        var color: vec4f = vec4(shadedColor, 1.0);
+        //var shadedColor: vec3f = applyLightning(shading, fsInput.normal, vec3(0.3, 0.3, 1.0));
+        //color: vec4f = vec4(shadedColor, 1.0);
         
         // debug normals
         color = vec4(abs(normalize(fsInput.normal.xzy)), 1.0);

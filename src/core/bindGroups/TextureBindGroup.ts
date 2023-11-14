@@ -5,7 +5,7 @@ import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
 import { BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
-import { TextureBindings } from '../bindings/TextureBindings'
+import { TextureBinding } from '../bindings/TextureBinding'
 
 /**
  * An object defining all possible {@link TextureBindGroup} class instancing parameters
@@ -115,7 +115,7 @@ export class TextureBindGroup extends BindGroup {
   resetTextureBindGroup() {
     // find the indexes of all texture bindings
     const textureBindingsIndexes = [...this.bindings].reduce(
-      (foundIndexes, binding, index) => (binding instanceof TextureBindings && foundIndexes.push(index), foundIndexes),
+      (foundIndexes, binding, index) => (binding instanceof TextureBinding && foundIndexes.push(index), foundIndexes),
       []
     )
 

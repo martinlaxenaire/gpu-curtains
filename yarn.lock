@@ -279,9 +279,9 @@
     eslint-visitor-keys "^3.3.0"
 
 "@webgpu/types@^0.1.32":
-  version "0.1.33"
-  resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.33.tgz#5bc898869d57355e8fee6ade6917434e928c563d"
-  integrity sha512-AHabMBacHCvrV/Ru/yfOsMoVCBbT0d7SUNp1MFAzRM/J8HFODRO/LwUuCCcgQn/Rod2hhJfi+NRFUHX8I+0n/w==
+  version "0.1.38"
+  resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.38.tgz#6fda4b410edc753d3213c648320ebcf319669020"
+  integrity sha512-7LrhVKz2PRh+DD7+S+PVaFd5HxaWQvoMqBbsV9fNJO1pjUs1P8bM2vQVNfk+3URTqbuTI7gkXi0rfsN0IadoBA==
 
 acorn-jsx@^5.3.2:
   version "5.3.2"

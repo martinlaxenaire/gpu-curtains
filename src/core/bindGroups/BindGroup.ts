@@ -1,20 +1,25 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID, toKebabCase } from '../../utils/utils'
-import { WorkBufferBindings, WorkBufferBindingsParams } from '../bindings/WorkBufferBindings'
-import { BufferBindings } from '../bindings/BufferBindings'
+import { WritableBufferBinding, WritableBufferBindingParams } from '../bindings/WritableBufferBinding'
+import { BufferBinding } from '../bindings/BufferBinding'
 import {
   AllowedBindGroups,
-  AllowedInputBindingsParams,
   BindGroupBindingElement,
   BindGroupBufferBindingElement,
   BindGroupEntries,
   BindGroupParams,
   InputBindings,
-  WorkInputBindingsParams,
+  InputBindingsParams,
 } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { TextureBindGroupParams } from './TextureBindGroup'
-import { BindingType } from '../bindings/Bindings'
+import { BindingType } from '../bindings/Binding'
+
+/**
+ * @module core/bindGroups/BindGroup
+ * @alias BindGroup
+ * @export
+ */
 
 /**
  * BindGroup class:
@@ -123,14 +128,14 @@ export class BindGroup {
 
   /**
    * Creates Bindings based on a list of inputs
-   * @param bindingType - [binding type]{@link Bindings#bindingType}
+   * @param bindingType - [binding type]{@link Binding#bindingType}
    * @param inputs - [inputs]{@link InputBindings} that will be used to create the binding
    * @returns - a {@link bindings} array
    */
   createInputBindings(bindingType: BindingType = 'uniform', inputs: InputBindings = {}): BindGroupBindingElement[] {
     return [
       ...Object.keys(inputs).map((inputKey) => {
-        const binding = inputs[inputKey] as AllowedInputBindingsParams
+        const binding = inputs[inputKey] as InputBindingsParams
 
         const bindingParams = {
           label: toKebabCase(binding.label || inputKey),
@@ -141,17 +146,17 @@ export class BindGroup {
           visibility: bindingType === 'storageWrite' ? 'compute' : binding.visibility,
         }
 
-        const BufferBindingConstructor = bindingType === 'storageWrite' ? WorkBufferBindings : BufferBindings
+        const BufferBindingConstructor = bindingType === 'storageWrite' ? WritableBufferBinding : BufferBinding
 
         return binding.useStruct !== false
-          ? new BufferBindingConstructor(bindingParams as WorkBufferBindingsParams)
+          ? new BufferBindingConstructor(bindingParams as WritableBufferBindingParams)
           : Object.keys(binding.bindings).map((bindingKey) => {
               bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey)
               bindingParams.name = inputKey + bindingKey
               bindingParams.useStruct = false
               bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
 
-              return new BufferBindingConstructor(bindingParams as WorkBufferBindingsParams)
+              return new BufferBindingConstructor(bindingParams as WritableBufferBindingParams)
             })
       }),
     ].flat()
@@ -210,7 +215,7 @@ export class BindGroup {
    */
   get bufferBindings(): BindGroupBufferBindingElement[] {
     return this.bindings.filter(
-      (binding) => binding instanceof BufferBindings || binding instanceof WorkBufferBindings
+      (binding) => binding instanceof BufferBinding || binding instanceof WritableBufferBinding
     ) as BindGroupBufferBindingElement[]
   }
 

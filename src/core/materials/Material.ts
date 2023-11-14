@@ -3,7 +3,7 @@ import { BindGroup } from '../bindGroups/BindGroup'
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
 import { Sampler } from '../samplers/Sampler'
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
-import { BufferBindings, BufferBindingsInput } from '../bindings/BufferBindings'
+import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding'
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { Texture } from '../textures/Texture'
 import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/Materials'
@@ -32,15 +32,15 @@ export class Material {
   clonedBindGroups: AllowedBindGroups[]
 
   /** Object containing all uniforms inputs handled by this {@link Material} */
-  uniforms: Record<string, Record<string, BufferBindingsInput>>
+  uniforms: Record<string, Record<string, BufferBindingInput>>
   /** Object containing all readonly storages inputs handled by this {@link Material} */
-  storages: Record<string, Record<string, BufferBindingsInput>>
+  storages: Record<string, Record<string, BufferBindingInput>>
   /** Object containing all read/write storages inputs handled by this {@link Material} */
-  works: Record<string, Record<string, BufferBindingsInput>>
+  works: Record<string, Record<string, BufferBindingInput>>
 
   /** Array of [bind groups]{@link BindGroup} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
   inputsBindGroups: BindGroup[]
-  /** Array of [bindings]{@link Bindings} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
+  /** Array of [bindings]{@link Binding} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
   inputsBindings: BindGroupBindingElement[]
 
   /** Array of [textures]{@link MaterialTexture} handled by this {@link Material} */
@@ -295,7 +295,7 @@ export class Material {
    * @param bindingName - the binding name/key to look for
    * @returns - bind group found or null if not found
    */
-  getBindGroupByBindingName(bindingName: BufferBindings['name'] = ''): AllowedBindGroups | null {
+  getBindGroupByBindingName(bindingName: BufferBinding['name'] = ''): AllowedBindGroups | null {
     return (this.ready ? this.bindGroups : this.inputsBindGroups).find((bindGroup) => {
       return bindGroup.bindings.find((binding) => binding.name === bindingName)
     })
@@ -340,7 +340,7 @@ export class Material {
    * @param bufferBindingName - the buffer binding name
    * @param bindingName - the binding name
    */
-  shouldUpdateInputsBindings(bufferBindingName?: BufferBindings['name'], bindingName?: BufferBindingsInput['name']) {
+  shouldUpdateInputsBindings(bufferBindingName?: BufferBinding['name'], bindingName?: BufferBindingInput['name']) {
     if (!bufferBindingName) return
 
     const bufferBinding = this.inputsBindings.find((bB) => bB.name === bufferBindingName)
@@ -360,7 +360,7 @@ export class Material {
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
-  getBindingsByName(bindingName: BufferBindings['name'] = ''): BindGroupBindingElement | null {
+  getBindingsByName(bindingName: BufferBinding['name'] = ''): BindGroupBindingElement | null {
     let binding
     ;(this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
       binding = bindGroup.getBindingsByName(bindingName)

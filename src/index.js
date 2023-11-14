@@ -1,11 +1,20 @@
 // core
+/**
+ * BindGroup module
+ * @module core/bindGroups/BindGroup
+ * [BindGroup]{@link BindGroup}
+ */
 export { BindGroup } from './core/bindGroups/BindGroup'
+/**
+ * TextureBindGroup module
+ * @module core/bindGroups/TextureBindGroup
+ */
 export { TextureBindGroup } from './core/bindGroups/TextureBindGroup'
-export { Bindings } from './core/bindings/Bindings'
-export { BufferBindings } from './core/bindings/BufferBindings'
-export { SamplerBindings } from './core/bindings/SamplerBindings'
-export { TextureBindings } from './core/bindings/TextureBindings'
-export { WorkBufferBindings } from './core/bindings/WorkBufferBindings'
+export { Binding } from './core/bindings/Binding'
+export { BufferBinding } from './core/bindings/BufferBinding'
+export { SamplerBinding } from './core/bindings/SamplerBinding'
+export { TextureBinding } from './core/bindings/TextureBinding'
+export { WritableBufferBinding } from './core/bindings/WritableBufferBinding'
 export { Camera } from './core/camera/Camera'
 export { ComputePass } from './core/computePasses/ComputePass'
 export { DOMFrustum } from './core/DOM/DOMFrustum'

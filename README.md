@@ -38,6 +38,8 @@ The library has been rewritten to the core, so it is not just a port of the exis
 ### Todo
 
 - ~~TextureLoader class?~~
+- Storage textures
+- Cache compute pipelines
 - Mesh raycasting?
 - context lost handling
 - Tests! (removing, samplers, external video textures...)

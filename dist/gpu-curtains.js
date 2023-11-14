@@ -21,10 +21,10 @@ var GPUCurtains = (() => {
   var src_exports = {};
   __export(src_exports, {
     BindGroup: () => BindGroup,
-    Bindings: () => Bindings,
+    Binding: () => Binding,
     Box3: () => Box3,
     BoxGeometry: () => BoxGeometry,
-    BufferBindings: () => BufferBindings,
+    BufferBinding: () => BufferBinding,
     Camera: () => Camera,
     ComputeMaterial: () => ComputeMaterial,
     ComputePass: () => ComputePass,
@@ -57,16 +57,16 @@ var GPUCurtains = (() => {
     RenderTarget: () => RenderTarget,
     RenderTexture: () => RenderTexture,
     Sampler: () => Sampler,
-    SamplerBindings: () => SamplerBindings,
+    SamplerBinding: () => SamplerBinding,
     Scene: () => Scene,
     ShaderPass: () => ShaderPass,
     SphereGeometry: () => SphereGeometry,
     Texture: () => Texture,
     TextureBindGroup: () => TextureBindGroup,
-    TextureBindings: () => TextureBindings,
+    TextureBinding: () => TextureBinding,
     Vec2: () => Vec2,
     Vec3: () => Vec3,
-    WorkBufferBindings: () => WorkBufferBindings
+    WritableBufferBinding: () => WritableBufferBinding
   });
 
   // src/utils/utils.ts
@@ -232,11 +232,11 @@ var GPUCurtains = (() => {
     };
   })();
 
-  // src/core/bindings/Bindings.ts
-  var Bindings = class {
+  // src/core/bindings/Binding.ts
+  var Binding = class {
     /**
-     * Bindings constructor
-     * @param parameters - [parameters]{@link BindingsParams} used to create our {@link Bindings}
+     * Binding constructor
+     * @param parameters - [parameters]{@link BindingParams} used to create our {@link Binding}
      */
     constructor({
       label = "Uniform",
@@ -261,6 +261,13 @@ var GPUCurtains = (() => {
             return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
         }
       })() : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
+      this.options = {
+        label,
+        name,
+        bindingType,
+        bindIndex,
+        visibility
+      };
     }
     /**
      * To update our buffers before at each render. Will be overriden.
@@ -338,6 +345,19 @@ var GPUCurtains = (() => {
       }
     })();
   };
+  var getTextureBindingWGSLVarType = (binding) => {
+    return (() => {
+      switch (binding.bindingType) {
+        case "storageTexture":
+          return `var ${binding.name}: texture_storage_2d<${binding.options.format}, ${binding.options.access}>;`;
+        case "externalTexture":
+          return `var ${binding.name}: texture_external;`;
+        case "texture":
+        default:
+          return `var ${binding.name}: texture_2d<f32>;`;
+      }
+    })();
+  };
   var getBindGroupLayoutBindingType = (bindingType) => {
     return (() => {
       switch (bindingType) {
@@ -348,6 +368,31 @@ var GPUCurtains = (() => {
         case "uniform":
         default:
           return "uniform";
+      }
+    })();
+  };
+  var getBindGroupLayoutTextureBindingType = (binding) => {
+    return (() => {
+      switch (binding.bindingType) {
+        case "externalTexture":
+          return { externalTexture: {} };
+        case "storageTexture":
+          return {
+            storageTexture: {
+              format: binding.options.format,
+              viewDimension: "2d"
+              // TODO allow for other dimensions?
+            }
+          };
+        case "texture":
+          return {
+            texture: {
+              viewDimension: "2d"
+              // TODO allow for other dimensions?
+            }
+          };
+        default:
+          return null;
       }
     })();
   };
@@ -1440,10 +1485,10 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/core/bindings/BufferBindings.ts
-  var BufferBindings = class extends Bindings {
+  // src/core/bindings/BufferBinding.ts
+  var BufferBinding = class extends Binding {
     /**
-     * BufferBindings constructor
+     * BufferBinding constructor
      * @param parameters - parameters used to create our BufferBindings
      * @param {string=} parameters.label - binding label
      * @param {string=} parameters.name - binding name
@@ -1464,6 +1509,11 @@ var GPUCurtains = (() => {
     }) {
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindIndex, bindingType, visibility });
+      this.options = {
+        ...this.options,
+        useStruct,
+        bindings
+      };
       this.size = 0;
       this.shouldUpdate = false;
       this.useStruct = useStruct;
@@ -1680,11 +1730,11 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/core/bindings/WorkBufferBindings.ts
-  var WorkBufferBindings = class extends BufferBindings {
+  // src/core/bindings/WritableBufferBinding.ts
+  var WritableBufferBinding = class extends BufferBinding {
     /**
-     * WorkBufferBindings constructor
-     * @param parameters - [parameters]{@link WorkBufferBindingsParams} used to create our {@link WorkBufferBindings}
+     * WritableBufferBinding constructor
+     * @param parameters - [parameters]{@link WritableBufferBindingParams} used to create our {@link WritableBufferBinding}
      */
     constructor({
       label = "Work",
@@ -1699,6 +1749,10 @@ var GPUCurtains = (() => {
       bindingType = "storageWrite";
       visibility = "compute";
       super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility });
+      this.options = {
+        ...this.options,
+        shouldCopyResult
+      };
       this.shouldCopyResult = shouldCopyResult;
       this.result = new Float32Array(this.value.slice());
       this.resultBuffer = null;
@@ -1758,7 +1812,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Creates Bindings based on a list of inputs
-     * @param bindingType - [binding type]{@link Bindings#bindingType}
+     * @param bindingType - [binding type]{@link Binding#bindingType}
      * @param inputs - [inputs]{@link InputBindings} that will be used to create the binding
      * @returns - a {@link bindings} array
      */
@@ -1775,7 +1829,7 @@ var GPUCurtains = (() => {
             bindings: binding.bindings,
             visibility: bindingType === "storageWrite" ? "compute" : binding.visibility
           };
-          const BufferBindingConstructor = bindingType === "storageWrite" ? WorkBufferBindings : BufferBindings;
+          const BufferBindingConstructor = bindingType === "storageWrite" ? WritableBufferBinding : BufferBinding;
           return binding.useStruct !== false ? new BufferBindingConstructor(bindingParams) : Object.keys(binding.bindings).map((bindingKey) => {
             bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey);
             bindingParams.name = inputKey + bindingKey;
@@ -1834,7 +1888,7 @@ var GPUCurtains = (() => {
      */
     get bufferBindings() {
       return this.bindings.filter(
-        (binding) => binding instanceof BufferBindings || binding instanceof WorkBufferBindings
+        (binding) => binding instanceof BufferBinding || binding instanceof WritableBufferBinding
       );
     }
     /**
@@ -1987,28 +2041,30 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/core/bindings/TextureBindings.ts
-  var TextureBindings = class extends Bindings {
+  // src/core/bindings/TextureBinding.ts
+  var TextureBinding = class extends Binding {
     /**
-     * TextureBindings constructor
-     * @param parameters - parameters used to create our TextureBindings
-     * @param {string=} parameters.label - binding label
-     * @param {string=} parameters.name - binding name
-     * @param {BindingType="uniform"} parameters.bindingType - binding type
-     * @param {number=} parameters.bindIndex - bind index inside the bind group
-     * @param {MaterialShadersType=} parameters.visibility - shader visibility
-     * @param {TextureBindingResource=} parameters.resource - a GPUTexture or GPUExternalTexture
+     * TextureBinding constructor
+     * @param parameters - [parameters]{@link TextureBindingParams} used to create our {@link TextureBinding}
      */
     constructor({
       label = "Texture",
       name = "texture",
-      texture,
       bindingType,
       bindIndex = 0,
-      visibility
+      visibility,
+      texture,
+      format = "rgba8unorm",
+      access = "write"
     }) {
       bindingType = bindingType ?? "texture";
       super({ label, name, bindingType, bindIndex, visibility });
+      this.options = {
+        ...this.options,
+        texture,
+        format,
+        access
+      };
       this.resource = texture;
       this.setWGSLFragment();
     }
@@ -2016,7 +2072,7 @@ var GPUCurtains = (() => {
      * Get bind group layout entry resource, either for [texture]{@link GPUBindGroupLayoutEntry#texture} or [externalTexture]{@link GPUBindGroupLayoutEntry#externalTexture}
      */
     get resourceLayout() {
-      return this.texture instanceof GPUExternalTexture ? { externalTexture: {} } : this.texture instanceof GPUTexture ? { texture: {} } : null;
+      return getBindGroupLayoutTextureBindingType(this);
     }
     /**
      * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
@@ -2028,8 +2084,8 @@ var GPUCurtains = (() => {
       this.texture = value;
     }
     /**
-     * Set or update our [bindingType]{@link Bindings#bindingType} and our WGSL code snippet
-     * @param bindingType - the new [binding type]{@link Bindings#bindingType}
+     * Set or update our [bindingType]{@link Binding#bindingType} and our WGSL code snippet
+     * @param bindingType - the new [binding type]{@link Binding#bindingType}
      */
     setBindingType(bindingType) {
       if (bindingType !== this.bindingType) {
@@ -2041,9 +2097,7 @@ var GPUCurtains = (() => {
      * Set the correct WGSL code snippet.
      */
     setWGSLFragment() {
-      this.wgslGroupFragment = [
-        this.bindingType === "externalTexture" ? `var ${this.name}: texture_external;` : `var ${this.name}: texture_2d<f32>;`
-      ];
+      this.wgslGroupFragment = [`${getTextureBindingWGSLVarType(this)}`];
     }
   };
 
@@ -2114,7 +2168,7 @@ var GPUCurtains = (() => {
      */
     resetTextureBindGroup() {
       const textureBindingsIndexes = [...this.bindings].reduce(
-        (foundIndexes, binding, index) => (binding instanceof TextureBindings && foundIndexes.push(index), foundIndexes),
+        (foundIndexes, binding, index) => (binding instanceof TextureBinding && foundIndexes.push(index), foundIndexes),
         []
       );
       if (textureBindingsIndexes.length) {
@@ -2174,10 +2228,10 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/core/bindings/SamplerBindings.ts
-  var SamplerBindings = class extends Bindings {
+  // src/core/bindings/SamplerBinding.ts
+  var SamplerBinding = class extends Binding {
     /**
-     * SamplerBindings constructor
+     * SamplerBinding constructor
      * @param parameters - parameters used to create our SamplerBindings
      * @param {string=} parameters.label - binding label
      * @param {string=} parameters.name - binding name
@@ -2196,6 +2250,10 @@ var GPUCurtains = (() => {
     }) {
       bindingType = bindingType ?? "sampler";
       super({ label, name, bindIndex, bindingType, visibility });
+      this.options = {
+        ...this.options,
+        sampler
+      };
       this.resource = sampler;
       this.setWGSLFragment();
     }
@@ -2484,10 +2542,10 @@ var GPUCurtains = (() => {
       this.sampler = this.renderer.createSampler(this);
     }
     /**
-     * Set the [binding]{@link SamplerBindings}
+     * Set the [binding]{@link SamplerBinding}
      */
     createBinding() {
-      this.binding = new SamplerBindings({
+      this.binding = new SamplerBinding({
         label: this.label,
         name: this.name,
         bindingType: "sampler",
@@ -2727,7 +2785,7 @@ var GPUCurtains = (() => {
         width: 1,
         height: 1
       };
-      this.textureMatrix = new BufferBindings({
+      this.textureMatrix = new BufferBinding({
         label: this.options.label + ": model matrix",
         name: this.options.name + "Matrix",
         useStruct: false,
@@ -2757,7 +2815,7 @@ var GPUCurtains = (() => {
      */
     setBindings() {
       this.bindings = [
-        new TextureBindings({
+        new TextureBinding({
           label: this.options.label + ": texture",
           name: this.options.name,
           texture: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
@@ -2767,7 +2825,7 @@ var GPUCurtains = (() => {
       ];
     }
     /**
-     * Get our [texture binding]{@link TextureBindings}
+     * Get our [texture binding]{@link TextureBinding}
      * @readonly
      */
     get textureBinding() {
@@ -3575,6 +3633,12 @@ var GPUCurtains = (() => {
       return !!hasMappedBuffer;
     }
     /* WORK GROUPS */
+    /**
+     * Add a new [work group]{@link ComputeMaterial#workGroups} to render each frame.
+     * A [work group]{@link ComputeMaterial#workGroups} is composed of an array of [bind groups][@link BindGroup] to set and a dispatch size to dispatch the [work group]{@link ComputeMaterial#workGroups}
+     * @param bindGroups
+     * @param dispatchSize
+     */
     addWorkGroup({ bindGroups = [], dispatchSize = 1 }) {
       if (Array.isArray(dispatchSize)) {
         dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1);
@@ -3591,8 +3655,8 @@ var GPUCurtains = (() => {
     /* RENDER */
     /**
      * Render a [work group]{@link ComputeMaterial#workGroups}: set its bind groups and then dispatch using its dispatch size
-     * @param pass
-     * @param workGroup
+     * @param pass - current compute pass encoder
+     * @param workGroup - [Work group]{@link ComputeMaterial#workGroups} to render
      */
     renderWorkGroup(pass, workGroup) {
       workGroup.bindGroups.forEach((bindGroup) => {
@@ -4670,8 +4734,8 @@ var GPUCurtains = (() => {
 
   // src/core/textures/RenderTexture.ts
   var defaultRenderTextureParams = {
-    label: "Texture",
-    name: "texture",
+    label: "RenderTexture",
+    name: "renderTexture",
     fromTexture: null
   };
   var RenderTexture = class {
@@ -4702,7 +4766,7 @@ var GPUCurtains = (() => {
       };
     }
     /**
-     * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBindings#resource}
+     * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
      */
     createTexture() {
       if (this.options.fromTexture) {
@@ -4726,8 +4790,8 @@ var GPUCurtains = (() => {
      */
     setBindings() {
       this.bindings = [
-        new TextureBindings({
-          label: this.options.label + ": " + this.options.name + " texture",
+        new TextureBinding({
+          label: this.options.label + ": " + this.options.name + " render texture",
           name: this.options.name,
           texture: this.texture,
           bindingType: "texture"
@@ -4735,7 +4799,7 @@ var GPUCurtains = (() => {
       ];
     }
     /**
-     * Get our [texture binding]{@link TextureBindings}
+     * Get our [texture binding]{@link TextureBinding}
      * @readonly
      */
     get textureBinding() {
@@ -7477,6 +7541,58 @@ ${this.shaders.compute.head}`;
     }
   };
 
+  // src/utils/TasksQueueManager.ts
+  var TasksQueueManager = class {
+    /**
+     * TaskQueueManager constructor
+     */
+    constructor() {
+      /** Private number to assign a unique id to each [task queue item]{@link TaskQueueItem} */
+      this.#taskCount = 0;
+      this.queue = [];
+    }
+    #taskCount;
+    /**
+     * Add a [task item]{@link TaskQueueItem} to the queue
+     * @param callback - callback to add to the [task queue item]{@link TaskQueueItem}
+     * @param parameters - [parameters]{@link TaskQueueItemParams} of the [task queue item]{@link TaskQueueItem} to add
+     * @returns - [ID]{@link TaskQueueItem#id} of the new [task queue item]{@link TaskQueueItem}, useful to later the remove the task id needed
+     */
+    add(callback = (args) => {
+    }, { order = this.queue.length, once = false } = {}) {
+      const task = {
+        callback,
+        order,
+        once,
+        id: this.#taskCount
+      };
+      this.#taskCount++;
+      this.queue.push(task);
+      this.queue.sort((a, b) => {
+        return a.order - b.order;
+      });
+      return task.id;
+    }
+    /**
+     * Remove a [task item]{@link TaskQueueItem} from the queue
+     * @param taskId
+     */
+    remove(taskId = 0) {
+      this.queue = this.queue.filter((task) => task.id !== taskId);
+    }
+    /**
+     * Execute the [tasks queue]{@link TasksQueueManager#queue}
+     */
+    execute(args) {
+      this.queue.forEach((task) => {
+        task.callback(args);
+        if (task.once) {
+          this.remove(task.id);
+        }
+      });
+    }
+  };
+
   // src/core/renderers/GPURenderer.ts
   var GPURenderer = class {
     /**
@@ -7513,6 +7629,7 @@ ${this.shaders.compute.head}`;
           throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
         }, 0);
       }
+      this.setTasksQueues();
       this.setRendererObjects();
       this.canvas = document.createElement("canvas");
       this.domElement = new DOMElement({
@@ -7845,7 +7962,13 @@ ${this.shaders.compute.head}`;
         return gpuSampler;
       }
     }
-    /* OBJECTS */
+    /* OBJECTS & TASKS */
+    setTasksQueues() {
+      this.onBeforeCommandEncoderCreation = new TasksQueueManager();
+      this.onBeforeRenderScene = new TasksQueueManager();
+      this.onAfterRenderScene = new TasksQueueManager();
+      this.onAfterCommandEncoderSubmission = new TasksQueueManager();
+    }
     /**
      * Set all objects arrays that we'll keep track of
      */
@@ -7916,10 +8039,13 @@ ${this.shaders.compute.head}`;
       if (!this.ready)
         return;
       this.onBeforeCommandEncoder();
+      this.onBeforeCommandEncoderCreation.execute();
       const commandEncoder = this.device?.createCommandEncoder({ label: "Renderer command encoder" });
       this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
+      this.onBeforeRenderScene.execute(commandEncoder);
       this.scene.render(commandEncoder);
       this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
+      this.onAfterRenderScene.execute(commandEncoder);
       const commandBuffer = commandEncoder.finish();
       this.device?.queue.submit([commandBuffer]);
       this.texturesQueue.forEach((texture) => {
@@ -7927,6 +8053,7 @@ ${this.shaders.compute.head}`;
       });
       this.texturesQueue = [];
       this.onAfterCommandEncoder();
+      this.onAfterCommandEncoderSubmission.execute();
     }
     /**
      * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
@@ -8001,7 +8128,7 @@ ${this.shaders.compute.head}`;
      * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
      */
     setCameraBufferBinding() {
-      this.cameraBufferBinding = new BufferBindings({
+      this.cameraBufferBinding = new BufferBinding({
         label: "Camera",
         name: "camera",
         visibility: "vertex",

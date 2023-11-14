@@ -1,7 +1,7 @@
 import { Vec3 } from '../../math/Vec3'
 import { isRenderer, Renderer } from '../renderers/utils'
-import { TextureBindings, TextureBindingsParams } from '../bindings/TextureBindings'
-import { BufferBindings } from '../bindings/BufferBindings'
+import { TextureBinding, TextureBindingParams } from '../bindings/TextureBinding'
+import { BufferBinding } from '../bindings/BufferBinding'
 import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
 import { generateUUID, throwWarning } from '../../utils/utils'
@@ -27,7 +27,7 @@ const defaultTextureParams: TextureParams = {
 /**
  * Texture class:
  * Used to create [textures]{@link GPUTexture} or [external textures]{@link GPUExternalTexture} from different kinds of [sources]{@link TextureSource}.
- * Handles the various sources loading and uploading, GPU textures creation, [texture matrix binding]{@link BufferBindings} and [texture binding]{@link TextureBindings}
+ * Handles the various sources loading and uploading, GPU textures creation, [texture matrix binding]{@link BufferBinding} and [texture binding]{@link TextureBinding}
  * @extends Object3D
  */
 export class Texture extends Object3D {
@@ -51,9 +51,9 @@ export class Texture extends Object3D {
   /** Options used to create this {@link Texture} */
   options: TextureOptions
 
-  /** A [buffer binding]{@link BufferBindings} that will hold the texture matrix */
-  textureMatrix: BufferBindings
-  /** The bindings used by this {@link Texture}, i.e. its [texture matrix buffer binding]{@link Texture#textureMatrix} and its [texture binding]{@link TextureBindings} */
+  /** A [buffer binding]{@link BufferBinding} that will hold the texture matrix */
+  textureMatrix: BufferBinding
+  /** The bindings used by this {@link Texture}, i.e. its [texture matrix buffer binding]{@link Texture#textureMatrix} and its [texture binding]{@link TextureBinding} */
   bindings: BindGroupBindingElement[]
 
   /** {@link Texture} parent if any */
@@ -132,7 +132,7 @@ export class Texture extends Object3D {
     }
 
     // we will always declare a texture matrix
-    this.textureMatrix = new BufferBindings({
+    this.textureMatrix = new BufferBinding({
       label: this.options.label + ': model matrix',
       name: this.options.name + 'Matrix',
       useStruct: false,
@@ -164,22 +164,22 @@ export class Texture extends Object3D {
    */
   setBindings() {
     this.bindings = [
-      new TextureBindings({
+      new TextureBinding({
         label: this.options.label + ': texture',
         name: this.options.name,
         texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
-      } as TextureBindingsParams),
+      } as TextureBindingParams),
       this.textureMatrix,
     ]
   }
 
   /**
-   * Get our [texture binding]{@link TextureBindings}
+   * Get our [texture binding]{@link TextureBinding}
    * @readonly
    */
-  get textureBinding(): TextureBindings {
-    return this.bindings[0] as TextureBindings
+  get textureBinding(): TextureBinding {
+    return this.bindings[0] as TextureBinding
   }
 
   /**

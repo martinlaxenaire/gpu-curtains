@@ -1,5 +1,6 @@
-import { BindingType } from './Bindings'
-import { BufferBindingsElement } from './BufferBindings'
+import { BindingType } from './Binding'
+import { BufferBindingElement } from './BufferBinding'
+import { TextureBinding } from './TextureBinding'
 
 /** Defines a typed array */
 export type TypedArray =
@@ -96,11 +97,11 @@ export const getBufferLayout = (bufferType: WGSLVariableType): BufferLayout => {
 }
 
 /**
- * Get the correct buffer array stride for the given [binding element]{@link BufferBindingsElement}
- * @param bindingElement - [binding element]{@link BufferBindingsElement} to use
+ * Get the correct buffer array stride for the given [binding element]{@link BufferBindingElement}
+ * @param bindingElement - [binding element]{@link BufferBindingElement} to use
  * @returns - buffer array stride value
  */
-export const getBufferArrayStride = (bindingElement: BufferBindingsElement): number => {
+export const getBufferArrayStride = (bindingElement: BufferBindingElement): number => {
   return (() => {
     switch (bindingElement.type) {
       case 'array<vec4f>':
@@ -136,6 +137,25 @@ export const getBindingWGSLVarType = (bindingType: BindingType): string => {
 }
 
 /**
+ * Get the correct WGSL variable declaration code fragment based on the given [texture binding]{@link TextureBinding}
+ * @param binding - [texture binding]{@link TextureBinding} to use
+ * @returns - WGSL variable declaration code fragment
+ */
+export const getTextureBindingWGSLVarType = (binding: TextureBinding): string => {
+  return (() => {
+    switch (binding.bindingType) {
+      case 'storageTexture':
+        return `var ${binding.name}: texture_storage_2d<${binding.options.format}, ${binding.options.access}>;`
+      case 'externalTexture':
+        return `var ${binding.name}: texture_external;`
+      case 'texture':
+      default:
+        return `var ${binding.name}: texture_2d<f32>;`
+    }
+  })()
+}
+
+/**
  * Get the correct [bind group layout]{@link GPUBindGroupLayout} resource type based on the given [binding type]{@link BindingType}
  * @param bindingType - [binding type]{@link BindingType} to use
  * @returns - [bind group layout]{@link GPUBindGroupLayout} resource type
@@ -150,6 +170,37 @@ export const getBindGroupLayoutBindingType = (bindingType: BindingType): GPUBuff
       case 'uniform':
       default:
         return 'uniform'
+    }
+  })()
+}
+
+/**
+ * Get the correct [bind group layout]{@link GPUBindGroupLayout} resource type based on the given [texture binding type]{@link BindingType}
+ * @param binding - [texture binding]{@link TextureBinding} to use
+ * @returns - [bind group layout]{@link GPUBindGroupLayout} resource type
+ */
+export const getBindGroupLayoutTextureBindingType = (
+  binding: TextureBinding
+): GPUTextureBindingLayout | GPUExternalTextureBindingLayout | GPUStorageTextureBindingLayout | null => {
+  return (() => {
+    switch (binding.bindingType) {
+      case 'externalTexture':
+        return { externalTexture: {} }
+      case 'storageTexture':
+        return {
+          storageTexture: {
+            format: binding.options.format,
+            viewDimension: '2d', // TODO allow for other dimensions?
+          },
+        }
+      case 'texture':
+        return {
+          texture: {
+            viewDimension: '2d', // TODO allow for other dimensions?
+          },
+        }
+      default:
+        return null
     }
   })()
 }

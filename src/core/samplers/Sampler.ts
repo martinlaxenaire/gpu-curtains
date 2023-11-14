@@ -1,5 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { SamplerBindings } from '../bindings/SamplerBindings'
+import { SamplerBinding } from '../bindings/SamplerBinding'
 import { throwWarning } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
@@ -7,13 +7,13 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
  * Parameters used to create a {@link Sampler}
  */
 export interface SamplerParams extends GPUSamplerDescriptor {
-  /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBindings} */
+  /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
   name: string
 }
 
 /**
  * Sampler class:
- * Used to create a {@link GPUSampler} and its associated {@link SamplerBindings}
+ * Used to create a {@link GPUSampler} and its associated {@link SamplerBinding}
  */
 export class Sampler {
   /** The type of the {@link Sampler} */
@@ -22,15 +22,15 @@ export class Sampler {
   renderer: Renderer
   /** The label of the {@link Sampler}, used to create the {@link GPUSampler} for debugging purpose */
   label: string
-  /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBindings} */
+  /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
   name: string
   /** Options used to create this {@link Sampler} */
   options: GPUSamplerDescriptor // TODO not exact
 
   /** {@link GPUSampler} */
   sampler: GPUSampler
-  /** {@link SamplerBindings} to pass to a [bind group]{@link BindGroup} */
-  binding: SamplerBindings
+  /** {@link SamplerBinding} to pass to a [bind group]{@link BindGroup} */
+  binding: SamplerBinding
 
   /**
    * Sampler constructor
@@ -91,10 +91,10 @@ export class Sampler {
   }
 
   /**
-   * Set the [binding]{@link SamplerBindings}
+   * Set the [binding]{@link SamplerBinding}
    */
   createBinding() {
-    this.binding = new SamplerBindings({
+    this.binding = new SamplerBinding({
       label: this.label,
       name: this.name,
       bindingType: 'sampler',

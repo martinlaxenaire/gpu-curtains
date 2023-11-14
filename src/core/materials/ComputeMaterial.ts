@@ -9,7 +9,7 @@ import {
 import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
-import { WorkBufferBindings } from '../bindings/WorkBufferBindings'
+import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
 
 /**
  * ComputeMaterial class:
@@ -119,7 +119,7 @@ export class ComputeMaterial extends Material {
     // check if we have a buffer mapped or pending map
     const hasMappedBuffer = this.bindGroups.some((bindGroup) => {
       return bindGroup.bindings.some(
-        (bindingBuffer: WorkBufferBindings) =>
+        (bindingBuffer: WritableBufferBinding) =>
           bindingBuffer.resultBuffer && bindingBuffer.resultBuffer.mapState !== 'unmapped'
       )
     })
@@ -193,7 +193,7 @@ export class ComputeMaterial extends Material {
    */
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding: WorkBufferBindings) => {
+      bindGroup.bindings.forEach((binding: WritableBufferBinding) => {
         if ('shouldCopyResult' in binding && binding.shouldCopyResult) {
           commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
         }
@@ -206,7 +206,7 @@ export class ComputeMaterial extends Material {
    */
   setWorkGroupsResult() {
     this.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding: WorkBufferBindings) => {
+      bindGroup.bindings.forEach((binding: WritableBufferBinding) => {
         if (binding.shouldCopyResult) {
           this.setBufferResult(binding)
         }
@@ -218,7 +218,7 @@ export class ComputeMaterial extends Material {
    * Copy the result buffer into our result array
    * @param binding - buffer binding to set the result from
    */
-  setBufferResult(binding: WorkBufferBindings) {
+  setBufferResult(binding: WritableBufferBinding) {
     if (binding.resultBuffer?.mapState === 'unmapped') {
       binding.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
         binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0))

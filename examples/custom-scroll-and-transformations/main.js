@@ -124,7 +124,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // add our planes and handle them
   planeElements.forEach((planeEl, planeIndex) => {
     params.label = 'Plane' + planeIndex
-    const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, params)
+    const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, { ...params, renderOrder: -planeIndex })
 
     // check if our plane is defined and use it
     plane
@@ -145,15 +145,16 @@ window.addEventListener('DOMContentLoaded', async () => {
           (2 * (planeCenter.y - gpuCurtains.boundingRect.height * 0.5)) / gpuCurtains.boundingRect.height
         )
 
-        const halfScreenEffect = Math.max(0, distanceFromCenter.y)
-        const scrollEffect = Math.pow(halfScreenEffect, 2) * Math.sign(distanceFromCenter.x)
+        const halfScreenEffect = Math.pow(Math.max(0, distanceFromCenter.y), 2)
+        const scrollEffect = halfScreenEffect * Math.sign(distanceFromCenter.x)
         plane.rotation.z = -scrollEffect
         plane.textures[0].rotation.z = scrollEffect
 
-        plane.scale.x = 1 - halfScreenEffect * 0.25
-        plane.scale.y = 1 - halfScreenEffect * 0.25
+        plane.scale.x = 1 + halfScreenEffect * 0.25
+        plane.scale.y = 1 + halfScreenEffect * 0.25
 
         plane.documentPosition.x = scrollEffect * gpuCurtains.boundingRect.width * 0.25
+        plane.documentPosition.y = halfScreenEffect * gpuCurtains.boundingRect.height * 0.125
       })
   })
 })

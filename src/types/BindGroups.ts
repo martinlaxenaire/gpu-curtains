@@ -1,25 +1,71 @@
 import { BindGroup } from '../core/bindGroups/BindGroup'
 import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup'
-import { BufferBindings } from '../core/bindings/BufferBindings'
-import { SamplerBindings } from '../core/bindings/SamplerBindings'
-import { TextureBindings } from '../core/bindings/TextureBindings'
-import { WorkBufferBindings } from '../core/bindings/WorkBufferBindings'
+import { BufferBinding } from '../core/bindings/BufferBinding'
+import { SamplerBinding } from '../core/bindings/SamplerBinding'
+import { TextureBinding } from '../core/bindings/TextureBinding'
+import { WritableBufferBinding } from '../core/bindings/WritableBufferBinding'
 import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
 import { MaterialShadersType } from './Materials'
 import { VertexBufferAttribute } from './Geometries'
 
+// INPUTS
+
 /**
- * Defines a specific type of {@link Bindings} that handles a {@link BufferBindings#value} array to be sent to a {@link GPUBuffer}
+ * Defines all kind of possible input value types
  */
-export type BindGroupBufferBindingElement = BufferBindings | WorkBufferBindings
+export type InputValue = number | Vec2 | Vec3 | Mat4 | number[]
+
 /**
- * Defines all kind of possible textures/ samplers {@link Bindings}
+ * Defines the base object on which an {@link Input} is based.
  */
-export type BindGroupTextureSamplerElement = SamplerBindings | TextureBindings
+export interface InputBase {
+  /** {@link InputBase} type - could be 'f32', 'vec2f', etc. */
+  type: VertexBufferAttribute['type']
+  /** {@link InputBase} name */
+  name?: string
+  /** callback to run before updating the [binding]{@link BindGroupBufferBindingElement} using this {@link InputBase} */
+  onBeforeUpdate?: () => void
+}
+
 /**
- * Defines all kind of possible {@link Bindings}
+ * An {@link Input} is an object used to pass data from the CPU to the GPU either via uniforms or storages.
+ */
+export interface Input extends InputBase {
+  /** The {@link Input} value */
+  value: InputValue
+}
+
+/**
+ * An object defining all possible {@link InputBindingsParams} parameters
+ */
+export interface InputBindingsParams {
+  /** {@link Binding} label */
+  label?: string
+  /** Whether this {@link Binding} should use structured WGSL variables */
+  useStruct?: boolean
+  /** {@link Binding} variables shaders visibility */
+  visibility?: MaterialShadersType
+  /** Object containing one or multiple [input bindings]{@link Input} */
+  bindings: Record<string, Input>
+}
+
+/**
+ * Defines an input bindings
+ */
+export type InputBindings = Record<string, InputBindingsParams>
+
+/**
+ * Defines a specific type of {@link Binding} that handles a {@link BufferBinding#value} array to be sent to a {@link GPUBuffer}
+ */
+export type BindGroupBufferBindingElement = BufferBinding | WritableBufferBinding
+/**
+ * Defines all kind of possible textures/ samplers {@link Binding}
+ */
+export type BindGroupTextureSamplerElement = SamplerBinding | TextureBinding
+/**
+ * Defines all kind of possible {@link Binding}
  */
 export type BindGroupBindingElement = BindGroupBufferBindingElement | BindGroupTextureSamplerElement
 /**
@@ -64,61 +110,3 @@ export interface BindGroupEntries {
   /** [GPUBindGroup descriptor]{@link GPUBindGroupDescriptor} entries */
   bindGroup: GPUBindGroupEntry[]
 }
-
-// inputs
-/**
- * Defines all kind of possible input value types
- */
-export type InputValue = number | Vec2 | Vec3 | Mat4 | number[]
-
-/**
- * Defines the base object on which an {@link Input} is based.
- */
-export interface InputBase {
-  /** {@link InputBase} type - could be 'f32', 'vec2f', etc. */
-  type: VertexBufferAttribute['type']
-  /** {@link InputBase} name */
-  name?: string
-  /** callback to run before updating the [binding]{@link BindGroupBufferBindingElement} using this {@link InputBase} */
-  onBeforeUpdate?: () => void
-}
-
-/**
- * An {@link Input} is an object used to pass data from the CPU to the GPU either via uniforms or storages.
- */
-export interface Input extends InputBase {
-  /** The {@link Input} value */
-  value: InputValue
-}
-
-/**
- * An object defining all possible {@link InputBindingsParams} parameters
- */
-export interface InputBindingsParams {
-  /** {@link Bindings} label */
-  label?: string
-  /** Whether this {@link Bindings} should use structured WGSL variables */
-  useStruct?: boolean
-  /** {@link Bindings} variables shaders visibility */
-  visibility?: MaterialShadersType
-  /** Object containing one or multiple [input bindings]{@link Input} */
-  bindings: Record<string, Input>
-}
-
-/**
- * An object defining all possible {@link WorkInputBindingsParams} parameters
- */
-export interface WorkInputBindingsParams extends InputBindingsParams {
-  /** Work group dispatch size to use */
-  dispatchSize?: number | number[]
-}
-
-/**
- * Defines all kind of input bindings params
- */
-export type AllowedInputBindingsParams = InputBindingsParams | WorkInputBindingsParams
-
-/**
- * Defines an input bindings
- */
-export type InputBindings = Record<string, AllowedInputBindingsParams>
