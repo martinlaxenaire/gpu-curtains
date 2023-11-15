@@ -148,6 +148,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     fromTexture: plane.textures[slideshowState.nextTextureIndex],
   })
 
+  console.log(plane)
+
   plane
     .onLoading((texture) => {
       console.log('texture uploaded!', texture)

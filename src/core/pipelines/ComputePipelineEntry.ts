@@ -89,6 +89,7 @@ export class ComputePipelineEntry extends PipelineEntry {
     })
 
     groupsBindings.forEach((groupBinding) => {
+      // do not duplicate structs
       if (
         groupBinding.wgslStructFragment &&
         this.shaders.compute.head.indexOf(groupBinding.wgslStructFragment) === -1
@@ -96,7 +97,10 @@ export class ComputePipelineEntry extends PipelineEntry {
         this.shaders.compute.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.compute.head}`
       }
 
-      this.shaders.compute.head = `${this.shaders.compute.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
+      // do not duplicate bindings var as well
+      if (this.shaders.compute.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+        this.shaders.compute.head = `${this.shaders.compute.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
+      }
 
       if (groupBinding.newLine) this.shaders.compute.head += `\n`
     })

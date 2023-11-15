@@ -26,8 +26,18 @@ export class Material {
   /** Pipeline entry used by this {@link Material} */
   pipelineEntry: AllowedPipelineEntries
 
-  /** Array of [bind groups]{@link BindGroup} used by this {@link Material} */
+  /**
+   * Array of [bind groups]{@link BindGroup} used by this {@link Material}
+   * This array respects a specific order:
+   * 1. The [main texture bind group]{@link Material#texturesBindGroup}
+   * 2. The [bind group]{@link BindGroup} created using [inputs parameters]{@link MaterialParams#inputs} if any
+   * 3. Additional [bind groups parameters]{@link MaterialParams#bindGroups} if any
+   */
   bindGroups: AllowedBindGroups[]
+  /** Array of [texture bind groups]{@link BindGroup} used by this {@link Material} */
+  texturesBindGroups: TextureBindGroup[]
+  /** Array of [bind groups]{@link BindGroup} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
+  inputsBindGroups: BindGroup[]
   /** Array of [cloned bind groups]{@link BindGroup} created by this {@link Material} */
   clonedBindGroups: AllowedBindGroups[]
 
@@ -36,17 +46,15 @@ export class Material {
   /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingInput>>
 
-  /** Array of [bind groups]{@link BindGroup} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
-  inputsBindGroups: BindGroup[]
   /** Array of [bindings]{@link Binding} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
   inputsBindings: BindGroupBindingElement[]
 
-  /** Array of [textures]{@link MaterialTexture} handled by this {@link Material} */
-  textures: MaterialTexture[]
+  /** Array of [textures]{@link Texture} handled by this {@link Material} */
+  textures: Texture[]
+  /** Array of [render textures]{@link RenderTexture} handled by this {@link Material} */
+  renderTextures: RenderTexture[]
   /** Array of [samplers]{@link Sampler} handled by this {@link Material} */
   samplers: Sampler[]
-  /** Specific [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related bindings */
-  texturesBindGroup: TextureBindGroup
 
   /**
    * Material constructor
@@ -101,6 +109,7 @@ export class Material {
     }
 
     this.bindGroups = []
+    this.texturesBindGroups = []
     this.clonedBindGroups = []
 
     this.setBindGroups()
@@ -205,6 +214,14 @@ export class Material {
   }
 
   /**
+   * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related bindings
+   * @readonly
+   */
+  get texturesBindGroup(): TextureBindGroup {
+    return this.texturesBindGroups[0]
+  }
+
+  /**
    * Process all {@see BindGroup} bindings and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to bindings.
    * @param bindGroup - The {@see BindGroup} to process
    */
@@ -242,20 +259,36 @@ export class Material {
       this.bindGroups.push(this.texturesBindGroup)
     }
 
-    this.options.bindGroups?.forEach((bindGroup) => {
-      // it has been created but not been added yet? add it!
-      if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-        this.bindGroups.push(bindGroup)
-      }
-    })
-
-    // then uniforms
+    // then uniforms/storages inputs
     this.inputsBindGroups.forEach((bindGroup) => {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length)
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
+      }
+    })
+
+    // finally, bindGroups inputs
+    this.options.bindGroups?.forEach((bindGroup) => {
+      // it has been created but not been added yet? add it!
+      if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
+        bindGroup.setIndex(this.bindGroups.length)
+        this.bindGroups.push(bindGroup)
+      }
+
+      // add it to our textures bind groups as well if needed
+      if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
+        this.texturesBindGroups.push(bindGroup)
+
+        // also add the textures?
+        bindGroup.textures.forEach((texture) => {
+          if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+            this.textures.push(texture)
+          } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
+            this.renderTextures.push(texture)
+          }
+        })
       }
     })
   }
@@ -273,13 +306,13 @@ export class Material {
     bindings = [],
     keepLayout = true,
   }: {
-    bindGroup?: BindGroup
+    bindGroup?: AllowedBindGroups
     bindings?: BindGroupBindingElement[]
     keepLayout?: boolean
-  }): BindGroup | null {
+  }): AllowedBindGroups | null {
     if (!bindGroup) return null
 
-    const clone = bindGroup.cloneFromBindings({ bindings, keepLayout })
+    const clone = bindGroup.clone({ bindings, keepLayout })
     this.clonedBindGroups.push(clone)
 
     return clone
@@ -302,17 +335,26 @@ export class Material {
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
     this.clonedBindGroups.forEach((bindGroup) => bindGroup.destroy())
-    this.texturesBindGroup = null
+    this.texturesBindGroups = []
     this.inputsBindGroups = []
     this.bindGroups = []
     this.clonedBindGroups = []
   }
 
   /**
-   * Update all bind groups.
-   * For each of them, first check if it eventually needs a reset, then update its bindings
+   * Update all bind groups:
+   * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
+   * - Check if it eventually needs a reset
+   * - Check if we need to flush the pipeline
+   * - Update its bindings
    */
   updateBindGroups() {
+    // update our textures
+    this.texturesBindGroups.forEach((texturesBindGroup) => {
+      texturesBindGroup.updateTextures()
+    })
+
+    // now check if bind groups need an update / pipeline flush and update buffers
     this.bindGroups.forEach((bindGroup) => {
       if (bindGroup.needsReset) {
         bindGroup.resetBindGroup()
@@ -324,7 +366,7 @@ export class Material {
         bindGroup.needsPipelineFlush = false
       }
 
-      bindGroup.updateBindings()
+      bindGroup.updateBufferBindings()
     })
   }
 
@@ -371,9 +413,12 @@ export class Material {
    */
   setTextures() {
     this.textures = []
-    this.texturesBindGroup = new TextureBindGroup(this.renderer, {
-      label: this.options.label + ': Textures bind group',
-    })
+    this.renderTextures = []
+    this.texturesBindGroups.push(
+      new TextureBindGroup(this.renderer, {
+        label: this.options.label + ': Textures bind group',
+      })
+    )
   }
 
   /**
@@ -381,7 +426,11 @@ export class Material {
    * @param texture - texture to add
    */
   addTexture(texture: Texture | RenderTexture) {
-    this.textures.push(texture)
+    if (texture instanceof Texture) {
+      this.textures.push(texture)
+    } else if (texture instanceof RenderTexture) {
+      this.renderTextures.push(texture)
+    }
 
     // is it used in our shaders?
     if (
@@ -398,7 +447,9 @@ export class Material {
    */
   destroyTextures() {
     this.textures?.forEach((texture) => texture.destroy())
+    this.renderTextures?.forEach((texture) => texture.destroy())
     this.textures = []
+    this.renderTextures = []
   }
 
   /**
@@ -441,8 +492,8 @@ export class Material {
   /**
    * Called before rendering the Material.
    * First, check if we need to create our bind groups or pipeline
-   * Then render the textures and updates them
-   * Finally updates all buffer inputs that need it and update the bind groups (write buffers if needed)
+   * Then render the [textures]{@link Material#textures}
+   * Finally updates all the [bind groups]{@link Material#bindGroups}
    */
   onBeforeRender() {
     // set our material if needed
@@ -450,45 +501,19 @@ export class Material {
 
     // first what needs to be done for all textures
     this.textures.forEach((texture) => {
-      // RenderTextures does not have a render method
-      if ('render' in texture) {
-        texture.render()
-      }
+      texture.render()
     })
 
-    // then what needs to be done only for textures actually used in our shaders
-    this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
-      // copy textures that need it on first init, but only when original texture is ready
-      if (texture instanceof Texture) {
-        if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
-          texture.copy(texture.options.fromTexture)
-        }
-
-        if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === 'externalVideo') {
-          texture.uploadVideoTexture()
-
-          if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
-            this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex)
-          }
-        }
-      }
-
-      // reset texture bind group each time the texture changed:
-      // 1. texture media is loaded (switch from placeholder 1x1 texture to media texture)
-      // 2. external texture at each tick
-      // 3. render texture has changed (on resize)
-      if (texture.shouldUpdateBindGroup && (texture.texture || (texture as Texture).externalTexture)) {
-        this.texturesBindGroup.resetTextureBindGroup()
-        texture.shouldUpdateBindGroup = false
-      }
-    })
-
-    this.inputsBindings.forEach((inputBinding) => {
-      inputBinding.onBeforeRender()
-    })
-
-    // update uniforms buffers
+    // update bind groups
     this.updateBindGroups()
+  }
+
+  /**
+   * Set the current pipeline
+   * @param pass - current pass encoder
+   */
+  setPipeline(pass: GPURenderPassEncoder | GPUComputePassEncoder) {
+    this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry)
   }
 
   /**
@@ -503,7 +528,7 @@ export class Material {
     if (!this.ready) return
 
     // set current pipeline
-    this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry)
+    this.setPipeline(pass)
 
     // set bind groups
     this.bindGroups.forEach((bindGroup) => {

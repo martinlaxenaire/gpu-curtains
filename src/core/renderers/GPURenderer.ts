@@ -498,7 +498,7 @@ export class GPURenderer {
         this.device?.queue.copyExternalImageToTexture(
           {
             source: texture.source as GPUImageCopyExternalImageSource,
-            flipY: texture.options.texture.flipY,
+            flipY: texture.options.flipY,
           } as GPUImageCopyExternalImage,
           { texture: texture.texture as GPUTexture },
           { width: texture.size.width, height: texture.size.height }
@@ -516,7 +516,7 @@ export class GPURenderer {
     } else {
       this.device?.queue.writeTexture(
         { texture: texture.texture as GPUTexture },
-        new Uint8Array(texture.options.texture.placeholderColor),
+        new Uint8Array(texture.options.placeholderColor),
         { bytesPerRow: texture.size.width * 4 },
         { width: texture.size.width, height: texture.size.height }
       )
@@ -668,6 +668,14 @@ export class GPURenderer {
 
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
+
+    // now handle textures
+
+    // first check if media textures without parent need to be uploaded
+    // TODO safe?
+    this.textures
+      .filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded)
+      .forEach((texture) => this.uploadTexture(texture))
 
     // no need to use device.queue.onSubmittedWorkDone
     // as [Kai Ninomiya](https://github.com/kainino0x) stated:

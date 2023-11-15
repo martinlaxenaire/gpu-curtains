@@ -1627,7 +1627,7 @@ var GPUCurtains = (() => {
           this.value.subarray(bindingElement.startOffset, bindingElement.endOffset)
         );
         bindingElement.update = (value) => {
-          if (bindingElement.type === "f32") {
+          if (bindingElement.type === "f32" || bindingElement.type === "u32" || bindingElement.type === "i32") {
             bindingElement.array[0] = value;
           } else if (bindingElement.type === "vec2f") {
             bindingElement.array[0] = value.x ?? value[0] ?? 0;
@@ -1958,11 +1958,12 @@ var GPUCurtains = (() => {
       });
     }
     /**
-     * Check whether we should update (write the buffer) our GPUBuffer or not
+     * Check whether we should update (write the buffer) our GPUBuffer or not.
      * Called at each render from Material
      */
-    updateBindings() {
+    updateBufferBindings() {
       this.bufferBindings.forEach((binding, index) => {
+        binding.onBeforeRender();
         if (binding.shouldUpdate) {
           if (!binding.useStruct && binding.bindingElements.length > 1) {
             this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array);
@@ -1976,11 +1977,12 @@ var GPUCurtains = (() => {
     /**
      * Clones a {@link BindGroup} from a list of {@link bindings}
      * Useful to create a new bind group with already created buffers, but swapped
-     * @param bindings - our input {@link bindings}
-     * @param keepLayout - whether we should keep original {@link bindGroupLayout} or not
+     * @param parameters - parameters to use for cloning
+     * @param parameters.bindings - our input {@link bindings}
+     * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not
      * @returns - the cloned {@link BindGroup}
      */
-    cloneFromBindings({
+    clone({
       bindings = [],
       keepLayout = false
     } = {}) {
@@ -1990,9 +1992,13 @@ var GPUCurtains = (() => {
         label: params.label
       });
       bindGroupCopy.setIndex(this.index);
+      bindGroupCopy.options = params;
       const bindingsRef = bindings.length ? bindings : this.bindings;
       bindingsRef.forEach((binding, index) => {
         bindGroupCopy.addBinding(binding);
+        if ("buffer" in binding && !binding.buffer) {
+          bindGroupCopy.createBindingBuffer(binding);
+        }
         if (!keepLayout) {
           bindGroupCopy.entries.bindGroupLayout.push({
             binding: bindGroupCopy.entries.bindGroupLayout.length,
@@ -2016,15 +2022,15 @@ var GPUCurtains = (() => {
      * Clones a bind group with all its {@link bindings}
      * @returns - the cloned BindGroup
      */
-    clone() {
-      return this.cloneFromBindings();
-    }
+    // clone(): AllowedBindGroups {
+    //   return this.cloneFromBindings()
+    // }
     /**
      * Destroy our {@link BindGroup}
      * Most important is to destroy the GPUBuffers to free the memory
      */
     destroy() {
-      this.bindings.forEach((binding) => {
+      this.bufferBindings.forEach((binding) => {
         if ("buffer" in binding) {
           binding.buffer?.destroy();
         }
@@ -2056,6 +2062,9 @@ var GPUCurtains = (() => {
       access = "write"
     }) {
       bindingType = bindingType ?? "texture";
+      if (bindingType === "storageTexture") {
+        visibility = "compute";
+      }
       super({ label, name, bindingType, bindIndex, visibility });
       this.options = {
         ...this.options,
@@ -2099,6 +2108,649 @@ var GPUCurtains = (() => {
     }
   };
 
+  // src/core/objects3D/Object3D.ts
+  var Object3D = class {
+    /**
+     * Object3D constructor
+     */
+    constructor() {
+      this.setMatrices();
+      this.setTransforms();
+    }
+    /* TRANSFORMS */
+    /**
+     * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+     */
+    setTransforms() {
+      this.transforms = {
+        origin: {
+          model: new Vec3()
+        },
+        quaternion: new Quat(),
+        rotation: new Vec3(),
+        position: {
+          world: new Vec3()
+        },
+        scale: new Vec3(1)
+      };
+      this.rotation.onChange(() => this.applyRotation());
+      this.position.onChange(() => this.applyPosition());
+      this.scale.onChange(() => this.applyScale());
+      this.transformOrigin.onChange(() => this.applyTransformOrigin());
+    }
+    /**
+     * Get/set our rotation vector
+     * @readonly
+     */
+    get rotation() {
+      return this.transforms.rotation;
+    }
+    set rotation(value) {
+      this.transforms.rotation = value;
+      this.applyRotation();
+    }
+    /**
+     * Get/set our quaternion
+     * @readonly
+     */
+    get quaternion() {
+      return this.transforms.quaternion;
+    }
+    set quaternion(value) {
+      this.transforms.quaternion = value;
+    }
+    /**
+     * Get/set our position vector
+     * @readonly
+     */
+    get position() {
+      return this.transforms.position.world;
+    }
+    set position(value) {
+      this.transforms.position.world = value;
+    }
+    /**
+     * Get/set our scale vector
+     * @readonly
+     */
+    get scale() {
+      return this.transforms.scale;
+    }
+    set scale(value) {
+      this.transforms.scale = value;
+      this.applyScale();
+    }
+    /**
+     * Get/set our transform origin vector
+     * @readonly
+     */
+    get transformOrigin() {
+      return this.transforms.origin.model;
+    }
+    set transformOrigin(value) {
+      this.transforms.origin.model = value;
+    }
+    /**
+     * Apply our rotation and tell our model matrix to update
+     */
+    applyRotation() {
+      this.quaternion.setFromVec3(this.rotation);
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Tell our model matrix to update
+     */
+    applyPosition() {
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Tell our model matrix to update
+     */
+    applyScale() {
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Tell our model matrix to update
+     */
+    applyTransformOrigin() {
+      this.shouldUpdateModelMatrix();
+    }
+    /* MATRICES */
+    /**
+     * Set our model matrix
+     */
+    setMatrices() {
+      this.matrices = {
+        model: {
+          matrix: new Mat4(),
+          shouldUpdate: false,
+          onUpdate: () => this.updateModelMatrix()
+        }
+      };
+    }
+    /**
+     * Get/set our model matrix
+     * @readonly
+     */
+    get modelMatrix() {
+      return this.matrices.model.matrix;
+    }
+    set modelMatrix(value) {
+      this.matrices.model.matrix = value;
+      this.matrices.model.shouldUpdate = true;
+    }
+    /**
+     * Set our model matrix shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateModelMatrix() {
+      this.matrices.model.shouldUpdate = true;
+    }
+    /**
+     * Update our model matrix
+     */
+    updateModelMatrix() {
+      this.modelMatrix = this.modelMatrix.composeFromOrigin(
+        this.position,
+        this.quaternion,
+        this.scale,
+        this.transformOrigin
+      );
+    }
+    /**
+     * Callback to run if at least one matrix of the stack has been updated
+     */
+    onAfterMatrixStackUpdate() {
+    }
+    /**
+     * Tell our model matrix to update
+     */
+    updateSizeAndPosition() {
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Check at each render whether we should update our matrices, and update them if needed
+     */
+    updateMatrixStack() {
+      const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate);
+      for (const matrixName in this.matrices) {
+        if (this.matrices[matrixName].shouldUpdate) {
+          this.matrices[matrixName].onUpdate();
+          this.matrices[matrixName].shouldUpdate = false;
+        }
+      }
+      if (matrixShouldUpdate)
+        this.onAfterMatrixStackUpdate();
+    }
+  };
+
+  // src/core/textures/Texture.ts
+  var defaultTextureParams = {
+    name: "texture",
+    generateMips: false,
+    flipY: false,
+    format: "rgba8unorm",
+    placeholderColor: [0, 0, 0, 255],
+    // default to black
+    useExternalTextures: true,
+    fromTexture: null
+  };
+  var Texture = class extends Object3D {
+    /**
+     * Texture constructor
+     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+     * @param parameters - [parameters]{@link TextureParams} used to create this {@link Texture}
+     */
+    constructor(renderer, parameters = defaultTextureParams) {
+      super();
+      /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
+      this.#parentRatio = new Vec3(1);
+      /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [source size]{@link Texture#size} */
+      this.#sourceRatio = new Vec3(1);
+      /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [#parentRatio]{@link Texture##parentRatio} and [#sourceRatio]{@link Texture##sourceRatio} */
+      this.#coverScale = new Vec3(1);
+      /** Private rotation [matrix]{@link Mat4} based on [texture quaternion]{@link Texture#quaternion} */
+      this.#rotationMatrix = new Mat4();
+      // callbacks / events
+      /** function assigned to the [onSourceLoaded]{@link Texture#onSourceLoaded} callback */
+      this._onSourceLoadedCallback = () => {
+      };
+      /** function assigned to the [onSourceUploaded]{@link Texture#onSourceUploaded} callback */
+      this._onSourceUploadedCallback = () => {
+      };
+      this.type = "Texture";
+      renderer = renderer && renderer.renderer || renderer;
+      isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+      this.renderer = renderer;
+      this.uuid = generateUUID();
+      const defaultOptions = {
+        ...defaultTextureParams,
+        source: parameters.fromTexture ? parameters.fromTexture.options.source : null,
+        sourceType: parameters.fromTexture ? parameters.fromTexture.options.sourceType : null
+      };
+      this.options = { ...defaultOptions, ...parameters };
+      this.options.label = this.options.label ?? this.options.name;
+      this.texture = null;
+      this.externalTexture = null;
+      this.source = null;
+      this.size = {
+        width: 1,
+        height: 1
+      };
+      this.textureMatrix = new BufferBinding({
+        label: this.options.label + ": model matrix",
+        name: this.options.name + "Matrix",
+        useStruct: false,
+        bindings: {
+          matrix: {
+            name: this.options.name + "Matrix",
+            type: "mat4x4f",
+            value: this.modelMatrix
+            //onBeforeUpdate: () => this.updateTextureMatrix(),
+          }
+        }
+      });
+      this.setBindings();
+      this._parent = null;
+      this.sourceLoaded = false;
+      this.sourceUploaded = false;
+      this.shouldUpdate = false;
+      this.shouldUpdateBindGroup = false;
+      this.renderer.addTexture(this);
+    }
+    #parentRatio;
+    #sourceRatio;
+    #coverScale;
+    #rotationMatrix;
+    /**
+     * Set our [bindings]{@link Texture#bindings}
+     */
+    setBindings() {
+      this.bindings = [
+        new TextureBinding({
+          label: this.options.label + ": texture",
+          name: this.options.name,
+          texture: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
+          bindingType: this.options.sourceType === "externalVideo" ? "externalTexture" : "texture"
+        }),
+        this.textureMatrix
+      ];
+    }
+    /**
+     * Get our [texture binding]{@link TextureBinding}
+     * @readonly
+     */
+    get textureBinding() {
+      return this.bindings[0];
+    }
+    /**
+     * Get/set our [texture parent]{@link Texture#_parent}
+     * @readonly
+     */
+    get parent() {
+      return this._parent;
+    }
+    set parent(value) {
+      this._parent = value;
+      this.resize();
+    }
+    /**
+     * Get/set whether our [texture source]{@link Texture#source} has loaded
+     * @readonly
+     */
+    get sourceLoaded() {
+      return this._sourceLoaded;
+    }
+    set sourceLoaded(value) {
+      if (value && !this.sourceLoaded) {
+        this._onSourceLoadedCallback && this._onSourceLoadedCallback();
+      }
+      this._sourceLoaded = value;
+    }
+    /**
+     * Get/set whether our [texture source]{@link Texture#source} has been uploaded
+     * @readonly
+     */
+    get sourceUploaded() {
+      return this._sourceUploaded;
+    }
+    set sourceUploaded(value) {
+      if (value && !this.sourceUploaded) {
+        this._onSourceUploadedCallback && this._onSourceUploadedCallback();
+      }
+      this._sourceUploaded = value;
+    }
+    /**
+     * Set our [texture transforms object]{@link Texture#transforms}
+     */
+    setTransforms() {
+      super.setTransforms();
+      this.transforms.quaternion.setAxisOrder("ZXY");
+      this.transforms.origin.model.set(0.5, 0.5, 0);
+    }
+    /* TEXTURE MATRIX */
+    /**
+     * Update the [texture model matrix]{@link Texture#modelMatrix}
+     */
+    updateModelMatrix() {
+      if (!this.parent)
+        return;
+      const parentScale = this.parent.scale ? this.parent.scale : new Vec3(1, 1, 1);
+      const parentWidth = this.parent.boundingRect ? this.parent.boundingRect.width * parentScale.x : this.size.width;
+      const parentHeight = this.parent.boundingRect ? this.parent.boundingRect.height * parentScale.y : this.size.height;
+      const parentRatio = parentWidth / parentHeight;
+      const sourceWidth = this.size.width;
+      const sourceHeight = this.size.height;
+      const sourceRatio = sourceWidth / sourceHeight;
+      if (parentWidth > parentHeight) {
+        this.#parentRatio.set(parentRatio, 1, 1);
+        this.#sourceRatio.set(1 / sourceRatio, 1, 1);
+      } else {
+        this.#parentRatio.set(1, 1 / parentRatio, 1);
+        this.#sourceRatio.set(1, sourceRatio, 1);
+      }
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? this.#parentRatio.x * this.#sourceRatio.x : this.#sourceRatio.y * this.#parentRatio.y;
+      this.#coverScale.set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
+      this.#rotationMatrix.rotateFromQuaternion(this.quaternion);
+      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(this.#coverScale).premultiplyScale(this.#parentRatio).premultiply(this.#rotationMatrix).premultiplyScale(this.#sourceRatio).premultiplyTranslate(this.transformOrigin).translate(this.position);
+    }
+    /**
+     * Our [model matrix]{@link Texture#modelMatrix} has been updated, tell the [texture matrix binding]{@link Texture#textureMatrix} to update as well
+     */
+    onAfterMatrixStackUpdate() {
+      this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
+    }
+    /**
+     * Resize our {@link Texture}
+     */
+    resize() {
+      if (this.source && this.source instanceof HTMLCanvasElement && (this.source.width !== this.size.width || this.source.height !== this.size.height)) {
+        this.setSourceSize();
+        this.createTexture();
+      }
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Get the number of mip levels create based on [texture source size]{@link Texture#size}
+     * @param sizes
+     * @returns - number of mip levels
+     */
+    getNumMipLevels(...sizes) {
+      const maxSize = Math.max(...sizes);
+      return 1 + Math.log2(maxSize) | 0;
+    }
+    /**
+     * Tell the {@link Renderer} to upload or texture
+     */
+    uploadTexture() {
+      this.renderer.uploadTexture(this);
+      this.shouldUpdate = false;
+    }
+    /**
+     * Import an [external texture]{@link GPUExternalTexture} from the {@link Renderer}, update the [texture binding]{@link Texture#textureBinding} and its [bind group]{@link BindGroup}
+     */
+    uploadVideoTexture() {
+      this.externalTexture = this.renderer.importExternalTexture(this.source);
+      this.textureBinding.resource = this.externalTexture;
+      this.textureBinding.setBindingType("externalTexture");
+      this.shouldUpdateBindGroup = true;
+      this.shouldUpdate = false;
+      this.sourceUploaded = true;
+    }
+    /**
+     * Copy a [texture]{@link Texture}
+     * @param texture - [texture]{@link Texture} to copy
+     */
+    copy(texture) {
+      if (this.options.sourceType === "externalVideo" && texture.options.sourceType !== "externalVideo") {
+        throwWarning(`${this.options.label}: cannot copy a GPUTexture to a GPUExternalTexture`);
+        return;
+      } else if (this.options.sourceType !== "externalVideo" && texture.options.sourceType === "externalVideo") {
+        throwWarning(`${this.options.label}: cannot copy a GPUExternalTexture to a GPUTexture`);
+        return;
+      }
+      this.options.fromTexture = texture;
+      this.options.sourceType = texture.options.sourceType;
+      this.options.generateMips = texture.options.generateMips;
+      this.options.flipY = texture.options.flipY;
+      this.options.format = texture.options.format;
+      this.options.placeholderColor = texture.options.placeholderColor;
+      this.options.useExternalTextures = texture.options.useExternalTextures;
+      this.sourceLoaded = texture.sourceLoaded;
+      this.sourceUploaded = texture.sourceUploaded;
+      if (texture.texture) {
+        if (texture.sourceLoaded) {
+          this.size = texture.size;
+          this.source = texture.source;
+          this.resize();
+        }
+        if (texture.sourceUploaded) {
+          this.texture = texture.texture;
+          this.textureBinding.resource = this.texture;
+          this.shouldUpdateBindGroup = true;
+        } else {
+          this.createTexture();
+        }
+      }
+    }
+    /**
+     * Set the [texture]{@link Texture#texture}
+     */
+    createTexture() {
+      const options = {
+        label: this.options.label,
+        format: this.options.format,
+        size: [this.size.width, this.size.height],
+        // [1, 1] if no source
+        usage: !!this.source ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+      };
+      if (this.options.sourceType !== "externalVideo") {
+        options.mipLevelCount = this.options.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1;
+        this.texture?.destroy();
+        this.texture = this.renderer.createTexture(options);
+        this.textureBinding.resource = this.texture;
+        this.shouldUpdateBindGroup = !!this.source;
+      }
+      this.shouldUpdate = true;
+    }
+    /* SOURCES */
+    /**
+     * Set the [size]{@link Texture#size} based on [texture source]{@link Texture#source}
+     */
+    setSourceSize() {
+      this.size = {
+        width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
+        height: this.source.naturalHeight || this.source.height || this.source.videoHeight
+      };
+    }
+    /**
+     * Load an [image]{@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a [texture source]{@link Texture#source}
+     * @async
+     * @param url - URL of the image to load
+     * @returns - the newly created {@link ImageBitmap}
+     */
+    async loadImageBitmap(url) {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      return await createImageBitmap(blob, { colorSpaceConversion: "none" });
+    }
+    /**
+     * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
+     * @async
+     * @param source - the image URL or {@link HTMLImageElement} to load
+     * @returns - the newly created {@link ImageBitmap}
+     */
+    async loadImage(source) {
+      const image = typeof source === "string" ? source : source.getAttribute("src");
+      this.options.source = image;
+      this.options.sourceType = "image";
+      this.sourceLoaded = false;
+      this.sourceUploaded = false;
+      this.source = await this.loadImageBitmap(this.options.source);
+      this.setSourceSize();
+      this.resize();
+      this.sourceLoaded = true;
+      this.createTexture();
+    }
+    // weirldy enough, we don't have to do anything in that callback
+    // because the <video> is not visible in the viewport, the video playback is throttled
+    // and the rendering is janky
+    // using requestVideoFrameCallback helps preventing this but is unsupported in Firefox at the moment
+    // WebCodecs may be the way to go when time comes!
+    // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
+    /**
+     * Set our [shouldUpdate]{@link Texture#shouldUpdate} flag to true at each new video frame
+     */
+    onVideoFrameCallback() {
+      if (this.videoFrameCallbackId) {
+        this.shouldUpdate = true;
+        this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this));
+      }
+    }
+    /**
+     * Callback to run when a [video]{@link HTMLVideoElement} has loaded (when it has enough data to play).
+     * Set the [video]{@link HTMLVideoElement} as a [texture source]{@link Texture#source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
+     * @param video - the newly loaded [video]{@link HTMLVideoElement}
+     */
+    onVideoLoaded(video) {
+      if (!this.sourceLoaded) {
+        this.source = video;
+        this.setSourceSize();
+        this.resize();
+        if (this.options.useExternalTextures) {
+          this.options.sourceType = "externalVideo";
+          this.texture?.destroy();
+        } else {
+          this.options.sourceType = "video";
+          this.createTexture();
+        }
+        if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
+          this.videoFrameCallbackId = this.source.requestVideoFrameCallback(
+            this.onVideoFrameCallback.bind(this)
+          );
+        }
+        this.sourceLoaded = true;
+      }
+    }
+    /**
+     * Get whether the [texture source]{@link Texture#source} is a video
+     * @readonly
+     */
+    get isVideoSource() {
+      return this.source && (this.options.sourceType === "video" || this.options.sourceType === "externalVideo");
+    }
+    /**
+     * Load a video from a URL or {@link HTMLVideoElement} and register [onVideoLoaded]{@link Texture#onVideoLoaded} callback
+     * @param source - the video URL or {@link HTMLVideoElement} to load
+     */
+    loadVideo(source) {
+      let video;
+      if (typeof source === "string") {
+        video = document.createElement("video");
+        video.src = source;
+      } else {
+        video = source;
+      }
+      video.preload = "auto";
+      video.muted = true;
+      video.loop = true;
+      video.crossOrigin = "anonymous";
+      video.setAttribute("playsinline", "");
+      this.options.source = video.src;
+      this.sourceLoaded = false;
+      this.sourceUploaded = false;
+      if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+        this.onVideoLoaded(video);
+      } else {
+        video.addEventListener("canplaythrough", this.onVideoLoaded.bind(this, video), {
+          once: true
+        });
+      }
+      if (isNaN(video.duration)) {
+        video.load();
+      }
+    }
+    /**
+     * Load a [canvas]{@link HTMLCanvasElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
+     * @param source
+     */
+    loadCanvas(source) {
+      this.options.source = source;
+      this.options.sourceType = "canvas";
+      this.sourceLoaded = false;
+      this.sourceUploaded = false;
+      this.source = source;
+      this.setSourceSize();
+      this.resize();
+      this.sourceLoaded = true;
+      this.createTexture();
+    }
+    /* EVENTS */
+    /**
+     * Callback to run when the [texture source]{@link Texture#source} has loaded
+     * @param callback - callback to run when the [texture source]{@link Texture#source} has loaded
+     * @returns - our {@link Texture}
+     */
+    onSourceLoaded(callback) {
+      if (callback) {
+        this._onSourceLoadedCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Callback to run when the [texture source]{@link Texture#source} has been uploaded
+     * @param callback - callback to run when the [texture source]{@link Texture#source} been uploaded
+     * @returns - our {@link Texture}
+     */
+    onSourceUploaded(callback) {
+      if (callback) {
+        this._onSourceUploadedCallback = callback;
+      }
+      return this;
+    }
+    /* RENDER */
+    /**
+     * Render a {@link Texture}:
+     * - Update its [model matrix]{@link Texture#modelMatrix} and [bindings]{@link Texture#bindings} if needed
+     * - Upload the texture if it needs to be done
+     */
+    render() {
+      this.updateMatrixStack();
+      this.textureMatrix.onBeforeRender();
+      if (this.options.sourceType === "externalVideo") {
+        this.shouldUpdate = true;
+      }
+      if (this.isVideoSource && !this.videoFrameCallbackId && this.source.readyState >= this.source.HAVE_CURRENT_DATA && !this.source.paused) {
+        this.shouldUpdate = true;
+      }
+      if (this.shouldUpdate && this.options.sourceType && this.options.sourceType !== "externalVideo") {
+        this.uploadTexture();
+      }
+    }
+    /* DESTROY */
+    /**
+     * Destroy the {@link Texture}
+     */
+    destroy() {
+      if (this.videoFrameCallbackId) {
+        ;
+        this.source.cancelVideoFrameCallback(this.videoFrameCallbackId);
+      }
+      if (this.isVideoSource) {
+        ;
+        this.source.removeEventListener(
+          "canplaythrough",
+          this.onVideoLoaded.bind(this, this.source),
+          {
+            once: true
+          }
+        );
+      }
+      this.renderer.removeTexture(this);
+      this.texture?.destroy();
+      this.texture = null;
+    }
+  };
+
   // src/core/bindGroups/TextureBindGroup.ts
   var TextureBindGroup = class extends BindGroup {
     /**
@@ -2113,9 +2765,16 @@ var GPUCurtains = (() => {
       super(renderer, { label, index, bindings, inputs });
       this.options = {
         ...this.options,
-        textures,
-        samplers
+        // will be filled after
+        textures: [],
+        samplers: []
       };
+      if (textures.length) {
+        textures.forEach((texture) => this.addTexture(texture));
+      }
+      if (samplers.length) {
+        samplers.forEach((sampler) => this.addSampler(sampler));
+      }
       this.type = type;
       this.externalTexturesIDs = [];
     }
@@ -2160,9 +2819,10 @@ var GPUCurtains = (() => {
     /**
      * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
      * Called each time a GPUTexture or GPUExternalTexture has changed:
-     * - A texture media has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
-     * - GPUExternalTexture at each tick
-     * - A render texture GPUTexture has changed (on resize)
+     * 1. A [texture source]{@link Texture#source} has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
+     * 2. A [texture]{@link Texture} copy just happened
+     * 3. {@link GPUExternalTexture} at each tick
+     * 4. A [render texture GPUTexture]{@link RenderTexture#texture} has changed (on resize)
      */
     resetTextureBindGroup() {
       const textureBindingsIndexes = [...this.bindings].reduce(
@@ -2215,6 +2875,31 @@ var GPUCurtains = (() => {
         });
         this.setBindGroupLayout();
       }
+    }
+    /**
+     * Update the [bind group textures]{@link TextureBindGroup#textures}:
+     * - Check if they need to copy their source texture
+     * - Upload texture if needed
+     * - Check if the [bind group layout]{@link TextureBindGroup#bindGroupLayout} and/or [bing group]{@link TextureBindGroup#bindGroup} need an update
+     */
+    updateTextures() {
+      this.textures.forEach((texture, textureIndex) => {
+        if (texture instanceof Texture) {
+          if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
+            texture.copy(texture.options.fromTexture);
+          }
+          if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === "externalVideo") {
+            texture.uploadVideoTexture();
+            if (this.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
+              this.updateVideoTextureBindGroupLayout(textureIndex);
+            }
+          }
+        }
+        if (texture.shouldUpdateBindGroup && (texture.texture || texture.externalTexture)) {
+          this.resetTextureBindGroup();
+          texture.shouldUpdateBindGroup = false;
+        }
+      });
     }
     /**
      * Destroy our {@link TextureBindGroup}
@@ -2552,274 +3237,81 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/core/objects3D/Object3D.ts
-  var Object3D = class {
-    /**
-     * Object3D constructor
-     */
-    constructor() {
-      this.setMatrices();
-      this.setTransforms();
-    }
-    /* TRANSFORMS */
-    /**
-     * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
-     */
-    setTransforms() {
-      this.transforms = {
-        origin: {
-          model: new Vec3()
-        },
-        quaternion: new Quat(),
-        rotation: new Vec3(),
-        position: {
-          world: new Vec3()
-        },
-        scale: new Vec3(1)
-      };
-      this.rotation.onChange(() => this.applyRotation());
-      this.position.onChange(() => this.applyPosition());
-      this.scale.onChange(() => this.applyScale());
-      this.transformOrigin.onChange(() => this.applyTransformOrigin());
-    }
-    /**
-     * Get/set our rotation vector
-     * @readonly
-     */
-    get rotation() {
-      return this.transforms.rotation;
-    }
-    set rotation(value) {
-      this.transforms.rotation = value;
-      this.applyRotation();
-    }
-    /**
-     * Get/set our quaternion
-     * @readonly
-     */
-    get quaternion() {
-      return this.transforms.quaternion;
-    }
-    set quaternion(value) {
-      this.transforms.quaternion = value;
-    }
-    /**
-     * Get/set our position vector
-     * @readonly
-     */
-    get position() {
-      return this.transforms.position.world;
-    }
-    set position(value) {
-      this.transforms.position.world = value;
-    }
-    /**
-     * Get/set our scale vector
-     * @readonly
-     */
-    get scale() {
-      return this.transforms.scale;
-    }
-    set scale(value) {
-      this.transforms.scale = value;
-      this.applyScale();
-    }
-    /**
-     * Get/set our transform origin vector
-     * @readonly
-     */
-    get transformOrigin() {
-      return this.transforms.origin.model;
-    }
-    set transformOrigin(value) {
-      this.transforms.origin.model = value;
-    }
-    /**
-     * Apply our rotation and tell our model matrix to update
-     */
-    applyRotation() {
-      this.quaternion.setFromVec3(this.rotation);
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Tell our model matrix to update
-     */
-    applyPosition() {
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Tell our model matrix to update
-     */
-    applyScale() {
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Tell our model matrix to update
-     */
-    applyTransformOrigin() {
-      this.shouldUpdateModelMatrix();
-    }
-    /* MATRICES */
-    /**
-     * Set our model matrix
-     */
-    setMatrices() {
-      this.matrices = {
-        model: {
-          matrix: new Mat4(),
-          shouldUpdate: false,
-          onUpdate: () => this.updateModelMatrix()
-        }
-      };
-    }
-    /**
-     * Get/set our model matrix
-     * @readonly
-     */
-    get modelMatrix() {
-      return this.matrices.model.matrix;
-    }
-    set modelMatrix(value) {
-      this.matrices.model.matrix = value;
-      this.matrices.model.shouldUpdate = true;
-    }
-    /**
-     * Set our model matrix shouldUpdate flag to true (tell it to update)
-     */
-    shouldUpdateModelMatrix() {
-      this.matrices.model.shouldUpdate = true;
-    }
-    /**
-     * Update our model matrix
-     */
-    updateModelMatrix() {
-      this.modelMatrix = this.modelMatrix.composeFromOrigin(
-        this.position,
-        this.quaternion,
-        this.scale,
-        this.transformOrigin
-      );
-    }
-    /**
-     * Callback to run if at least one matrix of the stack has been updated
-     */
-    onAfterMatrixStackUpdate() {
-    }
-    /**
-     * Tell our model matrix to update
-     */
-    updateSizeAndPosition() {
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Check at each render whether we should update our matrices, and update them if needed
-     */
-    updateMatrixStack() {
-      const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate);
-      for (const matrixName in this.matrices) {
-        if (this.matrices[matrixName].shouldUpdate) {
-          this.matrices[matrixName].onUpdate();
-          this.matrices[matrixName].shouldUpdate = false;
-        }
-      }
-      if (matrixShouldUpdate)
-        this.onAfterMatrixStackUpdate();
-    }
-  };
-
-  // src/core/textures/Texture.ts
-  var defaultTextureParams = {
-    name: "texture",
-    texture: {
-      generateMips: false,
-      flipY: false,
-      format: "rgba8unorm",
-      placeholderColor: [0, 0, 0, 255],
-      // default to black
-      useExternalTextures: true
-    },
+  // src/core/textures/RenderTexture.ts
+  var defaultRenderTextureParams = {
+    label: "RenderTexture",
+    name: "renderTexture",
+    usage: "texture",
+    access: "write",
     fromTexture: null
   };
-  var Texture = class extends Object3D {
+  var RenderTexture = class {
     /**
-     * Texture constructor
-     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-     * @param parameters - [parameters]{@link TextureParams} used to create this {@link Texture}
+     * RenderTexture constructor
+     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
+     * @param parameters - [parameters]{@link RenderTextureParams} used to create this {@link RenderTexture}
      */
-    constructor(renderer, parameters = defaultTextureParams) {
-      super();
-      /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
-      this.#parentRatio = new Vec3(1);
-      /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [source size]{@link Texture#size} */
-      this.#sourceRatio = new Vec3(1);
-      /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [#parentRatio]{@link Texture##parentRatio} and [#sourceRatio]{@link Texture##sourceRatio} */
-      this.#coverScale = new Vec3(1);
-      /** Private rotation [matrix]{@link Mat4} based on [texture quaternion]{@link Texture#quaternion} */
-      this.#rotationMatrix = new Mat4();
-      // callbacks / events
-      /** function assigned to the [onSourceLoaded]{@link Texture#onSourceLoaded} callback */
-      this._onSourceLoadedCallback = () => {
-      };
-      /** function assigned to the [onSourceUploaded]{@link Texture#onSourceUploaded} callback */
-      this._onSourceUploadedCallback = () => {
-      };
-      this.type = "Texture";
+    constructor(renderer, parameters = defaultRenderTextureParams) {
       renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+      isRenderer(renderer, parameters.label ? parameters.label + " RenderTexture" : "RenderTexture");
+      this.type = "RenderTexture";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const defaultOptions = {
-        ...defaultTextureParams,
-        source: parameters.fromTexture ? parameters.fromTexture.options.source : null,
-        sourceType: parameters.fromTexture ? parameters.fromTexture.options.sourceType : null
-      };
-      this.options = { ...defaultOptions, ...parameters };
-      this.options.texture = { ...defaultOptions.texture, ...parameters.texture };
-      this.options.label = this.options.label ?? this.options.name;
-      this.texture = null;
-      this.externalTexture = null;
-      this.source = null;
-      this.size = {
-        width: 1,
-        height: 1
-      };
-      this.textureMatrix = new BufferBinding({
-        label: this.options.label + ": model matrix",
-        name: this.options.name + "Matrix",
-        useStruct: false,
-        bindings: {
-          matrix: {
-            name: this.options.name + "Matrix",
-            type: "mat4x4f",
-            value: this.modelMatrix
-            //onBeforeUpdate: () => this.updateTextureMatrix(),
-          }
-        }
-      });
-      this.setBindings();
-      this._parent = null;
-      this.sourceLoaded = false;
-      this.sourceUploaded = false;
-      this.shouldUpdate = false;
+      this.options = { ...defaultRenderTextureParams, ...parameters };
+      if (!this.options.format) {
+        this.options.format = this.renderer.preferredFormat;
+      }
       this.shouldUpdateBindGroup = false;
-      this.renderer.addTexture(this);
+      this.setSize(this.options.size);
+      this.setBindings();
+      this.createTexture();
     }
-    #parentRatio;
-    #sourceRatio;
-    #coverScale;
-    #rotationMatrix;
     /**
-     * Set our [bindings]{@link Texture#bindings}
+     * Set the [size]{@link RenderTexture#size}
+     * @param size - [size]{@link RectSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height if null
+     */
+    setSize(size = null) {
+      if (!size) {
+        size = {
+          width: this.renderer.pixelRatioBoundingRect.width,
+          height: this.renderer.pixelRatioBoundingRect.height
+        };
+      }
+      this.size = size;
+    }
+    /**
+     * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
+     */
+    createTexture() {
+      if (this.options.fromTexture) {
+        this.texture = this.options.fromTexture.texture;
+        this.size = this.options.fromTexture.size;
+        this.textureBinding.resource = this.texture;
+        return;
+      }
+      this.texture?.destroy();
+      this.texture = this.renderer.createTexture({
+        label: this.options.label,
+        format: this.options.format,
+        size: [this.size.width, this.size.height],
+        usage: (
+          // TODO let user chose?
+          this.options.usage === "texture" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+        )
+      });
+      this.textureBinding.resource = this.texture;
+    }
+    /**
+     * Set our [bindings]{@link RenderTexture#bindings}
      */
     setBindings() {
       this.bindings = [
         new TextureBinding({
-          label: this.options.label + ": texture",
+          label: this.options.label + ": " + this.options.name + " render texture",
           name: this.options.name,
-          texture: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
-          bindingType: this.options.sourceType === "externalVideo" ? "externalTexture" : "texture"
-        }),
-        this.textureMatrix
+          texture: this.texture,
+          bindingType: this.options.usage
+        })
       ];
     }
     /**
@@ -2830,364 +3322,18 @@ var GPUCurtains = (() => {
       return this.bindings[0];
     }
     /**
-     * Get/set our [texture parent]{@link Texture#_parent}
-     * @readonly
+     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
+     * @param size - the optional new [size]{@link RectSize} to set
      */
-    get parent() {
-      return this._parent;
-    }
-    set parent(value) {
-      this._parent = value;
-      this.resize();
-    }
-    /**
-     * Get/set whether our [texture source]{@link Texture#source} has loaded
-     * @readonly
-     */
-    get sourceLoaded() {
-      return this._sourceLoaded;
-    }
-    set sourceLoaded(value) {
-      if (value && !this.sourceLoaded) {
-        this._onSourceLoadedCallback && this._onSourceLoadedCallback();
-      }
-      this._sourceLoaded = value;
-    }
-    /**
-     * Get/set whether our [texture source]{@link Texture#source} has been uploaded
-     * @readonly
-     */
-    get sourceUploaded() {
-      return this._sourceUploaded;
-    }
-    set sourceUploaded(value) {
-      if (value && !this.sourceUploaded) {
-        this._onSourceUploadedCallback && this._onSourceUploadedCallback();
-      }
-      this._sourceUploaded = value;
-    }
-    /**
-     * Set our [texture transforms object]{@link Texture#transforms}
-     */
-    setTransforms() {
-      super.setTransforms();
-      this.transforms.quaternion.setAxisOrder("ZXY");
-      this.transforms.origin.model.set(0.5, 0.5, 0);
-    }
-    /* TEXTURE MATRIX */
-    /**
-     * Update the [texture model matrix]{@link Texture#modelMatrix}
-     */
-    updateModelMatrix() {
-      if (!this.parent)
-        return;
-      const parentScale = this.parent.scale ? this.parent.scale : new Vec3(1, 1, 1);
-      const parentWidth = this.parent.boundingRect ? this.parent.boundingRect.width * parentScale.x : this.size.width;
-      const parentHeight = this.parent.boundingRect ? this.parent.boundingRect.height * parentScale.y : this.size.height;
-      const parentRatio = parentWidth / parentHeight;
-      const sourceWidth = this.size.width;
-      const sourceHeight = this.size.height;
-      const sourceRatio = sourceWidth / sourceHeight;
-      if (parentWidth > parentHeight) {
-        this.#parentRatio.set(parentRatio, 1, 1);
-        this.#sourceRatio.set(1 / sourceRatio, 1, 1);
-      } else {
-        this.#parentRatio.set(1, 1 / parentRatio, 1);
-        this.#sourceRatio.set(1, sourceRatio, 1);
-      }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? this.#parentRatio.x * this.#sourceRatio.x : this.#sourceRatio.y * this.#parentRatio.y;
-      this.#coverScale.set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
-      this.#rotationMatrix.rotateFromQuaternion(this.quaternion);
-      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(this.#coverScale).premultiplyScale(this.#parentRatio).premultiply(this.#rotationMatrix).premultiplyScale(this.#sourceRatio).premultiplyTranslate(this.transformOrigin).translate(this.position);
-    }
-    /**
-     * Our [model matrix]{@link Texture#modelMatrix} has been updated, tell the [texture matrix binding]{@link Texture#textureMatrix} to update as well
-     */
-    onAfterMatrixStackUpdate() {
-      this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
-    }
-    /**
-     * Resize our {@link Texture}
-     */
-    resize() {
-      if (this.source && this.source instanceof HTMLCanvasElement && (this.source.width !== this.size.width || this.source.height !== this.size.height)) {
-        this.setSourceSize();
-        this.createTexture();
-      }
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Get the number of mip levels create based on [texture source size]{@link Texture#size}
-     * @param sizes
-     * @returns - number of mip levels
-     */
-    getNumMipLevels(...sizes) {
-      const maxSize = Math.max(...sizes);
-      return 1 + Math.log2(maxSize) | 0;
-    }
-    /**
-     * Tell the {@link Renderer} to upload or texture
-     */
-    uploadTexture() {
-      this.renderer.uploadTexture(this);
-      this.shouldUpdate = false;
-    }
-    /**
-     * Import an [external texture]{@link GPUExternalTexture} from the {@link Renderer}, update the [texture binding]{@link Texture#textureBinding} and its [bind group]{@link BindGroup}
-     */
-    uploadVideoTexture() {
-      this.externalTexture = this.renderer.importExternalTexture(this.source);
-      this.textureBinding.resource = this.externalTexture;
-      this.textureBinding.setBindingType("externalTexture");
+    resize(size = null) {
+      this.setSize(size);
+      this.createTexture();
       this.shouldUpdateBindGroup = true;
-      this.shouldUpdate = false;
-      this.sourceUploaded = true;
     }
     /**
-     * Copy a [texture]{@link Texture}
-     * @param texture - [texture]{@link Texture} to copy
-     */
-    copy(texture) {
-      if (this.options.sourceType === "externalVideo" && texture.options.sourceType !== "externalVideo") {
-        throwWarning(`${this.options.label}: cannot copy a GPUTexture to a GPUExternalTexture`);
-        return;
-      } else if (this.options.sourceType !== "externalVideo" && texture.options.sourceType === "externalVideo") {
-        throwWarning(`${this.options.label}: cannot copy a GPUExternalTexture to a GPUTexture`);
-        return;
-      }
-      this.options.fromTexture = texture;
-      this.options.sourceType = texture.options.sourceType;
-      this.options.texture = texture.options.texture;
-      this.sourceLoaded = texture.sourceLoaded;
-      this.sourceUploaded = texture.sourceUploaded;
-      if (texture.texture) {
-        if (texture.sourceLoaded) {
-          this.size = texture.size;
-          this.source = texture.source;
-          this.resize();
-        }
-        if (texture.sourceUploaded) {
-          this.texture = texture.texture;
-          this.shouldUpdateBindGroup = true;
-        } else {
-          this.createTexture();
-        }
-      }
-    }
-    /**
-     * Set the [texture]{@link Texture#texture}
-     */
-    createTexture() {
-      const options = {
-        label: this.options.label,
-        format: this.options.texture.format,
-        size: [this.size.width, this.size.height],
-        // [1, 1] if no source
-        usage: !!this.source ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
-      };
-      if (this.options.sourceType !== "externalVideo") {
-        options.mipLevelCount = this.options.texture.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1;
-        this.texture?.destroy();
-        this.texture = this.renderer.createTexture(options);
-        this.textureBinding.resource = this.texture;
-        this.shouldUpdateBindGroup = !!this.source;
-      }
-      this.shouldUpdate = true;
-    }
-    /* SOURCES */
-    /**
-     * Set the [size]{@link Texture#size} based on [texture source]{@link Texture#source}
-     */
-    setSourceSize() {
-      this.size = {
-        width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
-        height: this.source.naturalHeight || this.source.height || this.source.videoHeight
-      };
-    }
-    /**
-     * Load an [image]{@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a [texture source]{@link Texture#source}
-     * @async
-     * @param url - URL of the image to load
-     * @returns - the newly created {@link ImageBitmap}
-     */
-    async loadImageBitmap(url) {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      return await createImageBitmap(blob, { colorSpaceConversion: "none" });
-    }
-    /**
-     * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
-     * @async
-     * @param source - the image URL or {@link HTMLImageElement} to load
-     * @returns - the newly created {@link ImageBitmap}
-     */
-    async loadImage(source) {
-      const image = typeof source === "string" ? source : source.getAttribute("src");
-      this.options.source = image;
-      this.options.sourceType = "image";
-      this.sourceLoaded = false;
-      this.sourceUploaded = false;
-      this.source = await this.loadImageBitmap(this.options.source);
-      this.setSourceSize();
-      this.resize();
-      this.sourceLoaded = true;
-      this.createTexture();
-    }
-    // weirldy enough, we don't have to do anything in that callback
-    // because the <video> is not visible in the viewport, the video playback is throttled
-    // and the rendering is janky
-    // using requestVideoFrameCallback helps preventing this but is unsupported in Firefox at the moment
-    // WebCodecs may be the way to go when time comes!
-    // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
-    /**
-     * Set our [shouldUpdate]{@link Texture#shouldUpdate} flag to true at each new video frame
-     */
-    onVideoFrameCallback() {
-      if (this.videoFrameCallbackId) {
-        this.shouldUpdate = true;
-        this.source.requestVideoFrameCallback(this.onVideoFrameCallback.bind(this));
-      }
-    }
-    /**
-     * Callback to run when a [video]{@link HTMLVideoElement} has loaded (when it has enough data to play).
-     * Set the [video]{@link HTMLVideoElement} as a [texture source]{@link Texture#source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
-     * @param video - the newly loaded [video]{@link HTMLVideoElement}
-     */
-    onVideoLoaded(video) {
-      if (!this.sourceLoaded) {
-        this.source = video;
-        this.setSourceSize();
-        this.resize();
-        if (this.options.texture.useExternalTextures) {
-          this.options.sourceType = "externalVideo";
-          this.texture?.destroy();
-        } else {
-          this.options.sourceType = "video";
-          this.createTexture();
-        }
-        if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
-          this.videoFrameCallbackId = this.source.requestVideoFrameCallback(
-            this.onVideoFrameCallback.bind(this)
-          );
-        }
-        this.sourceLoaded = true;
-      }
-    }
-    /**
-     * Get whether the [texture source]{@link Texture#source} is a video
-     * @readonly
-     */
-    get isVideoSource() {
-      return this.source && (this.options.sourceType === "video" || this.options.sourceType === "externalVideo");
-    }
-    /**
-     * Load a video from a URL or {@link HTMLVideoElement} and register [onVideoLoaded]{@link Texture#onVideoLoaded} callback
-     * @param source - the video URL or {@link HTMLVideoElement} to load
-     */
-    loadVideo(source) {
-      let video;
-      if (typeof source === "string") {
-        video = document.createElement("video");
-        video.src = source;
-      } else {
-        video = source;
-      }
-      video.preload = "auto";
-      video.muted = true;
-      video.loop = true;
-      video.crossOrigin = "anonymous";
-      video.setAttribute("playsinline", "");
-      this.options.source = video.src;
-      this.sourceLoaded = false;
-      this.sourceUploaded = false;
-      if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-        this.onVideoLoaded(video);
-      } else {
-        video.addEventListener("canplaythrough", this.onVideoLoaded.bind(this, video), {
-          once: true
-        });
-      }
-      if (isNaN(video.duration)) {
-        video.load();
-      }
-    }
-    /**
-     * Load a [canvas]{@link HTMLCanvasElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
-     * @param source
-     */
-    loadCanvas(source) {
-      this.options.source = source;
-      this.options.sourceType = "canvas";
-      this.sourceLoaded = false;
-      this.sourceUploaded = false;
-      this.source = source;
-      this.setSourceSize();
-      this.resize();
-      this.sourceLoaded = true;
-      this.createTexture();
-    }
-    /* EVENTS */
-    /**
-     * Callback to run when the [texture source]{@link Texture#source} has loaded
-     * @param callback - callback to run when the [texture source]{@link Texture#source} has loaded
-     * @returns - our {@link Texture}
-     */
-    onSourceLoaded(callback) {
-      if (callback) {
-        this._onSourceLoadedCallback = callback;
-      }
-      return this;
-    }
-    /**
-     * Callback to run when the [texture source]{@link Texture#source} has been uploaded
-     * @param callback - callback to run when the [texture source]{@link Texture#source} been uploaded
-     * @returns - our {@link Texture}
-     */
-    onSourceUploaded(callback) {
-      if (callback) {
-        this._onSourceUploadedCallback = callback;
-      }
-      return this;
-    }
-    /* RENDER */
-    /**
-     * Render a {@link Texture}:
-     * - Update its [model matrix]{@link Texture#modelMatrix} and [bindings]{@link Texture#bindings} if needed
-     * - Upload the texture if it needs to be done
-     */
-    render() {
-      this.updateMatrixStack();
-      this.textureMatrix.onBeforeRender();
-      if (this.options.sourceType === "externalVideo") {
-        this.shouldUpdate = true;
-      }
-      if (this.isVideoSource && !this.videoFrameCallbackId && this.source.readyState >= this.source.HAVE_CURRENT_DATA && !this.source.paused) {
-        this.shouldUpdate = true;
-      }
-      if (this.shouldUpdate && this.options.sourceType && this.options.sourceType !== "externalVideo") {
-        this.uploadTexture();
-      }
-    }
-    /* DESTROY */
-    /**
-     * Destroy the {@link Texture}
+     * Destroy our {@link RenderTexture}
      */
     destroy() {
-      if (this.videoFrameCallbackId) {
-        ;
-        this.source.cancelVideoFrameCallback(this.videoFrameCallbackId);
-      }
-      if (this.isVideoSource) {
-        ;
-        this.source.removeEventListener(
-          "canplaythrough",
-          this.onVideoLoaded.bind(this, this.source),
-          {
-            once: true
-          }
-        );
-      }
-      this.renderer.removeTexture(this);
       this.texture?.destroy();
       this.texture = null;
     }
@@ -3221,6 +3367,7 @@ var GPUCurtains = (() => {
         ...samplers !== void 0 && { samplers }
       };
       this.bindGroups = [];
+      this.texturesBindGroups = [];
       this.clonedBindGroups = [];
       this.setBindGroups();
       this.setTextures();
@@ -3307,6 +3454,13 @@ var GPUCurtains = (() => {
       });
     }
     /**
+     * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related bindings
+     * @readonly
+     */
+    get texturesBindGroup() {
+      return this.texturesBindGroups[0];
+    }
+    /**
      * Process all {@see BindGroup} bindings and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to bindings.
      * @param bindGroup - The {@see BindGroup} to process
      */
@@ -3334,16 +3488,27 @@ var GPUCurtains = (() => {
         this.texturesBindGroup.createBindGroup();
         this.bindGroups.push(this.texturesBindGroup);
       }
-      this.options.bindGroups?.forEach((bindGroup) => {
-        if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-          this.bindGroups.push(bindGroup);
-        }
-      });
       this.inputsBindGroups.forEach((bindGroup) => {
         if (bindGroup.shouldCreateBindGroup) {
           bindGroup.setIndex(this.bindGroups.length);
           bindGroup.createBindGroup();
           this.bindGroups.push(bindGroup);
+        }
+      });
+      this.options.bindGroups?.forEach((bindGroup) => {
+        if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
+          bindGroup.setIndex(this.bindGroups.length);
+          this.bindGroups.push(bindGroup);
+        }
+        if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
+          this.texturesBindGroups.push(bindGroup);
+          bindGroup.textures.forEach((texture) => {
+            if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+              this.textures.push(texture);
+            } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
+              this.renderTextures.push(texture);
+            }
+          });
         }
       });
     }
@@ -3362,7 +3527,7 @@ var GPUCurtains = (() => {
     }) {
       if (!bindGroup)
         return null;
-      const clone = bindGroup.cloneFromBindings({ bindings, keepLayout });
+      const clone = bindGroup.clone({ bindings, keepLayout });
       this.clonedBindGroups.push(clone);
       return clone;
     }
@@ -3382,16 +3547,22 @@ var GPUCurtains = (() => {
     destroyBindGroups() {
       this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
       this.clonedBindGroups.forEach((bindGroup) => bindGroup.destroy());
-      this.texturesBindGroup = null;
+      this.texturesBindGroups = [];
       this.inputsBindGroups = [];
       this.bindGroups = [];
       this.clonedBindGroups = [];
     }
     /**
-     * Update all bind groups.
-     * For each of them, first check if it eventually needs a reset, then update its bindings
+     * Update all bind groups:
+     * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
+     * - Check if it eventually needs a reset
+     * - Check if we need to flush the pipeline
+     * - Update its bindings
      */
     updateBindGroups() {
+      this.texturesBindGroups.forEach((texturesBindGroup) => {
+        texturesBindGroup.updateTextures();
+      });
       this.bindGroups.forEach((bindGroup) => {
         if (bindGroup.needsReset) {
           bindGroup.resetBindGroup();
@@ -3401,7 +3572,7 @@ var GPUCurtains = (() => {
           this.pipelineEntry.flushPipelineEntry(this.bindGroups);
           bindGroup.needsPipelineFlush = false;
         }
-        bindGroup.updateBindings();
+        bindGroup.updateBufferBindings();
       });
     }
     /* INPUTS */
@@ -3443,16 +3614,23 @@ var GPUCurtains = (() => {
      */
     setTextures() {
       this.textures = [];
-      this.texturesBindGroup = new TextureBindGroup(this.renderer, {
-        label: this.options.label + ": Textures bind group"
-      });
+      this.renderTextures = [];
+      this.texturesBindGroups.push(
+        new TextureBindGroup(this.renderer, {
+          label: this.options.label + ": Textures bind group"
+        })
+      );
     }
     /**
      * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
      * @param texture - texture to add
      */
     addTexture(texture) {
-      this.textures.push(texture);
+      if (texture instanceof Texture) {
+        this.textures.push(texture);
+      } else if (texture instanceof RenderTexture) {
+        this.renderTextures.push(texture);
+      }
       if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
         this.texturesBindGroup.addTexture(texture);
       }
@@ -3462,7 +3640,9 @@ var GPUCurtains = (() => {
      */
     destroyTextures() {
       this.textures?.forEach((texture) => texture.destroy());
+      this.renderTextures?.forEach((texture) => texture.destroy());
       this.textures = [];
+      this.renderTextures = [];
     }
     /**
      * Prepare our samplers array and always add a default sampler if not already passed as parameter
@@ -3492,37 +3672,22 @@ var GPUCurtains = (() => {
     /**
      * Called before rendering the Material.
      * First, check if we need to create our bind groups or pipeline
-     * Then render the textures and updates them
-     * Finally updates all buffer inputs that need it and update the bind groups (write buffers if needed)
+     * Then render the [textures]{@link Material#textures}
+     * Finally updates all the [bind groups]{@link Material#bindGroups}
      */
     onBeforeRender() {
       this.setMaterial();
       this.textures.forEach((texture) => {
-        if ("render" in texture) {
-          texture.render();
-        }
-      });
-      this.texturesBindGroup?.textures.forEach((texture, textureIndex) => {
-        if (texture instanceof Texture) {
-          if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
-            texture.copy(texture.options.fromTexture);
-          }
-          if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === "externalVideo") {
-            texture.uploadVideoTexture();
-            if (this.texturesBindGroup.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
-              this.texturesBindGroup.updateVideoTextureBindGroupLayout(textureIndex);
-            }
-          }
-        }
-        if (texture.shouldUpdateBindGroup && (texture.texture || texture.externalTexture)) {
-          this.texturesBindGroup.resetTextureBindGroup();
-          texture.shouldUpdateBindGroup = false;
-        }
-      });
-      this.inputsBindings.forEach((inputBinding) => {
-        inputBinding.onBeforeRender();
+        texture.render();
       });
       this.updateBindGroups();
+    }
+    /**
+     * Set the current pipeline
+     * @param pass - current pass encoder
+     */
+    setPipeline(pass) {
+      this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
     }
     /**
      * Render the material if it is ready:
@@ -3532,7 +3697,7 @@ var GPUCurtains = (() => {
     render(pass) {
       if (!this.ready)
         return;
-      this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
+      this.setPipeline(pass);
       this.bindGroups.forEach((bindGroup) => {
         pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
       });
@@ -3667,7 +3832,7 @@ var GPUCurtains = (() => {
     render(pass) {
       if (!this.ready)
         return;
-      this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
+      this.setPipeline(pass);
       this.workGroups.forEach((workGroup) => {
         this.renderWorkGroup(pass, workGroup);
       });
@@ -3779,14 +3944,26 @@ var GPUCurtains = (() => {
       this.type = type;
       this.uuid = generateUUID();
       Object.defineProperty(this, "index", { value: computePassIndex++ });
-      const { label, shaders, renderOrder, inputs, bindGroups, autoAddToScene, useAsyncPipeline, dispatchSize } = parameters;
+      const {
+        label,
+        shaders,
+        renderOrder,
+        inputs,
+        bindGroups,
+        autoAddToScene,
+        useAsyncPipeline,
+        texturesOptions,
+        dispatchSize
+      } = parameters;
       this.options = {
         label,
         shaders,
         ...autoAddToScene !== void 0 && { autoAddToScene },
         ...renderOrder !== void 0 && { renderOrder },
         ...useAsyncPipeline !== void 0 && { useAsyncPipeline },
-        ...dispatchSize !== void 0 && { dispatchSize }
+        ...dispatchSize !== void 0 && { dispatchSize },
+        texturesOptions
+        // TODO default
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoAddToScene !== void 0) {
@@ -3818,13 +3995,6 @@ var GPUCurtains = (() => {
       this._ready = value;
     }
     /**
-     * Create the compute pass material
-     * @param computeParameters - {@link ComputeMaterial} parameters
-     */
-    setComputeMaterial(computeParameters) {
-      this.material = new ComputeMaterial(this.renderer, computeParameters);
-    }
-    /**
      * Add our compute pass to the scene and the renderer
      */
     addToScene() {
@@ -3843,14 +4013,79 @@ var GPUCurtains = (() => {
       this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
     }
     /**
-     * Get our {@link ComputeMaterial} uniforms
+     * Create the compute pass material
+     * @param computeParameters - {@link ComputeMaterial} parameters
+     */
+    setComputeMaterial(computeParameters) {
+      this.material = new ComputeMaterial(this.renderer, computeParameters);
+    }
+    /* TEXTURES */
+    /**
+     * Get our [compute material textures array]{@link ComputeMaterial#textures}
+     * @readonly
+     */
+    get textures() {
+      return this.material?.textures || [];
+    }
+    /**
+     * Get our [compute material render textures array]{@link ComputeMaterial#renderTextures}
+     * @readonly
+     */
+    get renderTextures() {
+      return this.material?.renderTextures || [];
+    }
+    /**
+     * Create a new {@link Texture}
+     * @param options - [Texture options]{@link TextureParams}
+     * @returns - newly created {@link Texture}
+     */
+    createTexture(options) {
+      if (!options.name) {
+        options.name = "texture" + this.textures.length;
+      }
+      if (!options.label) {
+        options.label = this.options.label + " " + options.name;
+      }
+      const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+      this.addTexture(texture);
+      return texture;
+    }
+    /**
+     * Add a {@link Texture}
+     * @param texture - {@link Texture} to add
+     */
+    addTexture(texture) {
+      this.material.addTexture(texture);
+    }
+    /**
+     * Create a new {@link RenderTexture}
+     * @param  options - [RenderTexture options]{@link RenderTextureParams}
+     * @returns - newly created {@link RenderTexture}
+     */
+    createRenderTexture(options) {
+      if (!options.name) {
+        options.name = "renderTexture" + this.renderTextures.length;
+      }
+      const renderTexture = new RenderTexture(this.renderer, options);
+      this.addRenderTexture(renderTexture);
+      return renderTexture;
+    }
+    /**
+     * Add a {@link RenderTexture}
+     * @param renderTexture - {@link RenderTexture} to add
+     */
+    addRenderTexture(renderTexture) {
+      this.material.addTexture(renderTexture);
+    }
+    /**
+     * Get our [compute material uniforms]{@link ComputeMaterial#uniforms}
      * @readonly
      */
     get uniforms() {
       return this.material?.uniforms;
     }
     /**
-     * Get our {@link ComputeMaterial} storages
+     * Get our [compute material storages]{@link ComputeMaterial#storages}
      * @readonly
      */
     get storages() {
@@ -4720,103 +4955,6 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/core/textures/RenderTexture.ts
-  var defaultRenderTextureParams = {
-    label: "RenderTexture",
-    name: "renderTexture",
-    usage: "texture",
-    access: "write",
-    fromTexture: null
-  };
-  var RenderTexture = class {
-    /**
-     * RenderTexture constructor
-     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-     * @param parameters - [parameters]{@link RenderTextureParams} used to create this {@link RenderTexture}
-     */
-    constructor(renderer, parameters = defaultRenderTextureParams) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " RenderTexture" : "RenderTexture");
-      this.type = "RenderTexture";
-      this.renderer = renderer;
-      this.options = { ...defaultRenderTextureParams, ...parameters };
-      if (!this.options.format) {
-        this.options.format = this.renderer.preferredFormat;
-      }
-      this.shouldUpdateBindGroup = false;
-      this.setSize(this.options.size);
-      this.setBindings();
-      this.createTexture();
-    }
-    /**
-     * Set the [size]{@link RenderTexture#size}
-     */
-    setSize(size = null) {
-      if (!size) {
-        size = {
-          width: this.renderer.pixelRatioBoundingRect.width,
-          height: this.renderer.pixelRatioBoundingRect.height
-        };
-      }
-      this.size = size;
-    }
-    /**
-     * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
-     */
-    createTexture() {
-      if (this.options.fromTexture) {
-        this.texture = this.options.fromTexture.texture;
-        this.size = this.options.fromTexture.size;
-        this.textureBinding.resource = this.texture;
-        return;
-      }
-      this.texture?.destroy();
-      this.texture = this.renderer.createTexture({
-        label: this.options.label,
-        format: this.options.format,
-        size: [this.size.width, this.size.height],
-        usage: this.options.usage === "texture" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
-        // TODO let user chose?
-      });
-      this.textureBinding.resource = this.texture;
-    }
-    /**
-     * Set our [bindings]{@link RenderTexture#bindings}
-     */
-    setBindings() {
-      this.bindings = [
-        new TextureBinding({
-          label: this.options.label + ": " + this.options.name + " render texture",
-          name: this.options.name,
-          texture: this.texture,
-          bindingType: this.options.usage
-        })
-      ];
-    }
-    /**
-     * Get our [texture binding]{@link TextureBinding}
-     * @readonly
-     */
-    get textureBinding() {
-      return this.bindings[0];
-    }
-    /**
-     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
-     */
-    resize() {
-      this.setSize();
-      this.createTexture();
-      this.shouldUpdateBindGroup = true;
-    }
-    /**
-     * Destroy our {@link RenderTexture}
-     */
-    destroy() {
-      this.texture?.destroy();
-      this.texture = null;
-    }
-  };
-
   // src/core/meshes/MeshBaseMixin.ts
   var meshIndex = 0;
   var defaultMeshBaseParams = {
@@ -4852,7 +4990,7 @@ var GPUCurtains = (() => {
            * @property {boolean=} visible - whether this Mesh should be visible (drawn) or not
            * @property {number=} renderOrder - controls the order in which this Mesh should be rendered by our {@link Scene}
            * @property {RenderTarget=} renderTarget - {@link RenderTarget} to render onto if any
-           * @property {MeshTextureParams=} texturesOptions - textures options to apply
+           * @property {ExternalTextureParams=} texturesOptions - textures options to apply
            * @property {Sampler[]=} samplers - array of {@link Sampler}
            *
            * @typedef MeshBaseArrayParams
@@ -4895,8 +5033,6 @@ var GPUCurtains = (() => {
         renderer = renderer && renderer.renderer || renderer;
         isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
-        this.textures = [];
-        this.renderTextures = [];
         const {
           label,
           shaders,
@@ -5037,9 +5173,23 @@ var GPUCurtains = (() => {
       }
       /* TEXTURES */
       /**
+       * Get our [render material textures array]{@link RenderMaterial#textures}
+       * @readonly
+       */
+      get textures() {
+        return this.material?.textures || [];
+      }
+      /**
+       * Get our [render material render textures array]{@link RenderMaterial#renderTextures}
+       * @readonly
+       */
+      get renderTextures() {
+        return this.material?.renderTextures || [];
+      }
+      /**
        * Create a new {@link Texture}
-       * @param options - [Texture options]{@link TextureDefaultParams}
-       * @returns - newly created Texture
+       * @param options - [Texture options]{@link TextureParams}
+       * @returns - newly created {@link Texture}
        */
       createTexture(options) {
         if (!options.name) {
@@ -5048,32 +5198,44 @@ var GPUCurtains = (() => {
         if (!options.label) {
           options.label = this.options.label + " " + options.name;
         }
-        const texture = new Texture(this.renderer, { ...options, texture: this.options.texturesOptions });
-        this.material.addTexture(texture);
-        this.textures.push(texture);
-        this.onTextureCreated(texture);
+        const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+        this.addTexture(texture);
         return texture;
       }
       /**
-       * Callback run when a new {@link Texture} has been created
+       * Add a {@link Texture}
+       * @param texture - {@link Texture} to add
+       */
+      addTexture(texture) {
+        this.material.addTexture(texture);
+        this.onTextureAdded(texture);
+      }
+      /**
+       * Callback run when a new {@link Texture} has been added
        * @param texture - newly created Texture
        */
-      onTextureCreated(texture) {
+      onTextureAdded(texture) {
         texture.parent = this;
       }
       /**
        * Create a new {@link RenderTexture}
        * @param  options - [RenderTexture options]{@link RenderTextureParams}
-       * @returns - newly created RenderTexture
+       * @returns - newly created {@link RenderTexture}
        */
       createRenderTexture(options) {
         if (!options.name) {
           options.name = "renderTexture" + this.renderTextures.length;
         }
         const renderTexture = new RenderTexture(this.renderer, options);
-        this.material.addTexture(renderTexture);
-        this.renderTextures.push(renderTexture);
+        this.addRenderTexture(renderTexture);
         return renderTexture;
+      }
+      /**
+       * Add a {@link RenderTexture}
+       * @param renderTexture - {@link RenderTexture} to add
+       */
+      addRenderTexture(renderTexture) {
+        this.material.addTexture(renderTexture);
       }
       /**
        * Assign or remove a {@link RenderTarget} to this Mesh
@@ -5104,12 +5266,19 @@ var GPUCurtains = (() => {
       get storages() {
         return this.material?.storages;
       }
+      /* RESIZE */
+      /**
+       * Resize the Mesh's render textures only if they're not storage textures
+       */
+      resizeRenderTextures() {
+        this.renderTextures?.filter((renderTexture) => renderTexture.options.usage === "texture").forEach((renderTexture) => renderTexture.resize());
+      }
       /**
        * Resize the Mesh's textures
        * @param boundingRect
        */
       resize(boundingRect = null) {
-        this.renderTextures?.forEach((renderTexture) => renderTexture.resize());
+        this.resizeRenderTextures();
         if (super.resize) {
           super.resize(boundingRect);
         }
@@ -5243,8 +5412,6 @@ var GPUCurtains = (() => {
         }
         this.material?.destroy();
         this.geometry?.destroy();
-        this.renderTextures = [];
-        this.textures = [];
       }
     };
   }
@@ -6201,28 +6368,32 @@ ${this.shaders.fragment.head}`;
       });
       groupsBindings.forEach((groupBinding) => {
         if (groupBinding.visibility === GPUShaderStage.VERTEX || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)) {
-          if (groupBinding.wgslStructFragment) {
+          if (groupBinding.wgslStructFragment && this.shaders.vertex.head.indexOf(groupBinding.wgslStructFragment) === -1) {
             this.shaders.vertex.head = `
 ${groupBinding.wgslStructFragment}
 ${this.shaders.vertex.head}`;
           }
-          this.shaders.vertex.head = `${this.shaders.vertex.head}
+          if (this.shaders.vertex.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+            this.shaders.vertex.head = `${this.shaders.vertex.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
-          if (groupBinding.newLine)
-            this.shaders.vertex.head += `
+            if (groupBinding.newLine)
+              this.shaders.vertex.head += `
 `;
+          }
         }
         if (groupBinding.visibility === GPUShaderStage.FRAGMENT || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)) {
-          if (groupBinding.wgslStructFragment) {
+          if (groupBinding.wgslStructFragment && this.shaders.fragment.head.indexOf(groupBinding.wgslStructFragment) === -1) {
             this.shaders.fragment.head = `
 ${groupBinding.wgslStructFragment}
 ${this.shaders.fragment.head}`;
           }
-          this.shaders.fragment.head = `${this.shaders.fragment.head}
+          if (this.shaders.fragment.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+            this.shaders.fragment.head = `${this.shaders.fragment.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
-          if (groupBinding.newLine)
-            this.shaders.fragment.head += `
+            if (groupBinding.newLine)
+              this.shaders.fragment.head += `
 `;
+          }
         }
       });
       this.shaders.vertex.head = `${this.attributes.wgslStructFragment}
@@ -6426,8 +6597,10 @@ ${this.shaders.vertex.head}`;
 ${groupBinding.wgslStructFragment}
 ${this.shaders.compute.head}`;
         }
-        this.shaders.compute.head = `${this.shaders.compute.head}
+        if (this.shaders.compute.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+          this.shaders.compute.head = `${this.shaders.compute.head}
 @group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
+        }
         if (groupBinding.newLine)
           this.shaders.compute.head += `
 `;
@@ -6973,6 +7146,46 @@ ${this.shaders.compute.head}`;
           `${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`
         );
       }
+    }
+    /**
+     * Get our [DOM Element]{@link DOMMesh#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
+     */
+    get pixelRatioBoundingRect() {
+      const devicePixelRatio = window.devicePixelRatio ?? 1;
+      const scaleBoundingRect = this.renderer.pixelRatio / devicePixelRatio;
+      return Object.keys(this.domElement.boundingRect).reduce(
+        (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
+        {
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0
+        }
+      );
+    }
+    /**
+     * Create a new {@link RenderTexture}
+     * @param  options - [RenderTexture options]{@link RenderTextureParams}
+     * @returns - newly created {@link RenderTexture}
+     */
+    createRenderTexture(options) {
+      options = {
+        ...options,
+        size: { width: this.pixelRatioBoundingRect.width, height: this.pixelRatioBoundingRect.height }
+      };
+      return super.createRenderTexture(options);
+    }
+    /**
+     * Resize the Mesh's render textures only if they're not storage textures
+     */
+    resizeRenderTextures() {
+      this.renderTextures?.filter((renderTexture) => renderTexture.options.usage === "texture").forEach(
+        (renderTexture) => renderTexture.resize({ width: this.pixelRatioBoundingRect.width, height: this.pixelRatioBoundingRect.height })
+      );
     }
     /* EVENTS */
     /**
@@ -7910,7 +8123,7 @@ ${this.shaders.compute.head}`;
           this.device?.queue.copyExternalImageToTexture(
             {
               source: texture.source,
-              flipY: texture.options.texture.flipY
+              flipY: texture.options.flipY
             },
             { texture: texture.texture },
             { width: texture.size.width, height: texture.size.height }
@@ -7925,7 +8138,7 @@ ${this.shaders.compute.head}`;
       } else {
         this.device?.queue.writeTexture(
           { texture: texture.texture },
-          new Uint8Array(texture.options.texture.placeholderColor),
+          new Uint8Array(texture.options.placeholderColor),
           { bytesPerRow: texture.size.width * 4 },
           { width: texture.size.width, height: texture.size.height }
         );
@@ -8043,6 +8256,7 @@ ${this.shaders.compute.head}`;
       this.onAfterRenderScene.execute(commandEncoder);
       const commandBuffer = commandEncoder.finish();
       this.device?.queue.submit([commandBuffer]);
+      this.textures.filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
       this.texturesQueue.forEach((texture) => {
         texture.sourceUploaded = true;
       });
@@ -8211,7 +8425,7 @@ ${this.shaders.compute.head}`;
         return;
       this.cameraBufferBinding?.onBeforeRender();
       this.setCameraBindGroup();
-      this.cameraBindGroup?.updateBindings();
+      this.cameraBindGroup?.updateBufferBindings();
       super.render();
     }
     /**

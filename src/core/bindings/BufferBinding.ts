@@ -287,7 +287,7 @@ export class BufferBinding extends Binding {
       )
 
       bindingElement.update = (value) => {
-        if (bindingElement.type === 'f32') {
+        if (bindingElement.type === 'f32' || bindingElement.type === 'u32' || bindingElement.type === 'i32') {
           bindingElement.array[0] = value as number
         } else if (bindingElement.type === 'vec2f') {
           bindingElement.array[0] = (value as Vec2).x ?? value[0] ?? 0

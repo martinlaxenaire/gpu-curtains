@@ -14,13 +14,11 @@ import { RectSize } from '../DOM/DOMElement'
 /** @const - default [texture]{@link Texture} parameters */
 const defaultTextureParams: TextureParams = {
   name: 'texture',
-  texture: {
-    generateMips: false,
-    flipY: false,
-    format: 'rgba8unorm',
-    placeholderColor: [0, 0, 0, 255], // default to black
-    useExternalTextures: true,
-  },
+  generateMips: false,
+  flipY: false,
+  format: 'rgba8unorm',
+  placeholderColor: [0, 0, 0, 255], // default to black
+  useExternalTextures: true,
   fromTexture: null,
 }
 
@@ -117,7 +115,7 @@ export class Texture extends Object3D {
 
     this.options = { ...defaultOptions, ...parameters }
     // force merge of texture object
-    this.options.texture = { ...defaultOptions.texture, ...parameters.texture }
+    //this.options.texture = { ...defaultOptions.texture, ...parameters.texture }
 
     this.options.label = this.options.label ?? this.options.name
 
@@ -377,9 +375,19 @@ export class Texture extends Object3D {
     }
 
     this.options.fromTexture = texture
+
+    // now copy all desired texture options except source
+    // const { source, ...optionsToCopy } = texture.options
+    // this.options = { ...this.options, ...optionsToCopy }
+
     this.options.sourceType = texture.options.sourceType
 
-    this.options.texture = texture.options.texture
+    // TODO better way to do that?
+    this.options.generateMips = texture.options.generateMips
+    this.options.flipY = texture.options.flipY
+    this.options.format = texture.options.format
+    this.options.placeholderColor = texture.options.placeholderColor
+    this.options.useExternalTextures = texture.options.useExternalTextures
 
     this.sourceLoaded = texture.sourceLoaded
     this.sourceUploaded = texture.sourceUploaded
@@ -394,8 +402,11 @@ export class Texture extends Object3D {
       }
 
       if (texture.sourceUploaded) {
+        // texture to copy is ready, update our texture and binding
         this.texture = texture.texture
+        this.textureBinding.resource = this.texture
 
+        // tell the texture bind group to update
         this.shouldUpdateBindGroup = true
       } else {
         this.createTexture()
@@ -409,7 +420,7 @@ export class Texture extends Object3D {
   createTexture() {
     const options = {
       label: this.options.label,
-      format: this.options.texture.format,
+      format: this.options.format,
       size: [this.size.width, this.size.height], // [1, 1] if no source
       usage: !!this.source
         ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
@@ -417,9 +428,7 @@ export class Texture extends Object3D {
     } as GPUTextureDescriptor
 
     if (this.options.sourceType !== 'externalVideo') {
-      options.mipLevelCount = this.options.texture.generateMips
-        ? this.getNumMipLevels(this.size.width, this.size.height)
-        : 1
+      options.mipLevelCount = this.options.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1
 
       this.texture?.destroy()
 
@@ -515,7 +524,7 @@ export class Texture extends Object3D {
       this.setSourceSize()
       this.resize()
 
-      if (this.options.texture.useExternalTextures) {
+      if (this.options.useExternalTextures) {
         this.options.sourceType = 'externalVideo'
 
         // texture bindings will be set when uploading external texture

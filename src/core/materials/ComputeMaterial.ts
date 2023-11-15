@@ -177,7 +177,7 @@ export class ComputeMaterial extends Material {
     if (!this.ready) return
 
     // set current pipeline
-    this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry)
+    this.setPipeline(pass)
 
     // render our work groups
     this.workGroups.forEach((workGroup) => {

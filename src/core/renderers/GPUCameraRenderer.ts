@@ -193,7 +193,7 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.setCameraBindGroup()
 
-    this.cameraBindGroup?.updateBindings()
+    this.cameraBindGroup?.updateBufferBindings()
 
     super.render()
   }

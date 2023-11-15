@@ -306,11 +306,14 @@ export class BindGroup {
   }
 
   /**
-   * Check whether we should update (write the buffer) our GPUBuffer or not
+   * Check whether we should update (write the buffer) our GPUBuffer or not.
    * Called at each render from Material
    */
-  updateBindings() {
+  updateBufferBindings() {
     this.bufferBindings.forEach((binding, index) => {
+      // update binding elements
+      binding.onBeforeRender()
+
       if (binding.shouldUpdate) {
         // bufferOffset is always equals to 0 in our case
         if (!binding.useStruct && binding.bindingElements.length > 1) {
@@ -330,11 +333,12 @@ export class BindGroup {
   /**
    * Clones a {@link BindGroup} from a list of {@link bindings}
    * Useful to create a new bind group with already created buffers, but swapped
-   * @param bindings - our input {@link bindings}
-   * @param keepLayout - whether we should keep original {@link bindGroupLayout} or not
+   * @param parameters - parameters to use for cloning
+   * @param parameters.bindings - our input {@link bindings}
+   * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not
    * @returns - the cloned {@link BindGroup}
    */
-  cloneFromBindings({
+  clone({
     bindings = [],
     keepLayout = false,
   }: {
@@ -349,13 +353,17 @@ export class BindGroup {
     })
 
     bindGroupCopy.setIndex(this.index)
+    bindGroupCopy.options = params
 
     const bindingsRef = bindings.length ? bindings : this.bindings
 
     bindingsRef.forEach((binding, index) => {
       bindGroupCopy.addBinding(binding)
 
-      //bindGroupCopy.bindings.push(binding)
+      // if it's a buffer binding without a GPUBuffer, create it now
+      if ('buffer' in binding && !binding.buffer) {
+        bindGroupCopy.createBindingBuffer(binding)
+      }
 
       // if we should create a new bind group layout, fill it
       if (!keepLayout) {
@@ -387,16 +395,16 @@ export class BindGroup {
    * Clones a bind group with all its {@link bindings}
    * @returns - the cloned BindGroup
    */
-  clone(): AllowedBindGroups {
-    return this.cloneFromBindings()
-  }
+  // clone(): AllowedBindGroups {
+  //   return this.cloneFromBindings()
+  // }
 
   /**
    * Destroy our {@link BindGroup}
    * Most important is to destroy the GPUBuffers to free the memory
    */
   destroy() {
-    this.bindings.forEach((binding) => {
+    this.bufferBindings.forEach((binding) => {
       if ('buffer' in binding) {
         binding.buffer?.destroy()
       }

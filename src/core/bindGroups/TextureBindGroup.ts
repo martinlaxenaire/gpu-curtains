@@ -44,11 +44,21 @@ export class TextureBindGroup extends BindGroup {
 
     super(renderer, { label, index, bindings, inputs })
 
-    //this.options.textures = textures
     this.options = {
       ...this.options,
-      textures,
-      samplers,
+      // will be filled after
+      textures: [],
+      samplers: [],
+    }
+
+    // add initial textures if any
+    if (textures.length) {
+      textures.forEach((texture) => this.addTexture(texture))
+    }
+
+    // add initial samplers if any
+    if (samplers.length) {
+      samplers.forEach((sampler) => this.addSampler(sampler))
     }
 
     this.type = type
@@ -108,9 +118,10 @@ export class TextureBindGroup extends BindGroup {
   /**
    * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
    * Called each time a GPUTexture or GPUExternalTexture has changed:
-   * - A texture media has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
-   * - GPUExternalTexture at each tick
-   * - A render texture GPUTexture has changed (on resize)
+   * 1. A [texture source]{@link Texture#source} has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
+   * 2. A [texture]{@link Texture} copy just happened
+   * 3. {@link GPUExternalTexture} at each tick
+   * 4. A [render texture GPUTexture]{@link RenderTexture#texture} has changed (on resize)
    */
   resetTextureBindGroup() {
     // find the indexes of all texture bindings
@@ -180,6 +191,41 @@ export class TextureBindGroup extends BindGroup {
       // bind group will be set later anyway
       this.setBindGroupLayout()
     }
+  }
+
+  /**
+   * Update the [bind group textures]{@link TextureBindGroup#textures}:
+   * - Check if they need to copy their source texture
+   * - Upload texture if needed
+   * - Check if the [bind group layout]{@link TextureBindGroup#bindGroupLayout} and/or [bing group]{@link TextureBindGroup#bindGroup} need an update
+   */
+  updateTextures() {
+    this.textures.forEach((texture, textureIndex) => {
+      // copy textures that need it on first init, but only when original texture is ready
+      if (texture instanceof Texture) {
+        if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
+          texture.copy(texture.options.fromTexture)
+        }
+
+        if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === 'externalVideo') {
+          texture.uploadVideoTexture()
+
+          if (this.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
+            this.updateVideoTextureBindGroupLayout(textureIndex)
+          }
+        }
+      }
+
+      // reset texture bind group each time the texture changed:
+      // 1. texture media is loaded (switch from placeholder 1x1 texture to media texture)
+      // 2. a texture copy just happened
+      // 3. external texture at each tick
+      // 4. render texture has changed (on resize)
+      if (texture.shouldUpdateBindGroup && (texture.texture || (texture as Texture).externalTexture)) {
+        this.resetTextureBindGroup()
+        texture.shouldUpdateBindGroup = false
+      }
+    })
   }
 
   /**

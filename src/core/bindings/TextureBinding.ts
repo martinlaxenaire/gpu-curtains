@@ -43,6 +43,10 @@ export class TextureBinding extends Binding {
   }: TextureBindingParams) {
     bindingType = bindingType ?? 'texture'
 
+    if (bindingType === 'storageTexture') {
+      visibility = 'compute'
+    }
+
     super({ label, name, bindingType, bindIndex, visibility })
 
     this.options = {

@@ -4,6 +4,8 @@ import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RectSize } from '../DOM/DOMElement'
 import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
+import { generateUUID } from '../../utils/utils'
+import { Texture } from './Texture'
 
 export type RenderTextureBindingType = Exclude<TextureBindingType, 'externalTexture'>
 
@@ -30,8 +32,8 @@ export interface RenderTextureBaseParams {
  * Parameters used to create a {@link RenderTexture}
  */
 export interface RenderTextureParams extends RenderTextureBaseParams {
-  /** Optional {@link RenderTexture} to use as a copy source input */
-  fromTexture?: RenderTexture | null
+  /** Optional texture to use as a copy source input. Could be a {@link RenderTexture} or {@link Texture} */
+  fromTexture?: RenderTexture | Texture | null
 }
 
 /** @const - default {@link RenderTexture} parameters */
@@ -53,6 +55,8 @@ export class RenderTexture {
   renderer: Renderer
   /** The type of the {@link RenderTexture} */
   type: string
+  /** The universal unique id of this {@link RenderTexture} */
+  readonly uuid: string
 
   /** The {@link GPUTexture} used */
   texture: GPUTexture
@@ -82,6 +86,8 @@ export class RenderTexture {
     this.type = 'RenderTexture'
 
     this.renderer = renderer
+
+    this.uuid = generateUUID()
 
     this.options = { ...defaultRenderTextureParams, ...parameters }
 
@@ -136,12 +142,13 @@ export class RenderTexture {
       format: this.options.format,
       size: [this.size.width, this.size.height],
       usage:
+        // TODO let user chose?
         this.options.usage === 'texture'
           ? GPUTextureUsage.TEXTURE_BINDING |
             GPUTextureUsage.COPY_SRC |
             GPUTextureUsage.COPY_DST |
             GPUTextureUsage.RENDER_ATTACHMENT
-          : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST, // TODO let user chose?
+          : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
     })
 
     // update texture binding
