@@ -202,7 +202,7 @@ export class BindGroup {
   }
 
   /**
-   * Reset {@link BindGroup} {@link entries} and recreates it
+   * Reset the [bind group entries]{@link BindGroup#entries}, recreates it then recreate the [bind group layout]{@link BindGroup#bindGroupLayout} and [bind group]{@link BindGroup#bindGroup}
    */
   // TODO not necessarily needed?
   resetBindGroup() {
@@ -211,7 +211,7 @@ export class BindGroup {
   }
 
   /**
-   * Get all bindings that handle a GPUBuffer
+   * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
    */
   get bufferBindings(): BindGroupBufferBindingElement[] {
     return this.bindings.filter(
@@ -223,13 +223,13 @@ export class BindGroup {
    * Creates binding GPUBuffer with correct params
    * @param binding - the binding element
    */
-  createBindingBuffer(binding) {
+  createBindingBuffer(binding: BindGroupBufferBindingElement) {
     // TODO user defined usage?
     // [Kangz](https://github.com/Kangz) said:
     // "In general though COPY_SRC/DST is free (at least in Dawn / Chrome because we add it all the time for our own purpose)."
     binding.buffer = this.renderer.createBuffer({
       label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
-      size: binding.value.byteLength,
+      size: binding.arrayBuffer.byteLength,
       usage:
         binding.bindingType === 'uniform'
           ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
@@ -239,7 +239,7 @@ export class BindGroup {
     if ('resultBuffer' in binding) {
       binding.resultBuffer = this.renderer.createBuffer({
         label: this.options.label + ': Result buffer from: ' + binding.label,
-        size: binding.value.byteLength,
+        size: binding.arrayBuffer.byteLength,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
       })
     }
@@ -280,7 +280,7 @@ export class BindGroup {
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
-  getBindingsByName(bindingName = ''): BindGroupBindingElement | null {
+  getBindingByName(bindingName = ''): BindGroupBindingElement | null {
     return this.bindings.find((binding) => binding.name === bindingName)
   }
 
@@ -306,14 +306,14 @@ export class BindGroup {
   }
 
   /**
-   * Check whether we should update (write the buffer) our GPUBuffer or not.
-   * Called at each render from Material
+   * Check whether we should update (write) our {@link GPUBuffer} or not.
    */
   updateBufferBindings() {
     this.bufferBindings.forEach((binding, index) => {
       // update binding elements
-      binding.onBeforeRender()
+      binding.update()
 
+      // now write to the GPUBuffer if needed
       if (binding.shouldUpdate) {
         // bufferOffset is always equals to 0 in our case
         if (!binding.useStruct && binding.bindingElements.length > 1) {
@@ -321,13 +321,28 @@ export class BindGroup {
           // that should not happen but that way we're covered
           this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array)
         } else {
-          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
+          //this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
+          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer)
         }
       }
 
       // reset update flag
       binding.shouldUpdate = false
     })
+  }
+
+  /**
+   * Update the {@link BindGroup}, which means update its [buffer bindings]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
+   * Called at each render from the parent {@link Material}
+   * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
+   */
+  update() {
+    this.updateBufferBindings()
+
+    if (this.needsReset) {
+      this.resetBindGroup()
+      this.needsReset = false
+    }
   }
 
   /**

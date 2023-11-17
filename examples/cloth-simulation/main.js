@@ -635,7 +635,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   plane.onRender(() => {
     // update cloth vertex buffer with resulting buffer from compute passes
     const vertexBuffer = plane.geometry.getVertexBufferByName('clothAttributes')
-    const clothBuffer = computeNormalPass.material.getBindingsByName('clothVertex')
+    const clothBuffer = computeNormalPass.material.getBindingByName('clothVertex')
 
     vertexBuffer.buffer = clothBuffer?.buffer
   })

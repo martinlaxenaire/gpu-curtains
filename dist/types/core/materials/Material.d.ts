@@ -10,6 +10,7 @@ import { Texture } from '../textures/Texture';
 import { FullShadersType, MaterialOptions, MaterialParams } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { RenderTexture } from '../textures/RenderTexture';
+import { Binding } from '../bindings/Binding';
 /**
  * Material class:
  * Used as a base to create a material.
@@ -125,25 +126,25 @@ export declare class Material {
      */
     destroyBindGroups(): void;
     /**
-     * Update all bind groups:
+     * [Update]{@link BindGroup#update} all bind groups:
      * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-     * - Check if it eventually needs a reset
+     * - Update its [buffer bindings]{@link BindGroup#bufferBindings}
+     * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
      * - Check if we need to flush the pipeline
-     * - Update its bindings
      */
     updateBindGroups(): void;
+    /**
+     * Look for a binding by name/key in all bind groups
+     * @param bindingName - the binding name or key
+     * @returns - the found binding, or null if not found
+     */
+    getBindingByName(bindingName?: Binding['name']): BindGroupBindingElement | undefined;
     /**
      * Force a given buffer binding update flag to update it at next render
      * @param bufferBindingName - the buffer binding name
      * @param bindingName - the binding name
      */
     shouldUpdateInputsBindings(bufferBindingName?: BufferBinding['name'], bindingName?: BufferBindingInput['name']): void;
-    /**
-     * Look for a binding by name/key in all bind groups
-     * @param bindingName - the binding name or key
-     * @returns - the found binding, or null if not found
-     */
-    getBindingsByName(bindingName?: BufferBinding['name']): BindGroupBindingElement | null;
     /**
      * Prepare our textures array and set the {@see TextureBindGroup}
      */

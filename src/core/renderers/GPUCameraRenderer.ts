@@ -184,16 +184,13 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Handle the camera [bind group]{@link GPUCameraRenderer#cameraBindGroup} and [bindings]{@link GPUCameraRenderer#cameraBufferBinding}, then call our [super render method]{@link GPURenderer#render}
+   * Check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed, then update it and then call our [super render method]{@link GPURenderer#render}
    */
   render() {
     if (!this.ready) return
 
-    this.cameraBufferBinding?.onBeforeRender()
-
     this.setCameraBindGroup()
-
-    this.cameraBindGroup?.updateBufferBindings()
+    this.cameraBindGroup?.update()
 
     super.render()
   }

@@ -229,6 +229,15 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
+   * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer bindings]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+   */
+  update() {
+    this.updateTextures()
+
+    super.update()
+  }
+
+  /**
    * Destroy our {@link TextureBindGroup}
    */
   destroy() {

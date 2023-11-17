@@ -63,14 +63,18 @@ export declare class BufferBinding extends Binding {
     /** Number of rows (each row has a byteLength of 16) used to build our padded {@link value} array */
     alignmentRows: number;
     /** Total size of our {@link value} array in bytes, so {@link alignmentRows} * 16 */
-    size: number;
     /** Flag to indicate whether one of the {@link bindings} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
     shouldUpdate: boolean;
-    /** An array describing how each corresponding {@link bindings} should be inserted into our {@link value} array
+    /** An array describing how each corresponding {@link bindings} should be inserted into our {@link arrayView} array
      * @type {BufferBindingElement[]} */
     bindingElements: BufferBindingElement[];
     /** The padded value array that will be sent to the GPUBuffer */
-    value: Float32Array;
+    /** Total size of our {@link arrayBuffer} array in bytes */
+    arrayBufferSize: number;
+    /** Array buffer that will be sent to the {@link GPUBuffer} */
+    arrayBuffer: ArrayBuffer;
+    /** Data view of our [array buffer]{@link arrayBuffer} */
+    arrayView: DataView;
     /** The GPUBuffer */
     buffer: GPUBuffer | null;
     /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
@@ -125,7 +129,7 @@ export declare class BufferBinding extends Binding {
     /**
      * Executed at the beginning of a Material render call.
      * If any of the {@link bindings} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
-     * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the GPUBuffer.
+     * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
-    onBeforeRender(): void;
+    update(): void;
 }

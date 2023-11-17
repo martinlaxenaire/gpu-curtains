@@ -653,7 +653,7 @@ export class Texture extends Object3D {
     this.updateMatrixStack()
 
     // update uniforms values
-    this.textureMatrix.onBeforeRender()
+    this.textureMatrix.update()
 
     // since external texture are destroyed as soon as JavaScript returns to the browser
     // we need to update it at every tick, even if it hasn't changed

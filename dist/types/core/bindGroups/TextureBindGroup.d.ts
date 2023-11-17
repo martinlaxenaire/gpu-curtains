@@ -83,6 +83,10 @@ export declare class TextureBindGroup extends BindGroup {
      */
     updateTextures(): void;
     /**
+     * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer bindings]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+     */
+    update(): void;
+    /**
      * Destroy our {@link TextureBindGroup}
      */
     destroy(): void;

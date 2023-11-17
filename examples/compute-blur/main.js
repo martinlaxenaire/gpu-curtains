@@ -23,6 +23,7 @@ fn main(
 ) {
   let filterOffset = (params.filterDim - 1) / 2;
   let dims = vec2<i32>(textureDimensions(inputTexture, 0));
+  //let dims = vec2<i32>(1280, 720);
   let baseIndex = vec2<i32>(WorkGroupID.xy * vec2(params.blockDim, 4)
                   + LocalInvocationID.xy * vec2(4, 1))
                   - vec2(filterOffset, 0);
@@ -51,6 +52,8 @@ fn main(
       if (direction.flip != 0) {
         writeIndex = writeIndex.yx;
       }
+      
+      
 
       let center = i32(4 * LocalInvocationID.x) + c;
       if (center >= filterOffset &&
@@ -62,119 +65,14 @@ fn main(
           acc = acc + (1.0 / f32(params.filterDim)) * tile[r][i];
         }
         textureStore(outputTexture, writeIndex, vec4(acc, 1.0));
-        //textureStore(outputTexture, writeIndex, vec4(1.0, 0.0, 0.0, 1.0));
       }
     }
   }
+  
 }
 `
 
 window.addEventListener('DOMContentLoaded', async () => {
-  // new WebGPURecorder({
-  //   frames: 100,
-  //   export: 'WebGPURecord',
-  //   width: 800,
-  //   height: 600,
-  // })
-
-  /*
-  inputTexture = x5.createTexture({"label":`Compute input texture`,"format":`rgba8unorm`,"size":[1280,720],"usage":22,"mipLevelCount":1});
-  outputTexture = x5.createTexture({"label":`Compute output texture`,"format":`rgba8unorm`,"size":[1280,720],"usage":14});
-  outputTexture2 = x5.createTexture({"label":`Compute output texture 2`,"format":`rgba8unorm`,"size":[1280,720],"usage":14});
-  flip0Buffer = x5.createBuffer({"label":`Compute blur texture bind group 1: uniform buffer from: Direction`,"size":16,"usage":108});
-  xbd = inputTexture.createView();
-  xbe = outputTexture.createView();
-
-  // TEXTURE BIND GROUP
-  // BUFFER: flip0Buffer (FLIP0)
-  // TEXT VIEW 1: xbd (INPUTTEXTURE) - from TEXTURE1 inputTexture
-  // TEXT VIEW 2: xbe (OUPUTTEXTURE) - from TEXTURE2 outputTexture
-  xbf = x5.createBindGroupLayout({"label":`Compute blur texture bind group 1 layout`,"entries":[{"binding":0,"buffer":{"type":`uniform`},"visibility":4},{"binding":1,"texture":{"viewDimension":`2d`},"visibility":7},{"binding":2,"storageTexture":{"format":`rgba8unorm`,"viewDimension":`2d`},"visibility":4}]});
-  textureBindGroup = x5.createBindGroup({"label":`Compute blur texture bind group 1`,"layout":xbf,"entries":[{"binding":0,"resource":{"buffer":flip0Buffer}},{"binding":1,"resource":xbd},{"binding":2,"resource":xbe}]});
-
-
-  // OUTPUTBINDGROUP1
-  // BUFFER: xc1 (FLIP1)
-  // TEXT VIEW 1: xc2 (OUPUTTEXTURE) - from TEXTURE1 outputTexture
-  // TEXT VIEW 2: xc3 (OUPUTTEXTURE2) - from TEXTURE2 outputTexture2
-  xc1 = x5.createBuffer({"label":`Compute blur texture bind group 1 (copy): uniform buffer from: Direction`,"size":16,"usage":108});
-  xc2 = outputTexture.createView();
-  xc3 = outputTexture2.createView();
-  xc4 = x5.createBindGroupLayout({"label":`Compute blur texture bind group 1 (copy) layout`,"entries":[{"binding":0,"buffer":{"type":`uniform`},"visibility":4},{"binding":1,"texture":{"viewDimension":`2d`},"visibility":7},{"binding":2,"storageTexture":{"format":`rgba8unorm`,"viewDimension":`2d`},"visibility":4}]});
-  outputTextureBindGroup1 = x5.createBindGroup({"label":`Compute blur texture bind group 1 (copy)`,"layout":xc4,"entries":[{"binding":0,"resource":{"buffer":xc1}},{"binding":1,"resource":xc2},{"binding":2,"resource":xc3}]});
-
-  // OUTPUTBINDGROUP2
-  // BUFFER: flip0Buffer (FLIP0)
-  // TEXT VIEW 1: xc6 (OUPUTTEXTURE2) - from TEXTURE1 outputTexture2
-  // TEXT VIEW 2: xc7 (OUPUTTEXTURE) - from TEXTURE1 outputTexture
-  xc6 = outputTexture2.createView();
-  xc7 = outputTexture.createView();
-  xc8 = x5.createBindGroupLayout({"label":`Compute blur texture bind group 1 (copy) layout`,"entries":[{"binding":0,"buffer":{"type":`uniform`},"visibility":4},{"binding":1,"texture":{"viewDimension":`2d`},"visibility":7},{"binding":2,"storageTexture":{"format":`rgba8unorm`,"viewDimension":`2d`},"visibility":4}]});
-  outputTextureBindGroup2 = x5.createBindGroup({"label":`Compute blur texture bind group 1 (copy)`,"layout":xc8,"entries":[{"binding":0,"resource":{"buffer":flip0Buffer}},{"binding":1,"resource":xc6},{"binding":2,"resource":xc7}]});
-  
-
-  // COMPUTE SAMPLER BIND GROUP
-  xca = x5.createSampler({"label":`Sampler`,"addressModeU":`repeat`,"addressModeV":`repeat`,"magFilter":`linear`,"minFilter":`linear`,"mipmapFilter":`linear`,"maxAnisotropy":1});
-  xcc = x5.createBindGroupLayout({"label":`Compute blur: Textures bind group layout`,"entries":[{"binding":0,"sampler":{"type":`filtering`},"visibility":7}]});
-  samplerBindGroup = x5.createBindGroup({"label":`Compute blur: Textures bind group`,"layout":xcc,"entries":[{"binding":0,"resource":xca}]});
-
-  // COMPUTE UNIFORMS BIND GROUP
-  xce = x5.createBuffer({"label":`Compute blur: Bindings bind group: uniform buffer from: Params`,"size":16,"usage":108});
-  xcf = x5.createBindGroupLayout({"label":`Compute blur: Bindings bind group layout`,"entries":[{"binding":0,"buffer":{"type":`uniform`},"visibility":7}]});
-  computeUniformsBindGroup = x5.createBindGroup({"label":`Compute blur: Bindings bind group`,"layout":xcf,"entries":[{"binding":0,"resource":{"buffer":xce}}]});
-
-  // PLANE BIND GROUPS
-  xdc = x5.createBindGroupLayout({"label":`Plane: Textures bind group layout`,"entries":[{"binding":0,"sampler":{"type":`filtering`},"visibility":7},{"binding":1,"texture":{"viewDimension":`2d`},"visibility":7},{"binding":2,"buffer":{"type":`uniform`},"visibility":7},{"binding":3,"texture":{"viewDimension":`2d`},"visibility":7}]});
-
-  planeTexturesBindGroup = x5.createBindGroup({"label":`Plane: Textures bind group`,"layout":xdc,"entries":[{"binding":0,"resource":xca},{"binding":1,"resource":xd9},{"binding":2,"resource":{"buffer":xda}},{"binding":3,"resource":xdb}]});
-
-  xde = x5.createBuffer({"label":`Plane: Bindings bind group: uniform buffer from: Matrices`,"size":192,"usage":108});
-  xdf = x5.createBindGroupLayout({"label":`Plane: Bindings bind group layout`,"entries":[{"binding":0,"buffer":{"type":`uniform`},"visibility":7}]});
-  planeUniformsBindGroup = x5.createBindGroup({"label":`Plane: Bindings bind group`,"layout":xdf,"entries":[{"binding":0,"resource":{"buffer":xde}}]});
-
-  // IMAGE TEXTURE
-  xe7 = inputTexture.createView();
-  // BLURRED TEXTURE VIEW xe8 FROM OUTPUTTEXTURE2 outputTexture2
-  xe8 = outputTexture2.createView();
-  planeTexturesBindGroupUpdated = x5.createBindGroup({"label":`Plane: Textures bind group`,"layout":xdc,"entries":[{"binding":0,"resource":xca},{"binding":1,"resource":xe7},{"binding":2,"resource":{"buffer":xda}},{"binding":3,"resource":xe8}]});
-
-
-  async function f95() {
-  let x110,x111,x112,x113,x114,x115;
-  x110 = x5.createCommandEncoder({"label":`Renderer command encoder`});
-  x111 = x110.beginComputePass();
-  x111.setPipeline(xf0);
-  x111.setBindGroup(0,samplerBindGroup);
-  x111.setBindGroup(1,computeUniformsBindGroup);
-  x111.setBindGroup(2,textureBindGroup);
-  x111.dispatchWorkgroups(12,180);
-  x111.setBindGroup(2,outputTextureBindGroup1);
-  x111.dispatchWorkgroups(7,320);
-  x111.setBindGroup(2,outputTextureBindGroup2);
-  x111.dispatchWorkgroups(12,180);
-  x111.setBindGroup(2,outputTextureBindGroup1);
-  x111.dispatchWorkgroups(7,320);
-  x111.end();
-
-  // RENDER
-  x112 = x3.getCurrentTexture();
-  x113 = x112.createView();
-  x114 = x110.beginRenderPass({"label":`Main Render pass descriptor`,"colorAttachments":[{"view":x9,"clearValue":[0,0,0,0],"loadOp":`clear`,"storeOp":`store`,"resolveTarget":x113}],"depthStencilAttachment":{"view":xa,"depthClearValue":1,"depthLoadOp":`clear`,"depthStoreOp":`store`}});
-
-  // CAMERA
-  x114.setBindGroup(0,cameraBindGroup);
-  x114.setPipeline(xf1);
-  x114.setBindGroup(1,planeTexturesBindGroupUpdated);
-  x114.setBindGroup(2,planeUniformsBindGroup);
-  x114.setVertexBuffer(0,xd7);
-  x114.setIndexBuffer(xd8,`uint32`);
-  x114.drawIndexed(6,1);
-  x114.end();
-  x115 = x110.finish();
-  x6.submit([x115]);
-}
-   */
-
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains.GPUCurtains({
     container: 'canvas',
@@ -314,17 +212,15 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   computeBlurPass.onReady(() => {
     console.log('ready', computeBlurPass)
+    console.log(computeBlurPass.material.getBindingByName('params'))
   })
 
   gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
     computeBlurPass.onBeforeRenderPass()
 
-    // also update the buffer bindings of the 2 bind groups that are not part of the compute pass
-    outputTextureBindGroup1.updateTextures()
-    outputTextureBindGroup1.updateBufferBindings()
-
-    outputTextureBindGroup2.updateTextures()
-    outputTextureBindGroup2.updateBufferBindings()
+    // also update the bindings of the 2 bind groups that are not part of the compute pass
+    outputTextureBindGroup1.update()
+    outputTextureBindGroup2.update()
 
     if (!computeBlurPass.ready) return
 
@@ -373,6 +269,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       struct VSOutput {
         @builtin(position) position: vec4f,
         @location(0) uv: vec2f,
+        @location(1) originalUv: vec2f, // debug
       };
       
       @vertex fn main(
@@ -381,8 +278,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         var vsOutput: VSOutput;
         
         vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
-        //vsOutput.uv = getUVCover(attributes.uv, imageTextureMatrix);
-        vsOutput.uv = attributes.uv;
+        vsOutput.uv = getUVCover(attributes.uv, imageTextureMatrix);
+        vsOutput.originalUv = attributes.uv;
       
         return vsOutput;
       }
@@ -392,6 +289,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       struct VSOutput {
         @builtin(position) position: vec4f,
         @location(0) uv: vec2f,
+        @location(1) originalUv: vec2f, // debug
       };
       
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
@@ -420,8 +318,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.log(plane)
 
   plane.addTexture(imageTexture)
-
-  //plane.addRenderTexture(outputTexture2)
 
   const blurredTexture = plane.createRenderTexture({
     label: 'Blur render texture',

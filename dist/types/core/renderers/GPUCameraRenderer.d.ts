@@ -65,7 +65,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     onResize(): void;
     /**
-     * Handle the camera [bind group]{@link GPUCameraRenderer#cameraBindGroup} and [bindings]{@link GPUCameraRenderer#cameraBufferBinding}, then call our [super render method]{@link GPURenderer#render}
+     * Check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed, then update it and then call our [super render method]{@link GPURenderer#render}
      */
     render(): void;
     /**

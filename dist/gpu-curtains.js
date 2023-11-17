@@ -269,11 +269,6 @@ var GPUCurtains = (() => {
         visibility
       };
     }
-    /**
-     * To update our buffers before at each render. Will be overriden.
-     */
-    onBeforeRender() {
-    }
   };
 
   // src/core/bindings/utils.ts
@@ -1510,7 +1505,7 @@ var GPUCurtains = (() => {
         access,
         bindings
       };
-      this.size = 0;
+      this.arrayBufferSize = 0;
       this.shouldUpdate = false;
       this.useStruct = useStruct;
       this.bindingElements = [];
@@ -1590,9 +1585,9 @@ var GPUCurtains = (() => {
         });
       });
       this.alignmentRows = 0;
-      const bytesPerElement = Float32Array.BYTES_PER_ELEMENT;
       this.bindingElements.forEach((bindingElement, index) => {
-        const { numElements, align } = bindingElement.bufferLayout;
+        const { numElements, align, View } = bindingElement.bufferLayout;
+        const bytesPerElement = View.BYTES_PER_ELEMENT;
         if (index === 0) {
           bindingElement.startOffset = 0;
           this.alignmentRows += Math.max(1, Math.ceil(numElements / bytesPerElement));
@@ -1620,11 +1615,14 @@ var GPUCurtains = (() => {
         }
         bindingElement.endOffset = bindingElement.startOffset + bindingElement.bufferLayout.numElements;
       });
-      this.size = this.alignmentRows * bytesPerElement;
-      this.value = new Float32Array(this.size);
+      this.arrayBufferSize = this.alignmentRows * 4 * 4;
+      this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
+      this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength);
       this.bindingElements.forEach((bindingElement) => {
         bindingElement.array = new bindingElement.bufferLayout.View(
-          this.value.subarray(bindingElement.startOffset, bindingElement.endOffset)
+          this.arrayBuffer,
+          bindingElement.startOffset * bindingElement.bufferLayout.View.BYTES_PER_ELEMENT,
+          bindingElement.endOffset - bindingElement.startOffset
         );
         bindingElement.update = (value) => {
           if (bindingElement.type === "f32" || bindingElement.type === "u32" || bindingElement.type === "i32") {
@@ -1638,8 +1636,8 @@ var GPUCurtains = (() => {
             bindingElement.array[2] = value.z ?? value[2] ?? 0;
           } else if (value.elements) {
             bindingElement.array = value.elements;
-          } else if (value instanceof Float32Array) {
-            bindingElement.array.set(value.slice());
+          } else if (value instanceof bindingElement.bufferLayout.View) {
+            bindingElement.array = value;
           } else if (Array.isArray(value)) {
             for (let i = 0; i < bindingElement.array.length; i++) {
               bindingElement.array[i] = value[i] ? value[i] : 0;
@@ -1647,7 +1645,7 @@ var GPUCurtains = (() => {
           }
         };
       });
-      this.shouldUpdate = this.size > 0;
+      this.shouldUpdate = this.arrayBufferSize > 0;
     }
     /**
      * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
@@ -1691,9 +1689,9 @@ var GPUCurtains = (() => {
     /**
      * Executed at the beginning of a Material render call.
      * If any of the {@link bindings} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
-     * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the GPUBuffer.
+     * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
-    onBeforeRender() {
+    update() {
       Object.keys(this.bindings).forEach((bindingKey, bindingIndex) => {
         const binding = this.bindings[bindingKey];
         const bindingElement = this.bindingElements.find((bindingEl) => bindingEl.key === bindingKey);
@@ -1703,8 +1701,24 @@ var GPUCurtains = (() => {
           const notAllArrays = Object.keys(this.bindings).find(
             (bindingKey2) => this.bindings[bindingKey2].type.indexOf("array") === -1
           );
+          const arrayViewSetFunction = ((arrayView) => {
+            switch (bindingElement.bufferLayout.View) {
+              case Int32Array:
+                return arrayView.setInt32.bind(arrayView);
+              case Uint16Array:
+                return arrayView.setUint16.bind(arrayView);
+              case Uint32Array:
+                return arrayView.setUint32.bind(arrayView);
+              case Float32Array:
+              default:
+                return arrayView.setFloat32.bind(arrayView);
+            }
+          })(this.arrayView);
+          const bytesPerElement = Float32Array.BYTES_PER_ELEMENT;
           if (notAllArrays) {
-            this.value.set(bindingElement.array, bindingElement.startOffset);
+            bindingElement.array.forEach((value, index) => {
+              arrayViewSetFunction(bindingElement.startOffset * bytesPerElement + index * bytesPerElement, value, true);
+            });
           } else {
             const arrayStride = getBufferArrayStride(bindingElement);
             let totalArrayStride = 0;
@@ -1716,7 +1730,11 @@ var GPUCurtains = (() => {
               }
             });
             for (let i = 0, j = 0; j < bindingElement.array.length; i++, j += arrayStride) {
-              this.value.set(bindingElement.array.subarray(j, j + arrayStride), i * totalArrayStride + startIndex);
+              const subarray = bindingElement.array.subarray(j, j + arrayStride);
+              const viewArrayOffset = i * totalArrayStride * bytesPerElement + startIndex * bytesPerElement;
+              subarray.forEach((value, index) => {
+                arrayViewSetFunction(viewArrayOffset + index * bytesPerElement, value, true);
+              });
             }
           }
           this.shouldUpdate = true;
@@ -1751,7 +1769,7 @@ var GPUCurtains = (() => {
         shouldCopyResult
       };
       this.shouldCopyResult = shouldCopyResult;
-      this.result = new Float32Array(this.value.slice());
+      this.result = new Float32Array(this.arrayBuffer.slice(0));
       this.resultBuffer = null;
     }
   };
@@ -1874,7 +1892,7 @@ var GPUCurtains = (() => {
       this.setBindGroup();
     }
     /**
-     * Reset {@link BindGroup} {@link entries} and recreates it
+     * Reset the [bind group entries]{@link BindGroup#entries}, recreates it then recreate the [bind group layout]{@link BindGroup#bindGroupLayout} and [bind group]{@link BindGroup#bindGroup}
      */
     // TODO not necessarily needed?
     resetBindGroup() {
@@ -1882,7 +1900,7 @@ var GPUCurtains = (() => {
       this.createBindGroup();
     }
     /**
-     * Get all bindings that handle a GPUBuffer
+     * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings() {
       return this.bindings.filter(
@@ -1896,13 +1914,13 @@ var GPUCurtains = (() => {
     createBindingBuffer(binding) {
       binding.buffer = this.renderer.createBuffer({
         label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
-        size: binding.value.byteLength,
+        size: binding.arrayBuffer.byteLength,
         usage: binding.bindingType === "uniform" ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
       });
       if ("resultBuffer" in binding) {
         binding.resultBuffer = this.renderer.createBuffer({
           label: this.options.label + ": Result buffer from: " + binding.label,
-          size: binding.value.byteLength,
+          size: binding.arrayBuffer.byteLength,
           usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
         });
       }
@@ -1935,7 +1953,7 @@ var GPUCurtains = (() => {
      * @param bindingName - the binding name or key
      * @returns - the found binding, or null if not found
      */
-    getBindingsByName(bindingName = "") {
+    getBindingByName(bindingName = "") {
       return this.bindings.find((binding) => binding.name === bindingName);
     }
     /**
@@ -1958,21 +1976,32 @@ var GPUCurtains = (() => {
       });
     }
     /**
-     * Check whether we should update (write the buffer) our GPUBuffer or not.
-     * Called at each render from Material
+     * Check whether we should update (write) our {@link GPUBuffer} or not.
      */
     updateBufferBindings() {
       this.bufferBindings.forEach((binding, index) => {
-        binding.onBeforeRender();
+        binding.update();
         if (binding.shouldUpdate) {
           if (!binding.useStruct && binding.bindingElements.length > 1) {
             this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array);
           } else {
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value);
+            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer);
           }
         }
         binding.shouldUpdate = false;
       });
+    }
+    /**
+     * Update the {@link BindGroup}, which means update its [buffer bindings]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
+     * Called at each render from the parent {@link Material}
+     * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
+     */
+    update() {
+      this.updateBufferBindings();
+      if (this.needsReset) {
+        this.resetBindGroup();
+        this.needsReset = false;
+      }
     }
     /**
      * Clones a {@link BindGroup} from a list of {@link bindings}
@@ -2715,7 +2744,7 @@ var GPUCurtains = (() => {
      */
     render() {
       this.updateMatrixStack();
-      this.textureMatrix.onBeforeRender();
+      this.textureMatrix.update();
       if (this.options.sourceType === "externalVideo") {
         this.shouldUpdate = true;
       }
@@ -2900,6 +2929,13 @@ var GPUCurtains = (() => {
           texture.shouldUpdateBindGroup = false;
         }
       });
+    }
+    /**
+     * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer bindings]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+     */
+    update() {
+      this.updateTextures();
+      super.update();
     }
     /**
      * Destroy our {@link TextureBindGroup}
@@ -3553,29 +3589,30 @@ var GPUCurtains = (() => {
       this.clonedBindGroups = [];
     }
     /**
-     * Update all bind groups:
+     * [Update]{@link BindGroup#update} all bind groups:
      * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-     * - Check if it eventually needs a reset
+     * - Update its [buffer bindings]{@link BindGroup#bufferBindings}
+     * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
      * - Check if we need to flush the pipeline
-     * - Update its bindings
      */
     updateBindGroups() {
-      this.texturesBindGroups.forEach((texturesBindGroup) => {
-        texturesBindGroup.updateTextures();
-      });
       this.bindGroups.forEach((bindGroup) => {
-        if (bindGroup.needsReset) {
-          bindGroup.resetBindGroup();
-          bindGroup.needsReset = false;
-        }
+        bindGroup.update();
         if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
           this.pipelineEntry.flushPipelineEntry(this.bindGroups);
           bindGroup.needsPipelineFlush = false;
         }
-        bindGroup.updateBufferBindings();
       });
     }
     /* INPUTS */
+    /**
+     * Look for a binding by name/key in all bind groups
+     * @param bindingName - the binding name or key
+     * @returns - the found binding, or null if not found
+     */
+    getBindingByName(bindingName = "") {
+      return this.inputsBindings.find((binding) => binding.name === bindingName);
+    }
     /**
      * Force a given buffer binding update flag to update it at next render
      * @param bufferBindingName - the buffer binding name
@@ -3584,7 +3621,7 @@ var GPUCurtains = (() => {
     shouldUpdateInputsBindings(bufferBindingName, bindingName) {
       if (!bufferBindingName)
         return;
-      const bufferBinding = this.inputsBindings.find((bB) => bB.name === bufferBindingName);
+      const bufferBinding = this.getBindingByName(bufferBindingName);
       if (bufferBinding) {
         if (!bindingName) {
           Object.keys(bufferBinding.bindings).forEach(
@@ -3595,18 +3632,6 @@ var GPUCurtains = (() => {
           bufferBinding.shouldUpdateBinding(bindingName);
         }
       }
-    }
-    /**
-     * Look for a binding by name/key in all bind groups
-     * @param bindingName - the binding name or key
-     * @returns - the found binding, or null if not found
-     */
-    getBindingsByName(bindingName = "") {
-      let binding;
-      (this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
-        binding = bindGroup.getBindingsByName(bindingName);
-      });
-      return binding;
     }
     /* SAMPLERS & TEXTURES */
     /**
@@ -8418,14 +8443,13 @@ ${this.shaders.compute.head}`;
       this.updateCameraMatrixStack();
     }
     /**
-     * Handle the camera [bind group]{@link GPUCameraRenderer#cameraBindGroup} and [bindings]{@link GPUCameraRenderer#cameraBufferBinding}, then call our [super render method]{@link GPURenderer#render}
+     * Check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed, then update it and then call our [super render method]{@link GPURenderer#render}
      */
     render() {
       if (!this.ready)
         return;
-      this.cameraBufferBinding?.onBeforeRender();
       this.setCameraBindGroup();
-      this.cameraBindGroup?.updateBufferBindings();
+      this.cameraBindGroup?.update();
       super.render();
     }
     /**

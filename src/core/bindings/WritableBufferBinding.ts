@@ -50,7 +50,8 @@ export class WritableBufferBinding extends BufferBinding {
 
     this.shouldCopyResult = shouldCopyResult
 
-    this.result = new Float32Array(this.value.slice())
+    //this.result = new Float32Array(this.value.slice())
+    this.result = new Float32Array(this.arrayBuffer.slice(0))
     this.resultBuffer = null
   }
 }

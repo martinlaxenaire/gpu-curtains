@@ -84,18 +84,18 @@ export declare class BindGroup {
      */
     createBindGroup(): void;
     /**
-     * Reset {@link BindGroup} {@link entries} and recreates it
+     * Reset the [bind group entries]{@link BindGroup#entries}, recreates it then recreate the [bind group layout]{@link BindGroup#bindGroupLayout} and [bind group]{@link BindGroup#bindGroup}
      */
     resetBindGroup(): void;
     /**
-     * Get all bindings that handle a GPUBuffer
+     * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings(): BindGroupBufferBindingElement[];
     /**
      * Creates binding GPUBuffer with correct params
      * @param binding - the binding element
      */
-    createBindingBuffer(binding: any): void;
+    createBindingBuffer(binding: BindGroupBufferBindingElement): void;
     /**
      * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.
      * For buffer bindings, create a GPUBuffer first if needed
@@ -106,7 +106,7 @@ export declare class BindGroup {
      * @param bindingName - the binding name or key
      * @returns - the found binding, or null if not found
      */
-    getBindingsByName(bindingName?: string): BindGroupBindingElement | null;
+    getBindingByName(bindingName?: string): BindGroupBindingElement | null;
     /**
      * Create a GPUBindGroupLayout and set our {@link bindGroupLayout}
      */
@@ -116,10 +116,15 @@ export declare class BindGroup {
      */
     setBindGroup(): void;
     /**
-     * Check whether we should update (write the buffer) our GPUBuffer or not.
-     * Called at each render from Material
+     * Check whether we should update (write) our {@link GPUBuffer} or not.
      */
     updateBufferBindings(): void;
+    /**
+     * Update the {@link BindGroup}, which means update its [buffer bindings]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
+     * Called at each render from the parent {@link Material}
+     * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
+     */
+    update(): void;
     /**
      * Clones a {@link BindGroup} from a list of {@link bindings}
      * Useful to create a new bind group with already created buffers, but swapped

@@ -45,8 +45,6 @@ export declare class Binding {
     bindIndex: number;
     /** The visibility of the {@link Binding} in the shaders */
     visibility: GPUShaderStageFlags;
-    /** The padded value array that will be sent to the GPUBuffer */
-    value?: Float32Array | null;
     /** Options used to create this {@link Binding} */
     options: BindingParams;
     /**
@@ -54,8 +52,4 @@ export declare class Binding {
      * @param parameters - [parameters]{@link BindingParams} used to create our {@link Binding}
      */
     constructor({ label, name, bindingType, bindIndex, visibility, }: BindingParams);
-    /**
-     * To update our buffers before at each render. Will be overriden.
-     */
-    onBeforeRender(): void;
 }

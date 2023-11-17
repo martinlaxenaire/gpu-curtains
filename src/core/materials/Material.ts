@@ -9,6 +9,7 @@ import { Texture } from '../textures/Texture'
 import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture } from '../textures/RenderTexture'
+import { Binding } from '../bindings/Binding'
 
 /**
  * Material class:
@@ -342,35 +343,37 @@ export class Material {
   }
 
   /**
-   * Update all bind groups:
+   * [Update]{@link BindGroup#update} all bind groups:
    * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-   * - Check if it eventually needs a reset
+   * - Update its [buffer bindings]{@link BindGroup#bufferBindings}
+   * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
    * - Check if we need to flush the pipeline
-   * - Update its bindings
    */
   updateBindGroups() {
-    // update our textures
-    this.texturesBindGroups.forEach((texturesBindGroup) => {
-      texturesBindGroup.updateTextures()
-    })
-
-    // now check if bind groups need an update / pipeline flush and update buffers
+    // now update all bind groups in use and check if they need to flush the pipeline
     this.bindGroups.forEach((bindGroup) => {
-      if (bindGroup.needsReset) {
-        bindGroup.resetBindGroup()
-        bindGroup.needsReset = false
-      }
+      bindGroup.update()
 
+      // if a bind group needs to flush the pipeline
+      // usually happens if one of the bindings bindingType has changed,
+      // which means the shader should be re-patched and recreated
       if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups)
         bindGroup.needsPipelineFlush = false
       }
-
-      bindGroup.updateBufferBindings()
     })
   }
 
   /* INPUTS */
+
+  /**
+   * Look for a binding by name/key in all bind groups
+   * @param bindingName - the binding name or key
+   * @returns - the found binding, or null if not found
+   */
+  getBindingByName(bindingName: Binding['name'] = ''): BindGroupBindingElement | undefined {
+    return this.inputsBindings.find((binding) => binding.name === bindingName)
+  }
 
   /**
    * Force a given buffer binding update flag to update it at next render
@@ -380,7 +383,7 @@ export class Material {
   shouldUpdateInputsBindings(bufferBindingName?: BufferBinding['name'], bindingName?: BufferBindingInput['name']) {
     if (!bufferBindingName) return
 
-    const bufferBinding = this.inputsBindings.find((bB) => bB.name === bufferBindingName)
+    const bufferBinding = this.getBindingByName(bufferBindingName)
     if (bufferBinding) {
       if (!bindingName) {
         Object.keys((bufferBinding as BindGroupBufferBindingElement).bindings).forEach((bindingKey) =>
@@ -390,20 +393,6 @@ export class Material {
         ;(bufferBinding as BindGroupBufferBindingElement).shouldUpdateBinding(bindingName)
       }
     }
-  }
-
-  /**
-   * Look for a binding by name/key in all bind groups
-   * @param bindingName - the binding name or key
-   * @returns - the found binding, or null if not found
-   */
-  getBindingsByName(bindingName: BufferBinding['name'] = ''): BindGroupBindingElement | null {
-    let binding
-    ;(this.ready ? this.bindGroups : this.inputsBindGroups).forEach((bindGroup) => {
-      binding = bindGroup.getBindingsByName(bindingName)
-    })
-
-    return binding
   }
 
   /* SAMPLERS & TEXTURES */

@@ -83,15 +83,23 @@ export class BufferBinding extends Binding {
   /** Number of rows (each row has a byteLength of 16) used to build our padded {@link value} array */
   alignmentRows: number
   /** Total size of our {@link value} array in bytes, so {@link alignmentRows} * 16 */
-  size: number
+  //size: number
   /** Flag to indicate whether one of the {@link bindings} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
   shouldUpdate: boolean
-  /** An array describing how each corresponding {@link bindings} should be inserted into our {@link value} array
+  /** An array describing how each corresponding {@link bindings} should be inserted into our {@link arrayView} array
    * @type {BufferBindingElement[]} */
   bindingElements: BufferBindingElement[]
 
   /** The padded value array that will be sent to the GPUBuffer */
-  value: Float32Array
+  //value: Float32Array | Uint32Array
+
+  /** Total size of our {@link arrayBuffer} array in bytes */
+  arrayBufferSize: number
+  /** Array buffer that will be sent to the {@link GPUBuffer} */
+  arrayBuffer: ArrayBuffer
+  /** Data view of our [array buffer]{@link arrayBuffer} */
+  arrayView: DataView
+
   /** The GPUBuffer */
   buffer: GPUBuffer | null
 
@@ -134,7 +142,7 @@ export class BufferBinding extends Binding {
       bindings,
     }
 
-    this.size = 0
+    this.arrayBufferSize = 0
 
     this.shouldUpdate = false
     this.useStruct = useStruct
@@ -231,9 +239,10 @@ export class BufferBinding extends Binding {
     })
 
     this.alignmentRows = 0
-    const bytesPerElement = Float32Array.BYTES_PER_ELEMENT
+    // TODO we will certainly have alignment issues with Uint16Array, those should be avoided for now
     this.bindingElements.forEach((bindingElement, index) => {
-      const { numElements, align } = bindingElement.bufferLayout
+      const { numElements, align, View } = bindingElement.bufferLayout
+      const bytesPerElement = View.BYTES_PER_ELEMENT
       // we gotta start somewhere!
       if (index === 0) {
         bindingElement.startOffset = 0
@@ -277,13 +286,28 @@ export class BufferBinding extends Binding {
       bindingElement.endOffset = bindingElement.startOffset + bindingElement.bufferLayout.numElements
     })
 
-    // our array size is the number of alignmentRows * bytes per element
-    this.size = this.alignmentRows * bytesPerElement
-    this.value = new Float32Array(this.size)
+    // our array size is the number of alignmentRows * number of elements per row * bytes per element
+    this.arrayBufferSize = this.alignmentRows * 4 * 4
+
+    // are we holding integer only bindings?
+    // const isFloatArray = !!this.bindingElements.find(
+    //   (bindingElement) => bindingElement.bufferLayout.View === Float32Array
+    // )
+
+    //this.value = isFloatArray ? new Float32Array(this.size) : new Uint32Array(this.size)
+
+    this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize)
+    this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength)
 
     this.bindingElements.forEach((bindingElement) => {
+      // bindingElement.array = new bindingElement.bufferLayout.View(
+      //   this.value.subarray(bindingElement.startOffset, bindingElement.endOffset)
+      // )
+
       bindingElement.array = new bindingElement.bufferLayout.View(
-        this.value.subarray(bindingElement.startOffset, bindingElement.endOffset)
+        this.arrayBuffer,
+        bindingElement.startOffset * bindingElement.bufferLayout.View.BYTES_PER_ELEMENT,
+        bindingElement.endOffset - bindingElement.startOffset
       )
 
       bindingElement.update = (value) => {
@@ -298,8 +322,11 @@ export class BufferBinding extends Binding {
           bindingElement.array[2] = (value as Vec3).z ?? value[2] ?? 0
         } else if ((value as Quat | Mat4).elements) {
           bindingElement.array = (value as Quat | Mat4).elements
-        } else if (value instanceof Float32Array) {
-          bindingElement.array.set(value.slice())
+        } else if (value instanceof bindingElement.bufferLayout.View) {
+          // here we cannot set directly our viewArray or else it will modify the array buffer
+          // we might not want that in case of an interleaved array buffer (if bindings are all arrays)
+          bindingElement.array = value as Float32Array
+          //bindingElement.array.set(value.slice())
         } else if (Array.isArray(value)) {
           for (let i = 0; i < bindingElement.array.length; i++) {
             bindingElement.array[i] = value[i] ? value[i] : 0
@@ -308,7 +335,7 @@ export class BufferBinding extends Binding {
       }
     })
 
-    this.shouldUpdate = this.size > 0
+    this.shouldUpdate = this.arrayBufferSize > 0
   }
 
   /**
@@ -361,9 +388,9 @@ export class BufferBinding extends Binding {
   /**
    * Executed at the beginning of a Material render call.
    * If any of the {@link bindings} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
-   * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the GPUBuffer.
+   * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
-  onBeforeRender() {
+  update() {
     Object.keys(this.bindings).forEach((bindingKey, bindingIndex) => {
       const binding = this.bindings[bindingKey]
       const bindingElement = this.bindingElements.find((bindingEl) => bindingEl.key === bindingKey)
@@ -376,8 +403,32 @@ export class BufferBinding extends Binding {
           (bindingKey) => this.bindings[bindingKey].type.indexOf('array') === -1
         )
 
+        const arrayViewSetFunction:
+          | DataView['setInt32']
+          | DataView['setUint16']
+          | DataView['setUint32']
+          | DataView['setFloat32'] = ((arrayView) => {
+          switch (bindingElement.bufferLayout.View) {
+            case Int32Array:
+              return arrayView.setInt32.bind(arrayView) as DataView['setInt32']
+            case Uint16Array:
+              return arrayView.setUint16.bind(arrayView) as DataView['setUint16']
+            case Uint32Array:
+              return arrayView.setUint32.bind(arrayView) as DataView['setUint32']
+            case Float32Array:
+            default:
+              return arrayView.setFloat32.bind(arrayView) as DataView['setFloat32']
+          }
+        })(this.arrayView)
+
+        const bytesPerElement = Float32Array.BYTES_PER_ELEMENT
+
         if (notAllArrays) {
-          this.value.set(bindingElement.array, bindingElement.startOffset)
+          //this.value.set(bindingElement.array, bindingElement.startOffset)
+
+          bindingElement.array.forEach((value, index) => {
+            arrayViewSetFunction(bindingElement.startOffset * bytesPerElement + index * bytesPerElement, value, true)
+          })
         } else {
           // now this is tricky cause we need to reorder value by strides
           const arrayStride = getBufferArrayStride(bindingElement)
@@ -393,7 +444,14 @@ export class BufferBinding extends Binding {
 
           for (let i = 0, j = 0; j < bindingElement.array.length; i++, j += arrayStride) {
             // fill portion of value array with portion of binding element array
-            this.value.set(bindingElement.array.subarray(j, j + arrayStride), i * totalArrayStride + startIndex)
+            //this.value.set(bindingElement.array.subarray(j, j + arrayStride), i * totalArrayStride + startIndex)
+
+            const subarray = bindingElement.array.subarray(j, j + arrayStride)
+            const viewArrayOffset = i * totalArrayStride * bytesPerElement + startIndex * bytesPerElement
+
+            subarray.forEach((value, index) => {
+              arrayViewSetFunction(viewArrayOffset + index * bytesPerElement, value, true)
+            })
           }
         }
 
