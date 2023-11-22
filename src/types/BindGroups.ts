@@ -7,6 +7,7 @@ import { WritableBufferBinding } from '../core/bindings/WritableBufferBinding'
 import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
+import { Quat } from '../math/Quat'
 import { MaterialShadersType } from './Materials'
 import { VertexBufferAttribute } from './Geometries'
 import { BufferBindingMemoryAccessType } from '../core/bindings/Binding'
@@ -16,7 +17,17 @@ import { BufferBindingMemoryAccessType } from '../core/bindings/Binding'
 /**
  * Defines all kind of possible input value types
  */
-export type InputValue = number | Vec2 | Vec3 | Mat4 | number[]
+export type InputValue =
+  | number
+  | number[]
+  | Vec2
+  | Vec3
+  | Mat4
+  | Quat
+  | Int32Array
+  | Uint32Array
+  | Float32Array
+  | Uint16Array
 
 /**
  * Defines the base object on which an {@link Input} is based.

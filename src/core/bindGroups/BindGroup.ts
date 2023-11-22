@@ -316,10 +316,10 @@ export class BindGroup {
       // now write to the GPUBuffer if needed
       if (binding.shouldUpdate) {
         // bufferOffset is always equals to 0 in our case
-        if (!binding.useStruct && binding.bindingElements.length > 1) {
+        if (!binding.useStruct && binding.bufferElements.length > 1) {
           // we're in a non struct buffer binding with multiple entries
           // that should not happen but that way we're covered
-          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array)
+          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view)
         } else {
           //this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
           this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer)

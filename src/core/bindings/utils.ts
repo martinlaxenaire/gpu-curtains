@@ -1,5 +1,5 @@
 import { BindingType } from './Binding'
-import { BufferBinding, BufferBindingElement } from './BufferBinding'
+import { BufferBinding } from './BufferBinding'
 import { TextureBinding } from './TextureBinding'
 
 /** Defines a typed array */
@@ -36,7 +36,7 @@ export type BufferLayout = {
   numElements: number
   /** Required alignment by this variable type */
   align: number
-  /** Size of this variable type */
+  /** Size in bytes of this variable type */
   size: number
   /** Variable type */
   type: WGSLVariableType
@@ -94,27 +94,6 @@ export const getBufferLayout = (bufferType: WGSLVariableType): BufferLayout => {
   }
 
   return bufferLayouts[bufferType]
-}
-
-/**
- * Get the correct buffer array stride for the given [binding element]{@link BufferBindingElement}
- * @param bindingElement - [binding element]{@link BufferBindingElement} to use
- * @returns - buffer array stride value
- */
-export const getBufferArrayStride = (bindingElement: BufferBindingElement): number => {
-  return (() => {
-    switch (bindingElement.type) {
-      case 'array<vec4f>':
-        return 4
-      case 'array<vec3f>':
-        return 3
-      case 'array<vec2f>':
-        return 2
-      case 'array<f32>':
-      default:
-        return 1
-    }
-  })()
 }
 
 /**

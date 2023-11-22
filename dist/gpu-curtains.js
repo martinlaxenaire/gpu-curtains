@@ -312,21 +312,6 @@ var GPUCurtains = (() => {
     };
     return bufferLayouts[bufferType];
   };
-  var getBufferArrayStride = (bindingElement) => {
-    return (() => {
-      switch (bindingElement.type) {
-        case "array<vec4f>":
-          return 4;
-        case "array<vec3f>":
-          return 3;
-        case "array<vec2f>":
-          return 2;
-        case "array<f32>":
-        default:
-          return 1;
-      }
-    })();
-  };
   var getBindingWGSLVarType = (binding) => {
     return (() => {
       switch (binding.bindingType) {
@@ -1474,6 +1459,233 @@ var GPUCurtains = (() => {
     }
   };
 
+  // src/core/bindings/bufferElements/BufferElement.ts
+  var slotsPerRow = 4;
+  var bytesPerSlot = 4;
+  var bytesPerRow = slotsPerRow * bytesPerSlot;
+  var BufferElement = class {
+    /**
+     * BufferElement constructor
+     * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferElement}
+     */
+    constructor({ name, key, type = "f32", value }) {
+      this.name = name;
+      this.key = key;
+      this.type = type;
+      this.isArray = this.type.indexOf("array") !== -1 && (Array.isArray(value) || ArrayBuffer.isView(value));
+      this.bufferLayout = getBufferLayout(
+        this.isArray ? this.type.replace("array", "").replace("<", "").replace(">", "") : this.type
+      );
+      this.inputLength = this.isArray ? value.length / this.bufferLayout.numElements : 1;
+      this.alignment = {
+        startOffset: 0,
+        entries: []
+      };
+    }
+    /**
+     * Get the offset (i.e. slot index) at which our {@link BufferElement} ends
+     * @readonly
+     */
+    get endOffset() {
+      return Math.ceil(this.alignment.startOffset + this.bufferLayout.size / bytesPerSlot);
+    }
+    /**
+     * Get the total number of rows used by this {@link BufferElement}
+     * @readonly
+     */
+    get rowCount() {
+      return this.alignment.entries.length ? this.alignment.entries[this.alignment.entries.length - 1].row.end + 1 : this.alignment.startOffset / slotsPerRow + Math.ceil(this.bufferLayout.size / bytesPerRow) + 1;
+    }
+    /**
+     * Get the total number of slots used by this {@link BufferElement}
+     * @readonly
+     */
+    get slotCount() {
+      return this.rowCount * slotsPerRow * bytesPerSlot;
+    }
+    /**
+     * Compute the right alignment (i.e. start and end rows and slots) given the size and align properties and the next available slot
+     * @param nextSlotAvailable - next slot at which we should insert this entry
+     * @returns - computed [alignment]{@link BufferElementAlignment}
+     */
+    getElementAlignment(nextSlotAvailable = { startOffset: 0, row: 0, slot: 0 }) {
+      const { size, align } = this.bufferLayout;
+      if (nextSlotAvailable.slot % align !== 0) {
+        nextSlotAvailable.startOffset += nextSlotAvailable.slot % align / bytesPerSlot;
+        nextSlotAvailable.slot += nextSlotAvailable.slot % align;
+      }
+      if (size <= bytesPerRow && nextSlotAvailable.slot + size > bytesPerRow) {
+        nextSlotAvailable.row += 1;
+        nextSlotAvailable.slot = 0;
+        nextSlotAvailable.startOffset = nextSlotAvailable.row * 4;
+      }
+      const alignment = {
+        startOffset: nextSlotAvailable.startOffset,
+        entries: [
+          {
+            row: {
+              start: nextSlotAvailable.row,
+              end: nextSlotAvailable.row + Math.ceil(size / bytesPerRow) - 1
+            },
+            slot: {
+              start: nextSlotAvailable.slot,
+              end: nextSlotAvailable.slot + (size % bytesPerRow === 0 ? bytesPerRow - 1 : size % bytesPerRow - 1)
+              // end of row ? then it ends on slot (bytesPerRow - 1)
+            }
+          }
+        ]
+      };
+      if (alignment.entries[0].slot.end > bytesPerRow - 1) {
+        const overflow = alignment.entries[0].slot.end % bytesPerRow;
+        alignment.entries[0].row.end += Math.ceil(overflow / bytesPerRow);
+        alignment.entries[0].slot.end = overflow;
+      }
+      return alignment;
+    }
+    /**
+     * Set the [alignment entries]{@link BufferElementAlignment#entries}
+     * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     */
+    setAlignment(startOffset = 0) {
+      const { numElements } = this.bufferLayout;
+      const nextSlotAvailable = {
+        startOffset,
+        row: Math.floor(startOffset / slotsPerRow),
+        slot: startOffset * bytesPerSlot % bytesPerRow
+      };
+      const alignment = this.getElementAlignment(nextSlotAvailable);
+      if (this.inputLength > 1) {
+        let tempAlignment = alignment;
+        for (let i = 0; i < this.inputLength - 1; i++) {
+          const arrayStartOffset = tempAlignment.entries[0].row.start * slotsPerRow + tempAlignment.entries[0].slot.start / bytesPerSlot + numElements;
+          const nextArraySlotAvailable = {
+            startOffset: arrayStartOffset,
+            row: Math.floor(arrayStartOffset / slotsPerRow),
+            slot: arrayStartOffset * bytesPerSlot % bytesPerRow
+          };
+          tempAlignment = this.getElementAlignment(nextArraySlotAvailable);
+          alignment.entries.push(tempAlignment.entries[0]);
+        }
+      }
+      this.alignment = alignment;
+    }
+    /**
+     * Set the [view]{@link BufferElement#view}
+     * @param arrayBuffer - the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     * @param arrayView - the [buffer binding array buffer view]{@link BufferBinding#arrayView}
+     */
+    setView(arrayBuffer, arrayView) {
+      this.view = new this.bufferLayout.View(
+        arrayBuffer,
+        this.alignment.startOffset * bytesPerSlot,
+        // 4 bytes per row slots
+        this.bufferLayout.numElements * this.alignment.entries.length
+      );
+    }
+    /**
+     * Update the [view]{@link BufferElement#view} based on the new value
+     * @param value - new value to use
+     */
+    update(value) {
+      if (this.type === "f32" || this.type === "u32" || this.type === "i32") {
+        this.view[0] = value;
+      } else if (this.type === "vec2f") {
+        this.view[0] = value.x ?? value[0] ?? 0;
+        this.view[1] = value.y ?? value[1] ?? 0;
+      } else if (this.type === "vec3f") {
+        this.view[0] = value.x ?? value[0] ?? 0;
+        this.view[1] = value.y ?? value[1] ?? 0;
+        this.view[2] = value.z ?? value[2] ?? 0;
+      } else if (value.elements) {
+        this.view.set(value.elements);
+      } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
+        if (this.isArray) {
+          let valueIndex = 0;
+          this.alignment.entries.forEach((entry, entryIndex) => {
+            const elementSize = this.bufferLayout.size / this.bufferLayout.numElements;
+            const entryStartOffset = entry.row.start * slotsPerRow + entry.slot.start / bytesPerSlot;
+            const entryEndOffset = entry.row.end * slotsPerRow + Math.ceil(entry.slot.end / bytesPerSlot);
+            for (let i = 0; i < elementSize; i++) {
+              if (i < entryEndOffset - entryStartOffset) {
+                this.view[i + entryIndex * elementSize] = value[valueIndex];
+              }
+              valueIndex++;
+            }
+          });
+        } else {
+          for (let i = 0; i < this.view.length; i++) {
+            this.view[i] = value[i] ? value[i] : 0;
+          }
+        }
+      }
+    }
+  };
+
+  // src/core/bindings/bufferElements/BufferInterleavedElement.ts
+  var BufferInterleavedElement = class extends BufferElement {
+    /**
+     * BufferInterleavedElement constructor
+     * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferInterleavedElement}
+     */
+    constructor({ name, key, type = "f32", value }) {
+      super({ name, key, type, value });
+      this.interleavedAlignment = {
+        startOffset: 0,
+        entries: []
+      };
+    }
+    /**
+     * Get the total number of rows used by this {@link BufferInterleavedElement}
+     * @readonly
+     */
+    get rowCount() {
+      return this.interleavedAlignment.entries.length ? this.interleavedAlignment.entries[this.interleavedAlignment.entries.length - 1].row.end + 1 : this.interleavedAlignment.startOffset / slotsPerRow + Math.ceil(this.bufferLayout.size / bytesPerRow) + 1;
+    }
+    /**
+     * Get the total number of slots used by this {@link BufferInterleavedElement}
+     * @readonly
+     */
+    get slotCount() {
+      return this.rowCount * slotsPerRow * bytesPerSlot;
+    }
+    /**
+     * Set the [view]{@link BufferInterleavedElement#view} and [viewSetFunction]{@link BufferInterleavedElement#viewSetFunction}
+     * @param arrayBuffer - the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     * @param arrayView - the [buffer binding array buffer view]{@link BufferBinding#arrayView}
+     */
+    setView(arrayBuffer, arrayView) {
+      this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.alignment.entries.length);
+      this.viewSetFunction = ((arrayView2) => {
+        switch (this.bufferLayout.View) {
+          case Int32Array:
+            return arrayView2.setInt32.bind(arrayView2);
+          case Uint16Array:
+            return arrayView2.setUint16.bind(arrayView2);
+          case Uint32Array:
+            return arrayView2.setUint32.bind(arrayView2);
+          case Float32Array:
+          default:
+            return arrayView2.setFloat32.bind(arrayView2);
+        }
+      })(arrayView);
+    }
+    /**
+     * Update the [view]{@link BufferElement#view} based on the new value, and then update the [buffer binding array view]{@link BufferBinding#arrayView} using sub arrays
+     * @param value - new value to use
+     */
+    update(value) {
+      super.update(value);
+      this.interleavedAlignment.entries.forEach((entry, entryIndex) => {
+        const elementSize = this.bufferLayout.size / this.bufferLayout.numElements;
+        const subarray = this.view.subarray(entryIndex * elementSize, entryIndex * elementSize + elementSize);
+        const startByteOffset = entry.row.start * bytesPerRow + entry.slot.start;
+        subarray.forEach((value2, index) => {
+          this.viewSetFunction(startByteOffset + index * this.bufferLayout.View.BYTES_PER_ELEMENT, value2, true);
+        });
+      });
+    }
+  };
+
   // src/core/bindings/BufferBinding.ts
   var BufferBinding = class extends Binding {
     /**
@@ -1508,7 +1720,7 @@ var GPUCurtains = (() => {
       this.arrayBufferSize = 0;
       this.shouldUpdate = false;
       this.useStruct = useStruct;
-      this.bindingElements = [];
+      this.bufferElements = [];
       this.bindings = {};
       this.buffer = null;
       this.setBindings(bindings);
@@ -1561,89 +1773,90 @@ var GPUCurtains = (() => {
     }
     /**
      * Set our buffer attributes:
-     * Takes all the {@link bindings} and adds them to the {@link bindingElements} array with the correct start and end offsets (padded), then fill our {@link value} typed array accordingly.
+     * Takes all the {@link bindings} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link value} typed array accordingly.
      */
     setBufferAttributes() {
-      Object.keys(this.bindings).forEach((bindingKey) => {
+      const arrayBindings = Object.keys(this.bindings).filter(
+        (bindingKey) => this.bindings[bindingKey].type.indexOf("array") !== -1
+      );
+      let orderedBindings = Object.keys(this.bindings).sort((bindingKeyA, bindingKeyB) => {
+        const isBindingAArray = Math.min(0, this.bindings[bindingKeyA].type.indexOf("array"));
+        const isBindingBArray = Math.min(0, this.bindings[bindingKeyB].type.indexOf("array"));
+        return isBindingAArray - isBindingBArray;
+      });
+      if (arrayBindings.length > 1) {
+        orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey));
+      }
+      orderedBindings.forEach((bindingKey) => {
         const binding = this.bindings[bindingKey];
-        const bufferLayout = binding.type && binding.type.indexOf("array") !== -1 && binding.value instanceof Float32Array ? {
-          numElements: binding.value.length,
-          align: 16,
-          size: binding.value.byteLength,
-          type: "f32",
-          View: Float32Array
-        } : getBufferLayout(binding.type);
-        this.bindingElements.push({
-          name: toCamelCase(binding.name ?? bindingKey),
-          type: binding.type ?? "array<f32>",
-          key: bindingKey,
-          bufferLayout,
-          startOffset: 0,
-          // will be changed later
-          endOffset: 0
-          // will be changed later
+        this.bufferElements.push(
+          new BufferElement({
+            name: toCamelCase(binding.name ?? bindingKey),
+            key: bindingKey,
+            type: binding.type,
+            value: binding.value
+          })
+        );
+      });
+      this.bufferElements.forEach((bufferElement, index) => {
+        const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset;
+        bufferElement.setAlignment(startOffset);
+      });
+      if (arrayBindings.length > 1) {
+        const arraySizes = arrayBindings.map((bindingKey) => {
+          const binding = this.bindings[bindingKey];
+          const bufferLayout = getBufferLayout(binding.type.replace("array", "").replace("<", "").replace(">", ""));
+          return binding.value.length / bufferLayout.numElements;
         });
-      });
-      this.alignmentRows = 0;
-      this.bindingElements.forEach((bindingElement, index) => {
-        const { numElements, align, View } = bindingElement.bufferLayout;
-        const bytesPerElement = View.BYTES_PER_ELEMENT;
-        if (index === 0) {
-          bindingElement.startOffset = 0;
-          this.alignmentRows += Math.max(1, Math.ceil(numElements / bytesPerElement));
-        } else {
-          let nextSpaceAvailable = this.bindingElements[index - 1].startOffset + this.bindingElements[index - 1].bufferLayout.numElements;
-          if (align <= bytesPerElement * 2) {
-            if (numElements === 2 && nextSpaceAvailable % 2 === 1) {
-              nextSpaceAvailable = nextSpaceAvailable + 1;
-            }
-            if (nextSpaceAvailable + numElements <= this.alignmentRows * bytesPerElement) {
-              bindingElement.startOffset = nextSpaceAvailable;
-            } else {
-              bindingElement.startOffset = this.alignmentRows * bytesPerElement;
-              this.alignmentRows++;
-            }
-          } else {
-            if (nextSpaceAvailable % align !== 0 || (nextSpaceAvailable + numElements) % bytesPerElement !== 0) {
-              bindingElement.startOffset = this.alignmentRows * bytesPerElement;
-              this.alignmentRows += Math.ceil(numElements / bytesPerElement);
-            } else {
-              bindingElement.startOffset = nextSpaceAvailable;
-              this.alignmentRows += Math.ceil(numElements / bytesPerElement);
-            }
+        const equalSize = arraySizes.every((size, i, array) => size === array[0]);
+        if (equalSize) {
+          const interleavedBufferElements = arrayBindings.map((bindingKey) => {
+            const binding = this.bindings[bindingKey];
+            return new BufferInterleavedElement({
+              name: toCamelCase(binding.name ?? bindingKey),
+              key: bindingKey,
+              type: binding.type,
+              value: binding.value
+            });
+          });
+          const tempBufferElements = arrayBindings.map((bindingKey) => {
+            const binding = this.bindings[bindingKey];
+            return new BufferElement({
+              name: toCamelCase(binding.name ?? bindingKey),
+              key: bindingKey,
+              type: binding.type.replace("array", "").replace("<", "").replace(">", ""),
+              value: []
+              // useless
+            });
+          });
+          for (let i = 0; i < arraySizes[0]; i++) {
+            tempBufferElements.forEach((tempBufferElement, index) => {
+              const startOffset = i === 0 && index === 0 ? this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].rowCount : 0 : tempBufferElements[index === 0 ? tempBufferElements.length - 1 : index - 1].endOffset;
+              tempBufferElement.setAlignment(startOffset);
+              if (i === 0) {
+                interleavedBufferElements[index].interleavedAlignment = tempBufferElement.alignment;
+              } else {
+                interleavedBufferElements[index].interleavedAlignment.entries.push(tempBufferElement.alignment.entries[0]);
+              }
+            });
           }
+          interleavedBufferElements.forEach((bufferElement, index) => {
+            bufferElement.setAlignment(0);
+          });
+          this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
+        } else {
+          throwWarning(
+            `BufferBinding: "${this.label}" contains multiple array inputs that should use an interleaved array, but their size does not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(
+              ", "
+            )}"`
+          );
         }
-        bindingElement.endOffset = bindingElement.startOffset + bindingElement.bufferLayout.numElements;
-      });
-      this.arrayBufferSize = this.alignmentRows * 4 * 4;
+      }
+      this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].slotCount : 0;
       this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
       this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength);
-      this.bindingElements.forEach((bindingElement) => {
-        bindingElement.array = new bindingElement.bufferLayout.View(
-          this.arrayBuffer,
-          bindingElement.startOffset * bindingElement.bufferLayout.View.BYTES_PER_ELEMENT,
-          bindingElement.endOffset - bindingElement.startOffset
-        );
-        bindingElement.update = (value) => {
-          if (bindingElement.type === "f32" || bindingElement.type === "u32" || bindingElement.type === "i32") {
-            bindingElement.array[0] = value;
-          } else if (bindingElement.type === "vec2f") {
-            bindingElement.array[0] = value.x ?? value[0] ?? 0;
-            bindingElement.array[1] = value.y ?? value[1] ?? 0;
-          } else if (bindingElement.type === "vec3f") {
-            bindingElement.array[0] = value.x ?? value[0] ?? 0;
-            bindingElement.array[1] = value.y ?? value[1] ?? 0;
-            bindingElement.array[2] = value.z ?? value[2] ?? 0;
-          } else if (value.elements) {
-            bindingElement.array = value.elements;
-          } else if (value instanceof bindingElement.bufferLayout.View) {
-            bindingElement.array = value;
-          } else if (Array.isArray(value)) {
-            for (let i = 0; i < bindingElement.array.length; i++) {
-              bindingElement.array[i] = value[i] ? value[i] : 0;
-            }
-          }
-        };
+      this.bufferElements.forEach((bufferElement) => {
+        bufferElement.setView(this.arrayBuffer, this.arrayView);
       });
       this.shouldUpdate = this.arrayBufferSize > 0;
     }
@@ -1651,27 +1864,45 @@ var GPUCurtains = (() => {
      * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
      */
     setWGSLFragment() {
+      const kebabCaseLabel = toKebabCase(this.label);
       if (this.useStruct) {
-        const notAllArrays = Object.keys(this.bindings).find(
-          (bindingKey) => this.bindings[bindingKey].type.indexOf("array") === -1
+        const bufferElements = this.bufferElements.filter(
+          (bufferElement) => !(bufferElement instanceof BufferInterleavedElement)
         );
-        if (!notAllArrays) {
-          const kebabCaseLabel = toKebabCase(this.label);
-          this.wgslStructFragment = `struct ${kebabCaseLabel} {
-	${this.bindingElements.map((binding) => binding.name + ": " + binding.type.replace("array", "").replace("<", "").replace(">", "")).join(",\n	")}
+        const interleavedBufferElements = this.bufferElements.filter(
+          (bufferElement) => bufferElement instanceof BufferInterleavedElement
+        );
+        if (interleavedBufferElements.length) {
+          if (bufferElements.length) {
+            this.wgslStructFragment = `struct ${kebabCaseLabel}Element {
+	${interleavedBufferElements.map((binding) => binding.name + ": " + binding.type.replace("array", "").replace("<", "").replace(">", "")).join(",\n	")}
+};
+
+`;
+            const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element>,`;
+            this.wgslStructFragment += `struct ${kebabCaseLabel} {
+	${bufferElements.map((bufferElement) => bufferElement.name + ": " + bufferElement.type).join(",\n	")}
+	${interleavedBufferStructDeclaration}
 };`;
-          const varType = getBindingWGSLVarType(this);
-          this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`];
+            const varType = getBindingWGSLVarType(this);
+            this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
+          } else {
+            this.wgslStructFragment = `struct ${kebabCaseLabel} {
+	${this.bufferElements.map((binding) => binding.name + ": " + binding.type.replace("array", "").replace("<", "").replace(">", "")).join(",\n	")}
+};`;
+            const varType = getBindingWGSLVarType(this);
+            this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`];
+          }
         } else {
-          this.wgslStructFragment = `struct ${toKebabCase(this.label)} {
-	${this.bindingElements.map((binding) => binding.name + ": " + binding.type).join(",\n	")}
+          this.wgslStructFragment = `struct ${kebabCaseLabel} {
+	${this.bufferElements.map((binding) => binding.name + ": " + binding.type).join(",\n	")}
 };`;
           const varType = getBindingWGSLVarType(this);
-          this.wgslGroupFragment = [`${varType} ${this.name}: ${toKebabCase(this.label)};`];
+          this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
         }
       } else {
         this.wgslStructFragment = "";
-        this.wgslGroupFragment = this.bindingElements.map((binding) => {
+        this.wgslGroupFragment = this.bufferElements.map((binding) => {
           const varType = getBindingWGSLVarType(this);
           return `${varType} ${binding.name}: ${binding.type};`;
         });
@@ -1694,49 +1925,10 @@ var GPUCurtains = (() => {
     update() {
       Object.keys(this.bindings).forEach((bindingKey, bindingIndex) => {
         const binding = this.bindings[bindingKey];
-        const bindingElement = this.bindingElements.find((bindingEl) => bindingEl.key === bindingKey);
-        if (binding.shouldUpdate && bindingElement) {
+        const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey);
+        if (binding.shouldUpdate && bufferElement) {
           binding.onBeforeUpdate && binding.onBeforeUpdate();
-          bindingElement.update(binding.value);
-          const notAllArrays = Object.keys(this.bindings).find(
-            (bindingKey2) => this.bindings[bindingKey2].type.indexOf("array") === -1
-          );
-          const arrayViewSetFunction = ((arrayView) => {
-            switch (bindingElement.bufferLayout.View) {
-              case Int32Array:
-                return arrayView.setInt32.bind(arrayView);
-              case Uint16Array:
-                return arrayView.setUint16.bind(arrayView);
-              case Uint32Array:
-                return arrayView.setUint32.bind(arrayView);
-              case Float32Array:
-              default:
-                return arrayView.setFloat32.bind(arrayView);
-            }
-          })(this.arrayView);
-          const bytesPerElement = Float32Array.BYTES_PER_ELEMENT;
-          if (notAllArrays) {
-            bindingElement.array.forEach((value, index) => {
-              arrayViewSetFunction(bindingElement.startOffset * bytesPerElement + index * bytesPerElement, value, true);
-            });
-          } else {
-            const arrayStride = getBufferArrayStride(bindingElement);
-            let totalArrayStride = 0;
-            let startIndex = 0;
-            this.bindingElements.forEach((bindingEl, index) => {
-              totalArrayStride += getBufferArrayStride(bindingEl);
-              if (index < bindingIndex) {
-                startIndex += getBufferArrayStride(bindingEl);
-              }
-            });
-            for (let i = 0, j = 0; j < bindingElement.array.length; i++, j += arrayStride) {
-              const subarray = bindingElement.array.subarray(j, j + arrayStride);
-              const viewArrayOffset = i * totalArrayStride * bytesPerElement + startIndex * bytesPerElement;
-              subarray.forEach((value, index) => {
-                arrayViewSetFunction(viewArrayOffset + index * bytesPerElement, value, true);
-              });
-            }
-          }
+          bufferElement.update(binding.value);
           this.shouldUpdate = true;
           binding.shouldUpdate = false;
         }
@@ -1982,8 +2174,8 @@ var GPUCurtains = (() => {
       this.bufferBindings.forEach((binding, index) => {
         binding.update();
         if (binding.shouldUpdate) {
-          if (!binding.useStruct && binding.bindingElements.length > 1) {
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array);
+          if (!binding.useStruct && binding.bufferElements.length > 1) {
+            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view);
           } else {
             this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer);
           }

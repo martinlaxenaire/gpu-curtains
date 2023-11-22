@@ -332,7 +332,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('no-curtains')
   })
 
-  const simulationSpeed = 3
+  const simulationSpeed = 2
 
   const clothDefinition = new GPUCurtains.Vec2(40)
 
@@ -342,8 +342,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   const positionArray = clothGeometry.getAttributeByName('position').array.slice()
+
   const vertexPositionArray = new Float32Array((positionArray.length * 4) / 3)
-  const normalPositionArray = new Float32Array((positionArray.length * 4) / 3)
+
+  const normalPositionArray = new Float32Array(vertexPositionArray.length)
   const vertexVelocityArray = new Float32Array(vertexPositionArray.length)
   const vertexForceArray = new Float32Array(vertexPositionArray.length)
 
@@ -535,6 +537,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // add a task to our renderer onBeforeRenderScene tasks queue manager
   gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
+    // set bind groups if needed
+    if (!computeForcesPass.ready) computeForcesPass.onBeforeRenderPass()
+    if (!computeUpdatePass.ready) computeUpdatePass.onBeforeRenderPass()
+    if (!computeNormalPass.ready) computeNormalPass.onBeforeRenderPass()
+
+    // now if the compute passes are not ready, do not render them
+    if (!computeForcesPass.ready || !computeUpdatePass.ready || !computeNormalPass.ready) return
+
     for (let i = 0; i < nbSimsComputePerRender; i++) {
       const forcePass = commandEncoder.beginComputePass()
       computeForcesPass.render(forcePass)
