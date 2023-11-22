@@ -1,4 +1,4 @@
-import { CameraRenderer, isRenderer, Renderer } from '../../utils/renderer-utils'
+import { CameraRenderer, isRenderer, Renderer } from '../renderers/utils'
 import { DOMMeshType, MeshType } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'

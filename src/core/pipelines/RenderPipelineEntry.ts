@@ -1,6 +1,6 @@
 import { PipelineEntry } from './PipelineEntry'
 import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
-import { CameraRenderer, isRenderer, Renderer } from '../../utils/renderer-utils'
+import { CameraRenderer, isRenderer, Renderer } from '../renderers/utils'
 import { throwError } from '../../utils/utils'
 import {
   PipelineEntryParams,
@@ -157,26 +157,40 @@ export class RenderPipelineEntry extends PipelineEntry {
         groupBinding.visibility === GPUShaderStage.VERTEX ||
         groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)
       ) {
-        if (groupBinding.wgslStructFragment) {
+        // do not duplicate structs
+        if (
+          groupBinding.wgslStructFragment &&
+          this.shaders.vertex.head.indexOf(groupBinding.wgslStructFragment) === -1
+        ) {
           this.shaders.vertex.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.vertex.head}`
         }
 
-        this.shaders.vertex.head = `${this.shaders.vertex.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
+        // do not duplicate bindings var as well
+        if (this.shaders.vertex.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+          this.shaders.vertex.head = `${this.shaders.vertex.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
 
-        if (groupBinding.newLine) this.shaders.vertex.head += `\n`
+          if (groupBinding.newLine) this.shaders.vertex.head += `\n`
+        }
       }
 
       if (
         groupBinding.visibility === GPUShaderStage.FRAGMENT ||
         groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)
       ) {
-        if (groupBinding.wgslStructFragment) {
+        // do not duplicate structs
+        if (
+          groupBinding.wgslStructFragment &&
+          this.shaders.fragment.head.indexOf(groupBinding.wgslStructFragment) === -1
+        ) {
           this.shaders.fragment.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.fragment.head}`
         }
 
-        this.shaders.fragment.head = `${this.shaders.fragment.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
+        // do not duplicate bindings var as well
+        if (this.shaders.fragment.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+          this.shaders.fragment.head = `${this.shaders.fragment.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
 
-        if (groupBinding.newLine) this.shaders.fragment.head += `\n`
+          if (groupBinding.newLine) this.shaders.fragment.head += `\n`
+        }
       }
     })
 

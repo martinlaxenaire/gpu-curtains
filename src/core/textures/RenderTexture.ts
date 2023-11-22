@@ -1,8 +1,13 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
-import { TextureBindings, TextureBindingsParams } from '../bindings/TextureBindings'
+import { isRenderer, Renderer } from '../renderers/utils'
+import { TextureBinding, TextureBindingParams } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RectSize } from '../DOM/DOMElement'
+import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
+import { generateUUID } from '../../utils/utils'
+import { Texture } from './Texture'
+
+export type RenderTextureBindingType = Exclude<TextureBindingType, 'externalTexture'>
 
 /**
  * Base parameters used to create a {@link RenderTexture}
@@ -10,22 +15,33 @@ import { RectSize } from '../DOM/DOMElement'
 export interface RenderTextureBaseParams {
   /** The label of the {@link RenderTexture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link RenderTexture} to use in the [binding]{@link TextureBindings} */
+  /** Name of the {@link RenderTexture} to use in the [binding]{@link TextureBinding} */
   name?: string
+
+  /** Optional size of the [texture]{@link RenderTexture#texture} */
+  size?: RectSize
+  /** Whether to use this [texture]{@link RenderTexture} as a regular or storage texture */
+  usage?: RenderTextureBindingType
+  /** Optional format of the [texture]{@link RenderTexture#texture}, mainly used for storage textures */
+  format?: GPUTextureFormat
+  /** Optional texture binding memory access type, mainly used for storage textures */
+  access?: BindingMemoryAccessType
 }
 
 /**
  * Parameters used to create a {@link RenderTexture}
  */
 export interface RenderTextureParams extends RenderTextureBaseParams {
-  /** Optional {@link RenderTexture} to use as a copy source input */
-  fromTexture?: RenderTexture | null
+  /** Optional texture to use as a copy source input. Could be a {@link RenderTexture} or {@link Texture} */
+  fromTexture?: RenderTexture | Texture | null
 }
 
 /** @const - default {@link RenderTexture} parameters */
 const defaultRenderTextureParams: RenderTextureParams = {
-  label: 'Texture',
-  name: 'texture',
+  label: 'RenderTexture',
+  name: 'renderTexture',
+  usage: 'texture',
+  access: 'write',
   fromTexture: null,
 }
 
@@ -39,6 +55,8 @@ export class RenderTexture {
   renderer: Renderer
   /** The type of the {@link RenderTexture} */
   type: string
+  /** The universal unique id of this {@link RenderTexture} */
+  readonly uuid: string
 
   /** The {@link GPUTexture} used */
   texture: GPUTexture
@@ -49,9 +67,9 @@ export class RenderTexture {
   /** Options used to create this {@link RenderTexture} */
   options: RenderTextureParams
 
-  /** Array of [bindings]{@link Bindings} that will actually only hold one [texture binding]{@link TextureBindings} */
+  /** Array of [bindings]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
   bindings: BindGroupBindingElement[]
-  /** Whether to update the [bind group]{@link BindGroup} to which the [texture binding]{@link TextureBindings} belongs */
+  /** Whether to update the [bind group]{@link BindGroup} to which the [texture binding]{@link TextureBinding} belongs */
   shouldUpdateBindGroup: boolean
 
   /**
@@ -69,12 +87,18 @@ export class RenderTexture {
 
     this.renderer = renderer
 
+    this.uuid = generateUUID()
+
     this.options = { ...defaultRenderTextureParams, ...parameters }
+
+    if (!this.options.format) {
+      this.options.format = this.renderer.preferredFormat
+    }
 
     this.shouldUpdateBindGroup = false
 
     // sizes
-    this.setSourceSize()
+    this.setSize(this.options.size)
 
     // bindings
     this.setBindings()
@@ -85,18 +109,21 @@ export class RenderTexture {
 
   /**
    * Set the [size]{@link RenderTexture#size}
+   * @param size - [size]{@link RectSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height if null
    */
-  setSourceSize() {
-    const rendererBoundingRect = this.renderer.pixelRatioBoundingRect
-
-    this.size = {
-      width: rendererBoundingRect.width,
-      height: rendererBoundingRect.height,
+  setSize(size: RectSize | null = null) {
+    if (!size) {
+      size = {
+        width: this.renderer.pixelRatioBoundingRect.width,
+        height: this.renderer.pixelRatioBoundingRect.height,
+      }
     }
+
+    this.size = size
   }
 
   /**
-   * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBindings#resource}
+   * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
    */
   createTexture() {
     if (this.options.fromTexture) {
@@ -112,13 +139,16 @@ export class RenderTexture {
 
     this.texture = this.renderer.createTexture({
       label: this.options.label,
-      format: this.renderer.preferredFormat,
+      format: this.options.format,
       size: [this.size.width, this.size.height],
       usage:
-        GPUTextureUsage.TEXTURE_BINDING |
-        GPUTextureUsage.COPY_SRC |
-        GPUTextureUsage.COPY_DST |
-        GPUTextureUsage.RENDER_ATTACHMENT, // TODO let user chose?
+        // TODO let user chose?
+        this.options.usage === 'texture'
+          ? GPUTextureUsage.TEXTURE_BINDING |
+            GPUTextureUsage.COPY_SRC |
+            GPUTextureUsage.COPY_DST |
+            GPUTextureUsage.RENDER_ATTACHMENT
+          : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
     })
 
     // update texture binding
@@ -130,28 +160,29 @@ export class RenderTexture {
    */
   setBindings() {
     this.bindings = [
-      new TextureBindings({
-        label: this.options.label + ': ' + this.options.name + ' texture',
+      new TextureBinding({
+        label: this.options.label + ': ' + this.options.name + ' render texture',
         name: this.options.name,
         texture: this.texture,
-        bindingType: 'texture',
-      } as TextureBindingsParams),
+        bindingType: this.options.usage,
+      } as TextureBindingParams),
     ]
   }
 
   /**
-   * Get our [texture binding]{@link TextureBindings}
+   * Get our [texture binding]{@link TextureBinding}
    * @readonly
    */
-  get textureBinding(): TextureBindings {
-    return this.bindings[0] as TextureBindings
+  get textureBinding(): TextureBinding {
+    return this.bindings[0] as TextureBinding
   }
 
   /**
    * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
+   * @param size - the optional new [size]{@link RectSize} to set
    */
-  resize() {
-    this.setSourceSize()
+  resize(size: RectSize | null = null) {
+    this.setSize(size)
 
     this.createTexture()
     this.shouldUpdateBindGroup = true

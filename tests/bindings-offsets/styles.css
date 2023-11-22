@@ -1,0 +1,149 @@
+:root {
+  --byte-table-border-color: #555;
+  --byte-border-color: rgba(255, 255, 255, 0.2);
+}
+
+.binding {
+  padding: 2rem;
+}
+
+.binding-declaration {
+  /*display: flex;*/
+  overflow: hidden;
+}
+
+.wgsl-declaration {
+  order: 2;
+  margin-left: 4rem;
+  padding: 1rem 2rem;
+  font-size: 0.95rem;
+  background: var(--byte-table-border-color);
+  float: left;
+}
+
+.wgsl-declaration pre {
+  margin: 0;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+}
+
+.wgsl-declaration-var {
+  margin-top: 1rem;
+}
+
+.byte-diagram {
+  float: left;
+  display: grid;
+  grid-template-columns: repeat(16, [col-start] 1fr);
+  gap: 2px;
+  background: var(--byte-table-border-color);
+  width: 900px;
+  color: var(--dark-color);
+}
+
+.binding-element {
+  box-sizing: border-box;
+}
+
+.binding-element-type {
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 0.325em 0.5em;
+  border-bottom: 2px solid var(--byte-table-border-color);
+}
+
+.binding-element-slots {
+  width: 100%;
+  display: flex;
+}
+
+.binding-element-slot-item {
+  flex-grow: 1;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 0.5em;
+  box-sizing: border-box;
+  text-align: center;
+  min-height: 2.5em;
+}
+
+.binding-element-slot-item:not(:first-of-type) {
+  border-left: 2px solid var(--byte-table-border-color);
+}
+
+.color-0 {
+  background: lch(70 50 0);
+}
+
+.color-1 {
+  background: lch(70 50 84.6);
+}
+
+.color-2 {
+  background: lch(70 50 169.2);
+}
+
+.color-3 {
+  background: lch(70 50 253.8);
+}
+
+.color-4 {
+  background: lch(70 50 338.4);
+}
+
+.color-5 {
+  background-color: lch(70 50 63);
+}
+
+.color-6 {
+  background-color: lch(70 50 147.6);
+}
+
+.color-7 {
+  background-color: lch(70 50 232.2);
+}
+
+.color-pad {
+  background: var(--light-color);
+  color: var(--dark-color);
+}
+
+/* cols */
+
+.col-span-2 {
+  grid-column-end: span 2;
+}
+
+.col-span-4 {
+  grid-column-end: span 4;
+}
+
+.col-span-8 {
+  grid-column-end: span 8;
+}
+
+.col-span-12 {
+  grid-column-end: span 12;
+}
+
+.col-span-16 {
+  grid-column-end: span 16;
+}
+
+.col-start-1 {
+  grid-column-start: 1;
+}
+
+.col-start-5 {
+  grid-column-start: 5;
+}
+
+.col-start-9 {
+  grid-column-start: 9;
+}
+
+.col-start-13 {
+  grid-column-start: 13;
+}

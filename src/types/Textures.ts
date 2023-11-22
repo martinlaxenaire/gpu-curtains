@@ -6,9 +6,9 @@ import { Mesh } from '../core/meshes/Mesh'
 import { PingPongPlane } from '../curtains/meshes/PingPongPlane'
 
 /**
- * Parameters used to create a Mesh {@link Texture}
+ * Parameters used to copy an external image to texture, i.e. that will be uploaded to the GPU using [copyExternalImageToTexture]{@link GPUQueue#copyExternalImageToTexture}
  */
-export interface MeshTextureParams {
+export interface ExternalTextureParams {
   /** Whether to generate mips */
   generateMips?: boolean
   /** Whether to flip the source along the Y axis */
@@ -24,29 +24,17 @@ export interface MeshTextureParams {
 /**
  * Base parameters used to create a {@link Texture}
  */
-export interface TextureBaseParams {
+export interface TextureBaseParams extends ExternalTextureParams {
   /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link Texture} to use in the [bindings]{@link Bindings} */
+  /** Name of the {@link Texture} to use in the [bindings]{@link Binding} */
   name?: string
-}
-
-/**
- * Default parameters used to create a {@link Texture}
- */
-export interface TextureDefaultParams extends TextureBaseParams {
-  /** Mesh [textures options]{@link MeshTextureParams} */
-  texture?: MeshTextureParams
-  /** Optional {@link Texture} to use as a copy source input */
-  fromTexture?: Texture
 }
 
 /**
  * Parameters used to create a {@link Texture}
  */
-export interface TextureParams extends TextureDefaultParams {
-  /** Mesh [textures options]{@link MeshTextureParams} */
-  texture: MeshTextureParams
+export interface TextureParams extends TextureBaseParams {
   /** Optional {@link Texture} to use as a copy source input */
   fromTexture?: Texture | null
 }

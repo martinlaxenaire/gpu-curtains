@@ -1,75 +1,33 @@
 import { BindGroup } from '../core/bindGroups/BindGroup'
 import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup'
-import { BufferBindings } from '../core/bindings/BufferBindings'
-import { SamplerBindings } from '../core/bindings/SamplerBindings'
-import { TextureBindings } from '../core/bindings/TextureBindings'
-import { WorkBufferBindings } from '../core/bindings/WorkBufferBindings'
+import { BufferBinding } from '../core/bindings/BufferBinding'
+import { SamplerBinding } from '../core/bindings/SamplerBinding'
+import { TextureBinding } from '../core/bindings/TextureBinding'
+import { WritableBufferBinding } from '../core/bindings/WritableBufferBinding'
 import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
+import { Quat } from '../math/Quat'
 import { MaterialShadersType } from './Materials'
 import { VertexBufferAttribute } from './Geometries'
+import { BufferBindingMemoryAccessType } from '../core/bindings/Binding'
 
-/**
- * Defines a specific type of {@link Bindings} that handles a {@link BufferBindings#value} array to be sent to a {@link GPUBuffer}
- */
-export type BindGroupBufferBindingElement = BufferBindings | WorkBufferBindings
-/**
- * Defines all kind of possible textures/ samplers {@link Bindings}
- */
-export type BindGroupTextureSamplerElement = SamplerBindings | TextureBindings
-/**
- * Defines all kind of possible {@link Bindings}
- */
-export type BindGroupBindingElement = BindGroupBufferBindingElement | BindGroupTextureSamplerElement
-/**
- * Defines all kind of possible {@link BindGroup}
- */
-export type AllowedBindGroups = BindGroup | TextureBindGroup
+// INPUTS
 
-//export type AllowedBindingsTypes = 'uniforms' | 'storages' | 'works'
-//export type BindGroupInputs = Record<AllowedBindingsTypes, InputBindings>
-/**
- * An object defining all possible [bind group]{@link AllowedBindGroups} inputs
- */
-export interface BindGroupInputs {
-  /** uniforms input to pass to a {@link BindGroup} */
-  uniforms?: InputBindings
-  /** read storages input to pass to a {@link BindGroup} */
-  storages?: InputBindings
-  /** read/write storages input to pass to a {@link BindGroup} */
-  works?: InputBindings
-}
-
-/**
- * An object defining all possible {@link BindGroup} class instancing parameters
- */
-export interface BindGroupParams {
-  /** {@link BindGroup} label */
-  label?: string
-  /** {@link BindGroup} index (used to generate shader code) */
-  index?: number
-  /** array of already created [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) to pass to this {@link BindGroup} */
-  bindings?: BindGroupBindingElement[]
-  /** [inputs]{@link BindGroupInputs} that will be used to create additional {@link BindGroup} [bindings]{@link BindGroupBindingElement} */
-  inputs?: BindGroupInputs
-}
-
-/**
- * An object used to define {@link BindGroup} entries
- */
-export interface BindGroupEntries {
-  /** [GPUBindGroupLayout descriptor]{@link GPUBindGroupLayoutDescriptor} entries */
-  bindGroupLayout: GPUBindGroupLayoutEntry[]
-  /** [GPUBindGroup descriptor]{@link GPUBindGroupDescriptor} entries */
-  bindGroup: GPUBindGroupEntry[]
-}
-
-// inputs
 /**
  * Defines all kind of possible input value types
  */
-export type InputValue = number | Vec2 | Vec3 | Mat4 | number[]
+export type InputValue =
+  | number
+  | number[]
+  | Vec2
+  | Vec3
+  | Mat4
+  | Quat
+  | Int32Array
+  | Uint32Array
+  | Float32Array
+  | Uint16Array
 
 /**
  * Defines the base object on which an {@link Input} is based.
@@ -95,30 +53,72 @@ export interface Input extends InputBase {
  * An object defining all possible {@link InputBindingsParams} parameters
  */
 export interface InputBindingsParams {
-  /** {@link Bindings} label */
+  /** {@link Binding} label */
   label?: string
-  /** Whether this {@link Bindings} should use structured WGSL variables */
+  /** Whether this {@link Binding} should use structured WGSL variables */
   useStruct?: boolean
-  /** {@link Bindings} variables shaders visibility */
+  /** {@link Binding} variables shaders visibility */
   visibility?: MaterialShadersType
+  /** {@link BufferBinding} memory access type (read only or read/write) */
+  access?: BufferBindingMemoryAccessType
   /** Object containing one or multiple [input bindings]{@link Input} */
   bindings: Record<string, Input>
 }
 
 /**
- * An object defining all possible {@link WorkInputBindingsParams} parameters
+ * Defines an input bindings
  */
-export interface WorkInputBindingsParams extends InputBindingsParams {
-  /** Work group dispatch size to use */
-  dispatchSize?: number | number[]
+export type InputBindings = Record<string, InputBindingsParams>
+
+/**
+ * Defines a specific type of {@link Binding} that handles a {@link BufferBinding#value} array to be sent to a {@link GPUBuffer}
+ */
+export type BindGroupBufferBindingElement = BufferBinding | WritableBufferBinding
+/**
+ * Defines all kind of possible textures/ samplers {@link Binding}
+ */
+export type BindGroupTextureSamplerElement = SamplerBinding | TextureBinding
+/**
+ * Defines all kind of possible {@link Binding}
+ */
+export type BindGroupBindingElement = BindGroupBufferBindingElement | BindGroupTextureSamplerElement
+/**
+ * Defines all kind of possible {@link BindGroup}
+ */
+export type AllowedBindGroups = BindGroup | TextureBindGroup
+
+//export type AllowedBindingsTypes = 'uniforms' | 'storages'
+//export type BindGroupInputs = Record<AllowedBindingsTypes, InputBindings>
+/**
+ * An object defining all possible [bind group]{@link AllowedBindGroups} inputs
+ */
+export interface BindGroupInputs {
+  /** uniforms input to pass to a {@link BindGroup} */
+  uniforms?: InputBindings
+  /** read only or read/write storages input to pass to a {@link BindGroup} */
+  storages?: InputBindings
 }
 
 /**
- * Defines all kind of input bindings params
+ * An object defining all possible {@link BindGroup} class instancing parameters
  */
-export type AllowedInputBindingsParams = InputBindingsParams | WorkInputBindingsParams
+export interface BindGroupParams {
+  /** {@link BindGroup} label */
+  label?: string
+  /** {@link BindGroup} index (used to generate shader code) */
+  index?: number
+  /** array of already created [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) to pass to this {@link BindGroup} */
+  bindings?: BindGroupBindingElement[]
+  /** [inputs]{@link BindGroupInputs} that will be used to create additional {@link BindGroup} [bindings]{@link BindGroupBindingElement} */
+  inputs?: BindGroupInputs
+}
 
 /**
- * Defines an input bindings
+ * An object used to define {@link BindGroup} entries
  */
-export type InputBindings = Record<string, AllowedInputBindingsParams>
+export interface BindGroupEntries {
+  /** [GPUBindGroupLayout descriptor]{@link GPUBindGroupLayoutDescriptor} entries */
+  bindGroupLayout: GPUBindGroupLayoutEntry[]
+  /** [GPUBindGroup descriptor]{@link GPUBindGroupDescriptor} entries */
+  bindGroup: GPUBindGroupEntry[]
+}

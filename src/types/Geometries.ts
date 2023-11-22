@@ -1,4 +1,4 @@
-import { WGSLVariableType } from '../utils/buffers-utils'
+import { WGSLVariableType } from '../core/bindings/utils'
 
 /**
  * Parameters used to create a {@link VertexBufferAttribute}

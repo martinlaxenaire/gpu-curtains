@@ -20,7 +20,7 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Compute passes
 - Scene class
 - Scroll + resize, frustum culling check
-- Texture & RenderTexture classes
+- Texture & RenderTexture (with storage) classes
 - Sampler class
 - Shader passes 
 - RenderTarget (render to textures)
@@ -32,12 +32,13 @@ The library has been rewritten to the core, so it is not just a port of the exis
 ### Work in progress
 
 - Errors / warning handling
-- Events / callbacks
-- Removing / destroying meshes
+- Tests
 
 ### Todo
 
 - ~~TextureLoader class?~~
+- Cache compute pipelines
 - Mesh raycasting?
 - context lost handling
-- Tests! (removing, samplers, external video textures...)
+- More tests! (removing, samplers, external video textures, buffer offsets...)
+- Documentation (using JSDoc?)

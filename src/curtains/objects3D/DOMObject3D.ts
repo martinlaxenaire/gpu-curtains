@@ -1,7 +1,7 @@
 import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
-import { isCurtainsRenderer } from '../../utils/renderer-utils'
+import { isCurtainsRenderer } from '../../core/renderers/utils'
 import { DOMElement, DOMElementBoundingRect, DOMPosition, RectBBox } from '../../core/DOM/DOMElement'
 import { Vec3 } from '../../math/Vec3'
 import { Camera } from '../../core/camera/Camera'

@@ -1,12 +1,14 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
-import { isCurtainsRenderer } from '../../utils/renderer-utils'
-import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
+import { isCurtainsRenderer } from '../../core/renderers/utils'
+import MeshTransformedMixin, { MeshTransformedBaseClass } from '../../core/meshes/MeshTransformedMixin'
 import MeshBaseMixin, { MeshBaseParams, MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin'
 import { throwWarning } from '../../utils/utils'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 import { Texture } from '../../core/textures/Texture'
 import { AllowedGeometries } from '../../types/Materials'
+import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture'
+import { DOMElementBoundingRect } from '../../core/DOM/DOMElement'
 
 /**
  * Base parameters to create a {@link DOMMesh}
@@ -39,7 +41,7 @@ const defaultDOMMeshParams = {
  * @extends MeshTransformedMixin
  * @mixes {MeshBaseMixin}
  */
-export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
+export class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
   /** Whether to automatically create a {@link Texture} for all [images]{@link HTMLImageElement}, [videos]{@link HTMLVideoElement} and [canvases]{@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
   autoloadSources: boolean
   /** Whether all the sources have been successfully loaded */
@@ -212,6 +214,53 @@ export class DOMMesh extends MeshTransformedMixin(MeshBaseMixin(DOMObject3D)) {
         `${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`
       )
     }
+  }
+
+  /**
+   * Get our [DOM Element]{@link DOMMesh#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
+   */
+  get pixelRatioBoundingRect(): DOMElementBoundingRect {
+    const devicePixelRatio = window.devicePixelRatio ?? 1
+    const scaleBoundingRect = this.renderer.pixelRatio / devicePixelRatio
+
+    return Object.keys(this.domElement.boundingRect).reduce(
+      (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
+      {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+      }
+    )
+  }
+
+  /**
+   * Create a new {@link RenderTexture}
+   * @param  options - [RenderTexture options]{@link RenderTextureParams}
+   * @returns - newly created {@link RenderTexture}
+   */
+  createRenderTexture(options: RenderTextureParams): RenderTexture {
+    options = {
+      ...options,
+      size: { width: this.pixelRatioBoundingRect.width, height: this.pixelRatioBoundingRect.height },
+    }
+
+    return super.createRenderTexture(options)
+  }
+
+  /**
+   * Resize the Mesh's render textures only if they're not storage textures
+   */
+  resizeRenderTextures() {
+    this.renderTextures
+      ?.filter((renderTexture) => renderTexture.options.usage === 'texture')
+      .forEach((renderTexture) =>
+        renderTexture.resize({ width: this.pixelRatioBoundingRect.width, height: this.pixelRatioBoundingRect.height })
+      )
   }
 
   /* EVENTS */

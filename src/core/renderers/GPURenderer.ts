@@ -1,4 +1,4 @@
-import { generateMips } from '../../utils/renderer-utils'
+import { generateMips } from './utils'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
@@ -15,6 +15,7 @@ import { Sampler } from '../samplers/Sampler'
 import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
+import { TasksQueueManager } from '../../utils/TasksQueueManager'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -107,6 +108,12 @@ export class GPURenderer {
   /** Document [body]{@link HTMLBodyElement} [DOM Element]{@link DOMElement} used to trigger resize when the document body size changes */
   documentBody: DOMElement
 
+  // TODO
+  onBeforeCommandEncoderCreation: TasksQueueManager
+  onBeforeRenderScene: TasksQueueManager
+  onAfterRenderScene: TasksQueueManager
+  onAfterCommandEncoderSubmission: TasksQueueManager
+
   // callbacks / events
   /** function assigned to the [onBeforeRender]{@link GPURenderer#onBeforeRender} callback */
   _onBeforeRenderCallback = (commandEncoder: GPUCommandEncoder) => {
@@ -150,6 +157,7 @@ export class GPURenderer {
       }, 0)
     }
 
+    this.setTasksQueues()
     this.setRendererObjects()
 
     // create the canvas
@@ -490,7 +498,7 @@ export class GPURenderer {
         this.device?.queue.copyExternalImageToTexture(
           {
             source: texture.source as GPUImageCopyExternalImageSource,
-            flipY: texture.options.texture.flipY,
+            flipY: texture.options.flipY,
           } as GPUImageCopyExternalImage,
           { texture: texture.texture as GPUTexture },
           { width: texture.size.width, height: texture.size.height }
@@ -508,7 +516,7 @@ export class GPURenderer {
     } else {
       this.device?.queue.writeTexture(
         { texture: texture.texture as GPUTexture },
-        new Uint8Array(texture.options.texture.placeholderColor),
+        new Uint8Array(texture.options.placeholderColor),
         { bytesPerRow: texture.size.width * 4 },
         { width: texture.size.width, height: texture.size.height }
       )
@@ -551,7 +559,15 @@ export class GPURenderer {
     }
   }
 
-  /* OBJECTS */
+  /* OBJECTS & TASKS */
+
+  setTasksQueues() {
+    // TODO
+    this.onBeforeCommandEncoderCreation = new TasksQueueManager()
+    this.onBeforeRenderScene = new TasksQueueManager()
+    this.onAfterRenderScene = new TasksQueueManager()
+    this.onAfterCommandEncoderSubmission = new TasksQueueManager()
+  }
 
   /**
    * Set all objects arrays that we'll keep track of
@@ -638,17 +654,28 @@ export class GPURenderer {
 
     // now render!
     this.onBeforeCommandEncoder()
+    this.onBeforeCommandEncoderCreation.execute()
 
     const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer command encoder' })
 
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
+    this.onBeforeRenderScene.execute(commandEncoder)
 
     this.scene.render(commandEncoder)
 
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
+    this.onAfterRenderScene.execute(commandEncoder)
 
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
+
+    // now handle textures
+
+    // first check if media textures without parent need to be uploaded
+    // TODO safe?
+    this.textures
+      .filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded)
+      .forEach((texture) => this.uploadTexture(texture))
 
     // no need to use device.queue.onSubmittedWorkDone
     // as [Kai Ninomiya](https://github.com/kainino0x) stated:
@@ -661,6 +688,7 @@ export class GPURenderer {
     this.texturesQueue = []
 
     this.onAfterCommandEncoder()
+    this.onAfterCommandEncoderSubmission.execute()
   }
 
   /**

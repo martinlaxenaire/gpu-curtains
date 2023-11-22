@@ -1,4 +1,4 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectSize } from '../DOM/DOMElement'

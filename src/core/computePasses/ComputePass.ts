@@ -1,8 +1,11 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID } from '../../utils/utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
-import { MaterialParams, MaterialShaders } from '../../types/Materials'
+import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
+import { ExternalTextureParams, TextureParams } from '../../types/Textures'
 
 /** Defines {@link ComputePass} options */
 export interface ComputePassOptions {
@@ -16,6 +19,10 @@ export interface ComputePassOptions {
   shaders: MaterialShaders
   /** whether the [compute pipeline]{@link ComputePipelineEntry#pipeline} should be compiled asynchronously */
   useAsyncPipeline?: boolean
+  /** Parameters used by this {@link ComputePass} to create a [texture]{@link Texture} */
+  texturesOptions?: ExternalTextureParams
+  /** Main/first {@link ComputeMaterial} work group dispatch size to use with this {@link ComputePass} */
+  dispatchSize?: number | number[]
 }
 
 /**
@@ -98,7 +105,17 @@ export class ComputePass {
     this.uuid = generateUUID()
     Object.defineProperty(this as ComputePass, 'index', { value: computePassIndex++ })
 
-    const { label, shaders, renderOrder, inputs, bindGroups, autoAddToScene, useAsyncPipeline } = parameters
+    const {
+      label,
+      shaders,
+      renderOrder,
+      inputs,
+      bindGroups,
+      autoAddToScene,
+      useAsyncPipeline,
+      texturesOptions,
+      dispatchSize,
+    } = parameters
 
     this.options = {
       label,
@@ -106,6 +123,8 @@ export class ComputePass {
       ...(autoAddToScene !== undefined && { autoAddToScene }),
       ...(renderOrder !== undefined && { renderOrder }),
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
+      ...(dispatchSize !== undefined && { dispatchSize }),
+      texturesOptions, // TODO default
     }
 
     this.renderOrder = renderOrder ?? 0
@@ -123,6 +142,7 @@ export class ComputePass {
       inputs,
       bindGroups,
       useAsyncPipeline,
+      dispatchSize,
     })
 
     this.addToScene()
@@ -141,14 +161,6 @@ export class ComputePass {
       this._onReadyCallback && this._onReadyCallback()
     }
     this._ready = value
-  }
-
-  /**
-   * Create the compute pass material
-   * @param computeParameters - {@link ComputeMaterial} parameters
-   */
-  setComputeMaterial(computeParameters: MaterialParams) {
-    this.material = new ComputeMaterial(this.renderer, computeParameters)
   }
 
   /**
@@ -174,7 +186,87 @@ export class ComputePass {
   }
 
   /**
-   * Get our {@link ComputeMaterial} uniforms
+   * Create the compute pass material
+   * @param computeParameters - {@link ComputeMaterial} parameters
+   */
+  setComputeMaterial(computeParameters: ComputeMaterialParams) {
+    this.material = new ComputeMaterial(this.renderer, computeParameters)
+  }
+
+  /* TEXTURES */
+
+  /**
+   * Get our [compute material textures array]{@link ComputeMaterial#textures}
+   * @readonly
+   */
+  get textures(): Texture[] {
+    return this.material?.textures || []
+  }
+
+  /**
+   * Get our [compute material render textures array]{@link ComputeMaterial#renderTextures}
+   * @readonly
+   */
+  get renderTextures(): RenderTexture[] {
+    return this.material?.renderTextures || []
+  }
+
+  /**
+   * Create a new {@link Texture}
+   * @param options - [Texture options]{@link TextureParams}
+   * @returns - newly created {@link Texture}
+   */
+  createTexture(options: TextureParams): Texture {
+    if (!options.name) {
+      options.name = 'texture' + this.textures.length
+    }
+
+    if (!options.label) {
+      options.label = this.options.label + ' ' + options.name
+    }
+
+    const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions })
+
+    this.addTexture(texture)
+
+    return texture
+  }
+
+  /**
+   * Add a {@link Texture}
+   * @param texture - {@link Texture} to add
+   */
+  addTexture(texture: Texture) {
+    this.material.addTexture(texture)
+  }
+
+  /**
+   * Create a new {@link RenderTexture}
+   * @param  options - [RenderTexture options]{@link RenderTextureParams}
+   * @returns - newly created {@link RenderTexture}
+   */
+  createRenderTexture(options: RenderTextureParams): RenderTexture {
+    if (!options.name) {
+      options.name = 'renderTexture' + this.renderTextures.length
+    }
+
+    const renderTexture = new RenderTexture(this.renderer, options)
+
+    this.addRenderTexture(renderTexture)
+
+    return renderTexture
+  }
+
+  /**
+   * Add a {@link RenderTexture}
+   * @param renderTexture - {@link RenderTexture} to add
+   */
+  addRenderTexture(renderTexture: RenderTexture) {
+    this.material.addTexture(renderTexture)
+  }
+
+  /**
+   * Get our [compute material uniforms]{@link ComputeMaterial#uniforms}
    * @readonly
    */
   get uniforms(): ComputeMaterial['uniforms'] {
@@ -182,19 +274,11 @@ export class ComputePass {
   }
 
   /**
-   * Get our {@link ComputeMaterial} storages
+   * Get our [compute material storages]{@link ComputeMaterial#storages}
    * @readonly
    */
   get storages(): ComputeMaterial['storages'] {
     return this.material?.storages
-  }
-
-  /**
-   * Get our {@link ComputeMaterial} works
-   * @readonly
-   */
-  get works(): ComputeMaterial['works'] {
-    return this.material?.works
   }
 
   /**
@@ -363,9 +447,5 @@ export class ComputePass {
    */
   destroy() {
     this.material?.destroy()
-
-    // TODO like Mesh?
-    // this.renderTextures = []
-    // this.textures = []
   }
 }

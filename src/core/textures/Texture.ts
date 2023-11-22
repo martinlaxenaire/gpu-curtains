@@ -1,7 +1,7 @@
 import { Vec3 } from '../../math/Vec3'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
-import { TextureBindings, TextureBindingsParams } from '../bindings/TextureBindings'
-import { BufferBindings } from '../bindings/BufferBindings'
+import { isRenderer, Renderer } from '../renderers/utils'
+import { TextureBinding, TextureBindingParams } from '../bindings/TextureBinding'
+import { BufferBinding } from '../bindings/BufferBinding'
 import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
 import { generateUUID, throwWarning } from '../../utils/utils'
@@ -14,20 +14,18 @@ import { RectSize } from '../DOM/DOMElement'
 /** @const - default [texture]{@link Texture} parameters */
 const defaultTextureParams: TextureParams = {
   name: 'texture',
-  texture: {
-    generateMips: false,
-    flipY: false,
-    format: 'rgba8unorm',
-    placeholderColor: [0, 0, 0, 255], // default to black
-    useExternalTextures: true,
-  },
+  generateMips: false,
+  flipY: false,
+  format: 'rgba8unorm',
+  placeholderColor: [0, 0, 0, 255], // default to black
+  useExternalTextures: true,
   fromTexture: null,
 }
 
 /**
  * Texture class:
  * Used to create [textures]{@link GPUTexture} or [external textures]{@link GPUExternalTexture} from different kinds of [sources]{@link TextureSource}.
- * Handles the various sources loading and uploading, GPU textures creation, [texture matrix binding]{@link BufferBindings} and [texture binding]{@link TextureBindings}
+ * Handles the various sources loading and uploading, GPU textures creation, [texture matrix binding]{@link BufferBinding} and [texture binding]{@link TextureBinding}
  * @extends Object3D
  */
 export class Texture extends Object3D {
@@ -51,9 +49,9 @@ export class Texture extends Object3D {
   /** Options used to create this {@link Texture} */
   options: TextureOptions
 
-  /** A [buffer binding]{@link BufferBindings} that will hold the texture matrix */
-  textureMatrix: BufferBindings
-  /** The bindings used by this {@link Texture}, i.e. its [texture matrix buffer binding]{@link Texture#textureMatrix} and its [texture binding]{@link TextureBindings} */
+  /** A [buffer binding]{@link BufferBinding} that will hold the texture matrix */
+  textureMatrix: BufferBinding
+  /** The bindings used by this {@link Texture}, i.e. its [texture matrix buffer binding]{@link Texture#textureMatrix} and its [texture binding]{@link TextureBinding} */
   bindings: BindGroupBindingElement[]
 
   /** {@link Texture} parent if any */
@@ -117,7 +115,7 @@ export class Texture extends Object3D {
 
     this.options = { ...defaultOptions, ...parameters }
     // force merge of texture object
-    this.options.texture = { ...defaultOptions.texture, ...parameters.texture }
+    //this.options.texture = { ...defaultOptions.texture, ...parameters.texture }
 
     this.options.label = this.options.label ?? this.options.name
 
@@ -132,7 +130,7 @@ export class Texture extends Object3D {
     }
 
     // we will always declare a texture matrix
-    this.textureMatrix = new BufferBindings({
+    this.textureMatrix = new BufferBinding({
       label: this.options.label + ': model matrix',
       name: this.options.name + 'Matrix',
       useStruct: false,
@@ -164,22 +162,22 @@ export class Texture extends Object3D {
    */
   setBindings() {
     this.bindings = [
-      new TextureBindings({
+      new TextureBinding({
         label: this.options.label + ': texture',
         name: this.options.name,
         texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
-      } as TextureBindingsParams),
+      } as TextureBindingParams),
       this.textureMatrix,
     ]
   }
 
   /**
-   * Get our [texture binding]{@link TextureBindings}
+   * Get our [texture binding]{@link TextureBinding}
    * @readonly
    */
-  get textureBinding(): TextureBindings {
-    return this.bindings[0] as TextureBindings
+  get textureBinding(): TextureBinding {
+    return this.bindings[0] as TextureBinding
   }
 
   /**
@@ -377,9 +375,19 @@ export class Texture extends Object3D {
     }
 
     this.options.fromTexture = texture
+
+    // now copy all desired texture options except source
+    // const { source, ...optionsToCopy } = texture.options
+    // this.options = { ...this.options, ...optionsToCopy }
+
     this.options.sourceType = texture.options.sourceType
 
-    this.options.texture = texture.options.texture
+    // TODO better way to do that?
+    this.options.generateMips = texture.options.generateMips
+    this.options.flipY = texture.options.flipY
+    this.options.format = texture.options.format
+    this.options.placeholderColor = texture.options.placeholderColor
+    this.options.useExternalTextures = texture.options.useExternalTextures
 
     this.sourceLoaded = texture.sourceLoaded
     this.sourceUploaded = texture.sourceUploaded
@@ -394,8 +402,11 @@ export class Texture extends Object3D {
       }
 
       if (texture.sourceUploaded) {
+        // texture to copy is ready, update our texture and binding
         this.texture = texture.texture
+        this.textureBinding.resource = this.texture
 
+        // tell the texture bind group to update
         this.shouldUpdateBindGroup = true
       } else {
         this.createTexture()
@@ -409,7 +420,7 @@ export class Texture extends Object3D {
   createTexture() {
     const options = {
       label: this.options.label,
-      format: this.options.texture.format,
+      format: this.options.format,
       size: [this.size.width, this.size.height], // [1, 1] if no source
       usage: !!this.source
         ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
@@ -417,9 +428,7 @@ export class Texture extends Object3D {
     } as GPUTextureDescriptor
 
     if (this.options.sourceType !== 'externalVideo') {
-      options.mipLevelCount = this.options.texture.generateMips
-        ? this.getNumMipLevels(this.size.width, this.size.height)
-        : 1
+      options.mipLevelCount = this.options.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1
 
       this.texture?.destroy()
 
@@ -515,7 +524,7 @@ export class Texture extends Object3D {
       this.setSourceSize()
       this.resize()
 
-      if (this.options.texture.useExternalTextures) {
+      if (this.options.useExternalTextures) {
         this.options.sourceType = 'externalVideo'
 
         // texture bindings will be set when uploading external texture
@@ -644,7 +653,7 @@ export class Texture extends Object3D {
     this.updateMatrixStack()
 
     // update uniforms values
-    this.textureMatrix.onBeforeRender()
+    this.textureMatrix.update()
 
     // since external texture are destroyed as soon as JavaScript returns to the browser
     // we need to update it at every tick, even if it hasn't changed

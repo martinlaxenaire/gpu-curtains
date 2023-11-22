@@ -2,9 +2,9 @@
   /*** content ***/
 
   #page {
-    max-width: 1440px;
+    max-width: 1680px;
     margin: 0 auto;
-    padding: 2.25rem 0;
+    padding: 2.25rem 20px;
   }
 
   #planes {
@@ -19,6 +19,12 @@
     grid-column: span 1;
     aspect-ratio: 1;
     margin: 0;
+  }
+}
+
+@media screen and (min-width: 1720px) {
+  #planes {
+    padding: 0 0 calc(50vh - (0.5 * 1680px / var(--nb-planes-per-row))) 0;
   }
 }
 

@@ -1,20 +1,25 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID, toKebabCase } from '../../utils/utils'
-import { WorkBufferBindings, WorkBufferBindingsParams } from '../bindings/WorkBufferBindings'
-import { BufferBindings } from '../bindings/BufferBindings'
+import { WritableBufferBinding, WritableBufferBindingParams } from '../bindings/WritableBufferBinding'
+import { BufferBinding } from '../bindings/BufferBinding'
 import {
   AllowedBindGroups,
-  AllowedInputBindingsParams,
   BindGroupBindingElement,
   BindGroupBufferBindingElement,
   BindGroupEntries,
   BindGroupParams,
   InputBindings,
-  WorkInputBindingsParams,
+  InputBindingsParams,
 } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { TextureBindGroupParams } from './TextureBindGroup'
-import { BindingType } from '../bindings/Bindings'
+import { BindingType } from '../bindings/Binding'
+
+/**
+ * @module core/bindGroups/BindGroup
+ * @alias BindGroup
+ * @export
+ */
 
 /**
  * BindGroup class:
@@ -123,36 +128,36 @@ export class BindGroup {
 
   /**
    * Creates Bindings based on a list of inputs
-   * @param bindingType - [binding type]{@link Bindings#bindingType}
+   * @param bindingType - [binding type]{@link Binding#bindingType}
    * @param inputs - [inputs]{@link InputBindings} that will be used to create the binding
    * @returns - a {@link bindings} array
    */
   createInputBindings(bindingType: BindingType = 'uniform', inputs: InputBindings = {}): BindGroupBindingElement[] {
     return [
       ...Object.keys(inputs).map((inputKey) => {
-        const binding = inputs[inputKey] as AllowedInputBindingsParams
+        const binding = inputs[inputKey] as InputBindingsParams
 
         const bindingParams = {
           label: toKebabCase(binding.label || inputKey),
           name: inputKey,
           bindingType,
           useStruct: true, // by default
+          visibility: binding.access === 'read_write' ? 'compute' : binding.visibility,
+          access: binding.access ?? 'read', // read by default
           bindings: binding.bindings,
-          dispatchSize: (binding as WorkInputBindingsParams).dispatchSize,
-          visibility: bindingType === 'storageWrite' ? 'compute' : binding.visibility,
         }
 
-        const BufferBindingConstructor = bindingType === 'storageWrite' ? WorkBufferBindings : BufferBindings
+        const BufferBindingConstructor = bindingParams.access === 'read_write' ? WritableBufferBinding : BufferBinding
 
         return binding.useStruct !== false
-          ? new BufferBindingConstructor(bindingParams as WorkBufferBindingsParams)
+          ? new BufferBindingConstructor(bindingParams as WritableBufferBindingParams)
           : Object.keys(binding.bindings).map((bindingKey) => {
               bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey)
               bindingParams.name = inputKey + bindingKey
               bindingParams.useStruct = false
               bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] }
 
-              return new BufferBindingConstructor(bindingParams as WorkBufferBindingsParams)
+              return new BufferBindingConstructor(bindingParams as WritableBufferBindingParams)
             })
       }),
     ].flat()
@@ -165,7 +170,6 @@ export class BindGroup {
     this.addBindings([
       ...this.createInputBindings('uniform', this.options.inputs.uniforms),
       ...this.createInputBindings('storage', this.options.inputs.storages),
-      ...this.createInputBindings('storageWrite', this.options.inputs.works),
     ])
   }
 
@@ -198,7 +202,7 @@ export class BindGroup {
   }
 
   /**
-   * Reset {@link BindGroup} {@link entries} and recreates it
+   * Reset the [bind group entries]{@link BindGroup#entries}, recreates it then recreate the [bind group layout]{@link BindGroup#bindGroupLayout} and [bind group]{@link BindGroup#bindGroup}
    */
   // TODO not necessarily needed?
   resetBindGroup() {
@@ -207,11 +211,11 @@ export class BindGroup {
   }
 
   /**
-   * Get all bindings that handle a GPUBuffer
+   * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
    */
   get bufferBindings(): BindGroupBufferBindingElement[] {
     return this.bindings.filter(
-      (binding) => binding instanceof BufferBindings || binding instanceof WorkBufferBindings
+      (binding) => binding instanceof BufferBinding || binding instanceof WritableBufferBinding
     ) as BindGroupBufferBindingElement[]
   }
 
@@ -219,13 +223,13 @@ export class BindGroup {
    * Creates binding GPUBuffer with correct params
    * @param binding - the binding element
    */
-  createBindingBuffer(binding) {
+  createBindingBuffer(binding: BindGroupBufferBindingElement) {
     // TODO user defined usage?
     // [Kangz](https://github.com/Kangz) said:
     // "In general though COPY_SRC/DST is free (at least in Dawn / Chrome because we add it all the time for our own purpose)."
     binding.buffer = this.renderer.createBuffer({
       label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
-      size: binding.value.byteLength,
+      size: binding.arrayBuffer.byteLength,
       usage:
         binding.bindingType === 'uniform'
           ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
@@ -235,7 +239,7 @@ export class BindGroup {
     if ('resultBuffer' in binding) {
       binding.resultBuffer = this.renderer.createBuffer({
         label: this.options.label + ': Result buffer from: ' + binding.label,
-        size: binding.value.byteLength,
+        size: binding.arrayBuffer.byteLength,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
       })
     }
@@ -276,7 +280,7 @@ export class BindGroup {
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
-  getBindingsByName(bindingName = ''): BindGroupBindingElement | null {
+  getBindingByName(bindingName = ''): BindGroupBindingElement | null {
     return this.bindings.find((binding) => binding.name === bindingName)
   }
 
@@ -302,19 +306,23 @@ export class BindGroup {
   }
 
   /**
-   * Check whether we should update (write the buffer) our GPUBuffer or not
-   * Called at each render from Material
+   * Check whether we should update (write) our {@link GPUBuffer} or not.
    */
-  updateBindings() {
+  updateBufferBindings() {
     this.bufferBindings.forEach((binding, index) => {
+      // update binding elements
+      binding.update()
+
+      // now write to the GPUBuffer if needed
       if (binding.shouldUpdate) {
         // bufferOffset is always equals to 0 in our case
-        if (!binding.useStruct && binding.bindingElements.length > 1) {
+        if (!binding.useStruct && binding.bufferElements.length > 1) {
           // we're in a non struct buffer binding with multiple entries
           // that should not happen but that way we're covered
-          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bindingElements[index].array)
+          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view)
         } else {
-          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
+          //this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
+          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer)
         }
       }
 
@@ -324,13 +332,28 @@ export class BindGroup {
   }
 
   /**
+   * Update the {@link BindGroup}, which means update its [buffer bindings]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
+   * Called at each render from the parent {@link Material}
+   * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
+   */
+  update() {
+    this.updateBufferBindings()
+
+    if (this.needsReset) {
+      this.resetBindGroup()
+      this.needsReset = false
+    }
+  }
+
+  /**
    * Clones a {@link BindGroup} from a list of {@link bindings}
    * Useful to create a new bind group with already created buffers, but swapped
-   * @param bindings - our input {@link bindings}
-   * @param keepLayout - whether we should keep original {@link bindGroupLayout} or not
+   * @param parameters - parameters to use for cloning
+   * @param parameters.bindings - our input {@link bindings}
+   * @param [parameters.keepLayout=false] - whether we should keep original {@link bindGroupLayout} or not
    * @returns - the cloned {@link BindGroup}
    */
-  cloneFromBindings({
+  clone({
     bindings = [],
     keepLayout = false,
   }: {
@@ -345,13 +368,17 @@ export class BindGroup {
     })
 
     bindGroupCopy.setIndex(this.index)
+    bindGroupCopy.options = params
 
     const bindingsRef = bindings.length ? bindings : this.bindings
 
     bindingsRef.forEach((binding, index) => {
       bindGroupCopy.addBinding(binding)
 
-      //bindGroupCopy.bindings.push(binding)
+      // if it's a buffer binding without a GPUBuffer, create it now
+      if ('buffer' in binding && !binding.buffer) {
+        bindGroupCopy.createBindingBuffer(binding)
+      }
 
       // if we should create a new bind group layout, fill it
       if (!keepLayout) {
@@ -383,16 +410,16 @@ export class BindGroup {
    * Clones a bind group with all its {@link bindings}
    * @returns - the cloned BindGroup
    */
-  clone(): AllowedBindGroups {
-    return this.cloneFromBindings()
-  }
+  // clone(): AllowedBindGroups {
+  //   return this.cloneFromBindings()
+  // }
 
   /**
    * Destroy our {@link BindGroup}
    * Most important is to destroy the GPUBuffers to free the memory
    */
   destroy() {
-    this.bindings.forEach((binding) => {
+    this.bufferBindings.forEach((binding) => {
       if ('buffer' in binding) {
         binding.buffer?.destroy()
       }

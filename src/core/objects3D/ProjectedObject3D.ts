@@ -1,6 +1,6 @@
 import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from './Object3D'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { CameraRenderer, isCameraRenderer } from '../../utils/renderer-utils'
+import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { Mat4 } from '../../math/Mat4'
 import { Camera } from '../camera/Camera'
 

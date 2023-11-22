@@ -1,4 +1,4 @@
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { RenderPass, RenderPassParams } from './RenderPass'
 import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
 import { generateUUID } from '../../utils/utils'

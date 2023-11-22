@@ -1,0 +1,14 @@
+@media screen {
+  #page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #blur {
+    position: relative;
+    overflow: hidden;
+    width: 90%;
+    height: 90vh;
+  }
+}

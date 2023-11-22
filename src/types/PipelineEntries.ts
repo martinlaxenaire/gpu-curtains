@@ -4,7 +4,7 @@ import {
   RenderMaterialAttributes,
   RenderMaterialRenderingOptions,
 } from './Materials'
-import { Renderer } from '../utils/renderer-utils'
+import { Renderer } from '../core/renderers/utils'
 import { GPUCurtains } from '../curtains/GPUCurtains'
 import { AllowedBindGroups } from './BindGroups'
 
@@ -12,7 +12,7 @@ import { AllowedBindGroups } from './BindGroups'
  * Defines a [pipeline entry]{@link PipelineEntry} shader object
  */
 export interface PipelineEntryShader {
-  /** Additional piece of WGSL code added at the beginning of the shader, with bits coming from the {@link Bindings} and {@link Geometry} */
+  /** Additional piece of WGSL code added at the beginning of the shader, with bits coming from the {@link Binding} and {@link Geometry} */
   head?: string
   /** Complete WGSL shader code, i.e. [head code]{@link PipelineEntryShader#head} plus code that has been passed by the {@link Material} */
   code: string

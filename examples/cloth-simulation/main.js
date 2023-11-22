@@ -312,7 +312,7 @@ const computeClothSim = /* wgsl */ `
             
     setVelocity(offset, pointVelocity + a * params.deltaTime);
     
-    let pos = pointPosition + pointVelocity * params.deltaTime;
+    let pos = pointPosition + getVelocity(offset) * params.deltaTime;
     setPosition(offset, vec4<f32>(pos.x, max(pos.y, -1.0), pos.zw));
   }
 `
@@ -342,8 +342,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   const positionArray = clothGeometry.getAttributeByName('position').array.slice()
+
   const vertexPositionArray = new Float32Array((positionArray.length * 4) / 3)
-  const normalPositionArray = new Float32Array((positionArray.length * 4) / 3)
+
+  const normalPositionArray = new Float32Array(vertexPositionArray.length)
   const vertexVelocityArray = new Float32Array(vertexPositionArray.length)
   const vertexForceArray = new Float32Array(vertexPositionArray.length)
 
@@ -356,7 +358,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     //const xFixed = (Math.ceil(Math.abs(positionArray[j]) * (clothDefinition.x + 1)) / 2) % 5 === 0
     const xFixed = Math.abs(positionArray[j]) === 1
 
-    vertexPositionArray[i + 3] = positionArray[j + 1] === 1 && xFixed ? -1 : 0 // fixed point
+    //vertexPositionArray[i + 3] = positionArray[j + 1] === 1 && xFixed ? -1 : 0 // fixed point
+    vertexPositionArray[i + 3] = positionArray[j + 1] === 1 ? -1 : 0 // fixed point
 
     // explicitly set normals
     normalPositionArray[i] = 0
@@ -416,7 +419,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           bindings: {
             deltaTime: {
               type: 'f32',
-              value: 0.001 * simulationSpeed * 1.5,
+              value: 0.001 * simulationSpeed,
             },
             mass: {
               type: 'f32',
@@ -450,7 +453,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             pointerStrength: {
               type: 'f32',
-              value: 200,
+              value: 250,
             },
             wind: {
               type: 'vec3f',
@@ -459,9 +462,10 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
         },
       },
-      works: {
+      storages: {
         clothVertex: {
           label: 'ClothVertex',
+          access: 'read_write', // we want a readable AND writable buffer!
           bindings: {
             position: {
               type: 'array<vec4f>',
@@ -485,10 +489,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  const computeBinding = computeBindGroup.getBindingsByName('clothVertex')
-
-  //console.log(computeBindGroup, computeBinding)
-
   // first our compute pass
   const computeForcesPass = new GPUCurtains.ComputePass(gpuCurtains, {
     label: 'Compute forces',
@@ -500,6 +500,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     autoAddToScene: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
+    dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
   })
 
   const computeUpdatePass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -512,6 +513,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     autoAddToScene: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
+    dispatchSize: [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)],
   })
 
   const computeNormalPass = new GPUCurtains.ComputePass(gpuCurtains, {
@@ -524,29 +526,24 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     autoAddToScene: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
+    dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
   })
 
-  console.log(computeForcesPass.material, computeUpdatePass.material, computeNormalPass.material)
-
-  // adjust various dispatch sizes on render
-  computeForcesPass.onRender(() => {
-    computeBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]
-  })
-
-  computeUpdatePass.onRender(() => {
-    computeBinding.dispatchSize = [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)]
-  })
-
-  computeNormalPass.onRender(() => {
-    computeBinding.dispatchSize = [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)]
-  })
+  console.log({ computeForcesPass, computeUpdatePass, computeNormalPass })
 
   // now use renderer onBeforeRender callback to render our compute passes
   // nb sims compute per render impacts the speed at which the simulation runs
-  const nbSimsComputePerRender = Math.min(50, 100 / simulationSpeed)
+  const nbSimsComputePerRender = Math.min(75, Math.ceil(200 / simulationSpeed))
 
-  gpuCurtains.renderer.onBeforeRender((commandEncoder) => {
-    gpuCurtains.renderer.pipelineManager.resetCurrentPipeline()
+  // add a task to our renderer onBeforeRenderScene tasks queue manager
+  gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
+    // set bind groups if needed
+    if (!computeForcesPass.ready) computeForcesPass.onBeforeRenderPass()
+    if (!computeUpdatePass.ready) computeUpdatePass.onBeforeRenderPass()
+    if (!computeNormalPass.ready) computeNormalPass.onBeforeRenderPass()
+
+    // now if the compute passes are not ready, do not render them
+    if (!computeForcesPass.ready || !computeUpdatePass.ready || !computeNormalPass.ready) return
 
     for (let i = 0; i < nbSimsComputePerRender; i++) {
       const forcePass = commandEncoder.beginComputePass()
@@ -609,11 +606,12 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
       
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var color: vec4f;
+      
         var shading: vec3f = vec3(0.5);
         
-        var shadedColor: vec3f = applyLightning(shading, fsInput.normal, vec3(0.3, 0.3, 1.0));
-        
-        var color: vec4f = vec4(shadedColor, 1.0);
+        //var shadedColor: vec3f = applyLightning(shading, fsInput.normal, vec3(0.3, 0.3, 1.0));
+        //color: vec4f = vec4(shadedColor, 1.0);
         
         // debug normals
         color = vec4(abs(normalize(fsInput.normal.xzy)), 1.0);
@@ -647,7 +645,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   plane.onRender(() => {
     // update cloth vertex buffer with resulting buffer from compute passes
     const vertexBuffer = plane.geometry.getVertexBufferByName('clothAttributes')
-    const clothBuffer = computeNormalPass.material.getBindingsByName('clothVertex')
+    const clothBuffer = computeNormalPass.material.getBindingByName('clothVertex')
 
     vertexBuffer.buffer = clothBuffer?.buffer
   })

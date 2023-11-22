@@ -1,5 +1,5 @@
 import MeshBaseMixin, { MeshBaseRenderParams } from './MeshBaseMixin'
-import { isRenderer, Renderer } from '../../utils/renderer-utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
 import { DOMElement, DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
 import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
