@@ -29,6 +29,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     initialParticleVelocity[2 * i + 1] = 2 * systemSize.y * (Math.random() - 0.5) * 0.1
   }
 
+  console.log(initialParticlePosition, initialParticleVelocity)
+
   const computeBoids = /* wgsl */ `
     @compute @workgroup_size(64) fn main(
       @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
@@ -174,11 +176,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  console.log(computePass, computePass.material)
+  console.log(computePass, computePass.material, computePass.material.getBindingByName('particles'))
 
   computePass
     .onReady(() => {
-      console.log(computePass.material)
+      // useful to get the WGSL struct and variables code generated based on input bindings
       console.log(computePass.material.getAddedShaderCode('compute'))
     })
     .onAfterResize(() => {
@@ -248,8 +250,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     ],
   })
 
-  console.log(sphereGeometry)
-
   const sphereMesh = new GPUCurtains.Mesh(gpuCurtains, {
     label: 'Sphere mesh',
     geometry: sphereGeometry,
@@ -276,10 +276,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onRender(() => {
       const instanceVertexBuffer = sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
-      const particleBuffer = computePass.material.getBindingsByName('particles')
+      const particleBuffer = computePass.material.getBindingByName('particles')
 
       instanceVertexBuffer.buffer = particleBuffer?.buffer
     })
-
-  console.log(sphereMesh, gpuCurtains)
 })

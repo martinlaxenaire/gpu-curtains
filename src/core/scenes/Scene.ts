@@ -244,6 +244,8 @@ export class Scene {
    * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
    * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}
    * This also handles the [renderPassEntries screen array]{@link Scene#renderPassEntries.screen} entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
+   * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-hk6rnd
+   * TODO: could we directly use the renderPass view/resolve texture as ShaderPass input?
    * @param shaderPass - [shader pass]{@link ShaderPass} to add
    */
   addShaderPass(shaderPass: ShaderPass) {
@@ -329,6 +331,7 @@ export class Scene {
   /**
    * Add a [ping pong plane]{@link PingPongPlane} to our scene [renderPassEntries pingPong array]{@link Scene#renderPassEntries.pingPong}.
    * After rendering the [ping pong plane]{@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture} so we'll be able to use it as an input for the next pass
+   * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p
    * @param pingPongPlane
    */
   addPingPongPlane(pingPongPlane: PingPongPlane) {

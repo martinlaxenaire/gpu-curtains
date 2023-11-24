@@ -1605,9 +1605,9 @@ var GPUCurtains = (() => {
             const elementSize = this.bufferLayout.size / this.bufferLayout.numElements;
             const entryStartOffset = entry.row.start * slotsPerRow + entry.slot.start / bytesPerSlot;
             const entryEndOffset = entry.row.end * slotsPerRow + Math.ceil(entry.slot.end / bytesPerSlot);
-            for (let i = 0; i < elementSize; i++) {
+            for (let i = 0; i < this.bufferLayout.numElements; i++) {
               if (i < entryEndOffset - entryStartOffset) {
-                this.view[i + entryIndex * elementSize] = value[valueIndex];
+                this.view[i + entryIndex * this.bufferLayout.numElements] = value[valueIndex];
               }
               valueIndex++;
             }
@@ -1676,8 +1676,10 @@ var GPUCurtains = (() => {
     update(value) {
       super.update(value);
       this.interleavedAlignment.entries.forEach((entry, entryIndex) => {
-        const elementSize = this.bufferLayout.size / this.bufferLayout.numElements;
-        const subarray = this.view.subarray(entryIndex * elementSize, entryIndex * elementSize + elementSize);
+        const subarray = this.view.subarray(
+          entryIndex * this.bufferLayout.numElements,
+          entryIndex * this.bufferLayout.numElements + this.bufferLayout.numElements
+        );
         const startByteOffset = entry.row.start * bytesPerRow + entry.slot.start;
         subarray.forEach((value2, index) => {
           this.viewSetFunction(startByteOffset + index * this.bufferLayout.View.BYTES_PER_ELEMENT, value2, true);
@@ -7644,6 +7646,8 @@ ${this.shaders.compute.head}`;
      * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
      * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}
      * This also handles the [renderPassEntries screen array]{@link Scene#renderPassEntries.screen} entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
+     * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-hk6rnd
+     * TODO: could we directly use the renderPass view/resolve texture as ShaderPass input?
      * @param shaderPass - [shader pass]{@link ShaderPass} to add
      */
     addShaderPass(shaderPass) {
@@ -7714,6 +7718,7 @@ ${this.shaders.compute.head}`;
     /**
      * Add a [ping pong plane]{@link PingPongPlane} to our scene [renderPassEntries pingPong array]{@link Scene#renderPassEntries.pingPong}.
      * After rendering the [ping pong plane]{@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture} so we'll be able to use it as an input for the next pass
+     * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p
      * @param pingPongPlane
      */
     addPingPongPlane(pingPongPlane) {

@@ -87,8 +87,10 @@ export class BufferInterleavedElement extends BufferElement {
 
     // now use our viewSetFunction to fill the array view with interleaved alignment
     this.interleavedAlignment.entries.forEach((entry, entryIndex) => {
-      const elementSize = this.bufferLayout.size / this.bufferLayout.numElements
-      const subarray = this.view.subarray(entryIndex * elementSize, entryIndex * elementSize + elementSize)
+      const subarray = this.view.subarray(
+        entryIndex * this.bufferLayout.numElements,
+        entryIndex * this.bufferLayout.numElements + this.bufferLayout.numElements
+      )
 
       const startByteOffset = entry.row.start * bytesPerRow + entry.slot.start
 

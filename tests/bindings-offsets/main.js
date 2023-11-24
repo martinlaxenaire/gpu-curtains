@@ -100,6 +100,24 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   debugBindings.push(arrayTest)
 
+  const computePassExample = new GPUCurtains.BufferBinding({
+    label: 'Simple interleaved vec2 array buffer',
+    name: 'simpleInterleavedVec2ArrayBuffer',
+    bindingType: 'uniform',
+    bindings: {
+      position: {
+        type: 'array<vec2f>',
+        value: new Float32Array(2 * 5),
+      },
+      velocity: {
+        type: 'array<vec2f>',
+        value: new Float32Array(2 * 5),
+      },
+    },
+  })
+
+  debugBindings.push(computePassExample)
+
   const binding3 = new GPUCurtains.BufferBinding({
     label: 'Simple interleaved array buffer',
     name: 'simpleInterleavedArrayBuffer',

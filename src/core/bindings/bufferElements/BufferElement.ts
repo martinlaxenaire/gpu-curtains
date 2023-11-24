@@ -272,13 +272,12 @@ export class BufferElement {
         let valueIndex = 0
         this.alignment.entries.forEach((entry, entryIndex) => {
           // respect the padding, so fill only view entries needed and leave empty padded values if needed
-          const elementSize = this.bufferLayout.size / this.bufferLayout.numElements
           const entryStartOffset = entry.row.start * slotsPerRow + entry.slot.start / bytesPerSlot
           const entryEndOffset = entry.row.end * slotsPerRow + Math.ceil(entry.slot.end / bytesPerSlot)
 
-          for (let i = 0; i < elementSize; i++) {
+          for (let i = 0; i < this.bufferLayout.numElements; i++) {
             if (i < entryEndOffset - entryStartOffset) {
-              this.view[i + entryIndex * elementSize] = value[valueIndex]
+              this.view[i + entryIndex * this.bufferLayout.numElements] = value[valueIndex]
             }
 
             valueIndex++
