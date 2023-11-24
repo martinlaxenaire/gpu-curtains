@@ -34,11 +34,12 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Errors / warning handling
 - Tests
 
-### Todo
+### TODO
 
 - ~~TextureLoader class?~~
 - Cache compute pipelines
+- Use render bundles?
 - Mesh raycasting?
-- context lost handling
+- Context lost handling
 - More tests! (removing, samplers, external video textures, buffer offsets...)
 - Documentation (using JSDoc?)

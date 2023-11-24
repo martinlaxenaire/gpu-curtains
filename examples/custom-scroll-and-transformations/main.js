@@ -150,6 +150,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         plane.rotation.z = -scrollEffect
         plane.textures[0].rotation.z = scrollEffect
 
+        plane.rotation.y = -scrollEffect * 0.5
+
         plane.scale.x = 1 + halfScreenEffect * 0.25
         plane.scale.y = 1 + halfScreenEffect * 0.25
 

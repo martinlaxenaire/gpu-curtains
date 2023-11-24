@@ -12,12 +12,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('no-curtains')
   })
 
-  const mouse = new GPUCurtains.Vec2()
-  const velocity = new GPUCurtains.Vec2()
-  // used for vector lerping
-  const nullVector = new GPUCurtains.Vec2()
-  const lastMouse = mouse.clone()
-
   const planeVs = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
