@@ -117,6 +117,8 @@
     right: 1em;
     font-weight: bold;
     z-index: 1;
+    /** temp **/
+    display: none;
   }
 
   /*** canvas ***/
