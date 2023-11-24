@@ -1602,7 +1602,6 @@ var GPUCurtains = (() => {
         if (this.isArray) {
           let valueIndex = 0;
           this.alignment.entries.forEach((entry, entryIndex) => {
-            const elementSize = this.bufferLayout.size / this.bufferLayout.numElements;
             const entryStartOffset = entry.row.start * slotsPerRow + entry.slot.start / bytesPerSlot;
             const entryEndOffset = entry.row.end * slotsPerRow + Math.ceil(entry.slot.end / bytesPerSlot);
             for (let i = 0; i < this.bufferLayout.numElements; i++) {
