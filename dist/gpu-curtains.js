@@ -6147,19 +6147,15 @@ struct VertexOutput {
           frustumCulled,
           DOMFrustumMargins
         };
-        this.frustumCulled = this.options.frustumCulled;
-        this.domFrustum.shouldUpdate = this.frustumCulled;
+        this.setDOMFrustum();
         this.geometry = geometry;
         this.updateSizePositionAndProjection();
       }
       /* GEOMETRY */
       /**
-       * Override {@link MeshBaseClass} method to add the domFrustum
+       * Set the Mesh frustum culling
        */
-      computeGeometry() {
-        if (this.geometry.shouldCompute) {
-          this.geometry.computeGeometry();
-        }
+      setDOMFrustum() {
         this.domFrustum = new DOMFrustum({
           boundingBox: this.geometry.boundingBox,
           modelViewProjectionMatrix: this.modelViewProjectionMatrix,
@@ -6173,6 +6169,8 @@ struct VertexOutput {
           }
         });
         this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
+        this.frustumCulled = this.options.frustumCulled;
+        this.domFrustum.shouldUpdate = this.frustumCulled;
       }
       /* MATERIAL */
       /**

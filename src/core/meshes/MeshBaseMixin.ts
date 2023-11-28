@@ -13,6 +13,7 @@ import { DOMElementBoundingRect } from '../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
 //import { TransformedObject3D } from './MeshTransformedMixin'
 import { Object3D } from '../objects3D/Object3D'
+import { MeshTransformedBaseClass } from './MeshTransformedMixin'
 
 let meshIndex = 0
 
@@ -133,31 +134,31 @@ export declare class MeshBaseClass {
    * @param callback - callback to run when {@link MeshBaseClass} is ready
    * @returns - our Mesh
    */
-  onReady: (callback: () => void) => MeshBaseClass
+  onReady: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
   /**
    * Assign a callback function to _onBeforeRenderCallback
    * @param callback - callback to run just before {@link MeshBaseClass} will be rendered
    * @returns - our Mesh
    */
-  onBeforeRender: (callback: () => void) => MeshBaseClass
+  onBeforeRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
   /**
    * Assign a callback function to _onRenderCallback
    * @param callback - callback to run when {@link MeshBaseClass} is rendered
    * @returns - our Mesh
    */
-  onRender: (callback: () => void) => MeshBaseClass
+  onRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
   /**
    * Assign a callback function to _onAfterRenderCallback
    * @param callback - callback to run just after {@link MeshBaseClass} has been rendered
    * @returns - our Mesh
    */
-  onAfterRender: (callback: () => void) => MeshBaseClass
+  onAfterRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
   /**
    * Assign a callback function to _onBeforeRenderCallback
    * @param callback - callback to run just after {@link MeshBaseClass} has been resized
    * @returns - our Mesh
    */
-  onAfterResize: (callback: () => void) => MeshBaseClass
+  onAfterResize: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
 
   /**
    * {@link MeshBaseClass} constructor
@@ -787,7 +788,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run when {@link MeshBase} is ready
      * @returns - our Mesh
      */
-    onReady(callback: () => void): MeshBase {
+    onReady(callback: () => void): MeshBase | MeshTransformedBaseClass {
       if (callback) {
         this._onReadyCallback = callback
       }
@@ -800,7 +801,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run just before {@link MeshBase} will be rendered
      * @returns - our Mesh
      */
-    onBeforeRender(callback: () => void): MeshBase {
+    onBeforeRender(callback: () => void): MeshBase | MeshTransformedBaseClass {
       if (callback) {
         this._onBeforeRenderCallback = callback
       }
@@ -813,7 +814,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run when {@link MeshBase} is rendered
      * @returns - our Mesh
      */
-    onRender(callback: () => void): MeshBase {
+    onRender(callback: () => void): MeshBase | MeshTransformedBaseClass {
       if (callback) {
         this._onRenderCallback = callback
       }
@@ -826,7 +827,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run just after {@link MeshBase} has been rendered
      * @returns - our Mesh
      */
-    onAfterRender(callback: () => void): MeshBase {
+    onAfterRender(callback: () => void): MeshBase | MeshTransformedBaseClass {
       if (callback) {
         this._onAfterRenderCallback = callback
       }
@@ -839,7 +840,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run just after {@link MeshBase} has been resized
      * @returns - our Mesh
      */
-    onAfterResize(callback: () => void): MeshBase {
+    onAfterResize(callback: () => void): MeshBase | MeshTransformedBaseClass {
       if (callback) {
         this._onAfterResizeCallback = callback
       }

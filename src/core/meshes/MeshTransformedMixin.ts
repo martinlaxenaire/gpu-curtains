@@ -110,13 +110,13 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
 
   /**
    * Assign a callback function to _onReEnterViewCallback
-   * @param callback - callback to run when {@link MeshTransformedBase} is reentering the view frustum
+   * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
    * @returns - our Mesh
    */
   onReEnterView: (callback: () => void) => MeshTransformedBaseClass
   /**
    * Assign a callback function to _onLeaveViewCallback
-   * @param callback - callback to run when {@link MeshTransformedBase} is leaving the view frustum
+   * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
    * @returns - our Mesh
    */
   onLeaveView: (callback: () => void) => MeshTransformedBaseClass
@@ -244,8 +244,7 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
         DOMFrustumMargins,
       }
 
-      this.frustumCulled = this.options.frustumCulled
-      this.domFrustum.shouldUpdate = this.frustumCulled
+      this.setDOMFrustum()
 
       // explicitly needed for DOM Frustum
       this.geometry = geometry
@@ -257,13 +256,9 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
     /* GEOMETRY */
 
     /**
-     * Override {@link MeshBaseClass} method to add the domFrustum
+     * Set the Mesh frustum culling
      */
-    computeGeometry() {
-      if (this.geometry.shouldCompute) {
-        this.geometry.computeGeometry()
-      }
-
+    setDOMFrustum() {
       this.domFrustum = new DOMFrustum({
         boundingBox: this.geometry.boundingBox,
         modelViewProjectionMatrix: this.modelViewProjectionMatrix,
@@ -278,6 +273,8 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
       })
 
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
+      this.frustumCulled = this.options.frustumCulled
+      this.domFrustum.shouldUpdate = this.frustumCulled
     }
 
     /* MATERIAL */
@@ -393,7 +390,7 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
      * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
      * @returns - our Mesh
      */
-    onReEnterView(callback: () => void): MeshTransformedBase {
+    onReEnterView(callback: () => void): MeshTransformedBaseClass {
       if (callback) {
         this._onReEnterViewCallback = callback
       }
@@ -406,7 +403,7 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
      * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
      * @returns - our Mesh
      */
-    onLeaveView(callback: () => void): MeshTransformedBase {
+    onLeaveView(callback: () => void): MeshTransformedBaseClass {
       if (callback) {
         this._onLeaveViewCallback = callback
       }
