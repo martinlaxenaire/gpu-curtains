@@ -2609,10 +2609,9 @@ var GPUCurtains = (() => {
     /**
      * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
      * @param target - [target]{@link Vec3} to look at
-     * @param inverseLookAt - whether to inverse position and target, should be set to true to orient a {@link Mesh} and false to orient a {@link Camera}
      */
-    lookAt(target = new Vec3(), inverseLookAt = false) {
-      const rotationMatrix = inverseLookAt ? new Mat4().lookAt(target, this.position) : new Mat4().lookAt(this.position, target);
+    lookAt(target = new Vec3()) {
+      const rotationMatrix = new Mat4().lookAt(this.position, target);
       this.quaternion.setFromRotationMatrix(rotationMatrix);
       this.shouldUpdateModelMatrix();
     }
@@ -6092,6 +6091,15 @@ struct VertexOutput {
     applyTransformOrigin() {
       super.applyTransformOrigin();
       this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+     * @param target - [target]{@link Vec3} to look at
+     */
+    lookAt(target = new Vec3()) {
+      const rotationMatrix = new Mat4().lookAt(target, this.position);
+      this.quaternion.setFromRotationMatrix(rotationMatrix);
+      this.shouldUpdateModelMatrix();
     }
     /**
      * Set our transform and projection matrices

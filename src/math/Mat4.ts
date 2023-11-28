@@ -531,6 +531,8 @@ export class Mat4 {
   lookAt(eye: Vec3 = new Vec3(), target: Vec3 = new Vec3(), up: Vec3 = new Vec3(0, 1, 0)): Mat4 {
     const te = this.elements
 
+    // TODO optimize all those vectors created each time
+
     const _z = eye.clone().sub(target)
 
     if (_z.lengthSq() === 0) {

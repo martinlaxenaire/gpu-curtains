@@ -113,9 +113,8 @@ export declare class Object3D {
     /**
      * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
      * @param target - [target]{@link Vec3} to look at
-     * @param inverseLookAt - whether to inverse position and target, should be set to true to orient a {@link Mesh} and false to orient a {@link Camera}
      */
-    lookAt(target?: Vec3, inverseLookAt?: boolean): void;
+    lookAt(target?: Vec3): void;
     /**
      * Set our model matrix shouldUpdate flag to true (tell it to update)
      */

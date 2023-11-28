@@ -124,7 +124,10 @@
           ) -> VSOutput {
             var vsOutput : VSOutput;
 
-            vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+            var transformed: vec3f = attributes.position;
+            //transformed = transformed + attributes.normal * vec3(deformation.strength * sin(transformed.y * 10.0 + deformation.time * 0.05));
+
+            vsOutput.position = getOutputPosition(camera, matrices, transformed);
             vsOutput.uv = attributes.uv;
             vsOutput.normal = attributes.normal;
 
@@ -161,6 +164,22 @@
                 code: meshFs,
               },
             },
+            inputs: {
+              uniforms: {
+                deformation: {
+                  bindings: {
+                    time: {
+                      type: 'f32',
+                      value: 0,
+                    },
+                    strength: {
+                      type: 'f32',
+                      value: Math.random() * 0.2,
+                    },
+                  },
+                },
+              },
+            },
             watchScroll: false,
           })
 
@@ -179,7 +198,7 @@
 
               sphereMesh.userData.angle = Math.random() * Math.PI
 
-              const positionAngle = Math.random() * Math.PI * 2 - Math.PI
+              const positionAngle = Math.random() * Math.PI * 2
 
               sphereMesh.userData.orbitPosition = new GPUCurtains.Vec3(
                 Math.cos(positionAngle) * distance,
@@ -220,8 +239,10 @@
                 sphereMesh.position.copy(orbitPosition)
 
                 // look at our main sphere
-                sphereMesh.lookAt(spheres[0].worldPosition, true)
+                sphereMesh.lookAt(spheres[0].position)
               }
+
+              sphereMesh.uniforms.deformation.time.value++
             })
             .onLeaveView(() => {
               console.log('left view', sphereMesh.options.label)
