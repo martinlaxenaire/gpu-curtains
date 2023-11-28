@@ -522,6 +522,54 @@ export class Mat4 {
   }
 
   /**
+   * Set this [matrix]{@link Mat4} as a rotation matrix based on an eye, target and up [vectors]{@link Vec3}
+   * @param eye - [position]{@link Vec3} of the object that should be rotated
+   * @param target - [target]{@link Vec3} to look at
+   * @param up - up [vector]{@link Vec3}
+   * @returns - rotated [matrix]{@link Mat4}
+   */
+  lookAt(eye: Vec3 = new Vec3(), target: Vec3 = new Vec3(), up: Vec3 = new Vec3(0, 1, 0)): Mat4 {
+    const te = this.elements
+
+    const _z = eye.clone().sub(target)
+
+    if (_z.lengthSq() === 0) {
+      // eye and target are in the same position
+      _z.z = 1
+    }
+
+    _z.normalize()
+    const _x = new Vec3().crossVectors(up, _z)
+
+    if (_x.lengthSq() === 0) {
+      // up and z are parallel
+      if (Math.abs(up.z) === 1) {
+        _z.x += 0.0001
+      } else {
+        _z.z += 0.0001
+      }
+
+      _z.normalize()
+      _x.crossVectors(up, _z)
+    }
+
+    _x.normalize()
+    const _y = new Vec3().crossVectors(_z, _x)
+
+    te[0] = _x.x
+    te[4] = _y.x
+    te[8] = _z.x
+    te[1] = _x.y
+    te[5] = _y.y
+    te[9] = _z.y
+    te[2] = _x.z
+    te[6] = _y.z
+    te[10] = _z.z
+
+    return this
+  }
+
+  /**
    * Creates a [matrix]{@link Mat4} from a [quaternion]{@link Quat} rotation, [vector]{@link Vec3} translation and [vector]{@link Vec3} scale
    * Equivalent for applying translation, rotation and scale matrices but much faster
    * Source code from: http://glmatrix.net/docs/mat4.js.html

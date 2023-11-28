@@ -1,4 +1,5 @@
 import { Vec3 } from './Vec3'
+import { Mat4 } from './Mat4'
 
 type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX'
 
@@ -161,7 +162,7 @@ export class Quat {
    * @param angle - angle (in radians) to rotate
    * @returns - [quaternion]{@link Quat} after having applied the rotation
    */
-  setFromAxisAngle(axis = new Vec3(), angle = 0) {
+  setFromAxisAngle(axis: Vec3 = new Vec3(), angle = 0): Quat {
     // https://github.com/mrdoob/three.js/blob/dev/src/math/Quaternion.js#L275
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
 
@@ -174,6 +175,59 @@ export class Quat {
     this.elements[1] = axis.y * s
     this.elements[2] = axis.z * s
     this.elements[3] = Math.cos(halfAngle)
+
+    return this
+  }
+
+  /**
+   * Set a [quaternion]{@link Quat} from a rotation [matrix]{@link Mat4}
+   * @param matrix - rotation [matrix]{@link Mat4} to use
+   * @returns - [quaternion]{@link Quat} after having applied the rotation
+   */
+  setFromRotationMatrix(matrix: Mat4): Quat {
+    // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+    // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
+    const te = matrix.elements,
+      m11 = te[0],
+      m12 = te[4],
+      m13 = te[8],
+      m21 = te[1],
+      m22 = te[5],
+      m23 = te[9],
+      m31 = te[2],
+      m32 = te[6],
+      m33 = te[10],
+      trace = m11 + m22 + m33
+
+    if (trace > 0) {
+      const s = 0.5 / Math.sqrt(trace + 1.0)
+
+      this.elements[3] = 0.25 / s
+      this.elements[0] = (m32 - m23) * s
+      this.elements[1] = (m13 - m31) * s
+      this.elements[2] = (m21 - m12) * s
+    } else if (m11 > m22 && m11 > m33) {
+      const s = 2.0 * Math.sqrt(1.0 + m11 - m22 - m33)
+
+      this.elements[3] = (m32 - m23) / s
+      this.elements[0] = 0.25 * s
+      this.elements[1] = (m12 + m21) / s
+      this.elements[2] = (m13 + m31) / s
+    } else if (m22 > m33) {
+      const s = 2.0 * Math.sqrt(1.0 + m22 - m11 - m33)
+
+      this.elements[3] = (m13 - m31) / s
+      this.elements[0] = (m12 + m21) / s
+      this.elements[1] = 0.25 * s
+      this.elements[2] = (m23 + m32) / s
+    } else {
+      const s = 2.0 * Math.sqrt(1.0 + m33 - m11 - m22)
+
+      this.elements[3] = (m21 - m12) / s
+      this.elements[0] = (m13 + m31) / s
+      this.elements[1] = (m23 + m32) / s
+      this.elements[2] = 0.25 * s
+    }
 
     return this
   }

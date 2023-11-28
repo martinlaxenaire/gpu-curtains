@@ -202,7 +202,20 @@ export class Object3D {
 
   set modelMatrix(value: Mat4) {
     this.matrices.model.matrix = value
-    this.matrices.model.shouldUpdate = true
+    this.shouldUpdateModelMatrix()
+  }
+
+  /**
+   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+   * @param target - [target]{@link Vec3} to look at
+   * @param inverseLookAt - whether to inverse position and target, should be set to true to orient a {@link Mesh} and false to orient a {@link Camera}
+   */
+  lookAt(target: Vec3 = new Vec3(), inverseLookAt = false) {
+    const rotationMatrix = inverseLookAt
+      ? new Mat4().lookAt(target, this.position)
+      : new Mat4().lookAt(this.position, target)
+    this.quaternion.setFromRotationMatrix(rotationMatrix)
+    this.shouldUpdateModelMatrix()
   }
 
   /**

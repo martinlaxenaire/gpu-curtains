@@ -147,6 +147,8 @@
 
         const sphereGeometry = new GPUCurtains.SphereGeometry()
 
+        const spheres = []
+
         for (let i = 0; i < 15; i++) {
           const sphereMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
             label: 'Sphere ' + i,
@@ -161,6 +163,8 @@
             },
             watchScroll: false,
           })
+
+          spheres.push(sphereMesh)
 
           const updateSphereScale = () => {
             if (i > 0) {
@@ -203,9 +207,6 @@
 
           sphereMesh
             .onRender(() => {
-              sphereMesh.rotation.x += speed
-              sphereMesh.rotation.y += speed
-
               if (i > 0) {
                 sphereMesh.userData.angle += speed
 
@@ -217,6 +218,9 @@
                   .applyAxisAngle(sphereMesh.userData.axisAngle, sphereMesh.userData.angle)
 
                 sphereMesh.position.copy(orbitPosition)
+
+                // look at our main sphere
+                sphereMesh.lookAt(spheres[0].worldPosition, true)
               }
             })
             .onLeaveView(() => {

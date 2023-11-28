@@ -227,7 +227,7 @@ export class DOMObject3D extends ProjectedObject3D {
    * Get the {@link DOMObject3D} position in world space
    */
   get worldPosition(): Vec3 {
-    return this.#DOMObjectWorldPosition
+    return this.#DOMObjectWorldPosition.clone()
   }
 
   /**

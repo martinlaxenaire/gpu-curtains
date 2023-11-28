@@ -537,6 +537,20 @@ var GPUCurtains = (() => {
       return this.x === vector.x && this.y === vector.y;
     }
     /**
+     * Get the square length of this [vector]{@link Vec2}
+     * @returns - square length of this [vector]{@link Vec2}
+     */
+    lengthSq() {
+      return this.x * this.x + this.y * this.y;
+    }
+    /**
+     * Get the length of this [vector]{@link Vec2}
+     * @returns - length of this [vector]{@link Vec2}
+     */
+    length() {
+      return Math.sqrt(this.lengthSq());
+    }
+    /**
      * Normalize this [vector]{@link Vec2}
      * @returns - normalized [vector]{@link Vec2}
      */
@@ -700,6 +714,40 @@ var GPUCurtains = (() => {
       this.elements[1] = axis.y * s;
       this.elements[2] = axis.z * s;
       this.elements[3] = Math.cos(halfAngle);
+      return this;
+    }
+    /**
+     * Set a [quaternion]{@link Quat} from a rotation [matrix]{@link Mat4}
+     * @param matrix - rotation [matrix]{@link Mat4} to use
+     * @returns - [quaternion]{@link Quat} after having applied the rotation
+     */
+    setFromRotationMatrix(matrix) {
+      const te = matrix.elements, m11 = te[0], m12 = te[4], m13 = te[8], m21 = te[1], m22 = te[5], m23 = te[9], m31 = te[2], m32 = te[6], m33 = te[10], trace = m11 + m22 + m33;
+      if (trace > 0) {
+        const s = 0.5 / Math.sqrt(trace + 1);
+        this.elements[3] = 0.25 / s;
+        this.elements[0] = (m32 - m23) * s;
+        this.elements[1] = (m13 - m31) * s;
+        this.elements[2] = (m21 - m12) * s;
+      } else if (m11 > m22 && m11 > m33) {
+        const s = 2 * Math.sqrt(1 + m11 - m22 - m33);
+        this.elements[3] = (m32 - m23) / s;
+        this.elements[0] = 0.25 * s;
+        this.elements[1] = (m12 + m21) / s;
+        this.elements[2] = (m13 + m31) / s;
+      } else if (m22 > m33) {
+        const s = 2 * Math.sqrt(1 + m22 - m11 - m33);
+        this.elements[3] = (m13 - m31) / s;
+        this.elements[0] = (m12 + m21) / s;
+        this.elements[1] = 0.25 * s;
+        this.elements[2] = (m23 + m32) / s;
+      } else {
+        const s = 2 * Math.sqrt(1 + m33 - m11 - m22);
+        this.elements[3] = (m21 - m12) / s;
+        this.elements[0] = (m13 + m31) / s;
+        this.elements[1] = (m23 + m32) / s;
+        this.elements[2] = 0.25 * s;
+      }
       return this;
     }
   };
@@ -1088,6 +1136,43 @@ var GPUCurtains = (() => {
       return this;
     }
     /**
+     * Set this [matrix]{@link Mat4} as a rotation matrix based on an eye, target and up [vectors]{@link Vec3}
+     * @param eye - [position]{@link Vec3} of the object that should be rotated
+     * @param target - [target]{@link Vec3} to look at
+     * @param up - up [vector]{@link Vec3}
+     * @returns - rotated [matrix]{@link Mat4}
+     */
+    lookAt(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
+      const te = this.elements;
+      const _z = eye.clone().sub(target);
+      if (_z.lengthSq() === 0) {
+        _z.z = 1;
+      }
+      _z.normalize();
+      const _x = new Vec3().crossVectors(up, _z);
+      if (_x.lengthSq() === 0) {
+        if (Math.abs(up.z) === 1) {
+          _z.x += 1e-4;
+        } else {
+          _z.z += 1e-4;
+        }
+        _z.normalize();
+        _x.crossVectors(up, _z);
+      }
+      _x.normalize();
+      const _y = new Vec3().crossVectors(_z, _x);
+      te[0] = _x.x;
+      te[4] = _y.x;
+      te[8] = _z.x;
+      te[1] = _x.y;
+      te[5] = _y.y;
+      te[9] = _z.y;
+      te[2] = _x.z;
+      te[6] = _y.z;
+      te[10] = _z.z;
+      return this;
+    }
+    /**
      * Creates a [matrix]{@link Mat4} from a [quaternion]{@link Quat} rotation, [vector]{@link Vec3} translation and [vector]{@link Vec3} scale
      * Equivalent for applying translation, rotation and scale matrices but much faster
      * Source code from: http://glmatrix.net/docs/mat4.js.html
@@ -1386,11 +1471,25 @@ var GPUCurtains = (() => {
       return this.x === vector.x && this.y === vector.y && this.z === vector.z;
     }
     /**
+     * Get the square length of this [vector]{@link Vec3}
+     * @returns - square length of this [vector]{@link Vec3}
+     */
+    lengthSq() {
+      return this.x * this.x + this.y * this.y + this.z * this.z;
+    }
+    /**
+     * Get the length of this [vector]{@link Vec3}
+     * @returns - length of this [vector]{@link Vec3}
+     */
+    length() {
+      return Math.sqrt(this.lengthSq());
+    }
+    /**
      * Normalize this [vector]{@link Vec3}
      * @returns - normalized [vector]{@link Vec3}
      */
     normalize() {
-      let len = this.x * this.x + this.y * this.y + this.z * this.z;
+      let len = this.lengthSq();
       if (len > 0) {
         len = 1 / Math.sqrt(len);
       }
@@ -1406,6 +1505,28 @@ var GPUCurtains = (() => {
      */
     dot(vector = new _Vec3()) {
       return this.x * vector.x + this.y * vector.y + this.z * vector.z;
+    }
+    /**
+     * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
+     * @param vector - [vector]{@link Vec3} to use for cross product
+     * @returns - this [vector]{@link Vec3} after cross product
+     */
+    cross(vector = new _Vec3()) {
+      return this.crossVectors(this, vector);
+    }
+    /**
+     * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
+     * @param a - first [vector]{@link Vec3} to use for cross product
+     * @param b - second [vector]{@link Vec3} to use for cross product
+     * @returns - this [vector]{@link Vec3} after cross product
+     */
+    crossVectors(a = new _Vec3(), b = new _Vec3()) {
+      const ax = a.x, ay = a.y, az = a.z;
+      const bx = b.x, by = b.y, bz = b.z;
+      this.x = ay * bz - az * by;
+      this.y = az * bx - ax * bz;
+      this.z = ax * by - ay * bx;
+      return this;
     }
     /**
      * Calculate the linear interpolation of this [vector]{@link Vec3} by given [vector]{@link Vec3} and alpha, where alpha is the percent distance along the line
@@ -1462,28 +1583,6 @@ var GPUCurtains = (() => {
      */
     applyAxisAngle(axis = new _Vec3(), angle = 0, quaternion = new Quat()) {
       return this.applyQuat(quaternion.setFromAxisAngle(axis, angle));
-    }
-    /**
-     * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
-     * @param vector - [vector]{@link Vec3} to use for cross product
-     * @returns - this [vector]{@link Vec3} after cross product
-     */
-    cross(vector = new _Vec3()) {
-      return this.crossVectors(this, vector);
-    }
-    /**
-     * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
-     * @param a - first [vector]{@link Vec3} to use for cross product
-     * @param b - second [vector]{@link Vec3} to use for cross product
-     * @returns - this [vector]{@link Vec3} after cross product
-     */
-    crossVectors(a = new _Vec3(), b = new _Vec3()) {
-      const ax = a.x, ay = a.y, az = a.z;
-      const bx = b.x, by = b.y, bz = b.z;
-      this.x = ay * bz - az * by;
-      this.y = az * bx - ax * bz;
-      this.z = ax * by - ay * bx;
-      return this;
     }
     /**
      * Project a 3D coordinate [vector]{@link Vec3} to a 2D coordinate [vector]{@link Vec3}
@@ -2505,7 +2604,17 @@ var GPUCurtains = (() => {
     }
     set modelMatrix(value) {
       this.matrices.model.matrix = value;
-      this.matrices.model.shouldUpdate = true;
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+     * @param target - [target]{@link Vec3} to look at
+     * @param inverseLookAt - whether to inverse position and target, should be set to true to orient a {@link Mesh} and false to orient a {@link Camera}
+     */
+    lookAt(target = new Vec3(), inverseLookAt = false) {
+      const rotationMatrix = inverseLookAt ? new Mat4().lookAt(target, this.position) : new Mat4().lookAt(this.position, target);
+      this.quaternion.setFromRotationMatrix(rotationMatrix);
+      this.shouldUpdateModelMatrix();
     }
     /**
      * Set our model matrix shouldUpdate flag to true (tell it to update)
@@ -7124,7 +7233,7 @@ ${this.shaders.compute.head}`;
      * Get the {@link DOMObject3D} position in world space
      */
     get worldPosition() {
-      return this.#DOMObjectWorldPosition;
+      return this.#DOMObjectWorldPosition.clone();
     }
     /**
      * Get/set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}

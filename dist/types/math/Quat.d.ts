@@ -1,4 +1,5 @@
 import { Vec3 } from './Vec3';
+import { Mat4 } from './Mat4';
 type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
 /**
  * Quat class:
@@ -59,6 +60,12 @@ export declare class Quat {
      * @param angle - angle (in radians) to rotate
      * @returns - [quaternion]{@link Quat} after having applied the rotation
      */
-    setFromAxisAngle(axis?: Vec3, angle?: number): this;
+    setFromAxisAngle(axis?: Vec3, angle?: number): Quat;
+    /**
+     * Set a [quaternion]{@link Quat} from a rotation [matrix]{@link Mat4}
+     * @param matrix - rotation [matrix]{@link Mat4} to use
+     * @returns - [quaternion]{@link Quat} after having applied the rotation
+     */
+    setFromRotationMatrix(matrix: Mat4): Quat;
 }
 export {};
