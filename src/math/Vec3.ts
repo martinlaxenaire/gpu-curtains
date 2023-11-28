@@ -335,6 +335,48 @@ export class Vec3 {
   }
 
   /**
+   * Rotate a [vector]{@link Vec3} around and axis by a given angle
+   * @param axis - normalized [vector]{@link Vec3} around which to rotate
+   * @param angle - angle (in radians) to rotate
+   * @param quaternion - optional [quaternion]{@link Quat} to use for rotation computations
+   * @returns - this [vector]{@link Vec3} with the rotation applied
+   */
+  applyAxisAngle(axis = new Vec3(), angle = 0, quaternion = new Quat()) {
+    // https://github.com/mrdoob/three.js/blob/master/src/math/Vector3.js#L212
+    return this.applyQuat(quaternion.setFromAxisAngle(axis, angle))
+  }
+
+  /**
+   * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
+   * @param vector - [vector]{@link Vec3} to use for cross product
+   * @returns - this [vector]{@link Vec3} after cross product
+   */
+  cross(vector = new Vec3()) {
+    return this.crossVectors(this, vector)
+  }
+
+  /**
+   * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
+   * @param a - first [vector]{@link Vec3} to use for cross product
+   * @param b - second [vector]{@link Vec3} to use for cross product
+   * @returns - this [vector]{@link Vec3} after cross product
+   */
+  crossVectors(a = new Vec3(), b = new Vec3()) {
+    const ax = a.x,
+      ay = a.y,
+      az = a.z
+    const bx = b.x,
+      by = b.y,
+      bz = b.z
+
+    this.x = ay * bz - az * by
+    this.y = az * bx - ax * bz
+    this.z = ax * by - ay * bx
+
+    return this
+  }
+
+  /**
    * Project a 3D coordinate [vector]{@link Vec3} to a 2D coordinate [vector]{@link Vec3}
    * @param camera - [camera]{@link Camera} to use for projection
    * @returns - projected [vector]{@link Vec3}

@@ -688,6 +688,20 @@ var GPUCurtains = (() => {
       }
       return this;
     }
+    /**
+     * Set a [quaternion]{@link Quat} from a rotation axis [vector]{@link Vec3} and an angle
+     * @param axis - normalized [vector]{@link Vec3} around which to rotate
+     * @param angle - angle (in radians) to rotate
+     * @returns - [quaternion]{@link Quat} after having applied the rotation
+     */
+    setFromAxisAngle(axis = new Vec3(), angle = 0) {
+      const halfAngle = angle / 2, s = Math.sin(halfAngle);
+      this.elements[0] = axis.x * s;
+      this.elements[1] = axis.y * s;
+      this.elements[2] = axis.z * s;
+      this.elements[3] = Math.cos(halfAngle);
+      return this;
+    }
   };
 
   // src/math/Mat4.ts
@@ -1437,6 +1451,38 @@ var GPUCurtains = (() => {
       this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
       this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
       this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+      return this;
+    }
+    /**
+     * Rotate a [vector]{@link Vec3} around and axis by a given angle
+     * @param axis - normalized [vector]{@link Vec3} around which to rotate
+     * @param angle - angle (in radians) to rotate
+     * @param quaternion - optional [quaternion]{@link Quat} to use for rotation computations
+     * @returns - this [vector]{@link Vec3} with the rotation applied
+     */
+    applyAxisAngle(axis = new _Vec3(), angle = 0, quaternion = new Quat()) {
+      return this.applyQuat(quaternion.setFromAxisAngle(axis, angle));
+    }
+    /**
+     * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
+     * @param vector - [vector]{@link Vec3} to use for cross product
+     * @returns - this [vector]{@link Vec3} after cross product
+     */
+    cross(vector = new _Vec3()) {
+      return this.crossVectors(this, vector);
+    }
+    /**
+     * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
+     * @param a - first [vector]{@link Vec3} to use for cross product
+     * @param b - second [vector]{@link Vec3} to use for cross product
+     * @returns - this [vector]{@link Vec3} after cross product
+     */
+    crossVectors(a = new _Vec3(), b = new _Vec3()) {
+      const ax = a.x, ay = a.y, az = a.z;
+      const bx = b.x, by = b.y, bz = b.z;
+      this.x = ay * bz - az * by;
+      this.y = az * bx - ax * bz;
+      this.z = ax * by - ay * bx;
       return this;
     }
     /**
@@ -4187,6 +4233,7 @@ var GPUCurtains = (() => {
       if (autoAddToScene !== void 0) {
         this.#autoAddToScene = autoAddToScene;
       }
+      this.userData = {};
       this.ready = false;
       this.setComputeMaterial({
         label: this.options.label,
@@ -5281,6 +5328,7 @@ var GPUCurtains = (() => {
         this.visible = visible;
         this.renderOrder = renderOrder;
         this.ready = false;
+        this.userData = {};
         this.computeGeometry();
         this.setMaterial({
           label: this.options.label,

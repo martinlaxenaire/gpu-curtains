@@ -6,8 +6,31 @@
     <meta name="description" content="List of useful examples to learn gpu-curtains" />
 
     <link href="common-styles.css" rel="stylesheet" />
+
+    <style>
+      #sphere {
+        position: fixed;
+        z-index: -1;
+        top: 50%;
+        left: calc(100% * 2 / 3);
+        width: 15vw;
+        aspect-ratio: 1;
+        transform: translate3d(-50%, -50%, 0);
+      }
+
+      @media screen and (orientation: portrait) {
+        #sphere {
+          left: 50%;
+          width: 33vw;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="canvas"></div>
+
+    <div id="sphere"></div>
+
     <div id="page">
       <div class="large-container">
         <h1>Useful gpu-curtains examples</h1>
@@ -76,5 +99,126 @@
         </ul>
       </div>
     </div>
+
+    <script src="../dist/gpu-curtains.js"></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', async () => {
+        // set up our WebGL context and append the canvas to our wrapper
+        const gpuCurtains = new GPUCurtains.GPUCurtains({
+          container: 'canvas',
+          watchScroll: false,
+          pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+        })
+
+        await gpuCurtains.setRendererContext()
+
+        const meshVs = /* wgsl */ `
+          struct VSOutput {
+            @builtin(position) position: vec4f,
+            @location(0) uv: vec2f,
+            @location(1) normal: vec3f,
+          };
+
+          @vertex fn main(
+            attributes: Attributes,
+          ) -> VSOutput {
+            var vsOutput : VSOutput;
+
+            vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+            vsOutput.uv = attributes.uv;
+            vsOutput.normal = attributes.normal;
+
+            return vsOutput;
+          }
+        `
+
+        const meshFs = /* wgsl */ `
+          struct VSOutput {
+            @builtin(position) position: vec4f,
+            @location(0) uv: vec2f,
+            @location(1) normal: vec3f,
+          };
+
+          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+            // debug normals
+            return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
+          }
+        `
+
+        const sphereGeometry = new GPUCurtains.SphereGeometry()
+
+        for (let i = 0; i < 15; i++) {
+          const sphereMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
+            geometry: sphereGeometry,
+            shaders: {
+              vertex: {
+                code: meshVs,
+              },
+              fragment: {
+                code: meshFs,
+              },
+            },
+            watchScroll: false,
+          })
+
+          const updateSphereScale = () => {
+            if (i > 0) {
+              const scale = 0.1 + Math.random() * 0.2
+
+              const sphereSize = sphereMesh.boundingRect.height / gpuCurtains.boundingRect.height
+              // min distance so that the satellite sphere lies exactly at the border of our main sphere
+              const minDistance = sphereSize * 0.5 + sphereSize * 0.5 * scale * 0.5
+              const distance = minDistance + Math.random() * sphereSize * 0.5
+
+              sphereMesh.userData.angle = Math.random() * Math.PI
+
+              const positionAngle = Math.random() * Math.PI * 2 - Math.PI
+
+              sphereMesh.userData.orbitPosition = new GPUCurtains.Vec3(
+                Math.cos(positionAngle) * distance,
+                Math.sin(positionAngle) * distance,
+                0
+              )
+
+              const axisAngle = new GPUCurtains.Vec3(0, Math.sin(positionAngle), Math.cos(positionAngle)).normalize()
+
+              sphereMesh.userData.axisAngle = sphereMesh.userData.orbitPosition.clone().cross(axisAngle).normalize()
+
+              sphereMesh.scale.x = scale
+              sphereMesh.scale.y = scale
+            }
+
+            // scale our sphere along the Z axis based on its height (Y axis)
+            sphereMesh.scale.z = sphereMesh.worldScale.y
+          }
+
+          sphereMesh.onAfterResize(updateSphereScale)
+
+          const speed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
+
+          let closeFactor = 0
+
+          sphereMesh.onRender(() => {
+            sphereMesh.rotation.x += speed
+            sphereMesh.rotation.y += speed
+
+            if (i > 0) {
+              sphereMesh.userData.angle += speed
+
+              //closeFactor += 0.01
+
+              const orbitPosition = sphereMesh.userData.orbitPosition
+                .clone()
+                .multiplyScalar(Math.cos(closeFactor) * 0.5 + 0.5)
+                .applyAxisAngle(sphereMesh.userData.axisAngle, sphereMesh.userData.angle)
+
+              sphereMesh.position.copy(orbitPosition)
+            }
+          })
+
+          updateSphereScale()
+        }
+      })
+    </script>
   </body>
 </html>

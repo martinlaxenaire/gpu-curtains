@@ -114,6 +114,9 @@ export declare class MeshBaseClass {
   /** Flag indicating whether this {@link MeshBaseClass} is ready to be drawn */
   _ready: boolean
 
+  /** Empty object to store any additional data or custom properties into your Mesh. */
+  userData: Record<string, unknown>
+
   // callbacks
   /** function assigned to the [onReady]{@link MeshBaseClass#onReady} callback */
   _onReadyCallback: () => void
@@ -381,6 +384,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /** Flag indicating whether this {@link MeshBase} is ready to be drawn */
     _ready: boolean
 
+    /** Empty object to store any additional data or custom properties into your {@link MeshBase}. */
+    userData: Record<string, unknown>
+
     /** Whether we should add this {@link MeshBase} to our {@link Scene} to let it handle the rendering process automatically */
     #autoAddToScene = true
 
@@ -491,6 +497,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.visible = visible
       this.renderOrder = renderOrder
       this.ready = false
+
+      this.userData = {}
 
       this.computeGeometry()
 

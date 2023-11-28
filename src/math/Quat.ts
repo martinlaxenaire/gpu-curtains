@@ -154,4 +154,27 @@ export class Quat {
 
     return this
   }
+
+  /**
+   * Set a [quaternion]{@link Quat} from a rotation axis [vector]{@link Vec3} and an angle
+   * @param axis - normalized [vector]{@link Vec3} around which to rotate
+   * @param angle - angle (in radians) to rotate
+   * @returns - [quaternion]{@link Quat} after having applied the rotation
+   */
+  setFromAxisAngle(axis = new Vec3(), angle = 0) {
+    // https://github.com/mrdoob/three.js/blob/dev/src/math/Quaternion.js#L275
+    // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
+
+    // assumes axis is normalized
+
+    const halfAngle = angle / 2,
+      s = Math.sin(halfAngle)
+
+    this.elements[0] = axis.x * s
+    this.elements[1] = axis.y * s
+    this.elements[2] = axis.z * s
+    this.elements[3] = Math.cos(halfAngle)
+
+    return this
+  }
 }
