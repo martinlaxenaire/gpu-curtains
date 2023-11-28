@@ -3261,7 +3261,7 @@ var GPUCurtains = (() => {
       onPositionChanged = () => {
       }
     } = {}) {
-      this.position = new Vec3(0, 0, 1).onChange(() => this.applyPosition());
+      this.position = new Vec3(0, 0, 5).onChange(() => this.applyPosition());
       this.projectionMatrix = new Mat4();
       this.modelMatrix = new Mat4();
       this.viewMatrix = new Mat4();
@@ -6147,6 +6147,8 @@ struct VertexOutput {
           frustumCulled,
           DOMFrustumMargins
         };
+        this.frustumCulled = this.options.frustumCulled;
+        this.domFrustum.shouldUpdate = this.frustumCulled;
         this.geometry = geometry;
         this.updateSizePositionAndProjection();
       }
@@ -6157,22 +6159,20 @@ struct VertexOutput {
       computeGeometry() {
         if (this.geometry.shouldCompute) {
           this.geometry.computeGeometry();
-          this.domFrustum = new DOMFrustum({
-            boundingBox: this.geometry.boundingBox,
-            modelViewProjectionMatrix: this.modelViewProjectionMatrix,
-            containerBoundingRect: this.renderer.boundingRect,
-            DOMFrustumMargins: this.options.DOMFrustumMargins,
-            onReEnterView: () => {
-              this._onReEnterViewCallback && this._onReEnterViewCallback();
-            },
-            onLeaveView: () => {
-              this._onLeaveViewCallback && this._onLeaveViewCallback();
-            }
-          });
-          this.frustumCulled = this.options.frustumCulled;
-          this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
-          this.domFrustum.shouldUpdate = this.frustumCulled;
         }
+        this.domFrustum = new DOMFrustum({
+          boundingBox: this.geometry.boundingBox,
+          modelViewProjectionMatrix: this.modelViewProjectionMatrix,
+          containerBoundingRect: this.renderer.boundingRect,
+          DOMFrustumMargins: this.options.DOMFrustumMargins,
+          onReEnterView: () => {
+            this._onReEnterViewCallback && this._onReEnterViewCallback();
+          },
+          onLeaveView: () => {
+            this._onLeaveViewCallback && this._onLeaveViewCallback();
+          }
+        });
+        this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
       }
       /* MATERIAL */
       /**
@@ -7138,10 +7138,16 @@ ${this.shaders.compute.head}`;
       this.applyPosition();
     }
     /**
-     * Get the {@link DOMObject3D} scale in world space
+     * Get the [DOMObject3D DOM element]{@link DOMObject3D#domElement} scale in world space
+     */
+    get DOMObjectWorldScale() {
+      return this.#DOMObjectWorldScale.clone();
+    }
+    /**
+     * Get the {@link DOMObject3D} scale in world space (accounting for [scale]{@link DOMObject3D#scale})
      */
     get worldScale() {
-      return this.#DOMObjectWorldScale.clone().multiply(this.scale);
+      return this.DOMObjectWorldScale.multiply(this.scale);
     }
     /**
      * Get the {@link DOMObject3D} position in world space

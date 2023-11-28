@@ -100,8 +100,8 @@ export class Camera {
     } = {} as CameraParams
   ) {
     // camera can't be at position (0, 0, 0), it needs some recoil
-    // arbitrarily set to 1
-    this.position = new Vec3(0, 0, 1).onChange(() => this.applyPosition())
+    // arbitrarily set to 5 so objects of default size (1, 1, 1) don't appear to big
+    this.position = new Vec3(0, 0, 5).onChange(() => this.applyPosition())
     this.projectionMatrix = new Mat4()
 
     this.modelMatrix = new Mat4()

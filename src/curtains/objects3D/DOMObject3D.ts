@@ -210,10 +210,17 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Get the {@link DOMObject3D} scale in world space
+   * Get the [DOMObject3D DOM element]{@link DOMObject3D#domElement} scale in world space
+   */
+  get DOMObjectWorldScale(): Vec3 {
+    return this.#DOMObjectWorldScale.clone()
+  }
+
+  /**
+   * Get the {@link DOMObject3D} scale in world space (accounting for [scale]{@link DOMObject3D#scale})
    */
   get worldScale(): Vec3 {
-    return this.#DOMObjectWorldScale.clone().multiply(this.scale)
+    return this.DOMObjectWorldScale.multiply(this.scale)
   }
 
   /**

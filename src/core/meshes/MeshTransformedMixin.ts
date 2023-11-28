@@ -244,6 +244,9 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
         DOMFrustumMargins,
       }
 
+      this.frustumCulled = this.options.frustumCulled
+      this.domFrustum.shouldUpdate = this.frustumCulled
+
       // explicitly needed for DOM Frustum
       this.geometry = geometry
 
@@ -259,24 +262,22 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
     computeGeometry() {
       if (this.geometry.shouldCompute) {
         this.geometry.computeGeometry()
-
-        this.domFrustum = new DOMFrustum({
-          boundingBox: this.geometry.boundingBox,
-          modelViewProjectionMatrix: this.modelViewProjectionMatrix,
-          containerBoundingRect: this.renderer.boundingRect,
-          DOMFrustumMargins: this.options.DOMFrustumMargins,
-          onReEnterView: () => {
-            this._onReEnterViewCallback && this._onReEnterViewCallback()
-          },
-          onLeaveView: () => {
-            this._onLeaveViewCallback && this._onLeaveViewCallback()
-          },
-        })
-
-        this.frustumCulled = this.options.frustumCulled
-        this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
-        this.domFrustum.shouldUpdate = this.frustumCulled
       }
+
+      this.domFrustum = new DOMFrustum({
+        boundingBox: this.geometry.boundingBox,
+        modelViewProjectionMatrix: this.modelViewProjectionMatrix,
+        containerBoundingRect: this.renderer.boundingRect,
+        DOMFrustumMargins: this.options.DOMFrustumMargins,
+        onReEnterView: () => {
+          this._onReEnterViewCallback && this._onReEnterViewCallback()
+        },
+        onLeaveView: () => {
+          this._onLeaveViewCallback && this._onLeaveViewCallback()
+        },
+      })
+
+      this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
     }
 
     /* MATERIAL */

@@ -100,7 +100,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         cubeMesh.rotation.x += 0.01
       })
       .onAfterResize(() => {
-        console.log('cube after resize')
         updateCubeScaleAndPosition()
       })
 
