@@ -1,5 +1,6 @@
 import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
+import { Object3D } from '../objects3D/Object3D'
 
 /**
  * Defines Camera basic perspective options
@@ -39,13 +40,13 @@ export interface CameraParams extends CameraPerspectiveOptions {
  * Camera class:
  * Used to create a perspective camera and its matricess (projection, model, view).
  */
-export class Camera {
+export class Camera extends Object3D {
   /** The {@link Camera} position */
-  position: Vec3
+  //position: Vec3
   /** The {@link Camera} projection matrix */
   projectionMatrix: Mat4
   /** The {@link Camera} model matrix */
-  modelMatrix: Mat4
+  //modelMatrix: Mat4
   /** The {@link Camera} view matrix */
   viewMatrix: Mat4
 
@@ -99,12 +100,15 @@ export class Camera {
       },
     } = {} as CameraParams
   ) {
+    super()
+
     // camera can't be at position (0, 0, 0), it needs some recoil
     // arbitrarily set to 5 so objects of default size (1, 1, 1) don't appear to big
-    this.position = new Vec3(0, 0, 5).onChange(() => this.applyPosition())
+    //this.position = new Vec3(0, 0, 5).onChange(() => this.applyPosition())
+    this.position.set(0, 0, 5)
     this.projectionMatrix = new Mat4()
 
-    this.modelMatrix = new Mat4()
+    //this.modelMatrix = new Mat4()
     this.viewMatrix = new Mat4()
 
     this.onPerspectiveChanged = onPerspectiveChanged
@@ -125,8 +129,6 @@ export class Camera {
 
     if (fov !== this.fov) {
       this.fov = fov
-      this.setPosition()
-
       this.shouldUpdate = true
     }
 
@@ -220,28 +222,9 @@ export class Camera {
   }
 
   /**
-   * Sets the {@link Camera} {@link position} and update the {@link modelMatrix} and {@link viewMatrix}.
-   * @param position - new {@link Camera}  {@link position}
+   * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
    */
-  setPosition(position: Vec3 = this.position) {
-    this.position.copy(position)
-
-    this.applyPosition()
-  }
-
-  /**
-   * Update the {@link modelMatrix} and {@link viewMatrix}.
-   */
-  applyPosition() {
-    // update matrices
-    // prettier-ignore
-    this.modelMatrix.set(
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      this.position.x, this.position.y, this.position.z, 1
-    )
-
+  onAfterMatrixStackUpdate() {
     this.viewMatrix = this.modelMatrix.clone().getInverse()
 
     this.setScreenRatios()

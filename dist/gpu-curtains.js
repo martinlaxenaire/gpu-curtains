@@ -3244,7 +3244,7 @@ var GPUCurtains = (() => {
   };
 
   // src/core/camera/Camera.ts
-  var Camera = class {
+  var Camera = class extends Object3D {
     /**
      * Camera constructor
      * @param parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
@@ -3261,9 +3261,9 @@ var GPUCurtains = (() => {
       onPositionChanged = () => {
       }
     } = {}) {
-      this.position = new Vec3(0, 0, 5).onChange(() => this.applyPosition());
+      super();
+      this.position.set(0, 0, 5);
       this.projectionMatrix = new Mat4();
-      this.modelMatrix = new Mat4();
       this.viewMatrix = new Mat4();
       this.onPerspectiveChanged = onPerspectiveChanged;
       this.onPositionChanged = onPositionChanged;
@@ -3278,7 +3278,6 @@ var GPUCurtains = (() => {
       fov = Math.max(1, Math.min(fov, 179));
       if (fov !== this.fov) {
         this.fov = fov;
-        this.setPosition();
         this.shouldUpdate = true;
       }
       this.setScreenRatios();
@@ -3352,35 +3351,9 @@ var GPUCurtains = (() => {
       }
     }
     /**
-     * Sets the {@link Camera} {@link position} and update the {@link modelMatrix} and {@link viewMatrix}.
-     * @param position - new {@link Camera}  {@link position}
+     * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
      */
-    setPosition(position = this.position) {
-      this.position.copy(position);
-      this.applyPosition();
-    }
-    /**
-     * Update the {@link modelMatrix} and {@link viewMatrix}.
-     */
-    applyPosition() {
-      this.modelMatrix.set(
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        this.position.x,
-        this.position.y,
-        this.position.z,
-        1
-      );
+    onAfterMatrixStackUpdate() {
       this.viewMatrix = this.modelMatrix.clone().getInverse();
       this.setScreenRatios();
       this.onPositionChanged();
@@ -8680,7 +8653,7 @@ ${this.shaders.compute.head}`;
      * @param position - new [position]{@link Camera#position}
      */
     setCameraPosition(position = new Vec3(0, 0, 1)) {
-      this.camera.setPosition(position);
+      this.camera.position.copy(position);
     }
     /**
      * Call our [super onResize method]{@link GPURenderer#onResize} and resize our [camera]{@link GPUCameraRenderer#camera} as well
@@ -8690,14 +8663,22 @@ ${this.shaders.compute.head}`;
       this.setPerspective();
       this.updateCameraMatrixStack();
     }
+    /* RENDER */
     /**
-     * Check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed, then update it and then call our [super render method]{@link GPURenderer#render}
+     * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
+     */
+    updateCamera() {
+      this.camera?.updateMatrixStack();
+      this.setCameraBindGroup();
+      this.cameraBindGroup?.update();
+    }
+    /**
+     * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
      */
     render() {
       if (!this.ready)
         return;
-      this.setCameraBindGroup();
-      this.cameraBindGroup?.update();
+      this.updateCamera();
       super.render();
     }
     /**

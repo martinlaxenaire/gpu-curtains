@@ -171,7 +171,7 @@ export class GPUCameraRenderer extends GPURenderer {
    * @param position - new [position]{@link Camera#position}
    */
   setCameraPosition(position: Vec3 = new Vec3(0, 0, 1)) {
-    this.camera.setPosition(position)
+    this.camera.position.copy(position)
   }
 
   /**
@@ -183,15 +183,24 @@ export class GPUCameraRenderer extends GPURenderer {
     this.updateCameraMatrixStack()
   }
 
+  /* RENDER */
+
   /**
-   * Check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed, then update it and then call our [super render method]{@link GPURenderer#render}
+   * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
+   */
+  updateCamera() {
+    this.camera?.updateMatrixStack()
+    this.setCameraBindGroup()
+    this.cameraBindGroup?.update()
+  }
+
+  /**
+   * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
    */
   render() {
     if (!this.ready) return
 
-    this.setCameraBindGroup()
-    this.cameraBindGroup?.update()
-
+    this.updateCamera()
     super.render()
   }
 
