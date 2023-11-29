@@ -94,7 +94,7 @@ export class ProjectedObject3D extends Object3D {
         shouldUpdate: false,
         onUpdate: () => {
           // our model view matrix is our model matrix multiplied with our camera view matrix
-          this.modelViewMatrix.multiplyMatrices(this.camera.viewMatrix, this.modelMatrix)
+          this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.modelMatrix)
         },
       },
       modelViewProjection: {

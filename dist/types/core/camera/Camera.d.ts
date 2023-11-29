@@ -128,4 +128,5 @@ export declare class Camera extends Object3D {
      * Updates the {@link Camera} {@link projectionMatrix}
      */
     updateProjectionMatrix(): void;
+    updateMatrixStack(): void;
 }

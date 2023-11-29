@@ -106,9 +106,12 @@ export class Camera extends Object3D {
     // arbitrarily set to 5 so objects of default size (1, 1, 1) don't appear to big
     //this.position = new Vec3(0, 0, 5).onChange(() => this.applyPosition())
     this.position.set(0, 0, 5)
-    this.projectionMatrix = new Mat4()
 
-    //this.modelMatrix = new Mat4()
+    // TODO:
+    // 1. add projection and view matrices to this.matrices instead
+    // 2. fov, near, far, should be getters/setters
+    // 3. one and only one callback for when camera settings (position or perspective) changed
+    this.projectionMatrix = new Mat4()
     this.viewMatrix = new Mat4()
 
     this.onPerspectiveChanged = onPerspectiveChanged
@@ -214,11 +217,6 @@ export class Camera extends Object3D {
     this.setFov(fov)
     this.setNear(near)
     this.setFar(far)
-
-    if (this.shouldUpdate) {
-      this.updateProjectionMatrix()
-      this.onPerspectiveChanged()
-    }
   }
 
   /**
@@ -299,5 +297,15 @@ export class Camera extends Object3D {
       a, b, c, -1,
       0, 0, d, 0
     )
+  }
+
+  updateMatrixStack() {
+    if (this.shouldUpdate) {
+      this.updateProjectionMatrix()
+      this.onPerspectiveChanged()
+      this.shouldUpdate = false
+    }
+
+    super.updateMatrixStack()
   }
 }

@@ -33,7 +33,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setCamera(cameraParameters: CameraBasePerspectiveOptions): void;
     /**
-     * Callback to run each time the [camera]{@link GPUCameraRenderer#camera} position changes
+     * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
     onCameraPositionChanged(): void;
     /**
@@ -47,7 +47,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /**
      * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
      */
-    updateCameraMatrixStack(): void;
+    updateCameraBindings(): void;
     /**
      * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
      * @param fov - new [field of view]{@link Camera#fov}

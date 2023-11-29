@@ -73,9 +73,9 @@ export class GPUCameraRenderer extends GPURenderer {
       height,
       pixelRatio: this.pixelRatio,
       // TODO is this still needed after all?
-      // onPerspectiveChanged: () => {
-      //   this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
-      // },
+      onPerspectiveChanged: () => {
+        this.onCameraPositionChanged()
+      },
       onPositionChanged: () => {
         this.onCameraPositionChanged()
       },
@@ -85,10 +85,16 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Callback to run each time the [camera]{@link GPUCameraRenderer#camera} position changes
+   * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
    */
   onCameraPositionChanged() {
-    this.setPerspective()
+    this.updateCameraBindings()
+
+    this.meshes.forEach((mesh) => {
+      if ('modelViewMatrix' in mesh) {
+        mesh.updateSizePositionAndProjection()
+      }
+    })
   }
 
   /**
@@ -150,7 +156,7 @@ export class GPUCameraRenderer extends GPURenderer {
   /**
    * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
    */
-  updateCameraMatrixStack() {
+  updateCameraBindings() {
     this.cameraBufferBinding?.shouldUpdateBinding('model')
     this.cameraBufferBinding?.shouldUpdateBinding('view')
     this.cameraBufferBinding?.shouldUpdateBinding('projection')
@@ -180,7 +186,7 @@ export class GPUCameraRenderer extends GPURenderer {
   onResize() {
     super.onResize()
     this.setPerspective()
-    this.updateCameraMatrixStack()
+    this.updateCameraBindings()
   }
 
   /* RENDER */

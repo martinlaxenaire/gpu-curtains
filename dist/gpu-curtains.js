@@ -3453,10 +3453,6 @@ var GPUCurtains = (() => {
       this.setFov(fov);
       this.setNear(near);
       this.setFar(far);
-      if (this.shouldUpdate) {
-        this.updateProjectionMatrix();
-        this.onPerspectiveChanged();
-      }
     }
     /**
      * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
@@ -3531,6 +3527,14 @@ var GPUCurtains = (() => {
         d,
         0
       );
+    }
+    updateMatrixStack() {
+      if (this.shouldUpdate) {
+        this.updateProjectionMatrix();
+        this.onPerspectiveChanged();
+        this.shouldUpdate = false;
+      }
+      super.updateMatrixStack();
     }
   };
 
@@ -5175,7 +5179,17 @@ var GPUCurtains = (() => {
         bufferLength: verticesCount * 3,
         array: new Float32Array(verticesCount * 3)
       };
+      const normal = {
+        name: "normal",
+        type: "vec3f",
+        bufferFormat: "float32x3",
+        // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
+        size: 3,
+        bufferLength: verticesCount * 3,
+        array: new Float32Array(verticesCount * 3)
+      };
       let positionOffset = 0;
+      let normalOffset = 0;
       let uvOffset = 0;
       for (let y = 0; y <= this.definition.height; y++) {
         const v = y / this.definition.height;
@@ -5187,15 +5201,21 @@ var GPUCurtains = (() => {
             position.array[positionOffset++] = (u - 0.5) * 2;
             position.array[positionOffset++] = (v - 0.5) * 2;
             position.array[positionOffset++] = 0;
+            normal.array[normalOffset++] = 0;
+            normal.array[normalOffset++] = 0;
+            normal.array[normalOffset++] = 1;
           }
           uv.array[uvOffset++] = u + 1 / this.definition.width;
           uv.array[uvOffset++] = 1 - v;
           position.array[positionOffset++] = (u + 1 / this.definition.width - 0.5) * 2;
           position.array[positionOffset++] = (v - 0.5) * 2;
           position.array[positionOffset++] = 0;
+          normal.array[normalOffset++] = 0;
+          normal.array[normalOffset++] = 0;
+          normal.array[normalOffset++] = 1;
         }
       }
-      return { position, uv };
+      return { position, uv, normal };
     }
   };
 
@@ -6112,7 +6132,7 @@ struct VertexOutput {
           matrix: new Mat4(),
           shouldUpdate: false,
           onUpdate: () => {
-            this.modelViewMatrix.multiplyMatrices(this.camera.viewMatrix, this.modelMatrix);
+            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.modelMatrix);
           }
         },
         modelViewProjection: {
@@ -8681,9 +8701,9 @@ ${this.shaders.compute.head}`;
         height,
         pixelRatio: this.pixelRatio,
         // TODO is this still needed after all?
-        // onPerspectiveChanged: () => {
-        //   this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
-        // },
+        onPerspectiveChanged: () => {
+          this.onCameraPositionChanged();
+        },
         onPositionChanged: () => {
           this.onCameraPositionChanged();
         }
@@ -8691,10 +8711,15 @@ ${this.shaders.compute.head}`;
       this.setCameraBufferBinding();
     }
     /**
-     * Callback to run each time the [camera]{@link GPUCameraRenderer#camera} position changes
+     * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
     onCameraPositionChanged() {
-      this.setPerspective();
+      this.updateCameraBindings();
+      this.meshes.forEach((mesh) => {
+        if ("modelViewMatrix" in mesh) {
+          mesh.updateSizePositionAndProjection();
+        }
+      });
     }
     /**
      * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
@@ -8751,7 +8776,7 @@ ${this.shaders.compute.head}`;
     /**
      * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
      */
-    updateCameraMatrixStack() {
+    updateCameraBindings() {
       this.cameraBufferBinding?.shouldUpdateBinding("model");
       this.cameraBufferBinding?.shouldUpdateBinding("view");
       this.cameraBufferBinding?.shouldUpdateBinding("projection");
@@ -8778,7 +8803,7 @@ ${this.shaders.compute.head}`;
     onResize() {
       super.onResize();
       this.setPerspective();
-      this.updateCameraMatrixStack();
+      this.updateCameraBindings();
     }
     /* RENDER */
     /**
@@ -9029,10 +9054,10 @@ ${this.shaders.compute.head}`;
     /**
      * Update the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
-    onCameraPositionChanged() {
-      super.onCameraPositionChanged();
-      this.domMeshes?.forEach((mesh) => mesh.updateSizePositionAndProjection());
-    }
+    // onCameraPositionChanged() {
+    //   super.onCameraPositionChanged()
+    //   this.domMeshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
+    // }
     /**
      * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements
      */

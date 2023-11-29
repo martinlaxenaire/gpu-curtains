@@ -16,7 +16,6 @@ export declare class GPUCurtainsRenderer extends GPUCameraRenderer {
     /**
      * Update the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
-    onCameraPositionChanged(): void;
     /**
      * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements
      */

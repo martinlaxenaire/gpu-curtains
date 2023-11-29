@@ -149,13 +149,53 @@
         `
 
         const sphereGeometry = new GPUCurtains.SphereGeometry()
+        const satelliteGeometry = new GPUCurtains.SphereGeometry({
+          widthSegments: 5,
+          heightSegments: 3,
+        })
 
-        const spheres = []
+        const sphereMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
+          label: 'Main Sphere',
+          geometry: sphereGeometry,
+          shaders: {
+            vertex: {
+              code: meshVs,
+            },
+            fragment: {
+              code: meshFs,
+            },
+          },
+          inputs: {
+            uniforms: {
+              deformation: {
+                bindings: {
+                  time: {
+                    type: 'f32',
+                    value: 0,
+                  },
+                  strength: {
+                    type: 'f32',
+                    value: Math.random() * 0.2,
+                  },
+                },
+              },
+            },
+          },
+          watchScroll: false,
+        })
 
+        const updateSphereScale = () => {
+          // scale our sphere along the Z axis based on its height (Y axis scale)
+          sphereMesh.scale.z = sphereMesh.worldScale.y
+        }
+
+        sphereMesh.onAfterResize(updateSphereScale)
+
+        // now the cubes
         for (let i = 0; i < 15; i++) {
-          const sphereMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
-            label: 'Sphere ' + i,
-            geometry: sphereGeometry,
+          const satelliteMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
+            label: 'Cube ' + i,
+            geometry: satelliteGeometry,
             shaders: {
               vertex: {
                 code: meshVs,
@@ -183,72 +223,66 @@
             watchScroll: false,
           })
 
-          spheres.push(sphereMesh)
+          const updateSatelliteScale = () => {
+            const scale = 0.1 + Math.random() * 0.15
 
-          const updateSphereScale = () => {
-            if (i > 0) {
-              const scale = 0.1 + Math.random() * 0.2
+            // get the DOM #sphere size in the world space
+            const sphereSize = sphereMesh.DOMObjectWorldScale.y
 
-              // get the DOM #sphere size in the world space
-              const sphereSize = sphereMesh.DOMObjectWorldScale.y
+            // min distance so that the satellite sphere lies exactly at the border of our main sphere
+            const minDistance = sphereSize + sphereSize * scale
+            const distance = minDistance + Math.random() * sphereSize * 1.5
 
-              // min distance so that the satellite sphere lies exactly at the border of our main sphere
-              const minDistance = sphereSize + sphereSize * scale
-              const distance = minDistance + Math.random() * sphereSize * 1.5
+            satelliteMesh.userData.angle = Math.random() * Math.PI
 
-              sphereMesh.userData.angle = Math.random() * Math.PI
+            const positionAngle = Math.random() * Math.PI * 2
 
-              const positionAngle = Math.random() * Math.PI * 2
+            satelliteMesh.userData.orbitPosition = new GPUCurtains.Vec3(
+              Math.cos(positionAngle) * distance,
+              Math.sin(positionAngle) * distance,
+              0
+            )
 
-              sphereMesh.userData.orbitPosition = new GPUCurtains.Vec3(
-                Math.cos(positionAngle) * distance,
-                Math.sin(positionAngle) * distance,
-                0
-              )
+            const axisAngle = new GPUCurtains.Vec3(0, Math.sin(positionAngle), Math.cos(positionAngle)).normalize()
 
-              const axisAngle = new GPUCurtains.Vec3(0, Math.sin(positionAngle), Math.cos(positionAngle)).normalize()
+            satelliteMesh.userData.axisAngle = satelliteMesh.userData.orbitPosition.clone().cross(axisAngle).normalize()
 
-              sphereMesh.userData.axisAngle = sphereMesh.userData.orbitPosition.clone().cross(axisAngle).normalize()
-
-              sphereMesh.scale.x = scale
-              sphereMesh.scale.y = scale
-            }
+            satelliteMesh.scale.x = scale
+            satelliteMesh.scale.y = scale
 
             // scale our sphere along the Z axis based on its height (Y axis scale)
-            sphereMesh.scale.z = sphereMesh.worldScale.y
+            satelliteMesh.scale.z = satelliteMesh.worldScale.y
           }
 
-          sphereMesh.onAfterResize(updateSphereScale)
+          satelliteMesh.onAfterResize(updateSatelliteScale)
 
           const speed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
 
           let closeFactor = 0
 
-          sphereMesh
+          satelliteMesh
             .onRender(() => {
-              if (i > 0) {
-                sphereMesh.userData.angle += speed
+              satelliteMesh.userData.angle += speed
 
-                //closeFactor += 0.01
+              //closeFactor += 0.01
 
-                const orbitPosition = sphereMesh.userData.orbitPosition
-                  .clone()
-                  .multiplyScalar(Math.cos(closeFactor) * 0.5 + 0.5)
-                  .applyAxisAngle(sphereMesh.userData.axisAngle, sphereMesh.userData.angle)
+              const orbitPosition = satelliteMesh.userData.orbitPosition
+                .clone()
+                .multiplyScalar(Math.cos(closeFactor) * 0.5 + 0.5)
+                .applyAxisAngle(satelliteMesh.userData.axisAngle, satelliteMesh.userData.angle)
 
-                sphereMesh.position.copy(orbitPosition)
+              satelliteMesh.position.copy(orbitPosition)
 
-                // look at our main sphere
-                sphereMesh.lookAt(spheres[0].position)
-              }
+              // look at our main sphere
+              satelliteMesh.lookAt(sphereMesh.position)
 
               sphereMesh.uniforms.deformation.time.value++
             })
             .onLeaveView(() => {
-              console.log('left view', sphereMesh.options.label)
+              console.log('left view', satelliteMesh.options.label)
             })
 
-          updateSphereScale()
+          updateSatelliteScale()
         }
       })
     </script>
