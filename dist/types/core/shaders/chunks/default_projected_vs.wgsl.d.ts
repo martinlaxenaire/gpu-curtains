@@ -1,0 +1,2 @@
+declare const _default: "\nstruct VertexOutput {\n  @builtin(position) position: vec4f,\n  @location(0) uv: vec2f,\n  @location(1) normal: vec3f,\n};\n\n@vertex fn main(\n  attributes: Attributes,\n) -> VertexOutput {\n  var vsOutput: VertexOutput;\n\n  vsOutput.position = getOutputPosition(camera, matrices, attributes.position);\n  vsOutput.uv = attributes.uv;\n  vsOutput.normal = attributes.normal;\n  \n  return vsOutput;\n}";
+export default _default;

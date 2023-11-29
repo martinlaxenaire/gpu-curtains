@@ -11,10 +11,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   // number of particles instances
   const numParticles = 2500
   // how much we're going to shrink the original geometry
-  const particleShrinkScale = 100
+  const particleShrinkScale = 40
 
   // camera screen ratio depends on screen size, fov and camera position
-  const cameraRatio = gpuCurtains.renderer.camera.screenRatio.height * particleShrinkScale
+  const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale
 
   const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
   const systemSize = new GPUCurtains.Vec2(cameraRatio * screenRatio, cameraRatio)
@@ -184,7 +184,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       console.log(computePass.material.getAddedShaderCode('compute'))
     })
     .onAfterResize(() => {
-      const cameraRatio = gpuCurtains.renderer.camera.screenRatio.height * particleShrinkScale
+      const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale
       const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
       computePass.uniforms.params.systemSize.value.set(cameraRatio * screenRatio, cameraRatio)
     })
@@ -208,19 +208,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       vsOutput.normal = attributes.normal;
       
       return vsOutput;
-    }
-  `
-
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-    };
-  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      // normals
-      return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
     }
   `
 
@@ -254,12 +241,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'Sphere mesh',
     geometry: sphereGeometry,
     shaders: {
+      // no fragment shader provided, will fall back to display normal colors
       vertex: {
         code: meshVs,
-        entryPoint: 'main',
-      },
-      fragment: {
-        code: meshFs,
         entryPoint: 'main',
       },
     },

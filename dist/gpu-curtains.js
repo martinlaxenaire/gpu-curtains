@@ -5321,6 +5321,36 @@ var GPUCurtains = (() => {
     }
   };
 
+  // src/core/shaders/chunks/default_vs.wgsl.js
+  var default_vs_wgsl_default = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = vec4f(attributes.position, 1.0);
+  vsOutput.uv = attributes.uv;
+  
+  return vsOutput;
+}`
+  );
+
+  // src/core/shaders/chunks/default_fs.wgsl.js
+  var default_fs_wgsl_default = (
+    /* wgsl */
+    `
+@fragment fn main() -> @location(0) vec4f {
+  return vec4(0.0, 0.0, 0.0, 1.0);
+}`
+  );
+
   // src/core/meshes/MeshBaseMixin.ts
   var meshIndex = 0;
   var defaultMeshBaseParams = {
@@ -5478,6 +5508,38 @@ var GPUCurtains = (() => {
         }
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
       }
+      /* SHADERS */
+      /**
+       * Set default shaders if one or both of them are missing
+       */
+      setShaders() {
+        let { shaders } = this.options;
+        if (!shaders) {
+          shaders = {
+            vertex: {
+              code: default_vs_wgsl_default,
+              entryPoint: "main"
+            },
+            fragment: {
+              code: default_fs_wgsl_default,
+              entryPoint: "main"
+            }
+          };
+        } else {
+          if (!shaders.vertex || !shaders.vertex.code) {
+            shaders.vertex = {
+              code: default_vs_wgsl_default,
+              entryPoint: "main"
+            };
+          }
+          if (!shaders.fragment || !shaders.fragment.code) {
+            shaders.fragment = {
+              code: default_fs_wgsl_default,
+              entryPoint: "main"
+            };
+          }
+        }
+      }
       /* GEOMETRY */
       /**
        * Compute the Mesh geometry if needed
@@ -5528,6 +5590,7 @@ var GPUCurtains = (() => {
        */
       setMaterial(meshParameters) {
         this.transparent = meshParameters.transparent;
+        this.setShaders();
         this.material = new RenderMaterial(this.renderer, meshParameters);
       }
       /**
@@ -5949,27 +6012,6 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/core/shaders/chunks/default_vs.wgsl.js
-  var default_vs_wgsl_default = (
-    /* wgsl */
-    `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VertexOutput {
-  var vertexOutput: VertexOutput;
-
-  vertexOutput.position = vec4f(attributes.position, 1.0);
-  vertexOutput.uv = attributes.uv;
-  
-  return vertexOutput;
-}`
-  );
-
   // src/utils/CacheManager.ts
   var CacheManager = class {
     /**
@@ -6025,12 +6067,6 @@ struct VertexOutput {
       if (!geometry) {
         geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
         cacheManager.addPlaneGeometry(geometry);
-      }
-      if (!parameters.shaders.vertex || !parameters.shaders.vertex.code) {
-        parameters.shaders.vertex = {
-          code: default_vs_wgsl_default,
-          entryPoint: "main"
-        };
       }
       super(renderer, null, { geometry, ...parameters });
       this.size = {
@@ -6196,6 +6232,45 @@ struct VertexOutput {
     }
   };
 
+  // src/core/shaders/chunks/default_projected_vs.wgsl.js
+  var default_projected_vs_wgsl_default = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+  @location(1) normal: vec3f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+  vsOutput.uv = attributes.uv;
+  vsOutput.normal = attributes.normal;
+  
+  return vsOutput;
+}`
+  );
+
+  // src/core/shaders/chunks/default_normal_fs.wgsl.js
+  var default_normal_fs_wgsl_default = (
+    /* wgsl */
+    `
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+  @location(1) normal: vec3f,
+};
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  // normals
+  return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
+}`
+  );
+
   // src/core/meshes/MeshTransformedMixin.ts
   var defaultTransformedMeshParams = {
     //useProjection: true,
@@ -6260,6 +6335,38 @@ struct VertexOutput {
         this.setDOMFrustum();
         this.geometry = geometry;
         this.updateSizePositionAndProjection();
+      }
+      /* SHADERS */
+      /**
+       * Set default shaders if one or both of them are missing
+       */
+      setShaders() {
+        let { shaders } = this.options;
+        if (!shaders) {
+          shaders = {
+            vertex: {
+              code: default_projected_vs_wgsl_default,
+              entryPoint: "main"
+            },
+            fragment: {
+              code: default_normal_fs_wgsl_default,
+              entryPoint: "main"
+            }
+          };
+        } else {
+          if (!shaders.vertex || !shaders.vertex.code) {
+            shaders.vertex = {
+              code: default_projected_vs_wgsl_default,
+              entryPoint: "main"
+            };
+          }
+          if (!shaders.fragment || !shaders.fragment.code) {
+            shaders.fragment = {
+              code: default_normal_fs_wgsl_default,
+              entryPoint: "main"
+            };
+          }
+        }
       }
       /* GEOMETRY */
       /**

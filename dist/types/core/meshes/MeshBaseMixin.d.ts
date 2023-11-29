@@ -142,6 +142,10 @@ export declare class MeshBaseClass {
      */
     removeFromScene(): void;
     /**
+     * Set default shaders if one or both of them are missing
+     */
+    setShaders(): void;
+    /**
      * Compute the Mesh geometry if needed
      */
     computeGeometry(): void;

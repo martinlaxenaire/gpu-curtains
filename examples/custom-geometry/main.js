@@ -220,8 +220,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     mesh.rotation.y = Math.sin(time * 0.5) * 0.75
 
     // rotate camera around Y axis
-    gpuCurtains.camera.position.z = Math.cos(time * 0.125) * cameraDistance
-    gpuCurtains.camera.position.x = Math.sin(time * 0.125) * cameraDistance
-    gpuCurtains.camera.lookAt(cameraLookAt)
+    // gpuCurtains.camera.position.z = Math.cos(time * 0.125) * cameraDistance
+    // gpuCurtains.camera.position.x = Math.sin(time * 0.125) * cameraDistance
+    // gpuCurtains.camera.lookAt(cameraLookAt)
   })
 })

@@ -157,30 +157,6 @@
         const sphereMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
           label: 'Main Sphere',
           geometry: sphereGeometry,
-          shaders: {
-            vertex: {
-              code: meshVs,
-            },
-            fragment: {
-              code: meshFs,
-            },
-          },
-          inputs: {
-            uniforms: {
-              deformation: {
-                bindings: {
-                  time: {
-                    type: 'f32',
-                    value: 0,
-                  },
-                  strength: {
-                    type: 'f32',
-                    value: Math.random() * 0.2,
-                  },
-                },
-              },
-            },
-          },
           watchScroll: false,
         })
 
@@ -196,30 +172,6 @@
           const satelliteMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
             label: 'Cube ' + i,
             geometry: satelliteGeometry,
-            shaders: {
-              vertex: {
-                code: meshVs,
-              },
-              fragment: {
-                code: meshFs,
-              },
-            },
-            inputs: {
-              uniforms: {
-                deformation: {
-                  bindings: {
-                    time: {
-                      type: 'f32',
-                      value: 0,
-                    },
-                    strength: {
-                      type: 'f32',
-                      value: Math.random() * 0.2,
-                    },
-                  },
-                },
-              },
-            },
             watchScroll: false,
           })
 
@@ -275,8 +227,6 @@
 
               // look at our main sphere
               satelliteMesh.lookAt(sphereMesh.position)
-
-              sphereMesh.uniforms.deformation.time.value++
             })
             .onLeaveView(() => {
               console.log('left view', satelliteMesh.options.label)

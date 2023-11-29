@@ -41,6 +41,10 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
      */
     constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams);
     /**
+     * Set default shaders if one or both of them are missing
+     */
+    setShaders(): void;
+    /**
      * Override {@link MeshBaseClass} method to add the domFrustum
      */
     computeGeometry(): void;

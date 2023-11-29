@@ -10,6 +10,8 @@ import { RenderMaterial } from '../materials/RenderMaterial'
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
 import { ProjectedObject3D, ProjectedObject3DMatrices } from '../objects3D/ProjectedObject3D'
 import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
+import default_projected_vsWgsl from '../shaders/chunks/default_projected_vs.wgsl'
+import default_normal_fsWgsl from '../shaders/chunks/default_normal_fs.wgsl'
 
 /**
  * Base parameters used to create a TransformedMesh
@@ -64,6 +66,11 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
    * @param parameters - [Mesh base parameters]{@link MeshBaseParams}
    */
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
+
+  /**
+   * Set default shaders if one or both of them are missing
+   */
+  setShaders(): void
 
   /**
    * Override {@link MeshBaseClass} method to add the domFrustum
@@ -251,6 +258,42 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
 
       // tell the model and projection matrices to update right away
       this.updateSizePositionAndProjection()
+    }
+
+    /* SHADERS */
+
+    /**
+     * Set default shaders if one or both of them are missing
+     */
+    setShaders() {
+      let { shaders } = this.options
+
+      if (!shaders) {
+        shaders = {
+          vertex: {
+            code: default_projected_vsWgsl,
+            entryPoint: 'main',
+          },
+          fragment: {
+            code: default_normal_fsWgsl,
+            entryPoint: 'main',
+          },
+        }
+      } else {
+        if (!shaders.vertex || !shaders.vertex.code) {
+          shaders.vertex = {
+            code: default_projected_vsWgsl,
+            entryPoint: 'main',
+          }
+        }
+
+        if (!shaders.fragment || !shaders.fragment.code) {
+          shaders.fragment = {
+            code: default_normal_fsWgsl,
+            entryPoint: 'main',
+          }
+        }
+      }
     }
 
     /* GEOMETRY */

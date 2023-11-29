@@ -14,6 +14,8 @@ import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
 //import { TransformedObject3D } from './MeshTransformedMixin'
 import { Object3D } from '../objects3D/Object3D'
 import { MeshTransformedBaseClass } from './MeshTransformedMixin'
+import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
+import default_fsWgsl from '../shaders/chunks/default_fs.wgsl'
 
 let meshIndex = 0
 
@@ -190,6 +192,11 @@ export declare class MeshBaseClass {
    * Remove a Mesh from the renderer and the {@link Scene}
    */
   removeFromScene(): void
+
+  /**
+   * Set default shaders if one or both of them are missing
+   */
+  setShaders(): void
 
   /**
    * Compute the Mesh geometry if needed
@@ -559,6 +566,42 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
     }
 
+    /* SHADERS */
+
+    /**
+     * Set default shaders if one or both of them are missing
+     */
+    setShaders() {
+      let { shaders } = this.options
+
+      if (!shaders) {
+        shaders = {
+          vertex: {
+            code: default_vsWgsl,
+            entryPoint: 'main',
+          },
+          fragment: {
+            code: default_fsWgsl,
+            entryPoint: 'main',
+          },
+        }
+      } else {
+        if (!shaders.vertex || !shaders.vertex.code) {
+          shaders.vertex = {
+            code: default_vsWgsl,
+            entryPoint: 'main',
+          }
+        }
+
+        if (!shaders.fragment || !shaders.fragment.code) {
+          shaders.fragment = {
+            code: default_fsWgsl,
+            entryPoint: 'main',
+          }
+        }
+      }
+    }
+
     /* GEOMETRY */
 
     /**
@@ -618,6 +661,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     setMaterial(meshParameters: RenderMaterialParams) {
       this.transparent = meshParameters.transparent
+
+      this.setShaders()
 
       this.material = new RenderMaterial(this.renderer, meshParameters)
     }
