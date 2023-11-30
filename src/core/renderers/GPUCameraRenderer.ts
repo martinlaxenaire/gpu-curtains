@@ -72,12 +72,8 @@ export class GPUCameraRenderer extends GPURenderer {
       width,
       height,
       pixelRatio: this.pixelRatio,
-      // TODO is this still needed after all?
-      onPerspectiveChanged: () => {
-        this.onCameraPositionChanged()
-      },
-      onPositionChanged: () => {
-        this.onCameraPositionChanged()
+      onMatricesChanged: () => {
+        this.onCameraMatricesChanged()
       },
     })
 
@@ -87,7 +83,7 @@ export class GPUCameraRenderer extends GPURenderer {
   /**
    * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
    */
-  onCameraPositionChanged() {
+  onCameraMatricesChanged() {
     this.updateCameraBindings()
 
     this.meshes.forEach((mesh) => {

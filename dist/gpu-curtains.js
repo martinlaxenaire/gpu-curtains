@@ -1031,52 +1031,36 @@ var GPUCurtains = (() => {
       te[15] = a44 * b44;
       return this;
     }
+    invert() {
+      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+      const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+      if (det === 0)
+        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      const detInv = 1 / det;
+      te[0] = t11 * detInv;
+      te[1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * detInv;
+      te[2] = (n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44) * detInv;
+      te[3] = (n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43) * detInv;
+      te[4] = t12 * detInv;
+      te[5] = (n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44) * detInv;
+      te[6] = (n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44) * detInv;
+      te[7] = (n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43) * detInv;
+      te[8] = t13 * detInv;
+      te[9] = (n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44) * detInv;
+      te[10] = (n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44) * detInv;
+      te[11] = (n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43) * detInv;
+      te[12] = t14 * detInv;
+      te[13] = (n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34) * detInv;
+      te[14] = (n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34) * detInv;
+      te[15] = (n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33) * detInv;
+      return this;
+    }
     /**
      * Get the [matrix]{@link Mat4} inverse
      * @returns - inverted [matrix]{@link Mat4}
      */
     getInverse() {
-      const te = this.elements;
-      const out = new _Mat4();
-      const oe = out.elements;
-      const a00 = te[0], a01 = te[1], a02 = te[2], a03 = te[3];
-      const a10 = te[4], a11 = te[5], a12 = te[6], a13 = te[7];
-      const a20 = te[8], a21 = te[9], a22 = te[10], a23 = te[11];
-      const a30 = te[12], a31 = te[13], a32 = te[14], a33 = te[15];
-      const b00 = a00 * a11 - a01 * a10;
-      const b01 = a00 * a12 - a02 * a10;
-      const b02 = a00 * a13 - a03 * a10;
-      const b03 = a01 * a12 - a02 * a11;
-      const b04 = a01 * a13 - a03 * a11;
-      const b05 = a02 * a13 - a03 * a12;
-      const b06 = a20 * a31 - a21 * a30;
-      const b07 = a20 * a32 - a22 * a30;
-      const b08 = a20 * a33 - a23 * a30;
-      const b09 = a21 * a32 - a22 * a31;
-      const b10 = a21 * a33 - a23 * a31;
-      const b11 = a22 * a33 - a23 * a32;
-      let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-      if (!det) {
-        return null;
-      }
-      det = 1 / det;
-      oe[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
-      oe[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
-      oe[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
-      oe[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
-      oe[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
-      oe[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
-      oe[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
-      oe[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
-      oe[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
-      oe[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
-      oe[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
-      oe[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
-      oe[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
-      oe[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
-      oe[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
-      oe[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
-      return out;
+      return this.clone().invert();
     }
     /**
      * Translate a [matrix]{@link Mat4}
@@ -2607,6 +2591,12 @@ var GPUCurtains = (() => {
       this.shouldUpdateModelMatrix();
     }
     /**
+     * Set our model matrix shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateModelMatrix() {
+      this.matrices.model.shouldUpdate = true;
+    }
+    /**
      * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
      * @param target - [target]{@link Vec3} to look at
      */
@@ -2614,12 +2604,6 @@ var GPUCurtains = (() => {
       const rotationMatrix = new Mat4().lookAt(this.position, target);
       this.quaternion.setFromRotationMatrix(rotationMatrix);
       this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Set our model matrix shouldUpdate flag to true (tell it to update)
-     */
-    shouldUpdateModelMatrix() {
-      this.matrices.model.shouldUpdate = true;
     }
     /**
      * Update our model matrix
@@ -3364,76 +3348,148 @@ var GPUCurtains = (() => {
       width = 1,
       height = 1,
       pixelRatio = 1,
-      onPerspectiveChanged = () => {
-      },
-      onPositionChanged = () => {
+      onMatricesChanged = () => {
       }
     } = {}) {
       super();
       this.position.set(0, 0, 5);
-      this.projectionMatrix = new Mat4();
-      this.viewMatrix = new Mat4();
-      this.onPerspectiveChanged = onPerspectiveChanged;
-      this.onPositionChanged = onPositionChanged;
-      this.shouldUpdate = false;
+      this.onMatricesChanged = onMatricesChanged;
+      this.size = {
+        width: 1,
+        height: 1
+      };
       this.setPerspective(fov, near, far, width, height, pixelRatio);
     }
+    /** Private {@link Camera} field of view */
+    #fov;
+    /** Private {@link Camera} near plane */
+    #near;
+    /** Private {@link Camera} far plane */
+    #far;
+    /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
+    #pixelRatio;
     /**
-     * Sets the {@link Camera} {@link fov}. Update the {@link projectionMatrix} only if the field of view actually changed
-     * @param fov - new {@link fov}
+     * Set our transform and projection matrices
      */
-    setFov(fov = this.fov) {
-      fov = Math.max(1, Math.min(fov, 179));
+    setMatrices() {
+      super.setMatrices();
+      this.matrices = {
+        ...this.matrices,
+        view: {
+          matrix: new Mat4(),
+          shouldUpdate: false,
+          onUpdate: () => {
+            this.viewMatrix.copy(this.modelMatrix).invert();
+          }
+        },
+        projection: {
+          matrix: new Mat4(),
+          shouldUpdate: false,
+          onUpdate: () => this.updateProjectionMatrix()
+        }
+      };
+    }
+    /**
+     * Get/set our view matrix
+     * @readonly
+     */
+    get viewMatrix() {
+      return this.matrices.view.matrix;
+    }
+    set viewMatrix(value) {
+      this.matrices.view.matrix = value;
+      this.matrices.view.shouldUpdate = true;
+    }
+    /**
+     * Get/set our projection matrix
+     * @readonly
+     */
+    get projectionMatrix() {
+      return this.matrices.projection.matrix;
+    }
+    set projectionMatrix(value) {
+      this.matrices.projection.matrix = value;
+      this.shouldUpdateProjectionMatrix();
+    }
+    /**
+     * Set our projection matrix shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateProjectionMatrix() {
+      this.matrices.projection.shouldUpdate = true;
+    }
+    /**
+     * Update our model matrix and tell our view matrix to update as well
+     */
+    updateModelMatrix() {
+      super.updateModelMatrix();
+      this.setScreenRatios();
+      this.matrices.view.shouldUpdate = true;
+    }
+    /**
+     * Get / set the {@link Camera} [field of view]{@link Camera##fov}. Update the {@link projectionMatrix} only if the field of view actually changed
+     * @readonly
+     */
+    get fov() {
+      return this.#fov;
+    }
+    set fov(fov) {
+      fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        this.fov = fov;
-        this.shouldUpdate = true;
+        this.#fov = fov;
+        this.shouldUpdateProjectionMatrix();
       }
       this.setScreenRatios();
       this.setCSSPerspective();
     }
     /**
-     * Sets the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-     * @param near - {@link near} plane value to use
+     * Get / set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+     * @readonly
      */
-    setNear(near = this.near) {
-      near = Math.max(near, 0.01);
+    get near() {
+      return this.#near;
+    }
+    set near(near) {
+      near = Math.max(near ?? this.near, 0.01);
       if (near !== this.near) {
-        this.near = near;
-        this.shouldUpdate = true;
+        this.#near = near;
+        this.shouldUpdateProjectionMatrix();
       }
     }
     /**
-     * Sets the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-     * @param far - {@link far} plane value to use
+     * Get / set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+     * @readonly
      */
-    setFar(far = this.far) {
-      far = Math.max(far, 50);
+    get far() {
+      return this.#far;
+    }
+    set far(far) {
+      far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        this.far = far;
-        this.shouldUpdate = true;
+        this.#far = far;
+        this.shouldUpdateProjectionMatrix();
       }
     }
     /**
-     * Sets the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
-     * @param pixelRatio - {@link pixelRatio} value to use
+     * Get / set the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
+     * @readonly
      */
-    setPixelRatio(pixelRatio = this.pixelRatio) {
-      if (pixelRatio !== this.pixelRatio) {
-        this.shouldUpdate = true;
-      }
-      this.pixelRatio = pixelRatio;
+    get pixelRatio() {
+      return this.#pixelRatio;
+    }
+    set pixelRatio(pixelRatio) {
+      this.#pixelRatio = pixelRatio ?? this.pixelRatio;
+      this.setCSSPerspective();
     }
     /**
      * Sets the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
-     * @param width - {@link width} value to use
-     * @param height - {@link height} value to use
+     * @param size - {@link width} and {@link height} values to use
      */
-    setSize(width, height) {
-      if (width !== this.width || height !== this.height) {
-        this.shouldUpdate = true;
+    setSize({ width, height }) {
+      if (width !== this.size.width || height !== this.size.height) {
+        this.shouldUpdateProjectionMatrix();
       }
-      this.width = width;
-      this.height = height;
+      this.size.width = width;
+      this.size.height = height;
       this.setScreenRatios();
       this.setCSSPerspective();
     }
@@ -3447,20 +3503,18 @@ var GPUCurtains = (() => {
      * @param pixelRatio - pixel ratio value to use
      */
     // TODO use a parameter object instead?
-    setPerspective(fov = this.fov, near = this.near, far = this.far, width = this.width, height = this.height, pixelRatio = this.pixelRatio) {
-      this.setPixelRatio(pixelRatio);
-      this.setSize(width, height);
-      this.setFov(fov);
-      this.setNear(near);
-      this.setFar(far);
+    setPerspective(fov = this.fov, near = this.near, far = this.far, width = this.size.width, height = this.size.height, pixelRatio = this.pixelRatio) {
+      this.setSize({ width, height });
+      this.pixelRatio = pixelRatio;
+      this.fov = fov;
+      this.near = near;
+      this.far = far;
     }
     /**
      * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
      */
     onAfterMatrixStackUpdate() {
-      this.viewMatrix = this.modelMatrix.clone().getInverse();
-      this.setScreenRatios();
-      this.onPositionChanged();
+      this.onMatricesChanged();
     }
     /**
      * Sets a {@link CSSPerspective} property based on {@link width}, {@link height}, {@link pixelRatio} and {@link fov}
@@ -3469,7 +3523,7 @@ var GPUCurtains = (() => {
      */
     setCSSPerspective() {
       this.CSSPerspective = Math.pow(
-        Math.pow(this.width / (2 * this.pixelRatio), 2) + Math.pow(this.height / (2 * this.pixelRatio), 2),
+        Math.pow(this.size.width / (2 * this.pixelRatio), 2) + Math.pow(this.size.height / (2 * this.pixelRatio), 2),
         0.5
       ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
     }
@@ -3488,7 +3542,7 @@ var GPUCurtains = (() => {
       const vFOV = this.fov * Math.PI / 180;
       const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth);
       this.screenRatio = {
-        width: height * this.width / this.height,
+        width: height * this.size.width / this.size.height,
         height
       };
     }
@@ -3496,7 +3550,7 @@ var GPUCurtains = (() => {
      * Updates the {@link Camera} {@link projectionMatrix}
      */
     updateProjectionMatrix() {
-      const aspect = this.width / this.height;
+      const aspect = this.size.width / this.size.height;
       const top = this.near * Math.tan(Math.PI / 180 * 0.5 * this.fov);
       const height = 2 * top;
       const width = aspect * height;
@@ -3527,14 +3581,6 @@ var GPUCurtains = (() => {
         d,
         0
       );
-    }
-    updateMatrixStack() {
-      if (this.shouldUpdate) {
-        this.updateProjectionMatrix();
-        this.onPerspectiveChanged();
-        this.shouldUpdate = false;
-      }
-      super.updateMatrixStack();
     }
   };
 
@@ -7735,8 +7781,8 @@ ${this.shaders.compute.head}`;
      */
     mouseToPlaneCoords(mouseCoords = new Vec2()) {
       const worldMouse = {
-        x: 2 * (mouseCoords.x / this.renderer.boundingRect.width) - 1,
-        y: 2 * (1 - mouseCoords.y / this.renderer.boundingRect.height) - 1
+        x: 2 * (mouseCoords.x / this.renderer.pixelRatioBoundingRect.width) - 1,
+        y: 2 * (1 - mouseCoords.y / this.renderer.pixelRatioBoundingRect.height) - 1
       };
       const rayOrigin = this.camera.position.clone();
       const rayDirection = new Vec3(worldMouse.x, worldMouse.y, -0.5);
@@ -7747,7 +7793,7 @@ ${this.shaders.compute.head}`;
       const result = new Vec3(0, 0, 0);
       const denominator = planeNormals.dot(rayDirection);
       if (Math.abs(denominator) >= 1e-4) {
-        const inverseViewMatrix = this.modelMatrix.getInverse().multiply(this.camera.viewMatrix);
+        const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix);
         const planeOrigin = this.worldTransformOrigin.clone().add(this.worldPosition);
         const rotatedOrigin = new Vec3(
           this.worldPosition.x - planeOrigin.x,
@@ -8429,6 +8475,7 @@ ${this.shaders.compute.head}`;
         this.setMainRenderPass();
         this.setPipelineManager();
         this.setScene();
+        this.domElement.element.appendChild(this.canvas);
         this.ready = true;
       }
     }
@@ -8807,12 +8854,8 @@ ${this.shaders.compute.head}`;
         width,
         height,
         pixelRatio: this.pixelRatio,
-        // TODO is this still needed after all?
-        onPerspectiveChanged: () => {
-          this.onCameraPositionChanged();
-        },
-        onPositionChanged: () => {
-          this.onCameraPositionChanged();
+        onMatricesChanged: () => {
+          this.onCameraMatricesChanged();
         }
       });
       this.setCameraBufferBinding();
@@ -8820,7 +8863,7 @@ ${this.shaders.compute.head}`;
     /**
      * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
-    onCameraPositionChanged() {
+    onCameraMatricesChanged() {
       this.updateCameraBindings();
       this.meshes.forEach((mesh) => {
         if ("modelViewMatrix" in mesh) {
@@ -9344,7 +9387,6 @@ ${this.shaders.compute.head}`;
     setCurtains() {
       this.initEvents();
       this.setRenderer();
-      this.container.appendChild(this.renderer.canvas);
       if (this.options.autoRender) {
         this.animate();
       }

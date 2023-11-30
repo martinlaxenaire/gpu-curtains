@@ -206,6 +206,13 @@ export class Object3D {
   }
 
   /**
+   * Set our model matrix shouldUpdate flag to true (tell it to update)
+   */
+  shouldUpdateModelMatrix() {
+    this.matrices.model.shouldUpdate = true
+  }
+
+  /**
    * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
    * @param target - [target]{@link Vec3} to look at
    */
@@ -213,13 +220,6 @@ export class Object3D {
     const rotationMatrix = new Mat4().lookAt(this.position, target)
     this.quaternion.setFromRotationMatrix(rotationMatrix)
     this.shouldUpdateModelMatrix()
-  }
-
-  /**
-   * Set our model matrix shouldUpdate flag to true (tell it to update)
-   */
-  shouldUpdateModelMatrix() {
-    this.matrices.model.shouldUpdate = true
   }
 
   /**

@@ -41,5 +41,6 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - Use render bundles?
 - Mesh raycasting?
 - Context lost handling
-- More tests! (removing, samplers, external video textures, buffer offsets...)
+- Handle multiple canvas / renderers?
+- More tests! (removing, samplers, external video textures...)
 - Documentation (using JSDoc?)

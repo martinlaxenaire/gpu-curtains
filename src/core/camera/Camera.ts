@@ -1,6 +1,6 @@
-import { Vec3 } from '../../math/Vec3'
 import { Mat4 } from '../../math/Mat4'
-import { Object3D } from '../objects3D/Object3D'
+import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from '../objects3D/Object3D'
+import { RectSize } from '../DOM/DOMElement'
 
 /**
  * Defines Camera basic perspective options
@@ -30,55 +30,43 @@ export interface CameraPerspectiveOptions extends CameraBasePerspectiveOptions {
  * An object defining all possible {@link Camera} class instancing parameters
  */
 export interface CameraParams extends CameraPerspectiveOptions {
-  /** callback to execute when the {@link Camera} perspective changed */
-  onPerspectiveChanged?: () => void
-  /** callback to execute when the {@link Camera} [position]{@link Camera#position} changed */
-  onPositionChanged?: () => void
+  /** callback to execute when one of the [camera matrices]{@link Camera#matrices} changed */
+  onMatricesChanged?: () => void
 }
+
+/** Defines all kind of possible {@link ProjectedObject3D} matrix types */
+export type CameraObject3DMatricesType = Object3DMatricesType | 'projection' | 'view'
+/** Defines all possible [matrix object]{@link Object3DTransformMatrix} used by our {@link ProjectedObject3D} */
+export type CameraObject3DMatrices = Record<CameraObject3DMatricesType, Object3DTransformMatrix>
 
 /**
  * Camera class:
- * Used to create a perspective camera and its matricess (projection, model, view).
+ * Used to create a perspective camera and its matrices (projection, model, view).
+ * @extends Object3D
  */
 export class Camera extends Object3D {
-  /** The {@link Camera} position */
-  //position: Vec3
-  /** The {@link Camera} projection matrix */
-  projectionMatrix: Mat4
-  /** The {@link Camera} model matrix */
-  //modelMatrix: Mat4
-  /** The {@link Camera} view matrix */
-  viewMatrix: Mat4
+  /** [Matrices object]{@link CameraObject3DMatrices} of the {@link Camera} */
+  matrices: CameraObject3DMatrices
 
-  /** The {@link Camera} field of view */
-  fov: number
-  /** The {@link Camera} near plane */
-  near: number
-  /** The {@link Camera} far plane */
-  far: number
+  /** Private {@link Camera} field of view */
+  #fov: number
+  /** Private {@link Camera} near plane */
+  #near: number
+  /** Private {@link Camera} far plane */
+  #far: number
 
-  /** The {@link Camera} frustum width */
-  width: number
-  /** The {@link Camera} frustum height */
-  height: number
-  /** The {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
-  pixelRatio: number
+  /** The {@link Camera} frustum width and height */
+  size: RectSize
+  /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
+  #pixelRatio: number
 
-  /** Callback to run when the {@link Camera} perspective changed */
-  onPerspectiveChanged: () => void
-  /** Callback to run when the {@link Camera} {@link position} changed */
-  onPositionChanged: () => void
+  /** Callback to execute when one of the [camera matrices]{@link Camera#matrices} changed */
+  onMatricesChanged?: () => void
 
   /** A number representing what CSS perspective value (in pixel) should be used to obtain the same perspective effect as this {@link Camera} */
   CSSPerspective: number
   /** An object containing the visible width / height at a given z-depth from our camera parameters */
-  screenRatio: {
-    width: number
-    height: number
-  }
-
-  /** Flag indicating whether we should update the {@link Camera} {@link projectionMatrix} */
-  shouldUpdate: boolean
+  screenRatio: RectSize
 
   /**
    * Camera constructor
@@ -92,14 +80,12 @@ export class Camera extends Object3D {
       width = 1,
       height = 1,
       pixelRatio = 1,
-      onPerspectiveChanged = () => {
-        /* allow empty callback */
-      },
-      onPositionChanged = () => {
+      onMatricesChanged = () => {
         /* allow empty callback */
       },
     } = {} as CameraParams
   ) {
+    // Object3D
     super()
 
     // camera can't be at position (0, 0, 0), it needs some recoil
@@ -107,32 +93,98 @@ export class Camera extends Object3D {
     //this.position = new Vec3(0, 0, 5).onChange(() => this.applyPosition())
     this.position.set(0, 0, 5)
 
-    // TODO:
-    // 1. add projection and view matrices to this.matrices instead
-    // 2. fov, near, far, should be getters/setters
-    // 3. one and only one callback for when camera settings (position or perspective) changed
-    this.projectionMatrix = new Mat4()
-    this.viewMatrix = new Mat4()
+    // callback to run if any of the matrices changed
+    this.onMatricesChanged = onMatricesChanged
 
-    this.onPerspectiveChanged = onPerspectiveChanged
-    this.onPositionChanged = onPositionChanged
-
-    this.shouldUpdate = false
+    // create size object, will be set right after
+    this.size = {
+      width: 1,
+      height: 1,
+    }
 
     this.setPerspective(fov, near, far, width, height, pixelRatio)
   }
 
   /**
-   * Sets the {@link Camera} {@link fov}. Update the {@link projectionMatrix} only if the field of view actually changed
-   * @param fov - new {@link fov}
+   * Set our transform and projection matrices
    */
-  setFov(fov: number = this.fov) {
+  setMatrices() {
+    super.setMatrices()
+
+    this.matrices = {
+      ...this.matrices,
+      view: {
+        matrix: new Mat4(),
+        shouldUpdate: false,
+        onUpdate: () => {
+          this.viewMatrix.copy(this.modelMatrix).invert()
+        },
+      },
+      projection: {
+        matrix: new Mat4(),
+        shouldUpdate: false,
+        onUpdate: () => this.updateProjectionMatrix(),
+      },
+    }
+  }
+
+  /**
+   * Get/set our view matrix
+   * @readonly
+   */
+  get viewMatrix(): Mat4 {
+    return this.matrices.view.matrix
+  }
+
+  set viewMatrix(value: Mat4) {
+    this.matrices.view.matrix = value
+    this.matrices.view.shouldUpdate = true
+  }
+
+  /**
+   * Get/set our projection matrix
+   * @readonly
+   */
+  get projectionMatrix(): Mat4 {
+    return this.matrices.projection.matrix
+  }
+
+  set projectionMatrix(value: Mat4) {
+    this.matrices.projection.matrix = value
+    this.shouldUpdateProjectionMatrix()
+  }
+
+  /**
+   * Set our projection matrix shouldUpdate flag to true (tell it to update)
+   */
+  shouldUpdateProjectionMatrix() {
+    this.matrices.projection.shouldUpdate = true
+  }
+
+  /**
+   * Update our model matrix and tell our view matrix to update as well
+   */
+  updateModelMatrix() {
+    super.updateModelMatrix()
+    this.setScreenRatios()
+    this.matrices.view.shouldUpdate = true
+  }
+
+  /**
+   * Get / set the {@link Camera} [field of view]{@link Camera##fov}. Update the {@link projectionMatrix} only if the field of view actually changed
+   * @readonly
+   */
+  get fov(): number {
+    return this.#fov
+  }
+
+  set fov(fov: number) {
     // clamp between 1 and 179
-    fov = Math.max(1, Math.min(fov, 179))
+    fov = Math.max(1, Math.min(fov ?? this.fov, 179))
 
     if (fov !== this.fov) {
-      this.fov = fov
-      this.shouldUpdate = true
+      this.#fov = fov
+      this.shouldUpdateProjectionMatrix()
     }
 
     this.setScreenRatios()
@@ -140,55 +192,63 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Sets the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-   * @param near - {@link near} plane value to use
+   * Get / set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+   * @readonly
    */
-  setNear(near: number = this.near) {
-    near = Math.max(near, 0.01)
+  get near(): number {
+    return this.#near
+  }
+
+  set near(near: number) {
+    near = Math.max(near ?? this.near, 0.01)
 
     if (near !== this.near) {
-      this.near = near
-      this.shouldUpdate = true
+      this.#near = near
+      this.shouldUpdateProjectionMatrix()
     }
   }
 
   /**
-   * Sets the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-   * @param far - {@link far} plane value to use
+   * Get / set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+   * @readonly
    */
-  setFar(far: number = this.far) {
-    far = Math.max(far, 50)
+  get far(): number {
+    return this.#far
+  }
+
+  set far(far: number) {
+    far = Math.max(far ?? this.far, this.near + 1)
 
     if (far !== this.far) {
-      this.far = far
-      this.shouldUpdate = true
+      this.#far = far
+      this.shouldUpdateProjectionMatrix()
     }
   }
 
   /**
-   * Sets the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
-   * @param pixelRatio - {@link pixelRatio} value to use
+   * Get / set the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
+   * @readonly
    */
-  setPixelRatio(pixelRatio: number = this.pixelRatio) {
-    if (pixelRatio !== this.pixelRatio) {
-      this.shouldUpdate = true
-    }
+  get pixelRatio() {
+    return this.#pixelRatio
+  }
 
-    this.pixelRatio = pixelRatio
+  set pixelRatio(pixelRatio: number) {
+    this.#pixelRatio = pixelRatio ?? this.pixelRatio
+    this.setCSSPerspective()
   }
 
   /**
    * Sets the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
-   * @param width - {@link width} value to use
-   * @param height - {@link height} value to use
+   * @param size - {@link width} and {@link height} values to use
    */
-  setSize(width: number, height: number) {
-    if (width !== this.width || height !== this.height) {
-      this.shouldUpdate = true
+  setSize({ width, height }: RectSize) {
+    if (width !== this.size.width || height !== this.size.height) {
+      this.shouldUpdateProjectionMatrix()
     }
 
-    this.width = width
-    this.height = height
+    this.size.width = width
+    this.size.height = height
 
     this.setScreenRatios()
     this.setCSSPerspective()
@@ -208,25 +268,23 @@ export class Camera extends Object3D {
     fov: number = this.fov,
     near: number = this.near,
     far: number = this.far,
-    width: number = this.width,
-    height: number = this.height,
+    width: number = this.size.width,
+    height: number = this.size.height,
     pixelRatio: number = this.pixelRatio
   ) {
-    this.setPixelRatio(pixelRatio)
-    this.setSize(width, height)
-    this.setFov(fov)
-    this.setNear(near)
-    this.setFar(far)
+    this.setSize({ width, height })
+    this.pixelRatio = pixelRatio
+    this.fov = fov
+    this.near = near
+    this.far = far
   }
 
   /**
    * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
    */
   onAfterMatrixStackUpdate() {
-    this.viewMatrix = this.modelMatrix.clone().getInverse()
-
-    this.setScreenRatios()
-    this.onPositionChanged()
+    // callback because matrices changed
+    this.onMatricesChanged()
   }
 
   /**
@@ -237,7 +295,7 @@ export class Camera extends Object3D {
   setCSSPerspective() {
     this.CSSPerspective =
       Math.pow(
-        Math.pow(this.width / (2 * this.pixelRatio), 2) + Math.pow(this.height / (2 * this.pixelRatio), 2),
+        Math.pow(this.size.width / (2 * this.pixelRatio), 2) + Math.pow(this.size.height / (2 * this.pixelRatio), 2),
         0.5
       ) / Math.tan((this.fov * 0.5 * Math.PI) / 180)
   }
@@ -263,7 +321,7 @@ export class Camera extends Object3D {
     const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth)
 
     this.screenRatio = {
-      width: (height * this.width) / this.height,
+      width: (height * this.size.width) / this.size.height,
       height,
     }
   }
@@ -272,7 +330,7 @@ export class Camera extends Object3D {
    * Updates the {@link Camera} {@link projectionMatrix}
    */
   updateProjectionMatrix() {
-    const aspect = this.width / this.height
+    const aspect = this.size.width / this.size.height
 
     const top = this.near * Math.tan((Math.PI / 180) * 0.5 * this.fov)
     const height = 2 * top
@@ -297,15 +355,5 @@ export class Camera extends Object3D {
       a, b, c, -1,
       0, 0, d, 0
     )
-  }
-
-  updateMatrixStack() {
-    if (this.shouldUpdate) {
-      this.updateProjectionMatrix()
-      this.onPerspectiveChanged()
-      this.shouldUpdate = false
-    }
-
-    super.updateMatrixStack()
   }
 }

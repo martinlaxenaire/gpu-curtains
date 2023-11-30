@@ -111,14 +111,14 @@ export declare class Object3D {
     get modelMatrix(): Mat4;
     set modelMatrix(value: Mat4);
     /**
+     * Set our model matrix shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateModelMatrix(): void;
+    /**
      * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
      * @param target - [target]{@link Vec3} to look at
      */
     lookAt(target?: Vec3): void;
-    /**
-     * Set our model matrix shouldUpdate flag to true (tell it to update)
-     */
-    shouldUpdateModelMatrix(): void;
     /**
      * Update our model matrix
      */

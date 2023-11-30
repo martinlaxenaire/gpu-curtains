@@ -96,8 +96,8 @@ export class Plane extends DOMMesh {
 
     // convert mouse position to 3d normalised device coordinates (from [-1, -1] to [1, 1])
     const worldMouse = {
-      x: 2 * (mouseCoords.x / this.renderer.boundingRect.width) - 1,
-      y: 2 * (1 - mouseCoords.y / this.renderer.boundingRect.height) - 1,
+      x: 2 * (mouseCoords.x / this.renderer.pixelRatioBoundingRect.width) - 1,
+      y: 2 * (1 - mouseCoords.y / this.renderer.pixelRatioBoundingRect.height) - 1,
     }
 
     const rayOrigin = this.camera.position.clone()
@@ -120,7 +120,7 @@ export class Plane extends DOMMesh {
     const denominator = planeNormals.dot(rayDirection)
 
     if (Math.abs(denominator) >= 0.0001) {
-      const inverseViewMatrix = this.modelMatrix.getInverse().multiply(this.camera.viewMatrix)
+      const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix)
 
       // get the plane's center coordinates
       // start with our transform origin point

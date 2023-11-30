@@ -11,7 +11,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const meshVs = /* wgsl */ `  
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
+      @location(0) originalUv: vec2f,
+      @location(1) uv: vec2f,
     };
 
     @vertex fn main(
@@ -20,6 +21,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var vsOutput : VSOutput;
                     
       vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.originalUv = attributes.uv;
       vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
       
       return vsOutput;
@@ -29,15 +31,27 @@ window.addEventListener('DOMContentLoaded', async () => {
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
+      @location(0) originalUv: vec2f,
+      @location(1) uv: vec2f,
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      return textureSample(planeTexture, defaultSampler, fsInput.uv);
+      var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
+      
+      
+      return mix(
+        vec4(1.0),
+        color,
+        step(
+          1.0 - clamp(distance(fsInput.originalUv, getVertex2DToUVCoords(mouse.position)), 0.0, 1.0),
+          0.875
+        )
+      );
     }
   `
 
-  //const cube = new GPUCurtains.DOMMesh(gpuCurtains, '#canvas', {
+  const mousePosition = new GPUCurtains.Vec2(Infinity)
+
   const plane = new GPUCurtains.Plane(gpuCurtains, '.plane', {
     shaders: {
       vertex: {
@@ -48,6 +62,23 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     cullMode: 'none',
+    inputs: {
+      uniforms: {
+        mouse: {
+          bindings: {
+            position: {
+              type: 'vec2f',
+              value: mousePosition,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  window.addEventListener('pointermove', (e) => {
+    //plane.uniforms.mouse
+    mousePosition.copy(plane.mouseToPlaneCoords(new GPUCurtains.Vec2(e.clientX, e.clientY)))
   })
 
   const planeBBox = document.createElement('div')
@@ -70,12 +101,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const { camera } = gpuCurtains
 
   const perspectiveFolder = gui.addFolder('Camera')
-  perspectiveFolder
-    .add({ value: camera.fov }, 'value', 1, 179, 1)
-    .name('Field of view')
-    .onChange((value) => {
-      camera.setFov(value)
-    })
+  perspectiveFolder.add(camera, 'fov', 1, 179, 1).name('Field of view')
 
   const debugProjectionFolder = gui.addFolder('Frustum culling DOM bounding rectangle')
 

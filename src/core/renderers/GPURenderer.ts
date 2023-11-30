@@ -286,6 +286,9 @@ export class GPURenderer {
       this.setPipelineManager()
       this.setScene()
 
+      // append the canvas and we're ready!
+      this.domElement.element.appendChild(this.canvas)
+
       // ready to start
       this.ready = true
     }

@@ -35,7 +35,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /**
      * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
-    onCameraPositionChanged(): void;
+    onCameraMatricesChanged(): void;
     /**
      * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
      */

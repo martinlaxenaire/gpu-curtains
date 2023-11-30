@@ -91,6 +91,7 @@ export declare class Mat4 {
      * @returns - this [matrix]{@link Mat4} after the premultiply scale operation
      */
     premultiplyScale(vector?: Vec3): Mat4;
+    invert(): Mat4;
     /**
      * Get the [matrix]{@link Mat4} inverse
      * @returns - inverted [matrix]{@link Mat4}

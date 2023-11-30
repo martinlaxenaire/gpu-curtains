@@ -1,14 +1,70 @@
+// Goals of this test:
+// - test the GPUCameraRenderer without the use of GPUCurtains class
+// - test camera position, rotation, lookAt, fov
+// - test frustum culling
 window.addEventListener('DOMContentLoaded', async () => {
-  // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
-    container: 'canvas',
-    watchScroll: false, // no need to listen for the scroll in this example
-    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+  // create a camera renderer
+  const gpuCameraRenderer = new GPUCurtains.GPUCameraRenderer({
+    container: document.querySelector('#canvas'),
   })
 
-  await gpuCurtains.setRendererContext()
+  // set context
+  await gpuCameraRenderer.setContext()
 
-  const cube = new GPUCurtains.Mesh(gpuCurtains, {
+  // render it
+  const animate = () => {
+    gpuCameraRenderer.render()
+    requestAnimationFrame(animate)
+  }
+
+  animate()
+
+  // now our scene
+  const floorFs = `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+  
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var c: vec2f = floor(fsInput.uv * checkerboard.scale) * 0.5;
+      var checker: f32 = 2.0 * fract(c.x + c.y);
+    
+      var color: vec4f = vec4(vec3(checker) * 0.5, 1.0);
+      return color;
+    }
+  `
+
+  const floorScale = new GPUCurtains.Vec2(150)
+
+  const floor = new GPUCurtains.Mesh(gpuCameraRenderer, {
+    geometry: new GPUCurtains.PlaneGeometry(),
+    shaders: {
+      fragment: {
+        code: floorFs,
+      },
+    },
+    cullMode: 'none',
+    inputs: {
+      uniforms: {
+        checkerboard: {
+          bindings: {
+            scale: {
+              type: 'vec2f',
+              value: floorScale,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  floor.position.y = -1.5
+  floor.rotation.x = -Math.PI / 2
+  floor.scale.x = floorScale.x
+  floor.scale.y = floorScale.y
+
+  const cube = new GPUCurtains.Mesh(gpuCameraRenderer, {
     geometry: new GPUCurtains.BoxGeometry(),
   })
 
@@ -28,7 +84,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     cubeBBox.style.height = cube.projectedBoundingRect.height + 'px'
   })
 
-  const plane = new GPUCurtains.Mesh(gpuCurtains, {
+  const plane = new GPUCurtains.Mesh(gpuCameraRenderer, {
     geometry: new GPUCurtains.PlaneGeometry(),
     cullMode: 'none',
   })
@@ -54,16 +110,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     title: 'Camera',
   })
 
-  const { camera } = gpuCurtains
+  const { camera } = gpuCameraRenderer
   const lookAt = new GPUCurtains.Vec3()
 
   const perspectiveFolder = gui.addFolder('Perspective')
-  perspectiveFolder
-    .add({ value: camera.fov }, 'value', 1, 179, 1)
-    .name('Field of view')
-    .onChange((value) => {
-      camera.setFov(value)
-    })
+  perspectiveFolder.add(camera, 'fov', 1, 179, 1).name('Field of view')
+  perspectiveFolder.add(camera, 'near', 0.01, 5, 0.01).name('Near plane')
+  perspectiveFolder.add(camera, 'far', 5, 250, 1).name('Far plane')
 
   const positionFolder = gui.addFolder('Position')
   positionFolder
