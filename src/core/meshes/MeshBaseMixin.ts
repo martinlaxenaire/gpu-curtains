@@ -47,7 +47,7 @@ export interface MeshBaseOptions {
   /** The label of this Mesh, sent to various GPU objects for debugging purpose */
   label?: MeshBaseParams['label']
   /** Shaders to use by this Mesh {@link RenderMaterial} */
-  shaders: MeshBaseParams['shaders']
+  shaders?: MeshBaseParams['shaders']
   /** Parameters used by this Mesh to create a [texture]{@link Texture} */
   texturesOptions?: ExternalTextureParams
   /** {@link RenderTarget} to render this Mesh to, if any */
@@ -60,7 +60,6 @@ export interface MeshBaseOptions {
 
 /** @const - Default Mesh parameters to merge with user defined parameters */
 const defaultMeshBaseParams = {
-  label: 'Mesh',
   // geometry
   geometry: new Geometry(),
   // material
@@ -486,7 +485,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
-        label,
+        label: label ?? 'Mesh ' + this.renderer.meshes.length,
         shaders,
         texturesOptions,
         ...(renderTarget !== undefined && { renderTarget }),

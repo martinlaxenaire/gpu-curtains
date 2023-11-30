@@ -43,7 +43,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     mesh.position.x = Math.random() * systemSize * 2 * aspectRatio - systemSize * aspectRatio
     mesh.position.y = Math.random() * systemSize * 2 - systemSize
-    mesh.position.z = -Math.random() * systemSize
+    mesh.position.z = -Math.random() * systemSize * 2
 
     const rotationSpeed = Math.random() * 0.025
 

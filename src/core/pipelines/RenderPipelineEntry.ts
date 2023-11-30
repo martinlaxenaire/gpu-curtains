@@ -5,10 +5,12 @@ import { throwError } from '../../utils/utils'
 import {
   PipelineEntryParams,
   PipelineEntryShaders,
+  RenderPipelineEntryOptions,
+  RenderPipelineEntryParams,
   RenderPipelineEntryPropertiesParams,
 } from '../../types/PipelineEntries'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { BindGroupBufferBindingElement } from '../../types/BindGroups'
+import { AllowedBindGroups, BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { RenderMaterialAttributes } from '../../types/Materials'
 
 /**
@@ -23,12 +25,14 @@ export class RenderPipelineEntry extends PipelineEntry {
   attributes: RenderMaterialAttributes
   /** [Renderer pipeline descriptor]{@link GPURenderPipelineDescriptor} based on [layout]{@link RenderPipelineEntry#layout} and [shaders]{@link RenderPipelineEntry#shaders} */
   descriptor: GPURenderPipelineDescriptor | null
+  /** Options used to create this {@link RenderPipelineEntry} */
+  options: RenderPipelineEntryOptions
 
   /**
    * RenderPipelineEntry constructor
-   * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link RenderPipelineEntry}
+   * @param parameters - [parameters]{@link RenderPipelineEntryParams} used to create this {@link RenderPipelineEntry}
    */
-  constructor(parameters: PipelineEntryParams) {
+  constructor(parameters: RenderPipelineEntryParams) {
     let { renderer } = parameters
     const { label, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, useProjection } = parameters
 
@@ -80,7 +84,7 @@ export class RenderPipelineEntry extends PipelineEntry {
    * Merge our [pipeline entry bind groups]{@link RenderPipelineEntry#bindGroups} with the [camera bind group]{@link CameraRenderer#cameraBindGroup} if needed and set them
    * @param bindGroups - [bind groups]{@link RenderMaterial#bindGroups} to use with this {@link RenderPipelineEntry}
    */
-  setPipelineEntryBindGroups(bindGroups) {
+  setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]) {
     this.bindGroups =
       'cameraBindGroup' in this.renderer && this.options.useProjection
         ? [this.renderer.cameraBindGroup, ...bindGroups]

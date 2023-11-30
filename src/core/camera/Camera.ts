@@ -89,8 +89,7 @@ export class Camera extends Object3D {
     super()
 
     // camera can't be at position (0, 0, 0), it needs some recoil
-    // arbitrarily set to 5 so objects of default size (1, 1, 1) don't appear to big
-    //this.position = new Vec3(0, 0, 5).onChange(() => this.applyPosition())
+    // arbitrarily set to 5 so objects of default size (1, 1, 1) don't appear too big
     this.position.set(0, 0, 5)
 
     // callback to run if any of the matrices changed

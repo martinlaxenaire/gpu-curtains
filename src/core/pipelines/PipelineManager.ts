@@ -46,13 +46,15 @@ export class PipelineManager {
     const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder } = parameters
 
     return this.pipelineEntries
-      .filter((pipelineEntry) => pipelineEntry.type === 'RenderPipelineEntry')
-      .find((pipelineEntry) => {
+      .filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry)
+      .find((pipelineEntry: RenderPipelineEntry) => {
         const { options } = pipelineEntry
 
         return (
           shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 &&
+          shaders.vertex.entryPoint === options.shaders.vertex.entryPoint &&
           shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 &&
+          shaders.fragment.entryPoint === options.shaders.fragment.entryPoint &&
           cullMode === options.cullMode &&
           depthWriteEnabled === options.depthWriteEnabled &&
           depthCompare === options.depthCompare &&
@@ -86,19 +88,45 @@ export class PipelineManager {
   }
 
   /**
+   * Checks if the provided [parameters]{@link PipelineEntryBaseParams} belongs to an already created {@link ComputePipelineEntry}.
+   * @param parameters - [ComputePipelineEntry parameters]{@link PipelineEntryBaseParams}
+   * @returns - the found {@link ComputePipelineEntry}, or null if not found
+   */
+  isSameComputePipeline(parameters: PipelineEntryBaseParams) {
+    const { shaders } = parameters
+
+    return this.pipelineEntries
+      .filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry)
+      .find((pipelineEntry: ComputePipelineEntry) => {
+        const { options } = pipelineEntry
+
+        return (
+          shaders.compute.code.localeCompare(options.shaders.compute.code) === 0 &&
+          shaders.compute.entryPoint === options.shaders.compute.entryPoint
+        )
+      }) as ComputePipelineEntry | null
+  }
+
+  /**
    * Create a new {@link ComputePipelineEntry}
    * @param parameters - [PipelineEntry parameters]{@link PipelineEntryBaseParams}
    * @returns - newly created {@link ComputePipelineEntry}
    */
   createComputePipeline(parameters: PipelineEntryBaseParams): ComputePipelineEntry {
-    const pipelineEntry = new ComputePipelineEntry({
-      renderer: this.renderer,
-      ...parameters,
-    })
+    const existingPipelineEntry = this.isSameComputePipeline(parameters)
 
-    this.pipelineEntries.push(pipelineEntry)
+    if (existingPipelineEntry) {
+      return existingPipelineEntry
+    } else {
+      const pipelineEntry = new ComputePipelineEntry({
+        renderer: this.renderer,
+        ...parameters,
+      })
 
-    return pipelineEntry
+      this.pipelineEntries.push(pipelineEntry)
+
+      return pipelineEntry
+    }
   }
 
   /**

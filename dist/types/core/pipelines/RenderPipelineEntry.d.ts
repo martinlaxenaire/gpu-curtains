@@ -1,6 +1,7 @@
 /// <reference types="dist" />
 import { PipelineEntry } from './PipelineEntry';
-import { PipelineEntryParams, PipelineEntryShaders, RenderPipelineEntryPropertiesParams } from '../../types/PipelineEntries';
+import { PipelineEntryShaders, RenderPipelineEntryOptions, RenderPipelineEntryParams, RenderPipelineEntryPropertiesParams } from '../../types/PipelineEntries';
+import { AllowedBindGroups } from '../../types/BindGroups';
 import { RenderMaterialAttributes } from '../../types/Materials';
 /**
  * RenderPipelineEntry class:
@@ -14,16 +15,18 @@ export declare class RenderPipelineEntry extends PipelineEntry {
     attributes: RenderMaterialAttributes;
     /** [Renderer pipeline descriptor]{@link GPURenderPipelineDescriptor} based on [layout]{@link RenderPipelineEntry#layout} and [shaders]{@link RenderPipelineEntry#shaders} */
     descriptor: GPURenderPipelineDescriptor | null;
+    /** Options used to create this {@link RenderPipelineEntry} */
+    options: RenderPipelineEntryOptions;
     /**
      * RenderPipelineEntry constructor
-     * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link RenderPipelineEntry}
+     * @param parameters - [parameters]{@link RenderPipelineEntryParams} used to create this {@link RenderPipelineEntry}
      */
-    constructor(parameters: PipelineEntryParams);
+    constructor(parameters: RenderPipelineEntryParams);
     /**
      * Merge our [pipeline entry bind groups]{@link RenderPipelineEntry#bindGroups} with the [camera bind group]{@link CameraRenderer#cameraBindGroup} if needed and set them
      * @param bindGroups - [bind groups]{@link RenderMaterial#bindGroups} to use with this {@link RenderPipelineEntry}
      */
-    setPipelineEntryBindGroups(bindGroups: any): void;
+    setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]): void;
     /**
      * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes}) and create the [pipeline]{@link RenderPipelineEntry#pipeline} itself
      * @param parameters - the [bind groups]{@link RenderMaterial#bindGroups} and [attributes]{@link RenderMaterial#attributes} to use

@@ -1031,6 +1031,10 @@ var GPUCurtains = (() => {
       te[15] = a44 * b44;
       return this;
     }
+    /**
+     * Get the [matrix]{@link Mat4} inverse
+     * @returns - the [matrix]{@link Mat4} inverted
+     */
     invert() {
       const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
       const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
@@ -1056,8 +1060,8 @@ var GPUCurtains = (() => {
       return this;
     }
     /**
-     * Get the [matrix]{@link Mat4} inverse
-     * @returns - inverted [matrix]{@link Mat4}
+     * Clone and invert the [matrix]{@link Mat4}
+     * @returns - inverted cloned [matrix]{@link Mat4}
      */
     getInverse() {
       return this.clone().invert();
@@ -5400,7 +5404,6 @@ struct VertexOutput {
   // src/core/meshes/MeshBaseMixin.ts
   var meshIndex = 0;
   var defaultMeshBaseParams = {
-    label: "Mesh",
     // geometry
     geometry: new Geometry(),
     // material
@@ -5490,7 +5493,7 @@ struct VertexOutput {
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
-          label,
+          label: label ?? "Mesh " + this.renderer.meshes.length,
           shaders,
           texturesOptions,
           ...renderTarget !== void 0 && { renderTarget },
@@ -6369,12 +6372,10 @@ struct VSOutput {
         renderer = renderer && renderer.renderer || renderer;
         isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
-        const { label, geometry, shaders, frustumCulled, DOMFrustumMargins } = parameters;
+        const { geometry, frustumCulled, DOMFrustumMargins } = parameters;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
-          label,
-          shaders,
           frustumCulled,
           DOMFrustumMargins
         };
@@ -6791,7 +6792,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
   var RenderPipelineEntry = class extends PipelineEntry {
     /**
      * RenderPipelineEntry constructor
-     * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link RenderPipelineEntry}
+     * @param parameters - [parameters]{@link RenderPipelineEntryParams} used to create this {@link RenderPipelineEntry}
      */
     constructor(parameters) {
       let { renderer } = parameters;
@@ -7224,9 +7225,9 @@ ${this.shaders.compute.head}`;
      */
     isSameRenderPipeline(parameters) {
       const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder } = parameters;
-      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry.type === "RenderPipelineEntry").find((pipelineEntry) => {
+      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && cullMode === options.cullMode && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && verticesOrder === options.verticesOrder;
+        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint && cullMode === options.cullMode && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && verticesOrder === options.verticesOrder;
       });
     }
     /**
@@ -7249,17 +7250,34 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
+     * Checks if the provided [parameters]{@link PipelineEntryBaseParams} belongs to an already created {@link ComputePipelineEntry}.
+     * @param parameters - [ComputePipelineEntry parameters]{@link PipelineEntryBaseParams}
+     * @returns - the found {@link ComputePipelineEntry}, or null if not found
+     */
+    isSameComputePipeline(parameters) {
+      const { shaders } = parameters;
+      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
+        const { options } = pipelineEntry;
+        return shaders.compute.code.localeCompare(options.shaders.compute.code) === 0 && shaders.compute.entryPoint === options.shaders.compute.entryPoint;
+      });
+    }
+    /**
      * Create a new {@link ComputePipelineEntry}
      * @param parameters - [PipelineEntry parameters]{@link PipelineEntryBaseParams}
      * @returns - newly created {@link ComputePipelineEntry}
      */
     createComputePipeline(parameters) {
-      const pipelineEntry = new ComputePipelineEntry({
-        renderer: this.renderer,
-        ...parameters
-      });
-      this.pipelineEntries.push(pipelineEntry);
-      return pipelineEntry;
+      const existingPipelineEntry = this.isSameComputePipeline(parameters);
+      if (existingPipelineEntry) {
+        return existingPipelineEntry;
+      } else {
+        const pipelineEntry = new ComputePipelineEntry({
+          renderer: this.renderer,
+          ...parameters
+        });
+        this.pipelineEntries.push(pipelineEntry);
+        return pipelineEntry;
+      }
     }
     /**
      * Check if the given [pipeline entry]{@link AllowedPipelineEntries} is already set, if not set it

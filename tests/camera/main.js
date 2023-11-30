@@ -44,6 +44,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         code: floorFs,
       },
     },
+    frustumCulled: false, // always draw the floor
     cullMode: 'none',
     inputs: {
       uniforms: {
