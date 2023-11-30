@@ -7,10 +7,10 @@ struct VertexOutput {
 @vertex fn main(
   attributes: Attributes,
 ) -> VertexOutput {
-  var vertexOutput: VertexOutput;
+  var vsOutput: VertexOutput;
 
-  vertexOutput.position = vec4f(attributes.position, 1.0);
-  vertexOutput.uv = attributes.uv;
+  vsOutput.position = vec4f(attributes.position, 1.0);
+  vsOutput.uv = attributes.uv;
   
-  return vertexOutput;
+  return vsOutput;
 }`

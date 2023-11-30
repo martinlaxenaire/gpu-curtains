@@ -1,5 +1,6 @@
-import { Vec3 } from '../../math/Vec3';
 import { Mat4 } from '../../math/Mat4';
+import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from '../objects3D/Object3D';
+import { RectSize } from '../DOM/DOMElement';
 /**
  * Defines Camera basic perspective options
  */
@@ -26,80 +27,88 @@ export interface CameraPerspectiveOptions extends CameraBasePerspectiveOptions {
  * An object defining all possible {@link Camera} class instancing parameters
  */
 export interface CameraParams extends CameraPerspectiveOptions {
-    /** callback to execute when the {@link Camera} perspective changed */
-    onPerspectiveChanged?: () => void;
-    /** callback to execute when the {@link Camera} [position]{@link Camera#position} changed */
-    onPositionChanged?: () => void;
+    /** callback to execute when one of the [camera matrices]{@link Camera#matrices} changed */
+    onMatricesChanged?: () => void;
 }
+/** Defines all kind of possible {@link ProjectedObject3D} matrix types */
+export type CameraObject3DMatricesType = Object3DMatricesType | 'projection' | 'view';
+/** Defines all possible [matrix object]{@link Object3DTransformMatrix} used by our {@link ProjectedObject3D} */
+export type CameraObject3DMatrices = Record<CameraObject3DMatricesType, Object3DTransformMatrix>;
 /**
  * Camera class:
- * Used to create a perspective camera and its matricess (projection, model, view).
+ * Used to create a perspective camera and its matrices (projection, model, view).
+ * @extends Object3D
  */
-export declare class Camera {
-    /** The {@link Camera} position */
-    position: Vec3;
-    /** The {@link Camera} projection matrix */
-    projectionMatrix: Mat4;
-    /** The {@link Camera} model matrix */
-    modelMatrix: Mat4;
-    /** The {@link Camera} view matrix */
-    viewMatrix: Mat4;
-    /** The {@link Camera} field of view */
-    fov: number;
-    /** The {@link Camera} near plane */
-    near: number;
-    /** The {@link Camera} far plane */
-    far: number;
-    /** The {@link Camera} frustum width */
-    width: number;
-    /** The {@link Camera} frustum height */
-    height: number;
-    /** The {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
-    pixelRatio: number;
-    /** Callback to run when the {@link Camera} perspective changed */
-    onPerspectiveChanged: () => void;
-    /** Callback to run when the {@link Camera} {@link position} changed */
-    onPositionChanged: () => void;
+export declare class Camera extends Object3D {
+    #private;
+    /** [Matrices object]{@link CameraObject3DMatrices} of the {@link Camera} */
+    matrices: CameraObject3DMatrices;
+    /** The {@link Camera} frustum width and height */
+    size: RectSize;
+    /** Callback to execute when one of the [camera matrices]{@link Camera#matrices} changed */
+    onMatricesChanged?: () => void;
     /** A number representing what CSS perspective value (in pixel) should be used to obtain the same perspective effect as this {@link Camera} */
     CSSPerspective: number;
     /** An object containing the visible width / height at a given z-depth from our camera parameters */
-    screenRatio: {
-        width: number;
-        height: number;
-    };
-    /** Flag indicating whether we should update the {@link Camera} {@link projectionMatrix} */
-    shouldUpdate: boolean;
+    screenRatio: RectSize;
     /**
      * Camera constructor
      * @param parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
      */
-    constructor({ fov, near, far, width, height, pixelRatio, onPerspectiveChanged, onPositionChanged, }?: CameraParams);
+    constructor({ fov, near, far, width, height, pixelRatio, onMatricesChanged, }?: CameraParams);
     /**
-     * Sets the {@link Camera} {@link fov}. Update the {@link projectionMatrix} only if the field of view actually changed
-     * @param fov - new {@link fov}
+     * Set our transform and projection matrices
      */
-    setFov(fov?: number): void;
+    setMatrices(): void;
     /**
-     * Sets the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-     * @param near - {@link near} plane value to use
+     * Get/set our view matrix
+     * @readonly
      */
-    setNear(near?: number): void;
+    get viewMatrix(): Mat4;
+    set viewMatrix(value: Mat4);
     /**
-     * Sets the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-     * @param far - {@link far} plane value to use
+     * Get/set our projection matrix
+     * @readonly
      */
-    setFar(far?: number): void;
+    get projectionMatrix(): Mat4;
+    set projectionMatrix(value: Mat4);
     /**
-     * Sets the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
-     * @param pixelRatio - {@link pixelRatio} value to use
+     * Set our projection matrix shouldUpdate flag to true (tell it to update)
      */
-    setPixelRatio(pixelRatio?: number): void;
+    shouldUpdateProjectionMatrix(): void;
+    /**
+     * Update our model matrix and tell our view matrix to update as well
+     */
+    updateModelMatrix(): void;
+    /**
+     * Get / set the {@link Camera} [field of view]{@link Camera##fov}. Update the {@link projectionMatrix} only if the field of view actually changed
+     * @readonly
+     */
+    get fov(): number;
+    set fov(fov: number);
+    /**
+     * Get / set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+     * @readonly
+     */
+    get near(): number;
+    set near(near: number);
+    /**
+     * Get / set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+     * @readonly
+     */
+    get far(): number;
+    set far(far: number);
+    /**
+     * Get / set the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
+     * @readonly
+     */
+    get pixelRatio(): number;
+    set pixelRatio(pixelRatio: number);
     /**
      * Sets the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
-     * @param width - {@link width} value to use
-     * @param height - {@link height} value to use
+     * @param size - {@link width} and {@link height} values to use
      */
-    setSize(width: number, height: number): void;
+    setSize({ width, height }: RectSize): void;
     /**
      * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if our {@link shouldUpdate} flag is true
      * @param fov - field of view to use
@@ -111,14 +120,9 @@ export declare class Camera {
      */
     setPerspective(fov?: number, near?: number, far?: number, width?: number, height?: number, pixelRatio?: number): void;
     /**
-     * Sets the {@link Camera} {@link position} and update the {@link modelMatrix} and {@link viewMatrix}.
-     * @param position - new {@link Camera}  {@link position}
+     * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
      */
-    setPosition(position?: Vec3): void;
-    /**
-     * Update the {@link modelMatrix} and {@link viewMatrix}.
-     */
-    applyPosition(): void;
+    onAfterMatrixStackUpdate(): void;
     /**
      * Sets a {@link CSSPerspective} property based on {@link width}, {@link height}, {@link pixelRatio} and {@link fov}
      * Used to translate planes along the Z axis using pixel units as CSS would do

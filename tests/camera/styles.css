@@ -1,0 +1,6 @@
+.mesh-bounding-box {
+  position: fixed;
+  box-sizing: border-box;
+  border-width: 2px;
+  border-style: solid;
+}

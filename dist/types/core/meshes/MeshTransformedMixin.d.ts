@@ -41,6 +41,10 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
      */
     constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams);
     /**
+     * Set default shaders if one or both of them are missing
+     */
+    setShaders(): void;
+    /**
      * Override {@link MeshBaseClass} method to add the domFrustum
      */
     computeGeometry(): void;
@@ -77,13 +81,13 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
     onAfterMatrixStackUpdate(): void;
     /**
      * Assign a callback function to _onReEnterViewCallback
-     * @param callback - callback to run when {@link MeshTransformedBase} is reentering the view frustum
+     * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
      * @returns - our Mesh
      */
     onReEnterView: (callback: () => void) => MeshTransformedBaseClass;
     /**
      * Assign a callback function to _onLeaveViewCallback
-     * @param callback - callback to run when {@link MeshTransformedBase} is leaving the view frustum
+     * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
      * @returns - our Mesh
      */
     onLeaveView: (callback: () => void) => MeshTransformedBaseClass;

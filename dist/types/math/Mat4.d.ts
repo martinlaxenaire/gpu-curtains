@@ -91,6 +91,7 @@ export declare class Mat4 {
      * @returns - this [matrix]{@link Mat4} after the premultiply scale operation
      */
     premultiplyScale(vector?: Vec3): Mat4;
+    invert(): Mat4;
     /**
      * Get the [matrix]{@link Mat4} inverse
      * @returns - inverted [matrix]{@link Mat4}
@@ -114,6 +115,14 @@ export declare class Mat4 {
      * @returns - rotated [matrix]{@link Mat4}
      */
     rotateFromQuaternion(quaternion?: Quat): Mat4;
+    /**
+     * Set this [matrix]{@link Mat4} as a rotation matrix based on an eye, target and up [vectors]{@link Vec3}
+     * @param eye - [position]{@link Vec3} of the object that should be rotated
+     * @param target - [target]{@link Vec3} to look at
+     * @param up - up [vector]{@link Vec3}
+     * @returns - rotated [matrix]{@link Mat4}
+     */
+    lookAt(eye?: Vec3, target?: Vec3, up?: Vec3): Mat4;
     /**
      * Creates a [matrix]{@link Mat4} from a [quaternion]{@link Quat} rotation, [vector]{@link Vec3} translation and [vector]{@link Vec3} scale
      * Equivalent for applying translation, rotation and scale matrices but much faster

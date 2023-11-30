@@ -33,9 +33,9 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setCamera(cameraParameters: CameraBasePerspectiveOptions): void;
     /**
-     * Callback to run each time the [camera]{@link GPUCameraRenderer#camera} position changes
+     * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
-    onCameraPositionChanged(): void;
+    onCameraMatricesChanged(): void;
     /**
      * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
      */
@@ -47,7 +47,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
     /**
      * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
      */
-    updateCameraMatrixStack(): void;
+    updateCameraBindings(): void;
     /**
      * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
      * @param fov - new [field of view]{@link Camera#fov}
@@ -65,7 +65,11 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     onResize(): void;
     /**
-     * Check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed, then update it and then call our [super render method]{@link GPURenderer#render}
+     * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
+     */
+    updateCamera(): void;
+    /**
+     * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
      */
     render(): void;
     /**

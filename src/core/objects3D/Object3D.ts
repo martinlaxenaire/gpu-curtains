@@ -202,7 +202,7 @@ export class Object3D {
 
   set modelMatrix(value: Mat4) {
     this.matrices.model.matrix = value
-    this.matrices.model.shouldUpdate = true
+    this.shouldUpdateModelMatrix()
   }
 
   /**
@@ -210,6 +210,16 @@ export class Object3D {
    */
   shouldUpdateModelMatrix() {
     this.matrices.model.shouldUpdate = true
+  }
+
+  /**
+   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+   * @param target - [target]{@link Vec3} to look at
+   */
+  lookAt(target: Vec3 = new Vec3()) {
+    const rotationMatrix = new Mat4().lookAt(this.position, target)
+    this.quaternion.setFromRotationMatrix(rotationMatrix)
+    this.shouldUpdateModelMatrix()
   }
 
   /**

@@ -127,12 +127,23 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   }
 
-  const handlePlane = (plane, planeIndex) => {
+  let planesLoaded = 0
+
+  const updateLoader = () => {
+    document.querySelector('#loader').textContent = `${(planesLoaded * 100) / planeElements.length}%`
+  }
+
+  updateLoader()
+
+  const handlePlane = (plane) => {
     // check if our plane is defined and use it
     plane
       .onReady(() => {
+        planesLoaded++
+        updateLoader()
+
         // once everything is ready, display everything
-        if (planeIndex === planes.length - 1) {
+        if (planesLoaded === planes.length) {
           document.body.classList.add('planes-loaded')
         }
       })
@@ -149,7 +160,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     console.log(plane)
 
-    handlePlane(plane, planeIndex)
+    handlePlane(plane)
   })
 
   // now handle additional planes
@@ -163,7 +174,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[i], params)
       planes.push(plane)
 
-      handlePlane(plane, i)
+      handlePlane(plane)
 
       // 30 planes are enough, right ?
       if (planes.length >= 28) {

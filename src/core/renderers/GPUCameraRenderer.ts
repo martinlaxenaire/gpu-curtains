@@ -72,12 +72,8 @@ export class GPUCameraRenderer extends GPURenderer {
       width,
       height,
       pixelRatio: this.pixelRatio,
-      // TODO is this still needed after all?
-      // onPerspectiveChanged: () => {
-      //   this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
-      // },
-      onPositionChanged: () => {
-        this.onCameraPositionChanged()
+      onMatricesChanged: () => {
+        this.onCameraMatricesChanged()
       },
     })
 
@@ -85,10 +81,16 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Callback to run each time the [camera]{@link GPUCameraRenderer#camera} position changes
+   * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
    */
-  onCameraPositionChanged() {
-    this.setPerspective()
+  onCameraMatricesChanged() {
+    this.updateCameraBindings()
+
+    this.meshes.forEach((mesh) => {
+      if ('modelViewMatrix' in mesh) {
+        mesh.updateSizePositionAndProjection()
+      }
+    })
   }
 
   /**
@@ -150,7 +152,7 @@ export class GPUCameraRenderer extends GPURenderer {
   /**
    * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
    */
-  updateCameraMatrixStack() {
+  updateCameraBindings() {
     this.cameraBufferBinding?.shouldUpdateBinding('model')
     this.cameraBufferBinding?.shouldUpdateBinding('view')
     this.cameraBufferBinding?.shouldUpdateBinding('projection')
@@ -171,7 +173,7 @@ export class GPUCameraRenderer extends GPURenderer {
    * @param position - new [position]{@link Camera#position}
    */
   setCameraPosition(position: Vec3 = new Vec3(0, 0, 1)) {
-    this.camera.setPosition(position)
+    this.camera.position.copy(position)
   }
 
   /**
@@ -180,18 +182,27 @@ export class GPUCameraRenderer extends GPURenderer {
   onResize() {
     super.onResize()
     this.setPerspective()
-    this.updateCameraMatrixStack()
+    this.updateCameraBindings()
+  }
+
+  /* RENDER */
+
+  /**
+   * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
+   */
+  updateCamera() {
+    this.camera?.updateMatrixStack()
+    this.setCameraBindGroup()
+    this.cameraBindGroup?.update()
   }
 
   /**
-   * Check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed, then update it and then call our [super render method]{@link GPURenderer#render}
+   * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
    */
   render() {
     if (!this.ready) return
 
-    this.setCameraBindGroup()
-    this.cameraBindGroup?.update()
-
+    this.updateCamera()
     super.render()
   }
 

@@ -45,13 +45,6 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
       cacheManager.addPlaneGeometry(geometry)
     }
 
-    if (!parameters.shaders.vertex || !parameters.shaders.vertex.code) {
-      parameters.shaders.vertex = {
-        code: default_vsWgsl,
-        entryPoint: 'main',
-      }
-    }
-
     // @ts-ignore
     super(renderer, null, { geometry, ...parameters })
 

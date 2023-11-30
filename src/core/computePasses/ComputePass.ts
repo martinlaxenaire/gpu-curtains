@@ -58,6 +58,9 @@ export class ComputePass {
   /** Flag indicating whether this {@link ComputePass} is ready to be rendered */
   _ready: boolean
 
+  /** Empty object to store any additional data or custom properties into your {@link ComputePass} */
+  userData: Record<string, unknown>
+
   /**
    * Whether this {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically
    * @private
@@ -132,6 +135,8 @@ export class ComputePass {
     if (autoAddToScene !== undefined) {
       this.#autoAddToScene = autoAddToScene
     }
+
+    this.userData = {}
 
     this.ready = false
 

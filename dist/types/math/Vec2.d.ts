@@ -111,6 +111,16 @@ export declare class Vec2 {
      */
     equals(vector?: Vec2): boolean;
     /**
+     * Get the square length of this [vector]{@link Vec2}
+     * @returns - square length of this [vector]{@link Vec2}
+     */
+    lengthSq(): number;
+    /**
+     * Get the length of this [vector]{@link Vec2}
+     * @returns - length of this [vector]{@link Vec2}
+     */
+    length(): number;
+    /**
      * Normalize this [vector]{@link Vec2}
      * @returns - normalized [vector]{@link Vec2}
      */

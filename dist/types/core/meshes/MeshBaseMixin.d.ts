@@ -8,6 +8,7 @@ import { RenderTarget } from '../renderPasses/RenderTarget';
 import { Material } from '../materials/Material';
 import { DOMElementBoundingRect } from '../DOM/DOMElement';
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials';
+import { MeshTransformedBaseClass } from './MeshTransformedMixin';
 export interface MeshBaseRenderParams extends RenderMaterialParams {
     /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
     autoAddToScene: boolean;
@@ -72,6 +73,8 @@ export declare class MeshBaseClass {
     visible: boolean;
     /** Flag indicating whether this {@link MeshBaseClass} is ready to be drawn */
     _ready: boolean;
+    /** Empty object to store any additional data or custom properties into your Mesh. */
+    userData: Record<string, unknown>;
     /** function assigned to the [onReady]{@link MeshBaseClass#onReady} callback */
     _onReadyCallback: () => void;
     /** function assigned to the [onBeforeRender]{@link MeshBaseClass#onBeforeRender} callback */
@@ -87,31 +90,31 @@ export declare class MeshBaseClass {
      * @param callback - callback to run when {@link MeshBaseClass} is ready
      * @returns - our Mesh
      */
-    onReady: (callback: () => void) => MeshBaseClass;
+    onReady: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
     /**
      * Assign a callback function to _onBeforeRenderCallback
      * @param callback - callback to run just before {@link MeshBaseClass} will be rendered
      * @returns - our Mesh
      */
-    onBeforeRender: (callback: () => void) => MeshBaseClass;
+    onBeforeRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
     /**
      * Assign a callback function to _onRenderCallback
      * @param callback - callback to run when {@link MeshBaseClass} is rendered
      * @returns - our Mesh
      */
-    onRender: (callback: () => void) => MeshBaseClass;
+    onRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
     /**
      * Assign a callback function to _onAfterRenderCallback
      * @param callback - callback to run just after {@link MeshBaseClass} has been rendered
      * @returns - our Mesh
      */
-    onAfterRender: (callback: () => void) => MeshBaseClass;
+    onAfterRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
     /**
      * Assign a callback function to _onBeforeRenderCallback
      * @param callback - callback to run just after {@link MeshBaseClass} has been resized
      * @returns - our Mesh
      */
-    onAfterResize: (callback: () => void) => MeshBaseClass;
+    onAfterResize: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
     /**
      * {@link MeshBaseClass} constructor
      * @param renderer - our [renderer]{@link Renderer} class object
@@ -138,6 +141,10 @@ export declare class MeshBaseClass {
      * Remove a Mesh from the renderer and the {@link Scene}
      */
     removeFromScene(): void;
+    /**
+     * Set default shaders if one or both of them are missing
+     */
+    setShaders(): void;
     /**
      * Compute the Mesh geometry if needed
      */

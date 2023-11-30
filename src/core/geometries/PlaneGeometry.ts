@@ -123,7 +123,18 @@ export class PlaneGeometry extends IndexedGeometry {
       array: new Float32Array(verticesCount * 3),
     }
 
+    const normal = {
+      name: 'normal',
+      type: 'vec3f',
+      bufferFormat: 'float32x3',
+      // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
+      size: 3,
+      bufferLength: verticesCount * 3,
+      array: new Float32Array(verticesCount * 3),
+    }
+
     let positionOffset = 0
+    let normalOffset = 0
     let uvOffset = 0
 
     // this is how it will look for a 3x2 quad
@@ -153,6 +164,10 @@ export class PlaneGeometry extends IndexedGeometry {
           position.array[positionOffset++] = (u - 0.5) * 2
           position.array[positionOffset++] = (v - 0.5) * 2
           position.array[positionOffset++] = 0
+
+          normal.array[normalOffset++] = 0
+          normal.array[normalOffset++] = 0
+          normal.array[normalOffset++] = 1
         }
 
         uv.array[uvOffset++] = u + 1 / this.definition.width
@@ -161,9 +176,14 @@ export class PlaneGeometry extends IndexedGeometry {
         position.array[positionOffset++] = (u + 1 / this.definition.width - 0.5) * 2
         position.array[positionOffset++] = (v - 0.5) * 2
         position.array[positionOffset++] = 0
+
+        // normals are simple
+        normal.array[normalOffset++] = 0
+        normal.array[normalOffset++] = 0
+        normal.array[normalOffset++] = 1
       }
     }
 
-    return { position, uv } as Record<string, VertexBufferAttributeParams>
+    return { position, uv, normal } as Record<string, VertexBufferAttributeParams>
   }
 }

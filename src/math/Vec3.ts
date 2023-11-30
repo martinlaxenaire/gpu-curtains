@@ -242,12 +242,28 @@ export class Vec3 {
   }
 
   /**
+   * Get the square length of this [vector]{@link Vec3}
+   * @returns - square length of this [vector]{@link Vec3}
+   */
+  lengthSq(): number {
+    return this.x * this.x + this.y * this.y + this.z * this.z
+  }
+
+  /**
+   * Get the length of this [vector]{@link Vec3}
+   * @returns - length of this [vector]{@link Vec3}
+   */
+  length(): number {
+    return Math.sqrt(this.lengthSq())
+  }
+
+  /**
    * Normalize this [vector]{@link Vec3}
    * @returns - normalized [vector]{@link Vec3}
    */
   normalize(): Vec3 {
     // normalize
-    let len = this.x * this.x + this.y * this.y + this.z * this.z
+    let len = this.lengthSq()
     if (len > 0) {
       len = 1 / Math.sqrt(len)
     }
@@ -265,6 +281,36 @@ export class Vec3 {
    */
   dot(vector: Vec3 = new Vec3()): number {
     return this.x * vector.x + this.y * vector.y + this.z * vector.z
+  }
+
+  /**
+   * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
+   * @param vector - [vector]{@link Vec3} to use for cross product
+   * @returns - this [vector]{@link Vec3} after cross product
+   */
+  cross(vector: Vec3 = new Vec3()): Vec3 {
+    return this.crossVectors(this, vector)
+  }
+
+  /**
+   * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
+   * @param a - first [vector]{@link Vec3} to use for cross product
+   * @param b - second [vector]{@link Vec3} to use for cross product
+   * @returns - this [vector]{@link Vec3} after cross product
+   */
+  crossVectors(a: Vec3 = new Vec3(), b: Vec3 = new Vec3()): Vec3 {
+    const ax = a.x,
+      ay = a.y,
+      az = a.z
+    const bx = b.x,
+      by = b.y,
+      bz = b.z
+
+    this.x = ay * bz - az * by
+    this.y = az * bx - ax * bz
+    this.z = ax * by - ay * bx
+
+    return this
   }
 
   /**
@@ -332,6 +378,18 @@ export class Vec3 {
     this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx
 
     return this
+  }
+
+  /**
+   * Rotate a [vector]{@link Vec3} around and axis by a given angle
+   * @param axis - normalized [vector]{@link Vec3} around which to rotate
+   * @param angle - angle (in radians) to rotate
+   * @param quaternion - optional [quaternion]{@link Quat} to use for rotation computations
+   * @returns - this [vector]{@link Vec3} with the rotation applied
+   */
+  applyAxisAngle(axis = new Vec3(), angle = 0, quaternion = new Quat()) {
+    // https://github.com/mrdoob/three.js/blob/master/src/math/Vector3.js#L212
+    return this.applyQuat(quaternion.setFromAxisAngle(axis, angle))
   }
 
   /**

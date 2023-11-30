@@ -169,9 +169,6 @@ export class GPUCurtains {
 
     this.setRenderer()
 
-    // we are ready to go
-    this.container.appendChild(this.renderer.canvas)
-
     // only if auto render
     if (this.options.autoRender) {
       this.animate()

@@ -51,6 +51,8 @@ export declare class ComputePass {
     material: ComputeMaterial;
     /** Flag indicating whether this {@link ComputePass} is ready to be rendered */
     _ready: boolean;
+    /** Empty object to store any additional data or custom properties into your {@link ComputePass} */
+    userData: Record<string, unknown>;
     /** function assigned to the [onReady]{@link ComputePass#onReady} callback */
     _onReadyCallback: () => void;
     /** function assigned to the [onBeforeRender]{@link ComputePass#onBeforeRender} callback */

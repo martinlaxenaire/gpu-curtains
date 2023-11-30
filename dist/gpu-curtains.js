@@ -537,6 +537,20 @@ var GPUCurtains = (() => {
       return this.x === vector.x && this.y === vector.y;
     }
     /**
+     * Get the square length of this [vector]{@link Vec2}
+     * @returns - square length of this [vector]{@link Vec2}
+     */
+    lengthSq() {
+      return this.x * this.x + this.y * this.y;
+    }
+    /**
+     * Get the length of this [vector]{@link Vec2}
+     * @returns - length of this [vector]{@link Vec2}
+     */
+    length() {
+      return Math.sqrt(this.lengthSq());
+    }
+    /**
      * Normalize this [vector]{@link Vec2}
      * @returns - normalized [vector]{@link Vec2}
      */
@@ -685,6 +699,54 @@ var GPUCurtains = (() => {
         this.elements[1] = cosx * siny * cosz - sinx * cosy * sinz;
         this.elements[2] = cosx * cosy * sinz + sinx * siny * cosz;
         this.elements[3] = cosx * cosy * cosz + sinx * siny * sinz;
+      }
+      return this;
+    }
+    /**
+     * Set a [quaternion]{@link Quat} from a rotation axis [vector]{@link Vec3} and an angle
+     * @param axis - normalized [vector]{@link Vec3} around which to rotate
+     * @param angle - angle (in radians) to rotate
+     * @returns - [quaternion]{@link Quat} after having applied the rotation
+     */
+    setFromAxisAngle(axis = new Vec3(), angle = 0) {
+      const halfAngle = angle / 2, s = Math.sin(halfAngle);
+      this.elements[0] = axis.x * s;
+      this.elements[1] = axis.y * s;
+      this.elements[2] = axis.z * s;
+      this.elements[3] = Math.cos(halfAngle);
+      return this;
+    }
+    /**
+     * Set a [quaternion]{@link Quat} from a rotation [matrix]{@link Mat4}
+     * @param matrix - rotation [matrix]{@link Mat4} to use
+     * @returns - [quaternion]{@link Quat} after having applied the rotation
+     */
+    setFromRotationMatrix(matrix) {
+      const te = matrix.elements, m11 = te[0], m12 = te[4], m13 = te[8], m21 = te[1], m22 = te[5], m23 = te[9], m31 = te[2], m32 = te[6], m33 = te[10], trace = m11 + m22 + m33;
+      if (trace > 0) {
+        const s = 0.5 / Math.sqrt(trace + 1);
+        this.elements[3] = 0.25 / s;
+        this.elements[0] = (m32 - m23) * s;
+        this.elements[1] = (m13 - m31) * s;
+        this.elements[2] = (m21 - m12) * s;
+      } else if (m11 > m22 && m11 > m33) {
+        const s = 2 * Math.sqrt(1 + m11 - m22 - m33);
+        this.elements[3] = (m32 - m23) / s;
+        this.elements[0] = 0.25 * s;
+        this.elements[1] = (m12 + m21) / s;
+        this.elements[2] = (m13 + m31) / s;
+      } else if (m22 > m33) {
+        const s = 2 * Math.sqrt(1 + m22 - m11 - m33);
+        this.elements[3] = (m13 - m31) / s;
+        this.elements[0] = (m12 + m21) / s;
+        this.elements[1] = 0.25 * s;
+        this.elements[2] = (m23 + m32) / s;
+      } else {
+        const s = 2 * Math.sqrt(1 + m33 - m11 - m22);
+        this.elements[3] = (m21 - m12) / s;
+        this.elements[0] = (m13 + m31) / s;
+        this.elements[1] = (m23 + m32) / s;
+        this.elements[2] = 0.25 * s;
       }
       return this;
     }
@@ -969,52 +1031,36 @@ var GPUCurtains = (() => {
       te[15] = a44 * b44;
       return this;
     }
+    invert() {
+      const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+      const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+      if (det === 0)
+        return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      const detInv = 1 / det;
+      te[0] = t11 * detInv;
+      te[1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * detInv;
+      te[2] = (n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44) * detInv;
+      te[3] = (n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43) * detInv;
+      te[4] = t12 * detInv;
+      te[5] = (n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44) * detInv;
+      te[6] = (n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44) * detInv;
+      te[7] = (n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43) * detInv;
+      te[8] = t13 * detInv;
+      te[9] = (n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44) * detInv;
+      te[10] = (n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44) * detInv;
+      te[11] = (n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43) * detInv;
+      te[12] = t14 * detInv;
+      te[13] = (n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34) * detInv;
+      te[14] = (n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34) * detInv;
+      te[15] = (n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33) * detInv;
+      return this;
+    }
     /**
      * Get the [matrix]{@link Mat4} inverse
      * @returns - inverted [matrix]{@link Mat4}
      */
     getInverse() {
-      const te = this.elements;
-      const out = new _Mat4();
-      const oe = out.elements;
-      const a00 = te[0], a01 = te[1], a02 = te[2], a03 = te[3];
-      const a10 = te[4], a11 = te[5], a12 = te[6], a13 = te[7];
-      const a20 = te[8], a21 = te[9], a22 = te[10], a23 = te[11];
-      const a30 = te[12], a31 = te[13], a32 = te[14], a33 = te[15];
-      const b00 = a00 * a11 - a01 * a10;
-      const b01 = a00 * a12 - a02 * a10;
-      const b02 = a00 * a13 - a03 * a10;
-      const b03 = a01 * a12 - a02 * a11;
-      const b04 = a01 * a13 - a03 * a11;
-      const b05 = a02 * a13 - a03 * a12;
-      const b06 = a20 * a31 - a21 * a30;
-      const b07 = a20 * a32 - a22 * a30;
-      const b08 = a20 * a33 - a23 * a30;
-      const b09 = a21 * a32 - a22 * a31;
-      const b10 = a21 * a33 - a23 * a31;
-      const b11 = a22 * a33 - a23 * a32;
-      let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-      if (!det) {
-        return null;
-      }
-      det = 1 / det;
-      oe[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
-      oe[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
-      oe[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
-      oe[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
-      oe[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
-      oe[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
-      oe[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
-      oe[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
-      oe[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
-      oe[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
-      oe[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
-      oe[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
-      oe[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
-      oe[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
-      oe[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
-      oe[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
-      return out;
+      return this.clone().invert();
     }
     /**
      * Translate a [matrix]{@link Mat4}
@@ -1071,6 +1117,43 @@ var GPUCurtains = (() => {
       te[2] = xz - wy;
       te[6] = yz + wx;
       te[10] = 1 - (xx + yy);
+      return this;
+    }
+    /**
+     * Set this [matrix]{@link Mat4} as a rotation matrix based on an eye, target and up [vectors]{@link Vec3}
+     * @param eye - [position]{@link Vec3} of the object that should be rotated
+     * @param target - [target]{@link Vec3} to look at
+     * @param up - up [vector]{@link Vec3}
+     * @returns - rotated [matrix]{@link Mat4}
+     */
+    lookAt(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
+      const te = this.elements;
+      const _z = eye.clone().sub(target);
+      if (_z.lengthSq() === 0) {
+        _z.z = 1;
+      }
+      _z.normalize();
+      const _x = new Vec3().crossVectors(up, _z);
+      if (_x.lengthSq() === 0) {
+        if (Math.abs(up.z) === 1) {
+          _z.x += 1e-4;
+        } else {
+          _z.z += 1e-4;
+        }
+        _z.normalize();
+        _x.crossVectors(up, _z);
+      }
+      _x.normalize();
+      const _y = new Vec3().crossVectors(_z, _x);
+      te[0] = _x.x;
+      te[4] = _y.x;
+      te[8] = _z.x;
+      te[1] = _x.y;
+      te[5] = _y.y;
+      te[9] = _z.y;
+      te[2] = _x.z;
+      te[6] = _y.z;
+      te[10] = _z.z;
       return this;
     }
     /**
@@ -1372,11 +1455,25 @@ var GPUCurtains = (() => {
       return this.x === vector.x && this.y === vector.y && this.z === vector.z;
     }
     /**
+     * Get the square length of this [vector]{@link Vec3}
+     * @returns - square length of this [vector]{@link Vec3}
+     */
+    lengthSq() {
+      return this.x * this.x + this.y * this.y + this.z * this.z;
+    }
+    /**
+     * Get the length of this [vector]{@link Vec3}
+     * @returns - length of this [vector]{@link Vec3}
+     */
+    length() {
+      return Math.sqrt(this.lengthSq());
+    }
+    /**
      * Normalize this [vector]{@link Vec3}
      * @returns - normalized [vector]{@link Vec3}
      */
     normalize() {
-      let len = this.x * this.x + this.y * this.y + this.z * this.z;
+      let len = this.lengthSq();
       if (len > 0) {
         len = 1 / Math.sqrt(len);
       }
@@ -1392,6 +1489,28 @@ var GPUCurtains = (() => {
      */
     dot(vector = new _Vec3()) {
       return this.x * vector.x + this.y * vector.y + this.z * vector.z;
+    }
+    /**
+     * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
+     * @param vector - [vector]{@link Vec3} to use for cross product
+     * @returns - this [vector]{@link Vec3} after cross product
+     */
+    cross(vector = new _Vec3()) {
+      return this.crossVectors(this, vector);
+    }
+    /**
+     * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
+     * @param a - first [vector]{@link Vec3} to use for cross product
+     * @param b - second [vector]{@link Vec3} to use for cross product
+     * @returns - this [vector]{@link Vec3} after cross product
+     */
+    crossVectors(a = new _Vec3(), b = new _Vec3()) {
+      const ax = a.x, ay = a.y, az = a.z;
+      const bx = b.x, by = b.y, bz = b.z;
+      this.x = ay * bz - az * by;
+      this.y = az * bx - ax * bz;
+      this.z = ax * by - ay * bx;
+      return this;
     }
     /**
      * Calculate the linear interpolation of this [vector]{@link Vec3} by given [vector]{@link Vec3} and alpha, where alpha is the percent distance along the line
@@ -1438,6 +1557,16 @@ var GPUCurtains = (() => {
       this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
       this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
       return this;
+    }
+    /**
+     * Rotate a [vector]{@link Vec3} around and axis by a given angle
+     * @param axis - normalized [vector]{@link Vec3} around which to rotate
+     * @param angle - angle (in radians) to rotate
+     * @param quaternion - optional [quaternion]{@link Quat} to use for rotation computations
+     * @returns - this [vector]{@link Vec3} with the rotation applied
+     */
+    applyAxisAngle(axis = new _Vec3(), angle = 0, quaternion = new Quat()) {
+      return this.applyQuat(quaternion.setFromAxisAngle(axis, angle));
     }
     /**
      * Project a 3D coordinate [vector]{@link Vec3} to a 2D coordinate [vector]{@link Vec3}
@@ -1602,7 +1731,6 @@ var GPUCurtains = (() => {
         if (this.isArray) {
           let valueIndex = 0;
           this.alignment.entries.forEach((entry, entryIndex) => {
-            const elementSize = this.bufferLayout.size / this.bufferLayout.numElements;
             const entryStartOffset = entry.row.start * slotsPerRow + entry.slot.start / bytesPerSlot;
             const entryEndOffset = entry.row.end * slotsPerRow + Math.ceil(entry.slot.end / bytesPerSlot);
             for (let i = 0; i < this.bufferLayout.numElements; i++) {
@@ -2460,13 +2588,22 @@ var GPUCurtains = (() => {
     }
     set modelMatrix(value) {
       this.matrices.model.matrix = value;
-      this.matrices.model.shouldUpdate = true;
+      this.shouldUpdateModelMatrix();
     }
     /**
      * Set our model matrix shouldUpdate flag to true (tell it to update)
      */
     shouldUpdateModelMatrix() {
       this.matrices.model.shouldUpdate = true;
+    }
+    /**
+     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+     * @param target - [target]{@link Vec3} to look at
+     */
+    lookAt(target = new Vec3()) {
+      const rotationMatrix = new Mat4().lookAt(this.position, target);
+      this.quaternion.setFromRotationMatrix(rotationMatrix);
+      this.shouldUpdateModelMatrix();
     }
     /**
      * Update our model matrix
@@ -3199,7 +3336,7 @@ var GPUCurtains = (() => {
   };
 
   // src/core/camera/Camera.ts
-  var Camera = class {
+  var Camera = class extends Object3D {
     /**
      * Camera constructor
      * @param parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
@@ -3211,77 +3348,148 @@ var GPUCurtains = (() => {
       width = 1,
       height = 1,
       pixelRatio = 1,
-      onPerspectiveChanged = () => {
-      },
-      onPositionChanged = () => {
+      onMatricesChanged = () => {
       }
     } = {}) {
-      this.position = new Vec3(0, 0, 1).onChange(() => this.applyPosition());
-      this.projectionMatrix = new Mat4();
-      this.modelMatrix = new Mat4();
-      this.viewMatrix = new Mat4();
-      this.onPerspectiveChanged = onPerspectiveChanged;
-      this.onPositionChanged = onPositionChanged;
-      this.shouldUpdate = false;
+      super();
+      this.position.set(0, 0, 5);
+      this.onMatricesChanged = onMatricesChanged;
+      this.size = {
+        width: 1,
+        height: 1
+      };
       this.setPerspective(fov, near, far, width, height, pixelRatio);
     }
+    /** Private {@link Camera} field of view */
+    #fov;
+    /** Private {@link Camera} near plane */
+    #near;
+    /** Private {@link Camera} far plane */
+    #far;
+    /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
+    #pixelRatio;
     /**
-     * Sets the {@link Camera} {@link fov}. Update the {@link projectionMatrix} only if the field of view actually changed
-     * @param fov - new {@link fov}
+     * Set our transform and projection matrices
      */
-    setFov(fov = this.fov) {
-      fov = Math.max(1, Math.min(fov, 179));
+    setMatrices() {
+      super.setMatrices();
+      this.matrices = {
+        ...this.matrices,
+        view: {
+          matrix: new Mat4(),
+          shouldUpdate: false,
+          onUpdate: () => {
+            this.viewMatrix.copy(this.modelMatrix).invert();
+          }
+        },
+        projection: {
+          matrix: new Mat4(),
+          shouldUpdate: false,
+          onUpdate: () => this.updateProjectionMatrix()
+        }
+      };
+    }
+    /**
+     * Get/set our view matrix
+     * @readonly
+     */
+    get viewMatrix() {
+      return this.matrices.view.matrix;
+    }
+    set viewMatrix(value) {
+      this.matrices.view.matrix = value;
+      this.matrices.view.shouldUpdate = true;
+    }
+    /**
+     * Get/set our projection matrix
+     * @readonly
+     */
+    get projectionMatrix() {
+      return this.matrices.projection.matrix;
+    }
+    set projectionMatrix(value) {
+      this.matrices.projection.matrix = value;
+      this.shouldUpdateProjectionMatrix();
+    }
+    /**
+     * Set our projection matrix shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateProjectionMatrix() {
+      this.matrices.projection.shouldUpdate = true;
+    }
+    /**
+     * Update our model matrix and tell our view matrix to update as well
+     */
+    updateModelMatrix() {
+      super.updateModelMatrix();
+      this.setScreenRatios();
+      this.matrices.view.shouldUpdate = true;
+    }
+    /**
+     * Get / set the {@link Camera} [field of view]{@link Camera##fov}. Update the {@link projectionMatrix} only if the field of view actually changed
+     * @readonly
+     */
+    get fov() {
+      return this.#fov;
+    }
+    set fov(fov) {
+      fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        this.fov = fov;
-        this.setPosition();
-        this.shouldUpdate = true;
+        this.#fov = fov;
+        this.shouldUpdateProjectionMatrix();
       }
       this.setScreenRatios();
       this.setCSSPerspective();
     }
     /**
-     * Sets the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-     * @param near - {@link near} plane value to use
+     * Get / set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+     * @readonly
      */
-    setNear(near = this.near) {
-      near = Math.max(near, 0.01);
+    get near() {
+      return this.#near;
+    }
+    set near(near) {
+      near = Math.max(near ?? this.near, 0.01);
       if (near !== this.near) {
-        this.near = near;
-        this.shouldUpdate = true;
+        this.#near = near;
+        this.shouldUpdateProjectionMatrix();
       }
     }
     /**
-     * Sets the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-     * @param far - {@link far} plane value to use
+     * Get / set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+     * @readonly
      */
-    setFar(far = this.far) {
-      far = Math.max(far, 50);
+    get far() {
+      return this.#far;
+    }
+    set far(far) {
+      far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        this.far = far;
-        this.shouldUpdate = true;
+        this.#far = far;
+        this.shouldUpdateProjectionMatrix();
       }
     }
     /**
-     * Sets the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
-     * @param pixelRatio - {@link pixelRatio} value to use
+     * Get / set the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
+     * @readonly
      */
-    setPixelRatio(pixelRatio = this.pixelRatio) {
-      if (pixelRatio !== this.pixelRatio) {
-        this.shouldUpdate = true;
-      }
-      this.pixelRatio = pixelRatio;
+    get pixelRatio() {
+      return this.#pixelRatio;
+    }
+    set pixelRatio(pixelRatio) {
+      this.#pixelRatio = pixelRatio ?? this.pixelRatio;
+      this.setCSSPerspective();
     }
     /**
      * Sets the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
-     * @param width - {@link width} value to use
-     * @param height - {@link height} value to use
+     * @param size - {@link width} and {@link height} values to use
      */
-    setSize(width, height) {
-      if (width !== this.width || height !== this.height) {
-        this.shouldUpdate = true;
+    setSize({ width, height }) {
+      if (width !== this.size.width || height !== this.size.height) {
+        this.shouldUpdateProjectionMatrix();
       }
-      this.width = width;
-      this.height = height;
+      this.size.width = width;
+      this.size.height = height;
       this.setScreenRatios();
       this.setCSSPerspective();
     }
@@ -3295,50 +3503,18 @@ var GPUCurtains = (() => {
      * @param pixelRatio - pixel ratio value to use
      */
     // TODO use a parameter object instead?
-    setPerspective(fov = this.fov, near = this.near, far = this.far, width = this.width, height = this.height, pixelRatio = this.pixelRatio) {
-      this.setPixelRatio(pixelRatio);
-      this.setSize(width, height);
-      this.setFov(fov);
-      this.setNear(near);
-      this.setFar(far);
-      if (this.shouldUpdate) {
-        this.updateProjectionMatrix();
-        this.onPerspectiveChanged();
-      }
+    setPerspective(fov = this.fov, near = this.near, far = this.far, width = this.size.width, height = this.size.height, pixelRatio = this.pixelRatio) {
+      this.setSize({ width, height });
+      this.pixelRatio = pixelRatio;
+      this.fov = fov;
+      this.near = near;
+      this.far = far;
     }
     /**
-     * Sets the {@link Camera} {@link position} and update the {@link modelMatrix} and {@link viewMatrix}.
-     * @param position - new {@link Camera}  {@link position}
+     * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
      */
-    setPosition(position = this.position) {
-      this.position.copy(position);
-      this.applyPosition();
-    }
-    /**
-     * Update the {@link modelMatrix} and {@link viewMatrix}.
-     */
-    applyPosition() {
-      this.modelMatrix.set(
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        this.position.x,
-        this.position.y,
-        this.position.z,
-        1
-      );
-      this.viewMatrix = this.modelMatrix.clone().getInverse();
-      this.setScreenRatios();
-      this.onPositionChanged();
+    onAfterMatrixStackUpdate() {
+      this.onMatricesChanged();
     }
     /**
      * Sets a {@link CSSPerspective} property based on {@link width}, {@link height}, {@link pixelRatio} and {@link fov}
@@ -3347,7 +3523,7 @@ var GPUCurtains = (() => {
      */
     setCSSPerspective() {
       this.CSSPerspective = Math.pow(
-        Math.pow(this.width / (2 * this.pixelRatio), 2) + Math.pow(this.height / (2 * this.pixelRatio), 2),
+        Math.pow(this.size.width / (2 * this.pixelRatio), 2) + Math.pow(this.size.height / (2 * this.pixelRatio), 2),
         0.5
       ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
     }
@@ -3366,7 +3542,7 @@ var GPUCurtains = (() => {
       const vFOV = this.fov * Math.PI / 180;
       const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth);
       this.screenRatio = {
-        width: height * this.width / this.height,
+        width: height * this.size.width / this.size.height,
         height
       };
     }
@@ -3374,7 +3550,7 @@ var GPUCurtains = (() => {
      * Updates the {@link Camera} {@link projectionMatrix}
      */
     updateProjectionMatrix() {
-      const aspect = this.width / this.height;
+      const aspect = this.size.width / this.size.height;
       const top = this.near * Math.tan(Math.PI / 180 * 0.5 * this.fov);
       const height = 2 * top;
       const width = aspect * height;
@@ -4188,6 +4364,7 @@ var GPUCurtains = (() => {
       if (autoAddToScene !== void 0) {
         this.#autoAddToScene = autoAddToScene;
       }
+      this.userData = {};
       this.ready = false;
       this.setComputeMaterial({
         label: this.options.label,
@@ -5048,7 +5225,17 @@ var GPUCurtains = (() => {
         bufferLength: verticesCount * 3,
         array: new Float32Array(verticesCount * 3)
       };
+      const normal = {
+        name: "normal",
+        type: "vec3f",
+        bufferFormat: "float32x3",
+        // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
+        size: 3,
+        bufferLength: verticesCount * 3,
+        array: new Float32Array(verticesCount * 3)
+      };
       let positionOffset = 0;
+      let normalOffset = 0;
       let uvOffset = 0;
       for (let y = 0; y <= this.definition.height; y++) {
         const v = y / this.definition.height;
@@ -5060,15 +5247,21 @@ var GPUCurtains = (() => {
             position.array[positionOffset++] = (u - 0.5) * 2;
             position.array[positionOffset++] = (v - 0.5) * 2;
             position.array[positionOffset++] = 0;
+            normal.array[normalOffset++] = 0;
+            normal.array[normalOffset++] = 0;
+            normal.array[normalOffset++] = 1;
           }
           uv.array[uvOffset++] = u + 1 / this.definition.width;
           uv.array[uvOffset++] = 1 - v;
           position.array[positionOffset++] = (u + 1 / this.definition.width - 0.5) * 2;
           position.array[positionOffset++] = (v - 0.5) * 2;
           position.array[positionOffset++] = 0;
+          normal.array[normalOffset++] = 0;
+          normal.array[normalOffset++] = 0;
+          normal.array[normalOffset++] = 1;
         }
       }
-      return { position, uv };
+      return { position, uv, normal };
     }
   };
 
@@ -5173,6 +5366,36 @@ var GPUCurtains = (() => {
       });
     }
   };
+
+  // src/core/shaders/chunks/default_vs.wgsl.js
+  var default_vs_wgsl_default = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = vec4f(attributes.position, 1.0);
+  vsOutput.uv = attributes.uv;
+  
+  return vsOutput;
+}`
+  );
+
+  // src/core/shaders/chunks/default_fs.wgsl.js
+  var default_fs_wgsl_default = (
+    /* wgsl */
+    `
+@fragment fn main() -> @location(0) vec4f {
+  return vec4(0.0, 0.0, 0.0, 1.0);
+}`
+  );
 
   // src/core/meshes/MeshBaseMixin.ts
   var meshIndex = 0;
@@ -5282,6 +5505,7 @@ var GPUCurtains = (() => {
         this.visible = visible;
         this.renderOrder = renderOrder;
         this.ready = false;
+        this.userData = {};
         this.computeGeometry();
         this.setMaterial({
           label: this.options.label,
@@ -5329,6 +5553,38 @@ var GPUCurtains = (() => {
           this.renderer.scene.removeMesh(this);
         }
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+      }
+      /* SHADERS */
+      /**
+       * Set default shaders if one or both of them are missing
+       */
+      setShaders() {
+        let { shaders } = this.options;
+        if (!shaders) {
+          shaders = {
+            vertex: {
+              code: default_vs_wgsl_default,
+              entryPoint: "main"
+            },
+            fragment: {
+              code: default_fs_wgsl_default,
+              entryPoint: "main"
+            }
+          };
+        } else {
+          if (!shaders.vertex || !shaders.vertex.code) {
+            shaders.vertex = {
+              code: default_vs_wgsl_default,
+              entryPoint: "main"
+            };
+          }
+          if (!shaders.fragment || !shaders.fragment.code) {
+            shaders.fragment = {
+              code: default_fs_wgsl_default,
+              entryPoint: "main"
+            };
+          }
+        }
       }
       /* GEOMETRY */
       /**
@@ -5380,6 +5636,7 @@ var GPUCurtains = (() => {
        */
       setMaterial(meshParameters) {
         this.transparent = meshParameters.transparent;
+        this.setShaders();
         this.material = new RenderMaterial(this.renderer, meshParameters);
       }
       /**
@@ -5801,27 +6058,6 @@ var GPUCurtains = (() => {
     }
   };
 
-  // src/core/shaders/chunks/default_vs.wgsl.js
-  var default_vs_wgsl_default = (
-    /* wgsl */
-    `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VertexOutput {
-  var vertexOutput: VertexOutput;
-
-  vertexOutput.position = vec4f(attributes.position, 1.0);
-  vertexOutput.uv = attributes.uv;
-  
-  return vertexOutput;
-}`
-  );
-
   // src/utils/CacheManager.ts
   var CacheManager = class {
     /**
@@ -5877,12 +6113,6 @@ struct VertexOutput {
       if (!geometry) {
         geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
         cacheManager.addPlaneGeometry(geometry);
-      }
-      if (!parameters.shaders.vertex || !parameters.shaders.vertex.code) {
-        parameters.shaders.vertex = {
-          code: default_vs_wgsl_default,
-          entryPoint: "main"
-        };
       }
       super(renderer, null, { geometry, ...parameters });
       this.size = {
@@ -5965,6 +6195,15 @@ struct VertexOutput {
       this.shouldUpdateProjectionMatrixStack();
     }
     /**
+     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+     * @param target - [target]{@link Vec3} to look at
+     */
+    lookAt(target = new Vec3()) {
+      const rotationMatrix = new Mat4().lookAt(target, this.position);
+      this.quaternion.setFromRotationMatrix(rotationMatrix);
+      this.shouldUpdateModelMatrix();
+    }
+    /**
      * Set our transform and projection matrices
      */
     setMatrices() {
@@ -5975,7 +6214,7 @@ struct VertexOutput {
           matrix: new Mat4(),
           shouldUpdate: false,
           onUpdate: () => {
-            this.modelViewMatrix.multiplyMatrices(this.camera.viewMatrix, this.modelMatrix);
+            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.modelMatrix);
           }
         },
         modelViewProjection: {
@@ -6039,6 +6278,45 @@ struct VertexOutput {
     }
   };
 
+  // src/core/shaders/chunks/default_projected_vs.wgsl.js
+  var default_projected_vs_wgsl_default = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+  @location(1) normal: vec3f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+  vsOutput.uv = attributes.uv;
+  vsOutput.normal = attributes.normal;
+  
+  return vsOutput;
+}`
+  );
+
+  // src/core/shaders/chunks/default_normal_fs.wgsl.js
+  var default_normal_fs_wgsl_default = (
+    /* wgsl */
+    `
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+  @location(1) normal: vec3f,
+};
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  // normals
+  return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
+}`
+  );
+
   // src/core/meshes/MeshTransformedMixin.ts
   var defaultTransformedMeshParams = {
     //useProjection: true,
@@ -6100,32 +6378,62 @@ struct VertexOutput {
           frustumCulled,
           DOMFrustumMargins
         };
+        this.setDOMFrustum();
         this.geometry = geometry;
         this.updateSizePositionAndProjection();
       }
+      /* SHADERS */
+      /**
+       * Set default shaders if one or both of them are missing
+       */
+      setShaders() {
+        let { shaders } = this.options;
+        if (!shaders) {
+          shaders = {
+            vertex: {
+              code: default_projected_vs_wgsl_default,
+              entryPoint: "main"
+            },
+            fragment: {
+              code: default_normal_fs_wgsl_default,
+              entryPoint: "main"
+            }
+          };
+        } else {
+          if (!shaders.vertex || !shaders.vertex.code) {
+            shaders.vertex = {
+              code: default_projected_vs_wgsl_default,
+              entryPoint: "main"
+            };
+          }
+          if (!shaders.fragment || !shaders.fragment.code) {
+            shaders.fragment = {
+              code: default_normal_fs_wgsl_default,
+              entryPoint: "main"
+            };
+          }
+        }
+      }
       /* GEOMETRY */
       /**
-       * Override {@link MeshBaseClass} method to add the domFrustum
+       * Set the Mesh frustum culling
        */
-      computeGeometry() {
-        if (this.geometry.shouldCompute) {
-          this.geometry.computeGeometry();
-          this.domFrustum = new DOMFrustum({
-            boundingBox: this.geometry.boundingBox,
-            modelViewProjectionMatrix: this.modelViewProjectionMatrix,
-            containerBoundingRect: this.renderer.boundingRect,
-            DOMFrustumMargins: this.options.DOMFrustumMargins,
-            onReEnterView: () => {
-              this._onReEnterViewCallback && this._onReEnterViewCallback();
-            },
-            onLeaveView: () => {
-              this._onLeaveViewCallback && this._onLeaveViewCallback();
-            }
-          });
-          this.frustumCulled = this.options.frustumCulled;
-          this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
-          this.domFrustum.shouldUpdate = this.frustumCulled;
-        }
+      setDOMFrustum() {
+        this.domFrustum = new DOMFrustum({
+          boundingBox: this.geometry.boundingBox,
+          modelViewProjectionMatrix: this.modelViewProjectionMatrix,
+          containerBoundingRect: this.renderer.boundingRect,
+          DOMFrustumMargins: this.options.DOMFrustumMargins,
+          onReEnterView: () => {
+            this._onReEnterViewCallback && this._onReEnterViewCallback();
+          },
+          onLeaveView: () => {
+            this._onLeaveViewCallback && this._onLeaveViewCallback();
+          }
+        });
+        this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
+        this.frustumCulled = this.options.frustumCulled;
+        this.domFrustum.shouldUpdate = this.frustumCulled;
       }
       /* MATERIAL */
       /**
@@ -7091,16 +7399,22 @@ ${this.shaders.compute.head}`;
       this.applyPosition();
     }
     /**
-     * Get the {@link DOMObject3D} scale in world space
+     * Get the [DOMObject3D DOM element]{@link DOMObject3D#domElement} scale in world space
+     */
+    get DOMObjectWorldScale() {
+      return this.#DOMObjectWorldScale.clone();
+    }
+    /**
+     * Get the {@link DOMObject3D} scale in world space (accounting for [scale]{@link DOMObject3D#scale})
      */
     get worldScale() {
-      return this.#DOMObjectWorldScale.clone().multiply(this.scale);
+      return this.DOMObjectWorldScale.multiply(this.scale);
     }
     /**
      * Get the {@link DOMObject3D} position in world space
      */
     get worldPosition() {
-      return this.#DOMObjectWorldPosition;
+      return this.#DOMObjectWorldPosition.clone();
     }
     /**
      * Get/set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
@@ -7467,8 +7781,8 @@ ${this.shaders.compute.head}`;
      */
     mouseToPlaneCoords(mouseCoords = new Vec2()) {
       const worldMouse = {
-        x: 2 * (mouseCoords.x / this.renderer.boundingRect.width) - 1,
-        y: 2 * (1 - mouseCoords.y / this.renderer.boundingRect.height) - 1
+        x: 2 * (mouseCoords.x / this.renderer.pixelRatioBoundingRect.width) - 1,
+        y: 2 * (1 - mouseCoords.y / this.renderer.pixelRatioBoundingRect.height) - 1
       };
       const rayOrigin = this.camera.position.clone();
       const rayDirection = new Vec3(worldMouse.x, worldMouse.y, -0.5);
@@ -7479,7 +7793,7 @@ ${this.shaders.compute.head}`;
       const result = new Vec3(0, 0, 0);
       const denominator = planeNormals.dot(rayDirection);
       if (Math.abs(denominator) >= 1e-4) {
-        const inverseViewMatrix = this.modelMatrix.getInverse().multiply(this.camera.viewMatrix);
+        const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix);
         const planeOrigin = this.worldTransformOrigin.clone().add(this.worldPosition);
         const rotatedOrigin = new Vec3(
           this.worldPosition.x - planeOrigin.x,
@@ -8161,6 +8475,7 @@ ${this.shaders.compute.head}`;
         this.setMainRenderPass();
         this.setPipelineManager();
         this.setScene();
+        this.domElement.element.appendChild(this.canvas);
         this.ready = true;
       }
     }
@@ -8539,21 +8854,22 @@ ${this.shaders.compute.head}`;
         width,
         height,
         pixelRatio: this.pixelRatio,
-        // TODO is this still needed after all?
-        // onPerspectiveChanged: () => {
-        //   this.planes?.forEach((plane) => plane.updateSizePositionAndProjection())
-        // },
-        onPositionChanged: () => {
-          this.onCameraPositionChanged();
+        onMatricesChanged: () => {
+          this.onCameraMatricesChanged();
         }
       });
       this.setCameraBufferBinding();
     }
     /**
-     * Callback to run each time the [camera]{@link GPUCameraRenderer#camera} position changes
+     * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
-    onCameraPositionChanged() {
-      this.setPerspective();
+    onCameraMatricesChanged() {
+      this.updateCameraBindings();
+      this.meshes.forEach((mesh) => {
+        if ("modelViewMatrix" in mesh) {
+          mesh.updateSizePositionAndProjection();
+        }
+      });
     }
     /**
      * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
@@ -8610,7 +8926,7 @@ ${this.shaders.compute.head}`;
     /**
      * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
      */
-    updateCameraMatrixStack() {
+    updateCameraBindings() {
       this.cameraBufferBinding?.shouldUpdateBinding("model");
       this.cameraBufferBinding?.shouldUpdateBinding("view");
       this.cameraBufferBinding?.shouldUpdateBinding("projection");
@@ -8629,7 +8945,7 @@ ${this.shaders.compute.head}`;
      * @param position - new [position]{@link Camera#position}
      */
     setCameraPosition(position = new Vec3(0, 0, 1)) {
-      this.camera.setPosition(position);
+      this.camera.position.copy(position);
     }
     /**
      * Call our [super onResize method]{@link GPURenderer#onResize} and resize our [camera]{@link GPUCameraRenderer#camera} as well
@@ -8637,16 +8953,24 @@ ${this.shaders.compute.head}`;
     onResize() {
       super.onResize();
       this.setPerspective();
-      this.updateCameraMatrixStack();
+      this.updateCameraBindings();
+    }
+    /* RENDER */
+    /**
+     * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
+     */
+    updateCamera() {
+      this.camera?.updateMatrixStack();
+      this.setCameraBindGroup();
+      this.cameraBindGroup?.update();
     }
     /**
-     * Check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed, then update it and then call our [super render method]{@link GPURenderer#render}
+     * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
      */
     render() {
       if (!this.ready)
         return;
-      this.setCameraBindGroup();
-      this.cameraBindGroup?.update();
+      this.updateCamera();
       super.render();
     }
     /**
@@ -8880,10 +9204,10 @@ ${this.shaders.compute.head}`;
     /**
      * Update the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
      */
-    onCameraPositionChanged() {
-      super.onCameraPositionChanged();
-      this.domMeshes?.forEach((mesh) => mesh.updateSizePositionAndProjection());
-    }
+    // onCameraPositionChanged() {
+    //   super.onCameraPositionChanged()
+    //   this.domMeshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
+    // }
     /**
      * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements
      */
@@ -9063,7 +9387,6 @@ ${this.shaders.compute.head}`;
     setCurtains() {
       this.initEvents();
       this.setRenderer();
-      this.container.appendChild(this.renderer.canvas);
       if (this.options.autoRender) {
         this.animate();
       }

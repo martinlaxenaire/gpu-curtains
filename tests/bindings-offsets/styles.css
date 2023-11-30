@@ -147,3 +147,19 @@
 .col-start-13 {
   grid-column-start: 13;
 }
+
+@media (min-width: 1280px) {
+  .binding-declaration {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .byte-diagram {
+    margin-bottom: 1rem;
+  }
+
+  .wgsl-declaration {
+    margin: 0 0 auto 0;
+  }
+}

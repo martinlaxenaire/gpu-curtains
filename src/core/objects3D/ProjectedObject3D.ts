@@ -3,6 +3,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { Mat4 } from '../../math/Mat4'
 import { Camera } from '../camera/Camera'
+import { Vec3 } from '../../math/Vec3'
 
 /** Defines all kind of possible {@link ProjectedObject3D} matrix types */
 export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' | 'modelViewProjection'
@@ -70,6 +71,17 @@ export class ProjectedObject3D extends Object3D {
   }
 
   /**
+   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+   * @param target - [target]{@link Vec3} to look at
+   */
+  lookAt(target: Vec3 = new Vec3()) {
+    // since we know it's not a camera, invert target and position
+    const rotationMatrix = new Mat4().lookAt(target, this.position)
+    this.quaternion.setFromRotationMatrix(rotationMatrix)
+    this.shouldUpdateModelMatrix()
+  }
+
+  /**
    * Set our transform and projection matrices
    */
   setMatrices() {
@@ -82,7 +94,7 @@ export class ProjectedObject3D extends Object3D {
         shouldUpdate: false,
         onUpdate: () => {
           // our model view matrix is our model matrix multiplied with our camera view matrix
-          this.modelViewMatrix.multiplyMatrices(this.camera.viewMatrix, this.modelMatrix)
+          this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.modelMatrix)
         },
       },
       modelViewProjection: {

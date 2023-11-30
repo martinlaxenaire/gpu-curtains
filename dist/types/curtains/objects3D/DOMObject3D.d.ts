@@ -99,7 +99,11 @@ export declare class DOMObject3D extends ProjectedObject3D {
     get documentPosition(): Vec3;
     set documentPosition(value: Vec3);
     /**
-     * Get the {@link DOMObject3D} scale in world space
+     * Get the [DOMObject3D DOM element]{@link DOMObject3D#domElement} scale in world space
+     */
+    get DOMObjectWorldScale(): Vec3;
+    /**
+     * Get the {@link DOMObject3D} scale in world space (accounting for [scale]{@link DOMObject3D#scale})
      */
     get worldScale(): Vec3;
     /**

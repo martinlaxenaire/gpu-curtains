@@ -208,6 +208,22 @@ export class Vec2 {
   }
 
   /**
+   * Get the square length of this [vector]{@link Vec2}
+   * @returns - square length of this [vector]{@link Vec2}
+   */
+  lengthSq(): number {
+    return this.x * this.x + this.y * this.y
+  }
+
+  /**
+   * Get the length of this [vector]{@link Vec2}
+   * @returns - length of this [vector]{@link Vec2}
+   */
+  length(): number {
+    return Math.sqrt(this.lengthSq())
+  }
+
+  /**
    * Normalize this [vector]{@link Vec2}
    * @returns - normalized [vector]{@link Vec2}
    */

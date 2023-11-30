@@ -125,6 +125,16 @@ export declare class Vec3 {
      */
     equals(vector?: Vec3): boolean;
     /**
+     * Get the square length of this [vector]{@link Vec3}
+     * @returns - square length of this [vector]{@link Vec3}
+     */
+    lengthSq(): number;
+    /**
+     * Get the length of this [vector]{@link Vec3}
+     * @returns - length of this [vector]{@link Vec3}
+     */
+    length(): number;
+    /**
      * Normalize this [vector]{@link Vec3}
      * @returns - normalized [vector]{@link Vec3}
      */
@@ -135,6 +145,19 @@ export declare class Vec3 {
      * @returns - dot product of the 2 [vectors]{@link Vec3}
      */
     dot(vector?: Vec3): number;
+    /**
+     * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
+     * @param vector - [vector]{@link Vec3} to use for cross product
+     * @returns - this [vector]{@link Vec3} after cross product
+     */
+    cross(vector?: Vec3): Vec3;
+    /**
+     * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
+     * @param a - first [vector]{@link Vec3} to use for cross product
+     * @param b - second [vector]{@link Vec3} to use for cross product
+     * @returns - this [vector]{@link Vec3} after cross product
+     */
+    crossVectors(a?: Vec3, b?: Vec3): Vec3;
     /**
      * Calculate the linear interpolation of this [vector]{@link Vec3} by given [vector]{@link Vec3} and alpha, where alpha is the percent distance along the line
      * @param vector - [vector]{@link Vec3} to interpolate towards
@@ -156,6 +179,14 @@ export declare class Vec3 {
      * @returns - this [vector]{@link Vec3} with the transformation applied
      */
     applyQuat(quaternion?: Quat): Vec3;
+    /**
+     * Rotate a [vector]{@link Vec3} around and axis by a given angle
+     * @param axis - normalized [vector]{@link Vec3} around which to rotate
+     * @param angle - angle (in radians) to rotate
+     * @param quaternion - optional [quaternion]{@link Quat} to use for rotation computations
+     * @returns - this [vector]{@link Vec3} with the rotation applied
+     */
+    applyAxisAngle(axis?: Vec3, angle?: number, quaternion?: Quat): Vec3;
     /**
      * Project a 3D coordinate [vector]{@link Vec3} to a 2D coordinate [vector]{@link Vec3}
      * @param camera - [camera]{@link Camera} to use for projection

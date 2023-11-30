@@ -207,14 +207,21 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.log(geometry.getVertexBufferByName('attributes'), mesh)
 
   // move camera back
-  gpuCurtains.camera.position.z = 50
+  const cameraDistance = 50
+  const cameraLookAt = new GPUCurtains.Vec3()
+  gpuCurtains.camera.position.z = cameraDistance
 
   mesh.onRender(() => {
     mesh.uniforms.frames.elapsed.value++
     const time = mesh.uniforms.frames.elapsed.value * 0.025
 
     // rotate the whole system
-    mesh.rotation.x = Math.sin(time / 4) * 0.75
-    mesh.rotation.y = Math.sin(time / 2) * 0.75
+    mesh.rotation.x = Math.sin(time * 0.25) * 0.75
+    mesh.rotation.y = Math.sin(time * 0.5) * 0.75
+
+    // rotate camera around Y axis
+    // gpuCurtains.camera.position.z = Math.cos(time * 0.125) * cameraDistance
+    // gpuCurtains.camera.position.x = Math.sin(time * 0.125) * cameraDistance
+    // gpuCurtains.camera.lookAt(cameraLookAt)
   })
 })

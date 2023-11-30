@@ -82,6 +82,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       texturesOptions: {
         // display a redish color while textures are loading
         placeholderColor: [238, 101, 87, 255],
+        generateMips: true,
       },
     })
 
@@ -100,7 +101,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         cubeMesh.rotation.x += 0.01
       })
       .onAfterResize(() => {
-        console.log('cube after resize')
         updateCubeScaleAndPosition()
       })
 
