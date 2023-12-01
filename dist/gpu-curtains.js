@@ -4826,9 +4826,15 @@ var GPUCurtains = (() => {
      * @param {number} [parameters.instancesCount=1] - number of instances to draw
      * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
      */
-    constructor({ verticesOrder = "cw", instancesCount = 1, vertexBuffers = [] } = {}) {
+    constructor({
+      verticesOrder = "cw",
+      topology = "triangle-list",
+      instancesCount = 1,
+      vertexBuffers = []
+    } = {}) {
       this.verticesCount = 0;
       this.verticesOrder = verticesOrder;
+      this.topology = topology;
       this.instancesCount = instancesCount;
       this.boundingBox = new Box3();
       this.type = "Geometry";
@@ -4839,7 +4845,8 @@ var GPUCurtains = (() => {
       this.options = {
         verticesOrder,
         instancesCount,
-        vertexBuffers
+        vertexBuffers,
+        topology
       };
       vertexBuffers.forEach((vertexBuffer) => {
         this.addVertexBuffer({
@@ -5101,8 +5108,13 @@ var GPUCurtains = (() => {
      * @param {number} [parameters.instancesCount=1] - number of instances to draw
      * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
      */
-    constructor({ verticesOrder = "cw", instancesCount = 1, vertexBuffers = [] } = {}) {
-      super({ verticesOrder, instancesCount, vertexBuffers });
+    constructor({
+      verticesOrder = "cw",
+      topology = "triangle-list",
+      instancesCount = 1,
+      vertexBuffers = []
+    } = {}) {
+      super({ verticesOrder, topology, instancesCount, vertexBuffers });
       this.type = "IndexedGeometry";
     }
     /**
@@ -5167,9 +5179,10 @@ var GPUCurtains = (() => {
       widthSegments = 1,
       heightSegments = 1,
       instancesCount = 1,
-      vertexBuffers = []
+      vertexBuffers = [],
+      topology
     } = {}) {
-      super({ verticesOrder: "cw", instancesCount, vertexBuffers });
+      super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers });
       this.type = "PlaneGeometry";
       widthSegments = Math.floor(widthSegments);
       heightSegments = Math.floor(heightSegments);
@@ -5242,23 +5255,11 @@ var GPUCurtains = (() => {
       let normalOffset = 0;
       let uvOffset = 0;
       for (let y = 0; y <= this.definition.height; y++) {
-        const v = y / this.definition.height;
-        for (let x = 0; x < this.definition.width; x++) {
-          const u = x / this.definition.width;
-          if (x === 0) {
-            uv.array[uvOffset++] = u;
-            uv.array[uvOffset++] = 1 - v;
-            position.array[positionOffset++] = (u - 0.5) * 2;
-            position.array[positionOffset++] = (v - 0.5) * 2;
-            position.array[positionOffset++] = 0;
-            normal.array[normalOffset++] = 0;
-            normal.array[normalOffset++] = 0;
-            normal.array[normalOffset++] = 1;
-          }
-          uv.array[uvOffset++] = u + 1 / this.definition.width;
-          uv.array[uvOffset++] = 1 - v;
-          position.array[positionOffset++] = (u + 1 / this.definition.width - 0.5) * 2;
-          position.array[positionOffset++] = (v - 0.5) * 2;
+        for (let x = 0; x <= this.definition.width; x++) {
+          uv.array[uvOffset++] = x / this.definition.width;
+          uv.array[uvOffset++] = 1 - y / this.definition.height;
+          position.array[positionOffset++] = x * 2 / this.definition.width - 1;
+          position.array[positionOffset++] = y * 2 / this.definition.height - 1;
           position.array[positionOffset++] = 0;
           normal.array[normalOffset++] = 0;
           normal.array[normalOffset++] = 0;
@@ -5410,12 +5411,14 @@ struct VertexOutput {
     shaders: {},
     autoAddToScene: true,
     useProjection: false,
+    // rendering
     cullMode: "back",
     depthWriteEnabled: true,
     depthCompare: "less",
     transparent: false,
     visible: true,
     renderOrder: 0,
+    // textures
     texturesOptions: {}
   };
   function MeshBaseMixin(Base) {
@@ -5487,7 +5490,6 @@ struct VertexOutput {
           renderTarget,
           texturesOptions,
           autoAddToScene,
-          verticesOrder,
           ...meshParameters
         } = parameters;
         this.options = {
@@ -5513,7 +5515,7 @@ struct VertexOutput {
         this.setMaterial({
           label: this.options.label,
           shaders: this.options.shaders,
-          ...{ ...meshParameters, verticesOrder: verticesOrder ?? geometry.verticesOrder }
+          ...{ ...meshParameters, verticesOrder: geometry.verticesOrder, topology: geometry.topology }
         });
         this.addToScene();
       }
@@ -6796,7 +6798,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      */
     constructor(parameters) {
       let { renderer } = parameters;
-      const { label, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, useProjection } = parameters;
+      const { label, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, topology, useProjection } = parameters;
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
@@ -6827,6 +6829,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         depthCompare,
         transparent,
         verticesOrder,
+        topology,
         useProjection
       };
     }
@@ -7000,7 +7003,7 @@ ${this.shaders.vertex.head}`;
           ]
         },
         primitive: {
-          //topology: 'triangle-list', // default setting anyway
+          topology: this.options.topology,
           frontFace: this.options.verticesOrder,
           cullMode: this.options.cullMode
         },
@@ -7224,10 +7227,10 @@ ${this.shaders.compute.head}`;
      * @returns - the found {@link RenderPipelineEntry}, or null if not found
      */
     isSameRenderPipeline(parameters) {
-      const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder } = parameters;
+      const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, topology } = parameters;
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint && cullMode === options.cullMode && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && verticesOrder === options.verticesOrder;
+        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint && cullMode === options.cullMode && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && verticesOrder === options.verticesOrder && topology === options.topology;
       });
     }
     /**
@@ -9617,9 +9620,10 @@ ${this.shaders.compute.head}`;
       heightSegments = 1,
       depthSegments = 1,
       instancesCount = 1,
-      vertexBuffers = []
+      vertexBuffers = [],
+      topology
     } = {}) {
-      super({ verticesOrder: "ccw", instancesCount, vertexBuffers });
+      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers });
       this.type = "BoxGeometry";
       widthSegments = Math.floor(widthSegments);
       heightSegments = Math.floor(heightSegments);
@@ -9711,9 +9715,10 @@ ${this.shaders.compute.head}`;
       thetaStart = 0,
       thetaLength = Math.PI,
       instancesCount = 1,
-      vertexBuffers = []
+      vertexBuffers = [],
+      topology
     } = {}) {
-      super({ verticesOrder: "ccw", instancesCount, vertexBuffers });
+      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers });
       this.type = "SphereGeometry";
       widthSegments = Math.max(3, Math.floor(widthSegments));
       heightSegments = Math.max(2, Math.floor(heightSegments));

@@ -19,6 +19,8 @@ export class Geometry {
   verticesCount: number
   /** Vertices order to be drawn by the [render pipeline]{@link RenderPipelineEntry} */
   verticesOrder: GPUFrontFace
+  /** Topology to use with this {@link Geometry}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
+  topology: GPUPrimitiveTopology
   /** Number of instances of this geometry to draw */
   instancesCount: number
   /** Array of [vertex buffers]{@link VertexBuffer} to use with this geometry */
@@ -41,9 +43,15 @@ export class Geometry {
    * @param {number} [parameters.instancesCount=1] - number of instances to draw
    * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
    */
-  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] }: GeometryParams = {}) {
+  constructor({
+    verticesOrder = 'cw',
+    topology = 'triangle-list',
+    instancesCount = 1,
+    vertexBuffers = [],
+  }: GeometryParams = {}) {
     this.verticesCount = 0
     this.verticesOrder = verticesOrder
+    this.topology = topology
     this.instancesCount = instancesCount
 
     this.boundingBox = new Box3()
@@ -61,6 +69,7 @@ export class Geometry {
       verticesOrder,
       instancesCount,
       vertexBuffers,
+      topology,
     }
 
     vertexBuffers.forEach((vertexBuffer) => {

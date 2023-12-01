@@ -38,7 +38,7 @@ export declare class IndexedGeometry extends Geometry {
      * @param {number} [parameters.instancesCount=1] - number of instances to draw
      * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
      */
-    constructor({ verticesOrder, instancesCount, vertexBuffers }?: GeometryParams);
+    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, }?: GeometryParams);
     /**
      * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
      * @readonly

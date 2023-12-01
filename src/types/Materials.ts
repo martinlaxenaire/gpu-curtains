@@ -159,6 +159,8 @@ export interface RenderMaterialBaseRenderingOptions {
 export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRenderingOptions {
   /** Vertices order to be used by the [render pipeline]{@link RenderPipelineEntry#pipeline} */
   verticesOrder: Geometry['verticesOrder']
+  /** Topology to use with this {@link RenderMaterial}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
+  topology: Geometry['topology']
 }
 
 /** Base parameters used to create a {@link RenderMaterial} */

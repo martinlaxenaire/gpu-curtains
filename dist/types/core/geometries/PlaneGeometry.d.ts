@@ -37,7 +37,7 @@ export declare class PlaneGeometry extends IndexedGeometry {
      * @param {number} [parameters.widthSegments=1] - number of segments along the X axis
      * @param {number} [parameters.heightSegments=1] - number of segments along the Y axis
      */
-    constructor({ widthSegments, heightSegments, instancesCount, vertexBuffers, }?: PlaneGeometryParams);
+    constructor({ widthSegments, heightSegments, instancesCount, vertexBuffers, topology, }?: PlaneGeometryParams);
     /**
      * Set our PlaneGeometry index array
      */

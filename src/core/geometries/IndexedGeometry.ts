@@ -41,8 +41,13 @@ export class IndexedGeometry extends Geometry {
    * @param {number} [parameters.instancesCount=1] - number of instances to draw
    * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
    */
-  constructor({ verticesOrder = 'cw', instancesCount = 1, vertexBuffers = [] }: GeometryParams = {}) {
-    super({ verticesOrder, instancesCount, vertexBuffers })
+  constructor({
+    verticesOrder = 'cw',
+    topology = 'triangle-list',
+    instancesCount = 1,
+    vertexBuffers = [],
+  }: GeometryParams = {}) {
+    super({ verticesOrder, topology, instancesCount, vertexBuffers })
 
     this.type = 'IndexedGeometry'
   }

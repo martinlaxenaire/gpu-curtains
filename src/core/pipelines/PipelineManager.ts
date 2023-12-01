@@ -43,7 +43,7 @@ export class PipelineManager {
    * @returns - the found {@link RenderPipelineEntry}, or null if not found
    */
   isSameRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry | null {
-    const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder } = parameters
+    const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, topology } = parameters
 
     return this.pipelineEntries
       .filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry)
@@ -59,7 +59,8 @@ export class PipelineManager {
           depthWriteEnabled === options.depthWriteEnabled &&
           depthCompare === options.depthCompare &&
           transparent === options.transparent &&
-          verticesOrder === options.verticesOrder
+          verticesOrder === options.verticesOrder &&
+          topology === options.topology
         )
       }) as RenderPipelineEntry | null
   }

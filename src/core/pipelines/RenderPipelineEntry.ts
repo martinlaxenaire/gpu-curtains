@@ -34,7 +34,8 @@ export class RenderPipelineEntry extends PipelineEntry {
    */
   constructor(parameters: RenderPipelineEntryParams) {
     let { renderer } = parameters
-    const { label, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, useProjection } = parameters
+    const { label, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, topology, useProjection } =
+      parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
@@ -73,6 +74,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       depthCompare,
       transparent,
       verticesOrder,
+      topology,
       useProjection,
     }
   }
@@ -280,7 +282,7 @@ export class RenderPipelineEntry extends PipelineEntry {
         ],
       },
       primitive: {
-        //topology: 'triangle-list', // default setting anyway
+        topology: this.options.topology,
         frontFace: this.options.verticesOrder,
         cullMode: this.options.cullMode,
       },

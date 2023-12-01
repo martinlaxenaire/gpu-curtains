@@ -80,6 +80,8 @@ export interface GeometryOptions {
   instancesCount: number
   /** Vertices order sent to the [render pipeline]{@link RenderPipelineEntry#pipeline} */
   verticesOrder?: GPUFrontFace
+  /** Topology to use with this [geometry]{@link Geometry}, sent to the [render pipeline]{@link RenderPipelineEntry#pipeline}. Whether to draw triangles, lines or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
+  topology: GPUPrimitiveTopology
   /** Array of {@link VertexBufferParams} used to create {@link VertexBuffer} on geometry creation */
   vertexBuffers: VertexBufferParams[]
 }

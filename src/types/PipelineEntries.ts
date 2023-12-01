@@ -80,22 +80,9 @@ export interface PipelineEntryPropertiesParams {
 /* RENDER PIPELINES */
 
 /**
- * Options used to create this {@link PipelineEntry}
+ * Options used to create this {@link RenderPipelineEntry}
  */
-export interface RenderPipelineEntryOptions extends PipelineEntryOptions {
-  /** Cull mode to use with this [render pipeline]{@link RenderPipelineEntry#pipeline} */
-  cullMode?: GPUCullMode
-  /** Depth function to use with this [render pipeline]{@link RenderPipelineEntry#pipeline} */
-  depthCompare?: GPUCompareFunction
-  /** Whether this [render pipeline]{@link RenderPipelineEntry#pipeline} should enable depth write */
-  depthWriteEnabled?: boolean
-  /** Defines the [render pipeline]{@link RenderPipelineEntry#pipeline} blend properties */
-  transparent?: boolean
-  /** Vertices order to be used by the [render pipeline]{@link RenderPipelineEntry#pipeline} */
-  verticesOrder?: GPUFrontFace
-  /** Whether this {@link RenderPipelineEntry} should implicitly add the [renderer camera bind group]{@link CameraRenderer#cameraBindGroup} and append corresponding WGSL code chunks */
-  useProjection?: boolean
-}
+export interface RenderPipelineEntryOptions extends PipelineEntryOptions, Partial<RenderMaterialRenderingOptions> {}
 
 /**
  * Parameters used to add properties to the {@link RenderPipelineEntry}
