@@ -6798,7 +6798,17 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      */
     constructor(parameters) {
       let { renderer } = parameters;
-      const { label, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, topology, useProjection } = parameters;
+      const {
+        label,
+        cullMode,
+        depthWriteEnabled,
+        depthCompare,
+        transparent,
+        verticesOrder,
+        topology,
+        blend,
+        useProjection
+      } = parameters;
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
@@ -6830,6 +6840,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         transparent,
         verticesOrder,
         topology,
+        blend,
         useProjection
       };
     }
@@ -6955,6 +6966,16 @@ ${this.shaders.vertex.head}`;
       if (!this.shaders.vertex.module || !this.shaders.fragment.module)
         return;
       let vertexLocationIndex = -1;
+      const blend = this.options.blend ?? (this.options.transparent && {
+        color: {
+          srcFactor: "src-alpha",
+          dstFactor: "one-minus-src-alpha"
+        },
+        alpha: {
+          srcFactor: "one",
+          dstFactor: "one-minus-src-alpha"
+        }
+      });
       this.descriptor = {
         label: this.options.label,
         layout: this.layout,
@@ -6984,20 +7005,8 @@ ${this.shaders.vertex.head}`;
           targets: [
             {
               format: this.renderer.preferredFormat,
-              // we will assume our renderer alphaMode is set to 'premultiplied'
-              // we either disable blending if mesh if opaque
-              // or use this blend equation if mesh is transparent (see https://limnu.com/webgl-blending-youre-probably-wrong/)
-              ...this.options.transparent && {
-                blend: {
-                  color: {
-                    srcFactor: "src-alpha",
-                    dstFactor: "one-minus-src-alpha"
-                  },
-                  alpha: {
-                    srcFactor: "one",
-                    dstFactor: "one-minus-src-alpha"
-                  }
-                }
+              ...blend && {
+                blend
               }
             }
           ]

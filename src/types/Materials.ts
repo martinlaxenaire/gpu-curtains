@@ -145,7 +145,7 @@ export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry
 export interface RenderMaterialBaseRenderingOptions {
   /** Whether this {@link RenderMaterial} should implicitly use the [renderer camera bind group]{@link CameraRenderer#cameraBindGroup} */
   useProjection: boolean
-  /** Whether this {@link RenderMaterial} should be treated as transparent. Impacts the [render pipeline]{@link RenderPipelineEntry#pipeline} blend properties */
+  /** Whether this {@link RenderMaterial} should be treated as transparent. Impacts the [render pipeline]{@link RenderPipelineEntry#pipeline} [blend property]{@link GPURenderPipeline#blend} */
   transparent: boolean
   /** Whether this {@link RenderMaterial} should enable depth write */
   depthWriteEnabled: boolean
@@ -153,6 +153,8 @@ export interface RenderMaterialBaseRenderingOptions {
   depthCompare: GPUCompareFunction
   /** Cull mode to use with this {@link RenderMaterial} */
   cullMode: GPUCullMode
+  /** Custom blending to use with this {@link RenderMaterial}. Can override default transparent blending if set */
+  blend?: GPUBlendState
 }
 
 /** Rendering options to send to the [render pipeline]{@link RenderPipelineEntry#pipeline} */
