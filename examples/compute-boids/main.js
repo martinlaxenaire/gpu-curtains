@@ -14,7 +14,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const particleShrinkScale = 40
 
   // camera screen ratio depends on screen size, fov and camera position
-  const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale
+  const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale * 0.5
 
   const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
   const systemSize = new GPUCurtains.Vec2(cameraRatio * screenRatio, cameraRatio)
@@ -28,8 +28,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     initialParticleVelocity[2 * i + 0] = 2 * systemSize.x * (Math.random() - 0.5) * 0.1
     initialParticleVelocity[2 * i + 1] = 2 * systemSize.y * (Math.random() - 0.5) * 0.1
   }
-
-  console.log(initialParticlePosition, initialParticleVelocity)
 
   const computeBoids = /* wgsl */ `
     @compute @workgroup_size(64) fn main(
@@ -132,7 +130,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             rule1Distance: {
               type: 'f32',
-              value: 0.2,
+              value: 0.15,
             },
             rule2Distance: {
               type: 'f32',
@@ -175,8 +173,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
   })
-
-  console.log(computePass, computePass.material, computePass.material.getBindingByName('particles'))
 
   computePass
     .onReady(() => {
@@ -249,10 +245,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  // scale our cube along the Z axis based on its height (Y axis)
-  sphereMesh.scale.x = 0.5 / particleShrinkScale
-  sphereMesh.scale.y = 0.5 / particleShrinkScale
-  sphereMesh.scale.z = 0.5 / particleShrinkScale
+  sphereMesh.scale.x = 1 / particleShrinkScale
+  sphereMesh.scale.y = 1 / particleShrinkScale
+  sphereMesh.scale.z = 1 / particleShrinkScale
 
   sphereMesh
     .onReady(() => {

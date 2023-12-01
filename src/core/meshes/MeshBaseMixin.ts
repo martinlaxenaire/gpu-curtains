@@ -47,7 +47,7 @@ export interface MeshBaseOptions {
   /** The label of this Mesh, sent to various GPU objects for debugging purpose */
   label?: MeshBaseParams['label']
   /** Shaders to use by this Mesh {@link RenderMaterial} */
-  shaders: MeshBaseParams['shaders']
+  shaders?: MeshBaseParams['shaders']
   /** Parameters used by this Mesh to create a [texture]{@link Texture} */
   texturesOptions?: ExternalTextureParams
   /** {@link RenderTarget} to render this Mesh to, if any */
@@ -60,19 +60,20 @@ export interface MeshBaseOptions {
 
 /** @const - Default Mesh parameters to merge with user defined parameters */
 const defaultMeshBaseParams = {
-  label: 'Mesh',
   // geometry
   geometry: new Geometry(),
   // material
   shaders: {},
   autoAddToScene: true,
   useProjection: false,
+  // rendering
   cullMode: 'back',
   depthWriteEnabled: true,
   depthCompare: 'less',
   transparent: false,
   visible: true,
   renderOrder: 0,
+  // textures
   texturesOptions: {},
 } as MeshBaseParams
 
@@ -98,11 +99,6 @@ export declare class MeshBaseClass {
   material: RenderMaterial
   /** [Geometry]{@link AllowedGeometries} used by this {@link MeshBaseClass} */
   geometry: MeshBaseParams['geometry']
-
-  // /** Array of {@link RenderTexture} handled by this {@link MeshBaseClass} */
-  // renderTextures: RenderTexture[]
-  // /** Array of {@link Texture} handled by this {@link MeshBaseClass} */
-  // textures: Texture[]
 
   /** {@link RenderTarget} to render this {@link MeshBase} to, if any */
   renderTarget: null | RenderTarget
@@ -374,11 +370,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /** [Geometry]{@link AllowedGeometries} used by this {@link MeshBase} */
     geometry: MeshBaseParams['geometry']
 
-    // /** Array of {@link RenderTexture} handled by this {@link MeshBase} */
-    // renderTextures: RenderTexture[]
-    // /** Array of {@link Texture} handled by this {@link MeshBase} */
-    // textures: Texture[]
-
     /** {@link RenderTarget} to render this {@link MeshBase} to, if any */
     renderTarget: null | RenderTarget
 
@@ -468,9 +459,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.renderer = renderer
 
-      //this.textures = []
-      //this.renderTextures = []
-
       const {
         label,
         shaders,
@@ -480,13 +468,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         renderTarget,
         texturesOptions,
         autoAddToScene,
-        verticesOrder,
         ...meshParameters
       } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
-        label,
+        label: label ?? 'Mesh ' + this.renderer.meshes.length,
         shaders,
         texturesOptions,
         ...(renderTarget !== undefined && { renderTarget }),
@@ -513,7 +500,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.setMaterial({
         label: this.options.label,
         shaders: this.options.shaders,
-        ...{ ...meshParameters, verticesOrder: verticesOrder ?? geometry.verticesOrder },
+        ...{ ...meshParameters, verticesOrder: geometry.verticesOrder, topology: geometry.topology },
       } as RenderMaterialParams)
 
       this.addToScene()

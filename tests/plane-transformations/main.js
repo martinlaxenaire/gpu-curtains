@@ -38,15 +38,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
       
+      var mousePosition: vec2f = getVertex2DToUVCoords(mouse.position);
+      var cursor: vec2f = fsInput.originalUv - mousePosition;
+      cursor.x = cursor.x * mouse.aspect;
+      var cursorSize: f32 = step(length(cursor), mouse.size);
       
-      return mix(
-        vec4(1.0),
-        color,
-        step(
-          1.0 - clamp(distance(fsInput.originalUv, getVertex2DToUVCoords(mouse.position)), 0.0, 1.0),
-          0.875
-        )
-      );
+      return mix(color, vec4(1.0), cursorSize);
     }
   `
 
@@ -70,11 +67,25 @@ window.addEventListener('DOMContentLoaded', async () => {
               type: 'vec2f',
               value: mousePosition,
             },
+            aspect: {
+              type: 'f32',
+              value: 1,
+            },
+            size: {
+              type: 'f32',
+              value: 0.2,
+            },
           },
         },
       },
     },
   })
+
+  const setMouseAspect = () => {
+    plane.uniforms.mouse.aspect.value = plane.boundingRect.width / plane.boundingRect.height
+  }
+
+  setMouseAspect()
 
   window.addEventListener('pointermove', (e) => {
     //plane.uniforms.mouse
@@ -86,12 +97,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   planeBBox.style.borderColor = 'red'
   document.body.appendChild(planeBBox)
 
-  plane.onRender(() => {
-    planeBBox.style.top = plane.projectedBoundingRect.top + 'px'
-    planeBBox.style.left = plane.projectedBoundingRect.left + 'px'
-    planeBBox.style.width = plane.projectedBoundingRect.width + 'px'
-    planeBBox.style.height = plane.projectedBoundingRect.height + 'px'
-  })
+  plane
+    .onRender(() => {
+      planeBBox.style.top = plane.projectedBoundingRect.top + 'px'
+      planeBBox.style.left = plane.projectedBoundingRect.left + 'px'
+      planeBBox.style.width = plane.projectedBoundingRect.width + 'px'
+      planeBBox.style.height = plane.projectedBoundingRect.height + 'px'
+    })
+    .onAfterResize(setMouseAspect)
 
   // GUI
   const gui = new lil.GUI({

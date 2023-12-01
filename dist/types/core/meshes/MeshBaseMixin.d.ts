@@ -35,7 +35,7 @@ export interface MeshBaseOptions {
     /** The label of this Mesh, sent to various GPU objects for debugging purpose */
     label?: MeshBaseParams['label'];
     /** Shaders to use by this Mesh {@link RenderMaterial} */
-    shaders: MeshBaseParams['shaders'];
+    shaders?: MeshBaseParams['shaders'];
     /** Parameters used by this Mesh to create a [texture]{@link Texture} */
     texturesOptions?: ExternalTextureParams;
     /** {@link RenderTarget} to render this Mesh to, if any */

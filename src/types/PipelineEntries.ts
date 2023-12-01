@@ -32,7 +32,6 @@ export interface PipelineEntryShaders {
   compute?: PipelineEntryShader
   /** Full [pipeline entry shader]{@link PipelineEntryShader} object (i.e. vertex + fragment) */
   full?: PipelineEntryShader
-  // [shaderType: FullShadersType]: PipelineEntryShader
 }
 
 /**
@@ -45,18 +44,6 @@ export interface PipelineEntryOptions {
   useAsync?: boolean
   /** Shaders to use with this {@link PipelineEntry} */
   shaders: MaterialShaders
-  /** Cull mode to use with this [render pipeline]{@link RenderPipelineEntry#pipeline} */
-  cullMode?: GPUCullMode
-  /** Depth function to use with this [render pipeline]{@link RenderPipelineEntry#pipeline} */
-  depthCompare?: GPUCompareFunction
-  /** Whether this [render pipeline]{@link RenderPipelineEntry#pipeline} should enable depth write */
-  depthWriteEnabled?: boolean
-  /** Defines the [render pipeline]{@link RenderPipelineEntry#pipeline} blend properties */
-  transparent?: boolean
-  /** Vertices order to be used by the [render pipeline]{@link RenderPipelineEntry#pipeline} */
-  verticesOrder?: GPUFrontFace
-  /** Whether this {@link RenderPipelineEntry} should implicitly add the [renderer camera bind group]{@link CameraRenderer#cameraBindGroup} and append corresponding WGSL code chunks */
-  useProjection?: boolean
 }
 
 /** Base parameters used to create this {@link PipelineEntry} */
@@ -90,6 +77,13 @@ export interface PipelineEntryPropertiesParams {
   bindGroups: MaterialBindGroups
 }
 
+/* RENDER PIPELINES */
+
+/**
+ * Options used to create this {@link RenderPipelineEntry}
+ */
+export interface RenderPipelineEntryOptions extends PipelineEntryOptions, Partial<RenderMaterialRenderingOptions> {}
+
 /**
  * Parameters used to add properties to the {@link RenderPipelineEntry}
  */
@@ -106,4 +100,12 @@ export interface RenderPipelineEntryBaseParams extends RenderMaterialRenderingOp
   label?: string
   /** Shaders to use with this {@link RenderPipelineEntry} */
   shaders?: MaterialShaders
+}
+
+/**
+ * Parameters used to create this {@link RenderPipelineEntry}
+ */
+export interface RenderPipelineEntryParams extends RenderPipelineEntryBaseParams {
+  /** [renderer]{@link Renderer} used to create this {@link PipelineEntry}, or our {@link GPUCurtains} class object */
+  renderer: Renderer | GPUCurtains
 }

@@ -47,7 +47,7 @@ export declare class PipelineEntry {
      * Set our [pipeline entry bind groups]{@link PipelineEntry#bindGroups}
      * @param bindGroups - [bind groups]{@link Material#bindGroups} to use with this {@link PipelineEntry}
      */
-    setPipelineEntryBindGroups(bindGroups: any): void;
+    setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]): void;
     /**
      * Create a {@link GPUShaderModule}
      * @param parameters - Parameters used

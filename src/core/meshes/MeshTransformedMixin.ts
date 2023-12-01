@@ -241,12 +241,10 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
 
       this.renderer = renderer
 
-      const { label, geometry, shaders, frustumCulled, DOMFrustumMargins } = parameters
+      const { geometry, frustumCulled, DOMFrustumMargins } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
-        label,
-        shaders,
         frustumCulled,
         DOMFrustumMargins,
       }

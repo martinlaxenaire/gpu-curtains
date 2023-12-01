@@ -45,8 +45,9 @@ export class PlaneGeometry extends IndexedGeometry {
     heightSegments = 1,
     instancesCount = 1,
     vertexBuffers = [],
+    topology,
   }: PlaneGeometryParams = {}) {
-    super({ verticesOrder: 'cw', instancesCount, vertexBuffers })
+    super({ verticesOrder: 'cw', topology, instancesCount, vertexBuffers })
 
     this.type = 'PlaneGeometry'
 
@@ -148,33 +149,14 @@ export class PlaneGeometry extends IndexedGeometry {
     // 8---9---10--11
 
     for (let y = 0; y <= this.definition.height; y++) {
-      const v = y / this.definition.height
+      for (let x = 0; x <= this.definition.width; x++) {
+        // uv
+        uv.array[uvOffset++] = x / this.definition.width
+        uv.array[uvOffset++] = 1 - y / this.definition.height
 
-      for (let x = 0; x < this.definition.width; x++) {
-        const u = x / this.definition.width
-
-        // top left
-        // filled only on first iteration
-        // on next iterations it is the same as previous top right values
-        if (x === 0) {
-          uv.array[uvOffset++] = u
-          // remember on WebGPU, vec2(0, 0) for uv is the top left!
-          uv.array[uvOffset++] = 1 - v
-
-          position.array[positionOffset++] = (u - 0.5) * 2
-          position.array[positionOffset++] = (v - 0.5) * 2
-          position.array[positionOffset++] = 0
-
-          normal.array[normalOffset++] = 0
-          normal.array[normalOffset++] = 0
-          normal.array[normalOffset++] = 1
-        }
-
-        uv.array[uvOffset++] = u + 1 / this.definition.width
-        uv.array[uvOffset++] = 1 - v
-
-        position.array[positionOffset++] = (u + 1 / this.definition.width - 0.5) * 2
-        position.array[positionOffset++] = (v - 0.5) * 2
+        // vertex position
+        position.array[positionOffset++] = (x * 2) / this.definition.width - 1
+        position.array[positionOffset++] = (y * 2) / this.definition.height - 1
         position.array[positionOffset++] = 0
 
         // normals are simple

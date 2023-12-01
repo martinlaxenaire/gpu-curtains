@@ -27,9 +27,10 @@ export class BoxGeometry extends IndexedGeometry {
       depthSegments = 1,
       instancesCount = 1,
       vertexBuffers = [],
+      topology,
     } = {} as BoxGeometryParams
   ) {
-    super({ verticesOrder: 'ccw', instancesCount, vertexBuffers })
+    super({ verticesOrder: 'ccw', topology, instancesCount, vertexBuffers })
 
     this.type = 'BoxGeometry'
 

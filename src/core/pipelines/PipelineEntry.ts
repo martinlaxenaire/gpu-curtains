@@ -90,7 +90,7 @@ export class PipelineEntry {
    * Set our [pipeline entry bind groups]{@link PipelineEntry#bindGroups}
    * @param bindGroups - [bind groups]{@link Material#bindGroups} to use with this {@link PipelineEntry}
    */
-  setPipelineEntryBindGroups(bindGroups) {
+  setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]) {
     this.bindGroups = bindGroups
   }
 

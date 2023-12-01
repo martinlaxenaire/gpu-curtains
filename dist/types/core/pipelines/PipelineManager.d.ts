@@ -38,6 +38,12 @@ export declare class PipelineManager {
      */
     createRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry;
     /**
+     * Checks if the provided [parameters]{@link PipelineEntryBaseParams} belongs to an already created {@link ComputePipelineEntry}.
+     * @param parameters - [ComputePipelineEntry parameters]{@link PipelineEntryBaseParams}
+     * @returns - the found {@link ComputePipelineEntry}, or null if not found
+     */
+    isSameComputePipeline(parameters: PipelineEntryBaseParams): ComputePipelineEntry;
+    /**
      * Create a new {@link ComputePipelineEntry}
      * @param parameters - [PipelineEntry parameters]{@link PipelineEntryBaseParams}
      * @returns - newly created {@link ComputePipelineEntry}
