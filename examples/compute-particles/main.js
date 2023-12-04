@@ -2,8 +2,8 @@
 // TODO use bitangent noise? https://github.com/atyuwen/bitangent_noise/blob/main/BitangentNoise.hlsl#L41
 window.addEventListener('DOMContentLoaded', async () => {
   // number of particles instances
-  const numParticles = 200_000
-  const systemSize = new GPUCurtains.Vec3(128)
+  const nbParticles = 500_000
+  const systemSize = new GPUCurtains.Vec3(150)
 
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains.GPUCurtains({
@@ -17,35 +17,154 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setRendererContext()
 
-  gpuCurtains.camera.position.z = systemSize.z * 3
+  let now = performance.now()
 
-  const initialParticlePosition = new Float32Array(numParticles * 4)
-  const particleMaxLife = new Float32Array(numParticles)
-  const position = new GPUCurtains.Vec3()
+  const particlesBindGroup = new GPUCurtains.BindGroup(gpuCurtains.renderer, {
+    label: 'Particles bind group',
+    inputs: {
+      uniforms: {
+        params: {
+          bindings: {
+            systemSize: {
+              type: 'vec3f',
+              value: systemSize,
+            },
+            nbParticles: {
+              type: 'f32',
+              value: nbParticles,
+            },
+            time: {
+              type: 'f32',
+              value: 0,
+            },
+            frequency: {
+              type: 'f32',
+              value: 0.01,
+            },
+            amplitude: {
+              type: 'f32',
+              value: 0.5,
+            },
+          },
+        },
+      },
+      storages: {
+        particles: {
+          access: 'read_write', // we want a readable AND writable buffer!
+          bindings: {
+            position: {
+              type: 'array<vec4f>',
+              value: new Float32Array(nbParticles * 4),
+            },
+          },
+        },
+        particlesStaticData: {
+          access: 'read_write', // we want a readable AND writable buffer!
+          bindings: {
+            maxLife: {
+              type: 'array<f32>',
+              value: new Float32Array(nbParticles),
+            },
+            position: {
+              type: 'array<vec4f>',
+              value: new Float32Array(nbParticles * 4),
+            },
+          },
+        },
+      },
+    },
+  })
 
-  for (let i = 0; i < numParticles; ++i) {
-    position.x = Math.random() * 2 - 1
-    position.y = Math.random() * 2 - 1
-    position.z = Math.random() * 2 - 1
-
-    const length = position.length()
-    if (length > 1) {
-      position.multiplyScalar(1 / length)
+  const computeInitData = /* wgsl */ `
+    // https://github.com/Cyan4973/xxHash
+    // https://www.shadertoy.com/view/Xt3cDn
+    fn xxhash32(n: u32) -> u32 {
+        var h32 = n + 374761393u;
+        h32 = 668265263u * ((h32 << 17) | (h32 >> (32 - 17)));
+        h32 = 2246822519u * (h32 ^ (h32 >> 15));
+        h32 = 3266489917u * (h32 ^ (h32 >> 13));
+        return h32^(h32 >> 16);
     }
 
-    position.normalize().multiply(systemSize)
+    // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
+    //fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
+    fn rand11(f: f32) -> f32 { return f32(xxhash32(bitcast<u32>(f))) / f32(0xffffffff); }
 
-    // number of frames for a cycle
-    const maxLife = 1500 + Math.ceil(Math.random() * 1000)
-    particleMaxLife[i] = maxLife
+    @compute @workgroup_size(64) fn main(
+      @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
+    ) {
+      var index = GlobalInvocationID.x;
+      
+      var fIndex: f32 = f32(index);
+      
+      // calculate a random particle max life
+      // max life is in number of frames
+      var maxLife: f32 = 1500.0 + round(rand11(asin(fIndex / params.nbParticles)) * 1000.0);
+      particlesStaticData[index].maxLife = maxLife;
+      
+      // now set a different initial life for each particle
+      var initLife: f32 = round(maxLife * rand11(acos(fIndex / params.nbParticles)));
+      
+      particles.position[index].w = initLife;
+      particlesStaticData[index].position.w = initLife;
+      
+      // now the positions
+      // calculate an initial random position along a sphere the size of our system
+      var position: vec3f;
+      position.x = rand11(cos(fIndex / params.nbParticles)) * 2.0 - 1.0;
+      position.y = rand11(sin(fIndex / params.nbParticles)) * 2.0 - 1.0;
+      position.z = rand11(tan(fIndex / params.nbParticles)) * 2.0 - 1.0;
+      
+      var posLength = length(position);
+      if(posLength > 1.0) {
+        posLength *= 1.0 / posLength;
+      }
+      
+      position = normalize(position) * params.systemSize;
+      
+      // write positions
+      particles.position[index].x = position.x;
+      particles.position[index].y = position.y;
+      particles.position[index].z = position.z;
+      
+      particlesStaticData[index].position.x = position.x;
+      particlesStaticData[index].position.y = position.y;
+      particlesStaticData[index].position.z = position.z;
+    }
+  `
 
-    initialParticlePosition[4 * i + 0] = position.x
-    initialParticlePosition[4 * i + 1] = position.y
-    initialParticlePosition[4 * i + 2] = position.z
-    initialParticlePosition[4 * i + 3] = Math.ceil(maxLife * Math.random()) // initial life
-  }
+  // first our compute pass
+  const computeInit = new GPUCurtains.ComputePass(gpuCurtains, {
+    label: 'Compute initial data',
+    shaders: {
+      compute: {
+        code: computeInitData,
+      },
+    },
+    dispatchSize: Math.ceil(nbParticles / 64), // Note that we divide the vertex count by the workgroup_size!
+    bindGroups: [particlesBindGroup],
+    autoAddToScene: false,
+  })
+
+  // now we should await pipeline compilation!
+  await computeInit.material.setMaterial()
+
+  // now compute the init data just once
+  const commandEncoder = gpuCurtains.renderer.device.createCommandEncoder({
+    label: 'Compute init data command encoder',
+  })
+
+  const pass = commandEncoder.beginComputePass()
+  computeInit.render(pass)
+  pass.end()
+
+  const commandBuffer = commandEncoder.finish()
+  gpuCurtains.renderer.device.queue.submit([commandBuffer])
+
+  console.log('time to generate particles positions on the GPU', performance.now() - now)
 
   const computeParticles = /* wgsl */ `
+    // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
     fn mod289_3(x: vec3f) -> vec3f {
       return x - floor(x * (1.0 / 289.0)) * 289.0;
     }
@@ -189,57 +308,58 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // first our compute pass
   const computePass = new GPUCurtains.ComputePass(gpuCurtains, {
-    label: 'Compute test',
+    label: 'Compute particles positions',
     shaders: {
       compute: {
         code: computeParticles,
       },
     },
-    dispatchSize: Math.ceil(numParticles / 64), // Note that we divide the vertex count by the workgroup_size!
-    inputs: {
-      uniforms: {
-        params: {
-          bindings: {
-            time: {
-              type: 'f32',
-              value: 0,
-            },
-            frequency: {
-              type: 'f32',
-              value: 0.01,
-            },
-            amplitude: {
-              type: 'f32',
-              value: 0.5,
-            },
-          },
-        },
-      },
-      storages: {
-        particles: {
-          label: 'Particle',
-          access: 'read_write', // we want a readable AND writable buffer!
-          bindings: {
-            position: {
-              type: 'array<vec4f>',
-              value: initialParticlePosition,
-            },
-          },
-        },
-        particlesStaticData: {
-          bindings: {
-            maxLife: {
-              type: 'array<f32>',
-              value: particleMaxLife,
-            },
-            position: {
-              type: 'array<vec4f>',
-              value: initialParticlePosition,
-            },
-          },
-        },
-      },
-    },
+    dispatchSize: Math.ceil(nbParticles / 64), // Note that we divide the vertex count by the workgroup_size!
+    bindGroups: [particlesBindGroup],
+    // inputs: {
+    //   uniforms: {
+    //     params: {
+    //       bindings: {
+    //         time: {
+    //           type: 'f32',
+    //           value: 0,
+    //         },
+    //         frequency: {
+    //           type: 'f32',
+    //           value: 0.01,
+    //         },
+    //         amplitude: {
+    //           type: 'f32',
+    //           value: 0.5,
+    //         },
+    //       },
+    //     },
+    //   },
+    //   storages: {
+    //     particles: {
+    //       label: 'Particle',
+    //       access: 'read_write', // we want a readable AND writable buffer!
+    //       bindings: {
+    //         position: {
+    //           type: 'array<vec4f>',
+    //           value: initialParticlePosition,
+    //         },
+    //       },
+    //     },
+    //     particlesStaticData: {
+    //       bindings: {
+    //         maxLife: {
+    //           type: 'array<f32>',
+    //           value: particleMaxLife,
+    //         },
+    //         position: {
+    //           type: 'array<vec4f>',
+    //           value: initialParticlePosition,
+    //         },
+    //       },
+    //     },
+    //   },
+    // },
   })
 
   console.log(computePass)
@@ -252,6 +372,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     .onRender(() => {
       computePass.uniforms.params.time.value += 0.1
     })
+
+  // now the render part
+  gpuCurtains.camera.position.z = systemSize.z * 3
 
   const particlesVs = /* wgsl */ `  
     struct VSOutput {
@@ -280,8 +403,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
+  // create a geometry from scratch that
+  // but this could also work with any geometry, topology, etc
+  // as long as we pass the instanced vertex buffer attributes
   const particlesGeometry = new GPUCurtains.Geometry({
-    instancesCount: numParticles,
+    instancesCount: nbParticles,
     // we will draw points
     topology: 'point-list',
     // and they will use instancing
@@ -295,7 +421,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             type: 'vec4f',
             bufferFormat: 'float32x4',
             size: 4,
-            array: initialParticlePosition,
+            array: new Float32Array(nbParticles * 4),
           },
         ],
       },
@@ -310,26 +436,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     array: new Float32Array([0, 0, 0]),
   })
 
-  // this could also work with a box geometry!
-  // const particlesGeometry = new GPUCurtains.BoxGeometry({
-  //   instancesCount: numParticles,
-  //   vertexBuffers: [
-  //     {
-  //       stepMode: 'instance',
-  //       name: 'instanceAttributes',
-  //       attributes: [
-  //         {
-  //           name: 'instancePosition',
-  //           type: 'vec4f',
-  //           bufferFormat: 'float32x4',
-  //           size: 4,
-  //           array: initialParticlePosition,
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // })
-
   const particles = new GPUCurtains.Mesh(gpuCurtains, {
     label: 'Particles mesh',
     geometry: particlesGeometry,
@@ -341,27 +447,60 @@ window.addEventListener('DOMContentLoaded', async () => {
         code: particlesFs,
       },
     },
-    //transparent: true,
+    transparent: true,
     frustumCulled: false,
-    blend: {
-      color: {
-        srcFactor: 'src-alpha',
-        dstFactor: 'one',
-      },
-      alpha: {
-        srcFactor: 'zero',
-        dstFactor: 'one',
-      },
-    },
+    // TODO test blending with other objects!
+    // blend: {
+    //   color: {
+    //     //srcFactor: 'src-alpha',
+    //     srcFactor: 'one',
+    //     dstFactor: 'one',
+    //   },
+    //   alpha: {
+    //     srcFactor: 'zero',
+    //     dstFactor: 'one',
+    //   },
+    // },
   })
 
   particles.onRender(() => {
     const instanceVertexBuffer = particles.geometry.getVertexBufferByName('instanceAttributes')
     const particleBuffer = computePass.material.getBindingByName('particles')
+    //const particleBuffer = computeInit.material.getBindingByName('particles')
 
     instanceVertexBuffer.buffer = particleBuffer?.buffer
 
     particles.rotation.x = ((Math.cos(Date.now() * 0.001) * Math.PI) / 180) * 2
     particles.rotation.y -= (Math.PI / 180) * 0.05
   })
+
+  // test timings
+  now = performance.now()
+  const initialParticlePosition = new Float32Array(nbParticles * 4)
+  const particleMaxLife = new Float32Array(nbParticles)
+  const position = new GPUCurtains.Vec3()
+
+  for (let i = 0; i < nbParticles; ++i) {
+    position.x = Math.random() * 2 - 1
+    position.y = Math.random() * 2 - 1
+    position.z = Math.random() * 2 - 1
+
+    const length = position.length()
+    if (length > 1) {
+      position.multiplyScalar(1 / length)
+    }
+
+    position.normalize().multiply(systemSize)
+
+    // number of frames for a cycle
+    const maxLife = 1500 + Math.ceil(Math.random() * 1000)
+    particleMaxLife[i] = maxLife
+
+    initialParticlePosition[4 * i + 0] = position.x
+    initialParticlePosition[4 * i + 1] = position.y
+    initialParticlePosition[4 * i + 2] = position.z
+    initialParticlePosition[4 * i + 3] = Math.ceil(maxLife * Math.random()) // initial life
+  }
+
+  console.log('time to generate positions on CPU', performance.now() - now)
 })

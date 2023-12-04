@@ -176,13 +176,13 @@ export class PipelineEntry {
     this.status.error = null
 
     this.setPipelineEntryBindGroups(newBindGroups)
-    this.setPipelineEntry()
+    this.compilePipelineEntry()
   }
 
   /**
    * Set up a [pipeline]{@link PipelineEntry#pipeline} by creating the shaders, the [layout]{@link PipelineEntry#layout} and the descriptor
    */
-  setPipelineEntry() {
+  compilePipelineEntry() {
     this.status.compiling = true
 
     this.createShaders()

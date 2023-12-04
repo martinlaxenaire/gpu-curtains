@@ -30,13 +30,19 @@ export declare class ComputeMaterial extends Material {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: ComputeMaterialParams);
     /**
-     * When all bind groups are created, add them to the {@link ComputePipelineEntry} and compile it
+     * When all bind groups are created, add them to the {@link ComputePipelineEntry}
      */
     setPipelineEntryProperties(): void;
     /**
-     * Check if all bind groups are ready, create them if needed and set {@link ComputePipelineEntry} bind group buffers
+     * Compile the {@link ComputePipelineEntry}
+     * @async
      */
-    setMaterial(): void;
+    compilePipelineEntry(): Promise<void>;
+    /**
+     * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
+     * @async
+     */
+    setMaterial(): Promise<void>;
     /**
      * Check whether we're currently accessing one of the buffer and therefore can't render our material
      * @readonly

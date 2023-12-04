@@ -80,5 +80,5 @@ export declare class PipelineEntry {
     /**
      * Set up a [pipeline]{@link PipelineEntry#pipeline} by creating the shaders, the [layout]{@link PipelineEntry#layout} and the descriptor
      */
-    setPipelineEntry(): void;
+    compilePipelineEntry(): void;
 }

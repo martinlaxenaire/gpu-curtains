@@ -47,15 +47,13 @@ export class ComputePipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups}) and create the [pipeline]{@link ComputePipelineEntry#pipeline} itself
+   * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups})
    * @param parameters - the [bind groups]{@link ComputeMaterial#bindGroups} to use
    */
   setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams) {
     const { bindGroups } = parameters
 
     this.setPipelineEntryBindGroups(bindGroups)
-
-    this.setPipelineEntry()
   }
 
   /* SHADERS */
@@ -172,13 +170,14 @@ export class ComputePipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Call [super setPipelineEntry]{@link PipelineEntry#setPipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * @async
    */
-  setPipelineEntry() {
-    super.setPipelineEntry()
+  async compilePipelineEntry() {
+    super.compilePipelineEntry()
 
     if (this.options.useAsync) {
-      this.createComputePipelineAsync()
+      await this.createComputePipelineAsync()
     } else {
       this.createComputePipeline()
       this.status.compiled = true

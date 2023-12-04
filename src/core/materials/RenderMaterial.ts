@@ -88,7 +88,7 @@ export class RenderMaterial extends Material {
   }
 
   /**
-   * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry} and compile it
+   * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry}
    */
   setPipelineEntryProperties() {
     this.pipelineEntry.setPipelineEntryProperties({
@@ -98,13 +98,23 @@ export class RenderMaterial extends Material {
   }
 
   /**
-   * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers
+   * Compile the {@link RenderPipelineEntry}
+   * @async
    */
-  setMaterial() {
+  async compilePipelineEntry() {
+    await this.pipelineEntry.compilePipelineEntry()
+  }
+
+  /**
+   * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers and compile the pipeline
+   * @async
+   */
+  async setMaterial() {
     super.setMaterial()
 
     if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryProperties()
+      await this.compilePipelineEntry()
     }
   }
 

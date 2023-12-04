@@ -79,6 +79,8 @@ export class GPURenderer {
   /** The {@link Scene} used */
   scene: Scene
 
+  /** An array containing all our created {@link GPUBuffer} */
+  buffers: GPUBuffer[]
   /** An array containing all our created {@link ComputePass} */
   computePasses: ComputePass[]
   /** An array containing all our created {@link PingPongPlane} */
@@ -362,7 +364,19 @@ export class GPURenderer {
    * @returns - newly created {@link GPUBuffer}
    */
   createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer {
-    return this.device?.createBuffer(bufferDescriptor)
+    const buffer = this.device?.createBuffer(bufferDescriptor)
+    this.buffers.push(buffer)
+    return buffer
+  }
+
+  /**
+   * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPURenderer#buffers}
+   * @param buffer - [buffer]{@link GPUBuffer} to remove
+   */
+  removeBuffer(buffer: GPUBuffer) {
+    this.buffers = this.buffers.filter((b) => {
+      return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size
+    })
   }
 
   /**
@@ -468,7 +482,7 @@ export class GPURenderer {
    * @param texture - [texture]{@link Texture} to remove
    */
   removeTexture(texture: Texture) {
-    this.textures.filter((t) => t.uuid !== texture.uuid)
+    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid)
   }
 
   /**
@@ -577,6 +591,7 @@ export class GPURenderer {
    */
   setRendererObjects() {
     // keep track of meshes, textures, etc.
+    this.buffers = []
     this.computePasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []

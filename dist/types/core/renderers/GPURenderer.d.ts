@@ -67,6 +67,8 @@ export declare class GPURenderer {
     pipelineManager: PipelineManager;
     /** The {@link Scene} used */
     scene: Scene;
+    /** An array containing all our created {@link GPUBuffer} */
+    buffers: GPUBuffer[];
     /** An array containing all our created {@link ComputePass} */
     computePasses: ComputePass[];
     /** An array containing all our created {@link PingPongPlane} */
@@ -156,6 +158,11 @@ export declare class GPURenderer {
      * @returns - newly created {@link GPUBuffer}
      */
     createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer;
+    /**
+     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPURenderer#buffers}
+     * @param buffer - [buffer]{@link GPUBuffer} to remove
+     */
+    removeBuffer(buffer: GPUBuffer): void;
     /**
      * Write to a {@link GPUBuffer}
      * @param buffer - {@link GPUBuffer} to write to

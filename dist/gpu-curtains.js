@@ -4162,7 +4162,7 @@ var GPUCurtains = (() => {
       });
     }
     /**
-     * When all bind groups are created, add them to the {@link ComputePipelineEntry} and compile it
+     * When all bind groups are created, add them to the {@link ComputePipelineEntry}
      */
     setPipelineEntryProperties() {
       this.pipelineEntry.setPipelineEntryProperties({
@@ -4170,12 +4170,21 @@ var GPUCurtains = (() => {
       });
     }
     /**
-     * Check if all bind groups are ready, create them if needed and set {@link ComputePipelineEntry} bind group buffers
+     * Compile the {@link ComputePipelineEntry}
+     * @async
      */
-    setMaterial() {
+    async compilePipelineEntry() {
+      await this.pipelineEntry.compilePipelineEntry();
+    }
+    /**
+     * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
+     * @async
+     */
+    async setMaterial() {
       super.setMaterial();
       if (this.pipelineEntry && this.pipelineEntry.canCompile) {
         this.setPipelineEntryProperties();
+        await this.compilePipelineEntry();
       }
     }
     /* BIND GROUPS */
@@ -5323,7 +5332,7 @@ var GPUCurtains = (() => {
       this.attributes = null;
     }
     /**
-     * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry} and compile it
+     * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry}
      */
     setPipelineEntryProperties() {
       this.pipelineEntry.setPipelineEntryProperties({
@@ -5332,12 +5341,21 @@ var GPUCurtains = (() => {
       });
     }
     /**
-     * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers
+     * Compile the {@link RenderPipelineEntry}
+     * @async
      */
-    setMaterial() {
+    async compilePipelineEntry() {
+      await this.pipelineEntry.compilePipelineEntry();
+    }
+    /**
+     * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers and compile the pipeline
+     * @async
+     */
+    async setMaterial() {
       super.setMaterial();
       if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
         this.setPipelineEntryProperties();
+        await this.compilePipelineEntry();
       }
     }
     /* ATTRIBUTES */
@@ -6714,12 +6732,12 @@ ${formattedMessage}`);
       this.status.compiled = false;
       this.status.error = null;
       this.setPipelineEntryBindGroups(newBindGroups);
-      this.setPipelineEntry();
+      this.compilePipelineEntry();
     }
     /**
      * Set up a [pipeline]{@link PipelineEntry#pipeline} by creating the shaders, the [layout]{@link PipelineEntry#layout} and the descriptor
      */
-    setPipelineEntry() {
+    compilePipelineEntry() {
       this.status.compiling = true;
       this.createShaders();
       this.createPipelineLayout();
@@ -6855,14 +6873,13 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
       this.bindGroups = "cameraBindGroup" in this.renderer && this.options.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
     }
     /**
-     * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes}) and create the [pipeline]{@link RenderPipelineEntry#pipeline} itself
+     * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes})
      * @param parameters - the [bind groups]{@link RenderMaterial#bindGroups} and [attributes]{@link RenderMaterial#attributes} to use
      */
     setPipelineEntryProperties(parameters) {
       const { attributes, bindGroups } = parameters;
       this.attributes = attributes;
       this.setPipelineEntryBindGroups(bindGroups);
-      this.setPipelineEntry();
     }
     /* SHADERS */
     /**
@@ -7060,12 +7077,13 @@ ${this.shaders.vertex.head}`;
       }
     }
     /**
-     * Call [super setPipelineEntry]{@link PipelineEntry#setPipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+     * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+     * @async
      */
-    setPipelineEntry() {
-      super.setPipelineEntry();
+    async compilePipelineEntry() {
+      super.compilePipelineEntry();
       if (this.options.useAsync) {
-        this.createRenderPipelineAsync();
+        await this.createRenderPipelineAsync();
       } else {
         this.createRenderPipeline();
         this.status.compiled = true;
@@ -7099,13 +7117,12 @@ ${this.shaders.vertex.head}`;
       this.descriptor = null;
     }
     /**
-     * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups}) and create the [pipeline]{@link ComputePipelineEntry#pipeline} itself
+     * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups})
      * @param parameters - the [bind groups]{@link ComputeMaterial#bindGroups} to use
      */
     setPipelineEntryProperties(parameters) {
       const { bindGroups } = parameters;
       this.setPipelineEntryBindGroups(bindGroups);
-      this.setPipelineEntry();
     }
     /* SHADERS */
     /**
@@ -7205,12 +7222,13 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Call [super setPipelineEntry]{@link PipelineEntry#setPipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+     * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+     * @async
      */
-    setPipelineEntry() {
-      super.setPipelineEntry();
+    async compilePipelineEntry() {
+      super.compilePipelineEntry();
       if (this.options.useAsync) {
-        this.createComputePipelineAsync();
+        await this.createComputePipelineAsync();
       } else {
         this.createComputePipeline();
         this.status.compiled = true;
@@ -8569,7 +8587,18 @@ ${this.shaders.compute.head}`;
      * @returns - newly created {@link GPUBuffer}
      */
     createBuffer(bufferDescriptor) {
-      return this.device?.createBuffer(bufferDescriptor);
+      const buffer = this.device?.createBuffer(bufferDescriptor);
+      this.buffers.push(buffer);
+      return buffer;
+    }
+    /**
+     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPURenderer#buffers}
+     * @param buffer - [buffer]{@link GPUBuffer} to remove
+     */
+    removeBuffer(buffer) {
+      this.buffers = this.buffers.filter((b) => {
+        return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size;
+      });
     }
     /**
      * Write to a {@link GPUBuffer}
@@ -8661,7 +8690,7 @@ ${this.shaders.compute.head}`;
      * @param texture - [texture]{@link Texture} to remove
      */
     removeTexture(texture) {
-      this.textures.filter((t) => t.uuid !== texture.uuid);
+      this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
      * Call texture [createTexture]{@link Texture#createTexture} method
@@ -8748,6 +8777,7 @@ ${this.shaders.compute.head}`;
      * Set all objects arrays that we'll keep track of
      */
     setRendererObjects() {
+      this.buffers = [];
       this.computePasses = [];
       this.pingPongPlanes = [];
       this.shaderPasses = [];

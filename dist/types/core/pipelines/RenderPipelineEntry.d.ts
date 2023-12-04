@@ -28,7 +28,7 @@ export declare class RenderPipelineEntry extends PipelineEntry {
      */
     setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]): void;
     /**
-     * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes}) and create the [pipeline]{@link RenderPipelineEntry#pipeline} itself
+     * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes})
      * @param parameters - the [bind groups]{@link RenderMaterial#bindGroups} and [attributes]{@link RenderMaterial#attributes} to use
      */
     setPipelineEntryProperties(parameters: RenderPipelineEntryPropertiesParams): void;
@@ -55,7 +55,8 @@ export declare class RenderPipelineEntry extends PipelineEntry {
      */
     createRenderPipelineAsync(): Promise<void>;
     /**
-     * Call [super setPipelineEntry]{@link PipelineEntry#setPipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+     * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+     * @async
      */
-    setPipelineEntry(): void;
+    compilePipelineEntry(): Promise<void>;
 }
