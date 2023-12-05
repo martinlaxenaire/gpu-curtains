@@ -19,6 +19,8 @@ import { Binding } from '../bindings/Binding';
 export declare class Material {
     /** The type of the {@link Material} */
     type: string;
+    /** The universal unique id of the {@link Material} */
+    uuid: string;
     /** The {@link Renderer} used */
     renderer: Renderer;
     /** Options used to create this {@link Material} */
@@ -66,7 +68,7 @@ export declare class Material {
     /**
      * Check if all bind groups are ready, and create them if needed
      */
-    setMaterial(): void;
+    compileMaterial(): void;
     /**
      * Get whether the renderer is ready, our pipeline entry and pipeline have been created and successfully compiled
      * @readonly
@@ -121,6 +123,11 @@ export declare class Material {
      * @returns - bind group found or null if not found
      */
     getBindGroupByBindingName(bindingName?: BufferBinding['name']): AllowedBindGroups | null;
+    /**
+     * Destroy a bind group, only if it is not used by another object
+     * @param bindGroup - bind group to eventually destroy
+     */
+    destroyBindGroup(bindGroup: AllowedBindGroups): void;
     /**
      * Destroy all bind groups
      */

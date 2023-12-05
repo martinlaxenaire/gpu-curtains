@@ -26,8 +26,8 @@ export class BufferInterleavedElement extends BufferElement {
    * BufferInterleavedElement constructor
    * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferInterleavedElement}
    */
-  constructor({ name, key, type = 'f32', value }: BufferElementParams) {
-    super({ name, key, type, value })
+  constructor({ name, key, type = 'f32', value, computeAlignment = true }: BufferElementParams) {
+    super({ name, key, type, value, computeAlignment })
 
     this.interleavedAlignment = {
       startOffset: 0,

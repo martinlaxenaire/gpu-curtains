@@ -1601,10 +1601,11 @@ var GPUCurtains = (() => {
      * BufferElement constructor
      * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferElement}
      */
-    constructor({ name, key, type = "f32", value }) {
+    constructor({ name, key, type = "f32", value, computeAlignment = true }) {
       this.name = name;
       this.key = key;
       this.type = type;
+      this.computeAlignment = computeAlignment;
       this.isArray = this.type.indexOf("array") !== -1 && (Array.isArray(value) || ArrayBuffer.isView(value));
       this.bufferLayout = getBufferLayout(
         this.isArray ? this.type.replace("array", "").replace("<", "").replace(">", "") : this.type
@@ -1634,7 +1635,7 @@ var GPUCurtains = (() => {
      * @readonly
      */
     get slotCount() {
-      return this.rowCount * slotsPerRow * bytesPerSlot;
+      return this.rowCount * bytesPerRow;
     }
     /**
      * Compute the right alignment (i.e. start and end rows and slots) given the size and align properties and the next available slot
@@ -1687,6 +1688,12 @@ var GPUCurtains = (() => {
         slot: startOffset * bytesPerSlot % bytesPerRow
       };
       const alignment = this.getElementAlignment(nextSlotAvailable);
+      if (!this.computeAlignment) {
+        this.alignment = alignment;
+        this.alignment.entries[this.inputLength - 1] = { ...this.alignment.entries[0] };
+        this.alignment.entries[this.inputLength - 1].row.end = this.inputLength - 1 + startOffset;
+        return;
+      }
       if (this.inputLength > 1) {
         let tempAlignment = alignment;
         for (let i = 0; i < this.inputLength - 1; i++) {
@@ -1759,8 +1766,8 @@ var GPUCurtains = (() => {
      * BufferInterleavedElement constructor
      * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferInterleavedElement}
      */
-    constructor({ name, key, type = "f32", value }) {
-      super({ name, key, type, value });
+    constructor({ name, key, type = "f32", value, computeAlignment = true }) {
+      super({ name, key, type, value, computeAlignment });
       this.interleavedAlignment = {
         startOffset: 0,
         entries: []
@@ -1840,6 +1847,7 @@ var GPUCurtains = (() => {
       bindIndex = 0,
       visibility,
       useStruct = true,
+      computeAlignment = true,
       access = "read",
       bindings = {}
     }) {
@@ -1849,7 +1857,8 @@ var GPUCurtains = (() => {
         ...this.options,
         useStruct,
         access,
-        bindings
+        bindings,
+        computeAlignment
       };
       this.arrayBufferSize = 0;
       this.shouldUpdate = false;
@@ -1928,7 +1937,8 @@ var GPUCurtains = (() => {
             name: toCamelCase(binding.name ?? bindingKey),
             key: bindingKey,
             type: binding.type,
-            value: binding.value
+            value: binding.value,
+            computeAlignment: this.options.computeAlignment
           })
         );
       });
@@ -1936,7 +1946,7 @@ var GPUCurtains = (() => {
         const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset;
         bufferElement.setAlignment(startOffset);
       });
-      if (arrayBindings.length > 1) {
+      if (arrayBindings.length > 1 && this.options.computeAlignment) {
         const arraySizes = arrayBindings.map((bindingKey) => {
           const binding = this.bindings[bindingKey];
           const bufferLayout = getBufferLayout(binding.type.replace("array", "").replace("<", "").replace(">", ""));
@@ -1950,7 +1960,8 @@ var GPUCurtains = (() => {
               name: toCamelCase(binding.name ?? bindingKey),
               key: bindingKey,
               type: binding.type,
-              value: binding.value
+              value: binding.value,
+              computeAlignment: this.options.computeAlignment
             });
           });
           const tempBufferElements = arrayBindings.map((bindingKey) => {
@@ -1959,8 +1970,9 @@ var GPUCurtains = (() => {
               name: toCamelCase(binding.name ?? bindingKey),
               key: bindingKey,
               type: binding.type.replace("array", "").replace("<", "").replace(">", ""),
-              value: []
+              value: [],
               // useless
+              computeAlignment: this.options.computeAlignment
             });
           });
           for (let i = 0; i < arraySizes[0]; i++) {
@@ -1985,6 +1997,21 @@ var GPUCurtains = (() => {
             )}"`
           );
         }
+      } else if (arrayBindings.length > 1 && !this.options.computeAlignment) {
+        arrayBindings.forEach((bindingKey) => {
+          const binding = this.bindings[bindingKey];
+          const bufferElement = new BufferInterleavedElement({
+            name: toCamelCase(binding.name ?? bindingKey),
+            key: bindingKey,
+            type: binding.type,
+            value: binding.value,
+            computeAlignment: this.options.computeAlignment
+          });
+          const startOffset = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].rowCount : 0;
+          bufferElement.setAlignment(startOffset);
+          bufferElement.interleavedAlignment = bufferElement.alignment;
+          this.bufferElements.push(bufferElement);
+        });
       }
       this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].slotCount : 0;
       this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
@@ -2084,12 +2111,13 @@ var GPUCurtains = (() => {
       useStruct = true,
       bindings = {},
       visibility,
+      computeAlignment = true,
       access = "read_write",
       shouldCopyResult = false
     }) {
       bindingType = "storage";
       visibility = "compute";
-      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility, access });
+      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility, access, computeAlignment });
       this.options = {
         ...this.options,
         shouldCopyResult
@@ -2170,6 +2198,7 @@ var GPUCurtains = (() => {
             visibility: binding.access === "read_write" ? "compute" : binding.visibility,
             access: binding.access ?? "read",
             // read by default
+            computeAlignment: binding.computeAlignment,
             bindings: binding.bindings
           };
           const BufferBindingConstructor = bindingParams.access === "read_write" ? WritableBufferBinding : BufferBinding;
@@ -2387,9 +2416,11 @@ var GPUCurtains = (() => {
     destroy() {
       this.bufferBindings.forEach((binding) => {
         if ("buffer" in binding) {
+          this.renderer.removeBuffer(binding.buffer);
           binding.buffer?.destroy();
         }
         if ("resultBuffer" in binding) {
+          this.renderer.removeBuffer(binding.resultBuffer);
           binding.resultBuffer?.destroy();
         }
       });
@@ -3767,6 +3798,7 @@ var GPUCurtains = (() => {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, this.type);
       this.renderer = renderer;
+      this.uuid = generateUUID();
       const { shaders, label, useAsyncPipeline, inputs, bindGroups, samplers } = parameters;
       this.options = {
         shaders,
@@ -3786,7 +3818,7 @@ var GPUCurtains = (() => {
     /**
      * Check if all bind groups are ready, and create them if needed
      */
-    setMaterial() {
+    compileMaterial() {
       const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0;
       const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength;
       if (!bindGroupsReady) {
@@ -3952,11 +3984,22 @@ var GPUCurtains = (() => {
       });
     }
     /**
+     * Destroy a bind group, only if it is not used by another object
+     * @param bindGroup - bind group to eventually destroy
+     */
+    destroyBindGroup(bindGroup) {
+      const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup);
+      const shouldDestroy = !objectsUsingBindGroup || !objectsUsingBindGroup.find((object) => object.material.uuid !== this.uuid);
+      if (shouldDestroy) {
+        bindGroup.destroy();
+      }
+    }
+    /**
      * Destroy all bind groups
      */
     destroyBindGroups() {
-      this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
-      this.clonedBindGroups.forEach((bindGroup) => bindGroup.destroy());
+      this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
+      this.clonedBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
       this.texturesBindGroups = [];
       this.inputsBindGroups = [];
       this.bindGroups = [];
@@ -4075,7 +4118,7 @@ var GPUCurtains = (() => {
      * Finally updates all the [bind groups]{@link Material#bindGroups}
      */
     onBeforeRender() {
-      this.setMaterial();
+      this.compileMaterial();
       this.textures.forEach((texture) => {
         texture.render();
       });
@@ -4180,8 +4223,8 @@ var GPUCurtains = (() => {
      * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
      * @async
      */
-    async setMaterial() {
-      super.setMaterial();
+    async compileMaterial() {
+      super.compileMaterial();
       if (this.pipelineEntry && this.pipelineEntry.canCompile) {
         this.setPipelineEntryProperties();
         await this.compilePipelineEntry();
@@ -5351,8 +5394,8 @@ var GPUCurtains = (() => {
      * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers and compile the pipeline
      * @async
      */
-    async setMaterial() {
-      super.setMaterial();
+    async compileMaterial() {
+      super.compileMaterial();
       if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
         this.setPipelineEntryProperties();
         await this.compilePipelineEntry();
@@ -8325,6 +8368,16 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
+     * Set our [clear value]{@link GPUColor}
+     * @param clearValue - new [clear value]{@link GPUColor} to use
+     */
+    setClearValue(clearValue = [0, 0, 0, 0]) {
+      this.options.clearValue = clearValue;
+      if (this.descriptor && this.descriptor.colorAttachments) {
+        this.descriptor.colorAttachments[0].clearValue = clearValue;
+      }
+    }
+    /**
      * Destroy our {@link RenderPass}
      */
     destroy() {
@@ -8397,6 +8450,7 @@ ${this.shaders.compute.head}`;
       sampleCount = 4,
       production = false,
       preferredFormat,
+      alphaMode = "premultiplied",
       onError = () => {
       }
     }) {
@@ -8414,6 +8468,7 @@ ${this.shaders.compute.head}`;
       this.sampleCount = sampleCount;
       this.production = production;
       this.preferredFormat = preferredFormat;
+      this.alphaMode = alphaMode;
       this.onError = onError;
       if (!this.gpu) {
         setTimeout(() => {
@@ -8513,11 +8568,9 @@ ${this.shaders.compute.head}`;
         this.context.configure({
           device: this.device,
           format: this.preferredFormat,
+          alphaMode: this.alphaMode,
           // needed so we can copy textures for post processing usage
-          usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
-          // TODO
-          alphaMode: "premultiplied"
-          // or "opaque"
+          usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
           //viewFormats: []
         });
         this.setMainRenderPass();
@@ -8786,6 +8839,19 @@ ${this.shaders.compute.head}`;
       this.samplers = [];
       this.textures = [];
     }
+    /**
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+     */
+    getObjectsByBindGroup(bindGroup) {
+      return [...this.computePasses, ...this.meshes].filter((object) => {
+        return [
+          ...object.material.bindGroups,
+          ...object.material.inputsBindGroups,
+          ...object.material.clonedBindGroups
+        ].filter((bG) => bG.uuid === bindGroup.uuid);
+      });
+    }
     /* EVENTS */
     /**
      * Assign a callback function to _onBeforeRenderCallback
@@ -8838,14 +8904,53 @@ ${this.shaders.compute.head}`;
       this.scene.onAfterCommandEncoder();
     }
     /**
-     * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
+     * Render a single [Compute pass]{@link ComputePass}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * @param computePass - [Compute pass]{@link ComputePass}
      */
-    render() {
-      if (!this.ready)
+    renderSingleComputePass(commandEncoder, computePass) {
+      if (!computePass.canRender)
         return;
-      this.onBeforeCommandEncoder();
-      this.onBeforeCommandEncoderCreation.execute();
-      const commandEncoder = this.device?.createCommandEncoder({ label: "Renderer command encoder" });
+      const pass = commandEncoder.beginComputePass();
+      computePass.render(pass);
+      pass.end();
+      computePass.copyBufferToResult(commandEncoder);
+    }
+    /**
+     * Render a single [Mesh]{@link MeshType}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * @param mesh - [Mesh]{@link MeshType} to render
+     */
+    renderSingleMesh(commandEncoder, mesh) {
+      const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
+      mesh.render(pass);
+      pass.end();
+    }
+    /**
+     * Render an array of objects (either [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
+     * @param objects - Array of [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass} to render
+     */
+    renderOnce(objects) {
+      const commandEncoder = this.device?.createCommandEncoder({
+        label: "Renderer once command encoder"
+      });
+      this.pipelineManager.resetCurrentPipeline();
+      objects.forEach((object) => {
+        if (object instanceof ComputePass) {
+          this.renderSingleComputePass(commandEncoder, object);
+        } else {
+          this.renderSingleMesh(commandEncoder, object);
+        }
+      });
+      const commandBuffer = commandEncoder.finish();
+      this.device?.queue.submit([commandBuffer]);
+      this.pipelineManager.resetCurrentPipeline();
+    }
+    /**
+     * Render our [scene]{@link Scene}
+     */
+    renderScene() {
+      const commandEncoder = this.device?.createCommandEncoder({ label: "Renderer scene command encoder" });
       this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
       this.onBeforeRenderScene.execute(commandEncoder);
       this.scene.render(commandEncoder);
@@ -8853,6 +8958,16 @@ ${this.shaders.compute.head}`;
       this.onAfterRenderScene.execute(commandEncoder);
       const commandBuffer = commandEncoder.finish();
       this.device?.queue.submit([commandBuffer]);
+    }
+    /**
+     * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
+     */
+    render() {
+      if (!this.ready)
+        return;
+      this.onBeforeCommandEncoder();
+      this.onBeforeCommandEncoderCreation.execute();
+      this.renderScene();
       this.textures.filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
       this.texturesQueue.forEach((texture) => {
         texture.sourceUploaded = true;
@@ -8891,11 +9006,20 @@ ${this.shaders.compute.head}`;
       sampleCount = 4,
       preferredFormat,
       production = false,
+      alphaMode = "premultiplied",
       camera = {},
       onError = () => {
       }
     }) {
-      super({ container, pixelRatio, sampleCount, preferredFormat, production, onError });
+      super({
+        container,
+        pixelRatio,
+        sampleCount,
+        preferredFormat,
+        alphaMode,
+        production,
+        onError
+      });
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
       this.setCamera(camera);
@@ -9023,6 +9147,19 @@ ${this.shaders.compute.head}`;
       this.camera?.updateMatrixStack();
       this.setCameraBindGroup();
       this.cameraBindGroup?.update();
+    }
+    /**
+     * Render a single [Mesh]{@link MeshType} (binds the camera bind group if needed)
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * @param mesh - [Mesh]{@link MeshType} to render
+     */
+    renderSingleMesh(commandEncoder, mesh) {
+      const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
+      if (mesh.material.options.rendering.useProjection) {
+        pass.setBindGroup(this.cameraBindGroup.index, this.cameraBindGroup.bindGroup);
+      }
+      mesh.render(pass);
+      pass.end();
     }
     /**
      * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
@@ -9245,6 +9382,7 @@ ${this.shaders.compute.head}`;
       pixelRatio = 1,
       sampleCount = 4,
       preferredFormat,
+      alphaMode = "premultiplied",
       production = false,
       onError = () => {
       },
@@ -9255,19 +9393,13 @@ ${this.shaders.compute.head}`;
         pixelRatio,
         sampleCount,
         preferredFormat,
+        alphaMode,
         production,
         onError,
         camera
       });
       this.type = "GPUCurtainsRenderer";
     }
-    /**
-     * Update the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
-     */
-    // onCameraPositionChanged() {
-    //   super.onCameraPositionChanged()
-    //   this.domMeshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
-    // }
     /**
      * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements
      */
@@ -9356,6 +9488,7 @@ ${this.shaders.compute.head}`;
       pixelRatio = window.devicePixelRatio ?? 1,
       sampleCount = 4,
       preferredFormat,
+      alphaMode = "premultiplied",
       production = false,
       camera,
       autoRender = true,
@@ -9383,6 +9516,7 @@ ${this.shaders.compute.head}`;
         camera,
         production,
         preferredFormat,
+        alphaMode,
         autoRender,
         autoResize,
         watchScroll
@@ -9429,6 +9563,7 @@ ${this.shaders.compute.head}`;
         pixelRatio: this.options.pixelRatio,
         sampleCount: this.options.sampleCount,
         preferredFormat: this.options.preferredFormat,
+        alphaMode: this.options.alphaMode,
         camera: this.options.camera,
         production: this.options.production,
         onError: () => this._onErrorCallback && this._onErrorCallback()

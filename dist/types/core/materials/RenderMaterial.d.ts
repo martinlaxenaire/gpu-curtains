@@ -48,7 +48,7 @@ export declare class RenderMaterial extends Material {
      * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers and compile the pipeline
      * @async
      */
-    setMaterial(): Promise<void>;
+    compileMaterial(): Promise<void>;
     /**
      * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
      * @param geometry - the geometry to draw

@@ -57,7 +57,7 @@ export declare class GPUCurtains {
      * GPUCurtains constructor
      * @param parameters - [parameters]{@link GPUCurtainsParams} used to create this {@link GPUCurtains}
      */
-    constructor({ container, pixelRatio, sampleCount, preferredFormat, production, camera, autoRender, autoResize, watchScroll, }: GPUCurtainsParams);
+    constructor({ container, pixelRatio, sampleCount, preferredFormat, alphaMode, production, camera, autoRender, autoResize, watchScroll, }: GPUCurtainsParams);
     /**
      * Set the [container]{@link GPUCurtains#container}
      * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use

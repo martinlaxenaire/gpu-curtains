@@ -109,8 +109,8 @@ export class RenderMaterial extends Material {
    * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers and compile the pipeline
    * @async
    */
-  async setMaterial() {
-    super.setMaterial()
+  async compileMaterial() {
+    super.compileMaterial()
 
     if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryProperties()

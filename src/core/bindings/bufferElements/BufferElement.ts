@@ -53,6 +53,9 @@ export interface BufferElementParams {
   /** Callback used to fill the [buffer binding array]{@link BufferBinding#value} with the [array values]{@link BufferElement#array} */
   /** Original [input value]{@link InputValue} used to create this {@link BufferElement} */
   value: InputValue
+
+  // TODO
+  computeAlignment: boolean
 }
 
 // TODO we should correctly use types like GPUSize64 / GPUIndex32
@@ -69,6 +72,9 @@ export class BufferElement {
   type: WGSLVariableType
   /** The key of the {@link BufferElement} */
   key: string
+
+  // TODO
+  computeAlignment: boolean
 
   /** Whether this {@link BufferElement} [type]{@link BufferElement#type} is an array or not */
   isArray: boolean
@@ -91,10 +97,11 @@ export class BufferElement {
    * BufferElement constructor
    * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferElement}
    */
-  constructor({ name, key, type = 'f32', value }: BufferElementParams) {
+  constructor({ name, key, type = 'f32', value, computeAlignment = true }: BufferElementParams) {
     this.name = name
     this.key = key
     this.type = type
+    this.computeAlignment = computeAlignment
 
     this.isArray = this.type.indexOf('array') !== -1 && (Array.isArray(value) || ArrayBuffer.isView(value))
 
@@ -145,7 +152,7 @@ export class BufferElement {
    * @readonly
    */
   get slotCount(): number {
-    return this.rowCount * slotsPerRow * bytesPerSlot
+    return this.rowCount * bytesPerRow
   }
 
   /**
@@ -213,6 +220,16 @@ export class BufferElement {
     }
 
     const alignment = this.getElementAlignment(nextSlotAvailable)
+
+    if (!this.computeAlignment) {
+      this.alignment = alignment
+
+      // TODO
+      this.alignment.entries[this.inputLength - 1] = { ...this.alignment.entries[0] }
+      this.alignment.entries[this.inputLength - 1].row.end = this.inputLength - 1 + startOffset
+
+      return
+    }
 
     // if our binding is an array, we are going to repeat the alignment computation process
     if (this.inputLength > 1) {

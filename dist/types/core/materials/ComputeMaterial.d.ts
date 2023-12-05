@@ -42,7 +42,7 @@ export declare class ComputeMaterial extends Material {
      * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
      * @async
      */
-    setMaterial(): Promise<void>;
+    compileMaterial(): Promise<void>;
     /**
      * Check whether we're currently accessing one of the buffer and therefore can't render our material
      * @readonly

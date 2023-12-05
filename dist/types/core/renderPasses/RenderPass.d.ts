@@ -84,6 +84,11 @@ export declare class RenderPass {
      */
     setLoadOp(loadOp?: GPULoadOp): void;
     /**
+     * Set our [clear value]{@link GPUColor}
+     * @param clearValue - new [clear value]{@link GPUColor} to use
+     */
+    setClearValue(clearValue?: GPUColor): void;
+    /**
      * Destroy our {@link RenderPass}
      */
     destroy(): void;

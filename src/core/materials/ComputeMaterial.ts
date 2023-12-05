@@ -110,8 +110,8 @@ export class ComputeMaterial extends Material {
    * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
    * @async
    */
-  async setMaterial() {
-    super.setMaterial()
+  async compileMaterial() {
+    super.compileMaterial()
 
     if (this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryProperties()

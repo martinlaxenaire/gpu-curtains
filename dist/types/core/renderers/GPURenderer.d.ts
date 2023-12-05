@@ -13,6 +13,7 @@ import { DOMMesh } from '../../curtains/meshes/DOMMesh';
 import { Plane } from '../../curtains/meshes/Plane';
 import { Mesh } from '../meshes/Mesh';
 import { TasksQueueManager } from '../../utils/TasksQueueManager';
+import { AllowedBindGroups } from '../../types/BindGroups';
 /**
  * Parameters used to create a {@link GPURenderer}
  */
@@ -27,6 +28,8 @@ export interface GPURendererParams {
     production?: boolean;
     /** Texture rendering [preferred format]{@link GPUTextureFormat} */
     preferredFormat?: GPUTextureFormat;
+    /** Set the [context]{@link GPUCanvasContext} alpha mode */
+    alphaMode?: GPUCanvasAlphaMode;
     /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
     onError?: () => void;
 }
@@ -55,6 +58,8 @@ export declare class GPURenderer {
     context: null | GPUCanvasContext;
     /** Texture rendering [preferred format]{@link GPUTextureFormat} */
     preferredFormat: null | GPUTextureFormat;
+    /** Set the [context]{@link GPUCanvasContext} alpha mode */
+    alphaMode?: GPUCanvasAlphaMode;
     /** The WebGPU [adapter]{@link GPUAdapter} used */
     adapter: GPUAdapter | void;
     /** The WebGPU [device]{@link GPUDevice} used */
@@ -107,7 +112,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
      */
-    constructor({ container, pixelRatio, sampleCount, production, preferredFormat, onError, }: GPURendererParams);
+    constructor({ container, pixelRatio, sampleCount, production, preferredFormat, alphaMode, onError, }: GPURendererParams);
     /**
      * Set [canvas]{@link GPURenderer#canvas} size
      * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
@@ -265,6 +270,11 @@ export declare class GPURenderer {
      */
     setRendererObjects(): void;
     /**
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+     */
+    getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | Array<MeshType | ComputePass>;
+    /**
      * Assign a callback function to _onBeforeRenderCallback
      * @param callback - callback to run just before the [renderer render method]{@link GPURenderer#render} will be executed
      * @returns - our {@link GPURenderer}
@@ -291,6 +301,27 @@ export declare class GPURenderer {
      * Function to run just after our [command encoder]{@link GPUCommandEncoder} has been submitted at each [render]{@link GPURenderer#render} call
      */
     onAfterCommandEncoder(): void;
+    /**
+     * Render a single [Compute pass]{@link ComputePass}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * @param computePass - [Compute pass]{@link ComputePass}
+     */
+    renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass): void;
+    /**
+     * Render a single [Mesh]{@link MeshType}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * @param mesh - [Mesh]{@link MeshType} to render
+     */
+    renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType): void;
+    /**
+     * Render an array of objects (either [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
+     * @param objects - Array of [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass} to render
+     */
+    renderOnce(objects: Array<MeshType | ComputePass>): void;
+    /**
+     * Render our [scene]{@link Scene}
+     */
+    renderScene(): void;
     /**
      * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
      */

@@ -45,6 +45,7 @@ export interface BufferElementParams {
     /** Callback used to fill the [buffer binding array]{@link BufferBinding#value} with the [array values]{@link BufferElement#array} */
     /** Original [input value]{@link InputValue} used to create this {@link BufferElement} */
     value: InputValue;
+    computeAlignment: boolean;
 }
 /**
  * BufferElement class:
@@ -59,6 +60,7 @@ export declare class BufferElement {
     type: WGSLVariableType;
     /** The key of the {@link BufferElement} */
     key: string;
+    computeAlignment: boolean;
     /** Whether this {@link BufferElement} [type]{@link BufferElement#type} is an array or not */
     isArray: boolean;
     /** Length of the [input value]{@link BufferElementParams#value} if it's an array, 1 else. Useful to know how many times we'll have to loop to compute the correct alignment */
@@ -75,7 +77,7 @@ export declare class BufferElement {
      * BufferElement constructor
      * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferElement}
      */
-    constructor({ name, key, type, value }: BufferElementParams);
+    constructor({ name, key, type, value, computeAlignment }: BufferElementParams);
     /**
      * Get the offset (i.e. slot index) at which our {@link BufferElement} ends
      * @readonly

@@ -12,10 +12,7 @@ export declare class GPUCurtainsRenderer extends GPUCameraRenderer {
      * GPUCurtainsRenderer constructor
      * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCurtainsRenderer}
      */
-    constructor({ container, pixelRatio, sampleCount, preferredFormat, production, onError, camera, }: GPUCameraRendererParams);
-    /**
-     * Update the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
-     */
+    constructor({ container, pixelRatio, sampleCount, preferredFormat, alphaMode, production, onError, camera, }: GPUCameraRendererParams);
     /**
      * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements
      */

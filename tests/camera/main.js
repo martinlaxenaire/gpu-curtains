@@ -46,17 +46,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     frustumCulled: false, // always draw the floor
     cullMode: 'none',
-    // blend: {
-    //   color: {
-    //     //srcFactor: 'src-alpha',
-    //     srcFactor: 'one',
-    //     dstFactor: 'one',
-    //   },
-    //   alpha: {
-    //     srcFactor: 'zero',
-    //     dstFactor: 'one',
-    //   },
-    // },
     inputs: {
       uniforms: {
         checkerboard: {

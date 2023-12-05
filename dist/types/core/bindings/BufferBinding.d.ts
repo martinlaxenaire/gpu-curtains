@@ -19,15 +19,22 @@ export interface BufferBindingInput extends InputBase {
     shouldUpdate: boolean;
 }
 /**
- * Parameters used to create a {@link BufferBinding}
+ * Base parameters used to create a {@link BufferBinding}
  */
-export interface BufferBindingParams extends BindingParams {
+export interface BufferBindingBaseParams {
     /** Whether this {@link BufferBinding} should use structured WGSL variables */
     useStruct?: boolean;
     /** {@link BufferBinding} memory access types (read only or read/write) */
     access?: BufferBindingMemoryAccessType;
     /** Object containing one or multiple [input bindings]{@link Input} */
     bindings?: Record<string, Input>;
+    /** Whether to compute the buffer element offset/alignment. Could be set to false to improve performance if you are dealing with very large buffers and don't need to actually pass the values from the CPU to the GPU (i.e. directly compute buffer values in a compute shader) */
+    computeAlignment?: boolean;
+}
+/**
+ * Parameters used to create a {@link BufferBinding}
+ */
+export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {
 }
 /**
  * BufferBinding class:
@@ -69,7 +76,7 @@ export declare class BufferBinding extends Binding {
      * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
      * @param {Object.<string, Input>} parameters.bindings - bindings inputs
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, useStruct, access, bindings, }: BufferBindingParams);
+    constructor({ label, name, bindingType, bindIndex, visibility, useStruct, computeAlignment, access, bindings, }: BufferBindingParams);
     /**
      * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
      */

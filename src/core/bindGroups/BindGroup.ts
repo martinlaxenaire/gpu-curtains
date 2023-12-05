@@ -144,6 +144,7 @@ export class BindGroup {
           useStruct: true, // by default
           visibility: binding.access === 'read_write' ? 'compute' : binding.visibility,
           access: binding.access ?? 'read', // read by default
+          computeAlignment: binding.computeAlignment,
           bindings: binding.bindings,
         }
 
@@ -421,10 +422,12 @@ export class BindGroup {
   destroy() {
     this.bufferBindings.forEach((binding) => {
       if ('buffer' in binding) {
+        this.renderer.removeBuffer(binding.buffer)
         binding.buffer?.destroy()
       }
 
       if ('resultBuffer' in binding) {
+        this.renderer.removeBuffer(binding.resultBuffer)
         binding.resultBuffer?.destroy()
       }
     })

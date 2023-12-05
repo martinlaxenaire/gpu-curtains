@@ -16,7 +16,7 @@ export declare class BufferInterleavedElement extends BufferElement {
      * BufferInterleavedElement constructor
      * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferInterleavedElement}
      */
-    constructor({ name, key, type, value }: BufferElementParams);
+    constructor({ name, key, type, value, computeAlignment }: BufferElementParams);
     /**
      * Get the total number of rows used by this {@link BufferInterleavedElement}
      * @readonly
