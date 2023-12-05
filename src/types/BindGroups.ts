@@ -1,6 +1,6 @@
 import { BindGroup } from '../core/bindGroups/BindGroup'
 import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup'
-import { BufferBinding } from '../core/bindings/BufferBinding'
+import { BufferBinding, BufferBindingBaseParams, BufferBindingParams } from '../core/bindings/BufferBinding'
 import { SamplerBinding } from '../core/bindings/SamplerBinding'
 import { TextureBinding } from '../core/bindings/TextureBinding'
 import { WritableBufferBinding } from '../core/bindings/WritableBufferBinding'
@@ -52,18 +52,7 @@ export interface Input extends InputBase {
 /**
  * An object defining all possible {@link InputBindingsParams} parameters
  */
-export interface InputBindingsParams {
-  /** {@link Binding} label */
-  label?: string
-  /** Whether this {@link Binding} should use structured WGSL variables */
-  useStruct?: boolean
-  /** {@link Binding} variables shaders visibility */
-  visibility?: MaterialShadersType
-  /** {@link BufferBinding} memory access type (read only or read/write) */
-  access?: BufferBindingMemoryAccessType
-  /** Object containing one or multiple [input bindings]{@link Input} */
-  bindings: Record<string, Input>
-}
+export type InputBindingsParams = BufferBindingParams
 
 /**
  * Defines an input bindings

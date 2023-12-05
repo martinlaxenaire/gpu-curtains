@@ -19,6 +19,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     pixelRatio = 1,
     sampleCount = 4,
     preferredFormat,
+    alphaMode = 'premultiplied',
     production = false,
     onError = () => {
       /* allow empty callbacks */
@@ -30,6 +31,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
       pixelRatio,
       sampleCount,
       preferredFormat,
+      alphaMode,
       production,
       onError,
       camera,
@@ -37,14 +39,6 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
     this.type = 'GPUCurtainsRenderer'
   }
-
-  /**
-   * Update the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
-   */
-  // onCameraPositionChanged() {
-  //   super.onCameraPositionChanged()
-  //   this.domMeshes?.forEach((mesh) => mesh.updateSizePositionAndProjection())
-  // }
 
   /**
    * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements

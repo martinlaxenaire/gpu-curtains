@@ -16,6 +16,7 @@ import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
 import { TasksQueueManager } from '../../utils/TasksQueueManager'
+import { AllowedBindGroups } from '../../types/BindGroups'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -31,6 +32,8 @@ export interface GPURendererParams {
   production?: boolean
   /** Texture rendering [preferred format]{@link GPUTextureFormat} */
   preferredFormat?: GPUTextureFormat
+  /** Set the [context]{@link GPUCanvasContext} alpha mode */
+  alphaMode?: GPUCanvasAlphaMode
   /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
   onError?: () => void
 }
@@ -64,6 +67,8 @@ export class GPURenderer {
   context: null | GPUCanvasContext
   /** Texture rendering [preferred format]{@link GPUTextureFormat} */
   preferredFormat: null | GPUTextureFormat
+  /** Set the [context]{@link GPUCanvasContext} alpha mode */
+  alphaMode?: GPUCanvasAlphaMode
   /** The WebGPU [adapter]{@link GPUAdapter} used */
   adapter: GPUAdapter | void
   /** The WebGPU [device]{@link GPUDevice} used */
@@ -79,6 +84,8 @@ export class GPURenderer {
   /** The {@link Scene} used */
   scene: Scene
 
+  /** An array containing all our created {@link GPUBuffer} */
+  buffers: GPUBuffer[]
   /** An array containing all our created {@link ComputePass} */
   computePasses: ComputePass[]
   /** An array containing all our created {@link PingPongPlane} */
@@ -134,6 +141,7 @@ export class GPURenderer {
     sampleCount = 4,
     production = false,
     preferredFormat,
+    alphaMode = 'premultiplied',
     onError = () => {
       /* allow empty callbacks */
     },
@@ -147,6 +155,7 @@ export class GPURenderer {
     this.sampleCount = sampleCount
     this.production = production
     this.preferredFormat = preferredFormat
+    this.alphaMode = alphaMode
 
     this.onError = onError
 
@@ -275,10 +284,9 @@ export class GPURenderer {
       this.context.configure({
         device: this.device,
         format: this.preferredFormat,
+        alphaMode: this.alphaMode,
         // needed so we can copy textures for post processing usage
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
-        // TODO
-        alphaMode: 'premultiplied', // or "opaque"
         //viewFormats: []
       })
 
@@ -362,7 +370,19 @@ export class GPURenderer {
    * @returns - newly created {@link GPUBuffer}
    */
   createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer {
-    return this.device?.createBuffer(bufferDescriptor)
+    const buffer = this.device?.createBuffer(bufferDescriptor)
+    this.buffers.push(buffer)
+    return buffer
+  }
+
+  /**
+   * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPURenderer#buffers}
+   * @param buffer - [buffer]{@link GPUBuffer} to remove
+   */
+  removeBuffer(buffer: GPUBuffer) {
+    this.buffers = this.buffers.filter((b) => {
+      return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size
+    })
   }
 
   /**
@@ -468,7 +488,7 @@ export class GPURenderer {
    * @param texture - [texture]{@link Texture} to remove
    */
   removeTexture(texture: Texture) {
-    this.textures.filter((t) => t.uuid !== texture.uuid)
+    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid)
   }
 
   /**
@@ -577,6 +597,7 @@ export class GPURenderer {
    */
   setRendererObjects() {
     // keep track of meshes, textures, etc.
+    this.buffers = []
     this.computePasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []
@@ -584,6 +605,20 @@ export class GPURenderer {
     this.meshes = []
     this.samplers = []
     this.textures = []
+  }
+
+  /**
+   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+   */
+  getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | Array<MeshType | ComputePass> {
+    return [...this.computePasses, ...this.meshes].filter((object) => {
+      return [
+        ...object.material.bindGroups,
+        ...object.material.inputsBindGroups,
+        ...object.material.clonedBindGroups,
+      ].filter((bG) => bG.uuid === bindGroup.uuid)
+    })
   }
 
   /* EVENTS */
@@ -650,16 +685,61 @@ export class GPURenderer {
   }
 
   /**
-   * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
+   * Render a single [Compute pass]{@link ComputePass}
+   * @param commandEncoder - current {@link GPUCommandEncoder}
+   * @param computePass - [Compute pass]{@link ComputePass}
    */
-  render() {
-    if (!this.ready) return
+  renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass) {
+    if (!computePass.canRender) return
 
-    // now render!
-    this.onBeforeCommandEncoder()
-    this.onBeforeCommandEncoderCreation.execute()
+    const pass = commandEncoder.beginComputePass()
+    computePass.render(pass)
+    pass.end()
 
-    const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer command encoder' })
+    computePass.copyBufferToResult(commandEncoder)
+  }
+
+  /**
+   * Render a single [Mesh]{@link MeshType}
+   * @param commandEncoder - current {@link GPUCommandEncoder}
+   * @param mesh - [Mesh]{@link MeshType} to render
+   */
+  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType) {
+    const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
+    mesh.render(pass)
+    pass.end()
+  }
+
+  /**
+   * Render an array of objects (either [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
+   * @param objects - Array of [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass} to render
+   */
+  renderOnce(objects: Array<MeshType | ComputePass>) {
+    const commandEncoder = this.device?.createCommandEncoder({
+      label: 'Renderer once command encoder',
+    })
+
+    this.pipelineManager.resetCurrentPipeline()
+
+    objects.forEach((object) => {
+      if (object instanceof ComputePass) {
+        this.renderSingleComputePass(commandEncoder, object)
+      } else {
+        this.renderSingleMesh(commandEncoder, object)
+      }
+    })
+
+    const commandBuffer = commandEncoder.finish()
+    this.device?.queue.submit([commandBuffer])
+
+    this.pipelineManager.resetCurrentPipeline()
+  }
+
+  /**
+   * Render our [scene]{@link Scene}
+   */
+  renderScene() {
+    const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer scene command encoder' })
 
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
     this.onBeforeRenderScene.execute(commandEncoder)
@@ -671,6 +751,19 @@ export class GPURenderer {
 
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
+  }
+
+  /**
+   * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
+   */
+  render() {
+    if (!this.ready) return
+
+    // now render!
+    this.onBeforeCommandEncoder()
+    this.onBeforeCommandEncoderCreation.execute()
+
+    this.renderScene()
 
     // now handle textures
 

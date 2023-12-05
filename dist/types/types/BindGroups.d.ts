@@ -1,7 +1,7 @@
 /// <reference types="dist" />
 import { BindGroup } from '../core/bindGroups/BindGroup';
 import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup';
-import { BufferBinding } from '../core/bindings/BufferBinding';
+import { BufferBinding, BufferBindingParams } from '../core/bindings/BufferBinding';
 import { SamplerBinding } from '../core/bindings/SamplerBinding';
 import { TextureBinding } from '../core/bindings/TextureBinding';
 import { WritableBufferBinding } from '../core/bindings/WritableBufferBinding';
@@ -9,9 +9,7 @@ import { Vec2 } from '../math/Vec2';
 import { Vec3 } from '../math/Vec3';
 import { Mat4 } from '../math/Mat4';
 import { Quat } from '../math/Quat';
-import { MaterialShadersType } from './Materials';
 import { VertexBufferAttribute } from './Geometries';
-import { BufferBindingMemoryAccessType } from '../core/bindings/Binding';
 /**
  * Defines all kind of possible input value types
  */
@@ -37,18 +35,7 @@ export interface Input extends InputBase {
 /**
  * An object defining all possible {@link InputBindingsParams} parameters
  */
-export interface InputBindingsParams {
-    /** {@link Binding} label */
-    label?: string;
-    /** Whether this {@link Binding} should use structured WGSL variables */
-    useStruct?: boolean;
-    /** {@link Binding} variables shaders visibility */
-    visibility?: MaterialShadersType;
-    /** {@link BufferBinding} memory access type (read only or read/write) */
-    access?: BufferBindingMemoryAccessType;
-    /** Object containing one or multiple [input bindings]{@link Input} */
-    bindings: Record<string, Input>;
-}
+export type InputBindingsParams = BufferBindingParams;
 /**
  * Defines an input bindings
  */

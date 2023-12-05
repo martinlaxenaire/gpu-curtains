@@ -21,7 +21,7 @@ let meshIndex = 0
 
 export interface MeshBaseRenderParams extends RenderMaterialParams {
   /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
-  autoAddToScene: boolean
+  autoRender: boolean
   /** Flag indicating whether to draw this Mesh or not */
   visible?: boolean
   /** Controls the order in which this Mesh should be rendered by our {@link Scene} */
@@ -53,7 +53,7 @@ export interface MeshBaseOptions {
   /** {@link RenderTarget} to render this Mesh to, if any */
   renderTarget?: RenderTarget | null
   /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
-  autoAddToScene?: boolean
+  autoRender?: boolean
   /** Whether to compile this Mesh {@link RenderMaterial} [render pipeline]{@link RenderPipelineEntry#pipeline} asynchronously or not */
   useAsyncPipeline?: boolean
 }
@@ -64,7 +64,7 @@ const defaultMeshBaseParams = {
   geometry: new Geometry(),
   // material
   shaders: {},
-  autoAddToScene: true,
+  autoRender: true,
   useProjection: false,
   // rendering
   cullMode: 'back',
@@ -167,10 +167,10 @@ export declare class MeshBaseClass {
   constructor(renderer: Renderer, element: HTMLElement | null, parameters: MeshBaseParams)
 
   /**
-   * Get private #autoAddToScene value
+   * Get private #autoRender value
    * @readonly
    */
-  get autoAddToScene(): boolean // allow to read value from child classes
+  get autoRender(): boolean // allow to read value from child classes
 
   /**
    * Get/set whether a Mesh is ready or not
@@ -387,7 +387,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     userData: Record<string, unknown>
 
     /** Whether we should add this {@link MeshBase} to our {@link Scene} to let it handle the rendering process automatically */
-    #autoAddToScene = true
+    #autoRender = true
 
     // callbacks / events
     /** function assigned to the [onReady]{@link MeshBase#onReady} callback */
@@ -415,7 +415,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * MeshBase constructor
      * @typedef MeshBaseParams
      * @property {string=} label - MeshBase label
-     * @property {boolean=} autoAddToScene - whether we should add this MeshBase to our {@link Scene} to let it handle the rendering process automatically
+     * @property {boolean=} autoRender - whether we should add this MeshBase to our {@link Scene} to let it handle the rendering process automatically
      * @property {AllowedGeometries} geometry - geometry to draw
      * @property {boolean=} useAsyncPipeline - whether the {@link RenderPipelineEntry} should be compiled asynchronously
      * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
@@ -467,7 +467,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         renderOrder,
         renderTarget,
         texturesOptions,
-        autoAddToScene,
+        autoRender,
         ...meshParameters
       } = parameters
 
@@ -477,7 +477,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         shaders,
         texturesOptions,
         ...(renderTarget !== undefined && { renderTarget }),
-        ...(autoAddToScene !== undefined && { autoAddToScene }),
+        ...(autoRender !== undefined && { autoRender }),
         ...(meshParameters.useAsyncPipeline !== undefined && { useAsyncPipeline: meshParameters.useAsyncPipeline }),
       }
 
@@ -485,8 +485,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.geometry = geometry
 
-      if (autoAddToScene !== undefined) {
-        this.#autoAddToScene = autoAddToScene
+      if (autoRender !== undefined) {
+        this.#autoRender = autoRender
       }
 
       this.visible = visible
@@ -507,11 +507,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Get private #autoAddToScene value
+     * Get private #autoRender value
      * @readonly
      */
-    get autoAddToScene(): boolean {
-      return this.#autoAddToScene
+    get autoRender(): boolean {
+      return this.#autoRender
     }
 
     /**
@@ -537,7 +537,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     addToScene() {
       this.renderer.meshes.push(this as unknown as MeshType)
 
-      if (this.#autoAddToScene) {
+      if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as MeshType)
       }
     }
@@ -546,7 +546,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Remove a Mesh from the renderer and the {@link Scene}
      */
     removeFromScene() {
-      if (this.#autoAddToScene) {
+      if (this.#autoRender) {
         this.renderer.scene.removeMesh(this as unknown as MeshType)
       }
 

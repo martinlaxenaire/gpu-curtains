@@ -8,7 +8,7 @@ import { DOMElementBoundingRect } from '../DOM/DOMElement';
  */
 export interface RenderTargetParams extends RenderPassParams {
     /** Whether we should add this {@link RenderTarget} to our {@link Scene} to let it handle the rendering process automatically */
-    autoAddToScene?: boolean;
+    autoRender?: boolean;
 }
 /**
  * RenderTarget class:

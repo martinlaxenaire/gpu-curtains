@@ -214,6 +214,17 @@ export class RenderPass {
   }
 
   /**
+   * Set our [clear value]{@link GPUColor}
+   * @param clearValue - new [clear value]{@link GPUColor} to use
+   */
+  setClearValue(clearValue: GPUColor = [0, 0, 0, 0]) {
+    this.options.clearValue = clearValue
+    if (this.descriptor && this.descriptor.colorAttachments) {
+      this.descriptor.colorAttachments[0].clearValue = clearValue
+    }
+  }
+
+  /**
    * Destroy our {@link RenderPass}
    */
   destroy() {

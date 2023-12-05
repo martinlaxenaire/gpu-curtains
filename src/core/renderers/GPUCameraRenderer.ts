@@ -1,8 +1,9 @@
-import { GPURenderer, GPURendererParams } from './GPURenderer'
+import { GPURenderer, GPURendererParams, MeshType } from './GPURenderer'
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
+import { CameraRenderer } from './utils'
 
 /**
  * Parameters used to create a {@link GPUCameraRenderer}
@@ -35,12 +36,21 @@ export class GPUCameraRenderer extends GPURenderer {
     sampleCount = 4,
     preferredFormat,
     production = false,
+    alphaMode = 'premultiplied',
     camera = {},
     onError = () => {
       /* allow empty callbacks */
     },
   }: GPUCameraRendererParams) {
-    super({ container, pixelRatio, sampleCount, preferredFormat, production, onError })
+    super({
+      container,
+      pixelRatio,
+      sampleCount,
+      preferredFormat,
+      alphaMode,
+      production,
+      onError,
+    })
 
     // this.options = {
     //   container,
@@ -194,6 +204,23 @@ export class GPUCameraRenderer extends GPURenderer {
     this.camera?.updateMatrixStack()
     this.setCameraBindGroup()
     this.cameraBindGroup?.update()
+  }
+
+  /**
+   * Render a single [Mesh]{@link MeshType} (binds the camera bind group if needed)
+   * @param commandEncoder - current {@link GPUCommandEncoder}
+   * @param mesh - [Mesh]{@link MeshType} to render
+   */
+  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType) {
+    const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
+
+    // bind camera if needed
+    if (mesh.material.options.rendering.useProjection) {
+      pass.setBindGroup(this.cameraBindGroup.index, this.cameraBindGroup.bindGroup)
+    }
+
+    mesh.render(pass)
+    pass.end()
   }
 
   /**

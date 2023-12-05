@@ -55,7 +55,7 @@ export class PingPongPlane extends FullscreenPlane {
   addToScene() {
     this.renderer.pingPongPlanes.push(this)
 
-    if (this.autoAddToScene) {
+    if (this.autoRender) {
       this.renderer.scene.addPingPongPlane(this)
     }
   }
@@ -68,7 +68,7 @@ export class PingPongPlane extends FullscreenPlane {
       this.renderTarget.destroy()
     }
 
-    if (this.autoAddToScene) {
+    if (this.autoRender) {
       this.renderer.scene.removePingPongPlane(this)
     }
 

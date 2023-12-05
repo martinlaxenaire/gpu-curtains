@@ -10,6 +10,7 @@ import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } fro
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture } from '../textures/RenderTexture'
 import { Binding } from '../bindings/Binding'
+import { generateUUID } from '../../utils/utils'
 
 /**
  * Material class:
@@ -19,6 +20,8 @@ import { Binding } from '../bindings/Binding'
 export class Material {
   /** The type of the {@link Material} */
   type: string
+  /** The universal unique id of the {@link Material} */
+  uuid: string
   /** The {@link Renderer} used */
   renderer: Renderer
   /** Options used to create this {@link Material} */
@@ -78,6 +81,8 @@ export class Material {
 
     this.renderer = renderer
 
+    this.uuid = generateUUID()
+
     const { shaders, label, useAsyncPipeline, inputs, bindGroups, samplers } = parameters
 
     // shaders = {
@@ -122,7 +127,7 @@ export class Material {
   /**
    * Check if all bind groups are ready, and create them if needed
    */
-  setMaterial() {
+  compileMaterial() {
     const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0
     const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength
 
@@ -331,11 +336,28 @@ export class Material {
   }
 
   /**
+   * Destroy a bind group, only if it is not used by another object
+   * @param bindGroup - bind group to eventually destroy
+   */
+  destroyBindGroup(bindGroup: AllowedBindGroups) {
+    // check if this bind group is used by another object before actually destroying it
+    // TODO same thing for textures?
+    const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup)
+
+    const shouldDestroy =
+      !objectsUsingBindGroup || !objectsUsingBindGroup.find((object) => object.material.uuid !== this.uuid)
+
+    if (shouldDestroy) {
+      bindGroup.destroy()
+    }
+  }
+
+  /**
    * Destroy all bind groups
    */
   destroyBindGroups() {
-    this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
-    this.clonedBindGroups.forEach((bindGroup) => bindGroup.destroy())
+    this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup))
+    this.clonedBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup))
     this.texturesBindGroups = []
     this.inputsBindGroups = []
     this.bindGroups = []
@@ -486,7 +508,7 @@ export class Material {
    */
   onBeforeRender() {
     // set our material if needed
-    this.setMaterial()
+    this.compileMaterial()
 
     // first what needs to be done for all textures
     this.textures.forEach((texture) => {

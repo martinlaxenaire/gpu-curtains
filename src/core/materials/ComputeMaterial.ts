@@ -90,7 +90,7 @@ export class ComputeMaterial extends Material {
   }
 
   /**
-   * When all bind groups are created, add them to the {@link ComputePipelineEntry} and compile it
+   * When all bind groups are created, add them to the {@link ComputePipelineEntry}
    */
   setPipelineEntryProperties() {
     this.pipelineEntry.setPipelineEntryProperties({
@@ -99,13 +99,23 @@ export class ComputeMaterial extends Material {
   }
 
   /**
-   * Check if all bind groups are ready, create them if needed and set {@link ComputePipelineEntry} bind group buffers
+   * Compile the {@link ComputePipelineEntry}
+   * @async
    */
-  setMaterial() {
-    super.setMaterial()
+  async compilePipelineEntry() {
+    await this.pipelineEntry.compilePipelineEntry()
+  }
+
+  /**
+   * Check if all bind groups are ready, create them if needed, set {@link ComputePipelineEntry} bind group buffers and compile the pipeline
+   * @async
+   */
+  async compileMaterial() {
+    super.compileMaterial()
 
     if (this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryProperties()
+      await this.compilePipelineEntry()
     }
   }
 

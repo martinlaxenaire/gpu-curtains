@@ -36,13 +36,19 @@ export declare class RenderMaterial extends Material {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams);
     /**
-     * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry} and compile it
+     * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry}
      */
     setPipelineEntryProperties(): void;
     /**
-     * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers
+     * Compile the {@link RenderPipelineEntry}
+     * @async
      */
-    setMaterial(): void;
+    compilePipelineEntry(): Promise<void>;
+    /**
+     * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers and compile the pipeline
+     * @async
+     */
+    compileMaterial(): Promise<void>;
     /**
      * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
      * @param geometry - the geometry to draw

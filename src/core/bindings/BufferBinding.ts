@@ -11,7 +11,7 @@ import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { Input, InputBase, InputValue } from '../../types/BindGroups'
-import { BufferElement, BufferElementAlignment } from './bufferElements/BufferElement'
+import { BufferElement, BufferElementAlignment, slotsPerRow } from './bufferElements/BufferElement'
 import { BufferInterleavedElement } from './bufferElements/BufferInterleavedElement'
 
 /**
@@ -33,16 +33,23 @@ export interface BufferBindingInput extends InputBase {
 }
 
 /**
- * Parameters used to create a {@link BufferBinding}
+ * Base parameters used to create a {@link BufferBinding}
  */
-export interface BufferBindingParams extends BindingParams {
+export interface BufferBindingBaseParams {
   /** Whether this {@link BufferBinding} should use structured WGSL variables */
   useStruct?: boolean
   /** {@link BufferBinding} memory access types (read only or read/write) */
   access?: BufferBindingMemoryAccessType
   /** Object containing one or multiple [input bindings]{@link Input} */
   bindings?: Record<string, Input>
+  /** Whether to compute the buffer element offset/alignment. Could be set to false to improve performance if you are dealing with very large buffers and don't need to actually pass the values from the CPU to the GPU (i.e. directly compute buffer values in a compute shader) */
+  computeAlignment?: boolean
 }
+
+/**
+ * Parameters used to create a {@link BufferBinding}
+ */
+export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {}
 
 /**
  * BufferBinding class:
@@ -58,6 +65,7 @@ export class BufferBinding extends Binding {
 
   /** Flag to indicate whether one of the {@link bindings} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
   shouldUpdate: boolean
+
   /** An array describing how each corresponding {@link bindings} should be inserted into our {@link arrayView} array */
   bufferElements: Array<BufferElement | BufferInterleavedElement>
 
@@ -96,6 +104,7 @@ export class BufferBinding extends Binding {
     bindIndex = 0,
     visibility,
     useStruct = true,
+    computeAlignment = true,
     access = 'read',
     bindings = {},
   }: BufferBindingParams) {
@@ -108,6 +117,7 @@ export class BufferBinding extends Binding {
       useStruct,
       access,
       bindings,
+      computeAlignment,
     }
 
     this.arrayBufferSize = 0
@@ -217,6 +227,7 @@ export class BufferBinding extends Binding {
           key: bindingKey,
           type: binding.type,
           value: binding.value,
+          computeAlignment: this.options.computeAlignment,
         })
       )
     })
@@ -229,7 +240,7 @@ export class BufferBinding extends Binding {
     })
 
     // now create our interleaved buffer elements
-    if (arrayBindings.length > 1) {
+    if (arrayBindings.length > 1 && this.options.computeAlignment) {
       // first get the sizes of the arrays
       const arraySizes = arrayBindings.map((bindingKey) => {
         const binding = this.bindings[bindingKey]
@@ -250,6 +261,7 @@ export class BufferBinding extends Binding {
             key: bindingKey,
             type: binding.type,
             value: binding.value,
+            computeAlignment: this.options.computeAlignment,
           })
         })
 
@@ -261,6 +273,7 @@ export class BufferBinding extends Binding {
             key: bindingKey,
             type: binding.type.replace('array', '').replace('<', '').replace('>', ''),
             value: [], // useless
+            computeAlignment: this.options.computeAlignment,
           })
         })
 
@@ -304,6 +317,27 @@ export class BufferBinding extends Binding {
           )}"`
         )
       }
+    } else if (arrayBindings.length > 1 && !this.options.computeAlignment) {
+      arrayBindings.forEach((bindingKey) => {
+        const binding = this.bindings[bindingKey]
+
+        const bufferElement = new BufferInterleavedElement({
+          name: toCamelCase(binding.name ?? bindingKey),
+          key: bindingKey,
+          type: binding.type,
+          value: binding.value,
+          computeAlignment: this.options.computeAlignment,
+        })
+
+        const startOffset = this.bufferElements.length
+          ? this.bufferElements[this.bufferElements.length - 1].rowCount
+          : 0
+
+        bufferElement.setAlignment(startOffset)
+        bufferElement.interleavedAlignment = bufferElement.alignment
+
+        this.bufferElements.push(bufferElement)
+      })
     }
 
     // our array size is the number of rows * number of slots per row * bytes per slots

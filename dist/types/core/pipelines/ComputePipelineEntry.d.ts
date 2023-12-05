@@ -17,7 +17,7 @@ export declare class ComputePipelineEntry extends PipelineEntry {
      */
     constructor(parameters: PipelineEntryParams);
     /**
-     * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups}) and create the [pipeline]{@link ComputePipelineEntry#pipeline} itself
+     * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups})
      * @param parameters - the [bind groups]{@link ComputeMaterial#bindGroups} to use
      */
     setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams): void;
@@ -44,7 +44,8 @@ export declare class ComputePipelineEntry extends PipelineEntry {
      */
     createComputePipelineAsync(): Promise<void>;
     /**
-     * Call [super setPipelineEntry]{@link PipelineEntry#setPipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+     * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+     * @async
      */
-    setPipelineEntry(): void;
+    compilePipelineEntry(): Promise<void>;
 }

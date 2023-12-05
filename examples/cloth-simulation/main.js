@@ -498,7 +498,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'calc_forces',
       },
     },
-    autoAddToScene: false, // we will manually take care of rendering
+    autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
     dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
   })
@@ -511,7 +511,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'update',
       },
     },
-    autoAddToScene: false, // we will manually take care of rendering
+    autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
     dispatchSize: [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)],
   })
@@ -524,7 +524,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'calc_normal',
       },
     },
-    autoAddToScene: false, // we will manually take care of rendering
+    autoRender: false, // we will manually take care of rendering
     bindGroups: [computeBindGroup],
     dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
   })

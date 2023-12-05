@@ -1,4 +1,5 @@
-import { GPURenderer, GPURendererParams } from './GPURenderer';
+/// <reference types="dist" />
+import { GPURenderer, GPURendererParams, MeshType } from './GPURenderer';
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { BindGroup } from '../bindGroups/BindGroup';
@@ -26,7 +27,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * GPUCameraRenderer constructor
      * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
      */
-    constructor({ container, pixelRatio, sampleCount, preferredFormat, production, camera, onError, }: GPUCameraRendererParams);
+    constructor({ container, pixelRatio, sampleCount, preferredFormat, production, alphaMode, camera, onError, }: GPUCameraRendererParams);
     /**
      * Set the [camera]{@link GPUCameraRenderer#camera}
      * @param cameraParameters - [parameters]{@link CameraBasePerspectiveOptions} used to create the [camera]{@link GPUCameraRenderer#camera}
@@ -68,6 +69,12 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
      */
     updateCamera(): void;
+    /**
+     * Render a single [Mesh]{@link MeshType} (binds the camera bind group if needed)
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * @param mesh - [Mesh]{@link MeshType} to render
+     */
+    renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType): void;
     /**
      * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
      */

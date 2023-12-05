@@ -104,7 +104,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes}) and create the [pipeline]{@link RenderPipelineEntry#pipeline} itself
+   * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes})
    * @param parameters - the [bind groups]{@link RenderMaterial#bindGroups} and [attributes]{@link RenderMaterial#attributes} to use
    */
   setPipelineEntryProperties(parameters: RenderPipelineEntryPropertiesParams) {
@@ -113,8 +113,6 @@ export class RenderPipelineEntry extends PipelineEntry {
     this.attributes = attributes
 
     this.setPipelineEntryBindGroups(bindGroups)
-
-    this.setPipelineEntry()
   }
 
   /* SHADERS */
@@ -348,13 +346,14 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Call [super setPipelineEntry]{@link PipelineEntry#setPipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+   * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+   * @async
    */
-  setPipelineEntry() {
-    super.setPipelineEntry()
+  async compilePipelineEntry() {
+    super.compilePipelineEntry()
 
     if (this.options.useAsync) {
-      this.createRenderPipelineAsync()
+      await this.createRenderPipelineAsync()
     } else {
       this.createRenderPipeline()
       this.status.compiled = true
