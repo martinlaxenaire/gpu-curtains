@@ -285,7 +285,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     dispatchSize: Math.ceil(nbParticles / 64), //we divide the vertex count by the workgroup_size
     bindGroups: [particlesBindGroup],
-    autoAddToScene: false, // we don't want to run this pass each frame
+    autoRender: false, // we don't want to run this pass each frame
   })
 
   // we should wait for pipeline compilation!

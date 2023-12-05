@@ -10,7 +10,7 @@ import { DOMElementBoundingRect } from '../DOM/DOMElement'
  */
 export interface RenderTargetParams extends RenderPassParams {
   /** Whether we should add this {@link RenderTarget} to our {@link Scene} to let it handle the rendering process automatically */
-  autoAddToScene?: boolean
+  autoRender?: boolean
 }
 
 /**
@@ -34,7 +34,7 @@ export class RenderTarget {
   renderTexture: RenderTexture
 
   /** Whether we should add this {@link RenderTarget} to our {@link Scene} to let it handle the rendering process automatically */
-  #autoAddToScene = true
+  #autoRender = true
 
   /**
    * RenderTarget constructor
@@ -51,18 +51,18 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, depth, loadOp, clearValue, autoAddToScene } = parameters
+    const { label, depth, loadOp, clearValue, autoRender } = parameters
 
     this.options = {
       label,
       depth,
       loadOp,
       clearValue,
-      autoAddToScene,
+      autoRender,
     }
 
-    if (autoAddToScene !== undefined) {
-      this.#autoAddToScene = autoAddToScene
+    if (autoRender !== undefined) {
+      this.#autoRender = autoRender
     }
 
     this.renderPass = new RenderPass(this.renderer, {
@@ -87,7 +87,7 @@ export class RenderTarget {
   addToScene() {
     this.renderer.renderTargets.push(this)
 
-    if (this.#autoAddToScene) {
+    if (this.#autoRender) {
       this.renderer.scene.addRenderTarget(this)
     }
   }
@@ -96,7 +96,7 @@ export class RenderTarget {
    * Remove the {@link RenderTarget} from the renderer and the {@link Scene}
    */
   removeFromScene() {
-    if (this.#autoAddToScene) {
+    if (this.#autoRender) {
       this.renderer.scene.removeRenderTarget(this)
     }
 

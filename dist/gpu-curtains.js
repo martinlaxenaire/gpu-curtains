@@ -4371,7 +4371,7 @@ var GPUCurtains = (() => {
        * Whether this {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically
        * @private
        */
-      this.#autoAddToScene = true;
+      this.#autoRender = true;
       // callbacks / events
       /** function assigned to the [onReady]{@link ComputePass#onReady} callback */
       this._onReadyCallback = () => {
@@ -4401,7 +4401,7 @@ var GPUCurtains = (() => {
         renderOrder,
         inputs,
         bindGroups,
-        autoAddToScene,
+        autoRender,
         useAsyncPipeline,
         texturesOptions,
         dispatchSize
@@ -4409,7 +4409,7 @@ var GPUCurtains = (() => {
       this.options = {
         label,
         shaders,
-        ...autoAddToScene !== void 0 && { autoAddToScene },
+        ...autoRender !== void 0 && { autoRender },
         ...renderOrder !== void 0 && { renderOrder },
         ...useAsyncPipeline !== void 0 && { useAsyncPipeline },
         ...dispatchSize !== void 0 && { dispatchSize },
@@ -4417,8 +4417,8 @@ var GPUCurtains = (() => {
         // TODO default
       };
       this.renderOrder = renderOrder ?? 0;
-      if (autoAddToScene !== void 0) {
-        this.#autoAddToScene = autoAddToScene;
+      if (autoRender !== void 0) {
+        this.#autoRender = autoRender;
       }
       this.userData = {};
       this.ready = false;
@@ -4432,7 +4432,7 @@ var GPUCurtains = (() => {
       });
       this.addToScene();
     }
-    #autoAddToScene;
+    #autoRender;
     /**
      * Get or set whether the compute pass is ready to render (the material has been successfully compiled)
      * @readonly
@@ -4451,7 +4451,7 @@ var GPUCurtains = (() => {
      */
     addToScene() {
       this.renderer.computePasses.push(this);
-      if (this.#autoAddToScene) {
+      if (this.#autoRender) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -4459,7 +4459,7 @@ var GPUCurtains = (() => {
      * Remove our compute pass from the scene and the renderer
      */
     removeFromScene() {
-      if (this.#autoAddToScene) {
+      if (this.#autoRender) {
         this.renderer.scene.removeComputePass(this);
       }
       this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
@@ -5470,7 +5470,7 @@ struct VertexOutput {
     geometry: new Geometry(),
     // material
     shaders: {},
-    autoAddToScene: true,
+    autoRender: true,
     useProjection: false,
     // rendering
     cullMode: "back",
@@ -5488,7 +5488,7 @@ struct VertexOutput {
            * MeshBase constructor
            * @typedef MeshBaseParams
            * @property {string=} label - MeshBase label
-           * @property {boolean=} autoAddToScene - whether we should add this MeshBase to our {@link Scene} to let it handle the rendering process automatically
+           * @property {boolean=} autoRender - whether we should add this MeshBase to our {@link Scene} to let it handle the rendering process automatically
            * @property {AllowedGeometries} geometry - geometry to draw
            * @property {boolean=} useAsyncPipeline - whether the {@link RenderPipelineEntry} should be compiled asynchronously
            * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
@@ -5517,7 +5517,7 @@ struct VertexOutput {
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link Scene} to let it handle the rendering process automatically */
-        this.#autoAddToScene = true;
+        this.#autoRender = true;
         // callbacks / events
         /** function assigned to the [onReady]{@link MeshBase#onReady} callback */
         this._onReadyCallback = () => {
@@ -5550,7 +5550,7 @@ struct VertexOutput {
           renderOrder,
           renderTarget,
           texturesOptions,
-          autoAddToScene,
+          autoRender,
           ...meshParameters
         } = parameters;
         this.options = {
@@ -5560,13 +5560,13 @@ struct VertexOutput {
           shaders,
           texturesOptions,
           ...renderTarget !== void 0 && { renderTarget },
-          ...autoAddToScene !== void 0 && { autoAddToScene },
+          ...autoRender !== void 0 && { autoRender },
           ...meshParameters.useAsyncPipeline !== void 0 && { useAsyncPipeline: meshParameters.useAsyncPipeline }
         };
         this.renderTarget = renderTarget ?? null;
         this.geometry = geometry;
-        if (autoAddToScene !== void 0) {
-          this.#autoAddToScene = autoAddToScene;
+        if (autoRender !== void 0) {
+          this.#autoRender = autoRender;
         }
         this.visible = visible;
         this.renderOrder = renderOrder;
@@ -5580,13 +5580,13 @@ struct VertexOutput {
         });
         this.addToScene();
       }
-      #autoAddToScene;
+      #autoRender;
       /**
-       * Get private #autoAddToScene value
+       * Get private #autoRender value
        * @readonly
        */
-      get autoAddToScene() {
-        return this.#autoAddToScene;
+      get autoRender() {
+        return this.#autoRender;
       }
       /**
        * Get/set whether a Mesh is ready or not
@@ -5607,7 +5607,7 @@ struct VertexOutput {
        */
       addToScene() {
         this.renderer.meshes.push(this);
-        if (this.#autoAddToScene) {
+        if (this.#autoRender) {
           this.renderer.scene.addMesh(this);
         }
       }
@@ -5615,7 +5615,7 @@ struct VertexOutput {
        * Remove a Mesh from the renderer and the {@link Scene}
        */
       removeFromScene() {
-        if (this.#autoAddToScene) {
+        if (this.#autoRender) {
           this.renderer.scene.removeMesh(this);
         }
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
@@ -9188,22 +9188,22 @@ ${this.shaders.compute.head}`;
      */
     constructor(renderer, parameters) {
       /** Whether we should add this {@link RenderTarget} to our {@link Scene} to let it handle the rendering process automatically */
-      this.#autoAddToScene = true;
+      this.#autoRender = true;
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, depth, loadOp, clearValue, autoAddToScene } = parameters;
+      const { label, depth, loadOp, clearValue, autoRender } = parameters;
       this.options = {
         label,
         depth,
         loadOp,
         clearValue,
-        autoAddToScene
+        autoRender
       };
-      if (autoAddToScene !== void 0) {
-        this.#autoAddToScene = autoAddToScene;
+      if (autoRender !== void 0) {
+        this.#autoRender = autoRender;
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
@@ -9217,13 +9217,13 @@ ${this.shaders.compute.head}`;
       });
       this.addToScene();
     }
-    #autoAddToScene;
+    #autoRender;
     /**
      * Add the {@link RenderTarget} to the renderer and the {@link Scene}
      */
     addToScene() {
       this.renderer.renderTargets.push(this);
-      if (this.#autoAddToScene) {
+      if (this.#autoRender) {
         this.renderer.scene.addRenderTarget(this);
       }
     }
@@ -9231,7 +9231,7 @@ ${this.shaders.compute.head}`;
      * Remove the {@link RenderTarget} from the renderer and the {@link Scene}
      */
     removeFromScene() {
-      if (this.#autoAddToScene) {
+      if (this.#autoRender) {
         this.renderer.scene.removeRenderTarget(this);
       }
       this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
@@ -9302,7 +9302,7 @@ ${this.shaders.compute.head}`;
      */
     addToScene() {
       this.renderer.shaderPasses.push(this);
-      if (this.autoAddToScene) {
+      if (this.autoRender) {
         this.renderer.scene.addShaderPass(this);
       }
     }
@@ -9313,7 +9313,7 @@ ${this.shaders.compute.head}`;
       if (this.renderTarget) {
         this.renderTarget.destroy();
       }
-      if (this.autoAddToScene) {
+      if (this.autoRender) {
         this.renderer.scene.removeShaderPass(this);
       }
       this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
@@ -9353,7 +9353,7 @@ ${this.shaders.compute.head}`;
      */
     addToScene() {
       this.renderer.pingPongPlanes.push(this);
-      if (this.autoAddToScene) {
+      if (this.autoRender) {
         this.renderer.scene.addPingPongPlane(this);
       }
     }
@@ -9364,7 +9364,7 @@ ${this.shaders.compute.head}`;
       if (this.renderTarget) {
         this.renderTarget.destroy();
       }
-      if (this.autoAddToScene) {
+      if (this.autoRender) {
         this.renderer.scene.removePingPongPlane(this);
       }
       this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);

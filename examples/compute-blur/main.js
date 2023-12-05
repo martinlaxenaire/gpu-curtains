@@ -183,7 +183,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const computeBlurPass = new GPUCurtains.ComputePass(gpuCurtains.renderer, {
     label: 'Compute blur',
-    autoAddToScene: false,
+    autoRender: false,
     shaders: {
       compute: {
         code: computeBlur,

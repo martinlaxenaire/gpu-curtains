@@ -14,7 +14,7 @@ export interface ComputePassOptions {
   /** Controls the order in which this {@link ComputePass} should be rendered by our {@link Scene} */
   renderOrder?: number
   /** Whether the {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically */
-  autoAddToScene?: boolean
+  autoRender?: boolean
   /** Compute shader passed to the {@link ComputePass} following the [shader object]{@link ShaderOptions} notation */
   shaders: MaterialShaders
   /** whether the [compute pipeline]{@link ComputePipelineEntry#pipeline} should be compiled asynchronously */
@@ -65,7 +65,7 @@ export class ComputePass {
    * Whether this {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically
    * @private
    */
-  #autoAddToScene = true
+  #autoRender = true
 
   // callbacks / events
   /** function assigned to the [onReady]{@link ComputePass#onReady} callback */
@@ -114,7 +114,7 @@ export class ComputePass {
       renderOrder,
       inputs,
       bindGroups,
-      autoAddToScene,
+      autoRender,
       useAsyncPipeline,
       texturesOptions,
       dispatchSize,
@@ -123,7 +123,7 @@ export class ComputePass {
     this.options = {
       label,
       shaders,
-      ...(autoAddToScene !== undefined && { autoAddToScene }),
+      ...(autoRender !== undefined && { autoRender }),
       ...(renderOrder !== undefined && { renderOrder }),
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       ...(dispatchSize !== undefined && { dispatchSize }),
@@ -132,8 +132,8 @@ export class ComputePass {
 
     this.renderOrder = renderOrder ?? 0
 
-    if (autoAddToScene !== undefined) {
-      this.#autoAddToScene = autoAddToScene
+    if (autoRender !== undefined) {
+      this.#autoRender = autoRender
     }
 
     this.userData = {}
@@ -174,7 +174,7 @@ export class ComputePass {
   addToScene() {
     this.renderer.computePasses.push(this)
 
-    if (this.#autoAddToScene) {
+    if (this.#autoRender) {
       this.renderer.scene.addComputePass(this)
     }
   }
@@ -183,7 +183,7 @@ export class ComputePass {
    * Remove our compute pass from the scene and the renderer
    */
   removeFromScene() {
-    if (this.#autoAddToScene) {
+    if (this.#autoRender) {
       this.renderer.scene.removeComputePass(this)
     }
 

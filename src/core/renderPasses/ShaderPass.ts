@@ -58,7 +58,7 @@ export class ShaderPass extends FullscreenPlane {
   addToScene() {
     this.renderer.shaderPasses.push(this)
 
-    if (this.autoAddToScene) {
+    if (this.autoRender) {
       this.renderer.scene.addShaderPass(this)
     }
   }
@@ -71,7 +71,7 @@ export class ShaderPass extends FullscreenPlane {
       this.renderTarget.destroy()
     }
 
-    if (this.autoAddToScene) {
+    if (this.autoRender) {
       this.renderer.scene.removeShaderPass(this)
     }
 

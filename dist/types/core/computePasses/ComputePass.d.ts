@@ -13,7 +13,7 @@ export interface ComputePassOptions {
     /** Controls the order in which this {@link ComputePass} should be rendered by our {@link Scene} */
     renderOrder?: number;
     /** Whether the {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically */
-    autoAddToScene?: boolean;
+    autoRender?: boolean;
     /** Compute shader passed to the {@link ComputePass} following the [shader object]{@link ShaderOptions} notation */
     shaders: MaterialShaders;
     /** whether the [compute pipeline]{@link ComputePipelineEntry#pipeline} should be compiled asynchronously */

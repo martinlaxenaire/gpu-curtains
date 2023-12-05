@@ -11,7 +11,7 @@ import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials';
 import { MeshTransformedBaseClass } from './MeshTransformedMixin';
 export interface MeshBaseRenderParams extends RenderMaterialParams {
     /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
-    autoAddToScene: boolean;
+    autoRender: boolean;
     /** Flag indicating whether to draw this Mesh or not */
     visible?: boolean;
     /** Controls the order in which this Mesh should be rendered by our {@link Scene} */
@@ -41,7 +41,7 @@ export interface MeshBaseOptions {
     /** {@link RenderTarget} to render this Mesh to, if any */
     renderTarget?: RenderTarget | null;
     /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
-    autoAddToScene?: boolean;
+    autoRender?: boolean;
     /** Whether to compile this Mesh {@link RenderMaterial} [render pipeline]{@link RenderPipelineEntry#pipeline} asynchronously or not */
     useAsyncPipeline?: boolean;
 }
@@ -123,10 +123,10 @@ export declare class MeshBaseClass {
      */
     constructor(renderer: Renderer, element: HTMLElement | null, parameters: MeshBaseParams);
     /**
-     * Get private #autoAddToScene value
+     * Get private #autoRender value
      * @readonly
      */
-    get autoAddToScene(): boolean;
+    get autoRender(): boolean;
     /**
      * Get/set whether a Mesh is ready or not
      * @readonly
