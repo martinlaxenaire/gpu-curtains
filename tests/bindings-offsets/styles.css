@@ -40,6 +40,7 @@
   background: var(--byte-table-border-color);
   width: 900px;
   color: var(--dark-color);
+  margin-bottom: auto;
 }
 
 .binding-element {
@@ -153,10 +154,6 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-  }
-
-  .byte-diagram {
-    margin-bottom: 1rem;
   }
 
   .wgsl-declaration {

@@ -82,6 +82,32 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   debugBindings.push(binding2)
 
+  const otherBinding = new GPUCurtains.BufferBinding({
+    label: 'Other binding',
+    name: 'otherBinding',
+    bindingType: 'uniform',
+    bindings: {
+      systemSize: {
+        type: 'vec3f',
+        value: new GPUCurtains.Vec3(),
+      },
+      time: {
+        type: 'f32',
+        value: 0,
+      },
+      frequency: {
+        type: 'f32',
+        value: 0.01,
+      },
+      amplitude: {
+        type: 'f32',
+        value: 0.5,
+      },
+    },
+  })
+
+  debugBindings.push(otherBinding)
+
   const arrayTest = new GPUCurtains.BufferBinding({
     label: 'Array test',
     name: 'arrayTest',
@@ -168,22 +194,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     let previousEndOffset = 0
 
-    const regularBufferElements = binding.bufferElements.filter((bufferElement) => !bufferElement.interleavedAlignment)
+    const regularBufferElements = binding.bufferElements.filter((bufferElement) => !bufferElement.viewSetFunction)
 
     regularBufferElements.forEach((bindingElement, index) => {
-      const { startOffset, entries } = bindingElement.alignment
+      const { startOffset } = bindingElement
       const { numElements, size } = bindingElement.bufferLayout
 
-      for (let i = 0; i < entries.length; i++) {
-        const entryStartOffset =
-          i > 0
-            ? entries[i].row.start * 4 + // slots per row
-              entries[i].slot.start / 4 // bytes per slots
-            : startOffset
+      // padding before
+      // now the elements themselves
+      const totalNumElements = bindingElement.numElements ?? 1
+      for (let i = 0; i < totalNumElements; i++) {
+        const stride = bindingElement.stride ?? 0
+        let newStartOffset = startOffset + i * stride
 
-        // add empty padded slots before entry if needed
-        if (previousEndOffset < entryStartOffset * 4) {
-          const offsetDiff = entryStartOffset * 4 - previousEndOffset
+        if (previousEndOffset < newStartOffset) {
+          const offsetDiff = newStartOffset - previousEndOffset - 1
           for (let j = 0; j < offsetDiff; j += 4) {
             innerHTML += `<div class='binding-element pad-type col-span-${offsetDiff < 4 ? offsetDiff : 4} color-pad'>`
             innerHTML += `<div class='binding-element-type'>pad</div>`
@@ -203,7 +228,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             size < 4 ? size : 4
           } color-${index % 8}'>`
 
-          const arrayIndex = entries.length === 1 ? '' : `[${i}]`
+          const arrayIndex = bindingElement.numElements ? `[${i}]` : ''
+          //const arrayIndex = bindingElement.numElements ? `[${0}]` : ''
 
           innerHTML += `<div class='binding-element-type'>${bindingElement.name}${arrayIndex}: ${bindingElement.type}</div>`
 
@@ -216,26 +242,24 @@ window.addEventListener('DOMContentLoaded', async () => {
           innerHTML += `</div>`
         }
 
-        previousEndOffset = entryStartOffset * 4 + size
+        previousEndOffset = newStartOffset + (size - 1)
       }
-
-      //previousEndOffset = startOffset * 4 + size * entries.length
     })
 
-    const interleavedBufferElements = binding.bufferElements.filter(
-      (bufferElement) => !!bufferElement.interleavedAlignment
-    )
+    const interleavedBufferElements = binding.bufferElements.filter((bufferElement) => !!bufferElement.viewSetFunction)
 
     if (interleavedBufferElements.length) {
       const interleavedEntries = []
-      for (let i = 0; i < interleavedBufferElements[0].interleavedAlignment.entries.length; i++) {
+      for (let i = 0; i < interleavedBufferElements[0].numElements; i++) {
         interleavedBufferElements.forEach((interleavedBufferElement, index) => {
           interleavedEntries.push({
             name: interleavedBufferElement.name,
             type: interleavedBufferElement.bufferLayout.type,
             size: interleavedBufferElement.bufferLayout.size,
             numElements: interleavedBufferElement.bufferLayout.numElements,
-            entries: [interleavedBufferElement.interleavedAlignment.entries[i]],
+            startOffset: interleavedBufferElement.startOffset,
+            stride: interleavedBufferElement.stride,
+            //entries: [interleavedBufferElement.interleavedAlignment.entries[i]],
             index: regularBufferElements.length + index,
             loopIndex: i,
           })
@@ -245,13 +269,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       console.log(interleavedEntries)
 
       interleavedEntries.forEach((interleavedEntry) => {
-        const entryStartOffset =
-          interleavedEntry.entries[0].row.start * 4 + // slots per row
-          interleavedEntry.entries[0].slot.start / 4 // bytes per slots
+        const newStartOffset = interleavedEntry.startOffset + interleavedEntry.loopIndex * interleavedEntry.stride
 
         // add empty padded slots before entry if needed
-        if (previousEndOffset < entryStartOffset * 4) {
-          const offsetDiff = entryStartOffset * 4 - previousEndOffset
+        if (previousEndOffset < newStartOffset) {
+          const offsetDiff = newStartOffset - previousEndOffset - 1
           for (let j = 0; j < offsetDiff; j += 4) {
             innerHTML += `<div class='binding-element pad-type col-span-${offsetDiff < 4 ? offsetDiff : 4} color-pad'>`
             innerHTML += `<div class='binding-element-type'>pad</div>`
@@ -284,11 +306,12 @@ window.addEventListener('DOMContentLoaded', async () => {
           innerHTML += `</div>`
         }
 
-        previousEndOffset = entryStartOffset * 4 + interleavedEntry.size
+        previousEndOffset = newStartOffset + interleavedEntry.size - 1
       })
     }
 
-    const endPad = binding.arrayBufferSize - previousEndOffset
+    const endPad = binding.arrayBufferSize - (previousEndOffset + 1)
+    console.log(binding.name, endPad, binding.arrayBufferSize, previousEndOffset)
 
     // TODO what if end pad start with a size 2? i.e. endPad % 4 !== 0
     for (let i = 0; i < endPad; i += 4) {
@@ -326,99 +349,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     document.querySelector('#page').insertAdjacentHTML('beforeend', innerHTML)
   }
-
-  // const buildBindingDebugTable = (binding) => {
-  //   let innerHTML = `<div class='binding'>`
-  //   innerHTML += `<h2>${binding.label}</h2>`
-  //   innerHTML += `<div class='binding-declaration'>`
-  //
-  //   innerHTML += `<div class='byte-diagram'>`
-  //
-  //   const useInterleavedArray = !Object.keys(binding.bindings).find(
-  //     (bindingKey) => binding.bindings[bindingKey].type.indexOf('array') === -1
-  //   )
-  //
-  //   if (useInterleavedArray) {
-  //     const arraySize = binding.bindingElements[0].array.length / 4 // 4 slots per row
-  //     for (let i = 0; i < arraySize; i++) {
-  //       binding.bindingElements.forEach((bindingElement, index) => {
-  //         const { size, numElements } = bindingElement.alignment
-  //
-  //         innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-${
-  //           size > 16 ? 16 : size
-  //         } color-${index % 4} col-start-${bindingElement.alignment.slot.start + 1}'>
-  //       <div class='binding-element-type'>${bindingElement.name}: ${
-  //           bindingElement.type
-  //         }</div><div class='binding-element-slots'>`
-  //
-  //         for (let j = 0; j < numElements / arraySize; j++) {
-  //           const newRow = j % 4 === 0 && j !== 0
-  //           if (newRow) {
-  //             innerHTML += '</div>'
-  //             innerHTML += '</div>'
-  //             innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-16 color-${
-  //               index % 4
-  //             } col-start-${bindingElement.alignment.slot.start + 1}'>
-  //       <div class='binding-element-type'>${bindingElement.name}: ${
-  //               bindingElement.type
-  //             }</div><div class='binding-element-slots'>`
-  //           }
-  //
-  //           innerHTML += `<div class='binding-element-slot'>${bindingElement.bufferLayout.type}</div>`
-  //         }
-  //
-  //         innerHTML += '</div>'
-  //         innerHTML += '</div>'
-  //       })
-  //     }
-  //   } else {
-  //     binding.bindingElements.forEach((bindingElement, index) => {
-  //       const { size, numElements } = bindingElement.alignment
-  //
-  //       innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-${
-  //         size > 16 ? 16 : size
-  //       } color-${index % 4} col-start-${bindingElement.alignment.slot.start + 1}'>
-  //       <div class='binding-element-type'>${bindingElement.name}: ${
-  //         bindingElement.type
-  //       }</div><div class='binding-element-slots'>`
-  //
-  //       for (let j = 0; j < numElements; j++) {
-  //         const newRow = j % 4 === 0 && j !== 0
-  //         if (newRow) {
-  //           innerHTML += '</div>'
-  //           innerHTML += '</div>'
-  //           innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-16 color-${
-  //             index % 4
-  //           } col-start-${bindingElement.alignment.slot.start + 1}'>
-  //       <div class='binding-element-type'>${bindingElement.name}: ${
-  //             bindingElement.type
-  //           }</div><div class='binding-element-slots'>`
-  //         }
-  //
-  //         innerHTML += `<div class='binding-element-slot'>${bindingElement.bufferLayout.type}</div>`
-  //       }
-  //
-  //       innerHTML += '</div>'
-  //       innerHTML += '</div>'
-  //     })
-  //   }
-  //
-  //   innerHTML += `</div>`
-  //
-  //   innerHTML += `<div class='wgsl-declaration'>`
-  //   innerHTML += `<div class='wgsl-declaration-struct'><code><pre>${
-  //     binding.wgslStructFragment
-  //   }</pre></code></div><div class='wgsl-declaration-var'><code><pre>${binding.wgslGroupFragment
-  //     .map((fragment) => {
-  //       return fragment.replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-  //     })
-  //     .join('\n')}</pre></code></div></div>`
-  //
-  //   innerHTML += `</div>`
-  //   innerHTML += `</div>`
-  //
-  //   document.querySelector('#page').insertAdjacentHTML('beforeend', innerHTML)
-  // }
 
   console.log(debugBindings)
 

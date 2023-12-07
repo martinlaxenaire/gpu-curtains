@@ -20,11 +20,11 @@ const computeParticles = /* wgsl */ `
     
     // calculate a random particle max life
     // max life is in number of frames
-    var maxLife: f32 = 1500.0 + round(rand11(asin(fIndex * PI / nbParticles)) * 1000.0);
+    var maxLife: f32 = 250.0 + round( max(rand11(asin(fIndex * PI / nbParticles)), 0.0) * 1500.0 );
     particlesStaticData[index].maxLife = u32(maxLife);
     
     // now set a different initial life for each particle
-    var initLife: f32 = round(maxLife * rand11(acos(fIndex * PI / nbParticles)));
+    var initLife: f32 = maxLife * round( max(rand11(acos(fIndex * PI / nbParticles)), 0.0) );
     
     particles.position[index].w = initLife;
     particlesStaticData[index].position.w = initLife;
@@ -170,23 +170,22 @@ const computeParticles = /* wgsl */ `
     var vPos: vec3f = particles.position[index].xyz;
     var life: f32 = particles.position[index].w;
     
-    let curlPos: vec3f = curl( vPos * params.frequency + params.time * 0.05 ) * params.amplitude;
-    vPos = vPos + curlPos;
-
     life += 1.0;
     
-    let maxLife: u32 = particlesStaticData[index].maxLife;
+    let maxLife: f32 = f32(particlesStaticData[index].maxLife);
     
     // reset particle
-    if(life >= f32(maxLife)) {
+    if(life >= maxLife) {
       life = 0.0;
     }
     
-    let lifeRatio = life / f32(maxLife);
+    let lifeRatio = life / maxLife;
     var mixCurlOriginal = abs(lifeRatio * 2.0 - 1.0);
-    mixCurlOriginal = pow(mixCurlOriginal, 0.015);
+    mixCurlOriginal = 0.85 + pow(mixCurlOriginal, 0.25) * 0.15;
     
-    vPos = mix(particlesStaticData[index].position.xyz, vPos, mixCurlOriginal);
+    let curlPos: vec3f = curl( vPos * params.frequency + params.time * 0.05 ) * params.amplitude;
+    vPos = mix(particlesStaticData[index].position.xyz, vPos + curlPos, mixCurlOriginal);
+
     
     // Write back      
     particles.position[index] = vec4(vPos, life);
@@ -248,7 +247,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       storages: {
         particles: {
           access: 'read_write',
-          computeAlignment: false, // do not compute alignments!
+          //computeAlignment: false, // do not compute alignments!
           bindings: {
             position: {
               type: 'array<vec4f>',
@@ -258,7 +257,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
         particlesStaticData: {
           access: 'read_write', // we want a readable AND writable buffer!
-          computeAlignment: false, // do not compute alignments!
+          //computeAlignment: false, // do not compute alignments!
           bindings: {
             maxLife: {
               type: 'array<u32>',
