@@ -41,6 +41,9 @@ export class GPUCameraRenderer extends GPURenderer {
     onError = () => {
       /* allow empty callbacks */
     },
+    onContextLost = (info?: GPUDeviceLostInfo) => {
+      /* allow empty callbacks */
+    },
   }: GPUCameraRendererParams) {
     super({
       container,
@@ -50,6 +53,7 @@ export class GPUCameraRenderer extends GPURenderer {
       alphaMode,
       production,
       onError,
+      onContextLost,
     })
 
     // this.options = {
@@ -65,6 +69,12 @@ export class GPUCameraRenderer extends GPURenderer {
 
     camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera }
     this.setCamera(camera)
+  }
+
+  loseContext() {
+    super.loseContext()
+    // lose camera bind group context as well
+    this.cameraBindGroup.loseContext()
   }
 
   /**

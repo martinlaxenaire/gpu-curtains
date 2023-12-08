@@ -173,7 +173,7 @@ export class ComputePipelineEntry extends PipelineEntry {
    * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
    * @async
    */
-  async compilePipelineEntry() {
+  async compilePipelineEntry(): Promise<void> {
     super.compilePipelineEntry()
 
     if (this.options.useAsync) {

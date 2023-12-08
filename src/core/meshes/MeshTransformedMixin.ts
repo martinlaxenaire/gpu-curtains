@@ -68,6 +68,11 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
   constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
 
   /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been restored
+   */
+  restoreContext(): void
+
+  /**
    * Set default shaders if one or both of them are missing
    */
   setShaders(): void
@@ -255,6 +260,16 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
       this.geometry = geometry
 
       // tell the model and projection matrices to update right away
+      this.updateSizePositionAndProjection()
+    }
+
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been restored
+     */
+    restoreContext() {
+      super.restoreContext()
+
+      // tell the model and projection matrices to update again
       this.updateSizePositionAndProjection()
     }
 

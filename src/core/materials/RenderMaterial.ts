@@ -101,7 +101,7 @@ export class RenderMaterial extends Material {
    * Compile the {@link RenderPipelineEntry}
    * @async
    */
-  async compilePipelineEntry() {
+  async compilePipelineEntry(): Promise<void> {
     await this.pipelineEntry.compilePipelineEntry()
   }
 

@@ -349,7 +349,7 @@ export class RenderPipelineEntry extends PipelineEntry {
    * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
    * @async
    */
-  async compilePipelineEntry() {
+  async compilePipelineEntry(): Promise<void> {
     super.compilePipelineEntry()
 
     if (this.options.useAsync) {

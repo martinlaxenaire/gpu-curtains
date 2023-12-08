@@ -147,6 +147,59 @@ export class Material {
   }
 
   /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+   */
+  loseContext() {
+    // start with the textures
+    this.textures.forEach((texture) => {
+      texture.texture = null
+      texture.sourceUploaded = false
+    })
+
+    this.renderTextures.forEach((texture) => {
+      texture.texture = null
+    })
+
+    // then bind groups and bindings
+    ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) =>
+      bindGroup.loseContext()
+    )
+
+    // reset pipeline as well
+    this.pipelineEntry.pipeline = null
+  }
+
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been restored to recreate our bind groups.
+   */
+  restoreContext() {
+    // start with the samplers and textures
+    this.samplers.forEach((sampler) => {
+      // the samplers have all been recreated by the renderer, just update the reference
+      sampler.createSampler()
+      sampler.binding.resource = sampler.sampler
+    })
+
+    // recreate the textures and resize them
+    this.textures.forEach((texture) => {
+      texture.createTexture()
+      texture.resize()
+    })
+
+    this.renderTextures.forEach((texture) => {
+      texture.resize(texture.size)
+    })
+
+    // now the bind groups
+    ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
+      if (bindGroup.shouldCreateBindGroup) {
+        bindGroup.createBindGroup()
+      }
+    })
+  }
+
+  /**
    * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
    * @param [shaderType="full"] - shader to get the code from
    * @returns - The corresponding shader code

@@ -190,6 +190,17 @@ export declare class MeshBaseClass {
   removeFromScene(): void
 
   /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+   */
+  loseContext(): void
+
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been restored
+   */
+  restoreContext(): void
+
+  /**
    * Set default shaders if one or both of them are missing
    */
   setShaders(): void
@@ -551,6 +562,31 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       }
 
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
+    }
+
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     */
+    loseContext() {
+      // first the geometry
+      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+        vertexBuffer.buffer = null
+      })
+
+      if ('indexBuffer' in this.geometry) {
+        this.geometry.indexBuffer.buffer = null
+      }
+
+      // then the material
+      this.material.loseContext()
+    }
+
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been restored
+     */
+    restoreContext() {
+      this.material.restoreContext()
     }
 
     /* SHADERS */

@@ -211,6 +211,25 @@ export class BindGroup {
   }
 
   /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
+   */
+  loseContext() {
+    this.resetEntries()
+
+    this.bufferBindings.forEach((binding) => {
+      binding.buffer = null
+
+      if ('resultBuffer' in binding) {
+        binding.resultBuffer = null
+      }
+    })
+
+    this.bindGroup = null
+    this.bindGroupLayout = null
+    this.needsPipelineFlush = true
+  }
+
+  /**
    * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
    */
   get bufferBindings(): BindGroupBufferBindingElement[] {

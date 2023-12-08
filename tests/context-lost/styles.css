@@ -1,0 +1,15 @@
+#lose-context-button {
+  position: relative;
+  top: 1rem;
+  left: 1rem;
+}
+
+.plane {
+  position: absolute;
+  top: 10vh;
+  top: 10svh;
+  left: 10%;
+  width: 80%;
+  height: 80vh;
+  height: 80svh;
+}

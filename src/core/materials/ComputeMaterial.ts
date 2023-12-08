@@ -102,7 +102,7 @@ export class ComputeMaterial extends Material {
    * Compile the {@link ComputePipelineEntry}
    * @async
    */
-  async compilePipelineEntry() {
+  async compilePipelineEntry(): Promise<void> {
     await this.pipelineEntry.compilePipelineEntry()
   }
 

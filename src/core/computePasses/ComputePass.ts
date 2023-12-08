@@ -198,6 +198,21 @@ export class ComputePass {
     this.material = new ComputeMaterial(this.renderer, computeParameters)
   }
 
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+   */
+  loseContext() {
+    this.material.loseContext()
+  }
+
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been restored
+   */
+  restoreContext() {
+    this.material.restoreContext()
+  }
+
   /* TEXTURES */
 
   /**

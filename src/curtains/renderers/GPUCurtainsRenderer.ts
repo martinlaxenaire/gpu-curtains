@@ -24,6 +24,9 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     onError = () => {
       /* allow empty callbacks */
     },
+    onContextLost = (info?: GPUDeviceLostInfo) => {
+      /* allow empty callbacks */
+    },
     camera,
   }: GPUCameraRendererParams) {
     super({
@@ -34,6 +37,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
       alphaMode,
       production,
       onError,
+      onContextLost,
       camera,
     } as GPUCameraRendererParams)
 

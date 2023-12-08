@@ -2293,6 +2293,21 @@ var GPUCurtains = (() => {
       this.createBindGroup();
     }
     /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
+     */
+    loseContext() {
+      this.resetEntries();
+      this.bufferBindings.forEach((binding) => {
+        binding.buffer = null;
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer = null;
+        }
+      });
+      this.bindGroup = null;
+      this.bindGroupLayout = null;
+      this.needsPipelineFlush = true;
+    }
+    /**
      * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings() {
@@ -3871,6 +3886,44 @@ var GPUCurtains = (() => {
       return !!(this.renderer.ready && this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready);
     }
     /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     */
+    loseContext() {
+      this.textures.forEach((texture) => {
+        texture.texture = null;
+        texture.sourceUploaded = false;
+      });
+      this.renderTextures.forEach((texture) => {
+        texture.texture = null;
+      });
+      [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach(
+        (bindGroup) => bindGroup.loseContext()
+      );
+      this.pipelineEntry.pipeline = null;
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been restored to recreate our bind groups.
+     */
+    restoreContext() {
+      this.samplers.forEach((sampler) => {
+        sampler.createSampler();
+        sampler.binding.resource = sampler.sampler;
+      });
+      this.textures.forEach((texture) => {
+        texture.createTexture();
+        texture.resize();
+      });
+      this.renderTextures.forEach((texture) => {
+        texture.resize(texture.size);
+      });
+      [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
+        if (bindGroup.shouldCreateBindGroup) {
+          bindGroup.createBindGroup();
+        }
+      });
+    }
+    /**
      * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
      * @param [shaderType="full"] - shader to get the code from
      * @returns - The corresponding shader code
@@ -4116,11 +4169,22 @@ var GPUCurtains = (() => {
       }
     }
     /**
+     * Destroy a [texture]{@link Texture} or [render texture]{@link RenderTexture}, only if it is not used by another object
+     * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
+     */
+    destroyTexture(texture) {
+      const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
+      const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.find((object) => object.material.uuid !== this.uuid);
+      if (shouldDestroy) {
+        texture.destroy();
+      }
+    }
+    /**
      * Destroy all the Material textures
      */
     destroyTextures() {
-      this.textures?.forEach((texture) => texture.destroy());
-      this.renderTextures?.forEach((texture) => texture.destroy());
+      this.textures?.forEach((texture) => this.destroyTexture(texture));
+      this.renderTextures?.forEach((texture) => this.destroyTexture(texture));
       this.textures = [];
       this.renderTextures = [];
     }
@@ -4508,6 +4572,19 @@ var GPUCurtains = (() => {
      */
     setComputeMaterial(computeParameters) {
       this.material = new ComputeMaterial(this.renderer, computeParameters);
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     */
+    loseContext() {
+      this.material.loseContext();
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been restored
+     */
+    restoreContext() {
+      this.material.restoreContext();
     }
     /* TEXTURES */
     /**
@@ -5658,6 +5735,25 @@ struct VertexOutput {
         }
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
       }
+      /**
+       * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+       * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+       */
+      loseContext() {
+        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+          vertexBuffer.buffer = null;
+        });
+        if ("indexBuffer" in this.geometry) {
+          this.geometry.indexBuffer.buffer = null;
+        }
+        this.material.loseContext();
+      }
+      /**
+       * Called when the [renderer device]{@link GPURenderer#device} has been restored
+       */
+      restoreContext() {
+        this.material.restoreContext();
+      }
       /* SHADERS */
       /**
        * Set default shaders if one or both of them are missing
@@ -6482,6 +6578,13 @@ struct VSOutput {
         };
         this.setDOMFrustum();
         this.geometry = geometry;
+        this.updateSizePositionAndProjection();
+      }
+      /**
+       * Called when the [renderer device]{@link GPURenderer#device} has been restored
+       */
+      restoreContext() {
+        super.restoreContext();
         this.updateSizePositionAndProjection();
       }
       /* SHADERS */
@@ -8492,6 +8595,8 @@ ${this.shaders.compute.head}`;
       preferredFormat,
       alphaMode = "premultiplied",
       onError = () => {
+      },
+      onContextLost = (info) => {
       }
     }) {
       // callbacks / events
@@ -8507,15 +8612,17 @@ ${this.shaders.compute.head}`;
       this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
       this.sampleCount = sampleCount;
       this.production = production;
-      this.preferredFormat = preferredFormat;
       this.alphaMode = alphaMode;
+      this.devicesCount = 0;
       this.onError = onError;
+      this.onContextLost = onContextLost;
       if (!this.gpu) {
         setTimeout(() => {
           this.onError();
           throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
         }, 0);
       }
+      this.preferredFormat = preferredFormat ?? this.gpu?.getPreferredCanvasFormat();
       this.setTasksQueues();
       this.setRendererObjects();
       this.canvas = document.createElement("canvas");
@@ -8602,17 +8709,9 @@ ${this.shaders.compute.head}`;
      */
     async setContext() {
       this.context = this.canvas.getContext("webgpu");
-      await this.setAdapterAndDevice();
+      await this.setAdapter();
+      await this.setDevice();
       if (this.device) {
-        this.preferredFormat = this.preferredFormat ?? this.gpu?.getPreferredCanvasFormat();
-        this.context.configure({
-          device: this.device,
-          format: this.preferredFormat,
-          alphaMode: this.alphaMode,
-          // needed so we can copy textures for post processing usage
-          usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
-          //viewFormats: []
-        });
         this.setMainRenderPass();
         this.setPipelineManager();
         this.setScene();
@@ -8621,10 +8720,10 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set our [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} if possible
+     * Set our [adapter]{@link GPURenderer#adapter} if possible
      * @returns - void promise result
      */
-    async setAdapterAndDevice() {
+    async setAdapter() {
       this.adapter = await this.gpu?.requestAdapter().catch(() => {
         setTimeout(() => {
           this.onError();
@@ -8634,8 +8733,25 @@ ${this.shaders.compute.head}`;
       this.adapter?.requestAdapterInfo().then((infos) => {
         this.adapterInfos = infos;
       });
+    }
+    /**
+     * Set our [device]{@link GPURenderer#device} and configure [context]{@link GPURenderer#context} if possible
+     * @returns - void promise result
+     */
+    async setDevice() {
       try {
-        this.device = await this.adapter?.requestDevice();
+        this.device = await this.adapter?.requestDevice({
+          label: "GPUCurtains device " + this.devicesCount
+        });
+        this.devicesCount++;
+        this.context.configure({
+          device: this.device,
+          format: this.preferredFormat,
+          alphaMode: this.alphaMode,
+          // needed so we can copy textures for post processing usage
+          usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
+          //viewFormats: []
+        });
       } catch (error) {
         setTimeout(() => {
           this.onError();
@@ -8644,9 +8760,27 @@ ${this.shaders.compute.head}`;
       }
       this.device?.lost.then((info) => {
         throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`);
-        if (info.reason !== "destroyed") {
-        }
+        this.loseContext();
+        this.onContextLost(info);
       });
+    }
+    loseContext() {
+      this.ready = false;
+      this.samplers.forEach((sampler) => sampler.sampler = null);
+      this.computePasses.forEach((computePass) => computePass.loseContext());
+      this.meshes.forEach((mesh) => mesh.loseContext());
+      this.buffers = [];
+    }
+    async restoreContext() {
+      await this.setAdapter();
+      await this.setDevice();
+      this.samplers.forEach((sampler) => {
+        sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options });
+      });
+      this.computePasses.forEach((computePass) => computePass.restoreContext());
+      this.meshes.forEach((mesh) => mesh.restoreContext());
+      this.resize();
+      this.ready = true;
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
     /**
@@ -9061,6 +9195,8 @@ ${this.shaders.compute.head}`;
       alphaMode = "premultiplied",
       camera = {},
       onError = () => {
+      },
+      onContextLost = (info) => {
       }
     }) {
       super({
@@ -9070,11 +9206,16 @@ ${this.shaders.compute.head}`;
         preferredFormat,
         alphaMode,
         production,
-        onError
+        onError,
+        onContextLost
       });
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
       this.setCamera(camera);
+    }
+    loseContext() {
+      super.loseContext();
+      this.cameraBindGroup.loseContext();
     }
     /**
      * Set the [camera]{@link GPUCameraRenderer#camera}
@@ -9438,6 +9579,8 @@ ${this.shaders.compute.head}`;
       production = false,
       onError = () => {
       },
+      onContextLost = (info) => {
+      },
       camera
     }) {
       super({
@@ -9448,6 +9591,7 @@ ${this.shaders.compute.head}`;
         alphaMode,
         production,
         onError,
+        onContextLost,
         camera
       });
       this.type = "GPUCurtainsRenderer";
@@ -9560,6 +9704,9 @@ ${this.shaders.compute.head}`;
       /** function assigned to the [onError]{@link GPUCurtains#onError} callback */
       this._onErrorCallback = () => {
       };
+      /** function assigned to the [onContextLost]{@link GPUCurtains#onContextLost} callback */
+      this._onContextLostCallback = () => {
+      };
       this.type = "CurtainsGPU";
       this.options = {
         container,
@@ -9618,8 +9765,12 @@ ${this.shaders.compute.head}`;
         alphaMode: this.options.alphaMode,
         camera: this.options.camera,
         production: this.options.production,
-        onError: () => this._onErrorCallback && this._onErrorCallback()
+        onError: () => this._onErrorCallback && this._onErrorCallback(),
+        onContextLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
       });
+    }
+    restoreContext() {
+      this.renderer?.restoreContext();
     }
     /**
      * Set the [curtains renderer context]{@link GPUCurtainsRenderer#setContext}
@@ -9809,6 +9960,17 @@ ${this.shaders.compute.head}`;
     onError(callback) {
       if (callback) {
         this._onErrorCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Called whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+     * @param callback - callback to run whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+     * @returns - our {@link GPUCurtains}
+     */
+    onContextLost(callback) {
+      if (callback) {
+        this._onContextLostCallback = callback;
       }
       return this;
     }

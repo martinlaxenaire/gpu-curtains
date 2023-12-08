@@ -33,6 +33,7 @@ The library has been rewritten to the core, so it is not just a port of the exis
 ### Work in progress
 
 - Errors / warning handling
+- Context lost handling
 - Examples & tests
 
 ### TODO
@@ -41,7 +42,6 @@ The library has been rewritten to the core, so it is not just a port of the exis
 - constants for WebGPU flags
 - Use render bundles?
 - Mesh raycasting?
-- Context lost handling
 - Handle multiple canvas / renderers?
-- More tests! (removing, samplers, external video textures...)
+- More tests! (removing, samplers, external video textures, context lost/restored...)
 - Documentation (using JSDoc?)
