@@ -235,11 +235,19 @@ export class BufferElement {
   }
 
   /**
-   * Set the [alignment]{@link BufferElementAlignment}
+   * Set the [alignment]{@link BufferElementAlignment} from a [position]{@link BufferElementAlignmentPosition}
+   * @param position - [position]{@link BufferElementAlignmentPosition} at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   */
+  setAlignmentFromPosition(position: BufferElementAlignmentPosition = { row: 0, byte: 0 }) {
+    this.alignment = this.getElementAlignment(position)
+  }
+
+  /**
+   * Set the [alignment]{@link BufferElementAlignment} from an offset (byte count)
    * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
    */
   setAlignment(startOffset = 0) {
-    this.alignment = this.getElementAlignment(this.getPositionAtOffset(startOffset))
+    this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset))
   }
 
   /**

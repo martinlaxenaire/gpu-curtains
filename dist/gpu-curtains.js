@@ -1719,11 +1719,18 @@ var GPUCurtains = (() => {
       return alignment;
     }
     /**
-     * Set the [alignment]{@link BufferElementAlignment}
+     * Set the [alignment]{@link BufferElementAlignment} from a [position]{@link BufferElementAlignmentPosition}
+     * @param position - [position]{@link BufferElementAlignmentPosition} at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     */
+    setAlignmentFromPosition(position = { row: 0, byte: 0 }) {
+      this.alignment = this.getElementAlignment(position);
+    }
+    /**
+     * Set the [alignment]{@link BufferElementAlignment} from an offset (byte count)
      * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
      */
     setAlignment(startOffset = 0) {
-      this.alignment = this.getElementAlignment(this.getPositionAtOffset(startOffset));
+      this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
     }
     /**
      * Set the [view]{@link BufferElement#view}
@@ -1894,7 +1901,6 @@ var GPUCurtains = (() => {
       bindIndex = 0,
       visibility,
       useStruct = true,
-      computeAlignment = true,
       access = "read",
       bindings = {}
     }) {
@@ -1904,8 +1910,7 @@ var GPUCurtains = (() => {
         ...this.options,
         useStruct,
         access,
-        bindings,
-        computeAlignment
+        bindings
       };
       this.arrayBufferSize = 0;
       this.shouldUpdate = false;
@@ -2022,13 +2027,22 @@ var GPUCurtains = (() => {
             });
           });
           tempBufferElements.forEach((bufferElement, index) => {
-            const startOffset = index === 0 ? this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].endOffset + 1 : 0 : tempBufferElements[index - 1].endOffset + 1;
-            bufferElement.setAlignment(startOffset);
+            if (index === 0) {
+              if (this.bufferElements.length) {
+                bufferElement.setAlignmentFromPosition({
+                  row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
+                  byte: 0
+                });
+              } else {
+                bufferElement.setAlignment(0);
+              }
+            } else {
+              bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1);
+            }
           });
           const totalStride = tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset;
           interleavedBufferElements.forEach((bufferElement, index) => {
-            const startOffset = tempBufferElements[index].startOffset;
-            bufferElement.setAlignment(startOffset, totalStride);
+            bufferElement.setAlignment(tempBufferElements[index].startOffset, totalStride);
           });
           this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
         } else {
@@ -2137,13 +2151,12 @@ var GPUCurtains = (() => {
       useStruct = true,
       bindings = {},
       visibility,
-      computeAlignment = true,
       access = "read_write",
       shouldCopyResult = false
     }) {
       bindingType = "storage";
       visibility = "compute";
-      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility, access, computeAlignment });
+      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility, access });
       this.options = {
         ...this.options,
         shouldCopyResult
@@ -2224,7 +2237,6 @@ var GPUCurtains = (() => {
             visibility: binding.access === "read_write" ? "compute" : binding.visibility,
             access: binding.access ?? "read",
             // read by default
-            computeAlignment: binding.computeAlignment,
             bindings: binding.bindings
           };
           const BufferBindingConstructor = bindingParams.access === "read_write" ? WritableBufferBinding : BufferBinding;
@@ -6742,33 +6754,35 @@ struct VSOutput {
         label: this.options.label + ": " + type + "Shader module",
         code
       });
-      shaderModule.getCompilationInfo().then((compilationInfo) => {
-        for (const message of compilationInfo.messages) {
-          let formattedMessage = "";
-          if (message.lineNum) {
-            formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
-              message.offset,
-              message.offset + message.length
-            )}
+      if ("getCompilationInfo" in shaderModule && !this.renderer.production) {
+        shaderModule.getCompilationInfo().then((compilationInfo) => {
+          for (const message of compilationInfo.messages) {
+            let formattedMessage = "";
+            if (message.lineNum) {
+              formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
+                message.offset,
+                message.offset + message.length
+              )}
 `;
+            }
+            formattedMessage += message.message;
+            switch (message.type) {
+              case "error":
+                console.error(`${this.options.label} compilation error:
+${formattedMessage}`);
+                break;
+              case "warning":
+                console.warn(`${this.options.label} compilation warning:
+${formattedMessage}`);
+                break;
+              case "info":
+                console.log(`${this.options.label} compilation information:
+${formattedMessage}`);
+                break;
+            }
           }
-          formattedMessage += message.message;
-          switch (message.type) {
-            case "error":
-              !this.renderer.production && console.error(`${this.options.label} compilation error:
-${formattedMessage}`);
-              break;
-            case "warning":
-              !this.renderer.production && console.warn(`${this.options.label} compilation warning:
-${formattedMessage}`);
-              break;
-            case "info":
-              !this.renderer.production && console.log(`${this.options.label} compilation information:
-${formattedMessage}`);
-              break;
-          }
-        }
-      });
+        });
+      }
       return shaderModule;
     }
     /* SETUP */
@@ -6828,7 +6842,7 @@ fn getOutputPosition(camera: Camera, matrices: Matrices, position: vec3f) -> vec
     /* wgsl */
     `
 fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
-  return (textureMatrix * vec4f(uv, 0, 1)).xy;
+  return (textureMatrix * vec4f(uv, 0.0, 1.0)).xy;
 }`
   );
 
@@ -8617,6 +8631,9 @@ ${this.shaders.compute.head}`;
           throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
         }, 0);
       });
+      this.adapter?.requestAdapterInfo().then((infos) => {
+        this.adapterInfos = infos;
+      });
       try {
         this.device = await this.adapter?.requestDevice();
       } catch (error) {
@@ -8876,6 +8893,15 @@ ${this.shaders.compute.head}`;
           ...object.material.inputsBindGroups,
           ...object.material.clonedBindGroups
         ].filter((bG) => bG.uuid === bindGroup.uuid);
+      });
+    }
+    /**
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+     * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
+     */
+    getObjectsByTexture(texture) {
+      return [...this.computePasses, ...this.meshes].filter((object) => {
+        return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid);
       });
     }
     /* EVENTS */

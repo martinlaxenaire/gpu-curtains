@@ -43,8 +43,6 @@ export interface BufferBindingBaseParams {
   access?: BufferBindingMemoryAccessType
   /** Object containing one or multiple [input bindings]{@link Input} */
   bindings?: Record<string, Input>
-  /** Whether to compute the buffer element offset/alignment. Could be set to false to improve performance if you are dealing with very large buffers and don't need to actually pass the values from the CPU to the GPU (i.e. directly compute buffer values in a compute shader) */
-  computeAlignment?: boolean
 }
 
 /**
@@ -56,6 +54,7 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
  * BufferBinding class:
  * Used to format inputs bindings and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
+ * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. "array<f32>", "array<vec3f>" etc.)
  * @extends Binding
  */
 export class BufferBinding extends Binding {
@@ -105,7 +104,6 @@ export class BufferBinding extends Binding {
     bindIndex = 0,
     visibility,
     useStruct = true,
-    computeAlignment = true,
     access = 'read',
     bindings = {},
   }: BufferBindingParams) {
@@ -118,7 +116,6 @@ export class BufferBinding extends Binding {
       useStruct,
       access,
       bindings,
-      computeAlignment,
     }
 
     this.arrayBufferSize = 0
@@ -285,14 +282,20 @@ export class BufferBinding extends Binding {
 
         // set temp buffer alignments as if it was regular buffer elements
         tempBufferElements.forEach((bufferElement, index) => {
-          const startOffset =
-            index === 0
-              ? this.bufferElements.length
-                ? this.bufferElements[this.bufferElements.length - 1].endOffset + 1
-                : 0
-              : tempBufferElements[index - 1].endOffset + 1
-
-          bufferElement.setAlignment(startOffset)
+          if (index === 0) {
+            if (this.bufferElements.length) {
+              // if there are already buffer elements
+              // get last one end row, and start at the next row
+              bufferElement.setAlignmentFromPosition({
+                row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
+                byte: 0,
+              })
+            } else {
+              bufferElement.setAlignment(0)
+            }
+          } else {
+            bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1)
+          }
         })
 
         // now use last temp buffer end offset as our interleaved stride
@@ -301,15 +304,7 @@ export class BufferBinding extends Binding {
 
         // finally, set interleaved buffer elements alignment
         interleavedBufferElements.forEach((bufferElement, index) => {
-          // const startOffset =
-          //   index === 0
-          //     ? this.bufferElements.length
-          //       ? this.bufferElements[this.bufferElements.length - 1].endOffset + 1
-          //       : 0
-          //     : tempBufferElements[index - 1].endOffset + 1
-          const startOffset = tempBufferElements[index].startOffset
-
-          bufferElement.setAlignment(startOffset, totalStride)
+          bufferElement.setAlignment(tempBufferElements[index].startOffset, totalStride)
         })
 
         // add to our buffer elements array

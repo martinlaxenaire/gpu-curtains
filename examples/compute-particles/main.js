@@ -194,8 +194,8 @@ const computeParticles = /* wgsl */ `
 
 window.addEventListener('DOMContentLoaded', async () => {
   // number of particles instances
-  //const nbParticles = 1_000_000
-  const nbParticles = 500_000
+  const nbParticles = 1_000_000
+  //const nbParticles = 500_000
   const systemSize = new GPUCurtains.Vec3(150)
 
   // set up our WebGL context and append the canvas to our wrapper
@@ -247,7 +247,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       storages: {
         particles: {
           access: 'read_write',
-          //computeAlignment: false, // do not compute alignments!
           bindings: {
             position: {
               type: 'array<vec4f>',
@@ -257,7 +256,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
         particlesStaticData: {
           access: 'read_write', // we want a readable AND writable buffer!
-          //computeAlignment: false, // do not compute alignments!
           bindings: {
             maxLife: {
               type: 'array<u32>',

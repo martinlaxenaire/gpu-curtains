@@ -17,6 +17,7 @@ import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
 import { TasksQueueManager } from '../../utils/TasksQueueManager'
 import { AllowedBindGroups } from '../../types/BindGroups'
+import { RenderTexture } from '../textures/RenderTexture'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -71,6 +72,8 @@ export class GPURenderer {
   alphaMode?: GPUCanvasAlphaMode
   /** The WebGPU [adapter]{@link GPUAdapter} used */
   adapter: GPUAdapter | void
+  /** The WebGPU [adapter]{@link GPUAdapter} informations */
+  adapterInfos: GPUAdapterInfo | undefined
   /** The WebGPU [device]{@link GPUDevice} used */
   device: GPUDevice | null
 
@@ -312,6 +315,9 @@ export class GPURenderer {
         this.onError()
         throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
       }, 0)
+    })
+    ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
+      this.adapterInfos = infos
     })
 
     try {
@@ -618,6 +624,16 @@ export class GPURenderer {
         ...object.material.inputsBindGroups,
         ...object.material.clonedBindGroups,
       ].filter((bG) => bG.uuid === bindGroup.uuid)
+    })
+  }
+
+  /**
+   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+   * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
+   */
+  getObjectsByTexture(texture: Texture | RenderTexture): undefined | Array<MeshType | ComputePass> {
+    return [...this.computePasses, ...this.meshes].filter((object) => {
+      return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid)
     })
   }
 

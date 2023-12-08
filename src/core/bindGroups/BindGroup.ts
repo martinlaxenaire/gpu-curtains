@@ -144,7 +144,6 @@ export class BindGroup {
           useStruct: true, // by default
           visibility: binding.access === 'read_write' ? 'compute' : binding.visibility,
           access: binding.access ?? 'read', // read by default
-          computeAlignment: binding.computeAlignment,
           bindings: binding.bindings,
         }
 

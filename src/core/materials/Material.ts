@@ -341,7 +341,6 @@ export class Material {
    */
   destroyBindGroup(bindGroup: AllowedBindGroups) {
     // check if this bind group is used by another object before actually destroying it
-    // TODO same thing for textures?
     const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup)
 
     const shouldDestroy =
@@ -454,11 +453,27 @@ export class Material {
   }
 
   /**
+   * Destroy a [texture]{@link Texture} or [render texture]{@link RenderTexture}, only if it is not used by another object
+   * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
+   */
+  destroyTexture(texture: Texture | RenderTexture) {
+    // check if this texture is used by another object before actually destroying it
+    const objectsUsingTexture = this.renderer.getObjectsByTexture(texture)
+
+    const shouldDestroy =
+      !objectsUsingTexture || !objectsUsingTexture.find((object) => object.material.uuid !== this.uuid)
+
+    if (shouldDestroy) {
+      texture.destroy()
+    }
+  }
+
+  /**
    * Destroy all the Material textures
    */
   destroyTextures() {
-    this.textures?.forEach((texture) => texture.destroy())
-    this.renderTextures?.forEach((texture) => texture.destroy())
+    this.textures?.forEach((texture) => this.destroyTexture(texture))
+    this.renderTextures?.forEach((texture) => this.destroyTexture(texture))
     this.textures = []
     this.renderTextures = []
   }
