@@ -103,6 +103,8 @@ export class ComputePass {
 
     isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type)
 
+    parameters.label = parameters.label ?? 'ComputePass ' + renderer.computePasses?.length
+
     this.renderer = renderer
     this.type = type
     this.uuid = generateUUID()

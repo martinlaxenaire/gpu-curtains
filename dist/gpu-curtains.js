@@ -4523,6 +4523,7 @@ var GPUCurtains = (() => {
       const type = "ComputePass";
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type);
+      parameters.label = parameters.label ?? "ComputePass " + renderer.computePasses?.length;
       this.renderer = renderer;
       this.type = type;
       this.uuid = generateUUID();
@@ -9489,7 +9490,7 @@ ${this.shaders.compute.head}`;
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
       parameters.transparent = true;
-      parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses.length;
+      parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
       super(renderer, parameters);
       this.type = "ShaderPass";
       this.createRenderTexture({
@@ -9541,7 +9542,7 @@ ${this.shaders.compute.head}`;
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target"
       });
       parameters.transparent = false;
-      parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes.length;
+      parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
       super(renderer, parameters);
       this.type = "PingPongPlane";
       this.createRenderTexture({

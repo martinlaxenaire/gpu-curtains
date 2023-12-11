@@ -30,7 +30,7 @@ export class PingPongPlane extends FullscreenPlane {
 
     // no blending for ping pong planes
     parameters.transparent = false
-    parameters.label = parameters.label ?? 'PingPongPlane ' + renderer.pingPongPlanes.length
+    parameters.label = parameters.label ?? 'PingPongPlane ' + renderer.pingPongPlanes?.length
 
     super(renderer, parameters)
 

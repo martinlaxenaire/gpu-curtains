@@ -356,7 +356,11 @@ export class GPURenderer {
       throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`)
 
       this.loseContext()
-      this.onContextLost(info)
+
+      // do not call onContextLost event if the device was intentionally destroyed
+      if (info.reason !== 'destroyed') {
+        this.onContextLost(info)
+      }
     })
   }
 
