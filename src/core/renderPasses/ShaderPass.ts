@@ -33,6 +33,7 @@ export class ShaderPass extends FullscreenPlane {
 
     // force transparency to allow for correct blending between successive passes
     parameters.transparent = true
+    parameters.label = parameters.label ?? 'ShaderPass ' + renderer.shaderPasses?.length
 
     super(renderer, parameters)
 
@@ -41,6 +42,7 @@ export class ShaderPass extends FullscreenPlane {
     this.createRenderTexture({
       label: parameters.label ? `${parameters.label} render texture` : 'Shader pass render texture',
       name: 'renderTexture',
+      fromTexture: this.renderTarget ? this.renderTarget.renderTexture : null,
     })
   }
 
@@ -50,6 +52,23 @@ export class ShaderPass extends FullscreenPlane {
    */
   get renderTexture() {
     return this.renderTextures[0] ?? null
+  }
+
+  /**
+   * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+   * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
+   * Also copy or remove the [render target render texture]{@link RenderTarget#renderTexture} into the [shader pass render texture]{@link ShaderPass#renderTexture}
+   * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+   */
+  setRenderTarget(renderTarget: RenderTarget | null) {
+    super.setRenderTarget(renderTarget)
+
+    if (renderTarget) {
+      this.renderTexture.copy(this.renderTarget.renderTexture)
+    } else {
+      this.renderTexture.options.fromTexture = null
+      this.renderTexture.createTexture()
+    }
   }
 
   /**

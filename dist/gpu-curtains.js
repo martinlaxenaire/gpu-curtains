@@ -1601,113 +1601,136 @@ var GPUCurtains = (() => {
      * BufferElement constructor
      * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferElement}
      */
-    constructor({ name, key, type = "f32", value, computeAlignment = true }) {
+    constructor({ name, key, type = "f32" }) {
       this.name = name;
       this.key = key;
       this.type = type;
-      this.computeAlignment = computeAlignment;
-      this.isArray = this.type.indexOf("array") !== -1 && (Array.isArray(value) || ArrayBuffer.isView(value));
-      this.bufferLayout = getBufferLayout(
-        this.isArray ? this.type.replace("array", "").replace("<", "").replace(">", "") : this.type
-      );
-      this.inputLength = this.isArray ? value.length / this.bufferLayout.numElements : 1;
+      this.bufferLayout = getBufferLayout(this.type.replace("array", "").replace("<", "").replace(">", ""));
       this.alignment = {
-        startOffset: 0,
-        entries: []
+        start: {
+          row: 0,
+          byte: 0
+        },
+        end: {
+          row: 0,
+          byte: 0
+        }
       };
-    }
-    /**
-     * Get the offset (i.e. slot index) at which our {@link BufferElement} ends
-     * @readonly
-     */
-    get endOffset() {
-      return Math.ceil(this.alignment.startOffset + this.bufferLayout.size / bytesPerSlot);
     }
     /**
      * Get the total number of rows used by this {@link BufferElement}
      * @readonly
      */
     get rowCount() {
-      return this.alignment.entries.length ? this.alignment.entries[this.alignment.entries.length - 1].row.end + 1 : this.alignment.startOffset / slotsPerRow + Math.ceil(this.bufferLayout.size / bytesPerRow) + 1;
+      return this.alignment.end.row - this.alignment.start.row + 1;
     }
     /**
-     * Get the total number of slots used by this {@link BufferElement}
+     * Get the total number of bytes used by this {@link BufferElement} based on [alignment]{@link BufferElementAlignment} start and end offsets
      * @readonly
      */
-    get slotCount() {
-      return this.rowCount * bytesPerRow;
+    get byteCount() {
+      return Math.abs(this.endOffset - this.startOffset) + 1;
     }
     /**
-     * Compute the right alignment (i.e. start and end rows and slots) given the size and align properties and the next available slot
-     * @param nextSlotAvailable - next slot at which we should insert this entry
+     * Get the total number of bytes used by this {@link BufferElement}, including final padding
+     * @readonly
+     */
+    get paddedByteCount() {
+      return (this.alignment.end.row + 1) * bytesPerRow;
+    }
+    /**
+     * Get the offset (i.e. byte index) at which our {@link BufferElement} starts
+     * @readonly
+     */
+    get startOffset() {
+      return this.getByteCountAtPosition(this.alignment.start);
+    }
+    /**
+     * Get the offset (i.e. byte index) at which our {@link BufferElement} ends
+     * @readonly
+     */
+    get endOffset() {
+      return this.getByteCountAtPosition(this.alignment.end);
+    }
+    /**
+     * Get the position at given offset (i.e. byte index)
+     * @param offset - byte index to use
+     */
+    getPositionAtOffset(offset = 0) {
+      return {
+        row: Math.floor(offset / bytesPerRow),
+        byte: offset % bytesPerRow
+      };
+    }
+    /**
+     * Get the number of bytes at a given [position]{@link BufferElementAlignmentPosition}
+     * @param position - [position]{@link BufferElementAlignmentPosition} from which to count
+     * @returns - byte count at the given [position]{@link BufferElementAlignmentPosition}
+     */
+    getByteCountAtPosition(position = { row: 0, byte: 0 }) {
+      return position.row * bytesPerRow + position.byte;
+    }
+    /**
+     * Check that a [position byte]{@link BufferElementAlignmentPosition#byte} does not overflow its max value (16)
+     * @param position - [position]{@link BufferElementAlignmentPosition} to check
+     * @returns - updated [position]{@link BufferElementAlignmentPosition#
+     */
+    applyOverflowToPosition(position = { row: 0, byte: 0 }) {
+      if (position.byte > bytesPerRow - 1) {
+        const overflow = position.byte % bytesPerRow;
+        position.row += Math.floor(position.byte / bytesPerRow);
+        position.byte = overflow;
+      }
+      return position;
+    }
+    /**
+     * Get the number of bytes between two [positions]{@link BufferElementAlignmentPosition}
+     * @param p1 - first [position]{@link BufferElementAlignmentPosition}
+     * @param p2 - second [position]{@link BufferElementAlignmentPosition}
+     * @returns - number of bytes
+     */
+    getByteCountBetweenPositions(p1 = { row: 0, byte: 0 }, p2 = { row: 0, byte: 0 }) {
+      return Math.abs(this.getByteCountAtPosition(p2) - this.getByteCountAtPosition(p1));
+    }
+    /**
+     * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available [position]{@link BufferElementAlignmentPosition}
+     * @param nextPositionAvailable - next [position]{@link BufferElementAlignmentPosition} at which we should insert this element
      * @returns - computed [alignment]{@link BufferElementAlignment}
      */
-    getElementAlignment(nextSlotAvailable = { startOffset: 0, row: 0, slot: 0 }) {
-      const { size, align } = this.bufferLayout;
-      if (nextSlotAvailable.slot % align !== 0) {
-        nextSlotAvailable.startOffset += nextSlotAvailable.slot % align / bytesPerSlot;
-        nextSlotAvailable.slot += nextSlotAvailable.slot % align;
-      }
-      if (size <= bytesPerRow && nextSlotAvailable.slot + size > bytesPerRow) {
-        nextSlotAvailable.row += 1;
-        nextSlotAvailable.slot = 0;
-        nextSlotAvailable.startOffset = nextSlotAvailable.row * 4;
-      }
+    getElementAlignment(nextPositionAvailable = { row: 0, byte: 0 }) {
       const alignment = {
-        startOffset: nextSlotAvailable.startOffset,
-        entries: [
-          {
-            row: {
-              start: nextSlotAvailable.row,
-              end: nextSlotAvailable.row + Math.ceil(size / bytesPerRow) - 1
-            },
-            slot: {
-              start: nextSlotAvailable.slot,
-              end: nextSlotAvailable.slot + (size % bytesPerRow === 0 ? bytesPerRow - 1 : size % bytesPerRow - 1)
-              // end of row ? then it ends on slot (bytesPerRow - 1)
-            }
-          }
-        ]
+        start: nextPositionAvailable,
+        end: nextPositionAvailable
       };
-      if (alignment.entries[0].slot.end > bytesPerRow - 1) {
-        const overflow = alignment.entries[0].slot.end % bytesPerRow;
-        alignment.entries[0].row.end += Math.ceil(overflow / bytesPerRow);
-        alignment.entries[0].slot.end = overflow;
+      const { size, align } = this.bufferLayout;
+      if (nextPositionAvailable.byte % align !== 0) {
+        nextPositionAvailable.byte += nextPositionAvailable.byte % align;
       }
+      if (size <= bytesPerRow && nextPositionAvailable.byte + size > bytesPerRow) {
+        nextPositionAvailable.row += 1;
+        nextPositionAvailable.byte = 0;
+      }
+      alignment.end = {
+        row: nextPositionAvailable.row + Math.ceil(size / bytesPerRow) - 1,
+        byte: nextPositionAvailable.byte + (size % bytesPerRow === 0 ? bytesPerRow - 1 : size % bytesPerRow - 1)
+        // end of row ? then it ends on slot (bytesPerRow - 1)
+      };
+      alignment.end = this.applyOverflowToPosition(alignment.end);
       return alignment;
     }
     /**
-     * Set the [alignment entries]{@link BufferElementAlignment#entries}
+     * Set the [alignment]{@link BufferElementAlignment} from a [position]{@link BufferElementAlignmentPosition}
+     * @param position - [position]{@link BufferElementAlignmentPosition} at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     */
+    setAlignmentFromPosition(position = { row: 0, byte: 0 }) {
+      this.alignment = this.getElementAlignment(position);
+    }
+    /**
+     * Set the [alignment]{@link BufferElementAlignment} from an offset (byte count)
      * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
      */
     setAlignment(startOffset = 0) {
-      const { numElements } = this.bufferLayout;
-      const nextSlotAvailable = {
-        startOffset,
-        row: Math.floor(startOffset / slotsPerRow),
-        slot: startOffset * bytesPerSlot % bytesPerRow
-      };
-      const alignment = this.getElementAlignment(nextSlotAvailable);
-      if (!this.computeAlignment) {
-        this.alignment = alignment;
-        this.alignment.entries[this.inputLength - 1] = { ...this.alignment.entries[0] };
-        this.alignment.entries[this.inputLength - 1].row.end = this.inputLength - 1 + startOffset;
-        return;
-      }
-      if (this.inputLength > 1) {
-        let tempAlignment = alignment;
-        for (let i = 0; i < this.inputLength - 1; i++) {
-          const arrayStartOffset = tempAlignment.entries[0].row.start * slotsPerRow + tempAlignment.entries[0].slot.start / bytesPerSlot + numElements;
-          const nextArraySlotAvailable = {
-            startOffset: arrayStartOffset,
-            row: Math.floor(arrayStartOffset / slotsPerRow),
-            slot: arrayStartOffset * bytesPerSlot % bytesPerRow
-          };
-          tempAlignment = this.getElementAlignment(nextArraySlotAvailable);
-          alignment.entries.push(tempAlignment.entries[0]);
-        }
-      }
-      this.alignment = alignment;
+      this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
     }
     /**
      * Set the [view]{@link BufferElement#view}
@@ -1717,9 +1740,8 @@ var GPUCurtains = (() => {
     setView(arrayBuffer, arrayView) {
       this.view = new this.bufferLayout.View(
         arrayBuffer,
-        this.alignment.startOffset * bytesPerSlot,
-        // 4 bytes per row slots
-        this.bufferLayout.numElements * this.alignment.entries.length
+        this.startOffset,
+        this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT
       );
     }
     /**
@@ -1739,61 +1761,93 @@ var GPUCurtains = (() => {
       } else if (value.elements) {
         this.view.set(value.elements);
       } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-        if (this.isArray) {
-          let valueIndex = 0;
-          this.alignment.entries.forEach((entry, entryIndex) => {
-            const entryStartOffset = entry.row.start * slotsPerRow + entry.slot.start / bytesPerSlot;
-            const entryEndOffset = entry.row.end * slotsPerRow + Math.ceil(entry.slot.end / bytesPerSlot);
-            for (let i = 0; i < this.bufferLayout.numElements; i++) {
-              if (i < entryEndOffset - entryStartOffset) {
-                this.view[i + entryIndex * this.bufferLayout.numElements] = value[valueIndex];
-              }
-              valueIndex++;
-            }
-          });
-        } else {
-          for (let i = 0; i < this.view.length; i++) {
-            this.view[i] = value[i] ? value[i] : 0;
-          }
+        for (let i = 0; i < this.view.length; i++) {
+          this.view[i] = value[i] ? value[i] : 0;
         }
       }
     }
   };
 
-  // src/core/bindings/bufferElements/BufferInterleavedElement.ts
-  var BufferInterleavedElement = class extends BufferElement {
+  // src/core/bindings/bufferElements/BufferArrayElement.ts
+  var BufferArrayElement = class extends BufferElement {
     /**
-     * BufferInterleavedElement constructor
-     * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferInterleavedElement}
+     * BufferArrayElement constructor
+     * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferArrayElement}
      */
-    constructor({ name, key, type = "f32", value, computeAlignment = true }) {
-      super({ name, key, type, value, computeAlignment });
-      this.interleavedAlignment = {
-        startOffset: 0,
-        entries: []
-      };
+    constructor({ name, key, type = "f32", arrayLength = 1 }) {
+      super({ name, key, type });
+      this.arrayLength = arrayLength;
+      this.numElements = this.arrayLength / this.bufferLayout.numElements;
     }
     /**
-     * Get the total number of rows used by this {@link BufferInterleavedElement}
+     * Set the [alignment]{@link BufferElementAlignment}
+     * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the stride between two array elements. Using the stride and the total number of elements, we can easily get the end alignment position.
+     * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     */
+    setAlignment(startOffset = 0) {
+      super.setAlignment(startOffset);
+      const nextAlignment = this.getElementAlignment(this.getPositionAtOffset(this.endOffset + 1));
+      this.stride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end);
+      this.alignment.end = this.getPositionAtOffset(this.endOffset + this.stride * (this.numElements - 1));
+    }
+    /**
+     * Update the [view]{@link BufferElement#view} based on the new value
+     * @param value - new value to use
+     */
+    update(value) {
+      if (ArrayBuffer.isView(value) || Array.isArray(value)) {
+        let valueIndex = 0;
+        const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT;
+        const stride = Math.ceil(viewLength / this.numElements);
+        for (let i = 0; i < this.numElements; i++) {
+          for (let j = 0; j < this.bufferLayout.numElements; j++) {
+            this.view[j + i * stride] = value[valueIndex];
+            valueIndex++;
+          }
+        }
+      } else {
+        throwWarning(`BufferArrayElement: value passed to ${this.name} is not an array: ${value}`);
+      }
+    }
+  };
+
+  // src/core/bindings/bufferElements/BufferInterleavedArrayElement.ts
+  var BufferInterleavedArrayElement = class extends BufferArrayElement {
+    /**
+     * BufferInterleavedArrayElement constructor
+     * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferInterleavedArrayElement}
+     */
+    constructor({ name, key, type = "f32", arrayLength = 1 }) {
+      super({ name, key, type, arrayLength });
+      this.stride = 1;
+      this.arrayLength = arrayLength;
+      this.numElements = this.arrayLength / this.bufferLayout.numElements;
+    }
+    /**
+     * Get the total number of slots used by this {@link BufferInterleavedArrayElement} based on buffer layout size and total number of elements
      * @readonly
      */
-    get rowCount() {
-      return this.interleavedAlignment.entries.length ? this.interleavedAlignment.entries[this.interleavedAlignment.entries.length - 1].row.end + 1 : this.interleavedAlignment.startOffset / slotsPerRow + Math.ceil(this.bufferLayout.size / bytesPerRow) + 1;
+    get byteCount() {
+      return this.bufferLayout.size * this.numElements;
     }
     /**
-     * Get the total number of slots used by this {@link BufferInterleavedElement}
-     * @readonly
+     * Set the [alignment]{@link BufferElementAlignment}
+     * To compute how arrays are packed, we need to compute the stride between two elements beforehand and pass it here. Using the stride and the total number of elements, we can easily get the end alignment position.
+     * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     * @param stride - Stride in the {@link ArrayBuffer} between two elements of the array
      */
-    get slotCount() {
-      return this.rowCount * slotsPerRow * bytesPerSlot;
+    setAlignment(startOffset = 0, stride = 0) {
+      this.alignment = this.getElementAlignment(this.getPositionAtOffset(startOffset));
+      this.stride = stride;
+      this.alignment.end = this.getPositionAtOffset(this.endOffset + stride * (this.numElements - 1));
     }
     /**
-     * Set the [view]{@link BufferInterleavedElement#view} and [viewSetFunction]{@link BufferInterleavedElement#viewSetFunction}
+     * Set the [view]{@link BufferInterleavedArrayElement#view} and [viewSetFunction]{@link BufferInterleavedArrayElement#viewSetFunction}
      * @param arrayBuffer - the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
      * @param arrayView - the [buffer binding array buffer view]{@link BufferBinding#arrayView}
      */
     setView(arrayBuffer, arrayView) {
-      this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.alignment.entries.length);
+      this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.numElements);
       this.viewSetFunction = ((arrayView2) => {
         switch (this.bufferLayout.View) {
           case Int32Array:
@@ -1809,21 +1863,21 @@ var GPUCurtains = (() => {
       })(arrayView);
     }
     /**
-     * Update the [view]{@link BufferElement#view} based on the new value, and then update the [buffer binding array view]{@link BufferBinding#arrayView} using sub arrays
+     * Update the [view]{@link BufferArrayElement#view} based on the new value, and then update the [buffer binding array view]{@link BufferBinding#arrayView} using sub arrays
      * @param value - new value to use
      */
     update(value) {
       super.update(value);
-      this.interleavedAlignment.entries.forEach((entry, entryIndex) => {
+      for (let i = 0; i < this.numElements; i++) {
         const subarray = this.view.subarray(
-          entryIndex * this.bufferLayout.numElements,
-          entryIndex * this.bufferLayout.numElements + this.bufferLayout.numElements
+          i * this.bufferLayout.numElements,
+          i * this.bufferLayout.numElements + this.bufferLayout.numElements
         );
-        const startByteOffset = entry.row.start * bytesPerRow + entry.slot.start;
+        const startByteOffset = this.startOffset + i * this.stride;
         subarray.forEach((value2, index) => {
           this.viewSetFunction(startByteOffset + index * this.bufferLayout.View.BYTES_PER_ELEMENT, value2, true);
         });
-      });
+      }
     }
   };
 
@@ -1847,7 +1901,6 @@ var GPUCurtains = (() => {
       bindIndex = 0,
       visibility,
       useStruct = true,
-      computeAlignment = true,
       access = "read",
       bindings = {}
     }) {
@@ -1857,8 +1910,7 @@ var GPUCurtains = (() => {
         ...this.options,
         useStruct,
         access,
-        bindings,
-        computeAlignment
+        bindings
       };
       this.arrayBufferSize = 0;
       this.shouldUpdate = false;
@@ -1932,21 +1984,24 @@ var GPUCurtains = (() => {
       }
       orderedBindings.forEach((bindingKey) => {
         const binding = this.bindings[bindingKey];
+        const bufferElementOptions = {
+          name: toCamelCase(binding.name ?? bindingKey),
+          key: bindingKey,
+          type: binding.type
+        };
+        const isArray = binding.type.indexOf("array") !== -1 && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value));
         this.bufferElements.push(
-          new BufferElement({
-            name: toCamelCase(binding.name ?? bindingKey),
-            key: bindingKey,
-            type: binding.type,
-            value: binding.value,
-            computeAlignment: this.options.computeAlignment
-          })
+          isArray ? new BufferArrayElement({
+            ...bufferElementOptions,
+            arrayLength: binding.value.length
+          }) : new BufferElement(bufferElementOptions)
         );
       });
       this.bufferElements.forEach((bufferElement, index) => {
-        const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset;
+        const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset + 1;
         bufferElement.setAlignment(startOffset);
       });
-      if (arrayBindings.length > 1 && this.options.computeAlignment) {
+      if (arrayBindings.length > 1) {
         const arraySizes = arrayBindings.map((bindingKey) => {
           const binding = this.bindings[bindingKey];
           const bufferLayout = getBufferLayout(binding.type.replace("array", "").replace("<", "").replace(">", ""));
@@ -1956,12 +2011,11 @@ var GPUCurtains = (() => {
         if (equalSize) {
           const interleavedBufferElements = arrayBindings.map((bindingKey) => {
             const binding = this.bindings[bindingKey];
-            return new BufferInterleavedElement({
+            return new BufferInterleavedArrayElement({
               name: toCamelCase(binding.name ?? bindingKey),
               key: bindingKey,
               type: binding.type,
-              value: binding.value,
-              computeAlignment: this.options.computeAlignment
+              arrayLength: binding.value.length
             });
           });
           const tempBufferElements = arrayBindings.map((bindingKey) => {
@@ -1969,25 +2023,26 @@ var GPUCurtains = (() => {
             return new BufferElement({
               name: toCamelCase(binding.name ?? bindingKey),
               key: bindingKey,
-              type: binding.type.replace("array", "").replace("<", "").replace(">", ""),
-              value: [],
-              // useless
-              computeAlignment: this.options.computeAlignment
+              type: binding.type.replace("array", "").replace("<", "").replace(">", "")
             });
           });
-          for (let i = 0; i < arraySizes[0]; i++) {
-            tempBufferElements.forEach((tempBufferElement, index) => {
-              const startOffset = i === 0 && index === 0 ? this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].rowCount : 0 : tempBufferElements[index === 0 ? tempBufferElements.length - 1 : index - 1].endOffset;
-              tempBufferElement.setAlignment(startOffset);
-              if (i === 0) {
-                interleavedBufferElements[index].interleavedAlignment = tempBufferElement.alignment;
+          tempBufferElements.forEach((bufferElement, index) => {
+            if (index === 0) {
+              if (this.bufferElements.length) {
+                bufferElement.setAlignmentFromPosition({
+                  row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
+                  byte: 0
+                });
               } else {
-                interleavedBufferElements[index].interleavedAlignment.entries.push(tempBufferElement.alignment.entries[0]);
+                bufferElement.setAlignment(0);
               }
-            });
-          }
+            } else {
+              bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1);
+            }
+          });
+          const totalStride = tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset;
           interleavedBufferElements.forEach((bufferElement, index) => {
-            bufferElement.setAlignment(0);
+            bufferElement.setAlignment(tempBufferElements[index].startOffset, totalStride);
           });
           this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
         } else {
@@ -1997,23 +2052,8 @@ var GPUCurtains = (() => {
             )}"`
           );
         }
-      } else if (arrayBindings.length > 1 && !this.options.computeAlignment) {
-        arrayBindings.forEach((bindingKey) => {
-          const binding = this.bindings[bindingKey];
-          const bufferElement = new BufferInterleavedElement({
-            name: toCamelCase(binding.name ?? bindingKey),
-            key: bindingKey,
-            type: binding.type,
-            value: binding.value,
-            computeAlignment: this.options.computeAlignment
-          });
-          const startOffset = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].rowCount : 0;
-          bufferElement.setAlignment(startOffset);
-          bufferElement.interleavedAlignment = bufferElement.alignment;
-          this.bufferElements.push(bufferElement);
-        });
       }
-      this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].slotCount : 0;
+      this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount : 0;
       this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
       this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength);
       this.bufferElements.forEach((bufferElement) => {
@@ -2028,19 +2068,20 @@ var GPUCurtains = (() => {
       const kebabCaseLabel = toKebabCase(this.label);
       if (this.useStruct) {
         const bufferElements = this.bufferElements.filter(
-          (bufferElement) => !(bufferElement instanceof BufferInterleavedElement)
+          (bufferElement) => !(bufferElement instanceof BufferInterleavedArrayElement)
         );
         const interleavedBufferElements = this.bufferElements.filter(
-          (bufferElement) => bufferElement instanceof BufferInterleavedElement
+          (bufferElement) => bufferElement instanceof BufferInterleavedArrayElement
         );
         if (interleavedBufferElements.length) {
+          const arrayLength = this.bindingType === "uniform" ? `, ${interleavedBufferElements[0].numElements}` : "";
           if (bufferElements.length) {
             this.wgslStructFragment = `struct ${kebabCaseLabel}Element {
 	${interleavedBufferElements.map((binding) => binding.name + ": " + binding.type.replace("array", "").replace("<", "").replace(">", "")).join(",\n	")}
 };
 
 `;
-            const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element>,`;
+            const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element${arrayLength}>,`;
             this.wgslStructFragment += `struct ${kebabCaseLabel} {
 	${bufferElements.map((bufferElement) => bufferElement.name + ": " + bufferElement.type).join(",\n	")}
 	${interleavedBufferStructDeclaration}
@@ -2052,11 +2093,14 @@ var GPUCurtains = (() => {
 	${this.bufferElements.map((binding) => binding.name + ": " + binding.type.replace("array", "").replace("<", "").replace(">", "")).join(",\n	")}
 };`;
             const varType = getBindingWGSLVarType(this);
-            this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`];
+            this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
           }
         } else {
           this.wgslStructFragment = `struct ${kebabCaseLabel} {
-	${this.bufferElements.map((binding) => binding.name + ": " + binding.type).join(",\n	")}
+	${this.bufferElements.map((binding) => {
+            const bindingType = this.bindingType === "uniform" && "numElements" in binding ? `array<${binding.type.replace("array", "").replace("<", "").replace(">", "")}, ${binding.numElements}>` : binding.type;
+            return binding.name + ": " + bindingType;
+          }).join(",\n	")}
 };`;
           const varType = getBindingWGSLVarType(this);
           this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
@@ -2111,13 +2155,12 @@ var GPUCurtains = (() => {
       useStruct = true,
       bindings = {},
       visibility,
-      computeAlignment = true,
       access = "read_write",
       shouldCopyResult = false
     }) {
       bindingType = "storage";
       visibility = "compute";
-      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility, access, computeAlignment });
+      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility, access });
       this.options = {
         ...this.options,
         shouldCopyResult
@@ -2198,7 +2241,6 @@ var GPUCurtains = (() => {
             visibility: binding.access === "read_write" ? "compute" : binding.visibility,
             access: binding.access ?? "read",
             // read by default
-            computeAlignment: binding.computeAlignment,
             bindings: binding.bindings
           };
           const BufferBindingConstructor = bindingParams.access === "read_write" ? WritableBufferBinding : BufferBinding;
@@ -2253,6 +2295,21 @@ var GPUCurtains = (() => {
     resetBindGroup() {
       this.resetEntries();
       this.createBindGroup();
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
+     */
+    loseContext() {
+      this.resetEntries();
+      this.bufferBindings.forEach((binding) => {
+        binding.buffer = null;
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer = null;
+        }
+      });
+      this.bindGroup = null;
+      this.bindGroupLayout = null;
+      this.needsPipelineFlush = true;
     }
     /**
      * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
@@ -2636,7 +2693,7 @@ var GPUCurtains = (() => {
      * @param target - [target]{@link Vec3} to look at
      */
     lookAt(target = new Vec3()) {
-      const rotationMatrix = new Mat4().lookAt(this.position, target);
+      const rotationMatrix = new Mat4().lookAt(target, this.position);
       this.quaternion.setFromRotationMatrix(rotationMatrix);
       this.shouldUpdateModelMatrix();
     }
@@ -3582,6 +3639,15 @@ var GPUCurtains = (() => {
       };
     }
     /**
+     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+     * @param target - [target]{@link Vec3} to look at
+     */
+    lookAt(target = new Vec3()) {
+      const rotationMatrix = new Mat4().lookAt(this.position, target);
+      this.quaternion.setFromRotationMatrix(rotationMatrix);
+      this.shouldUpdateModelMatrix();
+    }
+    /**
      * Updates the {@link Camera} {@link projectionMatrix}
      */
     updateProjectionMatrix() {
@@ -3721,12 +3787,20 @@ var GPUCurtains = (() => {
       this.size = size;
     }
     /**
+     * Copy another {@link RenderTexture} into this {@link RenderTexture}
+     * @param texture - {@link RenderTexture} to copy
+     */
+    copy(texture) {
+      this.options.fromTexture = texture;
+      this.createTexture();
+    }
+    /**
      * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
      */
     createTexture() {
       if (this.options.fromTexture) {
-        this.texture = this.options.fromTexture.texture;
         this.size = this.options.fromTexture.size;
+        this.texture = this.options.fromTexture.texture;
         this.textureBinding.resource = this.texture;
         return;
       }
@@ -3833,6 +3907,45 @@ var GPUCurtains = (() => {
       return !!(this.renderer.ready && this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready);
     }
     /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     */
+    loseContext() {
+      this.textures.forEach((texture) => {
+        texture.texture = null;
+        texture.sourceUploaded = false;
+      });
+      this.renderTextures.forEach((texture) => {
+        texture.texture = null;
+      });
+      [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach(
+        (bindGroup) => bindGroup.loseContext()
+      );
+      this.pipelineEntry.pipeline = null;
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been restored to recreate our bind groups.
+     */
+    restoreContext() {
+      this.samplers.forEach((sampler) => {
+        sampler.createSampler();
+        sampler.binding.resource = sampler.sampler;
+      });
+      this.textures.forEach((texture) => {
+        texture.createTexture();
+        texture.resize();
+      });
+      this.renderTextures.forEach((texture) => {
+        texture.resize(texture.size);
+      });
+      [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
+        if (bindGroup.shouldCreateBindGroup) {
+          bindGroup.createBindGroup();
+        }
+        bindGroup.bufferBindings.forEach((bufferBinding) => bufferBinding.shouldUpdate = true);
+      });
+    }
+    /**
      * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
      * @param [shaderType="full"] - shader to get the code from
      * @returns - The corresponding shader code
@@ -3855,7 +3968,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="full"] - shader to get the code from
+     * @param [shaderType="vertex"] - shader to get the code from
      * @returns - The corresponding shader code
      */
     getAddedShaderCode(shaderType = "vertex") {
@@ -4078,11 +4191,22 @@ var GPUCurtains = (() => {
       }
     }
     /**
+     * Destroy a [texture]{@link Texture} or [render texture]{@link RenderTexture}, only if it is not used by another object
+     * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
+     */
+    destroyTexture(texture) {
+      const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
+      const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.find((object) => object.material.uuid !== this.uuid);
+      if (shouldDestroy) {
+        texture.destroy();
+      }
+    }
+    /**
      * Destroy all the Material textures
      */
     destroyTextures() {
-      this.textures?.forEach((texture) => texture.destroy());
-      this.renderTextures?.forEach((texture) => texture.destroy());
+      this.textures?.forEach((texture) => this.destroyTexture(texture));
+      this.renderTextures?.forEach((texture) => this.destroyTexture(texture));
       this.textures = [];
       this.renderTextures = [];
     }
@@ -4229,6 +4353,22 @@ var GPUCurtains = (() => {
         this.setPipelineEntryProperties();
         await this.compilePipelineEntry();
       }
+    }
+    /**
+     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
+     * @param [shaderType="compute"] - shader to get the code from
+     * @returns - The corresponding shader code
+     */
+    getShaderCode(shaderType = "compute") {
+      return super.getShaderCode(shaderType);
+    }
+    /**
+     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
+     * @param [shaderType="compute"] - shader to get the code from
+     * @returns - The corresponding shader code
+     */
+    getAddedShaderCode(shaderType = "compute") {
+      return super.getAddedShaderCode(shaderType);
     }
     /* BIND GROUPS */
     /**
@@ -4391,6 +4531,7 @@ var GPUCurtains = (() => {
       const type = "ComputePass";
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type);
+      parameters.label = parameters.label ?? "ComputePass " + renderer.computePasses?.length;
       this.renderer = renderer;
       this.type = type;
       this.uuid = generateUUID();
@@ -4470,6 +4611,19 @@ var GPUCurtains = (() => {
      */
     setComputeMaterial(computeParameters) {
       this.material = new ComputeMaterial(this.renderer, computeParameters);
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     */
+    loseContext() {
+      this.material.loseContext();
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been restored
+     */
+    restoreContext() {
+      this.material.restoreContext();
     }
     /* TEXTURES */
     /**
@@ -5620,6 +5774,25 @@ struct VertexOutput {
         }
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
       }
+      /**
+       * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+       * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+       */
+      loseContext() {
+        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+          vertexBuffer.buffer = null;
+        });
+        if ("indexBuffer" in this.geometry) {
+          this.geometry.indexBuffer.buffer = null;
+        }
+        this.material.loseContext();
+      }
+      /**
+       * Called when the [renderer device]{@link GPURenderer#device} has been restored
+       */
+      restoreContext() {
+        this.material.restoreContext();
+      }
       /* SHADERS */
       /**
        * Set default shaders if one or both of them are missing
@@ -6261,15 +6434,6 @@ struct VertexOutput {
       this.shouldUpdateProjectionMatrixStack();
     }
     /**
-     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-     * @param target - [target]{@link Vec3} to look at
-     */
-    lookAt(target = new Vec3()) {
-      const rotationMatrix = new Mat4().lookAt(target, this.position);
-      this.quaternion.setFromRotationMatrix(rotationMatrix);
-      this.shouldUpdateModelMatrix();
-    }
-    /**
      * Set our transform and projection matrices
      */
     setMatrices() {
@@ -6716,33 +6880,35 @@ struct VSOutput {
         label: this.options.label + ": " + type + "Shader module",
         code
       });
-      shaderModule.getCompilationInfo().then((compilationInfo) => {
-        for (const message of compilationInfo.messages) {
-          let formattedMessage = "";
-          if (message.lineNum) {
-            formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
-              message.offset,
-              message.offset + message.length
-            )}
+      if ("getCompilationInfo" in shaderModule && !this.renderer.production) {
+        shaderModule.getCompilationInfo().then((compilationInfo) => {
+          for (const message of compilationInfo.messages) {
+            let formattedMessage = "";
+            if (message.lineNum) {
+              formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
+                message.offset,
+                message.offset + message.length
+              )}
 `;
+            }
+            formattedMessage += message.message;
+            switch (message.type) {
+              case "error":
+                console.error(`${this.options.label} compilation error:
+${formattedMessage}`);
+                break;
+              case "warning":
+                console.warn(`${this.options.label} compilation warning:
+${formattedMessage}`);
+                break;
+              case "info":
+                console.log(`${this.options.label} compilation information:
+${formattedMessage}`);
+                break;
+            }
           }
-          formattedMessage += message.message;
-          switch (message.type) {
-            case "error":
-              !this.renderer.production && console.error(`${this.options.label} compilation error:
-${formattedMessage}`);
-              break;
-            case "warning":
-              !this.renderer.production && console.warn(`${this.options.label} compilation warning:
-${formattedMessage}`);
-              break;
-            case "info":
-              !this.renderer.production && console.log(`${this.options.label} compilation information:
-${formattedMessage}`);
-              break;
-          }
-        }
-      });
+        });
+      }
       return shaderModule;
     }
     /* SETUP */
@@ -6802,7 +6968,7 @@ fn getOutputPosition(camera: Camera, matrices: Matrices, position: vec3f) -> vec
     /* wgsl */
     `
 fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
-  return (textureMatrix * vec4f(uv, 0, 1)).xy;
+  return (textureMatrix * vec4f(uv, 0.0, 1.0)).xy;
 }`
   );
 
@@ -8051,8 +8217,7 @@ ${this.shaders.compute.head}`;
      * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
      * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}
      * This also handles the [renderPassEntries screen array]{@link Scene#renderPassEntries.screen} entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-     * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-hk6rnd
-     * TODO: could we directly use the renderPass view/resolve texture as ShaderPass input?
+     * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4
      * @param shaderPass - [shader pass]{@link ShaderPass} to add
      */
     addShaderPass(shaderPass) {
@@ -8061,34 +8226,22 @@ ${this.shaders.compute.head}`;
         // render directly to screen
         renderTexture: null,
         onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
-          if (shaderPass.renderTexture) {
-            commandEncoder.copyTextureToTexture(
-              {
-                texture: shaderPass.renderTarget ? shaderPass.renderTarget.renderTexture.texture : swapChainTexture
-              },
-              {
-                texture: shaderPass.renderTexture.texture
-              },
-              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-            );
-          }
           if (!shaderPass.renderTarget) {
+            if (shaderPass.renderTexture) {
+              commandEncoder.copyTextureToTexture(
+                {
+                  texture: swapChainTexture
+                },
+                {
+                  texture: shaderPass.renderTexture.texture
+                },
+                [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+              );
+            }
             this.renderer.renderPass.setLoadOp("clear");
           }
         },
-        onAfterRenderPass: (commandEncoder, swapChainTexture) => {
-          if (shaderPass.renderTarget) {
-            commandEncoder.copyTextureToTexture(
-              {
-                texture: swapChainTexture
-              },
-              {
-                texture: shaderPass.renderTarget.renderTexture.texture
-              },
-              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-            );
-          }
-        },
+        onAfterRenderPass: null,
         element: shaderPass,
         stack: null
         // explicitly set to null
@@ -8452,6 +8605,8 @@ ${this.shaders.compute.head}`;
       preferredFormat,
       alphaMode = "premultiplied",
       onError = () => {
+      },
+      onContextLost = (info) => {
       }
     }) {
       // callbacks / events
@@ -8467,15 +8622,17 @@ ${this.shaders.compute.head}`;
       this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
       this.sampleCount = sampleCount;
       this.production = production;
-      this.preferredFormat = preferredFormat;
       this.alphaMode = alphaMode;
+      this.devicesCount = 0;
       this.onError = onError;
+      this.onContextLost = onContextLost;
       if (!this.gpu) {
         setTimeout(() => {
           this.onError();
           throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
         }, 0);
       }
+      this.preferredFormat = preferredFormat ?? this.gpu?.getPreferredCanvasFormat();
       this.setTasksQueues();
       this.setRendererObjects();
       this.canvas = document.createElement("canvas");
@@ -8562,17 +8719,9 @@ ${this.shaders.compute.head}`;
      */
     async setContext() {
       this.context = this.canvas.getContext("webgpu");
-      await this.setAdapterAndDevice();
+      await this.setAdapter();
+      await this.setDevice();
       if (this.device) {
-        this.preferredFormat = this.preferredFormat ?? this.gpu?.getPreferredCanvasFormat();
-        this.context.configure({
-          device: this.device,
-          format: this.preferredFormat,
-          alphaMode: this.alphaMode,
-          // needed so we can copy textures for post processing usage
-          usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
-          //viewFormats: []
-        });
         this.setMainRenderPass();
         this.setPipelineManager();
         this.setScene();
@@ -8581,18 +8730,38 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set our [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} if possible
+     * Set our [adapter]{@link GPURenderer#adapter} if possible
      * @returns - void promise result
      */
-    async setAdapterAndDevice() {
+    async setAdapter() {
       this.adapter = await this.gpu?.requestAdapter().catch(() => {
         setTimeout(() => {
           this.onError();
           throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
         }, 0);
       });
+      this.adapter?.requestAdapterInfo().then((infos) => {
+        this.adapterInfos = infos;
+      });
+    }
+    /**
+     * Set our [device]{@link GPURenderer#device} and configure [context]{@link GPURenderer#context} if possible
+     * @returns - void promise result
+     */
+    async setDevice() {
       try {
-        this.device = await this.adapter?.requestDevice();
+        this.device = await this.adapter?.requestDevice({
+          label: "GPUCurtains device " + this.devicesCount
+        });
+        this.devicesCount++;
+        this.context.configure({
+          device: this.device,
+          format: this.preferredFormat,
+          alphaMode: this.alphaMode,
+          // needed so we can copy textures for post processing usage
+          usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
+          //viewFormats: []
+        });
       } catch (error) {
         setTimeout(() => {
           this.onError();
@@ -8601,23 +8770,37 @@ ${this.shaders.compute.head}`;
       }
       this.device?.lost.then((info) => {
         throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`);
+        this.loseContext();
         if (info.reason !== "destroyed") {
+          this.onContextLost(info);
         }
       });
+    }
+    loseContext() {
+      this.ready = false;
+      this.samplers.forEach((sampler) => sampler.sampler = null);
+      this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext());
+      this.buffers = [];
+    }
+    async restoreContext() {
+      await this.setAdapter();
+      await this.setDevice();
+      this.samplers.forEach((sampler) => {
+        sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options });
+      });
+      this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext());
+      this.resize();
+      this.ready = true;
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
     /**
      * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen
      */
     setMainRenderPass() {
-      this.renderPass = new RenderPass(
-        /** @type {GPURenderer} **/
-        this,
-        {
-          label: "Main Render pass",
-          depth: true
-        }
-      );
+      this.renderPass = new RenderPass(this, {
+        label: "Main Render pass",
+        depth: true
+      });
     }
     /**
      * Set our [pipeline manager]{@link GPURenderer#pipelineManager}
@@ -8840,16 +9023,32 @@ ${this.shaders.compute.head}`;
       this.textures = [];
     }
     /**
+     * Get all our scene objects (i.e. objects that are rendered)
+     * @readonly
+     */
+    get sceneObjects() {
+      return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes];
+    }
+    /**
      * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
      */
     getObjectsByBindGroup(bindGroup) {
-      return [...this.computePasses, ...this.meshes].filter((object) => {
+      return this.sceneObjects.filter((object) => {
         return [
           ...object.material.bindGroups,
           ...object.material.inputsBindGroups,
           ...object.material.clonedBindGroups
         ].filter((bG) => bG.uuid === bindGroup.uuid);
+      });
+    }
+    /**
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+     * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
+     */
+    getObjectsByTexture(texture) {
+      return this.sceneObjects.filter((object) => {
+        return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid);
       });
     }
     /* EVENTS */
@@ -8982,13 +9181,11 @@ ${this.shaders.compute.head}`;
     destroy() {
       this.domElement?.destroy();
       this.documentBody?.destroy();
-      this.meshes.forEach((mesh) => mesh.remove());
       this.textures = [];
       this.texturesQueue = [];
       this.renderPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
-      this.shaderPasses.forEach((shaderPass) => shaderPass.remove());
-      this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.remove());
+      this.sceneObjects.forEach((sceneObject) => sceneObject.remove());
       this.device?.destroy();
       this.context?.unconfigure();
     }
@@ -9009,6 +9206,8 @@ ${this.shaders.compute.head}`;
       alphaMode = "premultiplied",
       camera = {},
       onError = () => {
+      },
+      onContextLost = (info) => {
       }
     }) {
       super({
@@ -9018,11 +9217,16 @@ ${this.shaders.compute.head}`;
         preferredFormat,
         alphaMode,
         production,
-        onError
+        onError,
+        onContextLost
       });
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
       this.setCamera(camera);
+    }
+    loseContext() {
+      super.loseContext();
+      this.cameraBindGroup.loseContext();
     }
     /**
      * Set the [camera]{@link GPUCameraRenderer#camera}
@@ -9283,11 +9487,13 @@ ${this.shaders.compute.head}`;
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
       parameters.transparent = true;
+      parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
       super(renderer, parameters);
       this.type = "ShaderPass";
       this.createRenderTexture({
         label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-        name: "renderTexture"
+        name: "renderTexture",
+        fromTexture: this.renderTarget ? this.renderTarget.renderTexture : null
       });
     }
     /**
@@ -9296,6 +9502,21 @@ ${this.shaders.compute.head}`;
      */
     get renderTexture() {
       return this.renderTextures[0] ?? null;
+    }
+    /**
+     * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+     * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
+     * Also copy or remove the [render target render texture]{@link RenderTarget#renderTexture} into the [shader pass render texture]{@link ShaderPass#renderTexture}
+     * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+     */
+    setRenderTarget(renderTarget) {
+      super.setRenderTarget(renderTarget);
+      if (renderTarget) {
+        this.renderTexture.copy(this.renderTarget.renderTexture);
+      } else {
+        this.renderTexture.options.fromTexture = null;
+        this.renderTexture.createTexture();
+      }
     }
     /**
      * Add the {@link ShaderPass} to the renderer and the {@link Scene}
@@ -9334,6 +9555,7 @@ ${this.shaders.compute.head}`;
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target"
       });
       parameters.transparent = false;
+      parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
       super(renderer, parameters);
       this.type = "PingPongPlane";
       this.createRenderTexture({
@@ -9386,6 +9608,8 @@ ${this.shaders.compute.head}`;
       production = false,
       onError = () => {
       },
+      onContextLost = (info) => {
+      },
       camera
     }) {
       super({
@@ -9396,6 +9620,7 @@ ${this.shaders.compute.head}`;
         alphaMode,
         production,
         onError,
+        onContextLost,
         camera
       });
       this.type = "GPUCurtainsRenderer";
@@ -9508,6 +9733,9 @@ ${this.shaders.compute.head}`;
       /** function assigned to the [onError]{@link GPUCurtains#onError} callback */
       this._onErrorCallback = () => {
       };
+      /** function assigned to the [onContextLost]{@link GPUCurtains#onContextLost} callback */
+      this._onContextLostCallback = () => {
+      };
       this.type = "CurtainsGPU";
       this.options = {
         container,
@@ -9566,8 +9794,12 @@ ${this.shaders.compute.head}`;
         alphaMode: this.options.alphaMode,
         camera: this.options.camera,
         production: this.options.production,
-        onError: () => this._onErrorCallback && this._onErrorCallback()
+        onError: () => this._onErrorCallback && this._onErrorCallback(),
+        onContextLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
       });
+    }
+    restoreContext() {
+      this.renderer?.restoreContext();
     }
     /**
      * Set the [curtains renderer context]{@link GPUCurtainsRenderer#setContext}
@@ -9757,6 +9989,17 @@ ${this.shaders.compute.head}`;
     onError(callback) {
       if (callback) {
         this._onErrorCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Called whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+     * @param callback - callback to run whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+     * @returns - our {@link GPUCurtains}
+     */
+    onContextLost(callback) {
+      if (callback) {
+        this._onContextLostCallback = callback;
       }
       return this;
     }

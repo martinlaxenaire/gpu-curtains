@@ -147,6 +147,62 @@ export class Material {
   }
 
   /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+   */
+  loseContext() {
+    // start with the textures
+    this.textures.forEach((texture) => {
+      texture.texture = null
+      texture.sourceUploaded = false
+    })
+
+    this.renderTextures.forEach((texture) => {
+      texture.texture = null
+    })
+
+    // then bind groups and bindings
+    ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) =>
+      bindGroup.loseContext()
+    )
+
+    // reset pipeline as well
+    this.pipelineEntry.pipeline = null
+  }
+
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been restored to recreate our bind groups.
+   */
+  restoreContext() {
+    // start with the samplers and textures
+    this.samplers.forEach((sampler) => {
+      // the samplers have all been recreated by the renderer, just update the reference
+      sampler.createSampler()
+      sampler.binding.resource = sampler.sampler
+    })
+
+    // recreate the textures and resize them
+    this.textures.forEach((texture) => {
+      texture.createTexture()
+      texture.resize()
+    })
+
+    this.renderTextures.forEach((texture) => {
+      texture.resize(texture.size)
+    })
+
+    // now the bind groups
+    ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
+      if (bindGroup.shouldCreateBindGroup) {
+        bindGroup.createBindGroup()
+      }
+
+      // finally re-write all our buffers
+      bindGroup.bufferBindings.forEach((bufferBinding) => (bufferBinding.shouldUpdate = true))
+    })
+  }
+
+  /**
    * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
    * @param [shaderType="full"] - shader to get the code from
    * @returns - The corresponding shader code
@@ -171,7 +227,7 @@ export class Material {
 
   /**
    * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-   * @param [shaderType="full"] - shader to get the code from
+   * @param [shaderType="vertex"] - shader to get the code from
    * @returns - The corresponding shader code
    */
   getAddedShaderCode(shaderType: FullShadersType = 'vertex'): string {
@@ -341,7 +397,6 @@ export class Material {
    */
   destroyBindGroup(bindGroup: AllowedBindGroups) {
     // check if this bind group is used by another object before actually destroying it
-    // TODO same thing for textures?
     const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup)
 
     const shouldDestroy =
@@ -454,11 +509,27 @@ export class Material {
   }
 
   /**
+   * Destroy a [texture]{@link Texture} or [render texture]{@link RenderTexture}, only if it is not used by another object
+   * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
+   */
+  destroyTexture(texture: Texture | RenderTexture) {
+    // check if this texture is used by another object before actually destroying it
+    const objectsUsingTexture = this.renderer.getObjectsByTexture(texture)
+
+    const shouldDestroy =
+      !objectsUsingTexture || !objectsUsingTexture.find((object) => object.material.uuid !== this.uuid)
+
+    if (shouldDestroy) {
+      texture.destroy()
+    }
+  }
+
+  /**
    * Destroy all the Material textures
    */
   destroyTextures() {
-    this.textures?.forEach((texture) => texture.destroy())
-    this.renderTextures?.forEach((texture) => texture.destroy())
+    this.textures?.forEach((texture) => this.destroyTexture(texture))
+    this.renderTextures?.forEach((texture) => this.destroyTexture(texture))
     this.textures = []
     this.renderTextures = []
   }

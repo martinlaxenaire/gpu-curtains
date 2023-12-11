@@ -76,7 +76,7 @@ export class RenderTarget {
     this.renderTexture = new RenderTexture(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target Render Texture',
       name: 'renderTexture',
-    } as RenderTextureParams)
+    })
 
     this.addToScene()
   }

@@ -88,6 +88,10 @@ export declare class BindGroup {
      */
     resetBindGroup(): void;
     /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
+     */
+    loseContext(): void;
+    /**
      * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings(): BindGroupBufferBindingElement[];

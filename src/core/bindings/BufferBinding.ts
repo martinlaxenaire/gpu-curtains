@@ -11,8 +11,9 @@ import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { Input, InputBase, InputValue } from '../../types/BindGroups'
-import { BufferElement, BufferElementAlignment, slotsPerRow } from './bufferElements/BufferElement'
-import { BufferInterleavedElement } from './bufferElements/BufferInterleavedElement'
+import { BufferElement } from './bufferElements/BufferElement'
+import { BufferArrayElement } from './bufferElements/BufferArrayElement'
+import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement'
 
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
@@ -42,8 +43,6 @@ export interface BufferBindingBaseParams {
   access?: BufferBindingMemoryAccessType
   /** Object containing one or multiple [input bindings]{@link Input} */
   bindings?: Record<string, Input>
-  /** Whether to compute the buffer element offset/alignment. Could be set to false to improve performance if you are dealing with very large buffers and don't need to actually pass the values from the CPU to the GPU (i.e. directly compute buffer values in a compute shader) */
-  computeAlignment?: boolean
 }
 
 /**
@@ -55,6 +54,7 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
  * BufferBinding class:
  * Used to format inputs bindings and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
+ * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. "array<f32>", "array<vec3f>" etc.)
  * @extends Binding
  */
 export class BufferBinding extends Binding {
@@ -67,7 +67,7 @@ export class BufferBinding extends Binding {
   shouldUpdate: boolean
 
   /** An array describing how each corresponding {@link bindings} should be inserted into our {@link arrayView} array */
-  bufferElements: Array<BufferElement | BufferInterleavedElement>
+  bufferElements: Array<BufferElement | BufferArrayElement | BufferInterleavedArrayElement>
 
   /** Total size of our {@link arrayBuffer} array in bytes */
   arrayBufferSize: number
@@ -104,7 +104,6 @@ export class BufferBinding extends Binding {
     bindIndex = 0,
     visibility,
     useStruct = true,
-    computeAlignment = true,
     access = 'read',
     bindings = {},
   }: BufferBindingParams) {
@@ -117,7 +116,6 @@ export class BufferBinding extends Binding {
       useStruct,
       access,
       bindings,
-      computeAlignment,
     }
 
     this.arrayBufferSize = 0
@@ -221,26 +219,34 @@ export class BufferBinding extends Binding {
     orderedBindings.forEach((bindingKey) => {
       const binding = this.bindings[bindingKey]
 
+      const bufferElementOptions = {
+        name: toCamelCase(binding.name ?? bindingKey),
+        key: bindingKey,
+        type: binding.type,
+      }
+
+      const isArray =
+        binding.type.indexOf('array') !== -1 && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value))
+
       this.bufferElements.push(
-        new BufferElement({
-          name: toCamelCase(binding.name ?? bindingKey),
-          key: bindingKey,
-          type: binding.type,
-          value: binding.value,
-          computeAlignment: this.options.computeAlignment,
-        })
+        isArray
+          ? new BufferArrayElement({
+              ...bufferElementOptions,
+              arrayLength: (binding.value as number[]).length,
+            })
+          : new BufferElement(bufferElementOptions)
       )
     })
 
     // set their alignments
     this.bufferElements.forEach((bufferElement, index) => {
-      const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset
+      const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset + 1
 
       bufferElement.setAlignment(startOffset)
     })
 
     // now create our interleaved buffer elements
-    if (arrayBindings.length > 1 && this.options.computeAlignment) {
+    if (arrayBindings.length > 1) {
       // first get the sizes of the arrays
       const arraySizes = arrayBindings.map((bindingKey) => {
         const binding = this.bindings[bindingKey]
@@ -256,12 +262,11 @@ export class BufferBinding extends Binding {
         // this will hold our interleaved buffer elements
         const interleavedBufferElements = arrayBindings.map((bindingKey) => {
           const binding = this.bindings[bindingKey]
-          return new BufferInterleavedElement({
+          return new BufferInterleavedArrayElement({
             name: toCamelCase(binding.name ?? bindingKey),
             key: bindingKey,
             type: binding.type,
-            value: binding.value,
-            computeAlignment: this.options.computeAlignment,
+            arrayLength: (binding.value as number[]).length,
           })
         })
 
@@ -272,37 +277,34 @@ export class BufferBinding extends Binding {
             name: toCamelCase(binding.name ?? bindingKey),
             key: bindingKey,
             type: binding.type.replace('array', '').replace('<', '').replace('>', ''),
-            value: [], // useless
-            computeAlignment: this.options.computeAlignment,
           })
         })
 
-        for (let i = 0; i < arraySizes[0]; i++) {
-          tempBufferElements.forEach((tempBufferElement, index) => {
-            // start offset based on previous tempBufferElement end offset
-            const startOffset =
-              i === 0 && index === 0
-                ? this.bufferElements.length
-                  ? this.bufferElements[this.bufferElements.length - 1].rowCount
-                  : 0
-                : tempBufferElements[index === 0 ? tempBufferElements.length - 1 : index - 1].endOffset
-            tempBufferElement.setAlignment(startOffset)
-
-            if (i === 0) {
-              interleavedBufferElements[index].interleavedAlignment = tempBufferElement.alignment
+        // set temp buffer alignments as if it was regular buffer elements
+        tempBufferElements.forEach((bufferElement, index) => {
+          if (index === 0) {
+            if (this.bufferElements.length) {
+              // if there are already buffer elements
+              // get last one end row, and start at the next row
+              bufferElement.setAlignmentFromPosition({
+                row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
+                byte: 0,
+              })
             } else {
-              interleavedBufferElements[index].interleavedAlignment.entries.push(tempBufferElement.alignment.entries[0])
+              bufferElement.setAlignment(0)
             }
-          })
-        }
+          } else {
+            bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1)
+          }
+        })
 
-        // now set the interleaved buffer elements own alignment
-        // we treat them as single buffer array elements, just to know where to pad inside their own arrays
-        // that way we can fill accordingly their arrays with the right padding,
-        // and the buffer binding array buffer will be set with subarrays
+        // now use last temp buffer end offset as our interleaved stride
+        const totalStride =
+          tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset
+
+        // finally, set interleaved buffer elements alignment
         interleavedBufferElements.forEach((bufferElement, index) => {
-          // force start offset to 0
-          bufferElement.setAlignment(0)
+          bufferElement.setAlignment(tempBufferElements[index].startOffset, totalStride)
         })
 
         // add to our buffer elements array
@@ -317,32 +319,10 @@ export class BufferBinding extends Binding {
           )}"`
         )
       }
-    } else if (arrayBindings.length > 1 && !this.options.computeAlignment) {
-      arrayBindings.forEach((bindingKey) => {
-        const binding = this.bindings[bindingKey]
-
-        const bufferElement = new BufferInterleavedElement({
-          name: toCamelCase(binding.name ?? bindingKey),
-          key: bindingKey,
-          type: binding.type,
-          value: binding.value,
-          computeAlignment: this.options.computeAlignment,
-        })
-
-        const startOffset = this.bufferElements.length
-          ? this.bufferElements[this.bufferElements.length - 1].rowCount
-          : 0
-
-        bufferElement.setAlignment(startOffset)
-        bufferElement.interleavedAlignment = bufferElement.alignment
-
-        this.bufferElements.push(bufferElement)
-      })
     }
 
-    // our array size is the number of rows * number of slots per row * bytes per slots
     this.arrayBufferSize = this.bufferElements.length
-      ? this.bufferElements[this.bufferElements.length - 1].slotCount
+      ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount
       : 0
 
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize)
@@ -363,21 +343,22 @@ export class BufferBinding extends Binding {
 
     if (this.useStruct) {
       const bufferElements = this.bufferElements.filter(
-        (bufferElement) => !(bufferElement instanceof BufferInterleavedElement)
+        (bufferElement) => !(bufferElement instanceof BufferInterleavedArrayElement)
       )
       const interleavedBufferElements = this.bufferElements.filter(
-        (bufferElement) => bufferElement instanceof BufferInterleavedElement
-      )
+        (bufferElement) => bufferElement instanceof BufferInterleavedArrayElement
+      ) as BufferInterleavedArrayElement[]
 
       if (interleavedBufferElements.length) {
+        const arrayLength = this.bindingType === 'uniform' ? `, ${interleavedBufferElements[0].numElements}` : ''
+
         if (bufferElements.length) {
-          // TODO we have regular AND interleaved buffer elements
           this.wgslStructFragment = `struct ${kebabCaseLabel}Element {\n\t${interleavedBufferElements
             .map((binding) => binding.name + ': ' + binding.type.replace('array', '').replace('<', '').replace('>', ''))
             .join(',\n\t')}
 };\n\n`
 
-          const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element>,`
+          const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element${arrayLength}>,`
 
           this.wgslStructFragment += `struct ${kebabCaseLabel} {\n\t${bufferElements
             .map((bufferElement) => bufferElement.name + ': ' + bufferElement.type)
@@ -394,11 +375,20 @@ export class BufferBinding extends Binding {
 };`
 
           const varType = getBindingWGSLVarType(this)
-          this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`]
+          this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`]
         }
       } else {
         this.wgslStructFragment = `struct ${kebabCaseLabel} {\n\t${this.bufferElements
-          .map((binding) => binding.name + ': ' + binding.type)
+          .map((binding) => {
+            // now add array length if needed
+            const bindingType =
+              this.bindingType === 'uniform' && 'numElements' in binding
+                ? `array<${binding.type.replace('array', '').replace('<', '').replace('>', '')}, ${
+                    binding.numElements
+                  }>`
+                : binding.type
+            return binding.name + ': ' + bindingType
+          })
           .join(',\n\t')}
 };`
 

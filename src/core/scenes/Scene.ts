@@ -244,8 +244,7 @@ export class Scene {
    * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
    * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}
    * This also handles the [renderPassEntries screen array]{@link Scene#renderPassEntries.screen} entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-   * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-hk6rnd
-   * TODO: could we directly use the renderPass view/resolve texture as ShaderPass input?
+   * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4
    * @param shaderPass - [shader pass]{@link ShaderPass} to add
    */
   addShaderPass(shaderPass: ShaderPass) {
@@ -253,43 +252,26 @@ export class Scene {
       renderPass: this.renderer.renderPass, // render directly to screen
       renderTexture: null,
       onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
-        // draw the content into our render texture
-        // if this shader pass has a renderTarget assigned (i.e. it is not a global post processing pass, but a selective pass)
-        // copy its renderTarget renderTexture into its own renderTexture
-        // if it's a global post processing pass, copy the context current texture into its renderTexture
-        if (shaderPass.renderTexture) {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: shaderPass.renderTarget ? shaderPass.renderTarget.renderTexture.texture : swapChainTexture,
-            },
-            {
-              texture: shaderPass.renderTexture.texture,
-            },
-            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-          )
-        }
-
         if (!shaderPass.renderTarget) {
+          // draw the content into our render texture
+          // if it's a global post processing pass, copy the context current texture into its renderTexture
+          if (shaderPass.renderTexture) {
+            commandEncoder.copyTextureToTexture(
+              {
+                texture: swapChainTexture,
+              },
+              {
+                texture: shaderPass.renderTexture.texture,
+              },
+              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+            )
+          }
+
           // if we want to post process the whole scene, clear render pass content
           this.renderer.renderPass.setLoadOp('clear')
         }
       },
-      onAfterRenderPass: (commandEncoder, swapChainTexture) => {
-        // TODO do we still need to get the outputted texture?
-        // if this shader pass has a renderTarget assigned (i.e. it is not a global post processing pass, but a selective pass)
-        // copy back the context current texture into its renderTarget renderTexture
-        if (shaderPass.renderTarget) {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: swapChainTexture,
-            },
-            {
-              texture: shaderPass.renderTarget.renderTexture.texture,
-            },
-            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-          )
-        }
-      },
+      onAfterRenderPass: null,
       element: shaderPass,
       stack: null, // explicitly set to null
     })

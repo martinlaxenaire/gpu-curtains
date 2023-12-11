@@ -109,32 +109,33 @@ export class PipelineEntry {
       code,
     })
 
-    shaderModule.getCompilationInfo().then((compilationInfo) => {
-      for (const message of compilationInfo.messages) {
-        let formattedMessage = ''
-        if (message.lineNum) {
-          formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
-            message.offset,
-            message.offset + message.length
-          )}\n`
-        }
-        formattedMessage += message.message
+    if ('getCompilationInfo' in shaderModule && !this.renderer.production) {
+      shaderModule.getCompilationInfo().then((compilationInfo) => {
+        for (const message of compilationInfo.messages) {
+          let formattedMessage = ''
+          if (message.lineNum) {
+            formattedMessage += `Line ${message.lineNum}:${message.linePos} - ${code.substring(
+              message.offset,
+              message.offset + message.length
+            )}\n`
+          }
+          formattedMessage += message.message
 
-        switch (message.type) {
-          case 'error':
-            // TODO mesh onError
-            !this.renderer.production && console.error(`${this.options.label} compilation error:\n${formattedMessage}`)
-            break
-          case 'warning':
-            !this.renderer.production && console.warn(`${this.options.label} compilation warning:\n${formattedMessage}`)
-            break
-          case 'info':
-            !this.renderer.production &&
+          switch (message.type) {
+            case 'error':
+              // TODO mesh onError
+              console.error(`${this.options.label} compilation error:\n${formattedMessage}`)
+              break
+            case 'warning':
+              console.warn(`${this.options.label} compilation warning:\n${formattedMessage}`)
+              break
+            case 'info':
               console.log(`${this.options.label} compilation information:\n${formattedMessage}`)
-            break
+              break
+          }
         }
-      }
-    })
+      })
+    }
 
     return shaderModule
   }

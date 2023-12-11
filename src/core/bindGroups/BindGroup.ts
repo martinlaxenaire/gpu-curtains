@@ -144,7 +144,6 @@ export class BindGroup {
           useStruct: true, // by default
           visibility: binding.access === 'read_write' ? 'compute' : binding.visibility,
           access: binding.access ?? 'read', // read by default
-          computeAlignment: binding.computeAlignment,
           bindings: binding.bindings,
         }
 
@@ -209,6 +208,25 @@ export class BindGroup {
   resetBindGroup() {
     this.resetEntries()
     this.createBindGroup()
+  }
+
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
+   */
+  loseContext() {
+    this.resetEntries()
+
+    this.bufferBindings.forEach((binding) => {
+      binding.buffer = null
+
+      if ('resultBuffer' in binding) {
+        binding.resultBuffer = null
+      }
+    })
+
+    this.bindGroup = null
+    this.bindGroupLayout = null
+    this.needsPipelineFlush = true
   }
 
   /**

@@ -1,3 +1,4 @@
+/// <reference types="dist" />
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer';
 import { ScrollManager } from '../utils/ScrollManager';
 import { Vec3 } from '../math/Vec3';
@@ -53,6 +54,8 @@ export declare class GPUCurtains {
     _onAfterResizeCallback: () => void;
     /** function assigned to the [onError]{@link GPUCurtains#onError} callback */
     _onErrorCallback: () => void;
+    /** function assigned to the [onContextLost]{@link GPUCurtains#onContextLost} callback */
+    _onContextLostCallback: (info?: GPUDeviceLostInfo) => void;
     /**
      * GPUCurtains constructor
      * @param parameters - [parameters]{@link GPUCurtainsParams} used to create this {@link GPUCurtains}
@@ -67,6 +70,7 @@ export declare class GPUCurtains {
      * Set the [curtains renderer]{@link GPUCurtainsRenderer}
      */
     setRenderer(): void;
+    restoreContext(): void;
     /**
      * Set the [curtains renderer context]{@link GPUCurtainsRenderer#setContext}
      * @async
@@ -172,6 +176,12 @@ export declare class GPUCurtains {
      * @returns - our {@link GPUCurtains}
      */
     onError(callback: () => void): GPUCurtains;
+    /**
+     * Called whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+     * @param callback - callback to run whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+     * @returns - our {@link GPUCurtains}
+     */
+    onContextLost(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains;
     /**
      * Create a requestAnimationFrame loop and run it
      */

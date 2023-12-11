@@ -233,7 +233,6 @@ export class TextureBindGroup extends BindGroup {
    */
   update() {
     this.updateTextures()
-
     super.update()
   }
 

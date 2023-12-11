@@ -1,6 +1,7 @@
 import { Mat4 } from '../../math/Mat4';
 import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from '../objects3D/Object3D';
 import { RectSize } from '../DOM/DOMElement';
+import { Vec3 } from '../../math/Vec3';
 /**
  * Defines Camera basic perspective options
  */
@@ -135,6 +136,11 @@ export declare class Camera extends Object3D {
      * @param depth - depth to use for calcs
      */
     setScreenRatios(depth?: number): void;
+    /**
+     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+     * @param target - [target]{@link Vec3} to look at
+     */
+    lookAt(target?: Vec3): void;
     /**
      * Updates the {@link Camera} {@link projectionMatrix}
      */

@@ -65,6 +65,11 @@ export declare class RenderTexture {
      */
     setSize(size?: RectSize | null): void;
     /**
+     * Copy another {@link RenderTexture} into this {@link RenderTexture}
+     * @param texture - {@link RenderTexture} to copy
+     */
+    copy(texture: RenderTexture): void;
+    /**
      * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
      */
     createTexture(): void;

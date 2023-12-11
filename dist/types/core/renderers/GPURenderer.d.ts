@@ -14,6 +14,7 @@ import { Plane } from '../../curtains/meshes/Plane';
 import { Mesh } from '../meshes/Mesh';
 import { TasksQueueManager } from '../../utils/TasksQueueManager';
 import { AllowedBindGroups } from '../../types/BindGroups';
+import { RenderTexture } from '../textures/RenderTexture';
 /**
  * Parameters used to create a {@link GPURenderer}
  */
@@ -32,9 +33,12 @@ export interface GPURendererParams {
     alphaMode?: GPUCanvasAlphaMode;
     /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
     onError?: () => void;
+    /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
+    onContextLost?: (info?: GPUDeviceLostInfo) => void;
 }
 export type DOMMeshType = DOMMesh | Plane;
 export type MeshType = Mesh | DOMMeshType;
+export type SceneObject = MeshType | ComputePass | PingPongPlane | ShaderPass;
 /**
  * GPURenderer class:
  * Base renderer class, that could possibly used to render compute passes and draw meshes, even tho it is strongly advised to use the {@link GPUCurtainsRenderer} class instead.
@@ -62,10 +66,16 @@ export declare class GPURenderer {
     alphaMode?: GPUCanvasAlphaMode;
     /** The WebGPU [adapter]{@link GPUAdapter} used */
     adapter: GPUAdapter | void;
+    /** The WebGPU [adapter]{@link GPUAdapter} informations */
+    adapterInfos: GPUAdapterInfo | undefined;
     /** The WebGPU [device]{@link GPUDevice} used */
     device: GPUDevice | null;
+    /** The number of WebGPU [devices]{@link GPUDevice} created */
+    devicesCount: number;
     /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
     onError: () => void;
+    /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
+    onContextLost: (info?: GPUDeviceLostInfo) => void;
     /** The final [render pass]{@link RenderPass} to render our result to screen */
     renderPass: RenderPass;
     /** The {@link PipelineManager} used */
@@ -107,12 +117,12 @@ export declare class GPURenderer {
     /** function assigned to the [onBeforeRender]{@link GPURenderer#onBeforeRender} callback */
     _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
     /** function assigned to the [onAfterRender]{@link GPURenderer#onAfterRender} callback */
-    _onAfterRenderCallback: (commandEncoder: any) => void;
+    _onAfterRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
     /**
      * GPURenderer constructor
      * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
      */
-    constructor({ container, pixelRatio, sampleCount, production, preferredFormat, alphaMode, onError, }: GPURendererParams);
+    constructor({ container, pixelRatio, sampleCount, production, preferredFormat, alphaMode, onError, onContextLost, }: GPURendererParams);
     /**
      * Set [canvas]{@link GPURenderer#canvas} size
      * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
@@ -141,10 +151,17 @@ export declare class GPURenderer {
      */
     setContext(): Promise<void>;
     /**
-     * Set our [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} if possible
+     * Set our [adapter]{@link GPURenderer#adapter} if possible
      * @returns - void promise result
      */
-    setAdapterAndDevice(): Promise<void>;
+    setAdapter(): Promise<void>;
+    /**
+     * Set our [device]{@link GPURenderer#device} and configure [context]{@link GPURenderer#context} if possible
+     * @returns - void promise result
+     */
+    setDevice(): Promise<void>;
+    loseContext(): void;
+    restoreContext(): Promise<void>;
     /**
      * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen
      */
@@ -270,10 +287,20 @@ export declare class GPURenderer {
      */
     setRendererObjects(): void;
     /**
+     * Get all our scene objects (i.e. objects that are rendered)
+     * @readonly
+     */
+    get sceneObjects(): SceneObject[];
+    /**
      * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
      */
-    getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | Array<MeshType | ComputePass>;
+    getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
+    /**
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+     * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
+     */
+    getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[];
     /**
      * Assign a callback function to _onBeforeRenderCallback
      * @param callback - callback to run just before the [renderer render method]{@link GPURenderer#render} will be executed

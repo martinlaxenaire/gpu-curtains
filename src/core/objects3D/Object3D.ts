@@ -217,7 +217,7 @@ export class Object3D {
    * @param target - [target]{@link Vec3} to look at
    */
   lookAt(target: Vec3 = new Vec3()) {
-    const rotationMatrix = new Mat4().lookAt(this.position, target)
+    const rotationMatrix = new Mat4().lookAt(target, this.position)
     this.quaternion.setFromRotationMatrix(rotationMatrix)
     this.shouldUpdateModelMatrix()
   }

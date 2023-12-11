@@ -27,7 +27,8 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * GPUCameraRenderer constructor
      * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
      */
-    constructor({ container, pixelRatio, sampleCount, preferredFormat, production, alphaMode, camera, onError, }: GPUCameraRendererParams);
+    constructor({ container, pixelRatio, sampleCount, preferredFormat, production, alphaMode, camera, onError, onContextLost, }: GPUCameraRendererParams);
+    loseContext(): void;
     /**
      * Set the [camera]{@link GPUCameraRenderer#camera}
      * @param cameraParameters - [parameters]{@link CameraBasePerspectiveOptions} used to create the [camera]{@link GPUCameraRenderer#camera}

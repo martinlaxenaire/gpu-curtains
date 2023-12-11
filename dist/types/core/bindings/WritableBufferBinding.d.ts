@@ -25,5 +25,5 @@ export declare class WritableBufferBinding extends BufferBinding {
      * WritableBufferBinding constructor
      * @param parameters - [parameters]{@link WritableBufferBindingParams} used to create our {@link WritableBufferBinding}
      */
-    constructor({ label, name, bindingType, bindIndex, useStruct, bindings, visibility, computeAlignment, access, shouldCopyResult, }: WritableBufferBindingParams);
+    constructor({ label, name, bindingType, bindIndex, useStruct, bindings, visibility, access, shouldCopyResult, }: WritableBufferBindingParams);
 }

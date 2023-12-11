@@ -70,6 +70,10 @@ export class GPUCurtains {
   _onErrorCallback: () => void = () => {
     /* allow empty callback */
   }
+  /** function assigned to the [onContextLost]{@link GPUCurtains#onContextLost} callback */
+  _onContextLostCallback: (info?: GPUDeviceLostInfo) => void = () => {
+    /* allow empty callback */
+  }
 
   /**
    * GPUCurtains constructor
@@ -153,7 +157,12 @@ export class GPUCurtains {
       camera: this.options.camera,
       production: this.options.production,
       onError: () => this._onErrorCallback && this._onErrorCallback(),
+      onContextLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
     })
+  }
+
+  restoreContext() {
+    this.renderer?.restoreContext()
   }
 
   /**
@@ -381,6 +390,19 @@ export class GPUCurtains {
   onError(callback: () => void): GPUCurtains {
     if (callback) {
       this._onErrorCallback = callback
+    }
+
+    return this
+  }
+
+  /**
+   * Called whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+   * @param callback - callback to run whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+   * @returns - our {@link GPUCurtains}
+   */
+  onContextLost(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains {
+    if (callback) {
+      this._onContextLostCallback = callback
     }
 
     return this

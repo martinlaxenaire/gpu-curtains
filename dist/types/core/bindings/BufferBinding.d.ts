@@ -2,7 +2,8 @@
 import { Binding, BindingParams, BufferBindingMemoryAccessType } from './Binding';
 import { Input, InputBase, InputValue } from '../../types/BindGroups';
 import { BufferElement } from './bufferElements/BufferElement';
-import { BufferInterleavedElement } from './bufferElements/BufferInterleavedElement';
+import { BufferArrayElement } from './bufferElements/BufferArrayElement';
+import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement';
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
  */
@@ -28,8 +29,6 @@ export interface BufferBindingBaseParams {
     access?: BufferBindingMemoryAccessType;
     /** Object containing one or multiple [input bindings]{@link Input} */
     bindings?: Record<string, Input>;
-    /** Whether to compute the buffer element offset/alignment. Could be set to false to improve performance if you are dealing with very large buffers and don't need to actually pass the values from the CPU to the GPU (i.e. directly compute buffer values in a compute shader) */
-    computeAlignment?: boolean;
 }
 /**
  * Parameters used to create a {@link BufferBinding}
@@ -40,6 +39,7 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
  * BufferBinding class:
  * Used to format inputs bindings and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
+ * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. "array<f32>", "array<vec3f>" etc.)
  * @extends Binding
  */
 export declare class BufferBinding extends Binding {
@@ -50,7 +50,7 @@ export declare class BufferBinding extends Binding {
     /** Flag to indicate whether one of the {@link bindings} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
     shouldUpdate: boolean;
     /** An array describing how each corresponding {@link bindings} should be inserted into our {@link arrayView} array */
-    bufferElements: Array<BufferElement | BufferInterleavedElement>;
+    bufferElements: Array<BufferElement | BufferArrayElement | BufferInterleavedArrayElement>;
     /** Total size of our {@link arrayBuffer} array in bytes */
     arrayBufferSize: number;
     /** Array buffer that will be sent to the {@link GPUBuffer} */
@@ -76,7 +76,7 @@ export declare class BufferBinding extends Binding {
      * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
      * @param {Object.<string, Input>} parameters.bindings - bindings inputs
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, useStruct, computeAlignment, access, bindings, }: BufferBindingParams);
+    constructor({ label, name, bindingType, bindIndex, visibility, useStruct, access, bindings, }: BufferBindingParams);
     /**
      * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
      */

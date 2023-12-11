@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { Material } from './Material';
-import { ComputeMaterialOptions, ComputeMaterialParams, ComputeMaterialWorkGroup, ComputeMaterialWorkGroupParams } from '../../types/Materials';
+import { ComputeMaterialOptions, ComputeMaterialParams, ComputeMaterialWorkGroup, ComputeMaterialWorkGroupParams, FullShadersType } from '../../types/Materials';
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry';
@@ -43,6 +43,18 @@ export declare class ComputeMaterial extends Material {
      * @async
      */
     compileMaterial(): Promise<void>;
+    /**
+     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
+     * @param [shaderType="compute"] - shader to get the code from
+     * @returns - The corresponding shader code
+     */
+    getShaderCode(shaderType?: FullShadersType): string;
+    /**
+     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
+     * @param [shaderType="compute"] - shader to get the code from
+     * @returns - The corresponding shader code
+     */
+    getAddedShaderCode(shaderType?: FullShadersType): string;
     /**
      * Check whether we're currently accessing one of the buffer and therefore can't render our material
      * @readonly

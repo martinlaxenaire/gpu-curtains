@@ -4,6 +4,7 @@ import {
   ComputeMaterialParams,
   ComputeMaterialWorkGroup,
   ComputeMaterialWorkGroupParams,
+  FullShadersType,
   MaterialParams,
 } from '../../types/Materials'
 import { isRenderer, Renderer } from '../renderers/utils'
@@ -102,7 +103,7 @@ export class ComputeMaterial extends Material {
    * Compile the {@link ComputePipelineEntry}
    * @async
    */
-  async compilePipelineEntry() {
+  async compilePipelineEntry(): Promise<void> {
     await this.pipelineEntry.compilePipelineEntry()
   }
 
@@ -117,6 +118,24 @@ export class ComputeMaterial extends Material {
       this.setPipelineEntryProperties()
       await this.compilePipelineEntry()
     }
+  }
+
+  /**
+   * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
+   * @param [shaderType="compute"] - shader to get the code from
+   * @returns - The corresponding shader code
+   */
+  getShaderCode(shaderType: FullShadersType = 'compute'): string {
+    return super.getShaderCode(shaderType)
+  }
+
+  /**
+   * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
+   * @param [shaderType="compute"] - shader to get the code from
+   * @returns - The corresponding shader code
+   */
+  getAddedShaderCode(shaderType: FullShadersType = 'compute'): string {
+    return super.getAddedShaderCode(shaderType)
   }
 
   /* BIND GROUPS */

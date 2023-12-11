@@ -75,6 +75,15 @@ export declare class Material {
      */
     get ready(): boolean;
     /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     */
+    loseContext(): void;
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} has been restored to recreate our bind groups.
+     */
+    restoreContext(): void;
+    /**
      * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
      * @param [shaderType="full"] - shader to get the code from
      * @returns - The corresponding shader code
@@ -82,7 +91,7 @@ export declare class Material {
     getShaderCode(shaderType?: FullShadersType): string;
     /**
      * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="full"] - shader to get the code from
+     * @param [shaderType="vertex"] - shader to get the code from
      * @returns - The corresponding shader code
      */
     getAddedShaderCode(shaderType?: FullShadersType): string;
@@ -161,6 +170,11 @@ export declare class Material {
      * @param texture - texture to add
      */
     addTexture(texture: Texture | RenderTexture): void;
+    /**
+     * Destroy a [texture]{@link Texture} or [render texture]{@link RenderTexture}, only if it is not used by another object
+     * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
+     */
+    destroyTexture(texture: Texture | RenderTexture): void;
     /**
      * Destroy all the Material textures
      */

@@ -17,6 +17,7 @@ import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
 import { TasksQueueManager } from '../../utils/TasksQueueManager'
 import { AllowedBindGroups } from '../../types/BindGroups'
+import { RenderTexture } from '../textures/RenderTexture'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -36,11 +37,14 @@ export interface GPURendererParams {
   alphaMode?: GPUCanvasAlphaMode
   /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
   onError?: () => void
+  /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
+  onContextLost?: (info?: GPUDeviceLostInfo) => void
 }
 
 // TODO should be GPUCurtainsRenderer props?
 export type DOMMeshType = DOMMesh | Plane
 export type MeshType = Mesh | DOMMeshType
+export type SceneObject = MeshType | ComputePass | PingPongPlane | ShaderPass
 
 //export type MeshType = Mesh | DOMMeshType | typeof MeshBaseMixin<any>
 
@@ -71,11 +75,17 @@ export class GPURenderer {
   alphaMode?: GPUCanvasAlphaMode
   /** The WebGPU [adapter]{@link GPUAdapter} used */
   adapter: GPUAdapter | void
+  /** The WebGPU [adapter]{@link GPUAdapter} informations */
+  adapterInfos: GPUAdapterInfo | undefined
   /** The WebGPU [device]{@link GPUDevice} used */
   device: GPUDevice | null
+  /** The number of WebGPU [devices]{@link GPUDevice} created */
+  devicesCount: number
 
   /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
   onError: () => void
+  /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
+  onContextLost: (info?: GPUDeviceLostInfo) => void
 
   /** The final [render pass]{@link RenderPass} to render our result to screen */
   renderPass: RenderPass
@@ -127,7 +137,7 @@ export class GPURenderer {
     /* allow empty callback */
   }
   /** function assigned to the [onAfterRender]{@link GPURenderer#onAfterRender} callback */
-  _onAfterRenderCallback = (commandEncoder) => {
+  _onAfterRenderCallback = (commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
 
@@ -145,6 +155,9 @@ export class GPURenderer {
     onError = () => {
       /* allow empty callbacks */
     },
+    onContextLost = (info?: GPUDeviceLostInfo) => {
+      /* allow empty callbacks */
+    },
   }: GPURendererParams) {
     this.type = 'GPURenderer'
     this.ready = false
@@ -154,10 +167,12 @@ export class GPURenderer {
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.sampleCount = sampleCount
     this.production = production
-    this.preferredFormat = preferredFormat
     this.alphaMode = alphaMode
 
+    this.devicesCount = 0
+
     this.onError = onError
+    this.onContextLost = onContextLost
 
     if (!this.gpu) {
       setTimeout(() => {
@@ -165,6 +180,8 @@ export class GPURenderer {
         throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
       }, 0)
     }
+
+    this.preferredFormat = preferredFormat ?? this.gpu?.getPreferredCanvasFormat()
 
     this.setTasksQueues()
     this.setRendererObjects()
@@ -276,20 +293,10 @@ export class GPURenderer {
   async setContext(): Promise<void> {
     this.context = this.canvas.getContext('webgpu')
 
-    await this.setAdapterAndDevice()
+    await this.setAdapter()
+    await this.setDevice()
 
     if (this.device) {
-      this.preferredFormat = this.preferredFormat ?? this.gpu?.getPreferredCanvasFormat()
-
-      this.context.configure({
-        device: this.device,
-        format: this.preferredFormat,
-        alphaMode: this.alphaMode,
-        // needed so we can copy textures for post processing usage
-        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
-        //viewFormats: []
-      })
-
       this.setMainRenderPass()
       this.setPipelineManager()
       this.setScene()
@@ -303,19 +310,41 @@ export class GPURenderer {
   }
 
   /**
-   * Set our [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} if possible
+   * Set our [adapter]{@link GPURenderer#adapter} if possible
    * @returns - void promise result
    */
-  async setAdapterAndDevice(): Promise<void> {
+  async setAdapter(): Promise<void> {
     this.adapter = await this.gpu?.requestAdapter().catch(() => {
       setTimeout(() => {
         this.onError()
         throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
       }, 0)
     })
+    ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
+      this.adapterInfos = infos
+    })
+  }
 
+  /**
+   * Set our [device]{@link GPURenderer#device} and configure [context]{@link GPURenderer#context} if possible
+   * @returns - void promise result
+   */
+  async setDevice(): Promise<void> {
     try {
-      this.device = await (this.adapter as GPUAdapter)?.requestDevice()
+      this.device = await (this.adapter as GPUAdapter)?.requestDevice({
+        label: 'GPUCurtains device ' + this.devicesCount,
+      })
+
+      this.devicesCount++
+
+      this.context.configure({
+        device: this.device,
+        format: this.preferredFormat,
+        alphaMode: this.alphaMode,
+        // needed so we can copy textures for post processing usage
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+        //viewFormats: []
+      })
     } catch (error) {
       setTimeout(() => {
         this.onError()
@@ -326,11 +355,46 @@ export class GPURenderer {
     this.device?.lost.then((info) => {
       throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`)
 
-      // 'reason' will be 'destroyed' if we intentionally destroy the device.
+      this.loseContext()
+
+      // do not call onContextLost event if the device was intentionally destroyed
       if (info.reason !== 'destroyed') {
-        // try again...
+        this.onContextLost(info)
       }
     })
+  }
+
+  loseContext() {
+    this.ready = false
+
+    // first clean everything
+    this.samplers.forEach((sampler) => (sampler.sampler = null))
+
+    // force all our scene objects to lose context
+    this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext())
+
+    // reset the buffers array, it would be repopulated while restoring context
+    this.buffers = []
+  }
+
+  async restoreContext(): Promise<void> {
+    await this.setAdapter()
+    await this.setDevice()
+
+    // now restore everything: samplers, buffers, textures...
+    this.samplers.forEach((sampler) => {
+      // force all samplers recreation
+      sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options })
+    })
+
+    // restore context of all our scene objects
+    this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext())
+
+    // force renderer resize to resize all our render passes textures
+    this.resize()
+
+    // we're ready again!
+    this.ready = true
   }
 
   /* PIPELINES, SCENE & MAIN RENDER PASS */
@@ -339,8 +403,7 @@ export class GPURenderer {
    * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen
    */
   setMainRenderPass() {
-    // TODO is this.renderPass still needed?
-    this.renderPass = new RenderPass(/** @type {GPURenderer} **/ this, {
+    this.renderPass = new RenderPass(this, {
       label: 'Main Render pass',
       depth: true,
     })
@@ -608,16 +671,34 @@ export class GPURenderer {
   }
 
   /**
+   * Get all our scene objects (i.e. objects that are rendered)
+   * @readonly
+   */
+  get sceneObjects(): SceneObject[] {
+    return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes]
+  }
+
+  /**
    * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
-  getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | Array<MeshType | ComputePass> {
-    return [...this.computePasses, ...this.meshes].filter((object) => {
+  getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
+    return this.sceneObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
         ...object.material.clonedBindGroups,
       ].filter((bG) => bG.uuid === bindGroup.uuid)
+    })
+  }
+
+  /**
+   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+   * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
+   */
+  getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
+    return this.sceneObjects.filter((object) => {
+      return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid)
     })
   }
 
@@ -794,8 +875,6 @@ export class GPURenderer {
     this.domElement?.destroy()
     this.documentBody?.destroy()
 
-    this.meshes.forEach((mesh) => mesh.remove())
-
     //this.textures.forEach((texture) => texture.destroy())
     this.textures = []
     this.texturesQueue = []
@@ -804,8 +883,7 @@ export class GPURenderer {
     this.renderPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
-    this.shaderPasses.forEach((shaderPass) => shaderPass.remove())
-    this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.remove())
+    this.sceneObjects.forEach((sceneObject) => sceneObject.remove())
 
     this.device?.destroy()
     this.context?.unconfigure()
