@@ -38,6 +38,7 @@ export interface GPURendererParams {
 }
 export type DOMMeshType = DOMMesh | Plane;
 export type MeshType = Mesh | DOMMeshType;
+export type SceneObject = MeshType | ComputePass | PingPongPlane | ShaderPass;
 /**
  * GPURenderer class:
  * Base renderer class, that could possibly used to render compute passes and draw meshes, even tho it is strongly advised to use the {@link GPUCurtainsRenderer} class instead.
@@ -286,15 +287,20 @@ export declare class GPURenderer {
      */
     setRendererObjects(): void;
     /**
+     * Get all our scene objects (i.e. objects that are rendered)
+     * @readonly
+     */
+    get sceneObjects(): SceneObject[];
+    /**
      * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
      */
-    getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | Array<MeshType | ComputePass>;
+    getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
     /**
      * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
      * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
      */
-    getObjectsByTexture(texture: Texture | RenderTexture): undefined | Array<MeshType | ComputePass>;
+    getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[];
     /**
      * Assign a callback function to _onBeforeRenderCallback
      * @param callback - callback to run just before the [renderer render method]{@link GPURenderer#render} will be executed

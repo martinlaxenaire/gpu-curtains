@@ -293,7 +293,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // then the compute pass that is going to displace our particles
   const computePass = new GPUCurtains.ComputePass(gpuCurtains, {
-    label: 'Compute particles positions',
+    //label: 'Compute particles positions',
     shaders: {
       compute: {
         code: computeParticles,
@@ -303,8 +303,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     dispatchSize: Math.ceil(nbParticles / 64),
     bindGroups: [particlesBindGroup],
   })
-
-  console.log(computePass)
 
   // we're done with our first compute pass, remove it
   computeInitDataPass.remove()

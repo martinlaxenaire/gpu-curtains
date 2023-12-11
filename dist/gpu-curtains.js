@@ -2074,13 +2074,14 @@ var GPUCurtains = (() => {
           (bufferElement) => bufferElement instanceof BufferInterleavedArrayElement
         );
         if (interleavedBufferElements.length) {
+          const arrayLength = this.bindingType === "uniform" ? `, ${interleavedBufferElements[0].numElements}` : "";
           if (bufferElements.length) {
             this.wgslStructFragment = `struct ${kebabCaseLabel}Element {
 	${interleavedBufferElements.map((binding) => binding.name + ": " + binding.type.replace("array", "").replace("<", "").replace(">", "")).join(",\n	")}
 };
 
 `;
-            const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element>,`;
+            const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element${arrayLength}>,`;
             this.wgslStructFragment += `struct ${kebabCaseLabel} {
 	${bufferElements.map((bufferElement) => bufferElement.name + ": " + bufferElement.type).join(",\n	")}
 	${interleavedBufferStructDeclaration}
@@ -2092,11 +2093,14 @@ var GPUCurtains = (() => {
 	${this.bufferElements.map((binding) => binding.name + ": " + binding.type.replace("array", "").replace("<", "").replace(">", "")).join(",\n	")}
 };`;
             const varType = getBindingWGSLVarType(this);
-            this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`];
+            this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
           }
         } else {
           this.wgslStructFragment = `struct ${kebabCaseLabel} {
-	${this.bufferElements.map((binding) => binding.name + ": " + binding.type).join(",\n	")}
+	${this.bufferElements.map((binding) => {
+            const bindingType = this.bindingType === "uniform" && "numElements" in binding ? `array<${binding.type.replace("array", "").replace("<", "").replace(">", "")}, ${binding.numElements}>` : binding.type;
+            return binding.name + ": " + bindingType;
+          }).join(",\n	")}
 };`;
           const varType = getBindingWGSLVarType(this);
           this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
@@ -3956,7 +3960,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="full"] - shader to get the code from
+     * @param [shaderType="vertex"] - shader to get the code from
      * @returns - The corresponding shader code
      */
     getAddedShaderCode(shaderType = "vertex") {
@@ -4341,6 +4345,22 @@ var GPUCurtains = (() => {
         this.setPipelineEntryProperties();
         await this.compilePipelineEntry();
       }
+    }
+    /**
+     * Get the complete code of a given shader including all the WGSL fragment code snippets added by the pipeline
+     * @param [shaderType="compute"] - shader to get the code from
+     * @returns - The corresponding shader code
+     */
+    getShaderCode(shaderType = "compute") {
+      return super.getShaderCode(shaderType);
+    }
+    /**
+     * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
+     * @param [shaderType="compute"] - shader to get the code from
+     * @returns - The corresponding shader code
+     */
+    getAddedShaderCode(shaderType = "compute") {
+      return super.getAddedShaderCode(shaderType);
     }
     /* BIND GROUPS */
     /**
@@ -8761,8 +8781,7 @@ ${this.shaders.compute.head}`;
     loseContext() {
       this.ready = false;
       this.samplers.forEach((sampler) => sampler.sampler = null);
-      this.computePasses.forEach((computePass) => computePass.loseContext());
-      this.meshes.forEach((mesh) => mesh.loseContext());
+      this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext());
       this.buffers = [];
     }
     async restoreContext() {
@@ -8771,8 +8790,7 @@ ${this.shaders.compute.head}`;
       this.samplers.forEach((sampler) => {
         sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options });
       });
-      this.computePasses.forEach((computePass) => computePass.restoreContext());
-      this.meshes.forEach((mesh) => mesh.restoreContext());
+      this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext());
       this.resize();
       this.ready = true;
     }
@@ -9007,11 +9025,18 @@ ${this.shaders.compute.head}`;
       this.textures = [];
     }
     /**
+     * Get all our scene objects (i.e. objects that are rendered)
+     * @readonly
+     */
+    get sceneObjects() {
+      return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes];
+    }
+    /**
      * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
      */
     getObjectsByBindGroup(bindGroup) {
-      return [...this.computePasses, ...this.meshes].filter((object) => {
+      return this.sceneObjects.filter((object) => {
         return [
           ...object.material.bindGroups,
           ...object.material.inputsBindGroups,
@@ -9024,7 +9049,7 @@ ${this.shaders.compute.head}`;
      * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
      */
     getObjectsByTexture(texture) {
-      return [...this.computePasses, ...this.meshes].filter((object) => {
+      return this.sceneObjects.filter((object) => {
         return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid);
       });
     }
@@ -9158,13 +9183,11 @@ ${this.shaders.compute.head}`;
     destroy() {
       this.domElement?.destroy();
       this.documentBody?.destroy();
-      this.meshes.forEach((mesh) => mesh.remove());
       this.textures = [];
       this.texturesQueue = [];
       this.renderPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
-      this.shaderPasses.forEach((shaderPass) => shaderPass.remove());
-      this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.remove());
+      this.sceneObjects.forEach((sceneObject) => sceneObject.remove());
       this.device?.destroy();
       this.context?.unconfigure();
     }
@@ -9466,6 +9489,7 @@ ${this.shaders.compute.head}`;
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
       parameters.transparent = true;
+      parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses.length;
       super(renderer, parameters);
       this.type = "ShaderPass";
       this.createRenderTexture({
@@ -9517,6 +9541,7 @@ ${this.shaders.compute.head}`;
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target"
       });
       parameters.transparent = false;
+      parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes.length;
       super(renderer, parameters);
       this.type = "PingPongPlane";
       this.createRenderTexture({

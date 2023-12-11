@@ -72,6 +72,29 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
+  const postProShader = /* wgsl */ `
+    struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+      };
+
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+
+        return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.x, 0.5) );
+      }
+  `
+
+  const postProPass = new GPUCurtains.ShaderPass(gpuCurtains, {
+    shaders: {
+      fragment: {
+        code: postProShader,
+      },
+    },
+  })
+
+  // lost context
+
   const loseCtxButton = document.querySelector('#lose-context-button')
 
   let isContextActive = true
@@ -80,11 +103,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (isContextActive) {
       gpuCurtains.renderer.device?.destroy()
       loseCtxButton.textContent = 'Restore context'
-      console.log('lost', plane.material)
+      console.log('lost', postProPass.material)
     } else {
       gpuCurtains.restoreContext()
       loseCtxButton.textContent = 'Lose context'
-      console.log('restored', plane.material)
+      console.log('restored', postProPass.material)
     }
 
     isContextActive = !isContextActive

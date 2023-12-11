@@ -347,17 +347,18 @@ export class BufferBinding extends Binding {
       )
       const interleavedBufferElements = this.bufferElements.filter(
         (bufferElement) => bufferElement instanceof BufferInterleavedArrayElement
-      )
+      ) as BufferInterleavedArrayElement[]
 
       if (interleavedBufferElements.length) {
+        const arrayLength = this.bindingType === 'uniform' ? `, ${interleavedBufferElements[0].numElements}` : ''
+
         if (bufferElements.length) {
-          // TODO we have regular AND interleaved buffer elements
           this.wgslStructFragment = `struct ${kebabCaseLabel}Element {\n\t${interleavedBufferElements
             .map((binding) => binding.name + ': ' + binding.type.replace('array', '').replace('<', '').replace('>', ''))
             .join(',\n\t')}
 };\n\n`
 
-          const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element>,`
+          const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element${arrayLength}>,`
 
           this.wgslStructFragment += `struct ${kebabCaseLabel} {\n\t${bufferElements
             .map((bufferElement) => bufferElement.name + ': ' + bufferElement.type)
@@ -374,11 +375,20 @@ export class BufferBinding extends Binding {
 };`
 
           const varType = getBindingWGSLVarType(this)
-          this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}>;`]
+          this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`]
         }
       } else {
         this.wgslStructFragment = `struct ${kebabCaseLabel} {\n\t${this.bufferElements
-          .map((binding) => binding.name + ': ' + binding.type)
+          .map((binding) => {
+            // now add array length if needed
+            const bindingType =
+              this.bindingType === 'uniform' && 'numElements' in binding
+                ? `array<${binding.type.replace('array', '').replace('<', '').replace('>', '')}, ${
+                    binding.numElements
+                  }>`
+                : binding.type
+            return binding.name + ': ' + bindingType
+          })
           .join(',\n\t')}
 };`
 

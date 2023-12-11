@@ -33,6 +33,7 @@ export class ShaderPass extends FullscreenPlane {
 
     // force transparency to allow for correct blending between successive passes
     parameters.transparent = true
+    parameters.label = parameters.label ?? 'ShaderPass ' + renderer.shaderPasses.length
 
     super(renderer, parameters)
 

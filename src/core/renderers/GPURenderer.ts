@@ -44,6 +44,7 @@ export interface GPURendererParams {
 // TODO should be GPUCurtainsRenderer props?
 export type DOMMeshType = DOMMesh | Plane
 export type MeshType = Mesh | DOMMeshType
+export type SceneObject = MeshType | ComputePass | PingPongPlane | ShaderPass
 
 //export type MeshType = Mesh | DOMMeshType | typeof MeshBaseMixin<any>
 
@@ -365,8 +366,8 @@ export class GPURenderer {
     // first clean everything
     this.samplers.forEach((sampler) => (sampler.sampler = null))
 
-    this.computePasses.forEach((computePass) => computePass.loseContext())
-    this.meshes.forEach((mesh) => mesh.loseContext())
+    // force all our scene objects to lose context
+    this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext())
 
     // reset the buffers array, it would be repopulated while restoring context
     this.buffers = []
@@ -382,8 +383,8 @@ export class GPURenderer {
       sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options })
     })
 
-    this.computePasses.forEach((computePass) => computePass.restoreContext())
-    this.meshes.forEach((mesh) => mesh.restoreContext())
+    // restore context of all our scene objects
+    this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext())
 
     // force renderer resize to resize all our render passes textures
     this.resize()
@@ -666,11 +667,19 @@ export class GPURenderer {
   }
 
   /**
+   * Get all our scene objects (i.e. objects that are rendered)
+   * @readonly
+   */
+  get sceneObjects(): SceneObject[] {
+    return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes]
+  }
+
+  /**
    * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
-  getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | Array<MeshType | ComputePass> {
-    return [...this.computePasses, ...this.meshes].filter((object) => {
+  getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
+    return this.sceneObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
@@ -683,8 +692,8 @@ export class GPURenderer {
    * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */
-  getObjectsByTexture(texture: Texture | RenderTexture): undefined | Array<MeshType | ComputePass> {
-    return [...this.computePasses, ...this.meshes].filter((object) => {
+  getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
+    return this.sceneObjects.filter((object) => {
       return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid)
     })
   }
@@ -862,8 +871,6 @@ export class GPURenderer {
     this.domElement?.destroy()
     this.documentBody?.destroy()
 
-    this.meshes.forEach((mesh) => mesh.remove())
-
     //this.textures.forEach((texture) => texture.destroy())
     this.textures = []
     this.texturesQueue = []
@@ -872,8 +879,7 @@ export class GPURenderer {
     this.renderPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
-    this.shaderPasses.forEach((shaderPass) => shaderPass.remove())
-    this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.remove())
+    this.sceneObjects.forEach((sceneObject) => sceneObject.remove())
 
     this.device?.destroy()
     this.context?.unconfigure()

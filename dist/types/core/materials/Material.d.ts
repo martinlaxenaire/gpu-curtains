@@ -91,7 +91,7 @@ export declare class Material {
     getShaderCode(shaderType?: FullShadersType): string;
     /**
      * Get the added code of a given shader, i.e. all the WGSL fragment code snippets added by the pipeline
-     * @param [shaderType="full"] - shader to get the code from
+     * @param [shaderType="vertex"] - shader to get the code from
      * @returns - The corresponding shader code
      */
     getAddedShaderCode(shaderType?: FullShadersType): string;
