@@ -8228,8 +8228,15 @@ ${this.shaders.compute.head}`;
         onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
           if (!shaderPass.renderTarget) {
             if (shaderPass.renderTexture) {
-              shaderPass.renderTexture.texture = swapChainTexture;
-              shaderPass.renderTexture.textureBinding.resource = swapChainTexture;
+              commandEncoder.copyTextureToTexture(
+                {
+                  texture: swapChainTexture
+                },
+                {
+                  texture: shaderPass.renderTexture.texture
+                },
+                [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+              );
             }
             this.renderer.renderPass.setLoadOp("clear");
           }
