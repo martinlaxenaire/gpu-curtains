@@ -354,12 +354,8 @@ export class GPURenderer {
     this.device?.lost.then((info) => {
       throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`)
 
-      // 'reason' will be 'destroyed' if we intentionally destroy the device.
-      //if (info.reason !== 'destroyed') {
-      // try again...
       this.loseContext()
       this.onContextLost(info)
-      //}
     })
   }
 
@@ -372,6 +368,7 @@ export class GPURenderer {
     this.computePasses.forEach((computePass) => computePass.loseContext())
     this.meshes.forEach((mesh) => mesh.loseContext())
 
+    // reset the buffers array, it would be repopulated while restoring context
     this.buffers = []
   }
 
@@ -401,8 +398,7 @@ export class GPURenderer {
    * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen
    */
   setMainRenderPass() {
-    // TODO is this.renderPass still needed?
-    this.renderPass = new RenderPass(/** @type {GPURenderer} **/ this, {
+    this.renderPass = new RenderPass(this, {
       label: 'Main Render pass',
       depth: true,
     })

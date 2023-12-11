@@ -196,6 +196,9 @@ export class Material {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.createBindGroup()
       }
+
+      // finally re-write all our buffers
+      bindGroup.bufferBindings.forEach((bufferBinding) => (bufferBinding.shouldUpdate = true))
     })
   }
 

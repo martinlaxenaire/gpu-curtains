@@ -3,7 +3,6 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { CameraRenderer } from '../renderers/utils';
 import { Mat4 } from '../../math/Mat4';
 import { Camera } from '../camera/Camera';
-import { Vec3 } from '../../math/Vec3';
 /** Defines all kind of possible {@link ProjectedObject3D} matrix types */
 export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' | 'modelViewProjection';
 /** Defines all possible [matrix object]{@link Object3DTransformMatrix} used by our {@link ProjectedObject3D} */
@@ -39,11 +38,6 @@ export declare class ProjectedObject3D extends Object3D {
      * Tell our projection matrix stack to update
      */
     applyTransformOrigin(): void;
-    /**
-     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-     * @param target - [target]{@link Vec3} to look at
-     */
-    lookAt(target?: Vec3): void;
     /**
      * Set our transform and projection matrices
      */

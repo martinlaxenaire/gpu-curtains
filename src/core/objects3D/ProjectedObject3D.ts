@@ -71,17 +71,6 @@ export class ProjectedObject3D extends Object3D {
   }
 
   /**
-   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-   * @param target - [target]{@link Vec3} to look at
-   */
-  lookAt(target: Vec3 = new Vec3()) {
-    // since we know it's not a camera, invert target and position
-    const rotationMatrix = new Mat4().lookAt(target, this.position)
-    this.quaternion.setFromRotationMatrix(rotationMatrix)
-    this.shouldUpdateModelMatrix()
-  }
-
-  /**
    * Set our transform and projection matrices
    */
   setMatrices() {

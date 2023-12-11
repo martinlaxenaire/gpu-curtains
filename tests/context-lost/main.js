@@ -21,6 +21,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     geometry: cubeGeometry,
   })
 
+  //mesh.position.z = -0.5
+
   mesh.onRender(() => {
     mesh.rotation.y += 0.01
   })

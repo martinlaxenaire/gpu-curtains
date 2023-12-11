@@ -1,6 +1,7 @@
 import { Mat4 } from '../../math/Mat4'
 import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from '../objects3D/Object3D'
 import { RectSize } from '../DOM/DOMElement'
+import { Vec3 } from '../../math/Vec3'
 
 /**
  * Defines Camera basic perspective options
@@ -323,6 +324,17 @@ export class Camera extends Object3D {
       width: (height * this.size.width) / this.size.height,
       height,
     }
+  }
+
+  /**
+   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+   * @param target - [target]{@link Vec3} to look at
+   */
+  lookAt(target: Vec3 = new Vec3()) {
+    // since we know it's a camera, inverse position and target
+    const rotationMatrix = new Mat4().lookAt(this.position, target)
+    this.quaternion.setFromRotationMatrix(rotationMatrix)
+    this.shouldUpdateModelMatrix()
   }
 
   /**

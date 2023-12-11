@@ -41,10 +41,6 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
      */
     constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams);
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been restored
-     */
-    restoreContext(): void;
-    /**
      * Set default shaders if one or both of them are missing
      */
     setShaders(): void;

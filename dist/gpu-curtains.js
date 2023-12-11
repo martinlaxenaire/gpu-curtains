@@ -2689,7 +2689,7 @@ var GPUCurtains = (() => {
      * @param target - [target]{@link Vec3} to look at
      */
     lookAt(target = new Vec3()) {
-      const rotationMatrix = new Mat4().lookAt(this.position, target);
+      const rotationMatrix = new Mat4().lookAt(target, this.position);
       this.quaternion.setFromRotationMatrix(rotationMatrix);
       this.shouldUpdateModelMatrix();
     }
@@ -3635,6 +3635,15 @@ var GPUCurtains = (() => {
       };
     }
     /**
+     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
+     * @param target - [target]{@link Vec3} to look at
+     */
+    lookAt(target = new Vec3()) {
+      const rotationMatrix = new Mat4().lookAt(this.position, target);
+      this.quaternion.setFromRotationMatrix(rotationMatrix);
+      this.shouldUpdateModelMatrix();
+    }
+    /**
      * Updates the {@link Camera} {@link projectionMatrix}
      */
     updateProjectionMatrix() {
@@ -3921,6 +3930,7 @@ var GPUCurtains = (() => {
         if (bindGroup.shouldCreateBindGroup) {
           bindGroup.createBindGroup();
         }
+        bindGroup.bufferBindings.forEach((bufferBinding) => bufferBinding.shouldUpdate = true);
       });
     }
     /**
@@ -6395,15 +6405,6 @@ struct VertexOutput {
       this.shouldUpdateProjectionMatrixStack();
     }
     /**
-     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-     * @param target - [target]{@link Vec3} to look at
-     */
-    lookAt(target = new Vec3()) {
-      const rotationMatrix = new Mat4().lookAt(target, this.position);
-      this.quaternion.setFromRotationMatrix(rotationMatrix);
-      this.shouldUpdateModelMatrix();
-    }
-    /**
      * Set our transform and projection matrices
      */
     setMatrices() {
@@ -6578,13 +6579,6 @@ struct VSOutput {
         };
         this.setDOMFrustum();
         this.geometry = geometry;
-        this.updateSizePositionAndProjection();
-      }
-      /**
-       * Called when the [renderer device]{@link GPURenderer#device} has been restored
-       */
-      restoreContext() {
-        super.restoreContext();
         this.updateSizePositionAndProjection();
       }
       /* SHADERS */
@@ -8787,14 +8781,10 @@ ${this.shaders.compute.head}`;
      * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen
      */
     setMainRenderPass() {
-      this.renderPass = new RenderPass(
-        /** @type {GPURenderer} **/
-        this,
-        {
-          label: "Main Render pass",
-          depth: true
-        }
-      );
+      this.renderPass = new RenderPass(this, {
+        label: "Main Render pass",
+        depth: true
+      });
     }
     /**
      * Set our [pipeline manager]{@link GPURenderer#pipelineManager}
