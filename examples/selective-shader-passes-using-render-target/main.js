@@ -41,6 +41,15 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   console.log(gpuCurtains)
 
+  // We don't want to see our pass texture top/bottom edges
+  // so we're going to use a custom sampler with mirror repeat
+  const mirrorSampler = new GPUCurtains.Sampler(gpuCurtains, {
+    label: 'Mirror sampler',
+    name: 'mirrorSampler',
+    addressModeU: 'mirror-repeat',
+    addressModeV: 'mirror-repeat',
+  })
+
   const planeVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
@@ -98,7 +107,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+      var color: vec4f = textureSample(renderTexture, mirrorSampler, fsInput.uv);
       var grayscale: vec3f = vec3(color.r * 0.3 + color.g * 0.59 + color.b * 0.11);
       var grayscaleColor: vec4f = vec4(grayscale, color.a);
     
@@ -129,6 +138,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
       },
     },
+    samplers: [mirrorSampler],
   })
 
   grayscalePass.setRenderTarget(grayscaleTarget)
@@ -175,9 +185,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
     
-      var red: vec4f = textureSample(renderTexture, defaultSampler, vec2(uv.x, uv.y - scrollEffect.strength / 500.0));
-      var green: vec4f = textureSample(renderTexture, defaultSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1000.0));
-      var blue: vec4f = textureSample(renderTexture, defaultSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1500.0));
+      var red: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 500.0));
+      var green: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1000.0));
+      var blue: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1500.0));
     
       var color = vec4(red.r, green.g, blue.b, min(1.0, red.a + blue.a + green.a));
       return color;
@@ -206,6 +216,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         },
       },
     },
+    samplers: [mirrorSampler],
   })
 
   rgbShiftPass.onRender(() => {

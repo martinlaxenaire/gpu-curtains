@@ -3787,12 +3787,20 @@ var GPUCurtains = (() => {
       this.size = size;
     }
     /**
+     * Copy another {@link RenderTexture} into this {@link RenderTexture}
+     * @param texture - {@link RenderTexture} to copy
+     */
+    copy(texture) {
+      this.options.fromTexture = texture;
+      this.createTexture();
+    }
+    /**
      * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
      */
     createTexture() {
       if (this.options.fromTexture) {
-        this.texture = this.options.fromTexture.texture;
         this.size = this.options.fromTexture.size;
+        this.texture = this.options.fromTexture.texture;
         this.textureBinding.resource = this.texture;
         return;
       }
@@ -8209,8 +8217,7 @@ ${this.shaders.compute.head}`;
      * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
      * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}
      * This also handles the [renderPassEntries screen array]{@link Scene#renderPassEntries.screen} entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-     * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-hk6rnd
-     * TODO: could we directly use the renderPass view/resolve texture as ShaderPass input?
+     * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4
      * @param shaderPass - [shader pass]{@link ShaderPass} to add
      */
     addShaderPass(shaderPass) {
@@ -8219,34 +8226,15 @@ ${this.shaders.compute.head}`;
         // render directly to screen
         renderTexture: null,
         onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
-          if (shaderPass.renderTexture) {
-            commandEncoder.copyTextureToTexture(
-              {
-                texture: shaderPass.renderTarget ? shaderPass.renderTarget.renderTexture.texture : swapChainTexture
-              },
-              {
-                texture: shaderPass.renderTexture.texture
-              },
-              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-            );
-          }
           if (!shaderPass.renderTarget) {
+            if (shaderPass.renderTexture) {
+              shaderPass.renderTexture.texture = swapChainTexture;
+              shaderPass.renderTexture.textureBinding.resource = swapChainTexture;
+            }
             this.renderer.renderPass.setLoadOp("clear");
           }
         },
-        onAfterRenderPass: (commandEncoder, swapChainTexture) => {
-          if (shaderPass.renderTarget) {
-            commandEncoder.copyTextureToTexture(
-              {
-                texture: swapChainTexture
-              },
-              {
-                texture: shaderPass.renderTarget.renderTexture.texture
-              },
-              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-            );
-          }
-        },
+        onAfterRenderPass: null,
         element: shaderPass,
         stack: null
         // explicitly set to null
@@ -8776,7 +8764,9 @@ ${this.shaders.compute.head}`;
       this.device?.lost.then((info) => {
         throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`);
         this.loseContext();
-        this.onContextLost(info);
+        if (info.reason !== "destroyed") {
+          this.onContextLost(info);
+        }
       });
     }
     loseContext() {
@@ -9495,7 +9485,8 @@ ${this.shaders.compute.head}`;
       this.type = "ShaderPass";
       this.createRenderTexture({
         label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-        name: "renderTexture"
+        name: "renderTexture",
+        fromTexture: this.renderTarget ? this.renderTarget.renderTexture : null
       });
     }
     /**
@@ -9504,6 +9495,21 @@ ${this.shaders.compute.head}`;
      */
     get renderTexture() {
       return this.renderTextures[0] ?? null;
+    }
+    /**
+     * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+     * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
+     * Also copy or remove the [render target render texture]{@link RenderTarget#renderTexture} into the [shader pass render texture]{@link ShaderPass#renderTexture}
+     * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+     */
+    setRenderTarget(renderTarget) {
+      super.setRenderTarget(renderTarget);
+      if (renderTarget) {
+        this.renderTexture.copy(this.renderTarget.renderTexture);
+      } else {
+        this.renderTexture.options.fromTexture = null;
+        this.renderTexture.createTexture();
+      }
     }
     /**
      * Add the {@link ShaderPass} to the renderer and the {@link Scene}

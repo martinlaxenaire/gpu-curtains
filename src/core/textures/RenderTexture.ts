@@ -123,14 +123,23 @@ export class RenderTexture {
   }
 
   /**
+   * Copy another {@link RenderTexture} into this {@link RenderTexture}
+   * @param texture - {@link RenderTexture} to copy
+   */
+  copy(texture: RenderTexture) {
+    this.options.fromTexture = texture
+    this.createTexture()
+  }
+
+  /**
    * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
    */
   createTexture() {
     if (this.options.fromTexture) {
-      // just copy the original GPUTexture
-      this.texture = this.options.fromTexture.texture
+      // update size
       this.size = this.options.fromTexture.size
-      // update texture binding
+      // just copy the original GPUTexture and update the binding
+      this.texture = this.options.fromTexture.texture
       this.textureBinding.resource = this.texture
       return
     }

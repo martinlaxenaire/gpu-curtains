@@ -29,6 +29,13 @@ export declare class ShaderPass extends FullscreenPlane {
      */
     get renderTexture(): import("../textures/RenderTexture").RenderTexture;
     /**
+     * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+     * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
+     * Also copy or remove the [render target render texture]{@link RenderTarget#renderTexture} into the [shader pass render texture]{@link ShaderPass#renderTexture}
+     * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+     */
+    setRenderTarget(renderTarget: RenderTarget | null): void;
+    /**
      * Add the {@link ShaderPass} to the renderer and the {@link Scene}
      */
     addToScene(): void;
