@@ -2,9 +2,14 @@
 
 > :warning: WIP
 
-gpu-curtains is an attempt at rewriting [curtains.js](https://github.com/martinlaxenaire/curtainsjs) in WebGPU.
+#### WebGPU rendering engine
 
-The library has been rewritten to the core, so it is not just a port of the existing codebase but instead a new version based on the original concept.
+gpu-curtains is a small, lightweight WebGPU rendering engine library.
 
+Although it can theoretically be used as a genuine 3D engine, its main purpose is to turn HTML elements into textured planes, allowing you to animate them via WGSL shaders.
 
-See the [project roadmap](ROADMAP.md) for details on the work in progress.
+The project was initially conceived as a WebGPU port of [curtains.js](https://github.com/martinlaxenaire/curtainsjs). It turned out to be a complete rewrite of the library instead, but with a very similar API.
+
+### Roadmap
+
+See the [roadmap](ROADMAP.md) for details on the current work in progress.
