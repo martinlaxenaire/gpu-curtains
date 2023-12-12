@@ -42,6 +42,14 @@ export interface DOMPosition {
 export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPosition {
 }
 /**
+ * Parameters used to create a {@link DOMElement}
+ */
+export interface DOMElementParams {
+    element?: string | Node;
+    onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
+    onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
+}
+/**
  * DOMElement class:
  * Used to track a DOM Element size and position by using a resize observer provided by {@see ResizeManager}
  */
@@ -66,11 +74,7 @@ export declare class DOMElement {
      * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
      * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
      */
-    constructor({ element, onSizeChanged, onPositionChanged, }?: {
-        element?: string | HTMLElement;
-        onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
-        onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
-    });
+    constructor({ element, onSizeChanged, onPositionChanged, }?: DOMElementParams);
     /**
      * Check whether 2 bounding rectangles are equals
      * @param rect1 - first bounding rectangle

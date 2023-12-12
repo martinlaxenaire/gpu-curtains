@@ -6,6 +6,7 @@ import { Vec2 } from '../../math/Vec2'
 import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
+import { DOMElementParams } from '../../core/DOM/DOMElement'
 
 /**
  * Parameters used to create a {@link Plane}
@@ -41,7 +42,7 @@ export class Plane extends DOMMesh {
    */
   constructor(
     renderer: GPUCurtainsRenderer | GPUCurtains,
-    element: HTMLElement | string,
+    element: DOMElementParams['element'],
     parameters = {} as PlaneParams
   ) {
     // we could pass our curtains object OR our curtains renderer object

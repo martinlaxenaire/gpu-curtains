@@ -2,7 +2,7 @@ import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 import { isCurtainsRenderer } from '../../core/renderers/utils'
-import { DOMElement, DOMElementBoundingRect, DOMPosition, RectBBox } from '../../core/DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition, RectBBox } from '../../core/DOM/DOMElement'
 import { Vec3 } from '../../math/Vec3'
 import { Camera } from '../../core/camera/Camera'
 import { Object3DTransforms } from '../../core/objects3D/Object3D'
@@ -76,7 +76,7 @@ export class DOMObject3D extends ProjectedObject3D {
    */
   constructor(
     renderer: GPUCurtainsRenderer | GPUCurtains,
-    element: string | HTMLElement,
+    element: DOMElementParams['element'],
     parameters: DOMObject3DParams
   ) {
     super(renderer)
@@ -114,7 +114,7 @@ export class DOMObject3D extends ProjectedObject3D {
    * Set the [DOMElement]{@link DOMObject3D#domElement}
    * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
    */
-  setDOMElement(element: string | HTMLElement) {
+  setDOMElement(element: DOMElementParams['element']) {
     this.domElement = new DOMElement({
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),

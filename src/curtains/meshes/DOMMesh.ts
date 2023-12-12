@@ -8,7 +8,7 @@ import { GPUCurtains } from '../GPUCurtains'
 import { Texture } from '../../core/textures/Texture'
 import { AllowedGeometries } from '../../types/Materials'
 import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture'
-import { DOMElementBoundingRect } from '../../core/DOM/DOMElement'
+import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement'
 
 /**
  * Base parameters to create a {@link DOMMesh}
@@ -59,7 +59,11 @@ export class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
    * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}
    * @param parameters - [parameters]{@link DOMMeshParams} used to create this {@link DOMMesh}
    */
-  constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: string | HTMLElement, parameters: DOMMeshParams) {
+  constructor(
+    renderer: GPUCurtainsRenderer | GPUCurtains,
+    element: DOMElementParams['element'],
+    parameters: DOMMeshParams
+  ) {
     super(renderer, element, { ...defaultDOMMeshParams, ...parameters })
 
     parameters = { ...defaultDOMMeshParams, ...parameters }

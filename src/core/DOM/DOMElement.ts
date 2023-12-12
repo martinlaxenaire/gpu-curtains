@@ -48,6 +48,15 @@ export interface DOMPosition {
 export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPosition {}
 
 /**
+ * Parameters used to create a {@link DOMElement}
+ */
+export interface DOMElementParams {
+  element?: string | Node
+  onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
+  onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
+}
+
+/**
  * DOMElement class:
  * Used to track a DOM Element size and position by using a resize observer provided by {@see ResizeManager}
  */
@@ -84,11 +93,7 @@ export class DOMElement {
       onPositionChanged = (boundingRect = null) => {
         /* allow empty callback */
       },
-    } = {} as {
-      element?: string | HTMLElement
-      onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
-      onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
-    }
+    } = {} as DOMElementParams
   ) {
     if (typeof element === 'string') {
       this.element = document.querySelector(element)
@@ -98,7 +103,7 @@ export class DOMElement {
         throwError(`DOMElement: corresponding ${notFoundEl} not found.`)
       }
     } else {
-      this.element = element
+      this.element = element as HTMLElement
     }
 
     this.isResizing = false

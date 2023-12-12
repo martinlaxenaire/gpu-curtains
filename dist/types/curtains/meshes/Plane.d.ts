@@ -3,6 +3,7 @@ import { DOMMesh, DOMMeshBaseParams } from './DOMMesh';
 import { Vec2 } from '../../math/Vec2';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
+import { DOMElementParams } from '../../core/DOM/DOMElement';
 /**
  * Parameters used to create a {@link Plane}
  */
@@ -23,7 +24,7 @@ export declare class Plane extends DOMMesh {
      * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link Plane}
      * @param parameters - [parameters]{@link PlaneParams} used to create this {@link Plane}
      */
-    constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: HTMLElement | string, parameters?: PlaneParams);
+    constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: DOMElementParams['element'], parameters?: PlaneParams);
     /**
      * Take the pointer [vector]{@link Vec2} position relative to the document and returns it relative to our {@link Plane}
      * It ranges from -1 to 1 on both axis
