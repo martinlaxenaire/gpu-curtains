@@ -17,6 +17,7 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * TextureBindGroup class:
  * Used to regroup all [bindings]{@link BindGroupBindingElement} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
  * @extends BindGroup
+ * @memberof module:core/bindGroups/TextureBindGroup
  */
 export declare class TextureBindGroup extends BindGroup {
     /** An array containing all the already created external textures ID */

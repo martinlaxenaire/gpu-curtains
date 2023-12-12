@@ -1,6 +1,8 @@
+import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     preferredFormat: 'rgba16float', // important, we'll be using floating point textures
@@ -13,10 +15,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('no-curtains')
   })
 
-  const mouse = new GPUCurtains.Vec2()
-  const velocity = new GPUCurtains.Vec2()
+  const mouse = new Vec2()
+  const velocity = new Vec2()
   // used for vector lerping
-  const nullVector = new GPUCurtains.Vec2()
+  const nullVector = new Vec2()
   const lastMouse = mouse.clone()
   // if we should update the velocity or not
   let updateVelocity = false
@@ -57,7 +59,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const flowMap = new GPUCurtains.PingPongPlane(gpuCurtains, {
+  const flowMap = new PingPongPlane(gpuCurtains, {
     label: 'Flowmap Ping Pong Plane',
     shaders: {
       fragment: {
@@ -203,7 +205,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const displacedPlane = new GPUCurtains.Plane(gpuCurtains, '#ping-pong-plane', {
+  const displacedPlane = new Plane(gpuCurtains, '#ping-pong-plane', {
     label: 'Flowmap displaced plane',
     shaders: {
       vertex: {
@@ -218,7 +220,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     samplers: [
       // We don't want to see our media texture edges
       // so we're going to use a custom sampler with mirror repeat
-      new GPUCurtains.Sampler(gpuCurtains, {
+      new Sampler(gpuCurtains, {
         label: 'Mirror sampler',
         name: 'mirrorSampler',
         addressModeU: 'mirror-repeat',

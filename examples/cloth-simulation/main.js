@@ -1,3 +1,5 @@
+import { GPUCurtains, Vec2, Vec3, PlaneGeometry, BindGroup, ComputePass, Plane } from '../../src'
+
 // Port of https://github.com/Yuu6883/WebGPUDemo
 
 // cloth sim compute
@@ -319,7 +321,7 @@ const computeClothSim = /* wgsl */ `
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -334,9 +336,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const simulationSpeed = 2
 
-  const clothDefinition = new GPUCurtains.Vec2(40)
+  const clothDefinition = new Vec2(40)
 
-  const clothGeometry = new GPUCurtains.PlaneGeometry({
+  const clothGeometry = new PlaneGeometry({
     widthSegments: clothDefinition.x,
     heightSegments: clothDefinition.y,
   })
@@ -401,7 +403,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     ],
   })
 
-  const computeBindGroup = new GPUCurtains.BindGroup(gpuCurtains.renderer, {
+  const computeBindGroup = new BindGroup(gpuCurtains.renderer, {
     label: 'Cloth simulation compute bind group',
     inputs: {
       uniforms: {
@@ -431,7 +433,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             gravity: {
               type: 'vec3f',
-              value: new GPUCurtains.Vec3(0, -0.0981, 0),
+              value: new Vec3(0, -0.0981, 0),
               //value: new GPUCurtains.Vec3(0, -0.0375, 0),
             },
           },
@@ -441,11 +443,11 @@ window.addEventListener('DOMContentLoaded', async () => {
           bindings: {
             pointerPosition: {
               type: 'vec2f',
-              value: new GPUCurtains.Vec2(Infinity),
+              value: new Vec2(Infinity),
             },
             pointerVelocity: {
               type: 'vec2f',
-              value: new GPUCurtains.Vec2(0), // pointer velocity divided by plane size
+              value: new Vec2(0), // pointer velocity divided by plane size
             },
             pointerSize: {
               type: 'f32',
@@ -457,7 +459,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             },
             wind: {
               type: 'vec3f',
-              value: new GPUCurtains.Vec3(0, 0, 0),
+              value: new Vec3(0, 0, 0),
             },
           },
         },
@@ -490,7 +492,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // first our compute pass
-  const computeForcesPass = new GPUCurtains.ComputePass(gpuCurtains, {
+  const computeForcesPass = new ComputePass(gpuCurtains, {
     label: 'Compute forces',
     shaders: {
       compute: {
@@ -503,7 +505,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
   })
 
-  const computeUpdatePass = new GPUCurtains.ComputePass(gpuCurtains, {
+  const computeUpdatePass = new ComputePass(gpuCurtains, {
     label: 'Compute update',
     shaders: {
       compute: {
@@ -516,7 +518,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     dispatchSize: [Math.ceil(((clothDefinition.x + 1) * (clothDefinition.y + 1)) / 256)],
   })
 
-  const computeNormalPass = new GPUCurtains.ComputePass(gpuCurtains, {
+  const computeNormalPass = new ComputePass(gpuCurtains, {
     label: 'Compute normal',
     shaders: {
       compute: {
@@ -638,7 +640,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     cullMode: 'none',
   }
 
-  const plane = new GPUCurtains.Plane(gpuCurtains, '#cloth', params)
+  const plane = new Plane(gpuCurtains, '#cloth', params)
 
   console.log(plane)
 
@@ -650,8 +652,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     vertexBuffer.buffer = clothBuffer?.buffer
   })
 
-  const pointer = new GPUCurtains.Vec2(Infinity)
-  const velocity = new GPUCurtains.Vec2(0)
+  const pointer = new Vec2(Infinity)
+  const velocity = new Vec2(0)
   let pointerTimer
 
   window.addEventListener('pointermove', (e) => {

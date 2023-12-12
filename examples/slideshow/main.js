@@ -1,8 +1,10 @@
+import { GPUCurtains, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   console.log(window)
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -125,7 +127,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   document.body.classList.add('is-waiting')
 
-  const plane = new GPUCurtains.Plane(gpuCurtains, planeElements, params)
+  const plane = new Plane(gpuCurtains, planeElements, params)
 
   // the idea here is to create two additional textures
   // the first one will contain our visible image

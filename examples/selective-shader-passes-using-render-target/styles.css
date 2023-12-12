@@ -24,6 +24,7 @@
     left: 25%;
     margin: 0;
     font-size: 2em;
+    border-radius: 0;
   }
 
   .planes-list-item:nth-child(even) h2 {

@@ -160,7 +160,16 @@ export declare class GPURenderer {
      * @returns - void promise result
      */
     setDevice(): Promise<void>;
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} is lost.
+     * Reset all our samplers, force all our scene objects to lose context.
+     */
     loseContext(): void;
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures.
+     * @async
+     */
     restoreContext(): Promise<void>;
     /**
      * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen

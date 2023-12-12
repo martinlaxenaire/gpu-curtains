@@ -1,3 +1,4 @@
+import { GPUCurtains, Texture, RenderTexture, BufferBinding, TextureBindGroup, ComputePass, Plane } from '../../src'
 // Port of https://webgpu.github.io/webgpu-samples/samples/imageBlur
 
 // This shader blurs the input texture in one direction, depending on whether
@@ -74,7 +75,7 @@ fn main(
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -97,7 +98,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const planeEl = document.querySelector('#blur')
   const imageToBlur = planeEl.querySelector('img')
 
-  const imageTexture = new GPUCurtains.Texture(gpuCurtains, {
+  const imageTexture = new Texture(gpuCurtains, {
     label: 'image texture',
     name: 'imageTexture',
     format,
@@ -109,14 +110,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.log('source uploaded')
   })
 
-  const inputTexture = new GPUCurtains.RenderTexture(gpuCurtains, {
+  const inputTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute input texture',
     name: 'inputTexture',
     format,
     fromTexture: imageTexture,
   })
 
-  const tempTexture = new GPUCurtains.RenderTexture(gpuCurtains, {
+  const tempTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute temp texture',
     name: 'outputTexture',
     usage: 'storageTexture',
@@ -124,7 +125,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     size: inputTexture.size,
   })
 
-  const outputTexture = new GPUCurtains.RenderTexture(gpuCurtains, {
+  const outputTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute output texture',
     name: 'outputTexture',
     usage: 'storageTexture',
@@ -132,7 +133,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     size: inputTexture.size,
   })
 
-  const flipBinding0 = new GPUCurtains.BufferBinding({
+  const flipBinding0 = new BufferBinding({
     label: 'Direction',
     name: 'direction',
     bindingType: 'uniform',
@@ -145,7 +146,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  const flipBinding1 = new GPUCurtains.BufferBinding({
+  const flipBinding1 = new BufferBinding({
     label: 'Direction',
     name: 'direction',
     bindingType: 'uniform',
@@ -158,7 +159,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  const textureBindGroup = new GPUCurtains.TextureBindGroup(gpuCurtains.renderer, {
+  const textureBindGroup = new TextureBindGroup(gpuCurtains.renderer, {
     label: 'Compute blur texture bind group 1',
     textures: [inputTexture, tempTexture],
     bindings: [flipBinding0],
@@ -181,7 +182,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   console.log({ textureBindGroup, outputTextureBindGroup1, outputTextureBindGroup2 })
 
-  const computeBlurPass = new GPUCurtains.ComputePass(gpuCurtains.renderer, {
+  const computeBlurPass = new ComputePass(gpuCurtains.renderer, {
     label: 'Compute blur',
     autoRender: false,
     shaders: {
@@ -313,7 +314,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   }
 
-  const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, params)
+  const plane = new Plane(gpuCurtains, planeEl, params)
 
   console.log(plane)
 

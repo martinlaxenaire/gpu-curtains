@@ -1,3 +1,5 @@
+import { GPUCurtains, Vec2, Sampler, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   const buildPlaneHTMLElement = (index) => {
     return `<div class="plane">
@@ -26,7 +28,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   let planeElements = document.querySelectorAll('.plane')
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
     watchScroll: false,
@@ -110,7 +112,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     samplers: [
       // Use mipmap nearest filter
-      new GPUCurtains.Sampler(gpuCurtains, {
+      new Sampler(gpuCurtains, {
         label: 'Nearest sampler',
         name: 'mipmapNearestSampler',
         mipmapFilter: 'nearest',
@@ -124,7 +126,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // add our planes and handle them
   planeElements.forEach((planeEl, planeIndex) => {
     params.label = 'Plane' + planeIndex
-    const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, { ...params, renderOrder: -planeIndex })
+    const plane = new Plane(gpuCurtains, planeEl, { ...params, renderOrder: -planeIndex })
 
     // check if our plane is defined and use it
     plane
@@ -133,12 +135,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         texture.scale.y = 1.5
       })
       .onRender(() => {
-        const planeCenter = new GPUCurtains.Vec2(
+        const planeCenter = new Vec2(
           plane.boundingRect.left + plane.boundingRect.width * 0.5,
           plane.boundingRect.top + plane.boundingRect.height * 0.5
         )
 
-        const distanceFromCenter = new GPUCurtains.Vec2(
+        const distanceFromCenter = new Vec2(
           // -1 when planeCenter.x hits the left of the screen, 1 when planeCenter.x hits the right of the screen
           (2 * (planeCenter.x - gpuCurtains.boundingRect.width * 0.5)) / gpuCurtains.boundingRect.width,
           // -1 when planeCenter.y hits the top of the screen, 1 when planeCenter.y hits the bottom of the screen

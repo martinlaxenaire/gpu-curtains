@@ -1,7 +1,9 @@
+import { GPUCurtains, Vec2, ComputePass, SphereGeometry, Mesh } from '../../src'
+
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
@@ -17,7 +19,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale * 0.5
 
   const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
-  const systemSize = new GPUCurtains.Vec2(cameraRatio * screenRatio, cameraRatio)
+  const systemSize = new Vec2(cameraRatio * screenRatio, cameraRatio)
 
   const initialParticlePosition = new Float32Array(numParticles * 2)
   const initialParticleVelocity = new Float32Array(numParticles * 2)
@@ -106,7 +108,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   `
 
   // first our compute pass
-  const computePass = new GPUCurtains.ComputePass(gpuCurtains, {
+  const computePass = new ComputePass(gpuCurtains, {
     label: 'Compute test',
     shaders: {
       compute: {
@@ -180,7 +182,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       console.log(computePass.material.getAddedShaderCode('compute'))
     })
     .onAfterResize(() => {
-      const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale
+      const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale * 0.5
       const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
       computePass.uniforms.params.systemSize.value.set(cameraRatio * screenRatio, cameraRatio)
     })
@@ -207,7 +209,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const sphereGeometry = new GPUCurtains.SphereGeometry({
+  const sphereGeometry = new SphereGeometry({
     instancesCount: numParticles,
     vertexBuffers: [
       {
@@ -233,7 +235,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     ],
   })
 
-  const sphereMesh = new GPUCurtains.Mesh(gpuCurtains, {
+  const sphereMesh = new Mesh(gpuCurtains, {
     label: 'Sphere mesh',
     geometry: sphereGeometry,
     shaders: {

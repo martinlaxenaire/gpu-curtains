@@ -1,10 +1,12 @@
+import { GPUCameraRenderer, Vec2, Vec3, BoxGeometry, SphereGeometry, Mesh } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   const systemSize = 10
 
   // here is an example of how we can use a simple GPUCameraRenderer instead of GPUCurtains
   // this shows us how to use gpu-curtains as a basic genuine 3D engine, not related to DOM
   // so, let's start by creating a camera renderer
-  const gpuCameraRenderer = new GPUCurtains.GPUCameraRenderer({
+  const gpuCameraRenderer = new GPUCameraRenderer({
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
@@ -22,7 +24,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // each time we'll change the camera position, we'll update its transform origin as well
   // that way it will act as an orbit camera
-  const cameraPosition = new GPUCurtains.Vec3().onChange(() => {
+  const cameraPosition = new Vec3().onChange(() => {
     camera.position.copy(cameraPosition)
     camera.transformOrigin.set(-1 * cameraPosition.x, -1 * cameraPosition.y, -1 * cameraPosition.z)
   })
@@ -42,9 +44,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // now the orbit controls
   const mouse = {
-    current: new GPUCurtains.Vec2(Infinity),
-    last: new GPUCurtains.Vec2(Infinity),
-    delta: new GPUCurtains.Vec2(),
+    current: new Vec2(Infinity),
+    last: new Vec2(Infinity),
+    delta: new Vec2(),
     isDown: false,
   }
 
@@ -91,11 +93,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // now add objects to our scene
-  const cubeGeometry = new GPUCurtains.BoxGeometry()
-  const sphereGeometry = new GPUCurtains.SphereGeometry()
+  const cubeGeometry = new BoxGeometry()
+  const sphereGeometry = new SphereGeometry()
 
   for (let i = 0; i < 50; i++) {
-    const mesh = new GPUCurtains.Mesh(gpuCameraRenderer, {
+    const mesh = new Mesh(gpuCameraRenderer, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
     })
 

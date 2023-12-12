@@ -420,7 +420,7 @@ export class BufferBinding extends Binding {
    * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
-    Object.keys(this.bindings).forEach((bindingKey, bindingIndex) => {
+    Object.keys(this.bindings).forEach((bindingKey) => {
       const binding = this.bindings[bindingKey]
       const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey)
 

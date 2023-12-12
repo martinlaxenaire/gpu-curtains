@@ -2128,7 +2128,7 @@ var GPUCurtains = (() => {
      * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update() {
-      Object.keys(this.bindings).forEach((bindingKey, bindingIndex) => {
+      Object.keys(this.bindings).forEach((bindingKey) => {
         const binding = this.bindings[bindingKey];
         const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey);
         if (binding.shouldUpdate && bufferElement) {
@@ -8776,12 +8776,21 @@ ${this.shaders.compute.head}`;
         }
       });
     }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} is lost.
+     * Reset all our samplers, force all our scene objects to lose context.
+     */
     loseContext() {
       this.ready = false;
       this.samplers.forEach((sampler) => sampler.sampler = null);
       this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext());
       this.buffers = [];
     }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures.
+     * @async
+     */
     async restoreContext() {
       await this.setAdapter();
       await this.setDevice();
@@ -8789,7 +8798,7 @@ ${this.shaders.compute.head}`;
         sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options });
       });
       this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext());
-      this.resize();
+      this.onResize();
       this.ready = true;
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
@@ -9224,9 +9233,22 @@ ${this.shaders.compute.head}`;
       camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
       this.setCamera(camera);
     }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} is lost.
+     * Reset all our samplers, force all our scene objects and camera bind group to lose context.
+     */
     loseContext() {
       super.loseContext();
       this.cameraBindGroup.loseContext();
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures, re-write our camera buffer binding.
+     * @async
+     */
+    async restoreContext() {
+      this.cameraBufferBinding.shouldUpdate = true;
+      return super.restoreContext();
     }
     /**
      * Set the [camera]{@link GPUCameraRenderer#camera}

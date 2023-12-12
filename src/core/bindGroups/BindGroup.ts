@@ -16,12 +16,6 @@ import { TextureBindGroupParams } from './TextureBindGroup'
 import { BindingType } from '../bindings/Binding'
 
 /**
- * @module core/bindGroups/BindGroup
- * @alias BindGroup
- * @export
- */
-
-/**
  * BindGroup class:
  * Used to handle all inputs data sent to the GPU. Data (buffers, textures or samplers) are organised by Bindings.
  * It creates GPUBuffer, GPUBindGroup and GPUBindGroupLayout that are used by the GPU Pipelines.
@@ -340,7 +334,6 @@ export class BindGroup {
           // that should not happen but that way we're covered
           this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view)
         } else {
-          //this.renderer.queueWriteBuffer(binding.buffer, 0, binding.value)
           this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer)
         }
       }

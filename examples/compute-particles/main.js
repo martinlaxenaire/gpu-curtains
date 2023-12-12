@@ -1,3 +1,5 @@
+import { GPUCurtains, Vec3, BindGroup, ComputePass, Geometry, Mesh } from '../../src'
+
 // inspired by https://barradeau.com/blog/?p=621
 // and https://www.clicktorelease.com/code/polygon-shredder/
 // TODO use bitangent noise? https://github.com/atyuwen/bitangent_noise/blob/main/BitangentNoise.hlsl#L41
@@ -196,10 +198,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   // number of particles instances
   const nbParticles = 1_000_000
   //const nbParticles = 500_000
-  const systemSize = new GPUCurtains.Vec3(150)
+  const systemSize = new Vec3(150)
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
@@ -219,7 +221,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // first we're creating a bind group that is going to be used by both compute passes
   // to avoid super long alignment/offset buffer computations on the GPU for the positions and life buffers
   // we're explicitly setting the computeAlignment to false
-  const particlesBindGroup = new GPUCurtains.BindGroup(gpuCurtains.renderer, {
+  const particlesBindGroup = new BindGroup(gpuCurtains.renderer, {
     label: 'Particles bind group',
     inputs: {
       uniforms: {
@@ -272,7 +274,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // now the compute pass that is going to place the points on a sphere
-  const computeInitDataPass = new GPUCurtains.ComputePass(gpuCurtains, {
+  const computeInitDataPass = new ComputePass(gpuCurtains, {
     label: 'Compute initial data',
     shaders: {
       compute: {
@@ -292,7 +294,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   gpuCurtains.renderer.renderOnce([computeInitDataPass])
 
   // then the compute pass that is going to displace our particles
-  const computePass = new GPUCurtains.ComputePass(gpuCurtains, {
+  const computePass = new ComputePass(gpuCurtains, {
     label: 'Compute particles positions',
     shaders: {
       compute: {
@@ -346,7 +348,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // create a geometry from scratch that
   // but this could also work with any geometry, topology, etc
   // as long as we pass the instanced vertex buffer attributes
-  const particlesGeometry = new GPUCurtains.Geometry({
+  const particlesGeometry = new Geometry({
     instancesCount: nbParticles,
     // we will draw points
     topology: 'point-list',
@@ -376,7 +378,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     array: new Float32Array([0, 0, 0]),
   })
 
-  const particles = new GPUCurtains.Mesh(gpuCurtains, {
+  const particles = new Mesh(gpuCurtains, {
     label: 'Particles mesh',
     geometry: particlesGeometry,
     shaders: {

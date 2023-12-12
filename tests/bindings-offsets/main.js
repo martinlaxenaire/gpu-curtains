@@ -1,6 +1,8 @@
+import { GPUCurtains, BufferBinding, Vec2, Vec3 } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -14,7 +16,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ref: https://webgpufundamentals.org/webgpu/lessons/resources/wgsl-offset-computer.html#x=5d00000100f901000000000000003d8888623728a306fc320e1a9ba57547078694a9be9f86fca01fc2b96183b8019b42979f89b724d75b16a7d0ba5f05e1688c08377f9adcadac8b118c715ae49684657cbf39131e36661070f3c12b655a42f158e5add7714dbd4729a3973fef2edfb03e8759dabdeb5279ff2f0b45d47fb70575af8b3a734abecbf3ecdca99f3367a2d772ceb3b4659a28504ff11321f7227e9e5358ffdbc75a65573125707e74c84e6410a1b32e84d64e7b89923cf185c66e31f16e5489b838fb930f42f15dbbeeca544be7372401b7e7efb8288be7dc18cc48ba6edd18f2e1cc64d805f7862962ad3cd91a5a7b13ca157c51e17f8dcfe8c87398a0eabf62e1f623c49ec6ec8e7e598dc6b6d5a3ffbe2396d3
 
   // NOT WORKING!
-  const specialMatrix = new GPUCurtains.BufferBinding({
+  const specialMatrix = new BufferBinding({
     label: 'Special matrix',
     name: 'specialMatrix',
     bindingType: 'uniform',
@@ -28,7 +30,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   debugBindings.push(specialMatrix)
 
-  const binding1 = new GPUCurtains.BufferBinding({
+  const binding1 = new BufferBinding({
     label: 'Test1',
     name: 'test1',
     bindingType: 'uniform',
@@ -39,11 +41,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
       pointerPosition: {
         type: 'vec2f',
-        value: new GPUCurtains.Vec2(Infinity),
+        value: new Vec2(Infinity),
       },
       pointerVelocity: {
         type: 'vec2f',
-        value: new GPUCurtains.Vec2(0), // pointer velocity divided by plane size
+        value: new Vec2(0), // pointer velocity divided by plane size
       },
       pointerStrength: {
         type: 'f32',
@@ -51,14 +53,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
       wind: {
         type: 'vec3f',
-        value: new GPUCurtains.Vec3(0, 0, 0),
+        value: new Vec3(0, 0, 0),
       },
     },
   })
 
   debugBindings.push(binding1)
 
-  const binding2 = new GPUCurtains.BufferBinding({
+  const binding2 = new BufferBinding({
     label: 'Test2',
     name: 'test2',
     bindingType: 'uniform',
@@ -69,7 +71,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
       gravity: {
         type: 'vec3f',
-        value: new GPUCurtains.Vec3(),
+        value: new Vec3(),
       },
       mass: {
         type: 'f32',
@@ -90,21 +92,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       otherVec3f: {
         type: 'vec3f',
-        value: new GPUCurtains.Vec3(),
+        value: new Vec3(),
       },
     },
   })
 
   debugBindings.push(binding2)
 
-  const otherBinding = new GPUCurtains.BufferBinding({
+  const otherBinding = new BufferBinding({
     label: 'Other binding',
     name: 'otherBinding',
     bindingType: 'uniform',
     bindings: {
       systemSize: {
         type: 'vec3f',
-        value: new GPUCurtains.Vec3(),
+        value: new Vec3(),
       },
       time: {
         type: 'f32',
@@ -123,7 +125,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   debugBindings.push(otherBinding)
 
-  const arrayTest = new GPUCurtains.BufferBinding({
+  const arrayTest = new BufferBinding({
     label: 'Array test',
     name: 'arrayTest',
     bindingType: 'uniform',
@@ -141,7 +143,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   debugBindings.push(arrayTest)
 
-  const computePassExample = new GPUCurtains.BufferBinding({
+  const computePassExample = new BufferBinding({
     label: 'interleaved vec2 arrays',
     name: 'interleavedVec2Arrays',
     bindingType: 'uniform',
@@ -159,7 +161,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   debugBindings.push(computePassExample)
 
-  const binding3 = new GPUCurtains.BufferBinding({
+  const binding3 = new BufferBinding({
     label: 'Simple interleaved array buffer',
     name: 'simpleInterleavedArrayBuffer',
     bindingType: 'uniform',
@@ -177,7 +179,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   debugBindings.push(binding3)
 
-  const binding4 = new GPUCurtains.BufferBinding({
+  const binding4 = new BufferBinding({
     label: 'Complex interleaved array buffer',
     name: 'complexInterleavedArrayBuffer',
     bindingType: 'uniform',

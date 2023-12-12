@@ -106,11 +106,12 @@
       </div>
     </div>
 
-    <script src="../dist/gpu-curtains.js"></script>
-    <script>
+    <script type="module">
+      import { GPUCurtains, SphereGeometry, DOMMesh, Vec3 } from '../src'
+
       window.addEventListener('DOMContentLoaded', async () => {
         // set up our WebGL context and append the canvas to our wrapper
-        const gpuCurtains = new GPUCurtains.GPUCurtains({
+        const gpuCurtains = new GPUCurtains({
           container: 'canvas',
           watchScroll: false,
           pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -154,13 +155,13 @@
           }
         `
 
-        const sphereGeometry = new GPUCurtains.SphereGeometry()
-        const satelliteGeometry = new GPUCurtains.SphereGeometry({
+        const sphereGeometry = new SphereGeometry()
+        const satelliteGeometry = new SphereGeometry({
           widthSegments: 5,
           heightSegments: 3,
         })
 
-        const sphereMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
+        const sphereMesh = new DOMMesh(gpuCurtains, '#sphere', {
           label: 'Main Sphere',
           geometry: sphereGeometry,
           watchScroll: false,
@@ -173,9 +174,11 @@
 
         sphereMesh.onAfterResize(updateSphereScale)
 
+        console.log(sphereMesh)
+
         // now the cubes
-        for (let i = 0; i < 15; i++) {
-          const satelliteMesh = new GPUCurtains.DOMMesh(gpuCurtains, '#sphere', {
+        for (let i = 0; i < 25; i++) {
+          const satelliteMesh = new DOMMesh(gpuCurtains, '#sphere', {
             label: 'Cube ' + i,
             geometry: satelliteGeometry,
             watchScroll: false,
@@ -195,13 +198,13 @@
 
             const positionAngle = Math.random() * Math.PI * 2
 
-            satelliteMesh.userData.orbitPosition = new GPUCurtains.Vec3(
+            satelliteMesh.userData.orbitPosition = new Vec3(
               Math.cos(positionAngle) * distance,
               Math.sin(positionAngle) * distance,
               0
             )
 
-            const axisAngle = new GPUCurtains.Vec3(0, Math.sin(positionAngle), Math.cos(positionAngle)).normalize()
+            const axisAngle = new Vec3(0, Math.sin(positionAngle), Math.cos(positionAngle)).normalize()
 
             satelliteMesh.userData.axisAngle = satelliteMesh.userData.orbitPosition.clone().cross(axisAngle).normalize()
 

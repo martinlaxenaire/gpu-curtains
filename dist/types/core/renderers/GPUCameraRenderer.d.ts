@@ -28,7 +28,17 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
      */
     constructor({ container, pixelRatio, sampleCount, preferredFormat, production, alphaMode, camera, onError, onContextLost, }: GPUCameraRendererParams);
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} is lost.
+     * Reset all our samplers, force all our scene objects and camera bind group to lose context.
+     */
     loseContext(): void;
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures, re-write our camera buffer binding.
+     * @async
+     */
+    restoreContext(): Promise<void>;
     /**
      * Set the [camera]{@link GPUCameraRenderer#camera}
      * @param cameraParameters - [parameters]{@link CameraBasePerspectiveOptions} used to create the [camera]{@link GPUCameraRenderer#camera}

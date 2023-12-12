@@ -21,7 +21,7 @@ let meshIndex = 0
 
 export interface MeshBaseRenderParams extends RenderMaterialParams {
   /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
-  autoRender: boolean
+  autoRender?: boolean
   /** Flag indicating whether to draw this Mesh or not */
   visible?: boolean
   /** Controls the order in which this Mesh should be rendered by our {@link Scene} */

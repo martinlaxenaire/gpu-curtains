@@ -63,6 +63,7 @@
     margin: 0;
     z-index: 1;
     padding: 0.125em 0.25em;
+    border-radius: 0;
   }
 
   .plane-inner {

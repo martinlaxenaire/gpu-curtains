@@ -56,21 +56,17 @@
       >&lt;/ &gt;</a
     >
 
-    <script src="../../dist/gpu-curtains.js"></script>
-    <script>
-      //import {GPUCurtains, Plane} from '../../dist/gpu-curtains.mjs';
+    <script type="module">
+      import { GPUCurtains, Plane } from '../../src'
 
       window.addEventListener('DOMContentLoaded', async () => {
         // set up our WebGL context and append the canvas to our wrapper
-        const gpuCurtains = new GPUCurtains.GPUCurtains({
+        const gpuCurtains = new GPUCurtains({
           container: 'canvas',
           pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
         })
 
         await gpuCurtains.setRendererContext()
-
-        // get our plane element
-        const planeElements = document.getElementsByClassName('plane')
 
         const vertexShader = /* wgsl */ `
           struct VSOutput {
@@ -83,7 +79,7 @@
             ) -> VSOutput {
               var vsOutput: VSOutput;
 
-              var strength: f32 = 0.05;
+              var strength: f32 = 0.2;
               var nbWaves: f32 = 3.0;
 
               // map vertices coordinates to the 0->1 range on the X axis
@@ -153,7 +149,10 @@
           },
         }
 
-        const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
+        // get our plane element
+        const planeElement = document.querySelector('.plane')
+
+        const plane = new Plane(gpuCurtains, planeElement, params)
         console.log(plane)
 
         plane.onRender(() => {

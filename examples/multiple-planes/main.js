@@ -1,3 +1,5 @@
+import { GPUCurtains, Sampler, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // lerp
   const lerp = (start = 0, end = 1, amount = 0.1) => {
@@ -12,7 +14,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   let planeElements = document.querySelectorAll('.plane')
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
   })
@@ -116,7 +118,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     samplers: [
       // Use mipmap nearest filter
-      new GPUCurtains.Sampler(gpuCurtains, {
+      new Sampler(gpuCurtains, {
         label: 'Nearest sampler',
         name: 'mipmapNearestSampler',
         mipmapFilter: 'nearest',
@@ -155,7 +157,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // add our planes and handle them
   planeElements.forEach((planeEl, planeIndex) => {
-    const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, params)
+    const plane = new Plane(gpuCurtains, planeEl, params)
     planes.push(plane)
 
     console.log(plane)
@@ -171,7 +173,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     planeElements = document.querySelectorAll('.plane')
 
     for (let i = planes.length; i < planeElements.length; i++) {
-      const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[i], params)
+      const plane = new Plane(gpuCurtains, planeElements[i], params)
       planes.push(plane)
 
       handlePlane(plane)

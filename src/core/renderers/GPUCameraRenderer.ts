@@ -71,10 +71,24 @@ export class GPUCameraRenderer extends GPURenderer {
     this.setCamera(camera)
   }
 
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} is lost.
+   * Reset all our samplers, force all our scene objects and camera bind group to lose context.
+   */
   loseContext() {
     super.loseContext()
     // lose camera bind group context as well
     this.cameraBindGroup.loseContext()
+  }
+
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+   * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures, re-write our camera buffer binding.
+   * @async
+   */
+  async restoreContext(): Promise<void> {
+    this.cameraBufferBinding.shouldUpdate = true
+    return super.restoreContext()
   }
 
   /**
