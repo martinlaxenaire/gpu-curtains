@@ -688,6 +688,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.setShaders()
 
       this.material = new RenderMaterial(this.renderer, meshParameters)
+      // add eventual textures passed as parameters
+      this.material.options.textures?.forEach((texture) => this.onTextureAdded(texture))
     }
 
     /**
@@ -752,7 +754,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param texture - newly created Texture
      */
     onTextureAdded(texture: Texture) {
-      /* will be overriden */
       texture.parent = this as unknown as TextureParent
     }
 

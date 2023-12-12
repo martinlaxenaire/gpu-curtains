@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane } from '../../src'
+import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from '../../src'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
@@ -216,7 +216,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     samplers: [
-      // We don't want to see our media texture edges
+      // we don't want to see our media texture edges
       // so we're going to use a custom sampler with mirror repeat
       new Sampler(gpuCurtains, {
         label: 'Mirror sampler',
@@ -226,18 +226,27 @@ window.addEventListener('DOMContentLoaded', async () => {
       }),
     ],
     texturesOptions: {
-      // display a redish color while textures are loading
-      placeholderColor: [238, 101, 87, 255],
+      // display a custom color while texture is loading
+      //placeholderColor: [238, 101, 87, 255],
+      placeholderColor: [0, 255, 255, 255],
     },
+    renderTextures: [
+      // ping pong planes use a RenderTexture internally
+      // so we need to create one to use it in our plane
+      new RenderTexture(gpuCurtains, {
+        label: 'Flow map render texture',
+        name: 'flowMapTexture',
+        fromTexture: flowMap.renderTexture,
+      }),
+    ],
   })
 
-  // ping pong planes use a RenderTexture internally
-  // so we need to create one to use it in our plane
-  const flowMapTexture = displacedPlane.createRenderTexture({
-    label: 'Flow map render texture',
-    name: 'flowMapTexture',
-    fromTexture: flowMap.renderTexture,
-  })
+  // we could have added the render texture that way as well
+  // const flowMapTexture = displacedPlane.createRenderTexture({
+  //   label: 'Flow map render texture',
+  //   name: 'flowMapTexture',
+  //   fromTexture: flowMap.renderTexture,
+  // })
 
   console.log(displacedPlane, gpuCurtains.renderer.scene)
 })

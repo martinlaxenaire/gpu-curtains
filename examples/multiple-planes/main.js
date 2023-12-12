@@ -193,7 +193,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const createPlaneEl = (index) => {
       return `
       <div class="plane-wrapper">
-        <h2 class="primary-button plane-title">Title ${index + 1}</h2>
+        <h2 class="overlay-title plane-title">Title ${index + 1}</h2>
         <div class="plane-inner">
           <div class="plane">
             <img src="https://source.unsplash.com/featured/1920x1280/?nature&${index}" crossorigin="" data-texture-name="planeTexture" />

@@ -26,7 +26,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         var vsOutput: VSOutput;
         
         // progressively increase strength
-        var strength: f32 = 0.2 * min(frames.elapsed / 180.0, 1.0);
+        var strength: f32 = 0.2 * pow(min(frames.elapsed / 180.0, 1.0), 2.0);
         var nbWaves: f32 = 5.0;
 
         // map vertices coordinates to the 0->1 range on the X axis
@@ -105,14 +105,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     const htmlPlaneWidth = textPlane.boundingRect.width
     const htmlPlaneHeight = textPlane.boundingRect.height
 
-    const canvasResolution = window.devicePixelRatio
+    const canvasResolution = window.devicePixelRatio * 3
 
     // set sizes
     canvas.width = htmlPlaneWidth * canvasResolution
     canvas.height = htmlPlaneHeight * canvasResolution
 
-    // context.width = htmlPlaneWidth
-    // context.height = htmlPlaneHeight
+    // context.width = htmlPlaneWidth * canvasResolution
+    // context.height = htmlPlaneHeight * canvasResolution
 
     context.scale(canvasResolution, canvasResolution)
 

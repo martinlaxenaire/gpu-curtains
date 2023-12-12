@@ -57,7 +57,7 @@ export type BindGroupBindingElement = BindGroupBufferBindingElement | BindGroupT
  */
 export type AllowedBindGroups = BindGroup | TextureBindGroup;
 /**
- * An object defining all possible [bind group]{@link AllowedBindGroups} inputs
+ * Uniforms and storages [bind group]{@link AllowedBindGroups} inputs
  */
 export interface BindGroupInputs {
     /** uniforms input to pass to a {@link BindGroup} */

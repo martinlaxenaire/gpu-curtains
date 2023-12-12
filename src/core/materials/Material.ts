@@ -83,7 +83,8 @@ export class Material {
 
     this.uuid = generateUUID()
 
-    const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, samplers } = parameters
+    const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, samplers, textures, renderTextures } =
+      parameters
 
     this.options = {
       shaders,
@@ -93,6 +94,8 @@ export class Material {
       ...(storages !== undefined && { storages }),
       ...(bindGroups !== undefined && { bindGroups }),
       ...(samplers !== undefined && { samplers }),
+      ...(textures !== undefined && { textures }),
+      ...(renderTextures !== undefined && { renderTextures }),
     }
 
     this.bindGroups = []
@@ -467,6 +470,14 @@ export class Material {
         label: this.options.label + ': Textures bind group',
       })
     )
+
+    this.options.textures?.forEach((texture) => {
+      this.addTexture(texture)
+    })
+
+    this.options.renderTextures?.forEach((texture) => {
+      this.addTexture(texture)
+    })
   }
 
   /**

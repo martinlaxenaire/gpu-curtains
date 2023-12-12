@@ -76,10 +76,8 @@ export type BindGroupBindingElement = BindGroupBufferBindingElement | BindGroupT
  */
 export type AllowedBindGroups = BindGroup | TextureBindGroup
 
-//export type AllowedBindingsTypes = 'uniforms' | 'storages'
-//export type BindGroupInputs = Record<AllowedBindingsTypes, ReadOnlyInputBindings>
 /**
- * An object defining all possible [bind group]{@link AllowedBindGroups} inputs
+ * Uniforms and storages [bind group]{@link AllowedBindGroups} inputs
  */
 export interface BindGroupInputs {
   /** uniforms input to pass to a {@link BindGroup} */
@@ -98,8 +96,6 @@ export interface BindGroupParams extends BindGroupInputs {
   index?: number
   /** array of already created [struct]{@link BindGroupBindingElement} (buffers, texture, etc.) to pass to this {@link BindGroup} */
   bindings?: BindGroupBindingElement[]
-  /** [inputs]{@link BindGroupInputs} that will be used to create additional {@link BindGroup} [struct]{@link BindGroupBindingElement} */
-  //inputs?: BindGroupInputs
 }
 
 /**

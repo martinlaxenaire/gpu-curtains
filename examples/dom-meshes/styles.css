@@ -31,10 +31,6 @@
     text-align: center;
   }
 
-  .dom-mesh h2 span {
-    border-radius: 0;
-  }
-
   #large-cube-mesh {
     flex-basis: 60%;
     aspect-ratio: 2.5 / 1;

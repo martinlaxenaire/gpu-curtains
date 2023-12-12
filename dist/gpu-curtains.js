@@ -3875,7 +3875,7 @@ var GPUCurtains = (() => {
       isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, samplers } = parameters;
+      const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, samplers, textures, renderTextures } = parameters;
       this.options = {
         shaders,
         label,
@@ -3883,7 +3883,9 @@ var GPUCurtains = (() => {
         ...uniforms !== void 0 && { uniforms },
         ...storages !== void 0 && { storages },
         ...bindGroups !== void 0 && { bindGroups },
-        ...samplers !== void 0 && { samplers }
+        ...samplers !== void 0 && { samplers },
+        ...textures !== void 0 && { textures },
+        ...renderTextures !== void 0 && { renderTextures }
       };
       this.bindGroups = [];
       this.texturesBindGroups = [];
@@ -4179,6 +4181,12 @@ var GPUCurtains = (() => {
           label: this.options.label + ": Textures bind group"
         })
       );
+      this.options.textures?.forEach((texture) => {
+        this.addTexture(texture);
+      });
+      this.options.renderTextures?.forEach((texture) => {
+        this.addTexture(texture);
+      });
     }
     /**
      * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
@@ -5879,6 +5887,7 @@ struct VertexOutput {
         this.transparent = meshParameters.transparent;
         this.setShaders();
         this.material = new RenderMaterial(this.renderer, meshParameters);
+        this.material.options.textures?.forEach((texture) => this.onTextureAdded(texture));
       }
       /**
        * Set Mesh material attributes

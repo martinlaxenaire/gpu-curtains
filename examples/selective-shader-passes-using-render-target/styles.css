@@ -1,7 +1,5 @@
 @media screen {
   .planes-list {
-    max-width: 1440px;
-    margin: 0 auto;
     padding: 0 2.25rem 2.25rem 2.25rem;
     list-style: none;
   }
@@ -12,6 +10,7 @@
     grid-template-columns: repeat(12, [col-start] 1fr);
     gap: 2.25rem;
     margin: 0 0 10vh 0;
+    z-index: 1;
   }
 
   .planes-list-item:nth-child(even) {
@@ -24,7 +23,6 @@
     left: 25%;
     margin: 0;
     font-size: 2em;
-    border-radius: 0;
   }
 
   .planes-list-item:nth-child(even) h2 {
