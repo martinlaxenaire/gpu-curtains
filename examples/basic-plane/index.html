@@ -56,21 +56,17 @@
       >&lt;/ &gt;</a
     >
 
-    <script src="../../dist/gpu-curtains.js"></script>
-    <script>
-      //import {GPUCurtains, Plane} from '../../dist/gpu-curtains.mjs';
+    <script type="module">
+      import { GPUCurtains, Plane } from '../../src'
 
       window.addEventListener('DOMContentLoaded', async () => {
         // set up our WebGL context and append the canvas to our wrapper
-        const gpuCurtains = new GPUCurtains.GPUCurtains({
+        const gpuCurtains = new GPUCurtains({
           container: 'canvas',
           pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
         })
 
         await gpuCurtains.setRendererContext()
-
-        // get our plane element
-        const planeElements = document.getElementsByClassName('plane')
 
         const vertexShader = /* wgsl */ `
           struct VSOutput {
@@ -83,7 +79,7 @@
             ) -> VSOutput {
               var vsOutput: VSOutput;
 
-              var strength: f32 = 0.05;
+              var strength: f32 = 0.2;
               var nbWaves: f32 = 3.0;
 
               // map vertices coordinates to the 0->1 range on the X axis
@@ -126,38 +122,49 @@
 
         // set our initial parameters (basic uniforms)
         const params = {
+          // geometry parameters
           widthSegments: 20,
+          // material parameters
           shaders: {
             vertex: {
               code: vertexShader,
-              entryPoint: 'main',
+              entryPoint: 'main', // optional, default value is 'main'
             },
             fragment: {
               code: fragmentShader,
               entryPoint: 'main',
             },
           },
-          inputs: {
-            uniforms: {
-              // key could be something else, like "frames"...
-              frames: {
-                //label: 'Uniforms',
-                bindings: {
-                  elapsed: {
-                    type: 'f32', // this means our uniform is a float
-                    value: 0,
-                  },
+          uniforms: {
+            // this will add the following WGSL code snippet to your shaders:
+            //
+            // struct Frames {
+            //   elapsed: f32
+            // };
+            //
+            // @group(2) @binding(0) var<uniform> frames: Frames;
+            //
+            // explains why you can access your uniform value by using frames.elapsed in WGSL
+            frames: {
+              struct: {
+                elapsed: {
+                  type: 'f32', // this means our uniform is a float
+                  value: 0,
                 },
               },
             },
           },
         }
 
-        const plane = new GPUCurtains.Plane(gpuCurtains, planeElements[0], params)
-        console.log(plane)
+        // get our plane element
+        const planeElement = document.querySelector('.plane')
+
+        const plane = new Plane(gpuCurtains, planeElement, params)
+        console.log(plane.material)
 
         plane.onRender(() => {
           // update our time uniform value
+          // notice the shortcut here, the struct property is omitted
           plane.uniforms.frames.elapsed.value++
         })
       })

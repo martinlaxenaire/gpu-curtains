@@ -1,3 +1,5 @@
+import { GPUCurtains, PlaneGeometry, Sampler, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // lerp
   const lerp = (start = 0, end = 1, amount = 0.1) => {
@@ -11,7 +13,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   let planeElements = document.querySelectorAll('.plane')
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
   })
@@ -38,7 +40,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         delta.y = -maxScrollEffect
       }
 
-      scrollEffect = lerp(scrollEffect, delta.y, 0.1)
+      scrollEffect = lerp(scrollEffect, delta.y, 0.05)
     })
     .onError(() => {
       // display original images
@@ -86,7 +88,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       
       // avoid depth overlapping issues
       transformed.z -= 0.0001 * instanceIndex;
-      transformed.z -= instanceIndex * abs(scroll.strength) * 0.01;
+      transformed.z -= instanceIndex * abs(scroll.strength) * 0.025;
 
       vsOutput.position = getOutputPosition(camera, matrices, transformed);
       vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
@@ -116,7 +118,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const instancesCount = 7
 
-  const geometry = new GPUCurtains.PlaneGeometry({
+  const geometry = new PlaneGeometry({
     instancesCount,
   })
 
@@ -138,35 +140,33 @@ window.addEventListener('DOMContentLoaded', async () => {
       bottom: 200,
       left: 0,
     },
-    inputs: {
-      uniforms: {
-        scroll: {
-          label: 'Scroll',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
-            max: {
-              type: 'f32',
-              value: maxScrollEffect,
-            },
+    uniforms: {
+      scroll: {
+        label: 'Scroll',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
+          },
+          max: {
+            type: 'f32',
+            value: maxScrollEffect,
           },
         },
-        instances: {
-          label: 'Instances',
-          bindings: {
-            count: {
-              type: 'f32',
-              value: instancesCount,
-            },
+      },
+      instances: {
+        label: 'Instances',
+        struct: {
+          count: {
+            type: 'f32',
+            value: instancesCount,
           },
         },
       },
     },
     samplers: [
       // Use mipmap nearest filter
-      new GPUCurtains.Sampler(gpuCurtains, {
+      new Sampler(gpuCurtains, {
         label: 'Nearest sampler',
         name: 'mipmapNearestSampler',
         mipmapFilter: 'nearest',
@@ -180,7 +180,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // add our planes and handle them
   planeElements.forEach((planeEl, planeIndex) => {
     params.label = 'Plane' + planeIndex
-    const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, params)
+    const plane = new Plane(gpuCurtains, planeEl, params)
 
     console.log(plane)
 

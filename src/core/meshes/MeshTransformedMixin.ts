@@ -328,13 +328,13 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
       // add matrices uniforms
       const matricesUniforms = {
         label: 'Matrices',
-        bindings: {
+        struct: {
           model: {
             name: 'model',
             type: 'mat4x4f',
             value: this.modelMatrix,
             onBeforeUpdate: () => {
-              matricesUniforms.bindings.model.value = this.modelMatrix
+              matricesUniforms.struct.model.value = this.modelMatrix
             },
           },
           modelView: {
@@ -343,7 +343,7 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
             type: 'mat4x4f',
             value: this.modelViewMatrix,
             onBeforeUpdate: () => {
-              matricesUniforms.bindings.modelView.value = this.modelViewMatrix
+              matricesUniforms.struct.modelView.value = this.modelViewMatrix
             },
           },
           modelViewProjection: {
@@ -351,15 +351,16 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
             type: 'mat4x4f',
             value: this.modelViewProjectionMatrix,
             onBeforeUpdate: () => {
-              matricesUniforms.bindings.modelViewProjection.value = this.modelViewProjectionMatrix
+              matricesUniforms.struct.modelViewProjection.value = this.modelViewProjectionMatrix
             },
           },
         },
       }
 
-      if (!meshParameters.inputs) meshParameters.inputs = { uniforms: {} }
-
-      meshParameters.inputs.uniforms.matrices = matricesUniforms
+      // if (!meshParameters.inputs) meshParameters.inputs = { uniforms: {} }
+      // meshParameters.inputs.uniforms.matrices = matricesUniforms
+      if (!meshParameters.uniforms) meshParameters.uniforms = {}
+      meshParameters.uniforms.matrices = matricesUniforms
 
       super.setMaterial(meshParameters)
     }

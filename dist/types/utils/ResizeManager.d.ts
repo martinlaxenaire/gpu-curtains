@@ -1,9 +1,10 @@
+import { DOMElement } from '../core/DOM/DOMElement';
 /**
  * Defines a {@link ResizeManager} entry
  */
 export interface ResizeManagerEntry {
     /** {@link HTMLElement} to track */
-    element: HTMLElement;
+    element: DOMElement['element'] | Element;
     /** Function to execute when the [element]{@link ResizeManagerEntry#element} is resized */
     callback: () => void | null;
 }
@@ -36,7 +37,7 @@ export declare class ResizeManager {
      * Unobserve an [element]{@link HTMLElement} and remove it from our [entries array]{@link ResizeManager#entries}
      * @param element - [element]{@link HTMLElement} to unobserve
      */
-    unobserve(element: HTMLElement): void;
+    unobserve(element: DOMElement['element'] | Element): void;
     /**
      * Destroy our {@link ResizeManager}
      */

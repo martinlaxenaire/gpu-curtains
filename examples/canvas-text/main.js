@@ -1,6 +1,8 @@
+import { GPUCurtains, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
@@ -23,7 +25,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       ) -> VSOutput {
         var vsOutput: VSOutput;
         
-        var strength: f32 = 0.05;
+        // progressively increase strength
+        var strength: f32 = 0.2 * pow(min(frames.elapsed / 180.0, 1.0), 2.0);
         var nbWaves: f32 = 5.0;
 
         // map vertices coordinates to the 0->1 range on the X axis
@@ -61,7 +64,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const textPlane = new GPUCurtains.Plane(gpuCurtains, '#text-plane', {
+  const textPlane = new Plane(gpuCurtains, '#text-plane', {
     label: 'Canvas text plane',
     widthSegments: 20,
     shaders: {
@@ -74,14 +77,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        frames: {
-          bindings: {
-            elapsed: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      frames: {
+        struct: {
+          elapsed: {
+            type: 'f32',
+            value: 0,
           },
         },
       },
@@ -104,16 +105,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     const htmlPlaneWidth = textPlane.boundingRect.width
     const htmlPlaneHeight = textPlane.boundingRect.height
 
-    console.log(textPlane.boundingRect.width)
-
-    const canvasResolution = window.devicePixelRatio
+    const canvasResolution = window.devicePixelRatio * 3
 
     // set sizes
     canvas.width = htmlPlaneWidth * canvasResolution
     canvas.height = htmlPlaneHeight * canvasResolution
 
-    context.width = htmlPlaneWidth
-    context.height = htmlPlaneHeight
+    // context.width = htmlPlaneWidth * canvasResolution
+    // context.height = htmlPlaneHeight * canvasResolution
 
     context.scale(canvasResolution, canvasResolution)
 

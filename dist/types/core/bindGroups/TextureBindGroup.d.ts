@@ -15,8 +15,9 @@ export interface TextureBindGroupParams extends BindGroupParams {
 }
 /**
  * TextureBindGroup class:
- * Used to regroup all [bindings]{@link BindGroupBindingElement} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
+ * Used to regroup all [struct]{@link BindGroupBindingElement} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
  * @extends BindGroup
+ * @memberof module:core/bindGroups/TextureBindGroup
  */
 export declare class TextureBindGroup extends BindGroup {
     /** An array containing all the already created external textures ID */
@@ -26,9 +27,9 @@ export declare class TextureBindGroup extends BindGroup {
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
      * @param {TextureBindGroupParams=} parameters - [parameters]{@link TextureBindGroupParams} used to create our {@link TextureBindGroup}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, inputs, textures, samplers }?: TextureBindGroupParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, uniforms, storages, textures, samplers }?: TextureBindGroupParams);
     /**
-     * Adds a texture to the textures array and the bindings
+     * Adds a texture to the textures array and the struct
      * @param texture - texture to add
      */
     addTexture(texture: MaterialTexture): void;
@@ -38,7 +39,7 @@ export declare class TextureBindGroup extends BindGroup {
      */
     get textures(): MaterialTexture[];
     /**
-     * Adds a sampler to the samplers array and the bindings
+     * Adds a sampler to the samplers array and the struct
      * @param sampler
      */
     addSampler(sampler: Sampler): void;
@@ -83,7 +84,7 @@ export declare class TextureBindGroup extends BindGroup {
      */
     updateTextures(): void;
     /**
-     * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer bindings]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+     * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer struct]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
      */
     update(): void;
     /**

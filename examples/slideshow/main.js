@@ -1,8 +1,10 @@
+import { GPUCurtains, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   console.log(window)
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -96,27 +98,25 @@ window.addEventListener('DOMContentLoaded', async () => {
       // so we can copy them as regular textures
       useExternalTextures: false,
     },
-    inputs: {
-      uniforms: {
-        transition: {
-          label: 'Transition',
-          bindings: {
-            timer: {
-              type: 'f32', // this means our uniform is a float
-              value: 0,
-            },
-            duration: {
-              type: 'f32',
-              value: slideshowState.duration * 60, // duration * 60fps
-            },
-            colsCount: {
-              type: 'f32',
-              value: 15,
-            },
-            smoothness: {
-              type: 'f32',
-              value: 0.75,
-            },
+    uniforms: {
+      transition: {
+        label: 'Transition',
+        struct: {
+          timer: {
+            type: 'f32', // this means our uniform is a float
+            value: 0,
+          },
+          duration: {
+            type: 'f32',
+            value: slideshowState.duration * 60, // duration * 60fps
+          },
+          colsCount: {
+            type: 'f32',
+            value: 15,
+          },
+          smoothness: {
+            type: 'f32',
+            value: 0.75,
           },
         },
       },
@@ -125,7 +125,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   document.body.classList.add('is-waiting')
 
-  const plane = new GPUCurtains.Plane(gpuCurtains, planeElements, params)
+  const plane = new Plane(gpuCurtains, planeElements, params)
 
   // the idea here is to create two additional textures
   // the first one will contain our visible image

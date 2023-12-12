@@ -4,7 +4,7 @@ import { Vec3 } from '../../../math/Vec3'
 import { Quat } from '../../../math/Quat'
 import { Mat4 } from '../../../math/Mat4'
 
-// so all our bindings need to be packed into our arrayBuffer using a precise layout
+// so all our struct need to be packed into our arrayBuffer using a precise layout
 // they will be store in rows, each row made of 4 slots, each slots made of 4 bytes
 // depending on the binding element type, its row and slot may vary
 // and we may have to insert empty padded values

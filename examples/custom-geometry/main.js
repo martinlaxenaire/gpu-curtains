@@ -1,6 +1,8 @@
+import { GPUCurtains, Vec3, Geometry, Mesh } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
     camera: {
@@ -17,8 +19,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // instanced custom geometry mesh grid
   // we will basically recreate https://threejs.org/examples/?q=instanc#webgl_instancing_dynamic
-  const instancesGrid = new GPUCurtains.Vec3(10, 10, 10) // nb of instances per rows / cols
-  const instancesGridGap = new GPUCurtains.Vec3(3, 3, 3) // gap between instances
+  const instancesGrid = new Vec3(10, 10, 10) // nb of instances per rows / cols
+  const instancesGridGap = new Vec3(3, 3, 3) // gap between instances
 
   const meshVs = /* wgsl */ `  
     struct VSOutput {
@@ -139,7 +141,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const verticesColors = new Float32Array(colors.map((value) => value / 255))
 
-  const geometry = new GPUCurtains.Geometry({
+  const geometry = new Geometry({
     instancesCount: instancesGrid.x * instancesGrid.y * instancesGrid.z,
   })
 
@@ -174,35 +176,33 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        frames: {
-          label: 'Frames',
-          bindings: {
-            elapsed: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      frames: {
+        label: 'Frames',
+        struct: {
+          elapsed: {
+            type: 'f32',
+            value: 0,
           },
         },
-        instances: {
-          label: 'Instances',
-          bindings: {
-            grid: {
-              type: 'vec3f',
-              value: instancesGrid,
-            },
-            gridGap: {
-              type: 'vec3f',
-              value: instancesGridGap,
-            },
+      },
+      instances: {
+        label: 'Instances',
+        struct: {
+          grid: {
+            type: 'vec3f',
+            value: instancesGrid,
+          },
+          gridGap: {
+            type: 'vec3f',
+            value: instancesGridGap,
           },
         },
       },
     },
   }
 
-  const mesh = new GPUCurtains.Mesh(gpuCurtains, params)
+  const mesh = new Mesh(gpuCurtains, params)
 
   console.log(geometry.getVertexBufferByName('attributes'), mesh)
 

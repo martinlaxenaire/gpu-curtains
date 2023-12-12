@@ -1,6 +1,8 @@
+import { GPUCurtains, BoxGeometry, Mesh, Plane, ShaderPass } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -15,9 +17,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   await gpuCurtains.setRendererContext()
 
   // now add objects to our scene
-  const cubeGeometry = new GPUCurtains.BoxGeometry()
+  const cubeGeometry = new BoxGeometry()
 
-  const mesh = new GPUCurtains.Mesh(gpuCurtains, {
+  const mesh = new Mesh(gpuCurtains, {
     geometry: cubeGeometry,
   })
 
@@ -61,7 +63,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
   `
 
-  const plane = new GPUCurtains.Plane(gpuCurtains, '.plane', {
+  const plane = new Plane(gpuCurtains, '.plane', {
     shaders: {
       vertex: {
         code: vertexShader,
@@ -85,7 +87,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
   `
 
-  const postProPass = new GPUCurtains.ShaderPass(gpuCurtains, {
+  const postProPass = new ShaderPass(gpuCurtains, {
     shaders: {
       fragment: {
         code: postProShader,

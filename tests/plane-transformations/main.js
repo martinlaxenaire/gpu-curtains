@@ -1,6 +1,8 @@
+import { GPUCurtains, Vec2, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -47,9 +49,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const mousePosition = new GPUCurtains.Vec2(Infinity)
+  const mousePosition = new Vec2(Infinity)
 
-  const plane = new GPUCurtains.Plane(gpuCurtains, '.plane', {
+  const plane = new Plane(gpuCurtains, '.plane', {
     shaders: {
       vertex: {
         code: meshVs,
@@ -59,22 +61,20 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     cullMode: 'none',
-    inputs: {
-      uniforms: {
-        mouse: {
-          bindings: {
-            position: {
-              type: 'vec2f',
-              value: mousePosition,
-            },
-            aspect: {
-              type: 'f32',
-              value: 1,
-            },
-            size: {
-              type: 'f32',
-              value: 0.2,
-            },
+    uniforms: {
+      mouse: {
+        struct: {
+          position: {
+            type: 'vec2f',
+            value: mousePosition,
+          },
+          aspect: {
+            type: 'f32',
+            value: 1,
+          },
+          size: {
+            type: 'f32',
+            value: 0.2,
           },
         },
       },
@@ -89,7 +89,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   window.addEventListener('pointermove', (e) => {
     //plane.uniforms.mouse
-    mousePosition.copy(plane.mouseToPlaneCoords(new GPUCurtains.Vec2(e.clientX, e.clientY)))
+    mousePosition.copy(plane.mouseToPlaneCoords(new Vec2(e.clientX, e.clientY)))
   })
 
   const planeBBox = document.createElement('div')

@@ -1,7 +1,7 @@
 import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
-import { DOMElement, DOMElementBoundingRect, DOMPosition, RectBBox } from '../../core/DOM/DOMElement';
+import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition, RectBBox } from '../../core/DOM/DOMElement';
 import { Vec3 } from '../../math/Vec3';
 import { Object3DTransforms } from '../../core/objects3D/Object3D';
 /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */
@@ -60,12 +60,12 @@ export declare class DOMObject3D extends ProjectedObject3D {
      * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
      * @param parameters - [parameters]{@link DOMObject3DParams} used to create this {@link DOMObject3D}
      */
-    constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: string | HTMLElement, parameters: DOMObject3DParams);
+    constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: DOMElementParams['element'], parameters: DOMObject3DParams);
     /**
      * Set the [DOMElement]{@link DOMObject3D#domElement}
      * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
      */
-    setDOMElement(element: string | HTMLElement): void;
+    setDOMElement(element: DOMElementParams['element']): void;
     /**
      * Reset the [DOMElement]{@link DOMObject3D#domElement}
      * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use

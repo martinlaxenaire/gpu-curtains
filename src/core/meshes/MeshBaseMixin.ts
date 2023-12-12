@@ -21,7 +21,7 @@ let meshIndex = 0
 
 export interface MeshBaseRenderParams extends RenderMaterialParams {
   /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
-  autoRender: boolean
+  autoRender?: boolean
   /** Flag indicating whether to draw this Mesh or not */
   visible?: boolean
   /** Controls the order in which this Mesh should be rendered by our {@link Scene} */
@@ -300,7 +300,7 @@ export declare class MeshBaseClass {
   /**
    * Called before rendering the Mesh
    * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-   * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
+   * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
    */
   onBeforeRenderPass(): void
 
@@ -688,6 +688,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.setShaders()
 
       this.material = new RenderMaterial(this.renderer, meshParameters)
+      // add eventual textures passed as parameters
+      this.material.options.textures?.forEach((texture) => this.onTextureAdded(texture))
     }
 
     /**
@@ -752,7 +754,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param texture - newly created Texture
      */
     onTextureAdded(texture: Texture) {
-      /* will be overriden */
       texture.parent = this as unknown as TextureParent
     }
 
@@ -921,7 +922,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /**
      * Called before rendering the Mesh
      * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
+     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return

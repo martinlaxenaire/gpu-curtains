@@ -1,6 +1,8 @@
+import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     preferredFormat: 'rgba16float', // important, we'll be using floating point textures
@@ -13,10 +15,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('no-curtains')
   })
 
-  const mouse = new GPUCurtains.Vec2()
-  const velocity = new GPUCurtains.Vec2()
+  const mouse = new Vec2()
+  const velocity = new Vec2()
   // used for vector lerping
-  const nullVector = new GPUCurtains.Vec2()
+  const nullVector = new Vec2()
   const lastMouse = mouse.clone()
   // if we should update the velocity or not
   let updateVelocity = false
@@ -57,7 +59,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const flowMap = new GPUCurtains.PingPongPlane(gpuCurtains, {
+  const flowMap = new PingPongPlane(gpuCurtains, {
     label: 'Flowmap Ping Pong Plane',
     shaders: {
       fragment: {
@@ -65,45 +67,43 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'fs', // custom entry point
       },
     },
-    inputs: {
-      uniforms: {
-        flowmap: {
-          label: 'Flowmap',
-          bindings: {
-            mousePosition: {
-              type: 'vec2f',
-              value: mouse,
-            },
-            // how much the cursor must dissipate over time (ie trail length)
-            // closer to 1 = no dissipation
-            dissipation: {
-              type: 'f32',
-              value: 0.975,
-            },
-            cursorSize: {
-              type: 'f32',
-              value: 0.075, // size of the mouse cursor
-            },
-            // how much the cursor should grow with time
-            cursorGrow: {
-              type: 'f32',
-              value: 1.15,
-            },
-            // alpha of the cursor
-            alpha: {
-              type: 'f32',
-              value: 1,
-            },
-            // canvas aspect ratio, used to draw a circle shaped cursor
-            aspect: {
-              type: 'f32',
-              value: gpuCurtains.renderer.boundingRect.width / gpuCurtains.renderer.boundingRect.height,
-            },
-            // our velocity
-            velocity: {
-              type: 'vec2f',
-              value: velocity,
-            },
+    uniforms: {
+      flowmap: {
+        label: 'Flowmap',
+        struct: {
+          mousePosition: {
+            type: 'vec2f',
+            value: mouse,
+          },
+          // how much the cursor must dissipate over time (ie trail length)
+          // closer to 1 = no dissipation
+          dissipation: {
+            type: 'f32',
+            value: 0.975,
+          },
+          cursorSize: {
+            type: 'f32',
+            value: 0.075, // size of the mouse cursor
+          },
+          // how much the cursor should grow with time
+          cursorGrow: {
+            type: 'f32',
+            value: 1.15,
+          },
+          // alpha of the cursor
+          alpha: {
+            type: 'f32',
+            value: 1,
+          },
+          // canvas aspect ratio, used to draw a circle shaped cursor
+          aspect: {
+            type: 'f32',
+            value: gpuCurtains.renderer.boundingRect.width / gpuCurtains.renderer.boundingRect.height,
+          },
+          // our velocity
+          velocity: {
+            type: 'vec2f',
+            value: velocity,
           },
         },
       },
@@ -203,7 +203,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const displacedPlane = new GPUCurtains.Plane(gpuCurtains, '#ping-pong-plane', {
+  const displacedPlane = new Plane(gpuCurtains, '#ping-pong-plane', {
     label: 'Flowmap displaced plane',
     shaders: {
       vertex: {
@@ -216,9 +216,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     samplers: [
-      // We don't want to see our media texture edges
+      // we don't want to see our media texture edges
       // so we're going to use a custom sampler with mirror repeat
-      new GPUCurtains.Sampler(gpuCurtains, {
+      new Sampler(gpuCurtains, {
         label: 'Mirror sampler',
         name: 'mirrorSampler',
         addressModeU: 'mirror-repeat',
@@ -226,18 +226,27 @@ window.addEventListener('DOMContentLoaded', async () => {
       }),
     ],
     texturesOptions: {
-      // display a redish color while textures are loading
-      placeholderColor: [238, 101, 87, 255],
+      // display a custom color while texture is loading
+      //placeholderColor: [238, 101, 87, 255],
+      placeholderColor: [0, 255, 255, 255],
     },
+    renderTextures: [
+      // ping pong planes use a RenderTexture internally
+      // so we need to create one to use it in our plane
+      new RenderTexture(gpuCurtains, {
+        label: 'Flow map render texture',
+        name: 'flowMapTexture',
+        fromTexture: flowMap.renderTexture,
+      }),
+    ],
   })
 
-  // ping pong planes use a RenderTexture internally
-  // so we need to create one to use it in our plane
-  const flowMapTexture = displacedPlane.createRenderTexture({
-    label: 'Flow map render texture',
-    name: 'flowMapTexture',
-    fromTexture: flowMap.renderTexture,
-  })
+  // we could have added the render texture that way as well
+  // const flowMapTexture = displacedPlane.createRenderTexture({
+  //   label: 'Flow map render texture',
+  //   name: 'flowMapTexture',
+  //   fromTexture: flowMap.renderTexture,
+  // })
 
   console.log(displacedPlane, gpuCurtains.renderer.scene)
 })

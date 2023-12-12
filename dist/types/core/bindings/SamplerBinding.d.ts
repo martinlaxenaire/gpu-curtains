@@ -11,7 +11,7 @@ export interface SamplerBindingParams extends BindingParams {
 }
 /**
  * SamplerBinding class:
- * Used to handle GPUSampler bindings
+ * Used to handle GPUSampler struct
  * @extends Binding
  */
 export declare class SamplerBinding extends Binding {

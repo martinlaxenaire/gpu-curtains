@@ -1,3 +1,5 @@
+import { GPUCurtains, BoxGeometry, SphereGeometry, Mesh } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   const stats = new Stats()
 
@@ -8,7 +10,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const systemSize = 50
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
@@ -28,8 +30,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       stats.end()
     })
 
-  const cubeGeometry = new GPUCurtains.BoxGeometry()
-  const sphereGeometry = new GPUCurtains.SphereGeometry()
+  const cubeGeometry = new BoxGeometry()
+  const sphereGeometry = new SphereGeometry()
 
   gpuCurtains.camera.position.z = systemSize * 2
 
@@ -37,7 +39,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const aspectRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
 
   for (let i = 0; i < 3000; i++) {
-    const mesh = new GPUCurtains.Mesh(gpuCurtains, {
+    const mesh = new Mesh(gpuCurtains, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
     })
 

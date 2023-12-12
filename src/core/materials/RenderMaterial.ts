@@ -57,7 +57,8 @@ export class RenderMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    const { shaders, label, useAsyncPipeline, inputs, bindGroups, ...renderingOptions } = parameters
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, ...renderingOptions } = parameters
 
     if (!shaders.vertex.entryPoint) {
       shaders.vertex.entryPoint = 'main'
@@ -70,10 +71,6 @@ export class RenderMaterial extends Material {
     this.options = {
       ...this.options,
       shaders,
-      label,
-      ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
-      ...(inputs !== undefined && { inputs }),
-      ...(bindGroups !== undefined && { bindGroups }),
       rendering: renderingOptions,
     } as RenderMaterialOptions
 

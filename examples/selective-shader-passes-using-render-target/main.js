@@ -1,3 +1,5 @@
+import { GPUCurtains, Sampler, RenderTarget, Plane, ShaderPass } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // lerp
   const lerp = (start = 0, end = 1, amount = 0.1) => {
@@ -7,7 +9,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   let scrollEffect = 0
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
@@ -43,7 +45,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // We don't want to see our pass texture top/bottom edges
   // so we're going to use a custom sampler with mirror repeat
-  const mirrorSampler = new GPUCurtains.Sampler(gpuCurtains, {
+  const mirrorSampler = new Sampler(gpuCurtains, {
     label: 'Mirror sampler',
     name: 'mirrorSampler',
     addressModeU: 'mirror-repeat',
@@ -80,11 +82,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   `
 
   // first we're going to render large planes into a grayscale pass
-  const grayscaleTarget = new GPUCurtains.RenderTarget(gpuCurtains, { label: 'Large planes distortion render target' })
+  const grayscaleTarget = new RenderTarget(gpuCurtains, { label: 'Large planes distortion render target' })
 
   const largePlaneEls = document.querySelectorAll('.large-plane')
   largePlaneEls.forEach((largePlaneEl, index) => {
-    const largePlane = new GPUCurtains.Plane(gpuCurtains, largePlaneEl, {
+    const largePlane = new Plane(gpuCurtains, largePlaneEl, {
       label: `Large plane ${index}`,
       //renderTarget: grayscaleTarget, // we could do that directly
       shaders: {
@@ -115,7 +117,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const grayscalePass = new GPUCurtains.ShaderPass(gpuCurtains, {
+  const grayscalePass = new ShaderPass(gpuCurtains, {
     label: 'Large plane shader pass',
     //renderTarget: grayscaleTarget, // we could do that directly
     //renderOrder: 1, // uncomment to draw large planes above small planes
@@ -125,19 +127,18 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        scrollEffect: {
-          label: 'ScrollEffect',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      scrollEffect: {
+        label: 'ScrollEffect',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
           },
         },
       },
     },
+
     samplers: [mirrorSampler],
   })
 
@@ -154,13 +155,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   // }, 5000)
 
   // now render the small planes into a RGB shift pass
-  const rgbShiftTarget = new GPUCurtains.RenderTarget(gpuCurtains, {
+  const rgbShiftTarget = new RenderTarget(gpuCurtains, {
     label: 'Small planes RGB render target',
   })
 
   const smallPlaneEls = document.querySelectorAll('.small-plane')
   smallPlaneEls.forEach((smallPlaneEl, index) => {
-    const smallPlane = new GPUCurtains.Plane(gpuCurtains, smallPlaneEl, {
+    const smallPlane = new Plane(gpuCurtains, smallPlaneEl, {
       label: `Small plane ${index}`,
       renderTarget: rgbShiftTarget,
       shaders: {
@@ -194,7 +195,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const rgbShiftPass = new GPUCurtains.ShaderPass(gpuCurtains, {
+  const rgbShiftPass = new ShaderPass(gpuCurtains, {
     label: 'Small plane shader pass',
     renderTarget: rgbShiftTarget,
     shaders: {
@@ -203,15 +204,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        scrollEffect: {
-          label: 'ScrollEffect',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      scrollEffect: {
+        label: 'ScrollEffect',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
           },
         },
       },
@@ -262,7 +261,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   `
 
-  const finalShaderPass = new GPUCurtains.ShaderPass(gpuCurtains, {
+  const finalShaderPass = new ShaderPass(gpuCurtains, {
     label: 'Final shader pass',
     shaders: {
       fragment: {
@@ -270,15 +269,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        scrollEffect: {
-          label: 'ScrollEffect',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      scrollEffect: {
+        label: 'ScrollEffect',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
           },
         },
       },

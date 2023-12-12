@@ -1,6 +1,8 @@
+import { GPUCurtains, Plane } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
@@ -23,7 +25,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
   
-      var strength: f32 = 0.05;
+      var strength: f32 = 0.2;
       var nbWaves: f32 = 3.0;
   
       // map vertices coordinates to the 0->1 range on the X axis
@@ -72,15 +74,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   // set our initial parameters (basic uniforms)
   const params = {
     widthSegments: 20,
-    inputs: {
-      uniforms: {
-        frames: {
-          label: 'Frames',
-          bindings: {
-            elapsed: {
-              type: 'f32', // this means our uniform is a float
-              value: 0,
-            },
+    uniforms: {
+      frames: {
+        label: 'Frames',
+        struct: {
+          elapsed: {
+            type: 'f32', // this means our uniform is a float
+            value: 0,
           },
         },
       },
@@ -104,7 +104,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   }
 
-  const externalVideoPlane = new GPUCurtains.Plane(gpuCurtains, '#external-video-plane', externalVideoParams)
+  const externalVideoPlane = new Plane(gpuCurtains, '#external-video-plane', externalVideoParams)
 
   externalVideoPlane
     .onLoading((texture) => {
@@ -137,7 +137,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   }
 
-  const videoPlane = new GPUCurtains.Plane(gpuCurtains, '#video-plane', videoParams)
+  const videoPlane = new Plane(gpuCurtains, '#video-plane', videoParams)
 
   videoPlane
     .onLoading((texture) => {

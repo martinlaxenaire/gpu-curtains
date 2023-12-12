@@ -1,6 +1,8 @@
+import { GPUCurtains, BoxGeometry, SphereGeometry, DOMMesh, Sampler } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     camera: {
       fov: 35,
@@ -50,13 +52,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   `
 
   // create the geometries
-  const cubeGeometry = new GPUCurtains.BoxGeometry()
-  const sphereGeometry = new GPUCurtains.SphereGeometry()
+  const cubeGeometry = new BoxGeometry()
+  const sphereGeometry = new SphereGeometry()
 
   // now create the meshes
   const cubeEls = document.querySelectorAll('.cube-mesh')
   cubeEls.forEach((cubeEl, index) => {
-    const cubeMesh = new GPUCurtains.DOMMesh(gpuCurtains, cubeEl, {
+    const cubeMesh = new DOMMesh(gpuCurtains, cubeEl, {
       label: 'Cube ' + index,
       geometry: cubeGeometry,
       shaders: {
@@ -73,7 +75,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         // since the cube will be rotated, we will use anisotropy
         // we will explicitly set sampler name to 'defaultSampler'
         // so we can use the same shader for both cubes and spheres
-        new GPUCurtains.Sampler(gpuCurtains, {
+        new Sampler(gpuCurtains, {
           label: 'Cube sampler',
           name: 'defaultSampler',
           maxAnisotropy: 16,
@@ -110,7 +112,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const sphereEls = document.querySelectorAll('.sphere-mesh')
   sphereEls.forEach((sphereEl, index) => {
-    const sphereMesh = new GPUCurtains.DOMMesh(gpuCurtains, sphereEl, {
+    const sphereMesh = new DOMMesh(gpuCurtains, sphereEl, {
       label: 'Sphere ' + index,
       geometry: sphereGeometry,
       shaders: {

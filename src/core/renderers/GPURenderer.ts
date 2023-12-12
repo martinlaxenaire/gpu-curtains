@@ -364,6 +364,10 @@ export class GPURenderer {
     })
   }
 
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} is lost.
+   * Reset all our samplers, force all our scene objects to lose context.
+   */
   loseContext() {
     this.ready = false
 
@@ -377,6 +381,11 @@ export class GPURenderer {
     this.buffers = []
   }
 
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+   * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures.
+   * @async
+   */
   async restoreContext(): Promise<void> {
     await this.setAdapter()
     await this.setDevice()
@@ -391,7 +400,7 @@ export class GPURenderer {
     this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext())
 
     // force renderer resize to resize all our render passes textures
-    this.resize()
+    this.onResize()
 
     // we're ready again!
     this.ready = true

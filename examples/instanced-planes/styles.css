@@ -2,12 +2,11 @@
   /*** content ***/
 
   #page {
-    max-width: 1440px;
-    margin: 0 auto;
     padding: 2.25rem 0;
   }
 
   #planes {
+    padding: 0;
   }
 
   .plane {

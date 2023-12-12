@@ -51,7 +51,7 @@ export class Texture extends Object3D {
 
   /** A [buffer binding]{@link BufferBinding} that will hold the texture matrix */
   textureMatrix: BufferBinding
-  /** The bindings used by this {@link Texture}, i.e. its [texture matrix buffer binding]{@link Texture#textureMatrix} and its [texture binding]{@link TextureBinding} */
+  /** The struct used by this {@link Texture}, i.e. its [texture matrix buffer binding]{@link Texture#textureMatrix} and its [texture binding]{@link TextureBinding} */
   bindings: BindGroupBindingElement[]
 
   /** {@link Texture} parent if any */
@@ -63,7 +63,7 @@ export class Texture extends Object3D {
   private _sourceUploaded: boolean
   /** Whether the texture should be uploaded to the GPU */
   shouldUpdate: boolean
-  /** Whether the {@link BindGroup} handling this [texture bindings]{@link Texture#bindings} should be updated (i.e. each time a texture is uploaded to the GPU) */
+  /** Whether the {@link BindGroup} handling this [texture struct]{@link Texture#bindings} should be updated (i.e. each time a texture is uploaded to the GPU) */
   shouldUpdateBindGroup: boolean
 
   /** [Video frame callback]{@link requestVideoFrameCallback} returned id if used */
@@ -134,7 +134,7 @@ export class Texture extends Object3D {
       label: this.options.label + ': model matrix',
       name: this.options.name + 'Matrix',
       useStruct: false,
-      bindings: {
+      struct: {
         matrix: {
           name: this.options.name + 'Matrix',
           type: 'mat4x4f',
@@ -158,7 +158,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Set our [bindings]{@link Texture#bindings}
+   * Set our [struct]{@link Texture#bindings}
    */
   setBindings() {
     this.bindings = [
@@ -527,7 +527,7 @@ export class Texture extends Object3D {
       if (this.options.useExternalTextures) {
         this.options.sourceType = 'externalVideo'
 
-        // texture bindings will be set when uploading external texture
+        // texture struct will be set when uploading external texture
         // meanwhile, destroy previous texture
         this.texture?.destroy()
       } else {
@@ -645,7 +645,7 @@ export class Texture extends Object3D {
 
   /**
    * Render a {@link Texture}:
-   * - Update its [model matrix]{@link Texture#modelMatrix} and [bindings]{@link Texture#bindings} if needed
+   * - Update its [model matrix]{@link Texture#modelMatrix} and [struct]{@link Texture#bindings} if needed
    * - Upload the texture if it needs to be done
    */
   render() {

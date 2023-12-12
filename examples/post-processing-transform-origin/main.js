@@ -1,3 +1,5 @@
+import { GPUCurtains, Plane, ShaderPass } from '../../src'
+
 window.addEventListener('DOMContentLoaded', async () => {
   // lerp
   const lerp = (start = 0, end = 1, amount = 0.1) => {
@@ -61,7 +63,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   )
 
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: 'canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
@@ -113,7 +115,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const planeEls = document.querySelectorAll('.plane')
 
   planeEls.forEach((planeEl, index) => {
-    const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, {
+    const plane = new Plane(gpuCurtains, planeEl, {
       label: `Plane ${index}`,
       shaders: {
         vertex: {
@@ -179,21 +181,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        rotation: {
-          bindings: {
-            effect: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      rotation: {
+        struct: {
+          effect: {
+            type: 'f32',
+            value: 0,
           },
         },
       },
     },
   }
 
-  const shaderPass = new GPUCurtains.ShaderPass(gpuCurtains, shaderPassParams)
+  const shaderPass = new ShaderPass(gpuCurtains, shaderPassParams)
 
   shaderPass.onRender(() => {
     // update the uniform

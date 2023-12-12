@@ -1892,7 +1892,7 @@ var GPUCurtains = (() => {
      * @param {number=} parameters.bindIndex - bind index inside the bind group
      * @param {MaterialShadersType=} parameters.visibility - shader visibility
      * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
-     * @param {Object.<string, Input>} parameters.bindings - bindings inputs
+     * @param {Object.<string, Input>} parameters.bindings - struct inputs
      */
     constructor({
       label = "Uniform",
@@ -1902,7 +1902,7 @@ var GPUCurtains = (() => {
       visibility,
       useStruct = true,
       access = "read",
-      bindings = {}
+      struct = {}
     }) {
       bindingType = bindingType ?? "uniform";
       super({ label, name, bindIndex, bindingType, visibility });
@@ -1910,15 +1910,15 @@ var GPUCurtains = (() => {
         ...this.options,
         useStruct,
         access,
-        bindings
+        struct
       };
       this.arrayBufferSize = 0;
       this.shouldUpdate = false;
       this.useStruct = useStruct;
       this.bufferElements = [];
-      this.bindings = {};
+      this.inputs = {};
       this.buffer = null;
-      this.setBindings(bindings);
+      this.setBindings(struct);
       this.setBufferAttributes();
       this.setWGSLFragment();
     }
@@ -1939,8 +1939,8 @@ var GPUCurtains = (() => {
       return { buffer: this.buffer };
     }
     /**
-     * Format input bindings and set our {@link bindings}
-     * @param bindings - bindings inputs
+     * Format input struct and set our {@link inputs}
+     * @param bindings - struct inputs
      */
     setBindings(bindings) {
       Object.keys(bindings).forEach((bindingKey) => {
@@ -1963,27 +1963,27 @@ var GPUCurtains = (() => {
         if (binding.value instanceof Vec2 || binding.value instanceof Vec3) {
           binding.value.onChange(() => binding.shouldUpdate = true);
         }
-        this.bindings[bindingKey] = binding;
+        this.inputs[bindingKey] = binding;
       });
     }
     /**
      * Set our buffer attributes:
-     * Takes all the {@link bindings} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link value} typed array accordingly.
+     * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link value} typed array accordingly.
      */
     setBufferAttributes() {
-      const arrayBindings = Object.keys(this.bindings).filter(
-        (bindingKey) => this.bindings[bindingKey].type.indexOf("array") !== -1
+      const arrayBindings = Object.keys(this.inputs).filter(
+        (bindingKey) => this.inputs[bindingKey].type.indexOf("array") !== -1
       );
-      let orderedBindings = Object.keys(this.bindings).sort((bindingKeyA, bindingKeyB) => {
-        const isBindingAArray = Math.min(0, this.bindings[bindingKeyA].type.indexOf("array"));
-        const isBindingBArray = Math.min(0, this.bindings[bindingKeyB].type.indexOf("array"));
+      let orderedBindings = Object.keys(this.inputs).sort((bindingKeyA, bindingKeyB) => {
+        const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf("array"));
+        const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf("array"));
         return isBindingAArray - isBindingBArray;
       });
       if (arrayBindings.length > 1) {
         orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey));
       }
       orderedBindings.forEach((bindingKey) => {
-        const binding = this.bindings[bindingKey];
+        const binding = this.inputs[bindingKey];
         const bufferElementOptions = {
           name: toCamelCase(binding.name ?? bindingKey),
           key: bindingKey,
@@ -2003,14 +2003,14 @@ var GPUCurtains = (() => {
       });
       if (arrayBindings.length > 1) {
         const arraySizes = arrayBindings.map((bindingKey) => {
-          const binding = this.bindings[bindingKey];
+          const binding = this.inputs[bindingKey];
           const bufferLayout = getBufferLayout(binding.type.replace("array", "").replace("<", "").replace(">", ""));
           return binding.value.length / bufferLayout.numElements;
         });
         const equalSize = arraySizes.every((size, i, array) => size === array[0]);
         if (equalSize) {
           const interleavedBufferElements = arrayBindings.map((bindingKey) => {
-            const binding = this.bindings[bindingKey];
+            const binding = this.inputs[bindingKey];
             return new BufferInterleavedArrayElement({
               name: toCamelCase(binding.name ?? bindingKey),
               key: bindingKey,
@@ -2019,7 +2019,7 @@ var GPUCurtains = (() => {
             });
           });
           const tempBufferElements = arrayBindings.map((bindingKey) => {
-            const binding = this.bindings[bindingKey];
+            const binding = this.inputs[bindingKey];
             return new BufferElement({
               name: toCamelCase(binding.name ?? bindingKey),
               key: bindingKey,
@@ -2118,18 +2118,18 @@ var GPUCurtains = (() => {
      * @param bindingName - the binding name/key to update
      */
     shouldUpdateBinding(bindingName = "") {
-      const bindingKey = Object.keys(this.bindings).find((bindingKey2) => this.bindings[bindingKey2].name === bindingName);
+      const bindingKey = Object.keys(this.inputs).find((bindingKey2) => this.inputs[bindingKey2].name === bindingName);
       if (bindingKey)
-        this.bindings[bindingKey].shouldUpdate = true;
+        this.inputs[bindingKey].shouldUpdate = true;
     }
     /**
      * Executed at the beginning of a Material render call.
-     * If any of the {@link bindings} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
+     * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
      * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update() {
-      Object.keys(this.bindings).forEach((bindingKey, bindingIndex) => {
-        const binding = this.bindings[bindingKey];
+      Object.keys(this.inputs).forEach((bindingKey) => {
+        const binding = this.inputs[bindingKey];
         const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey);
         if (binding.shouldUpdate && bufferElement) {
           binding.onBeforeUpdate && binding.onBeforeUpdate();
@@ -2153,14 +2153,14 @@ var GPUCurtains = (() => {
       bindingType,
       bindIndex = 0,
       useStruct = true,
-      bindings = {},
+      struct = {},
       visibility,
       access = "read_write",
       shouldCopyResult = false
     }) {
       bindingType = "storage";
       visibility = "compute";
-      super({ label, name, bindIndex, bindingType, useStruct, bindings, visibility, access });
+      super({ label, name, bindIndex, bindingType, useStruct, struct, visibility, access });
       this.options = {
         ...this.options,
         shouldCopyResult
@@ -2178,7 +2178,7 @@ var GPUCurtains = (() => {
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
      * @param {BindGroupParams=} parameters - [parameters]{@link BindGroupParams} used to create our {@link BindGroup}
      */
-    constructor(renderer, { label = "BindGroup", index = 0, bindings = [], inputs } = {}) {
+    constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
       this.type = "BindGroup";
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, this.type);
@@ -2187,13 +2187,14 @@ var GPUCurtains = (() => {
         label,
         index,
         bindings,
-        ...inputs && { inputs }
+        ...uniforms && { uniforms },
+        ...storages && { storages }
       };
       this.index = index;
       this.uuid = generateUUID();
       this.bindings = [];
       bindings.length && this.addBindings(bindings);
-      if (this.options.inputs)
+      if (this.options.uniforms || this.options.storages)
         this.setInputBindings();
       this.resetEntries();
       this.bindGroupLayout = null;
@@ -2225,7 +2226,7 @@ var GPUCurtains = (() => {
     /**
      * Creates Bindings based on a list of inputs
      * @param bindingType - [binding type]{@link Binding#bindingType}
-     * @param inputs - [inputs]{@link InputBindings} that will be used to create the binding
+     * @param inputs - [inputs]{@link ReadOnlyInputBindings} that will be used to create the binding
      * @returns - a {@link bindings} array
      */
     createInputBindings(bindingType = "uniform", inputs = {}) {
@@ -2241,14 +2242,15 @@ var GPUCurtains = (() => {
             visibility: binding.access === "read_write" ? "compute" : binding.visibility,
             access: binding.access ?? "read",
             // read by default
-            bindings: binding.bindings
+            struct: binding.struct,
+            ...binding.shouldCopyResult !== void 0 && { shouldCopyResult: binding.shouldCopyResult }
           };
           const BufferBindingConstructor = bindingParams.access === "read_write" ? WritableBufferBinding : BufferBinding;
-          return binding.useStruct !== false ? new BufferBindingConstructor(bindingParams) : Object.keys(binding.bindings).map((bindingKey) => {
+          return binding.useStruct !== false ? new BufferBindingConstructor(bindingParams) : Object.keys(binding.struct).map((bindingKey) => {
             bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey);
             bindingParams.name = inputKey + bindingKey;
             bindingParams.useStruct = false;
-            bindingParams.bindings = { [bindingKey]: binding.bindings[bindingKey] };
+            bindingParams.struct = { [bindingKey]: binding.struct[bindingKey] };
             return new BufferBindingConstructor(bindingParams);
           });
         })
@@ -2259,8 +2261,8 @@ var GPUCurtains = (() => {
      */
     setInputBindings() {
       this.addBindings([
-        ...this.createInputBindings("uniform", this.options.inputs.uniforms),
-        ...this.createInputBindings("storage", this.options.inputs.storages)
+        ...this.createInputBindings("uniform", this.options.uniforms),
+        ...this.createInputBindings("storage", this.options.storages)
       ]);
     }
     /**
@@ -2312,7 +2314,7 @@ var GPUCurtains = (() => {
       this.needsPipelineFlush = true;
     }
     /**
-     * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
+     * Get all [bind group struct]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings() {
       return this.bindings.filter(
@@ -2339,7 +2341,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.
-     * For buffer bindings, create a GPUBuffer first if needed
+     * For buffer struct, create a GPUBuffer first if needed
      */
     fillEntries() {
       this.bindings.forEach((binding) => {
@@ -2404,7 +2406,7 @@ var GPUCurtains = (() => {
       });
     }
     /**
-     * Update the {@link BindGroup}, which means update its [buffer bindings]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
+     * Update the {@link BindGroup}, which means update its [buffer struct]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
      * Called at each render from the parent {@link Material}
      * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
      */
@@ -2792,7 +2794,7 @@ var GPUCurtains = (() => {
         label: this.options.label + ": model matrix",
         name: this.options.name + "Matrix",
         useStruct: false,
-        bindings: {
+        struct: {
           matrix: {
             name: this.options.name + "Matrix",
             type: "mat4x4f",
@@ -2814,7 +2816,7 @@ var GPUCurtains = (() => {
     #coverScale;
     #rotationMatrix;
     /**
-     * Set our [bindings]{@link Texture#bindings}
+     * Set our [struct]{@link Texture#bindings}
      */
     setBindings() {
       this.bindings = [
@@ -3162,7 +3164,7 @@ var GPUCurtains = (() => {
     /* RENDER */
     /**
      * Render a {@link Texture}:
-     * - Update its [model matrix]{@link Texture#modelMatrix} and [bindings]{@link Texture#bindings} if needed
+     * - Update its [model matrix]{@link Texture#modelMatrix} and [struct]{@link Texture#bindings} if needed
      * - Upload the texture if it needs to be done
      */
     render() {
@@ -3210,11 +3212,11 @@ var GPUCurtains = (() => {
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
      * @param {TextureBindGroupParams=} parameters - [parameters]{@link TextureBindGroupParams} used to create our {@link TextureBindGroup}
      */
-    constructor(renderer, { label, index = 0, bindings = [], inputs, textures = [], samplers = [] } = {}) {
+    constructor(renderer, { label, index = 0, bindings = [], uniforms, storages, textures = [], samplers = [] } = {}) {
       const type = "TextureBindGroup";
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, type);
-      super(renderer, { label, index, bindings, inputs });
+      super(renderer, { label, index, bindings, uniforms, storages });
       this.options = {
         ...this.options,
         // will be filled after
@@ -3231,7 +3233,7 @@ var GPUCurtains = (() => {
       this.externalTexturesIDs = [];
     }
     /**
-     * Adds a texture to the textures array and the bindings
+     * Adds a texture to the textures array and the struct
      * @param texture - texture to add
      */
     addTexture(texture) {
@@ -3246,7 +3248,7 @@ var GPUCurtains = (() => {
       return this.options.textures;
     }
     /**
-     * Adds a sampler to the samplers array and the bindings
+     * Adds a sampler to the samplers array and the struct
      * @param sampler
      */
     addSampler(sampler) {
@@ -3354,7 +3356,7 @@ var GPUCurtains = (() => {
       });
     }
     /**
-     * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer bindings]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+     * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer struct]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
      */
     update() {
       this.updateTextures();
@@ -3817,7 +3819,7 @@ var GPUCurtains = (() => {
       this.textureBinding.resource = this.texture;
     }
     /**
-     * Set our [bindings]{@link RenderTexture#bindings}
+     * Set our [struct]{@link RenderTexture#bindings}
      */
     setBindings() {
       this.bindings = [
@@ -3873,14 +3875,17 @@ var GPUCurtains = (() => {
       isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { shaders, label, useAsyncPipeline, inputs, bindGroups, samplers } = parameters;
+      const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, samplers, textures, renderTextures } = parameters;
       this.options = {
         shaders,
         label,
         ...useAsyncPipeline !== void 0 && { useAsyncPipeline },
-        ...inputs !== void 0 && { inputs },
+        ...uniforms !== void 0 && { uniforms },
+        ...storages !== void 0 && { storages },
         ...bindGroups !== void 0 && { bindGroups },
-        ...samplers !== void 0 && { samplers }
+        ...samplers !== void 0 && { samplers },
+        ...textures !== void 0 && { textures },
+        ...renderTextures !== void 0 && { renderTextures }
       };
       this.bindGroups = [];
       this.texturesBindGroups = [];
@@ -3995,10 +4000,11 @@ var GPUCurtains = (() => {
       this.storages = {};
       this.inputsBindGroups = [];
       this.inputsBindings = [];
-      if (this.options.inputs) {
+      if (this.options.uniforms || this.options.storages) {
         const inputsBindGroup = new BindGroup(this.renderer, {
           label: this.options.label + ": Bindings bind group",
-          inputs: this.options.inputs
+          uniforms: this.options.uniforms,
+          storages: this.options.storages
         });
         this.processBindGroupBindings(inputsBindGroup);
         this.inputsBindGroups.push(inputsBindGroup);
@@ -4009,14 +4015,14 @@ var GPUCurtains = (() => {
       });
     }
     /**
-     * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related bindings
+     * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related struct
      * @readonly
      */
     get texturesBindGroup() {
       return this.texturesBindGroups[0];
     }
     /**
-     * Process all {@see BindGroup} bindings and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to bindings.
+     * Process all {@see BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
      * @param bindGroup - The {@see BindGroup} to process
      */
     processBindGroupBindings(bindGroup) {
@@ -4024,12 +4030,12 @@ var GPUCurtains = (() => {
         if (inputBinding.bindingType === "uniform")
           this.uniforms = {
             ...this.uniforms,
-            [inputBinding.name]: inputBinding.bindings
+            [inputBinding.name]: inputBinding.inputs
           };
         if (inputBinding.bindingType === "storage")
           this.storages = {
             ...this.storages,
-            [inputBinding.name]: inputBinding.bindings
+            [inputBinding.name]: inputBinding.inputs
           };
         this.inputsBindings.push(inputBinding);
       });
@@ -4121,7 +4127,7 @@ var GPUCurtains = (() => {
     /**
      * [Update]{@link BindGroup#update} all bind groups:
      * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-     * - Update its [buffer bindings]{@link BindGroup#bufferBindings}
+     * - Update its [buffer struct]{@link BindGroup#bufferBindings}
      * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
      * - Check if we need to flush the pipeline
      */
@@ -4154,7 +4160,7 @@ var GPUCurtains = (() => {
       const bufferBinding = this.getBindingByName(bufferBindingName);
       if (bufferBinding) {
         if (!bindingName) {
-          Object.keys(bufferBinding.bindings).forEach(
+          Object.keys(bufferBinding.inputs).forEach(
             (bindingKey) => bufferBinding.shouldUpdateBinding(bindingKey)
           );
         } else {
@@ -4175,6 +4181,12 @@ var GPUCurtains = (() => {
           label: this.options.label + ": Textures bind group"
         })
       );
+      this.options.textures?.forEach((texture) => {
+        this.addTexture(texture);
+      });
+      this.options.renderTextures?.forEach((texture) => {
+        this.addTexture(texture);
+      });
     }
     /**
      * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
@@ -4540,7 +4552,8 @@ var GPUCurtains = (() => {
         label,
         shaders,
         renderOrder,
-        inputs,
+        uniforms,
+        storages,
         bindGroups,
         autoRender,
         useAsyncPipeline,
@@ -4566,7 +4579,8 @@ var GPUCurtains = (() => {
       this.setComputeMaterial({
         label: this.options.label,
         shaders: this.options.shaders,
-        inputs,
+        uniforms,
+        storages,
         bindGroups,
         useAsyncPipeline,
         dispatchSize
@@ -4756,7 +4770,7 @@ var GPUCurtains = (() => {
     }
     /**
      * Called before rendering the ComputePass
-     * Checks if the material is ready and eventually update its bindings
+     * Checks if the material is ready and eventually update its struct
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready)
@@ -5504,7 +5518,7 @@ var GPUCurtains = (() => {
       super(renderer, parameters);
       this.type = type;
       this.renderer = renderer;
-      const { shaders, label, useAsyncPipeline, inputs, bindGroups, ...renderingOptions } = parameters;
+      const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, ...renderingOptions } = parameters;
       if (!shaders.vertex.entryPoint) {
         shaders.vertex.entryPoint = "main";
       }
@@ -5514,10 +5528,6 @@ var GPUCurtains = (() => {
       this.options = {
         ...this.options,
         shaders,
-        label,
-        ...useAsyncPipeline !== void 0 && { useAsyncPipeline },
-        ...inputs !== void 0 && { inputs },
-        ...bindGroups !== void 0 && { bindGroups },
         rendering: renderingOptions
       };
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
@@ -5877,6 +5887,7 @@ struct VertexOutput {
         this.transparent = meshParameters.transparent;
         this.setShaders();
         this.material = new RenderMaterial(this.renderer, meshParameters);
+        this.material.options.textures?.forEach((texture) => this.onTextureAdded(texture));
       }
       /**
        * Set Mesh material attributes
@@ -6062,7 +6073,7 @@ struct VertexOutput {
       /**
        * Called before rendering the Mesh
        * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-       * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
+       * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
        */
       onBeforeRenderPass() {
         if (!this.renderer.ready)
@@ -6671,13 +6682,13 @@ struct VSOutput {
       setMaterial(meshParameters) {
         const matricesUniforms = {
           label: "Matrices",
-          bindings: {
+          struct: {
             model: {
               name: "model",
               type: "mat4x4f",
               value: this.modelMatrix,
               onBeforeUpdate: () => {
-                matricesUniforms.bindings.model.value = this.modelMatrix;
+                matricesUniforms.struct.model.value = this.modelMatrix;
               }
             },
             modelView: {
@@ -6686,7 +6697,7 @@ struct VSOutput {
               type: "mat4x4f",
               value: this.modelViewMatrix,
               onBeforeUpdate: () => {
-                matricesUniforms.bindings.modelView.value = this.modelViewMatrix;
+                matricesUniforms.struct.modelView.value = this.modelViewMatrix;
               }
             },
             modelViewProjection: {
@@ -6694,14 +6705,14 @@ struct VSOutput {
               type: "mat4x4f",
               value: this.modelViewProjectionMatrix,
               onBeforeUpdate: () => {
-                matricesUniforms.bindings.modelViewProjection.value = this.modelViewProjectionMatrix;
+                matricesUniforms.struct.modelViewProjection.value = this.modelViewProjectionMatrix;
               }
             }
           }
         };
-        if (!meshParameters.inputs)
-          meshParameters.inputs = { uniforms: {} };
-        meshParameters.inputs.uniforms.matrices = matricesUniforms;
+        if (!meshParameters.uniforms)
+          meshParameters.uniforms = {};
+        meshParameters.uniforms.matrices = matricesUniforms;
         super.setMaterial(meshParameters);
       }
       /* SIZE & TRANSFORMS */
@@ -8776,12 +8787,21 @@ ${this.shaders.compute.head}`;
         }
       });
     }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} is lost.
+     * Reset all our samplers, force all our scene objects to lose context.
+     */
     loseContext() {
       this.ready = false;
       this.samplers.forEach((sampler) => sampler.sampler = null);
       this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext());
       this.buffers = [];
     }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures.
+     * @async
+     */
     async restoreContext() {
       await this.setAdapter();
       await this.setDevice();
@@ -8789,7 +8809,7 @@ ${this.shaders.compute.head}`;
         sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options });
       });
       this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext());
-      this.resize();
+      this.onResize();
       this.ready = true;
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
@@ -9224,9 +9244,22 @@ ${this.shaders.compute.head}`;
       camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
       this.setCamera(camera);
     }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} is lost.
+     * Reset all our samplers, force all our scene objects and camera bind group to lose context.
+     */
     loseContext() {
       super.loseContext();
       this.cameraBindGroup.loseContext();
+    }
+    /**
+     * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures, re-write our camera buffer binding.
+     * @async
+     */
+    async restoreContext() {
+      this.cameraBufferBinding.shouldUpdate = true;
+      return super.restoreContext();
     }
     /**
      * Set the [camera]{@link GPUCameraRenderer#camera}
@@ -9260,21 +9293,21 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
+     * Set the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
      */
     setCameraBufferBinding() {
       this.cameraBufferBinding = new BufferBinding({
         label: "Camera",
         name: "camera",
         visibility: "vertex",
-        bindings: {
+        struct: {
           model: {
             // camera model matrix
             name: "model",
             type: "mat4x4f",
             value: this.camera.modelMatrix,
             onBeforeUpdate: () => {
-              this.cameraBufferBinding.bindings.model.value = this.camera.modelMatrix;
+              this.cameraBufferBinding.inputs.model.value = this.camera.modelMatrix;
             }
           },
           view: {
@@ -9283,7 +9316,7 @@ ${this.shaders.compute.head}`;
             type: "mat4x4f",
             value: this.camera.viewMatrix,
             onBeforeUpdate: () => {
-              this.cameraBufferBinding.bindings.view.value = this.camera.viewMatrix;
+              this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix;
             }
           },
           projection: {
@@ -9292,7 +9325,7 @@ ${this.shaders.compute.head}`;
             type: "mat4x4f",
             value: this.camera.projectionMatrix,
             onBeforeUpdate: () => {
-              this.cameraBufferBinding.bindings.projection.value = this.camera.projectionMatrix;
+              this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix;
             }
           }
         }
@@ -9312,7 +9345,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
+     * Tell our [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its struct
      */
     updateCameraBindings() {
       this.cameraBufferBinding?.shouldUpdateBinding("model");

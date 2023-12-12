@@ -67,7 +67,7 @@ export class RenderTexture {
   /** Options used to create this {@link RenderTexture} */
   options: RenderTextureParams
 
-  /** Array of [bindings]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
+  /** Array of [struct]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
   bindings: BindGroupBindingElement[]
   /** Whether to update the [bind group]{@link BindGroup} to which the [texture binding]{@link TextureBinding} belongs */
   shouldUpdateBindGroup: boolean
@@ -100,7 +100,7 @@ export class RenderTexture {
     // sizes
     this.setSize(this.options.size)
 
-    // bindings
+    // struct
     this.setBindings()
 
     // texture
@@ -165,7 +165,7 @@ export class RenderTexture {
   }
 
   /**
-   * Set our [bindings]{@link RenderTexture#bindings}
+   * Set our [struct]{@link RenderTexture#bindings}
    */
   setBindings() {
     this.bindings = [

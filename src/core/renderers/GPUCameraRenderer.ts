@@ -15,15 +15,15 @@ export interface GPUCameraRendererParams extends GPURendererParams {
 
 /**
  * GPUCameraRenderer class:
- * This renderer also creates a {@link Camera} and its associated [bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [bind group]{@link GPUCameraRenderer#cameraBindGroup}
+ * This renderer also creates a {@link Camera} and its associated [struct]{@link GPUCameraRenderer#cameraBufferBinding} and [bind group]{@link GPUCameraRenderer#cameraBindGroup}
  * @extends GPURenderer
  */
 export class GPUCameraRenderer extends GPURenderer {
   /** {@link Camera} used by this {@link GPUCameraRenderer} */
   camera: Camera
-  /** [bindings]{@link BufferBinding} handling the [camera]{@link GPUCameraRenderer#camera} matrices */
+  /** [struct]{@link BufferBinding} handling the [camera]{@link GPUCameraRenderer#camera} matrices */
   cameraBufferBinding: BufferBinding
-  /** [bind group]{@link BindGroup} handling the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} */
+  /** [bind group]{@link BindGroup} handling the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} */
   cameraBindGroup: BindGroup
 
   /**
@@ -71,10 +71,24 @@ export class GPUCameraRenderer extends GPURenderer {
     this.setCamera(camera)
   }
 
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} is lost.
+   * Reset all our samplers, force all our scene objects and camera bind group to lose context.
+   */
   loseContext() {
     super.loseContext()
     // lose camera bind group context as well
     this.cameraBindGroup.loseContext()
+  }
+
+  /**
+   * Called when the [renderer device]{@link GPURenderer#device} should be restored.
+   * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures, re-write our camera buffer binding.
+   * @async
+   */
+  async restoreContext(): Promise<void> {
+    this.cameraBufferBinding.shouldUpdate = true
+    return super.restoreContext()
   }
 
   /**
@@ -114,21 +128,21 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
+   * Set the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
    */
   setCameraBufferBinding() {
     this.cameraBufferBinding = new BufferBinding({
       label: 'Camera',
       name: 'camera',
       visibility: 'vertex',
-      bindings: {
+      struct: {
         model: {
           // camera model matrix
           name: 'model',
           type: 'mat4x4f',
           value: this.camera.modelMatrix,
           onBeforeUpdate: () => {
-            this.cameraBufferBinding.bindings.model.value = this.camera.modelMatrix
+            this.cameraBufferBinding.inputs.model.value = this.camera.modelMatrix
           },
         },
         view: {
@@ -137,7 +151,7 @@ export class GPUCameraRenderer extends GPURenderer {
           type: 'mat4x4f',
           value: this.camera.viewMatrix,
           onBeforeUpdate: () => {
-            this.cameraBufferBinding.bindings.view.value = this.camera.viewMatrix
+            this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix
           },
         },
         projection: {
@@ -146,7 +160,7 @@ export class GPUCameraRenderer extends GPURenderer {
           type: 'mat4x4f',
           value: this.camera.projectionMatrix,
           onBeforeUpdate: () => {
-            this.cameraBufferBinding.bindings.projection.value = this.camera.projectionMatrix
+            this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix
           },
         },
       },
@@ -170,7 +184,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
+   * Tell our [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its struct
    */
   updateCameraBindings() {
     this.cameraBufferBinding?.shouldUpdateBinding('model')

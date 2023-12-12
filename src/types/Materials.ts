@@ -61,32 +61,28 @@ export type MaterialBindGroups = AllowedBindGroups[]
 /**
  * Inputs (i.e. data provided by the user) parameters used to create a {@link Material}
  */
-export interface MaterialInputBindingsParams {
-  /** [Inputs]{@link BindGroupInputs} used by this {@link Material} to create [bind groups]{@link BindGroup} internally */
-  inputs?: BindGroupInputs
+export interface MaterialInputBindingsParams extends BindGroupInputs {
   /** Array of already created [bind groups]{@link BindGroup} to be used by this {@link Material} */
   bindGroups?: BindGroup[]
   /** Array of already created [samplers]{@link Sampler} to be used by this {@link Material} */
-  samplers?: Sampler[] // TODO render material property or not?
+  samplers?: Sampler[]
+  /** Array of already created [textures]{@link Texture} to be used by this {@link Material} */
+  textures?: Texture[]
+  /** Array of already created [render textures]{@link RenderTexture} to be used by this {@link Material} */
+  renderTextures?: RenderTexture[]
 }
 
 /** Parameters used to create a {@link Material} */
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
 
 /** Options used to create this {@link Material} */
-export interface MaterialOptions {
+export interface MaterialOptions extends MaterialInputBindingsParams {
   /** The label of the {@link Material}, sent to various GPU objects for debugging purpose */
   label: string
   /** Shaders to use with this {@link Material} */
   shaders: MaterialShaders
   /** Whether to compile the {@link Material} [pipeline]{@link GPUPipelineBase} asynchronously or not */
   useAsyncPipeline?: boolean
-  /** [Inputs]{@link BindGroupInputs} used by this {@link Material} to create [bind groups]{@link BindGroup} internally */
-  inputs?: BindGroupInputs
-  /** Array of already created [bind groups]{@link BindGroup} to be used by this {@link Material} */
-  bindGroups?: BindGroup[]
-  /** Array of already created [samplers]{@link Sampler} to be used by this {@link Material} */
-  samplers?: Sampler[]
 }
 
 /* COMPUTE MATERIAL */
