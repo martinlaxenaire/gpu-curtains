@@ -3,7 +3,7 @@ import { GPUCurtains, BoxGeometry, SphereGeometry, DOMMesh, Sampler } from '../.
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
-    container: 'canvas',
+    container: '#canvas',
     camera: {
       fov: 35,
     },

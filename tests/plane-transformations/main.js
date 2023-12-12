@@ -3,7 +3,7 @@ import { GPUCurtains, Vec2, Plane } from '../../src'
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
-    container: 'canvas',
+    container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })

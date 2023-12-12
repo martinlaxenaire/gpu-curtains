@@ -9,7 +9,7 @@ import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
 import { Camera } from '../core/camera/Camera'
-import { DOMElementBoundingRect, DOMPosition } from '../core/DOM/DOMElement'
+import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
 import { GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
 
 /**
@@ -115,7 +115,7 @@ export class GPUCurtains {
    * Set the [container]{@link GPUCurtains#container}
    * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
    */
-  setContainer(container: string | HTMLElement) {
+  setContainer(container: DOMElementParams['element']) {
     if (!container) {
       const container = document.createElement('div')
       container.setAttribute('id', 'curtains-gpu-canvas')
@@ -123,7 +123,7 @@ export class GPUCurtains {
       this.options.container = container
     } else {
       if (typeof container === 'string') {
-        container = document.getElementById(container)
+        container = document.querySelector(container)
 
         if (!container) {
           const container = document.createElement('div')
@@ -131,10 +131,10 @@ export class GPUCurtains {
           document.body.appendChild(container)
           this.options.container = container
         } else {
-          this.options.container = container
+          this.options.container = container as HTMLElement
         }
       } else if (container instanceof Element) {
-        this.options.container = container
+        this.options.container = container as HTMLElement
       }
     }
 
@@ -161,16 +161,20 @@ export class GPUCurtains {
     })
   }
 
-  restoreContext() {
-    this.renderer?.restoreContext()
-  }
-
   /**
    * Set the [curtains renderer context]{@link GPUCurtainsRenderer#setContext}
    * @async
    */
   async setRendererContext(): Promise<void> {
     await this.renderer.setContext()
+  }
+
+  /**
+   * Restore the [renderer]{@link GPUCurtainsRenderer} context
+   * @async
+   */
+  async restoreContext() {
+    await this.renderer?.restoreContext()
   }
 
   /**

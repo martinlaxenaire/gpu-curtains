@@ -44,7 +44,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // curtains
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains.GPUCurtains({
-    container: 'canvas',
+    container: '#canvas',
     camera: {
       fov: 35,
     },

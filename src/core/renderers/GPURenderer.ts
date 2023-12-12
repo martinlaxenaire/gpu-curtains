@@ -186,13 +186,19 @@ export class GPURenderer {
     this.setTasksQueues()
     this.setRendererObjects()
 
-    // create the canvas
-    this.canvas = document.createElement('canvas')
-
     // needed to get container bounding box
     this.domElement = new DOMElement({
       element: container,
     })
+
+    // create the canvas
+    if (container instanceof HTMLCanvasElement) {
+      this.canvas = container
+    } else {
+      this.canvas = document.createElement('canvas')
+      // append the canvas
+      this.domElement.element.appendChild(this.canvas)
+    }
 
     // now track any change in the document body size, and resize our scene
     this.documentBody = new DOMElement({
@@ -300,9 +306,6 @@ export class GPURenderer {
       this.setMainRenderPass()
       this.setPipelineManager()
       this.setScene()
-
-      // append the canvas and we're ready!
-      this.domElement.element.appendChild(this.canvas)
 
       // ready to start
       this.ready = true
