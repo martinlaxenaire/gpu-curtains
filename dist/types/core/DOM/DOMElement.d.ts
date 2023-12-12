@@ -45,7 +45,7 @@ export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPositio
  * Parameters used to create a {@link DOMElement}
  */
 export interface DOMElementParams {
-    element?: string | Node;
+    element?: string | Element;
     onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
     onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
 }
