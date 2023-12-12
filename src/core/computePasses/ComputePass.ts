@@ -114,7 +114,8 @@ export class ComputePass {
       label,
       shaders,
       renderOrder,
-      inputs,
+      uniforms,
+      storages,
       bindGroups,
       autoRender,
       useAsyncPipeline,
@@ -146,7 +147,8 @@ export class ComputePass {
     this.setComputeMaterial({
       label: this.options.label,
       shaders: this.options.shaders,
-      inputs,
+      uniforms,
+      storages,
       bindGroups,
       useAsyncPipeline,
       dispatchSize,
@@ -374,7 +376,7 @@ export class ComputePass {
 
   /**
    * Called before rendering the ComputePass
-   * Checks if the material is ready and eventually update its bindings
+   * Checks if the material is ready and eventually update its struct
    */
   onBeforeRenderPass() {
     if (!this.renderer.ready) return

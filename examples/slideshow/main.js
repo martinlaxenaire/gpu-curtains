@@ -98,27 +98,25 @@ window.addEventListener('DOMContentLoaded', async () => {
       // so we can copy them as regular textures
       useExternalTextures: false,
     },
-    inputs: {
-      uniforms: {
-        transition: {
-          label: 'Transition',
-          bindings: {
-            timer: {
-              type: 'f32', // this means our uniform is a float
-              value: 0,
-            },
-            duration: {
-              type: 'f32',
-              value: slideshowState.duration * 60, // duration * 60fps
-            },
-            colsCount: {
-              type: 'f32',
-              value: 15,
-            },
-            smoothness: {
-              type: 'f32',
-              value: 0.75,
-            },
+    uniforms: {
+      transition: {
+        label: 'Transition',
+        struct: {
+          timer: {
+            type: 'f32', // this means our uniform is a float
+            value: 0,
+          },
+          duration: {
+            type: 'f32',
+            value: slideshowState.duration * 60, // duration * 60fps
+          },
+          colsCount: {
+            type: 'f32',
+            value: 15,
+          },
+          smoothness: {
+            type: 'f32',
+            value: 0.75,
           },
         },
       },

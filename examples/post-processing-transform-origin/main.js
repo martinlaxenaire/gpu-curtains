@@ -181,14 +181,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        rotation: {
-          bindings: {
-            effect: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      rotation: {
+        struct: {
+          effect: {
+            type: 'f32',
+            value: 0,
           },
         },
       },

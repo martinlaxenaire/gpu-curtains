@@ -27,8 +27,8 @@ export interface BufferBindingBaseParams {
     useStruct?: boolean;
     /** {@link BufferBinding} memory access types (read only or read/write) */
     access?: BufferBindingMemoryAccessType;
-    /** Object containing one or multiple [input bindings]{@link Input} */
-    bindings?: Record<string, Input>;
+    /** Object containing one or multiple [inputs]{@link Input} describing the structure of the {@link BufferBinding} */
+    struct?: Record<string, Input>;
 }
 /**
  * Parameters used to create a {@link BufferBinding}
@@ -37,19 +37,19 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
 }
 /**
  * BufferBinding class:
- * Used to format inputs bindings and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
+ * Used to format inputs struct and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
  * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. "array<f32>", "array<vec3f>" etc.)
  * @extends Binding
  */
 export declare class BufferBinding extends Binding {
-    /** Flag to indicate whether these {@link BufferBinding} should use structured data */
+    /** Flag to indicate whether this {@link BufferBinding} [elements]{@link bufferElements} should be packed in a single structured object or if each one of them should be a separate binding. */
     useStruct: boolean;
     /** All the {@link BufferBinding} data inputs */
-    bindings: Record<string, BufferBindingInput>;
-    /** Flag to indicate whether one of the {@link bindings} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
+    inputs: Record<string, BufferBindingInput>;
+    /** Flag to indicate whether one of the {@link inputs} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
     shouldUpdate: boolean;
-    /** An array describing how each corresponding {@link bindings} should be inserted into our {@link arrayView} array */
+    /** An array describing how each corresponding {@link inputs} should be inserted into our {@link arrayView} array */
     bufferElements: Array<BufferElement | BufferArrayElement | BufferInterleavedArrayElement>;
     /** Total size of our {@link arrayBuffer} array in bytes */
     arrayBufferSize: number;
@@ -74,9 +74,9 @@ export declare class BufferBinding extends Binding {
      * @param {number=} parameters.bindIndex - bind index inside the bind group
      * @param {MaterialShadersType=} parameters.visibility - shader visibility
      * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
-     * @param {Object.<string, Input>} parameters.bindings - bindings inputs
+     * @param {Object.<string, Input>} parameters.bindings - struct inputs
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, useStruct, access, bindings, }: BufferBindingParams);
+    constructor({ label, name, bindingType, bindIndex, visibility, useStruct, access, struct, }: BufferBindingParams);
     /**
      * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
      */
@@ -90,13 +90,13 @@ export declare class BufferBinding extends Binding {
         buffer: GPUBuffer | null;
     };
     /**
-     * Format input bindings and set our {@link bindings}
-     * @param bindings - bindings inputs
+     * Format input struct and set our {@link inputs}
+     * @param bindings - struct inputs
      */
     setBindings(bindings: Record<string, Input>): void;
     /**
      * Set our buffer attributes:
-     * Takes all the {@link bindings} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link value} typed array accordingly.
+     * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link value} typed array accordingly.
      */
     setBufferAttributes(): void;
     /**
@@ -110,7 +110,7 @@ export declare class BufferBinding extends Binding {
     shouldUpdateBinding(bindingName?: string): void;
     /**
      * Executed at the beginning of a Material render call.
-     * If any of the {@link bindings} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
+     * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
      * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update(): void;

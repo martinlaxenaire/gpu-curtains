@@ -61,9 +61,9 @@ export type MaterialBindGroups = AllowedBindGroups[]
 /**
  * Inputs (i.e. data provided by the user) parameters used to create a {@link Material}
  */
-export interface MaterialInputBindingsParams {
+export interface MaterialInputBindingsParams extends BindGroupInputs {
   /** [Inputs]{@link BindGroupInputs} used by this {@link Material} to create [bind groups]{@link BindGroup} internally */
-  inputs?: BindGroupInputs
+  //inputs?: BindGroupInputs
   /** Array of already created [bind groups]{@link BindGroup} to be used by this {@link Material} */
   bindGroups?: BindGroup[]
   /** Array of already created [samplers]{@link Sampler} to be used by this {@link Material} */
@@ -74,7 +74,7 @@ export interface MaterialInputBindingsParams {
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
 
 /** Options used to create this {@link Material} */
-export interface MaterialOptions {
+export interface MaterialOptions extends BindGroupInputs {
   /** The label of the {@link Material}, sent to various GPU objects for debugging purpose */
   label: string
   /** Shaders to use with this {@link Material} */
@@ -82,7 +82,7 @@ export interface MaterialOptions {
   /** Whether to compile the {@link Material} [pipeline]{@link GPUPipelineBase} asynchronously or not */
   useAsyncPipeline?: boolean
   /** [Inputs]{@link BindGroupInputs} used by this {@link Material} to create [bind groups]{@link BindGroup} internally */
-  inputs?: BindGroupInputs
+  //inputs?: BindGroupInputs
   /** Array of already created [bind groups]{@link BindGroup} to be used by this {@link Material} */
   bindGroups?: BindGroup[]
   /** Array of already created [samplers]{@link Sampler} to be used by this {@link Material} */

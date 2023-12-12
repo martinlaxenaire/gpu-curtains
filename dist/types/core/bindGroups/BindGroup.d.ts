@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
-import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, InputBindings } from '../../types/BindGroups';
+import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, ReadOnlyInputBindings } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { TextureBindGroupParams } from './TextureBindGroup';
 import { BindingType } from '../bindings/Binding';
@@ -18,9 +18,9 @@ export declare class BindGroup {
     renderer: Renderer;
     /** Options used to create this {@link BindGroup} */
     options: TextureBindGroupParams;
-    /** Index of this {@link BindGroup}, used to link bindings in the shaders */
+    /** Index of this {@link BindGroup}, used to link struct in the shaders */
     index: number;
-    /** List of [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup} */
+    /** List of [struct]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup} */
     bindings: BindGroupBindingElement[];
     /** Our {@link BindGroup} [entries]{@link BindGroupEntries} objects */
     entries: BindGroupEntries;
@@ -37,7 +37,7 @@ export declare class BindGroup {
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
      * @param {BindGroupParams=} parameters - [parameters]{@link BindGroupParams} used to create our {@link BindGroup}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, inputs }?: BindGroupParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, uniforms, storages }?: BindGroupParams);
     /**
      * Sets our [BindGroup index]{@link BindGroup#index}
      * @param index - [BindGroup index]{@link BindGroup#index}
@@ -56,10 +56,10 @@ export declare class BindGroup {
     /**
      * Creates Bindings based on a list of inputs
      * @param bindingType - [binding type]{@link Binding#bindingType}
-     * @param inputs - [inputs]{@link InputBindings} that will be used to create the binding
+     * @param inputs - [inputs]{@link ReadOnlyInputBindings} that will be used to create the binding
      * @returns - a {@link bindings} array
      */
-    createInputBindings(bindingType?: BindingType, inputs?: InputBindings): BindGroupBindingElement[];
+    createInputBindings(bindingType?: BindingType, inputs?: ReadOnlyInputBindings): BindGroupBindingElement[];
     /**
      * Create and adds {@link bindings} based on inputs provided upon creation
      */
@@ -87,7 +87,7 @@ export declare class BindGroup {
      */
     loseContext(): void;
     /**
-     * Get all [bind group bindings]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
+     * Get all [bind group struct]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings(): BindGroupBufferBindingElement[];
     /**
@@ -97,7 +97,7 @@ export declare class BindGroup {
     createBindingBuffer(binding: BindGroupBufferBindingElement): void;
     /**
      * Fill in our entries bindGroupLayout and bindGroup arrays with the correct binding resources.
-     * For buffer bindings, create a GPUBuffer first if needed
+     * For buffer struct, create a GPUBuffer first if needed
      */
     fillEntries(): void;
     /**
@@ -119,7 +119,7 @@ export declare class BindGroup {
      */
     updateBufferBindings(): void;
     /**
-     * Update the {@link BindGroup}, which means update its [buffer bindings]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
+     * Update the {@link BindGroup}, which means update its [buffer struct]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
      * Called at each render from the parent {@link Material}
      * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
      */

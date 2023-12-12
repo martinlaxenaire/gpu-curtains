@@ -124,14 +124,14 @@ export class RenderTarget {
    * Destroy our {@link RenderTarget}
    */
   destroy() {
-    // release mesh bindings
+    // release mesh struct
     this.renderer.meshes.forEach((mesh) => {
       if (mesh.renderTarget && mesh.renderTarget.uuid === this.uuid) {
         mesh.setRenderTarget(null)
       }
     })
 
-    // release shader passes bindings
+    // release shader passes struct
     this.renderer.shaderPasses.forEach((shaderPass) => {
       if (shaderPass.renderTarget && shaderPass.renderTarget.uuid === this.uuid) {
         // force render target to null before removing / re-adding to scene

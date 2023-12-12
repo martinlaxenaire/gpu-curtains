@@ -50,7 +50,7 @@ export class Material {
   /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingInput>>
 
-  /** Array of [bindings]{@link Binding} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
+  /** Array of [struct]{@link Binding} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
   inputsBindings: BindGroupBindingElement[]
 
   /** Array of [textures]{@link Texture} handled by this {@link Material} */
@@ -83,33 +83,14 @@ export class Material {
 
     this.uuid = generateUUID()
 
-    const { shaders, label, useAsyncPipeline, inputs, bindGroups, samplers } = parameters
-
-    // shaders = {
-    //   ...{
-    //     vertex: {
-    //       entryPoint: 'main',
-    //     },
-    //     fragment: {
-    //       entryPoint: 'main',
-    //     },
-    //   },
-    //   ...shaders,
-    // }
-
-    // if (!shaders.vertex.entryPoint) {
-    //   shaders.vertex.entryPoint = 'main'
-    // }
-    //
-    // if (!shaders.fragment.entryPoint) {
-    //   shaders.fragment.entryPoint = 'main'
-    // }
+    const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, samplers } = parameters
 
     this.options = {
       shaders,
       label,
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
-      ...(inputs !== undefined && { inputs }),
+      ...(uniforms !== undefined && { uniforms }),
+      ...(storages !== undefined && { storages }),
       ...(bindGroups !== undefined && { bindGroups }),
       ...(samplers !== undefined && { samplers }),
     }
@@ -161,7 +142,7 @@ export class Material {
       texture.texture = null
     })
 
-    // then bind groups and bindings
+    // then bind groups and struct
     ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) =>
       bindGroup.loseContext()
     )
@@ -259,10 +240,11 @@ export class Material {
     this.inputsBindGroups = []
     this.inputsBindings = []
 
-    if (this.options.inputs) {
+    if (this.options.uniforms || this.options.storages) {
       const inputsBindGroup = new BindGroup(this.renderer, {
         label: this.options.label + ': Bindings bind group',
-        inputs: this.options.inputs,
+        uniforms: this.options.uniforms,
+        storages: this.options.storages,
       })
 
       this.processBindGroupBindings(inputsBindGroup)
@@ -276,7 +258,7 @@ export class Material {
   }
 
   /**
-   * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related bindings
+   * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related struct
    * @readonly
    */
   get texturesBindGroup(): TextureBindGroup {
@@ -284,7 +266,7 @@ export class Material {
   }
 
   /**
-   * Process all {@see BindGroup} bindings and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to bindings.
+   * Process all {@see BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
    * @param bindGroup - The {@see BindGroup} to process
    */
   processBindGroupBindings(bindGroup: BindGroup) {
@@ -292,12 +274,12 @@ export class Material {
       if (inputBinding.bindingType === 'uniform')
         this.uniforms = {
           ...this.uniforms,
-          [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).bindings,
+          [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
         }
       if (inputBinding.bindingType === 'storage')
         this.storages = {
           ...this.storages,
-          [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).bindings,
+          [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
         }
 
       // inputBinding.isActive =
@@ -422,7 +404,7 @@ export class Material {
   /**
    * [Update]{@link BindGroup#update} all bind groups:
    * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-   * - Update its [buffer bindings]{@link BindGroup#bufferBindings}
+   * - Update its [buffer struct]{@link BindGroup#bufferBindings}
    * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
    * - Check if we need to flush the pipeline
    */
@@ -432,7 +414,7 @@ export class Material {
       bindGroup.update()
 
       // if a bind group needs to flush the pipeline
-      // usually happens if one of the bindings bindingType has changed,
+      // usually happens if one of the struct bindingType has changed,
       // which means the shader should be re-patched and recreated
       if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups)
@@ -463,7 +445,7 @@ export class Material {
     const bufferBinding = this.getBindingByName(bufferBindingName)
     if (bufferBinding) {
       if (!bindingName) {
-        Object.keys((bufferBinding as BindGroupBufferBindingElement).bindings).forEach((bindingKey) =>
+        Object.keys((bufferBinding as BindGroupBufferBindingElement).inputs).forEach((bindingKey) =>
           (bufferBinding as BindGroupBufferBindingElement).shouldUpdateBinding(bindingKey)
         )
       } else {

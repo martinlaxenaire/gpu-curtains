@@ -140,28 +140,26 @@ window.addEventListener('DOMContentLoaded', async () => {
       bottom: 200,
       left: 0,
     },
-    inputs: {
-      uniforms: {
-        scroll: {
-          label: 'Scroll',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
-            max: {
-              type: 'f32',
-              value: maxScrollEffect,
-            },
+    uniforms: {
+      scroll: {
+        label: 'Scroll',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
+          },
+          max: {
+            type: 'f32',
+            value: maxScrollEffect,
           },
         },
-        instances: {
-          label: 'Instances',
-          bindings: {
-            count: {
-              type: 'f32',
-              value: instancesCount,
-            },
+      },
+      instances: {
+        label: 'Instances',
+        struct: {
+          count: {
+            type: 'f32',
+            value: instancesCount,
           },
         },
       },

@@ -236,7 +236,7 @@ export declare class MeshBaseClass {
     /**
      * Called before rendering the Mesh
      * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
+     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
      */
     onBeforeRenderPass(): void;
     /**

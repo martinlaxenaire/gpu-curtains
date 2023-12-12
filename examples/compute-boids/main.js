@@ -116,60 +116,58 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     dispatchSize: Math.ceil(numParticles / 64), // Note that we divide the vertex count by the workgroup_size!
-    inputs: {
-      uniforms: {
-        params: {
-          //name: 'params',
-          label: 'SimParams',
-          bindings: {
-            systemSize: {
-              type: 'vec2f',
-              value: systemSize,
-            },
-            deltaT: {
-              type: 'f32',
-              value: 0.04,
-            },
-            rule1Distance: {
-              type: 'f32',
-              value: 0.15,
-            },
-            rule2Distance: {
-              type: 'f32',
-              value: 0.05,
-            },
-            rule3Distance: {
-              type: 'f32',
-              value: 0.05,
-            },
-            rule1Scale: {
-              type: 'f32',
-              value: 0.04,
-            },
-            rule2Scale: {
-              type: 'f32',
-              value: 0.1,
-            },
-            rule3Scale: {
-              type: 'f32',
-              value: 0.01,
-            },
+    uniforms: {
+      params: {
+        //name: 'params',
+        label: 'SimParams',
+        struct: {
+          systemSize: {
+            type: 'vec2f',
+            value: systemSize,
+          },
+          deltaT: {
+            type: 'f32',
+            value: 0.04,
+          },
+          rule1Distance: {
+            type: 'f32',
+            value: 0.15,
+          },
+          rule2Distance: {
+            type: 'f32',
+            value: 0.05,
+          },
+          rule3Distance: {
+            type: 'f32',
+            value: 0.05,
+          },
+          rule1Scale: {
+            type: 'f32',
+            value: 0.04,
+          },
+          rule2Scale: {
+            type: 'f32',
+            value: 0.1,
+          },
+          rule3Scale: {
+            type: 'f32',
+            value: 0.01,
           },
         },
       },
-      storages: {
-        particles: {
-          label: 'Particle',
-          access: 'read_write', // we want a readable AND writable buffer!
-          bindings: {
-            position: {
-              type: 'array<vec2f>',
-              value: initialParticlePosition,
-            },
-            velocity: {
-              type: 'array<vec2f>',
-              value: initialParticleVelocity,
-            },
+    },
+    storages: {
+      particles: {
+        label: 'Particle',
+        access: 'read_write', // we want a readable AND writable buffer!
+        struct: {
+          position: {
+            type: 'array<vec2f>',
+            value: initialParticlePosition,
+          },
+          velocity: {
+            type: 'array<vec2f>',
+            value: initialParticleVelocity,
           },
         },
       },
@@ -178,7 +176,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   computePass
     .onReady(() => {
-      // useful to get the WGSL struct and variables code generated based on input bindings
+      // useful to get the WGSL struct and variables code generated based on input struct
       console.log(computePass.material.getAddedShaderCode('compute'))
     })
     .onAfterResize(() => {

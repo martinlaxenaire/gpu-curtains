@@ -176,28 +176,26 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        frames: {
-          label: 'Frames',
-          bindings: {
-            elapsed: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      frames: {
+        label: 'Frames',
+        struct: {
+          elapsed: {
+            type: 'f32',
+            value: 0,
           },
         },
-        instances: {
-          label: 'Instances',
-          bindings: {
-            grid: {
-              type: 'vec3f',
-              value: instancesGrid,
-            },
-            gridGap: {
-              type: 'vec3f',
-              value: instancesGridGap,
-            },
+      },
+      instances: {
+        label: 'Instances',
+        struct: {
+          grid: {
+            type: 'vec3f',
+            value: instancesGrid,
+          },
+          gridGap: {
+            type: 'vec3f',
+            value: instancesGridGap,
           },
         },
       },

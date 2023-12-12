@@ -405,86 +405,80 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const computeBindGroup = new BindGroup(gpuCurtains.renderer, {
     label: 'Cloth simulation compute bind group',
-    inputs: {
-      uniforms: {
-        dimension: {
-          label: 'Dimension',
-          bindings: {
-            size: {
-              type: 'vec2f',
-              value: clothDefinition,
-            },
-          },
-        },
-        params: {
-          label: '',
-          bindings: {
-            deltaTime: {
-              type: 'f32',
-              value: 0.001 * simulationSpeed,
-            },
-            mass: {
-              type: 'f32',
-              value: 1,
-            },
-            dampingConstant: {
-              type: 'f32',
-              value: 50,
-            },
-            gravity: {
-              type: 'vec3f',
-              value: new Vec3(0, -0.0981, 0),
-              //value: new GPUCurtains.Vec3(0, -0.0375, 0),
-            },
-          },
-        },
-        interaction: {
-          label: 'Interaction',
-          bindings: {
-            pointerPosition: {
-              type: 'vec2f',
-              value: new Vec2(Infinity),
-            },
-            pointerVelocity: {
-              type: 'vec2f',
-              value: new Vec2(0), // pointer velocity divided by plane size
-            },
-            pointerSize: {
-              type: 'f32',
-              value: 0.85, // 1 is full plane
-            },
-            pointerStrength: {
-              type: 'f32',
-              value: 250,
-            },
-            wind: {
-              type: 'vec3f',
-              value: new Vec3(0, 0, 0),
-            },
+    uniforms: {
+      dimension: {
+        struct: {
+          size: {
+            type: 'vec2f',
+            value: clothDefinition,
           },
         },
       },
-      storages: {
-        clothVertex: {
-          label: 'ClothVertex',
-          access: 'read_write', // we want a readable AND writable buffer!
-          bindings: {
-            position: {
-              type: 'array<vec4f>',
-              value: vertexPositionArray,
-            },
-            normal: {
-              type: 'array<vec4f>',
-              value: normalPositionArray,
-            },
-            force: {
-              type: 'array<vec4f>',
-              value: vertexForceArray,
-            },
-            velocity: {
-              type: 'array<vec4f>',
-              value: vertexVelocityArray,
-            },
+      params: {
+        struct: {
+          deltaTime: {
+            type: 'f32',
+            value: 0.001 * simulationSpeed,
+          },
+          mass: {
+            type: 'f32',
+            value: 1,
+          },
+          dampingConstant: {
+            type: 'f32',
+            value: 50,
+          },
+          gravity: {
+            type: 'vec3f',
+            value: new Vec3(0, -0.0981, 0),
+            //value: new GPUCurtains.Vec3(0, -0.0375, 0),
+          },
+        },
+      },
+      interaction: {
+        struct: {
+          pointerPosition: {
+            type: 'vec2f',
+            value: new Vec2(Infinity),
+          },
+          pointerVelocity: {
+            type: 'vec2f',
+            value: new Vec2(0), // pointer velocity divided by plane size
+          },
+          pointerSize: {
+            type: 'f32',
+            value: 0.85, // 1 is full plane
+          },
+          pointerStrength: {
+            type: 'f32',
+            value: 250,
+          },
+          wind: {
+            type: 'vec3f',
+            value: new Vec3(0, 0, 0),
+          },
+        },
+      },
+    },
+    storages: {
+      clothVertex: {
+        access: 'read_write', // we want a readable AND writable buffer!
+        struct: {
+          position: {
+            type: 'array<vec4f>',
+            value: vertexPositionArray,
+          },
+          normal: {
+            type: 'array<vec4f>',
+            value: normalPositionArray,
+          },
+          force: {
+            type: 'array<vec4f>',
+            value: vertexForceArray,
+          },
+          velocity: {
+            type: 'array<vec4f>',
+            value: vertexVelocityArray,
           },
         },
       },

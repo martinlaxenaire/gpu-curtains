@@ -13,15 +13,15 @@ export interface GPUCameraRendererParams extends GPURendererParams {
 }
 /**
  * GPUCameraRenderer class:
- * This renderer also creates a {@link Camera} and its associated [bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [bind group]{@link GPUCameraRenderer#cameraBindGroup}
+ * This renderer also creates a {@link Camera} and its associated [struct]{@link GPUCameraRenderer#cameraBufferBinding} and [bind group]{@link GPUCameraRenderer#cameraBindGroup}
  * @extends GPURenderer
  */
 export declare class GPUCameraRenderer extends GPURenderer {
     /** {@link Camera} used by this {@link GPUCameraRenderer} */
     camera: Camera;
-    /** [bindings]{@link BufferBinding} handling the [camera]{@link GPUCameraRenderer#camera} matrices */
+    /** [struct]{@link BufferBinding} handling the [camera]{@link GPUCameraRenderer#camera} matrices */
     cameraBufferBinding: BufferBinding;
-    /** [bind group]{@link BindGroup} handling the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} */
+    /** [bind group]{@link BindGroup} handling the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} */
     cameraBindGroup: BindGroup;
     /**
      * GPUCameraRenderer constructor
@@ -49,7 +49,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     onCameraMatricesChanged(): void;
     /**
-     * Set the [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
+     * Set the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
      */
     setCameraBufferBinding(): void;
     /**
@@ -57,7 +57,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setCameraBindGroup(): void;
     /**
-     * Tell our [camera buffer bindings]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its bindings
+     * Tell our [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its struct
      */
     updateCameraBindings(): void;
     /**

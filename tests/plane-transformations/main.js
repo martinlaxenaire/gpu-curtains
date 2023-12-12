@@ -61,22 +61,20 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     cullMode: 'none',
-    inputs: {
-      uniforms: {
-        mouse: {
-          bindings: {
-            position: {
-              type: 'vec2f',
-              value: mousePosition,
-            },
-            aspect: {
-              type: 'f32',
-              value: 1,
-            },
-            size: {
-              type: 'f32',
-              value: 0.2,
-            },
+    uniforms: {
+      mouse: {
+        struct: {
+          position: {
+            type: 'vec2f',
+            value: mousePosition,
+          },
+          aspect: {
+            type: 'f32',
+            value: 1,
+          },
+          size: {
+            type: 'f32',
+            value: 0.2,
           },
         },
       },

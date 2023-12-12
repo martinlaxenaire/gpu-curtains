@@ -48,14 +48,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     frustumCulled: false, // always draw the floor
     cullMode: 'none',
-    inputs: {
-      uniforms: {
-        checkerboard: {
-          bindings: {
-            scale: {
-              type: 'vec2f',
-              value: floorScale,
-            },
+    uniforms: {
+      checkerboard: {
+        struct: {
+          scale: {
+            type: 'vec2f',
+            value: floorScale,
           },
         },
       },

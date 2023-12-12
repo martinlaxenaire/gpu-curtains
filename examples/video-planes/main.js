@@ -74,15 +74,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   // set our initial parameters (basic uniforms)
   const params = {
     widthSegments: 20,
-    inputs: {
-      uniforms: {
-        frames: {
-          label: 'Frames',
-          bindings: {
-            elapsed: {
-              type: 'f32', // this means our uniform is a float
-              value: 0,
-            },
+    uniforms: {
+      frames: {
+        label: 'Frames',
+        struct: {
+          elapsed: {
+            type: 'f32', // this means our uniform is a float
+            value: 0,
           },
         },
       },

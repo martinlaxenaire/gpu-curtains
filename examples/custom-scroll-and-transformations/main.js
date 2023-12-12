@@ -97,15 +97,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       bottom: 200,
       left: 0,
     },
-    inputs: {
-      uniforms: {
-        scroll: {
-          label: 'Scroll',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      scroll: {
+        label: 'Scroll',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
           },
         },
       },

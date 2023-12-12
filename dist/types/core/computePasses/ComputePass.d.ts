@@ -171,7 +171,7 @@ export declare class ComputePass {
     onAfterResize(callback: () => void): ComputePass;
     /**
      * Called before rendering the ComputePass
-     * Checks if the material is ready and eventually update its bindings
+     * Checks if the material is ready and eventually update its struct
      */
     onBeforeRenderPass(): void;
     /**

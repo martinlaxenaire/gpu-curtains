@@ -20,7 +20,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'Special matrix',
     name: 'specialMatrix',
     bindingType: 'uniform',
-    bindings: {
+    struct: {
       matrix: {
         type: 'mat3x4f',
         value: new Float32Array(3 * 4),
@@ -34,7 +34,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'Test1',
     name: 'test1',
     bindingType: 'uniform',
-    bindings: {
+    struct: {
       pointerSize: {
         type: 'f32',
         value: 0.85, // 1 is full plane
@@ -64,7 +64,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'Test2',
     name: 'test2',
     bindingType: 'uniform',
-    bindings: {
+    struct: {
       deltaTime: {
         type: 'f32',
         value: 0,
@@ -103,7 +103,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'Other binding',
     name: 'otherBinding',
     bindingType: 'uniform',
-    bindings: {
+    struct: {
       systemSize: {
         type: 'vec3f',
         value: new Vec3(),
@@ -129,7 +129,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'Array test',
     name: 'arrayTest',
     bindingType: 'uniform',
-    bindings: {
+    struct: {
       arrayTest: {
         type: 'array<vec3f>',
         value: new Float32Array(3 * 4),
@@ -147,7 +147,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'interleaved vec2 arrays',
     name: 'interleavedVec2Arrays',
     bindingType: 'uniform',
-    bindings: {
+    struct: {
       position: {
         type: 'array<vec2f>',
         value: new Float32Array(2 * 5),
@@ -165,7 +165,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'Simple interleaved array buffer',
     name: 'simpleInterleavedArrayBuffer',
     bindingType: 'uniform',
-    bindings: {
+    struct: {
       position: {
         type: 'array<vec3f>',
         value: new Float32Array(3 * 5),
@@ -183,7 +183,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     label: 'Complex interleaved array buffer',
     name: 'complexInterleavedArrayBuffer',
     bindingType: 'uniform',
-    bindings: {
+    struct: {
       testFloat: {
         type: 'f32',
         value: 0,

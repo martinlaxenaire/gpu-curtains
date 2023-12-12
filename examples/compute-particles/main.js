@@ -223,50 +223,48 @@ window.addEventListener('DOMContentLoaded', async () => {
   // we're explicitly setting the computeAlignment to false
   const particlesBindGroup = new BindGroup(gpuCurtains.renderer, {
     label: 'Particles bind group',
-    inputs: {
-      uniforms: {
-        params: {
-          bindings: {
-            systemSize: {
-              type: 'vec3f',
-              value: systemSize,
-            },
-            time: {
-              type: 'f32',
-              value: 0,
-            },
-            frequency: {
-              type: 'f32',
-              value: 0.01,
-            },
-            amplitude: {
-              type: 'f32',
-              value: 0.5,
-            },
+    uniforms: {
+      params: {
+        struct: {
+          systemSize: {
+            type: 'vec3f',
+            value: systemSize,
+          },
+          time: {
+            type: 'f32',
+            value: 0,
+          },
+          frequency: {
+            type: 'f32',
+            value: 0.01,
+          },
+          amplitude: {
+            type: 'f32',
+            value: 0.5,
           },
         },
       },
-      storages: {
-        particles: {
-          access: 'read_write',
-          bindings: {
-            position: {
-              type: 'array<vec4f>',
-              value: new Float32Array(nbParticles * 4),
-            },
+    },
+    storages: {
+      particles: {
+        access: 'read_write',
+        struct: {
+          position: {
+            type: 'array<vec4f>',
+            value: new Float32Array(nbParticles * 4),
           },
         },
-        particlesStaticData: {
-          access: 'read_write', // we want a readable AND writable buffer!
-          bindings: {
-            maxLife: {
-              type: 'array<u32>',
-              value: new Float32Array(nbParticles),
-            },
-            position: {
-              type: 'array<vec4f>',
-              value: new Float32Array(nbParticles * 4),
-            },
+      },
+      particlesStaticData: {
+        access: 'read_write', // we want a readable AND writable buffer!
+        struct: {
+          maxLife: {
+            type: 'array<u32>',
+            value: new Float32Array(nbParticles),
+          },
+          position: {
+            type: 'array<vec4f>',
+            value: new Float32Array(nbParticles * 4),
           },
         },
       },

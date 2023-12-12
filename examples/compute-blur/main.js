@@ -138,7 +138,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     name: 'direction',
     bindingType: 'uniform',
     visibility: 'compute',
-    bindings: {
+    struct: {
       flip: {
         type: 'u32',
         value: 0,
@@ -151,7 +151,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     name: 'direction',
     bindingType: 'uniform',
     visibility: 'compute',
-    bindings: {
+    struct: {
       flip: {
         type: 'u32',
         value: 1,
@@ -169,13 +169,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   textureBindGroup.createBindGroup()
 
   const outputTextureBindGroup1 = textureBindGroup.clone({
-    // bindings as [flip direction, input texture, output texture]
+    // struct as [flip direction, input texture, output texture]
     bindings: [flipBinding1, tempTexture.textureBinding, outputTexture.textureBinding],
     keepLayout: true, // allows for bind groups ping pong
   })
 
   const outputTextureBindGroup2 = textureBindGroup.clone({
-    // bindings as [flip direction, input texture, output texture]
+    // struct as [flip direction, input texture, output texture]
     bindings: [flipBinding0, outputTexture.textureBinding, tempTexture.textureBinding],
     keepLayout: true, // allows for bind groups ping pong
   })
@@ -192,19 +192,17 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
     bindGroups: [textureBindGroup],
-    inputs: {
-      uniforms: {
-        params: {
-          label: 'Params',
-          bindings: {
-            filterDim: {
-              type: 'i32',
-              value: 15,
-            },
-            blockDim: {
-              type: 'u32',
-              value: blockDimension,
-            },
+    uniforms: {
+      params: {
+        label: 'Params',
+        struct: {
+          filterDim: {
+            type: 'i32',
+            value: 15,
+          },
+          blockDim: {
+            type: 'u32',
+            value: blockDimension,
           },
         },
       },
@@ -219,7 +217,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
     computeBlurPass.onBeforeRenderPass()
 
-    // also update the bindings of the 2 bind groups that are not part of the compute pass
+    // also update the struct of the 2 bind groups that are not part of the compute pass
     outputTextureBindGroup1.update()
     outputTextureBindGroup2.update()
 

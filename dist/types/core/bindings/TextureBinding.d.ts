@@ -13,7 +13,7 @@ export interface TextureBindingParams extends BindingParams {
 }
 /**
  * TextureBinding class:
- * Used to handle GPUTexture and GPUExternalTexture bindings
+ * Used to handle GPUTexture and GPUExternalTexture struct
  * @extends Binding
  */
 export declare class TextureBinding extends Binding {

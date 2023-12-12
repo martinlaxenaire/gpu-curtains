@@ -45,7 +45,7 @@ export declare class Material {
     uniforms: Record<string, Record<string, BufferBindingInput>>;
     /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
     storages: Record<string, Record<string, BufferBindingInput>>;
-    /** Array of [bindings]{@link Binding} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
+    /** Array of [struct]{@link Binding} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
     inputsBindings: BindGroupBindingElement[];
     /** Array of [textures]{@link Texture} handled by this {@link Material} */
     textures: Texture[];
@@ -100,12 +100,12 @@ export declare class Material {
      */
     setBindGroups(): void;
     /**
-     * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related bindings
+     * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related struct
      * @readonly
      */
     get texturesBindGroup(): TextureBindGroup;
     /**
-     * Process all {@see BindGroup} bindings and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to bindings.
+     * Process all {@see BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
      * @param bindGroup - The {@see BindGroup} to process
      */
     processBindGroupBindings(bindGroup: BindGroup): void;
@@ -144,7 +144,7 @@ export declare class Material {
     /**
      * [Update]{@link BindGroup#update} all bind groups:
      * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-     * - Update its [buffer bindings]{@link BindGroup#bufferBindings}
+     * - Update its [buffer struct]{@link BindGroup#bufferBindings}
      * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
      * - Check if we need to flush the pipeline
      */

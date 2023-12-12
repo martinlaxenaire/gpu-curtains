@@ -127,19 +127,18 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        scrollEffect: {
-          label: 'ScrollEffect',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      scrollEffect: {
+        label: 'ScrollEffect',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
           },
         },
       },
     },
+
     samplers: [mirrorSampler],
   })
 
@@ -205,15 +204,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        scrollEffect: {
-          label: 'ScrollEffect',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      scrollEffect: {
+        label: 'ScrollEffect',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
           },
         },
       },
@@ -272,15 +269,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        scrollEffect: {
-          label: 'ScrollEffect',
-          bindings: {
-            strength: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      scrollEffect: {
+        label: 'ScrollEffect',
+        struct: {
+          strength: {
+            type: 'f32',
+            value: 0,
           },
         },
       },

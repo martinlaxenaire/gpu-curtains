@@ -19,7 +19,7 @@ export interface TextureBindGroupParams extends BindGroupParams {
 
 /**
  * TextureBindGroup class:
- * Used to regroup all [bindings]{@link BindGroupBindingElement} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
+ * Used to regroup all [struct]{@link BindGroupBindingElement} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
  * @extends BindGroup
  * @memberof module:core/bindGroups/TextureBindGroup
  */
@@ -34,7 +34,7 @@ export class TextureBindGroup extends BindGroup {
    */
   constructor(
     renderer: Renderer | GPUCurtains,
-    { label, index = 0, bindings = [], inputs, textures = [], samplers = [] }: TextureBindGroupParams = {}
+    { label, index = 0, bindings = [], uniforms, storages, textures = [], samplers = [] }: TextureBindGroupParams = {}
   ) {
     const type = 'TextureBindGroup'
 
@@ -43,7 +43,7 @@ export class TextureBindGroup extends BindGroup {
 
     isRenderer(renderer, type)
 
-    super(renderer, { label, index, bindings, inputs })
+    super(renderer, { label, index, bindings, uniforms, storages })
 
     this.options = {
       ...this.options,
@@ -69,7 +69,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Adds a texture to the textures array and the bindings
+   * Adds a texture to the textures array and the struct
    * @param texture - texture to add
    */
   addTexture(texture: MaterialTexture) {
@@ -86,7 +86,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Adds a sampler to the samplers array and the bindings
+   * Adds a sampler to the samplers array and the struct
    * @param sampler
    */
   addSampler(sampler: Sampler) {
@@ -125,7 +125,7 @@ export class TextureBindGroup extends BindGroup {
    * 4. A [render texture GPUTexture]{@link RenderTexture#texture} has changed (on resize)
    */
   resetTextureBindGroup() {
-    // find the indexes of all texture bindings
+    // find the indexes of all texture struct
     const textureBindingsIndexes = [...this.bindings].reduce(
       (foundIndexes, binding, index) => (binding instanceof TextureBinding && foundIndexes.push(index), foundIndexes),
       []
@@ -167,7 +167,7 @@ export class TextureBindGroup extends BindGroup {
   updateVideoTextureBindGroupLayout(textureIndex: number) {
     const texture = this.textures[textureIndex]
 
-    // find the indexes of all bindings that have 'externalTexture' as bindingType
+    // find the indexes of all struct that have 'externalTexture' as bindingType
     const externalTexturesIndexes = [...this.bindings].reduce(
       (foundIndexes, binding, index) => (
         binding.bindingType === 'externalTexture' && foundIndexes.push(index), foundIndexes
@@ -230,7 +230,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer bindings]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+   * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer struct]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
    */
   update() {
     this.updateTextures()

@@ -77,14 +77,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
-    inputs: {
-      uniforms: {
-        frames: {
-          bindings: {
-            elapsed: {
-              type: 'f32',
-              value: 0,
-            },
+    uniforms: {
+      frames: {
+        struct: {
+          elapsed: {
+            type: 'f32',
+            value: 0,
           },
         },
       },

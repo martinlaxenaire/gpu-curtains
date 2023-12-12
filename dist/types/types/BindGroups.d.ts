@@ -4,12 +4,12 @@ import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup';
 import { BufferBinding, BufferBindingParams } from '../core/bindings/BufferBinding';
 import { SamplerBinding } from '../core/bindings/SamplerBinding';
 import { TextureBinding } from '../core/bindings/TextureBinding';
-import { WritableBufferBinding } from '../core/bindings/WritableBufferBinding';
+import { WritableBufferBinding, WritableBufferBindingParams } from '../core/bindings/WritableBufferBinding';
 import { Vec2 } from '../math/Vec2';
 import { Vec3 } from '../math/Vec3';
 import { Mat4 } from '../math/Mat4';
 import { Quat } from '../math/Quat';
-import { VertexBufferAttribute } from './Geometries';
+import { WGSLVariableType } from '../core/bindings/utils';
 /**
  * Defines all kind of possible input value types
  */
@@ -19,7 +19,7 @@ export type InputValue = number | number[] | Vec2 | Vec3 | Mat4 | Quat | Int32Ar
  */
 export interface InputBase {
     /** {@link InputBase} type - could be 'f32', 'vec2f', etc. */
-    type: VertexBufferAttribute['type'];
+    type: WGSLVariableType;
     /** {@link InputBase} name */
     name?: string;
     /** callback to run before updating the [binding]{@link BindGroupBufferBindingElement} using this {@link InputBase} */
@@ -33,13 +33,13 @@ export interface Input extends InputBase {
     value: InputValue;
 }
 /**
- * An object defining all possible {@link InputBindingsParams} parameters
+ * Defines a read only input binding
  */
-export type InputBindingsParams = BufferBindingParams;
+export type ReadOnlyInputBindings = Record<string, BufferBindingParams>;
 /**
- * Defines an input bindings
+ * Defines a read only or read/write input binding
  */
-export type InputBindings = Record<string, InputBindingsParams>;
+export type ReadWriteInputBindings = Record<string, BufferBindingParams | WritableBufferBindingParams>;
 /**
  * Defines a specific type of {@link Binding} that handles a {@link BufferBinding#value} array to be sent to a {@link GPUBuffer}
  */
@@ -61,22 +61,20 @@ export type AllowedBindGroups = BindGroup | TextureBindGroup;
  */
 export interface BindGroupInputs {
     /** uniforms input to pass to a {@link BindGroup} */
-    uniforms?: InputBindings;
+    uniforms?: ReadOnlyInputBindings;
     /** read only or read/write storages input to pass to a {@link BindGroup} */
-    storages?: InputBindings;
+    storages?: ReadWriteInputBindings;
 }
 /**
  * An object defining all possible {@link BindGroup} class instancing parameters
  */
-export interface BindGroupParams {
+export interface BindGroupParams extends BindGroupInputs {
     /** {@link BindGroup} label */
     label?: string;
     /** {@link BindGroup} index (used to generate shader code) */
     index?: number;
-    /** array of already created [bindings]{@link BindGroupBindingElement} (buffers, texture, etc.) to pass to this {@link BindGroup} */
+    /** array of already created [struct]{@link BindGroupBindingElement} (buffers, texture, etc.) to pass to this {@link BindGroup} */
     bindings?: BindGroupBindingElement[];
-    /** [inputs]{@link BindGroupInputs} that will be used to create additional {@link BindGroup} [bindings]{@link BindGroupBindingElement} */
-    inputs?: BindGroupInputs;
 }
 /**
  * An object used to define {@link BindGroup} entries

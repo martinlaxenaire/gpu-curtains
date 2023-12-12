@@ -37,7 +37,7 @@ export interface BindingParams {
 
 /**
  * Binding class:
- * Used as a shell to build actual bindings upon, like {@link BufferBinding}, {@link WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
+ * Used as a shell to build actual struct upon, like {@link BufferBinding}, {@link WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
  * Ultimately the goal of a Bindings element is to provide correct resources for {@link GPUBindGroupLayoutEntry} and {@link GPUBindGroupEntry}
  */
 export class Binding {
@@ -47,7 +47,7 @@ export class Binding {
   name: string
   /** The binding type of the {@link Binding} */
   bindingType: BindingType
-  /** The binding index of the {@link Binding}, used to link bindings in the shaders */
+  /** The binding index of the {@link Binding}, used to link struct in the shaders */
   bindIndex: number
   /** The visibility of the {@link Binding} in the shaders */
   visibility: GPUShaderStageFlags
