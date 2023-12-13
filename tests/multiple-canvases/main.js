@@ -12,7 +12,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   console.log(gpuCurtains)
 
-  gpuCurtains.addCameraRenderer({
+  gpuCurtains.createCameraRenderer({
     container: '#canvas-front',
   })
 

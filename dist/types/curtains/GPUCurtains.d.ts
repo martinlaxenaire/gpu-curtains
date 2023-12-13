@@ -121,39 +121,39 @@ export declare class GPUCurtains {
      */
     setCurtains(): void;
     /**
-     * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [ping pong planes]{@link PingPongPlane}
+     * Get all the created [ping pong planes]{@link PingPongPlane}
      */
     get pingPongPlanes(): PingPongPlane[];
     /**
-     * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [shader passes]{@link ShaderPass}
+     * Get all the created [shader passes]{@link ShaderPass}
      */
     get shaderPasses(): ShaderPass[];
     /**
-     * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [meshes]{@link MeshBase}
+     * Get all the created [meshes]{@link MeshBase}
      */
     get meshes(): MeshType[];
     /**
-     * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [DOM Meshes]{@link DOMMesh}
+     * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
      */
     get domMeshes(): DOMMesh[];
     /**
-     * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [planes]{@link Plane}
+     * Get all the created [planes]{@link Plane}
      */
     get planes(): Plane[];
     /**
-     * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [compute passes]{@link ComputePass}
+     * Get all the created [compute passes]{@link ComputePass}
      */
     get computePasses(): ComputePass[];
     /**
-     * Get the [curtains renderer camera]{@link GPUCurtainsRenderer#camera}
+     * Get the [default curtains renderer camera]{@link GPUCurtainsRenderer#camera}
      */
     get camera(): Camera;
     /**
-     * Set the [curtains renderer camera perspective]{@link GPUCurtainsRenderer#setPerspective}
+     * Set the [default curtains renderer camera perspective]{@link GPUCurtainsRenderer#setPerspective}
      */
     setPerspective(fov?: number, near?: number, far?: number): void;
     /**
-     * Set the [curtains renderer camera position]{@link GPUCurtainsRenderer#setCameraPosition}
+     * Set the default [curtains renderer camera position]{@link GPUCurtainsRenderer#setCameraPosition}
      */
     setCameraPosition(position?: Vec3): void;
     /**
@@ -161,7 +161,7 @@ export declare class GPUCurtains {
      */
     resize(): void;
     /**
-     * Get our [curtains renderer bounding rectangle]{@link GPUCurtainsRenderer#boundingRect}
+     * Get our [default curtains renderer bounding rectangle]{@link GPUCurtainsRenderer#boundingRect}
      */
     get boundingRect(): DOMElementBoundingRect;
     /**
@@ -211,14 +211,14 @@ export declare class GPUCurtains {
      */
     onAfterResize(callback: () => void): GPUCurtains;
     /**
-     * Called if there's been an error while trying to set up the [curtains renderer]{@link GPUCurtainsRenderer} context
-     * @param callback - callback to run if there's been an error while trying to set up the [curtains renderer]{@link GPUCurtainsRenderer} context
+     * Called if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
+     * @param callback - callback to run if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
      * @returns - our {@link GPUCurtains}
      */
     onError(callback: () => void): GPUCurtains;
     /**
-     * Called whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
-     * @param callback - callback to run whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+     * Called whenever the [device]{@link GPUDeviceManager#device} is lost
+     * @param callback - callback to run whenever the [device]{@link GPUDeviceManager#device} is lost
      * @returns - our {@link GPUCurtains}
      */
     onContextLost(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains;
@@ -227,11 +227,11 @@ export declare class GPUCurtains {
      */
     animate(): void;
     /**
-     * Renderer our [curtains renderer]{@link GPUCurtainsRenderer}
+     * Renderer our [renderers]{@link GPUCurtains#renderers}
      */
     render(): void;
     /**
-     * Destroy our {@link GPUCurtains} and [curtains renderer]{@link GPUCurtainsRenderer}
+     * Destroy our {@link GPUCurtains} and [device manager]{@link GPUDeviceManager}
      */
     destroy(): void;
 }

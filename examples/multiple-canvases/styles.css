@@ -1,0 +1,79 @@
+@media screen {
+  /*** canvas ***/
+
+  #canvas-front {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100svh;
+    width: 100vw;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  #canvas-back {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100svh;
+    width: 100vw;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /*** content ***/
+
+  #page {
+    padding: 2.25rem 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  #planes {
+    padding: 15rem 0;
+    --nb-planes-per-row: 3;
+    display: grid;
+    grid-template-columns: repeat(var(--nb-planes-per-row), [col-start] 1fr);
+    column-gap: 5rem;
+    row-gap: 12.5rem;
+  }
+
+  .plane {
+    aspect-ratio: 15 / 10;
+  }
+
+  #text-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+
+  #text-content h1,
+  #text-content h2 {
+    padding: 0;
+    font-size: 2.5rem;
+    margin: 0;
+    max-width: 25em;
+  }
+}
+
+@media screen and (orientation: portrait) {
+  #planes {
+    --nb-planes-per-row: 2;
+    column-gap: 2.5rem;
+    row-gap: 7.5rem;
+  }
+
+  #text-content h1,
+  #text-content h2 {
+    font-size: 1.5rem;
+  }
+}

@@ -155,7 +155,7 @@ export class GPUCurtains {
    * Set the default [curtains renderer]{@link GPUCurtainsRenderer}
    */
   setMainRenderer() {
-    this.addCurtainsRenderer({
+    this.createCurtainsRenderer({
       deviceManager: this.deviceManager,
       // TODO ...this.options?
       container: this.options.container,
@@ -184,30 +184,30 @@ export class GPUCurtains {
    * Create a new {@link GPURenderer} instance
    * @param options - [options]{@link GPURendererParams} to use
    */
-  addRenderer(options: GPURendererParams) {
+  createRenderer(options: GPURendererParams): GPURenderer {
     options = this.patchRendererOptions(options)
 
-    new GPURenderer({ ...options, deviceManager: this.deviceManager })
+    return new GPURenderer({ ...options, deviceManager: this.deviceManager })
   }
 
   /**
    * Create a new {@link GPUCameraRenderer} instance
    * @param options - [options]{@link GPUCameraRendererParams} to use
    */
-  addCameraRenderer(options: GPUCameraRendererParams) {
+  createCameraRenderer(options: GPUCameraRendererParams): GPUCameraRenderer {
     options = this.patchRendererOptions(options)
 
-    new GPUCameraRenderer({ ...options, deviceManager: this.deviceManager })
+    return new GPUCameraRenderer({ ...options, deviceManager: this.deviceManager })
   }
 
   /**
    * Create a new {@link GPUCurtainsRenderer} instance
    * @param options - [options]{@link GPUCameraRendererParams} to use
    */
-  addCurtainsRenderer(options: GPUCameraRendererParams) {
+  createCurtainsRenderer(options: GPUCameraRendererParams): GPUCurtainsRenderer {
     options = this.patchRendererOptions(options)
 
-    new GPUCurtainsRenderer({ ...options, deviceManager: this.deviceManager })
+    return new GPUCurtainsRenderer({ ...options, deviceManager: this.deviceManager })
   }
 
   /**

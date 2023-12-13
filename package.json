@@ -28,6 +28,9 @@
     "build:types": "rimraf dist/types && tsc --allowJs -d --emitDeclarationOnly",
     "build:minified": "esbuild src/index.js --bundle --minify --outfile=dist/gpu-curtains.min.js --global-name=GPUCurtains",
     "build:iife": "esbuild src/index.js --bundle --outfile=dist/gpu-curtains.js --global-name=GPUCurtains",
-    "build:dist": "yarn build:types && yarn build:minified && yarn build:iife"
+    "build:dist": "yarn build:types && yarn build:minified && yarn build:iife",
+    "build:vite-main": "vite build",
+    "build:vite-min": "vite build",
+    "build:vite-dist": "yarn build:vite-main && yarn build:types"
   }
 }

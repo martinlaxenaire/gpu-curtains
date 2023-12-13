@@ -48,6 +48,7 @@ export declare class GPUDeviceManager {
      * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
      */
     setAdapterAndDevice(): Promise<void>;
+    init(): Promise<void>;
     /**
      * Set our [adapter]{@link GPUDeviceManager#adapter} if possible
      * @async
@@ -89,6 +90,11 @@ export declare class GPUDeviceManager {
      * @param buffer - [buffer]{@link GPUBuffer} to remove
      */
     removeBuffer(buffer: GPUBuffer): void;
+    /**
+     * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
+     * @param sampler - [sampler]{@link Sampler} to remove
+     */
+    removeSampler(sampler: Sampler): void;
     /**
      * Destroy the {@link GPUDeviceManager} and its [renderers]{@link GPUDeviceManager#renderers}
      */

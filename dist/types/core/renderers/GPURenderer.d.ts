@@ -34,10 +34,6 @@ export interface GPURendererParams {
     preferredFormat?: GPUTextureFormat;
     /** Set the [context]{@link GPUCanvasContext} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
-    /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
-    onError?: () => void;
-    /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
-    onContextLost?: (info?: GPUDeviceLostInfo) => void;
 }
 export type DOMMeshType = DOMMesh | Plane;
 export type MeshType = Mesh | DOMMeshType;
@@ -61,7 +57,6 @@ export declare class GPURenderer {
     ready: boolean;
     /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
     deviceManager: GPUDeviceManager;
-    /** navigator {@link GPU} object */
     /** [canvas]{@link HTMLCanvasElement} onto everything is drawn */
     canvas: HTMLCanvasElement;
     /** The WebGPU [context]{@link GPUCanvasContext} used */
@@ -70,14 +65,6 @@ export declare class GPURenderer {
     preferredFormat: null | GPUTextureFormat;
     /** Set the [context]{@link GPUCanvasContext} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
-    /** The WebGPU [adapter]{@link GPUAdapter} used */
-    /** The WebGPU [adapter]{@link GPUAdapter} informations */
-    /** The WebGPU [device]{@link GPUDevice} used */
-    /** The number of WebGPU [devices]{@link GPUDevice} created */
-    /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
-    onError: () => void;
-    /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
-    onContextLost: (info?: GPUDeviceLostInfo) => void;
     /** The final [render pass]{@link RenderPass} to render our result to screen */
     renderPass: RenderPass;
     /** The {@link Scene} used */
@@ -122,7 +109,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, sampleCount, production, preferredFormat, alphaMode, onError, onContextLost, }: GPURendererParams);
+    constructor({ deviceManager, container, pixelRatio, sampleCount, production, preferredFormat, alphaMode, }: GPURendererParams);
     /**
      * Set [canvas]{@link GPURenderer#canvas} size
      * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
@@ -145,10 +132,29 @@ export declare class GPURenderer {
      * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
      */
     get pixelRatioBoundingRect(): DOMElementBoundingRect;
+    /**
+     * Get our [device]{@link GPUDeviceManager#device}
+     * @readonly
+     */
     get device(): GPUDevice | undefined;
+    /**
+     * Get all the created [samplers]{@link GPUDeviceManager#samplers}
+     * @readonly
+     */
     get samplers(): Sampler[];
+    /**
+     * Get all the created [buffers]{@link GPUDeviceManager#buffers}
+     * @readonly
+     */
     get buffers(): GPUBuffer[];
+    /**
+     * Get the [pipeline manager]{@link GPUDeviceManager#pipelineManager}
+     * @readonly
+     */
     get pipelineManager(): PipelineManager;
+    /**
+     * Configure our [context]{@link context} with the given options
+     */
     configureContext(): void;
     /**
      * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass} and [scene]{@link GPURenderer#scene}
@@ -280,6 +286,11 @@ export declare class GPURenderer {
      * @returns - the {@link GPUSampler}
      */
     createSampler(sampler: Sampler): GPUSampler;
+    /**
+     * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#sampler}
+     * @param sampler - [sampler]{@link Sampler} to remove
+     */
+    removeSampler(sampler: Sampler): void;
     setTasksQueues(): void;
     /**
      * Set all objects arrays that we'll keep track of
