@@ -16,6 +16,8 @@ export interface SamplerParams extends GPUSamplerDescriptor {
 export declare class Sampler {
     /** The type of the {@link Sampler} */
     type: string;
+    /** The universal unique id of this {@link Sampler} */
+    readonly uuid: string;
     /** [renderer]{@link Renderer} used by this {@link Sampler} */
     renderer: Renderer;
     /** The label of the {@link Sampler}, used to create the {@link GPUSampler} for debugging purpose */

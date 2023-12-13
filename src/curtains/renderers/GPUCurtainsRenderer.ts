@@ -15,29 +15,23 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
    * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCurtainsRenderer}
    */
   constructor({
+    deviceManager,
     container,
     pixelRatio = 1,
     sampleCount = 4,
     preferredFormat,
     alphaMode = 'premultiplied',
     production = false,
-    onError = () => {
-      /* allow empty callbacks */
-    },
-    onContextLost = (info?: GPUDeviceLostInfo) => {
-      /* allow empty callbacks */
-    },
     camera,
   }: GPUCameraRendererParams) {
     super({
+      deviceManager,
       container,
       pixelRatio,
       sampleCount,
       preferredFormat,
       alphaMode,
       production,
-      onError,
-      onContextLost,
       camera,
     } as GPUCameraRendererParams)
 

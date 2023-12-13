@@ -1,0 +1,40 @@
+#canvas-front {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  height: 100svh;
+  width: 100vw;
+  z-index: 3;
+  pointer-events: none;
+}
+
+#canvas-back {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  height: 100svh;
+  width: 100vw;
+  z-index: 1;
+  pointer-events: none;
+}
+
+#page {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#lose-context-button {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+#page h1 {
+  margin: 0;
+  font-size: 3rem;
+}

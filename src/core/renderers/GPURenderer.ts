@@ -3,7 +3,7 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
-import { throwError, throwWarning } from '../../utils/utils'
+import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
@@ -18,11 +18,14 @@ import { Mesh } from '../meshes/Mesh'
 import { TasksQueueManager } from '../../utils/TasksQueueManager'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { RenderTexture } from '../textures/RenderTexture'
+import { GPUDeviceManager } from './GPUDeviceManager'
 
 /**
  * Parameters used to create a {@link GPURenderer}
  */
 export interface GPURendererParams {
+  /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
+  deviceManager: GPUDeviceManager
   /** [HTML Element]{@link HTMLElement} or selector used as a container for our [canvas]{@link GPURenderer#canvas} */
   container: string | HTMLElement
   /** Pixel ratio to use for rendering */
@@ -35,10 +38,6 @@ export interface GPURendererParams {
   preferredFormat?: GPUTextureFormat
   /** Set the [context]{@link GPUCanvasContext} alpha mode */
   alphaMode?: GPUCanvasAlphaMode
-  /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
-  onError?: () => void
-  /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
-  onContextLost?: (info?: GPUDeviceLostInfo) => void
 }
 
 // TODO should be GPUCurtainsRenderer props?
@@ -61,10 +60,14 @@ export type SceneObject = MeshType | ComputePass | PingPongPlane | ShaderPass
 export class GPURenderer {
   /** The type of the {@link GPURenderer} */
   type: string
+  /** The universal unique id of this {@link GPURenderer} */
+  readonly uuid: string
   /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} have been successfully created */
   ready: boolean
-  /** navigator {@link GPU} object */
-  gpu: null | GPU
+
+  /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
+  deviceManager: GPUDeviceManager
+
   /** [canvas]{@link HTMLCanvasElement} onto everything is drawn */
   canvas: HTMLCanvasElement
   /** The WebGPU [context]{@link GPUCanvasContext} used */
@@ -73,29 +76,12 @@ export class GPURenderer {
   preferredFormat: null | GPUTextureFormat
   /** Set the [context]{@link GPUCanvasContext} alpha mode */
   alphaMode?: GPUCanvasAlphaMode
-  /** The WebGPU [adapter]{@link GPUAdapter} used */
-  adapter: GPUAdapter | void
-  /** The WebGPU [adapter]{@link GPUAdapter} informations */
-  adapterInfos: GPUAdapterInfo | undefined
-  /** The WebGPU [device]{@link GPUDevice} used */
-  device: GPUDevice | null
-  /** The number of WebGPU [devices]{@link GPUDevice} created */
-  devicesCount: number
-
-  /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
-  onError: () => void
-  /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
-  onContextLost: (info?: GPUDeviceLostInfo) => void
 
   /** The final [render pass]{@link RenderPass} to render our result to screen */
   renderPass: RenderPass
-  /** The {@link PipelineManager} used */
-  pipelineManager: PipelineManager
   /** The {@link Scene} used */
   scene: Scene
 
-  /** An array containing all our created {@link GPUBuffer} */
-  buffers: GPUBuffer[]
   /** An array containing all our created {@link ComputePass} */
   computePasses: ComputePass[]
   /** An array containing all our created {@link PingPongPlane} */
@@ -106,8 +92,6 @@ export class GPURenderer {
   renderTargets: RenderTarget[]
   /** An array containing all our created [Meshes]{@link MeshType} */
   meshes: MeshType[]
-  /** An array containing all our created {@link Sampler} */
-  samplers: Sampler[]
   // TODO keep track of RenderTexture as well?
   /** An array containing all our created {@link Texture} */
   textures: Texture[]
@@ -125,10 +109,13 @@ export class GPURenderer {
   /** Document [body]{@link HTMLBodyElement} [DOM Element]{@link DOMElement} used to trigger resize when the document body size changes */
   documentBody: DOMElement
 
-  // TODO
+  /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
   onBeforeCommandEncoderCreation: TasksQueueManager
+  /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created but before the {@link Scene} is rendered */
   onBeforeRenderScene: TasksQueueManager
+  /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created and after the {@link Scene} has been rendered */
   onAfterRenderScene: TasksQueueManager
+  /** Allow to add callbacks to be executed at each render after the {@link Scene} has been rendered and the {@link GPUCommandEncoder} has been submitted */
   onAfterCommandEncoderSubmission: TasksQueueManager
 
   // callbacks / events
@@ -146,61 +133,58 @@ export class GPURenderer {
    * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
    */
   constructor({
+    deviceManager,
     container,
     pixelRatio = 1,
     sampleCount = 4,
     production = false,
     preferredFormat,
     alphaMode = 'premultiplied',
-    onError = () => {
-      /* allow empty callbacks */
-    },
-    onContextLost = (info?: GPUDeviceLostInfo) => {
-      /* allow empty callbacks */
-    },
   }: GPURendererParams) {
     this.type = 'GPURenderer'
+    this.uuid = generateUUID()
     this.ready = false
 
-    this.gpu = navigator.gpu
+    this.deviceManager = deviceManager
+    this.deviceManager.addRenderer(this)
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.sampleCount = sampleCount
     this.production = production
     this.alphaMode = alphaMode
 
-    this.devicesCount = 0
-
-    this.onError = onError
-    this.onContextLost = onContextLost
-
-    if (!this.gpu) {
-      setTimeout(() => {
-        this.onError()
-        throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
-      }, 0)
-    }
-
-    this.preferredFormat = preferredFormat ?? this.gpu?.getPreferredCanvasFormat()
+    this.preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
 
     this.setTasksQueues()
     this.setRendererObjects()
-
-    // create the canvas
-    this.canvas = document.createElement('canvas')
 
     // needed to get container bounding box
     this.domElement = new DOMElement({
       element: container,
     })
 
+    // create the canvas
+    if (container instanceof HTMLCanvasElement) {
+      this.canvas = container
+    } else {
+      this.canvas = document.createElement('canvas')
+      // append the canvas
+      this.domElement.element.appendChild(this.canvas)
+    }
+
     // now track any change in the document body size, and resize our scene
+    // TODO this is called only once!!
     this.documentBody = new DOMElement({
       element: document.body,
       onSizeChanged: () => this.resize(),
     })
 
     this.texturesQueue = []
+
+    // device is already available? create the context!
+    if (this.deviceManager.device) {
+      this.setContext()
+    }
   }
 
   /**
@@ -286,23 +270,65 @@ export class GPURenderer {
     )
   }
 
+  /* USEFUL DEVICE MANAGER OBJECTS */
+
   /**
-   * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass}, [pipeline manager]{@link GPURenderer#pipelineManager} and [scene]{@link GPURenderer#scene}
-   * @returns - void promise result
+   * Get our [device]{@link GPUDeviceManager#device}
+   * @readonly
    */
-  async setContext(): Promise<void> {
+  get device(): GPUDevice | undefined {
+    return this.deviceManager.device
+  }
+
+  /**
+   * Get all the created [samplers]{@link GPUDeviceManager#samplers}
+   * @readonly
+   */
+  get samplers(): Sampler[] {
+    return this.deviceManager.samplers
+  }
+
+  /**
+   * Get all the created [buffers]{@link GPUDeviceManager#buffers}
+   * @readonly
+   */
+  get buffers(): GPUBuffer[] {
+    return this.deviceManager.buffers
+  }
+
+  /**
+   * Get the [pipeline manager]{@link GPUDeviceManager#pipelineManager}
+   * @readonly
+   */
+  get pipelineManager(): PipelineManager {
+    return this.deviceManager.pipelineManager
+  }
+
+  /**
+   * Configure our [context]{@link context} with the given options
+   */
+  configureContext() {
+    this.context.configure({
+      device: this.device,
+      format: this.preferredFormat,
+      alphaMode: this.alphaMode,
+      // needed so we can copy textures for post processing usage
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+      //viewFormats: []
+    })
+  }
+
+  /**
+   * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass} and [scene]{@link GPURenderer#scene}
+   */
+  setContext() {
     this.context = this.canvas.getContext('webgpu')
 
-    await this.setAdapter()
-    await this.setDevice()
-
     if (this.device) {
-      this.setMainRenderPass()
-      this.setPipelineManager()
-      this.setScene()
+      this.configureContext()
 
-      // append the canvas and we're ready!
-      this.domElement.element.appendChild(this.canvas)
+      this.setMainRenderPass()
+      this.setScene()
 
       // ready to start
       this.ready = true
@@ -310,91 +336,23 @@ export class GPURenderer {
   }
 
   /**
-   * Set our [adapter]{@link GPURenderer#adapter} if possible
-   * @returns - void promise result
-   */
-  async setAdapter(): Promise<void> {
-    this.adapter = await this.gpu?.requestAdapter().catch(() => {
-      setTimeout(() => {
-        this.onError()
-        throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
-      }, 0)
-    })
-    ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
-      this.adapterInfos = infos
-    })
-  }
-
-  /**
-   * Set our [device]{@link GPURenderer#device} and configure [context]{@link GPURenderer#context} if possible
-   * @returns - void promise result
-   */
-  async setDevice(): Promise<void> {
-    try {
-      this.device = await (this.adapter as GPUAdapter)?.requestDevice({
-        label: 'GPUCurtains device ' + this.devicesCount,
-      })
-
-      this.devicesCount++
-
-      this.context.configure({
-        device: this.device,
-        format: this.preferredFormat,
-        alphaMode: this.alphaMode,
-        // needed so we can copy textures for post processing usage
-        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
-        //viewFormats: []
-      })
-    } catch (error) {
-      setTimeout(() => {
-        this.onError()
-        throwError(`GPURenderer: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
-      }, 0)
-    }
-
-    this.device?.lost.then((info) => {
-      throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`)
-
-      this.loseContext()
-
-      // do not call onContextLost event if the device was intentionally destroyed
-      if (info.reason !== 'destroyed') {
-        this.onContextLost(info)
-      }
-    })
-  }
-
-  /**
    * Called when the [renderer device]{@link GPURenderer#device} is lost.
-   * Reset all our samplers, force all our scene objects to lose context.
+   * Force all our scene objects to lose context.
    */
   loseContext() {
     this.ready = false
 
-    // first clean everything
-    this.samplers.forEach((sampler) => (sampler.sampler = null))
-
     // force all our scene objects to lose context
     this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext())
-
-    // reset the buffers array, it would be repopulated while restoring context
-    this.buffers = []
   }
 
   /**
    * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-   * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures.
+   * Reset the adapter, device and configure context again, restore our scene objects context, resize the render textures.
    * @async
    */
-  async restoreContext(): Promise<void> {
-    await this.setAdapter()
-    await this.setDevice()
-
-    // now restore everything: samplers, buffers, textures...
-    this.samplers.forEach((sampler) => {
-      // force all samplers recreation
-      sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options })
-    })
+  restoreContext() {
+    this.configureContext()
 
     // restore context of all our scene objects
     this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext())
@@ -419,15 +377,6 @@ export class GPURenderer {
   }
 
   /**
-   * Set our [pipeline manager]{@link GPURenderer#pipelineManager}
-   */
-  setPipelineManager() {
-    this.pipelineManager = new PipelineManager({
-      renderer: this,
-    })
-  }
-
-  /**
    * Set our [scene]{@link GPURenderer#scene}
    */
   setScene() {
@@ -448,13 +397,11 @@ export class GPURenderer {
   }
 
   /**
-   * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPURenderer#buffers}
+   * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
    * @param buffer - [buffer]{@link GPUBuffer} to remove
    */
   removeBuffer(buffer: GPUBuffer) {
-    this.buffers = this.buffers.filter((b) => {
-      return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size
-    })
+    this.deviceManager.removeBuffer(buffer)
   }
 
   /**
@@ -634,7 +581,7 @@ export class GPURenderer {
 
   /**
    * Check if a {@link Sampler} has already been created with the same [parameters]{@link Sampler#options}.
-   * Use it if found, else create a new one and add it to the [samplers array]{@link GPURenderer#samplers}.
+   * Use it if found, else create a new one and add it to the [device manager samplers array]{@link GPUDeviceManager#samplers}.
    * @param sampler - {@link Sampler} to create
    * @returns - the {@link GPUSampler}
    */
@@ -654,6 +601,14 @@ export class GPURenderer {
     }
   }
 
+  /**
+   * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#sampler}
+   * @param sampler - [sampler]{@link Sampler} to remove
+   */
+  removeSampler(sampler: Sampler) {
+    this.deviceManager.removeSampler(sampler)
+  }
+
   /* OBJECTS & TASKS */
 
   setTasksQueues() {
@@ -669,13 +624,11 @@ export class GPURenderer {
    */
   setRendererObjects() {
     // keep track of meshes, textures, etc.
-    this.buffers = []
     this.computePasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []
     this.renderTargets = []
     this.meshes = []
-    this.samplers = []
     this.textures = []
   }
 
@@ -692,6 +645,7 @@ export class GPURenderer {
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
+    // TODO device manager instead!
     return this.sceneObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
@@ -706,6 +660,7 @@ export class GPURenderer {
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */
   getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
+    // TODO device manager instead!
     return this.sceneObjects.filter((object) => {
       return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid)
     })
@@ -884,15 +839,15 @@ export class GPURenderer {
     this.domElement?.destroy()
     this.documentBody?.destroy()
 
-    //this.textures.forEach((texture) => texture.destroy())
-    this.textures = []
-    this.texturesQueue = []
-
     // destroy render passes
     this.renderPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.sceneObjects.forEach((sceneObject) => sceneObject.remove())
+
+    //this.textures.forEach((texture) => texture.destroy())
+    this.textures = []
+    this.texturesQueue = []
 
     this.device?.destroy()
     this.context?.unconfigure()

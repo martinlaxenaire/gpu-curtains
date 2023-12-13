@@ -44,14 +44,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   // curtains
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains.GPUCurtains({
-    container: 'canvas',
+    container: '#canvas',
     camera: {
       fov: 35,
     },
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   // usually data come from a CMS but here it's hardcoded for more simplicity
   const images = [

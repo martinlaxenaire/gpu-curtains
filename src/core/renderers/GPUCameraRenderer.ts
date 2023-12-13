@@ -31,6 +31,7 @@ export class GPUCameraRenderer extends GPURenderer {
    * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
    */
   constructor({
+    deviceManager,
     container,
     pixelRatio = 1,
     sampleCount = 4,
@@ -38,32 +39,16 @@ export class GPUCameraRenderer extends GPURenderer {
     production = false,
     alphaMode = 'premultiplied',
     camera = {},
-    onError = () => {
-      /* allow empty callbacks */
-    },
-    onContextLost = (info?: GPUDeviceLostInfo) => {
-      /* allow empty callbacks */
-    },
   }: GPUCameraRendererParams) {
     super({
+      deviceManager,
       container,
       pixelRatio,
       sampleCount,
       preferredFormat,
       alphaMode,
       production,
-      onError,
-      onContextLost,
     })
-
-    // this.options = {
-    //   container,
-    //   pixelRatio,
-    //   sampleCount,
-    //   preferredFormat,
-    //   production,
-    //   camera,
-    // }
 
     this.type = 'GPUCameraRenderer'
 

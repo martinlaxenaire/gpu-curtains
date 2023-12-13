@@ -27,6 +27,7 @@
 - Errors / warning handling
 - Context lost handling
 - Examples & tests
+- Handle multiple canvases / renderers?
 
 ## TODO
 
@@ -34,6 +35,5 @@
 - constants for WebGPU flags
 - Use render bundles?
 - Mesh raycasting?
-- Handle multiple canvas / renderers?
 - More tests! (removing, samplers, external video textures, context lost/restored...)
 - Documentation (using JSDoc?)

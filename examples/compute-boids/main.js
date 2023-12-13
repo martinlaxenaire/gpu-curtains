@@ -4,11 +4,11 @@ import { GPUCurtains, Vec2, ComputePass, SphereGeometry, Mesh } from '../../src'
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
-    container: 'canvas',
+    container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   // number of particles instances
   const numParticles = 2500

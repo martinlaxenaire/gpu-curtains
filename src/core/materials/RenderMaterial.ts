@@ -10,7 +10,7 @@ import {
   RenderMaterialParams,
 } from '../../types/Materials'
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
-import { RenderPipelineEntryBaseParams } from '../../types/PipelineEntries'
+import { RenderPipelineEntryBaseParams, RenderPipelineEntryParams } from '../../types/PipelineEntries'
 
 /**
  * RenderMaterial class:
@@ -75,11 +75,12 @@ export class RenderMaterial extends Material {
     } as RenderMaterialOptions
 
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
+      renderer: this.renderer,
       label: this.options.label + ' render pipeline',
       shaders: this.options.shaders,
       useAsync: this.options.useAsyncPipeline,
       ...this.options.rendering,
-    } as RenderPipelineEntryBaseParams)
+    } as RenderPipelineEntryParams)
 
     this.attributes = null
   }

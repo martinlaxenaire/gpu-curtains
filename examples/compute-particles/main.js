@@ -202,7 +202,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
-    container: 'canvas',
+    container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       near: 1,
@@ -210,7 +210,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   // The basic idea here is to place instanced points on a sphere surface
   // and then displace them with curl noise in a compute shader

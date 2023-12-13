@@ -3,12 +3,12 @@ import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
-    container: 'canvas',
+    container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     preferredFormat: 'rgba16float', // important, we'll be using floating point textures
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   gpuCurtains.onError(() => {
     // display original images
