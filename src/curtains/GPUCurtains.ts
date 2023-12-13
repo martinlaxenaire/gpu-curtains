@@ -4,18 +4,21 @@ import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 import { PingPongPlane } from './meshes/PingPongPlane'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
-import { MeshType } from '../core/renderers/GPURenderer'
+import { GPURenderer, GPURendererParams, MeshType } from '../core/renderers/GPURenderer'
 import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
 import { Camera } from '../core/camera/Camera'
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
-import { GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
+import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
+import { GPUDeviceManager } from '../core/renderers/GPUDeviceManager'
+import { Renderer } from '../core/renderers/utils'
 
 /**
  * Options used to create a {@link GPUCurtains}
  */
-interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'onError'> {
+// TODO this could probably done in a better way
+interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager' | 'onError' | 'onContextLost'> {
   /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
   autoRender?: boolean
   /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
@@ -44,8 +47,11 @@ export class GPUCurtains {
   /** {@link HTMLElement} that will hold the WebGPU [canvas]{@link HTMLCanvasElement} */
   container: HTMLElement
 
+  /** {@link GPUDeviceManager} used to handle the {@link GPUAdapter} and {@link GPUDevice} */
+  deviceManager: GPUDeviceManager
+
   /** [Curtains renderer]{@link GPUCurtainsRenderer} used to handle everything related to WebGPU */
-  renderer: GPUCurtainsRenderer
+  //renderer: GPUCurtainsRenderer
 
   /** Tiny scroll event listener wrapper */
   scrollManager: ScrollManager
@@ -106,6 +112,8 @@ export class GPUCurtains {
       watchScroll,
     }
 
+    this.setDeviceManager()
+
     if (container) {
       this.setContainer(container)
     }
@@ -144,10 +152,11 @@ export class GPUCurtains {
   }
 
   /**
-   * Set the [curtains renderer]{@link GPUCurtainsRenderer}
+   * Set the default [curtains renderer]{@link GPUCurtainsRenderer}
    */
-  setRenderer() {
-    this.renderer = new GPUCurtainsRenderer({
+  setMainRenderer() {
+    this.addCurtainsRenderer({
+      deviceManager: this.deviceManager,
       // TODO ...this.options?
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
@@ -156,25 +165,91 @@ export class GPUCurtains {
       alphaMode: this.options.alphaMode,
       camera: this.options.camera,
       production: this.options.production,
-      onError: () => this._onErrorCallback && this._onErrorCallback(),
-      onContextLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
     })
   }
 
   /**
-   * Set the [curtains renderer context]{@link GPUCurtainsRenderer#setContext}
-   * @async
+   * Patch the options with default values before creating a [renderer]{@link Renderer}
+   * @param options - options to patch
    */
-  async setRendererContext(): Promise<void> {
-    await this.renderer.setContext()
+  patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(options: T): T {
+    if (options.pixelRatio === undefined) options.pixelRatio = this.options.pixelRatio
+    if (options.production === undefined) options.production = this.options.production
+    if (options.sampleCount === undefined) options.sampleCount = this.options.sampleCount
+
+    return options
   }
 
   /**
-   * Restore the [renderer]{@link GPUCurtainsRenderer} context
+   * Create a new {@link GPURenderer} instance
+   * @param options - [options]{@link GPURendererParams} to use
+   */
+  addRenderer(options: GPURendererParams) {
+    options = this.patchRendererOptions(options)
+
+    new GPURenderer({ ...options, deviceManager: this.deviceManager })
+  }
+
+  /**
+   * Create a new {@link GPUCameraRenderer} instance
+   * @param options - [options]{@link GPUCameraRendererParams} to use
+   */
+  addCameraRenderer(options: GPUCameraRendererParams) {
+    options = this.patchRendererOptions(options)
+
+    new GPUCameraRenderer({ ...options, deviceManager: this.deviceManager })
+  }
+
+  /**
+   * Create a new {@link GPUCurtainsRenderer} instance
+   * @param options - [options]{@link GPUCameraRendererParams} to use
+   */
+  addCurtainsRenderer(options: GPUCameraRendererParams) {
+    options = this.patchRendererOptions(options)
+
+    new GPUCurtainsRenderer({ ...options, deviceManager: this.deviceManager })
+  }
+
+  /**
+   * Set our [device manager]{@link GPUDeviceManager}
+   */
+  setDeviceManager() {
+    this.deviceManager = new GPUDeviceManager({
+      label: 'GPUCurtains default device',
+      onError: () => this._onErrorCallback && this._onErrorCallback(),
+      onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
+    })
+  }
+
+  /**
+   * Get all created [renderers]{@link Renderer}
+   * @readonly
+   */
+  get renderers(): Renderer[] {
+    return this.deviceManager.renderers
+  }
+
+  /**
+   * Get the default {@link GPUCurtainsRenderer} created
+   * @readonly
+   */
+  get renderer(): GPUCurtainsRenderer {
+    return this.renderers[0] as GPUCurtainsRenderer
+  }
+
+  /**
+   * Set the [device manager]{@link GPUDeviceManager} [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible, then set all created [renderers]{@link Renderer} contexts
+   */
+  async setDevice() {
+    await this.deviceManager.init()
+  }
+
+  /**
+   * Restore the [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device}
    * @async
    */
   async restoreContext() {
-    await this.renderer?.restoreContext()
+    await this.deviceManager.restoreDevice()
   }
 
   /**
@@ -183,7 +258,7 @@ export class GPUCurtains {
   setCurtains() {
     this.initEvents()
 
-    this.setRenderer()
+    this.setMainRenderer()
 
     // only if auto render
     if (this.options.autoRender) {
@@ -194,63 +269,66 @@ export class GPUCurtains {
   /* RENDERER TRACKED OBJECTS */
 
   /**
-   * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [ping pong planes]{@link PingPongPlane}
+   * Get all the created [ping pong planes]{@link PingPongPlane}
    */
   get pingPongPlanes(): PingPongPlane[] {
-    return this.renderer?.pingPongPlanes
+    return this.renderers?.map((renderer) => renderer.pingPongPlanes).flat()
   }
 
   /**
-   * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [shader passes]{@link ShaderPass}
+   * Get all the created [shader passes]{@link ShaderPass}
    */
   get shaderPasses(): ShaderPass[] {
-    return this.renderer?.shaderPasses
+    return this.renderers?.map((renderer) => renderer.shaderPasses).flat()
   }
 
   /**
-   * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [meshes]{@link MeshBase}
+   * Get all the created [meshes]{@link MeshBase}
    */
   get meshes(): MeshType[] {
-    return this.renderer?.meshes
+    return this.renderers?.map((renderer) => renderer.meshes).flat()
   }
 
   /**
-   * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [DOM Meshes]{@link DOMMesh}
+   * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
    */
   get domMeshes(): DOMMesh[] {
-    return this.renderer?.domMeshes
+    return this.renderers
+      ?.filter((renderer) => renderer instanceof GPUCurtainsRenderer)
+      .map((renderer: GPUCurtainsRenderer) => renderer.domMeshes)
+      .flat()
   }
 
   /**
-   * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [planes]{@link Plane}
+   * Get all the created [planes]{@link Plane}
    */
   get planes(): Plane[] {
-    return this.renderer?.domMeshes.filter((domMesh) => domMesh.type === 'Plane') as Plane[]
+    return this.domMeshes.filter((domMesh) => domMesh instanceof Plane) as Plane[]
   }
 
   /**
-   * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [compute passes]{@link ComputePass}
+   * Get all the created [compute passes]{@link ComputePass}
    */
   get computePasses(): ComputePass[] {
-    return this.renderer?.computePasses
+    return this.renderers?.map((renderer) => renderer.computePasses).flat()
   }
 
   /**
-   * Get the [curtains renderer camera]{@link GPUCurtainsRenderer#camera}
+   * Get the [default curtains renderer camera]{@link GPUCurtainsRenderer#camera}
    */
   get camera(): Camera {
     return this.renderer?.camera
   }
 
   /**
-   * Set the [curtains renderer camera perspective]{@link GPUCurtainsRenderer#setPerspective}
+   * Set the [default curtains renderer camera perspective]{@link GPUCurtainsRenderer#setPerspective}
    */
   setPerspective(fov = 50, near = 0.01, far = 50) {
     this.renderer?.setPerspective(fov, near, far)
   }
 
   /**
-   * Set the [curtains renderer camera position]{@link GPUCurtainsRenderer#setCameraPosition}
+   * Set the default [curtains renderer camera position]{@link GPUCurtainsRenderer#setCameraPosition}
    */
   setCameraPosition(position: Vec3 = new Vec3(0, 0, 1)) {
     this.renderer?.setCameraPosition(position)
@@ -262,14 +340,12 @@ export class GPUCurtains {
    * Manually resize our [curtains renderer]{@link GPUCurtainsRenderer}
    */
   resize() {
-    // TODO should be called when the renderer is resized instead?
-    this.renderer?.resize()
-
+    // TODO not used!!
     this._onAfterResizeCallback && this._onAfterResizeCallback()
   }
 
   /**
-   * Get our [curtains renderer bounding rectangle]{@link GPUCurtainsRenderer#boundingRect}
+   * Get our [default curtains renderer bounding rectangle]{@link GPUCurtainsRenderer#boundingRect}
    */
   get boundingRect(): DOMElementBoundingRect {
     return this.renderer?.boundingRect
@@ -301,7 +377,7 @@ export class GPUCurtains {
    * @param delta - last [scroll delta values]{@link ScrollManager#delta}
    */
   updateScroll(delta: DOMPosition = { x: 0, y: 0 }) {
-    this.renderer.domMeshes.forEach((mesh) => {
+    this.domMeshes.forEach((mesh) => {
       if (mesh.domElement) {
         mesh.updateScrollPosition(delta)
       }
@@ -387,8 +463,8 @@ export class GPUCurtains {
   }
 
   /**
-   * Called if there's been an error while trying to set up the [curtains renderer]{@link GPUCurtainsRenderer} context
-   * @param callback - callback to run if there's been an error while trying to set up the [curtains renderer]{@link GPUCurtainsRenderer} context
+   * Called if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
+   * @param callback - callback to run if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
    * @returns - our {@link GPUCurtains}
    */
   onError(callback: () => void): GPUCurtains {
@@ -400,8 +476,8 @@ export class GPUCurtains {
   }
 
   /**
-   * Called whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
-   * @param callback - callback to run whenever the [curtains renderer]{@link GPUCurtainsRenderer} context is lost
+   * Called whenever the [device]{@link GPUDeviceManager#device} is lost
+   * @param callback - callback to run whenever the [device]{@link GPUDeviceManager#device} is lost
    * @returns - our {@link GPUCurtains}
    */
   onContextLost(callback: (info?: GPUDeviceLostInfo) => void): GPUCurtains {
@@ -421,23 +497,24 @@ export class GPUCurtains {
   }
 
   /**
-   * Renderer our [curtains renderer]{@link GPUCurtainsRenderer}
+   * Renderer our [renderers]{@link GPUCurtains#renderers}
    */
   render() {
     this._onRenderCallback && this._onRenderCallback()
 
-    this.renderer?.render()
+    //this.renderer?.render()
+    this.renderers.forEach((renderer) => renderer.render())
   }
 
   /**
-   * Destroy our {@link GPUCurtains} and [curtains renderer]{@link GPUCurtainsRenderer}
+   * Destroy our {@link GPUCurtains} and [device manager]{@link GPUDeviceManager}
    */
   destroy() {
     if (this.animationFrameID) {
       window.cancelAnimationFrame(this.animationFrameID)
     }
 
-    this.renderer?.destroy()
+    this.deviceManager.destroy()
     this.scrollManager?.destroy()
     resizeManager.destroy()
   }

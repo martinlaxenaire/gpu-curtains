@@ -32,12 +32,21 @@ export class ResizeManager {
     this.entries = []
 
     this.resizeObserver = new ResizeObserver((observedEntries) => {
-      observedEntries.forEach((observedEntry) => {
-        const entry = this.entries.find((e) => e.element.isSameNode(observedEntry.target))
+      // get all entries corresponding to that element, and sort them by number of entries
+      // if there's more than 1 entry, it might be that we have multiple renderers and it's our document.body that is observed
+      // in this case call the callbacks last so all other DOM Element have updated their sizes
+      const allEntries = observedEntries
+        .map((observedEntry) => {
+          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target))
+        })
+        .sort((a, b) => a.length - b.length)
 
-        if (entry && entry.callback) {
-          entry.callback()
-        }
+      allEntries?.forEach((entries) => {
+        entries.forEach((entry) => {
+          if (entry && entry.callback) {
+            entry.callback()
+          }
+        })
       })
     })
   }

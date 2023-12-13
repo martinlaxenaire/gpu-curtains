@@ -20,7 +20,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   gpuCurtains.renderer
     .onBeforeRender(() => {

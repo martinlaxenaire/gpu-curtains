@@ -1,6 +1,6 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { SamplerBinding } from '../bindings/SamplerBinding'
-import { throwWarning } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
@@ -18,6 +18,8 @@ export interface SamplerParams extends GPUSamplerDescriptor {
 export class Sampler {
   /** The type of the {@link Sampler} */
   type: string
+  /** The universal unique id of this {@link Sampler} */
+  readonly uuid: string
   /** [renderer]{@link Renderer} used by this {@link Sampler} */
   renderer: Renderer
   /** The label of the {@link Sampler}, used to create the {@link GPUSampler} for debugging purpose */
@@ -51,6 +53,7 @@ export class Sampler {
     } = {} as SamplerParams
   ) {
     this.type = 'Sampler'
+    this.uuid = generateUUID()
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)

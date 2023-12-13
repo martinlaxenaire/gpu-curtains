@@ -4,17 +4,19 @@ import { ScrollManager } from '../utils/ScrollManager';
 import { Vec3 } from '../math/Vec3';
 import { PingPongPlane } from './meshes/PingPongPlane';
 import { ShaderPass } from '../core/renderPasses/ShaderPass';
-import { MeshType } from '../core/renderers/GPURenderer';
+import { GPURendererParams, MeshType } from '../core/renderers/GPURenderer';
 import { DOMMesh } from './meshes/DOMMesh';
 import { Plane } from './meshes/Plane';
 import { ComputePass } from '../core/computePasses/ComputePass';
 import { Camera } from '../core/camera/Camera';
-import { DOMElementBoundingRect, DOMPosition } from '../core/DOM/DOMElement';
+import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement';
 import { GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer';
+import { GPUDeviceManager } from '../core/renderers/GPUDeviceManager';
+import { Renderer } from '../core/renderers/utils';
 /**
  * Options used to create a {@link GPUCurtains}
  */
-interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'onError'> {
+interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager' | 'onError' | 'onContextLost'> {
     /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
     autoRender?: boolean;
     /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
@@ -40,8 +42,9 @@ export declare class GPUCurtains {
     options: GPUCurtainsOptions;
     /** {@link HTMLElement} that will hold the WebGPU [canvas]{@link HTMLCanvasElement} */
     container: HTMLElement;
+    /** {@link GPUDeviceManager} used to handle the {@link GPUAdapter} and {@link GPUDevice} */
+    deviceManager: GPUDeviceManager;
     /** [Curtains renderer]{@link GPUCurtainsRenderer} used to handle everything related to WebGPU */
-    renderer: GPUCurtainsRenderer;
     /** Tiny scroll event listener wrapper */
     scrollManager: ScrollManager;
     /** [Request animation frame callback]{@link requestVideoFrameCallback} returned id if used */
@@ -65,17 +68,54 @@ export declare class GPUCurtains {
      * Set the [container]{@link GPUCurtains#container}
      * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
      */
-    setContainer(container: string | HTMLElement): void;
+    setContainer(container: DOMElementParams['element']): void;
     /**
-     * Set the [curtains renderer]{@link GPUCurtainsRenderer}
+     * Set the default [curtains renderer]{@link GPUCurtainsRenderer}
      */
-    setRenderer(): void;
-    restoreContext(): void;
+    setMainRenderer(): void;
     /**
-     * Set the [curtains renderer context]{@link GPUCurtainsRenderer#setContext}
+     * Patch the options with default values before creating a [renderer]{@link Renderer}
+     * @param options - options to patch
+     */
+    patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(options: T): T;
+    /**
+     * Create a new {@link GPURenderer} instance
+     * @param options - [options]{@link GPURendererParams} to use
+     */
+    addRenderer(options: GPURendererParams): void;
+    /**
+     * Create a new {@link GPUCameraRenderer} instance
+     * @param options - [options]{@link GPUCameraRendererParams} to use
+     */
+    addCameraRenderer(options: GPUCameraRendererParams): void;
+    /**
+     * Create a new {@link GPUCurtainsRenderer} instance
+     * @param options - [options]{@link GPUCameraRendererParams} to use
+     */
+    addCurtainsRenderer(options: GPUCameraRendererParams): void;
+    /**
+     * Set our [device manager]{@link GPUDeviceManager}
+     */
+    setDeviceManager(): void;
+    /**
+     * Get all created [renderers]{@link Renderer}
+     * @readonly
+     */
+    get renderers(): Renderer[];
+    /**
+     * Get the default {@link GPUCurtainsRenderer} created
+     * @readonly
+     */
+    get renderer(): GPUCurtainsRenderer;
+    /**
+     * Set the [device manager]{@link GPUDeviceManager} [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible, then set all created [renderers]{@link Renderer} contexts
+     */
+    setDevice(): Promise<void>;
+    /**
+     * Restore the [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device}
      * @async
      */
-    setRendererContext(): Promise<void>;
+    restoreContext(): Promise<void>;
     /**
      * Set the various event listeners, set the [curtains renderer]{@link GPUCurtainsRenderer}, append the [canvas]{@link HTMLCanvasElement} to our [container]{@link GPUCurtains#container} and start rendering if needed
      */

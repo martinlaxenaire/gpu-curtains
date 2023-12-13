@@ -8,7 +8,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   const meshVs = /* wgsl */ `  
     struct VSOutput {

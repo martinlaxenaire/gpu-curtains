@@ -1,8 +1,11 @@
 import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
-import { isRenderer, Renderer } from '../renderers/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { PipelineEntryBaseParams, RenderPipelineEntryBaseParams } from '../../types/PipelineEntries'
+import {
+  PipelineEntryBaseParams,
+  PipelineEntryParams,
+  RenderPipelineEntryBaseParams,
+  RenderPipelineEntryParams,
+} from '../../types/PipelineEntries'
 
 /** Defines all types of allowed {@link PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
@@ -16,22 +19,13 @@ export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
 export class PipelineManager {
   /** The type of the {@link PipelineManager} */
   type: string
-  /** The [renderer]{@link Renderer} used to create this {@link PipelineManager} */
-  renderer: Renderer
   /** Keep track of the current bound pipeline in order to avoid redundant setPipeline calls */
   currentPipelineIndex: number | null
   /** Array of already created {@link ComputePipelineEntry} and {@link RenderPipelineEntry} */
   pipelineEntries: AllowedPipelineEntries[]
 
-  constructor({ renderer }: { renderer: Renderer | GPUCurtains }) {
+  constructor() {
     this.type = 'PipelineManager'
-
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, this.type)
-
-    this.renderer = renderer
 
     this.currentPipelineIndex = null
     this.pipelineEntries = []
@@ -71,16 +65,13 @@ export class PipelineManager {
    * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
    * @returns - {@link RenderPipelineEntry}, either from cache or newly created
    */
-  createRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry {
+  createRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry {
     const existingPipelineEntry = this.isSameRenderPipeline(parameters)
 
     if (existingPipelineEntry) {
       return existingPipelineEntry
     } else {
-      const pipelineEntry = new RenderPipelineEntry({
-        renderer: this.renderer,
-        ...parameters,
-      })
+      const pipelineEntry = new RenderPipelineEntry(parameters)
 
       this.pipelineEntries.push(pipelineEntry)
 
@@ -113,16 +104,13 @@ export class PipelineManager {
    * @param parameters - [PipelineEntry parameters]{@link PipelineEntryBaseParams}
    * @returns - newly created {@link ComputePipelineEntry}
    */
-  createComputePipeline(parameters: PipelineEntryBaseParams): ComputePipelineEntry {
+  createComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry {
     const existingPipelineEntry = this.isSameComputePipeline(parameters)
 
     if (existingPipelineEntry) {
       return existingPipelineEntry
     } else {
-      const pipelineEntry = new ComputePipelineEntry({
-        renderer: this.renderer,
-        ...parameters,
-      })
+      const pipelineEntry = new ComputePipelineEntry(parameters)
 
       this.pipelineEntries.push(pipelineEntry)
 

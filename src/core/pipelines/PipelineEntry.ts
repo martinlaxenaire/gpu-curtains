@@ -61,8 +61,6 @@ export class PipelineEntry {
       error: null,
     }
 
-    //this.ready = false
-
     this.options = {
       label,
       shaders,

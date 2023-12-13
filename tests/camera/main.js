@@ -1,17 +1,23 @@
-import { GPUCameraRenderer, Vec2, Vec3, Mesh, PlaneGeometry, BoxGeometry } from '../../src'
+import { GPUCameraRenderer, Vec2, Vec3, Mesh, PlaneGeometry, BoxGeometry, GPUDeviceManager } from '../../src'
 
 // Goals of this test:
-// - test the GPUCameraRenderer without the use of GPUCurtains class
+// - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
 // - test camera position, rotation, lookAt, fov
 // - test frustum culling
 window.addEventListener('DOMContentLoaded', async () => {
-  // create a camera renderer
-  const gpuCameraRenderer = new GPUCameraRenderer({
-    container: document.querySelector('#canvas'),
+  // create a device manager
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
   })
 
-  // set context
-  await gpuCameraRenderer.setContext()
+  // wait for the device to be created
+  await gpuDeviceManager.init()
+
+  // create a camera renderer
+  const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager,
+    container: document.querySelector('#canvas'),
+  })
 
   // render it
   const animate = () => {

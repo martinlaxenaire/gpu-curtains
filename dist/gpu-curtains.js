@@ -4335,6 +4335,7 @@ var GPUCurtains = (() => {
         dispatchSize: this.options.dispatchSize
       });
       this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
+        renderer: this.renderer,
         label: this.options.label + " compute pipeline",
         shaders: this.options.shaders,
         useAsync: this.options.useAsyncPipeline
@@ -5531,6 +5532,7 @@ var GPUCurtains = (() => {
         rendering: renderingOptions
       };
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
+        renderer: this.renderer,
         label: this.options.label + " render pipeline",
         shaders: this.options.shaders,
         useAsync: this.options.useAsyncPipeline,
@@ -6152,11 +6154,15 @@ struct VertexOutput {
       this.shouldWatch = true;
       this.entries = [];
       this.resizeObserver = new ResizeObserver((observedEntries) => {
-        observedEntries.forEach((observedEntry) => {
-          const entry = this.entries.find((e) => e.element.isSameNode(observedEntry.target));
-          if (entry && entry.callback) {
-            entry.callback();
-          }
+        const allEntries = observedEntries.map((observedEntry) => {
+          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
+        }).sort((a, b) => a.length - b.length);
+        allEntries?.forEach((entries) => {
+          entries.forEach((entry) => {
+            if (entry && entry.callback) {
+              entry.callback();
+            }
+          });
         });
       });
     }
@@ -7460,11 +7466,8 @@ ${this.shaders.compute.head}`;
 
   // src/core/pipelines/PipelineManager.ts
   var PipelineManager = class {
-    constructor({ renderer }) {
+    constructor() {
       this.type = "PipelineManager";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, this.type);
-      this.renderer = renderer;
       this.currentPipelineIndex = null;
       this.pipelineEntries = [];
     }
@@ -7491,10 +7494,7 @@ ${this.shaders.compute.head}`;
       if (existingPipelineEntry) {
         return existingPipelineEntry;
       } else {
-        const pipelineEntry = new RenderPipelineEntry({
-          renderer: this.renderer,
-          ...parameters
-        });
+        const pipelineEntry = new RenderPipelineEntry(parameters);
         this.pipelineEntries.push(pipelineEntry);
         return pipelineEntry;
       }
@@ -7521,10 +7521,7 @@ ${this.shaders.compute.head}`;
       if (existingPipelineEntry) {
         return existingPipelineEntry;
       } else {
-        const pipelineEntry = new ComputePipelineEntry({
-          renderer: this.renderer,
-          ...parameters
-        });
+        const pipelineEntry = new ComputePipelineEntry(parameters);
         this.pipelineEntries.push(pipelineEntry);
         return pipelineEntry;
       }
@@ -8609,6 +8606,7 @@ ${this.shaders.compute.head}`;
      * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
      */
     constructor({
+      deviceManager,
       container,
       pixelRatio = 1,
       sampleCount = 4,
@@ -8628,33 +8626,36 @@ ${this.shaders.compute.head}`;
       this._onAfterRenderCallback = (commandEncoder) => {
       };
       this.type = "GPURenderer";
+      this.uuid = generateUUID();
       this.ready = false;
-      this.gpu = navigator.gpu;
+      this.deviceManager = deviceManager;
+      this.deviceManager.addRenderer(this);
       this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
       this.sampleCount = sampleCount;
       this.production = production;
       this.alphaMode = alphaMode;
-      this.devicesCount = 0;
       this.onError = onError;
       this.onContextLost = onContextLost;
-      if (!this.gpu) {
-        setTimeout(() => {
-          this.onError();
-          throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
-        }, 0);
-      }
-      this.preferredFormat = preferredFormat ?? this.gpu?.getPreferredCanvasFormat();
+      this.preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
       this.setTasksQueues();
       this.setRendererObjects();
-      this.canvas = document.createElement("canvas");
       this.domElement = new DOMElement({
         element: container
       });
+      if (container instanceof HTMLCanvasElement) {
+        this.canvas = container;
+      } else {
+        this.canvas = document.createElement("canvas");
+        this.domElement.element.appendChild(this.canvas);
+      }
       this.documentBody = new DOMElement({
         element: document.body,
         onSizeChanged: () => this.resize()
       });
       this.texturesQueue = [];
+      if (this.deviceManager.device) {
+        this.setContext();
+      }
     }
     /**
      * Set [canvas]{@link GPURenderer#canvas} size
@@ -8724,90 +8725,56 @@ ${this.shaders.compute.head}`;
         }
       );
     }
+    /* USEFUL DEVICE MANAGER OBJECTS */
+    get device() {
+      return this.deviceManager.device;
+    }
+    get samplers() {
+      return this.deviceManager.samplers;
+    }
+    get buffers() {
+      return this.deviceManager.buffers;
+    }
+    get pipelineManager() {
+      return this.deviceManager.pipelineManager;
+    }
+    configureContext() {
+      this.context.configure({
+        device: this.device,
+        format: this.preferredFormat,
+        alphaMode: this.alphaMode,
+        // needed so we can copy textures for post processing usage
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
+        //viewFormats: []
+      });
+    }
     /**
-     * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass}, [pipeline manager]{@link GPURenderer#pipelineManager} and [scene]{@link GPURenderer#scene}
-     * @returns - void promise result
+     * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass} and [scene]{@link GPURenderer#scene}
      */
-    async setContext() {
+    setContext() {
       this.context = this.canvas.getContext("webgpu");
-      await this.setAdapter();
-      await this.setDevice();
       if (this.device) {
+        this.configureContext();
         this.setMainRenderPass();
-        this.setPipelineManager();
         this.setScene();
-        this.domElement.element.appendChild(this.canvas);
         this.ready = true;
       }
     }
     /**
-     * Set our [adapter]{@link GPURenderer#adapter} if possible
-     * @returns - void promise result
-     */
-    async setAdapter() {
-      this.adapter = await this.gpu?.requestAdapter().catch(() => {
-        setTimeout(() => {
-          this.onError();
-          throwError("GPURenderer: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
-        }, 0);
-      });
-      this.adapter?.requestAdapterInfo().then((infos) => {
-        this.adapterInfos = infos;
-      });
-    }
-    /**
-     * Set our [device]{@link GPURenderer#device} and configure [context]{@link GPURenderer#context} if possible
-     * @returns - void promise result
-     */
-    async setDevice() {
-      try {
-        this.device = await this.adapter?.requestDevice({
-          label: "GPUCurtains device " + this.devicesCount
-        });
-        this.devicesCount++;
-        this.context.configure({
-          device: this.device,
-          format: this.preferredFormat,
-          alphaMode: this.alphaMode,
-          // needed so we can copy textures for post processing usage
-          usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
-          //viewFormats: []
-        });
-      } catch (error) {
-        setTimeout(() => {
-          this.onError();
-          throwError(`GPURenderer: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
-        }, 0);
-      }
-      this.device?.lost.then((info) => {
-        throwWarning(`GPURenderer: WebGPU device was lost: ${info.message}`);
-        this.loseContext();
-        if (info.reason !== "destroyed") {
-          this.onContextLost(info);
-        }
-      });
-    }
-    /**
      * Called when the [renderer device]{@link GPURenderer#device} is lost.
-     * Reset all our samplers, force all our scene objects to lose context.
+     * Force all our scene objects to lose context.
      */
     loseContext() {
       this.ready = false;
-      this.samplers.forEach((sampler) => sampler.sampler = null);
       this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext());
-      this.buffers = [];
     }
     /**
      * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures.
+     * Reset the adapter, device and configure context again, restore our scene objects context, resize the render textures.
      * @async
      */
-    async restoreContext() {
-      await this.setAdapter();
-      await this.setDevice();
-      this.samplers.forEach((sampler) => {
-        sampler.sampler = this.device?.createSampler({ label: sampler.label, ...sampler.options });
-      });
+    restoreContext() {
+      this.configureContext();
       this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext());
       this.onResize();
       this.ready = true;
@@ -8820,14 +8787,6 @@ ${this.shaders.compute.head}`;
       this.renderPass = new RenderPass(this, {
         label: "Main Render pass",
         depth: true
-      });
-    }
-    /**
-     * Set our [pipeline manager]{@link GPURenderer#pipelineManager}
-     */
-    setPipelineManager() {
-      this.pipelineManager = new PipelineManager({
-        renderer: this
       });
     }
     /**
@@ -8848,13 +8807,11 @@ ${this.shaders.compute.head}`;
       return buffer;
     }
     /**
-     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPURenderer#buffers}
+     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
      * @param buffer - [buffer]{@link GPUBuffer} to remove
      */
     removeBuffer(buffer) {
-      this.buffers = this.buffers.filter((b) => {
-        return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size;
-      });
+      this.deviceManager.removeBuffer(buffer);
     }
     /**
      * Write to a {@link GPUBuffer}
@@ -9006,7 +8963,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Check if a {@link Sampler} has already been created with the same [parameters]{@link Sampler#options}.
-     * Use it if found, else create a new one and add it to the [samplers array]{@link GPURenderer#samplers}.
+     * Use it if found, else create a new one and add it to the [device manager samplers array]{@link GPUDeviceManager#samplers}.
      * @param sampler - {@link Sampler} to create
      * @returns - the {@link GPUSampler}
      */
@@ -9033,13 +8990,11 @@ ${this.shaders.compute.head}`;
      * Set all objects arrays that we'll keep track of
      */
     setRendererObjects() {
-      this.buffers = [];
       this.computePasses = [];
       this.pingPongPlanes = [];
       this.shaderPasses = [];
       this.renderTargets = [];
       this.meshes = [];
-      this.samplers = [];
       this.textures = [];
     }
     /**
@@ -9201,11 +9156,11 @@ ${this.shaders.compute.head}`;
     destroy() {
       this.domElement?.destroy();
       this.documentBody?.destroy();
-      this.textures = [];
-      this.texturesQueue = [];
       this.renderPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
       this.sceneObjects.forEach((sceneObject) => sceneObject.remove());
+      this.textures = [];
+      this.texturesQueue = [];
       this.device?.destroy();
       this.context?.unconfigure();
     }
@@ -9218,6 +9173,7 @@ ${this.shaders.compute.head}`;
      * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
      */
     constructor({
+      deviceManager,
       container,
       pixelRatio = 1,
       sampleCount = 4,
@@ -9231,6 +9187,7 @@ ${this.shaders.compute.head}`;
       }
     }) {
       super({
+        deviceManager,
         container,
         pixelRatio,
         sampleCount,
@@ -9633,6 +9590,7 @@ ${this.shaders.compute.head}`;
      * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCurtainsRenderer}
      */
     constructor({
+      deviceManager,
       container,
       pixelRatio = 1,
       sampleCount = 4,
@@ -9646,6 +9604,7 @@ ${this.shaders.compute.head}`;
       camera
     }) {
       super({
+        deviceManager,
         container,
         pixelRatio,
         sampleCount,
@@ -9735,6 +9694,147 @@ ${this.shaders.compute.head}`;
     }
   };
 
+  // src/core/renderers/GPUDeviceManager.ts
+  var GPUDeviceManager = class {
+    /**
+     * GPUDeviceManager constructor
+     * @param parameters - [parameters]{@link GPUDeviceManagerParams} used to create this {@link GPUDeviceManager}
+     */
+    constructor({
+      label,
+      onError = () => {
+      },
+      onDeviceLost = (info) => {
+      }
+    }) {
+      this.index = 0;
+      this.label = label ?? "GPUDeviceManager instance";
+      this.onError = onError;
+      this.onDeviceLost = onDeviceLost;
+      this.gpu = navigator.gpu;
+      if (!this.gpu) {
+        setTimeout(() => {
+          this.onError();
+          throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
+        }, 0);
+      }
+      this.setPipelineManager();
+      this.renderers = [];
+      this.buffers = [];
+      this.samplers = [];
+    }
+    /**
+     * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
+     */
+    async setAdapterAndDevice() {
+      await this.setAdapter();
+      await this.setDevice();
+    }
+    /**
+     * Set our [adapter]{@link GPUDeviceManager#adapter} if possible
+     * @async
+     * @returns - void promise result
+     */
+    async setAdapter() {
+      this.adapter = await this.gpu?.requestAdapter().catch(() => {
+        setTimeout(() => {
+          this.onError();
+          throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+        }, 0);
+      });
+      this.adapter?.requestAdapterInfo().then((infos) => {
+        this.adapterInfos = infos;
+      });
+    }
+    /**
+     * Set our [device]{@link GPUDeviceManager#device}
+     * @async
+     * @returns - void promise result
+     */
+    async setDevice() {
+      try {
+        this.device = await this.adapter?.requestDevice({
+          label: this.label + " " + this.index
+        });
+        this.index++;
+      } catch (error) {
+        setTimeout(() => {
+          this.onError();
+          throwError(`GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
+        }, 0);
+      }
+      this.device?.lost.then((info) => {
+        throwWarning(`GPUDeviceManager: WebGPU device was lost: ${info.message}`);
+        this.loseDevice();
+        if (info.reason !== "destroyed") {
+          this.onDeviceLost(info);
+        }
+      });
+    }
+    /**
+     * Set our [pipeline manager]{@link GPUDeviceManager#pipelineManager}
+     */
+    setPipelineManager() {
+      this.pipelineManager = new PipelineManager();
+    }
+    /**
+     * Called when the [device]{@link GPUDeviceManager#device} is lost.
+     * Reset all our renderers
+     */
+    loseDevice() {
+      this.samplers.forEach((sampler) => sampler.sampler = null);
+      this.renderers.forEach((renderer) => renderer.loseContext());
+      this.buffers = [];
+    }
+    /**
+     * Called when the [device]{@link GPUDeviceManager#device} should be restored.
+     * Restore all our renderers
+     */
+    async restoreDevice() {
+      await this.setAdapterAndDevice();
+      if (this.device) {
+        this.samplers.forEach((sampler) => {
+          sampler.sampler = this.device.createSampler({ label: sampler.label, ...sampler.options });
+        });
+        this.renderers.forEach((renderer) => renderer.restoreContext());
+      }
+    }
+    /**
+     * Add a [renderer]{@link Renderer} to our [renderers array]{@link GPUDeviceManager#renderers}
+     * @param renderer - [renderer]{@link Renderer} to add
+     */
+    addRenderer(renderer) {
+      this.renderers.push(renderer);
+    }
+    /**
+     * Remove a [renderer]{@link Renderer} from our [renderers array]{@link GPUDeviceManager#renderers}
+     * @param renderer - [renderer]{@link Renderer} to remove
+     */
+    removeRenderer(renderer) {
+      this.renderers = this.renderers.filter((r) => r.uuid !== renderer.uuid);
+    }
+    /**
+     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
+     * @param buffer - [buffer]{@link GPUBuffer} to remove
+     */
+    removeBuffer(buffer) {
+      this.buffers = this.buffers.filter((b) => {
+        return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size;
+      });
+    }
+    /**
+     * Destroy the {@link GPUDeviceManager} and its [renderers]{@link GPUDeviceManager#renderers}
+     */
+    destroy() {
+      this.device?.destroy();
+      this.renderers.forEach((renderer) => renderer.destroy());
+      this.buffers.forEach((buffer) => buffer?.destroy());
+      this.renderers = [];
+      this.samplers = [];
+      this.buffers = [];
+    }
+  };
+
   // src/curtains/GPUCurtains.ts
   var GPUCurtains = class {
     /**
@@ -9782,6 +9882,7 @@ ${this.shaders.compute.head}`;
         autoResize,
         watchScroll
       };
+      this.setDeviceManager();
       if (container) {
         this.setContainer(container);
       }
@@ -9798,7 +9899,7 @@ ${this.shaders.compute.head}`;
         this.options.container = container2;
       } else {
         if (typeof container === "string") {
-          container = document.getElementById(container);
+          container = document.querySelector(container);
           if (!container) {
             const container2 = document.createElement("div");
             container2.setAttribute("id", "curtains-gpu-canvas");
@@ -9815,10 +9916,11 @@ ${this.shaders.compute.head}`;
       this.setCurtains();
     }
     /**
-     * Set the [curtains renderer]{@link GPUCurtainsRenderer}
+     * Set the default [curtains renderer]{@link GPUCurtainsRenderer}
      */
-    setRenderer() {
-      this.renderer = new GPUCurtainsRenderer({
+    setMainRenderer() {
+      this.addCurtainsRenderer({
+        deviceManager: this.deviceManager,
         // TODO ...this.options?
         container: this.options.container,
         pixelRatio: this.options.pixelRatio,
@@ -9831,22 +9933,87 @@ ${this.shaders.compute.head}`;
         onContextLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
       });
     }
-    restoreContext() {
-      this.renderer?.restoreContext();
+    /**
+     * Patch the options with default values before creating a [renderer]{@link Renderer}
+     * @param options - options to patch
+     */
+    patchRendererOptions(options) {
+      if (options.pixelRatio === void 0)
+        options.pixelRatio = this.options.pixelRatio;
+      if (options.production === void 0)
+        options.production = this.options.production;
+      if (options.sampleCount === void 0)
+        options.sampleCount = this.options.sampleCount;
+      return options;
     }
     /**
-     * Set the [curtains renderer context]{@link GPUCurtainsRenderer#setContext}
+     * Create a new {@link GPURenderer} instance
+     * @param options - [options]{@link GPURendererParams} to use
+     */
+    addRenderer(options) {
+      options = this.patchRendererOptions(options);
+      new GPURenderer({ ...options, deviceManager: this.deviceManager });
+    }
+    /**
+     * Create a new {@link GPUCameraRenderer} instance
+     * @param options - [options]{@link GPUCameraRendererParams} to use
+     */
+    addCameraRenderer(options) {
+      options = this.patchRendererOptions(options);
+      new GPUCameraRenderer({ ...options, deviceManager: this.deviceManager });
+    }
+    /**
+     * Create a new {@link GPUCurtainsRenderer} instance
+     * @param options - [options]{@link GPUCameraRendererParams} to use
+     */
+    addCurtainsRenderer(options) {
+      options = this.patchRendererOptions(options);
+      new GPUCurtainsRenderer({ ...options, deviceManager: this.deviceManager });
+    }
+    /**
+     * Set our [device manager]{@link GPUDeviceManager}
+     */
+    setDeviceManager() {
+      this.deviceManager = new GPUDeviceManager({
+        label: "GPUCurtains default device",
+        onError: () => this._onErrorCallback && this._onErrorCallback(),
+        onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
+      });
+    }
+    /**
+     * Get all created [renderers]{@link Renderer}
+     * @readonly
+     */
+    get renderers() {
+      return this.deviceManager.renderers;
+    }
+    /**
+     * Get the default {@link GPUCurtainsRenderer} created
+     * @readonly
+     */
+    get renderer() {
+      return this.renderers[0];
+    }
+    /**
+     * Set the [device manager]{@link GPUDeviceManager} [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible, then set all created [renderers]{@link Renderer} contexts
+     */
+    async setDevice() {
+      await this.deviceManager.setAdapterAndDevice();
+      this.renderers.forEach((renderer) => renderer.setContext());
+    }
+    /**
+     * Restore the [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device}
      * @async
      */
-    async setRendererContext() {
-      await this.renderer.setContext();
+    async restoreContext() {
+      await this.deviceManager.restoreDevice();
     }
     /**
      * Set the various event listeners, set the [curtains renderer]{@link GPUCurtainsRenderer}, append the [canvas]{@link HTMLCanvasElement} to our [container]{@link GPUCurtains#container} and start rendering if needed
      */
     setCurtains() {
       this.initEvents();
-      this.setRenderer();
+      this.setMainRenderer();
       if (this.options.autoRender) {
         this.animate();
       }
@@ -9856,37 +10023,37 @@ ${this.shaders.compute.head}`;
      * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [ping pong planes]{@link PingPongPlane}
      */
     get pingPongPlanes() {
-      return this.renderer?.pingPongPlanes;
+      return this.renderers?.map((renderer) => renderer.pingPongPlanes).flat();
     }
     /**
      * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [shader passes]{@link ShaderPass}
      */
     get shaderPasses() {
-      return this.renderer?.shaderPasses;
+      return this.renderers?.map((renderer) => renderer.shaderPasses).flat();
     }
     /**
      * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [meshes]{@link MeshBase}
      */
     get meshes() {
-      return this.renderer?.meshes;
+      return this.renderers?.map((renderer) => renderer.meshes).flat();
     }
     /**
      * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [DOM Meshes]{@link DOMMesh}
      */
     get domMeshes() {
-      return this.renderer?.domMeshes;
+      return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domMeshes).flat();
     }
     /**
      * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [planes]{@link Plane}
      */
     get planes() {
-      return this.renderer?.domMeshes.filter((domMesh) => domMesh.type === "Plane");
+      return this.domMeshes.filter((domMesh) => domMesh instanceof Plane);
     }
     /**
      * Get all the [curtains renderer]{@link GPUCurtainsRenderer} created [compute passes]{@link ComputePass}
      */
     get computePasses() {
-      return this.renderer?.computePasses;
+      return this.renderers?.map((renderer) => renderer.computePasses).flat();
     }
     /**
      * Get the [curtains renderer camera]{@link GPUCurtainsRenderer#camera}
@@ -9911,7 +10078,6 @@ ${this.shaders.compute.head}`;
      * Manually resize our [curtains renderer]{@link GPUCurtainsRenderer}
      */
     resize() {
-      this.renderer?.resize();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
     /**
@@ -9944,7 +10110,7 @@ ${this.shaders.compute.head}`;
      * @param delta - last [scroll delta values]{@link ScrollManager#delta}
      */
     updateScroll(delta = { x: 0, y: 0 }) {
-      this.renderer.domMeshes.forEach((mesh) => {
+      this.domMeshes.forEach((mesh) => {
         if (mesh.domElement) {
           mesh.updateScrollPosition(delta);
         }
@@ -10048,7 +10214,7 @@ ${this.shaders.compute.head}`;
      */
     render() {
       this._onRenderCallback && this._onRenderCallback();
-      this.renderer?.render();
+      this.renderers.forEach((renderer) => renderer.render());
     }
     /**
      * Destroy our {@link GPUCurtains} and [curtains renderer]{@link GPUCurtainsRenderer}
@@ -10057,7 +10223,7 @@ ${this.shaders.compute.head}`;
       if (this.animationFrameID) {
         window.cancelAnimationFrame(this.animationFrameID);
       }
-      this.renderer?.destroy();
+      this.deviceManager.destroy();
       this.scrollManager?.destroy();
       resizeManager.destroy();
     }

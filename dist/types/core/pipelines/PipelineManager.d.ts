@@ -1,9 +1,7 @@
 /// <reference types="dist" />
 import { RenderPipelineEntry } from './RenderPipelineEntry';
 import { ComputePipelineEntry } from './ComputePipelineEntry';
-import { Renderer } from '../renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { PipelineEntryBaseParams, RenderPipelineEntryBaseParams } from '../../types/PipelineEntries';
+import { PipelineEntryBaseParams, PipelineEntryParams, RenderPipelineEntryBaseParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
 /** Defines all types of allowed {@link PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry;
 /**
@@ -15,15 +13,11 @@ export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry;
 export declare class PipelineManager {
     /** The type of the {@link PipelineManager} */
     type: string;
-    /** The [renderer]{@link Renderer} used to create this {@link PipelineManager} */
-    renderer: Renderer;
     /** Keep track of the current bound pipeline in order to avoid redundant setPipeline calls */
     currentPipelineIndex: number | null;
     /** Array of already created {@link ComputePipelineEntry} and {@link RenderPipelineEntry} */
     pipelineEntries: AllowedPipelineEntries[];
-    constructor({ renderer }: {
-        renderer: Renderer | GPUCurtains;
-    });
+    constructor();
     /**
      * Checks if the provided [parameters]{@link RenderPipelineEntryBaseParams} belongs to an already created {@link RenderPipelineEntry}.
      * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
@@ -36,7 +30,7 @@ export declare class PipelineManager {
      * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
      * @returns - {@link RenderPipelineEntry}, either from cache or newly created
      */
-    createRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry;
+    createRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry;
     /**
      * Checks if the provided [parameters]{@link PipelineEntryBaseParams} belongs to an already created {@link ComputePipelineEntry}.
      * @param parameters - [ComputePipelineEntry parameters]{@link PipelineEntryBaseParams}
@@ -48,7 +42,7 @@ export declare class PipelineManager {
      * @param parameters - [PipelineEntry parameters]{@link PipelineEntryBaseParams}
      * @returns - newly created {@link ComputePipelineEntry}
      */
-    createComputePipeline(parameters: PipelineEntryBaseParams): ComputePipelineEntry;
+    createComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry;
     /**
      * Check if the given [pipeline entry]{@link AllowedPipelineEntries} is already set, if not set it
      * @param pass - current pass encoder

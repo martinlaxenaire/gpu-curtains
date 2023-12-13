@@ -14,7 +14,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       console.log(info, gpuCurtains.renderer)
     })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()

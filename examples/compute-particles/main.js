@@ -210,7 +210,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   // The basic idea here is to place instanced points on a sphere surface
   // and then displace them with curl noise in a compute shader

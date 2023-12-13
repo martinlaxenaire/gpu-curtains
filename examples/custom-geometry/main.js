@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   gpuCurtains.onError(() => {
     // display original images

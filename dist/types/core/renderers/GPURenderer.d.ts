@@ -15,10 +15,13 @@ import { Mesh } from '../meshes/Mesh';
 import { TasksQueueManager } from '../../utils/TasksQueueManager';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { RenderTexture } from '../textures/RenderTexture';
+import { GPUDeviceManager } from './GPUDeviceManager';
 /**
  * Parameters used to create a {@link GPURenderer}
  */
 export interface GPURendererParams {
+    /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
+    deviceManager: GPUDeviceManager;
     /** [HTML Element]{@link HTMLElement} or selector used as a container for our [canvas]{@link GPURenderer#canvas} */
     container: string | HTMLElement;
     /** Pixel ratio to use for rendering */
@@ -52,10 +55,13 @@ export type SceneObject = MeshType | ComputePass | PingPongPlane | ShaderPass;
 export declare class GPURenderer {
     /** The type of the {@link GPURenderer} */
     type: string;
+    /** The universal unique id of this {@link GPURenderer} */
+    readonly uuid: string;
     /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} have been successfully created */
     ready: boolean;
+    /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
+    deviceManager: GPUDeviceManager;
     /** navigator {@link GPU} object */
-    gpu: null | GPU;
     /** [canvas]{@link HTMLCanvasElement} onto everything is drawn */
     canvas: HTMLCanvasElement;
     /** The WebGPU [context]{@link GPUCanvasContext} used */
@@ -65,25 +71,17 @@ export declare class GPURenderer {
     /** Set the [context]{@link GPUCanvasContext} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
     /** The WebGPU [adapter]{@link GPUAdapter} used */
-    adapter: GPUAdapter | void;
     /** The WebGPU [adapter]{@link GPUAdapter} informations */
-    adapterInfos: GPUAdapterInfo | undefined;
     /** The WebGPU [device]{@link GPUDevice} used */
-    device: GPUDevice | null;
     /** The number of WebGPU [devices]{@link GPUDevice} created */
-    devicesCount: number;
     /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
     onError: () => void;
     /** Callback to run whenever the [renderer device]{@link GPURenderer#device} context is lost */
     onContextLost: (info?: GPUDeviceLostInfo) => void;
     /** The final [render pass]{@link RenderPass} to render our result to screen */
     renderPass: RenderPass;
-    /** The {@link PipelineManager} used */
-    pipelineManager: PipelineManager;
     /** The {@link Scene} used */
     scene: Scene;
-    /** An array containing all our created {@link GPUBuffer} */
-    buffers: GPUBuffer[];
     /** An array containing all our created {@link ComputePass} */
     computePasses: ComputePass[];
     /** An array containing all our created {@link PingPongPlane} */
@@ -94,8 +92,6 @@ export declare class GPURenderer {
     renderTargets: RenderTarget[];
     /** An array containing all our created [Meshes]{@link MeshType} */
     meshes: MeshType[];
-    /** An array containing all our created {@link Sampler} */
-    samplers: Sampler[];
     /** An array containing all our created {@link Texture} */
     textures: Texture[];
     /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
@@ -110,9 +106,13 @@ export declare class GPURenderer {
     domElement: DOMElement;
     /** Document [body]{@link HTMLBodyElement} [DOM Element]{@link DOMElement} used to trigger resize when the document body size changes */
     documentBody: DOMElement;
+    /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
     onBeforeCommandEncoderCreation: TasksQueueManager;
+    /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created but before the {@link Scene} is rendered */
     onBeforeRenderScene: TasksQueueManager;
+    /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created and after the {@link Scene} has been rendered */
     onAfterRenderScene: TasksQueueManager;
+    /** Allow to add callbacks to be executed at each render after the {@link Scene} has been rendered and the {@link GPUCommandEncoder} has been submitted */
     onAfterCommandEncoderSubmission: TasksQueueManager;
     /** function assigned to the [onBeforeRender]{@link GPURenderer#onBeforeRender} callback */
     _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
@@ -122,7 +122,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
      */
-    constructor({ container, pixelRatio, sampleCount, production, preferredFormat, alphaMode, onError, onContextLost, }: GPURendererParams);
+    constructor({ deviceManager, container, pixelRatio, sampleCount, production, preferredFormat, alphaMode, onError, onContextLost, }: GPURendererParams);
     /**
      * Set [canvas]{@link GPURenderer#canvas} size
      * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
@@ -145,40 +145,30 @@ export declare class GPURenderer {
      * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
      */
     get pixelRatioBoundingRect(): DOMElementBoundingRect;
+    get device(): GPUDevice | undefined;
+    get samplers(): Sampler[];
+    get buffers(): GPUBuffer[];
+    get pipelineManager(): PipelineManager;
+    configureContext(): void;
     /**
-     * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass}, [pipeline manager]{@link GPURenderer#pipelineManager} and [scene]{@link GPURenderer#scene}
-     * @returns - void promise result
+     * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass} and [scene]{@link GPURenderer#scene}
      */
-    setContext(): Promise<void>;
-    /**
-     * Set our [adapter]{@link GPURenderer#adapter} if possible
-     * @returns - void promise result
-     */
-    setAdapter(): Promise<void>;
-    /**
-     * Set our [device]{@link GPURenderer#device} and configure [context]{@link GPURenderer#context} if possible
-     * @returns - void promise result
-     */
-    setDevice(): Promise<void>;
+    setContext(): void;
     /**
      * Called when the [renderer device]{@link GPURenderer#device} is lost.
-     * Reset all our samplers, force all our scene objects to lose context.
+     * Force all our scene objects to lose context.
      */
     loseContext(): void;
     /**
      * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures.
+     * Reset the adapter, device and configure context again, restore our scene objects context, resize the render textures.
      * @async
      */
-    restoreContext(): Promise<void>;
+    restoreContext(): void;
     /**
      * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen
      */
     setMainRenderPass(): void;
-    /**
-     * Set our [pipeline manager]{@link GPURenderer#pipelineManager}
-     */
-    setPipelineManager(): void;
     /**
      * Set our [scene]{@link GPURenderer#scene}
      */
@@ -190,7 +180,7 @@ export declare class GPURenderer {
      */
     createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer;
     /**
-     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPURenderer#buffers}
+     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
      * @param buffer - [buffer]{@link GPUBuffer} to remove
      */
     removeBuffer(buffer: GPUBuffer): void;
@@ -285,7 +275,7 @@ export declare class GPURenderer {
     importExternalTexture(video: HTMLVideoElement): GPUExternalTexture;
     /**
      * Check if a {@link Sampler} has already been created with the same [parameters]{@link Sampler#options}.
-     * Use it if found, else create a new one and add it to the [samplers array]{@link GPURenderer#samplers}.
+     * Use it if found, else create a new one and add it to the [device manager samplers array]{@link GPUDeviceManager#samplers}.
      * @param sampler - {@link Sampler} to create
      * @returns - the {@link GPUSampler}
      */

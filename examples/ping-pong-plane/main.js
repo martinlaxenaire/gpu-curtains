@@ -8,7 +8,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     preferredFormat: 'rgba16float', // important, we'll be using floating point textures
   })
 
-  await gpuCurtains.setRendererContext()
+  await gpuCurtains.setDevice()
 
   gpuCurtains.onError(() => {
     // display original images

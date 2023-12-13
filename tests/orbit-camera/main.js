@@ -1,21 +1,28 @@
-import { GPUCameraRenderer, Vec2, Vec3, BoxGeometry, SphereGeometry, Mesh } from '../../src'
+import { GPUCameraRenderer, Vec2, Vec3, BoxGeometry, SphereGeometry, Mesh, GPUDeviceManager } from '../../src'
 
 window.addEventListener('DOMContentLoaded', async () => {
   const systemSize = 10
 
   // here is an example of how we can use a simple GPUCameraRenderer instead of GPUCurtains
   // this shows us how to use gpu-curtains as a basic genuine 3D engine, not related to DOM
-  // so, let's start by creating a camera renderer
+
+  // first, we need a WebGPU device, that's what GPUDeviceManager is for
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
+  })
+
+  // we need to wait for the device to be created
+  await gpuDeviceManager.init()
+
+  // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       far: systemSize * 10,
     },
   })
-
-  // set the renderer context
-  await gpuCameraRenderer.setContext()
 
   // get the camera
   const { camera } = gpuCameraRenderer

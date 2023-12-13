@@ -84,6 +84,7 @@ export class ComputeMaterial extends Material {
     })
 
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
+      renderer: this.renderer,
       label: this.options.label + ' compute pipeline',
       shaders: this.options.shaders,
       useAsync: this.options.useAsyncPipeline,
