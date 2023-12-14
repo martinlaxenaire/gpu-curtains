@@ -158,6 +158,7 @@ export class RenderTexture {
       dimensions: this.options.viewDimension === '1d' ? '1d' : this.options.viewDimension === '3d' ? '3d' : '2d',
       usage:
         // TODO let user chose?
+        // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
         this.options.usage === 'texture'
           ? GPUTextureUsage.TEXTURE_BINDING |
             GPUTextureUsage.COPY_SRC |

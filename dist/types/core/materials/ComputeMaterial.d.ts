@@ -17,6 +17,8 @@ export declare class ComputeMaterial extends Material {
     options: ComputeMaterialOptions;
     /** Array of [work groups]{@link ComputeMaterialWorkGroup} to render each time the [render]{@link ComputeMaterial#render} method is called */
     workGroups: ComputeMaterialWorkGroup[];
+    /** function assigned to the [useCustomRender]{@link ComputeMaterial#useCustomRender} callback */
+    _useCustomRenderCallback: (pass: GPUComputePassEncoder) => void;
     /**
      * ComputeMaterial constructor
      * @param renderer - our renderer class object
@@ -73,6 +75,11 @@ export declare class ComputeMaterial extends Material {
      * @param workGroup - [Work group]{@link ComputeMaterial#workGroups} to render
      */
     renderWorkGroup(pass: GPUComputePassEncoder, workGroup: ComputeMaterialWorkGroup): void;
+    /**
+     * If we defined a custom render function instead of the default one, register the callback
+     * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+     */
+    useCustomRender(callback: (pass: GPUComputePassEncoder) => void): void;
     /**
      * Render the material if it is ready:
      * Set the current pipeline, and render all the [work groups]{@link ComputeMaterial#workGroups}

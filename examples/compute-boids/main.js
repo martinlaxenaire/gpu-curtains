@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec2, ComputePass, SphereGeometry, Mesh } from '../../src'
+import { GPUCurtains, Vec2, BufferBinding, BindGroup, ComputePass, SphereGeometry, Mesh } from '../../src'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
 window.addEventListener('DOMContentLoaded', async () => {
@@ -37,8 +37,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     ) {
       var index = GlobalInvocationID.x;
       
-      var vPos = particles[index].position;
-      var vVel = particles[index].velocity;
+      var vPos = particlesA[index].position;
+      var vVel = particlesA[index].velocity;
       
       var cMass = vec2(0.0);
       var cVel = vec2(0.0);
@@ -49,15 +49,15 @@ window.addEventListener('DOMContentLoaded', async () => {
       var vel : vec2<f32>;
       var minSystemSize: f32 = min(params.systemSize.x, params.systemSize.y);
       
-      var particlesArrayLength = arrayLength(&particles);
+      var particlesArrayLength = arrayLength(&particlesA);
     
       for (var i = 0u; i < particlesArrayLength; i++) {
         if (i == index) {
           continue;
         }
         
-        pos = particles[i].position.xy;
-        vel = particles[i].velocity.xy;
+        pos = particlesA[i].position.xy;
+        vel = particlesA[i].velocity.xy;
         
         if (distance(pos, vPos) < params.rule1Distance * minSystemSize) {
           cMass += pos;
@@ -102,87 +102,145 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
       
       // Write back      
-      particles[index].position = vPos;
-      particles[index].velocity = vVel;
+      particlesB[index].position = vPos;
+      particlesB[index].velocity = vVel;
     }
   `
 
-  // first our compute pass
-  const computePass = new ComputePass(gpuCurtains, {
+  // we're going to use ping pong 2 storage buffers (one with read-only access, the other with read/write access)
+  // and 2 bind groups with those buffers swapped
+
+  // first our uniform buffer
+  const uniformsBufferBinding = new BufferBinding({
+    bindingType: 'uniform',
+    visibility: 'compute',
+    name: 'params',
+    label: 'SimParams',
+    struct: {
+      systemSize: {
+        type: 'vec2f',
+        value: systemSize,
+      },
+      deltaT: {
+        type: 'f32',
+        value: 0.04,
+      },
+      rule1Distance: {
+        type: 'f32',
+        value: 0.15,
+      },
+      rule2Distance: {
+        type: 'f32',
+        value: 0.05,
+      },
+      rule3Distance: {
+        type: 'f32',
+        value: 0.05,
+      },
+      rule1Scale: {
+        type: 'f32',
+        value: 0.04,
+      },
+      rule2Scale: {
+        type: 'f32',
+        value: 0.1,
+      },
+      rule3Scale: {
+        type: 'f32',
+        value: 0.01,
+      },
+    },
+  })
+
+  // the read-only storage buffer
+  const particlesBufferBindingA = new BufferBinding({
+    label: 'ParticleA',
+    name: 'particlesA',
+    bindingType: 'storage',
+    access: 'read', // we want a read only buffer
+    visibility: 'compute',
+    struct: {
+      position: {
+        type: 'array<vec2f>',
+        value: initialParticlePosition,
+      },
+      velocity: {
+        type: 'array<vec2f>',
+        value: initialParticleVelocity,
+      },
+    },
+  })
+
+  // the read/write storage buffer
+  const particlesBufferBindingB = new BufferBinding({
+    label: 'ParticleB',
+    name: 'particlesB',
+    bindingType: 'storage',
+    access: 'read_write', // we want a readable AND writable buffer!
+    visibility: 'compute',
+    struct: {
+      position: {
+        type: 'array<vec2f>',
+        value: initialParticlePosition,
+      },
+      velocity: {
+        type: 'array<vec2f>',
+        value: initialParticleVelocity,
+      },
+    },
+  })
+
+  // create a first bind group with all of that
+  const particleBindGroupA = new BindGroup(gpuCurtains, {
+    label: 'Particle A bind group',
+    bindings: [uniformsBufferBinding, particlesBufferBindingA, particlesBufferBindingB],
+  })
+
+  // create bind group & its layout
+  particleBindGroupA.createBindGroup()
+
+  // now create a second one, with the same bind group layout but with the storage buffers swapped
+  const particleBindGroupB = particleBindGroupA.clone({
+    bindings: [uniformsBufferBinding, particlesBufferBindingB, particlesBufferBindingA],
+    keepLayout: true,
+  })
+
+  // the compute pass
+  const computeBoidsPass = new ComputePass(gpuCurtains, {
     label: 'Compute test',
     shaders: {
       compute: {
         code: computeBoids,
       },
     },
-    dispatchSize: Math.ceil(numParticles / 64), // Note that we divide the vertex count by the workgroup_size!
-    uniforms: {
-      params: {
-        //name: 'params',
-        label: 'SimParams',
-        struct: {
-          systemSize: {
-            type: 'vec2f',
-            value: systemSize,
-          },
-          deltaT: {
-            type: 'f32',
-            value: 0.04,
-          },
-          rule1Distance: {
-            type: 'f32',
-            value: 0.15,
-          },
-          rule2Distance: {
-            type: 'f32',
-            value: 0.05,
-          },
-          rule3Distance: {
-            type: 'f32',
-            value: 0.05,
-          },
-          rule1Scale: {
-            type: 'f32',
-            value: 0.04,
-          },
-          rule2Scale: {
-            type: 'f32',
-            value: 0.1,
-          },
-          rule3Scale: {
-            type: 'f32',
-            value: 0.01,
-          },
-        },
-      },
-    },
-    storages: {
-      particles: {
-        label: 'Particle',
-        access: 'read_write', // we want a readable AND writable buffer!
-        struct: {
-          position: {
-            type: 'array<vec2f>',
-            value: initialParticlePosition,
-          },
-          velocity: {
-            type: 'array<vec2f>',
-            value: initialParticleVelocity,
-          },
-        },
-      },
-    },
+    bindGroups: [particleBindGroupA],
   })
 
-  computePass
+  let pingPong = 0
+
+  // use a custom render function
+  // here the pipeline has already been set
+  // we just have to set the bind groups and dispatch the work groups as we want
+  computeBoidsPass
+    .useCustomRender((pass) => {
+      // bind group ping pong
+      pass.setBindGroup(
+        particleBindGroupA.index,
+        pingPong % 2 === 0 ? particleBindGroupA.bindGroup : particleBindGroupB.bindGroup
+      )
+
+      pass.dispatchWorkgroups(Math.ceil(numParticles / 64))
+
+      pingPong++
+    })
     .onReady(() => {
       // useful to get the WGSL struct and variables code generated based on input struct
-      console.log(computePass.material.getAddedShaderCode('compute'))
+      console.log(computeBoidsPass.material.getAddedShaderCode('compute'))
     })
     .onAfterResize(() => {
       const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale * 0.5
       const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
-      computePass.uniforms.params.systemSize.value.set(cameraRatio * screenRatio, cameraRatio)
+      computeBoidsPass.uniforms.params.systemSize.value.set(cameraRatio * screenRatio, cameraRatio)
     })
 
   const meshVs = /* wgsl */ `  
@@ -255,7 +313,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onRender(() => {
       const instanceVertexBuffer = sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
-      const particleBuffer = computePass.material.getBindingByName('particles')
+
+      // ping pong our buffers here
+      // always send to the instance positions buffer the one onto which we've just written
+      const particleBuffer = pingPong % 2 === 0 ? particlesBufferBindingB : particlesBufferBindingA
 
       instanceVertexBuffer.buffer = particleBuffer?.buffer
     })

@@ -268,7 +268,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const computeBlurPass = new ComputePass(gpuCurtains.renderer, {
     label: 'Compute blur',
-    autoRender: false, // we'll do it ourselves
     shaders: {
       compute: {
         code: computeBlur,
@@ -298,53 +297,47 @@ window.addEventListener('DOMContentLoaded', async () => {
   //   console.log(computeBlurPass.material.getBindingByName('params'))
   // })
 
-  gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
-    computeBlurPass.onBeforeRenderPass()
-
-    // also update the bindings of the 2 bind groups that are not part of the compute pass
+  // use a custom render function
+  // here the pipeline has already been set
+  // we just have to set the bind groups and dispatch the work groups as we want
+  computeBlurPass.useCustomRender((pass) => {
+    // update the bindings of the 2 bind groups that are not part of the compute pass
     outputTextureBindGroup1.update()
     outputTextureBindGroup2.update()
-
-    if (!computeBlurPass.ready) return
-
-    const blurPass = commandEncoder.beginComputePass()
-    computeBlurPass.material.setPipeline(blurPass)
 
     const samplerBindGroup = computeBlurPass.material.texturesBindGroup
     const uniformBindGroup = computeBlurPass.material.getBindGroupByBindingName('params')
 
     // bind the sampler bind group
-    blurPass.setBindGroup(samplerBindGroup.index, samplerBindGroup.bindGroup)
+    pass.setBindGroup(samplerBindGroup.index, samplerBindGroup.bindGroup)
     // bind the params uniforms bind group
-    blurPass.setBindGroup(uniformBindGroup.index, uniformBindGroup.bindGroup)
+    pass.setBindGroup(uniformBindGroup.index, uniformBindGroup.bindGroup)
 
     // now the blur process
-    blurPass.setBindGroup(textureBindGroup.index, textureBindGroup.bindGroup)
-    blurPass.dispatchWorkgroups(
+    pass.setBindGroup(textureBindGroup.index, textureBindGroup.bindGroup)
+    pass.dispatchWorkgroups(
       Math.ceil(outputTexture.size.width / blockDimension),
       Math.ceil(outputTexture.size.height / batchSize)
     )
 
-    blurPass.setBindGroup(textureBindGroup.index, outputTextureBindGroup1.bindGroup)
-    blurPass.dispatchWorkgroups(
+    pass.setBindGroup(textureBindGroup.index, outputTextureBindGroup1.bindGroup)
+    pass.dispatchWorkgroups(
       Math.ceil(outputTexture.size.height / blockDimension),
       Math.ceil(outputTexture.size.width / batchSize)
     )
 
     for (let i = 0; i < blurIterations - 1; i++) {
-      blurPass.setBindGroup(textureBindGroup.index, outputTextureBindGroup2.bindGroup)
-      blurPass.dispatchWorkgroups(
+      pass.setBindGroup(textureBindGroup.index, outputTextureBindGroup2.bindGroup)
+      pass.dispatchWorkgroups(
         Math.ceil(outputTexture.size.width / blockDimension),
         Math.ceil(outputTexture.size.height / batchSize)
       )
 
-      blurPass.setBindGroup(textureBindGroup.index, outputTextureBindGroup1.bindGroup)
-      blurPass.dispatchWorkgroups(
+      pass.setBindGroup(textureBindGroup.index, outputTextureBindGroup1.bindGroup)
+      pass.dispatchWorkgroups(
         Math.ceil(outputTexture.size.height / blockDimension),
         Math.ceil(outputTexture.size.width / batchSize)
       )
     }
-
-    blurPass.end()
   })
 })

@@ -3746,6 +3746,7 @@ var __privateMethod = (obj, member, method) => {
         dimensions: this.options.viewDimension === "1d" ? "1d" : this.options.viewDimension === "3d" ? "3d" : "2d",
         usage: (
           // TODO let user chose?
+          // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
           this.options.usage === "texture" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
         )
       });
@@ -4366,6 +4367,15 @@ var __privateMethod = (obj, member, method) => {
       pass.dispatchWorkgroups(workGroup.dispatchSize[0], workGroup.dispatchSize[1], workGroup.dispatchSize[2]);
     }
     /**
+     * If we defined a custom render function instead of the default one, register the callback
+     * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+     */
+    useCustomRender(callback) {
+      if (callback) {
+        this._useCustomRenderCallback = callback;
+      }
+    }
+    /**
      * Render the material if it is ready:
      * Set the current pipeline, and render all the [work groups]{@link ComputeMaterial#workGroups}
      * @param pass - current compute pass encoder
@@ -4374,9 +4384,13 @@ var __privateMethod = (obj, member, method) => {
       if (!this.ready)
         return;
       this.setPipeline(pass);
-      this.workGroups.forEach((workGroup) => {
-        this.renderWorkGroup(pass, workGroup);
-      });
+      if (this._useCustomRenderCallback !== void 0) {
+        this._useCustomRenderCallback(pass);
+      } else {
+        this.workGroups.forEach((workGroup) => {
+          this.renderWorkGroup(pass, workGroup);
+        });
+      }
     }
     /* RESULT BUFFER */
     /**
@@ -4688,6 +4702,14 @@ var __privateMethod = (obj, member, method) => {
       if (callback) {
         this._onAfterRenderCallback = callback;
       }
+      return this;
+    }
+    /**
+     * Callback used to run a custom render function instead of the default one.
+     * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+     */
+    useCustomRender(callback) {
+      this.material.useCustomRender(callback);
       return this;
     }
     /**
@@ -8879,7 +8901,11 @@ ${this.shaders.compute.head}`;
       if (existingSampler) {
         return existingSampler.sampler;
       } else {
-        const gpuSampler = (_a = this.device) == null ? void 0 : _a.createSampler({ label: sampler.label, ...sampler.options });
+        const { type, ...samplerOptions } = sampler.options;
+        const gpuSampler = (_a = this.device) == null ? void 0 : _a.createSampler({
+          label: sampler.label,
+          ...samplerOptions
+        });
         this.samplers.push(sampler);
         return gpuSampler;
       }
@@ -8991,7 +9017,7 @@ ${this.shaders.compute.head}`;
     setRenderPassCurrentTexture(renderPass, renderTexture = null) {
       if (!renderTexture) {
         renderTexture = this.context.getCurrentTexture();
-        renderTexture.label = "GPURenderer context current texture";
+        renderTexture.label = `${this.type} context current texture`;
       }
       if (this.sampleCount > 1) {
         renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView();

@@ -582,7 +582,7 @@ export class GPURenderer {
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
     // see onVideoFrameCallback method in Texture class
     // const videoFrame = new VideoFrame(video)
-    // return this.device.importExternalTexture({ source: videoFrame })
+    // return this.device?.importExternalTexture({ source: videoFrame })
     return this.device?.importExternalTexture({ source: video })
   }
 
@@ -600,7 +600,11 @@ export class GPURenderer {
     if (existingSampler) {
       return existingSampler.sampler
     } else {
-      const gpuSampler: GPUSampler = this.device?.createSampler({ label: sampler.label, ...sampler.options })
+      const { type, ...samplerOptions } = sampler.options
+      const gpuSampler: GPUSampler = this.device?.createSampler({
+        label: sampler.label,
+        ...samplerOptions,
+      })
 
       this.samplers.push(sampler)
 
@@ -733,7 +737,7 @@ export class GPURenderer {
   setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture: GPUTexture | null = null) {
     if (!renderTexture) {
       renderTexture = this.context.getCurrentTexture()
-      renderTexture.label = 'GPURenderer context current texture'
+      renderTexture.label = `${this.type} context current texture`
     }
 
     if (this.sampleCount > 1) {

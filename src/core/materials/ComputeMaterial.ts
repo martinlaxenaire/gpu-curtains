@@ -25,6 +25,9 @@ export class ComputeMaterial extends Material {
   /** Array of [work groups]{@link ComputeMaterialWorkGroup} to render each time the [render]{@link ComputeMaterial#render} method is called */
   workGroups: ComputeMaterialWorkGroup[]
 
+  /** function assigned to the [useCustomRender]{@link ComputeMaterial#useCustomRender} callback */
+  _useCustomRenderCallback: (pass: GPUComputePassEncoder) => void
+
   /**
    * ComputeMaterial constructor
    * @param renderer - our renderer class object
@@ -195,6 +198,16 @@ export class ComputeMaterial extends Material {
   }
 
   /**
+   * If we defined a custom render function instead of the default one, register the callback
+   * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+   */
+  useCustomRender(callback: (pass: GPUComputePassEncoder) => void) {
+    if (callback) {
+      this._useCustomRenderCallback = callback
+    }
+  }
+
+  /**
    * Render the material if it is ready:
    * Set the current pipeline, and render all the [work groups]{@link ComputeMaterial#workGroups}
    * @param pass - current compute pass encoder
@@ -208,10 +221,15 @@ export class ComputeMaterial extends Material {
     // set current pipeline
     this.setPipeline(pass)
 
-    // render our work groups
-    this.workGroups.forEach((workGroup) => {
-      this.renderWorkGroup(pass, workGroup)
-    })
+    // if we declared a custom render function, call it
+    if (this._useCustomRenderCallback !== undefined) {
+      this._useCustomRenderCallback(pass)
+    } else {
+      // else render our work groups
+      this.workGroups.forEach((workGroup) => {
+        this.renderWorkGroup(pass, workGroup)
+      })
+    }
   }
 
   /* RESULT BUFFER */
