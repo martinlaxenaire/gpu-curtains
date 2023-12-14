@@ -3,6 +3,7 @@ import { Renderer } from '../renderers/utils';
 import { RenderTarget } from './RenderTarget';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { MeshBaseRenderParams } from '../meshes/MeshBaseMixin';
+import { RenderTexture } from '../textures/RenderTexture';
 /**
  * Parameters used to create a {@link ShaderPass}
  */
@@ -27,7 +28,7 @@ export declare class ShaderPass extends FullscreenPlane {
      * Get our main [render texture]{@link RenderTexture}, the one that contains our post processed content
      * @readonly
      */
-    get renderTexture(): import("../textures/RenderTexture").RenderTexture;
+    get renderTexture(): RenderTexture | undefined;
     /**
      * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
      * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.

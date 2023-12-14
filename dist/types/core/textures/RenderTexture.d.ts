@@ -6,6 +6,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { RectSize } from '../DOM/DOMElement';
 import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding';
 import { Texture } from './Texture';
+import { TextureSize } from '../../types/Textures';
 export type RenderTextureBindingType = Exclude<TextureBindingType, 'externalTexture'>;
 /**
  * Base parameters used to create a {@link RenderTexture}
@@ -16,7 +17,7 @@ export interface RenderTextureBaseParams {
     /** Name of the {@link RenderTexture} to use in the [binding]{@link TextureBinding} */
     name?: string;
     /** Optional size of the [texture]{@link RenderTexture#texture} */
-    size?: RectSize;
+    size?: TextureSize;
     /** Whether to use this [texture]{@link RenderTexture} as a regular or storage texture */
     usage?: RenderTextureBindingType;
     /** Optional format of the [texture]{@link RenderTexture#texture}, mainly used for storage textures */
@@ -48,7 +49,7 @@ export declare class RenderTexture {
     /** The {@link GPUTexture} used */
     texture: GPUTexture;
     /** Size of the [texture]{@link RenderTexture#texture} source, usually our [renderer pixel ratio bounding rect]{@link Renderer#pixelRatioBoundingRect} */
-    size: RectSize;
+    size: TextureSize;
     /** Options used to create this {@link RenderTexture} */
     options: RenderTextureParams;
     /** Array of [struct]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
@@ -63,9 +64,9 @@ export declare class RenderTexture {
     constructor(renderer: Renderer | GPUCurtains, parameters?: RenderTextureParams);
     /**
      * Set the [size]{@link RenderTexture#size}
-     * @param size - [size]{@link RectSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height if null
+     * @param size - [size]{@link TextureSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height and 1 for depth if null
      */
-    setSize(size?: RectSize | null): void;
+    setSize(size?: TextureSize | null): void;
     /**
      * Copy another {@link RenderTexture} into this {@link RenderTexture}
      * @param texture - {@link RenderTexture} to copy

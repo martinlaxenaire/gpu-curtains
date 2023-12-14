@@ -3,6 +3,7 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { RenderTarget } from './RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseRenderParams } from '../meshes/MeshBaseMixin'
+import { RenderTexture } from '../textures/RenderTexture'
 
 /**
  * Parameters used to create a {@link ShaderPass}
@@ -50,8 +51,8 @@ export class ShaderPass extends FullscreenPlane {
    * Get our main [render texture]{@link RenderTexture}, the one that contains our post processed content
    * @readonly
    */
-  get renderTexture() {
-    return this.renderTextures[0] ?? null
+  get renderTexture(): RenderTexture | undefined {
+    return this.renderTextures.find((texture) => texture.options.name === 'renderTexture')
   }
 
   /**

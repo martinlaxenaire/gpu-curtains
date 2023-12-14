@@ -555,7 +555,7 @@ export class Texture extends Object3D {
    * Get whether the [texture source]{@link Texture#source} is a video
    * @readonly
    */
-  get isVideoSource() {
+  get isVideoSource(): boolean {
     return this.source && (this.options.sourceType === 'video' || this.options.sourceType === 'externalVideo')
   }
 

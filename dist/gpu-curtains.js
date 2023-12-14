@@ -277,17 +277,10 @@ const getBindingWGSLVarType = (binding) => {
   })();
 };
 const getTextureBindingWGSLVarType = (binding) => {
-  return (() => {
-    switch (binding.bindingType) {
-      case "storageTexture":
-        return `var ${binding.name}: texture_storage_2d<${binding.options.format}, ${binding.options.access}>;`;
-      case "externalTexture":
-        return `var ${binding.name}: texture_external;`;
-      case "texture":
-      default:
-        return `var ${binding.name}: texture_2d<f32>;`;
-    }
-  })();
+  if (binding.bindingType === "externalTexture") {
+    return `var ${binding.name}: texture_external;`;
+  }
+  return binding.bindingType === "storageTexture" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : `var ${binding.name}: texture_${binding.options.viewDimension}<f32>;`;
 };
 const getBindGroupLayoutBindingType = (binding) => {
   if (binding.bindingType === "storage" && binding.options.access === "read_write") {
@@ -313,7 +306,7 @@ const getBindGroupLayoutTextureBindingType = (binding) => {
       case "texture":
         return {
           texture: {
-            multisampled: true,
+            //multisampled: true,
             viewDimension: binding.options.viewDimension
           }
         };
@@ -2714,7 +2707,8 @@ class Texture extends Object3D {
     this.source = null;
     this.size = {
       width: 1,
-      height: 1
+      height: 1,
+      depth: 1
     };
     this.textureMatrix = new BufferBinding({
       label: this.options.label + ": model matrix",
@@ -2917,8 +2911,10 @@ class Texture extends Object3D {
     const options = {
       label: this.options.label,
       format: this.options.format,
-      size: [this.size.width, this.size.height],
+      size: [this.size.width, this.size.height, this.size.depth],
       // [1, 1] if no source
+      dimensions: this.options.viewDimension === "1d" ? "1d" : this.options.viewDimension === "3d" ? "3d" : "2d",
+      //sampleCount: this.source ? this.renderer.sampleCount : 1,
       usage: !!this.source ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
     };
     if (this.options.sourceType !== "externalVideo") {
@@ -2937,7 +2933,8 @@ class Texture extends Object3D {
   setSourceSize() {
     this.size = {
       width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
-      height: this.source.naturalHeight || this.source.height || this.source.videoHeight
+      height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
+      depth: 1
     };
   }
   /**
@@ -3706,13 +3703,14 @@ class RenderTexture {
   }
   /**
    * Set the [size]{@link RenderTexture#size}
-   * @param size - [size]{@link RectSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height if null
+   * @param size - [size]{@link TextureSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height and 1 for depth if null
    */
   setSize(size = null) {
     if (!size) {
       size = {
         width: this.renderer.pixelRatioBoundingRect.width,
-        height: this.renderer.pixelRatioBoundingRect.height
+        height: this.renderer.pixelRatioBoundingRect.height,
+        depth: 1
       };
     }
     this.size = size;
@@ -3740,7 +3738,8 @@ class RenderTexture {
     this.texture = this.renderer.createTexture({
       label: this.options.label,
       format: this.options.format,
-      size: [this.size.width, this.size.height],
+      size: [this.size.width, this.size.height, this.size.depth],
+      dimensions: this.options.viewDimension === "1d" ? "1d" : this.options.viewDimension === "3d" ? "3d" : "2d",
       usage: (
         // TODO let user chose?
         this.options.usage === "texture" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
@@ -8818,6 +8817,7 @@ class GPURenderer {
    */
   createTexture(textureDescriptor) {
     var _a;
+    console.log(textureDescriptor.label);
     return (_a = this.device) == null ? void 0 : _a.createTexture(textureDescriptor);
   }
   /**
@@ -8985,8 +8985,10 @@ class GPURenderer {
    * @returns - the [current render texture]{@link GPUTexture}
    */
   setRenderPassCurrentTexture(renderPass, renderTexture = null) {
-    if (!renderTexture)
+    if (!renderTexture) {
       renderTexture = this.context.getCurrentTexture();
+      renderTexture.label = "GPURenderer context current texture";
+    }
     if (this.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView();
     } else {
@@ -9590,7 +9592,7 @@ class ShaderPass extends FullscreenPlane {
    * @readonly
    */
   get renderTexture() {
-    return this.renderTextures[0] ?? null;
+    return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
   }
   /**
    * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
@@ -9656,7 +9658,7 @@ class PingPongPlane extends FullscreenPlane {
    * @readonly
    */
   get renderTexture() {
-    return this.renderTextures[0] ?? null;
+    return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
   }
   /**
    * Add the {@link PingPongPlane} to the renderer and the {@link Scene}

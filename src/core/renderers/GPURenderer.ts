@@ -533,6 +533,7 @@ export class GPURenderer {
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor: GPUTextureDescriptor): GPUTexture {
+    console.log(textureDescriptor.label)
     return this.device?.createTexture(textureDescriptor)
   }
 
@@ -730,7 +731,10 @@ export class GPURenderer {
    * @returns - the [current render texture]{@link GPUTexture}
    */
   setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture: GPUTexture | null = null) {
-    if (!renderTexture) renderTexture = this.context.getCurrentTexture()
+    if (!renderTexture) {
+      renderTexture = this.context.getCurrentTexture()
+      renderTexture.label = 'GPURenderer context current texture'
+    }
 
     if (this.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
