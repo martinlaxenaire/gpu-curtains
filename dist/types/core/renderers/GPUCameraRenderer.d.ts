@@ -62,11 +62,9 @@ export declare class GPUCameraRenderer extends GPURenderer {
     updateCameraBindings(): void;
     /**
      * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
-     * @param fov - new [field of view]{@link Camera#fov}
-     * @param near - new [near plane]{@link Camera#near}
-     * @param far - new [far plane]{@link Camera#far}
+     * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
      */
-    setPerspective(fov?: number, near?: number, far?: number): void;
+    setPerspective({ fov, near, far }?: CameraBasePerspectiveOptions): void;
     /**
      * Set our [camera]{@link GPUCameraRenderer#camera} position
      * @param position - new [position]{@link Camera#position}

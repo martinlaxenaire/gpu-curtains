@@ -17,7 +17,7 @@ export interface VertexBufferAttributeParams {
     /** [Attribute]{@link VertexBufferAttribute} array that will be used by the {@link VertexBuffer} */
     array: Float32Array;
     /** Use this [attribute]{@link VertexBufferAttribute} for every X vertices. Useful for vertex/face color, etc. */
-    verticesUsed?: number;
+    verticesStride?: number;
 }
 /**
  * A {@link VertexBufferAttribute} holds geometry data to be sent to the vertex shader. Most common geometry attributes are 'position' and 'uv'.
@@ -36,7 +36,7 @@ export interface VertexBufferAttribute extends VertexBufferAttributeParams {
     /** Bytes offset of the [attribute array]{@link VertexBuffer#array} inside the [vertex buffer array]{@link VertexBufferAttributeParams#array} */
     bufferOffset: GPUSize64;
     /** Use this [attribute]{@link VertexBufferAttribute} for every X vertices. Useful for vertex/face color, etc. */
-    verticesUsed: number;
+    verticesStride: number;
 }
 /**
  * A {@link VertexBuffer} is an object regrouping one or multiple {@link VertexBufferAttribute} into a single array and its associated {@link GPUBuffer}

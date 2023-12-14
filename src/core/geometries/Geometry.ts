@@ -147,7 +147,7 @@ export class Geometry {
    * @param {GPUVertexFormat} [parameters.bufferFormat="float32x3"] - attribute buffer format
    * @param {number} [parameters.size=3] - attribute size
    * @param {Float32Array} [parameters.array=Float32Array] - attribute array
-   * @param {number} [parameters.verticesUsed=1] - number of vertices used by this attribute, i.e. insert one for every X vertices
+   * @param {number} [parameters.verticesStride=1] - number of vertices used by this attribute, i.e. insert one for every X vertices
    */
   setAttribute({
     vertexBuffer = this.vertexBuffers[0],
@@ -156,7 +156,7 @@ export class Geometry {
     bufferFormat = 'float32x3',
     size = 3,
     array = new Float32Array(this.verticesCount * size),
-    verticesUsed = 1,
+    verticesStride = 1,
   }: VertexBufferAttributeParams) {
     const attributes = vertexBuffer.attributes
     const attributesLength = attributes.length
@@ -181,7 +181,7 @@ export class Geometry {
     if (
       vertexBuffer.stepMode === 'vertex' &&
       this.verticesCount &&
-      this.verticesCount !== attributeCount * verticesUsed
+      this.verticesCount !== attributeCount * verticesStride
     ) {
       throwError(
         `Geometry vertex attribute error. Attribute array of size ${size} must be of length: ${
@@ -211,10 +211,10 @@ export class Geometry {
         ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * 4
         : 0,
       array,
-      verticesUsed,
+      verticesStride: verticesStride,
     }
 
-    vertexBuffer.bufferLength += attribute.bufferLength * verticesUsed
+    vertexBuffer.bufferLength += attribute.bufferLength * verticesStride
     vertexBuffer.arrayStride += attribute.size
     vertexBuffer.attributes.push(attribute)
   }
@@ -270,10 +270,10 @@ export class Geometry {
       let attributeIndex = 0
       for (let i = 0; i < vertexBuffer.bufferLength; i += vertexBuffer.arrayStride) {
         for (let j = 0; j < vertexBuffer.attributes.length; j++) {
-          const { name, size, array, verticesUsed } = vertexBuffer.attributes[j]
+          const { name, size, array, verticesStride } = vertexBuffer.attributes[j]
 
           for (let s = 0; s < size; s++) {
-            const attributeValue = array[Math.floor(attributeIndex / verticesUsed) * size + s]
+            const attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s]
             vertexBuffer.array[currentIndex] = attributeValue
 
             // compute bounding box

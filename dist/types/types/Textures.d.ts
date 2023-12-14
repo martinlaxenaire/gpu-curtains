@@ -19,6 +19,8 @@ export interface ExternalTextureParams {
     placeholderColor?: [number, number, number, number];
     /** Whether video textures should use {@link GPUExternalTexture} or not */
     useExternalTextures?: boolean;
+    /** The [texture view dimension ]{@link GPUTextureViewDimension} to use */
+    viewDimension?: GPUTextureViewDimension;
 }
 /**
  * Base parameters used to create a {@link Texture}

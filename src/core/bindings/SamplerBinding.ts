@@ -1,4 +1,5 @@
 import { Binding, BindingParams } from './Binding'
+import { SamplerOptions } from '../samplers/Sampler'
 
 /** Defines a {@link SamplerBinding} [resource]{@link SamplerBinding#resource} */
 export type SamplerBindingResource = GPUSampler | null
@@ -9,6 +10,8 @@ export type SamplerBindingResource = GPUSampler | null
 export interface SamplerBindingParams extends BindingParams {
   /** {@link SamplerBinding} [bind group]{@link GPUBindGroup} resource */
   sampler: SamplerBindingResource
+  /** The bind group layout binding [type]{@link GPUSamplerBindingLayout#type} of this [sampler]{@link GPUSampler} */
+  type: SamplerOptions['type']
 }
 
 /**
@@ -41,6 +44,7 @@ export class SamplerBinding extends Binding {
     bindIndex = 0,
     visibility,
     sampler,
+    type = 'filtering',
   }: SamplerBindingParams) {
     bindingType = bindingType ?? 'sampler'
 
@@ -49,6 +53,7 @@ export class SamplerBinding extends Binding {
     this.options = {
       ...this.options,
       sampler,
+      type,
     }
 
     this.resource = sampler // should be a sampler
@@ -62,7 +67,7 @@ export class SamplerBinding extends Binding {
   get resourceLayout(): { sampler: GPUSamplerBindingLayout } {
     return {
       sampler: {
-        type: 'filtering', // TODO let user chose?
+        type: this.options.type,
       },
     }
   }

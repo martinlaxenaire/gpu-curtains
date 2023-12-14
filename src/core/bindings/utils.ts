@@ -163,14 +163,15 @@ export const getBindGroupLayoutTextureBindingType = (
         return {
           storageTexture: {
             format: binding.options.format,
-            viewDimension: '2d', // TODO allow for other dimensions?
-          },
+            viewDimension: binding.options.viewDimension,
+          } as GPUStorageTextureBindingLayout,
         }
       case 'texture':
         return {
           texture: {
-            viewDimension: '2d', // TODO allow for other dimensions?
-          },
+            //multisampled: true,
+            viewDimension: binding.options.viewDimension,
+          } as GPUTextureBindingLayout,
         }
       default:
         return null

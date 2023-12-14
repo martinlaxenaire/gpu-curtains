@@ -127,6 +127,10 @@ export class GPURenderer {
   _onAfterRenderCallback = (commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
+  /** function assigned to the [onAfterResize]{@link GPURenderer#onAfterResize} callback */
+  _onAfterResizeCallback: () => void = () => {
+    /* allow empty callback */
+  }
 
   /**
    * GPURenderer constructor
@@ -223,6 +227,8 @@ export class GPURenderer {
     this.setSize(boundingRect)
 
     this.onResize()
+
+    this._onAfterResizeCallback && this._onAfterResizeCallback()
   }
 
   /**
@@ -343,7 +349,7 @@ export class GPURenderer {
     this.ready = false
 
     // force all our scene objects to lose context
-    this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext())
+    this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext())
   }
 
   /**
@@ -355,7 +361,7 @@ export class GPURenderer {
     this.configureContext()
 
     // restore context of all our scene objects
-    this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext())
+    this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext())
 
     // force renderer resize to resize all our render passes textures
     this.onResize()
@@ -633,20 +639,28 @@ export class GPURenderer {
   }
 
   /**
-   * Get all our scene objects (i.e. objects that are rendered)
+   * Get all this [renderer]{@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
    * @readonly
    */
-  get sceneObjects(): SceneObject[] {
+  get renderedObjects(): SceneObject[] {
     return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes]
   }
 
   /**
-   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+   * @readonly
+   */
+  get deviceObjects(): SceneObject[] {
+    return this.deviceManager.deviceObjects
+  }
+
+  /**
+   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
-    // TODO device manager instead!
-    return this.sceneObjects.filter((object) => {
+    return this.deviceObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
@@ -656,12 +670,12 @@ export class GPURenderer {
   }
 
   /**
-   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */
   getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
-    // TODO device manager instead!
-    return this.sceneObjects.filter((object) => {
+    return this.deviceObjects.filter((object) => {
       return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid)
     })
   }
@@ -689,6 +703,19 @@ export class GPURenderer {
   onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void) {
     if (callback) {
       this._onAfterRenderCallback = callback
+    }
+
+    return this
+  }
+
+  /**
+   * Assign a callback function to _onAfterResizeCallback
+   * @param callback - callback to run just after the {@link GPURenderer} has been resized
+   * @returns - our {@link GPURenderer}
+   */
+  onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+    if (callback) {
+      this._onAfterResizeCallback = callback
     }
 
     return this
@@ -843,7 +870,7 @@ export class GPURenderer {
     this.renderPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
-    this.sceneObjects.forEach((sceneObject) => sceneObject.remove())
+    this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
 
     //this.textures.forEach((texture) => texture.destroy())
     this.textures = []

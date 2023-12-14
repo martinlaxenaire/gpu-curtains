@@ -102,7 +102,7 @@ export class Camera extends Object3D {
       height: 1,
     }
 
-    this.setPerspective(fov, near, far, width, height, pixelRatio)
+    this.setPerspective({ fov, near, far, width, height, pixelRatio })
   }
 
   /**
@@ -256,22 +256,16 @@ export class Camera extends Object3D {
 
   /**
    * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if our {@link shouldUpdate} flag is true
-   * @param fov - field of view to use
-   * @param near - near plane value to use
-   * @param far - far plane value to use
-   * @param width - width value to use
-   * @param height - height value to use
-   * @param pixelRatio - pixel ratio value to use
+   * @param parameters - [parameters]{@link CameraPerspectiveOptions} to use for the perspective
    */
-  // TODO use a parameter object instead?
-  setPerspective(
-    fov: number = this.fov,
-    near: number = this.near,
-    far: number = this.far,
-    width: number = this.size.width,
-    height: number = this.size.height,
-    pixelRatio: number = this.pixelRatio
-  ) {
+  setPerspective({
+    fov = this.fov,
+    near = this.near,
+    far = this.far,
+    width = this.size.width,
+    height = this.size.height,
+    pixelRatio = this.pixelRatio,
+  }: CameraPerspectiveOptions = {}) {
     this.setSize({ width, height })
     this.pixelRatio = pixelRatio
     this.fov = fov

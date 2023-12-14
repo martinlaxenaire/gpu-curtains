@@ -121,7 +121,6 @@ export declare class BindGroup {
     /**
      * Update the {@link BindGroup}, which means update its [buffer struct]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
      * Called at each render from the parent {@link Material}
-     * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
      */
     update(): void;
     /**

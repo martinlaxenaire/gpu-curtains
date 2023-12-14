@@ -2,7 +2,12 @@
 import { Renderer } from './utils';
 import { Sampler } from '../samplers/Sampler';
 import { PipelineManager } from '../pipelines/PipelineManager';
+import { SceneObject } from './GPURenderer';
+/**
+ * Parameters used to create a {@link GPUDeviceManager}
+ */
 export interface GPUDeviceManagerParams {
+    /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
     label?: string;
     /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter} or [device]{@link GPUDevice} */
     onError?: () => void;
@@ -11,15 +16,15 @@ export interface GPUDeviceManagerParams {
 }
 /**
  * GPUDeviceManager class:
- * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations.
- *
+ * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations, losing and restoration.
+ * Will also keep a track of all the [renderers]{@link Renderer}, [samplers]{@link Sampler} and [buffers]{@link GPUBuffer} created.
  */
 export declare class GPUDeviceManager {
     /** Number of times a {@link GPUDevice} has been created */
     index: number;
     /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
     label: string;
-    /** navigator {@link GPU} object */
+    /** The navigator {@link GPU} object */
     gpu: GPU | undefined;
     /** The WebGPU [adapter]{@link GPUAdapter} used */
     adapter: GPUAdapter | void;
@@ -48,17 +53,19 @@ export declare class GPUDeviceManager {
      * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
      */
     setAdapterAndDevice(): Promise<void>;
+    /**
+     * Set up our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} and all the already created [renderers]{@link GPUDeviceManager#renderers} contexts
+     */
     init(): Promise<void>;
     /**
-     * Set our [adapter]{@link GPUDeviceManager#adapter} if possible
+     * Set our [adapter]{@link GPUDeviceManager#adapter} if possible.
+     * The adapter represents a specific GPU. Some devices have multiple GPUs.
      * @async
-     * @returns - void promise result
      */
     setAdapter(): Promise<void>;
     /**
      * Set our [device]{@link GPUDeviceManager#device}
      * @async
-     * @returns - void promise result
      */
     setDevice(): Promise<void>;
     /**
@@ -85,6 +92,11 @@ export declare class GPUDeviceManager {
      * @param renderer - [renderer]{@link Renderer} to remove
      */
     removeRenderer(renderer: Renderer): void;
+    /**
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
+     * @readonly
+     */
+    get deviceObjects(): SceneObject[];
     /**
      * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
      * @param buffer - [buffer]{@link GPUBuffer} to remove

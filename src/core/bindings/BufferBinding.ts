@@ -310,11 +310,10 @@ export class BufferBinding extends Binding {
         // add to our buffer elements array
         this.bufferElements = [...this.bufferElements, ...interleavedBufferElements]
       } else {
-        // TODO better warning?
         throwWarning(
           `BufferBinding: "${
             this.label
-          }" contains multiple array inputs that should use an interleaved array, but their size does not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(
+          }" contains multiple array inputs that should use an interleaved array, but their sizes do not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(
             ', '
           )}"`
         )

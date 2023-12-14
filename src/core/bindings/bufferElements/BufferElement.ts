@@ -54,7 +54,6 @@ export interface BufferElementParams {
   type: WGSLVariableType
 }
 
-// TODO we should correctly use types like GPUSize64 / GPUIndex32
 /**
  * BufferElement class:
  * Used to handle each [buffer binding array]{@link BufferBinding#value} view and data layout alignment.

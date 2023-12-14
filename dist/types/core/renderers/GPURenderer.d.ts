@@ -105,6 +105,8 @@ export declare class GPURenderer {
     _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
     /** function assigned to the [onAfterRender]{@link GPURenderer#onAfterRender} callback */
     _onAfterRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
+    /** function assigned to the [onAfterResize]{@link GPURenderer#onAfterResize} callback */
+    _onAfterResizeCallback: () => void;
     /**
      * GPURenderer constructor
      * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
@@ -297,17 +299,24 @@ export declare class GPURenderer {
      */
     setRendererObjects(): void;
     /**
-     * Get all our scene objects (i.e. objects that are rendered)
+     * Get all this [renderer]{@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
      * @readonly
      */
-    get sceneObjects(): SceneObject[];
+    get renderedObjects(): SceneObject[];
     /**
-     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+     * @readonly
+     */
+    get deviceObjects(): SceneObject[];
+    /**
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+     * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
      */
     getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
     /**
-     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+     * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
      */
     getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[];
@@ -323,6 +332,12 @@ export declare class GPURenderer {
      * @returns - our {@link GPURenderer}
      */
     onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
+    /**
+     * Assign a callback function to _onAfterResizeCallback
+     * @param callback - callback to run just after the {@link GPURenderer} has been resized
+     * @returns - our {@link GPURenderer}
+     */
+    onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
      * Set the current [render pass descriptor]{@link RenderPass#descriptor} texture [view]{@link GPURenderPassColorAttachment#view} or [resolveTarget]{@link GPURenderPassColorAttachment#resolveTarget} (depending on whether we're using multisampling)
      * @param renderPass - current [render pass]{@link RenderPass}

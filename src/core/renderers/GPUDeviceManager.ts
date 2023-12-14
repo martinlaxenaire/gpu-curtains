@@ -2,8 +2,13 @@ import { throwError, throwWarning } from '../../utils/utils'
 import { Renderer } from './utils'
 import { Sampler } from '../samplers/Sampler'
 import { PipelineManager } from '../pipelines/PipelineManager'
+import { SceneObject } from './GPURenderer'
 
+/**
+ * Parameters used to create a {@link GPUDeviceManager}
+ */
 export interface GPUDeviceManagerParams {
+  /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
   label?: string
   /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter} or [device]{@link GPUDevice} */
   onError?: () => void
@@ -13,16 +18,17 @@ export interface GPUDeviceManagerParams {
 
 /**
  * GPUDeviceManager class:
- * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations.
- *
+ * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations, losing and restoration.
+ * Will also keep a track of all the [renderers]{@link Renderer}, [samplers]{@link Sampler} and [buffers]{@link GPUBuffer} created.
  */
+// TODO if we'd want to fully optimize multiple canvases rendering, the Scene and render method should be handled by the GPUDeviceManager and each renderer contexts should be an entry of our Scene
 export class GPUDeviceManager {
   /** Number of times a {@link GPUDevice} has been created */
   index: number
   /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
   label: string
 
-  /** navigator {@link GPU} object */
+  /** The navigator {@link GPU} object */
   gpu: GPU | undefined
   /** The WebGPU [adapter]{@link GPUAdapter} used */
   adapter: GPUAdapter | void
@@ -88,23 +94,28 @@ export class GPUDeviceManager {
     await this.setDevice()
   }
 
+  /**
+   * Set up our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} and all the already created [renderers]{@link GPUDeviceManager#renderers} contexts
+   */
   async init() {
     await this.setAdapterAndDevice()
 
     // set context
-    this.renderers.forEach((renderer) => {
-      if (!renderer.context) {
-        renderer.setContext()
-      }
-    })
+    if (this.device) {
+      this.renderers.forEach((renderer) => {
+        if (!renderer.context) {
+          renderer.setContext()
+        }
+      })
+    }
   }
 
   /**
-   * Set our [adapter]{@link GPUDeviceManager#adapter} if possible
+   * Set our [adapter]{@link GPUDeviceManager#adapter} if possible.
+   * The adapter represents a specific GPU. Some devices have multiple GPUs.
    * @async
-   * @returns - void promise result
    */
-  async setAdapter(): Promise<void> {
+  async setAdapter() {
     this.adapter = await this.gpu?.requestAdapter().catch(() => {
       setTimeout(() => {
         this.onError()
@@ -119,9 +130,8 @@ export class GPUDeviceManager {
   /**
    * Set our [device]{@link GPUDeviceManager#device}
    * @async
-   * @returns - void promise result
    */
-  async setDevice(): Promise<void> {
+  async setDevice() {
     try {
       this.device = await (this.adapter as GPUAdapter)?.requestDevice({
         label: this.label + ' ' + this.index,
@@ -131,12 +141,12 @@ export class GPUDeviceManager {
     } catch (error) {
       setTimeout(() => {
         this.onError()
-        throwError(`GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
+        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
       }, 0)
     }
 
     this.device?.lost.then((info) => {
-      throwWarning(`GPUDeviceManager: WebGPU device was lost: ${info.message}`)
+      throwWarning(`${this.label}: WebGPU device was lost: ${info.message}`)
 
       this.loseDevice()
 
@@ -200,6 +210,14 @@ export class GPUDeviceManager {
    */
   removeRenderer(renderer: Renderer) {
     this.renderers = this.renderers.filter((r) => r.uuid !== renderer.uuid)
+  }
+
+  /**
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
+   * @readonly
+   */
+  get deviceObjects(): SceneObject[] {
+    return this.renderers.map((renderer) => renderer.renderedObjects).flat()
   }
 
   /**

@@ -68,9 +68,9 @@ export declare class Geometry {
      * @param {GPUVertexFormat} [parameters.bufferFormat="float32x3"] - attribute buffer format
      * @param {number} [parameters.size=3] - attribute size
      * @param {Float32Array} [parameters.array=Float32Array] - attribute array
-     * @param {number} [parameters.verticesUsed=1] - number of vertices used by this attribute, i.e. insert one for every X vertices
+     * @param {number} [parameters.verticesStride=1] - number of vertices used by this attribute, i.e. insert one for every X vertices
      */
-    setAttribute({ vertexBuffer, name, type, bufferFormat, size, array, verticesUsed, }: VertexBufferAttributeParams): void;
+    setAttribute({ vertexBuffer, name, type, bufferFormat, size, array, verticesStride, }: VertexBufferAttributeParams): void;
     /**
      * Get an attribute by name
      * @param name - name of the attribute to find

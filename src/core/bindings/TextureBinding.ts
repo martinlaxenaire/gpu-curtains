@@ -10,8 +10,12 @@ export type TextureBindingResource = GPUTexture | GPUExternalTexture | null
 export interface TextureBindingParams extends BindingParams {
   /** {@link TextureBinding} [resource]{@link TextureBinding#resource} */
   texture: TextureBindingResource
+  /** The [texture]{@link GPUTexture} format to use */
   format?: GPUTextureFormat
+  /** The storage [texture]{@link GPUTexture} binding memory access types (read only, write only or read/write) */
   access?: BindingMemoryAccessType
+  /** The [texture]{@link GPUTexture} view dimension to use */
+  viewDimension?: GPUTextureViewDimension
 }
 
 /**
@@ -40,6 +44,7 @@ export class TextureBinding extends Binding {
     texture,
     format = 'rgba8unorm',
     access = 'write',
+    viewDimension = '2d',
   }: TextureBindingParams) {
     bindingType = bindingType ?? 'texture'
 
@@ -54,6 +59,7 @@ export class TextureBinding extends Binding {
       texture,
       format,
       access,
+      viewDimension,
     }
 
     this.resource = texture // should be a texture or an external texture
@@ -93,6 +99,7 @@ export class TextureBinding extends Binding {
    */
   setBindingType(bindingType: BindingType) {
     // TODO if the binding type change (probably switching from 'texture' to 'externalTexture'), maybe we should tell the parent bind group to reset from here?
+    // by using the shouldUpdateBinGroup flag here, from the binding perspective instead of in the Texture class?
     if (bindingType !== this.bindingType) {
       this.bindingType = bindingType
       this.setWGSLFragment()

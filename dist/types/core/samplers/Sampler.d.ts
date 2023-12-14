@@ -2,10 +2,12 @@
 import { Renderer } from '../renderers/utils';
 import { SamplerBinding } from '../bindings/SamplerBinding';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
+export interface SamplerOptions extends Partial<GPUSamplerDescriptor>, GPUSamplerBindingLayout {
+}
 /**
  * Parameters used to create a {@link Sampler}
  */
-export interface SamplerParams extends GPUSamplerDescriptor {
+export interface SamplerParams extends SamplerOptions {
     /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
     name: string;
 }
@@ -25,7 +27,7 @@ export declare class Sampler {
     /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
     name: string;
     /** Options used to create this {@link Sampler} */
-    options: GPUSamplerDescriptor;
+    options: SamplerOptions;
     /** {@link GPUSampler} */
     sampler: GPUSampler;
     /** {@link SamplerBinding} to pass to a [bind group]{@link BindGroup} */
@@ -35,7 +37,7 @@ export declare class Sampler {
      * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
      * @param parameters - [parameters]{@link SamplerParams} used to create this {@link Sampler}
      */
-    constructor(renderer: GPUCurtains | Renderer, { label, name, addressModeU, addressModeV, magFilter, minFilter, mipmapFilter, maxAnisotropy, }?: SamplerParams);
+    constructor(renderer: GPUCurtains | Renderer, { label, name, addressModeU, addressModeV, magFilter, minFilter, mipmapFilter, maxAnisotropy, type, }?: SamplerParams);
     /**
      * Set the {@link GPUSampler}
      */

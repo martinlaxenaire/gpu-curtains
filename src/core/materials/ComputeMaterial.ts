@@ -61,8 +61,7 @@ export class ComputeMaterial extends Material {
     }
 
     if (!shaders.compute.code) {
-      // TODO default shader?
-      shaders.compute.code = ''
+      shaders.compute.code = '@compute @workgroup_size(1) fn main(){}'
     }
 
     if (!shaders.compute.entryPoint) {

@@ -8,8 +8,12 @@ export type TextureBindingResource = GPUTexture | GPUExternalTexture | null;
 export interface TextureBindingParams extends BindingParams {
     /** {@link TextureBinding} [resource]{@link TextureBinding#resource} */
     texture: TextureBindingResource;
+    /** The [texture]{@link GPUTexture} format to use */
     format?: GPUTextureFormat;
+    /** The storage [texture]{@link GPUTexture} binding memory access types (read only, write only or read/write) */
     access?: BindingMemoryAccessType;
+    /** The [texture]{@link GPUTexture} view dimension to use */
+    viewDimension?: GPUTextureViewDimension;
 }
 /**
  * TextureBinding class:
@@ -27,7 +31,7 @@ export declare class TextureBinding extends Binding {
      * TextureBinding constructor
      * @param parameters - [parameters]{@link TextureBindingParams} used to create our {@link TextureBinding}
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, texture, format, access, }: TextureBindingParams);
+    constructor({ label, name, bindingType, bindIndex, visibility, texture, format, access, viewDimension, }: TextureBindingParams);
     /**
      * Get bind group layout entry resource, either for [texture]{@link GPUBindGroupLayoutEntry#texture} or [externalTexture]{@link GPUBindGroupLayoutEntry#externalTexture}
      */

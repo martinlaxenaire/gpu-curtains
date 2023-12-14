@@ -482,7 +482,6 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
 
       this._onRenderCallback && this._onRenderCallback()
 
-      // TODO check if frustumCulled
       if ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulled) {
         // render ou material
         this.material.render(pass)

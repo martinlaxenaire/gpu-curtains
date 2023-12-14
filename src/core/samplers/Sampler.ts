@@ -3,10 +3,12 @@ import { SamplerBinding } from '../bindings/SamplerBinding'
 import { generateUUID, throwWarning } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
+export interface SamplerOptions extends Partial<GPUSamplerDescriptor>, GPUSamplerBindingLayout {}
+
 /**
  * Parameters used to create a {@link Sampler}
  */
-export interface SamplerParams extends GPUSamplerDescriptor {
+export interface SamplerParams extends SamplerOptions {
   /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
   name: string
 }
@@ -27,7 +29,7 @@ export class Sampler {
   /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
   name: string
   /** Options used to create this {@link Sampler} */
-  options: GPUSamplerDescriptor // TODO not exact
+  options: SamplerOptions // TODO not exact
 
   /** {@link GPUSampler} */
   sampler: GPUSampler
@@ -50,6 +52,7 @@ export class Sampler {
       minFilter = 'linear',
       mipmapFilter = 'linear',
       maxAnisotropy = 1,
+      type = 'filtering',
     } = {} as SamplerParams
   ) {
     this.type = 'Sampler'
@@ -80,7 +83,8 @@ export class Sampler {
       minFilter,
       mipmapFilter,
       maxAnisotropy,
-    } as GPUSamplerDescriptor
+      type,
+    } as SamplerOptions
 
     this.createSampler()
     this.createBinding()
@@ -102,6 +106,7 @@ export class Sampler {
       name: this.name,
       bindingType: 'sampler',
       sampler: this.sampler,
+      type: this.options.type,
     })
   }
 }

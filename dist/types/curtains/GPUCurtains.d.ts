@@ -4,13 +4,13 @@ import { ScrollManager } from '../utils/ScrollManager';
 import { Vec3 } from '../math/Vec3';
 import { PingPongPlane } from './meshes/PingPongPlane';
 import { ShaderPass } from '../core/renderPasses/ShaderPass';
-import { GPURendererParams, MeshType } from '../core/renderers/GPURenderer';
+import { GPURenderer, GPURendererParams, MeshType } from '../core/renderers/GPURenderer';
 import { DOMMesh } from './meshes/DOMMesh';
 import { Plane } from './meshes/Plane';
 import { ComputePass } from '../core/computePasses/ComputePass';
-import { Camera } from '../core/camera/Camera';
+import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera';
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement';
-import { GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer';
+import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer';
 import { GPUDeviceManager } from '../core/renderers/GPUDeviceManager';
 import { Renderer } from '../core/renderers/utils';
 /**
@@ -53,8 +53,6 @@ export declare class GPUCurtains {
     _onRenderCallback: () => void;
     /** function assigned to the [onScroll]{@link GPUCurtains#onScroll} callback */
     _onScrollCallback: () => void;
-    /** function assigned to the [onAfterResize]{@link GPUCurtains#onAfterResize} callback */
-    _onAfterResizeCallback: () => void;
     /** function assigned to the [onError]{@link GPUCurtains#onError} callback */
     _onErrorCallback: () => void;
     /** function assigned to the [onContextLost]{@link GPUCurtains#onContextLost} callback */
@@ -82,17 +80,17 @@ export declare class GPUCurtains {
      * Create a new {@link GPURenderer} instance
      * @param options - [options]{@link GPURendererParams} to use
      */
-    addRenderer(options: GPURendererParams): void;
+    createRenderer(options: GPURendererParams): GPURenderer;
     /**
      * Create a new {@link GPUCameraRenderer} instance
      * @param options - [options]{@link GPUCameraRendererParams} to use
      */
-    addCameraRenderer(options: GPUCameraRendererParams): void;
+    createCameraRenderer(options: GPUCameraRendererParams): GPUCameraRenderer;
     /**
      * Create a new {@link GPUCurtainsRenderer} instance
      * @param options - [options]{@link GPUCameraRendererParams} to use
      */
-    addCurtainsRenderer(options: GPUCameraRendererParams): void;
+    createCurtainsRenderer(options: GPUCameraRendererParams): GPUCurtainsRenderer;
     /**
      * Set our [device manager]{@link GPUDeviceManager}
      */
@@ -122,44 +120,49 @@ export declare class GPUCurtains {
     setCurtains(): void;
     /**
      * Get all the created [ping pong planes]{@link PingPongPlane}
+     * @readonly
      */
     get pingPongPlanes(): PingPongPlane[];
     /**
      * Get all the created [shader passes]{@link ShaderPass}
+     * @readonly
      */
     get shaderPasses(): ShaderPass[];
     /**
      * Get all the created [meshes]{@link MeshBase}
+     * @readonly
      */
     get meshes(): MeshType[];
     /**
      * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
+     * @readonly
      */
     get domMeshes(): DOMMesh[];
     /**
      * Get all the created [planes]{@link Plane}
+     * @readonly
      */
     get planes(): Plane[];
     /**
      * Get all the created [compute passes]{@link ComputePass}
+     * @readonly
      */
     get computePasses(): ComputePass[];
     /**
      * Get the [default curtains renderer camera]{@link GPUCurtainsRenderer#camera}
+     * @readonly
      */
     get camera(): Camera;
     /**
      * Set the [default curtains renderer camera perspective]{@link GPUCurtainsRenderer#setPerspective}
+     * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
      */
-    setPerspective(fov?: number, near?: number, far?: number): void;
+    setPerspective({ fov, near, far }?: CameraBasePerspectiveOptions): void;
     /**
      * Set the default [curtains renderer camera position]{@link GPUCurtainsRenderer#setCameraPosition}
+     * @param position - new [position]{@link Camera#position}
      */
     setCameraPosition(position?: Vec3): void;
-    /**
-     * Manually resize our [curtains renderer]{@link GPUCurtainsRenderer}
-     */
-    resize(): void;
     /**
      * Get our [default curtains renderer bounding rectangle]{@link GPUCurtainsRenderer#boundingRect}
      */
@@ -204,12 +207,6 @@ export declare class GPUCurtains {
      * @returns - our {@link GPUCurtains}
      */
     onScroll(callback: () => void): GPUCurtains;
-    /**
-     * Called each time the [resize]{@link GPUCurtains#resize} method has been called
-     * @param callback - callback to run each time the [resize]{@link GPUCurtains#resize} method has been called
-     * @returns - our {@link GPUCurtains}
-     */
-    onAfterResize(callback: () => void): GPUCurtains;
     /**
      * Called if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
      * @param callback - callback to run if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}

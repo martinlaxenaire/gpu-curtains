@@ -33,7 +33,6 @@ export class BindGroup {
   index: number
 
   /** List of [struct]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup} */
-  // TODO BindGroupBufferBindingElement[] instead??
   bindings: BindGroupBindingElement[]
 
   /** Our {@link BindGroup} [entries]{@link BindGroupEntries} objects */
@@ -351,7 +350,6 @@ export class BindGroup {
   /**
    * Update the {@link BindGroup}, which means update its [buffer struct]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
    * Called at each render from the parent {@link Material}
-   * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
    */
   update() {
     this.updateBufferBindings()
@@ -449,8 +447,6 @@ export class BindGroup {
     })
 
     this.bindings = []
-    // TODO keep the struct in case we want to recreate it later?
-    //this.struct = []
     this.bindGroupLayout = null
     this.bindGroup = null
     this.resetEntries()

@@ -23,6 +23,8 @@ export interface RenderTextureBaseParams {
     format?: GPUTextureFormat;
     /** Optional texture binding memory access type, mainly used for storage textures */
     access?: BindingMemoryAccessType;
+    /** Optional [texture]{@link RenderTexture#texture} view dimension to use */
+    viewDimension?: GPUTextureViewDimension;
 }
 /**
  * Parameters used to create a {@link RenderTexture}
@@ -68,7 +70,7 @@ export declare class RenderTexture {
      * Copy another {@link RenderTexture} into this {@link RenderTexture}
      * @param texture - {@link RenderTexture} to copy
      */
-    copy(texture: RenderTexture): void;
+    copy(texture: RenderTexture | Texture): void;
     /**
      * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
      */
