@@ -3,7 +3,6 @@ import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
-import { CameraRenderer } from './utils'
 
 /**
  * Parameters used to create a {@link GPUCameraRenderer}

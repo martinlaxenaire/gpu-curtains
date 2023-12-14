@@ -5,7 +5,6 @@ import {
   ComputeMaterialWorkGroup,
   ComputeMaterialWorkGroupParams,
   FullShadersType,
-  MaterialParams,
 } from '../../types/Materials'
 import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
@@ -167,6 +166,7 @@ export class ComputeMaterial extends Material {
    * @param bindGroups
    * @param dispatchSize
    */
+  // TODO since we have a useCustomRender hook now, are work groups really needed anymore?
   addWorkGroup({ bindGroups = [], dispatchSize = 1 }: ComputeMaterialWorkGroupParams) {
     if (Array.isArray(dispatchSize)) {
       dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1)
@@ -233,6 +233,8 @@ export class ComputeMaterial extends Material {
   }
 
   /* RESULT BUFFER */
+
+  // TODO should we get rid of all that part?
 
   /**
    * Copy all writable binding buffers that need it

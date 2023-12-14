@@ -1,14 +1,13 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID, toKebabCase } from '../../utils/utils'
 import { WritableBufferBinding, WritableBufferBindingParams } from '../bindings/WritableBufferBinding'
-import { BufferBinding, BufferBindingParams } from '../bindings/BufferBinding'
+import { BufferBinding } from '../bindings/BufferBinding'
 import {
   AllowedBindGroups,
   BindGroupBindingElement,
   BindGroupBufferBindingElement,
   BindGroupEntries,
   BindGroupParams,
-  ReadWriteInputBindings,
   ReadOnlyInputBindings,
 } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'

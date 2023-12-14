@@ -1,12 +1,5 @@
 import { Binding, BindingParams, BufferBindingMemoryAccessType } from './Binding'
-import {
-  BufferLayout,
-  getBindGroupLayoutBindingType,
-  getBindingWGSLVarType,
-  getBufferLayout,
-  TypedArray,
-  WGSLVariableType,
-} from './utils'
+import { getBindGroupLayoutBindingType, getBindingWGSLVarType, getBufferLayout, TypedArray } from './utils'
 import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
@@ -27,6 +20,7 @@ export interface BufferBindingInput extends InputBase {
    * @readonly
    */
   get value(): InputValue
+
   set value(value: InputValue)
 
   /** Whether the [input value]{@link InputValue} has changed and we should update the [buffer binding array]{@link BufferBinding#value} */

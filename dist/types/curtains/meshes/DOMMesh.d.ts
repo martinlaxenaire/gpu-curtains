@@ -1,5 +1,4 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D';
-import { MeshTransformedBaseClass } from '../../core/meshes/MeshTransformedMixin';
 import { MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
@@ -23,7 +22,7 @@ export interface DOMMeshParams extends DOMMeshBaseParams {
     /** {@link Geometry} to use with the {@link DOMMesh} */
     geometry: AllowedGeometries;
 }
-declare const DOMMesh_base: import("../../core/meshes/MeshBaseMixin").MixinConstructor<MeshTransformedBaseClass> & typeof DOMObject3D;
+declare const DOMMesh_base: import("../../core/meshes/MeshBaseMixin").MixinConstructor<import("../../core/meshes/MeshTransformedMixin").MeshTransformedBaseClass> & typeof DOMObject3D;
 /**
  * DOMMesh class:
  * Create a {@link Mesh} based on a {@link DOMObject3D}, which allow the {@link Mesh} to be scaled and positioned based on a {@link HTMLElement} [bounding rectangle]{@link DOMElementBoundingRect}

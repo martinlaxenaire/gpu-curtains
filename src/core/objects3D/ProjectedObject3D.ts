@@ -3,7 +3,6 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { Mat4 } from '../../math/Mat4'
 import { Camera } from '../camera/Camera'
-import { Vec3 } from '../../math/Vec3'
 
 /** Defines all kind of possible {@link ProjectedObject3D} matrix types */
 export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' | 'modelViewProjection'

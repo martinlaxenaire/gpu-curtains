@@ -127,27 +127,27 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
       rule1Distance: {
         type: 'f32',
-        value: 0.15,
+        value: 0.1,
       },
       rule2Distance: {
         type: 'f32',
-        value: 0.05,
+        value: 0.025,
       },
       rule3Distance: {
         type: 'f32',
-        value: 0.05,
+        value: 0.025,
       },
       rule1Scale: {
         type: 'f32',
-        value: 0.04,
+        value: 0.02,
       },
       rule2Scale: {
         type: 'f32',
-        value: 0.1,
+        value: 0.05,
       },
       rule3Scale: {
         type: 'f32',
-        value: 0.01,
+        value: 0.005,
       },
     },
   })

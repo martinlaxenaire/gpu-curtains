@@ -3,7 +3,7 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
-import { generateUUID, throwError, throwWarning } from '../../utils/utils'
+import { generateUUID, throwError } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'

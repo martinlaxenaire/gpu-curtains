@@ -1,5 +1,5 @@
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
-import { ScrollManager, ScrollManagerParams } from '../utils/ScrollManager'
+import { ScrollManager } from '../utils/ScrollManager'
 import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 import { PingPongPlane } from './meshes/PingPongPlane'

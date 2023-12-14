@@ -4341,6 +4341,7 @@ var __privateMethod = (obj, member, method) => {
      * @param bindGroups
      * @param dispatchSize
      */
+    // TODO since we have a useCustomRender hook now, are work groups really needed anymore?
     addWorkGroup({ bindGroups = [], dispatchSize = 1 }) {
       if (Array.isArray(dispatchSize)) {
         dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1);
@@ -4393,6 +4394,7 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /* RESULT BUFFER */
+    // TODO should we get rid of all that part?
     /**
      * Copy all writable binding buffers that need it
      * @param commandEncoder - current command encoder

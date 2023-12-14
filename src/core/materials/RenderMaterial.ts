@@ -4,13 +4,12 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import {
   AllowedGeometries,
-  MaterialOptions,
   RenderMaterialAttributes,
   RenderMaterialOptions,
   RenderMaterialParams,
 } from '../../types/Materials'
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
-import { RenderPipelineEntryBaseParams, RenderPipelineEntryParams } from '../../types/PipelineEntries'
+import { RenderPipelineEntryParams } from '../../types/PipelineEntries'
 
 /**
  * RenderMaterial class:
