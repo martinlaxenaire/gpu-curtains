@@ -31,7 +31,7 @@ export declare class TextureBinding extends Binding {
      * TextureBinding constructor
      * @param parameters - [parameters]{@link TextureBindingParams} used to create our {@link TextureBinding}
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, texture, format, access, viewDimension, }: TextureBindingParams);
+    constructor({ label, name, bindingType, visibility, texture, format, access, viewDimension, }: TextureBindingParams);
     /**
      * Get bind group layout entry resource, either for [texture]{@link GPUBindGroupLayoutEntry#texture} or [externalTexture]{@link GPUBindGroupLayoutEntry#externalTexture}
      */

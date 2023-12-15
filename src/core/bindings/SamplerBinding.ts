@@ -33,7 +33,6 @@ export class SamplerBinding extends Binding {
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
    * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {number=} parameters.bindIndex - bind index inside the bind group
    * @param {MaterialShadersType=} parameters.visibility - shader visibility
    * @param {SamplerBindingResource=} parameters.resource - a GPUSampler
    */
@@ -41,14 +40,13 @@ export class SamplerBinding extends Binding {
     label = 'Sampler',
     name = 'sampler',
     bindingType,
-    bindIndex = 0,
     visibility,
     sampler,
     type = 'filtering',
   }: SamplerBindingParams) {
     bindingType = bindingType ?? 'sampler'
 
-    super({ label, name, bindIndex, bindingType, visibility })
+    super({ label, name, bindingType, visibility })
 
     this.options = {
       ...this.options,
@@ -67,7 +65,7 @@ export class SamplerBinding extends Binding {
   get resourceLayout(): { sampler: GPUSamplerBindingLayout } {
     return {
       sampler: {
-        type: this.options.type,
+        type: this.options.type, // TODO set shouldResetBindGroupLayout to true if it changes afterwards
       },
     }
   }
@@ -80,6 +78,8 @@ export class SamplerBinding extends Binding {
   }
 
   set resource(value: SamplerBindingResource) {
+    // resource changed, update bind group!
+    if (value && this.sampler) this.shouldResetBindGroup = true
     this.sampler = value
   }
 

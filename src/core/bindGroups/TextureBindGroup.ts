@@ -24,9 +24,6 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * @memberof module:core/bindGroups/TextureBindGroup
  */
 export class TextureBindGroup extends BindGroup {
-  /** An array containing all the already created external textures ID */
-  externalTexturesIDs: number[]
-
   /**
    * TextureBindGroup constructor
    * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
@@ -63,9 +60,6 @@ export class TextureBindGroup extends BindGroup {
     }
 
     this.type = type
-
-    // keep track of external textures to know when to flush
-    this.externalTexturesIDs = []
   }
 
   /**
@@ -117,84 +111,6 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
-   * Called each time a GPUTexture or GPUExternalTexture has changed:
-   * 1. A [texture source]{@link Texture#source} has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
-   * 2. A [texture]{@link Texture} copy just happened
-   * 3. {@link GPUExternalTexture} at each tick
-   * 4. A [render texture GPUTexture]{@link RenderTexture#texture} has changed (on resize)
-   */
-  resetTextureBindGroup() {
-    // find the indexes of all texture struct
-    const textureBindingsIndexes = [...this.bindings].reduce(
-      (foundIndexes, binding, index) => (binding instanceof TextureBinding && foundIndexes.push(index), foundIndexes),
-      []
-    )
-
-    // now update the entries bindGroup array resources if needed
-    if (textureBindingsIndexes.length) {
-      textureBindingsIndexes.forEach((index) => {
-        this.entries.bindGroup[index].resource = this.bindings[index].resource
-      })
-
-      this.setBindGroup()
-    }
-  }
-
-  /**
-   * Get whether we should update our video [bind group layout]{@link GPUBindGroupLayout}.
-   * Happens when a GPUExternalTexture is created, we need to rebuild the {@link BindGroup#bindGroup} and {@link BindGroup#bindGroupLayout} from scratch. We might even need to recreate the whole pipeline (it it has already been created).
-   * @param textureIndex - the texture index in the bind group textures array
-   * @returns - whether we should update the [bind group layout]{@link GPUBindGroupLayout}
-   */
-  shouldUpdateVideoTextureBindGroupLayout(textureIndex: number) {
-    // if we're here it's because we've just uploaded an external texture
-    // we need to flush the pipeline if the textures is not already in the externalTexturesIDs array
-    if (this.externalTexturesIDs.includes(textureIndex)) {
-      return false
-    } else {
-      this.externalTexturesIDs.push(textureIndex)
-      this.needsPipelineFlush = true
-      return this.needsPipelineFlush
-    }
-  }
-
-  /**
-   * Called if the result of {@link shouldUpdateVideoTextureBindGroupLayout} is true. Updates our {@link BindGroup#bindGroupLayout} {@link BindGroup#entries} on the fly, then recreates GPUBindGroupLayout.
-   * Will also call {@link resetTextureBindGroup} afterwhile to recreate the GPUBindGroup.
-   * @param textureIndex - the texture index in the bind group textures array
-   */
-  updateVideoTextureBindGroupLayout(textureIndex: number) {
-    const texture = this.textures[textureIndex]
-
-    // find the indexes of all struct that have 'externalTexture' as bindingType
-    const externalTexturesIndexes = [...this.bindings].reduce(
-      (foundIndexes, binding, index) => (
-        binding.bindingType === 'externalTexture' && foundIndexes.push(index), foundIndexes
-      ),
-      []
-    )
-
-    if (externalTexturesIndexes.length) {
-      externalTexturesIndexes.forEach((bindingIndex) => {
-        this.entries.bindGroupLayout[bindingIndex] = {
-          binding: this.entries.bindGroupLayout[bindingIndex].binding,
-          externalTexture: (texture as Texture).externalTexture,
-          visibility: this.entries.bindGroupLayout[bindingIndex].visibility,
-        }
-
-        // patch binding as well
-        if (this.bindings[bindingIndex]) {
-          this.bindings[bindingIndex].wgslGroupFragment = texture.textureBinding.wgslGroupFragment
-        }
-      })
-
-      // bind group will be set later anyway
-      this.setBindGroupLayout()
-    }
-  }
-
-  /**
    * Update the [bind group textures]{@link TextureBindGroup#textures}:
    * - Check if they need to copy their source texture
    * - Upload texture if needed
@@ -210,21 +126,7 @@ export class TextureBindGroup extends BindGroup {
 
         if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === 'externalVideo') {
           texture.uploadVideoTexture()
-
-          if (this.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
-            this.updateVideoTextureBindGroupLayout(textureIndex)
-          }
         }
-      }
-
-      // reset texture bind group each time the texture changed:
-      // 1. texture media is loaded (switch from placeholder 1x1 texture to media texture)
-      // 2. a texture copy just happened
-      // 3. external texture at each tick
-      // 4. render texture has changed (on resize)
-      if (texture.shouldUpdateBindGroup && (texture.texture || (texture as Texture).externalTexture)) {
-        this.resetTextureBindGroup()
-        texture.shouldUpdateBindGroup = false
       }
     })
   }

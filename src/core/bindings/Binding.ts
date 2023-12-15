@@ -29,8 +29,6 @@ export interface BindingParams {
   name?: string
   /** [bindingType]{@link BindingType} to use with this {@link Binding} */
   bindingType?: BindingType
-  /** binding index inside the [bind group]{@link GPUBindGroup} */
-  bindIndex?: number
   /** {@link Binding} variables shaders visibility */
   visibility?: MaterialShadersType | null
 }
@@ -47,28 +45,24 @@ export class Binding {
   name: string
   /** The binding type of the {@link Binding} */
   bindingType: BindingType
-  /** The binding index of the {@link Binding}, used to link struct in the shaders */
-  bindIndex: number
   /** The visibility of the {@link Binding} in the shaders */
   visibility: GPUShaderStageFlags
   /** Options used to create this {@link Binding} */
   options: BindingParams
 
+  /** Flag indicating whether we should recreate the parent [bind group]{@link BindGroup#bindGroup}, usually when a resource has changed */
+  shouldResetBindGroup: boolean
+  /** Flag indicating whether we should recreate the parent [bind group layout]{@link BindGroup#bindGroupLayout}, usually when a resource layout has changed */
+  shouldResetBindGroupLayout: boolean
+
   /**
    * Binding constructor
    * @param parameters - [parameters]{@link BindingParams} used to create our {@link Binding}
    */
-  constructor({
-    label = 'Uniform',
-    name = 'uniform',
-    bindingType = 'uniform',
-    bindIndex = 0,
-    visibility,
-  }: BindingParams) {
+  constructor({ label = 'Uniform', name = 'uniform', bindingType = 'uniform', visibility }: BindingParams) {
     this.label = label
     this.name = toCamelCase(name)
     this.bindingType = bindingType
-    this.bindIndex = bindIndex
 
     this.visibility = visibility
       ? (() => {
@@ -89,8 +83,10 @@ export class Binding {
       label,
       name,
       bindingType,
-      bindIndex,
       visibility,
     }
+
+    this.shouldResetBindGroup = false
+    this.shouldResetBindGroupLayout = false
   }
 }

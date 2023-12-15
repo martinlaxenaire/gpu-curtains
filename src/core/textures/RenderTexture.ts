@@ -73,8 +73,6 @@ export class RenderTexture {
 
   /** Array of [struct]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
   bindings: BindGroupBindingElement[]
-  /** Whether to update the [bind group]{@link BindGroup} to which the [texture binding]{@link TextureBinding} belongs */
-  shouldUpdateBindGroup: boolean
 
   /**
    * RenderTexture constructor
@@ -98,8 +96,6 @@ export class RenderTexture {
     if (!this.options.format) {
       this.options.format = this.renderer.preferredFormat
     }
-
-    this.shouldUpdateBindGroup = false
 
     // sizes
     this.setSize(this.options.size)
@@ -200,9 +196,7 @@ export class RenderTexture {
    */
   resize(size: RectSize | null = null) {
     this.setSize(size)
-
     this.createTexture()
-    this.shouldUpdateBindGroup = true
   }
 
   /**

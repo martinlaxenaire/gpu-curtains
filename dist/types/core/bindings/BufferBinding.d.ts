@@ -73,12 +73,11 @@ export declare class BufferBinding extends Binding {
      * @param {string=} parameters.label - binding label
      * @param {string=} parameters.name - binding name
      * @param {BindingType="uniform"} parameters.bindingType - binding type
-     * @param {number=} parameters.bindIndex - bind index inside the bind group
      * @param {MaterialShadersType=} parameters.visibility - shader visibility
      * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
      * @param {Object.<string, Input>} parameters.bindings - struct inputs
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, useStruct, access, struct, }: BufferBindingParams);
+    constructor({ label, name, bindingType, visibility, useStruct, access, struct, }: BufferBindingParams);
     /**
      * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
      */

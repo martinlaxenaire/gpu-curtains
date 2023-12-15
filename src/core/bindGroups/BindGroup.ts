@@ -42,8 +42,6 @@ export class BindGroup {
   /** Our {@link BindGroup} GPUBindGroup */
   bindGroup: null | GPUBindGroup
 
-  /** Flag indicating whether we need to totally reset this {@link BindGroup} */
-  needsReset: boolean
   /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
   needsPipelineFlush: boolean
 
@@ -80,18 +78,12 @@ export class BindGroup {
     if (this.options.uniforms || this.options.storages) this.setInputBindings()
 
     this.resetEntries()
-    //this.bindingsBuffers = []
 
     this.bindGroupLayout = null
     this.bindGroup = null
 
-    // we might want to rebuild the whole bind group sometimes
-    // like when we're adding textures after the bind group has already been created
-    this.needsReset = false
-
     // if we ever update our bind group layout
-    // we'll need to update the bind group as well
-    // and most importantly recreate the whole pipeline again
+    // we will have to recreate the whole pipeline again
     this.needsPipelineFlush = false
   }
 
@@ -199,12 +191,34 @@ export class BindGroup {
   }
 
   /**
-   * Reset the [bind group entries]{@link BindGroup#entries}, recreates it then recreate the [bind group layout]{@link BindGroup#bindGroupLayout} and [bind group]{@link BindGroup#bindGroup}
+   * Reset the [bindGroup entries]{@link BindGroup#entries#bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
    */
-  // TODO not necessarily needed?
   resetBindGroup() {
-    this.resetEntries()
-    this.createBindGroup()
+    this.entries.bindGroup = []
+    this.bindings.forEach((binding) => {
+      this.entries.bindGroup.push({
+        binding: this.entries.bindGroup.length,
+        resource: binding.resource,
+      })
+    })
+
+    this.setBindGroup()
+  }
+
+  /**
+   * Reset the [bindGroupLayout entries]{@link BindGroup#entries#bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
+   */
+  resetBindGroupLayout() {
+    this.entries.bindGroupLayout = []
+    this.bindings.forEach((binding) => {
+      this.entries.bindGroupLayout.push({
+        binding: this.entries.bindGroupLayout.length,
+        ...binding.resourceLayout,
+        visibility: binding.visibility,
+      })
+    })
+
+    this.setBindGroupLayout()
   }
 
   /**
@@ -353,9 +367,22 @@ export class BindGroup {
   update() {
     this.updateBufferBindings()
 
-    if (this.needsReset) {
+    const needsReset = this.bindings.some((binding) => binding.shouldResetBindGroup)
+    const resetBindGroupLayout = this.bindings.some((binding) => binding.shouldResetBindGroupLayout)
+
+    this.bindings.forEach((binding) => {
+      binding.shouldResetBindGroup = false
+      binding.shouldResetBindGroupLayout = false
+    })
+
+    if (resetBindGroupLayout) {
+      this.resetBindGroupLayout()
+      // bind group layout has changed, we have to recreate the pipeline
+      this.needsPipelineFlush = true
+    }
+
+    if (needsReset) {
       this.resetBindGroup()
-      this.needsReset = false
     }
   }
 
@@ -419,14 +446,6 @@ export class BindGroup {
 
     return bindGroupCopy
   }
-
-  /**
-   * Clones a bind group with all its {@link bindings}
-   * @returns - the cloned BindGroup
-   */
-  // clone(): AllowedBindGroups {
-  //   return this.cloneFromBindings()
-  // }
 
   /**
    * Destroy our {@link BindGroup}

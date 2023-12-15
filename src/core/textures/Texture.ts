@@ -64,8 +64,6 @@ export class Texture extends Object3D {
   private _sourceUploaded: boolean
   /** Whether the texture should be uploaded to the GPU */
   shouldUpdate: boolean
-  /** Whether the {@link BindGroup} handling this [texture struct]{@link Texture#bindings} should be updated (i.e. each time a texture is uploaded to the GPU) */
-  shouldUpdateBindGroup: boolean
 
   /** [Video frame callback]{@link requestVideoFrameCallback} returned id if used */
   videoFrameCallbackId: null | number
@@ -153,7 +151,6 @@ export class Texture extends Object3D {
     this.sourceLoaded = false
     this.sourceUploaded = false
     this.shouldUpdate = false
-    this.shouldUpdateBindGroup = false
 
     // add texture to renderer so it can creates a placeholder texture ASAP
     this.renderer.addTexture(this)
@@ -359,7 +356,6 @@ export class Texture extends Object3D {
     this.externalTexture = this.renderer.importExternalTexture(this.source as HTMLVideoElement)
     this.textureBinding.resource = this.externalTexture
     this.textureBinding.setBindingType('externalTexture')
-    this.shouldUpdateBindGroup = true
     this.shouldUpdate = false
     this.sourceUploaded = true
   }
@@ -408,9 +404,6 @@ export class Texture extends Object3D {
         // texture to copy is ready, update our texture and binding
         this.texture = texture.texture
         this.textureBinding.resource = this.texture
-
-        // tell the texture bind group to update
-        this.shouldUpdateBindGroup = true
       } else {
         this.createTexture()
       }
@@ -441,8 +434,6 @@ export class Texture extends Object3D {
 
       // update texture binding
       this.textureBinding.resource = this.texture
-
-      this.shouldUpdateBindGroup = !!this.source
     }
 
     this.shouldUpdate = true

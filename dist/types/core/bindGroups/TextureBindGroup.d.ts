@@ -20,8 +20,6 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * @memberof module:core/bindGroups/TextureBindGroup
  */
 export declare class TextureBindGroup extends BindGroup {
-    /** An array containing all the already created external textures ID */
-    externalTexturesIDs: number[];
     /**
      * TextureBindGroup constructor
      * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
@@ -54,28 +52,6 @@ export declare class TextureBindGroup extends BindGroup {
      * @readonly
      */
     get shouldCreateBindGroup(): boolean;
-    /**
-     * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
-     * Called each time a GPUTexture or GPUExternalTexture has changed:
-     * 1. A [texture source]{@link Texture#source} has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
-     * 2. A [texture]{@link Texture} copy just happened
-     * 3. {@link GPUExternalTexture} at each tick
-     * 4. A [render texture GPUTexture]{@link RenderTexture#texture} has changed (on resize)
-     */
-    resetTextureBindGroup(): void;
-    /**
-     * Get whether we should update our video [bind group layout]{@link GPUBindGroupLayout}.
-     * Happens when a GPUExternalTexture is created, we need to rebuild the {@link BindGroup#bindGroup} and {@link BindGroup#bindGroupLayout} from scratch. We might even need to recreate the whole pipeline (it it has already been created).
-     * @param textureIndex - the texture index in the bind group textures array
-     * @returns - whether we should update the [bind group layout]{@link GPUBindGroupLayout}
-     */
-    shouldUpdateVideoTextureBindGroupLayout(textureIndex: number): boolean;
-    /**
-     * Called if the result of {@link shouldUpdateVideoTextureBindGroupLayout} is true. Updates our {@link BindGroup#bindGroupLayout} {@link BindGroup#entries} on the fly, then recreates GPUBindGroupLayout.
-     * Will also call {@link resetTextureBindGroup} afterwhile to recreate the GPUBindGroup.
-     * @param textureIndex - the texture index in the bind group textures array
-     */
-    updateVideoTextureBindGroupLayout(textureIndex: number): void;
     /**
      * Update the [bind group textures]{@link TextureBindGroup#textures}:
      * - Check if they need to copy their source texture

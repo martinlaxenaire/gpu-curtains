@@ -29,7 +29,6 @@ export class WritableBufferBinding extends BufferBinding {
     label = 'Work',
     name = 'work',
     bindingType,
-    bindIndex = 0,
     useStruct = true,
     struct = {},
     visibility,
@@ -39,7 +38,7 @@ export class WritableBufferBinding extends BufferBinding {
     bindingType = 'storage'
     visibility = 'compute'
 
-    super({ label, name, bindIndex, bindingType, useStruct, struct: struct, visibility, access })
+    super({ label, name, bindingType, useStruct, struct: struct, visibility, access })
 
     this.options = {
       ...this.options,

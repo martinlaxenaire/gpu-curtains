@@ -193,17 +193,10 @@ class Binding {
    * Binding constructor
    * @param parameters - [parameters]{@link BindingParams} used to create our {@link Binding}
    */
-  constructor({
-    label = "Uniform",
-    name = "uniform",
-    bindingType = "uniform",
-    bindIndex = 0,
-    visibility
-  }) {
+  constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility }) {
     this.label = label;
     this.name = toCamelCase(name);
     this.bindingType = bindingType;
-    this.bindIndex = bindIndex;
     this.visibility = visibility ? (() => {
       switch (visibility) {
         case "vertex":
@@ -220,9 +213,10 @@ class Binding {
       label,
       name,
       bindingType,
-      bindIndex,
       visibility
     };
+    this.shouldResetBindGroup = false;
+    this.shouldResetBindGroupLayout = false;
   }
 }
 const getBufferLayout = (bufferType) => {
@@ -1861,7 +1855,6 @@ class BufferBinding extends Binding {
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
    * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {number=} parameters.bindIndex - bind index inside the bind group
    * @param {MaterialShadersType=} parameters.visibility - shader visibility
    * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
    * @param {Object.<string, Input>} parameters.bindings - struct inputs
@@ -1870,14 +1863,13 @@ class BufferBinding extends Binding {
     label = "Uniform",
     name = "uniform",
     bindingType,
-    bindIndex = 0,
     visibility,
     useStruct = true,
     access = "read",
     struct = {}
   }) {
     bindingType = bindingType ?? "uniform";
-    super({ label, name, bindIndex, bindingType, visibility });
+    super({ label, name, bindingType, visibility });
     this.options = {
       ...this.options,
       useStruct,
@@ -2138,7 +2130,6 @@ class WritableBufferBinding extends BufferBinding {
     label = "Work",
     name = "work",
     bindingType,
-    bindIndex = 0,
     useStruct = true,
     struct = {},
     visibility,
@@ -2147,7 +2138,7 @@ class WritableBufferBinding extends BufferBinding {
   }) {
     bindingType = "storage";
     visibility = "compute";
-    super({ label, name, bindIndex, bindingType, useStruct, struct, visibility, access });
+    super({ label, name, bindingType, useStruct, struct, visibility, access });
     this.options = {
       ...this.options,
       shouldCopyResult
@@ -2183,7 +2174,6 @@ class BindGroup {
     this.resetEntries();
     this.bindGroupLayout = null;
     this.bindGroup = null;
-    this.needsReset = false;
     this.needsPipelineFlush = false;
   }
   /**
@@ -2275,12 +2265,31 @@ class BindGroup {
     this.setBindGroup();
   }
   /**
-   * Reset the [bind group entries]{@link BindGroup#entries}, recreates it then recreate the [bind group layout]{@link BindGroup#bindGroupLayout} and [bind group]{@link BindGroup#bindGroup}
+   * Reset the [bindGroup entries]{@link BindGroup#entries#bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
    */
-  // TODO not necessarily needed?
   resetBindGroup() {
-    this.resetEntries();
-    this.createBindGroup();
+    this.entries.bindGroup = [];
+    this.bindings.forEach((binding) => {
+      this.entries.bindGroup.push({
+        binding: this.entries.bindGroup.length,
+        resource: binding.resource
+      });
+    });
+    this.setBindGroup();
+  }
+  /**
+   * Reset the [bindGroupLayout entries]{@link BindGroup#entries#bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
+   */
+  resetBindGroupLayout() {
+    this.entries.bindGroupLayout = [];
+    this.bindings.forEach((binding) => {
+      this.entries.bindGroupLayout.push({
+        binding: this.entries.bindGroupLayout.length,
+        ...binding.resourceLayout,
+        visibility: binding.visibility
+      });
+    });
+    this.setBindGroupLayout();
   }
   /**
    * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
@@ -2395,9 +2404,18 @@ class BindGroup {
    */
   update() {
     this.updateBufferBindings();
-    if (this.needsReset) {
+    const needsReset = this.bindings.some((binding) => binding.shouldResetBindGroup);
+    const resetBindGroupLayout = this.bindings.some((binding) => binding.shouldResetBindGroupLayout);
+    this.bindings.forEach((binding) => {
+      binding.shouldResetBindGroup = false;
+      binding.shouldResetBindGroupLayout = false;
+    });
+    if (resetBindGroupLayout) {
+      this.resetBindGroupLayout();
+      this.needsPipelineFlush = true;
+    }
+    if (needsReset) {
       this.resetBindGroup();
-      this.needsReset = false;
     }
   }
   /**
@@ -2445,13 +2463,6 @@ class BindGroup {
     return bindGroupCopy;
   }
   /**
-   * Clones a bind group with all its {@link bindings}
-   * @returns - the cloned BindGroup
-   */
-  // clone(): AllowedBindGroups {
-  //   return this.cloneFromBindings()
-  // }
-  /**
    * Destroy our {@link BindGroup}
    * Most important is to destroy the GPUBuffers to free the memory
    */
@@ -2482,7 +2493,6 @@ class TextureBinding extends Binding {
     label = "Texture",
     name = "texture",
     bindingType,
-    bindIndex = 0,
     visibility,
     texture,
     format = "rgba8unorm",
@@ -2493,7 +2503,7 @@ class TextureBinding extends Binding {
     if (bindingType === "storageTexture") {
       visibility = "compute";
     }
-    super({ label, name, bindingType, bindIndex, visibility });
+    super({ label, name, bindingType, visibility });
     this.options = {
       ...this.options,
       texture,
@@ -2517,6 +2527,8 @@ class TextureBinding extends Binding {
     return this.texture instanceof GPUExternalTexture ? this.texture : this.texture instanceof GPUTexture ? this.texture.createView() : null;
   }
   set resource(value) {
+    if (value && this.texture)
+      this.shouldResetBindGroup = true;
     this.texture = value;
   }
   /**
@@ -2525,6 +2537,8 @@ class TextureBinding extends Binding {
    */
   setBindingType(bindingType) {
     if (bindingType !== this.bindingType) {
+      if (bindingType)
+        this.shouldResetBindGroupLayout = true;
       this.bindingType = bindingType;
       this.setWGSLFragment();
     }
@@ -2787,7 +2801,6 @@ class Texture extends Object3D {
     this.sourceLoaded = false;
     this.sourceUploaded = false;
     this.shouldUpdate = false;
-    this.shouldUpdateBindGroup = false;
     this.renderer.addTexture(this);
   }
   /**
@@ -2922,7 +2935,6 @@ class Texture extends Object3D {
     this.externalTexture = this.renderer.importExternalTexture(this.source);
     this.textureBinding.resource = this.externalTexture;
     this.textureBinding.setBindingType("externalTexture");
-    this.shouldUpdateBindGroup = true;
     this.shouldUpdate = false;
     this.sourceUploaded = true;
   }
@@ -2956,7 +2968,6 @@ class Texture extends Object3D {
       if (texture.sourceUploaded) {
         this.texture = texture.texture;
         this.textureBinding.resource = this.texture;
-        this.shouldUpdateBindGroup = true;
       } else {
         this.createTexture();
       }
@@ -2981,7 +2992,6 @@ class Texture extends Object3D {
       (_a = this.texture) == null ? void 0 : _a.destroy();
       this.texture = this.renderer.createTexture(options);
       this.textureBinding.resource = this.texture;
-      this.shouldUpdateBindGroup = !!this.source;
     }
     this.shouldUpdate = true;
   }
@@ -3212,7 +3222,6 @@ class TextureBindGroup extends BindGroup {
       samplers.forEach((sampler) => this.addSampler(sampler));
     }
     this.type = type;
-    this.externalTexturesIDs = [];
   }
   /**
    * Adds a texture to the textures array and the struct
@@ -3253,66 +3262,6 @@ class TextureBindGroup extends BindGroup {
     return !this.bindGroup && !!this.bindings.length && !this.textures.find((texture) => !(texture.texture || texture.externalTexture)) && !this.samplers.find((sampler) => !sampler.sampler);
   }
   /**
-   * Reset our {@link TextureBindGroup}, first by reassigning correct {@link BindGroup#entries} resources, then by recreating the GPUBindGroup.
-   * Called each time a GPUTexture or GPUExternalTexture has changed:
-   * 1. A [texture source]{@link Texture#source} has been loaded (switching from placeholder 1x1 GPUTexture to media GPUTexture)
-   * 2. A [texture]{@link Texture} copy just happened
-   * 3. {@link GPUExternalTexture} at each tick
-   * 4. A [render texture GPUTexture]{@link RenderTexture#texture} has changed (on resize)
-   */
-  resetTextureBindGroup() {
-    const textureBindingsIndexes = [...this.bindings].reduce(
-      (foundIndexes, binding, index) => (binding instanceof TextureBinding && foundIndexes.push(index), foundIndexes),
-      []
-    );
-    if (textureBindingsIndexes.length) {
-      textureBindingsIndexes.forEach((index) => {
-        this.entries.bindGroup[index].resource = this.bindings[index].resource;
-      });
-      this.setBindGroup();
-    }
-  }
-  /**
-   * Get whether we should update our video [bind group layout]{@link GPUBindGroupLayout}.
-   * Happens when a GPUExternalTexture is created, we need to rebuild the {@link BindGroup#bindGroup} and {@link BindGroup#bindGroupLayout} from scratch. We might even need to recreate the whole pipeline (it it has already been created).
-   * @param textureIndex - the texture index in the bind group textures array
-   * @returns - whether we should update the [bind group layout]{@link GPUBindGroupLayout}
-   */
-  shouldUpdateVideoTextureBindGroupLayout(textureIndex) {
-    if (this.externalTexturesIDs.includes(textureIndex)) {
-      return false;
-    } else {
-      this.externalTexturesIDs.push(textureIndex);
-      this.needsPipelineFlush = true;
-      return this.needsPipelineFlush;
-    }
-  }
-  /**
-   * Called if the result of {@link shouldUpdateVideoTextureBindGroupLayout} is true. Updates our {@link BindGroup#bindGroupLayout} {@link BindGroup#entries} on the fly, then recreates GPUBindGroupLayout.
-   * Will also call {@link resetTextureBindGroup} afterwhile to recreate the GPUBindGroup.
-   * @param textureIndex - the texture index in the bind group textures array
-   */
-  updateVideoTextureBindGroupLayout(textureIndex) {
-    const texture = this.textures[textureIndex];
-    const externalTexturesIndexes = [...this.bindings].reduce(
-      (foundIndexes, binding, index) => (binding.bindingType === "externalTexture" && foundIndexes.push(index), foundIndexes),
-      []
-    );
-    if (externalTexturesIndexes.length) {
-      externalTexturesIndexes.forEach((bindingIndex) => {
-        this.entries.bindGroupLayout[bindingIndex] = {
-          binding: this.entries.bindGroupLayout[bindingIndex].binding,
-          externalTexture: texture.externalTexture,
-          visibility: this.entries.bindGroupLayout[bindingIndex].visibility
-        };
-        if (this.bindings[bindingIndex]) {
-          this.bindings[bindingIndex].wgslGroupFragment = texture.textureBinding.wgslGroupFragment;
-        }
-      });
-      this.setBindGroupLayout();
-    }
-  }
-  /**
    * Update the [bind group textures]{@link TextureBindGroup#textures}:
    * - Check if they need to copy their source texture
    * - Upload texture if needed
@@ -3326,14 +3275,7 @@ class TextureBindGroup extends BindGroup {
         }
         if (texture.shouldUpdate && texture.options.sourceType && texture.options.sourceType === "externalVideo") {
           texture.uploadVideoTexture();
-          if (this.shouldUpdateVideoTextureBindGroupLayout(textureIndex)) {
-            this.updateVideoTextureBindGroupLayout(textureIndex);
-          }
         }
-      }
-      if (texture.shouldUpdateBindGroup && (texture.texture || texture.externalTexture)) {
-        this.resetTextureBindGroup();
-        texture.shouldUpdateBindGroup = false;
       }
     });
   }
@@ -3360,7 +3302,6 @@ class SamplerBinding extends Binding {
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
    * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {number=} parameters.bindIndex - bind index inside the bind group
    * @param {MaterialShadersType=} parameters.visibility - shader visibility
    * @param {SamplerBindingResource=} parameters.resource - a GPUSampler
    */
@@ -3368,13 +3309,12 @@ class SamplerBinding extends Binding {
     label = "Sampler",
     name = "sampler",
     bindingType,
-    bindIndex = 0,
     visibility,
     sampler,
     type = "filtering"
   }) {
     bindingType = bindingType ?? "sampler";
-    super({ label, name, bindIndex, bindingType, visibility });
+    super({ label, name, bindingType, visibility });
     this.options = {
       ...this.options,
       sampler,
@@ -3390,6 +3330,7 @@ class SamplerBinding extends Binding {
     return {
       sampler: {
         type: this.options.type
+        // TODO set shouldResetBindGroupLayout to true if it changes afterwards
       }
     };
   }
@@ -3400,6 +3341,8 @@ class SamplerBinding extends Binding {
     return this.sampler;
   }
   set resource(value) {
+    if (value && this.sampler)
+      this.shouldResetBindGroup = true;
     this.sampler = value;
   }
   /**
@@ -3755,7 +3698,6 @@ class RenderTexture {
     if (!this.options.format) {
       this.options.format = this.renderer.preferredFormat;
     }
-    this.shouldUpdateBindGroup = false;
     this.setSize(this.options.size);
     this.setBindings();
     this.createTexture();
@@ -3835,7 +3777,6 @@ class RenderTexture {
   resize(size = null) {
     this.setSize(size);
     this.createTexture();
-    this.shouldUpdateBindGroup = true;
   }
   /**
    * Destroy our {@link RenderTexture}
