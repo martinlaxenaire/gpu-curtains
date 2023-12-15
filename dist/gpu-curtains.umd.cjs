@@ -1722,6 +1722,7 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+     * @returns - extracted data from the {@link Float32Array}
      */
     extractDataFromBufferResult(result) {
       return result.slice(this.startOffsetToIndex, this.endOffsetToIndex);
@@ -2113,6 +2114,23 @@ var __privateMethod = (obj, member, method) => {
           binding.shouldUpdate = false;
         }
       });
+    }
+    /**
+     * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the [buffer]{@link BufferBinding#buffer} data of this {@link BufferBinding}
+     * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+     * @param bufferElementName - name of the {@link BufferElement} to use to extract the data
+     * @returns - extracted data from the {@link Float32Array}
+     */
+    extractBufferElementDataFromBufferResult({
+      result,
+      bufferElementName
+    }) {
+      const bufferElement = this.bufferElements.find((bufferElement2) => bufferElement2.name === bufferElementName);
+      if (bufferElement) {
+        return bufferElement.extractDataFromBufferResult(result);
+      } else {
+        return result;
+      }
     }
   }
   class WritableBufferBinding extends BufferBinding {
@@ -4313,20 +4331,15 @@ var __privateMethod = (obj, member, method) => {
       bindingName,
       bufferElementName
     }) {
-      const bindingBufferResult = await this.getBufferBindingResultByBindingName(bindingName);
-      if (!bufferElementName || bindingBufferResult.length) {
-        return bindingBufferResult;
+      const result = await this.getBufferBindingResultByBindingName(bindingName);
+      if (!bufferElementName || result.length) {
+        return result;
       } else {
         const binding = this.getBufferBindingByName(bindingName);
-        if (binding && "bufferElements" in binding) {
-          const bufferElement = binding.bufferElements.find((bufferElement2) => bufferElement2.name === bufferElementName);
-          if (bufferElement) {
-            return bufferElement.extractDataFromBufferResult(bindingBufferResult);
-          } else {
-            return bindingBufferResult;
-          }
+        if (binding) {
+          return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName });
         } else {
-          return bindingBufferResult;
+          return result;
         }
       }
     }
@@ -4507,7 +4520,6 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /* RESULT BUFFER */
-    // TODO should we get rid of all that part?
     /**
      * Copy all writable binding buffers that need it
      * @param commandEncoder - current command encoder
@@ -4532,16 +4544,11 @@ var __privateMethod = (obj, member, method) => {
       bindingName = "",
       bufferElementName = ""
     }) {
-      const binding = this.getBindingByName(bindingName);
+      const binding = this.getBufferBindingByName(bindingName);
       if (binding && "resultBuffer" in binding) {
         const result = await this.getBufferResult(binding.resultBuffer);
         if (bufferElementName) {
-          const bufferElement = binding.bufferElements.find((bufferElement2) => bufferElement2.name === bufferElementName);
-          if (bufferElement) {
-            return bufferElement.extractDataFromBufferResult(result);
-          } else {
-            return result;
-          }
+          return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName });
         } else {
           return result;
         }

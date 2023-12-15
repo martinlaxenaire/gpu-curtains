@@ -196,8 +196,6 @@ export class ComputeMaterial extends Material {
 
   /* RESULT BUFFER */
 
-  // TODO should we get rid of all that part?
-
   /**
    * Copy all writable binding buffers that need it
    * @param commandEncoder - current command encoder
@@ -226,19 +224,13 @@ export class ComputeMaterial extends Material {
     bindingName?: string
     bufferElementName?: string
   }): Promise<Float32Array> {
-    const binding = this.getBindingByName(bindingName)
+    const binding = this.getBufferBindingByName(bindingName)
 
     if (binding && 'resultBuffer' in binding) {
       const result = await this.getBufferResult(binding.resultBuffer)
 
       if (bufferElementName) {
-        const bufferElement = binding.bufferElements.find((bufferElement) => bufferElement.name === bufferElementName)
-
-        if (bufferElement) {
-          return bufferElement.extractDataFromBufferResult(result)
-        } else {
-          return result
-        }
+        return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName })
       } else {
         return result
       }

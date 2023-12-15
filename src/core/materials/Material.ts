@@ -670,21 +670,16 @@ export class Material {
     bindingName: Binding['name']
     bufferElementName: BufferElement['name']
   }): Promise<Float32Array> {
-    const bindingBufferResult = await this.getBufferBindingResultByBindingName(bindingName)
+    const result = await this.getBufferBindingResultByBindingName(bindingName)
 
-    if (!bufferElementName || bindingBufferResult.length) {
-      return bindingBufferResult
+    if (!bufferElementName || result.length) {
+      return result
     } else {
       const binding = this.getBufferBindingByName(bindingName)
-      if (binding && 'bufferElements' in binding) {
-        const bufferElement = binding.bufferElements.find((bufferElement) => bufferElement.name === bufferElementName)
-        if (bufferElement) {
-          return bufferElement.extractDataFromBufferResult(bindingBufferResult)
-        } else {
-          return bindingBufferResult
-        }
+      if (binding) {
+        return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName })
       } else {
-        return bindingBufferResult
+        return result
       }
     }
   }

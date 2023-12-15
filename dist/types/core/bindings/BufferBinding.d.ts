@@ -116,4 +116,14 @@ export declare class BufferBinding extends Binding {
      * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update(): void;
+    /**
+     * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the [buffer]{@link BufferBinding#buffer} data of this {@link BufferBinding}
+     * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+     * @param bufferElementName - name of the {@link BufferElement} to use to extract the data
+     * @returns - extracted data from the {@link Float32Array}
+     */
+    extractBufferElementDataFromBufferResult({ result, bufferElementName, }: {
+        result: Float32Array;
+        bufferElementName: BufferElement['name'];
+    }): Float32Array;
 }
