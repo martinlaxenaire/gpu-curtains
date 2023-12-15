@@ -95,26 +95,8 @@ export interface ComputeMaterialParams extends MaterialParams {
 
 /** Options used to create this {@link ComputeMaterial} */
 export interface ComputeMaterialOptions extends MaterialOptions {
-  /** Main/first work group dispatch size to use with this {@link ComputeMaterial} */
+  /** Default work group dispatch size to use with this {@link ComputeMaterial} */
   dispatchSize?: number | number[]
-}
-
-/** Parameters used to add a [work group]{@link ComputeMaterial#workGroups} */
-export interface ComputeMaterialWorkGroupParams {
-  /** Bind groups to use with this [work group]{@link ComputeMaterial#workGroups} */
-  bindGroups: MaterialBindGroups
-  /** Optional [work group]{@link ComputeMaterial#workGroups} dispatch size  */
-  dispatchSize?: number | number[]
-}
-
-/**
- * Defines a {@link ComputeMaterial} work group.
- * At each render call, each of the [compute material work groups]{@link ComputeMaterial#workGroups} bind groups will be set, then we will dispatch the work group using its dispatch size.
- * Allow for custom compute work group dispatch process.
- */
-export interface ComputeMaterialWorkGroup extends ComputeMaterialWorkGroupParams {
-  /** [Work group]{@link ComputeMaterial#workGroups} dispatch size  */
-  dispatchSize: number[]
 }
 
 /* RENDER MATERIAL */

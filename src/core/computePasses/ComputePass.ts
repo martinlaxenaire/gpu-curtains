@@ -94,7 +94,6 @@ export class ComputePass {
    * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
    * @param parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
    */
-  // TODO do we need samplers here? What about textures?
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputePassParams = {}) {
     const type = 'ComputePass'
 
@@ -117,6 +116,9 @@ export class ComputePass {
       uniforms,
       storages,
       bindGroups,
+      samplers,
+      textures,
+      renderTextures,
       autoRender,
       useAsyncPipeline,
       texturesOptions,
@@ -150,6 +152,9 @@ export class ComputePass {
       uniforms,
       storages,
       bindGroups,
+      samplers,
+      textures,
+      renderTextures,
       useAsyncPipeline,
       dispatchSize,
     })
@@ -363,6 +368,15 @@ export class ComputePass {
   }
 
   /**
+   * Callback used to run a custom render function instead of the default one.
+   * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+   */
+  useCustomRender(callback: (pass: GPUComputePassEncoder) => void): ComputePass {
+    this.material.useCustomRender(callback)
+    return this
+  }
+
+  /**
    * Callback to run after the {@link Renderer} has been resized
    * @param callback - callback to run just after {@link GPURenderer} has been resized
    */
@@ -442,20 +456,20 @@ export class ComputePass {
   }
 
   /**
-   * Set {@link ComputeMaterial} work groups result
+   * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+   * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+   * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+   * @async
+   * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
-  setWorkGroupsResult() {
-    this.material?.setWorkGroupsResult()
-  }
-
-  /**
-   * Get the result of a work group by binding name
-   * @param workGroupName - name/key of the work group
-   * @param bindingName - name/key of the input binding
-   * @returns - the corresponding binding result array
-   */
-  getWorkGroupResult({ workGroupName, bindingName }: { workGroupName?: string; bindingName?: string }): Float32Array {
-    return this.material?.getWorkGroupResult({ workGroupName, bindingName })
+  async getComputeResult({
+    bindingName,
+    bufferElementName,
+  }: {
+    bindingName?: string
+    bufferElementName?: string
+  }): Promise<Float32Array> {
+    return await this.material?.getComputeResult({ bindingName, bufferElementName })
   }
 
   /**

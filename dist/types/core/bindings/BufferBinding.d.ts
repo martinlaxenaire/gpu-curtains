@@ -35,6 +35,8 @@ export interface BufferBindingBaseParams {
  */
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {
 }
+/** All allowed [buffer elements]{@link BufferElement} */
+export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement;
 /**
  * BufferBinding class:
  * Used to format inputs struct and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
@@ -50,7 +52,7 @@ export declare class BufferBinding extends Binding {
     /** Flag to indicate whether one of the {@link inputs} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
     shouldUpdate: boolean;
     /** An array describing how each corresponding {@link inputs} should be inserted into our {@link arrayView} array */
-    bufferElements: Array<BufferElement | BufferArrayElement | BufferInterleavedArrayElement>;
+    bufferElements: AllowedBufferElement[];
     /** Total size of our {@link arrayBuffer} array in bytes */
     arrayBufferSize: number;
     /** Array buffer that will be sent to the {@link GPUBuffer} */
@@ -71,12 +73,11 @@ export declare class BufferBinding extends Binding {
      * @param {string=} parameters.label - binding label
      * @param {string=} parameters.name - binding name
      * @param {BindingType="uniform"} parameters.bindingType - binding type
-     * @param {number=} parameters.bindIndex - bind index inside the bind group
      * @param {MaterialShadersType=} parameters.visibility - shader visibility
      * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
      * @param {Object.<string, Input>} parameters.bindings - struct inputs
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, useStruct, access, struct, }: BufferBindingParams);
+    constructor({ label, name, bindingType, visibility, useStruct, access, struct, }: BufferBindingParams);
     /**
      * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
      */
@@ -114,4 +115,14 @@ export declare class BufferBinding extends Binding {
      * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update(): void;
+    /**
+     * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the [buffer]{@link BufferBinding#buffer} data of this {@link BufferBinding}
+     * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+     * @param bufferElementName - name of the {@link BufferElement} to use to extract the data
+     * @returns - extracted data from the {@link Float32Array}
+     */
+    extractBufferElementDataFromBufferResult({ result, bufferElementName, }: {
+        result: Float32Array;
+        bufferElementName: BufferElement['name'];
+    }): Float32Array;
 }

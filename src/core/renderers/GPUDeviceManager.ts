@@ -2,8 +2,13 @@ import { throwError, throwWarning } from '../../utils/utils'
 import { Renderer } from './utils'
 import { Sampler } from '../samplers/Sampler'
 import { PipelineManager } from '../pipelines/PipelineManager'
+import { SceneObject } from './GPURenderer'
 
+/**
+ * Parameters used to create a {@link GPUDeviceManager}
+ */
 export interface GPUDeviceManagerParams {
+  /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
   label?: string
   /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter} or [device]{@link GPUDevice} */
   onError?: () => void
@@ -13,16 +18,17 @@ export interface GPUDeviceManagerParams {
 
 /**
  * GPUDeviceManager class:
- * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations.
- *
+ * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations, losing and restoration.
+ * Will also keep a track of all the [renderers]{@link Renderer}, [samplers]{@link Sampler} and [buffers]{@link GPUBuffer} created.
  */
+// TODO if we'd want to fully optimize multiple canvases rendering, the render method and command encoder creation should be handled by the GPUDeviceManager and each renderer render methods should be called from here
 export class GPUDeviceManager {
   /** Number of times a {@link GPUDevice} has been created */
   index: number
   /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
   label: string
 
-  /** navigator {@link GPU} object */
+  /** The navigator {@link GPU} object */
   gpu: GPU | undefined
   /** The WebGPU [adapter]{@link GPUAdapter} used */
   adapter: GPUAdapter | void
@@ -30,6 +36,9 @@ export class GPUDeviceManager {
   adapterInfos: GPUAdapterInfo | undefined
   /** The WebGPU [device]{@link GPUDevice} used */
   device: GPUDevice | undefined
+  /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} have been successfully created */
+  ready: boolean
+
   /** Array of [renderers]{@link Renderer} using that {@link GPUDeviceManager} */
   renderers: Renderer[]
   /** The {@link PipelineManager} used to cache {@link GPURenderPipeline} and {@link GPUComputePipeline} and set them only when appropriate */
@@ -60,6 +69,7 @@ export class GPUDeviceManager {
   }: GPUDeviceManagerParams) {
     this.index = 0
     this.label = label ?? 'GPUDeviceManager instance'
+    this.ready = false
 
     this.onError = onError
     this.onDeviceLost = onDeviceLost
@@ -88,23 +98,28 @@ export class GPUDeviceManager {
     await this.setDevice()
   }
 
+  /**
+   * Set up our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} and all the already created [renderers]{@link GPUDeviceManager#renderers} contexts
+   */
   async init() {
     await this.setAdapterAndDevice()
 
     // set context
-    this.renderers.forEach((renderer) => {
-      if (!renderer.context) {
-        renderer.setContext()
-      }
-    })
+    if (this.device) {
+      this.renderers.forEach((renderer) => {
+        if (!renderer.context) {
+          renderer.setContext()
+        }
+      })
+    }
   }
 
   /**
-   * Set our [adapter]{@link GPUDeviceManager#adapter} if possible
+   * Set our [adapter]{@link GPUDeviceManager#adapter} if possible.
+   * The adapter represents a specific GPU. Some devices have multiple GPUs.
    * @async
-   * @returns - void promise result
    */
-  async setAdapter(): Promise<void> {
+  async setAdapter() {
     this.adapter = await this.gpu?.requestAdapter().catch(() => {
       setTimeout(() => {
         this.onError()
@@ -119,24 +134,25 @@ export class GPUDeviceManager {
   /**
    * Set our [device]{@link GPUDeviceManager#device}
    * @async
-   * @returns - void promise result
    */
-  async setDevice(): Promise<void> {
+  async setDevice() {
     try {
       this.device = await (this.adapter as GPUAdapter)?.requestDevice({
         label: this.label + ' ' + this.index,
       })
 
+      this.ready = true
+
       this.index++
     } catch (error) {
       setTimeout(() => {
         this.onError()
-        throwError(`GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
+        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
       }, 0)
     }
 
     this.device?.lost.then((info) => {
-      throwWarning(`GPUDeviceManager: WebGPU device was lost: ${info.message}`)
+      throwWarning(`${this.label}: WebGPU device was lost: ${info.message}`)
 
       this.loseDevice()
 
@@ -159,6 +175,8 @@ export class GPUDeviceManager {
    * Reset all our renderers
    */
   loseDevice() {
+    this.ready = false
+
     // first clean all samplers
     this.samplers.forEach((sampler) => (sampler.sampler = null))
 
@@ -178,7 +196,11 @@ export class GPUDeviceManager {
     if (this.device) {
       // now recreate all the samplers
       this.samplers.forEach((sampler) => {
-        sampler.sampler = this.device.createSampler({ label: sampler.label, ...sampler.options })
+        const { type, ...samplerOptions } = sampler.options
+        sampler.sampler = this.device.createSampler({
+          label: sampler.label,
+          ...samplerOptions,
+        })
       })
 
       // then the renderers
@@ -203,6 +225,14 @@ export class GPUDeviceManager {
   }
 
   /**
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
+   * @readonly
+   */
+  get deviceObjects(): SceneObject[] {
+    return this.renderers.map((renderer) => renderer.renderedObjects).flat()
+  }
+
+  /**
    * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
    * @param buffer - [buffer]{@link GPUBuffer} to remove
    */
@@ -218,6 +248,21 @@ export class GPUDeviceManager {
    */
   removeSampler(sampler: Sampler) {
     this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid)
+  }
+
+  render() {
+    if (!this.ready) return
+
+    this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder())
+
+    const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer scene command encoder' })
+
+    this.renderers.forEach((renderer) => renderer.render(commandEncoder))
+
+    const commandBuffer = commandEncoder.finish()
+    this.device?.queue.submit([commandBuffer])
+
+    this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder())
   }
 
   /**

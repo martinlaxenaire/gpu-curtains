@@ -6,6 +6,7 @@ import { RectSize } from '../DOM/DOMElement'
 import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { Texture } from './Texture'
+import { TextureSize } from '../../types/Textures'
 
 export type RenderTextureBindingType = Exclude<TextureBindingType, 'externalTexture'>
 
@@ -19,13 +20,15 @@ export interface RenderTextureBaseParams {
   name?: string
 
   /** Optional size of the [texture]{@link RenderTexture#texture} */
-  size?: RectSize
+  size?: TextureSize
   /** Whether to use this [texture]{@link RenderTexture} as a regular or storage texture */
   usage?: RenderTextureBindingType
   /** Optional format of the [texture]{@link RenderTexture#texture}, mainly used for storage textures */
   format?: GPUTextureFormat
   /** Optional texture binding memory access type, mainly used for storage textures */
   access?: BindingMemoryAccessType
+  /** Optional [texture]{@link RenderTexture#texture} view dimension to use */
+  viewDimension?: GPUTextureViewDimension
 }
 
 /**
@@ -43,6 +46,7 @@ const defaultRenderTextureParams: RenderTextureParams = {
   usage: 'texture',
   access: 'write',
   fromTexture: null,
+  viewDimension: '2d',
 }
 
 /**
@@ -62,15 +66,13 @@ export class RenderTexture {
   texture: GPUTexture
 
   /** Size of the [texture]{@link RenderTexture#texture} source, usually our [renderer pixel ratio bounding rect]{@link Renderer#pixelRatioBoundingRect} */
-  size: RectSize
+  size: TextureSize
 
   /** Options used to create this {@link RenderTexture} */
   options: RenderTextureParams
 
   /** Array of [struct]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
   bindings: BindGroupBindingElement[]
-  /** Whether to update the [bind group]{@link BindGroup} to which the [texture binding]{@link TextureBinding} belongs */
-  shouldUpdateBindGroup: boolean
 
   /**
    * RenderTexture constructor
@@ -95,8 +97,6 @@ export class RenderTexture {
       this.options.format = this.renderer.preferredFormat
     }
 
-    this.shouldUpdateBindGroup = false
-
     // sizes
     this.setSize(this.options.size)
 
@@ -109,13 +109,14 @@ export class RenderTexture {
 
   /**
    * Set the [size]{@link RenderTexture#size}
-   * @param size - [size]{@link RectSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height if null
+   * @param size - [size]{@link TextureSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height and 1 for depth if null
    */
-  setSize(size: RectSize | null = null) {
+  setSize(size: TextureSize | null = null) {
     if (!size) {
       size = {
         width: this.renderer.pixelRatioBoundingRect.width,
         height: this.renderer.pixelRatioBoundingRect.height,
+        depth: 1,
       }
     }
 
@@ -126,7 +127,7 @@ export class RenderTexture {
    * Copy another {@link RenderTexture} into this {@link RenderTexture}
    * @param texture - {@link RenderTexture} to copy
    */
-  copy(texture: RenderTexture) {
+  copy(texture: RenderTexture | Texture) {
     this.options.fromTexture = texture
     this.createTexture()
   }
@@ -149,16 +150,18 @@ export class RenderTexture {
     this.texture = this.renderer.createTexture({
       label: this.options.label,
       format: this.options.format,
-      size: [this.size.width, this.size.height],
+      size: [this.size.width, this.size.height, this.size.depth],
+      dimensions: this.options.viewDimension === '1d' ? '1d' : this.options.viewDimension === '3d' ? '3d' : '2d',
       usage:
         // TODO let user chose?
+        // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
         this.options.usage === 'texture'
           ? GPUTextureUsage.TEXTURE_BINDING |
             GPUTextureUsage.COPY_SRC |
             GPUTextureUsage.COPY_DST |
             GPUTextureUsage.RENDER_ATTACHMENT
           : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
-    })
+    } as GPUTextureDescriptor)
 
     // update texture binding
     this.textureBinding.resource = this.texture
@@ -174,6 +177,7 @@ export class RenderTexture {
         name: this.options.name,
         texture: this.texture,
         bindingType: this.options.usage,
+        viewDimension: this.options.viewDimension,
       } as TextureBindingParams),
     ]
   }
@@ -192,16 +196,18 @@ export class RenderTexture {
    */
   resize(size: RectSize | null = null) {
     this.setSize(size)
-
     this.createTexture()
-    this.shouldUpdateBindGroup = true
   }
 
   /**
    * Destroy our {@link RenderTexture}
    */
   destroy() {
-    this.texture?.destroy()
+    // destroy the GPU texture only if it's not a copy of another texture
+    if (!this.options.fromTexture) {
+      this.texture?.destroy()
+    }
+
     this.texture = null
   }
 }

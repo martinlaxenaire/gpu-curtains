@@ -21,7 +21,7 @@ export declare class PingPongPlane extends FullscreenPlane {
      * Get our main [render texture]{@link RenderTexture}, the one that contains our ping pong content
      * @readonly
      */
-    get renderTexture(): RenderTexture | null;
+    get renderTexture(): RenderTexture | undefined;
     /**
      * Add the {@link PingPongPlane} to the renderer and the {@link Scene}
      */

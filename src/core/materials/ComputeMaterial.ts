@@ -1,16 +1,10 @@
 import { Material } from './Material'
-import {
-  ComputeMaterialOptions,
-  ComputeMaterialParams,
-  ComputeMaterialWorkGroup,
-  ComputeMaterialWorkGroupParams,
-  FullShadersType,
-  MaterialParams,
-} from '../../types/Materials'
+import { ComputeMaterialOptions, ComputeMaterialParams, FullShadersType } from '../../types/Materials'
 import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
 import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
+import { BufferInterleavedArrayElement } from '../bindings/bufferElements/BufferInterleavedArrayElement'
 
 /**
  * ComputeMaterial class:
@@ -22,19 +16,17 @@ export class ComputeMaterial extends Material {
   pipelineEntry: ComputePipelineEntry
   /** Options used to create this {@link ComputeMaterial} */
   options: ComputeMaterialOptions
-  /** Array of [work groups]{@link ComputeMaterialWorkGroup} to render each time the [render]{@link ComputeMaterial#render} method is called */
-  workGroups: ComputeMaterialWorkGroup[]
+
+  /** Default work group dispatch size to use with this {@link ComputeMaterial} */
+  dispatchSize?: number | number[]
+
+  /** function assigned to the [useCustomRender]{@link ComputeMaterial#useCustomRender} callback */
+  _useCustomRenderCallback: (pass: GPUComputePassEncoder) => void
 
   /**
    * ComputeMaterial constructor
-   * @param renderer - our renderer class object
-   * @param parameters - parameters used to create our Material
-   * @param {string} parameters.label - ComputeMaterial label
-   * @param {boolean} parameters.useAsyncPipeline - whether the {@link ComputePipelineEntry} should be compiled asynchronously
-   * @param {MaterialShaders} parameters.shaders - our ComputeMaterial shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our ComputeMaterial {@link BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
+   * @param renderer - our [renderer]{@link Renderer} class object
+   * @param parameters - [parameters]{@link ComputeMaterialParams} used to create our {@link ComputeMaterial}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputeMaterialParams) {
     // we could pass our curtains object OR our curtains renderer object
@@ -49,7 +41,7 @@ export class ComputeMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    let { shaders } = parameters
+    let { shaders, dispatchSize } = parameters
 
     if (!shaders || !shaders.compute) {
       shaders = {
@@ -61,8 +53,7 @@ export class ComputeMaterial extends Material {
     }
 
     if (!shaders.compute.code) {
-      // TODO default shader?
-      shaders.compute.code = ''
+      shaders.compute.code = '@compute @workgroup_size(1) fn main(){}'
     }
 
     if (!shaders.compute.entryPoint) {
@@ -75,13 +66,20 @@ export class ComputeMaterial extends Material {
       ...(parameters.dispatchSize !== undefined && { dispatchSize: parameters.dispatchSize }),
     }
 
-    this.workGroups = []
+    // set default dispatch size
+    if (!dispatchSize) {
+      dispatchSize = 1
+    }
 
-    // add main work group right now
-    this.addWorkGroup({
-      bindGroups: this.bindGroups,
-      dispatchSize: this.options.dispatchSize,
-    })
+    if (Array.isArray(dispatchSize)) {
+      dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1)
+      dispatchSize[1] = Math.ceil(dispatchSize[1] ?? 1)
+      dispatchSize[2] = Math.ceil(dispatchSize[2] ?? 1)
+    } else if (!isNaN(dispatchSize)) {
+      dispatchSize = [Math.ceil(dispatchSize), 1, 1]
+    }
+
+    this.dispatchSize = dispatchSize
 
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       renderer: this.renderer,
@@ -157,42 +155,16 @@ export class ComputeMaterial extends Material {
     return !!hasMappedBuffer
   }
 
-  /* WORK GROUPS */
-
-  /**
-   * Add a new [work group]{@link ComputeMaterial#workGroups} to render each frame.
-   * A [work group]{@link ComputeMaterial#workGroups} is composed of an array of [bind groups][@link BindGroup] to set and a dispatch size to dispatch the [work group]{@link ComputeMaterial#workGroups}
-   * @param bindGroups
-   * @param dispatchSize
-   */
-  addWorkGroup({ bindGroups = [], dispatchSize = 1 }: ComputeMaterialWorkGroupParams) {
-    if (Array.isArray(dispatchSize)) {
-      dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1)
-      dispatchSize[1] = Math.ceil(dispatchSize[1] ?? 1)
-      dispatchSize[2] = Math.ceil(dispatchSize[2] ?? 1)
-    } else if (!isNaN(dispatchSize)) {
-      dispatchSize = [Math.ceil(dispatchSize), 1, 1]
-    }
-
-    this.workGroups.push({
-      bindGroups,
-      dispatchSize,
-    } as ComputeMaterialWorkGroup)
-  }
-
   /* RENDER */
 
   /**
-   * Render a [work group]{@link ComputeMaterial#workGroups}: set its bind groups and then dispatch using its dispatch size
-   * @param pass - current compute pass encoder
-   * @param workGroup - [Work group]{@link ComputeMaterial#workGroups} to render
+   * If we defined a custom render function instead of the default one, register the callback
+   * @param callback - callback to run instead of the default behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
    */
-  renderWorkGroup(pass: GPUComputePassEncoder, workGroup: ComputeMaterialWorkGroup) {
-    workGroup.bindGroups.forEach((bindGroup) => {
-      pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
-    })
-
-    pass.dispatchWorkgroups(workGroup.dispatchSize[0], workGroup.dispatchSize[1], workGroup.dispatchSize[2])
+  useCustomRender(callback: (pass: GPUComputePassEncoder) => void) {
+    if (callback) {
+      this._useCustomRenderCallback = callback
+    }
   }
 
   /**
@@ -209,10 +181,17 @@ export class ComputeMaterial extends Material {
     // set current pipeline
     this.setPipeline(pass)
 
-    // render our work groups
-    this.workGroups.forEach((workGroup) => {
-      this.renderWorkGroup(pass, workGroup)
-    })
+    // if we declared a custom render function, call it
+    if (this._useCustomRenderCallback !== undefined) {
+      this._useCustomRenderCallback(pass)
+    } else {
+      // else just set our bind groups and dispatch
+      this.bindGroups.forEach((bindGroup) => {
+        pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
+      })
+
+      pass.dispatchWorkgroups(this.dispatchSize[0], this.dispatchSize[1], this.dispatchSize[2])
+    }
   }
 
   /* RESULT BUFFER */
@@ -223,8 +202,8 @@ export class ComputeMaterial extends Material {
    */
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding: WritableBufferBinding) => {
-        if ('shouldCopyResult' in binding && binding.shouldCopyResult) {
+      bindGroup.bufferBindings.forEach((binding: WritableBufferBinding) => {
+        if (binding.shouldCopyResult) {
           commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
         }
       })
@@ -232,63 +211,31 @@ export class ComputeMaterial extends Material {
   }
 
   /**
-   * Loop through all bind groups writable buffers and check if they need to be copied
+   * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+   * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+   * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+   * @async
+   * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
-  setWorkGroupsResult() {
-    this.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding: WritableBufferBinding) => {
-        if (binding.shouldCopyResult) {
-          this.setBufferResult(binding)
-        }
-      })
-    })
-  }
-
-  /**
-   * Copy the result buffer into our result array
-   * @param binding - buffer binding to set the result from
-   */
-  setBufferResult(binding: WritableBufferBinding) {
-    if (binding.resultBuffer?.mapState === 'unmapped') {
-      binding.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-        binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0))
-        binding.resultBuffer.unmap()
-      })
-    }
-  }
-
-  /**
-   * Get the result of work group by work group and binding names
-   * @param workGroupName - work group name/key
-   * @param bindingName - binding name/key
-   * @returns - the result of our GPU compute pass
-   */
-  getWorkGroupResult({
-    workGroupName = '',
+  async getComputeResult({
     bindingName = '',
+    bufferElementName = '',
   }: {
-    workGroupName?: string
     bindingName?: string
-  }): Float32Array {
-    let binding
-    this.bindGroups.forEach((bindGroup) => {
-      binding = bindGroup.bindings.find((binding) => binding.name === workGroupName)
-    })
+    bufferElementName?: string
+  }): Promise<Float32Array> {
+    const binding = this.getBufferBindingByName(bindingName)
 
-    if (binding) {
-      if (bindingName) {
-        const bindingElement = binding.bindingElements.find((bindingElement) => bindingElement.name === bindingName)
+    if (binding && 'resultBuffer' in binding) {
+      const result = await this.getBufferResult(binding.resultBuffer)
 
-        if (bindingElement) {
-          return binding.result.slice(bindingElement.startOffset, bindingElement.endOffset)
-        } else {
-          return binding.result.slice()
-        }
+      if (bufferElementName) {
+        return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName })
       } else {
-        return binding.result.slice()
+        return result
       }
     } else {
-      return null
+      return new Float32Array(0)
     }
   }
 }

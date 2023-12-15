@@ -1,5 +1,5 @@
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
-import { ScrollManager, ScrollManagerParams } from '../utils/ScrollManager'
+import { ScrollManager } from '../utils/ScrollManager'
 import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 import { PingPongPlane } from './meshes/PingPongPlane'
@@ -8,7 +8,7 @@ import { GPURenderer, GPURendererParams, MeshType } from '../core/renderers/GPUR
 import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
-import { Camera } from '../core/camera/Camera'
+import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera'
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
 import { GPUDeviceManager } from '../core/renderers/GPUDeviceManager'
@@ -66,10 +66,6 @@ export class GPUCurtains {
   }
   /** function assigned to the [onScroll]{@link GPUCurtains#onScroll} callback */
   _onScrollCallback: () => void = () => {
-    /* allow empty callback */
-  }
-  /** function assigned to the [onAfterResize]{@link GPUCurtains#onAfterResize} callback */
-  _onAfterResizeCallback: () => void = () => {
     /* allow empty callback */
   }
   /** function assigned to the [onError]{@link GPUCurtains#onError} callback */
@@ -270,6 +266,7 @@ export class GPUCurtains {
 
   /**
    * Get all the created [ping pong planes]{@link PingPongPlane}
+   * @readonly
    */
   get pingPongPlanes(): PingPongPlane[] {
     return this.renderers?.map((renderer) => renderer.pingPongPlanes).flat()
@@ -277,6 +274,7 @@ export class GPUCurtains {
 
   /**
    * Get all the created [shader passes]{@link ShaderPass}
+   * @readonly
    */
   get shaderPasses(): ShaderPass[] {
     return this.renderers?.map((renderer) => renderer.shaderPasses).flat()
@@ -284,6 +282,7 @@ export class GPUCurtains {
 
   /**
    * Get all the created [meshes]{@link MeshBase}
+   * @readonly
    */
   get meshes(): MeshType[] {
     return this.renderers?.map((renderer) => renderer.meshes).flat()
@@ -291,6 +290,7 @@ export class GPUCurtains {
 
   /**
    * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
+   * @readonly
    */
   get domMeshes(): DOMMesh[] {
     return this.renderers
@@ -301,6 +301,7 @@ export class GPUCurtains {
 
   /**
    * Get all the created [planes]{@link Plane}
+   * @readonly
    */
   get planes(): Plane[] {
     return this.domMeshes.filter((domMesh) => domMesh instanceof Plane) as Plane[]
@@ -308,6 +309,7 @@ export class GPUCurtains {
 
   /**
    * Get all the created [compute passes]{@link ComputePass}
+   * @readonly
    */
   get computePasses(): ComputePass[] {
     return this.renderers?.map((renderer) => renderer.computePasses).flat()
@@ -315,6 +317,7 @@ export class GPUCurtains {
 
   /**
    * Get the [default curtains renderer camera]{@link GPUCurtainsRenderer#camera}
+   * @readonly
    */
   get camera(): Camera {
     return this.renderer?.camera
@@ -322,26 +325,18 @@ export class GPUCurtains {
 
   /**
    * Set the [default curtains renderer camera perspective]{@link GPUCurtainsRenderer#setPerspective}
+   * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
    */
-  setPerspective(fov = 50, near = 0.01, far = 50) {
-    this.renderer?.setPerspective(fov, near, far)
+  setPerspective({ fov = 50, near = 0.01, far = 50 }: CameraBasePerspectiveOptions = {}) {
+    this.renderer?.setPerspective({ fov, near, far })
   }
 
   /**
    * Set the default [curtains renderer camera position]{@link GPUCurtainsRenderer#setCameraPosition}
+   * @param position - new [position]{@link Camera#position}
    */
   setCameraPosition(position: Vec3 = new Vec3(0, 0, 1)) {
     this.renderer?.setCameraPosition(position)
-  }
-
-  /* RESIZE */
-
-  /**
-   * Manually resize our [curtains renderer]{@link GPUCurtainsRenderer}
-   */
-  resize() {
-    // TODO not used!!
-    this._onAfterResizeCallback && this._onAfterResizeCallback()
   }
 
   /**
@@ -450,19 +445,6 @@ export class GPUCurtains {
   }
 
   /**
-   * Called each time the [resize]{@link GPUCurtains#resize} method has been called
-   * @param callback - callback to run each time the [resize]{@link GPUCurtains#resize} method has been called
-   * @returns - our {@link GPUCurtains}
-   */
-  onAfterResize(callback: () => void): GPUCurtains {
-    if (callback) {
-      this._onAfterResizeCallback = callback
-    }
-
-    return this
-  }
-
-  /**
    * Called if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
    * @param callback - callback to run if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
    * @returns - our {@link GPUCurtains}
@@ -502,8 +484,7 @@ export class GPUCurtains {
   render() {
     this._onRenderCallback && this._onRenderCallback()
 
-    //this.renderer?.render()
-    this.renderers.forEach((renderer) => renderer.render())
+    this.deviceManager.render()
   }
 
   /**

@@ -62,7 +62,7 @@ export class GPURenderer {
   type: string
   /** The universal unique id of this {@link GPURenderer} */
   readonly uuid: string
-  /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} have been successfully created */
+  /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [context]{@link GPURenderer#context} has been successfully configured */
   ready: boolean
 
   /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
@@ -125,6 +125,10 @@ export class GPURenderer {
   }
   /** function assigned to the [onAfterRender]{@link GPURenderer#onAfterRender} callback */
   _onAfterRenderCallback = (commandEncoder: GPUCommandEncoder) => {
+    /* allow empty callback */
+  }
+  /** function assigned to the [onAfterResize]{@link GPURenderer#onAfterResize} callback */
+  _onAfterResizeCallback: () => void = () => {
     /* allow empty callback */
   }
 
@@ -223,6 +227,8 @@ export class GPURenderer {
     this.setSize(boundingRect)
 
     this.onResize()
+
+    this._onAfterResizeCallback && this._onAfterResizeCallback()
   }
 
   /**
@@ -343,7 +349,7 @@ export class GPURenderer {
     this.ready = false
 
     // force all our scene objects to lose context
-    this.sceneObjects.forEach((sceneObject) => sceneObject.loseContext())
+    this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext())
   }
 
   /**
@@ -355,7 +361,7 @@ export class GPURenderer {
     this.configureContext()
 
     // restore context of all our scene objects
-    this.sceneObjects.forEach((sceneObject) => sceneObject.restoreContext())
+    this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext())
 
     // force renderer resize to resize all our render passes textures
     this.onResize()
@@ -413,6 +419,55 @@ export class GPURenderer {
   queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource) {
     this.device?.queue.writeBuffer(buffer, bufferOffset, data)
   }
+
+  /**
+   * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+   * @param parameters - parameters used to realize the copy
+   * @param parameters.srcBuffer - source {@link GPUBuffer}
+   * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+   * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+   * @returns - destination {@link GPUBuffer} after copy
+   */
+  copyBufferToBuffer({
+    srcBuffer,
+    dstBuffer,
+    commandEncoder,
+  }: {
+    srcBuffer: GPUBuffer
+    dstBuffer?: GPUBuffer
+    commandEncoder?: GPUCommandEncoder
+  }): GPUBuffer | null {
+    if (!srcBuffer) {
+      throwWarning(`${this.type}: cannot copy to buffer because the source buffer has not been provided`)
+      return null
+    }
+
+    if (!dstBuffer) {
+      dstBuffer = this.createBuffer({
+        label: this.type + ': destination copy buffer from: ' + srcBuffer.label,
+        size: srcBuffer.size,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+      })
+    }
+
+    // if there's no command encoder provided, we'll have to create one and submit it after the copy process
+    const hasCommandEncoder = !!commandEncoder
+
+    if (!hasCommandEncoder) {
+      commandEncoder = this.device?.createCommandEncoder({ label: 'Copy buffer command encoder' })
+    }
+
+    commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size)
+
+    if (!hasCommandEncoder) {
+      const commandBuffer = commandEncoder.finish()
+      this.device?.queue.submit([commandBuffer])
+    }
+
+    return dstBuffer
+  }
+
+  /* BIND GROUPS & LAYOUTS */
 
   /**
    * Create a {@link GPUBindGroupLayout}
@@ -575,7 +630,7 @@ export class GPURenderer {
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
     // see onVideoFrameCallback method in Texture class
     // const videoFrame = new VideoFrame(video)
-    // return this.device.importExternalTexture({ source: videoFrame })
+    // return this.device?.importExternalTexture({ source: videoFrame })
     return this.device?.importExternalTexture({ source: video })
   }
 
@@ -593,7 +648,11 @@ export class GPURenderer {
     if (existingSampler) {
       return existingSampler.sampler
     } else {
-      const gpuSampler: GPUSampler = this.device?.createSampler({ label: sampler.label, ...sampler.options })
+      const { type, ...samplerOptions } = sampler.options
+      const gpuSampler: GPUSampler = this.device?.createSampler({
+        label: sampler.label,
+        ...samplerOptions,
+      })
 
       this.samplers.push(sampler)
 
@@ -633,20 +692,28 @@ export class GPURenderer {
   }
 
   /**
-   * Get all our scene objects (i.e. objects that are rendered)
+   * Get all this [renderer]{@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
    * @readonly
    */
-  get sceneObjects(): SceneObject[] {
+  get renderedObjects(): SceneObject[] {
     return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes]
   }
 
   /**
-   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+   * @readonly
+   */
+  get deviceObjects(): SceneObject[] {
+    return this.deviceManager.deviceObjects
+  }
+
+  /**
+   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
-    // TODO device manager instead!
-    return this.sceneObjects.filter((object) => {
+    return this.deviceObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
@@ -656,12 +723,12 @@ export class GPURenderer {
   }
 
   /**
-   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */
   getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
-    // TODO device manager instead!
-    return this.sceneObjects.filter((object) => {
+    return this.deviceObjects.filter((object) => {
       return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid)
     })
   }
@@ -694,6 +761,19 @@ export class GPURenderer {
     return this
   }
 
+  /**
+   * Assign a callback function to _onAfterResizeCallback
+   * @param callback - callback to run just after the {@link GPURenderer} has been resized
+   * @returns - our {@link GPURenderer}
+   */
+  onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+    if (callback) {
+      this._onAfterResizeCallback = callback
+    }
+
+    return this
+  }
+
   /* RENDER */
 
   /**
@@ -703,7 +783,10 @@ export class GPURenderer {
    * @returns - the [current render texture]{@link GPUTexture}
    */
   setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture: GPUTexture | null = null) {
-    if (!renderTexture) renderTexture = this.context.getCurrentTexture()
+    if (!renderTexture) {
+      renderTexture = this.context.getCurrentTexture()
+      renderTexture.label = `${this.type} context current texture`
+    }
 
     if (this.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
@@ -712,21 +795,6 @@ export class GPURenderer {
     }
 
     return renderTexture
-  }
-
-  /**
-   * Function to run just before our [command encoder]{@link GPUCommandEncoder} is created at each [render]{@link GPURenderer#render} call
-   */
-  onBeforeCommandEncoder() {
-    /* will be overridden */
-  }
-
-  /**
-   * Function to run just after our [command encoder]{@link GPUCommandEncoder} has been submitted at each [render]{@link GPURenderer#render} call
-   */
-  onAfterCommandEncoder() {
-    /* will be overridden */
-    this.scene.onAfterCommandEncoder()
   }
 
   /**
@@ -781,39 +849,23 @@ export class GPURenderer {
   }
 
   /**
-   * Render our [scene]{@link Scene}
+   * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
    */
-  renderScene() {
-    const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer scene command encoder' })
-
-    this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
-    this.onBeforeRenderScene.execute(commandEncoder)
-
-    this.scene.render(commandEncoder)
-
-    this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
-    this.onAfterRenderScene.execute(commandEncoder)
-
-    const commandBuffer = commandEncoder.finish()
-    this.device?.queue.submit([commandBuffer])
+  onBeforeCommandEncoder() {
+    if (!this.ready) return
+    // now render!
+    this.onBeforeCommandEncoderCreation.execute()
   }
 
   /**
-   * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
+   * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} after the {@link GPUCommandEncoder} has been created.
+   * Used to handle our [textures queue]{@link GPURenderer#texturesQueue}
    */
-  render() {
+  onAfterCommandEncoder() {
     if (!this.ready) return
 
-    // now render!
-    this.onBeforeCommandEncoder()
-    this.onBeforeCommandEncoderCreation.execute()
-
-    this.renderScene()
-
-    // now handle textures
-
+    // handle textures
     // first check if media textures without parent need to be uploaded
-    // TODO safe?
     this.textures
       .filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded)
       .forEach((texture) => this.uploadTexture(texture))
@@ -828,8 +880,23 @@ export class GPURenderer {
     // clear texture queue
     this.texturesQueue = []
 
-    this.onAfterCommandEncoder()
     this.onAfterCommandEncoderSubmission.execute()
+  }
+
+  /**
+   * Called at each draw call to render our scene and its content
+   * @param commandEncoder - current {@link GPUCommandEncoder}
+   */
+  render(commandEncoder: GPUCommandEncoder) {
+    if (!this.ready) return
+
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
+    this.onBeforeRenderScene.execute(commandEncoder)
+
+    this.scene.render(commandEncoder)
+
+    this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
+    this.onAfterRenderScene.execute(commandEncoder)
   }
 
   /**
@@ -843,7 +910,7 @@ export class GPURenderer {
     this.renderPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
-    this.sceneObjects.forEach((sceneObject) => sceneObject.remove())
+    this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
 
     //this.textures.forEach((texture) => texture.destroy())
     this.textures = []

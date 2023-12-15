@@ -1,7 +1,7 @@
 import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
 import MeshTransformedMixin from './MeshTransformedMixin'
-import MeshBaseMixin, { MeshBaseParams } from './MeshBaseMixin'
+import { MeshBaseParams } from './MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**

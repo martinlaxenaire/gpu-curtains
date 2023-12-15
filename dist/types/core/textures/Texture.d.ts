@@ -4,9 +4,8 @@ import { TextureBinding } from '../bindings/TextureBinding';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { Object3D } from '../objects3D/Object3D';
 import { BindGroupBindingElement } from '../../types/BindGroups';
-import { TextureOptions, TextureParams, TextureParent, TextureSource } from '../../types/Textures';
+import { TextureOptions, TextureParams, TextureParent, TextureSize, TextureSource } from '../../types/Textures';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { RectSize } from '../DOM/DOMElement';
 /**
  * Texture class:
  * Used to create [textures]{@link GPUTexture} or [external textures]{@link GPUExternalTexture} from different kinds of [sources]{@link TextureSource}.
@@ -27,8 +26,8 @@ export declare class Texture extends Object3D {
     externalTexture: null | GPUExternalTexture;
     /** The {@link Texture} [source]{@link TextureSource} to use */
     source: TextureSource;
-    /** The {@link Texture} [source]{@link TextureSource} size */
-    size: RectSize;
+    /** The [texture]{@link GPUTexture}, matching the [texture source]{@link TextureSource} [size]{@link RectSize} with 1 for depth */
+    size: TextureSize;
     /** Options used to create this {@link Texture} */
     options: TextureOptions;
     /** A [buffer binding]{@link BufferBinding} that will hold the texture matrix */
@@ -43,8 +42,6 @@ export declare class Texture extends Object3D {
     private _sourceUploaded;
     /** Whether the texture should be uploaded to the GPU */
     shouldUpdate: boolean;
-    /** Whether the {@link BindGroup} handling this [texture struct]{@link Texture#bindings} should be updated (i.e. each time a texture is uploaded to the GPU) */
-    shouldUpdateBindGroup: boolean;
     /** [Video frame callback]{@link requestVideoFrameCallback} returned id if used */
     videoFrameCallbackId: null | number;
     /** function assigned to the [onSourceLoaded]{@link Texture#onSourceLoaded} callback */

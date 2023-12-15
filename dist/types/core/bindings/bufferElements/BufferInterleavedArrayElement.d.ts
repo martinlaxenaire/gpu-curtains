@@ -35,4 +35,9 @@ export declare class BufferInterleavedArrayElement extends BufferArrayElement {
      * @param value - new value to use
      */
     update(value: any): void;
+    /**
+     * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+     * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+     */
+    extractDataFromBufferResult(result: Float32Array): Float32Array;
 }

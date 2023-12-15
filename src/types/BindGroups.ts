@@ -1,6 +1,6 @@
 import { BindGroup } from '../core/bindGroups/BindGroup'
 import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup'
-import { BufferBinding, BufferBindingBaseParams, BufferBindingParams } from '../core/bindings/BufferBinding'
+import { BufferBinding, BufferBindingParams } from '../core/bindings/BufferBinding'
 import { SamplerBinding } from '../core/bindings/SamplerBinding'
 import { TextureBinding } from '../core/bindings/TextureBinding'
 import { WritableBufferBinding, WritableBufferBindingParams } from '../core/bindings/WritableBufferBinding'
@@ -8,9 +8,6 @@ import { Vec2 } from '../math/Vec2'
 import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
 import { Quat } from '../math/Quat'
-import { MaterialShadersType } from './Materials'
-import { VertexBufferAttribute } from './Geometries'
-import { BufferBindingMemoryAccessType } from '../core/bindings/Binding'
 import { WGSLVariableType } from '../core/bindings/utils'
 
 // INPUTS

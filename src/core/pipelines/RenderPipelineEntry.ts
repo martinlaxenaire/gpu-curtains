@@ -89,8 +89,7 @@ export class RenderPipelineEntry extends PipelineEntry {
     }
   }
 
-  // TODO!
-  // need to chose whether we should silently add the camera bind group here
+  // TODO! need to chose whether we should silently add the camera bind group here
   // or explicitly in the RenderMaterial class createBindGroups() method
   /**
    * Merge our [pipeline entry bind groups]{@link RenderPipelineEntry#bindGroups} with the [camera bind group]{@link CameraRenderer#cameraBindGroup} if needed and set them

@@ -28,8 +28,6 @@ export declare class BindGroup {
     bindGroupLayout: null | GPUBindGroupLayout;
     /** Our {@link BindGroup} GPUBindGroup */
     bindGroup: null | GPUBindGroup;
-    /** Flag indicating whether we need to totally reset this {@link BindGroup} */
-    needsReset: boolean;
     /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
     needsPipelineFlush: boolean;
     /**
@@ -79,9 +77,13 @@ export declare class BindGroup {
      */
     createBindGroup(): void;
     /**
-     * Reset the [bind group entries]{@link BindGroup#entries}, recreates it then recreate the [bind group layout]{@link BindGroup#bindGroupLayout} and [bind group]{@link BindGroup#bindGroup}
+     * Reset the [bindGroup entries]{@link BindGroup#entries#bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
      */
     resetBindGroup(): void;
+    /**
+     * Reset the [bindGroupLayout entries]{@link BindGroup#entries#bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
+     */
+    resetBindGroupLayout(): void;
     /**
      * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
      */
@@ -121,7 +123,6 @@ export declare class BindGroup {
     /**
      * Update the {@link BindGroup}, which means update its [buffer struct]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
      * Called at each render from the parent {@link Material}
-     * (TODO - add a Material 'setBindGroup' method and call it from here? - would allow to automatically update bind groups that are eventually not part of the Material bindGroups when set)
      */
     update(): void;
     /**
@@ -136,10 +137,6 @@ export declare class BindGroup {
         bindings?: BindGroupBindingElement[];
         keepLayout?: boolean;
     }): AllowedBindGroups;
-    /**
-     * Clones a bind group with all its {@link bindings}
-     * @returns - the cloned BindGroup
-     */
     /**
      * Destroy our {@link BindGroup}
      * Most important is to destroy the GPUBuffers to free the memory

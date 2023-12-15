@@ -1,5 +1,6 @@
 /// <reference types="dist" />
 import { Binding, BindingParams } from './Binding';
+import { SamplerOptions } from '../samplers/Sampler';
 /** Defines a {@link SamplerBinding} [resource]{@link SamplerBinding#resource} */
 export type SamplerBindingResource = GPUSampler | null;
 /**
@@ -8,6 +9,8 @@ export type SamplerBindingResource = GPUSampler | null;
 export interface SamplerBindingParams extends BindingParams {
     /** {@link SamplerBinding} [bind group]{@link GPUBindGroup} resource */
     sampler: SamplerBindingResource;
+    /** The bind group layout binding [type]{@link GPUSamplerBindingLayout#type} of this [sampler]{@link GPUSampler} */
+    type: SamplerOptions['type'];
 }
 /**
  * SamplerBinding class:
@@ -27,11 +30,10 @@ export declare class SamplerBinding extends Binding {
      * @param {string=} parameters.label - binding label
      * @param {string=} parameters.name - binding name
      * @param {BindingType="uniform"} parameters.bindingType - binding type
-     * @param {number=} parameters.bindIndex - bind index inside the bind group
      * @param {MaterialShadersType=} parameters.visibility - shader visibility
      * @param {SamplerBindingResource=} parameters.resource - a GPUSampler
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, sampler, }: SamplerBindingParams);
+    constructor({ label, name, bindingType, visibility, sampler, type, }: SamplerBindingParams);
     /**
      * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#sampler}
      */

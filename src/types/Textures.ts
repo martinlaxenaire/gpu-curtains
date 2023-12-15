@@ -4,6 +4,7 @@ import { FullscreenPlane } from '../core/meshes/FullscreenPlane'
 import { DOMMeshType } from '../core/renderers/GPURenderer'
 import { Mesh } from '../core/meshes/Mesh'
 import { PingPongPlane } from '../curtains/meshes/PingPongPlane'
+import { RectSize } from '../core/DOM/DOMElement'
 
 /**
  * Parameters used to copy an external image to texture, i.e. that will be uploaded to the GPU using [copyExternalImageToTexture]{@link GPUQueue#copyExternalImageToTexture}
@@ -19,6 +20,8 @@ export interface ExternalTextureParams {
   placeholderColor?: [number, number, number, number]
   /** Whether video textures should use {@link GPUExternalTexture} or not */
   useExternalTextures?: boolean
+  /** The [texture view dimension ]{@link GPUTextureViewDimension} to use */
+  viewDimension?: GPUTextureViewDimension
 }
 
 /**
@@ -53,6 +56,14 @@ export interface TextureOptions extends TextureParams {
   source: TextureSource | string // for image url
   /** {@link Texture} source type */
   sourceType: TextureSourceType
+}
+
+/**
+ * Defines the {@link GPUTexture} size. Depth default to 1 and could also be used for array layers.
+ */
+export interface TextureSize extends RectSize {
+  /** Depth or array layers of the {@link GPUTexture} */
+  depth?: number
 }
 
 /**

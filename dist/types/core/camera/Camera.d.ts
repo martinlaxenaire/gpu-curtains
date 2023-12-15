@@ -112,14 +112,9 @@ export declare class Camera extends Object3D {
     setSize({ width, height }: RectSize): void;
     /**
      * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if our {@link shouldUpdate} flag is true
-     * @param fov - field of view to use
-     * @param near - near plane value to use
-     * @param far - far plane value to use
-     * @param width - width value to use
-     * @param height - height value to use
-     * @param pixelRatio - pixel ratio value to use
+     * @param parameters - [parameters]{@link CameraPerspectiveOptions} to use for the perspective
      */
-    setPerspective(fov?: number, near?: number, far?: number, width?: number, height?: number, pixelRatio?: number): void;
+    setPerspective({ fov, near, far, width, height, pixelRatio, }?: CameraPerspectiveOptions): void;
     /**
      * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
      */

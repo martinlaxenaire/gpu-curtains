@@ -10,8 +10,12 @@ export type TextureBindingResource = GPUTexture | GPUExternalTexture | null
 export interface TextureBindingParams extends BindingParams {
   /** {@link TextureBinding} [resource]{@link TextureBinding#resource} */
   texture: TextureBindingResource
+  /** The [texture]{@link GPUTexture} format to use */
   format?: GPUTextureFormat
+  /** The storage [texture]{@link GPUTexture} binding memory access types (read only, write only or read/write) */
   access?: BindingMemoryAccessType
+  /** The [texture]{@link GPUTexture} view dimension to use */
+  viewDimension?: GPUTextureViewDimension
 }
 
 /**
@@ -35,11 +39,11 @@ export class TextureBinding extends Binding {
     label = 'Texture',
     name = 'texture',
     bindingType,
-    bindIndex = 0,
     visibility,
     texture,
     format = 'rgba8unorm',
     access = 'write',
+    viewDimension = '2d',
   }: TextureBindingParams) {
     bindingType = bindingType ?? 'texture'
 
@@ -47,13 +51,14 @@ export class TextureBinding extends Binding {
       visibility = 'compute'
     }
 
-    super({ label, name, bindingType, bindIndex, visibility })
+    super({ label, name, bindingType, visibility })
 
     this.options = {
       ...this.options,
       texture,
       format,
       access,
+      viewDimension,
     }
 
     this.resource = texture // should be a texture or an external texture
@@ -84,6 +89,8 @@ export class TextureBinding extends Binding {
   }
 
   set resource(value: TextureBindingResource) {
+    // resource changed, update bind group!
+    if (value && this.texture) this.shouldResetBindGroup = true
     this.texture = value
   }
 
@@ -92,8 +99,10 @@ export class TextureBinding extends Binding {
    * @param bindingType - the new [binding type]{@link Binding#bindingType}
    */
   setBindingType(bindingType: BindingType) {
-    // TODO if the binding type change (probably switching from 'texture' to 'externalTexture'), maybe we should tell the parent bind group to reset from here?
     if (bindingType !== this.bindingType) {
+      // binding type has changed!
+      if (bindingType) this.shouldResetBindGroupLayout = true
+
       this.bindingType = bindingType
       this.setWGSLFragment()
     }

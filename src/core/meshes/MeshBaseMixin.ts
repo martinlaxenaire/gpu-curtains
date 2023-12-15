@@ -236,6 +236,7 @@ export declare class MeshBaseClass {
    * @readonly
    */
   get textures(): Texture[]
+
   /**
    * Get our [render material render textures array]{@link RenderMaterial#renderTextures}
    * @readonly
@@ -248,6 +249,7 @@ export declare class MeshBaseClass {
    * @returns - newly created Texture
    */
   createTexture(options: TextureParams): Texture
+
   /**
    * Add a {@link Texture}
    * @param texture - {@link Texture} to add
@@ -266,6 +268,7 @@ export declare class MeshBaseClass {
    * @returns - newly created RenderTexture
    */
   createRenderTexture(options: RenderTextureParams): RenderTexture
+
   /**
    * Add a {@link RenderTexture}
    * @param renderTexture - {@link RenderTexture} to add

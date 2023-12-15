@@ -54,7 +54,6 @@ export interface BufferElementParams {
   type: WGSLVariableType
 }
 
-// TODO we should correctly use types like GPUSize64 / GPUIndex32
 /**
  * BufferElement class:
  * Used to handle each [buffer binding array]{@link BufferBinding#value} view and data layout alignment.
@@ -137,11 +136,27 @@ export class BufferElement {
   }
 
   /**
+   * Get the array offset (i.e. array index) at which our {@link BufferElement} starts
+   * @readonly
+   */
+  get startOffsetToIndex(): number {
+    return this.startOffset / bytesPerSlot
+  }
+
+  /**
    * Get the offset (i.e. byte index) at which our {@link BufferElement} ends
    * @readonly
    */
   get endOffset(): number {
     return this.getByteCountAtPosition(this.alignment.end)
+  }
+
+  /**
+   * Get the array offset (i.e. array index) at which our {@link BufferElement} ends
+   * @readonly
+   */
+  get endOffsetToIndex(): number {
+    return this.endOffset / bytesPerSlot
   }
 
   /**
@@ -284,5 +299,14 @@ export class BufferElement {
         this.view[i] = value[i] ? value[i] : 0
       }
     }
+  }
+
+  /**
+   * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+   * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+   * @returns - extracted data from the {@link Float32Array}
+   */
+  extractDataFromBufferResult(result: Float32Array) {
+    return result.slice(this.startOffsetToIndex, this.endOffsetToIndex)
   }
 }

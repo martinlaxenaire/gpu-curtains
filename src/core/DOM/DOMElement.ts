@@ -187,7 +187,6 @@ export class DOMElement {
 
     this.boundingRect = boundingRect ?? this.element.getBoundingClientRect()
 
-    // TODO
     this.#throttleResize = setTimeout(() => {
       this.isResizing = false
       this.#throttleResize = null

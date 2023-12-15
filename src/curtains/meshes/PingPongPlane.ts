@@ -46,8 +46,8 @@ export class PingPongPlane extends FullscreenPlane {
    * Get our main [render texture]{@link RenderTexture}, the one that contains our ping pong content
    * @readonly
    */
-  get renderTexture(): RenderTexture | null {
-    return this.renderTextures[0] ?? null
+  get renderTexture(): RenderTexture | undefined {
+    return this.renderTextures.find((texture) => texture.options.name === 'renderTexture')
   }
 
   /**

@@ -5,12 +5,13 @@ import { TextureBindGroup } from '../bindGroups/TextureBindGroup';
 import { Sampler } from '../samplers/Sampler';
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager';
 import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding';
-import { AllowedBindGroups, BindGroupBindingElement } from '../../types/BindGroups';
+import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups';
 import { Texture } from '../textures/Texture';
 import { FullShadersType, MaterialOptions, MaterialParams } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { RenderTexture } from '../textures/RenderTexture';
 import { Binding } from '../bindings/Binding';
+import { BufferElement } from '../bindings/bufferElements/BufferElement';
 /**
  * Material class:
  * Used as a base to create a material.
@@ -150,11 +151,17 @@ export declare class Material {
      */
     updateBindGroups(): void;
     /**
-     * Look for a binding by name/key in all bind groups
+     * Look for a [binding]{@link BindGroupBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
      * @param bindingName - the binding name or key
      * @returns - the found binding, or null if not found
      */
     getBindingByName(bindingName?: Binding['name']): BindGroupBindingElement | undefined;
+    /**
+     * Look for a [buffer binding]{@link BindGroupBufferBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+     * @param bindingName - the binding name or key
+     * @returns - the found binding, or null if not found
+     */
+    getBufferBindingByName(bindingName?: Binding['name']): BindGroupBufferBindingElement | undefined;
     /**
      * Force a given buffer binding update flag to update it at next render
      * @param bufferBindingName - the buffer binding name
@@ -188,6 +195,30 @@ export declare class Material {
      * @param sampler - sampler to add
      */
     addSampler(sampler: Sampler): void;
+    /**
+     * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
+     * @param buffer - {@link GPUBuffer} to map
+     * @async
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+     */
+    getBufferResult(buffer: GPUBuffer): Promise<Float32Array>;
+    /**
+     * Map the content of a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+     * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+     * @async
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+     */
+    getBufferBindingResultByBindingName(bindingName?: Binding['name']): Promise<Float32Array>;
+    /**
+     * Map the content of a specific [buffer element]{@link BufferElement} belonging to a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+     * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+     * @param bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
+     * @returns - {@link Float32Array} holding {@link GPUBuffer} data
+     */
+    getBufferElementResultByNames({ bindingName, bufferElementName, }: {
+        bindingName: Binding['name'];
+        bufferElementName: BufferElement['name'];
+    }): Promise<Float32Array>;
     /**
      * Called before rendering the Material.
      * First, check if we need to create our bind groups or pipeline

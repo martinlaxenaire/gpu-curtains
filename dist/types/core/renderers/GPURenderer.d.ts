@@ -53,7 +53,7 @@ export declare class GPURenderer {
     type: string;
     /** The universal unique id of this {@link GPURenderer} */
     readonly uuid: string;
-    /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} have been successfully created */
+    /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [context]{@link GPURenderer#context} has been successfully configured */
     ready: boolean;
     /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
     deviceManager: GPUDeviceManager;
@@ -105,6 +105,8 @@ export declare class GPURenderer {
     _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
     /** function assigned to the [onAfterRender]{@link GPURenderer#onAfterRender} callback */
     _onAfterRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
+    /** function assigned to the [onAfterResize]{@link GPURenderer#onAfterResize} callback */
+    _onAfterResizeCallback: () => void;
     /**
      * GPURenderer constructor
      * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
@@ -197,6 +199,19 @@ export declare class GPURenderer {
      * @param data - [data]{@link BufferSource} to write
      */
     queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource): void;
+    /**
+     * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+     * @param parameters - parameters used to realize the copy
+     * @param parameters.srcBuffer - source {@link GPUBuffer}
+     * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+     * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+     * @returns - destination {@link GPUBuffer} after copy
+     */
+    copyBufferToBuffer({ srcBuffer, dstBuffer, commandEncoder, }: {
+        srcBuffer: GPUBuffer;
+        dstBuffer?: GPUBuffer;
+        commandEncoder?: GPUCommandEncoder;
+    }): GPUBuffer | null;
     /**
      * Create a {@link GPUBindGroupLayout}
      * @param bindGroupLayoutDescriptor - [bind group layout descriptor]{@link GPUBindGroupLayoutDescriptor}
@@ -297,17 +312,24 @@ export declare class GPURenderer {
      */
     setRendererObjects(): void;
     /**
-     * Get all our scene objects (i.e. objects that are rendered)
+     * Get all this [renderer]{@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
      * @readonly
      */
-    get sceneObjects(): SceneObject[];
+    get renderedObjects(): SceneObject[];
     /**
-     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+     * @readonly
+     */
+    get deviceObjects(): SceneObject[];
+    /**
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+     * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
      */
     getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
     /**
-     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}
+     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+     * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
      */
     getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[];
@@ -324,20 +346,18 @@ export declare class GPURenderer {
      */
     onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
+     * Assign a callback function to _onAfterResizeCallback
+     * @param callback - callback to run just after the {@link GPURenderer} has been resized
+     * @returns - our {@link GPURenderer}
+     */
+    onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
+    /**
      * Set the current [render pass descriptor]{@link RenderPass#descriptor} texture [view]{@link GPURenderPassColorAttachment#view} or [resolveTarget]{@link GPURenderPassColorAttachment#resolveTarget} (depending on whether we're using multisampling)
      * @param renderPass - current [render pass]{@link RenderPass}
      * @param renderTexture - [render texture]{@link GPUTexture} to use, or the [context]{@link GPURenderer#context} [current texture]{@link GPUTexture} if null
      * @returns - the [current render texture]{@link GPUTexture}
      */
     setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture | null): GPUTexture;
-    /**
-     * Function to run just before our [command encoder]{@link GPUCommandEncoder} is created at each [render]{@link GPURenderer#render} call
-     */
-    onBeforeCommandEncoder(): void;
-    /**
-     * Function to run just after our [command encoder]{@link GPUCommandEncoder} has been submitted at each [render]{@link GPURenderer#render} call
-     */
-    onAfterCommandEncoder(): void;
     /**
      * Render a single [Compute pass]{@link ComputePass}
      * @param commandEncoder - current {@link GPUCommandEncoder}
@@ -356,13 +376,19 @@ export declare class GPURenderer {
      */
     renderOnce(objects: Array<MeshType | ComputePass>): void;
     /**
-     * Render our [scene]{@link Scene}
+     * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
      */
-    renderScene(): void;
+    onBeforeCommandEncoder(): void;
     /**
-     * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
+     * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} after the {@link GPUCommandEncoder} has been created.
+     * Used to handle our [textures queue]{@link GPURenderer#texturesQueue}
      */
-    render(): void;
+    onAfterCommandEncoder(): void;
+    /**
+     * Called at each draw call to render our scene and its content
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     */
+    render(commandEncoder: GPUCommandEncoder): void;
     /**
      * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
      */

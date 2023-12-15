@@ -1,4 +1,13 @@
-import { GPUCurtains, Texture, RenderTexture, BufferBinding, TextureBindGroup, ComputePass, Plane } from '../../src'
+import {
+  GPUCurtains,
+  Texture,
+  RenderTexture,
+  ShaderPass,
+  BufferBinding,
+  TextureBindGroup,
+  ComputePass,
+  Plane,
+} from '../../src'
 // Port of https://webgpu.github.io/webgpu-samples/samples/imageBlur
 
 // This shader blurs the input texture in one direction, depending on whether
@@ -15,7 +24,7 @@ import { GPUCurtains, Texture, RenderTexture, BufferBinding, TextureBindGroup, C
 // square blocks of size 128 - (filterSize - 1). We compute the number of blocks
 // needed in Javascript and dispatch that amount.
 const computeBlur = `
-var<workgroup> tile : array<array<vec3<f32>, 128>, 4>;
+var<workgroup> tile : array<array<vec4<f32>, 128>, 4>;
 
 @compute @workgroup_size(32, 1, 1)
 fn main(
@@ -24,7 +33,7 @@ fn main(
 ) {
   let filterOffset = (params.filterDim - 1) / 2;
   let dims = vec2<i32>(textureDimensions(inputTexture, 0));
-  //let dims = vec2<i32>(1280, 720);
+
   let baseIndex = vec2<i32>(WorkGroupID.xy * vec2(params.blockDim, 4)
                   + LocalInvocationID.xy * vec2(4, 1))
                   - vec2(filterOffset, 0);
@@ -41,7 +50,7 @@ fn main(
         defaultSampler,
         (vec2<f32>(loadIndex) + vec2<f32>(0.25, 0.25)) / vec2<f32>(dims),
         0.0
-      ).rgb;
+      );
     }
   }
 
@@ -54,18 +63,16 @@ fn main(
         writeIndex = writeIndex.yx;
       }
       
-      
-
       let center = i32(4 * LocalInvocationID.x) + c;
       if (center >= filterOffset &&
           center < 128 - filterOffset &&
           all(writeIndex < dims)) {
-        var acc = vec3(0.0, 0.0, 0.0);
+        var acc = vec4(0.0, 0.0, 0.0, 0.0);
         for (var f = 0; f < params.filterDim; f++) {
           var i = center + f - filterOffset;
           acc = acc + (1.0 / f32(params.filterDim)) * tile[r][i];
         }
-        textureStore(outputTexture, writeIndex, vec4(acc, 1.0));
+        textureStore(outputTexture, writeIndex, acc);
       }
     }
   }
@@ -77,7 +84,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
-    watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
@@ -88,6 +94,58 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.add('no-curtains')
   })
 
+  // first add all our planes
+  const planeVs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    @vertex fn main(
+      attributes: Attributes,
+    ) -> VSOutput {
+      var vsOutput: VSOutput;
+      
+      vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+    
+      return vsOutput;
+    }
+  `
+
+  const planeFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
+                    
+      return color;
+    }
+  `
+
+  const params = {
+    shaders: {
+      vertex: {
+        code: planeVs,
+        entryPoint: 'main',
+      },
+      fragment: {
+        code: planeFs,
+        entryPoint: 'main',
+      },
+    },
+  }
+
+  const planeEls = document.querySelectorAll('.plane')
+  planeEls.forEach((planeEl, index) => {
+    params.label = 'Plane ' + index
+    const plane = new Plane(gpuCurtains, planeEl, params)
+  })
+
+  // now create the post processing pass
   const tileDimension = 128
   const filterSize = 15
   const blockDimension = tileDimension - (filterSize - 1)
@@ -95,26 +153,49 @@ window.addEventListener('DOMContentLoaded', async () => {
   const batchSize = 4
   const format = 'rgba8unorm'
 
-  const planeEl = document.querySelector('#blur')
-  const imageToBlur = planeEl.querySelector('img')
+  const blurPassFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var color: vec4f = textureSample(blurredTexture, defaultSampler, fsInput.uv);
+      var original: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+      //color.a = original.a;
+                    
+      return color;
+    }
+  `
 
-  const imageTexture = new Texture(gpuCurtains, {
-    label: 'image texture',
-    name: 'imageTexture',
+  const blurredTexture = new RenderTexture(gpuCurtains, {
+    label: 'Blur render texture',
+    name: 'blurredTexture',
     format,
   })
 
-  await imageTexture.loadImage(imageToBlur)
-
-  imageTexture.onSourceUploaded(() => {
-    console.log('source uploaded')
+  const shaderPass = new ShaderPass(gpuCurtains, {
+    shaders: {
+      fragment: {
+        code: blurPassFs,
+      },
+    },
+    textures: [blurredTexture],
   })
+
+  // const blurredTexture = shaderPass.createRenderTexture({
+  //   label: 'Blur render texture',
+  //   name: 'blurredTexture',
+  //   format,
+  // })
+
+  console.log(shaderPass)
 
   const inputTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute input texture',
     name: 'inputTexture',
     format,
-    fromTexture: imageTexture,
+    fromTexture: shaderPass.renderTexture,
   })
 
   const tempTexture = new RenderTexture(gpuCurtains, {
@@ -132,6 +213,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     format,
     size: inputTexture.size,
   })
+
+  // last but not least, tell our blurred texture that we want to use the compute blur output as source
+  blurredTexture.copy(outputTexture)
 
   const flipBinding0 = new BufferBinding({
     label: 'Direction',
@@ -169,13 +253,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   textureBindGroup.createBindGroup()
 
   const outputTextureBindGroup1 = textureBindGroup.clone({
-    // struct as [flip direction, input texture, output texture]
+    // bindings as [flip direction, input texture, output texture]
     bindings: [flipBinding1, tempTexture.textureBinding, outputTexture.textureBinding],
     keepLayout: true, // allows for bind groups ping pong
   })
 
   const outputTextureBindGroup2 = textureBindGroup.clone({
-    // struct as [flip direction, input texture, output texture]
+    // bindings as [flip direction, input texture, output texture]
     bindings: [flipBinding0, outputTexture.textureBinding, tempTexture.textureBinding],
     keepLayout: true, // allows for bind groups ping pong
   })
@@ -184,7 +268,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const computeBlurPass = new ComputePass(gpuCurtains.renderer, {
     label: 'Compute blur',
-    autoRender: false,
     shaders: {
       compute: {
         code: computeBlur,
@@ -209,122 +292,52 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  computeBlurPass.onReady(() => {
-    console.log('ready', computeBlurPass)
-    console.log(computeBlurPass.material.getBindingByName('params'))
-  })
+  // computeBlurPass.onReady(() => {
+  //   console.log('ready', computeBlurPass)
+  //   console.log(computeBlurPass.material.getBindingByName('params'))
+  // })
 
-  gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
-    computeBlurPass.onBeforeRenderPass()
-
-    // also update the struct of the 2 bind groups that are not part of the compute pass
+  // use a custom render function
+  // here the pipeline has already been set
+  // we just have to set the bind groups and dispatch the work groups as we want
+  computeBlurPass.useCustomRender((pass) => {
+    // update the bindings of the 2 bind groups that are not part of the compute pass
     outputTextureBindGroup1.update()
     outputTextureBindGroup2.update()
-
-    if (!computeBlurPass.ready) return
-
-    const blurPass = commandEncoder.beginComputePass()
-    computeBlurPass.material.setPipeline(blurPass)
 
     const samplerBindGroup = computeBlurPass.material.texturesBindGroup
     const uniformBindGroup = computeBlurPass.material.getBindGroupByBindingName('params')
 
     // bind the sampler bind group
-    blurPass.setBindGroup(samplerBindGroup.index, samplerBindGroup.bindGroup)
+    pass.setBindGroup(samplerBindGroup.index, samplerBindGroup.bindGroup)
     // bind the params uniforms bind group
-    blurPass.setBindGroup(uniformBindGroup.index, uniformBindGroup.bindGroup)
+    pass.setBindGroup(uniformBindGroup.index, uniformBindGroup.bindGroup)
 
     // now the blur process
-    blurPass.setBindGroup(textureBindGroup.index, textureBindGroup.bindGroup)
-    blurPass.dispatchWorkgroups(
+    pass.setBindGroup(textureBindGroup.index, textureBindGroup.bindGroup)
+    pass.dispatchWorkgroups(
       Math.ceil(outputTexture.size.width / blockDimension),
       Math.ceil(outputTexture.size.height / batchSize)
     )
 
-    blurPass.setBindGroup(textureBindGroup.index, outputTextureBindGroup1.bindGroup)
-    blurPass.dispatchWorkgroups(
+    pass.setBindGroup(textureBindGroup.index, outputTextureBindGroup1.bindGroup)
+    pass.dispatchWorkgroups(
       Math.ceil(outputTexture.size.height / blockDimension),
       Math.ceil(outputTexture.size.width / batchSize)
     )
 
     for (let i = 0; i < blurIterations - 1; i++) {
-      blurPass.setBindGroup(textureBindGroup.index, outputTextureBindGroup2.bindGroup)
-      blurPass.dispatchWorkgroups(
+      pass.setBindGroup(textureBindGroup.index, outputTextureBindGroup2.bindGroup)
+      pass.dispatchWorkgroups(
         Math.ceil(outputTexture.size.width / blockDimension),
         Math.ceil(outputTexture.size.height / batchSize)
       )
 
-      blurPass.setBindGroup(textureBindGroup.index, outputTextureBindGroup1.bindGroup)
-      blurPass.dispatchWorkgroups(
+      pass.setBindGroup(textureBindGroup.index, outputTextureBindGroup1.bindGroup)
+      pass.dispatchWorkgroups(
         Math.ceil(outputTexture.size.height / blockDimension),
         Math.ceil(outputTexture.size.width / batchSize)
       )
     }
-
-    blurPass.end()
   })
-
-  const planeVs = /* wgsl */ `
-      struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-        @location(1) originalUv: vec2f, // debug
-      };
-      
-      @vertex fn main(
-        attributes: Attributes,
-      ) -> VSOutput {
-        var vsOutput: VSOutput;
-        
-        vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
-        vsOutput.uv = getUVCover(attributes.uv, imageTextureMatrix);
-        vsOutput.originalUv = attributes.uv;
-      
-        return vsOutput;
-      }
-    `
-
-  const planeFs = /* wgsl */ `
-      struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-        @location(1) originalUv: vec2f, // debug
-      };
-      
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var color: vec4f = textureSample(blurredTexture, defaultSampler, fsInput.uv);
-                      
-        return color;
-      }
-    `
-
-  const params = {
-    autoloadSources: false,
-    shaders: {
-      vertex: {
-        code: planeVs,
-        entryPoint: 'main',
-      },
-      fragment: {
-        code: planeFs,
-        entryPoint: 'main',
-      },
-    },
-  }
-
-  const plane = new Plane(gpuCurtains, planeEl, params)
-
-  console.log(plane)
-
-  plane.addTexture(imageTexture)
-
-  const blurredTexture = plane.createRenderTexture({
-    label: 'Blur render texture',
-    name: 'blurredTexture',
-    fromTexture: outputTexture,
-  })
-
-  // plane.onBeforeRender(() => {
-  //   blurredTexture.texture = outputTexture2.texture
-  // })
 })

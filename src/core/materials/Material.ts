@@ -6,11 +6,12 @@ import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
 import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding'
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { Texture } from '../textures/Texture'
-import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/Materials'
+import { FullShadersType, MaterialOptions, MaterialParams } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture } from '../textures/RenderTexture'
 import { Binding } from '../bindings/Binding'
-import { generateUUID } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
+import { BufferElement } from '../bindings/bufferElements/BufferElement'
 
 /**
  * Material class:
@@ -429,12 +430,23 @@ export class Material {
   /* INPUTS */
 
   /**
-   * Look for a binding by name/key in all bind groups
+   * Look for a [binding]{@link BindGroupBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
   getBindingByName(bindingName: Binding['name'] = ''): BindGroupBindingElement | undefined {
     return this.inputsBindings.find((binding) => binding.name === bindingName)
+  }
+
+  /**
+   * Look for a [buffer binding]{@link BindGroupBufferBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+   * @param bindingName - the binding name or key
+   * @returns - the found binding, or null if not found
+   */
+  getBufferBindingByName(bindingName: Binding['name'] = ''): BindGroupBufferBindingElement | undefined {
+    return this.inputsBindings.find((binding) => binding.name === bindingName && 'buffer' in binding) as
+      | BindGroupBufferBindingElement
+      | undefined
   }
 
   /**
@@ -559,6 +571,67 @@ export class Material {
       (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1)
     ) {
       this.texturesBindGroup.addSampler(sampler)
+    }
+  }
+
+  /* BUFFER RESULTS */
+
+  /**
+   * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
+   * @param buffer - {@link GPUBuffer} to map
+   * @async
+   * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+   */
+  async getBufferResult(buffer: GPUBuffer): Promise<Float32Array> {
+    await buffer.mapAsync(GPUMapMode.READ)
+    const result = new Float32Array(buffer.getMappedRange().slice(0))
+    buffer.unmap()
+
+    return result
+  }
+
+  /**
+   * Map the content of a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+   * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+   * @async
+   * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+   */
+  async getBufferBindingResultByBindingName(bindingName: Binding['name'] = ''): Promise<Float32Array> {
+    const binding = this.getBufferBindingByName(bindingName)
+    if (binding && 'buffer' in binding) {
+      const dstBuffer = this.renderer.copyBufferToBuffer({
+        srcBuffer: binding.buffer,
+      })
+      return await this.getBufferResult(dstBuffer)
+    } else {
+      return new Float32Array(0)
+    }
+  }
+
+  /**
+   * Map the content of a specific [buffer element]{@link BufferElement} belonging to a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+   * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+   * @param bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
+   * @returns - {@link Float32Array} holding {@link GPUBuffer} data
+   */
+  async getBufferElementResultByNames({
+    bindingName,
+    bufferElementName,
+  }: {
+    bindingName: Binding['name']
+    bufferElementName: BufferElement['name']
+  }): Promise<Float32Array> {
+    const result = await this.getBufferBindingResultByBindingName(bindingName)
+
+    if (!bufferElementName || result.length) {
+      return result
+    } else {
+      const binding = this.getBufferBindingByName(bindingName)
+      if (binding) {
+        return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName })
+      } else {
+        return result
+      }
     }
   }
 

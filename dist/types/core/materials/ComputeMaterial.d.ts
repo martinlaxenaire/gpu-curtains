@@ -1,10 +1,9 @@
 /// <reference types="dist" />
 import { Material } from './Material';
-import { ComputeMaterialOptions, ComputeMaterialParams, ComputeMaterialWorkGroup, ComputeMaterialWorkGroupParams, FullShadersType } from '../../types/Materials';
+import { ComputeMaterialOptions, ComputeMaterialParams, FullShadersType } from '../../types/Materials';
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry';
-import { WritableBufferBinding } from '../bindings/WritableBufferBinding';
 /**
  * ComputeMaterial class:
  * Create a Material specifically built to run computations on the GPU with a {@link ComputePass}
@@ -15,18 +14,14 @@ export declare class ComputeMaterial extends Material {
     pipelineEntry: ComputePipelineEntry;
     /** Options used to create this {@link ComputeMaterial} */
     options: ComputeMaterialOptions;
-    /** Array of [work groups]{@link ComputeMaterialWorkGroup} to render each time the [render]{@link ComputeMaterial#render} method is called */
-    workGroups: ComputeMaterialWorkGroup[];
+    /** Default work group dispatch size to use with this {@link ComputeMaterial} */
+    dispatchSize?: number | number[];
+    /** function assigned to the [useCustomRender]{@link ComputeMaterial#useCustomRender} callback */
+    _useCustomRenderCallback: (pass: GPUComputePassEncoder) => void;
     /**
      * ComputeMaterial constructor
-     * @param renderer - our renderer class object
-     * @param parameters - parameters used to create our Material
-     * @param {string} parameters.label - ComputeMaterial label
-     * @param {boolean} parameters.useAsyncPipeline - whether the {@link ComputePipelineEntry} should be compiled asynchronously
-     * @param {MaterialShaders} parameters.shaders - our ComputeMaterial shader codes and entry points
-     * @param {BindGroupInputs} parameters.inputs - our ComputeMaterial {@link BindGroup} inputs
-     * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-     * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
+     * @param renderer - our [renderer]{@link Renderer} class object
+     * @param parameters - [parameters]{@link ComputeMaterialParams} used to create our {@link ComputeMaterial}
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: ComputeMaterialParams);
     /**
@@ -61,18 +56,10 @@ export declare class ComputeMaterial extends Material {
      */
     get hasMappedBuffer(): boolean;
     /**
-     * Add a new [work group]{@link ComputeMaterial#workGroups} to render each frame.
-     * A [work group]{@link ComputeMaterial#workGroups} is composed of an array of [bind groups][@link BindGroup] to set and a dispatch size to dispatch the [work group]{@link ComputeMaterial#workGroups}
-     * @param bindGroups
-     * @param dispatchSize
+     * If we defined a custom render function instead of the default one, register the callback
+     * @param callback - callback to run instead of the default behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
      */
-    addWorkGroup({ bindGroups, dispatchSize }: ComputeMaterialWorkGroupParams): void;
-    /**
-     * Render a [work group]{@link ComputeMaterial#workGroups}: set its bind groups and then dispatch using its dispatch size
-     * @param pass - current compute pass encoder
-     * @param workGroup - [Work group]{@link ComputeMaterial#workGroups} to render
-     */
-    renderWorkGroup(pass: GPUComputePassEncoder, workGroup: ComputeMaterialWorkGroup): void;
+    useCustomRender(callback: (pass: GPUComputePassEncoder) => void): void;
     /**
      * Render the material if it is ready:
      * Set the current pipeline, and render all the [work groups]{@link ComputeMaterial#workGroups}
@@ -85,22 +72,14 @@ export declare class ComputeMaterial extends Material {
      */
     copyBufferToResult(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Loop through all bind groups writable buffers and check if they need to be copied
+     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * @async
+     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    setWorkGroupsResult(): void;
-    /**
-     * Copy the result buffer into our result array
-     * @param binding - buffer binding to set the result from
-     */
-    setBufferResult(binding: WritableBufferBinding): void;
-    /**
-     * Get the result of work group by work group and binding names
-     * @param workGroupName - work group name/key
-     * @param bindingName - binding name/key
-     * @returns - the result of our GPU compute pass
-     */
-    getWorkGroupResult({ workGroupName, bindingName, }: {
-        workGroupName?: string;
+    getComputeResult({ bindingName, bufferElementName, }: {
         bindingName?: string;
-    }): Float32Array;
+        bufferElementName?: string;
+    }): Promise<Float32Array>;
 }

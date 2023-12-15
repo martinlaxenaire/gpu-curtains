@@ -1,12 +1,5 @@
 import { Binding, BindingParams, BufferBindingMemoryAccessType } from './Binding'
-import {
-  BufferLayout,
-  getBindGroupLayoutBindingType,
-  getBindingWGSLVarType,
-  getBufferLayout,
-  TypedArray,
-  WGSLVariableType,
-} from './utils'
+import { getBindGroupLayoutBindingType, getBindingWGSLVarType, getBufferLayout, TypedArray } from './utils'
 import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
@@ -27,6 +20,7 @@ export interface BufferBindingInput extends InputBase {
    * @readonly
    */
   get value(): InputValue
+
   set value(value: InputValue)
 
   /** Whether the [input value]{@link InputValue} has changed and we should update the [buffer binding array]{@link BufferBinding#value} */
@@ -50,6 +44,9 @@ export interface BufferBindingBaseParams {
  */
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {}
 
+/** All allowed [buffer elements]{@link BufferElement} */
+export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement
+
 /**
  * BufferBinding class:
  * Used to format inputs struct and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
@@ -67,7 +64,7 @@ export class BufferBinding extends Binding {
   shouldUpdate: boolean
 
   /** An array describing how each corresponding {@link inputs} should be inserted into our {@link arrayView} array */
-  bufferElements: Array<BufferElement | BufferArrayElement | BufferInterleavedArrayElement>
+  bufferElements: AllowedBufferElement[]
 
   /** Total size of our {@link arrayBuffer} array in bytes */
   arrayBufferSize: number
@@ -92,7 +89,6 @@ export class BufferBinding extends Binding {
    * @param {string=} parameters.label - binding label
    * @param {string=} parameters.name - binding name
    * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {number=} parameters.bindIndex - bind index inside the bind group
    * @param {MaterialShadersType=} parameters.visibility - shader visibility
    * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
    * @param {Object.<string, Input>} parameters.bindings - struct inputs
@@ -101,7 +97,6 @@ export class BufferBinding extends Binding {
     label = 'Uniform',
     name = 'uniform',
     bindingType,
-    bindIndex = 0,
     visibility,
     useStruct = true,
     access = 'read',
@@ -109,7 +104,7 @@ export class BufferBinding extends Binding {
   }: BufferBindingParams) {
     bindingType = bindingType ?? 'uniform'
 
-    super({ label, name, bindIndex, bindingType, visibility })
+    super({ label, name, bindingType, visibility })
 
     this.options = {
       ...this.options,
@@ -310,11 +305,10 @@ export class BufferBinding extends Binding {
         // add to our buffer elements array
         this.bufferElements = [...this.bufferElements, ...interleavedBufferElements]
       } else {
-        // TODO better warning?
         throwWarning(
           `BufferBinding: "${
             this.label
-          }" contains multiple array inputs that should use an interleaved array, but their size does not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(
+          }" contains multiple array inputs that should use an interleaved array, but their sizes do not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(
             ', '
           )}"`
         )
@@ -433,5 +427,26 @@ export class BufferBinding extends Binding {
         binding.shouldUpdate = false
       }
     })
+  }
+
+  /**
+   * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the [buffer]{@link BufferBinding#buffer} data of this {@link BufferBinding}
+   * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+   * @param bufferElementName - name of the {@link BufferElement} to use to extract the data
+   * @returns - extracted data from the {@link Float32Array}
+   */
+  extractBufferElementDataFromBufferResult({
+    result,
+    bufferElementName,
+  }: {
+    result: Float32Array
+    bufferElementName: BufferElement['name']
+  }): Float32Array {
+    const bufferElement = this.bufferElements.find((bufferElement) => bufferElement.name === bufferElementName)
+    if (bufferElement) {
+      return bufferElement.extractDataFromBufferResult(result)
+    } else {
+      return result
+    }
   }
 }

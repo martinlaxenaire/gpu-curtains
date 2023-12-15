@@ -450,14 +450,4 @@ export class Scene {
       })
     }
   }
-
-  /**
-   * Execute this at each render after our [command encoder]{@link GPUCommandEncoder} has been submitted.
-   * Used to map writable storages buffers if needed.
-   */
-  onAfterCommandEncoder() {
-    this.computePassEntries.forEach((computePass) => {
-      computePass.setWorkGroupsResult()
-    })
-  }
 }

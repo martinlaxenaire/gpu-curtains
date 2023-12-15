@@ -119,17 +119,13 @@ export const getBindingWGSLVarType = (binding: BufferBinding): string => {
  * @returns - WGSL variable declaration code fragment
  */
 export const getTextureBindingWGSLVarType = (binding: TextureBinding): string => {
-  return (() => {
-    switch (binding.bindingType) {
-      case 'storageTexture':
-        return `var ${binding.name}: texture_storage_2d<${binding.options.format}, ${binding.options.access}>;`
-      case 'externalTexture':
-        return `var ${binding.name}: texture_external;`
-      case 'texture':
-      default:
-        return `var ${binding.name}: texture_2d<f32>;`
-    }
-  })()
+  if (binding.bindingType === 'externalTexture') {
+    return `var ${binding.name}: texture_external;`
+  }
+
+  return binding.bindingType === 'storageTexture'
+    ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;`
+    : `var ${binding.name}: texture_${binding.options.viewDimension}<f32>;`
 }
 
 /**
@@ -163,14 +159,15 @@ export const getBindGroupLayoutTextureBindingType = (
         return {
           storageTexture: {
             format: binding.options.format,
-            viewDimension: '2d', // TODO allow for other dimensions?
-          },
+            viewDimension: binding.options.viewDimension,
+          } as GPUStorageTextureBindingLayout,
         }
       case 'texture':
         return {
           texture: {
-            viewDimension: '2d', // TODO allow for other dimensions?
-          },
+            //multisampled: true,
+            viewDimension: binding.options.viewDimension,
+          } as GPUTextureBindingLayout,
         }
       default:
         return null

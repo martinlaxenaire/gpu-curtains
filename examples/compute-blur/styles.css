@@ -1,14 +1,13 @@
 @media screen {
   #page {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 2.25rem 0;
   }
 
-  #blur {
+  .plane {
     position: relative;
     overflow: hidden;
-    width: 90%;
-    height: 90vh;
+    width: 80%;
+    height: 80vh;
+    margin: 10vh auto;
   }
 }

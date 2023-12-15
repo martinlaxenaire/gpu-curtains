@@ -1,8 +1,6 @@
 import { Vec3 } from './Vec3'
 import { Quat } from './Quat'
 
-// TODO lot of (unused at the time) methods are missing
-
 /**
  * Mat4 class:
  * This is a really basic Matrix4 class used for matrix calculations

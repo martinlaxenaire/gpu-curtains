@@ -15,8 +15,6 @@ export interface WritableBufferBindingParams extends BufferBindingParams {
 export declare class WritableBufferBinding extends BufferBinding {
     /** Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our {@link result} array */
     shouldCopyResult: boolean;
-    /** Array specifically designed to handle the result of our [resultBuffer]{@link inputs#resultBuffer} GPUBuffer if needed */
-    result: Float32Array;
     /** The result GPUBuffer */
     resultBuffer: GPUBuffer | null;
     /** Options used to create this {@link WritableBufferBinding} */
@@ -25,5 +23,5 @@ export declare class WritableBufferBinding extends BufferBinding {
      * WritableBufferBinding constructor
      * @param parameters - [parameters]{@link WritableBufferBindingParams} used to create our {@link WritableBufferBinding}
      */
-    constructor({ label, name, bindingType, bindIndex, useStruct, struct, visibility, access, shouldCopyResult, }: WritableBufferBindingParams);
+    constructor({ label, name, bindingType, useStruct, struct, visibility, access, shouldCopyResult, }: WritableBufferBindingParams);
 }

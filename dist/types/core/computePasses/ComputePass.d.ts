@@ -165,6 +165,11 @@ export declare class ComputePass {
      */
     onAfterRender(callback: () => void): ComputePass;
     /**
+     * Callback used to run a custom render function instead of the default one.
+     * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+     */
+    useCustomRender(callback: (pass: GPUComputePassEncoder) => void): ComputePass;
+    /**
      * Callback to run after the {@link Renderer} has been resized
      * @param callback - callback to run just after {@link GPURenderer} has been resized
      */
@@ -200,19 +205,16 @@ export declare class ComputePass {
      */
     copyBufferToResult(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Set {@link ComputeMaterial} work groups result
+     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * @async
+     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    setWorkGroupsResult(): void;
-    /**
-     * Get the result of a work group by binding name
-     * @param workGroupName - name/key of the work group
-     * @param bindingName - name/key of the input binding
-     * @returns - the corresponding binding result array
-     */
-    getWorkGroupResult({ workGroupName, bindingName }: {
-        workGroupName?: string;
+    getComputeResult({ bindingName, bufferElementName, }: {
         bindingName?: string;
-    }): Float32Array;
+        bufferElementName?: string;
+    }): Promise<Float32Array>;
     /**
      * Remove the ComputePass from the scene and destroy it
      */

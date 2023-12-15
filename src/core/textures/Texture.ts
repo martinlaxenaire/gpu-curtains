@@ -6,7 +6,7 @@ import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
 import { generateUUID, throwWarning } from '../../utils/utils'
 import { BindGroupBindingElement } from '../../types/BindGroups'
-import { TextureOptions, TextureParams, TextureParent, TextureSource } from '../../types/Textures'
+import { TextureOptions, TextureParams, TextureParent, TextureSize, TextureSource } from '../../types/Textures'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMMeshType } from '../renderers/GPURenderer'
 import { RectSize } from '../DOM/DOMElement'
@@ -20,6 +20,7 @@ const defaultTextureParams: TextureParams = {
   placeholderColor: [0, 0, 0, 255], // default to black
   useExternalTextures: true,
   fromTexture: null,
+  viewDimension: '2d',
 }
 
 /**
@@ -43,8 +44,8 @@ export class Texture extends Object3D {
 
   /** The {@link Texture} [source]{@link TextureSource} to use */
   source: TextureSource
-  /** The {@link Texture} [source]{@link TextureSource} size */
-  size: RectSize
+  /** The [texture]{@link GPUTexture}, matching the [texture source]{@link TextureSource} [size]{@link RectSize} with 1 for depth */
+  size: TextureSize
 
   /** Options used to create this {@link Texture} */
   options: TextureOptions
@@ -63,8 +64,6 @@ export class Texture extends Object3D {
   private _sourceUploaded: boolean
   /** Whether the texture should be uploaded to the GPU */
   shouldUpdate: boolean
-  /** Whether the {@link BindGroup} handling this [texture struct]{@link Texture#bindings} should be updated (i.e. each time a texture is uploaded to the GPU) */
-  shouldUpdateBindGroup: boolean
 
   /** [Video frame callback]{@link requestVideoFrameCallback} returned id if used */
   videoFrameCallbackId: null | number
@@ -127,6 +126,7 @@ export class Texture extends Object3D {
     this.size = {
       width: 1,
       height: 1,
+      depth: 1,
     }
 
     // we will always declare a texture matrix
@@ -151,7 +151,6 @@ export class Texture extends Object3D {
     this.sourceLoaded = false
     this.sourceUploaded = false
     this.shouldUpdate = false
-    this.shouldUpdateBindGroup = false
 
     // add texture to renderer so it can creates a placeholder texture ASAP
     this.renderer.addTexture(this)
@@ -167,6 +166,7 @@ export class Texture extends Object3D {
         name: this.options.name,
         texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
+        viewDimension: this.options.viewDimension,
       } as TextureBindingParams),
       this.textureMatrix,
     ]
@@ -356,7 +356,6 @@ export class Texture extends Object3D {
     this.externalTexture = this.renderer.importExternalTexture(this.source as HTMLVideoElement)
     this.textureBinding.resource = this.externalTexture
     this.textureBinding.setBindingType('externalTexture')
-    this.shouldUpdateBindGroup = true
     this.shouldUpdate = false
     this.sourceUploaded = true
   }
@@ -405,9 +404,6 @@ export class Texture extends Object3D {
         // texture to copy is ready, update our texture and binding
         this.texture = texture.texture
         this.textureBinding.resource = this.texture
-
-        // tell the texture bind group to update
-        this.shouldUpdateBindGroup = true
       } else {
         this.createTexture()
       }
@@ -421,7 +417,9 @@ export class Texture extends Object3D {
     const options = {
       label: this.options.label,
       format: this.options.format,
-      size: [this.size.width, this.size.height], // [1, 1] if no source
+      size: [this.size.width, this.size.height, this.size.depth], // [1, 1] if no source
+      dimensions: this.options.viewDimension === '1d' ? '1d' : this.options.viewDimension === '3d' ? '3d' : '2d',
+      //sampleCount: this.source ? this.renderer.sampleCount : 1,
       usage: !!this.source
         ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
         : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
@@ -436,8 +434,6 @@ export class Texture extends Object3D {
 
       // update texture binding
       this.textureBinding.resource = this.texture
-
-      this.shouldUpdateBindGroup = !!this.source
     }
 
     this.shouldUpdate = true
@@ -458,6 +454,7 @@ export class Texture extends Object3D {
         (this.source as HTMLImageElement).naturalHeight ||
         (this.source as HTMLCanvasElement).height ||
         (this.source as HTMLVideoElement).videoHeight,
+      depth: 1,
     }
   }
 
@@ -549,7 +546,7 @@ export class Texture extends Object3D {
    * Get whether the [texture source]{@link Texture#source} is a video
    * @readonly
    */
-  get isVideoSource() {
+  get isVideoSource(): boolean {
     return this.source && (this.options.sourceType === 'video' || this.options.sourceType === 'externalVideo')
   }
 

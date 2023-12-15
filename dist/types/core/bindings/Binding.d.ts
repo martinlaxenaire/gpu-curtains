@@ -24,8 +24,6 @@ export interface BindingParams {
     name?: string;
     /** [bindingType]{@link BindingType} to use with this {@link Binding} */
     bindingType?: BindingType;
-    /** binding index inside the [bind group]{@link GPUBindGroup} */
-    bindIndex?: number;
     /** {@link Binding} variables shaders visibility */
     visibility?: MaterialShadersType | null;
 }
@@ -41,15 +39,17 @@ export declare class Binding {
     name: string;
     /** The binding type of the {@link Binding} */
     bindingType: BindingType;
-    /** The binding index of the {@link Binding}, used to link struct in the shaders */
-    bindIndex: number;
     /** The visibility of the {@link Binding} in the shaders */
     visibility: GPUShaderStageFlags;
     /** Options used to create this {@link Binding} */
     options: BindingParams;
+    /** Flag indicating whether we should recreate the parent [bind group]{@link BindGroup#bindGroup}, usually when a resource has changed */
+    shouldResetBindGroup: boolean;
+    /** Flag indicating whether we should recreate the parent [bind group layout]{@link BindGroup#bindGroupLayout}, usually when a resource layout has changed */
+    shouldResetBindGroupLayout: boolean;
     /**
      * Binding constructor
      * @param parameters - [parameters]{@link BindingParams} used to create our {@link Binding}
      */
-    constructor({ label, name, bindingType, bindIndex, visibility, }: BindingParams);
+    constructor({ label, name, bindingType, visibility }: BindingParams);
 }
