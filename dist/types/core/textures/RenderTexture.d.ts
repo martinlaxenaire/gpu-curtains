@@ -54,8 +54,6 @@ export declare class RenderTexture {
     options: RenderTextureParams;
     /** Array of [struct]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
     bindings: BindGroupBindingElement[];
-    /** Whether to update the [bind group]{@link BindGroup} to which the [texture binding]{@link TextureBinding} belongs */
-    shouldUpdateBindGroup: boolean;
     /**
      * RenderTexture constructor
      * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}

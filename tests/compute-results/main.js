@@ -124,7 +124,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   gpuRenderer.renderOnce([compute2DNoise])
 
   // const noiseBinding = compute2DNoise.material.getBindingByName('noise')
-  // const dstBuffer = compute2DNoise.material.copyBufferToBuffer({
+  // const dstBuffer = gpuRenderer.copyBufferToBuffer({
   //   srcBuffer: noiseBinding.buffer,
   // })
 

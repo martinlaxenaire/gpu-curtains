@@ -200,6 +200,19 @@ export declare class GPURenderer {
      */
     queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource): void;
     /**
+     * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+     * @param parameters - parameters used to realize the copy
+     * @param parameters.srcBuffer - source {@link GPUBuffer}
+     * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+     * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+     * @returns - destination {@link GPUBuffer} after copy
+     */
+    copyBufferToBuffer({ srcBuffer, dstBuffer, commandEncoder, }: {
+        srcBuffer: GPUBuffer;
+        dstBuffer?: GPUBuffer;
+        commandEncoder?: GPUCommandEncoder;
+    }): GPUBuffer | null;
+    /**
      * Create a {@link GPUBindGroupLayout}
      * @param bindGroupLayoutDescriptor - [bind group layout descriptor]{@link GPUBindGroupLayoutDescriptor}
      * @returns - newly created {@link GPUBindGroupLayout}

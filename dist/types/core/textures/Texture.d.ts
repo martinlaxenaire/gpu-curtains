@@ -42,8 +42,6 @@ export declare class Texture extends Object3D {
     private _sourceUploaded;
     /** Whether the texture should be uploaded to the GPU */
     shouldUpdate: boolean;
-    /** Whether the {@link BindGroup} handling this [texture struct]{@link Texture#bindings} should be updated (i.e. each time a texture is uploaded to the GPU) */
-    shouldUpdateBindGroup: boolean;
     /** [Video frame callback]{@link requestVideoFrameCallback} returned id if used */
     videoFrameCallbackId: null | number;
     /** function assigned to the [onSourceLoaded]{@link Texture#onSourceLoaded} callback */

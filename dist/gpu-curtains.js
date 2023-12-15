@@ -4190,45 +4190,7 @@ class Material {
       this.texturesBindGroup.addSampler(sampler);
     }
   }
-  /* BUFFER COPY */
-  /**
-   * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
-   * @param parameters - parameters used to realize the copy
-   * @param parameters.srcBuffer - source {@link GPUBuffer}
-   * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
-   * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-   * @returns - destination {@link GPUBuffer} after copy
-   */
-  copyBufferToBuffer({
-    srcBuffer,
-    dstBuffer,
-    commandEncoder
-  }) {
-    var _a, _b;
-    if (!srcBuffer) {
-      throwWarning(
-        `Material ${this.options.label} cannot copy to buffer because the source buffer has not been provided`
-      );
-      return null;
-    }
-    if (!dstBuffer) {
-      dstBuffer = this.renderer.createBuffer({
-        label: this.options.label + ": destination copy buffer from: " + srcBuffer.label,
-        size: srcBuffer.size,
-        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
-      });
-    }
-    const hasCommandEncoder = !!commandEncoder;
-    if (!hasCommandEncoder) {
-      commandEncoder = (_a = this.renderer.device) == null ? void 0 : _a.createCommandEncoder({ label: "Copy buffer command encoder" });
-    }
-    commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size);
-    if (!hasCommandEncoder) {
-      const commandBuffer = commandEncoder.finish();
-      (_b = this.renderer.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
-    }
-    return dstBuffer;
-  }
+  /* BUFFER RESULTS */
   /**
    * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
    * @param buffer - {@link GPUBuffer} to map
@@ -4250,7 +4212,7 @@ class Material {
   async getBufferBindingResultByBindingName(bindingName = "") {
     const binding = this.getBufferBindingByName(bindingName);
     if (binding && "buffer" in binding) {
-      const dstBuffer = this.copyBufferToBuffer({
+      const dstBuffer = this.renderer.copyBufferToBuffer({
         srcBuffer: binding.buffer
       });
       return await this.getBufferResult(dstBuffer);
@@ -8762,6 +8724,43 @@ class GPURenderer {
     var _a;
     (_a = this.device) == null ? void 0 : _a.queue.writeBuffer(buffer, bufferOffset, data);
   }
+  /**
+   * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+   * @param parameters - parameters used to realize the copy
+   * @param parameters.srcBuffer - source {@link GPUBuffer}
+   * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+   * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+   * @returns - destination {@link GPUBuffer} after copy
+   */
+  copyBufferToBuffer({
+    srcBuffer,
+    dstBuffer,
+    commandEncoder
+  }) {
+    var _a, _b;
+    if (!srcBuffer) {
+      throwWarning(`${this.type}: cannot copy to buffer because the source buffer has not been provided`);
+      return null;
+    }
+    if (!dstBuffer) {
+      dstBuffer = this.createBuffer({
+        label: this.type + ": destination copy buffer from: " + srcBuffer.label,
+        size: srcBuffer.size,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+      });
+    }
+    const hasCommandEncoder = !!commandEncoder;
+    if (!hasCommandEncoder) {
+      commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: "Copy buffer command encoder" });
+    }
+    commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size);
+    if (!hasCommandEncoder) {
+      const commandBuffer = commandEncoder.finish();
+      (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
+    }
+    return dstBuffer;
+  }
+  /* BIND GROUPS & LAYOUTS */
   /**
    * Create a {@link GPUBindGroupLayout}
    * @param bindGroupLayoutDescriptor - [bind group layout descriptor]{@link GPUBindGroupLayoutDescriptor}

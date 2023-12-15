@@ -574,56 +574,7 @@ export class Material {
     }
   }
 
-  /* BUFFER COPY */
-
-  /**
-   * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
-   * @param parameters - parameters used to realize the copy
-   * @param parameters.srcBuffer - source {@link GPUBuffer}
-   * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
-   * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-   * @returns - destination {@link GPUBuffer} after copy
-   */
-  copyBufferToBuffer({
-    srcBuffer,
-    dstBuffer,
-    commandEncoder,
-  }: {
-    srcBuffer: GPUBuffer
-    dstBuffer?: GPUBuffer
-    commandEncoder?: GPUCommandEncoder
-  }): GPUBuffer | null {
-    if (!srcBuffer) {
-      throwWarning(
-        `Material ${this.options.label} cannot copy to buffer because the source buffer has not been provided`
-      )
-      return null
-    }
-
-    if (!dstBuffer) {
-      dstBuffer = this.renderer.createBuffer({
-        label: this.options.label + ': destination copy buffer from: ' + srcBuffer.label,
-        size: srcBuffer.size,
-        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-      })
-    }
-
-    // if there's no command encoder provided, we'll have to create one and submit it after the copy process
-    const hasCommandEncoder = !!commandEncoder
-
-    if (!hasCommandEncoder) {
-      commandEncoder = this.renderer.device?.createCommandEncoder({ label: 'Copy buffer command encoder' })
-    }
-
-    commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size)
-
-    if (!hasCommandEncoder) {
-      const commandBuffer = commandEncoder.finish()
-      this.renderer.device?.queue.submit([commandBuffer])
-    }
-
-    return dstBuffer
-  }
+  /* BUFFER RESULTS */
 
   /**
    * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
@@ -648,7 +599,7 @@ export class Material {
   async getBufferBindingResultByBindingName(bindingName: Binding['name'] = ''): Promise<Float32Array> {
     const binding = this.getBufferBindingByName(bindingName)
     if (binding && 'buffer' in binding) {
-      const dstBuffer = this.copyBufferToBuffer({
+      const dstBuffer = this.renderer.copyBufferToBuffer({
         srcBuffer: binding.buffer,
       })
       return await this.getBufferResult(dstBuffer)

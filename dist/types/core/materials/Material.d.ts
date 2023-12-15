@@ -196,19 +196,6 @@ export declare class Material {
      */
     addSampler(sampler: Sampler): void;
     /**
-     * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
-     * @param parameters - parameters used to realize the copy
-     * @param parameters.srcBuffer - source {@link GPUBuffer}
-     * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
-     * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-     * @returns - destination {@link GPUBuffer} after copy
-     */
-    copyBufferToBuffer({ srcBuffer, dstBuffer, commandEncoder, }: {
-        srcBuffer: GPUBuffer;
-        dstBuffer?: GPUBuffer;
-        commandEncoder?: GPUCommandEncoder;
-    }): GPUBuffer | null;
-    /**
      * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
      * @param buffer - {@link GPUBuffer} to map
      * @async

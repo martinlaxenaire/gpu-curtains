@@ -3,7 +3,7 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
-import { generateUUID, throwError } from '../../utils/utils'
+import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
@@ -419,6 +419,55 @@ export class GPURenderer {
   queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource) {
     this.device?.queue.writeBuffer(buffer, bufferOffset, data)
   }
+
+  /**
+   * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+   * @param parameters - parameters used to realize the copy
+   * @param parameters.srcBuffer - source {@link GPUBuffer}
+   * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+   * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+   * @returns - destination {@link GPUBuffer} after copy
+   */
+  copyBufferToBuffer({
+    srcBuffer,
+    dstBuffer,
+    commandEncoder,
+  }: {
+    srcBuffer: GPUBuffer
+    dstBuffer?: GPUBuffer
+    commandEncoder?: GPUCommandEncoder
+  }): GPUBuffer | null {
+    if (!srcBuffer) {
+      throwWarning(`${this.type}: cannot copy to buffer because the source buffer has not been provided`)
+      return null
+    }
+
+    if (!dstBuffer) {
+      dstBuffer = this.createBuffer({
+        label: this.type + ': destination copy buffer from: ' + srcBuffer.label,
+        size: srcBuffer.size,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+      })
+    }
+
+    // if there's no command encoder provided, we'll have to create one and submit it after the copy process
+    const hasCommandEncoder = !!commandEncoder
+
+    if (!hasCommandEncoder) {
+      commandEncoder = this.device?.createCommandEncoder({ label: 'Copy buffer command encoder' })
+    }
+
+    commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size)
+
+    if (!hasCommandEncoder) {
+      const commandBuffer = commandEncoder.finish()
+      this.device?.queue.submit([commandBuffer])
+    }
+
+    return dstBuffer
+  }
+
+  /* BIND GROUPS & LAYOUTS */
 
   /**
    * Create a {@link GPUBindGroupLayout}
