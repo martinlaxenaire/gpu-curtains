@@ -78,8 +78,8 @@ export declare class ComputeMaterial extends Material {
      * @async
      * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    getWorkGroupResult({ bindingName, bufferElementName, }: {
+    getComputeResult({ bindingName, bufferElementName, }: {
         bindingName?: string;
         bufferElementName?: string;
-    }): Promise<Float32Array | undefined>;
+    }): Promise<Float32Array>;
 }

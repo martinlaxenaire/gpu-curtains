@@ -67,6 +67,10 @@ export class ComputeMaterial extends Material {
     }
 
     // set default dispatch size
+    if (!dispatchSize) {
+      dispatchSize = 1
+    }
+
     if (Array.isArray(dispatchSize)) {
       dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1)
       dispatchSize[1] = Math.ceil(dispatchSize[1] ?? 1)
@@ -215,46 +219,31 @@ export class ComputeMaterial extends Material {
    * @async
    * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
-  async getWorkGroupResult({
+  async getComputeResult({
     bindingName = '',
     bufferElementName = '',
   }: {
     bindingName?: string
     bufferElementName?: string
-  }): Promise<Float32Array | undefined> {
+  }): Promise<Float32Array> {
     const binding = this.getBindingByName(bindingName)
 
     if (binding && 'resultBuffer' in binding) {
-      await binding.resultBuffer.mapAsync(GPUMapMode.READ)
-      binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0))
-      binding.resultBuffer.unmap()
+      const result = await this.getBufferResult(binding.resultBuffer)
 
       if (bufferElementName) {
         const bufferElement = binding.bufferElements.find((bufferElement) => bufferElement.name === bufferElementName)
 
         if (bufferElement) {
-          // if our buffer element is an interleaved array, it's a bit more tricky
-          if (bufferElement instanceof BufferInterleavedArrayElement) {
-            const result = new Float32Array(bufferElement.arrayLength)
-            for (let i = 0; i < bufferElement.numElements; i++) {
-              const resultOffset = bufferElement.startOffsetToIndex + i * bufferElement.strideToIndex
-
-              for (let j = 0; j < bufferElement.bufferLayout.numElements; j++) {
-                result[i * bufferElement.bufferLayout.numElements + j] = binding.result[resultOffset + j]
-              }
-            }
-            return result
-          } else {
-            return binding.result.slice(bufferElement.startOffsetToIndex, bufferElement.endOffsetToIndex)
-          }
+          return bufferElement.extractDataFromBufferResult(result)
         } else {
-          return binding.result.slice()
+          return result
         }
       } else {
-        return binding.result.slice()
+        return result
       }
     } else {
-      return null
+      return new Float32Array(0)
     }
   }
 }

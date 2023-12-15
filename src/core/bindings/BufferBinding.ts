@@ -44,6 +44,9 @@ export interface BufferBindingBaseParams {
  */
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {}
 
+/** All allowed [buffer elements]{@link BufferElement} */
+export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement
+
 /**
  * BufferBinding class:
  * Used to format inputs struct and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
@@ -61,7 +64,7 @@ export class BufferBinding extends Binding {
   shouldUpdate: boolean
 
   /** An array describing how each corresponding {@link inputs} should be inserted into our {@link arrayView} array */
-  bufferElements: Array<BufferElement | BufferArrayElement | BufferInterleavedArrayElement>
+  bufferElements: AllowedBufferElement[]
 
   /** Total size of our {@link arrayBuffer} array in bytes */
   arrayBufferSize: number

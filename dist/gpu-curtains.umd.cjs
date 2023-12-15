@@ -1719,6 +1719,13 @@ var __privateMethod = (obj, member, method) => {
         }
       }
     }
+    /**
+     * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+     * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+     */
+    extractDataFromBufferResult(result) {
+      return result.slice(this.startOffsetToIndex, this.endOffsetToIndex);
+    }
   }
   class BufferArrayElement extends BufferElement {
     /**
@@ -1834,6 +1841,20 @@ var __privateMethod = (obj, member, method) => {
           this.viewSetFunction(startByteOffset + index * this.bufferLayout.View.BYTES_PER_ELEMENT, value2, true);
         });
       }
+    }
+    /**
+     * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+     * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+     */
+    extractDataFromBufferResult(result) {
+      const interleavedResult = new Float32Array(this.arrayLength);
+      for (let i = 0; i < this.numElements; i++) {
+        const resultOffset = this.startOffsetToIndex + i * this.strideToIndex;
+        for (let j = 0; j < this.bufferLayout.numElements; j++) {
+          interleavedResult[i * this.bufferLayout.numElements + j] = result[resultOffset + j];
+        }
+      }
+      return interleavedResult;
     }
   }
   class BufferBinding extends Binding {
@@ -2118,7 +2139,6 @@ var __privateMethod = (obj, member, method) => {
         shouldCopyResult
       };
       this.shouldCopyResult = shouldCopyResult;
-      this.result = new Float32Array(this.arrayBuffer.slice(0));
       this.resultBuffer = null;
     }
   }
@@ -4101,12 +4121,20 @@ var __privateMethod = (obj, member, method) => {
     }
     /* INPUTS */
     /**
-     * Look for a binding by name/key in all bind groups
+     * Look for a [binding]{@link BindGroupBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
      * @param bindingName - the binding name or key
      * @returns - the found binding, or null if not found
      */
     getBindingByName(bindingName = "") {
       return this.inputsBindings.find((binding) => binding.name === bindingName);
+    }
+    /**
+     * Look for a [buffer binding]{@link BindGroupBufferBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+     * @param bindingName - the binding name or key
+     * @returns - the found binding, or null if not found
+     */
+    getBufferBindingByName(bindingName = "") {
+      return this.inputsBindings.find((binding) => binding.name === bindingName && "buffer" in binding);
     }
     /**
      * Force a given buffer binding update flag to update it at next render
@@ -4207,6 +4235,101 @@ var __privateMethod = (obj, member, method) => {
         this.texturesBindGroup.addSampler(sampler);
       }
     }
+    /* BUFFER COPY */
+    /**
+     * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+     * @param parameters - parameters used to realize the copy
+     * @param parameters.srcBuffer - source {@link GPUBuffer}
+     * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+     * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+     * @returns - destination {@link GPUBuffer} after copy
+     */
+    copyBufferToBuffer({
+      srcBuffer,
+      dstBuffer,
+      commandEncoder
+    }) {
+      var _a, _b;
+      if (!srcBuffer) {
+        throwWarning(
+          `Material ${this.options.label} cannot copy to buffer because the source buffer has not been provided`
+        );
+        return null;
+      }
+      if (!dstBuffer) {
+        dstBuffer = this.renderer.createBuffer({
+          label: this.options.label + ": destination copy buffer from: " + srcBuffer.label,
+          size: srcBuffer.size,
+          usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+        });
+      }
+      const hasCommandEncoder = !!commandEncoder;
+      if (!hasCommandEncoder) {
+        commandEncoder = (_a = this.renderer.device) == null ? void 0 : _a.createCommandEncoder({ label: "Copy buffer command encoder" });
+      }
+      commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size);
+      if (!hasCommandEncoder) {
+        const commandBuffer = commandEncoder.finish();
+        (_b = this.renderer.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
+      }
+      return dstBuffer;
+    }
+    /**
+     * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
+     * @param buffer - {@link GPUBuffer} to map
+     * @async
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+     */
+    async getBufferResult(buffer) {
+      await buffer.mapAsync(GPUMapMode.READ);
+      const result = new Float32Array(buffer.getMappedRange().slice(0));
+      buffer.unmap();
+      return result;
+    }
+    /**
+     * Map the content of a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+     * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+     * @async
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+     */
+    async getBufferBindingResultByBindingName(bindingName = "") {
+      const binding = this.getBufferBindingByName(bindingName);
+      if (binding && "buffer" in binding) {
+        const dstBuffer = this.copyBufferToBuffer({
+          srcBuffer: binding.buffer
+        });
+        return await this.getBufferResult(dstBuffer);
+      } else {
+        return new Float32Array(0);
+      }
+    }
+    /**
+     * Map the content of a specific [buffer element]{@link BufferElement} belonging to a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+     * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+     * @param bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
+     * @returns - {@link Float32Array} holding {@link GPUBuffer} data
+     */
+    async getBufferElementResultByNames({
+      bindingName,
+      bufferElementName
+    }) {
+      const bindingBufferResult = await this.getBufferBindingResultByBindingName(bindingName);
+      if (!bufferElementName || bindingBufferResult.length) {
+        return bindingBufferResult;
+      } else {
+        const binding = this.getBufferBindingByName(bindingName);
+        if (binding && "bufferElements" in binding) {
+          const bufferElement = binding.bufferElements.find((bufferElement2) => bufferElement2.name === bufferElementName);
+          if (bufferElement) {
+            return bufferElement.extractDataFromBufferResult(bindingBufferResult);
+          } else {
+            return bindingBufferResult;
+          }
+        } else {
+          return bindingBufferResult;
+        }
+      }
+    }
     /* RENDER */
     /**
      * Called before rendering the Material.
@@ -4282,6 +4405,9 @@ var __privateMethod = (obj, member, method) => {
         shaders,
         ...parameters.dispatchSize !== void 0 && { dispatchSize: parameters.dispatchSize }
       };
+      if (!dispatchSize) {
+        dispatchSize = 1;
+      }
       if (Array.isArray(dispatchSize)) {
         dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1);
         dispatchSize[1] = Math.ceil(dispatchSize[1] ?? 1);
@@ -4402,38 +4528,25 @@ var __privateMethod = (obj, member, method) => {
      * @async
      * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    async getWorkGroupResult({
+    async getComputeResult({
       bindingName = "",
       bufferElementName = ""
     }) {
       const binding = this.getBindingByName(bindingName);
       if (binding && "resultBuffer" in binding) {
-        await binding.resultBuffer.mapAsync(GPUMapMode.READ);
-        binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0));
-        binding.resultBuffer.unmap();
+        const result = await this.getBufferResult(binding.resultBuffer);
         if (bufferElementName) {
           const bufferElement = binding.bufferElements.find((bufferElement2) => bufferElement2.name === bufferElementName);
           if (bufferElement) {
-            if (bufferElement instanceof BufferInterleavedArrayElement) {
-              const result = new Float32Array(bufferElement.arrayLength);
-              for (let i = 0; i < bufferElement.numElements; i++) {
-                const resultOffset = bufferElement.startOffsetToIndex + i * bufferElement.strideToIndex;
-                for (let j = 0; j < bufferElement.bufferLayout.numElements; j++) {
-                  result[i * bufferElement.bufferLayout.numElements + j] = binding.result[resultOffset + j];
-                }
-              }
-              return result;
-            } else {
-              return binding.result.slice(bufferElement.startOffsetToIndex, bufferElement.endOffsetToIndex);
-            }
+            return bufferElement.extractDataFromBufferResult(result);
           } else {
-            return binding.result.slice();
+            return result;
           }
         } else {
-          return binding.result.slice();
+          return result;
         }
       } else {
-        return null;
+        return new Float32Array(0);
       }
     }
   }
@@ -4766,12 +4879,12 @@ var __privateMethod = (obj, member, method) => {
      * @async
      * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    async getWorkGroupResult({
+    async getComputeResult({
       bindingName,
       bufferElementName
     }) {
       var _a;
-      return await ((_a = this.material) == null ? void 0 : _a.getWorkGroupResult({ bindingName, bufferElementName }));
+      return await ((_a = this.material) == null ? void 0 : _a.getComputeResult({ bindingName, bufferElementName }));
     }
     /**
      * Remove the ComputePass from the scene and destroy it
@@ -8812,7 +8925,6 @@ ${this.shaders.compute.head}`;
      */
     createTexture(textureDescriptor) {
       var _a;
-      console.log(textureDescriptor.label);
       return (_a = this.device) == null ? void 0 : _a.createTexture(textureDescriptor);
     }
     /**

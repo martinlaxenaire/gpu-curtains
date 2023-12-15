@@ -16,8 +16,6 @@ export interface WritableBufferBindingParams extends BufferBindingParams {
 export class WritableBufferBinding extends BufferBinding {
   /** Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our {@link result} array */
   shouldCopyResult: boolean
-  /** Array specifically designed to handle the result of our [resultBuffer]{@link inputs#resultBuffer} GPUBuffer if needed */
-  result: Float32Array
   /** The result GPUBuffer */
   resultBuffer: GPUBuffer | null
   /** Options used to create this {@link WritableBufferBinding} */
@@ -50,8 +48,7 @@ export class WritableBufferBinding extends BufferBinding {
 
     this.shouldCopyResult = shouldCopyResult
 
-    //this.result = new Float32Array(this.value.slice())
-    this.result = new Float32Array(this.arrayBuffer.slice(0))
+    // can be used as our buffer copy destination
     this.resultBuffer = null
   }
 }

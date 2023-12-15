@@ -462,14 +462,14 @@ export class ComputePass {
    * @async
    * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
-  async getWorkGroupResult({
+  async getComputeResult({
     bindingName,
     bufferElementName,
   }: {
     bindingName?: string
     bufferElementName?: string
-  }): Promise<Float32Array | undefined> {
-    return await this.material?.getWorkGroupResult({ bindingName, bufferElementName })
+  }): Promise<Float32Array> {
+    return await this.material?.getComputeResult({ bindingName, bufferElementName })
   }
 
   /**

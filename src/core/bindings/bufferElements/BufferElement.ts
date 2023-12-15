@@ -300,4 +300,12 @@ export class BufferElement {
       }
     }
   }
+
+  /**
+   * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+   * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+   */
+  extractDataFromBufferResult(result: Float32Array) {
+    return result.slice(this.startOffsetToIndex, this.endOffsetToIndex)
+  }
 }

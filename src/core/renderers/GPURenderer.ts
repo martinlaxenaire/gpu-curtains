@@ -533,7 +533,6 @@ export class GPURenderer {
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor: GPUTextureDescriptor): GPUTexture {
-    console.log(textureDescriptor.label)
     return this.device?.createTexture(textureDescriptor)
   }
 

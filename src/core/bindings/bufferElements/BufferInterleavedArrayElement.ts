@@ -91,4 +91,20 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
       })
     }
   }
+
+  /**
+   * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+   * @param result - {@link Float32Array} holding {@link GPUBuffer} data
+   */
+  extractDataFromBufferResult(result: Float32Array) {
+    const interleavedResult = new Float32Array(this.arrayLength)
+    for (let i = 0; i < this.numElements; i++) {
+      const resultOffset = this.startOffsetToIndex + i * this.strideToIndex
+
+      for (let j = 0; j < this.bufferLayout.numElements; j++) {
+        interleavedResult[i * this.bufferLayout.numElements + j] = result[resultOffset + j]
+      }
+    }
+    return interleavedResult
+  }
 }

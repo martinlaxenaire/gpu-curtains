@@ -10,7 +10,8 @@ import { FullShadersType, MaterialOptions, MaterialParams } from '../../types/Ma
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture } from '../textures/RenderTexture'
 import { Binding } from '../bindings/Binding'
-import { generateUUID } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
+import { BufferElement } from '../bindings/bufferElements/BufferElement'
 
 /**
  * Material class:
@@ -429,12 +430,23 @@ export class Material {
   /* INPUTS */
 
   /**
-   * Look for a binding by name/key in all bind groups
+   * Look for a [binding]{@link BindGroupBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
   getBindingByName(bindingName: Binding['name'] = ''): BindGroupBindingElement | undefined {
     return this.inputsBindings.find((binding) => binding.name === bindingName)
+  }
+
+  /**
+   * Look for a [buffer binding]{@link BindGroupBufferBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+   * @param bindingName - the binding name or key
+   * @returns - the found binding, or null if not found
+   */
+  getBufferBindingByName(bindingName: Binding['name'] = ''): BindGroupBufferBindingElement | undefined {
+    return this.inputsBindings.find((binding) => binding.name === bindingName && 'buffer' in binding) as
+      | BindGroupBufferBindingElement
+      | undefined
   }
 
   /**
@@ -559,6 +571,121 @@ export class Material {
       (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1)
     ) {
       this.texturesBindGroup.addSampler(sampler)
+    }
+  }
+
+  /* BUFFER COPY */
+
+  /**
+   * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+   * @param parameters - parameters used to realize the copy
+   * @param parameters.srcBuffer - source {@link GPUBuffer}
+   * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+   * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+   * @returns - destination {@link GPUBuffer} after copy
+   */
+  copyBufferToBuffer({
+    srcBuffer,
+    dstBuffer,
+    commandEncoder,
+  }: {
+    srcBuffer: GPUBuffer
+    dstBuffer?: GPUBuffer
+    commandEncoder?: GPUCommandEncoder
+  }): GPUBuffer | null {
+    if (!srcBuffer) {
+      throwWarning(
+        `Material ${this.options.label} cannot copy to buffer because the source buffer has not been provided`
+      )
+      return null
+    }
+
+    if (!dstBuffer) {
+      dstBuffer = this.renderer.createBuffer({
+        label: this.options.label + ': destination copy buffer from: ' + srcBuffer.label,
+        size: srcBuffer.size,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+      })
+    }
+
+    // if there's no command encoder provided, we'll have to create one and submit it after the copy process
+    const hasCommandEncoder = !!commandEncoder
+
+    if (!hasCommandEncoder) {
+      commandEncoder = this.renderer.device?.createCommandEncoder({ label: 'Copy buffer command encoder' })
+    }
+
+    commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size)
+
+    if (!hasCommandEncoder) {
+      const commandBuffer = commandEncoder.finish()
+      this.renderer.device?.queue.submit([commandBuffer])
+    }
+
+    return dstBuffer
+  }
+
+  /**
+   * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
+   * @param buffer - {@link GPUBuffer} to map
+   * @async
+   * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+   */
+  async getBufferResult(buffer: GPUBuffer): Promise<Float32Array> {
+    await buffer.mapAsync(GPUMapMode.READ)
+    const result = new Float32Array(buffer.getMappedRange().slice(0))
+    buffer.unmap()
+
+    return result
+  }
+
+  /**
+   * Map the content of a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+   * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+   * @async
+   * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
+   */
+  async getBufferBindingResultByBindingName(bindingName: Binding['name'] = ''): Promise<Float32Array> {
+    const binding = this.getBufferBindingByName(bindingName)
+    if (binding && 'buffer' in binding) {
+      const dstBuffer = this.copyBufferToBuffer({
+        srcBuffer: binding.buffer,
+      })
+      return await this.getBufferResult(dstBuffer)
+    } else {
+      return new Float32Array(0)
+    }
+  }
+
+  /**
+   * Map the content of a specific [buffer element]{@link BufferElement} belonging to a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+   * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+   * @param bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
+   * @returns - {@link Float32Array} holding {@link GPUBuffer} data
+   */
+  async getBufferElementResultByNames({
+    bindingName,
+    bufferElementName,
+  }: {
+    bindingName: Binding['name']
+    bufferElementName: BufferElement['name']
+  }): Promise<Float32Array> {
+    const bindingBufferResult = await this.getBufferBindingResultByBindingName(bindingName)
+
+    if (!bufferElementName || bindingBufferResult.length) {
+      return bindingBufferResult
+    } else {
+      const binding = this.getBufferBindingByName(bindingName)
+      if (binding && 'bufferElements' in binding) {
+        const bufferElement = binding.bufferElements.find((bufferElement) => bufferElement.name === bufferElementName)
+        if (bufferElement) {
+          return bufferElement.extractDataFromBufferResult(bindingBufferResult)
+        } else {
+          return bindingBufferResult
+        }
+      } else {
+        return bindingBufferResult
+      }
     }
   }
 
