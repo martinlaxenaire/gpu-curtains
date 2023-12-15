@@ -94,7 +94,6 @@ export class ComputePass {
    * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
    * @param parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
    */
-  // TODO do we need samplers here? What about textures?
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputePassParams = {}) {
     const type = 'ComputePass'
 
@@ -117,6 +116,9 @@ export class ComputePass {
       uniforms,
       storages,
       bindGroups,
+      samplers,
+      textures,
+      renderTextures,
       autoRender,
       useAsyncPipeline,
       texturesOptions,
@@ -150,6 +152,9 @@ export class ComputePass {
       uniforms,
       storages,
       bindGroups,
+      samplers,
+      textures,
+      renderTextures,
       useAsyncPipeline,
       dispatchSize,
     })

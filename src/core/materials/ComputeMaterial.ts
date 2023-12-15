@@ -24,14 +24,8 @@ export class ComputeMaterial extends Material {
 
   /**
    * ComputeMaterial constructor
-   * @param renderer - our renderer class object
-   * @param parameters - parameters used to create our Material
-   * @param {string} parameters.label - ComputeMaterial label
-   * @param {boolean} parameters.useAsyncPipeline - whether the {@link ComputePipelineEntry} should be compiled asynchronously
-   * @param {MaterialShaders} parameters.shaders - our ComputeMaterial shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our ComputeMaterial {@link BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
+   * @param renderer - our [renderer]{@link Renderer} class object
+   * @param parameters - [parameters]{@link ComputeMaterialParams} used to create our {@link ComputeMaterial}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputeMaterialParams) {
     // we could pass our curtains object OR our curtains renderer object
