@@ -1585,11 +1585,25 @@ var __privateMethod = (obj, member, method) => {
       return this.getByteCountAtPosition(this.alignment.start);
     }
     /**
+     * Get the array offset (i.e. array index) at which our {@link BufferElement} starts
+     * @readonly
+     */
+    get startOffsetToIndex() {
+      return this.startOffset / bytesPerSlot;
+    }
+    /**
      * Get the offset (i.e. byte index) at which our {@link BufferElement} ends
      * @readonly
      */
     get endOffset() {
       return this.getByteCountAtPosition(this.alignment.end);
+    }
+    /**
+     * Get the array offset (i.e. array index) at which our {@link BufferElement} ends
+     * @readonly
+     */
+    get endOffsetToIndex() {
+      return this.endOffset / bytesPerSlot;
     }
     /**
      * Get the position at given offset (i.e. byte index)
@@ -1715,6 +1729,13 @@ var __privateMethod = (obj, member, method) => {
       super({ name, key, type });
       this.arrayLength = arrayLength;
       this.numElements = this.arrayLength / this.bufferLayout.numElements;
+    }
+    /**
+     * Get the stride between two elements of the array in indices
+     * @readonly
+     */
+    get strideToIndex() {
+      return this.stride / bytesPerSlot;
     }
     /**
      * Set the [alignment]{@link BufferElementAlignment}
@@ -4231,14 +4252,8 @@ var __privateMethod = (obj, member, method) => {
   class ComputeMaterial extends Material {
     /**
      * ComputeMaterial constructor
-     * @param renderer - our renderer class object
-     * @param parameters - parameters used to create our Material
-     * @param {string} parameters.label - ComputeMaterial label
-     * @param {boolean} parameters.useAsyncPipeline - whether the {@link ComputePipelineEntry} should be compiled asynchronously
-     * @param {MaterialShaders} parameters.shaders - our ComputeMaterial shader codes and entry points
-     * @param {BindGroupInputs} parameters.inputs - our ComputeMaterial {@link BindGroup} inputs
-     * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-     * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
+     * @param renderer - our [renderer]{@link Renderer} class object
+     * @param parameters - [parameters]{@link ComputeMaterialParams} used to create our {@link ComputeMaterial}
      */
     constructor(renderer, parameters) {
       renderer = renderer && renderer.renderer || renderer;
@@ -4373,57 +4388,44 @@ var __privateMethod = (obj, member, method) => {
      */
     copyBufferToResult(commandEncoder) {
       this.bindGroups.forEach((bindGroup) => {
-        bindGroup.bindings.forEach((binding) => {
-          if ("shouldCopyResult" in binding && binding.shouldCopyResult) {
+        bindGroup.bufferBindings.forEach((binding) => {
+          if (binding.shouldCopyResult) {
             commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size);
           }
         });
       });
     }
     /**
-     * Loop through all bind groups writable buffers and check if they need to be copied
+     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * @async
+     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    setWorkGroupsResult() {
-      this.bindGroups.forEach((bindGroup) => {
-        bindGroup.bindings.forEach((binding) => {
-          if (binding.shouldCopyResult) {
-            this.setBufferResult(binding);
-          }
-        });
-      });
-    }
-    /**
-     * Copy the result buffer into our result array
-     * @param binding - buffer binding to set the result from
-     */
-    setBufferResult(binding) {
-      var _a;
-      if (((_a = binding.resultBuffer) == null ? void 0 : _a.mapState) === "unmapped") {
-        binding.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-          binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0));
-          binding.resultBuffer.unmap();
-        });
-      }
-    }
-    /**
-     * Get the result of work group by work group and binding names
-     * @param workGroupName - work group name/key
-     * @param bindingName - binding name/key
-     * @returns - the result of our GPU compute pass
-     */
-    getWorkGroupResult({
-      workGroupName = "",
-      bindingName = ""
+    async getWorkGroupResult({
+      bindingName = "",
+      bufferElementName = ""
     }) {
-      let binding;
-      this.bindGroups.forEach((bindGroup) => {
-        binding = bindGroup.bindings.find((binding2) => binding2.name === workGroupName);
-      });
-      if (binding) {
-        if (bindingName) {
-          const bufferElement = binding.bufferElements.find((bufferElement2) => bufferElement2.name === bindingName);
+      const binding = this.getBindingByName(bindingName);
+      if (binding && "resultBuffer" in binding) {
+        await binding.resultBuffer.mapAsync(GPUMapMode.READ);
+        binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0));
+        binding.resultBuffer.unmap();
+        if (bufferElementName) {
+          const bufferElement = binding.bufferElements.find((bufferElement2) => bufferElement2.name === bufferElementName);
           if (bufferElement) {
-            return binding.result.slice(bufferElement.startOffset, bufferElement.endOffset);
+            if (bufferElement instanceof BufferInterleavedArrayElement) {
+              const result = new Float32Array(bufferElement.arrayLength);
+              for (let i = 0; i < bufferElement.numElements; i++) {
+                const resultOffset = bufferElement.startOffsetToIndex + i * bufferElement.strideToIndex;
+                for (let j = 0; j < bufferElement.bufferLayout.numElements; j++) {
+                  result[i * bufferElement.bufferLayout.numElements + j] = binding.result[resultOffset + j];
+                }
+              }
+              return result;
+            } else {
+              return binding.result.slice(bufferElement.startOffsetToIndex, bufferElement.endOffsetToIndex);
+            }
           } else {
             return binding.result.slice();
           }
@@ -4442,7 +4444,6 @@ var __privateMethod = (obj, member, method) => {
      * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
      * @param parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
      */
-    // TODO do we need samplers here? What about textures?
     constructor(renderer, parameters = {}) {
       __privateAdd(this, _autoRender, void 0);
       var _a;
@@ -4472,6 +4473,9 @@ var __privateMethod = (obj, member, method) => {
         uniforms,
         storages,
         bindGroups,
+        samplers,
+        textures,
+        renderTextures,
         autoRender,
         useAsyncPipeline,
         texturesOptions,
@@ -4499,6 +4503,9 @@ var __privateMethod = (obj, member, method) => {
         uniforms,
         storages,
         bindGroups,
+        samplers,
+        textures,
+        renderTextures,
         useAsyncPipeline,
         dispatchSize
       });
@@ -4753,21 +4760,18 @@ var __privateMethod = (obj, member, method) => {
       (_a = this.material) == null ? void 0 : _a.copyBufferToResult(commandEncoder);
     }
     /**
-     * Set {@link ComputeMaterial} work groups result
+     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * @async
+     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    setWorkGroupsResult() {
+    async getWorkGroupResult({
+      bindingName,
+      bufferElementName
+    }) {
       var _a;
-      (_a = this.material) == null ? void 0 : _a.setWorkGroupsResult();
-    }
-    /**
-     * Get the result of a work group by binding name
-     * @param workGroupName - name/key of the work group
-     * @param bindingName - name/key of the input binding
-     * @returns - the corresponding binding result array
-     */
-    getWorkGroupResult({ workGroupName, bindingName }) {
-      var _a;
-      return (_a = this.material) == null ? void 0 : _a.getWorkGroupResult({ workGroupName, bindingName });
+      return await ((_a = this.material) == null ? void 0 : _a.getWorkGroupResult({ bindingName, bufferElementName }));
     }
     /**
      * Remove the ComputePass from the scene and destroy it
@@ -8262,15 +8266,6 @@ ${this.shaders.compute.head}`;
         });
       }
     }
-    /**
-     * Execute this at each render after our [command encoder]{@link GPUCommandEncoder} has been submitted.
-     * Used to map writable storages buffers if needed.
-     */
-    onAfterCommandEncoder() {
-      this.computePassEntries.forEach((computePass) => {
-        computePass.setWorkGroupsResult();
-      });
-    }
   }
   class RenderPass {
     /**
@@ -9009,7 +9004,6 @@ ${this.shaders.compute.head}`;
      * Function to run just after our [command encoder]{@link GPUCommandEncoder} has been submitted at each [render]{@link GPURenderer#render} call
      */
     onAfterCommandEncoder() {
-      this.scene.onAfterCommandEncoder();
     }
     /**
      * Render a single [Compute pass]{@link ComputePass}

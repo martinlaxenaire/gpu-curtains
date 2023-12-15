@@ -456,20 +456,20 @@ export class ComputePass {
   }
 
   /**
-   * Set {@link ComputeMaterial} work groups result
+   * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+   * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+   * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+   * @async
+   * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
-  setWorkGroupsResult() {
-    this.material?.setWorkGroupsResult()
-  }
-
-  /**
-   * Get the result of a work group by binding name
-   * @param workGroupName - name/key of the work group
-   * @param bindingName - name/key of the input binding
-   * @returns - the corresponding binding result array
-   */
-  getWorkGroupResult({ workGroupName, bindingName }: { workGroupName?: string; bindingName?: string }): Float32Array {
-    return this.material?.getWorkGroupResult({ workGroupName, bindingName })
+  async getWorkGroupResult({
+    bindingName,
+    bufferElementName,
+  }: {
+    bindingName?: string
+    bufferElementName?: string
+  }): Promise<Float32Array | undefined> {
+    return await this.material?.getWorkGroupResult({ bindingName, bufferElementName })
   }
 
   /**

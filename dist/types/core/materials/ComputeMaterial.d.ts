@@ -4,7 +4,6 @@ import { ComputeMaterialOptions, ComputeMaterialParams, FullShadersType } from '
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry';
-import { WritableBufferBinding } from '../bindings/WritableBufferBinding';
 /**
  * ComputeMaterial class:
  * Create a Material specifically built to run computations on the GPU with a {@link ComputePass}
@@ -21,14 +20,8 @@ export declare class ComputeMaterial extends Material {
     _useCustomRenderCallback: (pass: GPUComputePassEncoder) => void;
     /**
      * ComputeMaterial constructor
-     * @param renderer - our renderer class object
-     * @param parameters - parameters used to create our Material
-     * @param {string} parameters.label - ComputeMaterial label
-     * @param {boolean} parameters.useAsyncPipeline - whether the {@link ComputePipelineEntry} should be compiled asynchronously
-     * @param {MaterialShaders} parameters.shaders - our ComputeMaterial shader codes and entry points
-     * @param {BindGroupInputs} parameters.inputs - our ComputeMaterial {@link BindGroup} inputs
-     * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-     * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
+     * @param renderer - our [renderer]{@link Renderer} class object
+     * @param parameters - [parameters]{@link ComputeMaterialParams} used to create our {@link ComputeMaterial}
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: ComputeMaterialParams);
     /**
@@ -79,22 +72,14 @@ export declare class ComputeMaterial extends Material {
      */
     copyBufferToResult(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Loop through all bind groups writable buffers and check if they need to be copied
+     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * @async
+     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    setWorkGroupsResult(): void;
-    /**
-     * Copy the result buffer into our result array
-     * @param binding - buffer binding to set the result from
-     */
-    setBufferResult(binding: WritableBufferBinding): void;
-    /**
-     * Get the result of work group by work group and binding names
-     * @param workGroupName - work group name/key
-     * @param bindingName - binding name/key
-     * @returns - the result of our GPU compute pass
-     */
-    getWorkGroupResult({ workGroupName, bindingName, }: {
-        workGroupName?: string;
+    getWorkGroupResult({ bindingName, bufferElementName, }: {
         bindingName?: string;
-    }): Float32Array;
+        bufferElementName?: string;
+    }): Promise<Float32Array | undefined>;
 }

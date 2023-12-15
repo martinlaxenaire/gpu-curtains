@@ -1,4 +1,4 @@
-import { BufferElement, BufferElementParams } from './BufferElement'
+import { BufferElement, BufferElementParams, bytesPerSlot } from './BufferElement'
 import { throwWarning } from '../../../utils/utils'
 
 /**
@@ -19,7 +19,7 @@ export class BufferArrayElement extends BufferElement {
   arrayLength: number
   /** Total number of elements (i.e. {@link arrayLength} divided by [buffer layout number of elements]{@link BufferLayout#numElements} */
   numElements: number
-  /** Stride in the {@link ArrayBuffer} between two elements of the array */
+  /** Stride in the {@link ArrayBuffer} between two elements of the array in bytes */
   stride: number
 
   /**
@@ -31,6 +31,14 @@ export class BufferArrayElement extends BufferElement {
 
     this.arrayLength = arrayLength
     this.numElements = this.arrayLength / this.bufferLayout.numElements
+  }
+
+  /**
+   * Get the stride between two elements of the array in indices
+   * @readonly
+   */
+  get strideToIndex(): number {
+    return this.stride / bytesPerSlot
   }
 
   /**

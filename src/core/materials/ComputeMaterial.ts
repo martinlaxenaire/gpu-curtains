@@ -4,6 +4,7 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
 import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
+import { BufferInterleavedArrayElement } from '../bindings/bufferElements/BufferInterleavedArrayElement'
 
 /**
  * ComputeMaterial class:
@@ -199,8 +200,8 @@ export class ComputeMaterial extends Material {
    */
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding: WritableBufferBinding) => {
-        if ('shouldCopyResult' in binding && binding.shouldCopyResult) {
+      bindGroup.bufferBindings.forEach((binding: WritableBufferBinding) => {
+        if (binding.shouldCopyResult) {
           commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
         }
       })
@@ -208,55 +209,44 @@ export class ComputeMaterial extends Material {
   }
 
   /**
-   * Loop through all bind groups writable buffers and check if they need to be copied
+   * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+   * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+   * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+   * @async
+   * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
-  setWorkGroupsResult() {
-    this.bindGroups.forEach((bindGroup) => {
-      bindGroup.bindings.forEach((binding: WritableBufferBinding) => {
-        if (binding.shouldCopyResult) {
-          this.setBufferResult(binding)
-        }
-      })
-    })
-  }
-
-  /**
-   * Copy the result buffer into our result array
-   * @param binding - buffer binding to set the result from
-   */
-  setBufferResult(binding: WritableBufferBinding) {
-    if (binding.resultBuffer?.mapState === 'unmapped') {
-      binding.resultBuffer.mapAsync(GPUMapMode.READ).then(() => {
-        binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0))
-        binding.resultBuffer.unmap()
-      })
-    }
-  }
-
-  /**
-   * Get the result of work group by work group and binding names
-   * @param workGroupName - work group name/key
-   * @param bindingName - binding name/key
-   * @returns - the result of our GPU compute pass
-   */
-  getWorkGroupResult({
-    workGroupName = '',
+  async getWorkGroupResult({
     bindingName = '',
+    bufferElementName = '',
   }: {
-    workGroupName?: string
     bindingName?: string
-  }): Float32Array {
-    let binding
-    this.bindGroups.forEach((bindGroup) => {
-      binding = bindGroup.bindings.find((binding) => binding.name === workGroupName)
-    })
+    bufferElementName?: string
+  }): Promise<Float32Array | undefined> {
+    const binding = this.getBindingByName(bindingName)
 
-    if (binding) {
-      if (bindingName) {
-        const bufferElement = binding.bufferElements.find((bufferElement) => bufferElement.name === bindingName)
+    if (binding && 'resultBuffer' in binding) {
+      await binding.resultBuffer.mapAsync(GPUMapMode.READ)
+      binding.result = new Float32Array(binding.resultBuffer.getMappedRange().slice(0))
+      binding.resultBuffer.unmap()
+
+      if (bufferElementName) {
+        const bufferElement = binding.bufferElements.find((bufferElement) => bufferElement.name === bufferElementName)
 
         if (bufferElement) {
-          return binding.result.slice(bufferElement.startOffset, bufferElement.endOffset)
+          // if our buffer element is an interleaved array, it's a bit more tricky
+          if (bufferElement instanceof BufferInterleavedArrayElement) {
+            const result = new Float32Array(bufferElement.arrayLength)
+            for (let i = 0; i < bufferElement.numElements; i++) {
+              const resultOffset = bufferElement.startOffsetToIndex + i * bufferElement.strideToIndex
+
+              for (let j = 0; j < bufferElement.bufferLayout.numElements; j++) {
+                result[i * bufferElement.bufferLayout.numElements + j] = binding.result[resultOffset + j]
+              }
+            }
+            return result
+          } else {
+            return binding.result.slice(bufferElement.startOffsetToIndex, bufferElement.endOffsetToIndex)
+          }
         } else {
           return binding.result.slice()
         }

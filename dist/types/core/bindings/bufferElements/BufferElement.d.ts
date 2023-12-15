@@ -79,10 +79,20 @@ export declare class BufferElement {
      */
     get startOffset(): number;
     /**
+     * Get the array offset (i.e. array index) at which our {@link BufferElement} starts
+     * @readonly
+     */
+    get startOffsetToIndex(): number;
+    /**
      * Get the offset (i.e. byte index) at which our {@link BufferElement} ends
      * @readonly
      */
     get endOffset(): number;
+    /**
+     * Get the array offset (i.e. array index) at which our {@link BufferElement} ends
+     * @readonly
+     */
+    get endOffsetToIndex(): number;
     /**
      * Get the position at given offset (i.e. byte index)
      * @param offset - byte index to use

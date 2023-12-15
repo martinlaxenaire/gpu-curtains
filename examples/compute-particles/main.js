@@ -23,10 +23,10 @@ const computeParticles = /* wgsl */ `
     // calculate a random particle max life
     // max life is in number of frames
     var maxLife: f32 = 250.0 + round( max(rand11(asin(fIndex * PI / nbParticles)), 0.0) * 1500.0 );
-    particlesStaticData[index].maxLife = u32(maxLife);
+    particlesStaticData[index].maxLife = maxLife;
     
     // now set a different initial life for each particle
-    var initLife: f32 = maxLife * round( max(rand11(acos(fIndex * PI / nbParticles)), 0.0) );
+    var initLife: f32 = round( maxLife * max(rand11(acos(fIndex * PI / nbParticles)), 0.0) );
     
     particles.position[index].w = initLife;
     particlesStaticData[index].position.w = initLife;
@@ -174,7 +174,7 @@ const computeParticles = /* wgsl */ `
     
     life += 1.0;
     
-    let maxLife: f32 = f32(particlesStaticData[index].maxLife);
+    let maxLife: f32 = particlesStaticData[index].maxLife;
     
     // reset particle
     if(life >= maxLife) {
@@ -259,7 +259,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         access: 'read_write', // we want a readable AND writable buffer!
         struct: {
           maxLife: {
-            type: 'array<u32>',
+            type: 'array<f32>',
             value: new Float32Array(nbParticles),
           },
           position: {

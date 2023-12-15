@@ -148,9 +148,4 @@ export declare class Scene {
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder: GPUCommandEncoder): void;
-    /**
-     * Execute this at each render after our [command encoder]{@link GPUCommandEncoder} has been submitted.
-     * Used to map writable storages buffers if needed.
-     */
-    onAfterCommandEncoder(): void;
 }

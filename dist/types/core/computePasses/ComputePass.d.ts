@@ -205,19 +205,16 @@ export declare class ComputePass {
      */
     copyBufferToResult(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Set {@link ComputeMaterial} work groups result
+     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
+     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * @async
+     * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
-    setWorkGroupsResult(): void;
-    /**
-     * Get the result of a work group by binding name
-     * @param workGroupName - name/key of the work group
-     * @param bindingName - name/key of the input binding
-     * @returns - the corresponding binding result array
-     */
-    getWorkGroupResult({ workGroupName, bindingName }: {
-        workGroupName?: string;
+    getWorkGroupResult({ bindingName, bufferElementName, }: {
         bindingName?: string;
-    }): Float32Array;
+        bufferElementName?: string;
+    }): Promise<Float32Array | undefined>;
     /**
      * Remove the ComputePass from the scene and destroy it
      */

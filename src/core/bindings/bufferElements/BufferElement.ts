@@ -136,11 +136,27 @@ export class BufferElement {
   }
 
   /**
+   * Get the array offset (i.e. array index) at which our {@link BufferElement} starts
+   * @readonly
+   */
+  get startOffsetToIndex(): number {
+    return this.startOffset / bytesPerSlot
+  }
+
+  /**
    * Get the offset (i.e. byte index) at which our {@link BufferElement} ends
    * @readonly
    */
   get endOffset(): number {
     return this.getByteCountAtPosition(this.alignment.end)
+  }
+
+  /**
+   * Get the array offset (i.e. array index) at which our {@link BufferElement} ends
+   * @readonly
+   */
+  get endOffsetToIndex(): number {
+    return this.endOffset / bytesPerSlot
   }
 
   /**

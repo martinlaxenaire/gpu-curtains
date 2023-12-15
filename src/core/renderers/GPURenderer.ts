@@ -761,7 +761,6 @@ export class GPURenderer {
    */
   onAfterCommandEncoder() {
     /* will be overridden */
-    this.scene.onAfterCommandEncoder()
   }
 
   /**
