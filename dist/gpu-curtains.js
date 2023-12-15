@@ -4243,7 +4243,7 @@ class ComputeMaterial extends Material {
     super(renderer, parameters);
     this.type = type;
     this.renderer = renderer;
-    let { shaders } = parameters;
+    let { shaders, dispatchSize } = parameters;
     if (!shaders || !shaders.compute) {
       shaders = {
         compute: {
@@ -4263,11 +4263,14 @@ class ComputeMaterial extends Material {
       shaders,
       ...parameters.dispatchSize !== void 0 && { dispatchSize: parameters.dispatchSize }
     };
-    this.workGroups = [];
-    this.addWorkGroup({
-      bindGroups: this.bindGroups,
-      dispatchSize: this.options.dispatchSize
-    });
+    if (Array.isArray(dispatchSize)) {
+      dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1);
+      dispatchSize[1] = Math.ceil(dispatchSize[1] ?? 1);
+      dispatchSize[2] = Math.ceil(dispatchSize[2] ?? 1);
+    } else if (!isNaN(dispatchSize)) {
+      dispatchSize = [Math.ceil(dispatchSize), 1, 1];
+    }
+    this.dispatchSize = dispatchSize;
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       renderer: this.renderer,
       label: this.options.label + " compute pipeline",
@@ -4330,42 +4333,10 @@ class ComputeMaterial extends Material {
     });
     return !!hasMappedBuffer;
   }
-  /* WORK GROUPS */
-  /**
-   * Add a new [work group]{@link ComputeMaterial#workGroups} to render each frame.
-   * A [work group]{@link ComputeMaterial#workGroups} is composed of an array of [bind groups][@link BindGroup] to set and a dispatch size to dispatch the [work group]{@link ComputeMaterial#workGroups}
-   * @param bindGroups
-   * @param dispatchSize
-   */
-  // TODO since we have a useCustomRender hook now, are work groups really needed anymore?
-  addWorkGroup({ bindGroups = [], dispatchSize = 1 }) {
-    if (Array.isArray(dispatchSize)) {
-      dispatchSize[0] = Math.ceil(dispatchSize[0] ?? 1);
-      dispatchSize[1] = Math.ceil(dispatchSize[1] ?? 1);
-      dispatchSize[2] = Math.ceil(dispatchSize[2] ?? 1);
-    } else if (!isNaN(dispatchSize)) {
-      dispatchSize = [Math.ceil(dispatchSize), 1, 1];
-    }
-    this.workGroups.push({
-      bindGroups,
-      dispatchSize
-    });
-  }
   /* RENDER */
   /**
-   * Render a [work group]{@link ComputeMaterial#workGroups}: set its bind groups and then dispatch using its dispatch size
-   * @param pass - current compute pass encoder
-   * @param workGroup - [Work group]{@link ComputeMaterial#workGroups} to render
-   */
-  renderWorkGroup(pass, workGroup) {
-    workGroup.bindGroups.forEach((bindGroup) => {
-      pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-    });
-    pass.dispatchWorkgroups(workGroup.dispatchSize[0], workGroup.dispatchSize[1], workGroup.dispatchSize[2]);
-  }
-  /**
    * If we defined a custom render function instead of the default one, register the callback
-   * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+   * @param callback - callback to run instead of the default behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
    */
   useCustomRender(callback) {
     if (callback) {
@@ -4384,9 +4355,10 @@ class ComputeMaterial extends Material {
     if (this._useCustomRenderCallback !== void 0) {
       this._useCustomRenderCallback(pass);
     } else {
-      this.workGroups.forEach((workGroup) => {
-        this.renderWorkGroup(pass, workGroup);
+      this.bindGroups.forEach((bindGroup) => {
+        pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
       });
+      pass.dispatchWorkgroups(this.dispatchSize[0], this.dispatchSize[1], this.dispatchSize[2]);
     }
   }
   /* RESULT BUFFER */
@@ -4445,9 +4417,9 @@ class ComputeMaterial extends Material {
     });
     if (binding) {
       if (bindingName) {
-        const bindingElement = binding.bindingElements.find((bindingElement2) => bindingElement2.name === bindingName);
-        if (bindingElement) {
-          return binding.result.slice(bindingElement.startOffset, bindingElement.endOffset);
+        const bufferElement = binding.bufferElements.find((bufferElement2) => bufferElement2.name === bindingName);
+        if (bufferElement) {
+          return binding.result.slice(bufferElement.startOffset, bufferElement.endOffset);
         } else {
           return binding.result.slice();
         }
