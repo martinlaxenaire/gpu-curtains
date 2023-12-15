@@ -484,8 +484,7 @@ export class GPUCurtains {
   render() {
     this._onRenderCallback && this._onRenderCallback()
 
-    //this.renderer?.render()
-    this.renderers.forEach((renderer) => renderer.render())
+    this.deviceManager.render()
   }
 
   /**

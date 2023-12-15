@@ -21,7 +21,7 @@ export interface GPUDeviceManagerParams {
  * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations, losing and restoration.
  * Will also keep a track of all the [renderers]{@link Renderer}, [samplers]{@link Sampler} and [buffers]{@link GPUBuffer} created.
  */
-// TODO if we'd want to fully optimize multiple canvases rendering, the Scene and render method should be handled by the GPUDeviceManager and each renderer contexts should be an entry of our Scene
+// TODO if we'd want to fully optimize multiple canvases rendering, the render method and command encoder creation should be handled by the GPUDeviceManager and each renderer render methods should be called from here
 export class GPUDeviceManager {
   /** Number of times a {@link GPUDevice} has been created */
   index: number
@@ -36,6 +36,9 @@ export class GPUDeviceManager {
   adapterInfos: GPUAdapterInfo | undefined
   /** The WebGPU [device]{@link GPUDevice} used */
   device: GPUDevice | undefined
+  /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} have been successfully created */
+  ready: boolean
+
   /** Array of [renderers]{@link Renderer} using that {@link GPUDeviceManager} */
   renderers: Renderer[]
   /** The {@link PipelineManager} used to cache {@link GPURenderPipeline} and {@link GPUComputePipeline} and set them only when appropriate */
@@ -66,6 +69,7 @@ export class GPUDeviceManager {
   }: GPUDeviceManagerParams) {
     this.index = 0
     this.label = label ?? 'GPUDeviceManager instance'
+    this.ready = false
 
     this.onError = onError
     this.onDeviceLost = onDeviceLost
@@ -137,6 +141,8 @@ export class GPUDeviceManager {
         label: this.label + ' ' + this.index,
       })
 
+      this.ready = true
+
       this.index++
     } catch (error) {
       setTimeout(() => {
@@ -169,6 +175,8 @@ export class GPUDeviceManager {
    * Reset all our renderers
    */
   loseDevice() {
+    this.ready = false
+
     // first clean all samplers
     this.samplers.forEach((sampler) => (sampler.sampler = null))
 
@@ -188,7 +196,11 @@ export class GPUDeviceManager {
     if (this.device) {
       // now recreate all the samplers
       this.samplers.forEach((sampler) => {
-        sampler.sampler = this.device.createSampler({ label: sampler.label, ...sampler.options })
+        const { type, ...samplerOptions } = sampler.options
+        sampler.sampler = this.device.createSampler({
+          label: sampler.label,
+          ...samplerOptions,
+        })
       })
 
       // then the renderers
@@ -236,6 +248,21 @@ export class GPUDeviceManager {
    */
   removeSampler(sampler: Sampler) {
     this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid)
+  }
+
+  render() {
+    if (!this.ready) return
+
+    this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder())
+
+    const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer scene command encoder' })
+
+    this.renderers.forEach((renderer) => renderer.render(commandEncoder))
+
+    const commandBuffer = commandEncoder.finish()
+    this.device?.queue.submit([commandBuffer])
+
+    this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder())
   }
 
   /**

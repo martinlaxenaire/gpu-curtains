@@ -35,7 +35,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const animate = () => {
     camera.rotation.y += 0.01
 
-    gpuCameraRenderer.render()
+    gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
   }

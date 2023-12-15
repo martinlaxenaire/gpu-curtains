@@ -32,6 +32,8 @@ export declare class GPUDeviceManager {
     adapterInfos: GPUAdapterInfo | undefined;
     /** The WebGPU [device]{@link GPUDevice} used */
     device: GPUDevice | undefined;
+    /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} have been successfully created */
+    ready: boolean;
     /** Array of [renderers]{@link Renderer} using that {@link GPUDeviceManager} */
     renderers: Renderer[];
     /** The {@link PipelineManager} used to cache {@link GPURenderPipeline} and {@link GPUComputePipeline} and set them only when appropriate */
@@ -107,6 +109,7 @@ export declare class GPUDeviceManager {
      * @param sampler - [sampler]{@link Sampler} to remove
      */
     removeSampler(sampler: Sampler): void;
+    render(): void;
     /**
      * Destroy the {@link GPUDeviceManager} and its [renderers]{@link GPUDeviceManager#renderers}
      */

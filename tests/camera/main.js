@@ -29,7 +29,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // render it
   const animate = () => {
-    gpuCameraRenderer.render()
+    gpuDeviceManager.render()
     requestAnimationFrame(animate)
   }
 

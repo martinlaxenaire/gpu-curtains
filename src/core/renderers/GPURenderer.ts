@@ -62,7 +62,7 @@ export class GPURenderer {
   type: string
   /** The universal unique id of this {@link GPURenderer} */
   readonly uuid: string
-  /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} have been successfully created */
+  /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [context]{@link GPURenderer#context} has been successfully configured */
   ready: boolean
 
   /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
@@ -798,20 +798,6 @@ export class GPURenderer {
   }
 
   /**
-   * Function to run just before our [command encoder]{@link GPUCommandEncoder} is created at each [render]{@link GPURenderer#render} call
-   */
-  onBeforeCommandEncoder() {
-    /* will be overridden */
-  }
-
-  /**
-   * Function to run just after our [command encoder]{@link GPUCommandEncoder} has been submitted at each [render]{@link GPURenderer#render} call
-   */
-  onAfterCommandEncoder() {
-    /* will be overridden */
-  }
-
-  /**
    * Render a single [Compute pass]{@link ComputePass}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    * @param computePass - [Compute pass]{@link ComputePass}
@@ -863,39 +849,23 @@ export class GPURenderer {
   }
 
   /**
-   * Render our [scene]{@link Scene}
+   * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
    */
-  renderScene() {
-    const commandEncoder = this.device?.createCommandEncoder({ label: 'Renderer scene command encoder' })
-
-    this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
-    this.onBeforeRenderScene.execute(commandEncoder)
-
-    this.scene.render(commandEncoder)
-
-    this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
-    this.onAfterRenderScene.execute(commandEncoder)
-
-    const commandBuffer = commandEncoder.finish()
-    this.device?.queue.submit([commandBuffer])
+  onBeforeCommandEncoder() {
+    if (!this.ready) return
+    // now render!
+    this.onBeforeCommandEncoderCreation.execute()
   }
 
   /**
-   * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
+   * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} after the {@link GPUCommandEncoder} has been created.
+   * Used to handle our [textures queue]{@link GPURenderer#texturesQueue}
    */
-  render() {
+  onAfterCommandEncoder() {
     if (!this.ready) return
 
-    // now render!
-    this.onBeforeCommandEncoder()
-    this.onBeforeCommandEncoderCreation.execute()
-
-    this.renderScene()
-
-    // now handle textures
-
+    // handle textures
     // first check if media textures without parent need to be uploaded
-    // TODO safe?
     this.textures
       .filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded)
       .forEach((texture) => this.uploadTexture(texture))
@@ -910,8 +880,23 @@ export class GPURenderer {
     // clear texture queue
     this.texturesQueue = []
 
-    this.onAfterCommandEncoder()
     this.onAfterCommandEncoderSubmission.execute()
+  }
+
+  /**
+   * Called at each draw call to render our scene and its content
+   * @param commandEncoder - current {@link GPUCommandEncoder}
+   */
+  render(commandEncoder: GPUCommandEncoder) {
+    if (!this.ready) return
+
+    this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
+    this.onBeforeRenderScene.execute(commandEncoder)
+
+    this.scene.render(commandEncoder)
+
+    this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
+    this.onAfterRenderScene.execute(commandEncoder)
   }
 
   /**

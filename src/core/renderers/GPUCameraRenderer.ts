@@ -238,12 +238,13 @@ export class GPUCameraRenderer extends GPURenderer {
 
   /**
    * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
+   * @param commandEncoder - current {@link GPUCommandEncoder}
    */
-  render() {
+  render(commandEncoder: GPUCommandEncoder) {
     if (!this.ready) return
 
     this.updateCamera()
-    super.render()
+    super.render(commandEncoder)
   }
 
   /**

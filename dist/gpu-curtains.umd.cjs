@@ -9055,16 +9055,6 @@ ${this.shaders.compute.head}`;
       return renderTexture;
     }
     /**
-     * Function to run just before our [command encoder]{@link GPUCommandEncoder} is created at each [render]{@link GPURenderer#render} call
-     */
-    onBeforeCommandEncoder() {
-    }
-    /**
-     * Function to run just after our [command encoder]{@link GPUCommandEncoder} has been submitted at each [render]{@link GPURenderer#render} call
-     */
-    onAfterCommandEncoder() {
-    }
-    /**
      * Render a single [Compute pass]{@link ComputePass}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      * @param computePass - [Compute pass]{@link ComputePass}
@@ -9109,35 +9099,39 @@ ${this.shaders.compute.head}`;
       this.pipelineManager.resetCurrentPipeline();
     }
     /**
-     * Render our [scene]{@link Scene}
+     * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
      */
-    renderScene() {
-      var _a, _b;
-      const commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: "Renderer scene command encoder" });
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
-      this.onBeforeRenderScene.execute(commandEncoder);
-      this.scene.render(commandEncoder);
-      this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
-      this.onAfterRenderScene.execute(commandEncoder);
-      const commandBuffer = commandEncoder.finish();
-      (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
-    }
-    /**
-     * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
-     */
-    render() {
+    onBeforeCommandEncoder() {
       if (!this.ready)
         return;
-      this.onBeforeCommandEncoder();
       this.onBeforeCommandEncoderCreation.execute();
-      this.renderScene();
+    }
+    /**
+     * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} after the {@link GPUCommandEncoder} has been created.
+     * Used to handle our [textures queue]{@link GPURenderer#texturesQueue}
+     */
+    onAfterCommandEncoder() {
+      if (!this.ready)
+        return;
       this.textures.filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
       this.texturesQueue.forEach((texture) => {
         texture.sourceUploaded = true;
       });
       this.texturesQueue = [];
-      this.onAfterCommandEncoder();
       this.onAfterCommandEncoderSubmission.execute();
+    }
+    /**
+     * Called at each draw call to render our scene and its content
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     */
+    render(commandEncoder) {
+      if (!this.ready)
+        return;
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
+      this.onBeforeRenderScene.execute(commandEncoder);
+      this.scene.render(commandEncoder);
+      this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
+      this.onAfterRenderScene.execute(commandEncoder);
     }
     /**
      * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
@@ -9347,12 +9341,13 @@ ${this.shaders.compute.head}`;
     }
     /**
      * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
      */
-    render() {
+    render(commandEncoder) {
       if (!this.ready)
         return;
       this.updateCamera();
-      super.render();
+      super.render(commandEncoder);
     }
     /**
      * Destroy our {@link GPUCameraRenderer}
@@ -9377,6 +9372,7 @@ ${this.shaders.compute.head}`;
     }) {
       this.index = 0;
       this.label = label ?? "GPUDeviceManager instance";
+      this.ready = false;
       this.onError = onError;
       this.onDeviceLost = onDeviceLost;
       this.gpu = navigator.gpu;
@@ -9438,6 +9434,7 @@ ${this.shaders.compute.head}`;
         this.device = await ((_a = this.adapter) == null ? void 0 : _a.requestDevice({
           label: this.label + " " + this.index
         }));
+        this.ready = true;
         this.index++;
       } catch (error) {
         setTimeout(() => {
@@ -9464,6 +9461,7 @@ ${this.shaders.compute.head}`;
      * Reset all our renderers
      */
     loseDevice() {
+      this.ready = false;
       this.samplers.forEach((sampler) => sampler.sampler = null);
       this.renderers.forEach((renderer) => renderer.loseContext());
       this.buffers = [];
@@ -9476,7 +9474,11 @@ ${this.shaders.compute.head}`;
       await this.setAdapterAndDevice();
       if (this.device) {
         this.samplers.forEach((sampler) => {
-          sampler.sampler = this.device.createSampler({ label: sampler.label, ...sampler.options });
+          const { type, ...samplerOptions } = sampler.options;
+          sampler.sampler = this.device.createSampler({
+            label: sampler.label,
+            ...samplerOptions
+          });
         });
         this.renderers.forEach((renderer) => renderer.restoreContext());
       }
@@ -9517,6 +9519,17 @@ ${this.shaders.compute.head}`;
      */
     removeSampler(sampler) {
       this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
+    }
+    render() {
+      var _a, _b;
+      if (!this.ready)
+        return;
+      this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder());
+      const commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: "Renderer scene command encoder" });
+      this.renderers.forEach((renderer) => renderer.render(commandEncoder));
+      const commandBuffer = commandEncoder.finish();
+      (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
+      this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder());
     }
     /**
      * Destroy the {@link GPUDeviceManager} and its [renderers]{@link GPUDeviceManager#renderers}
@@ -10208,7 +10221,7 @@ ${this.shaders.compute.head}`;
      */
     render() {
       this._onRenderCallback && this._onRenderCallback();
-      this.renderers.forEach((renderer) => renderer.render());
+      this.deviceManager.render();
     }
     /**
      * Destroy our {@link GPUCurtains} and [device manager]{@link GPUDeviceManager}

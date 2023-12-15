@@ -86,8 +86,9 @@ export declare class GPUCameraRenderer extends GPURenderer {
     renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType): void;
     /**
      * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
      */
-    render(): void;
+    render(commandEncoder: GPUCommandEncoder): void;
     /**
      * Destroy our {@link GPUCameraRenderer}
      */

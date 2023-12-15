@@ -53,7 +53,7 @@ export declare class GPURenderer {
     type: string;
     /** The universal unique id of this {@link GPURenderer} */
     readonly uuid: string;
-    /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [adapter]{@link GPURenderer#adapter} and [device]{@link GPURenderer#device} have been successfully created */
+    /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [context]{@link GPURenderer#context} has been successfully configured */
     ready: boolean;
     /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
     deviceManager: GPUDeviceManager;
@@ -359,14 +359,6 @@ export declare class GPURenderer {
      */
     setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture | null): GPUTexture;
     /**
-     * Function to run just before our [command encoder]{@link GPUCommandEncoder} is created at each [render]{@link GPURenderer#render} call
-     */
-    onBeforeCommandEncoder(): void;
-    /**
-     * Function to run just after our [command encoder]{@link GPUCommandEncoder} has been submitted at each [render]{@link GPURenderer#render} call
-     */
-    onAfterCommandEncoder(): void;
-    /**
      * Render a single [Compute pass]{@link ComputePass}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      * @param computePass - [Compute pass]{@link ComputePass}
@@ -384,13 +376,19 @@ export declare class GPURenderer {
      */
     renderOnce(objects: Array<MeshType | ComputePass>): void;
     /**
-     * Render our [scene]{@link Scene}
+     * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
      */
-    renderScene(): void;
+    onBeforeCommandEncoder(): void;
     /**
-     * Called at each draw call to create a [command encoder]{@link GPUCommandEncoder}, render our scene and its content and handle our [textures queue]{@link GPURenderer#texturesQueue}
+     * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} after the {@link GPUCommandEncoder} has been created.
+     * Used to handle our [textures queue]{@link GPURenderer#texturesQueue}
      */
-    render(): void;
+    onAfterCommandEncoder(): void;
+    /**
+     * Called at each draw call to render our scene and its content
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     */
+    render(commandEncoder: GPUCommandEncoder): void;
     /**
      * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
      */
