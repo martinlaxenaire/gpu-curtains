@@ -109,6 +109,20 @@ export class Scene {
     }
   }
 
+  getRenderPassEntryLength(renderPassEntry: RenderPassEntry): number {
+    if (!renderPassEntry) {
+      return 0
+    } else {
+      return renderPassEntry.element
+        ? 1
+        : 0 +
+            renderPassEntry.stack.unProjected.opaque.length +
+            renderPassEntry.stack.unProjected.transparent.length +
+            renderPassEntry.stack.projected.opaque.length +
+            renderPassEntry.stack.projected.transparent.length
+    }
+  }
+
   /**
    * Add a [compute pass]{@link ComputePass} to our scene [computePassEntries array]{@link Scene#computePassEntries}
    * @param computePass - [compute pass]{@link ComputePass} to add
@@ -429,14 +443,7 @@ export class Scene {
 
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         // early bail if there's nothing to draw
-        if (
-          !renderPassEntry.element &&
-          !renderPassEntry.stack.unProjected.opaque.length &&
-          !renderPassEntry.stack.unProjected.transparent.length &&
-          !renderPassEntry.stack.projected.opaque.length &&
-          !renderPassEntry.stack.projected.transparent.length
-        )
-          return
+        if (!this.getRenderPassEntryLength(renderPassEntry)) return
 
         // if we're drawing to screen and it's not our first pass, load result from previous passes
         // post processing scene pass will clear content inside onBeforeRenderPass anyway

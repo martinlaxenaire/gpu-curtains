@@ -30,6 +30,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   for (let i = 0; i < gpuCurtains.renderers.length; i++) {
     const mesh = new Mesh(gpuCurtains.renderers[i], {
+      label: 'Mesh ' + i,
       geometry: new BoxGeometry(),
       shaders: {
         fragment: {
@@ -45,6 +46,25 @@ window.addEventListener('DOMContentLoaded', async () => {
       mesh.rotation.y += 0.01
       mesh.rotation.z += 0.01
     })
+
+    mesh.userData.currentRendererIndex = i
+
+    const meshRendererButton = document.createElement('button')
+    meshRendererButton.textContent = 'Change Mesh ' + i + ' renderer'
+    meshRendererButton.classList.add('primary-button')
+
+    meshRendererButton.addEventListener('click', () => {
+      if (mesh.userData.currentRendererIndex < gpuCurtains.renderers.length - 1) {
+        mesh.userData.currentRendererIndex++
+      } else {
+        mesh.userData.currentRendererIndex = 0
+      }
+
+      mesh.setRenderer(gpuCurtains.renderers[mesh.userData.currentRendererIndex])
+    })
+
+    const buttonsWrapper = document.querySelector('#buttons')
+    buttonsWrapper?.appendChild(meshRendererButton)
   }
 
   // lose/restore context

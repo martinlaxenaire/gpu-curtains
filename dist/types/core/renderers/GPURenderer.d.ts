@@ -53,8 +53,6 @@ export declare class GPURenderer {
     type: string;
     /** The universal unique id of this {@link GPURenderer} */
     readonly uuid: string;
-    /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [context]{@link GPURenderer#context} has been successfully configured */
-    ready: boolean;
     /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
     deviceManager: GPUDeviceManager;
     /** [canvas]{@link HTMLCanvasElement} onto everything is drawn */
@@ -306,6 +304,13 @@ export declare class GPURenderer {
      * @param sampler - [sampler]{@link Sampler} to remove
      */
     removeSampler(sampler: Sampler): void;
+    /**
+     * Set different tasks queue managers to execute callbacks at different phases of our render call:
+     * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder
+     * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}
+     * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}
+     * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder
+     */
     setTasksQueues(): void;
     /**
      * Set all objects arrays that we'll keep track of
@@ -321,6 +326,11 @@ export declare class GPURenderer {
      * @readonly
      */
     get deviceObjects(): SceneObject[];
+    /**
+     * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
+     * @readonly
+     */
+    get ready(): boolean;
     /**
      * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
@@ -375,6 +385,11 @@ export declare class GPURenderer {
      * @param objects - Array of [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass} to render
      */
     renderOnce(objects: Array<MeshType | ComputePass>): void;
+    /**
+     * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options#clearValue} by rendering and empty pass.
+     * @param commandEncoder
+     */
+    forceClear(commandEncoder?: GPUCommandEncoder): void;
     /**
      * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
      */

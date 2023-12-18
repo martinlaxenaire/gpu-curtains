@@ -5,6 +5,7 @@ import { Texture } from '../textures/Texture';
 import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture';
 import { ExternalTextureParams, TextureParams } from '../../types/Textures';
 import { RenderTarget } from '../renderPasses/RenderTarget';
+import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { Material } from '../materials/Material';
 import { DOMElementBoundingRect } from '../DOM/DOMElement';
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials';
@@ -141,6 +142,11 @@ export declare class MeshBaseClass {
      * Remove a Mesh from the renderer and the {@link Scene}
      */
     removeFromScene(): void;
+    /**
+     * Set a new {@link Renderer} for this {@link MeshBase}
+     * @param renderer - new {@link Renderer} to set
+     */
+    setRenderer(renderer: Renderer | GPUCurtains): void;
     /**
      * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}

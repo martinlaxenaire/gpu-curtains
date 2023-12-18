@@ -5722,6 +5722,25 @@ function MeshBaseMixin(Base) {
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
     }
     /**
+     * Set a new {@link Renderer} for this {@link MeshBase}
+     * @param renderer - new {@link Renderer} to set
+     */
+    setRenderer(renderer) {
+      renderer = renderer && renderer.renderer || renderer;
+      const oldRenderer = this.renderer;
+      this.removeFromScene();
+      this.renderer = renderer;
+      this.addToScene();
+      if (!oldRenderer.meshes.length) {
+        oldRenderer.onBeforeRenderScene.add(
+          (commandEncoder) => {
+            oldRenderer.forceClear(commandEncoder);
+          },
+          { once: true }
+        );
+      }
+    }
+    /**
      * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
      */
@@ -8015,6 +8034,13 @@ class Scene {
       ]
     };
   }
+  getRenderPassEntryLength(renderPassEntry) {
+    if (!renderPassEntry) {
+      return 0;
+    } else {
+      return renderPassEntry.element ? 1 : 0 + renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
+    }
+  }
   /**
    * Add a [compute pass]{@link ComputePass} to our scene [computePassEntries array]{@link Scene#computePassEntries}
    * @param computePass - [compute pass]{@link ComputePass} to add
@@ -8275,7 +8301,7 @@ class Scene {
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-        if (!renderPassEntry.element && !renderPassEntry.stack.unProjected.opaque.length && !renderPassEntry.stack.unProjected.transparent.length && !renderPassEntry.stack.projected.opaque.length && !renderPassEntry.stack.projected.transparent.length)
+        if (!this.getRenderPassEntryLength(renderPassEntry))
           return;
         renderPassEntry.renderPass.setLoadOp(
           renderPassEntryType === "screen" && passDrawnCount !== 0 ? "load" : "clear"
@@ -8508,7 +8534,6 @@ class GPURenderer {
     };
     this.type = "GPURenderer";
     this.uuid = generateUUID();
-    this.ready = false;
     this.deviceManager = deviceManager;
     this.deviceManager.addRenderer(this);
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
@@ -8657,7 +8682,6 @@ class GPURenderer {
       this.configureContext();
       this.setMainRenderPass();
       this.setScene();
-      this.ready = true;
     }
   }
   /**
@@ -8665,7 +8689,6 @@ class GPURenderer {
    * Force all our scene objects to lose context.
    */
   loseContext() {
-    this.ready = false;
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
   }
   /**
@@ -8677,7 +8700,6 @@ class GPURenderer {
     this.configureContext();
     this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
     this.onResize();
-    this.ready = true;
   }
   /* PIPELINES, SCENE & MAIN RENDER PASS */
   /**
@@ -8694,6 +8716,7 @@ class GPURenderer {
    */
   setScene() {
     this.scene = new Scene({ renderer: this });
+    console.log(this.scene);
   }
   /* BUFFERS & BINDINGS */
   /**
@@ -8942,6 +8965,13 @@ class GPURenderer {
     this.deviceManager.removeSampler(sampler);
   }
   /* OBJECTS & TASKS */
+  /**
+   * Set different tasks queue managers to execute callbacks at different phases of our render call:
+   * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder
+   * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}
+   * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}
+   * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder
+   */
   setTasksQueues() {
     this.onBeforeCommandEncoderCreation = new TasksQueueManager();
     this.onBeforeRenderScene = new TasksQueueManager();
@@ -8972,6 +9002,13 @@ class GPURenderer {
    */
   get deviceObjects() {
     return this.deviceManager.deviceObjects;
+  }
+  /**
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
+   * @readonly
+   */
+  get ready() {
+    return this.deviceManager.ready;
   }
   /**
    * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
@@ -9093,6 +9130,24 @@ class GPURenderer {
     const commandBuffer = commandEncoder.finish();
     (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
     this.pipelineManager.resetCurrentPipeline();
+  }
+  /**
+   * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options#clearValue} by rendering and empty pass.
+   * @param commandEncoder
+   */
+  forceClear(commandEncoder) {
+    var _a, _b;
+    const hasCommandEncoder = !!commandEncoder;
+    if (!hasCommandEncoder) {
+      commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: "Force clear command encoder" });
+    }
+    this.setRenderPassCurrentTexture(this.renderPass);
+    const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
+    pass.end();
+    if (!hasCommandEncoder) {
+      const commandBuffer = commandEncoder.finish();
+      (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
+    }
   }
   /**
    * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created

@@ -62,8 +62,6 @@ export class GPURenderer {
   type: string
   /** The universal unique id of this {@link GPURenderer} */
   readonly uuid: string
-  /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [context]{@link GPURenderer#context} has been successfully configured */
-  ready: boolean
 
   /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
   deviceManager: GPUDeviceManager
@@ -147,7 +145,6 @@ export class GPURenderer {
   }: GPURendererParams) {
     this.type = 'GPURenderer'
     this.uuid = generateUUID()
-    this.ready = false
 
     this.deviceManager = deviceManager
     this.deviceManager.addRenderer(this)
@@ -335,9 +332,6 @@ export class GPURenderer {
 
       this.setMainRenderPass()
       this.setScene()
-
-      // ready to start
-      this.ready = true
     }
   }
 
@@ -346,8 +340,6 @@ export class GPURenderer {
    * Force all our scene objects to lose context.
    */
   loseContext() {
-    this.ready = false
-
     // force all our scene objects to lose context
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext())
   }
@@ -365,9 +357,6 @@ export class GPURenderer {
 
     // force renderer resize to resize all our render passes textures
     this.onResize()
-
-    // we're ready again!
-    this.ready = true
   }
 
   /* PIPELINES, SCENE & MAIN RENDER PASS */
@@ -670,6 +659,13 @@ export class GPURenderer {
 
   /* OBJECTS & TASKS */
 
+  /**
+   * Set different tasks queue managers to execute callbacks at different phases of our render call:
+   * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder
+   * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}
+   * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}
+   * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder
+   */
   setTasksQueues() {
     // TODO
     this.onBeforeCommandEncoderCreation = new TasksQueueManager()
@@ -705,6 +701,14 @@ export class GPURenderer {
    */
   get deviceObjects(): SceneObject[] {
     return this.deviceManager.deviceObjects
+  }
+
+  /**
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
+   * @readonly
+   */
+  get ready(): boolean {
+    return this.deviceManager.ready
   }
 
   /**
@@ -846,6 +850,28 @@ export class GPURenderer {
     this.device?.queue.submit([commandBuffer])
 
     this.pipelineManager.resetCurrentPipeline()
+  }
+
+  /**
+   * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options#clearValue} by rendering and empty pass.
+   * @param commandEncoder
+   */
+  forceClear(commandEncoder?: GPUCommandEncoder) {
+    // if there's no command encoder provided, we'll have to create one and submit it after the copy process
+    const hasCommandEncoder = !!commandEncoder
+
+    if (!hasCommandEncoder) {
+      commandEncoder = this.device?.createCommandEncoder({ label: 'Force clear command encoder' })
+    }
+
+    this.setRenderPassCurrentTexture(this.renderPass)
+    const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
+    pass.end()
+
+    if (!hasCommandEncoder) {
+      const commandBuffer = commandEncoder.finish()
+      this.device?.queue.submit([commandBuffer])
+    }
   }
 
   /**

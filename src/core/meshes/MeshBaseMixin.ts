@@ -1,5 +1,5 @@
 import { generateUUID, throwWarning } from '../../utils/utils'
-import { isRenderer, Renderer } from '../renderers/utils'
+import { CameraRenderer, isRenderer, Renderer } from '../renderers/utils'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
 import { Geometry } from '../geometries/Geometry'
@@ -188,6 +188,12 @@ export declare class MeshBaseClass {
    * Remove a Mesh from the renderer and the {@link Scene}
    */
   removeFromScene(): void
+
+  /**
+   * Set a new {@link Renderer} for this {@link MeshBase}
+   * @param renderer - new {@link Renderer} to set
+   */
+  setRenderer(renderer: Renderer | GPUCurtains): void
 
   /**
    * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
@@ -565,6 +571,32 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       }
 
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
+    }
+
+    /**
+     * Set a new {@link Renderer} for this {@link MeshBase}
+     * @param renderer - new {@link Renderer} to set
+     */
+    setRenderer(renderer: Renderer | GPUCurtains) {
+      // we could pass our curtains object OR our curtains renderer object
+      renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
+      // TODO isRenderer check?
+
+      const oldRenderer = this.renderer
+      this.removeFromScene()
+      this.renderer = renderer
+      this.addToScene()
+
+      // if old renderer does not contain any meshes any more
+      // clear it
+      if (!oldRenderer.meshes.length) {
+        oldRenderer.onBeforeRenderScene.add(
+          (commandEncoder) => {
+            oldRenderer.forceClear(commandEncoder)
+          },
+          { once: true }
+        )
+      }
     }
 
     /**

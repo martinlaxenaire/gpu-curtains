@@ -65,6 +65,7 @@ export declare class Scene {
     constructor({ renderer }: {
         renderer: Renderer | GPUCurtains;
     });
+    getRenderPassEntryLength(renderPassEntry: RenderPassEntry): number;
     /**
      * Add a [compute pass]{@link ComputePass} to our scene [computePassEntries array]{@link Scene#computePassEntries}
      * @param computePass - [compute pass]{@link ComputePass} to add
