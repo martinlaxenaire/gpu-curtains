@@ -440,14 +440,6 @@ export class ComputePass {
   }
 
   /**
-   * Check whether we're currently accessing one of the {@link ComputeMaterial} buffer and therefore can't render our compute pass
-   * @readonly
-   */
-  get canRender(): boolean {
-    return this.material ? !this.material.hasMappedBuffer : false
-  }
-
-  /**
    * Copy the result of our read/write GPUBuffer into our result binding array
    * @param commandEncoder - current GPU command encoder
    */

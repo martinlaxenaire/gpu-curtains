@@ -4377,19 +4377,6 @@ class ComputeMaterial extends Material {
   getAddedShaderCode(shaderType = "compute") {
     return super.getAddedShaderCode(shaderType);
   }
-  /* BIND GROUPS */
-  /**
-   * Check whether we're currently accessing one of the buffer and therefore can't render our material
-   * @readonly
-   */
-  get hasMappedBuffer() {
-    const hasMappedBuffer = this.bindGroups.some((bindGroup) => {
-      return bindGroup.bindings.some(
-        (bindingBuffer) => bindingBuffer.resultBuffer && bindingBuffer.resultBuffer.mapState !== "unmapped"
-      );
-    });
-    return !!hasMappedBuffer;
-  }
   /* RENDER */
   /**
    * If we defined a custom render function instead of the default one, register the callback
@@ -4426,7 +4413,7 @@ class ComputeMaterial extends Material {
   copyBufferToResult(commandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
       bindGroup.bufferBindings.forEach((binding) => {
-        if (binding.shouldCopyResult) {
+        if (binding.shouldCopyResult && binding.resultBuffer.mapState === "unmapped") {
           commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size);
         }
       });
@@ -4444,7 +4431,7 @@ class ComputeMaterial extends Material {
     bufferElementName = ""
   }) {
     const binding = this.getBufferBindingByName(bindingName);
-    if (binding && "resultBuffer" in binding) {
+    if (binding && "resultBuffer" in binding && binding.resultBuffer.mapState === "unmapped") {
       const result = await this.getBufferResult(binding.resultBuffer);
       if (bufferElementName) {
         return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName });
@@ -4762,13 +4749,6 @@ class ComputePass {
       return;
     this.onRenderPass(pass);
     this.onAfterRenderPass();
-  }
-  /**
-   * Check whether we're currently accessing one of the {@link ComputeMaterial} buffer and therefore can't render our compute pass
-   * @readonly
-   */
-  get canRender() {
-    return this.material ? !this.material.hasMappedBuffer : false;
   }
   /**
    * Copy the result of our read/write GPUBuffer into our result binding array
@@ -5727,6 +5707,12 @@ function MeshBaseMixin(Base) {
      */
     setRenderer(renderer) {
       renderer = renderer && renderer.renderer || renderer;
+      if (!renderer || !(renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer")) {
+        throwWarning(
+          `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
+        );
+        return;
+      }
       const oldRenderer = this.renderer;
       this.removeFromScene();
       this.renderer = renderer;
@@ -8290,8 +8276,6 @@ class Scene {
    */
   render(commandEncoder) {
     this.computePassEntries.forEach((computePass) => {
-      if (!computePass.canRender)
-        return;
       const pass = commandEncoder.beginComputePass();
       computePass.render(pass);
       pass.end();
@@ -8716,7 +8700,6 @@ class GPURenderer {
    */
   setScene() {
     this.scene = new Scene({ renderer: this });
-    console.log(this.scene);
   }
   /* BUFFERS & BINDINGS */
   /**
@@ -8771,6 +8754,14 @@ class GPURenderer {
         size: srcBuffer.size,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
       });
+    }
+    if (srcBuffer.mapState !== "unmapped") {
+      throwWarning(`${this.type}: Cannot copy from ${srcBuffer} because it is currently mapped`);
+      return;
+    }
+    if (dstBuffer.mapState !== "unmapped") {
+      throwWarning(`${this.type}: Cannot copy from ${dstBuffer} because it is currently mapped`);
+      return;
     }
     const hasCommandEncoder = !!commandEncoder;
     if (!hasCommandEncoder) {
@@ -9093,8 +9084,6 @@ class GPURenderer {
    * @param computePass - [Compute pass]{@link ComputePass}
    */
   renderSingleComputePass(commandEncoder, computePass) {
-    if (!computePass.canRender)
-      return;
     const pass = commandEncoder.beginComputePass();
     computePass.render(pass);
     pass.end();

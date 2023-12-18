@@ -137,24 +137,6 @@ export class ComputeMaterial extends Material {
     return super.getAddedShaderCode(shaderType)
   }
 
-  /* BIND GROUPS */
-
-  /**
-   * Check whether we're currently accessing one of the buffer and therefore can't render our material
-   * @readonly
-   */
-  get hasMappedBuffer(): boolean {
-    // check if we have a buffer mapped or pending map
-    const hasMappedBuffer = this.bindGroups.some((bindGroup) => {
-      return bindGroup.bindings.some(
-        (bindingBuffer: WritableBufferBinding) =>
-          bindingBuffer.resultBuffer && bindingBuffer.resultBuffer.mapState !== 'unmapped'
-      )
-    })
-
-    return !!hasMappedBuffer
-  }
-
   /* RENDER */
 
   /**
@@ -203,7 +185,7 @@ export class ComputeMaterial extends Material {
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     this.bindGroups.forEach((bindGroup) => {
       bindGroup.bufferBindings.forEach((binding: WritableBufferBinding) => {
-        if (binding.shouldCopyResult) {
+        if (binding.shouldCopyResult && binding.resultBuffer.mapState === 'unmapped') {
           commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
         }
       })
@@ -226,7 +208,7 @@ export class ComputeMaterial extends Material {
   }): Promise<Float32Array> {
     const binding = this.getBufferBindingByName(bindingName)
 
-    if (binding && 'resultBuffer' in binding) {
+    if (binding && 'resultBuffer' in binding && binding.resultBuffer.mapState === 'unmapped') {
       const result = await this.getBufferResult(binding.resultBuffer)
 
       if (bufferElementName) {

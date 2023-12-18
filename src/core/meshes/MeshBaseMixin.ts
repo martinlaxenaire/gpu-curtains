@@ -1,4 +1,4 @@
-import { generateUUID, throwWarning } from '../../utils/utils'
+import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 import { CameraRenderer, isRenderer, Renderer } from '../renderers/utils'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
@@ -580,7 +580,20 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     setRenderer(renderer: Renderer | GPUCurtains) {
       // we could pass our curtains object OR our curtains renderer object
       renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-      // TODO isRenderer check?
+
+      if (
+        !renderer ||
+        !(
+          renderer.type === 'GPURenderer' ||
+          renderer.type === 'GPUCameraRenderer' ||
+          renderer.type === 'GPUCurtainsRenderer'
+        )
+      ) {
+        throwWarning(
+          `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
+        )
+        return
+      }
 
       const oldRenderer = this.renderer
       this.removeFromScene()

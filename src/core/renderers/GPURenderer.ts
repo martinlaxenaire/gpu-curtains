@@ -439,6 +439,15 @@ export class GPURenderer {
       })
     }
 
+    if (srcBuffer.mapState !== 'unmapped') {
+      throwWarning(`${this.type}: Cannot copy from ${srcBuffer} because it is currently mapped`)
+      return
+    }
+    if (dstBuffer.mapState !== 'unmapped') {
+      throwWarning(`${this.type}: Cannot copy from ${dstBuffer} because it is currently mapped`)
+      return
+    }
+
     // if there's no command encoder provided, we'll have to create one and submit it after the copy process
     const hasCommandEncoder = !!commandEncoder
 
@@ -807,8 +816,6 @@ export class GPURenderer {
    * @param computePass - [Compute pass]{@link ComputePass}
    */
   renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass) {
-    if (!computePass.canRender) return
-
     const pass = commandEncoder.beginComputePass()
     computePass.render(pass)
     pass.end()
