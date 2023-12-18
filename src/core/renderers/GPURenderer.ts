@@ -696,7 +696,6 @@ export class GPURenderer {
    * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder
    */
   setTasksQueues() {
-    // TODO
     this.onBeforeCommandEncoderCreation = new TasksQueueManager()
     this.onBeforeRenderScene = new TasksQueueManager()
     this.onAfterRenderScene = new TasksQueueManager()
@@ -735,7 +734,7 @@ export class GPURenderer {
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
         ...object.material.clonedBindGroups,
-      ].filter((bG) => bG.uuid === bindGroup.uuid)
+      ].some((bG) => bG.uuid === bindGroup.uuid)
     })
   }
 
@@ -746,7 +745,7 @@ export class GPURenderer {
    */
   getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
     return this.deviceObjects.filter((object) => {
-      return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid)
+      return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid)
     })
   }
 
@@ -949,11 +948,10 @@ export class GPURenderer {
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
 
-    //this.textures.forEach((texture) => texture.destroy())
+    this.textures.forEach((texture) => texture.destroy())
     this.textures = []
     this.texturesQueue = []
 
-    this.device?.destroy()
     this.context?.unconfigure()
   }
 }

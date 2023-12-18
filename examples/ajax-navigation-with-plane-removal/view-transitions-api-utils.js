@@ -1,13 +1,12 @@
-const getPageContent = async (url) => {
+export const getPageContent = async (url) => {
   // This is a really scrappy way to do this.
   // Don't do this in production!
   const response = await fetch(url)
   const text = await response.text()
-  // Particularly as it uses regexp
-  return /<body[^>]*>([\w\W]*)<\/body>/.exec(text)[1]
+  return text
 }
 
-const isBackNavigation = (navigateEvent) => {
+export const isBackNavigation = (navigateEvent) => {
   if (navigateEvent.navigationType === 'push' || navigateEvent.navigationType === 'replace') {
     return false
   }
@@ -20,9 +19,8 @@ const isBackNavigation = (navigateEvent) => {
 // Intercept navigations
 // https://developer.chrome.com/docs/web-platform/navigation-api/
 // This is a naive usage of the navigation API, to keep things simple.
-const onLinkNavigate = async (callback) => {
+export const onLinkNavigate = async (callback) => {
   navigation.addEventListener('navigate', (event) => {
-    console.log(event)
     const toUrl = new URL(event.destination.url)
 
     if (location.origin !== toUrl.origin) return
@@ -44,7 +42,7 @@ const onLinkNavigate = async (callback) => {
   })
 }
 
-const getLink = (href) => {
+export const getLink = (href) => {
   const fullLink = new URL(href, location.href).href
 
   return [...document.querySelectorAll('a')].find((link) => link.href === fullLink)
@@ -53,7 +51,7 @@ const getLink = (href) => {
 // This helper function returns a View-Transition-like object, even for browsers that don't support view transitions.
 // It won't do the transition in unsupported browsers, it'll act as if the transition is skipped.
 // It also makes it easier to add class names to the document element.
-const transitionHelper = ({ skipTransition = false, classNames = '', updateDOM }) => {
+export const transitionHelper = ({ skipTransition = false, classNames = '', updateDOM }) => {
   if (skipTransition || !document.startViewTransition) {
     const updateCallbackDone = Promise.resolve(updateDOM()).then(() => undefined)
 

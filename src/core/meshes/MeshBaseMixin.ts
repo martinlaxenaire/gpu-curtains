@@ -1042,6 +1042,17 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     remove() {
       this.removeFromScene()
       this.destroy()
+
+      // if old renderer does not contain any meshes any more
+      // clear it
+      if (!this.renderer.meshes.length) {
+        this.renderer.onBeforeRenderScene.add(
+          (commandEncoder) => {
+            this.renderer.forceClear(commandEncoder)
+          },
+          { once: true }
+        )
+      }
     }
 
     /**

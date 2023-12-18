@@ -2472,10 +2472,12 @@ class BindGroup {
       if ("buffer" in binding) {
         this.renderer.removeBuffer(binding.buffer);
         (_a = binding.buffer) == null ? void 0 : _a.destroy();
+        binding.buffer = null;
       }
       if ("resultBuffer" in binding) {
         this.renderer.removeBuffer(binding.resultBuffer);
         (_b = binding.resultBuffer) == null ? void 0 : _b.destroy();
+        binding.resultBuffer = null;
       }
     });
     this.bindings = [];
@@ -2741,7 +2743,8 @@ const defaultTextureParams = {
   // default to black
   useExternalTextures: true,
   fromTexture: null,
-  viewDimension: "2d"
+  viewDimension: "2d",
+  cache: true
 };
 class Texture extends Object3D {
   /**
@@ -3189,9 +3192,11 @@ class Texture extends Object3D {
         }
       );
     }
-    this.renderer.removeTexture(this);
-    (_a = this.texture) == null ? void 0 : _a.destroy();
-    this.texture = null;
+    if (!this.options.cache || !this.renderer.device) {
+      this.renderer.removeTexture(this);
+      (_a = this.texture) == null ? void 0 : _a.destroy();
+      this.texture = null;
+    }
   }
 }
 _parentRatio = new WeakMap();
@@ -4150,7 +4155,7 @@ class Material {
    */
   destroyTexture(texture) {
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
-    const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.find((object) => object.material.uuid !== this.uuid);
+    const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
     if (shouldDestroy) {
       texture.destroy();
     }
@@ -5016,7 +5021,7 @@ class Geometry {
    * @readonly
    */
   get shouldCompute() {
-    return !this.vertexBuffers[0].array;
+    return this.vertexBuffers.length && !this.vertexBuffers[0].array;
   }
   /**
    * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
@@ -5233,8 +5238,8 @@ class Geometry {
     this.vertexBuffers.forEach((vertexBuffer) => {
       var _a;
       (_a = vertexBuffer.buffer) == null ? void 0 : _a.destroy();
+      vertexBuffer.buffer = null;
     });
-    this.vertexBuffers = [];
   }
 }
 _setWGSLFragment = new WeakSet();
@@ -5313,7 +5318,7 @@ class IndexedGeometry extends Geometry {
     var _a, _b;
     super.destroy();
     (_b = (_a = this.indexBuffer) == null ? void 0 : _a.buffer) == null ? void 0 : _b.destroy();
-    this.indexBuffer = null;
+    this.indexBuffer.buffer = null;
   }
 }
 class PlaneGeometry extends IndexedGeometry {
@@ -6077,6 +6082,14 @@ function MeshBaseMixin(Base) {
     remove() {
       this.removeFromScene();
       this.destroy();
+      if (!this.renderer.meshes.length) {
+        this.renderer.onBeforeRenderScene.add(
+          (commandEncoder) => {
+            this.renderer.forceClear(commandEncoder);
+          },
+          { once: true }
+        );
+      }
     }
     /**
      * Destroy the Mesh
@@ -9019,7 +9032,7 @@ class GPURenderer {
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
         ...object.material.clonedBindGroups
-      ].filter((bG) => bG.uuid === bindGroup.uuid);
+      ].some((bG) => bG.uuid === bindGroup.uuid);
     });
   }
   /**
@@ -9029,7 +9042,7 @@ class GPURenderer {
    */
   getObjectsByTexture(texture) {
     return this.deviceObjects.filter((object) => {
-      return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid);
+      return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid);
     });
   }
   /* EVENTS */
@@ -9184,16 +9197,16 @@ class GPURenderer {
    * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
    */
   destroy() {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     (_a = this.domElement) == null ? void 0 : _a.destroy();
     (_b = this.documentBody) == null ? void 0 : _b.destroy();
     (_c = this.renderPass) == null ? void 0 : _c.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
+    this.textures.forEach((texture) => texture.destroy());
     this.textures = [];
     this.texturesQueue = [];
-    (_d = this.device) == null ? void 0 : _d.destroy();
-    (_e = this.context) == null ? void 0 : _e.unconfigure();
+    (_d = this.context) == null ? void 0 : _d.unconfigure();
   }
 }
 class GPUCameraRenderer extends GPURenderer {
@@ -9584,6 +9597,7 @@ class GPUDeviceManager {
   destroy() {
     var _a;
     (_a = this.device) == null ? void 0 : _a.destroy();
+    this.device = null;
     this.renderers.forEach((renderer) => renderer.destroy());
     this.buffers.forEach((buffer) => buffer == null ? void 0 : buffer.destroy());
     this.renderers = [];

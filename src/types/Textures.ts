@@ -40,6 +40,8 @@ export interface TextureBaseParams extends ExternalTextureParams {
 export interface TextureParams extends TextureBaseParams {
   /** Optional {@link Texture} to use as a copy source input */
   fromTexture?: Texture | null
+  /** Whether to keep the [texture]{@link Texture#texture} in the [renderer]{@link GPURenderer} cache when a {@link Material} destroys it */
+  cache?: boolean
 }
 
 /** Allowed [texture]{@link Texture} source to use */

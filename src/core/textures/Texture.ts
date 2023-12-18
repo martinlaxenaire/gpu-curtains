@@ -21,6 +21,7 @@ const defaultTextureParams: TextureParams = {
   useExternalTextures: true,
   fromTexture: null,
   viewDimension: '2d',
+  cache: true,
 }
 
 /**
@@ -697,10 +698,11 @@ export class Texture extends Object3D {
       )
     }
 
-    this.renderer.removeTexture(this)
+    if (!this.options.cache || !this.renderer.device) {
+      this.renderer.removeTexture(this)
 
-    this.texture?.destroy()
-
-    this.texture = null
+      this.texture?.destroy()
+      this.texture = null
+    }
   }
 }

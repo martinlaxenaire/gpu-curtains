@@ -456,11 +456,13 @@ export class BindGroup {
       if ('buffer' in binding) {
         this.renderer.removeBuffer(binding.buffer)
         binding.buffer?.destroy()
+        binding.buffer = null
       }
 
       if ('resultBuffer' in binding) {
         this.renderer.removeBuffer(binding.resultBuffer)
         binding.resultBuffer?.destroy()
+        binding.resultBuffer = null
       }
     })
 

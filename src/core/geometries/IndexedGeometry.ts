@@ -108,6 +108,6 @@ export class IndexedGeometry extends Geometry {
     super.destroy()
 
     this.indexBuffer?.buffer?.destroy()
-    this.indexBuffer = null
+    this.indexBuffer.buffer = null
   }
 }

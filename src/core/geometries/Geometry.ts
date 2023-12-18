@@ -86,7 +86,7 @@ export class Geometry {
    * @readonly
    */
   get shouldCompute(): boolean {
-    return !this.vertexBuffers[0].array
+    return this.vertexBuffers.length && !this.vertexBuffers[0].array
   }
 
   /**
@@ -357,9 +357,7 @@ export class Geometry {
   destroy() {
     this.vertexBuffers.forEach((vertexBuffer) => {
       vertexBuffer.buffer?.destroy()
+      vertexBuffer.buffer = null
     })
-
-    // explicitly free the memory from potentially big arrays
-    this.vertexBuffers = []
   }
 }

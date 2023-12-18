@@ -276,6 +276,7 @@ export class GPUDeviceManager {
    */
   destroy() {
     this.device?.destroy()
+    this.device = null
 
     this.renderers.forEach((renderer) => renderer.destroy())
     this.buffers.forEach((buffer) => buffer?.destroy())

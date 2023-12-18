@@ -520,7 +520,7 @@ export class Material {
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture)
 
     const shouldDestroy =
-      !objectsUsingTexture || !objectsUsingTexture.find((object) => object.material.uuid !== this.uuid)
+      !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid)
 
     if (shouldDestroy) {
       texture.destroy()
