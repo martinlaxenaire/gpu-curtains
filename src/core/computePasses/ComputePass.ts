@@ -145,7 +145,6 @@ export class ComputePass {
 
     this.ready = false
 
-    // TODO samplers?
     this.setComputeMaterial({
       label: this.options.label,
       shaders: this.options.shaders,

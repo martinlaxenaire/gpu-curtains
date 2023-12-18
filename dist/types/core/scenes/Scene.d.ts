@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
-import { MeshType } from '../renderers/GPURenderer';
+import { ProjectedMesh, RenderedMesh } from '../renderers/GPURenderer';
 import { ShaderPass } from '../renderPasses/ShaderPass';
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane';
 import { ComputePass } from '../computePasses/ComputePass';
@@ -13,9 +13,9 @@ import { RenderTexture } from '../textures/RenderTexture';
  */
 export interface ProjectionStack {
     /** opaque Meshes will be drawn first */
-    opaque: MeshType[];
+    opaque: ProjectedMesh[];
     /** transparent Meshes will be drawn last */
-    transparent: MeshType[];
+    transparent: ProjectedMesh[];
 }
 /** Meshes will be stacked in 2 different objects whether they are projected (use a {@link Camera}) or not */
 export type ProjectionType = 'unProjected' | 'projected';
@@ -36,7 +36,7 @@ export interface RenderPassEntry {
     /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy */
     onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null;
     /** If this {@link RenderPassEntry} needs to render only one Mesh */
-    element: MeshType | ShaderPass | PingPongPlane | null;
+    element: RenderedMesh | null;
     /** If this {@link RenderPassEntry} needs to render multiple Meshes, then use a {@link Stack} object */
     stack: Stack | null;
 }
@@ -92,18 +92,18 @@ export declare class Scene {
      * @param mesh - Mesh to check
      * @returns - the corresponding [render pass entry stack]{@link Stack}
      */
-    getMeshProjectionStack(mesh: MeshType): ProjectionStack;
+    getMeshProjectionStack(mesh: ProjectedMesh): ProjectionStack;
     /**
      * Add a Mesh to the correct [render pass entry]{@link Scene#renderPassEntries} [stack]{@link Stack} array.
      * Meshes are then ordered by their [indexes (order of creation]){@link MeshBase#index}, position along the Z axis in case they are transparent and then [renderOrder]{@link MeshBase#renderOrder}
      * @param mesh - Mesh to add
      */
-    addMesh(mesh: MeshType): void;
+    addMesh(mesh: ProjectedMesh): void;
     /**
      * Remove a Mesh from our {@link Scene}
      * @param mesh - Mesh to remove
      */
-    removeMesh(mesh: MeshType): void;
+    removeMesh(mesh: ProjectedMesh): void;
     /**
      * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
      * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}

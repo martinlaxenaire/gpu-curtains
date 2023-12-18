@@ -7,7 +7,7 @@ import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
 import { ExternalTextureParams, TextureParams, TextureParent } from '../../types/Textures'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { MeshType } from '../renderers/GPURenderer'
+import { ProjectedMesh } from '../renderers/GPURenderer'
 import { Material } from '../materials/Material'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
@@ -555,10 +555,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Add a Mesh to the renderer and the {@link Scene}
      */
     addToScene() {
-      this.renderer.meshes.push(this as unknown as MeshType)
+      this.renderer.meshes.push(this as unknown as ProjectedMesh)
 
       if (this.#autoRender) {
-        this.renderer.scene.addMesh(this as unknown as MeshType)
+        this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
       }
     }
 
@@ -567,7 +567,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     removeFromScene() {
       if (this.#autoRender) {
-        this.renderer.scene.removeMesh(this as unknown as MeshType)
+        this.renderer.scene.removeMesh(this as unknown as ProjectedMesh)
       }
 
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
@@ -1054,7 +1054,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         super.destroy()
       }
 
-      // TODO destroy anything else?
       this.material?.destroy()
       this.geometry?.destroy()
     }

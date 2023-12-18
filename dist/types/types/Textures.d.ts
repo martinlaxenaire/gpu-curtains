@@ -2,7 +2,7 @@
 import { Texture } from '../core/textures/Texture';
 import { ShaderPass } from '../core/renderPasses/ShaderPass';
 import { FullscreenPlane } from '../core/meshes/FullscreenPlane';
-import { DOMMeshType } from '../core/renderers/GPURenderer';
+import { DOMProjectedMesh } from '../core/renderers/GPURenderer';
 import { Mesh } from '../core/meshes/Mesh';
 import { PingPongPlane } from '../curtains/meshes/PingPongPlane';
 import { RectSize } from '../core/DOM/DOMElement';
@@ -62,4 +62,4 @@ export interface TextureSize extends RectSize {
 /**
  * Allowed [texture]{@link Texture} parent (can be any type of Mesh)
  */
-export type TextureParent = null | Mesh | DOMMeshType | ShaderPass | FullscreenPlane | PingPongPlane;
+export type TextureParent = null | Mesh | DOMProjectedMesh | ShaderPass | FullscreenPlane | PingPongPlane;

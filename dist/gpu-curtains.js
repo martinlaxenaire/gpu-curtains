@@ -8114,7 +8114,9 @@ class Scene {
     similarMeshes.splice(siblingMeshIndex, 0, mesh);
     similarMeshes.sort((a, b) => a.index - b.index);
     if ((mesh instanceof DOMMesh || mesh instanceof Plane) && mesh.transparent) {
-      similarMeshes.sort((a, b) => b.documentPosition.z - a.documentPosition.z);
+      similarMeshes.sort(
+        (a, b) => b.documentPosition.z - a.documentPosition.z
+      );
     }
     similarMeshes.sort((a, b) => a.renderOrder - b.renderOrder);
     mesh.transparent ? projectionStack.transparent = similarMeshes : projectionStack.opaque = similarMeshes;
@@ -8505,7 +8507,6 @@ class GPURenderer {
     container,
     pixelRatio = 1,
     sampleCount = 4,
-    production = false,
     preferredFormat,
     alphaMode = "premultiplied"
   }) {
@@ -8522,7 +8523,6 @@ class GPURenderer {
     this.deviceManager.addRenderer(this);
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
     this.sampleCount = sampleCount;
-    this.production = production;
     this.alphaMode = alphaMode;
     this.preferredFormat = preferredFormat ?? ((_a = this.deviceManager.gpu) == null ? void 0 : _a.getPreferredCanvasFormat());
     this.setTasksQueues();
@@ -8624,6 +8624,20 @@ class GPURenderer {
     return this.deviceManager.device;
   }
   /**
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
+   * @readonly
+   */
+  get ready() {
+    return this.deviceManager.ready;
+  }
+  /**
+   * Get our [device manager production flag]{@link GPUDeviceManager#production}
+   * @readonly
+   */
+  get production() {
+    return this.deviceManager.production;
+  }
+  /**
    * Get all the created [samplers]{@link GPUDeviceManager#samplers}
    * @readonly
    */
@@ -8643,6 +8657,13 @@ class GPURenderer {
    */
   get pipelineManager() {
     return this.deviceManager.pipelineManager;
+  }
+  /**
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+   * @readonly
+   */
+  get deviceObjects() {
+    return this.deviceManager.deviceObjects;
   }
   /**
    * Configure our [context]{@link context} with the given options
@@ -8988,21 +9009,7 @@ class GPURenderer {
     return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes];
   }
   /**
-   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
-   * @readonly
-   */
-  get deviceObjects() {
-    return this.deviceManager.deviceObjects;
-  }
-  /**
-   * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
-   * @readonly
-   */
-  get ready() {
-    return this.deviceManager.ready;
-  }
-  /**
-   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
@@ -9016,7 +9023,7 @@ class GPURenderer {
     });
   }
   /**
-   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */
@@ -9090,9 +9097,9 @@ class GPURenderer {
     computePass.copyBufferToResult(commandEncoder);
   }
   /**
-   * Render a single [Mesh]{@link MeshType}
+   * Render a single [Mesh]{@link ProjectedMesh}
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - [Mesh]{@link MeshType} to render
+   * @param mesh - [Mesh]{@link ProjectedMesh} to render
    */
   renderSingleMesh(commandEncoder, mesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9100,8 +9107,8 @@ class GPURenderer {
     pass.end();
   }
   /**
-   * Render an array of objects (either [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
-   * @param objects - Array of [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass} to render
+   * Render an array of objects (either [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
+   * @param objects - Array of [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass} to render
    */
   renderOnce(objects) {
     var _a, _b;
@@ -9200,7 +9207,6 @@ class GPUCameraRenderer extends GPURenderer {
     pixelRatio = 1,
     sampleCount = 4,
     preferredFormat,
-    production = false,
     alphaMode = "premultiplied",
     camera = {}
   }) {
@@ -9210,8 +9216,7 @@ class GPUCameraRenderer extends GPURenderer {
       pixelRatio,
       sampleCount,
       preferredFormat,
-      alphaMode,
-      production
+      alphaMode
     });
     this.type = "GPUCameraRenderer";
     camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
@@ -9367,9 +9372,9 @@ class GPUCameraRenderer extends GPURenderer {
     (_b = this.cameraBindGroup) == null ? void 0 : _b.update();
   }
   /**
-   * Render a single [Mesh]{@link MeshType} (binds the camera bind group if needed)
+   * Render a single [Mesh]{@link ProjectedMesh} (binds the camera bind group if needed)
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - [Mesh]{@link MeshType} to render
+   * @param mesh - [Mesh]{@link ProjectedMesh} to render
    */
   renderSingleMesh(commandEncoder, mesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9405,6 +9410,7 @@ class GPUDeviceManager {
    */
   constructor({
     label,
+    production = false,
     onError = () => {
     },
     onDeviceLost = (info) => {
@@ -9412,6 +9418,7 @@ class GPUDeviceManager {
   }) {
     this.index = 0;
     this.label = label ?? "GPUDeviceManager instance";
+    this.production = production;
     this.ready = false;
     this.onError = onError;
     this.onDeviceLost = onDeviceLost;
@@ -9804,7 +9811,6 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
     sampleCount = 4,
     preferredFormat,
     alphaMode = "premultiplied",
-    production = false,
     camera
   }) {
     super({
@@ -9814,7 +9820,6 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
       sampleCount,
       preferredFormat,
       alphaMode,
-      production,
       camera
     });
     this.type = "GPUCurtainsRenderer";
@@ -9977,8 +9982,7 @@ class GPUCurtains {
       sampleCount: this.options.sampleCount,
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
-      camera: this.options.camera,
-      production: this.options.production
+      camera: this.options.camera
     });
   }
   /**
@@ -9988,8 +9992,6 @@ class GPUCurtains {
   patchRendererOptions(options) {
     if (options.pixelRatio === void 0)
       options.pixelRatio = this.options.pixelRatio;
-    if (options.production === void 0)
-      options.production = this.options.production;
     if (options.sampleCount === void 0)
       options.sampleCount = this.options.sampleCount;
     return options;
@@ -10024,6 +10026,7 @@ class GPUCurtains {
   setDeviceManager() {
     this.deviceManager = new GPUDeviceManager({
       label: "GPUCurtains default device",
+      production: this.options.production,
       onError: () => this._onErrorCallback && this._onErrorCallback(),
       onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
     });

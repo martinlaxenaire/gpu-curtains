@@ -121,7 +121,7 @@ export class PipelineEntry {
 
           switch (message.type) {
             case 'error':
-              // TODO mesh onError
+              // TODO mesh onError?
               console.error(`${this.options.label} compilation error:\n${formattedMessage}`)
               break
             case 'warning':

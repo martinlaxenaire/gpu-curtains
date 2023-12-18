@@ -1,4 +1,4 @@
-import { GPURenderer, GPURendererParams, MeshType } from './GPURenderer'
+import { GPURenderer, GPURendererParams, ProjectedMesh } from './GPURenderer'
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
@@ -35,7 +35,6 @@ export class GPUCameraRenderer extends GPURenderer {
     pixelRatio = 1,
     sampleCount = 4,
     preferredFormat,
-    production = false,
     alphaMode = 'premultiplied',
     camera = {},
   }: GPUCameraRendererParams) {
@@ -46,7 +45,6 @@ export class GPUCameraRenderer extends GPURenderer {
       sampleCount,
       preferredFormat,
       alphaMode,
-      production,
     })
 
     this.type = 'GPUCameraRenderer'
@@ -220,11 +218,11 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Render a single [Mesh]{@link MeshType} (binds the camera bind group if needed)
+   * Render a single [Mesh]{@link ProjectedMesh} (binds the camera bind group if needed)
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - [Mesh]{@link MeshType} to render
+   * @param mesh - [Mesh]{@link ProjectedMesh} to render
    */
-  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType) {
+  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: ProjectedMesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
 
     // bind camera if needed

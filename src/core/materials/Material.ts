@@ -116,8 +116,6 @@ export class Material {
     const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0
     const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength
 
-    // TODO cache bind groups and pipelines?
-    // https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change
     if (!bindGroupsReady) {
       this.createBindGroups()
     }

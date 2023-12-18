@@ -9,6 +9,8 @@ import { SceneObject } from './GPURenderer';
 export interface GPUDeviceManagerParams {
     /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
     label?: string;
+    /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
+    production?: boolean;
     /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter} or [device]{@link GPUDevice} */
     onError?: () => void;
     /** Callback to run whenever the [device]{@link GPUDeviceManagerParams#device} is lost */
@@ -24,6 +26,8 @@ export declare class GPUDeviceManager {
     index: number;
     /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
     label: string;
+    /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
+    production: boolean;
     /** The navigator {@link GPU} object */
     gpu: GPU | undefined;
     /** The WebGPU [adapter]{@link GPUAdapter} used */
@@ -50,7 +54,7 @@ export declare class GPUDeviceManager {
      * GPUDeviceManager constructor
      * @param parameters - [parameters]{@link GPUDeviceManagerParams} used to create this {@link GPUDeviceManager}
      */
-    constructor({ label, onError, onDeviceLost, }: GPUDeviceManagerParams);
+    constructor({ label, production, onError, onDeviceLost, }: GPUDeviceManagerParams);
     /**
      * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
      */

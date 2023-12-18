@@ -16,6 +16,7 @@ import { TasksQueueManager } from '../../utils/TasksQueueManager';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { RenderTexture } from '../textures/RenderTexture';
 import { GPUDeviceManager } from './GPUDeviceManager';
+import { FullscreenPlane } from '../meshes/FullscreenPlane';
 /**
  * Parameters used to create a {@link GPURenderer}
  */
@@ -28,16 +29,15 @@ export interface GPURendererParams {
     pixelRatio?: number;
     /** Whether to use multisampling, and if so its value */
     sampleCount?: GPUSize32;
-    /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
-    production?: boolean;
     /** Texture rendering [preferred format]{@link GPUTextureFormat} */
     preferredFormat?: GPUTextureFormat;
     /** Set the [context]{@link GPUCanvasContext} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
 }
-export type DOMMeshType = DOMMesh | Plane;
-export type MeshType = Mesh | DOMMeshType;
-export type SceneObject = MeshType | ComputePass | PingPongPlane | ShaderPass;
+export type DOMProjectedMesh = DOMMesh | Plane;
+export type ProjectedMesh = Mesh | DOMProjectedMesh;
+export type RenderedMesh = ProjectedMesh | PingPongPlane | ShaderPass | FullscreenPlane;
+export type SceneObject = RenderedMesh | ComputePass;
 /**
  * GPURenderer class:
  * Base renderer class, that could possibly used to render compute passes and draw meshes, even tho it is strongly advised to use the {@link GPUCurtainsRenderer} class instead.
@@ -75,8 +75,8 @@ export declare class GPURenderer {
     shaderPasses: ShaderPass[];
     /** An array containing all our created {@link RenderTarget} */
     renderTargets: RenderTarget[];
-    /** An array containing all our created [Meshes]{@link MeshType} */
-    meshes: MeshType[];
+    /** An array containing all our created [Meshes]{@link ProjectedMesh} */
+    meshes: ProjectedMesh[];
     /** An array containing all our created {@link Texture} */
     textures: Texture[];
     /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
@@ -85,8 +85,6 @@ export declare class GPURenderer {
     sampleCount: GPUSize32;
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
-    /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
-    production: boolean;
     /** [DOM Element]{@link DOMElement} that will contain our canvas */
     domElement: DOMElement;
     /** Document [body]{@link HTMLBodyElement} [DOM Element]{@link DOMElement} used to trigger resize when the document body size changes */
@@ -109,7 +107,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, sampleCount, production, preferredFormat, alphaMode, }: GPURendererParams);
+    constructor({ deviceManager, container, pixelRatio, sampleCount, preferredFormat, alphaMode, }: GPURendererParams);
     /**
      * Set [canvas]{@link GPURenderer#canvas} size
      * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
@@ -138,6 +136,16 @@ export declare class GPURenderer {
      */
     get device(): GPUDevice | undefined;
     /**
+     * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
+     * @readonly
+     */
+    get ready(): boolean;
+    /**
+     * Get our [device manager production flag]{@link GPUDeviceManager#production}
+     * @readonly
+     */
+    get production(): boolean;
+    /**
      * Get all the created [samplers]{@link GPUDeviceManager#samplers}
      * @readonly
      */
@@ -152,6 +160,11 @@ export declare class GPURenderer {
      * @readonly
      */
     get pipelineManager(): PipelineManager;
+    /**
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+     * @readonly
+     */
+    get deviceObjects(): SceneObject[];
     /**
      * Configure our [context]{@link context} with the given options
      */
@@ -322,23 +335,13 @@ export declare class GPURenderer {
      */
     get renderedObjects(): SceneObject[];
     /**
-     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
-     * @readonly
-     */
-    get deviceObjects(): SceneObject[];
-    /**
-     * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
-     * @readonly
-     */
-    get ready(): boolean;
-    /**
-     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
      */
     getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
     /**
-     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
      */
@@ -375,16 +378,16 @@ export declare class GPURenderer {
      */
     renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass): void;
     /**
-     * Render a single [Mesh]{@link MeshType}
+     * Render a single [Mesh]{@link ProjectedMesh}
      * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - [Mesh]{@link MeshType} to render
+     * @param mesh - [Mesh]{@link ProjectedMesh} to render
      */
-    renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType): void;
+    renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh): void;
     /**
-     * Render an array of objects (either [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
-     * @param objects - Array of [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass} to render
+     * Render an array of objects (either [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
+     * @param objects - Array of [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass} to render
      */
-    renderOnce(objects: Array<MeshType | ComputePass>): void;
+    renderOnce(objects: SceneObject[]): void;
     /**
      * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options#clearValue} by rendering and empty pass.
      * @param commandEncoder

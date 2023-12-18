@@ -10,6 +10,8 @@ import { SceneObject } from './GPURenderer'
 export interface GPUDeviceManagerParams {
   /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
   label?: string
+  /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
+  production?: boolean
   /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter} or [device]{@link GPUDevice} */
   onError?: () => void
   /** Callback to run whenever the [device]{@link GPUDeviceManagerParams#device} is lost */
@@ -21,12 +23,14 @@ export interface GPUDeviceManagerParams {
  * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations, losing and restoration.
  * Will also keep a track of all the [renderers]{@link Renderer}, [samplers]{@link Sampler} and [buffers]{@link GPUBuffer} created.
  */
-// TODO if we'd want to fully optimize multiple canvases rendering, the render method and command encoder creation should be handled by the GPUDeviceManager and each renderer render methods should be called from here
 export class GPUDeviceManager {
   /** Number of times a {@link GPUDevice} has been created */
   index: number
   /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
   label: string
+
+  /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
+  production: boolean
 
   /** The navigator {@link GPU} object */
   gpu: GPU | undefined
@@ -60,6 +64,7 @@ export class GPUDeviceManager {
    */
   constructor({
     label,
+    production = false,
     onError = () => {
       /* allow empty callbacks */
     },
@@ -69,6 +74,7 @@ export class GPUDeviceManager {
   }: GPUDeviceManagerParams) {
     this.index = 0
     this.label = label ?? 'GPUDeviceManager instance'
+    this.production = production
     this.ready = false
 
     this.onError = onError

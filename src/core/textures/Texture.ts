@@ -8,7 +8,7 @@ import { generateUUID, throwWarning } from '../../utils/utils'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { TextureOptions, TextureParams, TextureParent, TextureSize, TextureSource } from '../../types/Textures'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMMeshType } from '../renderers/GPURenderer'
+import { DOMProjectedMesh } from '../renderers/GPURenderer'
 import { RectSize } from '../DOM/DOMElement'
 
 /** @const - default [texture]{@link Texture} parameters */
@@ -243,13 +243,15 @@ export class Texture extends Object3D {
   updateModelMatrix() {
     if (!this.parent) return
 
-    const parentScale = (this.parent as DOMMeshType).scale ? (this.parent as DOMMeshType).scale : new Vec3(1, 1, 1)
+    const parentScale = (this.parent as DOMProjectedMesh).scale
+      ? (this.parent as DOMProjectedMesh).scale
+      : new Vec3(1, 1, 1)
 
-    const parentWidth = (this.parent as DOMMeshType).boundingRect
-      ? (this.parent as DOMMeshType).boundingRect.width * parentScale.x
+    const parentWidth = (this.parent as DOMProjectedMesh).boundingRect
+      ? (this.parent as DOMProjectedMesh).boundingRect.width * parentScale.x
       : this.size.width
-    const parentHeight = (this.parent as DOMMeshType).boundingRect
-      ? (this.parent as DOMMeshType).boundingRect.height * parentScale.y
+    const parentHeight = (this.parent as DOMProjectedMesh).boundingRect
+      ? (this.parent as DOMProjectedMesh).boundingRect.height * parentScale.y
       : this.size.height
 
     const parentRatio = parentWidth / parentHeight

@@ -1,5 +1,5 @@
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../../core/renderers/GPUCameraRenderer'
-import { DOMMeshType } from '../../core/renderers/GPURenderer'
+import { DOMProjectedMesh } from '../../core/renderers/GPURenderer'
 
 /**
  * GPUCurtainsRenderer class:
@@ -8,7 +8,7 @@ import { DOMMeshType } from '../../core/renderers/GPURenderer'
  */
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
   /** All created [DOM Meshes]{@link DOMMesh} and [planes]{@link Plane} */
-  domMeshes: DOMMeshType[]
+  domMeshes: DOMProjectedMesh[]
 
   /**
    * GPUCurtainsRenderer constructor
@@ -21,7 +21,6 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     sampleCount = 4,
     preferredFormat,
     alphaMode = 'premultiplied',
-    production = false,
     camera,
   }: GPUCameraRendererParams) {
     super({
@@ -31,7 +30,6 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
       sampleCount,
       preferredFormat,
       alphaMode,
-      production,
       camera,
     } as GPUCameraRendererParams)
 

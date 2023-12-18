@@ -1,5 +1,5 @@
 import { CameraRenderer, isRenderer, Renderer } from '../renderers/utils'
-import { DOMMeshType, MeshType } from '../renderers/GPURenderer'
+import { DOMProjectedMesh, ProjectedMesh, RenderedMesh } from '../renderers/GPURenderer'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 import { ComputePass } from '../computePasses/ComputePass'
@@ -15,9 +15,9 @@ import { RenderTexture } from '../textures/RenderTexture'
  */
 export interface ProjectionStack {
   /** opaque Meshes will be drawn first */
-  opaque: MeshType[]
+  opaque: ProjectedMesh[]
   /** transparent Meshes will be drawn last */
-  transparent: MeshType[]
+  transparent: ProjectedMesh[]
 }
 
 /** Meshes will be stacked in 2 different objects whether they are projected (use a {@link Camera}) or not */
@@ -41,7 +41,7 @@ export interface RenderPassEntry {
   /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy */
   onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
   /** If this {@link RenderPassEntry} needs to render only one Mesh */
-  element: MeshType | ShaderPass | PingPongPlane | null
+  element: RenderedMesh | null
   /** If this {@link RenderPassEntry} needs to render multiple Meshes, then use a {@link Stack} object */
   stack: Stack | null
 }
@@ -188,7 +188,7 @@ export class Scene {
    * @param mesh - Mesh to check
    * @returns - the corresponding [render pass entry stack]{@link Stack}
    */
-  getMeshProjectionStack(mesh: MeshType): ProjectionStack {
+  getMeshProjectionStack(mesh: ProjectedMesh): ProjectionStack {
     // first get correct render pass enty and stack
     const renderPassEntry = mesh.renderTarget
       ? this.renderPassEntries.renderTarget.find(
@@ -206,7 +206,7 @@ export class Scene {
    * Meshes are then ordered by their [indexes (order of creation]){@link MeshBase#index}, position along the Z axis in case they are transparent and then [renderOrder]{@link MeshBase#renderOrder}
    * @param mesh - Mesh to add
    */
-  addMesh(mesh: MeshType) {
+  addMesh(mesh: ProjectedMesh) {
     const projectionStack = this.getMeshProjectionStack(mesh)
 
     // rebuild stack
@@ -231,7 +231,9 @@ export class Scene {
 
     // sort by Z pos if transparent
     if ((mesh instanceof DOMMesh || mesh instanceof Plane) && mesh.transparent) {
-      similarMeshes.sort((a, b) => (b as DOMMeshType).documentPosition.z - (a as DOMMeshType).documentPosition.z)
+      similarMeshes.sort(
+        (a, b) => (b as DOMProjectedMesh).documentPosition.z - (a as DOMProjectedMesh).documentPosition.z
+      )
     }
 
     // then sort by their render order
@@ -244,7 +246,7 @@ export class Scene {
    * Remove a Mesh from our {@link Scene}
    * @param mesh - Mesh to remove
    */
-  removeMesh(mesh: MeshType) {
+  removeMesh(mesh: ProjectedMesh) {
     const projectionStack = this.getMeshProjectionStack(mesh)
 
     if (mesh.transparent) {
