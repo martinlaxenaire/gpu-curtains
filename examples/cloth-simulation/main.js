@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec2, Vec3, PlaneGeometry, BindGroup, ComputePass, Plane } from '../../src'
+import { GPUCurtains, Vec2, Vec3, PlaneGeometry, BindGroup, ComputePass, Plane } from '../../dist/gpu-curtains.js'
 
 // Port of https://github.com/Yuu6883/WebGPUDemo
 

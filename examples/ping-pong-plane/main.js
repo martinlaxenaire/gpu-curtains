@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from '../../src'
+import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper

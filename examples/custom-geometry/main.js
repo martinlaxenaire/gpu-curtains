@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec3, Geometry, Mesh } from '../../src'
+import { GPUCurtains, Vec3, Geometry, Mesh } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper

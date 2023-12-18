@@ -1,4 +1,4 @@
-import { GPUCurtains, PlaneGeometry, Sampler, Plane } from '../../src'
+import { GPUCurtains, PlaneGeometry, Sampler, Plane } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // first dynamically build the planes elements

@@ -1,4 +1,12 @@
-import { GPUCurtains, Vec2, BufferBinding, BindGroup, ComputePass, SphereGeometry, Mesh } from '../../src'
+import {
+  GPUCurtains,
+  Vec2,
+  BufferBinding,
+  BindGroup,
+  ComputePass,
+  SphereGeometry,
+  Mesh,
+} from '../../dist/gpu-curtains.js'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
 window.addEventListener('DOMContentLoaded', async () => {
