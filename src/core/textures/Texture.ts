@@ -698,11 +698,9 @@ export class Texture extends Object3D {
       )
     }
 
-    if (!this.options.cache || !this.renderer.device) {
-      this.renderer.removeTexture(this)
+    this.renderer.removeTexture(this)
 
-      this.texture?.destroy()
-      this.texture = null
-    }
+    this.texture?.destroy()
+    this.texture = null
   }
 }

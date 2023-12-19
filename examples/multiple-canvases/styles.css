@@ -54,6 +54,13 @@
     flex-direction: column;
     justify-content: space-evenly;
     align-items: center;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .no-curtains #text-content,
+  .dom-ready #text-content {
+    opacity: 1;
   }
 
   #text-content h1,

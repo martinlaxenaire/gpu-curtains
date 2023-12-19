@@ -113,8 +113,7 @@ export class Geometry {
       bufferLength: 0,
       attributes: [],
       buffer: null,
-      indexBuffer: null,
-    } as VertexBuffer
+    }
 
     // set attributes right away if possible
     attributes?.forEach((attribute) => {

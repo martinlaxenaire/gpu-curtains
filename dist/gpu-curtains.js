@@ -2175,6 +2175,7 @@ class BindGroup {
     this.bindGroupLayout = null;
     this.bindGroup = null;
     this.needsPipelineFlush = false;
+    this.renderer.addBindGroup(this);
   }
   /**
    * Sets our [BindGroup index]{@link BindGroup#index}
@@ -2467,6 +2468,7 @@ class BindGroup {
    * Most important is to destroy the GPUBuffers to free the memory
    */
   destroy() {
+    this.renderer.removeBindGroup(this);
     this.bufferBindings.forEach((binding) => {
       var _a, _b;
       if ("buffer" in binding) {
@@ -3192,11 +3194,9 @@ class Texture extends Object3D {
         }
       );
     }
-    if (!this.options.cache || !this.renderer.device) {
-      this.renderer.removeTexture(this);
-      (_a = this.texture) == null ? void 0 : _a.destroy();
-      this.texture = null;
-    }
+    this.renderer.removeTexture(this);
+    (_a = this.texture) == null ? void 0 : _a.destroy();
+    this.texture = null;
   }
 }
 _parentRatio = new WeakMap();
@@ -4058,6 +4058,7 @@ class Material {
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
     this.clonedBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
+    this.texturesBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
     this.texturesBindGroups = [];
     this.inputsBindGroups = [];
     this.bindGroups = [];
@@ -4154,6 +4155,8 @@ class Material {
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
    */
   destroyTexture(texture) {
+    if (texture.options.cache)
+      return;
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
     const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
     if (shouldDestroy) {
@@ -5045,8 +5048,7 @@ class Geometry {
       arrayStride: 0,
       bufferLength: 0,
       attributes: [],
-      buffer: null,
-      indexBuffer: null
+      buffer: null
     };
     attributes == null ? void 0 : attributes.forEach((attribute) => {
       this.setAttribute({
@@ -5799,7 +5801,7 @@ function MeshBaseMixin(Base) {
         this.geometry.vertexBuffers.forEach((vertexBuffer) => {
           if (!vertexBuffer.buffer) {
             vertexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + ": Vertex buffer vertices",
+              label: this.options.label + " geometry: " + vertexBuffer.name + " buffer",
               size: vertexBuffer.array.byteLength,
               usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
@@ -5808,7 +5810,7 @@ function MeshBaseMixin(Base) {
         });
         if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
           this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + ": Index buffer vertices",
+            label: this.options.label + " geometry: index buffer",
             size: this.geometry.indexBuffer.array.byteLength,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
           });
@@ -6100,6 +6102,15 @@ function MeshBaseMixin(Base) {
         super.destroy();
       }
       (_a2 = this.material) == null ? void 0 : _a2.destroy();
+      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+        this.renderer.removeBuffer(
+          vertexBuffer.buffer,
+          this.options.label + " geometry: " + vertexBuffer.name + " buffer"
+        );
+      });
+      if ("indexBuffer" in this.geometry) {
+        this.renderer.removeBuffer(this.geometry.indexBuffer.buffer);
+      }
       (_b = this.geometry) == null ? void 0 : _b.destroy();
     }
   }, _autoRender3 = new WeakMap(), _a;
@@ -8750,9 +8761,10 @@ class GPURenderer {
   /**
    * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
    * @param buffer - [buffer]{@link GPUBuffer} to remove
+   * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
    */
-  removeBuffer(buffer) {
-    this.deviceManager.removeBuffer(buffer);
+  removeBuffer(buffer, originalLabel) {
+    this.deviceManager.removeBuffer(buffer, originalLabel);
   }
   /**
    * Write to a {@link GPUBuffer}
@@ -8809,6 +8821,22 @@ class GPURenderer {
     return dstBuffer;
   }
   /* BIND GROUPS & LAYOUTS */
+  /**
+   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPURenderer#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+   */
+  addBindGroup(bindGroup) {
+    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
+      this.bindGroups.push(bindGroup);
+    }
+  }
+  /**
+   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPURenderer#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+   */
+  removeBindGroup(bindGroup) {
+    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
+  }
   /**
    * Create a {@link GPUBindGroupLayout}
    * @param bindGroupLayoutDescriptor - [bind group layout descriptor]{@link GPUBindGroupLayoutDescriptor}
@@ -9007,6 +9035,7 @@ class GPURenderer {
    * Set all objects arrays that we'll keep track of
    */
   setRendererObjects() {
+    this.bindGroups = [];
     this.computePasses = [];
     this.pingPongPlanes = [];
     this.shaderPasses = [];
@@ -9203,6 +9232,7 @@ class GPURenderer {
     (_c = this.renderPass) == null ? void 0 : _c.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
+    this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
     this.textures.forEach((texture) => texture.destroy());
     this.textures = [];
     this.texturesQueue = [];
@@ -9343,6 +9373,21 @@ class GPUCameraRenderer extends GPURenderer {
     (_a = this.cameraBufferBinding) == null ? void 0 : _a.shouldUpdateBinding("model");
     (_b = this.cameraBufferBinding) == null ? void 0 : _b.shouldUpdateBinding("view");
     (_c = this.cameraBufferBinding) == null ? void 0 : _c.shouldUpdateBinding("projection");
+  }
+  /**
+   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}, including [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}.
+   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+   */
+  getObjectsByBindGroup(bindGroup) {
+    return this.deviceObjects.filter((object) => {
+      return [
+        ...object.material.bindGroups,
+        ...object.material.inputsBindGroups,
+        ...object.material.clonedBindGroups,
+        this.cameraBindGroup
+      ].some((bG) => bG.uuid === bindGroup.uuid);
+    });
   }
   /**
    * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
@@ -9567,11 +9612,14 @@ class GPUDeviceManager {
   /**
    * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
    * @param buffer - [buffer]{@link GPUBuffer} to remove
+   * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
    */
-  removeBuffer(buffer) {
-    this.buffers = this.buffers.filter((b) => {
-      return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size;
-    });
+  removeBuffer(buffer, originalLabel) {
+    if (buffer) {
+      this.buffers = this.buffers.filter((b) => {
+        return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size);
+      });
+    }
   }
   /**
    * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}

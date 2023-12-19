@@ -397,6 +397,7 @@ export class Material {
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup))
     this.clonedBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup))
+    this.texturesBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup))
     this.texturesBindGroups = []
     this.inputsBindGroups = []
     this.bindGroups = []
@@ -516,6 +517,9 @@ export class Material {
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
    */
   destroyTexture(texture: Texture | RenderTexture) {
+    // do not destroy a texture that must stay in cache
+    if ((texture as Texture).options.cache) return
+
     // check if this texture is used by another object before actually destroying it
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture)
 

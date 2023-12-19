@@ -1,8 +1,9 @@
-import { GPURenderer, GPURendererParams, ProjectedMesh } from './GPURenderer'
+import { GPURenderer, GPURendererParams, ProjectedMesh, SceneObject } from './GPURenderer'
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
+import { AllowedBindGroups } from '../../types/BindGroups'
 
 /**
  * Parameters used to create a {@link GPUCameraRenderer}
@@ -172,6 +173,22 @@ export class GPUCameraRenderer extends GPURenderer {
     this.cameraBufferBinding?.shouldUpdateBinding('model')
     this.cameraBufferBinding?.shouldUpdateBinding('view')
     this.cameraBufferBinding?.shouldUpdateBinding('projection')
+  }
+
+  /**
+   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}, including [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}.
+   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+   */
+  getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
+    return this.deviceObjects.filter((object) => {
+      return [
+        ...object.material.bindGroups,
+        ...object.material.inputsBindGroups,
+        ...object.material.clonedBindGroups,
+        this.cameraBindGroup,
+      ].some((bG) => bG.uuid === bindGroup.uuid)
+    })
   }
 
   /**

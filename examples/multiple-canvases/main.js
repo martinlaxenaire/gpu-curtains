@@ -23,6 +23,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   // append the response
   document.querySelector('#planes').insertAdjacentHTML('beforeend', planesHTMLString)
 
+  document.body.classList.add('dom-ready')
+
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas-front',
@@ -97,7 +99,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // notice that gpuCurtains.renderer matches the default renderer created by the GPUCurtains instance
     const plane = new Plane(gpuCurtains.renderer, planeEl, params)
 
-    plane.position.z = 1 // allow for an easy parallax effect
+    plane.position.z = Math.random() // allow for an easy parallax effect
   })
 
   // and then the back planes using our back renderer
@@ -106,6 +108,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     params.label = 'Back plane ' + index
     const plane = new Plane(backCurtainsRenderer, planeEl, params)
 
-    plane.position.z = -1 // allow for an easy parallax effect
+    plane.position.z = -1 * Math.random() // allow for an easy parallax effect
   })
 })

@@ -106,8 +106,9 @@ export declare class GPUDeviceManager {
     /**
      * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
      * @param buffer - [buffer]{@link GPUBuffer} to remove
+     * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
      */
-    removeBuffer(buffer: GPUBuffer): void;
+    removeBuffer(buffer: GPUBuffer, originalLabel?: string): void;
     /**
      * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
      * @param sampler - [sampler]{@link Sampler} to remove

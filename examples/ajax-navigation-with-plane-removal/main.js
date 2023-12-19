@@ -66,8 +66,25 @@ window.addEventListener('DOMContentLoaded', async () => {
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
+      
+      var strength: f32 = 0.1;
+      var nbWaves: f32 = 3.0;
+
+      // map vertices coordinates to the 0->1 range on the X axis
+      var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
+
+      // notice how the "uniforms" struct name matches our bindings object name property
+      var time: f32 = frames.elapsed * 0.0375;
+
+      var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
+
+      var transformed: vec3f = vec3(
+          attributes.position.x,
+          attributes.position.y,
+          attributes.position.z - waveSinusoid * strength
+      );
   
-      vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.position = getOutputPosition(camera, matrices, transformed);
       vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
   
       return vsOutput;
@@ -92,6 +109,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     planeEls.forEach((planeEl, index) => {
       const plane = new Plane(gpuCurtains, planeEl, {
+        widthSegments: 20,
         autoloadSources: false,
         label: `Plane ${index}`,
         shaders: {
@@ -100,6 +118,16 @@ window.addEventListener('DOMContentLoaded', async () => {
           },
           fragment: {
             code: planeFs,
+          },
+        },
+        uniforms: {
+          frames: {
+            struct: {
+              elapsed: {
+                type: 'f32',
+                value: 0,
+              },
+            },
           },
         },
         textures: (() => {
@@ -121,6 +149,8 @@ window.addEventListener('DOMContentLoaded', async () => {
           }
         })(),
       })
+
+      plane.onRender(() => plane.uniforms.frames.elapsed.value++)
 
       planes.push(plane)
     })

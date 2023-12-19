@@ -67,6 +67,8 @@ export declare class GPURenderer {
     renderPass: RenderPass;
     /** The {@link Scene} used */
     scene: Scene;
+    /** An array containing all our created {@link AllowedBindGroups} */
+    bindGroups: AllowedBindGroups[];
     /** An array containing all our created {@link ComputePass} */
     computePasses: ComputePass[];
     /** An array containing all our created {@link PingPongPlane} */
@@ -201,8 +203,9 @@ export declare class GPURenderer {
     /**
      * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
      * @param buffer - [buffer]{@link GPUBuffer} to remove
+     * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
      */
-    removeBuffer(buffer: GPUBuffer): void;
+    removeBuffer(buffer: GPUBuffer, originalLabel?: string): void;
     /**
      * Write to a {@link GPUBuffer}
      * @param buffer - {@link GPUBuffer} to write to
@@ -223,6 +226,16 @@ export declare class GPURenderer {
         dstBuffer?: GPUBuffer;
         commandEncoder?: GPUCommandEncoder;
     }): GPUBuffer | null;
+    /**
+     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPURenderer#bindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+     */
+    addBindGroup(bindGroup: AllowedBindGroups): void;
+    /**
+     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPURenderer#bindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+     */
+    removeBindGroup(bindGroup: AllowedBindGroups): void;
     /**
      * Create a {@link GPUBindGroupLayout}
      * @param bindGroupLayoutDescriptor - [bind group layout descriptor]{@link GPUBindGroupLayoutDescriptor}

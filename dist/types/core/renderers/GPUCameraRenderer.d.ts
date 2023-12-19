@@ -1,9 +1,10 @@
 /// <reference types="dist" />
-import { GPURenderer, GPURendererParams, ProjectedMesh } from './GPURenderer';
+import { GPURenderer, GPURendererParams, ProjectedMesh, SceneObject } from './GPURenderer';
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { BindGroup } from '../bindGroups/BindGroup';
 import { Vec3 } from '../../math/Vec3';
+import { AllowedBindGroups } from '../../types/BindGroups';
 /**
  * Parameters used to create a {@link GPUCameraRenderer}
  */
@@ -60,6 +61,12 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * Tell our [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its struct
      */
     updateCameraBindings(): void;
+    /**
+     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}, including [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}.
+     * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+     */
+    getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
     /**
      * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
      * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective

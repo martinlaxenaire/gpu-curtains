@@ -692,7 +692,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         this.geometry.vertexBuffers.forEach((vertexBuffer) => {
           if (!vertexBuffer.buffer) {
             vertexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + ': Vertex buffer vertices',
+              label: this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer',
               size: vertexBuffer.array.byteLength,
               usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
             })
@@ -704,7 +704,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         // if it's an indexed geometry, create index GPUBuffer as well
         if ('indexBuffer' in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
           this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + ': Index buffer vertices',
+            label: this.options.label + ' geometry: index buffer',
             size: this.geometry.indexBuffer.array.byteLength,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
           })
@@ -1043,7 +1043,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.removeFromScene()
       this.destroy()
 
-      // if old renderer does not contain any meshes any more
+      // if the renderer does not contain any meshes any more
       // clear it
       if (!this.renderer.meshes.length) {
         this.renderer.onBeforeRenderScene.add(
@@ -1066,6 +1066,20 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       }
 
       this.material?.destroy()
+
+      // remove geometry buffers from device cache
+      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+        // use original vertex buffer label in case it has been swapped (usually by a compute pass)
+        this.renderer.removeBuffer(
+          vertexBuffer.buffer,
+          this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer'
+        )
+      })
+
+      if ('indexBuffer' in this.geometry) {
+        this.renderer.removeBuffer(this.geometry.indexBuffer.buffer)
+      }
+
       this.geometry?.destroy()
     }
   }

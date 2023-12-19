@@ -241,11 +241,14 @@ export class GPUDeviceManager {
   /**
    * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
    * @param buffer - [buffer]{@link GPUBuffer} to remove
+   * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
    */
-  removeBuffer(buffer: GPUBuffer) {
-    this.buffers = this.buffers.filter((b) => {
-      return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size
-    })
+  removeBuffer(buffer: GPUBuffer, originalLabel?: string) {
+    if (buffer) {
+      this.buffers = this.buffers.filter((b) => {
+        return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size)
+      })
+    }
   }
 
   /**

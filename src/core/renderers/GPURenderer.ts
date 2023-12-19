@@ -80,6 +80,8 @@ export class GPURenderer {
   /** The {@link Scene} used */
   scene: Scene
 
+  /** An array containing all our created {@link AllowedBindGroups} */
+  bindGroups: AllowedBindGroups[]
   /** An array containing all our created {@link ComputePass} */
   computePasses: ComputePass[]
   /** An array containing all our created {@link PingPongPlane} */
@@ -414,9 +416,10 @@ export class GPURenderer {
   /**
    * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
    * @param buffer - [buffer]{@link GPUBuffer} to remove
+   * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
    */
-  removeBuffer(buffer: GPUBuffer) {
-    this.deviceManager.removeBuffer(buffer)
+  removeBuffer(buffer: GPUBuffer, originalLabel?: string) {
+    this.deviceManager.removeBuffer(buffer, originalLabel)
   }
 
   /**
@@ -486,6 +489,24 @@ export class GPURenderer {
   }
 
   /* BIND GROUPS & LAYOUTS */
+
+  /**
+   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPURenderer#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+   */
+  addBindGroup(bindGroup: AllowedBindGroups) {
+    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
+      this.bindGroups.push(bindGroup)
+    }
+  }
+
+  /**
+   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPURenderer#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+   */
+  removeBindGroup(bindGroup: AllowedBindGroups) {
+    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid)
+  }
 
   /**
    * Create a {@link GPUBindGroupLayout}
@@ -706,7 +727,8 @@ export class GPURenderer {
    * Set all objects arrays that we'll keep track of
    */
   setRendererObjects() {
-    // keep track of meshes, textures, etc.
+    // keep track of bind groups, meshes, textures, etc.
+    this.bindGroups = []
     this.computePasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []
@@ -947,6 +969,8 @@ export class GPURenderer {
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
+
+    this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
 
     this.textures.forEach((texture) => texture.destroy())
     this.textures = []

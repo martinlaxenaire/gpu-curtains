@@ -27,7 +27,7 @@
   #navigation {
     display: flex;
     justify-content: center;
-    margin: 3.5rem;
+    padding: 3.5rem;
   }
 
   #navigation a {
@@ -40,8 +40,8 @@
     color: var(--dark-color);
   }
 
-  #navigation a:hover {
-    text-decoration: none;
+  #page {
+    min-height: initial;
   }
 
   #content {
