@@ -2810,6 +2810,7 @@ var __privateMethod = (obj, member, method) => {
       this.sourceLoaded = false;
       this.sourceUploaded = false;
       this.shouldUpdate = false;
+      this.createTexture();
       this.renderer.addTexture(this);
     }
     /**
@@ -3033,9 +3034,14 @@ var __privateMethod = (obj, member, method) => {
      * @returns - the newly created {@link ImageBitmap}
      */
     async loadImage(source) {
-      const image = typeof source === "string" ? source : source.getAttribute("src");
-      this.options.source = image;
+      const url = typeof source === "string" ? source : source.getAttribute("src");
+      this.options.source = url;
       this.options.sourceType = "image";
+      const cachedTexture = this.renderer.textures.find((t) => t.options.source === url);
+      if (cachedTexture && cachedTexture.texture && cachedTexture.sourceUploaded) {
+        this.copy(cachedTexture);
+        return;
+      }
       this.sourceLoaded = false;
       this.sourceUploaded = false;
       this.source = await this.loadImageBitmap(this.options.source);
@@ -3710,6 +3716,7 @@ var __privateMethod = (obj, member, method) => {
       this.setSize(this.options.size);
       this.setBindings();
       this.createTexture();
+      this.renderer.addRenderTexture(this);
     }
     /**
      * Set the [size]{@link RenderTexture#size}
@@ -3792,6 +3799,7 @@ var __privateMethod = (obj, member, method) => {
      */
     destroy() {
       var _a;
+      this.renderer.removeRenderTexture(this);
       if (!this.options.fromTexture) {
         (_a = this.texture) == null ? void 0 : _a.destroy();
       }
@@ -8923,7 +8931,6 @@ ${this.shaders.compute.head}`;
      */
     addTexture(texture) {
       this.textures.push(texture);
-      this.setTexture(texture);
     }
     /**
      * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
@@ -8933,13 +8940,18 @@ ${this.shaders.compute.head}`;
       this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
-     * Call texture [createTexture]{@link Texture#createTexture} method
-     * @param texture - [texture]{@link Texture} to create
+     * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
+     * @param texture - [texture]{@link Texture} to add
      */
-    setTexture(texture) {
-      if (!texture.texture) {
-        texture.createTexture();
-      }
+    addRenderTexture(texture) {
+      this.renderTextures.push(texture);
+    }
+    /**
+     * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
+     * @param texture - [texture]{@link Texture} to remove
+     */
+    removeRenderTexture(texture) {
+      this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
      * Create a {@link GPUTexture}
@@ -9046,6 +9058,7 @@ ${this.shaders.compute.head}`;
       this.renderTargets = [];
       this.meshes = [];
       this.textures = [];
+      this.renderTextures = [];
     }
     /**
      * Get all this [renderer]{@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -9238,7 +9251,9 @@ ${this.shaders.compute.head}`;
       this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
       this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
       this.textures.forEach((texture) => texture.destroy());
+      this.renderTextures.forEach((texture) => texture.destroy());
       this.textures = [];
+      this.renderTextures = [];
       this.texturesQueue = [];
       (_d = this.context) == null ? void 0 : _d.unconfigure();
     }

@@ -92,9 +92,10 @@ export class GPURenderer {
   renderTargets: RenderTarget[]
   /** An array containing all our created [Meshes]{@link ProjectedMesh} */
   meshes: ProjectedMesh[]
-  // TODO keep track of RenderTexture as well?
   /** An array containing all our created {@link Texture} */
   textures: Texture[]
+  /** An array containing all our created {@link RenderTexture} */
+  renderTextures: RenderTexture[]
   /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
   texturesQueue: Texture[]
 
@@ -592,8 +593,6 @@ export class GPURenderer {
    */
   addTexture(texture: Texture) {
     this.textures.push(texture)
-
-    this.setTexture(texture)
   }
 
   /**
@@ -605,14 +604,19 @@ export class GPURenderer {
   }
 
   /**
-   * Call texture [createTexture]{@link Texture#createTexture} method
-   * @param texture - [texture]{@link Texture} to create
+   * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
+   * @param texture - [texture]{@link Texture} to add
    */
-  setTexture(texture: Texture) {
-    if (!texture.texture) {
-      // call createTexture on texture class, that is then going to call the renderer createTexture method
-      texture.createTexture()
-    }
+  addRenderTexture(texture: RenderTexture) {
+    this.renderTextures.push(texture)
+  }
+
+  /**
+   * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
+   * @param texture - [texture]{@link Texture} to remove
+   */
+  removeRenderTexture(texture: RenderTexture) {
+    this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid)
   }
 
   /**
@@ -735,6 +739,7 @@ export class GPURenderer {
     this.renderTargets = []
     this.meshes = []
     this.textures = []
+    this.renderTextures = []
   }
 
   /**
@@ -973,7 +978,9 @@ export class GPURenderer {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
 
     this.textures.forEach((texture) => texture.destroy())
+    this.renderTextures.forEach((texture) => texture.destroy())
     this.textures = []
+    this.renderTextures = []
     this.texturesQueue = []
 
     this.context?.unconfigure()

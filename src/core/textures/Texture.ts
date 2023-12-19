@@ -153,7 +153,7 @@ export class Texture extends Object3D {
     this.sourceUploaded = false
     this.shouldUpdate = false
 
-    // add texture to renderer so it can creates a placeholder texture ASAP
+    this.createTexture()
     this.renderer.addTexture(this)
   }
 
@@ -480,10 +480,17 @@ export class Texture extends Object3D {
    * @returns - the newly created {@link ImageBitmap}
    */
   async loadImage(source: string | HTMLImageElement): Promise<void> {
-    const image = typeof source === 'string' ? source : source.getAttribute('src')
+    const url = typeof source === 'string' ? source : source.getAttribute('src')
 
-    this.options.source = image
+    this.options.source = url
     this.options.sourceType = 'image'
+
+    const cachedTexture = this.renderer.textures.find((t) => t.options.source === url)
+    if (cachedTexture && cachedTexture.texture && cachedTexture.sourceUploaded) {
+      this.copy(cachedTexture)
+      return
+    }
+
     this.sourceLoaded = false
     this.sourceUploaded = false
 

@@ -105,6 +105,7 @@ export class RenderTexture {
 
     // texture
     this.createTexture()
+    this.renderer.addRenderTexture(this)
   }
 
   /**
@@ -203,6 +204,8 @@ export class RenderTexture {
    * Destroy our {@link RenderTexture}
    */
   destroy() {
+    this.renderer.removeRenderTexture(this)
+
     // destroy the GPU texture only if it's not a copy of another texture
     if (!this.options.fromTexture) {
       this.texture?.destroy()

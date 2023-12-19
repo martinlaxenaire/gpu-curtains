@@ -81,6 +81,8 @@ export declare class GPURenderer {
     meshes: ProjectedMesh[];
     /** An array containing all our created {@link Texture} */
     textures: Texture[];
+    /** An array containing all our created {@link RenderTexture} */
+    renderTextures: RenderTexture[];
     /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
     texturesQueue: Texture[];
     /** Whether to use multisampling, and if so its value */
@@ -297,10 +299,15 @@ export declare class GPURenderer {
      */
     removeTexture(texture: Texture): void;
     /**
-     * Call texture [createTexture]{@link Texture#createTexture} method
-     * @param texture - [texture]{@link Texture} to create
+     * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
+     * @param texture - [texture]{@link Texture} to add
      */
-    setTexture(texture: Texture): void;
+    addRenderTexture(texture: RenderTexture): void;
+    /**
+     * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
+     * @param texture - [texture]{@link Texture} to remove
+     */
+    removeRenderTexture(texture: RenderTexture): void;
     /**
      * Create a {@link GPUTexture}
      * @param textureDescriptor - [texture descriptor]{@link GPUTextureDescriptor}
