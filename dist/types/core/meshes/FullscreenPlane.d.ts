@@ -30,7 +30,7 @@ export declare class FullscreenPlane extends FullscreenPlane_base {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: MeshBaseRenderParams);
     /**
-     * Resize our FullscreenPlane
+     * Resize our {@link FullscreenPlane}
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect?: DOMElementBoundingRect | null): void;
@@ -41,5 +41,9 @@ export declare class FullscreenPlane extends FullscreenPlane_base {
      * @returns - the mapped [vector]{@link Vec2} coordinates in the [-1, 1] range
      */
     mouseToPlaneCoords(mouseCoords?: Vec2): Vec2;
+    /**
+     * Destroy our {@link FullscreenPlane}
+     */
+    destroy(): void;
 }
 export {};

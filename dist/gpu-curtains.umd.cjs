@@ -5295,6 +5295,13 @@ var __privateMethod = (obj, member, method) => {
       return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer) && this.indexBuffer && !!this.indexBuffer.buffer;
     }
     /**
+     * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
+     * @readonly
+     */
+    get useUint16IndexArray() {
+      return this.verticesCount < 256 * 256;
+    }
+    /**
      *
      * @param parameters - parameters used to create our index buffer
      * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
@@ -5372,8 +5379,7 @@ var __privateMethod = (obj, member, method) => {
      * Set our PlaneGeometry index array
      */
     setIndexArray() {
-      const isUInt16 = this.verticesCount < 256 * 256;
-      const indexArray = isUInt16 ? new Uint16Array(this.definition.count * 6) : new Uint32Array(this.definition.count * 6);
+      const indexArray = this.useUint16IndexArray ? new Uint16Array(this.definition.count * 6) : new Uint32Array(this.definition.count * 6);
       let index = 0;
       for (let y = 0; y < this.definition.height; y++) {
         for (let x = 0; x < this.definition.width; x++) {
@@ -5387,7 +5393,7 @@ var __privateMethod = (obj, member, method) => {
       }
       this.setIndexBuffer({
         array: indexArray,
-        bufferFormat: isUInt16 ? "uint16" : "uint32"
+        bufferFormat: this.useUint16IndexArray ? "uint16" : "uint32"
       });
     }
     /**
@@ -6351,10 +6357,10 @@ struct VertexOutput {
       super(renderer, null, { geometry, ...parameters });
       this.size = {
         document: {
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0
+          width: this.renderer.boundingRect.width,
+          height: this.renderer.boundingRect.height,
+          top: this.renderer.boundingRect.top,
+          left: this.renderer.boundingRect.left
         }
       };
       this.domElement = new DOMElement({
@@ -6364,7 +6370,7 @@ struct VertexOutput {
       this.type = "FullscreenQuadMesh";
     }
     /**
-     * Resize our FullscreenPlane
+     * Resize our {@link FullscreenPlane}
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect = null) {
@@ -6385,6 +6391,14 @@ struct VertexOutput {
         (mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1,
         1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2
       );
+    }
+    /**
+     * Destroy our {@link FullscreenPlane}
+     */
+    destroy() {
+      var _a;
+      super.destroy();
+      (_a = this.domElement) == null ? void 0 : _a.destroy();
     }
   }
   class ProjectedObject3D extends Object3D {
@@ -8186,6 +8200,8 @@ ${this.shaders.compute.head}`;
         renderTexture: null,
         onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
           if (!shaderPass.renderTarget) {
+            if (!shaderPass.renderTexture.texture)
+              console.log(shaderPass.renderTexture);
             if (shaderPass.renderTexture) {
               commandEncoder.copyTextureToTexture(
                 {
@@ -8601,7 +8617,7 @@ ${this.shaders.compute.head}`;
      * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
      */
     resize(boundingRect = null) {
-      if (!this.domElement)
+      if (!this.domElement && !boundingRect)
         return;
       if (!boundingRect)
         boundingRect = this.domElement.element.getBoundingClientRect();
@@ -8616,8 +8632,6 @@ ${this.shaders.compute.head}`;
       var _a;
       (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
       this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
-      this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
-      this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
       this.computePasses.forEach((computePass) => computePass.resize());
       this.meshes.forEach((mesh) => {
         if (!("domElement" in mesh))
@@ -8629,7 +8643,21 @@ ${this.shaders.compute.head}`;
      */
     get boundingRect() {
       var _a;
-      return this.domElement.boundingRect ?? ((_a = this.domElement.element) == null ? void 0 : _a.getBoundingClientRect());
+      if (!!this.domElement.boundingRect) {
+        return this.domElement.boundingRect;
+      } else {
+        const boundingRect = (_a = this.domElement.element) == null ? void 0 : _a.getBoundingClientRect();
+        return {
+          top: boundingRect.top,
+          right: boundingRect.right,
+          bottom: boundingRect.bottom,
+          left: boundingRect.left,
+          width: boundingRect.width,
+          height: boundingRect.height,
+          x: boundingRect.x,
+          y: boundingRect.y
+        };
+      }
     }
     /**
      * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
@@ -8660,11 +8688,11 @@ ${this.shaders.compute.head}`;
       return this.deviceManager.device;
     }
     /**
-     * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
+     * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set) and its size is set
      * @readonly
      */
     get ready() {
-      return this.deviceManager.ready;
+      return this.deviceManager.ready && !!this.canvas.style.width;
     }
     /**
      * Get our [device manager production flag]{@link GPUDeviceManager#production}
@@ -8738,9 +8766,12 @@ ${this.shaders.compute.head}`;
      * @async
      */
     restoreContext() {
+      var _a;
       this.configureContext();
+      (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
+      this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
+      this.renderTextures.forEach((renderTexture) => renderTexture.createTexture());
       this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
-      this.onResize();
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
     /**
@@ -8748,7 +8779,7 @@ ${this.shaders.compute.head}`;
      */
     setMainRenderPass() {
       this.renderPass = new RenderPass(this, {
-        label: "Main Render pass",
+        label: "Main render pass",
         depth: true
       });
     }
@@ -10476,9 +10507,6 @@ ${this.shaders.compute.head}`;
       buildPlane("x", "z", "y", 1, -1, 2, 2, -2, widthSegments, depthSegments);
       buildPlane("x", "y", "z", 1, -1, 2, 2, 2, widthSegments, heightSegments);
       buildPlane("x", "y", "z", -1, -1, 2, 2, -2, widthSegments, heightSegments);
-      this.setIndexBuffer({
-        array: new Uint32Array(indices)
-      });
       this.setAttribute({
         name: "position",
         type: "vec3f",
@@ -10499,6 +10527,10 @@ ${this.shaders.compute.head}`;
         bufferFormat: "float32x3",
         size: 3,
         array: new Float32Array(normals)
+      });
+      this.setIndexBuffer({
+        array: this.useUint16IndexArray ? new Uint16Array(indices) : new Uint32Array(indices),
+        bufferFormat: this.useUint16IndexArray ? "uint16" : "uint32"
       });
     }
   }
@@ -10562,9 +10594,6 @@ ${this.shaders.compute.head}`;
             indices.push(b, c, d);
         }
       }
-      this.setIndexBuffer({
-        array: new Uint32Array(indices)
-      });
       this.setAttribute({
         name: "position",
         type: "vec3f",
@@ -10585,6 +10614,10 @@ ${this.shaders.compute.head}`;
         bufferFormat: "float32x3",
         size: 3,
         array: new Float32Array(normals)
+      });
+      this.setIndexBuffer({
+        array: this.useUint16IndexArray ? new Uint16Array(indices) : new Uint32Array(indices),
+        bufferFormat: this.useUint16IndexArray ? "uint16" : "uint32"
       });
     }
   }

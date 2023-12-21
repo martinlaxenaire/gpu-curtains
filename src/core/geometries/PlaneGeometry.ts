@@ -77,8 +77,7 @@ export class PlaneGeometry extends IndexedGeometry {
    * Set our PlaneGeometry index array
    */
   setIndexArray() {
-    const isUInt16 = this.verticesCount < 256 * 256
-    const indexArray = isUInt16
+    const indexArray = this.useUint16IndexArray
       ? new Uint16Array(this.definition.count * 6)
       : new Uint32Array(this.definition.count * 6)
 
@@ -98,7 +97,7 @@ export class PlaneGeometry extends IndexedGeometry {
 
     this.setIndexBuffer({
       array: indexArray,
-      bufferFormat: isUInt16 ? 'uint16' : 'uint32',
+      bufferFormat: this.useUint16IndexArray ? 'uint16' : 'uint32',
     })
   }
 

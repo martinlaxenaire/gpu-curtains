@@ -66,6 +66,14 @@ export class IndexedGeometry extends Geometry {
   }
 
   /**
+   * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
+   * @readonly
+   */
+  get useUint16IndexArray(): boolean {
+    return this.verticesCount < 256 * 256
+  }
+
+  /**
    *
    * @param parameters - parameters used to create our index buffer
    * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]

@@ -201,7 +201,7 @@ export class GPURenderer {
    * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
    */
   resize(boundingRect: DOMElementBoundingRect | null = null) {
-    if (!this.domElement) return
+    if (!this.domElement && !boundingRect) return
 
     if (!boundingRect) boundingRect = this.domElement.element.getBoundingClientRect()
 
@@ -219,8 +219,6 @@ export class GPURenderer {
     // resize render & shader passes
     this.renderPass?.resize(this.pixelRatioBoundingRect)
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
-    this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
-    this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
     this.computePasses.forEach((computePass) => computePass.resize())
     this.meshes.forEach((mesh) => {
       // resize meshes that do not have a bound DOM element
@@ -232,7 +230,21 @@ export class GPURenderer {
    * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
    */
   get boundingRect(): DOMElementBoundingRect {
-    return this.domElement.boundingRect ?? this.domElement.element?.getBoundingClientRect()
+    if (!!this.domElement.boundingRect) {
+      return this.domElement.boundingRect
+    } else {
+      const boundingRect = this.domElement.element?.getBoundingClientRect()
+      return {
+        top: boundingRect.top,
+        right: boundingRect.right,
+        bottom: boundingRect.bottom,
+        left: boundingRect.left,
+        width: boundingRect.width,
+        height: boundingRect.height,
+        x: boundingRect.x,
+        y: boundingRect.y,
+      }
+    }
   }
 
   /**
@@ -268,11 +280,11 @@ export class GPURenderer {
   }
 
   /**
-   * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set)
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set) and its size is set
    * @readonly
    */
   get ready(): boolean {
-    return this.deviceManager.ready
+    return this.deviceManager.ready && !!this.canvas.style.width
   }
 
   /**
@@ -360,11 +372,15 @@ export class GPURenderer {
   restoreContext() {
     this.configureContext()
 
+    // resize render passes/recreate their textures
+    this.renderPass?.resize(this.pixelRatioBoundingRect)
+    this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
+
+    // recreate all render textures
+    this.renderTextures.forEach((renderTexture) => renderTexture.createTexture())
+
     // restore context of all our scene objects
     this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext())
-
-    // force renderer resize to resize all our render passes textures
-    this.onResize()
   }
 
   /* PIPELINES, SCENE & MAIN RENDER PASS */
@@ -374,7 +390,7 @@ export class GPURenderer {
    */
   setMainRenderPass() {
     this.renderPass = new RenderPass(this, {
-      label: 'Main Render pass',
+      label: 'Main render pass',
       depth: true,
     })
   }

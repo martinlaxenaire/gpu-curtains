@@ -121,10 +121,6 @@ export class SphereGeometry extends IndexedGeometry {
       }
     }
 
-    this.setIndexBuffer({
-      array: new Uint32Array(indices),
-    })
-
     this.setAttribute({
       name: 'position',
       type: 'vec3f',
@@ -147,6 +143,11 @@ export class SphereGeometry extends IndexedGeometry {
       bufferFormat: 'float32x3',
       size: 3,
       array: new Float32Array(normals),
+    })
+
+    this.setIndexBuffer({
+      array: this.useUint16IndexArray ? new Uint16Array(indices) : new Uint32Array(indices),
+      bufferFormat: this.useUint16IndexArray ? 'uint16' : 'uint32',
     })
   }
 }

@@ -269,6 +269,7 @@ export class Scene {
       renderTexture: null,
       onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
         if (!shaderPass.renderTarget) {
+          if (!shaderPass.renderTexture.texture) console.log(shaderPass.renderTexture)
           // draw the content into our render texture
           // if it's a global post processing pass, copy the context current texture into its renderTexture
           if (shaderPass.renderTexture) {

@@ -49,10 +49,10 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
 
     this.size = {
       document: {
-        width: 0,
-        height: 0,
-        top: 0,
-        left: 0,
+        width: this.renderer.boundingRect.width,
+        height: this.renderer.boundingRect.height,
+        top: this.renderer.boundingRect.top,
+        left: this.renderer.boundingRect.left,
       },
     }
 
@@ -65,7 +65,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
   }
 
   /**
-   * Resize our FullscreenPlane
+   * Resize our {@link FullscreenPlane}
    * @param boundingRect - the new bounding rectangle
    */
   resize(boundingRect: DOMElementBoundingRect | null = null) {
@@ -88,5 +88,13 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
       ((mouseCoords.x - this.size.document.left) / this.size.document.width) * 2 - 1,
       1 - ((mouseCoords.y - this.size.document.top) / this.size.document.height) * 2
     )
+  }
+
+  /**
+   * Destroy our {@link FullscreenPlane}
+   */
+  destroy() {
+    super.destroy()
+    this.domElement?.destroy()
   }
 }
