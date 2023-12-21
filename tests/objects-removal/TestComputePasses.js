@@ -1,4 +1,4 @@
-import { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } from '../../dist/gpu-curtains.js'
+import { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } from '../../src'
 
 export class TestComputePasses {
   constructor({ gpuCurtains }) {
@@ -11,7 +11,7 @@ export class TestComputePasses {
     // number of particles instances
     this.numParticles = 2500
     // how much we're going to shrink the original geometry
-    this.particleShrinkScale = 40
+    this.particleShrinkScale = 30
 
     // camera screen ratio depends on screen size, fov and camera position
     this.cameraRatio = this.gpuCurtains.camera.screenRatio.height * this.particleShrinkScale * 0.5

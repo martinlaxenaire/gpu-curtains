@@ -1,4 +1,4 @@
-import { PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../dist/gpu-curtains.js'
+import { PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../src'
 
 export class TestPingPong {
   constructor({ gpuCurtains }) {
@@ -233,7 +233,7 @@ export class TestPingPong {
         }),
       ],
     })
-    console.log('TEST PING PONG init', this.gpuCurtains.renderer)
+    console.log('TEST PING PONG init', this.gpuCurtains.deviceManager)
   }
 
   destroy() {
@@ -242,6 +242,6 @@ export class TestPingPong {
     this.flowMap.remove()
     this.displacedPlane.remove()
 
-    console.log('TEST PING PONG destroy', this.gpuCurtains.renderer)
+    console.log('TEST PING PONG destroy', this.gpuCurtains.deviceManager)
   }
 }

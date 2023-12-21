@@ -2528,10 +2528,10 @@ class TextureBinding extends Binding {
    * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
    */
   get resource() {
-    return this.texture instanceof GPUExternalTexture ? this.texture : this.texture instanceof GPUTexture ? this.texture.createView() : null;
+    return this.texture instanceof GPUExternalTexture ? this.texture : this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view" }) : null;
   }
   set resource(value) {
-    if (value && this.texture)
+    if (value || this.texture)
       this.shouldResetBindGroup = true;
     this.texture = value;
   }
@@ -2806,8 +2806,8 @@ class Texture extends Object3D {
     this.sourceLoaded = false;
     this.sourceUploaded = false;
     this.shouldUpdate = false;
-    this.createTexture();
     this.renderer.addTexture(this);
+    this.createTexture();
   }
   /**
    * Set our [struct]{@link Texture#bindings}
@@ -3387,7 +3387,7 @@ class Camera extends Object3D {
     __privateAdd(this, _far, void 0);
     /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
     __privateAdd(this, _pixelRatio, void 0);
-    this.position.set(0, 0, 5);
+    this.position.set(0, 0, 10);
     this.onMatricesChanged = onMatricesChanged;
     this.size = {
       width: 1,
@@ -3709,24 +3709,14 @@ class RenderTexture {
     if (!this.options.format) {
       this.options.format = this.renderer.preferredFormat;
     }
-    this.setSize(this.options.size);
+    this.size = this.options.size ?? {
+      width: this.renderer.pixelRatioBoundingRect.width,
+      height: this.renderer.pixelRatioBoundingRect.height,
+      depth: 1
+    };
     this.setBindings();
-    this.createTexture();
     this.renderer.addRenderTexture(this);
-  }
-  /**
-   * Set the [size]{@link RenderTexture#size}
-   * @param size - [size]{@link TextureSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height and 1 for depth if null
-   */
-  setSize(size = null) {
-    if (!size) {
-      size = {
-        width: this.renderer.pixelRatioBoundingRect.width,
-        height: this.renderer.pixelRatioBoundingRect.height,
-        depth: 1
-      };
-    }
-    this.size = size;
+    this.createTexture();
   }
   /**
    * Copy another {@link RenderTexture} into this {@link RenderTexture}
@@ -3787,7 +3777,17 @@ class RenderTexture {
    * @param size - the optional new [size]{@link RectSize} to set
    */
   resize(size = null) {
-    this.setSize(size);
+    if (!size) {
+      size = {
+        width: this.renderer.pixelRatioBoundingRect.width,
+        height: this.renderer.pixelRatioBoundingRect.height,
+        depth: 1
+      };
+    }
+    if (size.width === this.size.width && size.height === this.size.height && size.depth === this.size.depth) {
+      return;
+    }
+    this.size = size;
     this.createTexture();
   }
   /**
@@ -5357,18 +5357,19 @@ class PlaneGeometry extends IndexedGeometry {
       height: heightSegments,
       count: widthSegments * heightSegments
     };
-    this.setIndexArray();
-    const verticesCount = this.definition.width * 2 + 2 + (this.definition.height - 1) * (this.definition.width + 1);
+    const verticesCount = (this.definition.width + 1) * (this.definition.height + 1);
     const attributes = this.getIndexedVerticesAndUVs(verticesCount);
     Object.keys(attributes).forEach((attributeKey) => {
       this.setAttribute(attributes[attributeKey]);
     });
+    this.setIndexArray();
   }
   /**
    * Set our PlaneGeometry index array
    */
   setIndexArray() {
-    const indexArray = new Uint32Array(this.definition.count * 6);
+    const isUInt16 = this.verticesCount < 256 * 256;
+    const indexArray = isUInt16 ? new Uint16Array(this.definition.count * 6) : new Uint32Array(this.definition.count * 6);
     let index = 0;
     for (let y = 0; y < this.definition.height; y++) {
       for (let x = 0; x < this.definition.width; x++) {
@@ -5381,7 +5382,8 @@ class PlaneGeometry extends IndexedGeometry {
       }
     }
     this.setIndexBuffer({
-      array: indexArray
+      array: indexArray,
+      bufferFormat: isUInt16 ? "uint16" : "uint32"
     });
   }
   /**
@@ -6133,13 +6135,11 @@ class ResizeManager {
     this.resizeObserver = new ResizeObserver((observedEntries) => {
       const allEntries = observedEntries.map((observedEntry) => {
         return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
-      }).sort((a, b) => a.length - b.length);
-      allEntries == null ? void 0 : allEntries.forEach((entries) => {
-        entries.forEach((entry) => {
-          if (entry && entry.callback) {
-            entry.callback();
-          }
-        });
+      }).flat().sort((a, b) => b.priority - a.priority);
+      allEntries == null ? void 0 : allEntries.forEach((entry) => {
+        if (entry && entry.callback) {
+          entry.callback();
+        }
       });
     });
   }
@@ -6154,12 +6154,13 @@ class ResizeManager {
    * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
    * @param entry - [entry]{@link ResizeManagerEntry} to watch
    */
-  observe({ element, callback }) {
+  observe({ element, priority, callback }) {
     if (!element || !this.shouldWatch)
       return;
     this.resizeObserver.observe(element);
     const entry = {
       element,
+      priority,
       callback
     };
     this.entries.push(entry);
@@ -6190,6 +6191,7 @@ class DOMElement {
    */
   constructor({
     element = document.body,
+    priority = 1,
     onSizeChanged = (boundingRect = null) => {
     },
     onPositionChanged = (boundingRect = null) => {
@@ -6206,17 +6208,18 @@ class DOMElement {
     } else {
       this.element = element;
     }
+    this.priority = priority;
     this.isResizing = false;
     this.onSizeChanged = onSizeChanged;
     this.onPositionChanged = onPositionChanged;
     this.resizeManager = resizeManager;
     this.resizeManager.observe({
       element: this.element,
+      priority: this.priority,
       callback: () => {
         this.setSize();
       }
     });
-    this.setSize();
   }
   /**
    * Check whether 2 bounding rectangles are equals
@@ -8560,7 +8563,8 @@ class GPURenderer {
     this.setTasksQueues();
     this.setRendererObjects();
     this.domElement = new DOMElement({
-      element: container
+      element: container,
+      onSizeChanged: (boundingRect) => this.resize(boundingRect)
     });
     if (container instanceof HTMLCanvasElement) {
       this.canvas = container;
@@ -8568,11 +8572,6 @@ class GPURenderer {
       this.canvas = document.createElement("canvas");
       this.domElement.element.appendChild(this.canvas);
     }
-    this.documentBody = new DOMElement({
-      element: document.body,
-      onSizeChanged: () => this.resize()
-    });
-    this.texturesQueue = [];
     if (this.deviceManager.device) {
       this.setContext();
     }
@@ -8625,7 +8624,8 @@ class GPURenderer {
    * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
    */
   get boundingRect() {
-    return this.domElement.boundingRect;
+    var _a;
+    return this.domElement.boundingRect ?? ((_a = this.domElement.element) == null ? void 0 : _a.getBoundingClientRect());
   }
   /**
    * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
@@ -8633,8 +8633,8 @@ class GPURenderer {
   get pixelRatioBoundingRect() {
     const devicePixelRatio = window.devicePixelRatio ?? 1;
     const scaleBoundingRect = this.pixelRatio / devicePixelRatio;
-    return Object.keys(this.domElement.boundingRect).reduce(
-      (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
+    return Object.keys(this.boundingRect).reduce(
+      (a, key) => ({ ...a, [key]: this.boundingRect[key] * scaleBoundingRect }),
       {
         x: 0,
         y: 0,
@@ -8694,8 +8694,8 @@ class GPURenderer {
    * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
    * @readonly
    */
-  get deviceObjects() {
-    return this.deviceManager.deviceObjects;
+  get deviceRenderedObjects() {
+    return this.deviceManager.deviceRenderedObjects;
   }
   /**
    * Configure our [context]{@link context} with the given options
@@ -8763,7 +8763,7 @@ class GPURenderer {
   createBuffer(bufferDescriptor) {
     var _a;
     const buffer = (_a = this.device) == null ? void 0 : _a.createBuffer(bufferDescriptor);
-    this.buffers.push(buffer);
+    this.deviceManager.addBuffer(buffer);
     return buffer;
   }
   /**
@@ -8830,20 +8830,25 @@ class GPURenderer {
   }
   /* BIND GROUPS & LAYOUTS */
   /**
-   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPURenderer#bindGroups}
+   * Get all created [bind groups]{@link AllowedBindGroups} tracked by our {@link GPUDeviceManager}
+   * @readonly
+   */
+  get bindGroups() {
+    return this.deviceManager.bindGroups;
+  }
+  /**
+   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
    */
   addBindGroup(bindGroup) {
-    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-      this.bindGroups.push(bindGroup);
-    }
+    this.deviceManager.addBindGroup(bindGroup);
   }
   /**
-   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPURenderer#bindGroups}
+   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
    */
   removeBindGroup(bindGroup) {
-    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
+    this.deviceManager.removeBindGroup(bindGroup);
   }
   /**
    * Create a {@link GPUBindGroupLayout}
@@ -8922,29 +8927,36 @@ class GPURenderer {
   }
   /* TEXTURES */
   /**
-   * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
+   * Get all created [textures]{@link Texture} tracked by our {@link GPUDeviceManager}
+   * @readonly
+   */
+  get textures() {
+    return this.deviceManager.textures;
+  }
+  /**
+   * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
    * @param texture - [texture]{@link Texture} to add
    */
   addTexture(texture) {
-    this.textures.push(texture);
+    this.deviceManager.addTexture(texture);
   }
   /**
-   * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
+   * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
    * @param texture - [texture]{@link Texture} to remove
    */
   removeTexture(texture) {
-    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
+    this.deviceManager.removeTexture(texture);
   }
   /**
-   * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
-   * @param texture - [texture]{@link Texture} to add
+   * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPUDeviceManager#renderTextures}
+   * @param texture - [render texture]{@link RenderTexture} to add
    */
   addRenderTexture(texture) {
     this.renderTextures.push(texture);
   }
   /**
-   * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
-   * @param texture - [texture]{@link Texture} to remove
+   * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPUDeviceManager#renderTextures}
+   * @param texture - [render texture]{@link RenderTexture} to remove
    */
   removeRenderTexture(texture) {
     this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid);
@@ -8963,32 +8975,7 @@ class GPURenderer {
    * @param texture - [texture]{@link Texture} to upload
    */
   uploadTexture(texture) {
-    var _a, _b;
-    if (texture.source) {
-      try {
-        (_a = this.device) == null ? void 0 : _a.queue.copyExternalImageToTexture(
-          {
-            source: texture.source,
-            flipY: texture.options.flipY
-          },
-          { texture: texture.texture },
-          { width: texture.size.width, height: texture.size.height }
-        );
-        if (texture.texture.mipLevelCount > 1) {
-          generateMips(this.device, texture.texture);
-        }
-        this.texturesQueue.push(texture);
-      } catch ({ message }) {
-        throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`);
-      }
-    } else {
-      (_b = this.device) == null ? void 0 : _b.queue.writeTexture(
-        { texture: texture.texture },
-        new Uint8Array(texture.options.placeholderColor),
-        { bytesPerRow: texture.size.width * 4 },
-        { width: texture.size.width, height: texture.size.height }
-      );
-    }
+    this.deviceManager.uploadTexture(texture);
   }
   /**
    * Import an [external texture]{@link GPUExternalTexture}
@@ -9018,7 +9005,7 @@ class GPURenderer {
         label: sampler.label,
         ...samplerOptions
       });
-      this.samplers.push(sampler);
+      this.deviceManager.addSampler(sampler);
       return gpuSampler;
     }
   }
@@ -9047,13 +9034,11 @@ class GPURenderer {
    * Set all objects arrays that we'll keep track of
    */
   setRendererObjects() {
-    this.bindGroups = [];
     this.computePasses = [];
     this.pingPongPlanes = [];
     this.shaderPasses = [];
     this.renderTargets = [];
     this.meshes = [];
-    this.textures = [];
     this.renderTextures = [];
   }
   /**
@@ -9069,7 +9054,7 @@ class GPURenderer {
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
   getObjectsByBindGroup(bindGroup) {
-    return this.deviceObjects.filter((object) => {
+    return this.deviceRenderedObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
@@ -9083,7 +9068,7 @@ class GPURenderer {
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */
   getObjectsByTexture(texture) {
-    return this.deviceObjects.filter((object) => {
+    return this.deviceRenderedObjects.filter((object) => {
       return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid);
     });
   }
@@ -9215,11 +9200,6 @@ class GPURenderer {
   onAfterCommandEncoder() {
     if (!this.ready)
       return;
-    this.textures.filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
-    this.texturesQueue.forEach((texture) => {
-      texture.sourceUploaded = true;
-    });
-    this.texturesQueue = [];
     this.onAfterCommandEncoderSubmission.execute();
   }
   /**
@@ -9239,19 +9219,13 @@ class GPURenderer {
    * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
    */
   destroy() {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     (_a = this.domElement) == null ? void 0 : _a.destroy();
-    (_b = this.documentBody) == null ? void 0 : _b.destroy();
-    (_c = this.renderPass) == null ? void 0 : _c.destroy();
+    (_b = this.renderPass) == null ? void 0 : _b.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
-    this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
-    this.textures.forEach((texture) => texture.destroy());
     this.renderTextures.forEach((texture) => texture.destroy());
-    this.textures = [];
-    this.renderTextures = [];
-    this.texturesQueue = [];
-    (_d = this.context) == null ? void 0 : _d.unconfigure();
+    (_c = this.context) == null ? void 0 : _c.unconfigure();
   }
 }
 class GPUCameraRenderer extends GPURenderer {
@@ -9395,7 +9369,7 @@ class GPUCameraRenderer extends GPURenderer {
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
   getObjectsByBindGroup(bindGroup) {
-    return this.deviceObjects.filter((object) => {
+    return this.deviceRenderedObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
@@ -9503,9 +9477,7 @@ class GPUDeviceManager {
       }, 0);
     }
     this.setPipelineManager();
-    this.renderers = [];
-    this.buffers = [];
-    this.samplers = [];
+    this.setDeviceObjects();
   }
   /**
    * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
@@ -9604,6 +9576,17 @@ class GPUDeviceManager {
     }
   }
   /**
+   * Set all objects arrays that we'll keep track of
+   */
+  setDeviceObjects() {
+    this.renderers = [];
+    this.bindGroups = [];
+    this.buffers = [];
+    this.samplers = [];
+    this.textures = [];
+    this.texturesQueue = [];
+  }
+  /**
    * Add a [renderer]{@link Renderer} to our [renderers array]{@link GPUDeviceManager#renderers}
    * @param renderer - [renderer]{@link Renderer} to add
    */
@@ -9621,8 +9604,31 @@ class GPUDeviceManager {
    * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
    * @readonly
    */
-  get deviceObjects() {
+  get deviceRenderedObjects() {
     return this.renderers.map((renderer) => renderer.renderedObjects).flat();
+  }
+  /**
+   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+   */
+  addBindGroup(bindGroup) {
+    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
+      this.bindGroups.push(bindGroup);
+    }
+  }
+  /**
+   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+   */
+  removeBindGroup(bindGroup) {
+    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
+  }
+  /**
+   * Add a [buffer]{@link GPUBuffer} to our our [buffers array]{@link GPUDeviceManager#buffers}
+   * @param buffer - [buffer]{@link GPUBuffer} to add
+   */
+  addBuffer(buffer) {
+    this.buffers.push(buffer);
   }
   /**
    * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
@@ -9637,21 +9643,79 @@ class GPUDeviceManager {
     }
   }
   /**
+   * Add a [sampler]{@link Sampler} to our [samplers array]{@link GPUDeviceManager#samplers}
+   * @param sampler - [sampler]{@link Sampler} to add
+   */
+  addSampler(sampler) {
+    this.samplers.push(sampler);
+  }
+  /**
    * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
    * @param sampler - [sampler]{@link Sampler} to remove
    */
   removeSampler(sampler) {
     this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
   }
+  /**
+   * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
+   * @param texture - [texture]{@link Texture} to add
+   */
+  addTexture(texture) {
+    this.textures.push(texture);
+  }
+  /**
+   * Upload a [texture]{@link Texture} to the GPU
+   * @param texture - [texture]{@link Texture} to upload
+   */
+  uploadTexture(texture) {
+    var _a, _b;
+    if (texture.source) {
+      try {
+        (_a = this.device) == null ? void 0 : _a.queue.copyExternalImageToTexture(
+          {
+            source: texture.source,
+            flipY: texture.options.flipY
+          },
+          { texture: texture.texture },
+          { width: texture.size.width, height: texture.size.height }
+        );
+        if (texture.texture.mipLevelCount > 1) {
+          generateMips(this.device, texture.texture);
+        }
+        this.texturesQueue.push(texture);
+      } catch ({ message }) {
+        throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`);
+      }
+    } else {
+      (_b = this.device) == null ? void 0 : _b.queue.writeTexture(
+        { texture: texture.texture },
+        new Uint8Array(texture.options.placeholderColor),
+        { bytesPerRow: texture.size.width * 4 },
+        { width: texture.size.width, height: texture.size.height }
+      );
+    }
+  }
+  /**
+   * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
+   * @param texture - [texture]{@link Texture} to remove
+   */
+  removeTexture(texture) {
+    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
+  }
   render() {
     var _a, _b;
     if (!this.ready)
       return;
     this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder());
-    const commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: "Renderer scene command encoder" });
+    const commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: this.label + " command encoder" });
     this.renderers.forEach((renderer) => renderer.render(commandEncoder));
     const commandBuffer = commandEncoder.finish();
     (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
+    this.textures.filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
+    this.texturesQueue.forEach((texture) => {
+      texture.sourceUploaded = true;
+    });
+    this.texturesQueue = [];
     this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder());
   }
   /**
@@ -9662,10 +9726,10 @@ class GPUDeviceManager {
     (_a = this.device) == null ? void 0 : _a.destroy();
     this.device = null;
     this.renderers.forEach((renderer) => renderer.destroy());
+    this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
     this.buffers.forEach((buffer) => buffer == null ? void 0 : buffer.destroy());
-    this.renderers = [];
-    this.samplers = [];
-    this.buffers = [];
+    this.textures.forEach((texture) => texture.destroy());
+    this.setDeviceObjects();
   }
 }
 class RenderTarget {
@@ -9907,18 +9971,6 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
   setRendererObjects() {
     super.setRendererObjects();
     this.domMeshes = [];
-  }
-  /**
-   * Set each [DOM Meshes DOM Elements]{GPUCurtainsRenderer#domMeshes.domElement} size on resize
-   */
-  onResize() {
-    var _a;
-    super.onResize();
-    (_a = this.domMeshes) == null ? void 0 : _a.forEach((mesh) => {
-      if (mesh.domElement) {
-        mesh.domElement.setSize();
-      }
-    });
   }
 }
 class ScrollManager {

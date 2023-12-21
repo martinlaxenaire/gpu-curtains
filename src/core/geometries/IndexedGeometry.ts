@@ -8,7 +8,7 @@ export interface IndexedGeometryIndexBufferOptions {
   /** index buffer format */
   bufferFormat?: GPUIndexFormat
   /** index buffer array */
-  array?: Uint32Array
+  array?: Uint16Array | Uint32Array
 }
 
 /**
@@ -18,7 +18,7 @@ export interface IndexBuffer {
   /** index buffer format */
   bufferFormat: GPUIndexFormat
   /** index buffer array */
-  array: Uint32Array
+  array: Uint16Array | Uint32Array
   /** index buffer length */
   bufferLength: number
   /** index buffer {@link GPUBuffer} */

@@ -3,7 +3,6 @@ import { Renderer } from '../renderers/utils';
 import { TextureBinding } from '../bindings/TextureBinding';
 import { BindGroupBindingElement } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { RectSize } from '../DOM/DOMElement';
 import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding';
 import { Texture } from './Texture';
 import { TextureSize } from '../../types/Textures';
@@ -61,11 +60,6 @@ export declare class RenderTexture {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: RenderTextureParams);
     /**
-     * Set the [size]{@link RenderTexture#size}
-     * @param size - [size]{@link TextureSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height and 1 for depth if null
-     */
-    setSize(size?: TextureSize | null): void;
-    /**
      * Copy another {@link RenderTexture} into this {@link RenderTexture}
      * @param texture - {@link RenderTexture} to copy
      */
@@ -87,7 +81,7 @@ export declare class RenderTexture {
      * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
      * @param size - the optional new [size]{@link RectSize} to set
      */
-    resize(size?: RectSize | null): void;
+    resize(size?: TextureSize | null): void;
     /**
      * Destroy our {@link RenderTexture}
      */

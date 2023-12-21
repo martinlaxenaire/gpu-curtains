@@ -80,8 +80,6 @@ export class GPURenderer {
   /** The {@link Scene} used */
   scene: Scene
 
-  /** An array containing all our created {@link AllowedBindGroups} */
-  bindGroups: AllowedBindGroups[]
   /** An array containing all our created {@link ComputePass} */
   computePasses: ComputePass[]
   /** An array containing all our created {@link PingPongPlane} */
@@ -92,12 +90,8 @@ export class GPURenderer {
   renderTargets: RenderTarget[]
   /** An array containing all our created [Meshes]{@link ProjectedMesh} */
   meshes: ProjectedMesh[]
-  /** An array containing all our created {@link Texture} */
-  textures: Texture[]
   /** An array containing all our created {@link RenderTexture} */
   renderTextures: RenderTexture[]
-  /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
-  texturesQueue: Texture[]
 
   /** Whether to use multisampling, and if so its value */
   sampleCount: GPUSize32
@@ -106,8 +100,6 @@ export class GPURenderer {
 
   /** [DOM Element]{@link DOMElement} that will contain our canvas */
   domElement: DOMElement
-  /** Document [body]{@link HTMLBodyElement} [DOM Element]{@link DOMElement} used to trigger resize when the document body size changes */
-  documentBody: DOMElement
 
   /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
   onBeforeCommandEncoderCreation: TasksQueueManager
@@ -162,6 +154,7 @@ export class GPURenderer {
     // needed to get container bounding box
     this.domElement = new DOMElement({
       element: container,
+      onSizeChanged: (boundingRect) => this.resize(boundingRect),
     })
 
     // create the canvas
@@ -172,14 +165,6 @@ export class GPURenderer {
       // append the canvas
       this.domElement.element.appendChild(this.canvas)
     }
-
-    // now track any change in the document body size, and resize our scene
-    this.documentBody = new DOMElement({
-      element: document.body,
-      onSizeChanged: () => this.resize(),
-    })
-
-    this.texturesQueue = []
 
     // device is already available? create the context!
     if (this.deviceManager.device) {
@@ -247,7 +232,7 @@ export class GPURenderer {
    * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
    */
   get boundingRect(): DOMElementBoundingRect {
-    return this.domElement.boundingRect
+    return this.domElement.boundingRect ?? this.domElement.element?.getBoundingClientRect()
   }
 
   /**
@@ -257,8 +242,8 @@ export class GPURenderer {
     const devicePixelRatio = window.devicePixelRatio ?? 1
     const scaleBoundingRect = this.pixelRatio / devicePixelRatio
 
-    return Object.keys(this.domElement.boundingRect).reduce(
-      (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
+    return Object.keys(this.boundingRect).reduce(
+      (a, key) => ({ ...a, [key]: this.boundingRect[key] * scaleBoundingRect }),
       {
         x: 0,
         y: 0,
@@ -326,8 +311,8 @@ export class GPURenderer {
    * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
    * @readonly
    */
-  get deviceObjects(): SceneObject[] {
-    return this.deviceManager.deviceObjects
+  get deviceRenderedObjects(): SceneObject[] {
+    return this.deviceManager.deviceRenderedObjects
   }
 
   /**
@@ -410,7 +395,7 @@ export class GPURenderer {
    */
   createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer {
     const buffer = this.device?.createBuffer(bufferDescriptor)
-    this.buffers.push(buffer)
+    this.deviceManager.addBuffer(buffer)
     return buffer
   }
 
@@ -492,21 +477,27 @@ export class GPURenderer {
   /* BIND GROUPS & LAYOUTS */
 
   /**
-   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPURenderer#bindGroups}
-   * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+   * Get all created [bind groups]{@link AllowedBindGroups} tracked by our {@link GPUDeviceManager}
+   * @readonly
    */
-  addBindGroup(bindGroup: AllowedBindGroups) {
-    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-      this.bindGroups.push(bindGroup)
-    }
+  get bindGroups(): AllowedBindGroups[] {
+    return this.deviceManager.bindGroups
   }
 
   /**
-   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPURenderer#bindGroups}
+   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+   */
+  addBindGroup(bindGroup: AllowedBindGroups) {
+    this.deviceManager.addBindGroup(bindGroup)
+  }
+
+  /**
+   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
    */
   removeBindGroup(bindGroup: AllowedBindGroups) {
-    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid)
+    this.deviceManager.removeBindGroup(bindGroup)
   }
 
   /**
@@ -588,32 +579,40 @@ export class GPURenderer {
   /* TEXTURES */
 
   /**
-   * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
+   * Get all created [textures]{@link Texture} tracked by our {@link GPUDeviceManager}
+   * @readonly
+   */
+  get textures(): Texture[] {
+    return this.deviceManager.textures
+  }
+
+  /**
+   * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
    * @param texture - [texture]{@link Texture} to add
    */
   addTexture(texture: Texture) {
-    this.textures.push(texture)
+    this.deviceManager.addTexture(texture)
   }
 
   /**
-   * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
+   * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
    * @param texture - [texture]{@link Texture} to remove
    */
   removeTexture(texture: Texture) {
-    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid)
+    this.deviceManager.removeTexture(texture)
   }
 
   /**
-   * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
-   * @param texture - [texture]{@link Texture} to add
+   * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPUDeviceManager#renderTextures}
+   * @param texture - [render texture]{@link RenderTexture} to add
    */
   addRenderTexture(texture: RenderTexture) {
     this.renderTextures.push(texture)
   }
 
   /**
-   * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
-   * @param texture - [texture]{@link Texture} to remove
+   * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPUDeviceManager#renderTextures}
+   * @param texture - [render texture]{@link RenderTexture} to remove
    */
   removeRenderTexture(texture: RenderTexture) {
     this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid)
@@ -633,34 +632,7 @@ export class GPURenderer {
    * @param texture - [texture]{@link Texture} to upload
    */
   uploadTexture(texture: Texture) {
-    if (texture.source) {
-      try {
-        this.device?.queue.copyExternalImageToTexture(
-          {
-            source: texture.source as GPUImageCopyExternalImageSource,
-            flipY: texture.options.flipY,
-          } as GPUImageCopyExternalImage,
-          { texture: texture.texture as GPUTexture },
-          { width: texture.size.width, height: texture.size.height }
-        )
-
-        if ((texture.texture as GPUTexture).mipLevelCount > 1) {
-          generateMips(this.device, texture.texture as GPUTexture)
-        }
-
-        // add to our textures queue array to track when it has been uploaded
-        this.texturesQueue.push(texture)
-      } catch ({ message }) {
-        throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`)
-      }
-    } else {
-      this.device?.queue.writeTexture(
-        { texture: texture.texture as GPUTexture },
-        new Uint8Array(texture.options.placeholderColor),
-        { bytesPerRow: texture.size.width * 4 },
-        { width: texture.size.width, height: texture.size.height }
-      )
-    }
+    this.deviceManager.uploadTexture(texture)
   }
 
   /**
@@ -697,7 +669,7 @@ export class GPURenderer {
         ...samplerOptions,
       })
 
-      this.samplers.push(sampler)
+      this.deviceManager.addSampler(sampler)
 
       return gpuSampler
     }
@@ -731,14 +703,12 @@ export class GPURenderer {
    * Set all objects arrays that we'll keep track of
    */
   setRendererObjects() {
-    // keep track of bind groups, meshes, textures, etc.
-    this.bindGroups = []
+    // keep track of compute passes, meshes, etc.
     this.computePasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []
     this.renderTargets = []
     this.meshes = []
-    this.textures = []
     this.renderTextures = []
   }
 
@@ -756,7 +726,7 @@ export class GPURenderer {
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
-    return this.deviceObjects.filter((object) => {
+    return this.deviceRenderedObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
@@ -771,7 +741,7 @@ export class GPURenderer {
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */
   getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
-    return this.deviceObjects.filter((object) => {
+    return this.deviceRenderedObjects.filter((object) => {
       return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid)
     })
   }
@@ -927,22 +897,6 @@ export class GPURenderer {
   onAfterCommandEncoder() {
     if (!this.ready) return
 
-    // handle textures
-    // first check if media textures without parent need to be uploaded
-    this.textures
-      .filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded)
-      .forEach((texture) => this.uploadTexture(texture))
-
-    // no need to use device.queue.onSubmittedWorkDone
-    // as [Kai Ninomiya](https://github.com/kainino0x) stated:
-    // "Anything you submit() after the copyExternalImageToTexture() is guaranteed to see the result of that call."
-    this.texturesQueue.forEach((texture) => {
-      texture.sourceUploaded = true
-    })
-
-    // clear texture queue
-    this.texturesQueue = []
-
     this.onAfterCommandEncoderSubmission.execute()
   }
 
@@ -967,7 +921,6 @@ export class GPURenderer {
    */
   destroy() {
     this.domElement?.destroy()
-    this.documentBody?.destroy()
 
     // destroy render passes
     this.renderPass?.destroy()
@@ -975,13 +928,7 @@ export class GPURenderer {
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
 
-    this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
-
-    this.textures.forEach((texture) => texture.destroy())
     this.renderTextures.forEach((texture) => texture.destroy())
-    this.textures = []
-    this.renderTextures = []
-    this.texturesQueue = []
 
     this.context?.unconfigure()
   }

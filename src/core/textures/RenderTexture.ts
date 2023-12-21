@@ -98,30 +98,18 @@ export class RenderTexture {
     }
 
     // sizes
-    this.setSize(this.options.size)
+    this.size = this.options.size ?? {
+      width: this.renderer.pixelRatioBoundingRect.width,
+      height: this.renderer.pixelRatioBoundingRect.height,
+      depth: 1,
+    }
 
     // struct
     this.setBindings()
 
     // texture
-    this.createTexture()
     this.renderer.addRenderTexture(this)
-  }
-
-  /**
-   * Set the [size]{@link RenderTexture#size}
-   * @param size - [size]{@link TextureSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height and 1 for depth if null
-   */
-  setSize(size: TextureSize | null = null) {
-    if (!size) {
-      size = {
-        width: this.renderer.pixelRatioBoundingRect.width,
-        height: this.renderer.pixelRatioBoundingRect.height,
-        depth: 1,
-      }
-    }
-
-    this.size = size
+    this.createTexture()
   }
 
   /**
@@ -195,8 +183,21 @@ export class RenderTexture {
    * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
    * @param size - the optional new [size]{@link RectSize} to set
    */
-  resize(size: RectSize | null = null) {
-    this.setSize(size)
+  resize(size: TextureSize | null = null) {
+    if (!size) {
+      size = {
+        width: this.renderer.pixelRatioBoundingRect.width,
+        height: this.renderer.pixelRatioBoundingRect.height,
+        depth: 1,
+      }
+    }
+
+    // no real resize, bail!
+    if (size.width === this.size.width && size.height === this.size.height && size.depth === this.size.depth) {
+      return
+    }
+
+    this.size = size
     this.createTexture()
   }
 

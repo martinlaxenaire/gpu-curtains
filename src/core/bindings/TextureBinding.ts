@@ -84,13 +84,13 @@ export class TextureBinding extends Binding {
     return this.texture instanceof GPUExternalTexture
       ? this.texture
       : this.texture instanceof GPUTexture
-      ? this.texture.createView()
+      ? this.texture.createView({ label: this.options.label + ' view' })
       : null
   }
 
   set resource(value: TextureBindingResource) {
     // resource changed, update bind group!
-    if (value && this.texture) this.shouldResetBindGroup = true
+    if (value || this.texture) this.shouldResetBindGroup = true
     this.texture = value
   }
 

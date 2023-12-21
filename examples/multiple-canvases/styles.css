@@ -33,7 +33,7 @@
 
   #planes {
     padding: 15rem 0;
-    --nb-planes-per-row: 3;
+    --nb-planes-per-row: 4;
     display: grid;
     grid-template-columns: repeat(var(--nb-planes-per-row), [col-start] 1fr);
     column-gap: 5rem;

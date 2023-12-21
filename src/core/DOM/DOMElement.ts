@@ -1,4 +1,4 @@
-import { resizeManager, ResizeManager } from '../../utils/ResizeManager'
+import { resizeManager, ResizeManager, ResizeManagerEntry } from '../../utils/ResizeManager'
 import { throwError } from '../../utils/utils'
 
 /**
@@ -52,6 +52,7 @@ export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPositio
  */
 export interface DOMElementParams {
   element?: string | Element
+  priority?: ResizeManagerEntry['priority']
   onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
   onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
 }
@@ -66,6 +67,8 @@ export class DOMElement {
 
   /** The HTML element to track */
   element: HTMLElement
+  /** Priority at which this element {@link onSizeChanged} function must be called */
+  priority: ResizeManagerEntry['priority']
   /** Flag indicating whether the timeout is still running and we should avoid a new computation */
   isResizing: boolean
   /** Callback to run whenever the {@link element} size changed */
@@ -87,6 +90,7 @@ export class DOMElement {
   constructor(
     {
       element = document.body,
+      priority = 1,
       onSizeChanged = (boundingRect = null) => {
         /* allow empty callback */
       },
@@ -106,6 +110,8 @@ export class DOMElement {
       this.element = element as HTMLElement
     }
 
+    this.priority = priority
+
     this.isResizing = false
 
     this.onSizeChanged = onSizeChanged
@@ -115,13 +121,11 @@ export class DOMElement {
 
     this.resizeManager.observe({
       element: this.element,
+      priority: this.priority,
       callback: () => {
         this.setSize()
       },
     })
-
-    // do it right away on init
-    this.setSize()
   }
 
   /**

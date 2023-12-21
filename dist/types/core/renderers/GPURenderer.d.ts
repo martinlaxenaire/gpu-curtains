@@ -67,8 +67,6 @@ export declare class GPURenderer {
     renderPass: RenderPass;
     /** The {@link Scene} used */
     scene: Scene;
-    /** An array containing all our created {@link AllowedBindGroups} */
-    bindGroups: AllowedBindGroups[];
     /** An array containing all our created {@link ComputePass} */
     computePasses: ComputePass[];
     /** An array containing all our created {@link PingPongPlane} */
@@ -79,20 +77,14 @@ export declare class GPURenderer {
     renderTargets: RenderTarget[];
     /** An array containing all our created [Meshes]{@link ProjectedMesh} */
     meshes: ProjectedMesh[];
-    /** An array containing all our created {@link Texture} */
-    textures: Texture[];
     /** An array containing all our created {@link RenderTexture} */
     renderTextures: RenderTexture[];
-    /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
-    texturesQueue: Texture[];
     /** Whether to use multisampling, and if so its value */
     sampleCount: GPUSize32;
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** [DOM Element]{@link DOMElement} that will contain our canvas */
     domElement: DOMElement;
-    /** Document [body]{@link HTMLBodyElement} [DOM Element]{@link DOMElement} used to trigger resize when the document body size changes */
-    documentBody: DOMElement;
     /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
     onBeforeCommandEncoderCreation: TasksQueueManager;
     /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created but before the {@link Scene} is rendered */
@@ -168,7 +160,7 @@ export declare class GPURenderer {
      * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
      * @readonly
      */
-    get deviceObjects(): SceneObject[];
+    get deviceRenderedObjects(): SceneObject[];
     /**
      * Configure our [context]{@link context} with the given options
      */
@@ -229,12 +221,17 @@ export declare class GPURenderer {
         commandEncoder?: GPUCommandEncoder;
     }): GPUBuffer | null;
     /**
-     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPURenderer#bindGroups}
+     * Get all created [bind groups]{@link AllowedBindGroups} tracked by our {@link GPUDeviceManager}
+     * @readonly
+     */
+    get bindGroups(): AllowedBindGroups[];
+    /**
+     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
      */
     addBindGroup(bindGroup: AllowedBindGroups): void;
     /**
-     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPURenderer#bindGroups}
+     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
      */
     removeBindGroup(bindGroup: AllowedBindGroups): void;
@@ -289,23 +286,28 @@ export declare class GPURenderer {
      */
     createComputePipelineAsync(pipelineDescriptor: GPUComputePipelineDescriptor): Promise<GPUComputePipeline>;
     /**
-     * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
+     * Get all created [textures]{@link Texture} tracked by our {@link GPUDeviceManager}
+     * @readonly
+     */
+    get textures(): Texture[];
+    /**
+     * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
      * @param texture - [texture]{@link Texture} to add
      */
     addTexture(texture: Texture): void;
     /**
-     * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
+     * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
      * @param texture - [texture]{@link Texture} to remove
      */
     removeTexture(texture: Texture): void;
     /**
-     * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
-     * @param texture - [texture]{@link Texture} to add
+     * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPUDeviceManager#renderTextures}
+     * @param texture - [render texture]{@link RenderTexture} to add
      */
     addRenderTexture(texture: RenderTexture): void;
     /**
-     * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
-     * @param texture - [texture]{@link Texture} to remove
+     * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPUDeviceManager#renderTextures}
+     * @param texture - [render texture]{@link RenderTexture} to remove
      */
     removeRenderTexture(texture: RenderTexture): void;
     /**

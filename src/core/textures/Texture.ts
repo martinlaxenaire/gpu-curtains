@@ -153,8 +153,8 @@ export class Texture extends Object3D {
     this.sourceUploaded = false
     this.shouldUpdate = false
 
-    this.createTexture()
     this.renderer.addTexture(this)
+    this.createTexture()
   }
 
   /**

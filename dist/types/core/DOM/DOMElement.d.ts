@@ -1,4 +1,4 @@
-import { ResizeManager } from '../../utils/ResizeManager';
+import { ResizeManager, ResizeManagerEntry } from '../../utils/ResizeManager';
 /**
  * Defines a rectangular coordinates object
  */
@@ -46,6 +46,7 @@ export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPositio
  */
 export interface DOMElementParams {
     element?: string | Element;
+    priority?: ResizeManagerEntry['priority'];
     onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
     onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
 }
@@ -57,6 +58,8 @@ export declare class DOMElement {
     #private;
     /** The HTML element to track */
     element: HTMLElement;
+    /** Priority at which this element {@link onSizeChanged} function must be called */
+    priority: ResizeManagerEntry['priority'];
     /** Flag indicating whether the timeout is still running and we should avoid a new computation */
     isResizing: boolean;
     /** Callback to run whenever the {@link element} size changed */
@@ -74,7 +77,7 @@ export declare class DOMElement {
      * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
      * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
      */
-    constructor({ element, onSizeChanged, onPositionChanged, }?: DOMElementParams);
+    constructor({ element, priority, onSizeChanged, onPositionChanged, }?: DOMElementParams);
     /**
      * Check whether 2 bounding rectangles are equals
      * @param rect1 - first bounding rectangle

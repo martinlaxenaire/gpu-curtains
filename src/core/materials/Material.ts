@@ -284,11 +284,6 @@ export class Material {
           [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
         }
 
-      // inputBinding.isActive =
-      //   (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(inputBinding.name + '.') !== -1) ||
-      //   (this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(inputBinding.name + '.') !== -1) ||
-      //   (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(inputBinding.name + '.') !== -1)
-
       this.inputsBindings.push(inputBinding)
     })
   }

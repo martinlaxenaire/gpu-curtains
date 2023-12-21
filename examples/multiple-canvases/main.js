@@ -13,7 +13,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         </div>`
   }
 
-  const nbPlanes = 30
+  const nbPlanes = 40
   let planesHTMLString = ''
 
   for (let i = 0; i < nbPlanes; i++) {
@@ -99,7 +99,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // notice that gpuCurtains.renderer matches the default renderer created by the GPUCurtains instance
     const plane = new Plane(gpuCurtains.renderer, planeEl, params)
 
-    plane.position.z = Math.random() // allow for an easy parallax effect
+    plane.position.z = Math.random() * 4 // allow for an easy parallax effect
   })
 
   // and then the back planes using our back renderer
@@ -108,6 +108,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     params.label = 'Back plane ' + index
     const plane = new Plane(backCurtainsRenderer, planeEl, params)
 
-    plane.position.z = -1 * Math.random() // allow for an easy parallax effect
+    plane.position.z = -4 * Math.random() // allow for an easy parallax effect
   })
 })

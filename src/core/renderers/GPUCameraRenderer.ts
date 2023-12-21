@@ -181,7 +181,7 @@ export class GPUCameraRenderer extends GPURenderer {
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
-    return this.deviceObjects.filter((object) => {
+    return this.deviceRenderedObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,

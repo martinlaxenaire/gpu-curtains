@@ -3,6 +3,8 @@ import { Renderer } from './utils';
 import { Sampler } from '../samplers/Sampler';
 import { PipelineManager } from '../pipelines/PipelineManager';
 import { SceneObject } from './GPURenderer';
+import { Texture } from '../textures/Texture';
+import { AllowedBindGroups } from '../../types/BindGroups';
 /**
  * Parameters used to create a {@link GPUDeviceManager}
  */
@@ -38,14 +40,20 @@ export declare class GPUDeviceManager {
     device: GPUDevice | undefined;
     /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} have been successfully created */
     ready: boolean;
-    /** Array of [renderers]{@link Renderer} using that {@link GPUDeviceManager} */
-    renderers: Renderer[];
     /** The {@link PipelineManager} used to cache {@link GPURenderPipeline} and {@link GPUComputePipeline} and set them only when appropriate */
     pipelineManager: PipelineManager;
+    /** Array of [renderers]{@link Renderer} using that {@link GPUDeviceManager} */
+    renderers: Renderer[];
+    /** An array containing all our created {@link AllowedBindGroups} */
+    bindGroups: AllowedBindGroups[];
     /** An array containing all our created {@link GPUBuffer} */
     buffers: GPUBuffer[];
     /** An array containing all our created {@link Sampler} */
     samplers: Sampler[];
+    /** An array containing all our created {@link Texture} */
+    textures: Texture[];
+    /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
+    texturesQueue: Texture[];
     /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
     onError: () => void;
     /** Callback to run whenever the [renderer device]{@link GPUDeviceManager#device} is lost */
@@ -89,6 +97,10 @@ export declare class GPUDeviceManager {
      */
     restoreDevice(): Promise<void>;
     /**
+     * Set all objects arrays that we'll keep track of
+     */
+    setDeviceObjects(): void;
+    /**
      * Add a [renderer]{@link Renderer} to our [renderers array]{@link GPUDeviceManager#renderers}
      * @param renderer - [renderer]{@link Renderer} to add
      */
@@ -102,7 +114,22 @@ export declare class GPUDeviceManager {
      * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
      * @readonly
      */
-    get deviceObjects(): SceneObject[];
+    get deviceRenderedObjects(): SceneObject[];
+    /**
+     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+     */
+    addBindGroup(bindGroup: AllowedBindGroups): void;
+    /**
+     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+     */
+    removeBindGroup(bindGroup: AllowedBindGroups): void;
+    /**
+     * Add a [buffer]{@link GPUBuffer} to our our [buffers array]{@link GPUDeviceManager#buffers}
+     * @param buffer - [buffer]{@link GPUBuffer} to add
+     */
+    addBuffer(buffer: GPUBuffer): void;
     /**
      * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
      * @param buffer - [buffer]{@link GPUBuffer} to remove
@@ -110,10 +137,30 @@ export declare class GPUDeviceManager {
      */
     removeBuffer(buffer: GPUBuffer, originalLabel?: string): void;
     /**
+     * Add a [sampler]{@link Sampler} to our [samplers array]{@link GPUDeviceManager#samplers}
+     * @param sampler - [sampler]{@link Sampler} to add
+     */
+    addSampler(sampler: Sampler): void;
+    /**
      * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
      * @param sampler - [sampler]{@link Sampler} to remove
      */
     removeSampler(sampler: Sampler): void;
+    /**
+     * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
+     * @param texture - [texture]{@link Texture} to add
+     */
+    addTexture(texture: Texture): void;
+    /**
+     * Upload a [texture]{@link Texture} to the GPU
+     * @param texture - [texture]{@link Texture} to upload
+     */
+    uploadTexture(texture: Texture): void;
+    /**
+     * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
+     * @param texture - [texture]{@link Texture} to remove
+     */
+    removeTexture(texture: Texture): void;
     render(): void;
     /**
      * Destroy the {@link GPUDeviceManager} and its [renderers]{@link GPUDeviceManager#renderers}

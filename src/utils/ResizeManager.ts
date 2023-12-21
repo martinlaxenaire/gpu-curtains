@@ -6,6 +6,8 @@ import { DOMElement } from '../core/DOM/DOMElement'
 export interface ResizeManagerEntry {
   /** {@link HTMLElement} to track */
   element: DOMElement['element'] | Element
+  /** Priority in which to call the callback function */
+  priority?: number
   /** Function to execute when the [element]{@link ResizeManagerEntry#element} is resized */
   callback: () => void | null
 }
@@ -32,21 +34,18 @@ export class ResizeManager {
     this.entries = []
 
     this.resizeObserver = new ResizeObserver((observedEntries) => {
-      // get all entries corresponding to that element, and sort them by number of entries
-      // if there's more than 1 entry, it might be that we have multiple renderers and it's our document.body that is observed
-      // in this case call the callbacks last so all other DOM Element have updated their sizes
+      // get all entries corresponding to that element, and sort them by priority
       const allEntries = observedEntries
         .map((observedEntry) => {
           return this.entries.filter((e) => e.element.isSameNode(observedEntry.target))
         })
-        .sort((a, b) => a.length - b.length)
+        .flat()
+        .sort((a, b) => b.priority - a.priority)
 
-      allEntries?.forEach((entries) => {
-        entries.forEach((entry) => {
-          if (entry && entry.callback) {
-            entry.callback()
-          }
-        })
+      allEntries?.forEach((entry) => {
+        if (entry && entry.callback) {
+          entry.callback()
+        }
       })
     })
   }
@@ -63,13 +62,14 @@ export class ResizeManager {
    * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
    * @param entry - [entry]{@link ResizeManagerEntry} to watch
    */
-  observe({ element, callback }: ResizeManagerEntry) {
+  observe({ element, priority, callback }: ResizeManagerEntry) {
     if (!element || !this.shouldWatch) return
 
     this.resizeObserver.observe(element)
 
     const entry = {
       element,
+      priority,
       callback,
     }
 

@@ -17,8 +17,4 @@ export declare class GPUCurtainsRenderer extends GPUCameraRenderer {
      * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements
      */
     setRendererObjects(): void;
-    /**
-     * Set each [DOM Meshes DOM Elements]{GPUCurtainsRenderer#domMeshes.domElement} size on resize
-     */
-    onResize(): void;
 }

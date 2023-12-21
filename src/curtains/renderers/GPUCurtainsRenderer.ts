@@ -44,16 +44,4 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
     this.domMeshes = []
   }
-
-  /**
-   * Set each [DOM Meshes DOM Elements]{GPUCurtainsRenderer#domMeshes.domElement} size on resize
-   */
-  onResize() {
-    super.onResize()
-    this.domMeshes?.forEach((mesh) => {
-      if (mesh.domElement) {
-        mesh.domElement.setSize()
-      }
-    })
-  }
 }
