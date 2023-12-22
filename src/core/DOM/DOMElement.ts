@@ -126,6 +126,9 @@ export class DOMElement {
         this.setSize()
       },
     })
+
+    // set size right away on init
+    this.setSize()
   }
 
   /**

@@ -2532,7 +2532,7 @@ var __privateMethod = (obj, member, method) => {
      * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
      */
     get resource() {
-      return this.texture instanceof GPUExternalTexture ? this.texture : this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view" }) : null;
+      return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view" }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
     }
     set resource(value) {
       if (value || this.texture)
@@ -7423,6 +7423,7 @@ ${this.shaders.compute.head}`;
           this.setSize();
         }
       });
+      this.setSize();
     }
     /**
      * Check whether 2 bounding rectangles are equals
@@ -8576,14 +8577,13 @@ ${this.shaders.compute.head}`;
       this.preferredFormat = preferredFormat ?? ((_a = this.deviceManager.gpu) == null ? void 0 : _a.getPreferredCanvasFormat());
       this.setTasksQueues();
       this.setRendererObjects();
+      const isContainerCanvas = container instanceof HTMLCanvasElement;
+      this.canvas = isContainerCanvas ? container : document.createElement("canvas");
       this.domElement = new DOMElement({
         element: container,
         onSizeChanged: (boundingRect) => this.resize(boundingRect)
       });
-      if (container instanceof HTMLCanvasElement) {
-        this.canvas = container;
-      } else {
-        this.canvas = document.createElement("canvas");
+      if (!isContainerCanvas) {
         this.domElement.element.appendChild(this.canvas);
       }
       if (this.deviceManager.device) {

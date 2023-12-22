@@ -84,7 +84,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       
       transformed = rotatedTransformed.xyz;
       
-      //transformed.y += instanceIndex * scroll.strength * 0.025;
+      transformed.y += instanceIndex * scroll.strength * 0.0125;
       
       // avoid depth overlapping issues
       transformed.z -= 0.0001 * instanceIndex;

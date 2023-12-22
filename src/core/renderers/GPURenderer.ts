@@ -151,17 +151,17 @@ export class GPURenderer {
     this.setTasksQueues()
     this.setRendererObjects()
 
+    // create the canvas
+    const isContainerCanvas = container instanceof HTMLCanvasElement
+    this.canvas = isContainerCanvas ? (container as HTMLCanvasElement) : document.createElement('canvas')
+
     // needed to get container bounding box
     this.domElement = new DOMElement({
       element: container,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
     })
 
-    // create the canvas
-    if (container instanceof HTMLCanvasElement) {
-      this.canvas = container
-    } else {
-      this.canvas = document.createElement('canvas')
+    if (!isContainerCanvas) {
       // append the canvas
       this.domElement.element.appendChild(this.canvas)
     }
