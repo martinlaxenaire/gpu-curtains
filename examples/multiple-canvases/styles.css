@@ -72,6 +72,16 @@
   }
 }
 
+@media screen and (max-width: 1600px) {
+  .medium-container {
+    max-width: 1280px;
+  }
+
+  #planes {
+    column-gap: 2.5rem;
+  }
+}
+
 @media screen and (orientation: portrait) {
   #planes {
     --nb-planes-per-row: 2;
