@@ -6135,172 +6135,6 @@ struct VertexOutput {
       }
     }, _autoRender3 = new WeakMap(), _a;
   }
-  class ResizeManager {
-    /**
-     * ResizeManager constructor
-     */
-    constructor() {
-      this.shouldWatch = true;
-      this.entries = [];
-      this.resizeObserver = new ResizeObserver((observedEntries) => {
-        const allEntries = observedEntries.map((observedEntry) => {
-          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
-        }).flat().sort((a, b) => b.priority - a.priority);
-        allEntries == null ? void 0 : allEntries.forEach((entry) => {
-          if (entry && entry.callback) {
-            entry.callback();
-          }
-        });
-      });
-    }
-    /**
-     * Set [shouldWatch]{@link ResizeManager#shouldWatch}
-     * @param shouldWatch - whether to watch or not
-     */
-    useObserver(shouldWatch = true) {
-      this.shouldWatch = shouldWatch;
-    }
-    /**
-     * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
-     * @param entry - [entry]{@link ResizeManagerEntry} to watch
-     */
-    observe({ element, priority, callback }) {
-      if (!element || !this.shouldWatch)
-        return;
-      this.resizeObserver.observe(element);
-      const entry = {
-        element,
-        priority,
-        callback
-      };
-      this.entries.push(entry);
-    }
-    /**
-     * Unobserve an [element]{@link HTMLElement} and remove it from our [entries array]{@link ResizeManager#entries}
-     * @param element - [element]{@link HTMLElement} to unobserve
-     */
-    unobserve(element) {
-      this.resizeObserver.unobserve(element);
-      this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
-    }
-    /**
-     * Destroy our {@link ResizeManager}
-     */
-    destroy() {
-      this.resizeObserver.disconnect();
-    }
-  }
-  const resizeManager = new ResizeManager();
-  class DOMElement {
-    /**
-     * DOMElement constructor
-     * @param parameters - parameters used to create our DOMElement
-     * @param {HTMLElement=} parameters.element - DOM HTML element to track
-     * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
-     * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
-     */
-    constructor({
-      element = document.body,
-      priority = 1,
-      onSizeChanged = (boundingRect = null) => {
-      },
-      onPositionChanged = (boundingRect = null) => {
-      }
-    } = {}) {
-      __privateAdd(this, _throttleResize, void 0);
-      __privateSet(this, _throttleResize, null);
-      if (typeof element === "string") {
-        this.element = document.querySelector(element);
-        if (!this.element) {
-          const notFoundEl = typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`;
-          throwError(`DOMElement: corresponding ${notFoundEl} not found.`);
-        }
-      } else {
-        this.element = element;
-      }
-      this.priority = priority;
-      this.isResizing = false;
-      this.onSizeChanged = onSizeChanged;
-      this.onPositionChanged = onPositionChanged;
-      this.resizeManager = resizeManager;
-      this.resizeManager.observe({
-        element: this.element,
-        priority: this.priority,
-        callback: () => {
-          this.setSize();
-        }
-      });
-    }
-    /**
-     * Check whether 2 bounding rectangles are equals
-     * @param rect1 - first bounding rectangle
-     * @param rect2 - second bounding rectangle
-     * @returns - whether the rectangles are equals or not
-     */
-    compareBoundingRect(rect1, rect2) {
-      return !["x", "y", "left", "top", "right", "bottom", "width", "height"].some((k) => rect1[k] !== rect2[k]);
-    }
-    /**
-     * Get or set our element's bounding rectangle
-     * @readonly
-     */
-    get boundingRect() {
-      return this._boundingRect;
-    }
-    set boundingRect(boundingRect) {
-      const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect);
-      this._boundingRect = {
-        top: boundingRect.top,
-        right: boundingRect.right,
-        bottom: boundingRect.bottom,
-        left: boundingRect.left,
-        width: boundingRect.width,
-        height: boundingRect.height,
-        x: boundingRect.x,
-        y: boundingRect.y
-      };
-      if (!isSameRect) {
-        this.onSizeChanged(this.boundingRect);
-      }
-    }
-    /**
-     * Update our element bounding rectangle because the scroll position has changed
-     * @param delta - scroll delta values along X and Y axis
-     */
-    updateScrollPosition(delta = { x: 0, y: 0 }) {
-      if (this.isResizing)
-        return;
-      this._boundingRect.top += delta.y;
-      this._boundingRect.left += delta.x;
-      if (delta.x || delta.y) {
-        this.onPositionChanged(this.boundingRect);
-      }
-    }
-    /**
-     * Set our element bounding rectangle, either by a value or a getBoundingClientRect call
-     * @param boundingRect - new bounding rectangle
-     */
-    setSize(boundingRect = null) {
-      if (!this.element)
-        return;
-      this.isResizing = !!this.boundingRect;
-      this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
-      __privateSet(this, _throttleResize, setTimeout(() => {
-        this.isResizing = false;
-        __privateSet(this, _throttleResize, null);
-      }, 50));
-    }
-    /**
-     * Destroy our DOMElement - remove from resize observer and clear throttle timeout
-     */
-    destroy() {
-      this.resizeManager.unobserve(this.element);
-      if (__privateGet(this, _throttleResize)) {
-        clearTimeout(__privateGet(this, _throttleResize));
-      }
-    }
-  }
-  _throttleResize = new WeakMap();
   class CacheManager {
     /**
      * CacheManager constructor
@@ -6363,10 +6197,6 @@ struct VertexOutput {
           left: this.renderer.boundingRect.left
         }
       };
-      this.domElement = new DOMElement({
-        element: this.renderer.domElement.element,
-        onSizeChanged: (boundingRect) => this.resize(boundingRect)
-      });
       this.type = "FullscreenQuadMesh";
     }
     /**
@@ -6374,10 +6204,7 @@ struct VertexOutput {
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect = null) {
-      var _a;
-      if (!boundingRect && (!this.domElement || ((_a = this.domElement) == null ? void 0 : _a.isResizing)))
-        return;
-      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
+      this.size.document = boundingRect ?? this.renderer.boundingRect;
       super.resize(boundingRect);
     }
     /**
@@ -6391,14 +6218,6 @@ struct VertexOutput {
         (mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1,
         1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2
       );
-    }
-    /**
-     * Destroy our {@link FullscreenPlane}
-     */
-    destroy() {
-      var _a;
-      super.destroy();
-      (_a = this.domElement) == null ? void 0 : _a.destroy();
     }
   }
   class ProjectedObject3D extends Object3D {
@@ -7019,6 +6838,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         verticesOrder,
         topology,
         blend,
+        targetFormat,
         useProjection
       } = parameters;
       renderer = renderer && renderer.renderer || renderer;
@@ -7053,6 +6873,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         verticesOrder,
         topology,
         blend,
+        targetFormat,
         useProjection
       };
     }
@@ -7214,7 +7035,7 @@ ${this.shaders.vertex.head}`;
           entryPoint: this.options.shaders.fragment.entryPoint,
           targets: [
             {
-              format: this.renderer.preferredFormat,
+              format: this.options.targetFormat ?? this.renderer.preferredFormat,
               ...blend && {
                 blend
               }
@@ -7507,6 +7328,172 @@ ${this.shaders.compute.head}`;
       this.currentPipelineIndex = null;
     }
   }
+  class ResizeManager {
+    /**
+     * ResizeManager constructor
+     */
+    constructor() {
+      this.shouldWatch = true;
+      this.entries = [];
+      this.resizeObserver = new ResizeObserver((observedEntries) => {
+        const allEntries = observedEntries.map((observedEntry) => {
+          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
+        }).flat().sort((a, b) => b.priority - a.priority);
+        allEntries == null ? void 0 : allEntries.forEach((entry) => {
+          if (entry && entry.callback) {
+            entry.callback();
+          }
+        });
+      });
+    }
+    /**
+     * Set [shouldWatch]{@link ResizeManager#shouldWatch}
+     * @param shouldWatch - whether to watch or not
+     */
+    useObserver(shouldWatch = true) {
+      this.shouldWatch = shouldWatch;
+    }
+    /**
+     * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
+     * @param entry - [entry]{@link ResizeManagerEntry} to watch
+     */
+    observe({ element, priority, callback }) {
+      if (!element || !this.shouldWatch)
+        return;
+      this.resizeObserver.observe(element);
+      const entry = {
+        element,
+        priority,
+        callback
+      };
+      this.entries.push(entry);
+    }
+    /**
+     * Unobserve an [element]{@link HTMLElement} and remove it from our [entries array]{@link ResizeManager#entries}
+     * @param element - [element]{@link HTMLElement} to unobserve
+     */
+    unobserve(element) {
+      this.resizeObserver.unobserve(element);
+      this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
+    }
+    /**
+     * Destroy our {@link ResizeManager}
+     */
+    destroy() {
+      this.resizeObserver.disconnect();
+    }
+  }
+  const resizeManager = new ResizeManager();
+  class DOMElement {
+    /**
+     * DOMElement constructor
+     * @param parameters - parameters used to create our DOMElement
+     * @param {HTMLElement=} parameters.element - DOM HTML element to track
+     * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
+     * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
+     */
+    constructor({
+      element = document.body,
+      priority = 1,
+      onSizeChanged = (boundingRect = null) => {
+      },
+      onPositionChanged = (boundingRect = null) => {
+      }
+    } = {}) {
+      __privateAdd(this, _throttleResize, void 0);
+      __privateSet(this, _throttleResize, null);
+      if (typeof element === "string") {
+        this.element = document.querySelector(element);
+        if (!this.element) {
+          const notFoundEl = typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`;
+          throwError(`DOMElement: corresponding ${notFoundEl} not found.`);
+        }
+      } else {
+        this.element = element;
+      }
+      this.priority = priority;
+      this.isResizing = false;
+      this.onSizeChanged = onSizeChanged;
+      this.onPositionChanged = onPositionChanged;
+      this.resizeManager = resizeManager;
+      this.resizeManager.observe({
+        element: this.element,
+        priority: this.priority,
+        callback: () => {
+          this.setSize();
+        }
+      });
+    }
+    /**
+     * Check whether 2 bounding rectangles are equals
+     * @param rect1 - first bounding rectangle
+     * @param rect2 - second bounding rectangle
+     * @returns - whether the rectangles are equals or not
+     */
+    compareBoundingRect(rect1, rect2) {
+      return !["x", "y", "left", "top", "right", "bottom", "width", "height"].some((k) => rect1[k] !== rect2[k]);
+    }
+    /**
+     * Get or set our element's bounding rectangle
+     * @readonly
+     */
+    get boundingRect() {
+      return this._boundingRect;
+    }
+    set boundingRect(boundingRect) {
+      const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect);
+      this._boundingRect = {
+        top: boundingRect.top,
+        right: boundingRect.right,
+        bottom: boundingRect.bottom,
+        left: boundingRect.left,
+        width: boundingRect.width,
+        height: boundingRect.height,
+        x: boundingRect.x,
+        y: boundingRect.y
+      };
+      if (!isSameRect) {
+        this.onSizeChanged(this.boundingRect);
+      }
+    }
+    /**
+     * Update our element bounding rectangle because the scroll position has changed
+     * @param delta - scroll delta values along X and Y axis
+     */
+    updateScrollPosition(delta = { x: 0, y: 0 }) {
+      if (this.isResizing)
+        return;
+      this._boundingRect.top += delta.y;
+      this._boundingRect.left += delta.x;
+      if (delta.x || delta.y) {
+        this.onPositionChanged(this.boundingRect);
+      }
+    }
+    /**
+     * Set our element bounding rectangle, either by a value or a getBoundingClientRect call
+     * @param boundingRect - new bounding rectangle
+     */
+    setSize(boundingRect = null) {
+      if (!this.element)
+        return;
+      this.isResizing = !!this.boundingRect;
+      this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
+      __privateSet(this, _throttleResize, setTimeout(() => {
+        this.isResizing = false;
+        __privateSet(this, _throttleResize, null);
+      }, 50));
+    }
+    /**
+     * Destroy our DOMElement - remove from resize observer and clear throttle timeout
+     */
+    destroy() {
+      this.resizeManager.unobserve(this.element);
+      if (__privateGet(this, _throttleResize)) {
+        clearTimeout(__privateGet(this, _throttleResize));
+      }
+    }
+  }
+  _throttleResize = new WeakMap();
   class DOMObject3D extends ProjectedObject3D {
     /**
      * DOMObject3D constructor
@@ -8359,7 +8346,13 @@ ${this.shaders.compute.head}`;
      * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - [parameters]{@link RenderPassParams} used to create this {@link RenderPass}
      */
-    constructor(renderer, { label = "Render Pass", depth = true, loadOp = "clear", clearValue = [0, 0, 0, 0] } = {}) {
+    constructor(renderer, {
+      label = "Render Pass",
+      depth = true,
+      loadOp = "clear",
+      clearValue = [0, 0, 0, 0],
+      targetFormat
+    } = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "RenderPass");
       this.type = "RenderPass";
@@ -8369,7 +8362,8 @@ ${this.shaders.compute.head}`;
         label,
         depth,
         loadOp,
-        clearValue
+        clearValue,
+        targetFormat: targetFormat ?? this.renderer.preferredFormat
       };
       this.setSize(this.renderer.pixelRatioBoundingRect);
       this.sampleCount = this.renderer.sampleCount;
@@ -8398,7 +8392,7 @@ ${this.shaders.compute.head}`;
         label: this.options.label + " color attachment texture",
         size: [this.size.width, this.size.height],
         sampleCount: this.sampleCount,
-        format: this.renderer.preferredFormat,
+        format: this.options.targetFormat,
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING
       });
     }
@@ -8633,6 +8627,8 @@ ${this.shaders.compute.head}`;
       (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
       this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
       this.computePasses.forEach((computePass) => computePass.resize());
+      this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
+      this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
       this.meshes.forEach((mesh) => {
         if (!("domElement" in mesh))
           mesh.resize(this.boundingRect);
@@ -9781,12 +9777,13 @@ ${this.shaders.compute.head}`;
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, depth, loadOp, clearValue, autoRender } = parameters;
+      const { label, depth, loadOp, clearValue, targetFormat, autoRender } = parameters;
       this.options = {
         label,
         depth,
         loadOp,
         clearValue,
+        targetFormat: targetFormat ?? this.renderer.preferredFormat,
         autoRender
       };
       if (autoRender !== void 0) {
@@ -9796,11 +9793,13 @@ ${this.shaders.compute.head}`;
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
         depth: this.options.depth,
         loadOp: this.options.loadOp,
-        clearValue: this.options.clearValue
+        clearValue: this.options.clearValue,
+        targetFormat: this.options.targetFormat
       });
       this.renderTexture = new RenderTexture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target Render Texture",
-        name: "renderTexture"
+        name: "renderTexture",
+        format: this.options.targetFormat
       });
       this.addToScene();
     }
@@ -9935,7 +9934,8 @@ ${this.shaders.compute.head}`;
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
       parameters.renderTarget = new RenderTarget(renderer, {
-        label: parameters.label ? parameters.label + " render target" : "Ping Pong render target"
+        label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
+        ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
       });
       parameters.transparent = false;
       parameters.label = parameters.label ?? "PingPongPlane " + ((_a = renderer.pingPongPlanes) == null ? void 0 : _a.length);
@@ -9943,7 +9943,8 @@ ${this.shaders.compute.head}`;
       this.type = "PingPongPlane";
       this.createRenderTexture({
         label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
-        name: "renderTexture"
+        name: "renderTexture",
+        ...parameters.targetFormat && { format: parameters.targetFormat }
       });
     }
     /**

@@ -43,6 +43,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       verticesOrder,
       topology,
       blend,
+      targetFormat,
       useProjection,
     } = parameters
 
@@ -85,6 +86,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       verticesOrder,
       topology,
       blend,
+      targetFormat,
       useProjection,
     }
   }
@@ -286,7 +288,7 @@ export class RenderPipelineEntry extends PipelineEntry {
         entryPoint: this.options.shaders.fragment.entryPoint,
         targets: [
           {
-            format: this.renderer.preferredFormat,
+            format: this.options.targetFormat ?? this.renderer.preferredFormat,
             ...(blend && {
               blend,
             }),

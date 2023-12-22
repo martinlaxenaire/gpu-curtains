@@ -1,5 +1,5 @@
 import { getPageContent, isBackNavigation, onLinkNavigate, transitionHelper } from './view-transitions-api-utils.js'
-import { GPUCurtains, Texture, Plane } from '../../dist/gpu-curtains.js'
+import { GPUCurtains } from '../../src'
 import { TestRenderTargets } from './TestRenderTargets.js'
 import { TestPingPong } from './TestPingPong.js'
 import { TestComputePasses } from './TestComputePasses.js'

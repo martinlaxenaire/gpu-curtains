@@ -14,6 +14,8 @@ export interface RenderPassOptions {
     loadOp: GPULoadOp;
     /** The [color values]{@link GPUColor} to clear before drawing this {@link RenderPass} */
     clearValue: GPUColor;
+    /** Optional format of the color attachment texture */
+    targetFormat: GPUTextureFormat;
 }
 /**
  * Parameters used to create a {@link RenderPass}
@@ -47,7 +49,7 @@ export declare class RenderPass {
      * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - [parameters]{@link RenderPassParams} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, depth, loadOp, clearValue }?: Partial<RenderPassOptions>);
+    constructor(renderer: Renderer | GPUCurtains, { label, depth, loadOp, clearValue, targetFormat, }?: Partial<RenderPassOptions>);
     /**
      * Set our [render pass depth texture]{@link RenderPass#depthTexture}
      */

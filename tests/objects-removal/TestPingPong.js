@@ -80,6 +80,7 @@ export class TestPingPong {
           entryPoint: 'fs', // custom entry point
         },
       },
+      targetFormat: 'rgba16float', // important, we'll be using floating point textures
       uniforms: {
         flowmap: {
           label: 'Flowmap',

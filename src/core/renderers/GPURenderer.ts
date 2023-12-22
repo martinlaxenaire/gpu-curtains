@@ -219,7 +219,14 @@ export class GPURenderer {
     // resize render & shader passes
     this.renderPass?.resize(this.pixelRatioBoundingRect)
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
+
+    // force compute passes onAfterResize callback
     this.computePasses.forEach((computePass) => computePass.resize())
+
+    // now resize meshes that are bound to the renderer size
+    // especially useful to resize render textures
+    this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
+    this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
     this.meshes.forEach((mesh) => {
       // resize meshes that do not have a bound DOM element
       if (!('domElement' in mesh)) mesh.resize(this.boundingRect)
