@@ -5,6 +5,8 @@ import { DOMElement } from '../core/DOM/DOMElement';
 export interface ResizeManagerEntry {
     /** {@link HTMLElement} to track */
     element: DOMElement['element'] | Element;
+    /** Priority in which to call the callback function */
+    priority?: number;
     /** Function to execute when the [element]{@link ResizeManagerEntry#element} is resized */
     callback: () => void | null;
 }
@@ -32,7 +34,7 @@ export declare class ResizeManager {
      * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
      * @param entry - [entry]{@link ResizeManagerEntry} to watch
      */
-    observe({ element, callback }: ResizeManagerEntry): void;
+    observe({ element, priority, callback }: ResizeManagerEntry): void;
     /**
      * Unobserve an [element]{@link HTMLElement} and remove it from our [entries array]{@link ResizeManager#entries}
      * @param element - [element]{@link HTMLElement} to unobserve

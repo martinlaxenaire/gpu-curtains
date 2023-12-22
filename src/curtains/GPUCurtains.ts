@@ -4,7 +4,7 @@ import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 import { PingPongPlane } from './meshes/PingPongPlane'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
-import { GPURenderer, GPURendererParams, MeshType } from '../core/renderers/GPURenderer'
+import { GPURenderer, GPURendererParams, ProjectedMesh } from '../core/renderers/GPURenderer'
 import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
@@ -17,14 +17,15 @@ import { Renderer } from '../core/renderers/utils'
 /**
  * Options used to create a {@link GPUCurtains}
  */
-// TODO this could probably done in a better way
-interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager' | 'onError' | 'onContextLost'> {
+interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'> {
   /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
   autoRender?: boolean
   /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
   autoResize?: boolean
   /** Whether {@link GPUCurtains} should listen to scroll event or not */
   watchScroll?: boolean
+  /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
+  production: GPUDeviceManager['production']
 }
 
 /**
@@ -160,7 +161,6 @@ export class GPUCurtains {
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
       camera: this.options.camera,
-      production: this.options.production,
     })
   }
 
@@ -170,7 +170,6 @@ export class GPUCurtains {
    */
   patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(options: T): T {
     if (options.pixelRatio === undefined) options.pixelRatio = this.options.pixelRatio
-    if (options.production === undefined) options.production = this.options.production
     if (options.sampleCount === undefined) options.sampleCount = this.options.sampleCount
 
     return options
@@ -212,6 +211,7 @@ export class GPUCurtains {
   setDeviceManager() {
     this.deviceManager = new GPUDeviceManager({
       label: 'GPUCurtains default device',
+      production: this.options.production,
       onError: () => this._onErrorCallback && this._onErrorCallback(),
       onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
     })
@@ -284,7 +284,7 @@ export class GPUCurtains {
    * Get all the created [meshes]{@link MeshBase}
    * @readonly
    */
-  get meshes(): MeshType[] {
+  get meshes(): ProjectedMesh[] {
     return this.renderers?.map((renderer) => renderer.meshes).flat()
   }
 

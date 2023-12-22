@@ -21,8 +21,6 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
     /** document HTML size */
     document: RectBBox
   }
-  /** DOM Element (in fact, the renderer [DOM Element]{@link GPURenderer#domElement}) used to set the [document size]{@link FullscreenPlane#size.document} */
-  domElement: DOMElement
 
   /**
    * FullscreenPlane constructor
@@ -49,29 +47,22 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
 
     this.size = {
       document: {
-        width: 0,
-        height: 0,
-        top: 0,
-        left: 0,
+        width: this.renderer.boundingRect.width,
+        height: this.renderer.boundingRect.height,
+        top: this.renderer.boundingRect.top,
+        left: this.renderer.boundingRect.left,
       },
     }
-
-    this.domElement = new DOMElement({
-      element: this.renderer.domElement.element,
-      onSizeChanged: (boundingRect) => this.resize(boundingRect),
-    })
 
     this.type = 'FullscreenQuadMesh'
   }
 
   /**
-   * Resize our FullscreenPlane
+   * Resize our {@link FullscreenPlane}
    * @param boundingRect - the new bounding rectangle
    */
   resize(boundingRect: DOMElementBoundingRect | null = null) {
-    if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return
-
-    this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
+    this.size.document = boundingRect ?? this.renderer.boundingRect
 
     super.resize(boundingRect)
   }

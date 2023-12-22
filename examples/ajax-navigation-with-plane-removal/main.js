@@ -1,53 +1,11 @@
+import { getPageContent, isBackNavigation, onLinkNavigate, transitionHelper } from './view-transitions-api-utils.js'
+import { GPUCurtains, Texture, Plane } from '../../dist/gpu-curtains.js'
+
 window.addEventListener('DOMContentLoaded', async () => {
-  // https://glitch.com/edit/#!/simple-set-demos?path=2-slow-cross-fade%2Fscript.js%3A1%3A0
-  onLinkNavigate(async ({ toPath }) => {
-    const content = await getPageContent(toPath)
-
-    startViewTransition(() => {
-      // This is a pretty heavy-handed way to update page content.
-      // In production, you'd likely be modifying DOM elements directly,
-      // or using a framework.
-      // innerHTML is used here just to keep the DOM update super simple.
-      document.body.innerHTML = content
-    })
-  })
-
-  // const links = document.querySelectorAll('#navigation a')
-  // links.forEach((link) => {
-  //   link.addEventListener('click', async () => {
-  //     const toPath = link.getAttribute('href')
-  //
-  //     const content = await getPageContent(toPath)
-  //
-  //     startViewTransition(() => {
-  //       // This is a pretty heavy-handed way to update page content.
-  //       // In production, you'd likely be modifying DOM elements directly,
-  //       // or using a framework.
-  //       // innerHTML is used here just to keep the DOM update super simple.
-  //       document.body.innerHTML = content
-  //     })
-  //   })
-  // })
-
-  // A little helper function like this is really handy
-  // to handle progressive enhancement.
-  const startViewTransition = (callback) => {
-    console.log(document.startViewTransition)
-    if (!document.startViewTransition) {
-      callback()
-      return
-    }
-
-    document.startViewTransition(callback)
-  }
-
   // curtains
   // set up our WebGL context and append the canvas to our wrapper
-  const gpuCurtains = new GPUCurtains.GPUCurtains({
+  const gpuCurtains = new GPUCurtains({
     container: '#canvas',
-    camera: {
-      fov: 35,
-    },
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
@@ -73,25 +31,30 @@ window.addEventListener('DOMContentLoaded', async () => {
   const loaderEl = document.querySelector('#loader')
   loaderEl.innerText = '0%'
 
-  images.forEach((image) => {
-    const texture = new GPUCurtains.Texture(gpuCurtains)
-    texture.loadImage(image)
+  await Promise.all(
+    images.map(async (image) => {
+      const texture = new Texture(gpuCurtains, {
+        name: 'planeTexture',
+      })
 
-    textures.push(texture)
+      texture.onSourceLoaded(() => {
+        console.log('texture source loaded', texture)
 
-    texture.onSourceLoaded(() => {
-      console.log('texture source loaded', texture)
+        percentLoaded++
 
-      percentLoaded++
+        loaderEl.innerText = Math.round((100 * percentLoaded) / images.length) + '%'
 
-      loaderEl.innerText = Math.round((100 * percentLoaded) / images.length) + '%'
+        // we have finished loading our textures
+        if (percentLoaded === images.length) {
+          document.body.classList.add('images-loaded')
+        }
+      })
 
-      // we have finished loading our textures
-      if (percentLoaded === images.length) {
-        document.body.classList.add('images-loaded')
-      }
+      await texture.loadImage(image)
+
+      textures.push(texture)
     })
-  })
+  )
 
   const planeVs = /* wgsl */ `
     struct VSOutput {
@@ -103,8 +66,25 @@ window.addEventListener('DOMContentLoaded', async () => {
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
+      
+      var strength: f32 = 0.3;
+      var nbWaves: f32 = 3.0;
+
+      // map vertices coordinates to the 0->1 range on the X axis
+      var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
+
+      // notice how the "uniforms" struct name matches our bindings object name property
+      var time: f32 = frames.elapsed * 0.0375;
+
+      var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
+
+      var transformed: vec3f = vec3(
+          attributes.position.x,
+          attributes.position.y,
+          attributes.position.z - waveSinusoid * strength
+      );
   
-      vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.position = getOutputPosition(camera, matrices, transformed);
       vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
   
       return vsOutput;
@@ -118,29 +98,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      return textureSample(planeTexture, planeTextureSampler, fsInput.uv);
+      return textureSample(planeTexture, defaultSampler, fsInput.uv);
     }
   `
 
-  const assignTexture = (plane) => {
-    // set the right texture
-    const planeImage = plane.domElement.element.querySelector('img')
-    const planeTexture = textures.find((element) => element.source && element.source.src === planeImage.src)
-
-    // we got a texture that matches the plane img element, add it
-    if (planeTexture) {
-      // exactly the same as planeTexture.addParent(plane)
-      plane.addTexture(planeTexture)
-    }
-  }
-
-  const planes = []
+  let planes = []
 
   const addPlanes = () => {
     const planeEls = document.querySelectorAll('.plane')
 
     planeEls.forEach((planeEl, index) => {
-      const plane = new GPUCurtains.Plane(gpuCurtains, planeEl, {
+      const plane = new Plane(gpuCurtains, planeEl, {
+        widthSegments: 20,
+        autoloadSources: false,
         label: `Plane ${index}`,
         shaders: {
           vertex: {
@@ -150,42 +120,81 @@ window.addEventListener('DOMContentLoaded', async () => {
             code: planeFs,
           },
         },
+        uniforms: {
+          frames: {
+            struct: {
+              elapsed: {
+                type: 'f32',
+                value: 0,
+              },
+            },
+          },
+        },
+        textures: (() => {
+          // set the right texture
+          const planeImage = planeEl.querySelector('img')
+          const planeTexture = textures.find((texture) => texture.options && texture.options.source === planeImage.src)
+
+          // we got a texture that matches the plane img element, add it
+          if (planeTexture) {
+            return [planeTexture]
+          } else {
+            const texture = new Texture(gpuCurtains, {
+              name: 'planeTexture',
+            })
+
+            texture.loadImage(planeImage)
+
+            return [texture]
+          }
+        })(),
       })
 
-      // if the textures are already created, proceed
-      if (textures.length === images.length) {
-        assignTexture(plane)
-      } else {
-        // it's also possible that the planes were created before the textures sources were loaded
-        // so we'll use our nextRender method with its keep parameter to true to act as a setInterval
-        // once our textures are ready, cancel the nextRender call by setting the keep flag to false
-        // const waitForTexture = curtains.nextRender(() => {
-        //   if(textures.length === images.length) {
-        //     // textures are ready, stop executing the callback
-        //     waitForTexture.keep = false;
-        //
-        //     // assign the texture
-        //     assignTexture(plane);
-        //   }
-        // }, true);
-        const interval = setInterval(() => {
-          if (textures.length === images.length) {
-            // textures are ready, stop executing the callback
-            clearInterval(interval)
-
-            // assign the texture
-            assignTexture(plane)
-          }
-        }, 20)
-      }
-
-      plane.onRender(() => {})
+      plane.onRender(() => plane.uniforms.frames.elapsed.value++)
 
       planes.push(plane)
     })
+
+    console.log('planes added', planes)
+  }
+
+  const removePlanes = () => {
+    console.log('remove planes', planes)
+    planes.forEach((plane) => plane.remove())
+    planes = []
   }
 
   addPlanes()
 
-  console.log(textures, planes)
+  // navigation
+  // https://glitch.com/edit/#!/simple-set-demos?path=2-slow-cross-fade%2Fscript.js%3A1%3A0
+  onLinkNavigate(async ({ toPath }) => {
+    // first remove planes
+    removePlanes()
+
+    const content = await getPageContent(toPath)
+
+    startViewTransition(() => {
+      // Convert the HTML string into a document object
+      const parser = new DOMParser()
+      const newDocument = parser.parseFromString(content, 'text/html')
+      const currentPage = document.querySelector('#page')
+      const newPage = newDocument.querySelector('#page')
+
+      currentPage.replaceWith(newPage)
+
+      addPlanes()
+    })
+  })
+
+  // A little helper function like this is really handy
+  // to handle progressive enhancement.
+  const startViewTransition = (callback) => {
+    if (!document.startViewTransition) {
+      callback()
+      return
+    }
+
+    document.startViewTransition(callback)
+  }
 })

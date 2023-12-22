@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane } from '../../src'
+import { GPUCurtains, Plane } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   console.log(window)

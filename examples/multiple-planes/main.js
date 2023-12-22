@@ -1,4 +1,4 @@
-import { GPUCurtains, Sampler, Plane } from '../../src'
+import { GPUCurtains, Sampler, Plane } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // lerp

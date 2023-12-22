@@ -1,4 +1,4 @@
-import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, SphereGeometry, Mesh } from '../../src'
+import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, SphereGeometry, Mesh } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // here is an example of how we can use a GPUDeviceManager and a simple GPUCameraRenderer instead of the whole GPUCurtains package

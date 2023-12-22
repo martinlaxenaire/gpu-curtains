@@ -4,7 +4,7 @@ import { ScrollManager } from '../utils/ScrollManager';
 import { Vec3 } from '../math/Vec3';
 import { PingPongPlane } from './meshes/PingPongPlane';
 import { ShaderPass } from '../core/renderPasses/ShaderPass';
-import { GPURenderer, GPURendererParams, MeshType } from '../core/renderers/GPURenderer';
+import { GPURenderer, GPURendererParams, ProjectedMesh } from '../core/renderers/GPURenderer';
 import { DOMMesh } from './meshes/DOMMesh';
 import { Plane } from './meshes/Plane';
 import { ComputePass } from '../core/computePasses/ComputePass';
@@ -16,13 +16,15 @@ import { Renderer } from '../core/renderers/utils';
 /**
  * Options used to create a {@link GPUCurtains}
  */
-interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager' | 'onError' | 'onContextLost'> {
+interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'> {
     /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
     autoRender?: boolean;
     /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
     autoResize?: boolean;
     /** Whether {@link GPUCurtains} should listen to scroll event or not */
     watchScroll?: boolean;
+    /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
+    production: GPUDeviceManager['production'];
 }
 /**
  * Parameters used to create a {@link GPUCurtains}
@@ -132,7 +134,7 @@ export declare class GPUCurtains {
      * Get all the created [meshes]{@link MeshBase}
      * @readonly
      */
-    get meshes(): MeshType[];
+    get meshes(): ProjectedMesh[];
     /**
      * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
      * @readonly

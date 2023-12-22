@@ -141,8 +141,7 @@ export class RenderMaterial extends Material {
     //
     // super.createBindGroups()
 
-    // TODO!
-    // need to chose whether we should add the camera bind group here
+    // TODO! need to chose whether we should add the camera bind group here
     // in such case we need to find a way not to bind it inside the render call
     // because it is already bound by the scene class at each render to avoid extra WebGPU commands
     const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0

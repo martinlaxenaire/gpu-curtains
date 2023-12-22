@@ -116,8 +116,6 @@ export class Material {
     const texturesBindGroupLength = this.texturesBindGroup.bindings.length ? 1 : 0
     const bindGroupsReady = this.bindGroups.length >= this.inputsBindGroups.length + texturesBindGroupLength
 
-    // TODO cache bind groups and pipelines?
-    // https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change
     if (!bindGroupsReady) {
       this.createBindGroups()
     }
@@ -286,11 +284,6 @@ export class Material {
           [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
         }
 
-      // inputBinding.isActive =
-      //   (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(inputBinding.name + '.') !== -1) ||
-      //   (this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(inputBinding.name + '.') !== -1) ||
-      //   (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(inputBinding.name + '.') !== -1)
-
       this.inputsBindings.push(inputBinding)
     })
   }
@@ -399,6 +392,7 @@ export class Material {
   destroyBindGroups() {
     this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup))
     this.clonedBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup))
+    this.texturesBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup))
     this.texturesBindGroups = []
     this.inputsBindGroups = []
     this.bindGroups = []
@@ -518,11 +512,14 @@ export class Material {
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
    */
   destroyTexture(texture: Texture | RenderTexture) {
+    // do not destroy a texture that must stay in cache
+    if ((texture as Texture).options.cache) return
+
     // check if this texture is used by another object before actually destroying it
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture)
 
     const shouldDestroy =
-      !objectsUsingTexture || !objectsUsingTexture.find((object) => object.material.uuid !== this.uuid)
+      !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid)
 
     if (shouldDestroy) {
       texture.destroy()

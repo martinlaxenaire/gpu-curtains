@@ -145,7 +145,6 @@ export class ComputePass {
 
     this.ready = false
 
-    // TODO samplers?
     this.setComputeMaterial({
       label: this.options.label,
       shaders: this.options.shaders,
@@ -437,14 +436,6 @@ export class ComputePass {
     this.onRenderPass(pass)
 
     this.onAfterRenderPass()
-  }
-
-  /**
-   * Check whether we're currently accessing one of the {@link ComputeMaterial} buffer and therefore can't render our compute pass
-   * @readonly
-   */
-  get canRender(): boolean {
-    return this.material ? !this.material.hasMappedBuffer : false
   }
 
   /**

@@ -1,11 +1,10 @@
-import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from '../../src'
+import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
-    preferredFormat: 'rgba16float', // important, we'll be using floating point textures
   })
 
   await gpuCurtains.setDevice()
@@ -67,6 +66,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'fs', // custom entry point
       },
     },
+    targetFormat: 'rgba16float', // important, we'll be using floating point textures
     uniforms: {
       flowmap: {
         label: 'Flowmap',

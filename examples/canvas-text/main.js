@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane } from '../../src'
+import { GPUCurtains, Plane } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper
@@ -153,7 +153,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onAfterResize(() => {
       writeCanvasText()
-      canvasTexture.resize()
+      //canvasTexture.resize()
     })
 
   console.log(textPlane, gpuCurtains.renderer.scene)

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | AJAX Navigation with plane removal example</title>
+    <meta name="description" content="AJAX Navigation with plane removal with gpu-curtains" />
+
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div id="canvas"></div>
+
+    <div id="page" class="render-targets">
+      <header>
+        <nav id="navigation">
+          <a class="navigation-button primary-button" href="index.html">Home</a>
+          <a class="navigation-button primary-button active" href="render-targets.html">Render targets</a>
+          <a class="navigation-button primary-button" href="compute.html">Compute passes</a>
+          <a class="navigation-button primary-button" href="ping-pong.html">Ping pong</a>
+        </nav>
+      </header>
+
+      <main id="content" class="large-container">
+        <ul class="large-container planes-list">
+          <li class="planes-list-item">
+            <h2 class="overlay-title">Title 1</h2>
+            <div class="plane large-plane">
+              <img
+                src="https://source.unsplash.com/featured/1920x1280/?colorful&1"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+            <div class="plane small-plane">
+              <img
+                src="https://source.unsplash.com/featured/1280x1280/?colorful&1"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+          </li>
+
+          <li class="planes-list-item">
+            <h2 class="overlay-title">Title 2</h2>
+            <div class="plane large-plane">
+              <img
+                src="https://source.unsplash.com/featured/1920x1280/?colorful&2"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+            <div class="plane small-plane">
+              <img
+                src="https://source.unsplash.com/featured/1280x1280/?colorful&2"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+          </li>
+
+          <li class="planes-list-item">
+            <h2 class="overlay-title">Title 3</h2>
+            <div class="plane large-plane">
+              <img
+                src="https://source.unsplash.com/featured/1920x1280/?colorful&3"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+            <div class="plane small-plane">
+              <img
+                src="https://source.unsplash.com/featured/1280x1280/?colorful&3"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+          </li>
+
+          <li class="planes-list-item">
+            <h2 class="overlay-title">Title 4</h2>
+            <div class="plane large-plane">
+              <img
+                src="https://source.unsplash.com/featured/1920x1280/?colorful&4"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+            <div class="plane small-plane">
+              <img
+                src="https://source.unsplash.com/featured/1280x1280/?colorful&4"
+                crossorigin=""
+                data-texture-name="planeTexture"
+              />
+            </div>
+          </li>
+        </ul>
+      </main>
+    </div>
+
+    <a
+      href="https://www.curtainsjs.com/"
+      title="back to curtains.js website"
+      id="back-to-lib-link"
+      class="primary-button"
+      target="_blank"
+      >back to curtains.js website</a
+    >
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/slideshow/index.html"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script src="view-transitions-api-utils.js" type="module"></script>
+    <script src="main.js" type="module"></script>
+  </body>
+</html>

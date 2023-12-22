@@ -8,59 +8,30 @@
     <title>gpu-curtains | AJAX Navigation with plane removal example</title>
     <meta name="description" content="AJAX Navigation with plane removal with gpu-curtains" />
 
-    <link href="../common-styles.css" rel="stylesheet" />
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
     <link href="styles.css" rel="stylesheet" />
   </head>
 
   <body>
     <div id="canvas"></div>
 
-    <div id="loader"></div>
-
-    <div id="page">
+    <div id="page" class="ping-pong">
       <header>
         <nav id="navigation">
           <a class="navigation-button primary-button" href="index.html">Home</a>
-          <a class="navigation-button primary-button active" href="beach.html">Beach</a>
-          <a class="navigation-button primary-button" href="mountain.html">Mountain</a>
+          <a class="navigation-button primary-button" href="render-targets.html">Render targets</a>
+          <a class="navigation-button primary-button" href="compute.html">Compute passes</a>
+          <a class="navigation-button primary-button active" href="ping-pong.html">Ping pong</a>
         </nav>
       </header>
 
       <main id="content">
-        <h1>Beach</h1>
-
-        <div id="content-images">
-          <div class="plane">
-            <img
-              src="https://source.unsplash.com/HfIex7qwTlI/1920x1280/"
-              crossorigin=""
-              data-texture-name="planeTexture"
-            />
-          </div>
-
-          <div class="plane">
-            <img
-              src="https://source.unsplash.com/n7DY58YFg9E/1920x1280/"
-              crossorigin=""
-              data-texture-name="planeTexture"
-            />
-          </div>
-
-          <div class="plane">
-            <img
-              src="https://source.unsplash.com/Rl9l9mL6Pvs/1920x1280/"
-              crossorigin=""
-              data-texture-name="planeTexture"
-            />
-          </div>
-
-          <div class="plane">
-            <img
-              src="https://source.unsplash.com/sGRMspZmfPE/1920x1280/"
-              crossorigin=""
-              data-texture-name="planeTexture"
-            />
-          </div>
+        <div class="plane" id="ping-pong-plane">
+          <img
+            src="https://source.unsplash.com/featured/1920x1280/?colorful&1"
+            crossorigin=""
+            data-texture-name="displacedTexture"
+          />
         </div>
       </main>
     </div>

@@ -1,0 +1,98 @@
+@media screen {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1s;
+  }
+
+  #page {
+    min-height: initial;
+  }
+
+  #navigation {
+    display: flex;
+    justify-content: center;
+    padding: 3.5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  #navigation a {
+    margin: 0 1rem;
+  }
+
+  #navigation a.active {
+    border-color: var(--light-color);
+    background: var(--light-color);
+    color: var(--dark-color);
+  }
+
+  #content {
+    position: relative;
+    z-index: 1;
+  }
+
+  /** RTs test **/
+
+  .planes-list {
+    padding: 0 2.25rem 2.25rem 2.25rem;
+    list-style: none;
+  }
+
+  .planes-list-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(12, [col-start] 1fr);
+    gap: 2.25rem;
+    margin: 0 0 10vh 0;
+    z-index: 1;
+  }
+
+  .planes-list-item:nth-child(even) {
+    margin: 10vh 0;
+  }
+
+  .planes-list-item h2 {
+    position: absolute;
+    top: 25%;
+    left: 25%;
+    margin: 0;
+    font-size: 2em;
+  }
+
+  .planes-list-item:nth-child(even) h2 {
+    left: auto;
+    right: 25%;
+  }
+
+  .large-plane {
+    display: flex;
+    grid-column: col-start 1 / span 9;
+    aspect-ratio: 2.25;
+  }
+
+  .planes-list-item:nth-child(even) .large-plane {
+    grid-column: col-start 4 / span 9;
+  }
+
+  .small-plane {
+    display: flex;
+    grid-column: col-start 8 / span 4;
+    aspect-ratio: 1.25;
+    margin-top: -50%;
+  }
+
+  .planes-list-item:nth-child(even) .small-plane {
+    grid-column: col-start 2 / span 4;
+  }
+
+  /** PING PONG test */
+
+  #ping-pong-plane {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100svh;
+  }
+}

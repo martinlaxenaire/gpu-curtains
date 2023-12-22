@@ -8,7 +8,7 @@ export interface IndexedGeometryIndexBufferOptions {
   /** index buffer format */
   bufferFormat?: GPUIndexFormat
   /** index buffer array */
-  array?: Uint32Array
+  array?: Uint16Array | Uint32Array
 }
 
 /**
@@ -18,7 +18,7 @@ export interface IndexBuffer {
   /** index buffer format */
   bufferFormat: GPUIndexFormat
   /** index buffer array */
-  array: Uint32Array
+  array: Uint16Array | Uint32Array
   /** index buffer length */
   bufferLength: number
   /** index buffer {@link GPUBuffer} */
@@ -66,6 +66,14 @@ export class IndexedGeometry extends Geometry {
   }
 
   /**
+   * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
+   * @readonly
+   */
+  get useUint16IndexArray(): boolean {
+    return this.verticesCount < 256 * 256
+  }
+
+  /**
    *
    * @param parameters - parameters used to create our index buffer
    * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
@@ -108,6 +116,6 @@ export class IndexedGeometry extends Geometry {
     super.destroy()
 
     this.indexBuffer?.buffer?.destroy()
-    this.indexBuffer = null
+    this.indexBuffer.buffer = null
   }
 }

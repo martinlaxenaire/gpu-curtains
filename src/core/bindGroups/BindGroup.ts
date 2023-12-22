@@ -85,6 +85,8 @@ export class BindGroup {
     // if we ever update our bind group layout
     // we will have to recreate the whole pipeline again
     this.needsPipelineFlush = false
+
+    this.renderer.addBindGroup(this)
   }
 
   /**
@@ -452,15 +454,19 @@ export class BindGroup {
    * Most important is to destroy the GPUBuffers to free the memory
    */
   destroy() {
+    this.renderer.removeBindGroup(this)
+
     this.bufferBindings.forEach((binding) => {
       if ('buffer' in binding) {
         this.renderer.removeBuffer(binding.buffer)
         binding.buffer?.destroy()
+        binding.buffer = null
       }
 
       if ('resultBuffer' in binding) {
         this.renderer.removeBuffer(binding.resultBuffer)
         binding.resultBuffer?.destroy()
+        binding.resultBuffer = null
       }
     })
 

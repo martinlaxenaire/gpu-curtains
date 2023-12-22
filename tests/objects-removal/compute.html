@@ -8,27 +8,24 @@
     <title>gpu-curtains | AJAX Navigation with plane removal example</title>
     <meta name="description" content="AJAX Navigation with plane removal with gpu-curtains" />
 
-    <link href="../common-styles.css" rel="stylesheet" />
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
     <link href="styles.css" rel="stylesheet" />
   </head>
 
   <body>
     <div id="canvas"></div>
 
-    <div id="loader"></div>
-
-    <div id="page">
+    <div id="page" class="compute">
       <header>
         <nav id="navigation">
-          <a class="navigation-button primary-button active" href="index.html">Home</a>
-          <a class="navigation-button primary-button" href="beach.html">Beach</a>
-          <a class="navigation-button primary-button" href="mountain.html">Mountain</a>
+          <a class="navigation-button primary-button" href="index.html">Home</a>
+          <a class="navigation-button primary-button" href="render-targets.html">Render targets</a>
+          <a class="navigation-button primary-button active" href="compute.html">Compute passes</a>
+          <a class="navigation-button primary-button" href="ping-pong.html">Ping pong</a>
         </nav>
       </header>
 
-      <main id="content">
-        <h1>AJAX Navigation</h1>
-      </main>
+      <main id="content"></main>
     </div>
 
     <a

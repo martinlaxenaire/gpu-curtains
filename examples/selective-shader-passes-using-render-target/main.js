@@ -1,4 +1,4 @@
-import { GPUCurtains, Sampler, RenderTarget, Plane, ShaderPass } from '../../src'
+import { GPUCurtains, Sampler, RenderTarget, Plane, ShaderPass } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // lerp

@@ -29,7 +29,7 @@ export class Sampler {
   /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
   name: string
   /** Options used to create this {@link Sampler} */
-  options: SamplerOptions // TODO not exact
+  options: SamplerOptions
 
   /** {@link GPUSampler} */
   sampler: GPUSampler

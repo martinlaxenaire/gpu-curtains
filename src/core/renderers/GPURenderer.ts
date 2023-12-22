@@ -19,6 +19,7 @@ import { TasksQueueManager } from '../../utils/TasksQueueManager'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { RenderTexture } from '../textures/RenderTexture'
 import { GPUDeviceManager } from './GPUDeviceManager'
+import { FullscreenPlane } from '../meshes/FullscreenPlane'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -32,8 +33,6 @@ export interface GPURendererParams {
   pixelRatio?: number
   /** Whether to use multisampling, and if so its value */
   sampleCount?: GPUSize32
-  /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
-  production?: boolean
   /** Texture rendering [preferred format]{@link GPUTextureFormat} */
   preferredFormat?: GPUTextureFormat
   /** Set the [context]{@link GPUCanvasContext} alpha mode */
@@ -41,11 +40,12 @@ export interface GPURendererParams {
 }
 
 // TODO should be GPUCurtainsRenderer props?
-export type DOMMeshType = DOMMesh | Plane
-export type MeshType = Mesh | DOMMeshType
-export type SceneObject = MeshType | ComputePass | PingPongPlane | ShaderPass
+export type DOMProjectedMesh = DOMMesh | Plane
+export type ProjectedMesh = Mesh | DOMProjectedMesh
+export type RenderedMesh = ProjectedMesh | PingPongPlane | ShaderPass | FullscreenPlane
+export type SceneObject = RenderedMesh | ComputePass
 
-//export type MeshType = Mesh | DOMMeshType | typeof MeshBaseMixin<any>
+//export type ProjectedMesh = Mesh | DOMProjectedMesh | typeof MeshBaseMixin<any>
 
 /**
  * GPURenderer class:
@@ -62,8 +62,6 @@ export class GPURenderer {
   type: string
   /** The universal unique id of this {@link GPURenderer} */
   readonly uuid: string
-  /** Flag indicating whether the {@link GPURenderer} is ready, i.e. its [context]{@link GPURenderer#context} has been successfully configured */
-  ready: boolean
 
   /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
   deviceManager: GPUDeviceManager
@@ -90,24 +88,18 @@ export class GPURenderer {
   shaderPasses: ShaderPass[]
   /** An array containing all our created {@link RenderTarget} */
   renderTargets: RenderTarget[]
-  /** An array containing all our created [Meshes]{@link MeshType} */
-  meshes: MeshType[]
-  // TODO keep track of RenderTexture as well?
-  /** An array containing all our created {@link Texture} */
-  textures: Texture[]
-  /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
-  texturesQueue: Texture[]
+  /** An array containing all our created [Meshes]{@link ProjectedMesh} */
+  meshes: ProjectedMesh[]
+  /** An array containing all our created {@link RenderTexture} */
+  renderTextures: RenderTexture[]
 
   /** Whether to use multisampling, and if so its value */
   sampleCount: GPUSize32
   /** Pixel ratio to use for rendering */
   pixelRatio: number
-  /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
-  production: boolean
+
   /** [DOM Element]{@link DOMElement} that will contain our canvas */
   domElement: DOMElement
-  /** Document [body]{@link HTMLBodyElement} [DOM Element]{@link DOMElement} used to trigger resize when the document body size changes */
-  documentBody: DOMElement
 
   /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
   onBeforeCommandEncoderCreation: TasksQueueManager
@@ -141,20 +133,17 @@ export class GPURenderer {
     container,
     pixelRatio = 1,
     sampleCount = 4,
-    production = false,
     preferredFormat,
     alphaMode = 'premultiplied',
   }: GPURendererParams) {
     this.type = 'GPURenderer'
     this.uuid = generateUUID()
-    this.ready = false
 
     this.deviceManager = deviceManager
     this.deviceManager.addRenderer(this)
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.sampleCount = sampleCount
-    this.production = production
     this.alphaMode = alphaMode
 
     this.preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
@@ -162,28 +151,20 @@ export class GPURenderer {
     this.setTasksQueues()
     this.setRendererObjects()
 
+    // create the canvas
+    const isContainerCanvas = container instanceof HTMLCanvasElement
+    this.canvas = isContainerCanvas ? (container as HTMLCanvasElement) : document.createElement('canvas')
+
     // needed to get container bounding box
     this.domElement = new DOMElement({
       element: container,
+      onSizeChanged: (boundingRect) => this.resize(boundingRect),
     })
 
-    // create the canvas
-    if (container instanceof HTMLCanvasElement) {
-      this.canvas = container
-    } else {
-      this.canvas = document.createElement('canvas')
+    if (!isContainerCanvas) {
       // append the canvas
       this.domElement.element.appendChild(this.canvas)
     }
-
-    // now track any change in the document body size, and resize our scene
-    // TODO this is called only once!!
-    this.documentBody = new DOMElement({
-      element: document.body,
-      onSizeChanged: () => this.resize(),
-    })
-
-    this.texturesQueue = []
 
     // device is already available? create the context!
     if (this.deviceManager.device) {
@@ -220,7 +201,7 @@ export class GPURenderer {
    * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
    */
   resize(boundingRect: DOMElementBoundingRect | null = null) {
-    if (!this.domElement) return
+    if (!this.domElement && !boundingRect) return
 
     if (!boundingRect) boundingRect = this.domElement.element.getBoundingClientRect()
 
@@ -238,9 +219,14 @@ export class GPURenderer {
     // resize render & shader passes
     this.renderPass?.resize(this.pixelRatioBoundingRect)
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
+
+    // force compute passes onAfterResize callback
+    this.computePasses.forEach((computePass) => computePass.resize())
+
+    // now resize meshes that are bound to the renderer size
+    // especially useful to resize render textures
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
-    this.computePasses.forEach((computePass) => computePass.resize())
     this.meshes.forEach((mesh) => {
       // resize meshes that do not have a bound DOM element
       if (!('domElement' in mesh)) mesh.resize(this.boundingRect)
@@ -251,7 +237,21 @@ export class GPURenderer {
    * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
    */
   get boundingRect(): DOMElementBoundingRect {
-    return this.domElement.boundingRect
+    if (!!this.domElement.boundingRect) {
+      return this.domElement.boundingRect
+    } else {
+      const boundingRect = this.domElement.element?.getBoundingClientRect()
+      return {
+        top: boundingRect.top,
+        right: boundingRect.right,
+        bottom: boundingRect.bottom,
+        left: boundingRect.left,
+        width: boundingRect.width,
+        height: boundingRect.height,
+        x: boundingRect.x,
+        y: boundingRect.y,
+      }
+    }
   }
 
   /**
@@ -261,8 +261,8 @@ export class GPURenderer {
     const devicePixelRatio = window.devicePixelRatio ?? 1
     const scaleBoundingRect = this.pixelRatio / devicePixelRatio
 
-    return Object.keys(this.domElement.boundingRect).reduce(
-      (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
+    return Object.keys(this.boundingRect).reduce(
+      (a, key) => ({ ...a, [key]: this.boundingRect[key] * scaleBoundingRect }),
       {
         x: 0,
         y: 0,
@@ -284,6 +284,22 @@ export class GPURenderer {
    */
   get device(): GPUDevice | undefined {
     return this.deviceManager.device
+  }
+
+  /**
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set) and its size is set
+   * @readonly
+   */
+  get ready(): boolean {
+    return this.deviceManager.ready && !!this.canvas.style.width
+  }
+
+  /**
+   * Get our [device manager production flag]{@link GPUDeviceManager#production}
+   * @readonly
+   */
+  get production(): boolean {
+    return this.deviceManager.production
   }
 
   /**
@@ -311,6 +327,14 @@ export class GPURenderer {
   }
 
   /**
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+   * @readonly
+   */
+  get deviceRenderedObjects(): SceneObject[] {
+    return this.deviceManager.deviceRenderedObjects
+  }
+
+  /**
    * Configure our [context]{@link context} with the given options
    */
   configureContext() {
@@ -335,9 +359,6 @@ export class GPURenderer {
 
       this.setMainRenderPass()
       this.setScene()
-
-      // ready to start
-      this.ready = true
     }
   }
 
@@ -346,8 +367,6 @@ export class GPURenderer {
    * Force all our scene objects to lose context.
    */
   loseContext() {
-    this.ready = false
-
     // force all our scene objects to lose context
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext())
   }
@@ -360,14 +379,15 @@ export class GPURenderer {
   restoreContext() {
     this.configureContext()
 
+    // resize render passes/recreate their textures
+    this.renderPass?.resize(this.pixelRatioBoundingRect)
+    this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
+
+    // recreate all render textures
+    this.renderTextures.forEach((renderTexture) => renderTexture.createTexture())
+
     // restore context of all our scene objects
     this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext())
-
-    // force renderer resize to resize all our render passes textures
-    this.onResize()
-
-    // we're ready again!
-    this.ready = true
   }
 
   /* PIPELINES, SCENE & MAIN RENDER PASS */
@@ -377,7 +397,7 @@ export class GPURenderer {
    */
   setMainRenderPass() {
     this.renderPass = new RenderPass(this, {
-      label: 'Main Render pass',
+      label: 'Main render pass',
       depth: true,
     })
   }
@@ -398,16 +418,17 @@ export class GPURenderer {
    */
   createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer {
     const buffer = this.device?.createBuffer(bufferDescriptor)
-    this.buffers.push(buffer)
+    this.deviceManager.addBuffer(buffer)
     return buffer
   }
 
   /**
    * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
    * @param buffer - [buffer]{@link GPUBuffer} to remove
+   * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
    */
-  removeBuffer(buffer: GPUBuffer) {
-    this.deviceManager.removeBuffer(buffer)
+  removeBuffer(buffer: GPUBuffer, originalLabel?: string) {
+    this.deviceManager.removeBuffer(buffer, originalLabel)
   }
 
   /**
@@ -450,6 +471,15 @@ export class GPURenderer {
       })
     }
 
+    if (srcBuffer.mapState !== 'unmapped') {
+      throwWarning(`${this.type}: Cannot copy from ${srcBuffer} because it is currently mapped`)
+      return
+    }
+    if (dstBuffer.mapState !== 'unmapped') {
+      throwWarning(`${this.type}: Cannot copy from ${dstBuffer} because it is currently mapped`)
+      return
+    }
+
     // if there's no command encoder provided, we'll have to create one and submit it after the copy process
     const hasCommandEncoder = !!commandEncoder
 
@@ -468,6 +498,30 @@ export class GPURenderer {
   }
 
   /* BIND GROUPS & LAYOUTS */
+
+  /**
+   * Get all created [bind groups]{@link AllowedBindGroups} tracked by our {@link GPUDeviceManager}
+   * @readonly
+   */
+  get bindGroups(): AllowedBindGroups[] {
+    return this.deviceManager.bindGroups
+  }
+
+  /**
+   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+   */
+  addBindGroup(bindGroup: AllowedBindGroups) {
+    this.deviceManager.addBindGroup(bindGroup)
+  }
+
+  /**
+   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+   */
+  removeBindGroup(bindGroup: AllowedBindGroups) {
+    this.deviceManager.removeBindGroup(bindGroup)
+  }
 
   /**
    * Create a {@link GPUBindGroupLayout}
@@ -548,32 +602,43 @@ export class GPURenderer {
   /* TEXTURES */
 
   /**
-   * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
+   * Get all created [textures]{@link Texture} tracked by our {@link GPUDeviceManager}
+   * @readonly
+   */
+  get textures(): Texture[] {
+    return this.deviceManager.textures
+  }
+
+  /**
+   * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
    * @param texture - [texture]{@link Texture} to add
    */
   addTexture(texture: Texture) {
-    this.textures.push(texture)
-
-    this.setTexture(texture)
+    this.deviceManager.addTexture(texture)
   }
 
   /**
-   * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
+   * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
    * @param texture - [texture]{@link Texture} to remove
    */
   removeTexture(texture: Texture) {
-    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid)
+    this.deviceManager.removeTexture(texture)
   }
 
   /**
-   * Call texture [createTexture]{@link Texture#createTexture} method
-   * @param texture - [texture]{@link Texture} to create
+   * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPUDeviceManager#renderTextures}
+   * @param texture - [render texture]{@link RenderTexture} to add
    */
-  setTexture(texture: Texture) {
-    if (!texture.texture) {
-      // call createTexture on texture class, that is then going to call the renderer createTexture method
-      texture.createTexture()
-    }
+  addRenderTexture(texture: RenderTexture) {
+    this.renderTextures.push(texture)
+  }
+
+  /**
+   * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPUDeviceManager#renderTextures}
+   * @param texture - [render texture]{@link RenderTexture} to remove
+   */
+  removeRenderTexture(texture: RenderTexture) {
+    this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid)
   }
 
   /**
@@ -590,34 +655,7 @@ export class GPURenderer {
    * @param texture - [texture]{@link Texture} to upload
    */
   uploadTexture(texture: Texture) {
-    if (texture.source) {
-      try {
-        this.device?.queue.copyExternalImageToTexture(
-          {
-            source: texture.source as GPUImageCopyExternalImageSource,
-            flipY: texture.options.flipY,
-          } as GPUImageCopyExternalImage,
-          { texture: texture.texture as GPUTexture },
-          { width: texture.size.width, height: texture.size.height }
-        )
-
-        if ((texture.texture as GPUTexture).mipLevelCount > 1) {
-          generateMips(this.device, texture.texture as GPUTexture)
-        }
-
-        // add to our textures queue array to track when it has been uploaded
-        this.texturesQueue.push(texture)
-      } catch ({ message }) {
-        throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`)
-      }
-    } else {
-      this.device?.queue.writeTexture(
-        { texture: texture.texture as GPUTexture },
-        new Uint8Array(texture.options.placeholderColor),
-        { bytesPerRow: texture.size.width * 4 },
-        { width: texture.size.width, height: texture.size.height }
-      )
-    }
+    this.deviceManager.uploadTexture(texture)
   }
 
   /**
@@ -654,7 +692,7 @@ export class GPURenderer {
         ...samplerOptions,
       })
 
-      this.samplers.push(sampler)
+      this.deviceManager.addSampler(sampler)
 
       return gpuSampler
     }
@@ -670,8 +708,14 @@ export class GPURenderer {
 
   /* OBJECTS & TASKS */
 
+  /**
+   * Set different tasks queue managers to execute callbacks at different phases of our render call:
+   * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder
+   * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}
+   * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}
+   * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder
+   */
   setTasksQueues() {
-    // TODO
     this.onBeforeCommandEncoderCreation = new TasksQueueManager()
     this.onBeforeRenderScene = new TasksQueueManager()
     this.onAfterRenderScene = new TasksQueueManager()
@@ -682,13 +726,13 @@ export class GPURenderer {
    * Set all objects arrays that we'll keep track of
    */
   setRendererObjects() {
-    // keep track of meshes, textures, etc.
+    // keep track of compute passes, meshes, etc.
     this.computePasses = []
     this.pingPongPlanes = []
     this.shaderPasses = []
     this.renderTargets = []
     this.meshes = []
-    this.textures = []
+    this.renderTextures = []
   }
 
   /**
@@ -700,36 +744,28 @@ export class GPURenderer {
   }
 
   /**
-   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
-   * @readonly
-   */
-  get deviceObjects(): SceneObject[] {
-    return this.deviceManager.deviceObjects
-  }
-
-  /**
-   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
-    return this.deviceObjects.filter((object) => {
+    return this.deviceRenderedObjects.filter((object) => {
       return [
         ...object.material.bindGroups,
         ...object.material.inputsBindGroups,
         ...object.material.clonedBindGroups,
-      ].filter((bG) => bG.uuid === bindGroup.uuid)
+      ].some((bG) => bG.uuid === bindGroup.uuid)
     })
   }
 
   /**
-   * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */
   getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
-    return this.deviceObjects.filter((object) => {
-      return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid)
+    return this.deviceRenderedObjects.filter((object) => {
+      return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid)
     })
   }
 
@@ -803,8 +839,6 @@ export class GPURenderer {
    * @param computePass - [Compute pass]{@link ComputePass}
    */
   renderSingleComputePass(commandEncoder: GPUCommandEncoder, computePass: ComputePass) {
-    if (!computePass.canRender) return
-
     const pass = commandEncoder.beginComputePass()
     computePass.render(pass)
     pass.end()
@@ -813,21 +847,21 @@ export class GPURenderer {
   }
 
   /**
-   * Render a single [Mesh]{@link MeshType}
+   * Render a single [Mesh]{@link ProjectedMesh}
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - [Mesh]{@link MeshType} to render
+   * @param mesh - [Mesh]{@link ProjectedMesh} to render
    */
-  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType) {
+  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
     mesh.render(pass)
     pass.end()
   }
 
   /**
-   * Render an array of objects (either [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
-   * @param objects - Array of [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass} to render
+   * Render an array of objects (either [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
+   * @param objects - Array of [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass} to render
    */
-  renderOnce(objects: Array<MeshType | ComputePass>) {
+  renderOnce(objects: SceneObject[]) {
     const commandEncoder = this.device?.createCommandEncoder({
       label: 'Renderer once command encoder',
     })
@@ -849,6 +883,28 @@ export class GPURenderer {
   }
 
   /**
+   * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options#clearValue} by rendering and empty pass.
+   * @param commandEncoder
+   */
+  forceClear(commandEncoder?: GPUCommandEncoder) {
+    // if there's no command encoder provided, we'll have to create one and submit it after the copy process
+    const hasCommandEncoder = !!commandEncoder
+
+    if (!hasCommandEncoder) {
+      commandEncoder = this.device?.createCommandEncoder({ label: 'Force clear command encoder' })
+    }
+
+    this.setRenderPassCurrentTexture(this.renderPass)
+    const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
+    pass.end()
+
+    if (!hasCommandEncoder) {
+      const commandBuffer = commandEncoder.finish()
+      this.device?.queue.submit([commandBuffer])
+    }
+  }
+
+  /**
    * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
    */
   onBeforeCommandEncoder() {
@@ -863,22 +919,6 @@ export class GPURenderer {
    */
   onAfterCommandEncoder() {
     if (!this.ready) return
-
-    // handle textures
-    // first check if media textures without parent need to be uploaded
-    this.textures
-      .filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded)
-      .forEach((texture) => this.uploadTexture(texture))
-
-    // no need to use device.queue.onSubmittedWorkDone
-    // as [Kai Ninomiya](https://github.com/kainino0x) stated:
-    // "Anything you submit() after the copyExternalImageToTexture() is guaranteed to see the result of that call."
-    this.texturesQueue.forEach((texture) => {
-      texture.sourceUploaded = true
-    })
-
-    // clear texture queue
-    this.texturesQueue = []
 
     this.onAfterCommandEncoderSubmission.execute()
   }
@@ -904,7 +944,6 @@ export class GPURenderer {
    */
   destroy() {
     this.domElement?.destroy()
-    this.documentBody?.destroy()
 
     // destroy render passes
     this.renderPass?.destroy()
@@ -912,11 +951,8 @@ export class GPURenderer {
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
 
-    //this.textures.forEach((texture) => texture.destroy())
-    this.textures = []
-    this.texturesQueue = []
+    this.renderTextures.forEach((texture) => texture.destroy())
 
-    this.device?.destroy()
     this.context?.unconfigure()
   }
 }

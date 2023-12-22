@@ -133,6 +133,8 @@ export interface RenderMaterialBaseRenderingOptions {
   cullMode: GPUCullMode
   /** Custom blending to use with this {@link RenderMaterial}. Can override default transparent blending if set */
   blend?: GPUBlendState
+  /** Optional texture format of the [render pipeline]{@link RenderPipelineEntry} color target. Default to the renderer preferred format. */
+  targetFormat: GPUTextureFormat
 }
 
 /** Rendering options to send to the [render pipeline]{@link RenderPipelineEntry#pipeline} */
@@ -154,7 +156,6 @@ export interface RenderMaterialParams extends Partial<RenderMaterialBaseParams> 
   shaders?: MaterialShaders
   /** Whether to compile the {@link RenderMaterial} [render pipeline]{@link RenderPipelineEntry#pipeline} asynchronously or not */
   useAsyncPipeline?: boolean
-  //geometry: AllowedGeometries
 }
 
 /** Options used to create this {@link RenderMaterial} */

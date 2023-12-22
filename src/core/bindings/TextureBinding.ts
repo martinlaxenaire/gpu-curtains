@@ -81,16 +81,16 @@ export class TextureBinding extends Binding {
    * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
    */
   get resource(): GPUExternalTexture | GPUTextureView | null {
-    return this.texture instanceof GPUExternalTexture
+    return this.texture instanceof GPUTexture
+      ? this.texture.createView({ label: this.options.label + ' view' })
+      : this.texture instanceof GPUExternalTexture
       ? this.texture
-      : this.texture instanceof GPUTexture
-      ? this.texture.createView()
       : null
   }
 
   set resource(value: TextureBindingResource) {
     // resource changed, update bind group!
-    if (value && this.texture) this.shouldResetBindGroup = true
+    if (value || this.texture) this.shouldResetBindGroup = true
     this.texture = value
   }
 

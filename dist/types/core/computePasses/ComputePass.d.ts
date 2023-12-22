@@ -195,11 +195,6 @@ export declare class ComputePass {
      */
     render(pass: GPUComputePassEncoder): void;
     /**
-     * Check whether we're currently accessing one of the {@link ComputeMaterial} buffer and therefore can't render our compute pass
-     * @readonly
-     */
-    get canRender(): boolean;
-    /**
      * Copy the result of our read/write GPUBuffer into our result binding array
      * @param commandEncoder - current GPU command encoder
      */

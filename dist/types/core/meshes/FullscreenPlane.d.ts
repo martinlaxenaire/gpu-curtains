@@ -1,6 +1,6 @@
 import { MeshBaseRenderParams } from './MeshBaseMixin';
 import { Renderer } from '../renderers/utils';
-import { DOMElement, DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement';
+import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement';
 import { Vec2 } from '../../math/Vec2';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 declare const FullscreenPlane_base: import("./MeshBaseMixin").MixinConstructor<import("./MeshBaseMixin").MeshBaseClass> & {
@@ -21,8 +21,6 @@ export declare class FullscreenPlane extends FullscreenPlane_base {
         /** document HTML size */
         document: RectBBox;
     };
-    /** DOM Element (in fact, the renderer [DOM Element]{@link GPURenderer#domElement}) used to set the [document size]{@link FullscreenPlane#size.document} */
-    domElement: DOMElement;
     /**
      * FullscreenPlane constructor
      * @param renderer- [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
@@ -30,7 +28,7 @@ export declare class FullscreenPlane extends FullscreenPlane_base {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: MeshBaseRenderParams);
     /**
-     * Resize our FullscreenPlane
+     * Resize our {@link FullscreenPlane}
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect?: DOMElementBoundingRect | null): void;

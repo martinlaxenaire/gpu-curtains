@@ -1,5 +1,5 @@
-import { generateUUID, throwWarning } from '../../utils/utils'
-import { isRenderer, Renderer } from '../renderers/utils'
+import { generateUUID, throwError, throwWarning } from '../../utils/utils'
+import { CameraRenderer, isRenderer, Renderer } from '../renderers/utils'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { Texture } from '../textures/Texture'
 import { Geometry } from '../geometries/Geometry'
@@ -7,7 +7,7 @@ import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
 import { ExternalTextureParams, TextureParams, TextureParent } from '../../types/Textures'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { MeshType } from '../renderers/GPURenderer'
+import { ProjectedMesh } from '../renderers/GPURenderer'
 import { Material } from '../materials/Material'
 import { DOMElementBoundingRect } from '../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
@@ -188,6 +188,12 @@ export declare class MeshBaseClass {
    * Remove a Mesh from the renderer and the {@link Scene}
    */
   removeFromScene(): void
+
+  /**
+   * Set a new {@link Renderer} for this {@link MeshBase}
+   * @param renderer - new {@link Renderer} to set
+   */
+  setRenderer(renderer: Renderer | GPUCurtains): void
 
   /**
    * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
@@ -549,10 +555,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Add a Mesh to the renderer and the {@link Scene}
      */
     addToScene() {
-      this.renderer.meshes.push(this as unknown as MeshType)
+      this.renderer.meshes.push(this as unknown as ProjectedMesh)
 
       if (this.#autoRender) {
-        this.renderer.scene.addMesh(this as unknown as MeshType)
+        this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
       }
     }
 
@@ -561,10 +567,49 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     removeFromScene() {
       if (this.#autoRender) {
-        this.renderer.scene.removeMesh(this as unknown as MeshType)
+        this.renderer.scene.removeMesh(this as unknown as ProjectedMesh)
       }
 
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
+    }
+
+    /**
+     * Set a new {@link Renderer} for this {@link MeshBase}
+     * @param renderer - new {@link Renderer} to set
+     */
+    setRenderer(renderer: Renderer | GPUCurtains) {
+      // we could pass our curtains object OR our curtains renderer object
+      renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
+
+      if (
+        !renderer ||
+        !(
+          renderer.type === 'GPURenderer' ||
+          renderer.type === 'GPUCameraRenderer' ||
+          renderer.type === 'GPUCurtainsRenderer'
+        )
+      ) {
+        throwWarning(
+          `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
+        )
+        return
+      }
+
+      const oldRenderer = this.renderer
+      this.removeFromScene()
+      this.renderer = renderer
+      this.addToScene()
+
+      // if old renderer does not contain any meshes any more
+      // clear it
+      if (!oldRenderer.meshes.length) {
+        oldRenderer.onBeforeRenderScene.add(
+          (commandEncoder) => {
+            oldRenderer.forceClear(commandEncoder)
+          },
+          { once: true }
+        )
+      }
     }
 
     /**
@@ -647,7 +692,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         this.geometry.vertexBuffers.forEach((vertexBuffer) => {
           if (!vertexBuffer.buffer) {
             vertexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + ': Vertex buffer vertices',
+              label: this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer',
               size: vertexBuffer.array.byteLength,
               usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
             })
@@ -659,7 +704,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         // if it's an indexed geometry, create index GPUBuffer as well
         if ('indexBuffer' in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
           this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + ': Index buffer vertices',
+            label: this.options.label + ' geometry: index buffer',
             size: this.geometry.indexBuffer.array.byteLength,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
           })
@@ -997,6 +1042,17 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     remove() {
       this.removeFromScene()
       this.destroy()
+
+      // if the renderer does not contain any meshes any more
+      // clear it
+      if (!this.renderer.meshes.length) {
+        this.renderer.onBeforeRenderScene.add(
+          (commandEncoder) => {
+            this.renderer.forceClear(commandEncoder)
+          },
+          { once: true }
+        )
+      }
     }
 
     /**
@@ -1009,8 +1065,21 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         super.destroy()
       }
 
-      // TODO destroy anything else?
       this.material?.destroy()
+
+      // remove geometry buffers from device cache
+      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+        // use original vertex buffer label in case it has been swapped (usually by a compute pass)
+        this.renderer.removeBuffer(
+          vertexBuffer.buffer,
+          this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer'
+        )
+      })
+
+      if ('indexBuffer' in this.geometry) {
+        this.renderer.removeBuffer(this.geometry.indexBuffer.buffer)
+      }
+
       this.geometry?.destroy()
     }
   }

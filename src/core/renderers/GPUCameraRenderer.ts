@@ -1,8 +1,9 @@
-import { GPURenderer, GPURendererParams, MeshType } from './GPURenderer'
+import { GPURenderer, GPURendererParams, ProjectedMesh, SceneObject } from './GPURenderer'
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
+import { AllowedBindGroups } from '../../types/BindGroups'
 
 /**
  * Parameters used to create a {@link GPUCameraRenderer}
@@ -35,7 +36,6 @@ export class GPUCameraRenderer extends GPURenderer {
     pixelRatio = 1,
     sampleCount = 4,
     preferredFormat,
-    production = false,
     alphaMode = 'premultiplied',
     camera = {},
   }: GPUCameraRendererParams) {
@@ -46,7 +46,6 @@ export class GPUCameraRenderer extends GPURenderer {
       sampleCount,
       preferredFormat,
       alphaMode,
-      production,
     })
 
     this.type = 'GPUCameraRenderer'
@@ -177,6 +176,22 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
+   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}, including [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}.
+   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+   * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+   */
+  getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
+    return this.deviceRenderedObjects.filter((object) => {
+      return [
+        ...object.material.bindGroups,
+        ...object.material.inputsBindGroups,
+        ...object.material.clonedBindGroups,
+        this.cameraBindGroup,
+      ].some((bG) => bG.uuid === bindGroup.uuid)
+    })
+  }
+
+  /**
    * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
    * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
    */
@@ -220,11 +235,11 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Render a single [Mesh]{@link MeshType} (binds the camera bind group if needed)
+   * Render a single [Mesh]{@link ProjectedMesh} (binds the camera bind group if needed)
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - [Mesh]{@link MeshType} to render
+   * @param mesh - [Mesh]{@link ProjectedMesh} to render
    */
-  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: MeshType) {
+  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: ProjectedMesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
 
     // bind camera if needed

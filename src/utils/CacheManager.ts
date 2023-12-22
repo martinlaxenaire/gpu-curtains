@@ -1,4 +1,3 @@
-// TODO handle textures?
 import { PlaneGeometry } from '../core/geometries/PlaneGeometry'
 
 /**

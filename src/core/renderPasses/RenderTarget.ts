@@ -51,13 +51,14 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, depth, loadOp, clearValue, autoRender } = parameters
+    const { label, depth, loadOp, clearValue, targetFormat, autoRender } = parameters
 
     this.options = {
       label,
       depth,
       loadOp,
       clearValue,
+      targetFormat: targetFormat ?? this.renderer.preferredFormat,
       autoRender,
     }
 
@@ -70,12 +71,14 @@ export class RenderTarget {
       depth: this.options.depth,
       loadOp: this.options.loadOp,
       clearValue: this.options.clearValue,
+      targetFormat: this.options.targetFormat,
     })
 
     // this is the texture that will be resolved when setting the current render pass texture
     this.renderTexture = new RenderTexture(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target Render Texture',
       name: 'renderTexture',
+      format: this.options.targetFormat,
     })
 
     this.addToScene()

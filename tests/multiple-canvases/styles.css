@@ -28,10 +28,23 @@
   align-items: center;
 }
 
-#lose-context-button {
+#buttons {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+#buttons button {
+  pointer-events: auto;
+  margin: 0 1rem 1rem 0;
 }
 
 #page h1 {

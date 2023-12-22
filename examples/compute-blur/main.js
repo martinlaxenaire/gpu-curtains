@@ -7,7 +7,7 @@ import {
   TextureBindGroup,
   ComputePass,
   Plane,
-} from '../../src'
+} from '../../dist/gpu-curtains.js'
 // Port of https://webgpu.github.io/webgpu-samples/samples/imageBlur
 
 // This shader blurs the input texture in one direction, depending on whether

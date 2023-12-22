@@ -63,21 +63,23 @@ export class PlaneGeometry extends IndexedGeometry {
       count: widthSegments * heightSegments,
     }
 
-    this.setIndexArray()
-
-    const verticesCount = this.definition.width * 2 + 2 + (this.definition.height - 1) * (this.definition.width + 1)
+    const verticesCount = (this.definition.width + 1) * (this.definition.height + 1)
     const attributes = this.getIndexedVerticesAndUVs(verticesCount)
 
     Object.keys(attributes).forEach((attributeKey) => {
       this.setAttribute(attributes[attributeKey] as VertexBufferAttributeParams)
     })
+
+    this.setIndexArray()
   }
 
   /**
    * Set our PlaneGeometry index array
    */
   setIndexArray() {
-    const indexArray = new Uint32Array(this.definition.count * 6)
+    const indexArray = this.useUint16IndexArray
+      ? new Uint16Array(this.definition.count * 6)
+      : new Uint32Array(this.definition.count * 6)
 
     let index = 0
 
@@ -95,6 +97,7 @@ export class PlaneGeometry extends IndexedGeometry {
 
     this.setIndexBuffer({
       array: indexArray,
+      bufferFormat: this.useUint16IndexArray ? 'uint16' : 'uint32',
     })
   }
 

@@ -123,19 +123,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   // now run the compute pass just once
   gpuRenderer.renderOnce([compute2DNoise])
 
+  console.log(compute2DNoise)
+
   // const noiseBinding = compute2DNoise.material.getBindingByName('noise')
   // const dstBuffer = gpuRenderer.copyBufferToBuffer({
   //   srcBuffer: noiseBinding.buffer,
   // })
-
-  // and get the result of our compute pass
-  const result = await compute2DNoise.material.getComputeResult({ bindingName: 'noise' })
-
-  console.log(`noise generated in ${(performance.now() - start).toFixed(4)}ms`)
-
-  //const dstResult = await compute2DNoise.material.getBufferResult(dstBuffer)
-  const dstResult = await compute2DNoise.material.getBufferBindingResultByBindingName('noise')
-  console.log(result, dstResult)
 
   // display result on a canvas
   const canvas = document.createElement('canvas')
@@ -145,11 +138,50 @@ window.addEventListener('DOMContentLoaded', async () => {
   const page = document.querySelector('#page')
   page.appendChild(canvas)
 
-  // write to the canvas
-  const ctx = canvas.getContext('2d')
-  for (let i = 0; i < noiseSize.x * noiseSize.y; i++) {
-    const noise = result[i] * 255
-    ctx.fillStyle = `rgba(${noise}, ${noise}, ${noise}, 1)`
-    ctx.fillRect(i % noiseSize.x, Math.floor(i / noiseSize.x), 1, 1)
+  const drawResult = (result) => {
+    // write to the canvas
+    const ctx = canvas.getContext('2d')
+    for (let i = 0; i < noiseSize.x * noiseSize.y; i++) {
+      const noise = result[i] * 255
+      ctx.fillStyle = `rgba(${noise}, ${noise}, ${noise}, 1)`
+      ctx.fillRect(i % noiseSize.x, Math.floor(i / noiseSize.x), 1, 1)
+    }
   }
+
+  // and get the result of our compute pass
+  const result = await compute2DNoise.material.getComputeResult({ bindingName: 'noise' })
+
+  console.log(`noise generated in ${(performance.now() - start).toFixed(4)}ms`)
+
+  drawResult(result)
+
+  //const dstResult = await compute2DNoise.material.getBufferResult(dstBuffer)
+  const dstResult = await compute2DNoise.material.getBufferBindingResultByBindingName('noise')
+  console.log(result, dstResult)
+
+  // render
+  // const animate = () => {
+  //   deviceManager.render()
+  //   requestAnimationFrame(animate)
+  // }
+  //
+  // animate()
+  //
+  // compute2DNoise.onReady(async () => {
+  //   compute2DNoise.renderer.onBeforeRenderScene.add(
+  //     async () => {
+  //       // and get the result of our compute pass
+  //       const result = await compute2DNoise.material.getComputeResult({ bindingName: 'noise' })
+  //
+  //       console.log(`noise generated in ${(performance.now() - start).toFixed(4)}ms`)
+  //
+  //       //const dstResult = await compute2DNoise.material.getBufferResult(dstBuffer)
+  //       // const dstResult = await compute2DNoise.material.getBufferBindingResultByBindingName('noise')
+  //       // console.log(result, dstResult)
+  //
+  //       drawResult(result)
+  //     },
+  //     { once: true }
+  //   )
+  // })
 })

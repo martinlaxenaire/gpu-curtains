@@ -51,11 +51,6 @@ export declare class ComputeMaterial extends Material {
      */
     getAddedShaderCode(shaderType?: FullShadersType): string;
     /**
-     * Check whether we're currently accessing one of the buffer and therefore can't render our material
-     * @readonly
-     */
-    get hasMappedBuffer(): boolean;
-    /**
      * If we defined a custom render function instead of the default one, register the callback
      * @param callback - callback to run instead of the default behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
      */

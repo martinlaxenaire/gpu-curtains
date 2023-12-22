@@ -15,6 +15,8 @@ export interface RenderPassOptions {
   loadOp: GPULoadOp
   /** The [color values]{@link GPUColor} to clear before drawing this {@link RenderPass} */
   clearValue: GPUColor
+  /** Optional format of the color attachment texture */
+  targetFormat: GPUTextureFormat
 }
 
 /**
@@ -57,7 +59,13 @@ export class RenderPass {
    */
   constructor(
     renderer: Renderer | GPUCurtains,
-    { label = 'Render Pass', depth = true, loadOp = 'clear', clearValue = [0, 0, 0, 0] } = {} as RenderPassParams
+    {
+      label = 'Render Pass',
+      depth = true,
+      loadOp = 'clear',
+      clearValue = [0, 0, 0, 0],
+      targetFormat,
+    } = {} as RenderPassParams
   ) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
@@ -73,6 +81,7 @@ export class RenderPass {
       depth,
       loadOp,
       clearValue,
+      targetFormat: targetFormat ?? this.renderer.preferredFormat,
     } as RenderPassOptions
 
     this.setSize(this.renderer.pixelRatioBoundingRect)
@@ -107,7 +116,7 @@ export class RenderPass {
       label: this.options.label + ' color attachment texture',
       size: [this.size.width, this.size.height],
       sampleCount: this.sampleCount,
-      format: this.renderer.preferredFormat,
+      format: this.options.targetFormat,
       usage:
         GPUTextureUsage.RENDER_ATTACHMENT |
         GPUTextureUsage.COPY_SRC |

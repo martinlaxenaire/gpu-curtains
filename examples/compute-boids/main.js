@@ -1,4 +1,12 @@
-import { GPUCurtains, Vec2, BufferBinding, BindGroup, ComputePass, SphereGeometry, Mesh } from '../../src'
+import {
+  GPUCurtains,
+  Vec2,
+  BufferBinding,
+  BindGroup,
+  ComputePass,
+  SphereGeometry,
+  Mesh,
+} from '../../dist/gpu-curtains.js'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
 window.addEventListener('DOMContentLoaded', async () => {
@@ -13,7 +21,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // number of particles instances
   const numParticles = 2500
   // how much we're going to shrink the original geometry
-  const particleShrinkScale = 40
+  const particleShrinkScale = 30
 
   // camera screen ratio depends on screen size, fov and camera position
   const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale * 0.5

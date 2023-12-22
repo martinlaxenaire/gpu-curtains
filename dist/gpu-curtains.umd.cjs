@@ -2179,6 +2179,7 @@ var __privateMethod = (obj, member, method) => {
       this.bindGroupLayout = null;
       this.bindGroup = null;
       this.needsPipelineFlush = false;
+      this.renderer.addBindGroup(this);
     }
     /**
      * Sets our [BindGroup index]{@link BindGroup#index}
@@ -2471,15 +2472,18 @@ var __privateMethod = (obj, member, method) => {
      * Most important is to destroy the GPUBuffers to free the memory
      */
     destroy() {
+      this.renderer.removeBindGroup(this);
       this.bufferBindings.forEach((binding) => {
         var _a, _b;
         if ("buffer" in binding) {
           this.renderer.removeBuffer(binding.buffer);
           (_a = binding.buffer) == null ? void 0 : _a.destroy();
+          binding.buffer = null;
         }
         if ("resultBuffer" in binding) {
           this.renderer.removeBuffer(binding.resultBuffer);
           (_b = binding.resultBuffer) == null ? void 0 : _b.destroy();
+          binding.resultBuffer = null;
         }
       });
       this.bindings = [];
@@ -2528,10 +2532,10 @@ var __privateMethod = (obj, member, method) => {
      * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
      */
     get resource() {
-      return this.texture instanceof GPUExternalTexture ? this.texture : this.texture instanceof GPUTexture ? this.texture.createView() : null;
+      return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view" }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
     }
     set resource(value) {
-      if (value && this.texture)
+      if (value || this.texture)
         this.shouldResetBindGroup = true;
       this.texture = value;
     }
@@ -2745,7 +2749,8 @@ var __privateMethod = (obj, member, method) => {
     // default to black
     useExternalTextures: true,
     fromTexture: null,
-    viewDimension: "2d"
+    viewDimension: "2d",
+    cache: true
   };
   class Texture extends Object3D {
     /**
@@ -2806,6 +2811,7 @@ var __privateMethod = (obj, member, method) => {
       this.sourceUploaded = false;
       this.shouldUpdate = false;
       this.renderer.addTexture(this);
+      this.createTexture();
     }
     /**
      * Set our [struct]{@link Texture#bindings}
@@ -3028,9 +3034,14 @@ var __privateMethod = (obj, member, method) => {
      * @returns - the newly created {@link ImageBitmap}
      */
     async loadImage(source) {
-      const image = typeof source === "string" ? source : source.getAttribute("src");
-      this.options.source = image;
+      const url = typeof source === "string" ? source : source.getAttribute("src");
+      this.options.source = url;
       this.options.sourceType = "image";
+      const cachedTexture = this.renderer.textures.find((t) => t.options.source === url);
+      if (cachedTexture && cachedTexture.texture && cachedTexture.sourceUploaded) {
+        this.copy(cachedTexture);
+        return;
+      }
       this.sourceLoaded = false;
       this.sourceUploaded = false;
       this.source = await this.loadImageBitmap(this.options.source);
@@ -3380,7 +3391,7 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _far, void 0);
       /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
       __privateAdd(this, _pixelRatio, void 0);
-      this.position.set(0, 0, 5);
+      this.position.set(0, 0, 10);
       this.onMatricesChanged = onMatricesChanged;
       this.size = {
         width: 1,
@@ -3702,23 +3713,14 @@ var __privateMethod = (obj, member, method) => {
       if (!this.options.format) {
         this.options.format = this.renderer.preferredFormat;
       }
-      this.setSize(this.options.size);
+      this.size = this.options.size ?? {
+        width: this.renderer.pixelRatioBoundingRect.width,
+        height: this.renderer.pixelRatioBoundingRect.height,
+        depth: 1
+      };
       this.setBindings();
+      this.renderer.addRenderTexture(this);
       this.createTexture();
-    }
-    /**
-     * Set the [size]{@link RenderTexture#size}
-     * @param size - [size]{@link TextureSize} to set, the [renderer bounding rectangle]{@link Renderer#pixelRatioBoundingRect} width and height and 1 for depth if null
-     */
-    setSize(size = null) {
-      if (!size) {
-        size = {
-          width: this.renderer.pixelRatioBoundingRect.width,
-          height: this.renderer.pixelRatioBoundingRect.height,
-          depth: 1
-        };
-      }
-      this.size = size;
     }
     /**
      * Copy another {@link RenderTexture} into this {@link RenderTexture}
@@ -3779,7 +3781,17 @@ var __privateMethod = (obj, member, method) => {
      * @param size - the optional new [size]{@link RectSize} to set
      */
     resize(size = null) {
-      this.setSize(size);
+      if (!size) {
+        size = {
+          width: this.renderer.pixelRatioBoundingRect.width,
+          height: this.renderer.pixelRatioBoundingRect.height,
+          depth: 1
+        };
+      }
+      if (size.width === this.size.width && size.height === this.size.height && size.depth === this.size.depth) {
+        return;
+      }
+      this.size = size;
       this.createTexture();
     }
     /**
@@ -3787,6 +3799,7 @@ var __privateMethod = (obj, member, method) => {
      */
     destroy() {
       var _a;
+      this.renderer.removeRenderTexture(this);
       if (!this.options.fromTexture) {
         (_a = this.texture) == null ? void 0 : _a.destroy();
       }
@@ -4057,6 +4070,7 @@ var __privateMethod = (obj, member, method) => {
     destroyBindGroups() {
       this.bindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
       this.clonedBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
+      this.texturesBindGroups.forEach((bindGroup) => this.destroyBindGroup(bindGroup));
       this.texturesBindGroups = [];
       this.inputsBindGroups = [];
       this.bindGroups = [];
@@ -4153,8 +4167,10 @@ var __privateMethod = (obj, member, method) => {
      * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
      */
     destroyTexture(texture) {
+      if (texture.options.cache)
+        return;
       const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
-      const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.find((object) => object.material.uuid !== this.uuid);
+      const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
       if (shouldDestroy) {
         texture.destroy();
       }
@@ -4381,19 +4397,6 @@ var __privateMethod = (obj, member, method) => {
     getAddedShaderCode(shaderType = "compute") {
       return super.getAddedShaderCode(shaderType);
     }
-    /* BIND GROUPS */
-    /**
-     * Check whether we're currently accessing one of the buffer and therefore can't render our material
-     * @readonly
-     */
-    get hasMappedBuffer() {
-      const hasMappedBuffer = this.bindGroups.some((bindGroup) => {
-        return bindGroup.bindings.some(
-          (bindingBuffer) => bindingBuffer.resultBuffer && bindingBuffer.resultBuffer.mapState !== "unmapped"
-        );
-      });
-      return !!hasMappedBuffer;
-    }
     /* RENDER */
     /**
      * If we defined a custom render function instead of the default one, register the callback
@@ -4430,7 +4433,7 @@ var __privateMethod = (obj, member, method) => {
     copyBufferToResult(commandEncoder) {
       this.bindGroups.forEach((bindGroup) => {
         bindGroup.bufferBindings.forEach((binding) => {
-          if (binding.shouldCopyResult) {
+          if (binding.shouldCopyResult && binding.resultBuffer.mapState === "unmapped") {
             commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size);
           }
         });
@@ -4448,7 +4451,7 @@ var __privateMethod = (obj, member, method) => {
       bufferElementName = ""
     }) {
       const binding = this.getBufferBindingByName(bindingName);
-      if (binding && "resultBuffer" in binding) {
+      if (binding && "resultBuffer" in binding && binding.resultBuffer.mapState === "unmapped") {
         const result = await this.getBufferResult(binding.resultBuffer);
         if (bufferElementName) {
           return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName });
@@ -4768,13 +4771,6 @@ var __privateMethod = (obj, member, method) => {
       this.onAfterRenderPass();
     }
     /**
-     * Check whether we're currently accessing one of the {@link ComputeMaterial} buffer and therefore can't render our compute pass
-     * @readonly
-     */
-    get canRender() {
-      return this.material ? !this.material.hasMappedBuffer : false;
-    }
-    /**
      * Copy the result of our read/write GPUBuffer into our result binding array
      * @param commandEncoder - current GPU command encoder
      */
@@ -5040,7 +5036,7 @@ var __privateMethod = (obj, member, method) => {
      * @readonly
      */
     get shouldCompute() {
-      return !this.vertexBuffers[0].array;
+      return this.vertexBuffers.length && !this.vertexBuffers[0].array;
     }
     /**
      * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
@@ -5064,8 +5060,7 @@ var __privateMethod = (obj, member, method) => {
         arrayStride: 0,
         bufferLength: 0,
         attributes: [],
-        buffer: null,
-        indexBuffer: null
+        buffer: null
       };
       attributes == null ? void 0 : attributes.forEach((attribute) => {
         this.setAttribute({
@@ -5257,8 +5252,8 @@ var __privateMethod = (obj, member, method) => {
       this.vertexBuffers.forEach((vertexBuffer) => {
         var _a;
         (_a = vertexBuffer.buffer) == null ? void 0 : _a.destroy();
+        vertexBuffer.buffer = null;
       });
-      this.vertexBuffers = [];
     }
   }
   _setWGSLFragment = new WeakSet();
@@ -5300,6 +5295,13 @@ var __privateMethod = (obj, member, method) => {
       return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer) && this.indexBuffer && !!this.indexBuffer.buffer;
     }
     /**
+     * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
+     * @readonly
+     */
+    get useUint16IndexArray() {
+      return this.verticesCount < 256 * 256;
+    }
+    /**
      *
      * @param parameters - parameters used to create our index buffer
      * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
@@ -5337,7 +5339,7 @@ var __privateMethod = (obj, member, method) => {
       var _a, _b;
       super.destroy();
       (_b = (_a = this.indexBuffer) == null ? void 0 : _a.buffer) == null ? void 0 : _b.destroy();
-      this.indexBuffer = null;
+      this.indexBuffer.buffer = null;
     }
   }
   class PlaneGeometry extends IndexedGeometry {
@@ -5366,18 +5368,18 @@ var __privateMethod = (obj, member, method) => {
         height: heightSegments,
         count: widthSegments * heightSegments
       };
-      this.setIndexArray();
-      const verticesCount = this.definition.width * 2 + 2 + (this.definition.height - 1) * (this.definition.width + 1);
+      const verticesCount = (this.definition.width + 1) * (this.definition.height + 1);
       const attributes = this.getIndexedVerticesAndUVs(verticesCount);
       Object.keys(attributes).forEach((attributeKey) => {
         this.setAttribute(attributes[attributeKey]);
       });
+      this.setIndexArray();
     }
     /**
      * Set our PlaneGeometry index array
      */
     setIndexArray() {
-      const indexArray = new Uint32Array(this.definition.count * 6);
+      const indexArray = this.useUint16IndexArray ? new Uint16Array(this.definition.count * 6) : new Uint32Array(this.definition.count * 6);
       let index = 0;
       for (let y = 0; y < this.definition.height; y++) {
         for (let x = 0; x < this.definition.width; x++) {
@@ -5390,7 +5392,8 @@ var __privateMethod = (obj, member, method) => {
         }
       }
       this.setIndexBuffer({
-        array: indexArray
+        array: indexArray,
+        bufferFormat: this.useUint16IndexArray ? "uint16" : "uint32"
       });
     }
     /**
@@ -5726,6 +5729,31 @@ struct VertexOutput {
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
       }
       /**
+       * Set a new {@link Renderer} for this {@link MeshBase}
+       * @param renderer - new {@link Renderer} to set
+       */
+      setRenderer(renderer) {
+        renderer = renderer && renderer.renderer || renderer;
+        if (!renderer || !(renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer")) {
+          throwWarning(
+            `${this.options.label}: Cannot set ${renderer} as a renderer because it is not of a valid Renderer type.`
+          );
+          return;
+        }
+        const oldRenderer = this.renderer;
+        this.removeFromScene();
+        this.renderer = renderer;
+        this.addToScene();
+        if (!oldRenderer.meshes.length) {
+          oldRenderer.onBeforeRenderScene.add(
+            (commandEncoder) => {
+              oldRenderer.forceClear(commandEncoder);
+            },
+            { once: true }
+          );
+        }
+      }
+      /**
        * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
        * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
        */
@@ -5793,7 +5821,7 @@ struct VertexOutput {
           this.geometry.vertexBuffers.forEach((vertexBuffer) => {
             if (!vertexBuffer.buffer) {
               vertexBuffer.buffer = this.renderer.createBuffer({
-                label: this.options.label + ": Vertex buffer vertices",
+                label: this.options.label + " geometry: " + vertexBuffer.name + " buffer",
                 size: vertexBuffer.array.byteLength,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
               });
@@ -5802,7 +5830,7 @@ struct VertexOutput {
           });
           if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
             this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + ": Index buffer vertices",
+              label: this.options.label + " geometry: index buffer",
               size: this.geometry.indexBuffer.array.byteLength,
               usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
             });
@@ -6076,6 +6104,14 @@ struct VertexOutput {
       remove() {
         this.removeFromScene();
         this.destroy();
+        if (!this.renderer.meshes.length) {
+          this.renderer.onBeforeRenderScene.add(
+            (commandEncoder) => {
+              this.renderer.forceClear(commandEncoder);
+            },
+            { once: true }
+          );
+        }
       }
       /**
        * Destroy the Mesh
@@ -6086,175 +6122,19 @@ struct VertexOutput {
           super.destroy();
         }
         (_a2 = this.material) == null ? void 0 : _a2.destroy();
+        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+          this.renderer.removeBuffer(
+            vertexBuffer.buffer,
+            this.options.label + " geometry: " + vertexBuffer.name + " buffer"
+          );
+        });
+        if ("indexBuffer" in this.geometry) {
+          this.renderer.removeBuffer(this.geometry.indexBuffer.buffer);
+        }
         (_b = this.geometry) == null ? void 0 : _b.destroy();
       }
     }, _autoRender3 = new WeakMap(), _a;
   }
-  class ResizeManager {
-    /**
-     * ResizeManager constructor
-     */
-    constructor() {
-      this.shouldWatch = true;
-      this.entries = [];
-      this.resizeObserver = new ResizeObserver((observedEntries) => {
-        const allEntries = observedEntries.map((observedEntry) => {
-          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
-        }).sort((a, b) => a.length - b.length);
-        allEntries == null ? void 0 : allEntries.forEach((entries) => {
-          entries.forEach((entry) => {
-            if (entry && entry.callback) {
-              entry.callback();
-            }
-          });
-        });
-      });
-    }
-    /**
-     * Set [shouldWatch]{@link ResizeManager#shouldWatch}
-     * @param shouldWatch - whether to watch or not
-     */
-    useObserver(shouldWatch = true) {
-      this.shouldWatch = shouldWatch;
-    }
-    /**
-     * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
-     * @param entry - [entry]{@link ResizeManagerEntry} to watch
-     */
-    observe({ element, callback }) {
-      if (!element || !this.shouldWatch)
-        return;
-      this.resizeObserver.observe(element);
-      const entry = {
-        element,
-        callback
-      };
-      this.entries.push(entry);
-    }
-    /**
-     * Unobserve an [element]{@link HTMLElement} and remove it from our [entries array]{@link ResizeManager#entries}
-     * @param element - [element]{@link HTMLElement} to unobserve
-     */
-    unobserve(element) {
-      this.resizeObserver.unobserve(element);
-      this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
-    }
-    /**
-     * Destroy our {@link ResizeManager}
-     */
-    destroy() {
-      this.resizeObserver.disconnect();
-    }
-  }
-  const resizeManager = new ResizeManager();
-  class DOMElement {
-    /**
-     * DOMElement constructor
-     * @param parameters - parameters used to create our DOMElement
-     * @param {HTMLElement=} parameters.element - DOM HTML element to track
-     * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
-     * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
-     */
-    constructor({
-      element = document.body,
-      onSizeChanged = (boundingRect = null) => {
-      },
-      onPositionChanged = (boundingRect = null) => {
-      }
-    } = {}) {
-      __privateAdd(this, _throttleResize, void 0);
-      __privateSet(this, _throttleResize, null);
-      if (typeof element === "string") {
-        this.element = document.querySelector(element);
-        if (!this.element) {
-          const notFoundEl = typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`;
-          throwError(`DOMElement: corresponding ${notFoundEl} not found.`);
-        }
-      } else {
-        this.element = element;
-      }
-      this.isResizing = false;
-      this.onSizeChanged = onSizeChanged;
-      this.onPositionChanged = onPositionChanged;
-      this.resizeManager = resizeManager;
-      this.resizeManager.observe({
-        element: this.element,
-        callback: () => {
-          this.setSize();
-        }
-      });
-      this.setSize();
-    }
-    /**
-     * Check whether 2 bounding rectangles are equals
-     * @param rect1 - first bounding rectangle
-     * @param rect2 - second bounding rectangle
-     * @returns - whether the rectangles are equals or not
-     */
-    compareBoundingRect(rect1, rect2) {
-      return !["x", "y", "left", "top", "right", "bottom", "width", "height"].some((k) => rect1[k] !== rect2[k]);
-    }
-    /**
-     * Get or set our element's bounding rectangle
-     * @readonly
-     */
-    get boundingRect() {
-      return this._boundingRect;
-    }
-    set boundingRect(boundingRect) {
-      const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect);
-      this._boundingRect = {
-        top: boundingRect.top,
-        right: boundingRect.right,
-        bottom: boundingRect.bottom,
-        left: boundingRect.left,
-        width: boundingRect.width,
-        height: boundingRect.height,
-        x: boundingRect.x,
-        y: boundingRect.y
-      };
-      if (!isSameRect) {
-        this.onSizeChanged(this.boundingRect);
-      }
-    }
-    /**
-     * Update our element bounding rectangle because the scroll position has changed
-     * @param delta - scroll delta values along X and Y axis
-     */
-    updateScrollPosition(delta = { x: 0, y: 0 }) {
-      if (this.isResizing)
-        return;
-      this._boundingRect.top += delta.y;
-      this._boundingRect.left += delta.x;
-      if (delta.x || delta.y) {
-        this.onPositionChanged(this.boundingRect);
-      }
-    }
-    /**
-     * Set our element bounding rectangle, either by a value or a getBoundingClientRect call
-     * @param boundingRect - new bounding rectangle
-     */
-    setSize(boundingRect = null) {
-      if (!this.element)
-        return;
-      this.isResizing = !!this.boundingRect;
-      this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
-      __privateSet(this, _throttleResize, setTimeout(() => {
-        this.isResizing = false;
-        __privateSet(this, _throttleResize, null);
-      }, 50));
-    }
-    /**
-     * Destroy our DOMElement - remove from resize observer and clear throttle timeout
-     */
-    destroy() {
-      this.resizeManager.unobserve(this.element);
-      if (__privateGet(this, _throttleResize)) {
-        clearTimeout(__privateGet(this, _throttleResize));
-      }
-    }
-  }
-  _throttleResize = new WeakMap();
   class CacheManager {
     /**
      * CacheManager constructor
@@ -6311,27 +6191,20 @@ struct VertexOutput {
       super(renderer, null, { geometry, ...parameters });
       this.size = {
         document: {
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0
+          width: this.renderer.boundingRect.width,
+          height: this.renderer.boundingRect.height,
+          top: this.renderer.boundingRect.top,
+          left: this.renderer.boundingRect.left
         }
       };
-      this.domElement = new DOMElement({
-        element: this.renderer.domElement.element,
-        onSizeChanged: (boundingRect) => this.resize(boundingRect)
-      });
       this.type = "FullscreenQuadMesh";
     }
     /**
-     * Resize our FullscreenPlane
+     * Resize our {@link FullscreenPlane}
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect = null) {
-      var _a;
-      if (!boundingRect && (!this.domElement || ((_a = this.domElement) == null ? void 0 : _a.isResizing)))
-        return;
-      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
+      this.size.document = boundingRect ?? this.renderer.boundingRect;
       super.resize(boundingRect);
     }
     /**
@@ -6965,6 +6838,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         verticesOrder,
         topology,
         blend,
+        targetFormat,
         useProjection
       } = parameters;
       renderer = renderer && renderer.renderer || renderer;
@@ -6999,6 +6873,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
         verticesOrder,
         topology,
         blend,
+        targetFormat,
         useProjection
       };
     }
@@ -7160,7 +7035,7 @@ ${this.shaders.vertex.head}`;
           entryPoint: this.options.shaders.fragment.entryPoint,
           targets: [
             {
-              format: this.renderer.preferredFormat,
+              format: this.options.targetFormat ?? this.renderer.preferredFormat,
               ...blend && {
                 blend
               }
@@ -7453,6 +7328,173 @@ ${this.shaders.compute.head}`;
       this.currentPipelineIndex = null;
     }
   }
+  class ResizeManager {
+    /**
+     * ResizeManager constructor
+     */
+    constructor() {
+      this.shouldWatch = true;
+      this.entries = [];
+      this.resizeObserver = new ResizeObserver((observedEntries) => {
+        const allEntries = observedEntries.map((observedEntry) => {
+          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
+        }).flat().sort((a, b) => b.priority - a.priority);
+        allEntries == null ? void 0 : allEntries.forEach((entry) => {
+          if (entry && entry.callback) {
+            entry.callback();
+          }
+        });
+      });
+    }
+    /**
+     * Set [shouldWatch]{@link ResizeManager#shouldWatch}
+     * @param shouldWatch - whether to watch or not
+     */
+    useObserver(shouldWatch = true) {
+      this.shouldWatch = shouldWatch;
+    }
+    /**
+     * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
+     * @param entry - [entry]{@link ResizeManagerEntry} to watch
+     */
+    observe({ element, priority, callback }) {
+      if (!element || !this.shouldWatch)
+        return;
+      this.resizeObserver.observe(element);
+      const entry = {
+        element,
+        priority,
+        callback
+      };
+      this.entries.push(entry);
+    }
+    /**
+     * Unobserve an [element]{@link HTMLElement} and remove it from our [entries array]{@link ResizeManager#entries}
+     * @param element - [element]{@link HTMLElement} to unobserve
+     */
+    unobserve(element) {
+      this.resizeObserver.unobserve(element);
+      this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
+    }
+    /**
+     * Destroy our {@link ResizeManager}
+     */
+    destroy() {
+      this.resizeObserver.disconnect();
+    }
+  }
+  const resizeManager = new ResizeManager();
+  class DOMElement {
+    /**
+     * DOMElement constructor
+     * @param parameters - parameters used to create our DOMElement
+     * @param {HTMLElement=} parameters.element - DOM HTML element to track
+     * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
+     * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
+     */
+    constructor({
+      element = document.body,
+      priority = 1,
+      onSizeChanged = (boundingRect = null) => {
+      },
+      onPositionChanged = (boundingRect = null) => {
+      }
+    } = {}) {
+      __privateAdd(this, _throttleResize, void 0);
+      __privateSet(this, _throttleResize, null);
+      if (typeof element === "string") {
+        this.element = document.querySelector(element);
+        if (!this.element) {
+          const notFoundEl = typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`;
+          throwError(`DOMElement: corresponding ${notFoundEl} not found.`);
+        }
+      } else {
+        this.element = element;
+      }
+      this.priority = priority;
+      this.isResizing = false;
+      this.onSizeChanged = onSizeChanged;
+      this.onPositionChanged = onPositionChanged;
+      this.resizeManager = resizeManager;
+      this.resizeManager.observe({
+        element: this.element,
+        priority: this.priority,
+        callback: () => {
+          this.setSize();
+        }
+      });
+      this.setSize();
+    }
+    /**
+     * Check whether 2 bounding rectangles are equals
+     * @param rect1 - first bounding rectangle
+     * @param rect2 - second bounding rectangle
+     * @returns - whether the rectangles are equals or not
+     */
+    compareBoundingRect(rect1, rect2) {
+      return !["x", "y", "left", "top", "right", "bottom", "width", "height"].some((k) => rect1[k] !== rect2[k]);
+    }
+    /**
+     * Get or set our element's bounding rectangle
+     * @readonly
+     */
+    get boundingRect() {
+      return this._boundingRect;
+    }
+    set boundingRect(boundingRect) {
+      const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect);
+      this._boundingRect = {
+        top: boundingRect.top,
+        right: boundingRect.right,
+        bottom: boundingRect.bottom,
+        left: boundingRect.left,
+        width: boundingRect.width,
+        height: boundingRect.height,
+        x: boundingRect.x,
+        y: boundingRect.y
+      };
+      if (!isSameRect) {
+        this.onSizeChanged(this.boundingRect);
+      }
+    }
+    /**
+     * Update our element bounding rectangle because the scroll position has changed
+     * @param delta - scroll delta values along X and Y axis
+     */
+    updateScrollPosition(delta = { x: 0, y: 0 }) {
+      if (this.isResizing)
+        return;
+      this._boundingRect.top += delta.y;
+      this._boundingRect.left += delta.x;
+      if (delta.x || delta.y) {
+        this.onPositionChanged(this.boundingRect);
+      }
+    }
+    /**
+     * Set our element bounding rectangle, either by a value or a getBoundingClientRect call
+     * @param boundingRect - new bounding rectangle
+     */
+    setSize(boundingRect = null) {
+      if (!this.element)
+        return;
+      this.isResizing = !!this.boundingRect;
+      this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
+      __privateSet(this, _throttleResize, setTimeout(() => {
+        this.isResizing = false;
+        __privateSet(this, _throttleResize, null);
+      }, 50));
+    }
+    /**
+     * Destroy our DOMElement - remove from resize observer and clear throttle timeout
+     */
+    destroy() {
+      this.resizeManager.unobserve(this.element);
+      if (__privateGet(this, _throttleResize)) {
+        clearTimeout(__privateGet(this, _throttleResize));
+      }
+    }
+  }
+  _throttleResize = new WeakMap();
   class DOMObject3D extends ProjectedObject3D {
     /**
      * DOMObject3D constructor
@@ -8019,6 +8061,13 @@ ${this.shaders.compute.head}`;
         ]
       };
     }
+    getRenderPassEntryLength(renderPassEntry) {
+      if (!renderPassEntry) {
+        return 0;
+      } else {
+        return renderPassEntry.element ? 1 : 0 + renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
+      }
+    }
     /**
      * Add a [compute pass]{@link ComputePass} to our scene [computePassEntries array]{@link Scene#computePassEntries}
      * @param computePass - [compute pass]{@link ComputePass} to add
@@ -8106,7 +8155,9 @@ ${this.shaders.compute.head}`;
       similarMeshes.splice(siblingMeshIndex, 0, mesh);
       similarMeshes.sort((a, b) => a.index - b.index);
       if ((mesh instanceof DOMMesh || mesh instanceof Plane) && mesh.transparent) {
-        similarMeshes.sort((a, b) => b.documentPosition.z - a.documentPosition.z);
+        similarMeshes.sort(
+          (a, b) => b.documentPosition.z - a.documentPosition.z
+        );
       }
       similarMeshes.sort((a, b) => a.renderOrder - b.renderOrder);
       mesh.transparent ? projectionStack.transparent = similarMeshes : projectionStack.opaque = similarMeshes;
@@ -8137,6 +8188,8 @@ ${this.shaders.compute.head}`;
         renderTexture: null,
         onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
           if (!shaderPass.renderTarget) {
+            if (!shaderPass.renderTexture.texture)
+              console.log(shaderPass.renderTexture);
             if (shaderPass.renderTexture) {
               commandEncoder.copyTextureToTexture(
                 {
@@ -8268,8 +8321,6 @@ ${this.shaders.compute.head}`;
      */
     render(commandEncoder) {
       this.computePassEntries.forEach((computePass) => {
-        if (!computePass.canRender)
-          return;
         const pass = commandEncoder.beginComputePass();
         computePass.render(pass);
         pass.end();
@@ -8279,7 +8330,7 @@ ${this.shaders.compute.head}`;
       for (const renderPassEntryType in this.renderPassEntries) {
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-          if (!renderPassEntry.element && !renderPassEntry.stack.unProjected.opaque.length && !renderPassEntry.stack.unProjected.transparent.length && !renderPassEntry.stack.projected.opaque.length && !renderPassEntry.stack.projected.transparent.length)
+          if (!this.getRenderPassEntryLength(renderPassEntry))
             return;
           renderPassEntry.renderPass.setLoadOp(
             renderPassEntryType === "screen" && passDrawnCount !== 0 ? "load" : "clear"
@@ -8296,7 +8347,13 @@ ${this.shaders.compute.head}`;
      * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - [parameters]{@link RenderPassParams} used to create this {@link RenderPass}
      */
-    constructor(renderer, { label = "Render Pass", depth = true, loadOp = "clear", clearValue = [0, 0, 0, 0] } = {}) {
+    constructor(renderer, {
+      label = "Render Pass",
+      depth = true,
+      loadOp = "clear",
+      clearValue = [0, 0, 0, 0],
+      targetFormat
+    } = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "RenderPass");
       this.type = "RenderPass";
@@ -8306,7 +8363,8 @@ ${this.shaders.compute.head}`;
         label,
         depth,
         loadOp,
-        clearValue
+        clearValue,
+        targetFormat: targetFormat ?? this.renderer.preferredFormat
       };
       this.setSize(this.renderer.pixelRatioBoundingRect);
       this.sampleCount = this.renderer.sampleCount;
@@ -8335,7 +8393,7 @@ ${this.shaders.compute.head}`;
         label: this.options.label + " color attachment texture",
         size: [this.size.width, this.size.height],
         sampleCount: this.sampleCount,
-        format: this.renderer.preferredFormat,
+        format: this.options.targetFormat,
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING
       });
     }
@@ -8499,7 +8557,6 @@ ${this.shaders.compute.head}`;
       container,
       pixelRatio = 1,
       sampleCount = 4,
-      production = false,
       preferredFormat,
       alphaMode = "premultiplied"
     }) {
@@ -8512,30 +8569,23 @@ ${this.shaders.compute.head}`;
       };
       this.type = "GPURenderer";
       this.uuid = generateUUID();
-      this.ready = false;
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
       this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
       this.sampleCount = sampleCount;
-      this.production = production;
       this.alphaMode = alphaMode;
       this.preferredFormat = preferredFormat ?? ((_a = this.deviceManager.gpu) == null ? void 0 : _a.getPreferredCanvasFormat());
       this.setTasksQueues();
       this.setRendererObjects();
+      const isContainerCanvas = container instanceof HTMLCanvasElement;
+      this.canvas = isContainerCanvas ? container : document.createElement("canvas");
       this.domElement = new DOMElement({
-        element: container
+        element: container,
+        onSizeChanged: (boundingRect) => this.resize(boundingRect)
       });
-      if (container instanceof HTMLCanvasElement) {
-        this.canvas = container;
-      } else {
-        this.canvas = document.createElement("canvas");
+      if (!isContainerCanvas) {
         this.domElement.element.appendChild(this.canvas);
       }
-      this.documentBody = new DOMElement({
-        element: document.body,
-        onSizeChanged: () => this.resize()
-      });
-      this.texturesQueue = [];
       if (this.deviceManager.device) {
         this.setContext();
       }
@@ -8561,7 +8611,7 @@ ${this.shaders.compute.head}`;
      * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
      */
     resize(boundingRect = null) {
-      if (!this.domElement)
+      if (!this.domElement && !boundingRect)
         return;
       if (!boundingRect)
         boundingRect = this.domElement.element.getBoundingClientRect();
@@ -8576,9 +8626,9 @@ ${this.shaders.compute.head}`;
       var _a;
       (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
       this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
+      this.computePasses.forEach((computePass) => computePass.resize());
       this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
       this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
-      this.computePasses.forEach((computePass) => computePass.resize());
       this.meshes.forEach((mesh) => {
         if (!("domElement" in mesh))
           mesh.resize(this.boundingRect);
@@ -8588,7 +8638,22 @@ ${this.shaders.compute.head}`;
      * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
      */
     get boundingRect() {
-      return this.domElement.boundingRect;
+      var _a;
+      if (!!this.domElement.boundingRect) {
+        return this.domElement.boundingRect;
+      } else {
+        const boundingRect = (_a = this.domElement.element) == null ? void 0 : _a.getBoundingClientRect();
+        return {
+          top: boundingRect.top,
+          right: boundingRect.right,
+          bottom: boundingRect.bottom,
+          left: boundingRect.left,
+          width: boundingRect.width,
+          height: boundingRect.height,
+          x: boundingRect.x,
+          y: boundingRect.y
+        };
+      }
     }
     /**
      * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
@@ -8596,8 +8661,8 @@ ${this.shaders.compute.head}`;
     get pixelRatioBoundingRect() {
       const devicePixelRatio = window.devicePixelRatio ?? 1;
       const scaleBoundingRect = this.pixelRatio / devicePixelRatio;
-      return Object.keys(this.domElement.boundingRect).reduce(
-        (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
+      return Object.keys(this.boundingRect).reduce(
+        (a, key) => ({ ...a, [key]: this.boundingRect[key] * scaleBoundingRect }),
         {
           x: 0,
           y: 0,
@@ -8617,6 +8682,20 @@ ${this.shaders.compute.head}`;
      */
     get device() {
       return this.deviceManager.device;
+    }
+    /**
+     * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set) and its size is set
+     * @readonly
+     */
+    get ready() {
+      return this.deviceManager.ready && !!this.canvas.style.width;
+    }
+    /**
+     * Get our [device manager production flag]{@link GPUDeviceManager#production}
+     * @readonly
+     */
+    get production() {
+      return this.deviceManager.production;
     }
     /**
      * Get all the created [samplers]{@link GPUDeviceManager#samplers}
@@ -8640,6 +8719,13 @@ ${this.shaders.compute.head}`;
       return this.deviceManager.pipelineManager;
     }
     /**
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+     * @readonly
+     */
+    get deviceRenderedObjects() {
+      return this.deviceManager.deviceRenderedObjects;
+    }
+    /**
      * Configure our [context]{@link context} with the given options
      */
     configureContext() {
@@ -8661,7 +8747,6 @@ ${this.shaders.compute.head}`;
         this.configureContext();
         this.setMainRenderPass();
         this.setScene();
-        this.ready = true;
       }
     }
     /**
@@ -8669,7 +8754,6 @@ ${this.shaders.compute.head}`;
      * Force all our scene objects to lose context.
      */
     loseContext() {
-      this.ready = false;
       this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
     }
     /**
@@ -8678,10 +8762,12 @@ ${this.shaders.compute.head}`;
      * @async
      */
     restoreContext() {
+      var _a;
       this.configureContext();
+      (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
+      this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
+      this.renderTextures.forEach((renderTexture) => renderTexture.createTexture());
       this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
-      this.onResize();
-      this.ready = true;
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
     /**
@@ -8689,7 +8775,7 @@ ${this.shaders.compute.head}`;
      */
     setMainRenderPass() {
       this.renderPass = new RenderPass(this, {
-        label: "Main Render pass",
+        label: "Main render pass",
         depth: true
       });
     }
@@ -8708,15 +8794,16 @@ ${this.shaders.compute.head}`;
     createBuffer(bufferDescriptor) {
       var _a;
       const buffer = (_a = this.device) == null ? void 0 : _a.createBuffer(bufferDescriptor);
-      this.buffers.push(buffer);
+      this.deviceManager.addBuffer(buffer);
       return buffer;
     }
     /**
      * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
      * @param buffer - [buffer]{@link GPUBuffer} to remove
+     * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
      */
-    removeBuffer(buffer) {
-      this.deviceManager.removeBuffer(buffer);
+    removeBuffer(buffer, originalLabel) {
+      this.deviceManager.removeBuffer(buffer, originalLabel);
     }
     /**
      * Write to a {@link GPUBuffer}
@@ -8753,6 +8840,14 @@ ${this.shaders.compute.head}`;
           usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
         });
       }
+      if (srcBuffer.mapState !== "unmapped") {
+        throwWarning(`${this.type}: Cannot copy from ${srcBuffer} because it is currently mapped`);
+        return;
+      }
+      if (dstBuffer.mapState !== "unmapped") {
+        throwWarning(`${this.type}: Cannot copy from ${dstBuffer} because it is currently mapped`);
+        return;
+      }
       const hasCommandEncoder = !!commandEncoder;
       if (!hasCommandEncoder) {
         commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: "Copy buffer command encoder" });
@@ -8765,6 +8860,27 @@ ${this.shaders.compute.head}`;
       return dstBuffer;
     }
     /* BIND GROUPS & LAYOUTS */
+    /**
+     * Get all created [bind groups]{@link AllowedBindGroups} tracked by our {@link GPUDeviceManager}
+     * @readonly
+     */
+    get bindGroups() {
+      return this.deviceManager.bindGroups;
+    }
+    /**
+     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+     */
+    addBindGroup(bindGroup) {
+      this.deviceManager.addBindGroup(bindGroup);
+    }
+    /**
+     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+     */
+    removeBindGroup(bindGroup) {
+      this.deviceManager.removeBindGroup(bindGroup);
+    }
     /**
      * Create a {@link GPUBindGroupLayout}
      * @param bindGroupLayoutDescriptor - [bind group layout descriptor]{@link GPUBindGroupLayoutDescriptor}
@@ -8842,28 +8958,39 @@ ${this.shaders.compute.head}`;
     }
     /* TEXTURES */
     /**
-     * Add a [texture]{@link Texture} to our [textures array]{@link GPURenderer#textures}
+     * Get all created [textures]{@link Texture} tracked by our {@link GPUDeviceManager}
+     * @readonly
+     */
+    get textures() {
+      return this.deviceManager.textures;
+    }
+    /**
+     * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
      * @param texture - [texture]{@link Texture} to add
      */
     addTexture(texture) {
-      this.textures.push(texture);
-      this.setTexture(texture);
+      this.deviceManager.addTexture(texture);
     }
     /**
-     * Remove a [texture]{@link Texture} from our [textures array]{@link GPURenderer#textures}
+     * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
      * @param texture - [texture]{@link Texture} to remove
      */
     removeTexture(texture) {
-      this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
+      this.deviceManager.removeTexture(texture);
     }
     /**
-     * Call texture [createTexture]{@link Texture#createTexture} method
-     * @param texture - [texture]{@link Texture} to create
+     * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPUDeviceManager#renderTextures}
+     * @param texture - [render texture]{@link RenderTexture} to add
      */
-    setTexture(texture) {
-      if (!texture.texture) {
-        texture.createTexture();
-      }
+    addRenderTexture(texture) {
+      this.renderTextures.push(texture);
+    }
+    /**
+     * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPUDeviceManager#renderTextures}
+     * @param texture - [render texture]{@link RenderTexture} to remove
+     */
+    removeRenderTexture(texture) {
+      this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
      * Create a {@link GPUTexture}
@@ -8879,32 +9006,7 @@ ${this.shaders.compute.head}`;
      * @param texture - [texture]{@link Texture} to upload
      */
     uploadTexture(texture) {
-      var _a, _b;
-      if (texture.source) {
-        try {
-          (_a = this.device) == null ? void 0 : _a.queue.copyExternalImageToTexture(
-            {
-              source: texture.source,
-              flipY: texture.options.flipY
-            },
-            { texture: texture.texture },
-            { width: texture.size.width, height: texture.size.height }
-          );
-          if (texture.texture.mipLevelCount > 1) {
-            generateMips(this.device, texture.texture);
-          }
-          this.texturesQueue.push(texture);
-        } catch ({ message }) {
-          throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`);
-        }
-      } else {
-        (_b = this.device) == null ? void 0 : _b.queue.writeTexture(
-          { texture: texture.texture },
-          new Uint8Array(texture.options.placeholderColor),
-          { bytesPerRow: texture.size.width * 4 },
-          { width: texture.size.width, height: texture.size.height }
-        );
-      }
+      this.deviceManager.uploadTexture(texture);
     }
     /**
      * Import an [external texture]{@link GPUExternalTexture}
@@ -8934,7 +9036,7 @@ ${this.shaders.compute.head}`;
           label: sampler.label,
           ...samplerOptions
         });
-        this.samplers.push(sampler);
+        this.deviceManager.addSampler(sampler);
         return gpuSampler;
       }
     }
@@ -8946,6 +9048,13 @@ ${this.shaders.compute.head}`;
       this.deviceManager.removeSampler(sampler);
     }
     /* OBJECTS & TASKS */
+    /**
+     * Set different tasks queue managers to execute callbacks at different phases of our render call:
+     * - {@link onBeforeCommandEncoderCreation}: callbacks executed before the creation of the command encoder
+     * - {@link onBeforeRenderScene}: callbacks executed after the creation of the command encoder and before rendering the {@link Scene}
+     * - {@link onAfterRenderScene}: callbacks executed after the creation of the command encoder and after rendering the {@link Scene}
+     * - {@link onAfterCommandEncoderSubmission}: callbacks executed after the submission of the command encoder
+     */
     setTasksQueues() {
       this.onBeforeCommandEncoderCreation = new TasksQueueManager();
       this.onBeforeRenderScene = new TasksQueueManager();
@@ -8961,7 +9070,7 @@ ${this.shaders.compute.head}`;
       this.shaderPasses = [];
       this.renderTargets = [];
       this.meshes = [];
-      this.textures = [];
+      this.renderTextures = [];
     }
     /**
      * Get all this [renderer]{@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -8971,34 +9080,27 @@ ${this.shaders.compute.head}`;
       return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes];
     }
     /**
-     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
-     * @readonly
-     */
-    get deviceObjects() {
-      return this.deviceManager.deviceObjects;
-    }
-    /**
-     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
      */
     getObjectsByBindGroup(bindGroup) {
-      return this.deviceObjects.filter((object) => {
+      return this.deviceRenderedObjects.filter((object) => {
         return [
           ...object.material.bindGroups,
           ...object.material.inputsBindGroups,
           ...object.material.clonedBindGroups
-        ].filter((bG) => bG.uuid === bindGroup.uuid);
+        ].some((bG) => bG.uuid === bindGroup.uuid);
       });
     }
     /**
-     * Get all objects ([Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
      */
     getObjectsByTexture(texture) {
-      return this.deviceObjects.filter((object) => {
-        return [...object.material.textures, ...object.material.renderTextures].filter((t) => t.uuid === texture.uuid);
+      return this.deviceRenderedObjects.filter((object) => {
+        return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid);
       });
     }
     /* EVENTS */
@@ -9060,17 +9162,15 @@ ${this.shaders.compute.head}`;
      * @param computePass - [Compute pass]{@link ComputePass}
      */
     renderSingleComputePass(commandEncoder, computePass) {
-      if (!computePass.canRender)
-        return;
       const pass = commandEncoder.beginComputePass();
       computePass.render(pass);
       pass.end();
       computePass.copyBufferToResult(commandEncoder);
     }
     /**
-     * Render a single [Mesh]{@link MeshType}
+     * Render a single [Mesh]{@link ProjectedMesh}
      * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - [Mesh]{@link MeshType} to render
+     * @param mesh - [Mesh]{@link ProjectedMesh} to render
      */
     renderSingleMesh(commandEncoder, mesh) {
       const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9078,8 +9178,8 @@ ${this.shaders.compute.head}`;
       pass.end();
     }
     /**
-     * Render an array of objects (either [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
-     * @param objects - Array of [Meshes]{@link MeshType} or [Compute passes]{@link ComputePass} to render
+     * Render an array of objects (either [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
+     * @param objects - Array of [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass} to render
      */
     renderOnce(objects) {
       var _a, _b;
@@ -9099,6 +9199,24 @@ ${this.shaders.compute.head}`;
       this.pipelineManager.resetCurrentPipeline();
     }
     /**
+     * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options#clearValue} by rendering and empty pass.
+     * @param commandEncoder
+     */
+    forceClear(commandEncoder) {
+      var _a, _b;
+      const hasCommandEncoder = !!commandEncoder;
+      if (!hasCommandEncoder) {
+        commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: "Force clear command encoder" });
+      }
+      this.setRenderPassCurrentTexture(this.renderPass);
+      const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
+      pass.end();
+      if (!hasCommandEncoder) {
+        const commandBuffer = commandEncoder.finish();
+        (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
+      }
+    }
+    /**
      * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
      */
     onBeforeCommandEncoder() {
@@ -9113,11 +9231,6 @@ ${this.shaders.compute.head}`;
     onAfterCommandEncoder() {
       if (!this.ready)
         return;
-      this.textures.filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
-      this.texturesQueue.forEach((texture) => {
-        texture.sourceUploaded = true;
-      });
-      this.texturesQueue = [];
       this.onAfterCommandEncoderSubmission.execute();
     }
     /**
@@ -9137,16 +9250,13 @@ ${this.shaders.compute.head}`;
      * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
      */
     destroy() {
-      var _a, _b, _c, _d, _e;
+      var _a, _b, _c;
       (_a = this.domElement) == null ? void 0 : _a.destroy();
-      (_b = this.documentBody) == null ? void 0 : _b.destroy();
-      (_c = this.renderPass) == null ? void 0 : _c.destroy();
+      (_b = this.renderPass) == null ? void 0 : _b.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
       this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
-      this.textures = [];
-      this.texturesQueue = [];
-      (_d = this.device) == null ? void 0 : _d.destroy();
-      (_e = this.context) == null ? void 0 : _e.unconfigure();
+      this.renderTextures.forEach((texture) => texture.destroy());
+      (_c = this.context) == null ? void 0 : _c.unconfigure();
     }
   }
   class GPUCameraRenderer extends GPURenderer {
@@ -9160,7 +9270,6 @@ ${this.shaders.compute.head}`;
       pixelRatio = 1,
       sampleCount = 4,
       preferredFormat,
-      production = false,
       alphaMode = "premultiplied",
       camera = {}
     }) {
@@ -9170,8 +9279,7 @@ ${this.shaders.compute.head}`;
         pixelRatio,
         sampleCount,
         preferredFormat,
-        alphaMode,
-        production
+        alphaMode
       });
       this.type = "GPUCameraRenderer";
       camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
@@ -9287,6 +9395,21 @@ ${this.shaders.compute.head}`;
       (_c = this.cameraBufferBinding) == null ? void 0 : _c.shouldUpdateBinding("projection");
     }
     /**
+     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}, including [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}.
+     * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+     */
+    getObjectsByBindGroup(bindGroup) {
+      return this.deviceRenderedObjects.filter((object) => {
+        return [
+          ...object.material.bindGroups,
+          ...object.material.inputsBindGroups,
+          ...object.material.clonedBindGroups,
+          this.cameraBindGroup
+        ].some((bG) => bG.uuid === bindGroup.uuid);
+      });
+    }
+    /**
      * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
      * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
      */
@@ -9327,9 +9450,9 @@ ${this.shaders.compute.head}`;
       (_b = this.cameraBindGroup) == null ? void 0 : _b.update();
     }
     /**
-     * Render a single [Mesh]{@link MeshType} (binds the camera bind group if needed)
+     * Render a single [Mesh]{@link ProjectedMesh} (binds the camera bind group if needed)
      * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - [Mesh]{@link MeshType} to render
+     * @param mesh - [Mesh]{@link ProjectedMesh} to render
      */
     renderSingleMesh(commandEncoder, mesh) {
       const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9365,6 +9488,7 @@ ${this.shaders.compute.head}`;
      */
     constructor({
       label,
+      production = false,
       onError = () => {
       },
       onDeviceLost = (info) => {
@@ -9372,6 +9496,7 @@ ${this.shaders.compute.head}`;
     }) {
       this.index = 0;
       this.label = label ?? "GPUDeviceManager instance";
+      this.production = production;
       this.ready = false;
       this.onError = onError;
       this.onDeviceLost = onDeviceLost;
@@ -9383,9 +9508,7 @@ ${this.shaders.compute.head}`;
         }, 0);
       }
       this.setPipelineManager();
-      this.renderers = [];
-      this.buffers = [];
-      this.samplers = [];
+      this.setDeviceObjects();
     }
     /**
      * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
@@ -9484,6 +9607,17 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
+     * Set all objects arrays that we'll keep track of
+     */
+    setDeviceObjects() {
+      this.renderers = [];
+      this.bindGroups = [];
+      this.buffers = [];
+      this.samplers = [];
+      this.textures = [];
+      this.texturesQueue = [];
+    }
+    /**
      * Add a [renderer]{@link Renderer} to our [renderers array]{@link GPUDeviceManager#renderers}
      * @param renderer - [renderer]{@link Renderer} to add
      */
@@ -9501,17 +9635,50 @@ ${this.shaders.compute.head}`;
      * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
      * @readonly
      */
-    get deviceObjects() {
+    get deviceRenderedObjects() {
       return this.renderers.map((renderer) => renderer.renderedObjects).flat();
+    }
+    /**
+     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+     */
+    addBindGroup(bindGroup) {
+      if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
+        this.bindGroups.push(bindGroup);
+      }
+    }
+    /**
+     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
+     * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+     */
+    removeBindGroup(bindGroup) {
+      this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
+    }
+    /**
+     * Add a [buffer]{@link GPUBuffer} to our our [buffers array]{@link GPUDeviceManager#buffers}
+     * @param buffer - [buffer]{@link GPUBuffer} to add
+     */
+    addBuffer(buffer) {
+      this.buffers.push(buffer);
     }
     /**
      * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
      * @param buffer - [buffer]{@link GPUBuffer} to remove
+     * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
      */
-    removeBuffer(buffer) {
-      this.buffers = this.buffers.filter((b) => {
-        return b.label !== buffer.label && b.usage !== buffer.usage && b.size !== buffer.size;
-      });
+    removeBuffer(buffer, originalLabel) {
+      if (buffer) {
+        this.buffers = this.buffers.filter((b) => {
+          return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size);
+        });
+      }
+    }
+    /**
+     * Add a [sampler]{@link Sampler} to our [samplers array]{@link GPUDeviceManager#samplers}
+     * @param sampler - [sampler]{@link Sampler} to add
+     */
+    addSampler(sampler) {
+      this.samplers.push(sampler);
     }
     /**
      * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
@@ -9520,15 +9687,66 @@ ${this.shaders.compute.head}`;
     removeSampler(sampler) {
       this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
     }
+    /**
+     * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
+     * @param texture - [texture]{@link Texture} to add
+     */
+    addTexture(texture) {
+      this.textures.push(texture);
+    }
+    /**
+     * Upload a [texture]{@link Texture} to the GPU
+     * @param texture - [texture]{@link Texture} to upload
+     */
+    uploadTexture(texture) {
+      var _a, _b;
+      if (texture.source) {
+        try {
+          (_a = this.device) == null ? void 0 : _a.queue.copyExternalImageToTexture(
+            {
+              source: texture.source,
+              flipY: texture.options.flipY
+            },
+            { texture: texture.texture },
+            { width: texture.size.width, height: texture.size.height }
+          );
+          if (texture.texture.mipLevelCount > 1) {
+            generateMips(this.device, texture.texture);
+          }
+          this.texturesQueue.push(texture);
+        } catch ({ message }) {
+          throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`);
+        }
+      } else {
+        (_b = this.device) == null ? void 0 : _b.queue.writeTexture(
+          { texture: texture.texture },
+          new Uint8Array(texture.options.placeholderColor),
+          { bytesPerRow: texture.size.width * 4 },
+          { width: texture.size.width, height: texture.size.height }
+        );
+      }
+    }
+    /**
+     * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
+     * @param texture - [texture]{@link Texture} to remove
+     */
+    removeTexture(texture) {
+      this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
+    }
     render() {
       var _a, _b;
       if (!this.ready)
         return;
       this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder());
-      const commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: "Renderer scene command encoder" });
+      const commandEncoder = (_a = this.device) == null ? void 0 : _a.createCommandEncoder({ label: this.label + " command encoder" });
       this.renderers.forEach((renderer) => renderer.render(commandEncoder));
       const commandBuffer = commandEncoder.finish();
       (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
+      this.textures.filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
+      this.texturesQueue.forEach((texture) => {
+        texture.sourceUploaded = true;
+      });
+      this.texturesQueue = [];
       this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder());
     }
     /**
@@ -9537,11 +9755,12 @@ ${this.shaders.compute.head}`;
     destroy() {
       var _a;
       (_a = this.device) == null ? void 0 : _a.destroy();
+      this.device = null;
       this.renderers.forEach((renderer) => renderer.destroy());
+      this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
       this.buffers.forEach((buffer) => buffer == null ? void 0 : buffer.destroy());
-      this.renderers = [];
-      this.samplers = [];
-      this.buffers = [];
+      this.textures.forEach((texture) => texture.destroy());
+      this.setDeviceObjects();
     }
   }
   class RenderTarget {
@@ -9558,12 +9777,13 @@ ${this.shaders.compute.head}`;
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, depth, loadOp, clearValue, autoRender } = parameters;
+      const { label, depth, loadOp, clearValue, targetFormat, autoRender } = parameters;
       this.options = {
         label,
         depth,
         loadOp,
         clearValue,
+        targetFormat: targetFormat ?? this.renderer.preferredFormat,
         autoRender
       };
       if (autoRender !== void 0) {
@@ -9573,11 +9793,13 @@ ${this.shaders.compute.head}`;
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
         depth: this.options.depth,
         loadOp: this.options.loadOp,
-        clearValue: this.options.clearValue
+        clearValue: this.options.clearValue,
+        targetFormat: this.options.targetFormat
       });
       this.renderTexture = new RenderTexture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target Render Texture",
-        name: "renderTexture"
+        name: "renderTexture",
+        format: this.options.targetFormat
       });
       this.addToScene();
     }
@@ -9712,7 +9934,8 @@ ${this.shaders.compute.head}`;
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
       parameters.renderTarget = new RenderTarget(renderer, {
-        label: parameters.label ? parameters.label + " render target" : "Ping Pong render target"
+        label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
+        ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
       });
       parameters.transparent = false;
       parameters.label = parameters.label ?? "PingPongPlane " + ((_a = renderer.pingPongPlanes) == null ? void 0 : _a.length);
@@ -9720,7 +9943,8 @@ ${this.shaders.compute.head}`;
       this.type = "PingPongPlane";
       this.createRenderTexture({
         label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
-        name: "renderTexture"
+        name: "renderTexture",
+        ...parameters.targetFormat && { format: parameters.targetFormat }
       });
     }
     /**
@@ -9764,7 +9988,6 @@ ${this.shaders.compute.head}`;
       sampleCount = 4,
       preferredFormat,
       alphaMode = "premultiplied",
-      production = false,
       camera
     }) {
       super({
@@ -9774,7 +9997,6 @@ ${this.shaders.compute.head}`;
         sampleCount,
         preferredFormat,
         alphaMode,
-        production,
         camera
       });
       this.type = "GPUCurtainsRenderer";
@@ -9785,18 +10007,6 @@ ${this.shaders.compute.head}`;
     setRendererObjects() {
       super.setRendererObjects();
       this.domMeshes = [];
-    }
-    /**
-     * Set each [DOM Meshes DOM Elements]{GPUCurtainsRenderer#domMeshes.domElement} size on resize
-     */
-    onResize() {
-      var _a;
-      super.onResize();
-      (_a = this.domMeshes) == null ? void 0 : _a.forEach((mesh) => {
-        if (mesh.domElement) {
-          mesh.domElement.setSize();
-        }
-      });
     }
   }
   class ScrollManager {
@@ -9937,8 +10147,7 @@ ${this.shaders.compute.head}`;
         sampleCount: this.options.sampleCount,
         preferredFormat: this.options.preferredFormat,
         alphaMode: this.options.alphaMode,
-        camera: this.options.camera,
-        production: this.options.production
+        camera: this.options.camera
       });
     }
     /**
@@ -9948,8 +10157,6 @@ ${this.shaders.compute.head}`;
     patchRendererOptions(options) {
       if (options.pixelRatio === void 0)
         options.pixelRatio = this.options.pixelRatio;
-      if (options.production === void 0)
-        options.production = this.options.production;
       if (options.sampleCount === void 0)
         options.sampleCount = this.options.sampleCount;
       return options;
@@ -9984,6 +10191,7 @@ ${this.shaders.compute.head}`;
     setDeviceManager() {
       this.deviceManager = new GPUDeviceManager({
         label: "GPUCurtains default device",
+        production: this.options.production,
         onError: () => this._onErrorCallback && this._onErrorCallback(),
         onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
       });
@@ -10300,9 +10508,6 @@ ${this.shaders.compute.head}`;
       buildPlane("x", "z", "y", 1, -1, 2, 2, -2, widthSegments, depthSegments);
       buildPlane("x", "y", "z", 1, -1, 2, 2, 2, widthSegments, heightSegments);
       buildPlane("x", "y", "z", -1, -1, 2, 2, -2, widthSegments, heightSegments);
-      this.setIndexBuffer({
-        array: new Uint32Array(indices)
-      });
       this.setAttribute({
         name: "position",
         type: "vec3f",
@@ -10323,6 +10528,10 @@ ${this.shaders.compute.head}`;
         bufferFormat: "float32x3",
         size: 3,
         array: new Float32Array(normals)
+      });
+      this.setIndexBuffer({
+        array: this.useUint16IndexArray ? new Uint16Array(indices) : new Uint32Array(indices),
+        bufferFormat: this.useUint16IndexArray ? "uint16" : "uint32"
       });
     }
   }
@@ -10386,9 +10595,6 @@ ${this.shaders.compute.head}`;
             indices.push(b, c, d);
         }
       }
-      this.setIndexBuffer({
-        array: new Uint32Array(indices)
-      });
       this.setAttribute({
         name: "position",
         type: "vec3f",
@@ -10409,6 +10615,10 @@ ${this.shaders.compute.head}`;
         bufferFormat: "float32x3",
         size: 3,
         array: new Float32Array(normals)
+      });
+      this.setIndexBuffer({
+        array: this.useUint16IndexArray ? new Uint16Array(indices) : new Uint32Array(indices),
+        bufferFormat: this.useUint16IndexArray ? "uint16" : "uint32"
       });
     }
   }
