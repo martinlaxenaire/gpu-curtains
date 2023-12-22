@@ -67,6 +67,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const textPlane = new Plane(gpuCurtains, '#text-plane', {
     label: 'Canvas text plane',
     widthSegments: 20,
+    transparent: true,
     shaders: {
       vertex: {
         code: planeVs,
@@ -105,14 +106,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     const htmlPlaneWidth = textPlane.boundingRect.width
     const htmlPlaneHeight = textPlane.boundingRect.height
 
-    const canvasResolution = window.devicePixelRatio * 3
+    const canvasResolution = window.devicePixelRatio
 
     // set sizes
     canvas.width = htmlPlaneWidth * canvasResolution
     canvas.height = htmlPlaneHeight * canvasResolution
 
-    // context.width = htmlPlaneWidth * canvasResolution
-    // context.height = htmlPlaneHeight * canvasResolution
+    context.width = htmlPlaneWidth
+    context.height = htmlPlaneHeight
 
     context.scale(canvasResolution, canvasResolution)
 
@@ -153,7 +154,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .onAfterResize(() => {
       writeCanvasText()
-      //canvasTexture.resize()
+      canvasTexture.resize()
     })
 
   console.log(textPlane, gpuCurtains.renderer.scene)

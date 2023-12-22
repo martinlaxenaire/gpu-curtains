@@ -8577,6 +8577,8 @@ class GPURenderer {
     this.canvas = isContainerCanvas ? container : document.createElement("canvas");
     this.domElement = new DOMElement({
       element: container,
+      priority: 5,
+      // renderer callback need to be called first
       onSizeChanged: (boundingRect) => this.resize(boundingRect)
     });
     if (!isContainerCanvas) {
@@ -9711,7 +9713,7 @@ class GPUDeviceManager {
         }
         this.texturesQueue.push(texture);
       } catch ({ message }) {
-        throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`);
+        throwError(`GPUDeviceManager: could not upload texture: ${texture.options.name} because: ${message}`);
       }
     } else {
       (_b = this.device) == null ? void 0 : _b.queue.writeTexture(

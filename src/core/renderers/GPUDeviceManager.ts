@@ -344,7 +344,7 @@ export class GPUDeviceManager {
         // add to our textures queue array to track when it has been uploaded
         this.texturesQueue.push(texture)
       } catch ({ message }) {
-        throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`)
+        throwError(`GPUDeviceManager: could not upload texture: ${texture.options.name} because: ${message}`)
       }
     } else {
       this.device?.queue.writeTexture(
