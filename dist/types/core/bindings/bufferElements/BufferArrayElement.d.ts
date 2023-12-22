@@ -16,21 +16,21 @@ export declare class BufferArrayElement extends BufferElement {
     arrayLength: number;
     /** Total number of elements (i.e. {@link arrayLength} divided by [buffer layout number of elements]{@link BufferLayout#numElements} */
     numElements: number;
-    /** Stride in the {@link ArrayBuffer} between two elements of the array in bytes */
-    stride: number;
+    /** Number of bytes in the {@link ArrayBuffer} between two elements {@link startOffset} */
+    arrayStride: number;
     /**
      * BufferArrayElement constructor
      * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferArrayElement}
      */
     constructor({ name, key, type, arrayLength }: BufferArrayElementParams);
     /**
-     * Get the stride between two elements of the array in indices
+     * Get the array stride between two elements of the array, in indices
      * @readonly
      */
-    get strideToIndex(): number;
+    get arrayStrideToIndex(): number;
     /**
      * Set the [alignment]{@link BufferElementAlignment}
-     * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the stride between two array elements. Using the stride and the total number of elements, we can easily get the end alignment position.
+     * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the arrayStride between two array elements. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
      * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
      */
     setAlignment(startOffset?: number): void;

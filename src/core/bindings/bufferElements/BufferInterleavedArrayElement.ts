@@ -16,7 +16,7 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
   constructor({ name, key, type = 'f32', arrayLength = 1 }: BufferArrayElementParams) {
     super({ name, key, type, arrayLength })
 
-    this.stride = 1
+    this.arrayStride = 1
 
     this.arrayLength = arrayLength
     this.numElements = this.arrayLength / this.bufferLayout.numElements
@@ -32,14 +32,14 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
 
   /**
    * Set the [alignment]{@link BufferElementAlignment}
-   * To compute how arrays are packed, we need to compute the stride between two elements beforehand and pass it here. Using the stride and the total number of elements, we can easily get the end alignment position.
+   * To compute how arrays are packed, we need to compute the arrayStride between two elements beforehand and pass it here. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
    * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
    * @param stride - Stride in the {@link ArrayBuffer} between two elements of the array
    */
   setAlignment(startOffset = 0, stride = 0) {
     this.alignment = this.getElementAlignment(this.getPositionAtOffset(startOffset))
 
-    this.stride = stride
+    this.arrayStride = stride
 
     this.alignment.end = this.getPositionAtOffset(this.endOffset + stride * (this.numElements - 1))
   }
@@ -83,7 +83,7 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
         i * this.bufferLayout.numElements + this.bufferLayout.numElements
       )
 
-      const startByteOffset = this.startOffset + i * this.stride
+      const startByteOffset = this.startOffset + i * this.arrayStride
 
       // view set function need to be called for each subarray entry, so loop over subarray entries
       subarray.forEach((value, index) => {
@@ -99,7 +99,7 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
   extractDataFromBufferResult(result: Float32Array) {
     const interleavedResult = new Float32Array(this.arrayLength)
     for (let i = 0; i < this.numElements; i++) {
-      const resultOffset = this.startOffsetToIndex + i * this.strideToIndex
+      const resultOffset = this.startOffsetToIndex + i * this.arrayStrideToIndex
 
       for (let j = 0; j < this.bufferLayout.numElements; j++) {
         interleavedResult[i * this.bufferLayout.numElements + j] = result[resultOffset + j]

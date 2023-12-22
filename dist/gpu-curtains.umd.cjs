@@ -1733,22 +1733,22 @@ var __privateMethod = (obj, member, method) => {
       this.numElements = this.arrayLength / this.bufferLayout.numElements;
     }
     /**
-     * Get the stride between two elements of the array in indices
+     * Get the array stride between two elements of the array, in indices
      * @readonly
      */
-    get strideToIndex() {
-      return this.stride / bytesPerSlot;
+    get arrayStrideToIndex() {
+      return this.arrayStride / bytesPerSlot;
     }
     /**
      * Set the [alignment]{@link BufferElementAlignment}
-     * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the stride between two array elements. Using the stride and the total number of elements, we can easily get the end alignment position.
+     * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the arrayStride between two array elements. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
      * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
      */
     setAlignment(startOffset = 0) {
       super.setAlignment(startOffset);
       const nextAlignment = this.getElementAlignment(this.getPositionAtOffset(this.endOffset + 1));
-      this.stride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end);
-      this.alignment.end = this.getPositionAtOffset(this.endOffset + this.stride * (this.numElements - 1));
+      this.arrayStride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end);
+      this.alignment.end = this.getPositionAtOffset(this.endOffset + this.arrayStride * (this.numElements - 1));
     }
     /**
      * Update the [view]{@link BufferElement#view} based on the new value
@@ -1777,7 +1777,7 @@ var __privateMethod = (obj, member, method) => {
      */
     constructor({ name, key, type = "f32", arrayLength = 1 }) {
       super({ name, key, type, arrayLength });
-      this.stride = 1;
+      this.arrayStride = 1;
       this.arrayLength = arrayLength;
       this.numElements = this.arrayLength / this.bufferLayout.numElements;
     }
@@ -1790,13 +1790,13 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Set the [alignment]{@link BufferElementAlignment}
-     * To compute how arrays are packed, we need to compute the stride between two elements beforehand and pass it here. Using the stride and the total number of elements, we can easily get the end alignment position.
+     * To compute how arrays are packed, we need to compute the arrayStride between two elements beforehand and pass it here. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
      * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
      * @param stride - Stride in the {@link ArrayBuffer} between two elements of the array
      */
     setAlignment(startOffset = 0, stride = 0) {
       this.alignment = this.getElementAlignment(this.getPositionAtOffset(startOffset));
-      this.stride = stride;
+      this.arrayStride = stride;
       this.alignment.end = this.getPositionAtOffset(this.endOffset + stride * (this.numElements - 1));
     }
     /**
@@ -1831,7 +1831,7 @@ var __privateMethod = (obj, member, method) => {
           i * this.bufferLayout.numElements,
           i * this.bufferLayout.numElements + this.bufferLayout.numElements
         );
-        const startByteOffset = this.startOffset + i * this.stride;
+        const startByteOffset = this.startOffset + i * this.arrayStride;
         subarray.forEach((value2, index) => {
           this.viewSetFunction(startByteOffset + index * this.bufferLayout.View.BYTES_PER_ELEMENT, value2, true);
         });
@@ -1844,7 +1844,7 @@ var __privateMethod = (obj, member, method) => {
     extractDataFromBufferResult(result) {
       const interleavedResult = new Float32Array(this.arrayLength);
       for (let i = 0; i < this.numElements; i++) {
-        const resultOffset = this.startOffsetToIndex + i * this.strideToIndex;
+        const resultOffset = this.startOffsetToIndex + i * this.arrayStrideToIndex;
         for (let j = 0; j < this.bufferLayout.numElements; j++) {
           interleavedResult[i * this.bufferLayout.numElements + j] = result[resultOffset + j];
         }

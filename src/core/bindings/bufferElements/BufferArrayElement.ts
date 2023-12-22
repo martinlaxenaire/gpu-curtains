@@ -19,8 +19,8 @@ export class BufferArrayElement extends BufferElement {
   arrayLength: number
   /** Total number of elements (i.e. {@link arrayLength} divided by [buffer layout number of elements]{@link BufferLayout#numElements} */
   numElements: number
-  /** Stride in the {@link ArrayBuffer} between two elements of the array in bytes */
-  stride: number
+  /** Number of bytes in the {@link ArrayBuffer} between two elements {@link startOffset} */
+  arrayStride: number
 
   /**
    * BufferArrayElement constructor
@@ -34,16 +34,16 @@ export class BufferArrayElement extends BufferElement {
   }
 
   /**
-   * Get the stride between two elements of the array in indices
+   * Get the array stride between two elements of the array, in indices
    * @readonly
    */
-  get strideToIndex(): number {
-    return this.stride / bytesPerSlot
+  get arrayStrideToIndex(): number {
+    return this.arrayStride / bytesPerSlot
   }
 
   /**
    * Set the [alignment]{@link BufferElementAlignment}
-   * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the stride between two array elements. Using the stride and the total number of elements, we can easily get the end alignment position.
+   * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the arrayStride between two array elements. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
    * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
    */
   setAlignment(startOffset = 0) {
@@ -51,9 +51,9 @@ export class BufferArrayElement extends BufferElement {
 
     // repeat for a second element to know how things are laid out
     const nextAlignment = this.getElementAlignment(this.getPositionAtOffset(this.endOffset + 1))
-    this.stride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end)
+    this.arrayStride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end)
 
-    this.alignment.end = this.getPositionAtOffset(this.endOffset + this.stride * (this.numElements - 1))
+    this.alignment.end = this.getPositionAtOffset(this.endOffset + this.arrayStride * (this.numElements - 1))
   }
 
   /**
@@ -65,7 +65,7 @@ export class BufferArrayElement extends BufferElement {
       let valueIndex = 0
 
       const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT
-      // stride is our view length divided by the number of elements in our array
+      // arrayStride is our view length divided by the number of elements in our array
       const stride = Math.ceil(viewLength / this.numElements)
 
       for (let i = 0; i < this.numElements; i++) {

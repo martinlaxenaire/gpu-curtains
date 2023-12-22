@@ -121,15 +121,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // draw our title with the original style
     context.fillStyle = textStyle.color
-    context.font =
-      textStyle.fontStyle +
-      ' ' +
-      textStyle.fontWeight +
-      ' ' +
-      parseFloat(textStyle.fontSize) +
-      'px ' +
+    context.font = `${textStyle.fontStyle} ${textStyle.fontWeight} ${parseFloat(textStyle.fontSize)}px ${
       textStyle.fontFamily
-    //context.textAlign = htmlPlaneStyle.textAlign
+    }`
 
     context.lineHeight = textStyle.lineHeight
 

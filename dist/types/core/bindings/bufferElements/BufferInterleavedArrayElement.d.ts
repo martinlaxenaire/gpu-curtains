@@ -19,7 +19,7 @@ export declare class BufferInterleavedArrayElement extends BufferArrayElement {
     get byteCount(): number;
     /**
      * Set the [alignment]{@link BufferElementAlignment}
-     * To compute how arrays are packed, we need to compute the stride between two elements beforehand and pass it here. Using the stride and the total number of elements, we can easily get the end alignment position.
+     * To compute how arrays are packed, we need to compute the arrayStride between two elements beforehand and pass it here. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
      * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
      * @param stride - Stride in the {@link ArrayBuffer} between two elements of the array
      */

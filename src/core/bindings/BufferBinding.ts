@@ -293,7 +293,7 @@ export class BufferBinding extends Binding {
           }
         })
 
-        // now use last temp buffer end offset as our interleaved stride
+        // now use last temp buffer end offset as our interleaved arrayStride
         const totalStride =
           tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset
 
