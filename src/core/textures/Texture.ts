@@ -273,7 +273,6 @@ export class Texture extends Object3D {
     }
 
     // cover ratio is a bit tricky!
-    // TODO more tests!
     const coverRatio =
       parentRatio > sourceRatio !== parentWidth > parentHeight
         ? 1

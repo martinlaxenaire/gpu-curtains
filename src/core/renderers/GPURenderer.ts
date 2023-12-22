@@ -158,6 +158,7 @@ export class GPURenderer {
     // needed to get container bounding box
     this.domElement = new DOMElement({
       element: container,
+      priority: 5, // renderer callback need to be called first
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
     })
 

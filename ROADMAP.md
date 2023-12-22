@@ -2,9 +2,10 @@
 
 ## Implemented
 
+- GPUDeviceManager (can handle multiple renderers / canvases)
+- Renderers (GPURenderer, GPUCameraRenderer, GPUCurtainsRenderer)
 - Object3D, ProjectedObject3D, DOMObject3D
 - Camera
-- Renderers (GPURenderer, GPUCameraRenderer, GPUCurtainsRenderer)
 - Geometries
 - Materials (Material, RenderMaterial, ComputeMaterial)
 - Bindings & BindGroups
@@ -27,13 +28,11 @@
 - Errors / warning handling
 - Context lost handling
 - Examples & tests
-- Handle multiple canvases / renderers?
 
 ## TODO
 
-- ~~TextureLoader class?~~
-- constants for WebGPU flags
+- constants for WebGPU flags/usages?
 - Use render bundles?
 - Mesh raycasting?
-- More tests! (removing, samplers, external video textures, context lost/restored...)
+- More tests! (samplers, external video textures...)
 - Documentation (using JSDoc?)

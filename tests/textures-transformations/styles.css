@@ -1,0 +1,18 @@
+#planes {
+  display: grid;
+  grid-template-columns: repeat(2, [col-start] 1fr);
+  column-gap: 25vw;
+  row-gap: 25vh;
+}
+
+.square-plane {
+  aspect-ratio: 1;
+}
+
+.landscape-plane {
+  aspect-ratio: 15 / 10;
+}
+
+.portrait-plane {
+  aspect-ratio: 10 / 15;
+}
