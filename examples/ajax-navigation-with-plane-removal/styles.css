@@ -25,9 +25,13 @@
   }
 
   #navigation {
+    position: fixed;
+    top: 0;
+    width: 100%;
     display: flex;
     justify-content: center;
-    padding: 3.5rem;
+    padding: 2.25rem;
+    background: rgba(var(--dark-color-rgb), 0.5);
   }
 
   #navigation a {
@@ -42,6 +46,7 @@
 
   #page {
     min-height: initial;
+    padding-top: 6.5rem;
   }
 
   #content {

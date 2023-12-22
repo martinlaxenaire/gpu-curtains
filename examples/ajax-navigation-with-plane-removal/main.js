@@ -67,7 +67,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
       
-      var strength: f32 = 0.1;
+      var strength: f32 = 0.3;
       var nbWaves: f32 = 3.0;
 
       // map vertices coordinates to the 0->1 range on the X axis

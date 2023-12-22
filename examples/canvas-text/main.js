@@ -141,13 +141,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.log(canvasTexture, htmlPlaneWidth)
   }
 
-  writeCanvasText()
-
   canvasTexture.loadCanvas(canvas)
 
   textPlane.domElement.element.classList.add('canvas-texture-ready')
 
   textPlane
+    .onReady(() => {
+      writeCanvasText()
+    })
     .onRender(() => {
       textPlane.uniforms.frames.elapsed.value++
     })
