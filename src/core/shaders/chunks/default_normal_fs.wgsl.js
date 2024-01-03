@@ -7,5 +7,5 @@ struct VSOutput {
 
 @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
   // normals
-  return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
+  return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`

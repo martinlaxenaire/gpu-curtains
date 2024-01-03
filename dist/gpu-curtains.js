@@ -1704,9 +1704,7 @@ class BufferElement {
     } else if (value.elements) {
       this.view.set(value.elements);
     } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-      for (let i = 0; i < this.view.length; i++) {
-        this.view[i] = value[i] ? value[i] : 0;
-      }
+      this.view.set(value);
     }
   }
   /**
@@ -6362,7 +6360,7 @@ struct VSOutput {
 
 @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
   // normals
-  return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
+  return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`
 );
 const defaultTransformedMeshParams = {

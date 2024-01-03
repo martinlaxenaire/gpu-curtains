@@ -295,9 +295,7 @@ export class BufferElement {
     } else if ((value as Quat | Mat4).elements) {
       this.view.set((value as Quat | Mat4).elements)
     } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-      for (let i = 0; i < this.view.length; i++) {
-        this.view[i] = value[i] ? value[i] : 0
-      }
+      this.view.set(value as number[])
     }
   }
 
