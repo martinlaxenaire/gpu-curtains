@@ -82,7 +82,7 @@ export declare class Camera extends Object3D {
      */
     updateModelMatrix(): void;
     /**
-     * Get / set the {@link Camera} [field of view]{@link Camera##fov}. Update the {@link projectionMatrix} only if the field of view actually changed
+     * Get / set the {@link Camera} [field of view]{@link Camera#fov}. Update the {@link projectionMatrix} only if the field of view actually changed
      * @readonly
      */
     get fov(): number;
@@ -111,7 +111,7 @@ export declare class Camera extends Object3D {
      */
     setSize({ width, height }: RectSize): void;
     /**
-     * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if our {@link shouldUpdate} flag is true
+     * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if neededs
      * @param parameters - [parameters]{@link CameraPerspectiveOptions} to use for the perspective
      */
     setPerspective({ fov, near, far, width, height, pixelRatio, }?: CameraPerspectiveOptions): void;
@@ -120,7 +120,7 @@ export declare class Camera extends Object3D {
      */
     onAfterMatrixStackUpdate(): void;
     /**
-     * Sets a {@link CSSPerspective} property based on {@link width}, {@link height}, {@link pixelRatio} and {@link fov}
+     * Sets a {@link CSSPerspective} property based on {@link Camera#size.width}, {@link Camera#size.height}, {@link pixelRatio} and {@link fov}
      * Used to translate planes along the Z axis using pixel units as CSS would do
      * Taken from {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value}
      */

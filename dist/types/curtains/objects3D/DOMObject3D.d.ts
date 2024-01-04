@@ -126,11 +126,11 @@ export declare class DOMObject3D extends ProjectedObject3D {
     get worldTransformOrigin(): Vec3;
     set worldTransformOrigin(value: Vec3);
     /**
-     * Set the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} using its world position and document translation converted to world space
+     * Set the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
      */
     applyPosition(): void;
     /**
-     * Compute the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} using its world position and document translation converted to world space
+     * Compute the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
      */
     applyDocumentPosition(): void;
     /**

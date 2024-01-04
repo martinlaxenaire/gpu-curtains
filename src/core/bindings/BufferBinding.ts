@@ -60,7 +60,7 @@ export class BufferBinding extends Binding {
   /** All the {@link BufferBinding} data inputs */
   inputs: Record<string, BufferBindingInput>
 
-  /** Flag to indicate whether one of the {@link inputs} value has changed and we need to update the GPUBuffer linked to the {@link value} array */
+  /** Flag to indicate whether one of the {@link inputs} value has changed and we need to update the GPUBuffer linked to the {@link arrayBuffer} array */
   shouldUpdate: boolean
 
   /** An array describing how each corresponding {@link inputs} should be inserted into our {@link arrayView} array */
@@ -85,13 +85,7 @@ export class BufferBinding extends Binding {
 
   /**
    * BufferBinding constructor
-   * @param parameters - parameters used to create our BufferBindings
-   * @param {string=} parameters.label - binding label
-   * @param {string=} parameters.name - binding name
-   * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {MaterialShadersType=} parameters.visibility - shader visibility
-   * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
-   * @param {Object.<string, Input>} parameters.bindings - struct inputs
+   * @param parameters - [parameters]{@link BufferBindingParams} used to create our BufferBindings
    */
   constructor({
     label = 'Uniform',
@@ -182,7 +176,7 @@ export class BufferBinding extends Binding {
 
   /**
    * Set our buffer attributes:
-   * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link value} typed array accordingly.
+   * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link arrayBuffer} typed array accordingly.
    */
   setBufferAttributes() {
     // early on, check if there's at least one array binding
@@ -399,7 +393,7 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Set a binding shouldUpdate flag to true to update our {@link value} array during next render.
+   * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
    * @param bindingName - the binding name/key to update
    */
   shouldUpdateBinding(bindingName = '') {
@@ -410,7 +404,7 @@ export class BufferBinding extends Binding {
 
   /**
    * Executed at the beginning of a Material render call.
-   * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
+   * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link arrayBuffer} array.
    * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
@@ -431,8 +425,9 @@ export class BufferBinding extends Binding {
 
   /**
    * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the [buffer]{@link BufferBinding#buffer} data of this {@link BufferBinding}
-   * @param result - {@link Float32Array} holding {@link GPUBuffer} data
-   * @param bufferElementName - name of the {@link BufferElement} to use to extract the data
+   * @param parameters - parameters used to extract the data
+   * @param parameters.result - {@link Float32Array} holding {@link GPUBuffer} data
+   * @param parameters.bufferElementName - name of the {@link BufferElement} to use to extract the data
    * @returns - extracted data from the {@link Float32Array}
    */
   extractBufferElementDataFromBufferResult({

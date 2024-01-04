@@ -434,20 +434,20 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /**
      * MeshBase constructor
      * @typedef MeshBaseParams
-     * @property {string=} label - MeshBase label
-     * @property {boolean=} autoRender - whether we should add this MeshBase to our {@link Scene} to let it handle the rendering process automatically
+     * @property {string} [label] - MeshBase label
+     * @property {boolean} [autoRender] - whether we should add this MeshBase to our {@link Scene} to let it handle the rendering process automatically
      * @property {AllowedGeometries} geometry - geometry to draw
-     * @property {boolean=} useAsyncPipeline - whether the {@link RenderPipelineEntry} should be compiled asynchronously
+     * @property {boolean} [useAsyncPipeline] - whether the {@link RenderPipelineEntry} should be compiled asynchronously
      * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
-     * @property {BindGroupInputs=} inputs - our MeshBase {@link BindGroup} inputs
-     * @property {BindGroup[]=} bindGroups - already created {@link BindGroup} to use
-     * @property {boolean=} transparent - impacts the {@link RenderPipelineEntry} blend properties
-     * @property {GPUCullMode=} cullMode - cull mode to use
-     * @property {boolean=} visible - whether this Mesh should be visible (drawn) or not
-     * @property {number=} renderOrder - controls the order in which this Mesh should be rendered by our {@link Scene}
-     * @property {RenderTarget=} renderTarget - {@link RenderTarget} to render onto if any
-     * @property {ExternalTextureParams=} texturesOptions - textures options to apply
-     * @property {Sampler[]=} samplers - array of {@link Sampler}
+     * @property {BindGroupInputs} [inputs] - our MeshBase {@link BindGroup} inputs
+     * @property {BindGroup[]} [bindGroups] - already created {@link BindGroup} to use
+     * @property {boolean} [transparent] - impacts the {@link RenderPipelineEntry} blend properties
+     * @property {GPUCullMode} [cullMode] - cull mode to use
+     * @property {boolean} [visible] - whether this Mesh should be visible (drawn) or not
+     * @property {number} [renderOrder] - controls the order in which this Mesh should be rendered by our {@link Scene}
+     * @property {RenderTarget} [renderTarget] - {@link RenderTarget} to render onto if any
+     * @property {ExternalTextureParams} [texturesOptions] - textures options to apply
+     * @property {Sampler[]} [samplers] - array of {@link Sampler}
      *
      * @typedef MeshBaseArrayParams
      * @type {array}

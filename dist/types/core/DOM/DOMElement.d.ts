@@ -52,7 +52,7 @@ export interface DOMElementParams {
 }
 /**
  * DOMElement class:
- * Used to track a DOM Element size and position by using a resize observer provided by {@see ResizeManager}
+ * Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}
  */
 export declare class DOMElement {
     #private;

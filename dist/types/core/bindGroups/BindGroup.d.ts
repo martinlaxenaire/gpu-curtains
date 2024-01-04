@@ -24,9 +24,9 @@ export declare class BindGroup {
     bindings: BindGroupBindingElement[];
     /** Our {@link BindGroup} [entries]{@link BindGroupEntries} objects */
     entries: BindGroupEntries;
-    /** Our {@link BindGroup} GPUBindGroupLayout */
+    /** Our {@link BindGroup} [GPUBindGroupLayout]{@link GPUBindGroupLayout} */
     bindGroupLayout: null | GPUBindGroupLayout;
-    /** Our {@link BindGroup} GPUBindGroup */
+    /** Our {@link BindGroup} [GPUBindGroup]{@link GPUBindGroup} */
     bindGroup: null | GPUBindGroup;
     /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
     needsPipelineFlush: boolean;
@@ -77,11 +77,11 @@ export declare class BindGroup {
      */
     createBindGroup(): void;
     /**
-     * Reset the [bindGroup entries]{@link BindGroup#entries#bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
+     * Reset the [bindGroup entries]{@link BindGroup#entries.bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
      */
     resetBindGroup(): void;
     /**
-     * Reset the [bindGroupLayout entries]{@link BindGroup#entries#bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
+     * Reset the [bindGroupLayout entries]{@link BindGroup#entries.bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
      */
     resetBindGroupLayout(): void;
     /**

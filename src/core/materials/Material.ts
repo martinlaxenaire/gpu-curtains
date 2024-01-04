@@ -35,13 +35,13 @@ export class Material {
    * Array of [bind groups]{@link BindGroup} used by this {@link Material}
    * This array respects a specific order:
    * 1. The [main texture bind group]{@link Material#texturesBindGroup}
-   * 2. The [bind group]{@link BindGroup} created using [inputs parameters]{@link MaterialParams#inputs} if any
+   * 2. The [bind group]{@link BindGroup} created using [uniforms]{@link BindGroupInputs#uniforms} and [storages]@link BindGroupInputs#storages} parameters if any
    * 3. Additional [bind groups parameters]{@link MaterialParams#bindGroups} if any
    */
   bindGroups: AllowedBindGroups[]
   /** Array of [texture bind groups]{@link BindGroup} used by this {@link Material} */
   texturesBindGroups: TextureBindGroup[]
-  /** Array of [bind groups]{@link BindGroup} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
+  /** Array of [bind groups]{@link BindGroup} created using the [uniforms]{@link BindGroupInputs#uniforms} and [storages]@link BindGroupInputs#storages} parameters when instancing this {@link Material} */
   inputsBindGroups: BindGroup[]
   /** Array of [cloned bind groups]{@link BindGroup} created by this {@link Material} */
   clonedBindGroups: AllowedBindGroups[]
@@ -51,7 +51,7 @@ export class Material {
   /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingInput>>
 
-  /** Array of [struct]{@link Binding} created using the [inputs parameters]{@link MaterialParams#inputs} when instancing  this {@link Material} */
+  /** Array of [struct]{@link Binding} created using the [uniforms]{@link BindGroupInputs#uniforms} and [storages]@link BindGroupInputs#storages} parameters when instancing this {@link Material} */
   inputsBindings: BindGroupBindingElement[]
 
   /** Array of [textures]{@link Texture} handled by this {@link Material} */
@@ -68,9 +68,9 @@ export class Material {
    * @param {string} parameters.label - Material label
    * @param {boolean} parameters.useAsyncPipeline - whether the pipeline should be compiled asynchronously
    * @param {MaterialShaders} parameters.shaders - our Material shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our Material {@see BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@see BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@see Sampler}
+   * @param {BindGroupInputs} parameters.inputs - our Material {@link BindGroup} inputs
+   * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
+   * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams) {
     this.type = 'Material'
@@ -268,8 +268,8 @@ export class Material {
   }
 
   /**
-   * Process all {@see BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
-   * @param bindGroup - The {@see BindGroup} to process
+   * Process all {@link BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
+   * @param bindGroup - The {@link BindGroup} to process
    */
   processBindGroupBindings(bindGroup: BindGroup) {
     bindGroup.bindings.forEach((inputBinding) => {
@@ -335,7 +335,7 @@ export class Material {
   }
 
   /**
-   * Clones a {@see BindGroup} from a list of buffers
+   * Clones a {@link BindGroup} from a list of buffers
    * Useful to create a new bind group with already created buffers, but swapped
    * @param bindGroup - the BindGroup to clone
    * @param bindings - our input binding buffers
@@ -360,7 +360,7 @@ export class Material {
   }
 
   /**
-   * Get a corresponding {@see BindGroup} or {@see TextureBindGroup} from one of its binding name/key
+   * Get a corresponding {@link BindGroup} or {@link TextureBindGroup} from one of its binding name/key
    * @param bindingName - the binding name/key to look for
    * @returns - bind group found or null if not found
    */
@@ -466,7 +466,7 @@ export class Material {
   /* SAMPLERS & TEXTURES */
 
   /**
-   * Prepare our textures array and set the {@see TextureBindGroup}
+   * Prepare our textures array and set the {@link TextureBindGroup}
    */
   setTextures() {
     this.textures = []

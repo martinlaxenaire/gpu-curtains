@@ -76,8 +76,8 @@ export class RenderTexture {
 
   /**
    * RenderTexture constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-   * @param parameters - [parameters]{@link RenderTextureParams} used to create this {@link RenderTexture}
+   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
+   * @param parameters {RenderTextureParams} - [parameters]{@link RenderTextureParams} used to create this {@link RenderTexture}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = defaultRenderTextureParams) {
     // we could pass our curtains object OR our curtains renderer object

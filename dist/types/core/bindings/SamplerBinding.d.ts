@@ -26,12 +26,7 @@ export declare class SamplerBinding extends Binding {
     options: SamplerBindingParams;
     /**
      * SamplerBinding constructor
-     * @param parameters - parameters used to create our SamplerBindings
-     * @param {string=} parameters.label - binding label
-     * @param {string=} parameters.name - binding name
-     * @param {BindingType="uniform"} parameters.bindingType - binding type
-     * @param {MaterialShadersType=} parameters.visibility - shader visibility
-     * @param {SamplerBindingResource=} parameters.resource - a GPUSampler
+     * @param parameters - [parameters]{@link SamplerBindingParams} used to create our SamplerBindings
      */
     constructor({ label, name, bindingType, visibility, sampler, type, }: SamplerBindingParams);
     /**

@@ -260,7 +260,7 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Set the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} using its world position and document translation converted to world space
+   * Set the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
    */
   applyPosition() {
     this.applyDocumentPosition()
@@ -268,7 +268,7 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Compute the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} using its world position and document translation converted to world space
+   * Compute the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
    */
   applyDocumentPosition() {
     // avoid unnecessary calculations if we don't have a users set relative position

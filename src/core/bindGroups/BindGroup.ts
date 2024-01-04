@@ -37,9 +37,9 @@ export class BindGroup {
   /** Our {@link BindGroup} [entries]{@link BindGroupEntries} objects */
   entries: BindGroupEntries
 
-  /** Our {@link BindGroup} GPUBindGroupLayout */
+  /** Our {@link BindGroup} [GPUBindGroupLayout]{@link GPUBindGroupLayout} */
   bindGroupLayout: null | GPUBindGroupLayout
-  /** Our {@link BindGroup} GPUBindGroup */
+  /** Our {@link BindGroup} [GPUBindGroup]{@link GPUBindGroup} */
   bindGroup: null | GPUBindGroup
 
   /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
@@ -193,7 +193,7 @@ export class BindGroup {
   }
 
   /**
-   * Reset the [bindGroup entries]{@link BindGroup#entries#bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
+   * Reset the [bindGroup entries]{@link BindGroup#entries.bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
    */
   resetBindGroup() {
     this.entries.bindGroup = []
@@ -208,7 +208,7 @@ export class BindGroup {
   }
 
   /**
-   * Reset the [bindGroupLayout entries]{@link BindGroup#entries#bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
+   * Reset the [bindGroupLayout entries]{@link BindGroup#entries.bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
    */
   resetBindGroupLayout() {
     this.entries.bindGroupLayout = []

@@ -27,21 +27,7 @@ export class RenderMaterial extends Material {
   /**
    * RenderMaterial constructor
    * @param renderer - our renderer class object
-   * @param parameters - parameters used to create our Material
-   * @param {string} parameters.label - RenderMaterial label
-   * @param {AllowedGeometries} parameters.geometry - geometry to draw
-   * @param {boolean} parameters.useAsyncPipeline - whether the {@link RenderPipelineEntry} should be compiled asynchronously
-   * @param {MaterialShaders} parameters.shaders - our RenderMaterial shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our RenderMaterial {@link BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
-   * @param {RenderMaterialRenderingOptions} parameters.rendering - RenderMaterial rendering options to pass to the {@link RenderPipelineEntry}
-   * @param {boolean} parameters.rendering.useProjection - whether to use the Camera bind group with this material
-   * @param {boolean} parameters.rendering.transparent - impacts the {@link RenderPipelineEntry} blend properties
-   * @param {boolean} parameters.rendering.depthWriteEnabled - whether to write to the depth buffer or not
-   * @param {GPUCompareFunction} parameters.rendering.depthCompare - depth compare function to use
-   * @param {GPUCullMode} parameters.rendering.cullMode - cull mode to use
-   * @param {Geometry['verticesOrder']} parameters.rendering.verticesOrder - vertices order to use
+   * @param parameters - [parameters]{@link RenderMaterialParams} used to create our RenderMaterial
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams) {
     // we could pass our curtains object OR our curtains renderer object

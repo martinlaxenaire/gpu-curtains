@@ -166,7 +166,7 @@ export declare class ComputePass {
     onAfterRender(callback: () => void): ComputePass;
     /**
      * Callback used to run a custom render function instead of the default one.
-     * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+     * @param callback - callback to run instead of the default render behaviour
      */
     useCustomRender(callback: (pass: GPUComputePassEncoder) => void): ComputePass;
     /**

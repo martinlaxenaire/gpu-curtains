@@ -9,7 +9,7 @@ import { DOMMesh } from './meshes/DOMMesh';
 import { Plane } from './meshes/Plane';
 import { ComputePass } from '../core/computePasses/ComputePass';
 import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera';
-import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement';
+import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement';
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer';
 import { GPUDeviceManager } from '../core/renderers/GPUDeviceManager';
 import { Renderer } from '../core/renderers/utils';
@@ -46,7 +46,6 @@ export declare class GPUCurtains {
     container: HTMLElement;
     /** {@link GPUDeviceManager} used to handle the {@link GPUAdapter} and {@link GPUDevice} */
     deviceManager: GPUDeviceManager;
-    domElement: DOMElement;
     /** Tiny scroll event listener wrapper */
     scrollManager: ScrollManager;
     /** [Request animation frame callback]{@link requestVideoFrameCallback} returned id if used */

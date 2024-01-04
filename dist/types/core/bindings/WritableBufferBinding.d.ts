@@ -4,7 +4,7 @@ import { BufferBinding, BufferBindingParams } from './BufferBinding';
  * Parameters used to create a {@link WritableBufferBinding}
  */
 export interface WritableBufferBindingParams extends BufferBindingParams {
-    /** Whether whe should automatically copy the [resultBuffer]{@link inputs#resultBuffer} GPUBuffer content into our [result]{@link WritableBufferBinding#result} array */
+    /** Whether whe should automatically copy the [resultBuffer]{@link inputs#resultBuffer} GPUBuffer content into our [result GPUBuffer]{@link WritableBufferBinding#resultBuffer} */
     shouldCopyResult?: boolean;
 }
 /**
@@ -13,7 +13,7 @@ export interface WritableBufferBindingParams extends BufferBindingParams {
  * @extends BufferBinding
  */
 export declare class WritableBufferBinding extends BufferBinding {
-    /** Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our {@link result} array */
+    /** Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our [result GPUBuffer]{@link resultBuffer} array */
     shouldCopyResult: boolean;
     /** The result GPUBuffer */
     resultBuffer: GPUBuffer | null;

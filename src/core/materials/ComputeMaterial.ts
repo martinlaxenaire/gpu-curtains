@@ -141,7 +141,7 @@ export class ComputeMaterial extends Material {
 
   /**
    * If we defined a custom render function instead of the default one, register the callback
-   * @param callback - callback to run instead of the default behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
+   * @param callback - callback to run instead of the default render behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
    */
   useCustomRender(callback: (pass: GPUComputePassEncoder) => void) {
     if (callback) {
@@ -151,7 +151,7 @@ export class ComputeMaterial extends Material {
 
   /**
    * Render the material if it is ready:
-   * Set the current pipeline, and render all the [work groups]{@link ComputeMaterial#workGroups}
+   * Set the current pipeline, set the bind groups and dispatch the work groups
    * @param pass - current compute pass encoder
    */
   render(pass: GPUComputePassEncoder) {

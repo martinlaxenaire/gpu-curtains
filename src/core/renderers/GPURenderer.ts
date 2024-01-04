@@ -639,7 +639,7 @@ export class GPURenderer {
   }
 
   /**
-   * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPUDeviceManager#renderTextures}
+   * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPURenderer#renderTextures}
    * @param texture - [render texture]{@link RenderTexture} to add
    */
   addRenderTexture(texture: RenderTexture) {
@@ -647,7 +647,7 @@ export class GPURenderer {
   }
 
   /**
-   * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPUDeviceManager#renderTextures}
+   * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPURenderer#renderTextures}
    * @param texture - [render texture]{@link RenderTexture} to remove
    */
   removeRenderTexture(texture: RenderTexture) {
@@ -712,7 +712,7 @@ export class GPURenderer {
   }
 
   /**
-   * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#sampler}
+   * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
    * @param sampler - [sampler]{@link Sampler} to remove
    */
   removeSampler(sampler: Sampler) {
@@ -896,7 +896,7 @@ export class GPURenderer {
   }
 
   /**
-   * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options#clearValue} by rendering and empty pass.
+   * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options.clearValue} by rendering and empty pass.
    * @param commandEncoder
    */
   forceClear(commandEncoder?: GPUCommandEncoder) {
@@ -928,7 +928,7 @@ export class GPURenderer {
 
   /**
    * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} after the {@link GPUCommandEncoder} has been created.
-   * Used to handle our [textures queue]{@link GPURenderer#texturesQueue}
+   * Used to handle our [textures queue]{@link GPUDeviceManager#texturesQueue}
    */
   onAfterCommandEncoder() {
     if (!this.ready) return
