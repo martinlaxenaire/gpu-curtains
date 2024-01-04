@@ -612,10 +612,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         //color: vec4f = vec4(shadedColor, 1.0);
         
         // debug normals
-        color = vec4(abs(normalize(fsInput.normal.xzy)), 1.0);
+        color = vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
         
         // debug force
-        color = vec4(abs(normalize(fsInput.force.xzy)), 1.0);
+        //color = vec4(normalize(fsInput.force) * 0.5 + 0.5, 1.0);
                       
         return color;
       }
