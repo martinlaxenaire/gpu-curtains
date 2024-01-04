@@ -189,6 +189,7 @@ export class DOMElement {
    */
   setSize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!this.element) return
+
     // only throttle if we have set our first value
     this.isResizing = !!this.boundingRect
 
@@ -197,7 +198,7 @@ export class DOMElement {
     this.#throttleResize = setTimeout(() => {
       this.isResizing = false
       this.#throttleResize = null
-    }, 50)
+    }, 25)
   }
 
   /**

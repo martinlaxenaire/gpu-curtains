@@ -2714,12 +2714,6 @@ class Object3D {
   onAfterMatrixStackUpdate() {
   }
   /**
-   * Tell our model matrix to update
-   */
-  updateSizeAndPosition() {
-    this.shouldUpdateModelMatrix();
-  }
-  /**
    * Check at each render whether we should update our matrices, and update them if needed
    */
   updateMatrixStack() {
@@ -5972,7 +5966,7 @@ function MeshBaseMixin(Base) {
      * Resize the Mesh's textures
      * @param boundingRect
      */
-    resize(boundingRect = null) {
+    resize(boundingRect) {
       var _a2;
       this.resizeRenderTextures();
       if (super.resize) {
@@ -6323,7 +6317,7 @@ class ProjectedObject3D extends Object3D {
   /**
    * Tell all our matrices to update
    */
-  updateSizePositionAndProjection() {
+  shouldUpdateMatrixStack() {
     this.shouldUpdateModelMatrix();
     this.shouldUpdateProjectionMatrixStack();
   }
@@ -6420,7 +6414,7 @@ function MeshTransformedMixin(Base) {
       };
       this.setDOMFrustum();
       this.geometry = geometry;
-      this.updateSizePositionAndProjection();
+      this.shouldUpdateMatrixStack();
     }
     /* SHADERS */
     /**
@@ -6521,7 +6515,7 @@ function MeshTransformedMixin(Base) {
      * Resize our {@link MeshTransformedBaseClass}
      * @param boundingRect - the new bounding rectangle
      */
-    resize(boundingRect = null) {
+    resize(boundingRect) {
       if (this.domFrustum)
         this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect);
       super.resize(boundingRect);
@@ -6545,8 +6539,8 @@ function MeshTransformedMixin(Base) {
      * Tell the model and projection matrices to update.
      * Here because else typescript is confused
      */
-    updateSizePositionAndProjection() {
-      super.updateSizePositionAndProjection();
+    shouldUpdateMatrixStack() {
+      super.shouldUpdateMatrixStack();
     }
     /**
      * Update the model and projection matrices if needed.
@@ -7476,7 +7470,7 @@ class DOMElement {
     __privateSet(this, _throttleResize, setTimeout(() => {
       this.isResizing = false;
       __privateSet(this, _throttleResize, null);
-    }, 50));
+    }, 25));
   }
   /**
    * Destroy our DOMElement - remove from resize observer and clear throttle timeout
@@ -7531,13 +7525,18 @@ class DOMObject3D extends ProjectedObject3D {
     this.domElement = new DOMElement({
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
-      onPositionChanged: (boundingRect) => {
-        if (this.watchScroll) {
-          this.size.document = boundingRect;
-          this.updateSizeAndPosition();
-        }
-      }
+      onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect)
     });
+  }
+  /**
+   * Update size and position when the [DOMElement]{@link DOMObject3D#domElement} position changed
+   * @param boundingRect - the new bounding rectangle
+   */
+  onPositionChanged(boundingRect) {
+    if (this.watchScroll) {
+      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
+      this.updateSizeAndPosition();
+    }
   }
   /**
    * Reset the [DOMElement]{@link DOMObject3D#domElement}
@@ -7555,25 +7554,25 @@ class DOMObject3D extends ProjectedObject3D {
   updateSizeAndPosition() {
     this.setWorldSizes();
     this.applyPosition();
-    super.updateSizeAndPosition();
+    this.shouldUpdateModelMatrix();
   }
   /**
    * Update the {@link DOMObject3D} sizes, position and projection
    */
-  updateSizePositionAndProjection() {
+  shouldUpdateMatrixStack() {
     this.updateSizeAndPosition();
-    super.updateSizePositionAndProjection();
+    super.shouldUpdateMatrixStack();
   }
   /**
    * Resize the {@link DOMObject3D}
    * @param boundingRect - new [DOM Element]{@link DOMObject3D#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
    */
-  resize(boundingRect = null) {
+  resize(boundingRect) {
     var _a;
     if (!boundingRect && (!this.domElement || ((_a = this.domElement) == null ? void 0 : _a.isResizing)))
       return;
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-    this.updateSizePositionAndProjection();
+    this.shouldUpdateMatrixStack();
   }
   /* BOUNDING BOXES GETTERS */
   /**
@@ -8626,8 +8625,11 @@ class GPURenderer {
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
     this.meshes.forEach((mesh) => {
-      if (!("domElement" in mesh))
+      if (!("domElement" in mesh)) {
         mesh.resize(this.boundingRect);
+      } else {
+        mesh.resize();
+      }
     });
   }
   /**
@@ -9325,7 +9327,7 @@ class GPUCameraRenderer extends GPURenderer {
     this.updateCameraBindings();
     this.meshes.forEach((mesh) => {
       if ("modelViewMatrix" in mesh) {
-        mesh.updateSizePositionAndProjection();
+        mesh.shouldUpdateProjectionMatrixStack();
       }
     });
   }
@@ -10021,20 +10023,19 @@ class ScrollManager {
     this.delta = delta;
     this.shouldWatch = shouldWatch;
     this.onScroll = onScroll;
-    this.handler = this.scrollHandler.bind(this, true);
     if (this.shouldWatch) {
-      window.addEventListener("scroll", this.handler, { passive: true });
+      window.addEventListener("scroll", this.setScroll.bind(this), { passive: true });
     }
   }
   /**
    * Called by the scroll event listener
    */
-  scrollHandler() {
+  setScroll() {
     this.updateScrollValues({ x: window.pageXOffset, y: window.pageYOffset });
   }
   /**
    * Updates the scroll manager X and Y scroll values as well as last X and Y deltas
-   * Internally called by the scroll handler
+   * Internally called by the scroll event listener
    * Could be called externally as well if the user wants to handle the scroll by himself
    * @param parameters - scroll values
    * @param parameters.x - scroll value along X axis
@@ -10056,7 +10057,7 @@ class ScrollManager {
    */
   destroy() {
     if (this.shouldWatch) {
-      window.removeEventListener("scroll", this.handler, { passive: true });
+      window.removeEventListener("scroll", this.setScroll.bind(this), { passive: true });
     }
   }
 }
@@ -10367,6 +10368,11 @@ class GPUCurtains {
   initEvents() {
     resizeManager.useObserver(this.options.autoResize);
     this.initScroll();
+    this.domElement = new DOMElement({
+      element: document.body,
+      priority: -1
+      //onSizeChanged: () => this.updateScrollValues({ x: window.pageXOffset, y: window.pageYOffset }),
+    });
   }
   /* EVENTS */
   /**
@@ -10431,13 +10437,14 @@ class GPUCurtains {
    * Destroy our {@link GPUCurtains} and [device manager]{@link GPUDeviceManager}
    */
   destroy() {
-    var _a;
+    var _a, _b;
     if (this.animationFrameID) {
       window.cancelAnimationFrame(this.animationFrameID);
     }
     this.deviceManager.destroy();
     (_a = this.scrollManager) == null ? void 0 : _a.destroy();
     resizeManager.destroy();
+    (_b = this.domElement) == null ? void 0 : _b.destroy();
   }
 }
 class BoxGeometry extends IndexedGeometry {

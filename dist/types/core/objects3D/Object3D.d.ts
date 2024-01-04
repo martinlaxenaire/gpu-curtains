@@ -128,10 +128,6 @@ export declare class Object3D {
      */
     onAfterMatrixStackUpdate(): void;
     /**
-     * Tell our model matrix to update
-     */
-    updateSizeAndPosition(): void;
-    /**
      * Check at each render whether we should update our matrices, and update them if needed
      */
     updateMatrixStack(): void;

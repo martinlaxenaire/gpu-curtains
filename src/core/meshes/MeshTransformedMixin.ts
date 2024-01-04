@@ -100,7 +100,7 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
   /**
    * Tell the model and projection matrices to update.
    */
-  updateSizePositionAndProjection(): void
+  shouldUpdateMatrixStack(): void
 
   /**
    * Update the model and projection matrices if needed.
@@ -252,7 +252,7 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
       this.geometry = geometry
 
       // tell the model and projection matrices to update right away
-      this.updateSizePositionAndProjection()
+      this.shouldUpdateMatrixStack()
     }
 
     /* SHADERS */
@@ -368,7 +368,7 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
      * Resize our {@link MeshTransformedBaseClass}
      * @param boundingRect - the new bounding rectangle
      */
-    resize(boundingRect: DOMElementBoundingRect | null = null) {
+    resize(boundingRect?: DOMElementBoundingRect | null) {
       if (this.domFrustum) this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect)
 
       super.resize(boundingRect)
@@ -397,9 +397,9 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
      * Tell the model and projection matrices to update.
      * Here because else typescript is confused
      */
-    updateSizePositionAndProjection() {
+    shouldUpdateMatrixStack() {
       // @ts-ignore
-      super.updateSizePositionAndProjection()
+      super.shouldUpdateMatrixStack()
     }
 
     /**

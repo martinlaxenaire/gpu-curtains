@@ -26,8 +26,6 @@ export declare class ScrollManager {
     shouldWatch: boolean;
     /** Callback to execute each time the [scroll]{@link ScrollManager#scroll} values change */
     onScroll: (delta?: DOMPosition) => void;
-    /** Keep track of our scroll event listener */
-    handler: EventListener;
     /**
      * ScrollManager constructor
      * @param parameters - [parameters]{@link ScrollManagerParams} used to create this {@link ScrollManager}
@@ -36,10 +34,10 @@ export declare class ScrollManager {
     /**
      * Called by the scroll event listener
      */
-    scrollHandler(): void;
+    setScroll(): void;
     /**
      * Updates the scroll manager X and Y scroll values as well as last X and Y deltas
-     * Internally called by the scroll handler
+     * Internally called by the scroll event listener
      * Could be called externally as well if the user wants to handle the scroll by himself
      * @param parameters - scroll values
      * @param parameters.x - scroll value along X axis

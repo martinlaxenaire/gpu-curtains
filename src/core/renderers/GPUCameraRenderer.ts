@@ -105,7 +105,7 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.meshes.forEach((mesh) => {
       if ('modelViewMatrix' in mesh) {
-        mesh.updateSizePositionAndProjection()
+        mesh.shouldUpdateMatrixStack()
       }
     })
   }

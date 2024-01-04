@@ -118,13 +118,19 @@ export class DOMObject3D extends ProjectedObject3D {
     this.domElement = new DOMElement({
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
-      onPositionChanged: (boundingRect) => {
-        if (this.watchScroll) {
-          this.size.document = boundingRect
-          this.updateSizeAndPosition()
-        }
-      },
+      onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect),
     })
+  }
+
+  /**
+   * Update size and position when the [DOMElement]{@link DOMObject3D#domElement} position changed
+   * @param boundingRect - the new bounding rectangle
+   */
+  onPositionChanged(boundingRect?: DOMElementBoundingRect | null) {
+    if (this.watchScroll) {
+      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
+      this.updateSizeAndPosition()
+    }
   }
 
   /**
@@ -146,27 +152,27 @@ export class DOMObject3D extends ProjectedObject3D {
     this.setWorldSizes()
     this.applyPosition()
 
-    super.updateSizeAndPosition()
+    this.shouldUpdateModelMatrix()
   }
 
   /**
    * Update the {@link DOMObject3D} sizes, position and projection
    */
-  updateSizePositionAndProjection() {
+  shouldUpdateMatrixStack() {
     this.updateSizeAndPosition()
 
-    super.updateSizePositionAndProjection()
+    super.shouldUpdateMatrixStack()
   }
 
   /**
    * Resize the {@link DOMObject3D}
    * @param boundingRect - new [DOM Element]{@link DOMObject3D#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
    */
-  resize(boundingRect: DOMElementBoundingRect | null = null) {
+  resize(boundingRect?: DOMElementBoundingRect | null) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return
 
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
-    this.updateSizePositionAndProjection()
+    this.shouldUpdateMatrixStack()
   }
 
   /* BOUNDING BOXES GETTERS */
@@ -339,10 +345,9 @@ export class DOMObject3D extends ProjectedObject3D {
       y: containerBoundingRect.height / 2 + containerBoundingRect.top,
     }
 
-    // our plane world informations
-    // since our vertices values range from -1 to 1, it is supposed to draw a square
-    // we need to scale them under the hood relatively to our canvas
-    // to display an accurately sized planes
+    // our DOM object world size
+    // since our vertices values range from -1 to 1, we need to scale it relatively to our canvas
+    // to display an accurately sized object
     this.size.world = {
       width: ((this.size.document.width / containerBoundingRect.width) * this.camera.screenRatio.width) / 2,
       height: ((this.size.document.height / containerBoundingRect.height) * this.camera.screenRatio.height) / 2,

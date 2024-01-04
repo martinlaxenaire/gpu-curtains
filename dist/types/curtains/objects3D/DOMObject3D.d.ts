@@ -67,6 +67,11 @@ export declare class DOMObject3D extends ProjectedObject3D {
      */
     setDOMElement(element: DOMElementParams['element']): void;
     /**
+     * Update size and position when the [DOMElement]{@link DOMObject3D#domElement} position changed
+     * @param boundingRect - the new bounding rectangle
+     */
+    onPositionChanged(boundingRect?: DOMElementBoundingRect | null): void;
+    /**
      * Reset the [DOMElement]{@link DOMObject3D#domElement}
      * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
      */
@@ -78,7 +83,7 @@ export declare class DOMObject3D extends ProjectedObject3D {
     /**
      * Update the {@link DOMObject3D} sizes, position and projection
      */
-    updateSizePositionAndProjection(): void;
+    shouldUpdateMatrixStack(): void;
     /**
      * Resize the {@link DOMObject3D}
      * @param boundingRect - new [DOM Element]{@link DOMObject3D#domElement} [bounding rectangle]{@link DOMElement#boundingRect}

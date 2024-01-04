@@ -880,7 +880,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Resize the Mesh's textures
      * @param boundingRect
      */
-    resize(boundingRect: DOMElementBoundingRect | null = null) {
+    resize(boundingRect?: DOMElementBoundingRect | null) {
       // resize render textures first
       this.resizeRenderTextures()
 

@@ -70,7 +70,7 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
     /**
      * Tell the model and projection matrices to update.
      */
-    updateSizePositionAndProjection(): void;
+    shouldUpdateMatrixStack(): void;
     /**
      * Update the model and projection matrices if needed.
      */

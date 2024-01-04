@@ -1,0 +1,42 @@
+@media screen {
+  #mesh-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .dom-mesh {
+    width: 25%;
+    aspect-ratio: 1;
+    margin: 40vh auto;
+    box-sizing: border-box;
+    border: 2px solid var(--primary-color);
+    position: relative;
+
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+  }
+
+  .dom-mesh h2 {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    left: 0;
+    transform: translate3d(0, -50%, 0);
+    margin: 0;
+    text-align: center;
+  }
+
+  #large-cube-mesh {
+    width: 75%;
+    aspect-ratio: 2.5 / 1;
+  }
+
+  .dom-mesh img {
+    display: none;
+    min-width: 100%;
+    min-height: 100%;
+    object-fit: cover;
+  }
+}

@@ -229,8 +229,20 @@ export class GPURenderer {
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
     this.meshes.forEach((mesh) => {
-      // resize meshes that do not have a bound DOM element
-      if (!('domElement' in mesh)) mesh.resize(this.boundingRect)
+      if (!('domElement' in mesh)) {
+        // resize meshes that do not have a bound DOM element
+        mesh.resize(this.boundingRect)
+      } else {
+        this.onBeforeCommandEncoderCreation.add(
+          () => {
+            // update position for DOM meshes only if they're not currently being resized
+            if (!mesh.domElement.isResizing) {
+              mesh.domElement.setSize()
+            }
+          },
+          { once: true }
+        )
+      }
     })
   }
 

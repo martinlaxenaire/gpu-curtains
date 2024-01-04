@@ -243,13 +243,6 @@ export class Object3D {
   }
 
   /**
-   * Tell our model matrix to update
-   */
-  updateSizeAndPosition() {
-    this.shouldUpdateModelMatrix()
-  }
-
-  /**
    * Check at each render whether we should update our matrices, and update them if needed
    */
   updateMatrixStack() {

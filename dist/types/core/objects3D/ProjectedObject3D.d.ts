@@ -71,5 +71,5 @@ export declare class ProjectedObject3D extends Object3D {
     /**
      * Tell all our matrices to update
      */
-    updateSizePositionAndProjection(): void;
+    shouldUpdateMatrixStack(): void;
 }
