@@ -256,11 +256,7 @@ export class Texture extends Object3D {
       : this.size.height
 
     const parentRatio = parentWidth / parentHeight
-
-    const sourceWidth = this.size.width
-    const sourceHeight = this.size.height
-
-    const sourceRatio = sourceWidth / sourceHeight
+    const sourceRatio = this.size.width / this.size.height
 
     // handle the texture rotation
     // huge props to [@grgrdvrt](https://github.com/grgrdvrt) for this solution!
