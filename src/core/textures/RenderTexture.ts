@@ -16,18 +16,18 @@ export type RenderTextureBindingType = Exclude<TextureBindingType, 'externalText
 export interface RenderTextureBaseParams {
   /** The label of the {@link RenderTexture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link RenderTexture} to use in the [binding]{@link TextureBinding} */
+  /** Name of the {@link RenderTexture} to use in the {@link TextureBinding | texture binding} */
   name?: string
 
-  /** Optional size of the [texture]{@link RenderTexture#texture} */
+  /** Optional size of the {@link RenderTexture#texture | texture} */
   size?: TextureSize
-  /** Whether to use this [texture]{@link RenderTexture} as a regular or storage texture */
+  /** Whether to use this {@link RenderTexture} as a regular or storage texture */
   usage?: RenderTextureBindingType
-  /** Optional format of the [texture]{@link RenderTexture#texture}, mainly used for storage textures */
+  /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
   format?: GPUTextureFormat
   /** Optional texture binding memory access type, mainly used for storage textures */
   access?: BindingMemoryAccessType
-  /** Optional [texture]{@link RenderTexture#texture} view dimension to use */
+  /** Optional {@link RenderTexture#texture | texture} view dimension to use */
   viewDimension?: GPUTextureViewDimension
 }
 
@@ -51,11 +51,11 @@ const defaultRenderTextureParams: RenderTextureParams = {
 
 /**
  * RenderTexture class:
- * Used to create [textures]{@link GPUTexture} that can be used as copy source/destination for [render passes]{@link RenderPass} and [render targets]{@link RenderTarget}.
+ * Used to create {@link GPUTexture | texture} that can be used as copy source/destination for {@link RenderPass | render passes} and {@link RenderTarget | render targets}.
  * Basically useful for copying anything outputed to the screen at one point or another.
  */
 export class RenderTexture {
-  /** [renderer]{@link Renderer} used by this {@link RenderTexture} */
+  /** {@link Renderer | renderer} used by this {@link RenderTexture} */
   renderer: Renderer
   /** The type of the {@link RenderTexture} */
   type: string
@@ -65,19 +65,19 @@ export class RenderTexture {
   /** The {@link GPUTexture} used */
   texture: GPUTexture
 
-  /** Size of the [texture]{@link RenderTexture#texture} source, usually our [renderer pixel ratio bounding rect]{@link Renderer#pixelRatioBoundingRect} */
+  /** Size of the {@link RenderTexture#texture | texture} source, usually our {@link Renderer#pixelRatioBoundingRect | renderer pixel ratio bounding rect} */
   size: TextureSize
 
   /** Options used to create this {@link RenderTexture} */
   options: RenderTextureParams
 
-  /** Array of [struct]{@link Binding} that will actually only hold one [texture binding]{@link TextureBinding} */
+  /** Array of {@link Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding} */
   bindings: BindGroupBindingElement[]
 
   /**
    * RenderTexture constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
-   * @param parameters {RenderTextureParams} - [parameters]{@link RenderTextureParams} used to create this {@link RenderTexture}
+   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
+   * @param parameters - {@link RenderTextureParams | parameters} used to create this {@link RenderTexture}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = defaultRenderTextureParams) {
     // we could pass our curtains object OR our curtains renderer object
@@ -122,7 +122,7 @@ export class RenderTexture {
   }
 
   /**
-   * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
+   * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
    */
   createTexture() {
     if (this.options.fromTexture) {
@@ -157,7 +157,7 @@ export class RenderTexture {
   }
 
   /**
-   * Set our [struct]{@link RenderTexture#bindings}
+   * Set our {@link RenderTexture#bindings | bindings}
    */
   setBindings() {
     this.bindings = [
@@ -172,7 +172,7 @@ export class RenderTexture {
   }
 
   /**
-   * Get our [texture binding]{@link TextureBinding}
+   * Get our {@link TextureBinding | texture binding}
    * @readonly
    */
   get textureBinding(): TextureBinding {
@@ -180,8 +180,8 @@ export class RenderTexture {
   }
 
   /**
-   * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
-   * @param size - the optional new [size]{@link RectSize} to set
+   * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link BindGroup | bind group} to update
+   * @param size - the optional new {@link RectSize | size} to set
    */
   resize(size: TextureSize | null = null) {
     if (!size) {

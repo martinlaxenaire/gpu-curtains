@@ -613,7 +613,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
+     * Called when the [renderer device]{@link GPUDeviceManager#device} has been lost to prepare everything for restoration.
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
      */
     loseContext() {

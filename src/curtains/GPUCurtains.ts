@@ -54,7 +54,7 @@ export class GPUCurtains {
   /** Tiny scroll event listener wrapper */
   scrollManager: ScrollManager
 
-  /** [Request animation frame callback]{@link requestVideoFrameCallback} returned id if used */
+  /** Request animation frame callback returned id if used */
   animationFrameID: null | number
 
   // callbacks / events

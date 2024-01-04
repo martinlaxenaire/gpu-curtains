@@ -35,13 +35,13 @@ export class Material {
    * Array of [bind groups]{@link BindGroup} used by this {@link Material}
    * This array respects a specific order:
    * 1. The [main texture bind group]{@link Material#texturesBindGroup}
-   * 2. The [bind group]{@link BindGroup} created using [uniforms]{@link BindGroupInputs#uniforms} and [storages]@link BindGroupInputs#storages} parameters if any
+   * 2. The [bind group]{@link BindGroup} created using [uniforms]{@link types/BindGroups.BindGroupInputs#uniforms} and [storages]@link types/BindGroups.BindGroupInputs#storages} parameters if any
    * 3. Additional [bind groups parameters]{@link MaterialParams#bindGroups} if any
    */
   bindGroups: AllowedBindGroups[]
   /** Array of [texture bind groups]{@link BindGroup} used by this {@link Material} */
   texturesBindGroups: TextureBindGroup[]
-  /** Array of [bind groups]{@link BindGroup} created using the [uniforms]{@link BindGroupInputs#uniforms} and [storages]@link BindGroupInputs#storages} parameters when instancing this {@link Material} */
+  /** Array of [bind groups]{@link BindGroup} created using the [uniforms]{@link types/BindGroups.BindGroupInputs#uniforms} and [storages]@link types/BindGroups.BindGroupInputs#storages} parameters when instancing this {@link Material} */
   inputsBindGroups: BindGroup[]
   /** Array of [cloned bind groups]{@link BindGroup} created by this {@link Material} */
   clonedBindGroups: AllowedBindGroups[]
@@ -51,7 +51,7 @@ export class Material {
   /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingInput>>
 
-  /** Array of [struct]{@link Binding} created using the [uniforms]{@link BindGroupInputs#uniforms} and [storages]@link BindGroupInputs#storages} parameters when instancing this {@link Material} */
+  /** Array of [struct]{@link Binding} created using the [uniforms]{@link types/BindGroups.BindGroupInputs#uniforms} and [storages]@link types/BindGroups.BindGroupInputs#storages} parameters when instancing this {@link Material} */
   inputsBindings: BindGroupBindingElement[]
 
   /** Array of [textures]{@link Texture} handled by this {@link Material} */

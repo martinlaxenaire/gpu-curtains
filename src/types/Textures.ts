@@ -22,7 +22,7 @@ export interface ExternalTextureParams {
   useExternalTextures?: boolean
   /** The [texture view dimension ]{@link GPUTextureViewDimension} to use */
   viewDimension?: GPUTextureViewDimension
-  /** Whether to keep the [texture]{@link Texture#texture} in the [renderer]{@link GPURenderer} cache when a {@link Material} tries to destroy it */
+  /** Whether to keep the {@link Texture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material} tries to destroy it */
   cache?: boolean
 }
 
@@ -32,7 +32,7 @@ export interface ExternalTextureParams {
 export interface TextureBaseParams extends ExternalTextureParams {
   /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link Texture} to use in the [struct]{@link Binding} */
+  /** Name of the {@link Texture} to use in the [struct]{@link core/bindings/Binding.Binding} */
   name?: string
 }
 

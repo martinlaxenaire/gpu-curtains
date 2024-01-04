@@ -11,9 +11,9 @@ import { PlaneGeometry } from '../core/geometries/PlaneGeometry'
 
 // SHADERS
 
-/** Shaders types that can be used by a {@link RenderMaterial} */
+/** Shaders types that can be used by a {@link core/materials/RenderMaterial.RenderMaterial} */
 export type RenderMaterialShadersType = 'vertex' | 'fragment'
-/** Shaders types that can be used by a {@link ComputeMaterial} */
+/** Shaders types that can be used by a {@link core/materials/ComputeMaterial.ComputeMaterial} */
 export type ComputeMaterialShadersType = 'compute'
 /** All shaders types */
 export type MaterialShadersType = RenderMaterialShadersType | ComputeMaterialShadersType
@@ -31,7 +31,7 @@ export interface ShaderOptions {
 }
 
 /**
- * Defines all possible [shader options]{@link ShaderOptions} entries of a {@link Material}
+ * Defines all possible [shader options]{@link ShaderOptions} entries of a {@link core/materials/Material.Material}
  */
 export interface MaterialShaders {
   /** Vertex [shader options]{@link ShaderOptions} */
@@ -44,14 +44,14 @@ export interface MaterialShaders {
 }
 
 /**
- * Base parameters used to create a {@link Material}
+ * Base parameters used to create a {@link core/materials/Material.Material}
  */
 export interface MaterialBaseParams {
-  /** The label of the {@link Material}, sent to various GPU objects for debugging purpose */
+  /** The label of the {@link core/materials/Material.Material}, sent to various GPU objects for debugging purpose */
   label?: string
-  /** Shaders to use with this {@link Material} */
+  /** Shaders to use with this {@link core/materials/Material.Material} */
   shaders?: MaterialShaders
-  /** Whether to compile the {@link Material} [pipeline]{@link GPUPipelineBase} asynchronously or not */
+  /** Whether to compile the {@link core/materials/Material.Material} [pipeline]{@link GPUPipelineBase} asynchronously or not */
   useAsyncPipeline?: boolean
 }
 
@@ -59,43 +59,43 @@ export interface MaterialBaseParams {
 export type MaterialBindGroups = AllowedBindGroups[]
 
 /**
- * Inputs (i.e. data provided by the user) parameters used to create a {@link Material}
+ * Inputs (i.e. data provided by the user) parameters used to create a {@link core/materials/Material.Material}
  */
 export interface MaterialInputBindingsParams extends BindGroupInputs {
-  /** Array of already created [bind groups]{@link BindGroup} to be used by this {@link Material} */
+  /** Array of already created [bind groups]{@link core/bindGroups/BindGroup.BindGroup} to be used by this {@link core/materials/Material.Material} */
   bindGroups?: BindGroup[]
-  /** Array of already created [samplers]{@link Sampler} to be used by this {@link Material} */
+  /** Array of already created [samplers]{@link core/samplers/Sampler.Sampler} to be used by this {@link core/materials/Material.Material} */
   samplers?: Sampler[]
-  /** Array of already created [textures]{@link Texture} to be used by this {@link Material} */
+  /** Array of already created [textures]{@link core/textures/Texture.Texture} to be used by this {@link core/materials/Material.Material} */
   textures?: Texture[]
-  /** Array of already created [render textures]{@link RenderTexture} to be used by this {@link Material} */
+  /** Array of already created [render textures]{@link core/textures/RenderTexture.RenderTexture} to be used by this {@link core/materials/Material.Material} */
   renderTextures?: RenderTexture[]
 }
 
-/** Parameters used to create a {@link Material} */
+/** Parameters used to create a {@link core/materials/Material.Material} */
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
 
-/** Options used to create this {@link Material} */
+/** Options used to create this {@link core/materials/Material.Material} */
 export interface MaterialOptions extends MaterialInputBindingsParams {
-  /** The label of the {@link Material}, sent to various GPU objects for debugging purpose */
+  /** The label of the {@link core/materials/Material.Material}, sent to various GPU objects for debugging purpose */
   label: string
-  /** Shaders to use with this {@link Material} */
+  /** Shaders to use with this {@link core/materials/Material.Material} */
   shaders: MaterialShaders
-  /** Whether to compile the {@link Material} [pipeline]{@link GPUPipelineBase} asynchronously or not */
+  /** Whether to compile the {@link core/materials/Material.Material} [pipeline]{@link GPUPipelineBase} asynchronously or not */
   useAsyncPipeline?: boolean
 }
 
 /* COMPUTE MATERIAL */
 
-/** Parameters used to create a {@link ComputeMaterial} */
+/** Parameters used to create a {@link core/materials/ComputeMaterial.ComputeMaterial} */
 export interface ComputeMaterialParams extends MaterialParams {
-  /** Main/first work group dispatch size to use with this {@link ComputeMaterial} */
+  /** Main/first work group dispatch size to use with this {@link core/materials/ComputeMaterial.ComputeMaterial} */
   dispatchSize?: number | number[]
 }
 
-/** Options used to create this {@link ComputeMaterial} */
+/** Options used to create this {@link core/materials/ComputeMaterial.ComputeMaterial} */
 export interface ComputeMaterialOptions extends MaterialOptions {
-  /** Default work group dispatch size to use with this {@link ComputeMaterial} */
+  /** Default work group dispatch size to use with this {@link core/materials/ComputeMaterial.ComputeMaterial} */
   dispatchSize?: number | number[]
 }
 
@@ -104,12 +104,12 @@ export interface ComputeMaterialOptions extends MaterialOptions {
 // GEOMETRY
 
 /**
- * Defines the geometry attributes that a {@link RenderMaterial} should send to the [render pipeline]{@link RenderPipelineEntry#pipeline}
+ * Defines the geometry attributes that a {@link core/materials/RenderMaterial.RenderMaterial} should send to the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline}
  */
 export interface RenderMaterialAttributes {
   /** WGSL structure code fragment containing the attributes to use as vertex shader inputs */
   wgslStructFragment?: Geometry['wgslStructFragment']
-  /** Array of [vertex buffers]{@link VertexBuffer} to send to the [render pipeline]{@link RenderPipelineEntry#pipeline} */
+  /** Array of [vertex buffers]{@link VertexBuffer} to send to the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} */
   vertexBuffers?: Geometry['vertexBuffers']
 }
 
@@ -118,51 +118,51 @@ export interface RenderMaterialAttributes {
 export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry
 
 /**
- * Base rendering options to send to the [render pipeline]{@link RenderPipelineEntry#pipeline}
+ * Base rendering options to send to the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline}
  */
 export interface RenderMaterialBaseRenderingOptions {
-  /** Whether this {@link RenderMaterial} should implicitly use the [renderer camera bind group]{@link CameraRenderer#cameraBindGroup} */
+  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial} should implicitly use the [renderer camera bind group]{@link CameraRenderer#cameraBindGroup} */
   useProjection: boolean
-  /** Whether this {@link RenderMaterial} should be treated as transparent. Impacts the [render pipeline]{@link RenderPipelineEntry#pipeline} [blend property]{@link GPURenderPipeline#blend} */
+  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial} should be treated as transparent. Impacts the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} [blend property]{@link GPURenderPipeline#blend} */
   transparent: boolean
-  /** Whether this {@link RenderMaterial} should enable depth write */
+  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial} should enable depth write */
   depthWriteEnabled: boolean
-  /** Depth function to use with this {@link RenderMaterial} */
+  /** Depth function to use with this {@link core/materials/RenderMaterial.RenderMaterial} */
   depthCompare: GPUCompareFunction
-  /** Cull mode to use with this {@link RenderMaterial} */
+  /** Cull mode to use with this {@link core/materials/RenderMaterial.RenderMaterial} */
   cullMode: GPUCullMode
-  /** Custom blending to use with this {@link RenderMaterial}. Can override default transparent blending if set */
+  /** Custom blending to use with this {@link core/materials/RenderMaterial.RenderMaterial}. Can override default transparent blending if set */
   blend?: GPUBlendState
-  /** Optional texture format of the [render pipeline]{@link RenderPipelineEntry} color target. Default to the renderer preferred format. */
+  /** Optional texture format of the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry} color target. Default to the renderer preferred format. */
   targetFormat: GPUTextureFormat
 }
 
-/** Rendering options to send to the [render pipeline]{@link RenderPipelineEntry#pipeline} */
+/** Rendering options to send to the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} */
 export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRenderingOptions {
-  /** Vertices order to be used by the [render pipeline]{@link RenderPipelineEntry#pipeline} */
+  /** Vertices order to be used by the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} */
   verticesOrder: Geometry['verticesOrder']
-  /** Topology to use with this {@link RenderMaterial}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
+  /** Topology to use with this {@link core/materials/RenderMaterial.RenderMaterial}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
   topology: Geometry['topology']
 }
 
-/** Base parameters used to create a {@link RenderMaterial} */
+/** Base parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial} */
 export interface RenderMaterialBaseParams extends RenderMaterialRenderingOptions, MaterialInputBindingsParams {}
 
-/** Parameters used to create a {@link RenderMaterial} */
+/** Parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial} */
 export interface RenderMaterialParams extends Partial<RenderMaterialBaseParams> {
-  /** The label of the {@link RenderMaterial}, sent to various GPU objects for debugging purpose */
+  /** The label of the {@link core/materials/RenderMaterial.RenderMaterial}, sent to various GPU objects for debugging purpose */
   label?: string
-  /** Shaders to use with this {@link RenderMaterial} */
+  /** Shaders to use with this {@link core/materials/RenderMaterial.RenderMaterial} */
   shaders?: MaterialShaders
-  /** Whether to compile the {@link RenderMaterial} [render pipeline]{@link RenderPipelineEntry#pipeline} asynchronously or not */
+  /** Whether to compile the {@link core/materials/RenderMaterial.RenderMaterial} [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} asynchronously or not */
   useAsyncPipeline?: boolean
 }
 
-/** Options used to create this {@link RenderMaterial} */
+/** Options used to create this {@link core/materials/RenderMaterial.RenderMaterial} */
 export interface RenderMaterialOptions extends MaterialOptions {
   /** [Rendering options]{@link RenderMaterialRenderingOptions} to send to the [pipeline]{@link GPUPipelineBase} */
   rendering?: RenderMaterialRenderingOptions
 }
 
-/** Defines all kind of textures a {@link Material} can use */
+/** Defines all kind of textures a {@link core/materials/Material.Material} can use */
 export type MaterialTexture = Texture | RenderTexture

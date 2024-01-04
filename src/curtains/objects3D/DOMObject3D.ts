@@ -260,7 +260,7 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Set the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
+   * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
    */
   applyPosition() {
     this.applyDocumentPosition()
@@ -268,7 +268,7 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Compute the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
+   * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
    */
   applyDocumentPosition() {
     // avoid unnecessary calculations if we don't have a users set relative position
@@ -298,7 +298,7 @@ export class DOMObject3D extends ProjectedObject3D {
   /* MATRICES */
 
   /**
-   * Update the [model matrix]{@link DOMObject3D#modelMatrix} accounting the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} and [DOMObject3D world scale]{@link DOMObject3D##DOMObjectWorldScale}
+   * Update the [model matrix]{@link DOMObject3D#modelMatrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
    */
   updateModelMatrix() {
     // override for this special case
@@ -379,7 +379,7 @@ export class DOMObject3D extends ProjectedObject3D {
 
   /**
    * Update the [DOMOBject3D DOMElement]{@link DOMObject3D#domElement} scroll position
-   * @param delta - last [scroll delta values]{@link ScrollManager#delta}
+   * @param delta - last [scroll delta values]{@link utils/ScrollManager.ScrollManager.delta}
    */
   updateScrollPosition(delta: DOMPosition = { x: 0, y: 0 }) {
     // actually update the plane position only if last X delta or last Y delta is not equal to 0

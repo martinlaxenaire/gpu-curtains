@@ -31,7 +31,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build:docs": "rimraf docs && typedoc src/types/* src/index.ts",
+    "build:docs": "rimraf docs && typedoc --entryPointStrategy expand src/types/* src/utils/* src/math/* src/core/**/* src/curtains/**/* src/extras/**/*",
     "build:types": "rimraf dist/types && tsc --allowJs -d --emitDeclarationOnly",
     "build:main": "vite build",
     "build:dist": "yarn build:types && yarn build:main"

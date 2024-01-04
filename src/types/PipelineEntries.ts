@@ -9,12 +9,12 @@ import { GPUCurtains } from '../curtains/GPUCurtains'
 import { AllowedBindGroups } from './BindGroups'
 
 /**
- * Defines a [pipeline entry]{@link PipelineEntry} shader object
+ * Defines a [pipeline entry]{@link core/pipelines/PipelineEntry.PipelineEntry} shader object
  */
 export interface PipelineEntryShader {
-  /** Additional piece of WGSL code added at the beginning of the shader, with bits coming from the {@link Binding} and {@link Geometry} */
+  /** Additional piece of WGSL code added at the beginning of the shader, with bits coming from the {@link core/bindings/Binding.Binding} and {@link core/geometries/Geometry.Geometry} */
   head?: string
-  /** Complete WGSL shader code, i.e. [head code]{@link PipelineEntryShader#head} plus code that has been passed by the {@link Material} */
+  /** Complete WGSL shader code, i.e. [head code]{@link PipelineEntryShader#head} plus code that has been passed by the {@link core/materials/Material.Material} */
   code: string
   /** {@link GPUShaderModule} created based on the given [shader code]{@link PipelineEntryShader#code} */
   module: GPUShaderModule | null
@@ -35,77 +35,77 @@ export interface PipelineEntryShaders {
 }
 
 /**
- * Options used to create this {@link PipelineEntry}
+ * Options used to create this {@link core/pipelines/PipelineEntry.PipelineEntry}
  */
 export interface PipelineEntryOptions {
-  /** The label of the {@link PipelineEntry}, sent to various GPU objects for debugging purpose */
+  /** The label of the {@link core/pipelines/PipelineEntry.PipelineEntry}, sent to various GPU objects for debugging purpose */
   label: string
-  /** Whether to compile the [pipeline]{@link PipelineEntry#pipeline} asynchronously or not */
+  /** Whether to compile the [pipeline]{@link core/pipelines/PipelineEntry.PipelineEntry#pipeline} asynchronously or not */
   useAsync?: boolean
-  /** Shaders to use with this {@link PipelineEntry} */
+  /** Shaders to use with this {@link core/pipelines/PipelineEntry.PipelineEntry} */
   shaders: MaterialShaders
 }
 
-/** Base parameters used to create this {@link PipelineEntry} */
+/** Base parameters used to create this {@link core/pipelines/PipelineEntry.PipelineEntry} */
 export type PipelineEntryBaseParams = Partial<PipelineEntryOptions>
 
 /**
- * Parameters used to create this {@link PipelineEntry}
+ * Parameters used to create this {@link core/pipelines/PipelineEntry.PipelineEntry}
  */
 export interface PipelineEntryParams extends PipelineEntryBaseParams {
-  /** [renderer]{@link Renderer} used to create this {@link PipelineEntry}, or our {@link GPUCurtains} class object */
+  /** [renderer]{@link Renderer} used to create this {@link core/pipelines/PipelineEntry.PipelineEntry}, or our {@link curtains/GPUCurtains} class object */
   renderer: Renderer | GPUCurtains
 }
 
 /**
- * Defines our current [pipeline]{@link PipelineEntry#pipeline} compilation status
+ * Defines our current [pipeline]{@link core/pipelines/PipelineEntry.PipelineEntry#pipeline} compilation status
  */
 export interface PipelineEntryStatus {
-  /** Whether the [pipeline]{@link PipelineEntry#pipeline} is currently compiling */
+  /** Whether the [pipeline]{@link core/pipelines/PipelineEntry.PipelineEntry#pipeline} is currently compiling */
   compiling: boolean
-  /** Whether the [pipeline]{@link PipelineEntry#pipeline} has been successfully compiled */
+  /** Whether the [pipeline]{@link core/pipelines/PipelineEntry.PipelineEntry#pipeline} has been successfully compiled */
   compiled: boolean
-  /** Whether there has been an error while compiling the [pipeline]{@link PipelineEntry#pipeline}, and the corresponding error */
+  /** Whether there has been an error while compiling the [pipeline]{@link core/pipelines/PipelineEntry.PipelineEntry#pipeline}, and the corresponding error */
   error: null | string
 }
 
 /**
- * Parameters used to add properties to the {@link PipelineEntry}
+ * Parameters used to add properties to the {@link core/pipelines/PipelineEntry.PipelineEntry}
  */
 export interface PipelineEntryPropertiesParams {
-  /** Array of [bind groups]{@link AllowedBindGroups} to use with this [pipeline]{@link PipelineEntry#pipeline} */
+  /** Array of [bind groups]{@link AllowedBindGroups} to use with this [pipeline]{@link core/pipelines/PipelineEntry.PipelineEntry#pipeline} */
   bindGroups: MaterialBindGroups
 }
 
 /* RENDER PIPELINES */
 
 /**
- * Options used to create this {@link RenderPipelineEntry}
+ * Options used to create this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry}
  */
 export interface RenderPipelineEntryOptions extends PipelineEntryOptions, Partial<RenderMaterialRenderingOptions> {}
 
 /**
- * Parameters used to add properties to the {@link RenderPipelineEntry}
+ * Parameters used to add properties to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry}
  */
 export interface RenderPipelineEntryPropertiesParams extends PipelineEntryPropertiesParams {
-  /** Geometry attributes to use with this [render pipeline]{@link RenderPipelineEntry#pipeline} */
+  /** Geometry attributes to use with this [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} */
   attributes: RenderMaterialAttributes
 }
 
 /**
- * Base parameters used to create a {@link RenderPipelineEntry}
+ * Base parameters used to create a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry}
  */
 export interface RenderPipelineEntryBaseParams extends RenderMaterialRenderingOptions {
-  /** The label of the {@link RenderPipelineEntry}, sent to various GPU objects for debugging purpose */
+  /** The label of the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry}, sent to various GPU objects for debugging purpose */
   label?: string
-  /** Shaders to use with this {@link RenderPipelineEntry} */
+  /** Shaders to use with this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry} */
   shaders?: MaterialShaders
 }
 
 /**
- * Parameters used to create this {@link RenderPipelineEntry}
+ * Parameters used to create this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry}
  */
 export interface RenderPipelineEntryParams extends RenderPipelineEntryBaseParams {
-  /** [renderer]{@link Renderer} used to create this {@link PipelineEntry}, or our {@link GPUCurtains} class object */
+  /** [renderer]{@link Renderer} used to create this {@link core/pipelines/PipelineEntry.PipelineEntry}, or our {@link curtains/GPUCurtains} class object */
   renderer: Renderer | GPUCurtains
 }

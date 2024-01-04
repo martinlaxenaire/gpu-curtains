@@ -182,7 +182,7 @@ export class BufferElement {
   /**
    * Check that a [position byte]{@link BufferElementAlignmentPosition#byte} does not overflow its max value (16)
    * @param position - [position]{@link BufferElementAlignmentPosition} to check
-   * @returns - updated [position]{@link BufferElementAlignmentPosition#
+   * @returns - updated [position]{@link BufferElementAlignmentPosition#position}
    */
   applyOverflowToPosition(
     position: BufferElementAlignmentPosition = { row: 0, byte: 0 }

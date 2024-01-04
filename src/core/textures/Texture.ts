@@ -61,7 +61,7 @@ export class Texture extends Object3D {
 
   /** Whether the source has been loaded */
   private _sourceLoaded: boolean
-  /** Whether the source has been uploaded to the GPU, handled by the [renderer textures queue array]{@link Renderer#texturesQueue} */
+  /** Whether the source has been uploaded to the GPU, handled by the {@link GPUDeviceManager#texturesQueue | renderer textures queue array} */
   private _sourceUploaded: boolean
   /** Whether the texture should be uploaded to the GPU */
   shouldUpdate: boolean
@@ -69,11 +69,11 @@ export class Texture extends Object3D {
   /** [Video frame callback]{@link requestVideoFrameCallback} returned id if used */
   videoFrameCallbackId: null | number
 
-  /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
+  /** Private {@link Vec3 | vector} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
   #parentRatio: Vec3 = new Vec3(1)
   /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [source size]{@link Texture#size} */
   #sourceRatio: Vec3 = new Vec3(1)
-  /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [#parentRatio]{@link Texture##parentRatio} and [#sourceRatio]{@link Texture##sourceRatio} */
+  /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on #parentRatio and #sourceRatio */
   #coverScale: Vec3 = new Vec3(1)
   /** Private rotation [matrix]{@link Mat4} based on [texture quaternion]{@link Texture#quaternion} */
   #rotationMatrix: Mat4 = new Mat4()
