@@ -1,9 +1,8 @@
-import { generateMips } from './utils'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass } from '../renderPasses/RenderPass'
-import { generateUUID, throwError, throwWarning } from '../../utils/utils'
+import { generateUUID, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
@@ -48,14 +47,12 @@ export type SceneObject = RenderedMesh | ComputePass
 //export type ProjectedMesh = Mesh | DOMProjectedMesh | typeof MeshBaseMixin<any>
 
 /**
- * GPURenderer class:
- * Base renderer class, that could possibly used to render compute passes and draw meshes, even tho it is strongly advised to use the {@link GPUCurtainsRenderer} class instead.
+ * Base renderer class, that could technically be used to render compute passes and draw fullscreen quads, even tho it is strongly advised to use at least the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer | GPUCameraRenderer} class instead.
  * A renderer is responsible for:
- * - Everything related to the WebGPU [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} and [context]{@link GPUCanvasContext}
- * - Handling the [canvas]{@link HTMLCanvasElement} onto everything is drawn
+ * - Setting a {@link GPUCanvasContext | context}
+ * - Handling the {@link HTMLCanvasElement | canvas} onto everything is drawn
  * - Keeping track of every specific class objects created relative to computing and rendering
  * - Creating a {@link Scene} class that will take care of the rendering process of all previously mentioned objects
- * - Handling the {@link PipelineManager}
  */
 export class GPURenderer {
   /** The type of the {@link GPURenderer} */

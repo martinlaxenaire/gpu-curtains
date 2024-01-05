@@ -11,7 +11,7 @@ import { DOMElementParams } from '../../core/DOM/DOMElement'
 /**
  * Parameters used to create a {@link Plane}
  */
-interface PlaneParams extends DOMMeshBaseParams, PlaneGeometryParams {
+export interface PlaneParams extends DOMMeshBaseParams, PlaneGeometryParams {
   /** Optional {@link PlaneGeometry} to use */
   geometry?: PlaneGeometry
 }

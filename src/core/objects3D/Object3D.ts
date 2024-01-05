@@ -9,11 +9,11 @@ export type Object3DMatricesType = 'model'
  * Defines an {@link Object3D} matrix object
  */
 export interface Object3DTransformMatrix {
-  /** The [matrix]{@link Mat4} used */
+  /** The [matrix]{@link math/Mat4.Mat4} used */
   matrix: Mat4
-  /** Whether we should update the [matrix]{@link Mat4} */
+  /** Whether we should update the [matrix]{@link math/Mat4.Mat4} */
   shouldUpdate: boolean
-  /** Function to update our [matrix]{@link Mat4} */
+  /** Function to update our [matrix]{@link math/Mat4.Mat4} */
   onUpdate: () => void
 }
 
@@ -21,24 +21,24 @@ export interface Object3DTransformMatrix {
 export type Object3DMatrices = Record<Object3DMatricesType, Object3DTransformMatrix>
 
 /**
- * Defines all necessary [vectors]{@link Vec3}/[quaternions]{@link Quat} to compute a 3D [model matrix]{@link Mat4}
+ * Defines all necessary [vectors]{@link math/Vec3.Vec3}/[quaternions]{@link math/Quat.Quat} to compute a 3D [model matrix]{@link math/Mat4.Mat4}
  */
 export interface Object3DTransforms {
   /** Transformation origin object */
   origin: {
-    /** Transformation origin [vector]{@link Vec3} relative to the {@link Object3D} */
+    /** Transformation origin [vector]{@link math/Vec3.Vec3} relative to the {@link Object3D} */
     model: Vec3
   }
-  /** Model [quaternion]{@link Quat} defining its rotation in 3D space */
+  /** Model [quaternion]{@link math/Quat.Quat} defining its rotation in 3D space */
   quaternion: Quat
-  /** Model rotation [vector]{@link Vec3} used to compute its [quaternion]{@link Quat} */
+  /** Model rotation [vector]{@link math/Vec3.Vec3} used to compute its [quaternion]{@link math/Quat.Quat} */
   rotation: Vec3
   /** Position object */
   position: {
-    /** Position [vector]{@link Vec3} relative to the 3D world */
+    /** Position [vector]{@link math/Vec3.Vec3} relative to the 3D world */
     world: Vec3
   }
-  /** Model 3D scale [vector]{@link Vec3} */
+  /** Model 3D scale [vector]{@link math/Vec3.Vec3} */
   scale: Vec3
 }
 
@@ -63,7 +63,7 @@ export class Object3D {
   /* TRANSFORMS */
 
   /**
-   * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+   * Set our transforms properties and [onChange]{@link math/Vec3.Vec3#onChange} callbacks
    */
   setTransforms() {
     this.transforms = {
@@ -213,8 +213,8 @@ export class Object3D {
   }
 
   /**
-   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-   * @param target - [target]{@link Vec3} to look at
+   * Rotate this {@link Object3D} so it looks at the [target]{@link math/Vec3.Vec3}
+   * @param target - [target]{@link math/Vec3.Vec3} to look at
    */
   lookAt(target: Vec3 = new Vec3()) {
     const rotationMatrix = new Mat4().lookAt(target, this.position)

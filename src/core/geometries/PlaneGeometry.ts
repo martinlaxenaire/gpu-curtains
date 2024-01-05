@@ -34,11 +34,7 @@ export class PlaneGeometry extends IndexedGeometry {
 
   /**
    * PlaneGeometry constructor
-   * @param {PlaneGeometryParams} [parameters={}] - parameters used to create our PlaneGeometry
-   * @param {number} [parameters.instancesCount=1] - number of instances to draw
-   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
-   * @param {number} [parameters.widthSegments=1] - number of segments along the X axis
-   * @param {number} [parameters.heightSegments=1] - number of segments along the Y axis
+   * @param [parameters={}] - {@link types/Geometries.PlaneGeometryParams | parameters} used to create our PlaneGeometry
    */
   constructor({
     widthSegments = 1,

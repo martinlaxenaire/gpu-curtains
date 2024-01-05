@@ -1,4 +1,4 @@
-import { PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../src'
+import { PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../src/index.js'
 
 export class TestPingPong {
   constructor({ gpuCurtains }) {

@@ -49,9 +49,9 @@ export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferIn
 
 /**
  * BufferBinding class:
- * Used to format inputs struct and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
+ * Used to format {@link BufferBindingParams#struct | struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
- * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. "array<f32>", "array<vec3f>" etc.)
+ * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. "array\<f32\>", "array\<vec3f\>" etc.)
  * @extends Binding
  */
 export class BufferBinding extends Binding {
@@ -123,6 +123,7 @@ export class BufferBinding extends Binding {
 
   /**
    * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
+   * @readonly
    */
   get resourceLayout(): { buffer: GPUBufferBindingLayout } {
     return {
@@ -134,6 +135,7 @@ export class BufferBinding extends Binding {
 
   /**
    * Get [bind group resource]{@link GPUBindGroupEntry#resource}
+   * @readonly
    */
   get resource(): { buffer: GPUBuffer | null } {
     return { buffer: this.buffer }

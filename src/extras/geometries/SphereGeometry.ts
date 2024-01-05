@@ -5,7 +5,7 @@ import { GeometryBaseParams } from '../../types/Geometries'
 /**
  * Parameters used to create a {@link SphereGeometry}
  */
-interface SphereGeometryParams extends GeometryBaseParams {
+export interface SphereGeometryParams extends GeometryBaseParams {
   /** Number of horizontal segments */
   widthSegments?: number
   /** Number of vertical segments */

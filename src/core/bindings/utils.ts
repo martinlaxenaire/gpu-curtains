@@ -15,7 +15,7 @@ export type TypedArray =
   | Float64Array
 
 /** Defines a typed array constructor */
-type TypedArrayConstructor =
+export type TypedArrayConstructor =
   | Int8ArrayConstructor
   | Uint8ArrayConstructor
   | Int16ArrayConstructor

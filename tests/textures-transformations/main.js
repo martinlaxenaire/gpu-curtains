@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane } from '../../src'
+import { GPUCurtains, Plane } from '../../src/index.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   const systemSize = 50

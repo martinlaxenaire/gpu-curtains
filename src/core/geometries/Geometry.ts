@@ -17,7 +17,7 @@ import {
 export class Geometry {
   /** Number of vertices defined by this geometry */
   verticesCount: number
-  /** Vertices order to be drawn by the [render pipeline]{@link RenderPipelineEntry} */
+  /** Vertices order to be drawn by the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry} */
   verticesOrder: GPUFrontFace
   /** Topology to use with this {@link Geometry}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
   topology: GPUPrimitiveTopology
@@ -30,7 +30,7 @@ export class Geometry {
   /** The type of the geometry */
   type: string
 
-  /** The bounding box of the geometry, i.e. two {@link Vec3} defining the min and max positions to wrap this geometry in a cube */
+  /** The bounding box of the geometry, i.e. two {@link math/Vec3.Vec3} defining the min and max positions to wrap this geometry in a cube */
   boundingBox: Box3
 
   /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
@@ -38,10 +38,7 @@ export class Geometry {
 
   /**
    * Geometry constructor
-   * @param [parameters={}] - parameters used to create our Geometry
-   * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
-   * @param {number} [parameters.instancesCount=1] - number of instances to draw
-   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+   * @param [parameters={}] - {@link types/Geometries.GeometryParams | parameters} used to create our Geometry
    */
   constructor({
     verticesOrder = 'cw',
@@ -99,10 +96,7 @@ export class Geometry {
 
   /**
    * Add a vertex buffer to our Geometry, set its attributes and return it
-   * @param [parameters={}] - vertex buffer parameters
-   * @param [parameters.stepMode="vertex"] - GPU vertex step mode
-   * @param [parameters.name] - vertex buffer name
-   * @param [parameters.attributes=[]] - vertex buffer attributes
+   * @param [parameters={}] - vertex buffer {@link types/Geometries.VertexBufferParams | parameters}
    * @returns - newly created [vertex buffer]{@link VertexBuffer}
    */
   addVertexBuffer({ stepMode = 'vertex', name, attributes = [] }: VertexBufferParams = {}): VertexBuffer {
@@ -139,14 +133,7 @@ export class Geometry {
 
   /**
    * Set a vertex buffer attribute
-   * @param parameters - attributes parameters
-   * @param {VertexBuffer=} parameters.vertexBuffer - vertex buffer holding this attribute
-   * @param {string} parameters.name - attribute name
-   * @param {WGSLVariableType} [parameters.type="vec3f"] - attribute type
-   * @param {GPUVertexFormat} [parameters.bufferFormat="float32x3"] - attribute buffer format
-   * @param {number} [parameters.size=3] - attribute size
-   * @param {Float32Array} [parameters.array=Float32Array] - attribute array
-   * @param {number} [parameters.verticesStride=1] - number of vertices used by this attribute, i.e. insert one for every X vertices
+   * @param parameters - attributes {@link types/Geometries.VertexBufferAttributeParams | parameters}
    */
   setAttribute({
     vertexBuffer = this.vertexBuffers[0],

@@ -1,3 +1,7 @@
+/**
+ * Generate a unique universal id
+ * @returns - unique universal id generated
+ */
 export const generateUUID = (): string => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0,
@@ -6,23 +10,33 @@ export const generateUUID = (): string => {
   })
 }
 
+/**
+ * Turns a string into a camel case string
+ * @param string - string to transform
+ * @returns - camel case string created
+ */
 export const toCamelCase = (string: string): string => {
   return string
     .replace(/(?:^\w|[A-Z]|\b\w)/g, (ltr, idx) => (idx === 0 ? ltr.toLowerCase() : ltr.toUpperCase()))
     .replace(/\s+/g, '')
 }
 
+/**
+ * Turns a string into a kebab case string
+ * @param string - string to transform
+ * @returns - kebab case string created
+ */
 export const toKebabCase = (string: string): string => {
   const camelCase = toCamelCase(string)
   return camelCase.charAt(0).toUpperCase() + camelCase.slice(1)
 }
 
-/***
- Throw a console warning with the passed arguments
- ***/
-
 let warningThrown = 0
 
+/**
+ * Throw a console warning with the passed arguments
+ * @param warning - warning to be thrown
+ */
 export const throwWarning = (warning: string) => {
   if (warningThrown > 100) {
     return
@@ -35,16 +49,10 @@ export const throwWarning = (warning: string) => {
   warningThrown++
 }
 
-/***
- Log a console error with the passed arguments
- ***/
-export const logError = (error: string) => {
-  console.error(error)
-}
-
-/***
- Throw a javascript error with the passed arguments
- ***/
+/**
+ * Throw a javascript error with the passed arguments
+ * @param error - error to be thrown
+ */
 export const throwError = (error: string) => {
   throw new Error(error)
 }

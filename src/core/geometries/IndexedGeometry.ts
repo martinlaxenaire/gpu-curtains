@@ -36,10 +36,7 @@ export class IndexedGeometry extends Geometry {
 
   /**
    * IndexedGeometry constructor
-   * @param {GeometryParams} [parameters={}] - parameters used to create our IndexedGeometry
-   * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
-   * @param {number} [parameters.instancesCount=1] - number of instances to draw
-   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+   * @param [parameters={}] - {@link types/Geeometries.GeometryParams | parameters} used to create our IndexedGeometry
    */
   constructor({
     verticesOrder = 'cw',
@@ -74,10 +71,8 @@ export class IndexedGeometry extends Geometry {
   }
 
   /**
-   *
-   * @param parameters - parameters used to create our index buffer
-   * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
-   * @param {Uint32Array} [parameters.array=Uint32Array]
+   * Set our {@link indexBuffer}
+   * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
    */
   setIndexBuffer({ bufferFormat = 'uint32', array = new Uint32Array(0) }: IndexedGeometryIndexBufferOptions) {
     this.indexBuffer = {

@@ -56,6 +56,7 @@ export class SamplerBinding extends Binding {
 
   /**
    * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#sampler}
+   * @readonly
    */
   get resourceLayout(): { sampler: GPUSamplerBindingLayout } {
     return {
@@ -67,6 +68,7 @@ export class SamplerBinding extends Binding {
 
   /**
    * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+   * @readonly
    */
   get resource(): SamplerBindingResource {
     return this.sampler

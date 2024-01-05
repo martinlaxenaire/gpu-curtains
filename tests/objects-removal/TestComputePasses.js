@@ -1,4 +1,4 @@
-import { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } from '../../src'
+import { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } from '../../src/index.js'
 
 export class TestComputePasses {
   constructor({ gpuCurtains }) {

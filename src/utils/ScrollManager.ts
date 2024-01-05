@@ -64,9 +64,7 @@ export class ScrollManager {
    * Updates the scroll manager X and Y scroll values as well as last X and Y deltas
    * Internally called by the scroll event listener
    * Could be called externally as well if the user wants to handle the scroll by himself
-   * @param parameters - scroll values
-   * @param parameters.x - scroll value along X axis
-   * @param parameters.y - scroll value along Y axis
+   * @param parameters - {@link core/DOM/DOMElement.DOMPosition | scroll values}
    */
   updateScrollValues({ x, y }: DOMPosition) {
     // get our scroll delta values

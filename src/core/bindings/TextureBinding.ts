@@ -68,6 +68,7 @@ export class TextureBinding extends Binding {
 
   /**
    * Get bind group layout entry resource, either for {@link GPUBindGroupLayoutEntry#texture | texture} or {@link GPUBindGroupLayoutEntry#externalTexture | external texture}
+   * @readonly
    */
   get resourceLayout():
     | GPUTextureBindingLayout
@@ -79,6 +80,7 @@ export class TextureBinding extends Binding {
 
   /**
    * Get/set {@link GPUBindGroupEntry#resource | bind group resource}
+   * @readonly
    */
   get resource(): GPUExternalTexture | GPUTextureView | null {
     return this.texture instanceof GPUTexture

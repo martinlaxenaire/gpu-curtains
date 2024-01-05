@@ -17,7 +17,7 @@ import { Renderer } from '../core/renderers/utils'
 /**
  * Options used to create a {@link GPUCurtains}
  */
-interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'> {
+export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'> {
   /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
   autoRender?: boolean
   /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
@@ -31,7 +31,7 @@ interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManage
 /**
  * Parameters used to create a {@link GPUCurtains}
  */
-interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'container'>> {
+export interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'container'>> {
   /** {@link HTMLElement} or string representing an {@link HTMLElement} selector that will hold the WebGPU [canvas]{@link HTMLCanvasElement}. Could be set later if not specified. */
   container?: string | HTMLElement | null
 }

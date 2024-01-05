@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "src/**/*.ts"
+  ],
+  "out": "docs",
+  "sort": ["source-order"],
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": true
+  }
+}

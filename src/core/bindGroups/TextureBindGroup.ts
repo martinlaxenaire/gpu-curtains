@@ -5,29 +5,25 @@ import { Texture } from '../textures/Texture'
 import { Sampler } from '../samplers/Sampler'
 import { BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
-import { TextureBinding } from '../bindings/TextureBinding'
 
 /**
  * An object defining all possible {@link TextureBindGroup} class instancing parameters
  */
 export interface TextureBindGroupParams extends BindGroupParams {
-  /** array of [textures]{@link MaterialTexture} to add to a {@link TextureBindGroup} */
+  /** array of {@link MaterialTexture | textures} to add to a {@link TextureBindGroup} */
   textures?: MaterialTexture[]
   /** array of {@link Sampler} to add to a {@link TextureBindGroup} */
   samplers?: Sampler[]
 }
 
 /**
- * TextureBindGroup class:
- * Used to regroup all [struct]{@link BindGroupBindingElement} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
- * @extends BindGroup
- * @memberof module:core/bindGroups/TextureBindGroup
+ * Used to regroup all {@link types/BindGroups.BindGroupBindingElement | bindings} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
  */
 export class TextureBindGroup extends BindGroup {
   /**
    * TextureBindGroup constructor
-   * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param {TextureBindGroupParams=} parameters - [parameters]{@link TextureBindGroupParams} used to create our {@link TextureBindGroup}
+   * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+   * @param parameters - {@link TextureBindGroupParams | parameters} used to create our {@link TextureBindGroup}
    */
   constructor(
     renderer: Renderer | GPUCurtains,
@@ -111,10 +107,10 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Update the [bind group textures]{@link TextureBindGroup#textures}:
+   * Update the {@link TextureBindGroup#textures | bind group textures}:
    * - Check if they need to copy their source texture
    * - Upload texture if needed
-   * - Check if the [bind group layout]{@link TextureBindGroup#bindGroupLayout} and/or [bing group]{@link TextureBindGroup#bindGroup} need an update
+   * - Check if the {@link TextureBindGroup#bindGroupLayout | GPU bind group layout} and/or {@link TextureBindGroup#bindGroup | GPU bind group} need an update
    */
   updateTextures() {
     this.textures.forEach((texture, textureIndex) => {
@@ -132,7 +128,7 @@ export class TextureBindGroup extends BindGroup {
   }
 
   /**
-   * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer struct]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+   * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed
    */
   update() {
     this.updateTextures()

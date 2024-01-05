@@ -448,8 +448,9 @@ export class ComputePass {
 
   /**
    * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
-   * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
-   * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+   * @param parameters - parameters used to get the result
+   * @param parameters.bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
+   * @param parameters.bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
    * @async
    * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */

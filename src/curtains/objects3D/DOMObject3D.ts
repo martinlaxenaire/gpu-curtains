@@ -16,19 +16,19 @@ export interface DOMObject3DSize {
 }
 
 /**
- * Defines all necessary [vectors]{@link Vec3}/[quaternions]{@link Quat} to compute a 3D [model matrix]{@link Mat4} based on a DOM [HTML Element]{@link HTMLElement}
+ * Defines all necessary [vectors]{@link math/Vec3.Vec3}/[quaternions]{@link math/Quat.Quat} to compute a 3D [model matrix]{@link math/Mat4.Mat4} based on a DOM [HTML Element]{@link HTMLElement}
  */
 export interface DOMObject3DTransforms extends Omit<Object3DTransforms, 'origin' | 'position'> {
   /** Transformation origin object */
   origin: {
-    /** Transformation origin [vector]{@link Vec3} relative to the {@link DOMObject3D} */
+    /** Transformation origin [vector]{@link math/Vec3.Vec3} relative to the {@link DOMObject3D} */
     model: Vec3
-    /** Transformation origin [vector]{@link Vec3} relative to the 3D world */
+    /** Transformation origin [vector]{@link math/Vec3.Vec3} relative to the 3D world */
     world: Vec3
   }
   /** Position object */
   position: {
-    /** Position [vector]{@link Vec3} relative to the 3D world */
+    /** Position [vector]{@link math/Vec3.Vec3} relative to the 3D world */
     world: Vec3
     /** Additional translation [vector]{@link Vec3} relative to the DOM document */
     document: Vec3
@@ -63,9 +63,9 @@ export class DOMObject3D extends ProjectedObject3D {
   /** [Transformation object]{@link DOMObject3DTransforms} of the {@link DOMObject3D} */
   transforms: DOMObject3DTransforms
 
-  /** Private [vector]{@link Vec3} used to keep track of the actual [world position]{@link DOMObject3DTransforms#position.world} accounting the [additional document translation]{@link DOMObject3DTransforms#position.document} converted into world space */
+  /** Private [vector]{@link math/Vec3.Vec3} used to keep track of the actual [world position]{@link DOMObject3DTransforms#position.world} accounting the [additional document translation]{@link DOMObject3DTransforms#position.document} converted into world space */
   #DOMObjectWorldPosition: Vec3 = new Vec3()
-  /** Private [vector]{@link Vec3} used to keep track of the actual {@link DOMObject3D} world scale accounting the [DOMObject3D world size]{@link DOMObject3D#size.world} */
+  /** Private [vector]{@link math/Vec3.Vec3} used to keep track of the actual {@link DOMObject3D} world scale accounting the [DOMObject3D world size]{@link DOMObject3D#size.world} */
   #DOMObjectWorldScale: Vec3 = new Vec3()
 
   /**
@@ -188,7 +188,7 @@ export class DOMObject3D extends ProjectedObject3D {
   /* TRANSFOMS */
 
   /**
-   * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+   * Set our transforms properties and [onChange]{@link math/Vec3.Vec3#onChange} callbacks
    */
   setTransforms() {
     super.setTransforms()
@@ -316,8 +316,8 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Convert a document position [vector]{@link Vec3} to a world position [vector]{@link Vec3}
-   * @param vector - document position [vector]{@link Vec3} converted to world space
+   * Convert a document position [vector]{@link math/Vec3.Vec3} to a world position [vector]{@link math/Vec3.Vec3}
+   * @param vector - document position [vector]{@link math/Vec3.Vec3} converted to world space
    */
   documentToWorldSpace(vector: Vec3 = new Vec3()): Vec3 {
     return new Vec3(

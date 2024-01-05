@@ -16,8 +16,8 @@ export class Vec2 {
 
   /**
    * Vec2 constructor
-   * @param x=0 - X component of our [vector]{@link Vec2}
-   * @param y=x - Y component of our [vector]{@link Vec2}
+   * @param [x=0] - X component of our [vector]{@link Vec2}
+   * @param [y=x] - Y component of our [vector]{@link Vec2}
    */
   constructor(x = 0, y = x) {
     this.type = 'Vec2'
@@ -71,8 +71,8 @@ export class Vec2 {
 
   /**
    * Set the [vector]{@link Vec2} from values
-   * @param x=0 - new X component to set
-   * @param y=x - new Y component to set
+   * @param [x=0] - new X component to set
+   * @param [y=x] - new Y component to set
    * @returns - this [vector]{@link Vec2} after being set
    */
   set(x = 0, y = x): Vec2 {
@@ -96,7 +96,7 @@ export class Vec2 {
 
   /**
    * Add a scalar to all the components of this [vector]{@link Vec2}
-   * @param value=0 - number to add
+   * @param [value=0] - number to add
    * @returns - this [vector]{@link Vec2} after addition
    */
   addScalar(value = 0): Vec2 {
@@ -120,7 +120,7 @@ export class Vec2 {
 
   /**
    * Subtract a scalar to all the components of this [vector]{@link Vec2}
-   * @param value=0 - number to subtract
+   * @param [value=0] - number to subtract
    * @returns - this [vector]{@link Vec2} after subtraction
    */
   subScalar(value = 0): Vec2 {
@@ -144,7 +144,7 @@ export class Vec2 {
 
   /**
    * Multiply all components of this [vector]{@link Vec2} with a scalar
-   * @param value=1 - number to multiply with
+   * @param [value=1] - number to multiply with
    * @returns - this [vector]{@link Vec2} after multiplication
    */
   multiplyScalar(value = 1): Vec2 {
@@ -251,7 +251,7 @@ export class Vec2 {
   /**
    * Calculate the linear interpolation of this [vector]{@link Vec2} by given [vector]{@link Vec2} and alpha, where alpha is the percent distance along the line
    * @param vector - [vector]{@link Vec2} to interpolate towards
-   * @param alpha=1 - interpolation factor in the [0, 1] interval
+   * @param [alpha=1] - interpolation factor in the [0, 1] interval
    * @returns - this [vector]{@link Vec2} after linear interpolation
    */
   lerp(vector: Vec2 = new Vec2(), alpha = 1): Vec2 {

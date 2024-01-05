@@ -5,26 +5,25 @@ import { throwWarning } from '../../../utils/utils'
  * Parameters used to create a {@link BufferArrayElement}
  */
 export interface BufferArrayElementParams extends BufferElementParams {
-  /** Initial length of the input [buffer binding array]{@link BufferBinding#value} */
+  /** Initial length of the input {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} */
   arrayLength: number
 }
 
 /**
- * BufferArrayElement class:
- * Used to handle specific array [buffer binding]{@link BufferBinding} types
+ * Used to handle specific array {@link core/bindings/BufferBinding.BufferBinding | buffer binding} types
  * @extends BufferElement
  */
 export class BufferArrayElement extends BufferElement {
-  /** Initial length of the input [buffer binding array]{@link BufferBinding#value} */
+  /** Initial length of the input {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} */
   arrayLength: number
-  /** Total number of elements (i.e. {@link arrayLength} divided by [buffer layout number of elements]{@link BufferLayout#numElements} */
+  /** Total number of elements (i.e. {@link arrayLength} divided by {@link core/bindings/utils.BufferLayout | buffer layout} number of elements */
   numElements: number
   /** Number of bytes in the {@link ArrayBuffer} between two elements {@link startOffset} */
   arrayStride: number
 
   /**
    * BufferArrayElement constructor
-   * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferArrayElement}
+   * @param parameters - {@link BufferArrayElementParams | parameters} used to create our {@link BufferArrayElement}
    */
   constructor({ name, key, type = 'f32', arrayLength = 1 }: BufferArrayElementParams) {
     super({ name, key, type })
@@ -42,9 +41,9 @@ export class BufferArrayElement extends BufferElement {
   }
 
   /**
-   * Set the [alignment]{@link BufferElementAlignment}
+   * Set the {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment}
    * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the arrayStride between two array elements. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
-   * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array buffer}
    */
   setAlignment(startOffset = 0) {
     super.setAlignment(startOffset)
@@ -57,7 +56,7 @@ export class BufferArrayElement extends BufferElement {
   }
 
   /**
-   * Update the [view]{@link BufferElement#view} based on the new value
+   * Update the {@link view} based on the new value
    * @param value - new value to use
    */
   update(value) {

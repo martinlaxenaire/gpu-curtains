@@ -364,6 +364,16 @@ export class GPUDeviceManager {
     this.textures = this.textures.filter((t) => t.uuid !== texture.uuid)
   }
 
+  /**
+   * Render everything:
+   * - call all our {@link renderers} {@link GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
+   * - create a {@link GPUCommandEncoder}
+   * - render all our {@link renderers}
+   * - submit our {@link GPUCommandBuffer}
+   * - upload {@link Texture#texture | textures} that do not have a parent
+   * - empty our {@link texturesQueue} array
+   * - call all our {@link renderers} {@link GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
+   */
   render() {
     if (!this.ready) return
 

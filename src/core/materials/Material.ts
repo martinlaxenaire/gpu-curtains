@@ -63,14 +63,8 @@ export class Material {
 
   /**
    * Material constructor
-   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
-   * @param {MaterialParams} parameters - parameters used to create our Material
-   * @param {string} parameters.label - Material label
-   * @param {boolean} parameters.useAsyncPipeline - whether the pipeline should be compiled asynchronously
-   * @param {MaterialShaders} parameters.shaders - our Material shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our Material {@link BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
+   * @param renderer - our renderer class object
+   * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams) {
     this.type = 'Material'
@@ -337,9 +331,10 @@ export class Material {
   /**
    * Clones a {@link BindGroup} from a list of buffers
    * Useful to create a new bind group with already created buffers, but swapped
-   * @param bindGroup - the BindGroup to clone
-   * @param bindings - our input binding buffers
-   * @param keepLayout - whether we should keep original bind group layout or not
+   * @param parameters - parameters used to clone the {@link BindGroup | bind group}
+   * @param parameters.bindGroup - the BindGroup to clone
+   * @param parameters.bindings - our input binding buffers
+   * @param parameters.keepLayout - whether we should keep original bind group layout or not
    * @returns - the cloned BindGroup
    */
   cloneBindGroup({
@@ -607,8 +602,9 @@ export class Material {
 
   /**
    * Map the content of a specific [buffer element]{@link BufferElement} belonging to a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
-   * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
-   * @param bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
+   * @param parameters - parameters used to get the result
+   * @param parameters.bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+   * @param parameters.bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
    * @returns - {@link Float32Array} holding {@link GPUBuffer} data
    */
   async getBufferElementResultByNames({

@@ -8,7 +8,7 @@ import { RenderTexture } from '../textures/RenderTexture'
 /**
  * Parameters used to create a {@link ShaderPass}
  */
-interface ShaderPassParams extends MeshBaseRenderParams {
+export interface ShaderPassParams extends MeshBaseRenderParams {
   renderTarget?: RenderTarget
 }
 

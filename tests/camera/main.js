@@ -1,4 +1,4 @@
-import { GPUCameraRenderer, Vec2, Vec3, Mesh, PlaneGeometry, BoxGeometry, GPUDeviceManager } from '../../src'
+import { GPUCameraRenderer, Vec2, Vec3, Mesh, PlaneGeometry, BoxGeometry, GPUDeviceManager } from '../../src/index.js'
 
 // Goals of this test:
 // - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class

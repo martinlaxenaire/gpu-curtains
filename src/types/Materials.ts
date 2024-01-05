@@ -109,7 +109,7 @@ export interface ComputeMaterialOptions extends MaterialOptions {
 export interface RenderMaterialAttributes {
   /** WGSL structure code fragment containing the attributes to use as vertex shader inputs */
   wgslStructFragment?: Geometry['wgslStructFragment']
-  /** Array of [vertex buffers]{@link VertexBuffer} to send to the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} */
+  /** Array of [vertex buffers]{@link types/Geometries.VertexBuffer} to send to the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} */
   vertexBuffers?: Geometry['vertexBuffers']
 }
 
