@@ -9,7 +9,7 @@ import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
 import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera'
-import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
+import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
 import { GPUDeviceManager } from '../core/renderers/GPUDeviceManager'
 import { Renderer } from '../core/renderers/utils'
@@ -305,7 +305,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created [compute passes]{@link ComputePass}
+   * Get all the created {@link ComputePass | compute passes}
    * @readonly
    */
   get computePasses(): ComputePass[] {

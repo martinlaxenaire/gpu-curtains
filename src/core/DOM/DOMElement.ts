@@ -145,13 +145,16 @@ export class DOMElement {
   }
 
   /**
-   * Get or set our element's bounding rectangle
-   * @readonly
+   * Get our element bounding rectangle
    */
   get boundingRect(): DOMElementBoundingRect {
     return this._boundingRect
   }
 
+  /**
+   * Set our element bounding rectangle
+   * @param boundingRect - new bounding rectangle
+   */
   set boundingRect(boundingRect: DOMElementBoundingRect) {
     const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect)
 

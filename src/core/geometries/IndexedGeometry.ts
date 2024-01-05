@@ -2,7 +2,7 @@ import { Geometry } from './Geometry'
 import { GeometryParams } from '../../types/Geometries'
 
 /**
- * Defines the available options to create an [index buffer]{@link IndexedGeometry#indexBuffer}
+ * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
  */
 export interface IndexedGeometryIndexBufferOptions {
   /** index buffer format */
@@ -12,7 +12,7 @@ export interface IndexedGeometryIndexBufferOptions {
 }
 
 /**
- * Defines an [index buffer]{@link IndexedGeometry#indexBuffer}
+ * Defines an {@link IndexedGeometry#indexBuffer | index buffer}
  */
 export interface IndexBuffer {
   /** index buffer format */
@@ -26,9 +26,7 @@ export interface IndexBuffer {
 }
 
 /**
- * IndexedGeometry class:
  * Used to created an indexed geometry which holds an index array to use as indexBuffer
- * @extends Geometry
  */
 export class IndexedGeometry extends Geometry {
   /** Object containing our index buffer format & length, array and GPUBuffer */
@@ -36,7 +34,7 @@ export class IndexedGeometry extends Geometry {
 
   /**
    * IndexedGeometry constructor
-   * @param [parameters={}] - {@link types/Geeometries.GeometryParams | parameters} used to create our IndexedGeometry
+   * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
    */
   constructor({
     verticesOrder = 'cw',

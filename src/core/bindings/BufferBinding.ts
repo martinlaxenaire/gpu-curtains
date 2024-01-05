@@ -12,18 +12,15 @@ import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleave
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
  */
 export interface BufferBindingInput extends InputBase {
-  /** Original [input value]{@link InputValue} */
+  /** Original {@link InputValue | input value} */
   _value: InputValue
 
-  /**
-   * Get/set the [input value]{@link InputValue}
-   * @readonly
-   */
+  /** Get the {@link InputValue | input value} */
   get value(): InputValue
-
+  /** Set the {@link InputValue | input value} */
   set value(value: InputValue)
 
-  /** Whether the [input value]{@link InputValue} has changed and we should update the [buffer binding array]{@link BufferBinding#value} */
+  /** Whether the {@link InputValue | input value} has changed and we should update the {@link BufferBinding#arrayBuffer | buffer binding array} */
   shouldUpdate: boolean
 }
 
@@ -35,7 +32,7 @@ export interface BufferBindingBaseParams {
   useStruct?: boolean
   /** {@link BufferBinding} memory access types (read only or read/write) */
   access?: BufferBindingMemoryAccessType
-  /** Object containing one or multiple [inputs]{@link Input} describing the structure of the {@link BufferBinding} */
+  /** Object containing one or multiple {@link Input | inputs} describing the structure of the {@link BufferBinding} */
   struct?: Record<string, Input>
 }
 
@@ -44,18 +41,16 @@ export interface BufferBindingBaseParams {
  */
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {}
 
-/** All allowed [buffer elements]{@link BufferElement} */
+/** All allowed {@link BufferElement | buffer elements} */
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement
 
 /**
- * BufferBinding class:
  * Used to format {@link BufferBindingParams#struct | struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
  * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
  * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. "array\<f32\>", "array\<vec3f\>" etc.)
- * @extends Binding
  */
 export class BufferBinding extends Binding {
-  /** Flag to indicate whether this {@link BufferBinding} [elements]{@link bufferElements} should be packed in a single structured object or if each one of them should be a separate binding. */
+  /** Flag to indicate whether this {@link BufferBinding} {@link bufferElements | buffer elements} should be packed in a single structured object or if each one of them should be a separate binding. */
   useStruct: boolean
   /** All the {@link BufferBinding} data inputs */
   inputs: Record<string, BufferBindingInput>
@@ -70,7 +65,7 @@ export class BufferBinding extends Binding {
   arrayBufferSize: number
   /** Array buffer that will be sent to the {@link GPUBuffer} */
   arrayBuffer: ArrayBuffer
-  /** Data view of our [array buffer]{@link arrayBuffer} */
+  /** Data view of our {@link arrayBuffer | array buffer} */
   arrayView: DataView
 
   /** The GPUBuffer */
@@ -85,7 +80,7 @@ export class BufferBinding extends Binding {
 
   /**
    * BufferBinding constructor
-   * @param parameters - [parameters]{@link BufferBindingParams} used to create our BufferBindings
+   * @param parameters - {@link BufferBindingParams | parameters} used to create our BufferBindings
    */
   constructor({
     label = 'Uniform',
@@ -122,10 +117,12 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
+   * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
    * @readonly
    */
-  get resourceLayout(): { buffer: GPUBufferBindingLayout } {
+  get resourceLayout(): {
+    buffer: GPUBufferBindingLayout
+  } {
     return {
       buffer: {
         type: getBindGroupLayoutBindingType(this),
@@ -134,7 +131,7 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Get [bind group resource]{@link GPUBindGroupEntry#resource}
+   * Get {@link GPUBindGroupEntry#resource | bind group resource}
    * @readonly
    */
   get resource(): { buffer: GPUBuffer | null } {
@@ -142,8 +139,8 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Format input struct and set our {@link inputs}
-   * @param bindings - struct inputs
+   * Format bindings struct and set our {@link inputs}
+   * @param bindings - bindings inputs
    */
   setBindings(bindings: Record<string, Input>) {
     Object.keys(bindings).forEach((bindingKey) => {
@@ -407,7 +404,7 @@ export class BufferBinding extends Binding {
   /**
    * Executed at the beginning of a Material render call.
    * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link arrayBuffer} array.
-   * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
+   * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
     Object.keys(this.inputs).forEach((bindingKey) => {
@@ -426,7 +423,7 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the [buffer]{@link BufferBinding#buffer} data of this {@link BufferBinding}
+   * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the {@link BufferBinding#buffer | GPU buffer} data of this {@link BufferBinding}
    * @param parameters - parameters used to extract the data
    * @param parameters.result - {@link Float32Array} holding {@link GPUBuffer} data
    * @param parameters.bufferElementName - name of the {@link BufferElement} to use to extract the data

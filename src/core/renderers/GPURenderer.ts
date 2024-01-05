@@ -39,12 +39,14 @@ export interface GPURendererParams {
 }
 
 // TODO should be GPUCurtainsRenderer props?
+/** Any Mesh that is bound to a DOM Element */
 export type DOMProjectedMesh = DOMMesh | Plane
+/** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
 export type ProjectedMesh = Mesh | DOMProjectedMesh
+/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing */
 export type RenderedMesh = ProjectedMesh | PingPongPlane | ShaderPass | FullscreenPlane
+/** Any Mesh or Compute pass */
 export type SceneObject = RenderedMesh | ComputePass
-
-//export type ProjectedMesh = Mesh | DOMProjectedMesh | typeof MeshBaseMixin<any>
 
 /**
  * Base renderer class, that could technically be used to render compute passes and draw fullscreen quads, even tho it is strongly advised to use at least the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer | GPUCameraRenderer} class instead.
@@ -383,7 +385,7 @@ export class GPURenderer {
 
   /**
    * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-   * Reset the adapter, device and configure context again, restore our scene objects context, resize the render textures.
+   * Configure the context again, resize the {@link RenderTarget | render targets} and {@link RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context.
    * @async
    */
   restoreContext() {
@@ -754,7 +756,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
    */
@@ -769,7 +771,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
    */

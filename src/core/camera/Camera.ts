@@ -31,22 +31,20 @@ export interface CameraPerspectiveOptions extends CameraBasePerspectiveOptions {
  * An object defining all possible {@link Camera} class instancing parameters
  */
 export interface CameraParams extends CameraPerspectiveOptions {
-  /** callback to execute when one of the [camera matrices]{@link Camera#matrices} changed */
+  /** callback to execute when one of the {@link Camera#matrices | camera matrices} changed */
   onMatricesChanged?: () => void
 }
 
-/** Defines all kind of possible {@link ProjectedObject3D} matrix types */
+/** Defines all kind of possible {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} matrix types */
 export type CameraObject3DMatricesType = Object3DMatricesType | 'projection' | 'view'
-/** Defines all possible [matrix object]{@link Object3DTransformMatrix} used by our {@link ProjectedObject3D} */
+/** Defines all possible {@link Object3DTransformMatrix | matrix object} used by our {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} */
 export type CameraObject3DMatrices = Record<CameraObject3DMatricesType, Object3DTransformMatrix>
 
 /**
- * Camera class:
  * Used to create a perspective camera and its matrices (projection, model, view).
- * @extends Object3D
  */
 export class Camera extends Object3D {
-  /** [Matrices object]{@link CameraObject3DMatrices} of the {@link Camera} */
+  /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera} */
   matrices: CameraObject3DMatrices
 
   /** Private {@link Camera} field of view */
@@ -61,7 +59,7 @@ export class Camera extends Object3D {
   /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
   #pixelRatio: number
 
-  /** Callback to execute when one of the [camera matrices]{@link Camera#matrices} changed */
+  /** Callback to execute when one of the camera {@link matrices} changed */
   onMatricesChanged?: () => void
 
   /** A number representing what CSS perspective value (in pixel) should be used to obtain the same perspective effect as this {@link Camera} */
@@ -71,7 +69,7 @@ export class Camera extends Object3D {
 
   /**
    * Camera constructor
-   * @param parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
+   * @param parameters - {@link CameraParams | parameters} used to create our {@link Camera}
    */
   constructor(
     {
@@ -171,13 +169,16 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Get / set the {@link Camera} [field of view]{@link Camera#fov}. Update the {@link projectionMatrix} only if the field of view actually changed
-   * @readonly
+   * Get the {@link Camera} {@link fov | field of view}
    */
   get fov(): number {
     return this.#fov
   }
 
+  /**
+   * Set the {@link Camera} {@link fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
+   * @param fov - new field of view
+   */
   set fov(fov: number) {
     // clamp between 1 and 179
     fov = Math.max(1, Math.min(fov ?? this.fov, 179))
@@ -192,13 +193,16 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Get / set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-   * @readonly
+   * Get the {@link Camera} {@link near} plane value.
    */
   get near(): number {
     return this.#near
   }
 
+  /**
+   * Set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+   * @param near - new near plane value
+   */
   set near(near: number) {
     near = Math.max(near ?? this.near, 0.01)
 
@@ -209,13 +213,16 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Get / set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-   * @readonly
+   * Get / set the {@link Camera} {@link far} plane value.
    */
   get far(): number {
     return this.#far
   }
 
+  /**
+   * Set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+   * @param far - new far plane value
+   */
   set far(far: number) {
     far = Math.max(far ?? this.far, this.near + 1)
 
@@ -226,20 +233,23 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Get / set the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
-   * @readonly
+   * Get the {@link Camera} {@link pixelRatio} value.
    */
   get pixelRatio() {
     return this.#pixelRatio
   }
 
+  /**
+   * Set the {@link Camera} {@link pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
+   * @param pixelRatio - new pixel ratio value
+   */
   set pixelRatio(pixelRatio: number) {
     this.#pixelRatio = pixelRatio ?? this.pixelRatio
     this.setCSSPerspective()
   }
 
   /**
-   * Sets the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
+   * Set the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
    * @param size - {@link width} and {@link height} values to use
    */
   setSize({ width, height }: RectSize) {
@@ -256,7 +266,7 @@ export class Camera extends Object3D {
 
   /**
    * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if neededs
-   * @param parameters - [parameters]{@link CameraPerspectiveOptions} to use for the perspective
+   * @param parameters - {@link CameraPerspectiveOptions | parameters} to use for the perspective
    */
   setPerspective({
     fov = this.fov,
@@ -274,7 +284,7 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
+   * Callback to run when the camera{@link modelMatrix | model matrix} has been updated
    */
   onAfterMatrixStackUpdate() {
     // callback because matrices changed
@@ -282,7 +292,7 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Sets a {@link CSSPerspective} property based on {@link Camera#size.width}, {@link Camera#size.height}, {@link pixelRatio} and {@link fov}
+   * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}
    * Used to translate planes along the Z axis using pixel units as CSS would do
    * Taken from {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value}
    */
@@ -321,8 +331,8 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-   * @param target - [target]{@link Vec3} to look at
+   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+   * @param target - {@link Vec3 | target} to look at
    */
   lookAt(target: Vec3 = new Vec3()) {
     // since we know it's a camera, inverse position and target

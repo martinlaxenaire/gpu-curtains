@@ -204,12 +204,16 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Get/set the [additional translation relative to the document]{@link DOMObject3DTransforms#position.document}
+   * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
    */
   get documentPosition(): Vec3 {
     return this.transforms.position.document
   }
 
+  /**
+   * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+   * @param value - additional translation relative to the document to apply
+   */
   set documentPosition(value: Vec3) {
     this.transforms.position.document = value
     this.applyPosition()
@@ -217,6 +221,7 @@ export class DOMObject3D extends ProjectedObject3D {
 
   /**
    * Get the [DOMObject3D DOM element]{@link DOMObject3D#domElement} scale in world space
+   * @readonly
    */
   get DOMObjectWorldScale(): Vec3 {
     return this.#DOMObjectWorldScale.clone()
@@ -224,6 +229,7 @@ export class DOMObject3D extends ProjectedObject3D {
 
   /**
    * Get the {@link DOMObject3D} scale in world space (accounting for [scale]{@link DOMObject3D#scale})
+   * @readonly
    */
   get worldScale(): Vec3 {
     return this.DOMObjectWorldScale.multiply(this.scale)
@@ -231,30 +237,39 @@ export class DOMObject3D extends ProjectedObject3D {
 
   /**
    * Get the {@link DOMObject3D} position in world space
+   * @readonly
    */
   get worldPosition(): Vec3 {
     return this.#DOMObjectWorldPosition.clone()
   }
 
   /**
-   * Get/set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+   * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
    */
   get transformOrigin(): Vec3 {
     return this.transforms.origin.model
   }
 
+  /**
+   * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+   * @param value - new transform origin
+   */
   set transformOrigin(value: Vec3) {
     this.transforms.origin.model = value
     this.setWorldTransformOrigin()
   }
 
   /**
-   * Get/set the {@link DOMObject3D} transform origin in world space
+   * Get the {@link DOMObject3D} transform origin in world space
    */
   get worldTransformOrigin(): Vec3 {
     return this.transforms.origin.world
   }
 
+  /**
+   * Set the {@link DOMObject3D} transform origin in world space
+   * @param value - new world space transform origin
+   */
   set worldTransformOrigin(value: Vec3) {
     this.transforms.origin.world = value
   }

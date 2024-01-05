@@ -8,6 +8,9 @@ import { generateUUID } from '../../utils/utils'
 import { Texture } from './Texture'
 import { TextureSize } from '../../types/Textures'
 
+/**
+ * Define the possible binding types of a {@link RenderTexture}
+ */
 export type RenderTextureBindingType = Exclude<TextureBindingType, 'externalTexture'>
 
 /**

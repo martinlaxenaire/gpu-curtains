@@ -109,14 +109,17 @@ export class Scene {
     }
   }
 
+  /**
+   * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
+   * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
+   */
   getRenderPassEntryLength(renderPassEntry: RenderPassEntry): number {
     if (!renderPassEntry) {
       return 0
     } else {
       return renderPassEntry.element
         ? 1
-        : 0 +
-            renderPassEntry.stack.unProjected.opaque.length +
+        : renderPassEntry.stack.unProjected.opaque.length +
             renderPassEntry.stack.unProjected.transparent.length +
             renderPassEntry.stack.projected.opaque.length +
             renderPassEntry.stack.projected.transparent.length

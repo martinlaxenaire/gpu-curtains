@@ -131,7 +131,7 @@ export const getTextureBindingWGSLVarType = (binding: TextureBinding): string =>
 /**
  * Get the correct [bind group layout]{@link GPUBindGroupLayout} resource type based on the given [binding type]{@link BindingType}
  * @param binding - [buffer binding]{@link BufferBinding} to use
- * @returns - [bind group layout]{@link GPUBindGroupLayout} resource type
+ * @returns - {@link GPUBindGroupLayout | bind group layout} resource type
  */
 export const getBindGroupLayoutBindingType = (binding: BufferBinding): GPUBufferBindingType => {
   if (binding.bindingType === 'storage' && binding.options.access === 'read_write') {

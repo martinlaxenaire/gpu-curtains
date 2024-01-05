@@ -21,7 +21,6 @@ export interface TextureBindingParams extends BindingParams {
 /**
  * TextureBinding class:
  * Used to handle {@link GPUTexture} and {@link GPUExternalTexture} bindings
- * @extends Binding
  */
 export class TextureBinding extends Binding {
   /** Our {@link TextureBinding} resource, i.e. a {@link GPUTexture} or {@link GPUExternalTexture} */
@@ -79,8 +78,7 @@ export class TextureBinding extends Binding {
   }
 
   /**
-   * Get/set {@link GPUBindGroupEntry#resource | bind group resource}
-   * @readonly
+   * Get the {@link GPUBindGroupEntry#resource | bind group resource}
    */
   get resource(): GPUExternalTexture | GPUTextureView | null {
     return this.texture instanceof GPUTexture
@@ -90,6 +88,10 @@ export class TextureBinding extends Binding {
       : null
   }
 
+  /**
+   * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+   * @param value - new bind group resource
+   */
   set resource(value: TextureBindingResource) {
     // resource changed, update bind group!
     if (value || this.texture) this.shouldResetBindGroup = true
