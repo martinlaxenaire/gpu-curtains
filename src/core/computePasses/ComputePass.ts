@@ -207,7 +207,7 @@ export class ComputePass {
 
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
    */
   loseContext() {
     this.material.loseContext()

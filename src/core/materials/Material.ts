@@ -10,11 +10,10 @@ import { FullShadersType, MaterialOptions, MaterialParams } from '../../types/Ma
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture } from '../textures/RenderTexture'
 import { Binding } from '../bindings/Binding'
-import { generateUUID, throwWarning } from '../../utils/utils'
+import { generateUUID } from '../../utils/utils'
 import { BufferElement } from '../bindings/bufferElements/BufferElement'
 
 /**
- * Material class:
  * Used as a base to create a material.
  * The goal of material is to create and update the bind groups (including textures and samplers), create a pipeline and use them to render.
  */
@@ -32,18 +31,18 @@ export class Material {
   pipelineEntry: AllowedPipelineEntries
 
   /**
-   * Array of [bind groups]{@link BindGroup} used by this {@link Material}
+   * Array of {@link BindGroup | bind groups} used by this {@link Material}
    * This array respects a specific order:
-   * 1. The [main texture bind group]{@link Material#texturesBindGroup}
-   * 2. The [bind group]{@link BindGroup} created using [uniforms]{@link types/BindGroups.BindGroupInputs#uniforms} and [storages]@link types/BindGroups.BindGroupInputs#storages} parameters if any
-   * 3. Additional [bind groups parameters]{@link MaterialParams#bindGroups} if any
+   * 1. The {@link texturesBindGroup | textures bind groups}
+   * 2. The {@link BindGroup | bind group} created using {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters if any
+   * 3. Additional {@link MaterialParams#bindGroups | bind groups} parameters if any
    */
   bindGroups: AllowedBindGroups[]
-  /** Array of [texture bind groups]{@link BindGroup} used by this {@link Material} */
+  /** Array of {@link TextureBindGroup | texture bind groups} used by this {@link Material} */
   texturesBindGroups: TextureBindGroup[]
-  /** Array of [bind groups]{@link BindGroup} created using the [uniforms]{@link types/BindGroups.BindGroupInputs#uniforms} and [storages]@link types/BindGroups.BindGroupInputs#storages} parameters when instancing this {@link Material} */
+  /** Array of {@link BindGroup | bind groups} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
   inputsBindGroups: BindGroup[]
-  /** Array of [cloned bind groups]{@link BindGroup} created by this {@link Material} */
+  /** Array of {@link BindGroup | cloned bind groups} created by this {@link Material} */
   clonedBindGroups: AllowedBindGroups[]
 
   /** Object containing all uniforms inputs handled by this {@link Material} */
@@ -51,14 +50,14 @@ export class Material {
   /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingInput>>
 
-  /** Array of [struct]{@link Binding} created using the [uniforms]{@link types/BindGroups.BindGroupInputs#uniforms} and [storages]@link types/BindGroups.BindGroupInputs#storages} parameters when instancing this {@link Material} */
+  /** Array of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
   inputsBindings: BindGroupBindingElement[]
 
-  /** Array of [textures]{@link Texture} handled by this {@link Material} */
+  /** Array of {@link Texture} handled by this {@link Material} */
   textures: Texture[]
-  /** Array of [render textures]{@link RenderTexture} handled by this {@link Material} */
+  /** Array of {@link RenderTexture} handled by this {@link Material} */
   renderTextures: RenderTexture[]
-  /** Array of [samplers]{@link Sampler} handled by this {@link Material} */
+  /** Array of {@link Sampler} handled by this {@link Material} */
   samplers: Sampler[]
 
   /**
@@ -124,8 +123,8 @@ export class Material {
   }
 
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
    */
   loseContext() {
     // start with the textures
@@ -148,7 +147,7 @@ export class Material {
   }
 
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} has been restored to recreate our bind groups.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
    */
   restoreContext() {
     // start with the samplers and textures
@@ -254,7 +253,7 @@ export class Material {
   }
 
   /**
-   * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related struct
+   * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct
    * @readonly
    */
   get texturesBindGroup(): TextureBindGroup {
@@ -395,10 +394,10 @@ export class Material {
   }
 
   /**
-   * [Update]{@link BindGroup#update} all bind groups:
-   * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-   * - Update its [buffer struct]{@link BindGroup#bufferBindings}
-   * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
+   * {@link BindGroup#update | Update} all bind groups:
+   * - Update all {@link texturesBindGroups | textures bind groups} textures
+   * - Update its {@link BindGroup#bufferBindings | buffer bindings}
+   * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}
    * - Check if we need to flush the pipeline
    */
   updateBindGroups() {
@@ -419,7 +418,7 @@ export class Material {
   /* INPUTS */
 
   /**
-   * Look for a [binding]{@link BindGroupBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+   * Look for a {@link BindGroupBindingElement | binding} by name in all {@link inputsBindings | input bindings}
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
@@ -428,7 +427,7 @@ export class Material {
   }
 
   /**
-   * Look for a [buffer binding]{@link BindGroupBufferBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+   * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
@@ -503,8 +502,8 @@ export class Material {
   }
 
   /**
-   * Destroy a [texture]{@link Texture} or [render texture]{@link RenderTexture}, only if it is not used by another object
-   * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
+   * Destroy a {@link Texture} or {@link RenderTexture}, only if it is not used by another object or cached.
+   * @param texture - {@link Texture} or {@link RenderTexture} to eventually destroy
    */
   destroyTexture(texture: Texture | RenderTexture) {
     // do not destroy a texture that must stay in cache
@@ -583,8 +582,8 @@ export class Material {
   }
 
   /**
-   * Map the content of a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
-   * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+   * Map the content of a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
    * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
    */
@@ -601,10 +600,10 @@ export class Material {
   }
 
   /**
-   * Map the content of a specific [buffer element]{@link BufferElement} belonging to a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
+   * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
    * @param parameters - parameters used to get the result
-   * @param parameters.bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
-   * @param parameters.bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
+   * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+   * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
    * @returns - {@link Float32Array} holding {@link GPUBuffer} data
    */
   async getBufferElementResultByNames({
@@ -633,8 +632,8 @@ export class Material {
   /**
    * Called before rendering the Material.
    * First, check if we need to create our bind groups or pipeline
-   * Then render the [textures]{@link Material#textures}
-   * Finally updates all the [bind groups]{@link Material#bindGroups}
+   * Then render the {@link textures}
+   * Finally updates all the {@link bindGroups | bind groups}
    */
   onBeforeRender() {
     // set our material if needed

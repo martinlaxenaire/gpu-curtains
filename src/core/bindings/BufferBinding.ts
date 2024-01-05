@@ -121,6 +121,7 @@ export class BufferBinding extends Binding {
    * @readonly
    */
   get resourceLayout(): {
+    /** {@link GPUBindGroupLayout | bind group layout} resource */
     buffer: GPUBufferBindingLayout
   } {
     return {
@@ -134,7 +135,10 @@ export class BufferBinding extends Binding {
    * Get {@link GPUBindGroupEntry#resource | bind group resource}
    * @readonly
    */
-  get resource(): { buffer: GPUBuffer | null } {
+  get resource(): {
+    /** {@link GPUBindGroup | bind group} resource */
+    buffer: GPUBuffer | null
+  } {
     return { buffer: this.buffer }
   }
 

@@ -57,7 +57,10 @@ export class SamplerBinding extends Binding {
    * Get {@link GPUBindGroupLayoutEntry#sampler | bind group layout entry resource}
    * @readonly
    */
-  get resourceLayout(): { sampler: GPUSamplerBindingLayout } {
+  get resourceLayout(): {
+    /** {@link GPUBindGroupLayout | bind group layout} resource */
+    sampler: GPUSamplerBindingLayout
+  } {
     return {
       sampler: {
         type: this.options.type, // TODO set shouldResetBindGroupLayout to true if it changes afterwards
