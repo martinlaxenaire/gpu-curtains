@@ -6,19 +6,17 @@ import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
- * ComputePipelineEntry class:
  * Used to create a pipeline entry specifically designed to handle compute passes.
- * @extends PipelineEntry
  */
 export class ComputePipelineEntry extends PipelineEntry {
   /** Shaders to use with this {@link ComputePipelineEntry} */
   shaders: PipelineEntryShaders
-  /** [Compute pipeline descriptor]{@link GPUComputePipelineDescriptor} based on [layout]{@link ComputePipelineEntry#layout} and [shaders]{@link ComputePipelineEntry#shaders} */
+  /** {@link GPUComputePipelineDescriptor | Compute pipeline descriptor} based on {@link layout} and {@link shaders} */
   descriptor: GPUComputePipelineDescriptor | null
 
   /**
    * ComputePipelineEntry constructor
-   * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link ComputePipelineEntry}
+   * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
    */
   constructor(parameters: PipelineEntryParams) {
     let { renderer } = parameters
@@ -47,8 +45,8 @@ export class ComputePipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups})
-   * @param parameters - the [bind groups]{@link ComputeMaterial#bindGroups} to use
+   * Set {@link ComputePipelineEntry} properties (in this case the {@link bindGroups | bind groups})
+   * @param parameters - the {@link core/materials/ComputeMaterial.ComputeMaterial#bindGroups | bind groups} to use
    */
   setPipelineEntryProperties(parameters: PipelineEntryPropertiesParams) {
     const { bindGroups } = parameters
@@ -59,7 +57,7 @@ export class ComputePipelineEntry extends PipelineEntry {
   /* SHADERS */
 
   /**
-   * Patch the shaders by appending all the [bind groups]{@link ComputePipelineEntry#bindGroups}) WGSL code fragments to the given [parameter shader code]{@link PipelineEntryParams#shaders}
+   * Patch the shaders by appending all the {@link bindGroups | bind groups}) WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
    */
   patchShaders() {
     this.shaders.compute.head = ''
@@ -109,7 +107,7 @@ export class ComputePipelineEntry extends PipelineEntry {
   /* SETUP */
 
   /**
-   * Create the [shaders]{@link ComputePipelineEntry#shaders}: patch them and create the {@link GPUShaderModule}
+   * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
    */
   createShaders() {
     this.patchShaders()
@@ -121,7 +119,7 @@ export class ComputePipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Create the [compute pipeline descriptor]{@link ComputePipelineEntry#descriptor}
+   * Create the compute pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
     if (!this.shaders.compute.module) return
@@ -137,7 +135,7 @@ export class ComputePipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Create the [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * Create the compute {@link pipeline}
    */
   createComputePipeline() {
     if (!this.shaders.compute.module) return
@@ -151,7 +149,7 @@ export class ComputePipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Asynchronously create the [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * Asynchronously create the compute {@link pipeline}
    * @async
    * @returns - void promise result
    */
@@ -170,7 +168,7 @@ export class ComputePipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our compute {@link pipeline}
    * @async
    */
   async compilePipelineEntry(): Promise<void> {

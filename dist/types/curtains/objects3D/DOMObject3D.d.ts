@@ -12,19 +12,19 @@ export interface DOMObject3DSize {
     document: RectBBox;
 }
 /**
- * Defines all necessary [vectors]{@link Vec3}/[quaternions]{@link Quat} to compute a 3D [model matrix]{@link Mat4} based on a DOM [HTML Element]{@link HTMLElement}
+ * Defines all necessary [vectors]{@link math/Vec3.Vec3}/[quaternions]{@link math/Quat.Quat} to compute a 3D [model matrix]{@link math/Mat4.Mat4} based on a DOM [HTML Element]{@link HTMLElement}
  */
 export interface DOMObject3DTransforms extends Omit<Object3DTransforms, 'origin' | 'position'> {
     /** Transformation origin object */
     origin: {
-        /** Transformation origin [vector]{@link Vec3} relative to the {@link DOMObject3D} */
+        /** Transformation origin [vector]{@link math/Vec3.Vec3} relative to the {@link DOMObject3D} */
         model: Vec3;
-        /** Transformation origin [vector]{@link Vec3} relative to the 3D world */
+        /** Transformation origin [vector]{@link math/Vec3.Vec3} relative to the 3D world */
         world: Vec3;
     };
     /** Position object */
     position: {
-        /** Position [vector]{@link Vec3} relative to the 3D world */
+        /** Position [vector]{@link math/Vec3.Vec3} relative to the 3D world */
         world: Vec3;
         /** Additional translation [vector]{@link Vec3} relative to the DOM document */
         document: Vec3;
@@ -95,42 +95,57 @@ export declare class DOMObject3D extends ProjectedObject3D {
      */
     get boundingRect(): DOMElementBoundingRect;
     /**
-     * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+     * Set our transforms properties and [onChange]{@link math/Vec3.Vec3#onChange} callbacks
      */
     setTransforms(): void;
     /**
-     * Get/set the [additional translation relative to the document]{@link DOMObject3DTransforms#position.document}
+     * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
      */
     get documentPosition(): Vec3;
+    /**
+     * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+     * @param value - additional translation relative to the document to apply
+     */
     set documentPosition(value: Vec3);
     /**
      * Get the [DOMObject3D DOM element]{@link DOMObject3D#domElement} scale in world space
+     * @readonly
      */
     get DOMObjectWorldScale(): Vec3;
     /**
      * Get the {@link DOMObject3D} scale in world space (accounting for [scale]{@link DOMObject3D#scale})
+     * @readonly
      */
     get worldScale(): Vec3;
     /**
      * Get the {@link DOMObject3D} position in world space
+     * @readonly
      */
     get worldPosition(): Vec3;
     /**
-     * Get/set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+     * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
      */
     get transformOrigin(): Vec3;
+    /**
+     * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+     * @param value - new transform origin
+     */
     set transformOrigin(value: Vec3);
     /**
-     * Get/set the {@link DOMObject3D} transform origin in world space
+     * Get the {@link DOMObject3D} transform origin in world space
      */
     get worldTransformOrigin(): Vec3;
+    /**
+     * Set the {@link DOMObject3D} transform origin in world space
+     * @param value - new world space transform origin
+     */
     set worldTransformOrigin(value: Vec3);
     /**
-     * Set the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
+     * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
      */
     applyPosition(): void;
     /**
-     * Compute the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
+     * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
      */
     applyDocumentPosition(): void;
     /**
@@ -138,12 +153,12 @@ export declare class DOMObject3D extends ProjectedObject3D {
      */
     applyTransformOrigin(): void;
     /**
-     * Update the [model matrix]{@link DOMObject3D#modelMatrix} accounting the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} and [DOMObject3D world scale]{@link DOMObject3D##DOMObjectWorldScale}
+     * Update the [model matrix]{@link DOMObject3D#modelMatrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
      */
     updateModelMatrix(): void;
     /**
-     * Convert a document position [vector]{@link Vec3} to a world position [vector]{@link Vec3}
-     * @param vector - document position [vector]{@link Vec3} converted to world space
+     * Convert a document position [vector]{@link math/Vec3.Vec3} to a world position [vector]{@link math/Vec3.Vec3}
+     * @param vector - document position [vector]{@link math/Vec3.Vec3} converted to world space
      */
     documentToWorldSpace(vector?: Vec3): Vec3;
     /**
@@ -156,7 +171,7 @@ export declare class DOMObject3D extends ProjectedObject3D {
     setWorldTransformOrigin(): void;
     /**
      * Update the [DOMOBject3D DOMElement]{@link DOMObject3D#domElement} scroll position
-     * @param delta - last [scroll delta values]{@link ScrollManager#delta}
+     * @param delta - last [scroll delta values]{@link utils/ScrollManager.ScrollManager.delta}
      */
     updateScrollPosition(delta?: DOMPosition): void;
     /**

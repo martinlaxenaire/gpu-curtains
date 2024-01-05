@@ -9,47 +9,46 @@ export type Object3DMatricesType = 'model'
  * Defines an {@link Object3D} matrix object
  */
 export interface Object3DTransformMatrix {
-  /** The [matrix]{@link math/Mat4.Mat4} used */
+  /** The {@link math/Mat4.Mat4 | matrix} used */
   matrix: Mat4
-  /** Whether we should update the [matrix]{@link math/Mat4.Mat4} */
+  /** Whether we should update the {@link math/Mat4.Mat4 | matrix} */
   shouldUpdate: boolean
-  /** Function to update our [matrix]{@link math/Mat4.Mat4} */
+  /** Function to update our {@link math/Mat4.Mat4 | matrix} */
   onUpdate: () => void
 }
 
-/** Defines all possible [matrix object]{@link Object3DTransformMatrix} used by our {@link Object3D} */
+/** Defines all possible {@link Object3DTransformMatrix | matrix object} used by our {@link Object3D} */
 export type Object3DMatrices = Record<Object3DMatricesType, Object3DTransformMatrix>
 
 /**
- * Defines all necessary [vectors]{@link math/Vec3.Vec3}/[quaternions]{@link math/Quat.Quat} to compute a 3D [model matrix]{@link math/Mat4.Mat4}
+ * Defines all necessary {@link math/Vec3.Vec3 | vectors}/{@link math/Quat.Quat | quaternions} to compute a 3D {@link math/Mat4.Mat4 | model matrix}
  */
 export interface Object3DTransforms {
   /** Transformation origin object */
   origin: {
-    /** Transformation origin [vector]{@link math/Vec3.Vec3} relative to the {@link Object3D} */
+    /** Transformation origin {@link math/Vec3.Vec3 | vector} relative to the {@link Object3D} */
     model: Vec3
   }
-  /** Model [quaternion]{@link math/Quat.Quat} defining its rotation in 3D space */
+  /** Model {@link math/Quat.Quat | quaternion} defining its rotation in 3D space */
   quaternion: Quat
-  /** Model rotation [vector]{@link math/Vec3.Vec3} used to compute its [quaternion]{@link math/Quat.Quat} */
+  /** Model rotation {@link math/Vec3.Vec3 | vector} used to compute its {@link math/Quat.Quat | quaternion} */
   rotation: Vec3
   /** Position object */
   position: {
-    /** Position [vector]{@link math/Vec3.Vec3} relative to the 3D world */
+    /** Position {@link math/Vec3.Vec3 | vector} relative to the 3D world */
     world: Vec3
   }
-  /** Model 3D scale [vector]{@link math/Vec3.Vec3} */
+  /** Model 3D scale {@link math/Vec3.Vec3 | vector} */
   scale: Vec3
 }
 
 /**
- * Object3D class:
  * Used to create an object with transformation properties and a model matrix
  */
 export class Object3D {
-  /** [Transformation object]{@link Object3DTransforms} of the {@link Object3D} */
+  /** {@link Object3DTransforms | Transformation object} of the {@link Object3D} */
   transforms: Object3DTransforms
-  /** [Matrices object]{@link Object3DMatrices} of the {@link Object3D} */
+  /** {@link Object3DMatrices | Matrices object} of the {@link Object3D} */
   matrices: Object3DMatrices
 
   /**
@@ -63,7 +62,7 @@ export class Object3D {
   /* TRANSFORMS */
 
   /**
-   * Set our transforms properties and [onChange]{@link math/Vec3.Vec3#onChange} callbacks
+   * Set our transforms properties and {@link math/Vec3.Vec3#onChange | vectors onChange} callbacks
    */
   setTransforms() {
     this.transforms = {
@@ -85,50 +84,63 @@ export class Object3D {
   }
 
   /**
-   * Get/set our rotation vector
-   * @readonly
+   * Get our rotation {@link math/Vec3.Vec3 | vector}
    */
   get rotation(): Vec3 {
     return this.transforms.rotation
   }
 
+  /**
+   * Set our rotation {@link math/Vec3.Vec3 | vector}
+   * @param value - new rotation {@link math/Vec3.Vec3 | vector}
+   */
   set rotation(value: Vec3) {
     this.transforms.rotation = value
     this.applyRotation()
   }
 
   /**
-   * Get/set our quaternion
-   * @readonly
+   * Get our {@link math/Quat.Quat | quaternion}
    */
   get quaternion(): Quat {
     return this.transforms.quaternion
   }
 
+  /**
+   * Set our {@link math/Quat.Quat | quaternion}
+   * @param value - new {@link math/Quat.Quat | quaternion}
+   */
   set quaternion(value: Quat) {
     this.transforms.quaternion = value
   }
 
   /**
-   * Get/set our position vector
-   * @readonly
+   * Get our position {@link math/Vec3.Vec3 | vector}
    */
   get position(): Vec3 {
     return this.transforms.position.world
   }
 
+  /**
+   * Set our position {@link math/Vec3.Vec3 | vector}
+   * @param value - new position {@link math/Vec3.Vec3 | vector}
+   */
   set position(value: Vec3) {
     this.transforms.position.world = value
   }
 
   /**
-   * Get/set our scale vector
+   * Get our scale {@link math/Vec3.Vec3 | vector}
    * @readonly
    */
   get scale(): Vec3 {
     return this.transforms.scale
   }
 
+  /**
+   * Set our scale {@link math/Vec3.Vec3 | vector}
+   * @param value - new scale {@link math/Vec3.Vec3 | vector}
+   */
   set scale(value: Vec3) {
     // force scale to 1 on Z axis
     this.transforms.scale = value
@@ -136,19 +148,22 @@ export class Object3D {
   }
 
   /**
-   * Get/set our transform origin vector
-   * @readonly
+   * Get our transform origin {@link math/Vec3.Vec3 | vector}
    */
   get transformOrigin(): Vec3 {
     return this.transforms.origin.model
   }
 
+  /**
+   * Set our transform origin {@link math/Vec3.Vec3 | vector}
+   * @param value - new transform origin {@link math/Vec3.Vec3 | vector}
+   */
   set transformOrigin(value: Vec3) {
     this.transforms.origin.model = value
   }
 
   /**
-   * Apply our rotation and tell our model matrix to update
+   * Apply our rotation and tell our {@link modelMatrix | model matrix} to update
    */
   applyRotation() {
     this.quaternion.setFromVec3(this.rotation)
@@ -157,21 +172,21 @@ export class Object3D {
   }
 
   /**
-   * Tell our model matrix to update
+   * Tell our {@link modelMatrix | model matrix} to update
    */
   applyPosition() {
     this.shouldUpdateModelMatrix()
   }
 
   /**
-   * Tell our model matrix to update
+   * Tell our {@link modelMatrix | model matrix} to update
    */
   applyScale() {
     this.shouldUpdateModelMatrix()
   }
 
   /**
-   * Tell our model matrix to update
+   * Tell our {@link modelMatrix | model matrix} to update
    */
   applyTransformOrigin() {
     this.shouldUpdateModelMatrix()
@@ -180,7 +195,7 @@ export class Object3D {
   /* MATRICES */
 
   /**
-   * Set our model matrix
+   * Set our {@link modelMatrix | model matrix}
    */
   setMatrices() {
     this.matrices = {
@@ -193,28 +208,31 @@ export class Object3D {
   }
 
   /**
-   * Get/set our model matrix
-   * @readonly
+   * Get our {@link math/Mat4.Mat4 | model matrix}
    */
   get modelMatrix(): Mat4 {
     return this.matrices.model.matrix
   }
 
+  /**
+   * Set our {@link math/Mat4.Mat4 | model matrix}
+   * @param value - new {@link math/Mat4.Mat4 | model matrix}
+   */
   set modelMatrix(value: Mat4) {
     this.matrices.model.matrix = value
     this.shouldUpdateModelMatrix()
   }
 
   /**
-   * Set our model matrix shouldUpdate flag to true (tell it to update)
+   * Set our {@link modelMatrix | model matrix} shouldUpdate flag to true (tell it to update)
    */
   shouldUpdateModelMatrix() {
     this.matrices.model.shouldUpdate = true
   }
 
   /**
-   * Rotate this {@link Object3D} so it looks at the [target]{@link math/Vec3.Vec3}
-   * @param target - [target]{@link math/Vec3.Vec3} to look at
+   * Rotate this {@link Object3D} so it looks at the {@link math/Vec3.Vec3 | target}
+   * @param target - {@link math/Vec3.Vec3 | target} to look at
    */
   lookAt(target: Vec3 = new Vec3()) {
     const rotationMatrix = new Mat4().lookAt(target, this.position)
@@ -223,7 +241,7 @@ export class Object3D {
   }
 
   /**
-   * Update our model matrix
+   * Update our {@link modelMatrix | model matrix}
    */
   updateModelMatrix() {
     // compose our model transformation matrix from custom origin

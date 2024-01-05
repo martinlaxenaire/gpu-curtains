@@ -38,7 +38,7 @@ export declare class Texture extends Object3D {
     private _parent;
     /** Whether the source has been loaded */
     private _sourceLoaded;
-    /** Whether the source has been uploaded to the GPU, handled by the [renderer textures queue array]{@link Renderer#texturesQueue} */
+    /** Whether the source has been uploaded to the GPU, handled by the {@link GPUDeviceManager#texturesQueue | renderer textures queue array} */
     private _sourceUploaded;
     /** Whether the texture should be uploaded to the GPU */
     shouldUpdate: boolean;

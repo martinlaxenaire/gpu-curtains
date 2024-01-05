@@ -13,15 +13,15 @@ export interface GPUDeviceManagerParams {
     label?: string;
     /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
     production?: boolean;
-    /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter} or [device]{@link GPUDevice} */
+    /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
     onError?: () => void;
-    /** Callback to run whenever the [device]{@link GPUDeviceManagerParams#device} is lost */
+    /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost */
     onDeviceLost?: (info?: GPUDeviceLostInfo) => void;
 }
 /**
  * GPUDeviceManager class:
- * Responsible for the WebGPU [adapter]{@link GPUAdapter} and [device]{@link GPUDevice} creations, losing and restoration.
- * Will also keep a track of all the [renderers]{@link Renderer}, [samplers]{@link Sampler} and [buffers]{@link GPUBuffer} created.
+ * Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
+ * Will also keep a track of all the {@link Renderer | renderers}, {@link Sampler | samplers} and {@link GPUBuffer | GPU buffers} created.
  */
 export declare class GPUDeviceManager {
     /** Number of times a {@link GPUDevice} has been created */
@@ -32,17 +32,17 @@ export declare class GPUDeviceManager {
     production: boolean;
     /** The navigator {@link GPU} object */
     gpu: GPU | undefined;
-    /** The WebGPU [adapter]{@link GPUAdapter} used */
+    /** The WebGPU {@link GPUAdapter | adapter} used */
     adapter: GPUAdapter | void;
-    /** The WebGPU [adapter]{@link GPUAdapter} informations */
+    /** The WebGPU {@link GPUAdapter | adapter} informations */
     adapterInfos: GPUAdapterInfo | undefined;
-    /** The WebGPU [device]{@link GPUDevice} used */
+    /** The WebGPU {@link GPUDevice | device} used */
     device: GPUDevice | undefined;
-    /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} have been successfully created */
+    /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its {@link adapter} and {@link device} have been successfully created */
     ready: boolean;
     /** The {@link PipelineManager} used to cache {@link GPURenderPipeline} and {@link GPUComputePipeline} and set them only when appropriate */
     pipelineManager: PipelineManager;
-    /** Array of [renderers]{@link Renderer} using that {@link GPUDeviceManager} */
+    /** Array of {@link Renderer | renderers} using that {@link GPUDeviceManager} */
     renderers: Renderer[];
     /** An array containing all our created {@link AllowedBindGroups} */
     bindGroups: AllowedBindGroups[];
@@ -52,47 +52,47 @@ export declare class GPUDeviceManager {
     samplers: Sampler[];
     /** An array containing all our created {@link Texture} */
     textures: Texture[];
-    /** An array to keep track of the newly uploaded [textures]{@link Texture} and set their [sourceUploaded]{@link Texture#sourceUploaded} property */
+    /** An array to keep track of the newly uploaded {@link Texture | textures} and set their {@link Texture#sourceUploaded | sourceUploaded} property */
     texturesQueue: Texture[];
-    /** Callback to run if there's any error while trying to set up the [adapter]{@link GPUAdapter}, [device]{@link GPUDevice} or [context]{@link GPUCanvasContext} */
+    /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
     onError: () => void;
-    /** Callback to run whenever the [renderer device]{@link GPUDeviceManager#device} is lost */
+    /** Callback to run whenever the {@link device} is lost */
     onDeviceLost: (info?: GPUDeviceLostInfo) => void;
     /**
      * GPUDeviceManager constructor
-     * @param parameters - [parameters]{@link GPUDeviceManagerParams} used to create this {@link GPUDeviceManager}
+     * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
      */
     constructor({ label, production, onError, onDeviceLost, }: GPUDeviceManagerParams);
     /**
-     * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
+     * Set our {@link adapter} and {@link device} if possible
      */
     setAdapterAndDevice(): Promise<void>;
     /**
-     * Set up our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} and all the already created [renderers]{@link GPUDeviceManager#renderers} contexts
+     * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
      */
     init(): Promise<void>;
     /**
-     * Set our [adapter]{@link GPUDeviceManager#adapter} if possible.
+     * Set our {@link adapter} if possible.
      * The adapter represents a specific GPU. Some devices have multiple GPUs.
      * @async
      */
     setAdapter(): Promise<void>;
     /**
-     * Set our [device]{@link GPUDeviceManager#device}
+     * Set our {@link device}
      * @async
      */
     setDevice(): Promise<void>;
     /**
-     * Set our [pipeline manager]{@link GPUDeviceManager#pipelineManager}
+     * Set our {@link pipelineManager | pipeline manager}
      */
     setPipelineManager(): void;
     /**
-     * Called when the [device]{@link GPUDeviceManager#device} is lost.
+     * Called when the {@link device} is lost.
      * Reset all our renderers
      */
     loseDevice(): void;
     /**
-     * Called when the [device]{@link GPUDeviceManager#device} should be restored.
+     * Called when the {@link device} should be restored.
      * Restore all our renderers
      */
     restoreDevice(): Promise<void>;
@@ -101,69 +101,79 @@ export declare class GPUDeviceManager {
      */
     setDeviceObjects(): void;
     /**
-     * Add a [renderer]{@link Renderer} to our [renderers array]{@link GPUDeviceManager#renderers}
-     * @param renderer - [renderer]{@link Renderer} to add
+     * Add a {@link Renderer} to our {@link renderers} array
+     * @param renderer - {@link Renderer} to add
      */
     addRenderer(renderer: Renderer): void;
     /**
-     * Remove a [renderer]{@link Renderer} from our [renderers array]{@link GPUDeviceManager#renderers}
-     * @param renderer - [renderer]{@link Renderer} to remove
+     * Remove a {@link Renderer} from our {@link renderers} array
+     * @param renderer - {@link Renderer} to remove
      */
     removeRenderer(renderer: Renderer): void;
     /**
-     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}
      * @readonly
      */
     get deviceRenderedObjects(): SceneObject[];
     /**
-     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
-     * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+     * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to add
      */
     addBindGroup(bindGroup: AllowedBindGroups): void;
     /**
-     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
-     * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+     * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
      */
     removeBindGroup(bindGroup: AllowedBindGroups): void;
     /**
-     * Add a [buffer]{@link GPUBuffer} to our our [buffers array]{@link GPUDeviceManager#buffers}
-     * @param buffer - [buffer]{@link GPUBuffer} to add
+     * Add a {@link GPUBuffer} to our our {@link buffers} array
+     * @param buffer - {@link GPUBuffer} to add
      */
     addBuffer(buffer: GPUBuffer): void;
     /**
-     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
-     * @param buffer - [buffer]{@link GPUBuffer} to remove
-     * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
+     * Remove a {@link GPUBuffer} from our {@link buffers} array
+     * @param buffer - {@link GPUBuffer} to remove
+     * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
      */
     removeBuffer(buffer: GPUBuffer, originalLabel?: string): void;
     /**
-     * Add a [sampler]{@link Sampler} to our [samplers array]{@link GPUDeviceManager#samplers}
-     * @param sampler - [sampler]{@link Sampler} to add
+     * Add a {@link Sampler} to our {@link samplers} array
+     * @param sampler - {@link Sampler} to add
      */
     addSampler(sampler: Sampler): void;
     /**
-     * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
-     * @param sampler - [sampler]{@link Sampler} to remove
+     * Remove a {@link Sampler} from our {@link samplers} array
+     * @param sampler - {@link Sampler} to remove
      */
     removeSampler(sampler: Sampler): void;
     /**
-     * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
-     * @param texture - [texture]{@link Texture} to add
+     * Add a {@link Texture} to our {@link textures} array
+     * @param texture - {@link Texture} to add
      */
     addTexture(texture: Texture): void;
     /**
-     * Upload a [texture]{@link Texture} to the GPU
-     * @param texture - [texture]{@link Texture} to upload
+     * Upload a {@link Texture#texture | texture} to the GPU
+     * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
      */
     uploadTexture(texture: Texture): void;
     /**
-     * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
-     * @param texture - [texture]{@link Texture} to remove
+     * Remove a {@link Texture} from our {@link textures} array
+     * @param texture - {@link Texture} to remove
      */
     removeTexture(texture: Texture): void;
+    /**
+     * Render everything:
+     * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
+     * - create a {@link GPUCommandEncoder}
+     * - render all our {@link renderers}
+     * - submit our {@link GPUCommandBuffer}
+     * - upload {@link Texture#texture | textures} that do not have a parent
+     * - empty our {@link texturesQueue} array
+     * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
+     */
     render(): void;
     /**
-     * Destroy the {@link GPUDeviceManager} and its [renderers]{@link GPUDeviceManager#renderers}
+     * Destroy the {@link GPUDeviceManager} and its {@link renderers}
      */
     destroy(): void;
 }

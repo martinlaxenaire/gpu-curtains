@@ -3,7 +3,7 @@ import { GeometryBaseParams } from '../../types/Geometries';
 /**
  * Parameters used to create a {@link SphereGeometry}
  */
-interface SphereGeometryParams extends GeometryBaseParams {
+export interface SphereGeometryParams extends GeometryBaseParams {
     /** Number of horizontal segments */
     widthSegments?: number;
     /** Number of vertical segments */
@@ -25,4 +25,3 @@ interface SphereGeometryParams extends GeometryBaseParams {
 export declare class SphereGeometry extends IndexedGeometry {
     constructor({ widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength, instancesCount, vertexBuffers, topology, }?: SphereGeometryParams);
 }
-export {};

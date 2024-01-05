@@ -278,7 +278,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created [meshes]{@link MeshBase}
+   * Get all the created {@link ProjectedMesh | projected meshes}
    * @readonly
    */
   get meshes(): ProjectedMesh[] {
@@ -286,7 +286,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
+   * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
    * @readonly
    */
   get domMeshes(): DOMMesh[] {
@@ -297,7 +297,7 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created [planes]{@link Plane}
+   * Get all the created {@link Plane | planes}
    * @readonly
    */
   get planes(): Plane[] {

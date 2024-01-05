@@ -10,7 +10,7 @@ export interface SamplerOptions extends Partial<GPUSamplerDescriptor>, GPUSample
  * Parameters used to create a {@link Sampler}
  */
 export interface SamplerParams extends SamplerOptions {
-  /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
+  /** Name of the {@link Sampler} to use in the {@link SamplerBinding | binding} */
   name: string
 }
 
@@ -23,24 +23,24 @@ export class Sampler {
   type: string
   /** The universal unique id of this {@link Sampler} */
   readonly uuid: string
-  /** [renderer]{@link Renderer} used by this {@link Sampler} */
+  /** {@link Renderer} used by this {@link Sampler} */
   renderer: Renderer
   /** The label of the {@link Sampler}, used to create the {@link GPUSampler} for debugging purpose */
   label: string
-  /** Name of the {@link Sampler} to use in the [binding]{@link SamplerBinding} */
+  /** Name of the {@link Sampler} to use in the {@link SamplerBinding | binding} */
   name: string
   /** Options used to create this {@link Sampler} */
   options: SamplerOptions
 
   /** {@link GPUSampler} */
   sampler: GPUSampler
-  /** {@link SamplerBinding} to pass to a [bind group]{@link BindGroup} */
+  /** {@link SamplerBinding | binding} to pass to a {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group} */
   binding: SamplerBinding
 
   /**
    * Sampler constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
-   * @param parameters - [parameters]{@link SamplerParams} used to create this {@link Sampler}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
+   * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}
    */
   constructor(
     renderer: GPUCurtains | Renderer,
@@ -99,7 +99,7 @@ export class Sampler {
   }
 
   /**
-   * Set the [binding]{@link SamplerBinding}
+   * Set the {@link SamplerBinding | binding}
    */
   createBinding() {
     this.binding = new SamplerBinding({

@@ -65,6 +65,10 @@ export declare class Scene {
     constructor({ renderer }: {
         renderer: Renderer | GPUCurtains;
     });
+    /**
+     * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
+     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
+     */
     getRenderPassEntryLength(renderPassEntry: RenderPassEntry): number;
     /**
      * Add a [compute pass]{@link ComputePass} to our scene [computePassEntries array]{@link Scene#computePassEntries}

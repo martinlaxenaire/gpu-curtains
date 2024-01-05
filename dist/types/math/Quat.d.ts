@@ -1,6 +1,7 @@
 import { Vec3 } from './Vec3';
 import { Mat4 } from './Mat4';
-type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
+/** Defines all possible rotations axis orders */
+export type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
 /**
  * Quat class:
  * Really basic Quaternion class used for 3D rotation calculations
@@ -15,8 +16,8 @@ export declare class Quat {
     axisOrder: AxisOrder;
     /**
      * Quat constructor
-     * @param elements - initial array to use
-     * @param axisOrder='XYZ' - axis order to use
+     * @param [elements] - initial array to use
+     * @param [axisOrder='XYZ'] - axis order to use
      */
     constructor(elements?: Float32Array, axisOrder?: AxisOrder);
     /**
@@ -68,4 +69,3 @@ export declare class Quat {
      */
     setFromRotationMatrix(matrix: Mat4): Quat;
 }
-export {};

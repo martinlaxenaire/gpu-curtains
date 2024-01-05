@@ -7,12 +7,12 @@ import { RenderTexture } from '../textures/RenderTexture';
 /**
  * Parameters used to create a {@link ShaderPass}
  */
-interface ShaderPassParams extends MeshBaseRenderParams {
+export interface ShaderPassParams extends MeshBaseRenderParams {
+    /** Optional {@link RenderTarget} to assign to the {@link ShaderPass} */
     renderTarget?: RenderTarget;
 }
 /**
- * ShaderPass class:
- * Used to apply post processing, i.e. render meshes to a [render texture]{@link RenderTexture} and then draw a {@link FullscreenPlane} using that texture as an input.
+ * Used to apply post processing, i.e. render meshes to a {@link RenderTexture} and then draw a {@link FullscreenPlane} using that texture as an input.
  * A ShaderPass could either post process the whole scene or just a bunch of meshes using a {@link RenderTarget}.
  */
 export declare class ShaderPass extends FullscreenPlane {
@@ -20,29 +20,28 @@ export declare class ShaderPass extends FullscreenPlane {
     renderTarget: RenderTarget | undefined;
     /**
      * ShaderPass constructor
-     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-     * @param parameters - [parameters]{@link ShaderPassParams} use to create this {@link ShaderPass}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
+     * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: ShaderPassParams);
     /**
-     * Get our main [render texture]{@link RenderTexture}, the one that contains our post processed content
+     * Get our main {@link RenderTexture}, the one that contains our post processed content
      * @readonly
      */
     get renderTexture(): RenderTexture | undefined;
     /**
      * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
-     * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
-     * Also copy or remove the [render target render texture]{@link RenderTarget#renderTexture} into the [shader pass render texture]{@link ShaderPass#renderTexture}
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+     * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
      * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
      */
     setRenderTarget(renderTarget: RenderTarget | null): void;
     /**
-     * Add the {@link ShaderPass} to the renderer and the {@link Scene}
+     * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     addToScene(): void;
     /**
-     * Remove the {@link ShaderPass} from the renderer and the {@link Scene}
+     * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene(): void;
 }
-export {};

@@ -4,21 +4,19 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { AllowedGeometries, RenderMaterialAttributes, RenderMaterialOptions, RenderMaterialParams } from '../../types/Materials';
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry';
 /**
- * RenderMaterial class:
  * Create a Material specifically built to draw vertices
- * @extends Material
  */
 export declare class RenderMaterial extends Material {
-    /** [Render pipeline entry]{@link RenderPipelineEntry} used by this {@link RenderMaterial} */
+    /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial} */
     pipelineEntry: RenderPipelineEntry;
-    /** Mandatory [geometry attributes]{@link RenderMaterialAttributes} to pass to the [render pipeline entry]{@link RenderPipelineEntry} */
+    /** Mandatory {@link RenderMaterialAttributes | geometry attributes} to pass to the {@link RenderPipelineEntry | render pipeline entry} */
     attributes: RenderMaterialAttributes | null;
     /** Options used to create this {@link RenderMaterial} */
     options: RenderMaterialOptions;
     /**
      * RenderMaterial constructor
      * @param renderer - our renderer class object
-     * @param parameters - [parameters]{@link RenderMaterialParams} used to create our RenderMaterial
+     * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams);
     /**

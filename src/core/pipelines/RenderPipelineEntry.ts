@@ -21,16 +21,16 @@ import { RenderMaterialAttributes } from '../../types/Materials'
 export class RenderPipelineEntry extends PipelineEntry {
   /** Shaders to use with this {@link RenderPipelineEntry} */
   shaders: PipelineEntryShaders
-  /** [Geometry attributes]{@link RenderMaterialAttributes} sent to the {@link RenderPipelineEntry} */
+  /** {@link RenderMaterialAttributes | Geometry attributes} sent to the {@link RenderPipelineEntry} */
   attributes: RenderMaterialAttributes
-  /** [Renderer pipeline descriptor]{@link GPURenderPipelineDescriptor} based on [layout]{@link RenderPipelineEntry#layout} and [shaders]{@link RenderPipelineEntry#shaders} */
+  /** {@link GPURenderPipelineDescriptor | Render pipeline descriptor} based on {@link layout} and {@link shaders} */
   descriptor: GPURenderPipelineDescriptor | null
   /** Options used to create this {@link RenderPipelineEntry} */
   options: RenderPipelineEntryOptions
 
   /**
    * RenderPipelineEntry constructor
-   * @param parameters - [parameters]{@link RenderPipelineEntryParams} used to create this {@link RenderPipelineEntry}
+   * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
    */
   constructor(parameters: RenderPipelineEntryParams) {
     let { renderer } = parameters
@@ -94,8 +94,8 @@ export class RenderPipelineEntry extends PipelineEntry {
   // TODO! need to chose whether we should silently add the camera bind group here
   // or explicitly in the RenderMaterial class createBindGroups() method
   /**
-   * Merge our [pipeline entry bind groups]{@link RenderPipelineEntry#bindGroups} with the [camera bind group]{@link CameraRenderer#cameraBindGroup} if needed and set them
-   * @param bindGroups - [bind groups]{@link RenderMaterial#bindGroups} to use with this {@link RenderPipelineEntry}
+   * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link CameraRenderer#cameraBindGroup | camera bind group} if needed and set them
+   * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
    */
   setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]) {
     this.bindGroups =
@@ -105,8 +105,8 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes})
-   * @param parameters - the [bind groups]{@link RenderMaterial#bindGroups} and [attributes]{@link RenderMaterial#attributes} to use
+   * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
+   * @param parameters - the {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} and {@link core/materials/RenderMaterial.RenderMaterial#attributes | attributes} to use
    */
   setPipelineEntryProperties(parameters: RenderPipelineEntryPropertiesParams) {
     const { attributes, bindGroups } = parameters
@@ -119,7 +119,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   /* SHADERS */
 
   /**
-   * Patch the shaders by appending all the necessary shader chunks, [bind groups]{@link RenderPipelineEntry#bindGroups}) and [attributes]{@link RenderPipelineEntry#attributes} WGSL code fragments to the given [parameter shader code]{@link PipelineEntryParams#shaders}
+   * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
    */
   patchShaders() {
     this.shaders.vertex.head = ''
@@ -221,7 +221,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   /* SETUP */
 
   /**
-   * Create the [shaders]{@link RenderPipelineEntry#shaders}: patch them and create the {@link GPUShaderModule}
+   * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
    */
   createShaders() {
     this.patchShaders()
@@ -238,7 +238,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Create the [render pipeline descriptor]{@link RenderPipelineEntry#descriptor}
+   * Create the render pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
@@ -314,7 +314,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Create the [render pipeline]{@link RenderPipelineEntry#pipeline}
+   * Create the render {@link pipeline}
    */
   createRenderPipeline() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
@@ -328,7 +328,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Asynchronously create the [render pipeline]{@link RenderPipelineEntry#pipeline}
+   * Asynchronously create the render {@link pipeline}
    * @async
    * @returns - void promise result
    */
@@ -347,7 +347,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   }
 
   /**
-   * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+   * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our render {@link pipeline}
    * @async
    */
   async compilePipelineEntry(): Promise<void> {

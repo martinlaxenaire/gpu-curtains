@@ -7,7 +7,6 @@ import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
- * FullscreenPlane class:
  * Create a fullscreen quad, useful for post processing or background effects.
  * TODO!
  * @extends MeshBaseMixin
@@ -24,8 +23,8 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
 
   /**
    * FullscreenPlane constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
-   * @param parameters - [parameters]{@link MeshBaseRenderParams} use to create this {@link FullscreenPlane}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
+   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseRenderParams) {
     // we could pass our curtains object OR our curtains renderer object
@@ -68,10 +67,10 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
   }
 
   /**
-   * Take the pointer [vector]{@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}
+   * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link FullscreenPlane}
    * It ranges from -1 to 1 on both axis
-   * @param mouseCoords - pointer [vector]{@link Vec2} coordinates
-   * @returns - the mapped [vector]{@link Vec2} coordinates in the [-1, 1] range
+   * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
+   * @returns - the mapped {@link Vec2 | vector} coordinates in the [-1, 1] range
    */
   mouseToPlaneCoords(mouseCoords: Vec2 = new Vec2()): Vec2 {
     // mouse position conversion from document to plane space

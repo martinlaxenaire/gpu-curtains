@@ -10,17 +10,17 @@ import { ExternalTextureParams, TextureParams } from '../../types/Textures';
 export interface ComputePassOptions {
     /** The label of the {@link ComputePass} */
     label: string;
-    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link Scene} */
+    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder?: number;
-    /** Whether the {@link ComputePass} should be added to our {@link Scene} to let it handle the rendering process automatically */
+    /** Whether the {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
-    /** Compute shader passed to the {@link ComputePass} following the [shader object]{@link ShaderOptions} notation */
+    /** Compute shader passed to the {@link ComputePass} following the {@link types/Materials.ShaderOptions | shader object} notation */
     shaders: MaterialShaders;
-    /** whether the [compute pipeline]{@link ComputePipelineEntry#pipeline} should be compiled asynchronously */
+    /** whether the {@link core/pipelines/ComputePipelineEntry.ComputePipelineEntry#pipeline | compute pipeline} should be compiled asynchronously */
     useAsyncPipeline?: boolean;
-    /** Parameters used by this {@link ComputePass} to create a [texture]{@link Texture} */
+    /** Parameters used by this {@link ComputePass} to create a {@link Texture} */
     texturesOptions?: ExternalTextureParams;
-    /** Main/first {@link ComputeMaterial} work group dispatch size to use with this {@link ComputePass} */
+    /** Default {@link ComputeMaterial} work group dispatch size to use with this {@link ComputePass} */
     dispatchSize?: number | number[];
 }
 /**
@@ -29,7 +29,6 @@ export interface ComputePassOptions {
 export interface ComputePassParams extends Partial<ComputePassOptions>, MaterialParams {
 }
 /**
- * ComputePass class:
  * Used to create a compute pass, i.e. run computations on the GPU.
  * A compute pass is basically made of a {@link ComputeMaterial} that handles most of the process.
  */
@@ -43,7 +42,7 @@ export declare class ComputePass {
     index: number;
     /** The {@link Renderer} used */
     renderer: Renderer;
-    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link Scene} */
+    /** Controls the order in which this {@link ComputePass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number;
     /** Options used to create this {@link ComputePass} */
     options: ComputePassOptions;
@@ -53,20 +52,20 @@ export declare class ComputePass {
     _ready: boolean;
     /** Empty object to store any additional data or custom properties into your {@link ComputePass} */
     userData: Record<string, unknown>;
-    /** function assigned to the [onReady]{@link ComputePass#onReady} callback */
+    /** function assigned to the {@link onReady} callback */
     _onReadyCallback: () => void;
-    /** function assigned to the [onBeforeRender]{@link ComputePass#onBeforeRender} callback */
+    /** function assigned to the {@link onBeforeRender} callback */
     _onBeforeRenderCallback: () => void;
-    /** function assigned to the [onRender]{@link ComputePass#onRender} callback */
+    /** function assigned to the {@link onRender} callback */
     _onRenderCallback: () => void;
-    /** function assigned to the [onAfterRender]{@link ComputePass#onAfterRender} callback */
+    /** function assigned to the {@link onAfterRender} callback */
     _onAfterRenderCallback: () => void;
-    /** function assigned to the [onAfterResize]{@link ComputePass#onAfterResize} callback */
+    /** function assigned to the {@link onAfterResize} callback */
     _onAfterResizeCallback: () => void;
     /**
      * ComputePass constructor
      * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
+     * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: ComputePassParams);
     /**
@@ -89,27 +88,27 @@ export declare class ComputePass {
      */
     setComputeMaterial(computeParameters: ComputeMaterialParams): void;
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
      */
     loseContext(): void;
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been restored
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext(): void;
     /**
-     * Get our [compute material textures array]{@link ComputeMaterial#textures}
+     * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
      * @readonly
      */
     get textures(): Texture[];
     /**
-     * Get our [compute material render textures array]{@link ComputeMaterial#renderTextures}
+     * Get our {@link ComputeMaterial#renderTextures | ComputeMaterial render textures array}
      * @readonly
      */
     get renderTextures(): RenderTexture[];
     /**
      * Create a new {@link Texture}
-     * @param options - [Texture options]{@link TextureParams}
+     * @param options - {@link TextureParams | Texture parameters}
      * @returns - newly created {@link Texture}
      */
     createTexture(options: TextureParams): Texture;
@@ -120,7 +119,7 @@ export declare class ComputePass {
     addTexture(texture: Texture): void;
     /**
      * Create a new {@link RenderTexture}
-     * @param  options - [RenderTexture options]{@link RenderTextureParams}
+     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
      * @returns - newly created {@link RenderTexture}
      */
     createRenderTexture(options: RenderTextureParams): RenderTexture;
@@ -130,12 +129,12 @@ export declare class ComputePass {
      */
     addRenderTexture(renderTexture: RenderTexture): void;
     /**
-     * Get our [compute material uniforms]{@link ComputeMaterial#uniforms}
+     * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}
      * @readonly
      */
     get uniforms(): ComputeMaterial['uniforms'];
     /**
-     * Get our [compute material storages]{@link ComputeMaterial#storages}
+     * Get our {@link ComputeMaterial#storages | ComputeMaterial storages}
      * @readonly
      */
     get storages(): ComputeMaterial['storages'];
@@ -170,8 +169,8 @@ export declare class ComputePass {
      */
     useCustomRender(callback: (pass: GPUComputePassEncoder) => void): ComputePass;
     /**
-     * Callback to run after the {@link Renderer} has been resized
-     * @param callback - callback to run just after {@link GPURenderer} has been resized
+     * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
+     * @param callback - callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
      */
     onAfterResize(callback: () => void): ComputePass;
     /**
@@ -190,7 +189,7 @@ export declare class ComputePass {
     onAfterRenderPass(): void;
     /**
      * Render our compute pass
-     * Basically just check if our {@link GPURenderer} is ready, and then render our {@link ComputeMaterial}
+     * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}
      * @param pass
      */
     render(pass: GPUComputePassEncoder): void;
@@ -200,9 +199,10 @@ export declare class ComputePass {
      */
     copyBufferToResult(commandEncoder: GPUCommandEncoder): void;
     /**
-     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
-     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
-     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
+     * @param parameters - parameters used to get the result
+     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
+     * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
      * @async
      * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */

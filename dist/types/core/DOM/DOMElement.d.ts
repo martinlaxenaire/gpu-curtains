@@ -12,6 +12,9 @@ export interface RectCoords {
     /** left position */
     left: number;
 }
+/**
+ * Defines a size object
+ */
 export interface RectSize {
     /** width of the rectangle */
     width: number;
@@ -45,13 +48,16 @@ export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPositio
  * Parameters used to create a {@link DOMElement}
  */
 export interface DOMElementParams {
+    /** {@link HTMLElement} or string representing an {@link HTMLElement} selector of the element the resize observer should track */
     element?: string | Element;
+    /** Order in which the {@link resizeManager} callback is executed */
     priority?: ResizeManagerEntry['priority'];
+    /** Callback to tun when the {@link DOMElement#element | element} size changed */
     onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
+    /** Callback to tun when the {@link DOMElement#element | element} position changed */
     onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
 }
 /**
- * DOMElement class:
  * Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}
  */
 export declare class DOMElement {
@@ -72,10 +78,7 @@ export declare class DOMElement {
     _boundingRect: DOMElementBoundingRect;
     /**
      * DOMElement constructor
-     * @param parameters - parameters used to create our DOMElement
-     * @param {HTMLElement=} parameters.element - DOM HTML element to track
-     * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
-     * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
+     * @param parameters - {@link DOMElementParams | parameters} used to create our DOMElement
      */
     constructor({ element, priority, onSizeChanged, onPositionChanged, }?: DOMElementParams);
     /**
@@ -86,10 +89,13 @@ export declare class DOMElement {
      */
     compareBoundingRect(rect1: DOMRect | DOMElementBoundingRect, rect2: DOMRect | DOMElementBoundingRect): boolean;
     /**
-     * Get or set our element's bounding rectangle
-     * @readonly
+     * Get our element bounding rectangle
      */
     get boundingRect(): DOMElementBoundingRect;
+    /**
+     * Set our element bounding rectangle
+     * @param boundingRect - new bounding rectangle
+     */
     set boundingRect(boundingRect: DOMElementBoundingRect);
     /**
      * Update our element bounding rectangle because the scroll position has changed

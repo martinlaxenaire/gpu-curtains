@@ -14,8 +14,8 @@ export declare class Vec2 {
     _onChangeCallback?(): void;
     /**
      * Vec2 constructor
-     * @param x=0 - X component of our [vector]{@link Vec2}
-     * @param y=x - Y component of our [vector]{@link Vec2}
+     * @param [x=0] - X component of our [vector]{@link Vec2}
+     * @param [y=x] - Y component of our [vector]{@link Vec2}
      */
     constructor(x?: number, y?: number);
     /**
@@ -40,8 +40,8 @@ export declare class Vec2 {
     onChange(callback: () => void): Vec2;
     /**
      * Set the [vector]{@link Vec2} from values
-     * @param x=0 - new X component to set
-     * @param y=x - new Y component to set
+     * @param [x=0] - new X component to set
+     * @param [y=x] - new Y component to set
      * @returns - this [vector]{@link Vec2} after being set
      */
     set(x?: number, y?: number): Vec2;
@@ -53,7 +53,7 @@ export declare class Vec2 {
     add(vector?: Vec2): Vec2;
     /**
      * Add a scalar to all the components of this [vector]{@link Vec2}
-     * @param value=0 - number to add
+     * @param [value=0] - number to add
      * @returns - this [vector]{@link Vec2} after addition
      */
     addScalar(value?: number): Vec2;
@@ -65,7 +65,7 @@ export declare class Vec2 {
     sub(vector?: Vec2): Vec2;
     /**
      * Subtract a scalar to all the components of this [vector]{@link Vec2}
-     * @param value=0 - number to subtract
+     * @param [value=0] - number to subtract
      * @returns - this [vector]{@link Vec2} after subtraction
      */
     subScalar(value?: number): Vec2;
@@ -77,7 +77,7 @@ export declare class Vec2 {
     multiply(vector?: Vec2): Vec2;
     /**
      * Multiply all components of this [vector]{@link Vec2} with a scalar
-     * @param value=1 - number to multiply with
+     * @param [value=1] - number to multiply with
      * @returns - this [vector]{@link Vec2} after multiplication
      */
     multiplyScalar(value?: number): Vec2;
@@ -134,7 +134,7 @@ export declare class Vec2 {
     /**
      * Calculate the linear interpolation of this [vector]{@link Vec2} by given [vector]{@link Vec2} and alpha, where alpha is the percent distance along the line
      * @param vector - [vector]{@link Vec2} to interpolate towards
-     * @param alpha=1 - interpolation factor in the [0, 1] interval
+     * @param [alpha=1] - interpolation factor in the [0, 1] interval
      * @returns - this [vector]{@link Vec2} after linear interpolation
      */
     lerp(vector?: Vec2, alpha?: number): Vec2;

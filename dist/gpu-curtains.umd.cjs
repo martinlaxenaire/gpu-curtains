@@ -195,7 +195,7 @@ var __privateMethod = (obj, member, method) => {
   class Binding {
     /**
      * Binding constructor
-     * @param parameters - [parameters]{@link BindingParams} used to create our {@link Binding}
+     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
      */
     constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility }) {
       this.label = label;
@@ -316,8 +316,8 @@ var __privateMethod = (obj, member, method) => {
   class Vec2 {
     /**
      * Vec2 constructor
-     * @param x=0 - X component of our [vector]{@link Vec2}
-     * @param y=x - Y component of our [vector]{@link Vec2}
+     * @param [x=0] - X component of our [vector]{@link Vec2}
+     * @param [y=x] - Y component of our [vector]{@link Vec2}
      */
     constructor(x = 0, y = x) {
       this.type = "Vec2";
@@ -363,8 +363,8 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Set the [vector]{@link Vec2} from values
-     * @param x=0 - new X component to set
-     * @param y=x - new Y component to set
+     * @param [x=0] - new X component to set
+     * @param [y=x] - new Y component to set
      * @returns - this [vector]{@link Vec2} after being set
      */
     set(x = 0, y = x) {
@@ -384,7 +384,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Add a scalar to all the components of this [vector]{@link Vec2}
-     * @param value=0 - number to add
+     * @param [value=0] - number to add
      * @returns - this [vector]{@link Vec2} after addition
      */
     addScalar(value = 0) {
@@ -404,7 +404,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Subtract a scalar to all the components of this [vector]{@link Vec2}
-     * @param value=0 - number to subtract
+     * @param [value=0] - number to subtract
      * @returns - this [vector]{@link Vec2} after subtraction
      */
     subScalar(value = 0) {
@@ -424,7 +424,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Multiply all components of this [vector]{@link Vec2} with a scalar
-     * @param value=1 - number to multiply with
+     * @param [value=1] - number to multiply with
      * @returns - this [vector]{@link Vec2} after multiplication
      */
     multiplyScalar(value = 1) {
@@ -515,7 +515,7 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Calculate the linear interpolation of this [vector]{@link Vec2} by given [vector]{@link Vec2} and alpha, where alpha is the percent distance along the line
      * @param vector - [vector]{@link Vec2} to interpolate towards
-     * @param alpha=1 - interpolation factor in the [0, 1] interval
+     * @param [alpha=1] - interpolation factor in the [0, 1] interval
      * @returns - this [vector]{@link Vec2} after linear interpolation
      */
     lerp(vector = new Vec2(), alpha = 1) {
@@ -527,8 +527,8 @@ var __privateMethod = (obj, member, method) => {
   class Quat {
     /**
      * Quat constructor
-     * @param elements - initial array to use
-     * @param axisOrder='XYZ' - axis order to use
+     * @param [elements] - initial array to use
+     * @param [axisOrder='XYZ'] - axis order to use
      */
     constructor(elements = new Float32Array([0, 0, 0, 1]), axisOrder = "XYZ") {
       this.type = "Quat";
@@ -1206,9 +1206,9 @@ var __privateMethod = (obj, member, method) => {
   class Vec3 {
     /**
      * Vec3 constructor
-     * @param x=0 - X component of our [vector]{@link Vec3}
-     * @param y=x - Y component of our [vector]{@link Vec3}
-     * @param z=x - Z component of our [vector]{@link Vec3}
+     * @param [x=0] - X component of our [vector]{@link Vec3}
+     * @param [y=x] - Y component of our [vector]{@link Vec3}
+     * @param [z=x] - Z component of our [vector]{@link Vec3}
      */
     constructor(x = 0, y = x, z = x) {
       this.type = "Vec3";
@@ -1268,9 +1268,9 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Set the [vector]{@link Vec3} from values
-     * @param x=0 - new X component to set
-     * @param y=0 - new Y component to set
-     * @param z=0 - new Z component to set
+     * @param [x=0] - new X component to set
+     * @param [y=0] - new Y component to set
+     * @param [z=0] - new Z component to set
      * @returns - this [vector]{@link Vec3} after being set
      */
     set(x = 0, y = 0, z = 0) {
@@ -1292,7 +1292,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Add a scalar to all the components of this [vector]{@link Vec3}
-     * @param value=0 - number to add
+     * @param [value=0] - number to add
      * @returns - this [vector]{@link Vec3} after addition
      */
     addScalar(value = 0) {
@@ -1314,7 +1314,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Subtract a scalar to all the components of this [vector]{@link Vec3}
-     * @param value=0 - number to subtract
+     * @param [value=0] - number to subtract
      * @returns - this [vector]{@link Vec3} after subtraction
      */
     subScalar(value = 0) {
@@ -1336,7 +1336,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Multiply all components of this [vector]{@link Vec3} with a scalar
-     * @param value=1 - number to multiply with
+     * @param [value=1] - number to multiply with
      * @returns - this [vector]{@link Vec3} after multiplication
      */
     multiplyScalar(value = 1) {
@@ -1454,7 +1454,7 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Calculate the linear interpolation of this [vector]{@link Vec3} by given [vector]{@link Vec3} and alpha, where alpha is the percent distance along the line
      * @param vector - [vector]{@link Vec3} to interpolate towards
-     * @param alpha=1 - interpolation factor in the [0, 1] interval
+     * @param [alpha=1] - interpolation factor in the [0, 1] interval
      * @returns - this [vector]{@link Vec3} after linear interpolation
      */
     lerp(vector = new Vec3(), alpha = 1) {
@@ -1532,7 +1532,7 @@ var __privateMethod = (obj, member, method) => {
   class BufferElement {
     /**
      * BufferElement constructor
-     * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferElement}
+     * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}
      */
     constructor({ name, key, type = "f32" }) {
       this.name = name;
@@ -1558,7 +1558,7 @@ var __privateMethod = (obj, member, method) => {
       return this.alignment.end.row - this.alignment.start.row + 1;
     }
     /**
-     * Get the total number of bytes used by this {@link BufferElement} based on [alignment]{@link BufferElementAlignment} start and end offsets
+     * Get the total number of bytes used by this {@link BufferElement} based on {@link BufferElementAlignment | alignment} start and end offsets
      * @readonly
      */
     get byteCount() {
@@ -1610,17 +1610,17 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Get the number of bytes at a given [position]{@link BufferElementAlignmentPosition}
-     * @param position - [position]{@link BufferElementAlignmentPosition} from which to count
-     * @returns - byte count at the given [position]{@link BufferElementAlignmentPosition}
+     * Get the number of bytes at a given {@link BufferElementAlignmentPosition | position}
+     * @param position - {@link BufferElementAlignmentPosition | position} from which to count
+     * @returns - byte count at the given {@link BufferElementAlignmentPosition | position}
      */
     getByteCountAtPosition(position = { row: 0, byte: 0 }) {
       return position.row * bytesPerRow + position.byte;
     }
     /**
-     * Check that a [position byte]{@link BufferElementAlignmentPosition#byte} does not overflow its max value (16)
-     * @param position - [position]{@link BufferElementAlignmentPosition} to check
-     * @returns - updated [position]{@link BufferElementAlignmentPosition#
+     * Check that a {@link BufferElementAlignmentPosition#byte | byte position} does not overflow its max value (16)
+     * @param position - {@link BufferElementAlignmentPosition | position}
+     * @returns - updated {@link BufferElementAlignmentPosition | position}
      */
     applyOverflowToPosition(position = { row: 0, byte: 0 }) {
       if (position.byte > bytesPerRow - 1) {
@@ -1631,18 +1631,18 @@ var __privateMethod = (obj, member, method) => {
       return position;
     }
     /**
-     * Get the number of bytes between two [positions]{@link BufferElementAlignmentPosition}
-     * @param p1 - first [position]{@link BufferElementAlignmentPosition}
-     * @param p2 - second [position]{@link BufferElementAlignmentPosition}
+     * Get the number of bytes between two {@link BufferElementAlignmentPosition | positions}
+     * @param p1 - first {@link BufferElementAlignmentPosition | position}
+     * @param p2 - second {@link BufferElementAlignmentPosition | position}
      * @returns - number of bytes
      */
     getByteCountBetweenPositions(p1 = { row: 0, byte: 0 }, p2 = { row: 0, byte: 0 }) {
       return Math.abs(this.getByteCountAtPosition(p2) - this.getByteCountAtPosition(p1));
     }
     /**
-     * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available [position]{@link BufferElementAlignmentPosition}
-     * @param nextPositionAvailable - next [position]{@link BufferElementAlignmentPosition} at which we should insert this element
-     * @returns - computed [alignment]{@link BufferElementAlignment}
+     * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available {@link BufferElementAlignmentPosition | position}
+     * @param nextPositionAvailable - next {@link BufferElementAlignmentPosition | position} at which we should insert this element
+     * @returns - computed {@link BufferElementAlignment | alignment}
      */
     getElementAlignment(nextPositionAvailable = { row: 0, byte: 0 }) {
       const alignment = {
@@ -1666,23 +1666,23 @@ var __privateMethod = (obj, member, method) => {
       return alignment;
     }
     /**
-     * Set the [alignment]{@link BufferElementAlignment} from a [position]{@link BufferElementAlignmentPosition}
-     * @param position - [position]{@link BufferElementAlignmentPosition} at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     * Set the {@link BufferElementAlignment | alignment} from a {@link BufferElementAlignmentPosition | position}
+     * @param position - {@link BufferElementAlignmentPosition | position} at which to start inserting the values in the {@link !core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
      */
     setAlignmentFromPosition(position = { row: 0, byte: 0 }) {
       this.alignment = this.getElementAlignment(position);
     }
     /**
-     * Set the [alignment]{@link BufferElementAlignment} from an offset (byte count)
-     * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     * Set the {@link BufferElementAlignment | alignment} from an offset (byte count)
+     * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
      */
     setAlignment(startOffset = 0) {
       this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
     }
     /**
-     * Set the [view]{@link BufferElement#view}
-     * @param arrayBuffer - the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
-     * @param arrayView - the [buffer binding array buffer view]{@link BufferBinding#arrayView}
+     * Set the {@link view}
+     * @param arrayBuffer - the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
+     * @param arrayView - the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view}
      */
     setView(arrayBuffer, arrayView) {
       this.view = new this.bufferLayout.View(
@@ -1692,7 +1692,7 @@ var __privateMethod = (obj, member, method) => {
       );
     }
     /**
-     * Update the [view]{@link BufferElement#view} based on the new value
+     * Update the {@link view} based on the new value
      * @param value - new value to use
      */
     update(value) {
@@ -1712,7 +1712,7 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /**
-     * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+     * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data
      * @returns - extracted data from the {@link Float32Array}
      */
@@ -1723,7 +1723,7 @@ var __privateMethod = (obj, member, method) => {
   class BufferArrayElement extends BufferElement {
     /**
      * BufferArrayElement constructor
-     * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferArrayElement}
+     * @param parameters - {@link BufferArrayElementParams | parameters} used to create our {@link BufferArrayElement}
      */
     constructor({ name, key, type = "f32", arrayLength = 1 }) {
       super({ name, key, type });
@@ -1738,9 +1738,9 @@ var __privateMethod = (obj, member, method) => {
       return this.arrayStride / bytesPerSlot;
     }
     /**
-     * Set the [alignment]{@link BufferElementAlignment}
+     * Set the {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment}
      * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the arrayStride between two array elements. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
-     * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array buffer}
      */
     setAlignment(startOffset = 0) {
       super.setAlignment(startOffset);
@@ -1749,7 +1749,7 @@ var __privateMethod = (obj, member, method) => {
       this.alignment.end = this.getPositionAtOffset(this.endOffset + this.arrayStride * (this.numElements - 1));
     }
     /**
-     * Update the [view]{@link BufferElement#view} based on the new value
+     * Update the {@link view} based on the new value
      * @param value - new value to use
      */
     update(value) {
@@ -1771,7 +1771,7 @@ var __privateMethod = (obj, member, method) => {
   class BufferInterleavedArrayElement extends BufferArrayElement {
     /**
      * BufferInterleavedArrayElement constructor
-     * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferInterleavedArrayElement}
+     * @param parameters - {@link BufferArrayElementParams | parameters} used to create our {@link BufferInterleavedArrayElement}
      */
     constructor({ name, key, type = "f32", arrayLength = 1 }) {
       super({ name, key, type, arrayLength });
@@ -1787,9 +1787,9 @@ var __privateMethod = (obj, member, method) => {
       return this.bufferLayout.size * this.numElements;
     }
     /**
-     * Set the [alignment]{@link BufferElementAlignment}
+     * Set the {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment}
      * To compute how arrays are packed, we need to compute the arrayStride between two elements beforehand and pass it here. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
-     * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+     * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
      * @param stride - Stride in the {@link ArrayBuffer} between two elements of the array
      */
     setAlignment(startOffset = 0, stride = 0) {
@@ -1798,9 +1798,9 @@ var __privateMethod = (obj, member, method) => {
       this.alignment.end = this.getPositionAtOffset(this.endOffset + stride * (this.numElements - 1));
     }
     /**
-     * Set the [view]{@link BufferInterleavedArrayElement#view} and [viewSetFunction]{@link BufferInterleavedArrayElement#viewSetFunction}
-     * @param arrayBuffer - the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
-     * @param arrayView - the [buffer binding array buffer view]{@link BufferBinding#arrayView}
+     * Set the {@link view} and {@link viewSetFunction}
+     * @param arrayBuffer - the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
+     * @param arrayView - the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view}
      */
     setView(arrayBuffer, arrayView) {
       this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.numElements);
@@ -1819,7 +1819,7 @@ var __privateMethod = (obj, member, method) => {
       })(arrayView);
     }
     /**
-     * Update the [view]{@link BufferArrayElement#view} based on the new value, and then update the [buffer binding array view]{@link BufferBinding#arrayView} using sub arrays
+     * Update the {@link view} based on the new value, and then update the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view} using sub arrays
      * @param value - new value to use
      */
     update(value) {
@@ -1836,7 +1836,7 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /**
-     * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+     * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data
      */
     extractDataFromBufferResult(result) {
@@ -1853,7 +1853,7 @@ var __privateMethod = (obj, member, method) => {
   class BufferBinding extends Binding {
     /**
      * BufferBinding constructor
-     * @param parameters - [parameters]{@link BufferBindingParams} used to create our BufferBindings
+     * @param parameters - {@link BufferBindingParams | parameters} used to create our BufferBindings
      */
     constructor({
       label = "Uniform",
@@ -1883,7 +1883,8 @@ var __privateMethod = (obj, member, method) => {
       this.setWGSLFragment();
     }
     /**
-     * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
+     * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
+     * @readonly
      */
     get resourceLayout() {
       return {
@@ -1893,14 +1894,15 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Get [bind group resource]{@link GPUBindGroupEntry#resource}
+     * Get {@link GPUBindGroupEntry#resource | bind group resource}
+     * @readonly
      */
     get resource() {
       return { buffer: this.buffer };
     }
     /**
-     * Format input struct and set our {@link inputs}
-     * @param bindings - struct inputs
+     * Format bindings struct and set our {@link inputs}
+     * @param bindings - bindings inputs
      */
     setBindings(bindings) {
       Object.keys(bindings).forEach((bindingKey) => {
@@ -2085,7 +2087,7 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Executed at the beginning of a Material render call.
      * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link arrayBuffer} array.
-     * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
+     * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update() {
       Object.keys(this.inputs).forEach((bindingKey) => {
@@ -2100,7 +2102,7 @@ var __privateMethod = (obj, member, method) => {
       });
     }
     /**
-     * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the [buffer]{@link BufferBinding#buffer} data of this {@link BufferBinding}
+     * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the {@link BufferBinding#buffer | GPU buffer} data of this {@link BufferBinding}
      * @param parameters - parameters used to extract the data
      * @param parameters.result - {@link Float32Array} holding {@link GPUBuffer} data
      * @param parameters.bufferElementName - name of the {@link BufferElement} to use to extract the data
@@ -2121,7 +2123,7 @@ var __privateMethod = (obj, member, method) => {
   class WritableBufferBinding extends BufferBinding {
     /**
      * WritableBufferBinding constructor
-     * @param parameters - [parameters]{@link WritableBufferBindingParams} used to create our {@link WritableBufferBinding}
+     * @param parameters - {@link WritableBufferBindingParams | parameters} used to create our {@link WritableBufferBinding}
      */
     constructor({
       label = "Work",
@@ -2147,8 +2149,8 @@ var __privateMethod = (obj, member, method) => {
   class BindGroup {
     /**
      * BindGroup constructor
-     * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param {BindGroupParams=} parameters - [parameters]{@link BindGroupParams} used to create our {@link BindGroup}
+     * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+     * @param parameters - {@link BindGroupParams | parameters} used to create our {@link BindGroup}
      */
     constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
       this.type = "BindGroup";
@@ -2175,8 +2177,8 @@ var __privateMethod = (obj, member, method) => {
       this.renderer.addBindGroup(this);
     }
     /**
-     * Sets our [BindGroup index]{@link BindGroup#index}
-     * @param index - [BindGroup index]{@link BindGroup#index}
+     * Sets our {@link BindGroup#index | bind group index}
+     * @param index - {@link BindGroup#index | bind group index} to set
      */
     setIndex(index) {
       this.index = index;
@@ -2197,8 +2199,8 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Creates Bindings based on a list of inputs
-     * @param bindingType - [binding type]{@link Binding#bindingType}
-     * @param inputs - [inputs]{@link ReadOnlyInputBindings} that will be used to create the binding
+     * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}
+     * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding
      * @returns - a {@link bindings} array
      */
     createInputBindings(bindingType = "uniform", inputs = {}) {
@@ -2263,7 +2265,7 @@ var __privateMethod = (obj, member, method) => {
       this.setBindGroup();
     }
     /**
-     * Reset the [bindGroup entries]{@link BindGroup#entries.bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
+     * Reset the {@link BindGroup#entries.bindGroup | bindGroup entries}, recreates them and then recreate the {@link BindGroup#bindGroup | GPU bind group}
      */
     resetBindGroup() {
       this.entries.bindGroup = [];
@@ -2276,7 +2278,7 @@ var __privateMethod = (obj, member, method) => {
       this.setBindGroup();
     }
     /**
-     * Reset the [bindGroupLayout entries]{@link BindGroup#entries.bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
+     * Reset the {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entries}, recreates them and then recreate the {@link BindGroup#bindGroupLayout | GPU bind group layout}
      */
     resetBindGroupLayout() {
       this.entries.bindGroupLayout = [];
@@ -2290,7 +2292,7 @@ var __privateMethod = (obj, member, method) => {
       this.setBindGroupLayout();
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
      */
     loseContext() {
       this.resetEntries();
@@ -2305,7 +2307,7 @@ var __privateMethod = (obj, member, method) => {
       this.needsPipelineFlush = true;
     }
     /**
-     * Get all [bind group struct]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
+     * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings() {
       return this.bindings.filter(
@@ -2397,8 +2399,8 @@ var __privateMethod = (obj, member, method) => {
       });
     }
     /**
-     * Update the {@link BindGroup}, which means update its [buffer struct]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
-     * Called at each render from the parent {@link Material}
+     * Update the {@link BindGroup}, which means update its {@link BindGroup#bufferBindings | buffer bindings} and {@link BindGroup#resetBindGroup | reset it} if needed.
+     * Called at each render from the parent {@link core/materials/Material.Material | material}
      */
     update() {
       this.updateBufferBindings();
@@ -2488,7 +2490,7 @@ var __privateMethod = (obj, member, method) => {
   class TextureBinding extends Binding {
     /**
      * TextureBinding constructor
-     * @param parameters - [parameters]{@link TextureBindingParams} used to create our {@link TextureBinding}
+     * @param parameters - {@link TextureBindingParams | parameters} used to create our {@link TextureBinding}
      */
     constructor({
       label = "Texture",
@@ -2516,25 +2518,30 @@ var __privateMethod = (obj, member, method) => {
       this.setWGSLFragment();
     }
     /**
-     * Get bind group layout entry resource, either for [texture]{@link GPUBindGroupLayoutEntry#texture} or [externalTexture]{@link GPUBindGroupLayoutEntry#externalTexture}
+     * Get bind group layout entry resource, either for {@link GPUBindGroupLayoutEntry#texture | texture} or {@link GPUBindGroupLayoutEntry#externalTexture | external texture}
+     * @readonly
      */
     get resourceLayout() {
       return getBindGroupLayoutTextureBindingType(this);
     }
     /**
-     * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+     * Get the {@link GPUBindGroupEntry#resource | bind group resource}
      */
     get resource() {
       return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view" }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
     }
+    /**
+     * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+     * @param value - new bind group resource
+     */
     set resource(value) {
       if (value || this.texture)
         this.shouldResetBindGroup = true;
       this.texture = value;
     }
     /**
-     * Set or update our [bindingType]{@link Binding#bindingType} and our WGSL code snippet
-     * @param bindingType - the new [binding type]{@link Binding#bindingType}
+     * Set or update our {@link Binding#bindingType | bindingType} and our WGSL code snippet
+     * @param bindingType - the new {@link Binding#bindingType | binding type}
      */
     setBindingType(bindingType) {
       if (bindingType !== this.bindingType) {
@@ -2561,7 +2568,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /* TRANSFORMS */
     /**
-     * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+     * Set our transforms properties and {@link math/Vec3.Vec3#onChange | vectors onChange} callbacks
      */
     setTransforms() {
       this.transforms = {
@@ -2581,85 +2588,101 @@ var __privateMethod = (obj, member, method) => {
       this.transformOrigin.onChange(() => this.applyTransformOrigin());
     }
     /**
-     * Get/set our rotation vector
-     * @readonly
+     * Get our rotation {@link math/Vec3.Vec3 | vector}
      */
     get rotation() {
       return this.transforms.rotation;
     }
+    /**
+     * Set our rotation {@link math/Vec3.Vec3 | vector}
+     * @param value - new rotation {@link math/Vec3.Vec3 | vector}
+     */
     set rotation(value) {
       this.transforms.rotation = value;
       this.applyRotation();
     }
     /**
-     * Get/set our quaternion
-     * @readonly
+     * Get our {@link math/Quat.Quat | quaternion}
      */
     get quaternion() {
       return this.transforms.quaternion;
     }
+    /**
+     * Set our {@link math/Quat.Quat | quaternion}
+     * @param value - new {@link math/Quat.Quat | quaternion}
+     */
     set quaternion(value) {
       this.transforms.quaternion = value;
     }
     /**
-     * Get/set our position vector
-     * @readonly
+     * Get our position {@link math/Vec3.Vec3 | vector}
      */
     get position() {
       return this.transforms.position.world;
     }
+    /**
+     * Set our position {@link math/Vec3.Vec3 | vector}
+     * @param value - new position {@link math/Vec3.Vec3 | vector}
+     */
     set position(value) {
       this.transforms.position.world = value;
     }
     /**
-     * Get/set our scale vector
+     * Get our scale {@link math/Vec3.Vec3 | vector}
      * @readonly
      */
     get scale() {
       return this.transforms.scale;
     }
+    /**
+     * Set our scale {@link math/Vec3.Vec3 | vector}
+     * @param value - new scale {@link math/Vec3.Vec3 | vector}
+     */
     set scale(value) {
       this.transforms.scale = value;
       this.applyScale();
     }
     /**
-     * Get/set our transform origin vector
-     * @readonly
+     * Get our transform origin {@link math/Vec3.Vec3 | vector}
      */
     get transformOrigin() {
       return this.transforms.origin.model;
     }
+    /**
+     * Set our transform origin {@link math/Vec3.Vec3 | vector}
+     * @param value - new transform origin {@link math/Vec3.Vec3 | vector}
+     */
     set transformOrigin(value) {
       this.transforms.origin.model = value;
     }
     /**
-     * Apply our rotation and tell our model matrix to update
+     * Apply our rotation and tell our {@link modelMatrix | model matrix} to update
      */
     applyRotation() {
       this.quaternion.setFromVec3(this.rotation);
       this.shouldUpdateModelMatrix();
     }
     /**
-     * Tell our model matrix to update
+     * Tell our {@link modelMatrix | model matrix} to update
      */
     applyPosition() {
       this.shouldUpdateModelMatrix();
     }
     /**
-     * Tell our model matrix to update
+     * Tell our {@link modelMatrix | model matrix} to update
      */
     applyScale() {
       this.shouldUpdateModelMatrix();
     }
     /**
-     * Tell our model matrix to update
+     * Tell our {@link modelMatrix | model matrix} to update
      */
     applyTransformOrigin() {
       this.shouldUpdateModelMatrix();
     }
     /* MATRICES */
     /**
-     * Set our model matrix
+     * Set our {@link modelMatrix | model matrix}
      */
     setMatrices() {
       this.matrices = {
@@ -2671,25 +2694,28 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Get/set our model matrix
-     * @readonly
+     * Get our {@link math/Mat4.Mat4 | model matrix}
      */
     get modelMatrix() {
       return this.matrices.model.matrix;
     }
+    /**
+     * Set our {@link math/Mat4.Mat4 | model matrix}
+     * @param value - new {@link math/Mat4.Mat4 | model matrix}
+     */
     set modelMatrix(value) {
       this.matrices.model.matrix = value;
       this.shouldUpdateModelMatrix();
     }
     /**
-     * Set our model matrix shouldUpdate flag to true (tell it to update)
+     * Set our {@link modelMatrix | model matrix} shouldUpdate flag to true (tell it to update)
      */
     shouldUpdateModelMatrix() {
       this.matrices.model.shouldUpdate = true;
     }
     /**
-     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-     * @param target - [target]{@link Vec3} to look at
+     * Rotate this {@link Object3D} so it looks at the {@link math/Vec3.Vec3 | target}
+     * @param target - {@link math/Vec3.Vec3 | target} to look at
      */
     lookAt(target = new Vec3()) {
       const rotationMatrix = new Mat4().lookAt(target, this.position);
@@ -2697,7 +2723,7 @@ var __privateMethod = (obj, member, method) => {
       this.shouldUpdateModelMatrix();
     }
     /**
-     * Update our model matrix
+     * Update our {@link modelMatrix | model matrix}
      */
     updateModelMatrix() {
       this.modelMatrix = this.modelMatrix.composeFromOrigin(
@@ -3201,8 +3227,8 @@ var __privateMethod = (obj, member, method) => {
   class TextureBindGroup extends BindGroup {
     /**
      * TextureBindGroup constructor
-     * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param {TextureBindGroupParams=} parameters - [parameters]{@link TextureBindGroupParams} used to create our {@link TextureBindGroup}
+     * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+     * @param parameters - {@link TextureBindGroupParams | parameters} used to create our {@link TextureBindGroup}
      */
     constructor(renderer, { label, index = 0, bindings = [], uniforms, storages, textures = [], samplers = [] } = {}) {
       const type = "TextureBindGroup";
@@ -3262,10 +3288,10 @@ var __privateMethod = (obj, member, method) => {
       return !this.bindGroup && !!this.bindings.length && !this.textures.find((texture) => !(texture.texture || texture.externalTexture)) && !this.samplers.find((sampler) => !sampler.sampler);
     }
     /**
-     * Update the [bind group textures]{@link TextureBindGroup#textures}:
+     * Update the {@link TextureBindGroup#textures | bind group textures}:
      * - Check if they need to copy their source texture
      * - Upload texture if needed
-     * - Check if the [bind group layout]{@link TextureBindGroup#bindGroupLayout} and/or [bing group]{@link TextureBindGroup#bindGroup} need an update
+     * - Check if the {@link TextureBindGroup#bindGroupLayout | GPU bind group layout} and/or {@link TextureBindGroup#bindGroup | GPU bind group} need an update
      */
     updateTextures() {
       this.textures.forEach((texture, textureIndex) => {
@@ -3280,7 +3306,7 @@ var __privateMethod = (obj, member, method) => {
       });
     }
     /**
-     * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer struct]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+     * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed
      */
     update() {
       this.updateTextures();
@@ -3298,7 +3324,7 @@ var __privateMethod = (obj, member, method) => {
   class SamplerBinding extends Binding {
     /**
      * SamplerBinding constructor
-     * @param parameters - [parameters]{@link SamplerBindingParams} used to create our SamplerBindings
+     * @param parameters - {@link SamplerBindingParams | parameters} used to create our SamplerBindings
      */
     constructor({
       label = "Sampler",
@@ -3319,7 +3345,8 @@ var __privateMethod = (obj, member, method) => {
       this.setWGSLFragment();
     }
     /**
-     * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#sampler}
+     * Get {@link GPUBindGroupLayoutEntry#sampler | bind group layout entry resource}
+     * @readonly
      */
     get resourceLayout() {
       return {
@@ -3330,11 +3357,15 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+     * Get the {@link GPUBindGroupEntry#resource | bind group resource}
      */
     get resource() {
       return this.sampler;
     }
+    /**
+     * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+     * @param value - new bind group resource
+     */
     set resource(value) {
       if (value && this.sampler)
         this.shouldResetBindGroup = true;
@@ -3350,7 +3381,7 @@ var __privateMethod = (obj, member, method) => {
   class Camera extends Object3D {
     /**
      * Camera constructor
-     * @param parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
+     * @param parameters - {@link CameraParams | parameters} used to create our {@link Camera}
      */
     constructor({
       fov = 50,
@@ -3437,12 +3468,15 @@ var __privateMethod = (obj, member, method) => {
       this.matrices.view.shouldUpdate = true;
     }
     /**
-     * Get / set the {@link Camera} [field of view]{@link Camera#fov}. Update the {@link projectionMatrix} only if the field of view actually changed
-     * @readonly
+     * Get the {@link Camera} {@link fov | field of view}
      */
     get fov() {
       return __privateGet(this, _fov);
     }
+    /**
+     * Set the {@link Camera} {@link fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
+     * @param fov - new field of view
+     */
     set fov(fov) {
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
@@ -3453,12 +3487,15 @@ var __privateMethod = (obj, member, method) => {
       this.setCSSPerspective();
     }
     /**
-     * Get / set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-     * @readonly
+     * Get the {@link Camera} {@link near} plane value.
      */
     get near() {
       return __privateGet(this, _near);
     }
+    /**
+     * Set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+     * @param near - new near plane value
+     */
     set near(near) {
       near = Math.max(near ?? this.near, 0.01);
       if (near !== this.near) {
@@ -3467,12 +3504,15 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /**
-     * Get / set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-     * @readonly
+     * Get / set the {@link Camera} {@link far} plane value.
      */
     get far() {
       return __privateGet(this, _far);
     }
+    /**
+     * Set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+     * @param far - new far plane value
+     */
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
@@ -3481,18 +3521,21 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /**
-     * Get / set the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
-     * @readonly
+     * Get the {@link Camera} {@link pixelRatio} value.
      */
     get pixelRatio() {
       return __privateGet(this, _pixelRatio);
     }
+    /**
+     * Set the {@link Camera} {@link pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
+     * @param pixelRatio - new pixel ratio value
+     */
     set pixelRatio(pixelRatio) {
       __privateSet(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
     /**
-     * Sets the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
+     * Set the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
      * @param size - {@link width} and {@link height} values to use
      */
     setSize({ width, height }) {
@@ -3506,7 +3549,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if neededs
-     * @param parameters - [parameters]{@link CameraPerspectiveOptions} to use for the perspective
+     * @param parameters - {@link CameraPerspectiveOptions | parameters} to use for the perspective
      */
     setPerspective({
       fov = this.fov,
@@ -3523,13 +3566,13 @@ var __privateMethod = (obj, member, method) => {
       this.far = far;
     }
     /**
-     * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
+     * Callback to run when the camera{@link modelMatrix | model matrix} has been updated
      */
     onAfterMatrixStackUpdate() {
       this.onMatricesChanged();
     }
     /**
-     * Sets a {@link CSSPerspective} property based on {@link Camera#size.width}, {@link Camera#size.height}, {@link pixelRatio} and {@link fov}
+     * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}
      * Used to translate planes along the Z axis using pixel units as CSS would do
      * Taken from {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value}
      */
@@ -3559,8 +3602,8 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-     * @param target - [target]{@link Vec3} to look at
+     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+     * @param target - {@link Vec3 | target} to look at
      */
     lookAt(target = new Vec3()) {
       const rotationMatrix = new Mat4().lookAt(this.position, target);
@@ -3611,8 +3654,8 @@ var __privateMethod = (obj, member, method) => {
   class Sampler {
     /**
      * Sampler constructor
-     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
-     * @param parameters - [parameters]{@link SamplerParams} used to create this {@link Sampler}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
+     * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}
      */
     constructor(renderer, {
       label = "Sampler",
@@ -3657,7 +3700,7 @@ var __privateMethod = (obj, member, method) => {
       this.sampler = this.renderer.createSampler(this);
     }
     /**
-     * Set the [binding]{@link SamplerBinding}
+     * Set the {@link SamplerBinding | binding}
      */
     createBinding() {
       this.binding = new SamplerBinding({
@@ -3680,7 +3723,7 @@ var __privateMethod = (obj, member, method) => {
   class RenderTexture {
     /**
      * RenderTexture constructor
-     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
+     * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
      * @param parameters - {@link RenderTextureParams | parameters} used to create this {@link RenderTexture}
      */
     constructor(renderer, parameters = defaultRenderTextureParams) {
@@ -3711,7 +3754,7 @@ var __privateMethod = (obj, member, method) => {
       this.createTexture();
     }
     /**
-     * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
+     * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
      */
     createTexture() {
       var _a;
@@ -3736,7 +3779,7 @@ var __privateMethod = (obj, member, method) => {
       this.textureBinding.resource = this.texture;
     }
     /**
-     * Set our [struct]{@link RenderTexture#bindings}
+     * Set our {@link RenderTexture#bindings | bindings}
      */
     setBindings() {
       this.bindings = [
@@ -3750,15 +3793,15 @@ var __privateMethod = (obj, member, method) => {
       ];
     }
     /**
-     * Get our [texture binding]{@link TextureBinding}
+     * Get our {@link TextureBinding | texture binding}
      * @readonly
      */
     get textureBinding() {
       return this.bindings[0];
     }
     /**
-     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
-     * @param size - the optional new [size]{@link RectSize} to set
+     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link BindGroup | bind group} to update
+     * @param size - the optional new {@link RectSize | size} to set
      */
     resize(size = null) {
       if (!size) {
@@ -3789,14 +3832,8 @@ var __privateMethod = (obj, member, method) => {
   class Material {
     /**
      * Material constructor
-     * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
-     * @param {MaterialParams} parameters - parameters used to create our Material
-     * @param {string} parameters.label - Material label
-     * @param {boolean} parameters.useAsyncPipeline - whether the pipeline should be compiled asynchronously
-     * @param {MaterialShaders} parameters.shaders - our Material shader codes and entry points
-     * @param {BindGroupInputs} parameters.inputs - our Material {@link BindGroup} inputs
-     * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-     * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
+     * @param renderer - our renderer class object
+     * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material
      */
     constructor(renderer, parameters) {
       this.type = "Material";
@@ -3841,8 +3878,8 @@ var __privateMethod = (obj, member, method) => {
       return !!(this.renderer.ready && this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready);
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
      */
     loseContext() {
       this.textures.forEach((texture) => {
@@ -3858,7 +3895,7 @@ var __privateMethod = (obj, member, method) => {
       this.pipelineEntry.pipeline = null;
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been restored to recreate our bind groups.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
      */
     restoreContext() {
       this.samplers.forEach((sampler) => {
@@ -3945,7 +3982,7 @@ var __privateMethod = (obj, member, method) => {
       });
     }
     /**
-     * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related struct
+     * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct
      * @readonly
      */
     get texturesBindGroup() {
@@ -4007,9 +4044,10 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Clones a {@link BindGroup} from a list of buffers
      * Useful to create a new bind group with already created buffers, but swapped
-     * @param bindGroup - the BindGroup to clone
-     * @param bindings - our input binding buffers
-     * @param keepLayout - whether we should keep original bind group layout or not
+     * @param parameters - parameters used to clone the {@link BindGroup | bind group}
+     * @param parameters.bindGroup - the BindGroup to clone
+     * @param parameters.bindings - our input binding buffers
+     * @param parameters.keepLayout - whether we should keep original bind group layout or not
      * @returns - the cloned BindGroup
      */
     cloneBindGroup({
@@ -4057,10 +4095,10 @@ var __privateMethod = (obj, member, method) => {
       this.clonedBindGroups = [];
     }
     /**
-     * [Update]{@link BindGroup#update} all bind groups:
-     * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-     * - Update its [buffer struct]{@link BindGroup#bufferBindings}
-     * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
+     * {@link BindGroup#update | Update} all bind groups:
+     * - Update all {@link texturesBindGroups | textures bind groups} textures
+     * - Update its {@link BindGroup#bufferBindings | buffer bindings}
+     * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}
      * - Check if we need to flush the pipeline
      */
     updateBindGroups() {
@@ -4074,7 +4112,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /* INPUTS */
     /**
-     * Look for a [binding]{@link BindGroupBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+     * Look for a {@link BindGroupBindingElement | binding} by name in all {@link inputsBindings | input bindings}
      * @param bindingName - the binding name or key
      * @returns - the found binding, or null if not found
      */
@@ -4082,7 +4120,7 @@ var __privateMethod = (obj, member, method) => {
       return this.inputsBindings.find((binding) => binding.name === bindingName);
     }
     /**
-     * Look for a [buffer binding]{@link BindGroupBufferBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+     * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}
      * @param bindingName - the binding name or key
      * @returns - the found binding, or null if not found
      */
@@ -4143,8 +4181,8 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /**
-     * Destroy a [texture]{@link Texture} or [render texture]{@link RenderTexture}, only if it is not used by another object
-     * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
+     * Destroy a {@link Texture} or {@link RenderTexture}, only if it is not used by another object or cached.
+     * @param texture - {@link Texture} or {@link RenderTexture} to eventually destroy
      */
     destroyTexture(texture) {
       if (texture.options.cache)
@@ -4204,8 +4242,8 @@ var __privateMethod = (obj, member, method) => {
       return result;
     }
     /**
-     * Map the content of a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
-     * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+     * Map the content of a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
      * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
      */
@@ -4221,9 +4259,10 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /**
-     * Map the content of a specific [buffer element]{@link BufferElement} belonging to a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
-     * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
-     * @param bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
+     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+     * @param parameters - parameters used to get the result
+     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+     * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
      * @returns - {@link Float32Array} holding {@link GPUBuffer} data
      */
     async getBufferElementResultByNames({
@@ -4246,8 +4285,8 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Called before rendering the Material.
      * First, check if we need to create our bind groups or pipeline
-     * Then render the [textures]{@link Material#textures}
-     * Finally updates all the [bind groups]{@link Material#bindGroups}
+     * Then render the {@link textures}
+     * Finally updates all the {@link bindGroups | bind groups}
      */
     onBeforeRender() {
       this.compileMaterial();
@@ -4287,8 +4326,8 @@ var __privateMethod = (obj, member, method) => {
   class ComputeMaterial extends Material {
     /**
      * ComputeMaterial constructor
-     * @param renderer - our [renderer]{@link Renderer} class object
-     * @param parameters - [parameters]{@link ComputeMaterialParams} used to create our {@link ComputeMaterial}
+     * @param renderer - our {@link Renderer} class object
+     * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
      */
     constructor(renderer, parameters) {
       renderer = renderer && renderer.renderer || renderer;
@@ -4380,7 +4419,7 @@ var __privateMethod = (obj, member, method) => {
     /* RENDER */
     /**
      * If we defined a custom render function instead of the default one, register the callback
-     * @param callback - callback to run instead of the default render behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
+     * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}
      */
     useCustomRender(callback) {
       if (callback) {
@@ -4420,9 +4459,10 @@ var __privateMethod = (obj, member, method) => {
       });
     }
     /**
-     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
-     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
-     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
+     * @param parameters - parameters used to get the result
+     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
+     * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
      * @async
      * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
@@ -4448,7 +4488,7 @@ var __privateMethod = (obj, member, method) => {
     /**
      * ComputePass constructor
      * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
+     * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}
      */
     constructor(renderer, parameters = {}) {
       __privateAdd(this, _autoRender, void 0);
@@ -4556,21 +4596,21 @@ var __privateMethod = (obj, member, method) => {
       this.material = new ComputeMaterial(this.renderer, computeParameters);
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
      */
     loseContext() {
       this.material.loseContext();
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been restored
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext() {
       this.material.restoreContext();
     }
     /* TEXTURES */
     /**
-     * Get our [compute material textures array]{@link ComputeMaterial#textures}
+     * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
      * @readonly
      */
     get textures() {
@@ -4578,7 +4618,7 @@ var __privateMethod = (obj, member, method) => {
       return ((_a = this.material) == null ? void 0 : _a.textures) || [];
     }
     /**
-     * Get our [compute material render textures array]{@link ComputeMaterial#renderTextures}
+     * Get our {@link ComputeMaterial#renderTextures | ComputeMaterial render textures array}
      * @readonly
      */
     get renderTextures() {
@@ -4587,7 +4627,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Create a new {@link Texture}
-     * @param options - [Texture options]{@link TextureParams}
+     * @param options - {@link TextureParams | Texture parameters}
      * @returns - newly created {@link Texture}
      */
     createTexture(options) {
@@ -4610,7 +4650,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Create a new {@link RenderTexture}
-     * @param  options - [RenderTexture options]{@link RenderTextureParams}
+     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
      * @returns - newly created {@link RenderTexture}
      */
     createRenderTexture(options) {
@@ -4629,7 +4669,7 @@ var __privateMethod = (obj, member, method) => {
       this.material.addTexture(renderTexture);
     }
     /**
-     * Get our [compute material uniforms]{@link ComputeMaterial#uniforms}
+     * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}
      * @readonly
      */
     get uniforms() {
@@ -4637,7 +4677,7 @@ var __privateMethod = (obj, member, method) => {
       return (_a = this.material) == null ? void 0 : _a.uniforms;
     }
     /**
-     * Get our [compute material storages]{@link ComputeMaterial#storages}
+     * Get our {@link ComputeMaterial#storages | ComputeMaterial storages}
      * @readonly
      */
     get storages() {
@@ -4700,8 +4740,8 @@ var __privateMethod = (obj, member, method) => {
       return this;
     }
     /**
-     * Callback to run after the {@link Renderer} has been resized
-     * @param callback - callback to run just after {@link GPURenderer} has been resized
+     * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
+     * @param callback - callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
      */
     onAfterResize(callback) {
       if (callback) {
@@ -4740,7 +4780,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Render our compute pass
-     * Basically just check if our {@link GPURenderer} is ready, and then render our {@link ComputeMaterial}
+     * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}
      * @param pass
      */
     render(pass) {
@@ -4759,9 +4799,10 @@ var __privateMethod = (obj, member, method) => {
       (_a = this.material) == null ? void 0 : _a.copyBufferToResult(commandEncoder);
     }
     /**
-     * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
-     * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
-     * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+     * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
+     * @param parameters - parameters used to get the result
+     * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
+     * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
      * @async
      * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
      */
@@ -4870,7 +4911,7 @@ var __privateMethod = (obj, member, method) => {
   class DOMFrustum {
     /**
      * DOMFrustum constructor
-     * @param {DOMFrustumParams} parameters - [parameters]{@link DOMFrustumParams} used to create our {@link DOMFrustum}
+     * @param {DOMFrustumParams} parameters - {@link DOMFrustumParams | parameters} used to create our {@link DOMFrustum}
      */
     constructor({
       boundingBox = new Box3(),
@@ -4971,10 +5012,7 @@ var __privateMethod = (obj, member, method) => {
   class Geometry {
     /**
      * Geometry constructor
-     * @param [parameters={}] - parameters used to create our Geometry
-     * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
-     * @param {number} [parameters.instancesCount=1] - number of instances to draw
-     * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+     * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
      */
     constructor({
       verticesOrder = "cw",
@@ -5027,11 +5065,8 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Add a vertex buffer to our Geometry, set its attributes and return it
-     * @param [parameters={}] - vertex buffer parameters
-     * @param [parameters.stepMode="vertex"] - GPU vertex step mode
-     * @param [parameters.name] - vertex buffer name
-     * @param [parameters.attributes=[]] - vertex buffer attributes
-     * @returns - newly created [vertex buffer]{@link VertexBuffer}
+     * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
+     * @returns - newly created {@link VertexBuffer | vertex buffer}
      */
     addVertexBuffer({ stepMode = "vertex", name, attributes = [] } = {}) {
       const vertexBuffer = {
@@ -5054,21 +5089,14 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Get a vertex buffer by name
      * @param name - our vertex buffer name
-     * @returns - found [vertex buffer]{@link VertexBuffer} or null if not found
+     * @returns - found {@link VertexBuffer | vertex buffer} or null if not found
      */
     getVertexBufferByName(name = "") {
       return this.vertexBuffers.find((vertexBuffer) => vertexBuffer.name === name);
     }
     /**
      * Set a vertex buffer attribute
-     * @param parameters - attributes parameters
-     * @param {VertexBuffer=} parameters.vertexBuffer - vertex buffer holding this attribute
-     * @param {string} parameters.name - attribute name
-     * @param {WGSLVariableType} [parameters.type="vec3f"] - attribute type
-     * @param {GPUVertexFormat} [parameters.bufferFormat="float32x3"] - attribute buffer format
-     * @param {number} [parameters.size=3] - attribute size
-     * @param {Float32Array} [parameters.array=Float32Array] - attribute array
-     * @param {number} [parameters.verticesStride=1] - number of vertices used by this attribute, i.e. insert one for every X vertices
+     * @param parameters - attributes {@link VertexBufferAttributeParams | parameters}
      */
     setAttribute({
       vertexBuffer = this.vertexBuffers[0],
@@ -5127,7 +5155,7 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Get an attribute by name
      * @param name - name of the attribute to find
-     * @returns - found [attribute]{@link VertexBufferAttribute} or null if not found
+     * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
      */
     getAttributeByName(name) {
       let attribute;
@@ -5253,10 +5281,7 @@ var __privateMethod = (obj, member, method) => {
   class IndexedGeometry extends Geometry {
     /**
      * IndexedGeometry constructor
-     * @param {GeometryParams} [parameters={}] - parameters used to create our IndexedGeometry
-     * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
-     * @param {number} [parameters.instancesCount=1] - number of instances to draw
-     * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+     * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
      */
     constructor({
       verticesOrder = "cw",
@@ -5282,10 +5307,8 @@ var __privateMethod = (obj, member, method) => {
       return this.verticesCount < 256 * 256;
     }
     /**
-     *
-     * @param parameters - parameters used to create our index buffer
-     * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
-     * @param {Uint32Array} [parameters.array=Uint32Array]
+     * Set our {@link indexBuffer}
+     * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
      */
     setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0) }) {
       this.indexBuffer = {
@@ -5325,11 +5348,7 @@ var __privateMethod = (obj, member, method) => {
   class PlaneGeometry extends IndexedGeometry {
     /**
      * PlaneGeometry constructor
-     * @param {PlaneGeometryParams} [parameters={}] - parameters used to create our PlaneGeometry
-     * @param {number} [parameters.instancesCount=1] - number of instances to draw
-     * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
-     * @param {number} [parameters.widthSegments=1] - number of segments along the X axis
-     * @param {number} [parameters.heightSegments=1] - number of segments along the Y axis
+     * @param parameters - {@link PlaneGeometryParams | parameters} used to create our PlaneGeometry
      */
     constructor({
       widthSegments = 1,
@@ -5378,8 +5397,8 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Compute the UV and position arrays based on our plane widthSegments and heightSegments values and return the corresponding attributes
-     * @param verticesCount - [number of vertices]{@link Geometry#verticesCount} of our {@link PlaneGeometry}
-     * @returns - our position and uv [attributes]{@link VertexBufferAttributeParams}
+     * @param verticesCount - {@link Geometry#verticesCount | number of vertices} of our {@link PlaneGeometry}
+     * @returns - our position and uv {@link VertexBufferAttributeParams | attributes}
      */
     getIndexedVerticesAndUVs(verticesCount) {
       const uv = {
@@ -5430,7 +5449,7 @@ var __privateMethod = (obj, member, method) => {
     /**
      * RenderMaterial constructor
      * @param renderer - our renderer class object
-     * @param parameters - [parameters]{@link RenderMaterialParams} used to create our RenderMaterial
+     * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
      */
     constructor(renderer, parameters) {
       renderer = renderer && renderer.renderer || renderer;
@@ -5569,25 +5588,25 @@ struct VertexOutput {
            * MeshBase constructor
            * @typedef MeshBaseParams
            * @property {string} [label] - MeshBase label
-           * @property {boolean} [autoRender] - whether we should add this MeshBase to our {@link Scene} to let it handle the rendering process automatically
+           * @property {boolean} [autoRender] - whether we should add this MeshBase to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
            * @property {AllowedGeometries} geometry - geometry to draw
-           * @property {boolean} [useAsyncPipeline] - whether the {@link RenderPipelineEntry} should be compiled asynchronously
+           * @property {boolean} [useAsyncPipeline] - whether the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} should be compiled asynchronously
            * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
            * @property {BindGroupInputs} [inputs] - our MeshBase {@link BindGroup} inputs
            * @property {BindGroup[]} [bindGroups] - already created {@link BindGroup} to use
-           * @property {boolean} [transparent] - impacts the {@link RenderPipelineEntry} blend properties
+           * @property {boolean} [transparent] - impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} blend properties
            * @property {GPUCullMode} [cullMode] - cull mode to use
            * @property {boolean} [visible] - whether this Mesh should be visible (drawn) or not
-           * @property {number} [renderOrder] - controls the order in which this Mesh should be rendered by our {@link Scene}
+           * @property {number} [renderOrder] - controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene}
            * @property {RenderTarget} [renderTarget] - {@link RenderTarget} to render onto if any
            * @property {ExternalTextureParams} [texturesOptions] - textures options to apply
            * @property {Sampler[]} [samplers] - array of {@link Sampler}
            *
            * @typedef MeshBaseArrayParams
            * @type {array}
-           * @property {(Renderer|GPUCurtains)} 0 - our [renderer]{@link Renderer} class object
+           * @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
            * @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
-           * @property {MeshBaseParams} 2 - [Mesh base parameters]{@link MeshBaseParams}
+           * @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
       
            * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
            */
@@ -5677,7 +5696,7 @@ struct VertexOutput {
       }
       /* SCENE */
       /**
-       * Add a Mesh to the renderer and the {@link Scene}
+       * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
        */
       addToScene() {
         this.renderer.meshes.push(this);
@@ -5686,7 +5705,7 @@ struct VertexOutput {
         }
       }
       /**
-       * Remove a Mesh from the renderer and the {@link Scene}
+       * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
        */
       removeFromScene() {
         if (__privateGet(this, _autoRender3)) {
@@ -5695,7 +5714,7 @@ struct VertexOutput {
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
       }
       /**
-       * Set a new {@link Renderer} for this {@link MeshBase}
+       * Set a new {@link Renderer} for this Mesh
        * @param renderer - new {@link Renderer} to set
        */
       setRenderer(renderer) {
@@ -5720,8 +5739,8 @@ struct VertexOutput {
         }
       }
       /**
-       * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-       * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+       * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+       * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
        */
       loseContext() {
         this.geometry.vertexBuffers.forEach((vertexBuffer) => {
@@ -5733,7 +5752,7 @@ struct VertexOutput {
         this.material.loseContext();
       }
       /**
-       * Called when the [renderer device]{@link GPURenderer#device} has been restored
+       * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
        */
       restoreContext() {
         this.material.restoreContext();
@@ -5816,7 +5835,7 @@ struct VertexOutput {
       /* MATERIAL */
       /**
        * Set a Mesh transparent property, then set its material
-       * @param meshParameters - [RenderMaterial parameters]{@link RenderMaterialParams}
+       * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
        */
       setMaterial(meshParameters) {
         var _a2;
@@ -5835,7 +5854,7 @@ struct VertexOutput {
       }
       /* TEXTURES */
       /**
-       * Get our [render material textures array]{@link RenderMaterial#textures}
+       * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
        * @readonly
        */
       get textures() {
@@ -5843,7 +5862,7 @@ struct VertexOutput {
         return ((_a2 = this.material) == null ? void 0 : _a2.textures) || [];
       }
       /**
-       * Get our [render material render textures array]{@link RenderMaterial#renderTextures}
+       * Get our {@link RenderMaterial#renderTextures | RenderMaterial render textures array}
        * @readonly
        */
       get renderTextures() {
@@ -5852,7 +5871,7 @@ struct VertexOutput {
       }
       /**
        * Create a new {@link Texture}
-       * @param options - [Texture options]{@link TextureParams}
+       * @param options - {@link TextureParams | Texture parameters}
        * @returns - newly created {@link Texture}
        */
       createTexture(options) {
@@ -5883,7 +5902,7 @@ struct VertexOutput {
       }
       /**
        * Create a new {@link RenderTexture}
-       * @param  options - [RenderTexture options]{@link RenderTextureParams}
+       * @param  options - {@link RenderTextureParams | RenderTexture parameters}
        * @returns - newly created {@link RenderTexture}
        */
       createRenderTexture(options) {
@@ -5903,7 +5922,7 @@ struct VertexOutput {
       }
       /**
        * Assign or remove a {@link RenderTarget} to this Mesh
-       * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
+       * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
        * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
        */
       setRenderTarget(renderTarget) {
@@ -6046,11 +6065,11 @@ struct VertexOutput {
       }
       /**
        * Render our Mesh
-       * - Execute [onBeforeRenderPass]{@link MeshBase#onBeforeRenderPass}
-       * - Stop here if [renderer]{@link Renderer} is not ready or Mesh is not [visible]{@link MeshBase#visible}
+       * - Execute {@link onBeforeRenderPass}
+       * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}
        * - Execute super render call if it exists
-       * - [Render]{@link MeshBase#onRenderPass} our {@link RenderMaterial} and geometry
-       * - Execute [onAfterRenderPass]{@link MeshBase#onAfterRenderPass}
+       * - {@link onRenderPass | render} our {@link material} and {@link geometry}
+       * - Execute {@link onAfterRenderPass}
        * @param pass - current render pass encoder
        */
       render(pass) {
@@ -6065,7 +6084,7 @@ struct VertexOutput {
       }
       /* DESTROY */
       /**
-       * Remove the Mesh from the {@link Scene} and destroy it
+       * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
        */
       remove() {
         this.removeFromScene();
@@ -6143,8 +6162,8 @@ struct VertexOutput {
   }) {
     /**
      * FullscreenPlane constructor
-     * @param renderer- [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
-     * @param parameters - [parameters]{@link MeshBaseRenderParams} use to create this {@link FullscreenPlane}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
+     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
      */
     constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
@@ -6174,10 +6193,10 @@ struct VertexOutput {
       super.resize(boundingRect);
     }
     /**
-     * Take the pointer [vector]{@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}
+     * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link FullscreenPlane}
      * It ranges from -1 to 1 on both axis
-     * @param mouseCoords - pointer [vector]{@link Vec2} coordinates
-     * @returns - the mapped [vector]{@link Vec2} coordinates in the [-1, 1] range
+     * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
+     * @returns - the mapped {@link Vec2 | vector} coordinates in the [-1, 1] range
      */
     mouseToPlaneCoords(mouseCoords = new Vec2()) {
       return new Vec2(
@@ -6191,7 +6210,6 @@ struct VertexOutput {
      * ProjectedObject3D constructor
      * @param renderer - our renderer class object
      */
-    // TODO just use the Camera instead?
     constructor(renderer) {
       super();
       renderer = renderer && renderer.renderer || renderer;
@@ -6250,37 +6268,43 @@ struct VertexOutput {
       };
     }
     /**
-     * Get/set our model view matrix
-     * @readonly
+     * Get our {@link modelViewMatrix | model view matrix}
      */
     get modelViewMatrix() {
       return this.matrices.modelView.matrix;
     }
+    /**
+     * Set our {@link modelViewMatrix | model view matrix}
+     * @param value - new {@link modelViewMatrix | model view matrix}
+     */
     set modelViewMatrix(value) {
       this.matrices.modelView.matrix = value;
       this.matrices.modelView.shouldUpdate = true;
     }
     /**
-     * Get our camera view matrix
+     * Get our {@link Camera#viewMatrix | camera view matrix}
      * @readonly
      */
     get viewMatrix() {
       return this.camera.viewMatrix;
     }
     /**
-     * Get our camera projection matrix
+     * Get our {@link Camera#projectionMatrix | camera projection matrix}
      * @readonly
      */
     get projectionMatrix() {
       return this.camera.projectionMatrix;
     }
     /**
-     * Get/set our model view projection matrix
-     * @readonly
+     * Get our {@link modelViewProjectionMatrix | model view projection matrix}
      */
     get modelViewProjectionMatrix() {
       return this.matrices.modelViewProjection.matrix;
     }
+    /**
+     * Set our {@link modelViewProjectionMatrix | model view projection matrix}
+     * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
+     */
     set modelViewProjectionMatrix(value) {
       this.matrices.modelViewProjection.matrix = value;
       this.matrices.modelViewProjection.shouldUpdate = true;
@@ -6450,7 +6474,7 @@ struct VSOutput {
       /* MATERIAL */
       /**
        * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
-       * @param meshParameters - [RenderMaterial parameters]{@link RenderMaterialParams}
+       * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
        */
       setMaterial(meshParameters) {
         const matricesUniforms = {
@@ -6565,7 +6589,7 @@ struct VSOutput {
        * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
        * First, we update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
        * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
-       * Finally we call [Mesh base onBeforeRenderPass]{@link MeshBaseClass#onBeforeRenderPass} super
+       * Finally we call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
        */
       onBeforeRenderPass() {
         this.updateMatrixStack();
@@ -6603,7 +6627,7 @@ struct VSOutput {
   class PipelineEntry {
     /**
      * PipelineEntry constructor
-     * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link PipelineEntry}
+     * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link PipelineEntry}
      */
     constructor(parameters) {
       this.type = "PipelineEntry";
@@ -6627,22 +6651,22 @@ struct VSOutput {
       };
     }
     /**
-     * Get whether the [pipeline]{@link PipelineEntry#pipeline} is ready, i.e. successfully compiled
+     * Get whether the {@link pipeline} is ready, i.e. successfully compiled
      * @readonly
      */
     get ready() {
       return !this.status.compiling && this.status.compiled && !this.status.error;
     }
     /**
-     * Get whether the [pipeline]{@link PipelineEntry#pipeline} is ready to be compiled, i.e. we have already not already tried to compile it, and it's not currently compiling neither
+     * Get whether the {@link pipeline} is ready to be compiled, i.e. we have already not already tried to compile it, and it's not currently compiling neither
      * @readonly
      */
     get canCompile() {
       return !this.status.compiling && !this.status.compiled && !this.status.error;
     }
     /**
-     * Set our [pipeline entry bind groups]{@link PipelineEntry#bindGroups}
-     * @param bindGroups - [bind groups]{@link Material#bindGroups} to use with this {@link PipelineEntry}
+     * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}
+     * @param bindGroups - {@link core/materials/Material.Material#bindGroups | bind groups} to use with this {@link PipelineEntry}
      */
     setPipelineEntryBindGroups(bindGroups) {
       this.bindGroups = bindGroups;
@@ -6652,7 +6676,7 @@ struct VSOutput {
      * Create a {@link GPUShaderModule}
      * @param parameters - Parameters used
      * @param parameters.code - patched WGSL code string
-     * @param parameters.type - [shader type]{@link MaterialShadersType}
+     * @param parameters.type - {@link MaterialShadersType | shader type}
      * @returns - compiled {@link GPUShaderModule} if successful
      */
     createShaderModule({ code = "", type = "vertex" }) {
@@ -6698,7 +6722,7 @@ ${formattedMessage}`);
     createShaders() {
     }
     /**
-     * Create the [pipeline entry layout]{@link PipelineEntry#layout}
+     * Create the pipeline entry {@link layout}
      */
     createPipelineLayout() {
       this.layout = this.renderer.createPipelineLayout({
@@ -6712,9 +6736,9 @@ ${formattedMessage}`);
     createPipelineDescriptor() {
     }
     /**
-     * Flush a {@link PipelineEntry}, i.e. reset its [bind groups]{@link PipelineEntry#bindGroups}, [layout]{@link PipelineEntry#layout} and descriptor and recompile the [pipeline]{@link PipelineEntry#pipeline}
+     * Flush a {@link PipelineEntry}, i.e. reset its {@link bindGroups | bind groups}, {@link layout} and descriptor and recompile the {@link pipeline}
      * Used when one of the bind group or rendering property has changed
-     * @param newBindGroups - new [bind groups]{@link PipelineEntry#bindGroups} in case they have changed
+     * @param newBindGroups - new {@link bindGroups | bind groups} in case they have changed
      */
     flushPipelineEntry(newBindGroups = []) {
       this.status.compiling = false;
@@ -6724,7 +6748,7 @@ ${formattedMessage}`);
       this.compilePipelineEntry();
     }
     /**
-     * Set up a [pipeline]{@link PipelineEntry#pipeline} by creating the shaders, the [layout]{@link PipelineEntry#layout} and the descriptor
+     * Set up a {@link pipeline} by creating the shaders, the {@link layout} and the descriptor
      */
     compilePipelineEntry() {
       this.status.compiling = true;
@@ -6791,7 +6815,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
   class RenderPipelineEntry extends PipelineEntry {
     /**
      * RenderPipelineEntry constructor
-     * @param parameters - [parameters]{@link RenderPipelineEntryParams} used to create this {@link RenderPipelineEntry}
+     * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
      */
     constructor(parameters) {
       let { renderer } = parameters;
@@ -6846,15 +6870,15 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
     // TODO! need to chose whether we should silently add the camera bind group here
     // or explicitly in the RenderMaterial class createBindGroups() method
     /**
-     * Merge our [pipeline entry bind groups]{@link RenderPipelineEntry#bindGroups} with the [camera bind group]{@link CameraRenderer#cameraBindGroup} if needed and set them
-     * @param bindGroups - [bind groups]{@link RenderMaterial#bindGroups} to use with this {@link RenderPipelineEntry}
+     * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link CameraRenderer#cameraBindGroup | camera bind group} if needed and set them
+     * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
      */
     setPipelineEntryBindGroups(bindGroups) {
       this.bindGroups = "cameraBindGroup" in this.renderer && this.options.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
     }
     /**
-     * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes})
-     * @param parameters - the [bind groups]{@link RenderMaterial#bindGroups} and [attributes]{@link RenderMaterial#attributes} to use
+     * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
+     * @param parameters - the {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} and {@link core/materials/RenderMaterial.RenderMaterial#attributes | attributes} to use
      */
     setPipelineEntryProperties(parameters) {
       const { attributes, bindGroups } = parameters;
@@ -6863,7 +6887,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
     }
     /* SHADERS */
     /**
-     * Patch the shaders by appending all the necessary shader chunks, [bind groups]{@link RenderPipelineEntry#bindGroups}) and [attributes]{@link RenderPipelineEntry#attributes} WGSL code fragments to the given [parameter shader code]{@link PipelineEntryParams#shaders}
+     * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
      */
     patchShaders() {
       this.shaders.vertex.head = "";
@@ -6943,7 +6967,7 @@ ${this.shaders.vertex.head}`;
     }
     /* SETUP */
     /**
-     * Create the [shaders]{@link RenderPipelineEntry#shaders}: patch them and create the {@link GPUShaderModule}
+     * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
      */
     createShaders() {
       this.patchShaders();
@@ -6957,7 +6981,7 @@ ${this.shaders.vertex.head}`;
       });
     }
     /**
-     * Create the [render pipeline descriptor]{@link RenderPipelineEntry#descriptor}
+     * Create the render pipeline {@link descriptor}
      */
     createPipelineDescriptor() {
       if (!this.shaders.vertex.module || !this.shaders.fragment.module)
@@ -7026,7 +7050,7 @@ ${this.shaders.vertex.head}`;
       };
     }
     /**
-     * Create the [render pipeline]{@link RenderPipelineEntry#pipeline}
+     * Create the render {@link pipeline}
      */
     createRenderPipeline() {
       if (!this.shaders.vertex.module || !this.shaders.fragment.module)
@@ -7039,7 +7063,7 @@ ${this.shaders.vertex.head}`;
       }
     }
     /**
-     * Asynchronously create the [render pipeline]{@link RenderPipelineEntry#pipeline}
+     * Asynchronously create the render {@link pipeline}
      * @async
      * @returns - void promise result
      */
@@ -7057,7 +7081,7 @@ ${this.shaders.vertex.head}`;
       }
     }
     /**
-     * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+     * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our render {@link pipeline}
      * @async
      */
     async compilePipelineEntry() {
@@ -7075,7 +7099,7 @@ ${this.shaders.vertex.head}`;
   class ComputePipelineEntry extends PipelineEntry {
     /**
      * ComputePipelineEntry constructor
-     * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link ComputePipelineEntry}
+     * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
      */
     constructor(parameters) {
       let { renderer } = parameters;
@@ -7095,8 +7119,8 @@ ${this.shaders.vertex.head}`;
       this.descriptor = null;
     }
     /**
-     * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups})
-     * @param parameters - the [bind groups]{@link ComputeMaterial#bindGroups} to use
+     * Set {@link ComputePipelineEntry} properties (in this case the {@link bindGroups | bind groups})
+     * @param parameters - the {@link core/materials/ComputeMaterial.ComputeMaterial#bindGroups | bind groups} to use
      */
     setPipelineEntryProperties(parameters) {
       const { bindGroups } = parameters;
@@ -7104,7 +7128,7 @@ ${this.shaders.vertex.head}`;
     }
     /* SHADERS */
     /**
-     * Patch the shaders by appending all the [bind groups]{@link ComputePipelineEntry#bindGroups}) WGSL code fragments to the given [parameter shader code]{@link PipelineEntryParams#shaders}
+     * Patch the shaders by appending all the {@link bindGroups | bind groups}) WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
      */
     patchShaders() {
       this.shaders.compute.head = "";
@@ -7144,7 +7168,7 @@ ${this.shaders.compute.head}`;
     }
     /* SETUP */
     /**
-     * Create the [shaders]{@link ComputePipelineEntry#shaders}: patch them and create the {@link GPUShaderModule}
+     * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
      */
     createShaders() {
       this.patchShaders();
@@ -7154,7 +7178,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Create the [compute pipeline descriptor]{@link ComputePipelineEntry#descriptor}
+     * Create the compute pipeline {@link descriptor}
      */
     createPipelineDescriptor() {
       if (!this.shaders.compute.module)
@@ -7169,7 +7193,7 @@ ${this.shaders.compute.head}`;
       };
     }
     /**
-     * Create the [compute pipeline]{@link ComputePipelineEntry#pipeline}
+     * Create the compute {@link pipeline}
      */
     createComputePipeline() {
       if (!this.shaders.compute.module)
@@ -7182,7 +7206,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Asynchronously create the [compute pipeline]{@link ComputePipelineEntry#pipeline}
+     * Asynchronously create the compute {@link pipeline}
      * @async
      * @returns - void promise result
      */
@@ -7200,7 +7224,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+     * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our compute {@link pipeline}
      * @async
      */
     async compilePipelineEntry() {
@@ -7222,8 +7246,8 @@ ${this.shaders.compute.head}`;
       this.pipelineEntries = [];
     }
     /**
-     * Checks if the provided [parameters]{@link RenderPipelineEntryBaseParams} belongs to an already created {@link RenderPipelineEntry}.
-     * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
+     * Checks if the provided {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+     * @param parameters - {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters}
      * @returns - the found {@link RenderPipelineEntry}, or null if not found
      */
     isSameRenderPipeline(parameters) {
@@ -7234,9 +7258,9 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Check if a {@link RenderPipelineEntry} has already been created with the given [parameters]{@link RenderPipelineEntryBaseParams}.
-     * Use it if found, else create a new one and add it to the [pipelineEntries]{@link PipelineManager#pipelineEntries} array.
-     * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
+     * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
+     * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
      * @returns - {@link RenderPipelineEntry}, either from cache or newly created
      */
     createRenderPipeline(parameters) {
@@ -7250,8 +7274,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Checks if the provided [parameters]{@link PipelineEntryBaseParams} belongs to an already created {@link ComputePipelineEntry}.
-     * @param parameters - [ComputePipelineEntry parameters]{@link PipelineEntryBaseParams}
+     * Checks if the provided {@link PipelineEntryParams | parameters} belongs to an already created {@link ComputePipelineEntry}.
+     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
      * @returns - the found {@link ComputePipelineEntry}, or null if not found
      */
     isSameComputePipeline(parameters) {
@@ -7262,8 +7286,9 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Create a new {@link ComputePipelineEntry}
-     * @param parameters - [PipelineEntry parameters]{@link PipelineEntryBaseParams}
+     * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
+     * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
      * @returns - newly created {@link ComputePipelineEntry}
      */
     createComputePipeline(parameters) {
@@ -7277,9 +7302,9 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Check if the given [pipeline entry]{@link AllowedPipelineEntries} is already set, if not set it
+     * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it
      * @param pass - current pass encoder
-     * @param pipelineEntry - the [pipeline entry]{@link AllowedPipelineEntries} to set
+     * @param pipelineEntry - the {@link AllowedPipelineEntries | PipelineEntry} to set
      */
     setCurrentPipeline(pass, pipelineEntry) {
       if (pipelineEntry.index !== this.currentPipelineIndex) {
@@ -7288,7 +7313,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Reset the [current pipeline index]{@link PipelineManager#currentPipelineIndex} so the next [pipeline entry]{@link AllowedPipelineEntries} will be set for sure
+     * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
      */
     resetCurrentPipeline() {
       this.currentPipelineIndex = null;
@@ -7353,10 +7378,7 @@ ${this.shaders.compute.head}`;
   class DOMElement {
     /**
      * DOMElement constructor
-     * @param parameters - parameters used to create our DOMElement
-     * @param {HTMLElement=} parameters.element - DOM HTML element to track
-     * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
-     * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
+     * @param parameters - {@link DOMElementParams | parameters} used to create our DOMElement
      */
     constructor({
       element = document.body,
@@ -7401,12 +7423,15 @@ ${this.shaders.compute.head}`;
       return !["x", "y", "left", "top", "right", "bottom", "width", "height"].some((k) => rect1[k] !== rect2[k]);
     }
     /**
-     * Get or set our element's bounding rectangle
-     * @readonly
+     * Get our element bounding rectangle
      */
     get boundingRect() {
       return this._boundingRect;
     }
+    /**
+     * Set our element bounding rectangle
+     * @param boundingRect - new bounding rectangle
+     */
     set boundingRect(boundingRect) {
       const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect);
       this._boundingRect = {
@@ -7562,7 +7587,7 @@ ${this.shaders.compute.head}`;
     }
     /* TRANSFOMS */
     /**
-     * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+     * Set our transforms properties and [onChange]{@link math/Vec3.Vec3#onChange} callbacks
      */
     setTransforms() {
       super.setTransforms();
@@ -7573,61 +7598,76 @@ ${this.shaders.compute.head}`;
       this.transformOrigin.onChange(() => this.setWorldTransformOrigin());
     }
     /**
-     * Get/set the [additional translation relative to the document]{@link DOMObject3DTransforms#position.document}
+     * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
      */
     get documentPosition() {
       return this.transforms.position.document;
     }
+    /**
+     * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+     * @param value - additional translation relative to the document to apply
+     */
     set documentPosition(value) {
       this.transforms.position.document = value;
       this.applyPosition();
     }
     /**
      * Get the [DOMObject3D DOM element]{@link DOMObject3D#domElement} scale in world space
+     * @readonly
      */
     get DOMObjectWorldScale() {
       return __privateGet(this, _DOMObjectWorldScale).clone();
     }
     /**
      * Get the {@link DOMObject3D} scale in world space (accounting for [scale]{@link DOMObject3D#scale})
+     * @readonly
      */
     get worldScale() {
       return this.DOMObjectWorldScale.multiply(this.scale);
     }
     /**
      * Get the {@link DOMObject3D} position in world space
+     * @readonly
      */
     get worldPosition() {
       return __privateGet(this, _DOMObjectWorldPosition).clone();
     }
     /**
-     * Get/set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+     * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
      */
     get transformOrigin() {
       return this.transforms.origin.model;
     }
+    /**
+     * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+     * @param value - new transform origin
+     */
     set transformOrigin(value) {
       this.transforms.origin.model = value;
       this.setWorldTransformOrigin();
     }
     /**
-     * Get/set the {@link DOMObject3D} transform origin in world space
+     * Get the {@link DOMObject3D} transform origin in world space
      */
     get worldTransformOrigin() {
       return this.transforms.origin.world;
     }
+    /**
+     * Set the {@link DOMObject3D} transform origin in world space
+     * @param value - new world space transform origin
+     */
     set worldTransformOrigin(value) {
       this.transforms.origin.world = value;
     }
     /**
-     * Set the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
+     * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
      */
     applyPosition() {
       this.applyDocumentPosition();
       super.applyPosition();
     }
     /**
-     * Compute the [DOMObject3D world position]{@link DOMObject3D.#DOMObjectWorldPosition} using its world position and document translation converted to world space
+     * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
      */
     applyDocumentPosition() {
       let worldPosition = new Vec3(0, 0, 0);
@@ -7651,7 +7691,7 @@ ${this.shaders.compute.head}`;
     }
     /* MATRICES */
     /**
-     * Update the [model matrix]{@link DOMObject3D#modelMatrix} accounting the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} and [DOMObject3D world scale]{@link DOMObject3D##DOMObjectWorldScale}
+     * Update the [model matrix]{@link DOMObject3D#modelMatrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
      */
     updateModelMatrix() {
       this.modelMatrix.composeFromOrigin(
@@ -7663,8 +7703,8 @@ ${this.shaders.compute.head}`;
       this.modelMatrix.scale(__privateGet(this, _DOMObjectWorldScale));
     }
     /**
-     * Convert a document position [vector]{@link Vec3} to a world position [vector]{@link Vec3}
-     * @param vector - document position [vector]{@link Vec3} converted to world space
+     * Convert a document position [vector]{@link math/Vec3.Vec3} to a world position [vector]{@link math/Vec3.Vec3}
+     * @param vector - document position [vector]{@link math/Vec3.Vec3} converted to world space
      */
     documentToWorldSpace(vector = new Vec3()) {
       return new Vec3(
@@ -7711,7 +7751,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Update the [DOMOBject3D DOMElement]{@link DOMObject3D#domElement} scroll position
-     * @param delta - last [scroll delta values]{@link ScrollManager#delta}
+     * @param delta - last [scroll delta values]{@link utils/ScrollManager.ScrollManager.delta}
      */
     updateScrollPosition(delta = { x: 0, y: 0 }) {
       if (delta.x || delta.y) {
@@ -8032,11 +8072,15 @@ ${this.shaders.compute.head}`;
         ]
       };
     }
+    /**
+     * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
+     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
+     */
     getRenderPassEntryLength(renderPassEntry) {
       if (!renderPassEntry) {
         return 0;
       } else {
-        return renderPassEntry.element ? 1 : 0 + renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
+        return renderPassEntry.element ? 1 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
       }
     }
     /**
@@ -8315,8 +8359,8 @@ ${this.shaders.compute.head}`;
   class RenderPass {
     /**
      * RenderPass constructor
-     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
-     * @param parameters - [parameters]{@link RenderPassParams} used to create this {@link RenderPass}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
+     * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
     constructor(renderer, {
       label = "Render Pass",
@@ -8345,7 +8389,7 @@ ${this.shaders.compute.head}`;
       this.setRenderPassDescriptor();
     }
     /**
-     * Set our [render pass depth texture]{@link RenderPass#depthTexture}
+     * Set our {@link depthTexture | depth texture}
      */
     createDepthTexture() {
       this.depthTexture = this.renderer.createTexture({
@@ -8357,7 +8401,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our [render pass render texture]{@link RenderPass#renderTexture}
+     * Set our {@link renderTexture | render texture}
      */
     createRenderTexture() {
       this.renderTexture = this.renderer.createTexture({
@@ -8369,7 +8413,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Reset our [render pass depth texture]{@link RenderPass#depthTexture}
+     * Reset our {@link depthTexture | depth texture}
      */
     resetRenderPassDepth() {
       if (this.depthTexture) {
@@ -8379,7 +8423,7 @@ ${this.shaders.compute.head}`;
       this.descriptor.depthStencilAttachment.view = this.depthTexture.createView();
     }
     /**
-     * Reset our [render pass render texture]{@link RenderPass#renderTexture}
+     * Reset our {@link renderTexture | render texture}
      */
     resetRenderPassView() {
       if (this.renderTexture) {
@@ -8389,7 +8433,7 @@ ${this.shaders.compute.head}`;
       this.descriptor.colorAttachments[0].view = this.renderTexture.createView();
     }
     /**
-     * Set our [render pass descriptor]{@link RenderPass#descriptor}
+     * Set our render pass {@link descriptor}
      */
     setRenderPassDescriptor() {
       this.descriptor = {
@@ -8420,8 +8464,8 @@ ${this.shaders.compute.head}`;
       };
     }
     /**
-     * Set our [render pass size]{@link RenderPass#size}
-     * @param boundingRect - [bounding rectangle]{@link DOMElementBoundingRect} from which to get the width and height
+     * Set our render pass {@link size}
+     * @param boundingRect - {@link DOMElementBoundingRect | bounding rectangle} from which to get the width and height
      */
     setSize(boundingRect) {
       this.size = {
@@ -8431,7 +8475,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Resize our {@link RenderPass}: set its size and recreate the textures
-     * @param boundingRect - new [bounding rectangle]{@link DOMElementBoundingRect}
+     * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
      */
     resize(boundingRect) {
       this.setSize(boundingRect);
@@ -8440,8 +8484,8 @@ ${this.shaders.compute.head}`;
       this.resetRenderPassView();
     }
     /**
-     * Set our [load operation]{@link GPULoadOp}
-     * @param loadOp - new [load operation]{@link GPULoadOp} to use
+     * Set our {@link GPULoadOp | load operation}
+     * @param loadOp - new {@link GPULoadOp | load operation} to use
      */
     setLoadOp(loadOp = "clear") {
       this.options.loadOp = loadOp;
@@ -8450,8 +8494,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set our [clear value]{@link GPUColor}
-     * @param clearValue - new [clear value]{@link GPUColor} to use
+     * Set our {@link GPUColor | clear colors value}
+     * @param clearValue - new {@link GPUColor | clear colors value} to use
      */
     setClearValue(clearValue = [0, 0, 0, 0]) {
       this.options.clearValue = clearValue;
@@ -8521,7 +8565,7 @@ ${this.shaders.compute.head}`;
   class GPURenderer {
     /**
      * GPURenderer constructor
-     * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
+     * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
     constructor({
       deviceManager,
@@ -8564,8 +8608,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set [canvas]{@link GPURenderer#canvas} size
-     * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+     * Set {@link canvas} size
+     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
      */
     setSize(boundingRect) {
       const devicePixelRatio = window.devicePixelRatio ?? 1;
@@ -8581,7 +8625,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Resize our {@link GPURenderer}
-     * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
      */
     resize(boundingRect = null) {
       if (!this.domElement && !boundingRect)
@@ -8618,7 +8662,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+     * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
      */
     get boundingRect() {
       var _a;
@@ -8639,7 +8683,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
+     * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle} accounting for current {@link pixelRatio | pixel ratio}
      */
     get pixelRatioBoundingRect() {
       const devicePixelRatio = window.devicePixelRatio ?? 1;
@@ -8660,56 +8704,56 @@ ${this.shaders.compute.head}`;
     }
     /* USEFUL DEVICE MANAGER OBJECTS */
     /**
-     * Get our [device]{@link GPUDeviceManager#device}
+     * Get our {@link GPUDeviceManager#device | device}
      * @readonly
      */
     get device() {
       return this.deviceManager.device;
     }
     /**
-     * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set) and its size is set
+     * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) and its size is set
      * @readonly
      */
     get ready() {
       return this.deviceManager.ready && !!this.canvas.style.width;
     }
     /**
-     * Get our [device manager production flag]{@link GPUDeviceManager#production}
+     * Get our {@link GPUDeviceManager#production | GPUDeviceManager production flag}
      * @readonly
      */
     get production() {
       return this.deviceManager.production;
     }
     /**
-     * Get all the created [samplers]{@link GPUDeviceManager#samplers}
+     * Get all the created {@link GPUDeviceManager#samplers | samplers}
      * @readonly
      */
     get samplers() {
       return this.deviceManager.samplers;
     }
     /**
-     * Get all the created [buffers]{@link GPUDeviceManager#buffers}
+     * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}
      * @readonly
      */
     get buffers() {
       return this.deviceManager.buffers;
     }
     /**
-     * Get the [pipeline manager]{@link GPUDeviceManager#pipelineManager}
+     * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
      * @readonly
      */
     get pipelineManager() {
       return this.deviceManager.pipelineManager;
     }
     /**
-     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the {@link GPUDeviceManager}
      * @readonly
      */
     get deviceRenderedObjects() {
       return this.deviceManager.deviceRenderedObjects;
     }
     /**
-     * Configure our [context]{@link context} with the given options
+     * Configure our {@link context} with the given options
      */
     configureContext() {
       this.context.configure({
@@ -8722,7 +8766,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass} and [scene]{@link GPURenderer#scene}
+     * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}
      */
     setContext() {
       this.context = this.canvas.getContext("webgpu");
@@ -8733,15 +8777,15 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} is lost.
+     * Called when the {@link GPUDeviceManager#device | device} is lost.
      * Force all our scene objects to lose context.
      */
     loseContext() {
       this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-     * Reset the adapter, device and configure context again, restore our scene objects context, resize the render textures.
+     * Called when the {@link GPUDeviceManager#device | device} should be restored.
+     * Configure the context again, resize the {@link RenderTarget | render targets} and {@link RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context.
      * @async
      */
     restoreContext() {
@@ -8754,16 +8798,17 @@ ${this.shaders.compute.head}`;
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
     /**
-     * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen
+     * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
      */
     setMainRenderPass() {
       this.renderPass = new RenderPass(this, {
         label: "Main render pass",
-        depth: true
+        depth: true,
+        targetFormat: this.preferredFormat
       });
     }
     /**
-     * Set our [scene]{@link GPURenderer#scene}
+     * Set our {@link scene}
      */
     setScene() {
       this.scene = new Scene({ renderer: this });
@@ -8771,7 +8816,7 @@ ${this.shaders.compute.head}`;
     /* BUFFERS & BINDINGS */
     /**
      * Create a {@link GPUBuffer}
-     * @param bufferDescriptor - [buffer descriptor]{@link GPUBufferDescriptor}
+     * @param bufferDescriptor - {@link GPUBufferDescriptor | GPU buffer descriptor}
      * @returns - newly created {@link GPUBuffer}
      */
     createBuffer(bufferDescriptor) {
@@ -8781,9 +8826,9 @@ ${this.shaders.compute.head}`;
       return buffer;
     }
     /**
-     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
-     * @param buffer - [buffer]{@link GPUBuffer} to remove
-     * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
+     * Remove a {@link GPUBuffer} from our {@link GPUDeviceManager#buffers | GPU buffers array}
+     * @param buffer - {@link GPUBuffer} to remove
+     * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
      */
     removeBuffer(buffer, originalLabel) {
       this.deviceManager.removeBuffer(buffer, originalLabel);
@@ -8791,8 +8836,8 @@ ${this.shaders.compute.head}`;
     /**
      * Write to a {@link GPUBuffer}
      * @param buffer - {@link GPUBuffer} to write to
-     * @param bufferOffset - [buffer offset]{@link GPUSize64}
-     * @param data - [data]{@link BufferSource} to write
+     * @param bufferOffset - {@link GPUSize64 | buffer offset}
+     * @param data - {@link BufferSource | data} to write
      */
     queueWriteBuffer(buffer, bufferOffset, data) {
       var _a;
@@ -8803,7 +8848,7 @@ ${this.shaders.compute.head}`;
      * @param parameters - parameters used to realize the copy
      * @param parameters.srcBuffer - source {@link GPUBuffer}
      * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
-     * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+     * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
      * @returns - destination {@link GPUBuffer} after copy
      */
     copyBufferToBuffer({
@@ -8844,29 +8889,29 @@ ${this.shaders.compute.head}`;
     }
     /* BIND GROUPS & LAYOUTS */
     /**
-     * Get all created [bind groups]{@link AllowedBindGroups} tracked by our {@link GPUDeviceManager}
+     * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
      * @readonly
      */
     get bindGroups() {
       return this.deviceManager.bindGroups;
     }
     /**
-     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
-     * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+     * Add a {@link AllowedBindGroups | bind group} to our {@link GPUDeviceManager#bindGroups | bind groups array}
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to add
      */
     addBindGroup(bindGroup) {
       this.deviceManager.addBindGroup(bindGroup);
     }
     /**
-     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
-     * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+     * Remove a {@link AllowedBindGroups | bind group} from our {@link GPUDeviceManager#bindGroups | bind groups array}
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
      */
     removeBindGroup(bindGroup) {
       this.deviceManager.removeBindGroup(bindGroup);
     }
     /**
      * Create a {@link GPUBindGroupLayout}
-     * @param bindGroupLayoutDescriptor - [bind group layout descriptor]{@link GPUBindGroupLayoutDescriptor}
+     * @param bindGroupLayoutDescriptor - {@link GPUBindGroupLayoutDescriptor | GPU bind group layout descriptor}
      * @returns - newly created {@link GPUBindGroupLayout}
      */
     createBindGroupLayout(bindGroupLayoutDescriptor) {
@@ -8875,7 +8920,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUBindGroup}
-     * @param bindGroupDescriptor - [bind group descriptor]{@link GPUBindGroupDescriptor}
+     * @param bindGroupDescriptor - {@link GPUBindGroupDescriptor | GPU bind group descriptor}
      * @returns - newly created {@link GPUBindGroup}
      */
     createBindGroup(bindGroupDescriptor) {
@@ -8885,7 +8930,7 @@ ${this.shaders.compute.head}`;
     /* SHADERS & PIPELINES */
     /**
      * Create a {@link GPUShaderModule}
-     * @param shaderModuleDescriptor - [shader module descriptor]{@link shaderModuleDescriptor}
+     * @param shaderModuleDescriptor - {@link shaderModuleDescriptor | shader module descriptor}
      * @returns - newly created {@link GPUShaderModule}
      */
     createShaderModule(shaderModuleDescriptor) {
@@ -8894,7 +8939,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUPipelineLayout}
-     * @param pipelineLayoutDescriptor - [pipeline layout descriptor]{@link GPUPipelineLayoutDescriptor}
+     * @param pipelineLayoutDescriptor - {@link GPUPipelineLayoutDescriptor | GPU pipeline layout descriptor}
      * @returns - newly created {@link GPUPipelineLayout}
      */
     createPipelineLayout(pipelineLayoutDescriptor) {
@@ -8903,7 +8948,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPURenderPipeline}
-     * @param pipelineDescriptor - [render pipeline descriptor]{@link GPURenderPipelineDescriptor}
+     * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
      * @returns - newly created {@link GPURenderPipeline}
      */
     createRenderPipeline(pipelineDescriptor) {
@@ -8913,7 +8958,7 @@ ${this.shaders.compute.head}`;
     /**
      * Asynchronously create a {@link GPURenderPipeline}
      * @async
-     * @param pipelineDescriptor - [render pipeline descriptor]{@link GPURenderPipelineDescriptor}
+     * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
      * @returns - newly created {@link GPURenderPipeline}
      */
     async createRenderPipelineAsync(pipelineDescriptor) {
@@ -8922,7 +8967,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Create a {@link GPUComputePipeline}
-     * @param pipelineDescriptor - [compute pipeline descriptor]{@link GPUComputePipelineDescriptor}
+     * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
      * @returns - newly created {@link GPUComputePipeline}
      */
     createComputePipeline(pipelineDescriptor) {
@@ -8932,7 +8977,7 @@ ${this.shaders.compute.head}`;
     /**
      * Asynchronously create a {@link GPUComputePipeline}
      * @async
-     * @param pipelineDescriptor - [compute pipeline descriptor]{@link GPUComputePipelineDescriptor}
+     * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
      * @returns - newly created {@link GPUComputePipeline}
      */
     async createComputePipelineAsync(pipelineDescriptor) {
@@ -8941,43 +8986,43 @@ ${this.shaders.compute.head}`;
     }
     /* TEXTURES */
     /**
-     * Get all created [textures]{@link Texture} tracked by our {@link GPUDeviceManager}
+     * Get all created {@link Texture} tracked by our {@link GPUDeviceManager}
      * @readonly
      */
     get textures() {
       return this.deviceManager.textures;
     }
     /**
-     * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
-     * @param texture - [texture]{@link Texture} to add
+     * Add a {@link Texture} to our {@link GPUDeviceManager#textures | textures array}
+     * @param texture - {@link Texture} to add
      */
     addTexture(texture) {
       this.deviceManager.addTexture(texture);
     }
     /**
-     * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
-     * @param texture - [texture]{@link Texture} to remove
+     * Remove a {@link Texture} from our {@link GPUDeviceManager#textures | textures array}
+     * @param texture - {@link Texture} to remove
      */
     removeTexture(texture) {
       this.deviceManager.removeTexture(texture);
     }
     /**
-     * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPURenderer#renderTextures}
-     * @param texture - [render texture]{@link RenderTexture} to add
+     * Add a {@link RenderTexture} to our {@link renderTextures} array
+     * @param texture - {@link RenderTexture} to add
      */
     addRenderTexture(texture) {
       this.renderTextures.push(texture);
     }
     /**
-     * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPURenderer#renderTextures}
-     * @param texture - [render texture]{@link RenderTexture} to remove
+     * Remove a {@link RenderTexture} from our {@link renderTextures} array
+     * @param texture - {@link RenderTexture} to remove
      */
     removeRenderTexture(texture) {
       this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
      * Create a {@link GPUTexture}
-     * @param textureDescriptor - [texture descriptor]{@link GPUTextureDescriptor}
+     * @param textureDescriptor - {@link GPUTextureDescriptor | GPU texture descriptor}
      * @returns - newly created {@link GPUTexture}
      */
     createTexture(textureDescriptor) {
@@ -8985,24 +9030,24 @@ ${this.shaders.compute.head}`;
       return (_a = this.device) == null ? void 0 : _a.createTexture(textureDescriptor);
     }
     /**
-     * Upload a [texture]{@link Texture} to the GPU
-     * @param texture - [texture]{@link Texture} to upload
+     * Upload a {@link Texture#texture | texture} to the GPU
+     * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
      */
     uploadTexture(texture) {
       this.deviceManager.uploadTexture(texture);
     }
     /**
-     * Import an [external texture]{@link GPUExternalTexture}
-     * @param video - [video]{@link HTMLVideoElement} source
-     * @returns - [external texture]{@link GPUExternalTexture}
+     * Import a {@link GPUExternalTexture}
+     * @param video - {@link HTMLVideoElement} source
+     * @returns - {@link GPUExternalTexture}
      */
     importExternalTexture(video) {
       var _a;
       return (_a = this.device) == null ? void 0 : _a.importExternalTexture({ source: video });
     }
     /**
-     * Check if a {@link Sampler} has already been created with the same [parameters]{@link Sampler#options}.
-     * Use it if found, else create a new one and add it to the [device manager samplers array]{@link GPUDeviceManager#samplers}.
+     * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
+     * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
      * @param sampler - {@link Sampler} to create
      * @returns - the {@link GPUSampler}
      */
@@ -9024,8 +9069,8 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
-     * @param sampler - [sampler]{@link Sampler} to remove
+     * Remove a {@link Sampler} from our {@link GPUDeviceManager#samplers | samplers array}
+     * @param sampler - {@link Sampler} to remove
      */
     removeSampler(sampler) {
       this.deviceManager.removeSampler(sampler);
@@ -9056,16 +9101,16 @@ ${this.shaders.compute.head}`;
       this.renderTextures = [];
     }
     /**
-     * Get all this [renderer]{@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
+     * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
      * @readonly
      */
     get renderedObjects() {
       return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes];
     }
     /**
-     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-     * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to check
      */
     getObjectsByBindGroup(bindGroup) {
       return this.deviceRenderedObjects.filter((object) => {
@@ -9077,9 +9122,9 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link Texture} or {@link RenderTexture}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-     * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
+     * @param texture - {@link Texture} or {@link RenderTexture} to check
      */
     getObjectsByTexture(texture) {
       return this.deviceRenderedObjects.filter((object) => {
@@ -9089,7 +9134,7 @@ ${this.shaders.compute.head}`;
     /* EVENTS */
     /**
      * Assign a callback function to _onBeforeRenderCallback
-     * @param callback - callback to run just before the [renderer render method]{@link GPURenderer#render} will be executed
+     * @param callback - callback to run just before the {@link render} method will be executed
      * @returns - our {@link GPURenderer}
      */
     onBeforeRender(callback) {
@@ -9100,7 +9145,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Assign a callback function to _onAfterRenderCallback
-     * @param callback - callback to run just after the [renderer render method]{@link GPURenderer#render} has been executed
+     * @param callback - callback to run just after the {@link render} method has been executed
      * @returns - our {@link GPURenderer}
      */
     onAfterRender(callback) {
@@ -9122,10 +9167,10 @@ ${this.shaders.compute.head}`;
     }
     /* RENDER */
     /**
-     * Set the current [render pass descriptor]{@link RenderPass#descriptor} texture [view]{@link GPURenderPassColorAttachment#view} or [resolveTarget]{@link GPURenderPassColorAttachment#resolveTarget} (depending on whether we're using multisampling)
-     * @param renderPass - current [render pass]{@link RenderPass}
-     * @param renderTexture - [render texture]{@link GPUTexture} to use, or the [context]{@link GPURenderer#context} [current texture]{@link GPUTexture} if null
-     * @returns - the [current render texture]{@link GPUTexture}
+     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} or {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * @param renderPass - current {@link RenderPass}
+     * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
+     * @returns - the {@link GPUTexture | current render texture}
      */
     setRenderPassCurrentTexture(renderPass, renderTexture = null) {
       if (!renderTexture) {
@@ -9140,9 +9185,9 @@ ${this.shaders.compute.head}`;
       return renderTexture;
     }
     /**
-     * Render a single [Compute pass]{@link ComputePass}
+     * Render a single {@link ComputePass}
      * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param computePass - [Compute pass]{@link ComputePass}
+     * @param computePass - {@link ComputePass}
      */
     renderSingleComputePass(commandEncoder, computePass) {
       const pass = commandEncoder.beginComputePass();
@@ -9151,9 +9196,9 @@ ${this.shaders.compute.head}`;
       computePass.copyBufferToResult(commandEncoder);
     }
     /**
-     * Render a single [Mesh]{@link ProjectedMesh}
+     * Render a single {@link RenderedMesh | Mesh}
      * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - [Mesh]{@link ProjectedMesh} to render
+     * @param mesh - {@link RenderedMesh | Mesh} to render
      */
     renderSingleMesh(commandEncoder, mesh) {
       const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9161,8 +9206,8 @@ ${this.shaders.compute.head}`;
       pass.end();
     }
     /**
-     * Render an array of objects (either [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
-     * @param objects - Array of [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass} to render
+     * Render an array of objects (either {@link RenderedMesh | Meshes} or {@link ComputePass}) once. This method won't call any of the renderer render hooks like {@link onBeforeRender}, {@link onAfterRender}
+     * @param objects - Array of {@link RenderedMesh | Meshes} or {@link ComputePass} to render
      */
     renderOnce(objects) {
       var _a, _b;
@@ -9182,7 +9227,7 @@ ${this.shaders.compute.head}`;
       this.pipelineManager.resetCurrentPipeline();
     }
     /**
-     * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options.clearValue} by rendering and empty pass.
+     * Force to clear a {@link GPURenderer} content to its {@link RenderPass#options.clearValue | clear value} by rendering and empty pass.
      * @param commandEncoder
      */
     forceClear(commandEncoder) {
@@ -9200,7 +9245,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
+     * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created
      */
     onBeforeCommandEncoder() {
       if (!this.ready)
@@ -9208,8 +9253,7 @@ ${this.shaders.compute.head}`;
       this.onBeforeCommandEncoderCreation.execute();
     }
     /**
-     * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} after the {@link GPUCommandEncoder} has been created.
-     * Used to handle our [textures queue]{@link GPUDeviceManager#texturesQueue}
+     * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} after the {@link GPUCommandEncoder} has been created.
      */
     onAfterCommandEncoder() {
       if (!this.ready)
@@ -9245,7 +9289,7 @@ ${this.shaders.compute.head}`;
   class GPUCameraRenderer extends GPURenderer {
     /**
      * GPUCameraRenderer constructor
-     * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
+     * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
      */
     constructor({
       deviceManager,
@@ -9269,7 +9313,7 @@ ${this.shaders.compute.head}`;
       this.setCamera(camera);
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} is lost.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
      * Reset all our samplers, force all our scene objects and camera bind group to lose context.
      */
     loseContext() {
@@ -9277,8 +9321,8 @@ ${this.shaders.compute.head}`;
       this.cameraBindGroup.loseContext();
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-     * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures, re-write our camera buffer binding.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} should be restored.
+     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
      * @async
      */
     async restoreContext() {
@@ -9286,8 +9330,8 @@ ${this.shaders.compute.head}`;
       return super.restoreContext();
     }
     /**
-     * Set the [camera]{@link GPUCameraRenderer#camera}
-     * @param cameraParameters - [parameters]{@link CameraBasePerspectiveOptions} used to create the [camera]{@link GPUCameraRenderer#camera}
+     * Set the {@link camera}
+     * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
      */
     setCamera(cameraParameters) {
       const width = this.boundingRect ? this.boundingRect.width : 1;
@@ -9306,7 +9350,7 @@ ${this.shaders.compute.head}`;
       this.setCameraBufferBinding();
     }
     /**
-     * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
+     * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
      */
     onCameraMatricesChanged() {
       this.updateCameraBindings();
@@ -9317,7 +9361,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
+     * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
      */
     setCameraBufferBinding() {
       this.cameraBufferBinding = new BufferBinding({
@@ -9360,7 +9404,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Create the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} buffers
+     * Create the {@link cameraBindGroup | camera bind group} buffers
      */
     setCameraBindGroup() {
       if (this.cameraBindGroup.shouldCreateBindGroup) {
@@ -9369,7 +9413,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Tell our [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its struct
+     * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its struct
      */
     updateCameraBindings() {
       var _a, _b, _c;
@@ -9378,9 +9422,9 @@ ${this.shaders.compute.head}`;
       (_c = this.cameraBufferBinding) == null ? void 0 : _c.shouldUpdateBinding("projection");
     }
     /**
-     * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}, including [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}.
+     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraBindGroup | camera bind group}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-     * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to check
      */
     getObjectsByBindGroup(bindGroup) {
       return this.deviceRenderedObjects.filter((object) => {
@@ -9393,8 +9437,8 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
-     * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
+     * Set our {@link camera} perspective matrix new parameters (fov, near plane and far plane)
+     * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
      */
     setPerspective({ fov, near, far } = {}) {
       var _a;
@@ -9408,14 +9452,14 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our [camera]{@link GPUCameraRenderer#camera} position
-     * @param position - new [position]{@link Camera#position}
+     * Set our {@link camera} {@link Camera#position | position}
+     * @param position - new {@link Camera#position | position}
      */
     setCameraPosition(position = new Vec3(0, 0, 1)) {
       this.camera.position.copy(position);
     }
     /**
-     * Call our [super onResize method]{@link GPURenderer#onResize} and resize our [camera]{@link GPUCameraRenderer#camera} as well
+     * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
      */
     onResize() {
       super.onResize();
@@ -9424,7 +9468,7 @@ ${this.shaders.compute.head}`;
     }
     /* RENDER */
     /**
-     * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
+     * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
      */
     updateCamera() {
       var _a, _b;
@@ -9433,9 +9477,9 @@ ${this.shaders.compute.head}`;
       (_b = this.cameraBindGroup) == null ? void 0 : _b.update();
     }
     /**
-     * Render a single [Mesh]{@link ProjectedMesh} (binds the camera bind group if needed)
+     * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
      * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - [Mesh]{@link ProjectedMesh} to render
+     * @param mesh - {@link RenderedMesh | mesh} to render
      */
     renderSingleMesh(commandEncoder, mesh) {
       const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9446,7 +9490,7 @@ ${this.shaders.compute.head}`;
       pass.end();
     }
     /**
-     * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
+     * {@link updateCamera | Update the camera} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
@@ -9467,7 +9511,7 @@ ${this.shaders.compute.head}`;
   class GPUDeviceManager {
     /**
      * GPUDeviceManager constructor
-     * @param parameters - [parameters]{@link GPUDeviceManagerParams} used to create this {@link GPUDeviceManager}
+     * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
      */
     constructor({
       label,
@@ -9494,14 +9538,14 @@ ${this.shaders.compute.head}`;
       this.setDeviceObjects();
     }
     /**
-     * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
+     * Set our {@link adapter} and {@link device} if possible
      */
     async setAdapterAndDevice() {
       await this.setAdapter();
       await this.setDevice();
     }
     /**
-     * Set up our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} and all the already created [renderers]{@link GPUDeviceManager#renderers} contexts
+     * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
      */
     async init() {
       await this.setAdapterAndDevice();
@@ -9514,7 +9558,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set our [adapter]{@link GPUDeviceManager#adapter} if possible.
+     * Set our {@link adapter} if possible.
      * The adapter represents a specific GPU. Some devices have multiple GPUs.
      * @async
      */
@@ -9531,7 +9575,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our [device]{@link GPUDeviceManager#device}
+     * Set our {@link device}
      * @async
      */
     async setDevice() {
@@ -9557,13 +9601,13 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Set our [pipeline manager]{@link GPUDeviceManager#pipelineManager}
+     * Set our {@link pipelineManager | pipeline manager}
      */
     setPipelineManager() {
       this.pipelineManager = new PipelineManager();
     }
     /**
-     * Called when the [device]{@link GPUDeviceManager#device} is lost.
+     * Called when the {@link device} is lost.
      * Reset all our renderers
      */
     loseDevice() {
@@ -9573,7 +9617,7 @@ ${this.shaders.compute.head}`;
       this.buffers = [];
     }
     /**
-     * Called when the [device]{@link GPUDeviceManager#device} should be restored.
+     * Called when the {@link device} should be restored.
      * Restore all our renderers
      */
     async restoreDevice() {
@@ -9601,29 +9645,29 @@ ${this.shaders.compute.head}`;
       this.texturesQueue = [];
     }
     /**
-     * Add a [renderer]{@link Renderer} to our [renderers array]{@link GPUDeviceManager#renderers}
-     * @param renderer - [renderer]{@link Renderer} to add
+     * Add a {@link Renderer} to our {@link renderers} array
+     * @param renderer - {@link Renderer} to add
      */
     addRenderer(renderer) {
       this.renderers.push(renderer);
     }
     /**
-     * Remove a [renderer]{@link Renderer} from our [renderers array]{@link GPUDeviceManager#renderers}
-     * @param renderer - [renderer]{@link Renderer} to remove
+     * Remove a {@link Renderer} from our {@link renderers} array
+     * @param renderer - {@link Renderer} to remove
      */
     removeRenderer(renderer) {
       this.renderers = this.renderers.filter((r) => r.uuid !== renderer.uuid);
     }
     /**
-     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
+     * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}
      * @readonly
      */
     get deviceRenderedObjects() {
       return this.renderers.map((renderer) => renderer.renderedObjects).flat();
     }
     /**
-     * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
-     * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+     * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to add
      */
     addBindGroup(bindGroup) {
       if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
@@ -9631,23 +9675,23 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
-     * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+     * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
+     * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
      */
     removeBindGroup(bindGroup) {
       this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
     }
     /**
-     * Add a [buffer]{@link GPUBuffer} to our our [buffers array]{@link GPUDeviceManager#buffers}
-     * @param buffer - [buffer]{@link GPUBuffer} to add
+     * Add a {@link GPUBuffer} to our our {@link buffers} array
+     * @param buffer - {@link GPUBuffer} to add
      */
     addBuffer(buffer) {
       this.buffers.push(buffer);
     }
     /**
-     * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
-     * @param buffer - [buffer]{@link GPUBuffer} to remove
-     * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
+     * Remove a {@link GPUBuffer} from our {@link buffers} array
+     * @param buffer - {@link GPUBuffer} to remove
+     * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
      */
     removeBuffer(buffer, originalLabel) {
       if (buffer) {
@@ -9657,29 +9701,29 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Add a [sampler]{@link Sampler} to our [samplers array]{@link GPUDeviceManager#samplers}
-     * @param sampler - [sampler]{@link Sampler} to add
+     * Add a {@link Sampler} to our {@link samplers} array
+     * @param sampler - {@link Sampler} to add
      */
     addSampler(sampler) {
       this.samplers.push(sampler);
     }
     /**
-     * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
-     * @param sampler - [sampler]{@link Sampler} to remove
+     * Remove a {@link Sampler} from our {@link samplers} array
+     * @param sampler - {@link Sampler} to remove
      */
     removeSampler(sampler) {
       this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
     }
     /**
-     * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
-     * @param texture - [texture]{@link Texture} to add
+     * Add a {@link Texture} to our {@link textures} array
+     * @param texture - {@link Texture} to add
      */
     addTexture(texture) {
       this.textures.push(texture);
     }
     /**
-     * Upload a [texture]{@link Texture} to the GPU
-     * @param texture - [texture]{@link Texture} to upload
+     * Upload a {@link Texture#texture | texture} to the GPU
+     * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
      */
     uploadTexture(texture) {
       var _a, _b;
@@ -9710,12 +9754,22 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
-     * @param texture - [texture]{@link Texture} to remove
+     * Remove a {@link Texture} from our {@link textures} array
+     * @param texture - {@link Texture} to remove
      */
     removeTexture(texture) {
       this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
     }
+    /**
+     * Render everything:
+     * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
+     * - create a {@link GPUCommandEncoder}
+     * - render all our {@link renderers}
+     * - submit our {@link GPUCommandBuffer}
+     * - upload {@link Texture#texture | textures} that do not have a parent
+     * - empty our {@link texturesQueue} array
+     * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
+     */
     render() {
       var _a, _b;
       if (!this.ready)
@@ -9733,7 +9787,7 @@ ${this.shaders.compute.head}`;
       this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder());
     }
     /**
-     * Destroy the {@link GPUDeviceManager} and its [renderers]{@link GPUDeviceManager#renderers}
+     * Destroy the {@link GPUDeviceManager} and its {@link renderers}
      */
     destroy() {
       var _a;
@@ -9749,8 +9803,8 @@ ${this.shaders.compute.head}`;
   class RenderTarget {
     /**
      * RenderTarget constructor
-     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
-     * @param parameters - [parameters]{@link RenderTargetParams} use to create this {@link RenderTarget}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
+     * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
      */
     constructor(renderer, parameters) {
       __privateAdd(this, _autoRender2, void 0);
@@ -9787,7 +9841,7 @@ ${this.shaders.compute.head}`;
       this.addToScene();
     }
     /**
-     * Add the {@link RenderTarget} to the renderer and the {@link Scene}
+     * Add the {@link RenderTarget} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     addToScene() {
       this.renderer.renderTargets.push(this);
@@ -9796,7 +9850,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove the {@link RenderTarget} from the renderer and the {@link Scene}
+     * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
       if (__privateGet(this, _autoRender2)) {
@@ -9805,8 +9859,8 @@ ${this.shaders.compute.head}`;
       this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
     }
     /**
-     * Resize our [render pass]{@link RenderTarget#renderPass} and [render texture]{@link RenderTarget#renderTexture}
-     * @param boundingRect - new [bounding rectangle]{@link DOMElementBoundingRect}
+     * Resize our {@link renderPass} and {@link renderTexture}
+     * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
      */
     resize(boundingRect) {
       var _a, _b;
@@ -9845,8 +9899,8 @@ ${this.shaders.compute.head}`;
   class ShaderPass extends FullscreenPlane {
     /**
      * ShaderPass constructor
-     * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-     * @param parameters - [parameters]{@link ShaderPassParams} use to create this {@link ShaderPass}
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
+     * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
      */
     constructor(renderer, parameters) {
       var _a;
@@ -9863,7 +9917,7 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Get our main [render texture]{@link RenderTexture}, the one that contains our post processed content
+     * Get our main {@link RenderTexture}, the one that contains our post processed content
      * @readonly
      */
     get renderTexture() {
@@ -9871,8 +9925,8 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
-     * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
-     * Also copy or remove the [render target render texture]{@link RenderTarget#renderTexture} into the [shader pass render texture]{@link ShaderPass#renderTexture}
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+     * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
      * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
      */
     setRenderTarget(renderTarget) {
@@ -9885,7 +9939,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Add the {@link ShaderPass} to the renderer and the {@link Scene}
+     * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     addToScene() {
       this.renderer.shaderPasses.push(this);
@@ -9894,7 +9948,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove the {@link ShaderPass} from the renderer and the {@link Scene}
+     * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
       if (this.renderTarget) {
@@ -9962,7 +10016,7 @@ ${this.shaders.compute.head}`;
   class GPUCurtainsRenderer extends GPUCameraRenderer {
     /**
      * GPUCurtainsRenderer constructor
-     * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCurtainsRenderer}
+     * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}
      */
     constructor({
       deviceManager,
@@ -9985,7 +10039,7 @@ ${this.shaders.compute.head}`;
       this.type = "GPUCurtainsRenderer";
     }
     /**
-     * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements
+     * Add the {@link GPUCurtainsRenderer#domMeshes | domMeshes} to our tracked elements
      */
     setRendererObjects() {
       super.setRendererObjects();
@@ -10022,9 +10076,7 @@ ${this.shaders.compute.head}`;
      * Updates the scroll manager X and Y scroll values as well as last X and Y deltas
      * Internally called by the scroll event listener
      * Could be called externally as well if the user wants to handle the scroll by himself
-     * @param parameters - scroll values
-     * @param parameters.x - scroll value along X axis
-     * @param parameters.y - scroll value along Y axis
+     * @param parameters - {@link core/DOM/DOMElement.DOMPosition | scroll values}
      */
     updateScrollValues({ x, y }) {
       const lastScroll = this.scroll;
@@ -10233,7 +10285,7 @@ ${this.shaders.compute.head}`;
       return (_a = this.renderers) == null ? void 0 : _a.map((renderer) => renderer.shaderPasses).flat();
     }
     /**
-     * Get all the created [meshes]{@link MeshBase}
+     * Get all the created {@link ProjectedMesh | projected meshes}
      * @readonly
      */
     get meshes() {
@@ -10241,7 +10293,7 @@ ${this.shaders.compute.head}`;
       return (_a = this.renderers) == null ? void 0 : _a.map((renderer) => renderer.meshes).flat();
     }
     /**
-     * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
+     * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
      * @readonly
      */
     get domMeshes() {
@@ -10249,14 +10301,14 @@ ${this.shaders.compute.head}`;
       return (_a = this.renderers) == null ? void 0 : _a.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domMeshes).flat();
     }
     /**
-     * Get all the created [planes]{@link Plane}
+     * Get all the created {@link Plane | planes}
      * @readonly
      */
     get planes() {
       return this.domMeshes.filter((domMesh) => domMesh instanceof Plane);
     }
     /**
-     * Get all the created [compute passes]{@link ComputePass}
+     * Get all the created {@link ComputePass | compute passes}
      * @readonly
      */
     get computePasses() {

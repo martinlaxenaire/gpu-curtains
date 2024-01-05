@@ -16,7 +16,7 @@ import { Renderer } from '../core/renderers/utils';
 /**
  * Options used to create a {@link GPUCurtains}
  */
-interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'> {
+export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'> {
     /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
     autoRender?: boolean;
     /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
@@ -29,7 +29,7 @@ interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManage
 /**
  * Parameters used to create a {@link GPUCurtains}
  */
-interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'container'>> {
+export interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'container'>> {
     /** {@link HTMLElement} or string representing an {@link HTMLElement} selector that will hold the WebGPU [canvas]{@link HTMLCanvasElement}. Could be set later if not specified. */
     container?: string | HTMLElement | null;
 }
@@ -48,7 +48,7 @@ export declare class GPUCurtains {
     deviceManager: GPUDeviceManager;
     /** Tiny scroll event listener wrapper */
     scrollManager: ScrollManager;
-    /** [Request animation frame callback]{@link requestVideoFrameCallback} returned id if used */
+    /** Request animation frame callback returned id if used */
     animationFrameID: null | number;
     /** function assigned to the [onRender]{@link GPUCurtains#onRender} callback */
     _onRenderCallback: () => void;
@@ -130,22 +130,22 @@ export declare class GPUCurtains {
      */
     get shaderPasses(): ShaderPass[];
     /**
-     * Get all the created [meshes]{@link MeshBase}
+     * Get all the created {@link ProjectedMesh | projected meshes}
      * @readonly
      */
     get meshes(): ProjectedMesh[];
     /**
-     * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
+     * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
      * @readonly
      */
     get domMeshes(): DOMMesh[];
     /**
-     * Get all the created [planes]{@link Plane}
+     * Get all the created {@link Plane | planes}
      * @readonly
      */
     get planes(): Plane[];
     /**
-     * Get all the created [compute passes]{@link ComputePass}
+     * Get all the created {@link ComputePass | compute passes}
      * @readonly
      */
     get computePasses(): ComputePass[];
@@ -233,4 +233,3 @@ export declare class GPUCurtains {
      */
     destroy(): void;
 }
-export {};

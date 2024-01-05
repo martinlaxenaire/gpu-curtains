@@ -19,9 +19,9 @@ export declare class Vec3 {
     _onChangeCallback?(): void;
     /**
      * Vec3 constructor
-     * @param x=0 - X component of our [vector]{@link Vec3}
-     * @param y=x - Y component of our [vector]{@link Vec3}
-     * @param z=x - Z component of our [vector]{@link Vec3}
+     * @param [x=0] - X component of our [vector]{@link Vec3}
+     * @param [y=x] - Y component of our [vector]{@link Vec3}
+     * @param [z=x] - Z component of our [vector]{@link Vec3}
      */
     constructor(x?: number, y?: number, z?: number);
     /**
@@ -53,9 +53,9 @@ export declare class Vec3 {
     onChange(callback: () => void): Vec3;
     /**
      * Set the [vector]{@link Vec3} from values
-     * @param x=0 - new X component to set
-     * @param y=0 - new Y component to set
-     * @param z=0 - new Z component to set
+     * @param [x=0] - new X component to set
+     * @param [y=0] - new Y component to set
+     * @param [z=0] - new Z component to set
      * @returns - this [vector]{@link Vec3} after being set
      */
     set(x?: number, y?: number, z?: number): Vec3;
@@ -67,7 +67,7 @@ export declare class Vec3 {
     add(vector?: Vec3): Vec3;
     /**
      * Add a scalar to all the components of this [vector]{@link Vec3}
-     * @param value=0 - number to add
+     * @param [value=0] - number to add
      * @returns - this [vector]{@link Vec3} after addition
      */
     addScalar(value?: number): Vec3;
@@ -79,7 +79,7 @@ export declare class Vec3 {
     sub(vector?: Vec3): Vec3;
     /**
      * Subtract a scalar to all the components of this [vector]{@link Vec3}
-     * @param value=0 - number to subtract
+     * @param [value=0] - number to subtract
      * @returns - this [vector]{@link Vec3} after subtraction
      */
     subScalar(value?: number): Vec3;
@@ -91,7 +91,7 @@ export declare class Vec3 {
     multiply(vector?: Vec3): Vec3;
     /**
      * Multiply all components of this [vector]{@link Vec3} with a scalar
-     * @param value=1 - number to multiply with
+     * @param [value=1] - number to multiply with
      * @returns - this [vector]{@link Vec3} after multiplication
      */
     multiplyScalar(value?: number): Vec3;
@@ -161,7 +161,7 @@ export declare class Vec3 {
     /**
      * Calculate the linear interpolation of this [vector]{@link Vec3} by given [vector]{@link Vec3} and alpha, where alpha is the percent distance along the line
      * @param vector - [vector]{@link Vec3} to interpolate towards
-     * @param alpha=1 - interpolation factor in the [0, 1] interval
+     * @param [alpha=1] - interpolation factor in the [0, 1] interval
      * @returns - this [vector]{@link Vec3} after linear interpolation
      */
     lerp(vector?: Vec3, alpha?: number): Vec3;

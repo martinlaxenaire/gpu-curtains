@@ -1,21 +1,20 @@
 /// <reference types="dist" />
 import { Binding, BindingParams } from './Binding';
 import { SamplerOptions } from '../samplers/Sampler';
-/** Defines a {@link SamplerBinding} [resource]{@link SamplerBinding#resource} */
+/** Defines a {@link SamplerBinding} {@link SamplerBinding#resource | resource} */
 export type SamplerBindingResource = GPUSampler | null;
 /**
  * An object defining all possible {@link SamplerBinding} class instancing parameters
  */
 export interface SamplerBindingParams extends BindingParams {
-    /** {@link SamplerBinding} [bind group]{@link GPUBindGroup} resource */
+    /** {@link SamplerBinding} {@link GPUBindGroup | GPU bind group} resource */
     sampler: SamplerBindingResource;
-    /** The bind group layout binding [type]{@link GPUSamplerBindingLayout#type} of this [sampler]{@link GPUSampler} */
+    /** The bind group layout binding {@link GPUSamplerBindingLayout#type | type} of this {@link GPUSampler | GPU sampler} */
     type: SamplerOptions['type'];
 }
 /**
  * SamplerBinding class:
  * Used to handle GPUSampler struct
- * @extends Binding
  */
 export declare class SamplerBinding extends Binding {
     /** Our {@link SamplerBinding} resource, i.e. a {@link GPUSampler} */
@@ -26,19 +25,25 @@ export declare class SamplerBinding extends Binding {
     options: SamplerBindingParams;
     /**
      * SamplerBinding constructor
-     * @param parameters - [parameters]{@link SamplerBindingParams} used to create our SamplerBindings
+     * @param parameters - {@link SamplerBindingParams | parameters} used to create our SamplerBindings
      */
     constructor({ label, name, bindingType, visibility, sampler, type, }: SamplerBindingParams);
     /**
-     * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#sampler}
+     * Get {@link GPUBindGroupLayoutEntry#sampler | bind group layout entry resource}
+     * @readonly
      */
     get resourceLayout(): {
+        /** {@link GPUBindGroupLayout | bind group layout} resource */
         sampler: GPUSamplerBindingLayout;
     };
     /**
-     * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+     * Get the {@link GPUBindGroupEntry#resource | bind group resource}
      */
     get resource(): SamplerBindingResource;
+    /**
+     * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+     * @param value - new bind group resource
+     */
     set resource(value: SamplerBindingResource);
     /**
      * Set the correct WGSL code snippet.

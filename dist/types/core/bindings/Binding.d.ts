@@ -22,15 +22,14 @@ export interface BindingParams {
     label?: string;
     /** {@link Binding} name/key */
     name?: string;
-    /** [bindingType]{@link BindingType} to use with this {@link Binding} */
+    /** {@link BindingType | binding type} to use with this {@link Binding} */
     bindingType?: BindingType;
     /** {@link Binding} variables shaders visibility */
     visibility?: MaterialShadersType | null;
 }
 /**
- * Binding class:
- * Used as a shell to build actual struct upon, like {@link BufferBinding}, {@link WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
- * Ultimately the goal of a Bindings element is to provide correct resources for {@link GPUBindGroupLayoutEntry} and {@link GPUBindGroupEntry}
+ * Used as a shell to build actual binding upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
+ * Ultimately the goal of a {@link Binding} element is to provide correct resources for {@link GPUBindGroupLayoutEntry} and {@link GPUBindGroupEntry}
  */
 export declare class Binding {
     /** The label of the {@link Binding} */
@@ -43,13 +42,13 @@ export declare class Binding {
     visibility: GPUShaderStageFlags;
     /** Options used to create this {@link Binding} */
     options: BindingParams;
-    /** Flag indicating whether we should recreate the parent [bind group]{@link BindGroup#bindGroup}, usually when a resource has changed */
+    /** Flag indicating whether we should recreate the parent {@link core/bindGroups/BindGroup.BindGroup#bindGroup | bind group}, usually when a resource has changed */
     shouldResetBindGroup: boolean;
-    /** Flag indicating whether we should recreate the parent [bind group layout]{@link BindGroup#bindGroupLayout}, usually when a resource layout has changed */
+    /** Flag indicating whether we should recreate the parent {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout}, usually when a resource layout has changed */
     shouldResetBindGroupLayout: boolean;
     /**
      * Binding constructor
-     * @param parameters - [parameters]{@link BindingParams} used to create our {@link Binding}
+     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
      */
     constructor({ label, name, bindingType, visibility }: BindingParams);
 }

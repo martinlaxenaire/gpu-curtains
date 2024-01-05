@@ -5,7 +5,6 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { TextureBindGroupParams } from './TextureBindGroup';
 import { BindingType } from '../bindings/Binding';
 /**
- * BindGroup class:
  * Used to handle all inputs data sent to the GPU. Data (buffers, textures or samplers) are organised by Bindings.
  * It creates GPUBuffer, GPUBindGroup and GPUBindGroupLayout that are used by the GPU Pipelines.
  */
@@ -20,25 +19,25 @@ export declare class BindGroup {
     options: TextureBindGroupParams;
     /** Index of this {@link BindGroup}, used to link struct in the shaders */
     index: number;
-    /** List of [struct]{@link BindGroupBindingElement} (buffers, texture, etc.) handled by this {@link BindGroup} */
+    /** List of {@link BindGroupBindingElement | bindings} (buffers, texture, etc.) handled by this {@link BindGroup} */
     bindings: BindGroupBindingElement[];
-    /** Our {@link BindGroup} [entries]{@link BindGroupEntries} objects */
+    /** Our {@link BindGroup} {@link BindGroupEntries | entries} objects */
     entries: BindGroupEntries;
-    /** Our {@link BindGroup} [GPUBindGroupLayout]{@link GPUBindGroupLayout} */
+    /** Our {@link BindGroup}{@link GPUBindGroupLayout} */
     bindGroupLayout: null | GPUBindGroupLayout;
-    /** Our {@link BindGroup} [GPUBindGroup]{@link GPUBindGroup} */
+    /** Our {@link BindGroup} {@link GPUBindGroup} */
     bindGroup: null | GPUBindGroup;
     /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
     needsPipelineFlush: boolean;
     /**
      * BindGroup constructor
-     * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-     * @param {BindGroupParams=} parameters - [parameters]{@link BindGroupParams} used to create our {@link BindGroup}
+     * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+     * @param parameters - {@link BindGroupParams | parameters} used to create our {@link BindGroup}
      */
     constructor(renderer: Renderer | GPUCurtains, { label, index, bindings, uniforms, storages }?: BindGroupParams);
     /**
-     * Sets our [BindGroup index]{@link BindGroup#index}
-     * @param index - [BindGroup index]{@link BindGroup#index}
+     * Sets our {@link BindGroup#index | bind group index}
+     * @param index - {@link BindGroup#index | bind group index} to set
      */
     setIndex(index: number): void;
     /**
@@ -53,8 +52,8 @@ export declare class BindGroup {
     addBinding(binding: BindGroupBindingElement): void;
     /**
      * Creates Bindings based on a list of inputs
-     * @param bindingType - [binding type]{@link Binding#bindingType}
-     * @param inputs - [inputs]{@link ReadOnlyInputBindings} that will be used to create the binding
+     * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}
+     * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding
      * @returns - a {@link bindings} array
      */
     createInputBindings(bindingType?: BindingType, inputs?: ReadOnlyInputBindings): BindGroupBindingElement[];
@@ -77,19 +76,19 @@ export declare class BindGroup {
      */
     createBindGroup(): void;
     /**
-     * Reset the [bindGroup entries]{@link BindGroup#entries.bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
+     * Reset the {@link BindGroup#entries.bindGroup | bindGroup entries}, recreates them and then recreate the {@link BindGroup#bindGroup | GPU bind group}
      */
     resetBindGroup(): void;
     /**
-     * Reset the [bindGroupLayout entries]{@link BindGroup#entries.bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
+     * Reset the {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entries}, recreates them and then recreate the {@link BindGroup#bindGroupLayout | GPU bind group layout}
      */
     resetBindGroupLayout(): void;
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
      */
     loseContext(): void;
     /**
-     * Get all [bind group struct]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
+     * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings(): BindGroupBufferBindingElement[];
     /**
@@ -121,8 +120,8 @@ export declare class BindGroup {
      */
     updateBufferBindings(): void;
     /**
-     * Update the {@link BindGroup}, which means update its [buffer struct]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
-     * Called at each render from the parent {@link Material}
+     * Update the {@link BindGroup}, which means update its {@link BindGroup#bufferBindings | buffer bindings} and {@link BindGroup#resetBindGroup | reset it} if needed.
+     * Called at each render from the parent {@link core/materials/Material.Material | material}
      */
     update(): void;
     /**

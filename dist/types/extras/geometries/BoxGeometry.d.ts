@@ -3,7 +3,7 @@ import { GeometryBaseParams } from '../../types/Geometries';
 /**
  * Parameters used to create a {@link BoxGeometry}
  */
-interface BoxGeometryParams extends GeometryBaseParams {
+export interface BoxGeometryParams extends GeometryBaseParams {
     /** Number of segments along the X axis */
     widthSegments?: number;
     /** Number of segments along the Y axis */
@@ -19,4 +19,3 @@ interface BoxGeometryParams extends GeometryBaseParams {
 export declare class BoxGeometry extends IndexedGeometry {
     constructor({ widthSegments, heightSegments, depthSegments, instancesCount, vertexBuffers, topology, }?: BoxGeometryParams);
 }
-export {};
