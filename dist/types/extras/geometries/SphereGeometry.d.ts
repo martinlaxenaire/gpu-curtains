@@ -18,9 +18,7 @@ export interface SphereGeometryParams extends GeometryBaseParams {
     thetaLength?: number;
 }
 /**
- * SphereGeometry class:
  * Helper to easily create 3D sphere indexed geometries.
- * @extends IndexedGeometry
  */
 export declare class SphereGeometry extends IndexedGeometry {
     constructor({ widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength, instancesCount, vertexBuffers, topology, }?: SphereGeometryParams);

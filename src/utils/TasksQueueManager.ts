@@ -2,25 +2,24 @@
 export interface TaskQueueItem {
   /** Unique id of the task queue item */
   id: number
-  /** Priority order in the [tasks queue list]{@link TasksQueueManager#queue} */
+  /** Priority order in the {@link TasksQueueManager#queue | tasks queue array} */
   order: number
   /** Callback to execute */
   callback: (args?: any) => void
-  /** Whether to execute the task only once and them automatically remove it from the [tasks queue list]{@link TasksQueueManager#queue} */
+  /** Whether to execute the task only once and them automatically remove it from the {@link TasksQueueManager#queue | tasks queue array} */
   once: boolean
 }
 
-/** Parameters used to add a task to the [tasks queue list]{@link TasksQueueManager#queue} */
+/** Parameters used to add a task to the {@link TasksQueueManager#queue | tasks queue array} */
 export type TaskQueueItemParams = Partial<Omit<TaskQueueItem, 'id' | 'callback'>>
 
 /**
- * TaskQueueManager class:
  * Used to keep track of a bunch of callbacks and execute them in the right order when needed
  */
 export class TasksQueueManager {
-  /** Array of [task queue items]{@link TaskQueueItem} to execute */
+  /** Array of {@link TaskQueueItem | task queue item} to execute */
   queue: TaskQueueItem[]
-  /** Private number to assign a unique id to each [task queue item]{@link TaskQueueItem} */
+  /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
   #taskCount = 0
 
   /**
@@ -31,10 +30,10 @@ export class TasksQueueManager {
   }
 
   /**
-   * Add a [task item]{@link TaskQueueItem} to the queue
-   * @param callback - callback to add to the [task queue item]{@link TaskQueueItem}
-   * @param parameters - [parameters]{@link TaskQueueItemParams} of the [task queue item]{@link TaskQueueItem} to add
-   * @returns - [ID]{@link TaskQueueItem#id} of the new [task queue item]{@link TaskQueueItem}, useful to later the remove the task id needed
+   * Add a {@link TaskQueueItem | task queue item} to the queue
+   * @param callback - callback to add to the {@link TaskQueueItem | task queue item}
+   * @param parameters - {@link TaskQueueItemParams | parameters} of the {@link TaskQueueItem | task queue item} to add
+   * @returns - {@link TaskQueueItem#id | id} of the new {@link TaskQueueItem | task queue item}, useful to later remove the task if needed
    */
   add(
     callback: TaskQueueItem['callback'] = (args?: any) => {
@@ -61,15 +60,15 @@ export class TasksQueueManager {
   }
 
   /**
-   * Remove a [task item]{@link TaskQueueItem} from the queue
-   * @param taskId
+   * Remove a {@link TaskQueueItem | task queue item} from the queue
+   * @param taskId - {@link TaskQueueItem#id | id} of the new {@link TaskQueueItem | task queue item} to remove
    */
   remove(taskId = 0) {
     this.queue = this.queue.filter((task) => task.id !== taskId)
   }
 
   /**
-   * Execute the [tasks queue]{@link TasksQueueManager#queue}
+   * Execute the {@link TasksQueueManager#queue | tasks queue array}
    */
   execute(args?: any) {
     this.queue.forEach((task) => {

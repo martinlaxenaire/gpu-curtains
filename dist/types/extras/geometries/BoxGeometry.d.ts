@@ -12,9 +12,7 @@ export interface BoxGeometryParams extends GeometryBaseParams {
     depthSegments?: number;
 }
 /**
- * BoxGeometry class:
  * Helper to easily create 3D box indexed geometries.
- * @extends IndexedGeometry
  */
 export declare class BoxGeometry extends IndexedGeometry {
     constructor({ widthSegments, heightSegments, depthSegments, instancesCount, vertexBuffers, topology, }?: BoxGeometryParams);

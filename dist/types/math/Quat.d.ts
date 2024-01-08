@@ -3,7 +3,6 @@ import { Mat4 } from './Mat4';
 /** Defines all possible rotations axis orders */
 export type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
 /**
- * Quat class:
  * Really basic Quaternion class used for 3D rotation calculations
  * Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Quaternion.js
  */
@@ -21,51 +20,51 @@ export declare class Quat {
      */
     constructor(elements?: Float32Array, axisOrder?: AxisOrder);
     /**
-     * Sets the [quaternion]{@link Quat} values from an array
+     * Sets the {@link Quat} values from an array
      * @param array - an array of at least 4 elements
-     * @returns - this [quaternion]{@link Quat} after being set
+     * @returns - this {@link Quat} after being set
      */
     setFromArray(array?: Float32Array | number[]): Quat;
     /**
-     * Sets the [quaternion]{@link Quat} axis order
+     * Sets the {@link Quat} axis order
      * @param axisOrder - axis order to use
-     * @returns - this [quaternion]{@link Quat} after axis order has been set
+     * @returns - this {@link Quat} after axis order has been set
      */
     setAxisOrder(axisOrder?: AxisOrder | string): Quat;
     /**
-     * Copy a [quaternion]{@link Quat} into this [quaternion]{@link Quat}
-     * @param quaternion - [quaternion]{@link Quat} to copy
-     * @returns - this [quaternion]{@link Quat} after copy
+     * Copy a {@link Quat} into this {@link Quat}
+     * @param quaternion - {@link Quat} to copy
+     * @returns - this {@link Quat} after copy
      */
     copy(quaternion?: Quat): Quat;
     /**
-     * Clone a [quaternion]{@link Quat}
-     * @returns - cloned [quaternion]{@link Quat}
+     * Clone a {@link Quat}
+     * @returns - cloned {@link Quat}
      */
     clone(): Quat;
     /**
-     * Check if 2 [quaternions]{@link Quat} are equal
-     * @param quaternion - [quaternion]{@link Quat} to check against
-     * @returns - whether the [quaternions]{@link Quat} are equal or not
+     * Check if 2 {@link Quat} are equal
+     * @param quaternion - {@link Quat} to check against
+     * @returns - whether the {@link Quat} are equal or not
      */
     equals(quaternion?: Quat): boolean;
     /**
-     * Sets a rotation [quaternion]{@link Quat} using Euler angles [vector]{@link Vec3} and its axis order
-     * @param vector - rotation [vector]{@link Vec3} to set our [quaternion]{@link Quat} from
-     * @returns - [quaternion]{@link Quat} after having applied the rotation
+     * Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order
+     * @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from
+     * @returns - {@link Quat} after having applied the rotation
      */
     setFromVec3(vector?: Vec3): Quat;
     /**
-     * Set a [quaternion]{@link Quat} from a rotation axis [vector]{@link Vec3} and an angle
-     * @param axis - normalized [vector]{@link Vec3} around which to rotate
+     * Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle
+     * @param axis - normalized {@link Vec3 | vector} around which to rotate
      * @param angle - angle (in radians) to rotate
-     * @returns - [quaternion]{@link Quat} after having applied the rotation
+     * @returns - {@link Quat} after having applied the rotation
      */
     setFromAxisAngle(axis?: Vec3, angle?: number): Quat;
     /**
-     * Set a [quaternion]{@link Quat} from a rotation [matrix]{@link Mat4}
-     * @param matrix - rotation [matrix]{@link Mat4} to use
-     * @returns - [quaternion]{@link Quat} after having applied the rotation
+     * Set a {@link Quat} from a rotation {@link Mat4 | matrix}
+     * @param matrix - rotation {@link Mat4 | matrix} to use
+     * @returns - {@link Quat} after having applied the rotation
      */
     setFromRotationMatrix(matrix: Mat4): Quat;
 }

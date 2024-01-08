@@ -15,9 +15,7 @@ export interface BoxGeometryParams extends GeometryBaseParams {
 }
 
 /**
- * BoxGeometry class:
  * Helper to easily create 3D box indexed geometries.
- * @extends IndexedGeometry
  */
 export class BoxGeometry extends IndexedGeometry {
   constructor(

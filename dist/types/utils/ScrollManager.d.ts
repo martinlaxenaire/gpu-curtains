@@ -9,11 +9,10 @@ export interface ScrollManagerParams {
     delta?: DOMPosition;
     /** Whether the {@link ScrollManager} should listen to the window scroll event or not */
     shouldWatch?: boolean;
-    /** Callback to execute each time the [scroll]{@link ScrollManager#scroll} values change */
+    /** Callback to execute each time the {@link ScrollManager#scroll | scroll} values change */
     onScroll?: (delta?: DOMPosition) => void;
 }
 /**
- * ScrollManager class:
  * Used to keep track of our scroll position, scroll deltas and trigger an onScroll callback
  * Could either listen to the native scroll event or be hooked to any scroll (natural or virtual) scroll event
  */
@@ -24,11 +23,11 @@ export declare class ScrollManager {
     delta: DOMPosition;
     /** Whether the {@link ScrollManager} should listen to the window scroll event or not */
     shouldWatch: boolean;
-    /** Callback to execute each time the [scroll]{@link ScrollManager#scroll} values change */
+    /** Callback to execute each time the {@link scroll} values change */
     onScroll: (delta?: DOMPosition) => void;
     /**
      * ScrollManager constructor
-     * @param parameters - [parameters]{@link ScrollManagerParams} used to create this {@link ScrollManager}
+     * @param parameters - {@link ScrollManagerParams | parameters} used to create this {@link ScrollManager}
      */
     constructor({ scroll, delta, shouldWatch, onScroll, }?: ScrollManagerParams);
     /**

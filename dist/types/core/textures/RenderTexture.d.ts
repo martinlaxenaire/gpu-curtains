@@ -37,9 +37,8 @@ export interface RenderTextureParams extends RenderTextureBaseParams {
     fromTexture?: RenderTexture | Texture | null;
 }
 /**
- * RenderTexture class:
- * Used to create {@link GPUTexture | texture} that can be used as copy source/destination for {@link RenderPass | render passes} and {@link RenderTarget | render targets}.
- * Basically useful for copying anything outputed to the screen at one point or another.
+ * Used to create {@link GPUTexture | texture} that can be used as copy source/destination for {@link core/renderPasses/RenderPass.RenderPass | RenderPass} and {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget}.
+ * Basically useful for copying anything outputted to the screen at one point or another.
  */
 export declare class RenderTexture {
     /** {@link Renderer | renderer} used by this {@link RenderTexture} */
@@ -54,7 +53,7 @@ export declare class RenderTexture {
     size: TextureSize;
     /** Options used to create this {@link RenderTexture} */
     options: RenderTextureParams;
-    /** Array of {@link Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding} */
+    /** Array of {@link core/bindings/Binding.Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding} */
     bindings: BindGroupBindingElement[];
     /**
      * RenderTexture constructor
@@ -81,7 +80,7 @@ export declare class RenderTexture {
      */
     get textureBinding(): TextureBinding;
     /**
-     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link BindGroup | bind group} to update
+     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
      * @param size - the optional new {@link RectSize | size} to set
      */
     resize(size?: TextureSize | null): void;

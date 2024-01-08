@@ -11,7 +11,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMProjectedMesh } from '../renderers/GPURenderer'
 import { RectSize } from '../DOM/DOMElement'
 
-/** @const - default [texture]{@link Texture} parameters */
+/** @const - default {@link Texture} parameters */
 const defaultTextureParams: TextureParams = {
   name: 'texture',
   generateMips: false,
@@ -25,17 +25,15 @@ const defaultTextureParams: TextureParams = {
 }
 
 /**
- * Texture class:
- * Used to create [textures]{@link GPUTexture} or [external textures]{@link GPUExternalTexture} from different kinds of [sources]{@link TextureSource}.
- * Handles the various sources loading and uploading, GPU textures creation, [texture matrix binding]{@link BufferBinding} and [texture binding]{@link TextureBinding}
- * @extends Object3D
+ * Used to create {@link GPUTexture} or {@link GPUExternalTexture} from different kinds of {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
+ * Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}
  */
 export class Texture extends Object3D {
   /** The type of the {@link Texture} */
   type: string
   /** The universal unique id of this {@link Texture} */
   readonly uuid: string
-  /** [renderer]{@link Renderer} used by this {@link Texture} */
+  /** {@link Renderer} used by this {@link Texture} */
   renderer: Renderer
 
   /** The {@link GPUTexture} used if any */
@@ -43,17 +41,17 @@ export class Texture extends Object3D {
   /** The {@link GPUExternalTexture} used if any */
   externalTexture: null | GPUExternalTexture
 
-  /** The {@link Texture} [source]{@link TextureSource} to use */
+  /** The {@link Texture} {@link TextureSource | source} to use */
   source: TextureSource
-  /** The [texture]{@link GPUTexture}, matching the [texture source]{@link TextureSource} [size]{@link RectSize} with 1 for depth */
+  /** The {@link GPUTexture}, matching the {@link TextureSource | source} {@link RectSize | size} (with 1 for depth) */
   size: TextureSize
 
   /** Options used to create this {@link Texture} */
   options: TextureOptions
 
-  /** A [buffer binding]{@link BufferBinding} that will hold the texture matrix */
+  /** A {@link BufferBinding | buffer binding} that will hold the texture model matrix */
   textureMatrix: BufferBinding
-  /** The struct used by this {@link Texture}, i.e. its [texture matrix buffer binding]{@link Texture#textureMatrix} and its [texture binding]{@link TextureBinding} */
+  /** The bindings used by this {@link Texture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
   bindings: BindGroupBindingElement[]
 
   /** {@link Texture} parent if any */
@@ -61,37 +59,37 @@ export class Texture extends Object3D {
 
   /** Whether the source has been loaded */
   private _sourceLoaded: boolean
-  /** Whether the source has been uploaded to the GPU, handled by the {@link GPUDeviceManager#texturesQueue | renderer textures queue array} */
+  /** Whether the source has been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array} */
   private _sourceUploaded: boolean
   /** Whether the texture should be uploaded to the GPU */
   shouldUpdate: boolean
 
-  /** [Video frame callback]{@link requestVideoFrameCallback} returned id if used */
+  /** {@link HTMLVideoElement.requestVideoFrameCallback | requestVideoFrameCallback} returned id if used */
   videoFrameCallbackId: null | number
 
-  /** Private {@link Vec3 | vector} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [parent]{@link Texture#parent} [size]{@link RectSize} */
+  /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parent} {@link RectSize | size} */
   #parentRatio: Vec3 = new Vec3(1)
-  /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on [source size]{@link Texture#size} */
+  /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
   #sourceRatio: Vec3 = new Vec3(1)
-  /** Private [vector]{@link Vec3} used for [texture matrix]{@link Texture#modelMatrix} calculations, based on #parentRatio and #sourceRatio */
+  /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
   #coverScale: Vec3 = new Vec3(1)
-  /** Private rotation [matrix]{@link Mat4} based on [texture quaternion]{@link Texture#quaternion} */
+  /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
   #rotationMatrix: Mat4 = new Mat4()
 
   // callbacks / events
-  /** function assigned to the [onSourceLoaded]{@link Texture#onSourceLoaded} callback */
+  /** function assigned to the {@link onSourceLoaded} callback */
   _onSourceLoadedCallback = () => {
     /* allow empty callback */
   }
-  /** function assigned to the [onSourceUploaded]{@link Texture#onSourceUploaded} callback */
+  /** function assigned to the {@link onSourceUploaded} callback */
   _onSourceUploadedCallback = () => {
     /* allow empty callback */
   }
 
   /**
    * Texture constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-   * @param parameters - [parameters]{@link TextureParams} used to create this {@link Texture}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = defaultTextureParams) {
     super()
@@ -158,7 +156,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Set our [struct]{@link Texture#bindings}
+   * Set our {@link bindings}
    */
   setBindings() {
     this.bindings = [
@@ -174,7 +172,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Get our [texture binding]{@link TextureBinding}
+   * Get our {@link TextureBinding | GPU texture binding}
    * @readonly
    */
   get textureBinding(): TextureBinding {
@@ -182,26 +180,32 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Get/set our [texture parent]{@link Texture#_parent}
-   * @readonly
+   * Get our texture {@link parent}
    */
   get parent(): TextureParent {
     return this._parent
   }
 
+  /**
+   * Set our texture {@link parent}
+   * @param value - texture {@link parent} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
+   */
   set parent(value: TextureParent) {
     this._parent = value
     this.resize()
   }
 
   /**
-   * Get/set whether our [texture source]{@link Texture#source} has loaded
-   * @readonly
+   * Get whether our {@link source} has been loaded
    */
   get sourceLoaded(): boolean {
     return this._sourceLoaded
   }
 
+  /**
+   * Set whether our {@link source} has been loaded
+   * @param value - boolean flag indicating if the {@link source} has been loaded
+   */
   set sourceLoaded(value: boolean) {
     if (value && !this.sourceLoaded) {
       this._onSourceLoadedCallback && this._onSourceLoadedCallback()
@@ -210,13 +214,16 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Get/set whether our [texture source]{@link Texture#source} has been uploaded
-   * @readonly
+   * Get whether our {@link source} has been uploaded
    */
   get sourceUploaded(): boolean {
     return this._sourceUploaded
   }
 
+  /**
+   * Set whether our {@link source} has been uploaded
+   * @param value - boolean flag indicating if the {@link source} has been uploaded
+   */
   set sourceUploaded(value: boolean) {
     if (value && !this.sourceUploaded) {
       this._onSourceUploadedCallback && this._onSourceUploadedCallback()
@@ -225,7 +232,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Set our [texture transforms object]{@link Texture#transforms}
+   * Set our texture {@link transforms} object
    */
   setTransforms() {
     super.setTransforms()
@@ -239,7 +246,7 @@ export class Texture extends Object3D {
   /* TEXTURE MATRIX */
 
   /**
-   * Update the [texture model matrix]{@link Texture#modelMatrix}
+   * Update the {@link modelMatrix}
    */
   updateModelMatrix() {
     if (!this.parent) return
@@ -304,7 +311,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Our [model matrix]{@link Texture#modelMatrix} has been updated, tell the [texture matrix binding]{@link Texture#textureMatrix} to update as well
+   * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
    */
   onAfterMatrixStackUpdate() {
     this.textureMatrix.shouldUpdateBinding(this.options.name + 'Matrix')
@@ -330,8 +337,8 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Get the number of mip levels create based on [texture source size]{@link Texture#size}
-   * @param sizes
+   * Get the number of mip levels create based on {@link size}
+   * @param sizes - Array containing our texture width, height and depth
    * @returns - number of mip levels
    */
   getNumMipLevels(...sizes: number[]): number {
@@ -348,7 +355,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Import an [external texture]{@link GPUExternalTexture} from the {@link Renderer}, update the [texture binding]{@link Texture#textureBinding} and its [bind group]{@link BindGroup}
+   * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the  {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
    */
   uploadVideoTexture() {
     this.externalTexture = this.renderer.importExternalTexture(this.source as HTMLVideoElement)
@@ -359,8 +366,8 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Copy a [texture]{@link Texture}
-   * @param texture - [texture]{@link Texture} to copy
+   * Copy a {@link Texture}
+   * @param texture - {@link Texture} to copy
    */
   copy(texture: Texture) {
     if (this.options.sourceType === 'externalVideo' && texture.options.sourceType !== 'externalVideo') {
@@ -409,7 +416,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Set the [texture]{@link Texture#texture}
+   * Set the {@link texture | GPU texture}
    */
   createTexture() {
     const options = {
@@ -440,7 +447,7 @@ export class Texture extends Object3D {
   /* SOURCES */
 
   /**
-   * Set the [size]{@link Texture#size} based on [texture source]{@link Texture#source}
+   * Set the {@link size} based on the {@link source}
    */
   setSourceSize() {
     this.size = {
@@ -457,7 +464,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Load an [image]{@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a [texture source]{@link Texture#source}
+   * Load an {@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a {@link source}
    * @async
    * @param url - URL of the image to load
    * @returns - the newly created {@link ImageBitmap}
@@ -469,7 +476,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
+   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link source} and create the {@link GPUTexture}
    * @async
    * @param source - the image URL or {@link HTMLImageElement} to load
    * @returns - the newly created {@link ImageBitmap}
@@ -505,7 +512,7 @@ export class Texture extends Object3D {
   // WebCodecs may be the way to go when time comes!
   // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
   /**
-   * Set our [shouldUpdate]{@link Texture#shouldUpdate} flag to true at each new video frame
+   * Set our {@link shouldUpdate} flag to true at each new video frame
    */
   onVideoFrameCallback() {
     if (this.videoFrameCallbackId) {
@@ -515,9 +522,9 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Callback to run when a [video]{@link HTMLVideoElement} has loaded (when it has enough data to play).
-   * Set the [video]{@link HTMLVideoElement} as a [texture source]{@link Texture#source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
-   * @param video - the newly loaded [video]{@link HTMLVideoElement}
+   * Callback to run when a {@link HTMLVideoElement} has loaded (when it has enough data to play).
+   * Set the {@link HTMLVideoElement} as a {@link source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
+   * @param video - the newly loaded {@link HTMLVideoElement}
    */
   onVideoLoaded(video: HTMLVideoElement) {
     if (!this.sourceLoaded) {
@@ -548,7 +555,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Get whether the [texture source]{@link Texture#source} is a video
+   * Get whether the {@link source} is a video
    * @readonly
    */
   get isVideoSource(): boolean {
@@ -556,7 +563,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Load a video from a URL or {@link HTMLVideoElement} and register [onVideoLoaded]{@link Texture#onVideoLoaded} callback
+   * Load a video from a URL or {@link HTMLVideoElement} and register {@link onVideoLoaded} callback
    * @param source - the video URL or {@link HTMLVideoElement} to load
    */
   loadVideo(source: string | HTMLVideoElement) {
@@ -597,8 +604,8 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Load a [canvas]{@link HTMLCanvasElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
-   * @param source
+   * Load a {@link HTMLCanvasElement}, use it as a {@link source} and create the {@link GPUTexture}
+   * @param source - the {@link HTMLCanvasElement} to use
    */
   loadCanvas(source: HTMLCanvasElement) {
     this.options.source = source
@@ -618,8 +625,8 @@ export class Texture extends Object3D {
   /* EVENTS */
 
   /**
-   * Callback to run when the [texture source]{@link Texture#source} has loaded
-   * @param callback - callback to run when the [texture source]{@link Texture#source} has loaded
+   * Callback to run when the {@link source} has been loaded
+   * @param callback - callback to run when the {@link source} has been loaded
    * @returns - our {@link Texture}
    */
   onSourceLoaded(callback: () => void): Texture {
@@ -631,8 +638,8 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Callback to run when the [texture source]{@link Texture#source} has been uploaded
-   * @param callback - callback to run when the [texture source]{@link Texture#source} been uploaded
+   * Callback to run when the {@link source} has been uploaded
+   * @param callback - callback to run when the {@link source} been uploaded
    * @returns - our {@link Texture}
    */
   onSourceUploaded(callback: () => void): Texture {
@@ -647,7 +654,7 @@ export class Texture extends Object3D {
 
   /**
    * Render a {@link Texture}:
-   * - Update its [model matrix]{@link Texture#modelMatrix} and [struct]{@link Texture#bindings} if needed
+   * - Update its {@link modelMatrix} and {@link bindings} if needed
    * - Upload the texture if it needs to be done
    */
   render() {

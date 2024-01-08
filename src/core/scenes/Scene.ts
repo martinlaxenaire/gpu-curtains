@@ -20,7 +20,7 @@ export interface ProjectionStack {
   transparent: ProjectedMesh[]
 }
 
-/** Meshes will be stacked in 2 different objects whether they are projected (use a {@link Camera}) or not */
+/** Meshes will be stacked in 2 different objects whether they are projected (use a {@link core/camera/Camera.Camera | Camera}) or not */
 export type ProjectionType = 'unProjected' | 'projected'
 
 /**
@@ -32,9 +32,9 @@ export type Stack = Record<ProjectionType, ProjectionStack>
  * A RenderPassEntry object is used to group Meshes based on their rendering target
  */
 export interface RenderPassEntry {
-  /** [render pass]{@link RenderPass} target used onto which render */
+  /** {@link RenderPass} target used onto which render */
   renderPass: RenderPass
-  /** [render texture]{@link RenderTexture} to render to if any (if not specified then this {@link RenderPassEntry} Meshes will be rendered directly to screen) */
+  /** {@link RenderTexture} to render to if any (if not specified then this {@link RenderPassEntry} Meshes will be rendered directly to screen) */
   renderTexture: RenderTexture | null
   /** Optional function to execute just before rendering the Meshes, useful for eventual texture copy */
   onBeforeRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
@@ -52,23 +52,24 @@ export type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'screen'
 export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
 /**
- * Scene class:
  * Used to render everything that needs to be rendered (compute passes and meshes) in the right order with the right pass descriptors and target textures, perform textures copy at the right time, etc.
  */
 export class Scene {
-  /** [renderer]{@link Renderer} used by this {@link Scene} */
+  /** {@link Renderer} used by this {@link Scene} */
   renderer: Renderer
-  /** Array of [compute passes]{@link ComputePass} to render, ordered by [render order]{@link ComputePass#renderOrder} */
+  /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */
   computePassEntries: ComputePass[]
   /**
    * A {@link RenderPassEntries} object that will contain every Meshes that need to be drawn, put inside each one of our three entries type arrays: 'pingPong', 'renderTarget' and 'screen'.
-   * The {@link Scene} will first render all [pingPong entries]{@link Scene#renderPassEntries.pingPong} Meshes, then all Meshes that need to be rendered into specific [renderTarget entries]{@link Scene#renderPassEntries.renderTarget} and finally all Meshes that need to be rendered to the [screen]{@link Scene#renderPassEntries.screen}
+   * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes
+   * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries
+   * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen
    */
   renderPassEntries: RenderPassEntries
 
   /**
    * Scene constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
    */
   constructor({ renderer }: { renderer: Renderer | GPUCurtains }) {
     // we could pass our curtains object OR our curtains renderer object
@@ -81,11 +82,11 @@ export class Scene {
     this.computePassEntries = []
 
     this.renderPassEntries = {
-      /** Array of [render pass entries]{@link RenderPassEntry} that will handle [ping pong planes]{@link PingPongPlane}. Each [ping pong plane]{@link PingPongPlane} will be added as a distinct [render pass entry]{@link RenderPassEntry} here */
+      /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here */
       pingPong: [] as RenderPassEntry[],
-      /** Array of [render pass entries]{@link RenderPassEntry} that will render to a specific [render target]{@link RenderTarget}. Each [render target]{@link RenderTarget} will be added as a distinct [render pass entry]{@link RenderPassEntry} here */
+      /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
       renderTarget: [] as RenderPassEntry[],
-      /** Array of [render pass entries]{@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any [render target]{@link RenderTarget} assigned. Following entries will be created for every global [post processing passes]{@link ShaderPass} */
+      /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
       screen: [
         // add our basic scene entry
         {
@@ -127,8 +128,8 @@ export class Scene {
   }
 
   /**
-   * Add a [compute pass]{@link ComputePass} to our scene [computePassEntries array]{@link Scene#computePassEntries}
-   * @param computePass - [compute pass]{@link ComputePass} to add
+   * Add a {@link ComputePass} to our scene {@link computePassEntries} array
+   * @param computePass - {@link ComputePass} to add
    */
   addComputePass(computePass: ComputePass) {
     this.computePassEntries.push(computePass)
@@ -142,17 +143,17 @@ export class Scene {
   }
 
   /**
-   * Remove a [compute pass]{@link ComputePass} from our scene [computePassEntries array]{@link Scene#computePassEntries}
-   * @param computePass - [compute pass]{@link ComputePass} to remove
+   * Remove a {@link ComputePass} from our scene {@link computePassEntries} array
+   * @param computePass - {@link ComputePass} to remove
    */
   removeComputePass(computePass: ComputePass) {
     this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid)
   }
 
   /**
-   * Add a [render target]{@link RenderTarget} to our scene [renderPassEntries renderTarget array]{@link Scene#renderPassEntries.renderTarget}.
-   * Every Meshes later added to this [render target]{@link RenderTarget} will be rendered to the [render target render texture]{@link RenderTarget#renderTexture} using the [render target render pass descriptor]{@link RenderTarget#renderPass.descriptor}
-   * @param renderTarget - [render target]{@link RenderTarget} to add
+   * Add a {@link RenderTarget} to our scene {@link renderPassEntries} renderTarget array.
+   * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
+   * @param renderTarget - {@link RenderTarget} to add
    */
   addRenderTarget(renderTarget: RenderTarget) {
     // if RT is not already in the render pass entries
@@ -177,8 +178,8 @@ export class Scene {
   }
 
   /**
-   * Remove a [render target]{@link RenderTarget} from our scene [renderPassEntries renderTarget array]{@link Scene#renderPassEntries.renderTarget}.
-   * @param renderTarget - [render target]{@link RenderTarget} to add
+   * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} renderTarget array.
+   * @param renderTarget - {@link RenderTarget} to add
    */
   removeRenderTarget(renderTarget: RenderTarget) {
     this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
@@ -187,9 +188,9 @@ export class Scene {
   }
 
   /**
-   * Get the correct [render pass entry]{@link Scene#renderPassEntries} (either [renderTarget]{@link Scene#renderPassEntries.renderTarget} or [screen]{@link Scene#renderPassEntries.screen}) [stack]{@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+   * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} renderTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
    * @param mesh - Mesh to check
-   * @returns - the corresponding [render pass entry stack]{@link Stack}
+   * @returns - the corresponding render pass entry {@link Stack}
    */
   getMeshProjectionStack(mesh: ProjectedMesh): ProjectionStack {
     // first get correct render pass enty and stack
@@ -205,8 +206,8 @@ export class Scene {
   }
 
   /**
-   * Add a Mesh to the correct [render pass entry]{@link Scene#renderPassEntries} [stack]{@link Stack} array.
-   * Meshes are then ordered by their [indexes (order of creation]){@link MeshBase#index}, position along the Z axis in case they are transparent and then [renderOrder]{@link MeshBase#renderOrder}
+   * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
+   * Meshes are then ordered by their {@link core/meshes/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
    * @param mesh - Mesh to add
    */
   addMesh(mesh: ProjectedMesh) {
@@ -260,11 +261,11 @@ export class Scene {
   }
 
   /**
-   * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
-   * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}
-   * This also handles the [renderPassEntries screen array]{@link Scene#renderPassEntries.screen} entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-   * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4
-   * @param shaderPass - [shader pass]{@link ShaderPass} to add
+   * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
+   * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
+   * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
+   * {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
+   * @param shaderPass - {@link ShaderPass} to add
    */
   addShaderPass(shaderPass: ShaderPass) {
     this.renderPassEntries.screen.push({
@@ -272,7 +273,6 @@ export class Scene {
       renderTexture: null,
       onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
         if (!shaderPass.renderTarget) {
-          if (!shaderPass.renderTexture.texture) console.log(shaderPass.renderTexture)
           // draw the content into our render texture
           // if it's a global post processing pass, copy the context current texture into its renderTexture
           if (shaderPass.renderTexture) {
@@ -321,8 +321,8 @@ export class Scene {
   }
 
   /**
-   * Remove a [shader pass]{@link ShaderPass} from our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}
-   * @param shaderPass - [shader pass]{@link ShaderPass} to remove
+   * Remove a {@link ShaderPass} from our scene {@link renderPassEntries} screen array
+   * @param shaderPass - {@link ShaderPass} to remove
    */
   removeShaderPass(shaderPass: ShaderPass) {
     this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
@@ -331,9 +331,9 @@ export class Scene {
   }
 
   /**
-   * Add a [ping pong plane]{@link PingPongPlane} to our scene [renderPassEntries pingPong array]{@link Scene#renderPassEntries.pingPong}.
-   * After rendering the [ping pong plane]{@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture} so we'll be able to use it as an input for the next pass
-   * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p
+   * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
+   * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
+   * {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
    * @param pingPongPlane
    */
   addPingPongPlane(pingPongPlane: PingPongPlane) {
@@ -362,8 +362,8 @@ export class Scene {
   }
 
   /**
-   * Remove a [ping pong plane]{@link PingPongPlane} from our scene [renderPassEntries pingPong array]{@link Scene#renderPassEntries.pingPong}.
-   * @param pingPongPlane - [ping pong plane]{@link PingPongPlane} to remove
+   * Remove a {@link PingPongPlane} from our scene {@link renderPassEntries} pingPong array.
+   * @param pingPongPlane - {@link PingPongPlane} to remove
    */
   removePingPongPlane(pingPongPlane: PingPongPlane) {
     this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
@@ -372,16 +372,16 @@ export class Scene {
   }
 
   /**
-   * Here we render a [render pass entry]{@link RenderPassEntry}:
-   * - Set its [render pass descriptor]{@link RenderPass#descriptor} resolve target and get it at as swap chain texture
-   * - Execute [onBeforeRenderPass]{@link RenderPassEntry#onBeforeRenderPass} callback if specified
-   * - Begin the [render pass]{@link GPURenderPassEncoder} using our [render pass descriptor]{@link RenderPass#descriptor}
-   * - Render the single element if specified or the [render pass entry stack]{@link Stack}: draw unprojected opaque / transparent meshes first, then set [camera bind group]{@link CameraRenderer#cameraBindGroup} and draw projected opaque / transparent meshes
-   * - End the [render pass]{@link GPURenderPassEncoder}
-   * - Execute [onAfterRenderPass]{@link RenderPassEntry#onAfterRenderPass} callback if specified
-   * - Reset [pipeline manager current pipeline]{@link PipelineManager#currentPipelineIndex}
+   * Here we render a {@link RenderPassEntry}:
+   * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
+   * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
+   * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
+   * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link CameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
+   * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
+   * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
+   * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param renderPassEntry - [entry]{@link RenderPassEntry} to render
+   * @param renderPassEntry - {@link RenderPassEntry} to render
    */
   renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry) {
     // set the pass texture to render to
@@ -427,8 +427,8 @@ export class Scene {
 
   /**
    * Render our {@link Scene}
-   * - Render [compute pass entries]{@link Scene#computePassEntries} first
-   * - Then our [render pass entries]{@link Scene#renderPassEntries}
+   * - Render {@link computePassEntries} first
+   * - Then our {@link renderPassEntries}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {

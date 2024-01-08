@@ -21,9 +21,7 @@ export interface SphereGeometryParams extends GeometryBaseParams {
 }
 
 /**
- * SphereGeometry class:
  * Helper to easily create 3D sphere indexed geometries.
- * @extends IndexedGeometry
  */
 export class SphereGeometry extends IndexedGeometry {
   constructor(
