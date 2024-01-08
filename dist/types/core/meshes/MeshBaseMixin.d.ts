@@ -11,15 +11,15 @@ import { DOMElementBoundingRect } from '../DOM/DOMElement';
 import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials';
 import { MeshTransformedBaseClass } from './MeshTransformedMixin';
 export interface MeshBaseRenderParams extends RenderMaterialParams {
-    /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
+    /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
     /** Flag indicating whether to draw this Mesh or not */
     visible?: boolean;
-    /** Controls the order in which this Mesh should be rendered by our {@link Scene} */
+    /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder?: number;
     /** {@link RenderTarget} to render this Mesh to */
     renderTarget?: RenderTarget;
-    /** Parameters used by this Mesh to create a [texture]{@link Texture} */
+    /** Parameters used by this Mesh to create a {@link Texture} */
     texturesOptions?: ExternalTextureParams;
 }
 /**
@@ -37,17 +37,17 @@ export interface MeshBaseOptions {
     label?: MeshBaseParams['label'];
     /** Shaders to use by this Mesh {@link RenderMaterial} */
     shaders?: MeshBaseParams['shaders'];
-    /** Parameters used by this Mesh to create a [texture]{@link Texture} */
+    /** Parameters used by this Mesh to create a {@link Texture} */
     texturesOptions?: ExternalTextureParams;
     /** {@link RenderTarget} to render this Mesh to, if any */
     renderTarget?: RenderTarget | null;
-    /** Whether we should add this Mesh to our {@link Scene} to let it handle the rendering process automatically */
+    /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
-    /** Whether to compile this Mesh {@link RenderMaterial} [render pipeline]{@link RenderPipelineEntry#pipeline} asynchronously or not */
+    /** Whether to compile this Mesh {@link RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
     useAsyncPipeline?: boolean;
 }
 /**
- * MeshBaseClass - {@link MeshBase} typescript definition
+ * MeshBaseClass - MeshBase typescript definition
  */
 export declare class MeshBaseClass {
     /** The type of the {@link MeshBaseClass} */
@@ -62,13 +62,13 @@ export declare class MeshBaseClass {
     options: MeshBaseOptions;
     /** {@link RenderMaterial} used by this {@link MeshBaseClass} */
     material: RenderMaterial;
-    /** [Geometry]{@link AllowedGeometries} used by this {@link MeshBaseClass} */
+    /** {@link AllowedGeometries | Geometry} used by this {@link MeshBaseClass} */
     geometry: MeshBaseParams['geometry'];
-    /** {@link RenderTarget} to render this {@link MeshBase} to, if any */
+    /** {@link RenderTarget} to render this Mesh to, if any */
     renderTarget: null | RenderTarget;
-    /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link Scene} */
+    /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number;
-    /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the [render pipeline]{@link RenderPipelineEntry#pipeline} blend properties */
+    /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
     transparent: boolean;
     /** Flag indicating whether to draw this {@link MeshBaseClass} or not */
     visible: boolean;
@@ -76,15 +76,15 @@ export declare class MeshBaseClass {
     _ready: boolean;
     /** Empty object to store any additional data or custom properties into your Mesh. */
     userData: Record<string, unknown>;
-    /** function assigned to the [onReady]{@link MeshBaseClass#onReady} callback */
+    /** function assigned to the {@link onReady} callback */
     _onReadyCallback: () => void;
-    /** function assigned to the [onBeforeRender]{@link MeshBaseClass#onBeforeRender} callback */
+    /** function assigned to the {@link onBeforeRender} callback */
     _onBeforeRenderCallback: () => void;
-    /** function assigned to the [onRender]{@link MeshBaseClass#onRender} callback */
+    /** function assigned to the {@link onRender} callback */
     _onRenderCallback: () => void;
-    /** function assigned to the [onAfterRender]{@link MeshBaseClass#onAfterRender} callback */
+    /** function assigned to the {@link onAfterRender} callback */
     _onAfterRenderCallback: () => void;
-    /** function assigned to the [onAfterResize]{@link MeshBaseClass#onAfterResize} callback */
+    /** function assigned to the {@link onAfterResize} callback */
     _onAfterResizeCallback: () => void;
     /**
      * Assign a callback function to _onReadyCallback
@@ -118,9 +118,9 @@ export declare class MeshBaseClass {
     onAfterResize: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
     /**
      * {@link MeshBaseClass} constructor
-     * @param renderer - our [renderer]{@link Renderer} class object
+     * @param renderer - our {@link Renderer} class object
      * @param element - a DOM HTML Element that can be bound to a Mesh
-     * @param parameters - [Mesh base parameters]{@link MeshBaseParams}
+     * @param parameters - {@link MeshBaseParams | Mesh base parameters}
      */
     constructor(renderer: Renderer, element: HTMLElement | null, parameters: MeshBaseParams);
     /**
@@ -135,25 +135,25 @@ export declare class MeshBaseClass {
     get ready(): boolean;
     set ready(value: boolean);
     /**
-     * Add a Mesh to the renderer and the {@link Scene}
+     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     addToScene(): void;
     /**
-     * Remove a Mesh from the renderer and the {@link Scene}
+     * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene(): void;
     /**
-     * Set a new {@link Renderer} for this {@link MeshBase}
+     * Set a new {@link Renderer} for this Mesh
      * @param renderer - new {@link Renderer} to set
      */
     setRenderer(renderer: Renderer | GPUCurtains): void;
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext(): void;
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been restored
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext(): void;
     /**
@@ -174,7 +174,7 @@ export declare class MeshBaseClass {
     setGeometry(): void;
     /**
      * Set a Mesh transparent property, then set its material
-     * @param meshParameters - [RenderMaterial parameters]{@link RenderMaterialParams}
+     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */
     setMaterial(meshParameters: RenderMaterialParams): void;
     /**
@@ -182,18 +182,18 @@ export declare class MeshBaseClass {
      */
     setMaterialGeometryAttributes(): void;
     /**
-     * Get our [render material textures array]{@link RenderMaterial#textures}
+     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
      * @readonly
      */
     get textures(): Texture[];
     /**
-     * Get our [render material render textures array]{@link RenderMaterial#renderTextures}
+     * Get our {@link RenderMaterial#renderTextures | RenderMaterial render textures array}
      * @readonly
      */
     get renderTextures(): RenderTexture[];
     /**
      * Create a new {@link Texture}
-     * @param options - [Texture options]{@link TextureParams}
+     * @param options - {@link TextureParams | Texture parameters}
      * @returns - newly created Texture
      */
     createTexture(options: TextureParams): Texture;
@@ -209,7 +209,7 @@ export declare class MeshBaseClass {
     onTextureAdded(texture: Texture): void;
     /**
      * Create a new {@link RenderTexture}
-     * @param  options - [RenderTexture options]{@link RenderTextureParams}
+     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
      * @returns - newly created RenderTexture
      */
     createRenderTexture(options: RenderTextureParams): RenderTexture;
@@ -220,7 +220,7 @@ export declare class MeshBaseClass {
     addRenderTexture(renderTexture: RenderTexture): any;
     /**
      * Assign or remove a {@link RenderTarget} to this Mesh
-     * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
      * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
      */
     setRenderTarget(renderTarget: RenderTarget | null): void;
@@ -256,16 +256,16 @@ export declare class MeshBaseClass {
     onAfterRenderPass(): void;
     /**
      * Render our Mesh
-     * - Execute [onBeforeRenderPass]{@link MeshBaseClass#onBeforeRenderPass}
-     * - Stop here if [renderer]{@link Renderer} is not ready or Mesh is not [visible]{@link MeshBaseClass#visible}
+     * - Execute {@link onBeforeRenderPass}
+     * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}
      * - Execute super render call if it exists
-     * - [Render]{@link MeshBaseClass#onRenderPass} our {@link RenderMaterial} and geometry
-     * - Execute [onAfterRenderPass]{@link MeshBaseClass#onAfterRenderPass}
+     * - {@link onRenderPass | render} our {@link material} and {@link geometry}
+     * - Execute {@link onAfterRenderPass}
      * @param pass - current render pass encoder
      */
     render(pass: GPURenderPassEncoder): void;
     /**
-     * Remove the Mesh from the {@link Scene} and destroy it
+     * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
      */
     remove(): void;
     /**
@@ -273,10 +273,16 @@ export declare class MeshBaseClass {
      */
     destroy(): void;
 }
+/**
+ * To get started, we need a type which we'll use to extend
+ * other classes from. The main responsibility is to declare
+ * that the type being passed in is a class.
+ * We use a generic version which can apply a constraint on
+ * the class which this mixin is applied to
+ */
 export type MixinConstructor<T = {}> = new (...args: any[]) => T;
 /**
- * MeshBase Mixin:
- * Used to mix basic Mesh properties and methods defined in {@link MeshBaseClass} with a given Base of type {@link Object3D}, {@link ProjectedObject3D} or an empty class.
+ * Used to mix basic Mesh properties and methods defined in {@link MeshBaseClass} with a given Base of type {@link Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} or an empty class.
  * @exports MeshBaseMixin
  * @param {*} Base - the class to mix onto
  * @returns {module:MeshBaseMixin~MeshBase} - the mixin class.

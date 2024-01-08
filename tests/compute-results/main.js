@@ -1,5 +1,5 @@
 //import { GPUDeviceManager, GPURenderer, Vec2, ComputePass } from '../../dist/gpu-curtains.js'
-import { GPUDeviceManager, GPURenderer, Vec2, ComputePass } from '../../src'
+import { GPUDeviceManager, GPURenderer, Vec2, ComputePass } from '../../src/index.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   const start = performance.now()

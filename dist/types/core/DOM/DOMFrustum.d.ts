@@ -5,29 +5,28 @@ import { DOMElementBoundingRect, RectCoords } from './DOMElement';
  * An object defining all possible {@link DOMFrustum} class instancing parameters
  */
 export interface DOMFrustumParams {
-    /** our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link Geometry} */
+    /** our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link core/geometries/Geometry.Geometry | Geometry} */
     boundingBox?: Box3;
-    /** [model view projection matrix]{@link ProjectedObject3D#modelViewProjectionMatrix} to use for frustum calculations */
+    /** {@link core/objects3D/ProjectedObject3D.ProjectedObject3D#modelViewProjectionMatrix | model view projection matrix} to use for frustum calculations */
     modelViewProjectionMatrix?: Mat4;
-    /** the [bounding rectangle]{@link DOMElementBoundingRect} to check against */
+    /** the {@link DOMElementBoundingRect | bounding rectangle} to check against */
     containerBoundingRect?: DOMElementBoundingRect;
-    /** additional margins to add to [containerBoundingRect]{@link DOMFrustumParams#containerBoundingRect} */
+    /** additional margins to add to {@link containerBoundingRect} */
     DOMFrustumMargins?: RectCoords;
-    /** callback to run when the [projectedBoundingRect]{@link DOMFrustumParams#projectedBoundingRect} reenters the view frustum */
+    /** callback to run when the {@link DOMFrustum#projectedBoundingRect | projectedBoundingRect} reenters the view frustum */
     onReEnterView?: () => void;
-    /** callback to run when the [projectedBoundingRect]{@link DOMFrustumParams#projectedBoundingRect} leaves the view frustum */
+    /** callback to run when the {@link DOMFrustum#projectedBoundingRect | projectedBoundingRect} leaves the view frustum */
     onLeaveView?: () => void;
 }
 /**
- * DOMFrustum class:
- * Used to check if a {@link ProjectedObject3D} is currently contained inside a DOM bounding rectangle.
- * Uses a [model view projection matrix]{@link ProjectedObject3D#modelViewProjectionMatrix} that contains both 3D Object and Camera useful transformation and projection information.
- * The DOM bounding rectangle to check against usually is the {@link GPURenderer}'s {@link DOMElement} bounding rectangle, unless frustum margins are specified.
+ * Used to check if a {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} is currently contained inside a DOM bounding rectangle.
+ * Uses a {@link core/objects3D/ProjectedObject3D.ProjectedObject3D#modelViewProjectionMatrix | model view projection matrix} that contains both 3D Object and {@link core/camera/Camera.Camera | Camera} useful transformation and projection information.
+ * The DOM bounding rectangle to check against usually is the {@link core/renderers/GPURenderer.GPURenderer | renderer}'s {@link core/DOM/DOMElement.DOMElement | DOMElement} bounding rectangle, unless frustum margins are specified.
  */
 export declare class DOMFrustum {
-    /** Our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link Geometry} */
+    /** Our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link core/geometries/Geometry.Geometry | Geometry} */
     boundingBox: Box3;
-    /** A model view projection matrix defining transformations, usually from a {@link ProjectedObject3D}, to use for frustum calculations */
+    /** A model view projection matrix defining transformations, usually from a {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, to use for frustum calculations */
     modelViewProjectionMatrix: Mat4;
     /** The DOM bounding rectangle to check against, usually the renderer DOM Element bounding rectangle */
     containerBoundingRect: DOMElementBoundingRect;
@@ -45,7 +44,7 @@ export declare class DOMFrustum {
     shouldUpdate: boolean;
     /**
      * DOMFrustum constructor
-     * @param {DOMFrustumParams} parameters - [parameters]{@link DOMFrustumParams} used to create our {@link DOMFrustum}
+     * @param {DOMFrustumParams} parameters - {@link DOMFrustumParams | parameters} used to create our {@link DOMFrustum}
      */
     constructor({ boundingBox, modelViewProjectionMatrix, containerBoundingRect, DOMFrustumMargins, onReEnterView, onLeaveView, }: DOMFrustumParams);
     /**

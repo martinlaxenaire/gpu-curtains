@@ -3,28 +3,27 @@ import { Quat } from './Quat'
 import { Camera } from '../core/camera/Camera'
 
 /**
- * Vec3 class:
  * Really basic Vector3 class used for vector calculations
  * Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Vector3.js and http://glmatrix.net/docs/vec3.js.html
  */
 export class Vec3 {
   /** The type of the {@link Vec3} */
   type: string
-  /** X component of our [vector]{@link Vec3} */
+  /** X component of our {@link Vec3} */
   private _x: number
-  /** Y component of our [vector]{@link Vec3} */
+  /** Y component of our {@link Vec3} */
   private _y: number
-  /** Z component of our [vector]{@link Vec3} */
+  /** Z component of our {@link Vec3} */
   private _z: number
 
-  /** function assigned to the [onChange]{@link Vec3#onChange} callback */
+  /** function assigned to the {@link onChange} callback */
   _onChangeCallback?(): void
 
   /**
    * Vec3 constructor
-   * @param x=0 - X component of our [vector]{@link Vec3}
-   * @param y=x - Y component of our [vector]{@link Vec3}
-   * @param z=x - Z component of our [vector]{@link Vec3}
+   * @param x - X component of our {@link Vec3}
+   * @param y - Y component of our {@link Vec3}
+   * @param z - Z component of our {@link Vec3}
    */
   constructor(x = 0, y = x, z = x) {
     this.type = 'Vec3'
@@ -35,14 +34,17 @@ export class Vec3 {
   }
 
   /**
-   * Get/set the X component of the [vector]{@link Vec3}
-   * When set, can trigger [onChange]{@link Vec3#onChange} callback
-   * @readonly
+   * Get the X component of the {@link Vec3}
    */
   get x(): number {
     return this._x
   }
 
+  /**
+   * Set the X component of the {@link Vec3}
+   * Can trigger {@link onChange} callback
+   * @param value - X component to set
+   */
   set x(value: number) {
     const changed = value !== this._x
     this._x = value
@@ -50,14 +52,17 @@ export class Vec3 {
   }
 
   /**
-   * Get/set the Y component of the [vector]{@link Vec3}
-   * When set, can trigger [onChange]{@link Vec3#onChange} callback
-   * @readonly
+   * Get the Y component of the {@link Vec3}
    */
   get y(): number {
     return this._y
   }
 
+  /**
+   * Set the Y component of the {@link Vec3}
+   * Can trigger {@link onChange} callback
+   * @param value - Y component to set
+   */
   set y(value: number) {
     const changed = value !== this._y
     this._y = value
@@ -65,14 +70,17 @@ export class Vec3 {
   }
 
   /**
-   * Get/set the Z component of the [vector]{@link Vec3}
-   * When set, can trigger [onChange]{@link Vec3#onChange} callback
-   * @readonly
+   * Get the Z component of the {@link Vec3}
    */
   get z(): number {
     return this._z
   }
 
+  /**
+   * Set the Z component of the {@link Vec3}
+   * Can trigger {@link onChange} callback
+   * @param value - Z component to set
+   */
   set z(value: number) {
     const changed = value !== this._z
     this._z = value
@@ -80,8 +88,8 @@ export class Vec3 {
   }
 
   /**
-   * Called when at least one component of the [vector]{@link Vec3} has changed
-   * @param callback - callback to run when at least one component of the [vector]{@link Vec3} has changed
+   * Called when at least one component of the {@link Vec3} has changed
+   * @param callback - callback to run when at least one component of the {@link Vec3} has changed
    * @returns - our {@link Vec3}
    */
   onChange(callback: () => void): Vec3 {
@@ -93,11 +101,11 @@ export class Vec3 {
   }
 
   /**
-   * Set the [vector]{@link Vec3} from values
-   * @param x=0 - new X component to set
-   * @param y=0 - new Y component to set
-   * @param z=0 - new Z component to set
-   * @returns - this [vector]{@link Vec3} after being set
+   * Set the {@link Vec3} from values
+   * @param x - new X component to set
+   * @param y - new Y component to set
+   * @param z - new Z component to set
+   * @returns - this {@link Vec3} after being set
    */
   set(x = 0, y = 0, z = 0): Vec3 {
     this.x = x
@@ -108,9 +116,9 @@ export class Vec3 {
   }
 
   /**
-   * Add a [vector]{@link Vec3} to this [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to add
-   * @returns - this [vector]{@link Vec3} after addition
+   * Add a {@link Vec3} to this {@link Vec3}
+   * @param vector - {@link Vec3} to add
+   * @returns - this {@link Vec3} after addition
    */
   add(vector: Vec3 = new Vec3()): Vec3 {
     this.x += vector.x
@@ -121,9 +129,9 @@ export class Vec3 {
   }
 
   /**
-   * Add a scalar to all the components of this [vector]{@link Vec3}
-   * @param value=0 - number to add
-   * @returns - this [vector]{@link Vec3} after addition
+   * Add a scalar to all the components of this {@link Vec3}
+   * @param value - number to add
+   * @returns - this {@link Vec3} after addition
    */
   addScalar(value = 0): Vec3 {
     this.x += value
@@ -134,9 +142,9 @@ export class Vec3 {
   }
 
   /**
-   * Subtract a [vector]{@link Vec3} from this [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to subtract
-   * @returns - this [vector]{@link Vec3} after subtraction
+   * Subtract a {@link Vec3} from this {@link Vec3}
+   * @param vector - {@link Vec3} to subtract
+   * @returns - this {@link Vec3} after subtraction
    */
   sub(vector: Vec3 = new Vec3()): Vec3 {
     this.x -= vector.x
@@ -147,9 +155,9 @@ export class Vec3 {
   }
 
   /**
-   * Subtract a scalar to all the components of this [vector]{@link Vec3}
-   * @param value=0 - number to subtract
-   * @returns - this [vector]{@link Vec3} after subtraction
+   * Subtract a scalar to all the components of this {@link Vec3}
+   * @param value - number to subtract
+   * @returns - this {@link Vec3} after subtraction
    */
   subScalar(value = 0): Vec3 {
     this.x -= value
@@ -160,9 +168,9 @@ export class Vec3 {
   }
 
   /**
-   * Multiply a [vector]{@link Vec3} with this [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to multiply with
-   * @returns - this [vector]{@link Vec3} after multiplication
+   * Multiply a {@link Vec3} with this {@link Vec3}
+   * @param vector - {@link Vec3} to multiply with
+   * @returns - this {@link Vec3} after multiplication
    */
   multiply(vector: Vec3 = new Vec3(1)): Vec3 {
     this.x *= vector.x
@@ -173,9 +181,9 @@ export class Vec3 {
   }
 
   /**
-   * Multiply all components of this [vector]{@link Vec3} with a scalar
-   * @param value=1 - number to multiply with
-   * @returns - this [vector]{@link Vec3} after multiplication
+   * Multiply all components of this {@link Vec3} with a scalar
+   * @param value - number to multiply with
+   * @returns - this {@link Vec3} after multiplication
    */
   multiplyScalar(value = 1): Vec3 {
     this.x *= value
@@ -186,9 +194,9 @@ export class Vec3 {
   }
 
   /**
-   * Copy a [vector]{@link Vec3} into this [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to copy
-   * @returns - this [vector]{@link Vec3} after copy
+   * Copy a {@link Vec3} into this {@link Vec3}
+   * @param vector - {@link Vec3} to copy
+   * @returns - this {@link Vec3} after copy
    */
   copy(vector: Vec3 = new Vec3()): Vec3 {
     this.x = vector.x
@@ -199,17 +207,17 @@ export class Vec3 {
   }
 
   /**
-   * Clone this [vector]{@link Vec3}
-   * @returns - cloned [vector]{@link Vec3}
+   * Clone this {@link Vec3}
+   * @returns - cloned {@link Vec3}
    */
   clone(): Vec3 {
     return new Vec3(this.x, this.y, this.z)
   }
 
   /**
-   * Apply max values to this [vector]{@link Vec3} components
-   * @param vector - [vector]{@link Vec3} representing max values
-   * @returns - [vector]{@link Vec3} with max values applied
+   * Apply max values to this {@link Vec3} components
+   * @param vector - {@link Vec3} representing max values
+   * @returns - {@link Vec3} with max values applied
    */
   max(vector: Vec3 = new Vec3()): Vec3 {
     this.x = Math.max(this.x, vector.x)
@@ -220,9 +228,9 @@ export class Vec3 {
   }
 
   /**
-   * Apply min values to this [vector]{@link Vec3} components
-   * @param vector - [vector]{@link Vec3} representing min values
-   * @returns - [vector]{@link Vec3} with min values applied
+   * Apply min values to this {@link Vec3} components
+   * @param vector - {@link Vec3} representing min values
+   * @returns - {@link Vec3} with min values applied
    */
   min(vector: Vec3 = new Vec3()): Vec3 {
     this.x = Math.min(this.x, vector.x)
@@ -233,33 +241,33 @@ export class Vec3 {
   }
 
   /**
-   * Check if 2 [vectors]{@link Vec3} are equal
-   * @param vector - [vector]{@link Vec3} to compare
-   * @returns - whether the [vectors]{@link Vec3} are equals or not
+   * Check if 2 {@link Vec3} are equal
+   * @param vector - {@link Vec3} to compare
+   * @returns - whether the {@link Vec3} are equals or not
    */
   equals(vector: Vec3 = new Vec3()): boolean {
     return this.x === vector.x && this.y === vector.y && this.z === vector.z
   }
 
   /**
-   * Get the square length of this [vector]{@link Vec3}
-   * @returns - square length of this [vector]{@link Vec3}
+   * Get the square length of this {@link Vec3}
+   * @returns - square length of this {@link Vec3}
    */
   lengthSq(): number {
     return this.x * this.x + this.y * this.y + this.z * this.z
   }
 
   /**
-   * Get the length of this [vector]{@link Vec3}
-   * @returns - length of this [vector]{@link Vec3}
+   * Get the length of this {@link Vec3}
+   * @returns - length of this {@link Vec3}
    */
   length(): number {
     return Math.sqrt(this.lengthSq())
   }
 
   /**
-   * Normalize this [vector]{@link Vec3}
-   * @returns - normalized [vector]{@link Vec3}
+   * Normalize this {@link Vec3}
+   * @returns - normalized {@link Vec3}
    */
   normalize(): Vec3 {
     // normalize
@@ -275,28 +283,28 @@ export class Vec3 {
   }
 
   /**
-   * Calculate the dot product of 2 [vectors]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to use for dot product
-   * @returns - dot product of the 2 [vectors]{@link Vec3}
+   * Calculate the dot product of 2 {@link Vec3}
+   * @param vector - {@link Vec3} to use for dot product
+   * @returns - dot product of the 2 {@link Vec3}
    */
   dot(vector: Vec3 = new Vec3()): number {
     return this.x * vector.x + this.y * vector.y + this.z * vector.z
   }
 
   /**
-   * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to use for cross product
-   * @returns - this [vector]{@link Vec3} after cross product
+   * Get the cross product of this {@link Vec3} with another {@link Vec3}
+   * @param vector - {@link Vec3} to use for cross product
+   * @returns - this {@link Vec3} after cross product
    */
   cross(vector: Vec3 = new Vec3()): Vec3 {
     return this.crossVectors(this, vector)
   }
 
   /**
-   * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
-   * @param a - first [vector]{@link Vec3} to use for cross product
-   * @param b - second [vector]{@link Vec3} to use for cross product
-   * @returns - this [vector]{@link Vec3} after cross product
+   * Set this {@link Vec3} as the result of the cross product of two {@link Vec3}
+   * @param a - first {@link Vec3} to use for cross product
+   * @param b - second {@link Vec3} to use for cross product
+   * @returns - this {@link Vec3} after cross product
    */
   crossVectors(a: Vec3 = new Vec3(), b: Vec3 = new Vec3()): Vec3 {
     const ax = a.x,
@@ -314,10 +322,10 @@ export class Vec3 {
   }
 
   /**
-   * Calculate the linear interpolation of this [vector]{@link Vec3} by given [vector]{@link Vec3} and alpha, where alpha is the percent distance along the line
-   * @param vector - [vector]{@link Vec3} to interpolate towards
-   * @param alpha=1 - interpolation factor in the [0, 1] interval
-   * @returns - this [vector]{@link Vec3} after linear interpolation
+   * Calculate the linear interpolation of this {@link Vec3} by given {@link Vec3} and alpha, where alpha is the percent distance along the line
+   * @param vector - {@link Vec3} to interpolate towards
+   * @param alpha - interpolation factor in the [0, 1] interval
+   * @returns - this {@link Vec3} after linear interpolation
    */
   lerp(vector: Vec3 = new Vec3(), alpha = 1): Vec3 {
     this.x += (vector.x - this.x) * alpha
@@ -328,11 +336,11 @@ export class Vec3 {
   }
 
   /**
-   * Apply a [matrix]{@link Mat4} to a [vector]{@link Vec3}
-   * Useful to convert a position [vector]{@link Vec3} from plane local world to webgl space using projection view matrix for example
+   * Apply a {@link Mat4 | matrix} to a {@link Vec3}
+   * Useful to convert a position {@link Vec3} from plane local world to webgl space using projection view matrix for example
    * Source code from: http://glmatrix.net/docs/vec3.js.html
-   * @param matrix - [matrix]{@link Mat4} to use
-   * @returns - this [vector]{@link Vec3} after [matrix]{@link Mat4} application
+   * @param matrix - {@link Mat4 | matrix} to use
+   * @returns - this {@link Vec3} after {@link Mat4 | matrix} application
    */
   applyMat4(matrix: Mat4 = new Mat4()): Vec3 {
     const x = this._x,
@@ -351,9 +359,9 @@ export class Vec3 {
   }
 
   /**
-   * Apply a [quaternion]{@link Quat} (rotation in 3D space) to this [vector]{@link Vec3}
-   * @param quaternion - [quaternion]{@link Quat} to use
-   * @returns - this [vector]{@link Vec3} with the transformation applied
+   * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}
+   * @param quaternion - {@link Quat | quaternion} to use
+   * @returns - this {@link Vec3} with the transformation applied
    */
   applyQuat(quaternion: Quat = new Quat()): Vec3 {
     const x = this.x,
@@ -381,11 +389,11 @@ export class Vec3 {
   }
 
   /**
-   * Rotate a [vector]{@link Vec3} around and axis by a given angle
-   * @param axis - normalized [vector]{@link Vec3} around which to rotate
+   * Rotate a {@link Vec3} around and axis by a given angle
+   * @param axis - normalized {@link Vec3} around which to rotate
    * @param angle - angle (in radians) to rotate
-   * @param quaternion - optional [quaternion]{@link Quat} to use for rotation computations
-   * @returns - this [vector]{@link Vec3} with the rotation applied
+   * @param quaternion - optional {@link Quat | quaternion} to use for rotation computations
+   * @returns - this {@link Vec3} with the rotation applied
    */
   applyAxisAngle(axis = new Vec3(), angle = 0, quaternion = new Quat()) {
     // https://github.com/mrdoob/three.js/blob/master/src/math/Vector3.js#L212
@@ -393,9 +401,9 @@ export class Vec3 {
   }
 
   /**
-   * Project a 3D coordinate [vector]{@link Vec3} to a 2D coordinate [vector]{@link Vec3}
-   * @param camera - [camera]{@link Camera} to use for projection
-   * @returns - projected [vector]{@link Vec3}
+   * Project a 3D coordinate {@link Vec3} to a 2D coordinate {@link Vec3}
+   * @param camera - {@link Camera} to use for projection
+   * @returns - projected {@link Vec3}
    */
   project(camera: Camera): Vec3 {
     this.applyMat4(camera.viewMatrix).applyMat4(camera.projectionMatrix)
@@ -403,9 +411,9 @@ export class Vec3 {
   }
 
   /**
-   * Unproject a 2D coordinate [vector]{@link Vec3} to 3D coordinate [vector]{@link Vec3}
-   * @param camera - [camera]{@link Camera} to use for projection
-   * @returns - unprojected [vector]{@link Vec3}
+   * Unproject a 2D coordinate {@link Vec3} to 3D coordinate {@link Vec3}
+   * @param camera - {@link Camera} to use for projection
+   * @returns - unprojected {@link Vec3}
    */
   unproject(camera: Camera): Vec3 {
     this.applyMat4(camera.projectionMatrix.getInverse()).applyMat4(camera.modelMatrix)

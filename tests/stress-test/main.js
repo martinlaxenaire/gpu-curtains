@@ -1,4 +1,4 @@
-import { GPUCurtains, BoxGeometry, SphereGeometry, Mesh } from '../../src'
+import { GPUCurtains, BoxGeometry, SphereGeometry, Mesh } from '../../src/index.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   const stats = new Stats()

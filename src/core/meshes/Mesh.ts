@@ -5,12 +5,6 @@ import { MeshBaseParams } from './MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
- * @typedef {object} MeshBaseMixin
- * @extends ProjectedObject3D
- */
-
-/**
- * Mesh class:
  * Create a Mesh, with model and projection matrices.
  * TODO!
  * @extends MeshTransformedMixin

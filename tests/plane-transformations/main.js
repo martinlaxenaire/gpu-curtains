@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec2, Plane } from '../../src'
+import { GPUCurtains, Vec2, Plane } from '../../src/index.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper

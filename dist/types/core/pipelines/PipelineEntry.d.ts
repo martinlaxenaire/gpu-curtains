@@ -4,55 +4,54 @@ import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { MaterialShadersType } from '../../types/Materials';
 /**
- * PipelineEntry class:
  * Used as a base class to create a pipeline entry.
- * PipelineEntry roles are:
- * - Patch the given {@link Material} shaders code and create the corresponding {@link GPUShaderModule}.
- * - Create a [Pipeline layout]{@link GPUPipelineLayout} with the given [bind groups]{@link Material#bindGroups}
+ * PipelineEntry roles are:s
+ * - Patch the given {@link core/materials/Material.Material | Material} shaders code and create the corresponding {@link GPUShaderModule}.
+ * - Create a {@link GPUPipelineLayout | pipeline layout} with the given {@link core/materials/Material.Material#bindGroups | bind groups}
  * - Create a GPU pipeline
  */
 export declare class PipelineEntry {
     /** The type of the {@link PipelineEntry} */
     type: string;
-    /** The [renderer]{@link Renderer} used to create this {@link PipelineEntry} */
+    /** The {@link Renderer} used to create this {@link PipelineEntry} */
     renderer: Renderer;
     /** Index of this {@link PipelineEntry}, i.e. creation order */
     readonly index: number;
-    /** [Pipeline layout]{@link GPUPipelineLayout} created based on the given [bind groups]{@link PipelineEntry#bindGroups} */
+    /** {@link GPUPipelineLayout | Pipeline layout} created based on the given {@link bindGroups | bind groups} */
     layout: GPUPipelineLayout | null;
     /** The GPU pipeline */
     pipeline: GPURenderPipeline | GPUComputePipeline | null;
-    /** The pipeline [compilation status]{@link PipelineEntryStatus} */
+    /** The pipeline {@link PipelineEntryStatus | compilation status} */
     status: PipelineEntryStatus;
     /** Options used to create this {@link PipelineEntry} */
     options: PipelineEntryOptions;
-    /** [bind groups]{@link Material#bindGroups} used to patch the shaders and create the [pipeline layout]{@link PipelineEntry#layout} */
+    /** {@link core/materials/Material.Material#bindGroups | bind groups} used to patch the shaders and create the {@link PipelineEntry#layout | pipeline layout} */
     bindGroups: AllowedBindGroups[];
     /**
      * PipelineEntry constructor
-     * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link PipelineEntry}
+     * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link PipelineEntry}
      */
     constructor(parameters: PipelineEntryParams);
     /**
-     * Get whether the [pipeline]{@link PipelineEntry#pipeline} is ready, i.e. successfully compiled
+     * Get whether the {@link pipeline} is ready, i.e. successfully compiled
      * @readonly
      */
     get ready(): boolean;
     /**
-     * Get whether the [pipeline]{@link PipelineEntry#pipeline} is ready to be compiled, i.e. we have already not already tried to compile it, and it's not currently compiling neither
+     * Get whether the {@link pipeline} is ready to be compiled, i.e. we have already not already tried to compile it, and it's not currently compiling neither
      * @readonly
      */
     get canCompile(): boolean;
     /**
-     * Set our [pipeline entry bind groups]{@link PipelineEntry#bindGroups}
-     * @param bindGroups - [bind groups]{@link Material#bindGroups} to use with this {@link PipelineEntry}
+     * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}
+     * @param bindGroups - {@link core/materials/Material.Material#bindGroups | bind groups} to use with this {@link PipelineEntry}
      */
     setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]): void;
     /**
      * Create a {@link GPUShaderModule}
      * @param parameters - Parameters used
      * @param parameters.code - patched WGSL code string
-     * @param parameters.type - [shader type]{@link MaterialShadersType}
+     * @param parameters.type - {@link MaterialShadersType | shader type}
      * @returns - compiled {@link GPUShaderModule} if successful
      */
     createShaderModule({ code, type }: {
@@ -64,7 +63,7 @@ export declare class PipelineEntry {
      */
     createShaders(): void;
     /**
-     * Create the [pipeline entry layout]{@link PipelineEntry#layout}
+     * Create the pipeline entry {@link layout}
      */
     createPipelineLayout(): void;
     /**
@@ -72,13 +71,13 @@ export declare class PipelineEntry {
      */
     createPipelineDescriptor(): void;
     /**
-     * Flush a {@link PipelineEntry}, i.e. reset its [bind groups]{@link PipelineEntry#bindGroups}, [layout]{@link PipelineEntry#layout} and descriptor and recompile the [pipeline]{@link PipelineEntry#pipeline}
+     * Flush a {@link PipelineEntry}, i.e. reset its {@link bindGroups | bind groups}, {@link layout} and descriptor and recompile the {@link pipeline}
      * Used when one of the bind group or rendering property has changed
-     * @param newBindGroups - new [bind groups]{@link PipelineEntry#bindGroups} in case they have changed
+     * @param newBindGroups - new {@link bindGroups | bind groups} in case they have changed
      */
     flushPipelineEntry(newBindGroups?: AllowedBindGroups[]): void;
     /**
-     * Set up a [pipeline]{@link PipelineEntry#pipeline} by creating the shaders, the [layout]{@link PipelineEntry#layout} and the descriptor
+     * Set up a {@link pipeline} by creating the shaders, the {@link layout} and the descriptor
      */
     compilePipelineEntry(): void;
 }

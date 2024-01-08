@@ -6,7 +6,7 @@ import { Camera } from '../camera/Camera'
 
 /** Defines all kind of possible {@link ProjectedObject3D} matrix types */
 export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' | 'modelViewProjection'
-/** Defines all possible [matrix object]{@link Object3DTransformMatrix} used by our {@link ProjectedObject3D} */
+/** Defines all possible {@link Object3DTransformMatrix | matrix object} used by our {@link ProjectedObject3D} */
 export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>
 
 /**
@@ -15,20 +15,19 @@ export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Ob
  * @extends Object3D
  */
 export class ProjectedObject3D extends Object3D {
-  /** [Camera]{@link Camera} object used to compute [modelView]{@link ProjectedObject3D#modelViewMatrix} and [modelViewProjection]{@link ProjectedObject3D#modelViewProjectionMatrix} matrices */
+  /** {@link Camera | Camera} object used to compute {@link ProjectedObject3D#modelViewMatrix | model view} and {@link ProjectedObject3D#modelViewProjectionMatrix | model view projection} matrices */
   camera: Camera
 
-  /** [Matrices object]{@link ProjectedObject3DMatrices} of the {@link ProjectedObject3D} */
+  /** {@link ProjectedObject3DMatrices | Matrices object} of the {@link ProjectedObject3D} */
   matrices: ProjectedObject3DMatrices
 
   /**
    * ProjectedObject3D constructor
    * @param renderer - our renderer class object
    */
-  // TODO just use the Camera instead?
   constructor(renderer: CameraRenderer | GPUCurtains) {
     super()
-
+    // TODO just use the Camera instead?
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
 
@@ -98,20 +97,23 @@ export class ProjectedObject3D extends Object3D {
   }
 
   /**
-   * Get/set our model view matrix
-   * @readonly
+   * Get our {@link modelViewMatrix | model view matrix}
    */
   get modelViewMatrix(): Mat4 {
     return this.matrices.modelView.matrix
   }
 
+  /**
+   * Set our {@link modelViewMatrix | model view matrix}
+   * @param value - new {@link modelViewMatrix | model view matrix}
+   */
   set modelViewMatrix(value: Mat4) {
     this.matrices.modelView.matrix = value
     this.matrices.modelView.shouldUpdate = true
   }
 
   /**
-   * Get our camera view matrix
+   * Get our {@link Camera#viewMatrix | camera view matrix}
    * @readonly
    */
   get viewMatrix(): Mat4 {
@@ -119,7 +121,7 @@ export class ProjectedObject3D extends Object3D {
   }
 
   /**
-   * Get our camera projection matrix
+   * Get our {@link Camera#projectionMatrix | camera projection matrix}
    * @readonly
    */
   get projectionMatrix(): Mat4 {
@@ -127,13 +129,16 @@ export class ProjectedObject3D extends Object3D {
   }
 
   /**
-   * Get/set our model view projection matrix
-   * @readonly
+   * Get our {@link modelViewProjectionMatrix | model view projection matrix}
    */
   get modelViewProjectionMatrix(): Mat4 {
     return this.matrices.modelViewProjection.matrix
   }
 
+  /**
+   * Set our {@link modelViewProjectionMatrix | model view projection matrix}
+   * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
+   */
   set modelViewProjectionMatrix(value: Mat4) {
     this.matrices.modelViewProjection.matrix = value
     this.matrices.modelViewProjection.shouldUpdate = true
@@ -150,7 +155,7 @@ export class ProjectedObject3D extends Object3D {
   /**
    * Tell all our matrices to update
    */
-  updateSizePositionAndProjection() {
+  shouldUpdateMatrixStack() {
     this.shouldUpdateModelMatrix()
     this.shouldUpdateProjectionMatrixStack()
   }

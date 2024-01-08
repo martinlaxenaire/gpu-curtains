@@ -217,6 +217,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // last but not least, tell our blurred texture that we want to use the compute blur output as source
   blurredTexture.copy(outputTexture)
 
+  // create 2 uniforms bindings
   const flipBinding0 = new BufferBinding({
     label: 'Direction',
     name: 'direction',

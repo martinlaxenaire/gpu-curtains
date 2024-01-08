@@ -10,12 +10,11 @@ export interface ScrollManagerParams {
   delta?: DOMPosition
   /** Whether the {@link ScrollManager} should listen to the window scroll event or not */
   shouldWatch?: boolean
-  /** Callback to execute each time the [scroll]{@link ScrollManager#scroll} values change */
+  /** Callback to execute each time the {@link ScrollManager#scroll | scroll} values change */
   onScroll?: (delta?: DOMPosition) => void
 }
 
 /**
- * ScrollManager class:
  * Used to keep track of our scroll position, scroll deltas and trigger an onScroll callback
  * Could either listen to the native scroll event or be hooked to any scroll (natural or virtual) scroll event
  */
@@ -26,15 +25,12 @@ export class ScrollManager {
   delta: DOMPosition
   /** Whether the {@link ScrollManager} should listen to the window scroll event or not */
   shouldWatch: boolean
-  /** Callback to execute each time the [scroll]{@link ScrollManager#scroll} values change */
+  /** Callback to execute each time the {@link scroll} values change */
   onScroll: (delta?: DOMPosition) => void
-
-  /** Keep track of our scroll event listener */
-  handler: EventListener
 
   /**
    * ScrollManager constructor
-   * @param parameters - [parameters]{@link ScrollManagerParams} used to create this {@link ScrollManager}
+   * @param parameters - {@link ScrollManagerParams | parameters} used to create this {@link ScrollManager}
    */
   constructor({
     scroll = { x: 0, y: 0 },
@@ -51,27 +47,23 @@ export class ScrollManager {
 
     this.onScroll = onScroll
 
-    // keep a ref to our scroll event
-    this.handler = this.scrollHandler.bind(this, true)
     if (this.shouldWatch) {
-      window.addEventListener('scroll', this.handler, { passive: true })
+      window.addEventListener('scroll', this.setScroll.bind(this), { passive: true })
     }
   }
 
   /**
    * Called by the scroll event listener
    */
-  scrollHandler() {
+  setScroll() {
     this.updateScrollValues({ x: window.pageXOffset, y: window.pageYOffset })
   }
 
   /**
    * Updates the scroll manager X and Y scroll values as well as last X and Y deltas
-   * Internally called by the scroll handler
+   * Internally called by the scroll event listener
    * Could be called externally as well if the user wants to handle the scroll by himself
-   * @param parameters - scroll values
-   * @param parameters.x - scroll value along X axis
-   * @param parameters.y - scroll value along Y axis
+   * @param parameters - {@link core/DOM/DOMElement.DOMPosition | scroll values}
    */
   updateScrollValues({ x, y }: DOMPosition) {
     // get our scroll delta values
@@ -94,7 +86,7 @@ export class ScrollManager {
     if (this.shouldWatch) {
       // passive triggers a typescript error
       // https://github.com/microsoft/TypeScript/issues/32912#issuecomment-522142969
-      window.removeEventListener('scroll', this.handler, { passive: true } as AddEventListenerOptions &
+      window.removeEventListener('scroll', this.setScroll.bind(this), { passive: true } as AddEventListenerOptions &
         EventListenerOptions)
     }
   }

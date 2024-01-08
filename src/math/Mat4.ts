@@ -2,7 +2,6 @@ import { Vec3 } from './Vec3'
 import { Quat } from './Quat'
 
 /**
- * Mat4 class:
  * This is a really basic Matrix4 class used for matrix calculations
  * Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js and http://glmatrix.net/docs/mat4.js.html
  */
@@ -47,7 +46,7 @@ export class Mat4 {
    * @param n43 number
    * @param n44 number
    *
-   * @returns - this [matrix]{@link Mat4} after being set
+   * @returns - this {@link Mat4} after being set
    */
   set(
     n11: number,
@@ -90,8 +89,8 @@ export class Mat4 {
   }
 
   /**
-   * Sets the [matrix]{@link Mat4} to an identity matrix
-   * @returns - this [matrix]{@link Mat4} after being set
+   * Sets the {@link Mat4} to an identity matrix
+   * @returns - this {@link Mat4} after being set
    */
   identity(): Mat4 {
     // prettier-ignore
@@ -106,9 +105,9 @@ export class Mat4 {
   }
 
   /**
-   * Sets the [matrix]{@link Mat4} values from an array
+   * Sets the {@link Mat4} values from an array
    * @param array - array to use
-   * @returns - this [matrix]{@link Mat4} after being set
+   * @returns - this {@link Mat4} after being set
    */
   // prettier-ignore
   setFromArray(array: Float32Array | number[] = new Float32Array([
@@ -125,9 +124,9 @@ export class Mat4 {
   }
 
   /**
-   * Copy another [matrix]{@link Mat4}
+   * Copy another {@link Mat4}
    * @param matrix
-   * @returns - this [matrix]{@link Mat4} after being set
+   * @returns - this {@link Mat4} after being set
    */
   copy(matrix: Mat4 = new Mat4()): Mat4 {
     const array = matrix.elements
@@ -152,36 +151,36 @@ export class Mat4 {
   }
 
   /**
-   * Clone a [matrix]{@link Mat4}
-   * @returns - cloned [matrix]{@link Mat4}
+   * Clone a {@link Mat4}
+   * @returns - cloned {@link Mat4}
    */
   clone(): Mat4 {
     return new Mat4().copy(this)
   }
 
   /**
-   * Multiply this [matrix]{@link Mat4} with another [matrix]{@link Mat4}
-   * @param matrix - [matrix]{@link Mat4} to multiply with
-   * @returns - this [matrix]{@link Mat4} after multiplication
+   * Multiply this {@link Mat4} with another {@link Mat4}
+   * @param matrix - {@link Mat4} to multiply with
+   * @returns - this {@link Mat4} after multiplication
    */
   multiply(matrix: Mat4 = new Mat4()): Mat4 {
     return this.multiplyMatrices(this, matrix)
   }
 
   /**
-   * Multiply another [matrix]{@link Mat4} with this [matrix]{@link Mat4}
-   * @param matrix - [matrix]{@link Mat4} to multiply with
-   * @returns - this [matrix]{@link Mat4} after multiplication
+   * Multiply another {@link Mat4} with this {@link Mat4}
+   * @param matrix - {@link Mat4} to multiply with
+   * @returns - this {@link Mat4} after multiplication
    */
   premultiply(matrix: Mat4 = new Mat4()): Mat4 {
     return this.multiplyMatrices(matrix, this)
   }
 
   /**
-   * Multiply two [matrices]{@link Mat4}
-   * @param a - first [matrix]{@link Mat4}
-   * @param b - second [matrix]{@link Mat4}
-   * @returns - [matrix]{@link Mat4} resulting from the multiplication
+   * Multiply two {@link Mat4}
+   * @param a - first {@link Mat4}
+   * @param b - second {@link Mat4}
+   * @returns - {@link Mat4} resulting from the multiplication
    */
   multiplyMatrices(a: Mat4 = new Mat4(), b: Mat4 = new Mat4()): Mat4 {
     const ae = a.elements
@@ -246,9 +245,9 @@ export class Mat4 {
   }
 
   /**
-   * [Premultiply]{@link Mat4#premultiply} this [matrix]{@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
-   * @param vector - translation [vector]{@link Vec3} to use
-   * @returns - this [matrix]{@link Mat4} after the premultiply translate operation
+   * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
+   * @param vector - translation {@link Vec3 | vector} to use
+   * @returns - this {@link Mat4} after the premultiply translate operation
    */
   premultiplyTranslate(vector: Vec3 = new Vec3()): Mat4 {
     // premultiply by a translateMatrix, ie translateMatrix = new Mat4().translate(vector)
@@ -311,9 +310,9 @@ export class Mat4 {
   }
 
   /**
-   * [Premultiply]{@link Mat4#premultiply} this [matrix]{@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
-   * @param vector - scale [vector]{@link Vec3} to use
-   * @returns - this [matrix]{@link Mat4} after the premultiply scale operation
+   * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
+   * @param vector - scale {@link Vec3 | vector} to use
+   * @returns - this {@link Mat4} after the premultiply scale operation
    */
   premultiplyScale(vector: Vec3 = new Vec3()): Mat4 {
     // premultiply by a scaleMatrix, ie scaleMatrix = new Mat4().scale(vector)
@@ -369,8 +368,8 @@ export class Mat4 {
   }
 
   /**
-   * Get the [matrix]{@link Mat4} inverse
-   * @returns - the [matrix]{@link Mat4} inverted
+   * Get the {@link Mat4} inverse
+   * @returns - the {@link Mat4} inverted
    */
   invert() {
     // based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
@@ -450,17 +449,17 @@ export class Mat4 {
   }
 
   /**
-   * Clone and invert the [matrix]{@link Mat4}
-   * @returns - inverted cloned [matrix]{@link Mat4}
+   * Clone and invert the {@link Mat4}
+   * @returns - inverted cloned {@link Mat4}
    */
   getInverse(): Mat4 {
     return this.clone().invert()
   }
 
   /**
-   * Translate a [matrix]{@link Mat4}
-   * @param vector - translation [vector]{@link Vec3} to use
-   * @returns - translated [matrix]{@link Mat4}
+   * Translate a {@link Mat4}
+   * @param vector - translation {@link Vec3 | vector} to use
+   * @returns - translated {@link Mat4}
    */
   translate(vector: Vec3 = new Vec3()): Mat4 {
     const a = this.elements
@@ -474,9 +473,9 @@ export class Mat4 {
   }
 
   /**
-   * Scale a [matrix]{@link Mat4}
-   * @param vector - scale [vector]{@link Vec3} to use
-   * @returns - scaled [matrix]{@link Mat4}
+   * Scale a {@link Mat4}
+   * @param vector - scale {@link Vec3 | vector} to use
+   * @returns - scaled {@link Mat4}
    */
   scale(vector: Vec3 = new Vec3()): Mat4 {
     const a = this.elements
@@ -498,9 +497,9 @@ export class Mat4 {
   }
 
   /**
-   * Rotate a [matrix]{@link Mat4} from a [quaternion]{@link Quat}
-   * @param quaternion - [quaternion]{@link Vec3} to use
-   * @returns - rotated [matrix]{@link Mat4}
+   * Rotate a {@link Mat4} from a {@link Quat | quaternion}
+   * @param quaternion - {@link Quat | quaternion} to use
+   * @returns - rotated {@link Mat4}
    */
   rotateFromQuaternion(quaternion: Quat = new Quat()): Mat4 {
     const te = this.elements
@@ -539,11 +538,11 @@ export class Mat4 {
   }
 
   /**
-   * Set this [matrix]{@link Mat4} as a rotation matrix based on an eye, target and up [vectors]{@link Vec3}
-   * @param eye - [position]{@link Vec3} of the object that should be rotated
-   * @param target - [target]{@link Vec3} to look at
-   * @param up - up [vector]{@link Vec3}
-   * @returns - rotated [matrix]{@link Mat4}
+   * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
+   * @param eye - {@link Vec3 | position vector} of the object that should be rotated
+   * @param target - {@link Vec3 | target vector} to look at
+   * @param up - up {@link Vec3 | vector}
+   * @returns - rotated {@link Mat4}
    */
   lookAt(eye: Vec3 = new Vec3(), target: Vec3 = new Vec3(), up: Vec3 = new Vec3(0, 1, 0)): Mat4 {
     const te = this.elements
@@ -589,14 +588,14 @@ export class Mat4 {
   }
 
   /**
-   * Creates a [matrix]{@link Mat4} from a [quaternion]{@link Quat} rotation, [vector]{@link Vec3} translation and [vector]{@link Vec3} scale
+   * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
    * Equivalent for applying translation, rotation and scale matrices but much faster
    * Source code from: http://glmatrix.net/docs/mat4.js.html
    *
-   * @param translation - translation [vector]{@link Vec3} to use
-   * @param quaternion - [quaternion]{@link Quat} to use
-   * @param scale - translation [vector]{@link Vec3} to use
-   * @returns - transformed [matrix]{@link Mat4}
+   * @param translation - translation {@link Vec3 | vector} to use
+   * @param quaternion - {@link Quat | quaternion} to use
+   * @param scale - translation {@link Vec3 | vector} to use
+   * @returns - transformed {@link Mat4}
    */
   compose(translation: Vec3 = new Vec3(), quaternion: Quat = new Quat(), scale: Vec3 = new Vec3(1)): Mat4 {
     const matrix = this.elements
@@ -644,15 +643,15 @@ export class Mat4 {
   }
 
   /**
-   * Creates a [matrix]{@link Mat4} from a [quaternion]{@link Quat} rotation, [vector]{@link Vec3} translation and [vector]{@link Vec3} scale, rotating and scaling around the given [origin]{@link Vec3}
+   * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale, rotating and scaling around the given {@link Vec3 | origin vector}
    * Equivalent for applying translation, rotation and scale matrices but much faster
    * Source code from: http://glmatrix.net/docs/mat4.js.html
    *
-   * @param translation - translation [vector]{@link Vec3} to use
-   * @param quaternion - [quaternion]{@link Quat} to use
-   * @param scale - translation [vector]{@link Vec3} to use
-   * @param origin - origin [vector]{@link Vec3} around which to scale and rotate
-   * @returns - transformed [matrix]{@link Mat4}
+   * @param translation - translation {@link Vec3 | vector} to use
+   * @param quaternion - {@link Quat | quaternion} to use
+   * @param scale - translation {@link Vec3 | vector} to use
+   * @param origin - origin {@link Vec3 | vector} around which to scale and rotate
+   * @returns - transformed {@link Mat4}
    */
   composeFromOrigin(
     translation: Vec3 = new Vec3(),

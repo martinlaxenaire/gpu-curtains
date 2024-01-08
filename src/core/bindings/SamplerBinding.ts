@@ -1,23 +1,22 @@
 import { Binding, BindingParams } from './Binding'
 import { SamplerOptions } from '../samplers/Sampler'
 
-/** Defines a {@link SamplerBinding} [resource]{@link SamplerBinding#resource} */
+/** Defines a {@link SamplerBinding} {@link SamplerBinding#resource | resource} */
 export type SamplerBindingResource = GPUSampler | null
 
 /**
  * An object defining all possible {@link SamplerBinding} class instancing parameters
  */
 export interface SamplerBindingParams extends BindingParams {
-  /** {@link SamplerBinding} [bind group]{@link GPUBindGroup} resource */
+  /** {@link SamplerBinding} {@link GPUBindGroup | GPU bind group} resource */
   sampler: SamplerBindingResource
-  /** The bind group layout binding [type]{@link GPUSamplerBindingLayout#type} of this [sampler]{@link GPUSampler} */
+  /** The bind group layout binding {@link GPUSamplerBindingLayout#type | type} of this {@link GPUSampler | GPU sampler} */
   type: SamplerOptions['type']
 }
 
 /**
  * SamplerBinding class:
  * Used to handle GPUSampler struct
- * @extends Binding
  */
 export class SamplerBinding extends Binding {
   /** Our {@link SamplerBinding} resource, i.e. a {@link GPUSampler} */
@@ -29,12 +28,7 @@ export class SamplerBinding extends Binding {
 
   /**
    * SamplerBinding constructor
-   * @param parameters - parameters used to create our SamplerBindings
-   * @param {string=} parameters.label - binding label
-   * @param {string=} parameters.name - binding name
-   * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {MaterialShadersType=} parameters.visibility - shader visibility
-   * @param {SamplerBindingResource=} parameters.resource - a GPUSampler
+   * @param parameters - {@link SamplerBindingParams | parameters} used to create our SamplerBindings
    */
   constructor({
     label = 'Sampler',
@@ -60,9 +54,13 @@ export class SamplerBinding extends Binding {
   }
 
   /**
-   * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#sampler}
+   * Get {@link GPUBindGroupLayoutEntry#sampler | bind group layout entry resource}
+   * @readonly
    */
-  get resourceLayout(): { sampler: GPUSamplerBindingLayout } {
+  get resourceLayout(): {
+    /** {@link GPUBindGroupLayout | bind group layout} resource */
+    sampler: GPUSamplerBindingLayout
+  } {
     return {
       sampler: {
         type: this.options.type, // TODO set shouldResetBindGroupLayout to true if it changes afterwards
@@ -71,12 +69,16 @@ export class SamplerBinding extends Binding {
   }
 
   /**
-   * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+   * Get the {@link GPUBindGroupEntry#resource | bind group resource}
    */
   get resource(): SamplerBindingResource {
     return this.sampler
   }
 
+  /**
+   * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+   * @param value - new bind group resource
+   */
   set resource(value: SamplerBindingResource) {
     // resource changed, update bind group!
     if (value && this.sampler) this.shouldResetBindGroup = true

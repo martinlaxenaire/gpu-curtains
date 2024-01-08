@@ -17,8 +17,11 @@ import { Mat4 } from '../../../math/Mat4'
 //
 // see https://webgpufundamentals.org/webgpu/lessons/resources/wgsl-offset-computer.html
 
+/** Number of slots per row */
 export const slotsPerRow = 4
+/** Number of bytes per slot */
 export const bytesPerSlot = 4
+/** Number of bytes per row */
 export const bytesPerRow = slotsPerRow * bytesPerSlot
 
 /**
@@ -32,13 +35,13 @@ export interface BufferElementAlignmentPosition {
 }
 
 /**
- * Defines our [buffer element]{@link BufferElement} alignment:
+ * Defines our {@link BufferElement} alignment:
  * Keep track of an entry start and end row and bytes indexes (16 bytes per row)
  */
 export interface BufferElementAlignment {
-  /** The row and byte indexes at which this [buffer element]{@link BufferElement} starts */
+  /** The row and byte indexes at which this {@link BufferElement} starts */
   start: BufferElementAlignmentPosition
-  /** The row and byte indexes at which this [buffer element]{@link BufferElement} ends */
+  /** The row and byte indexes at which this {@link BufferElement} ends */
   end: BufferElementAlignmentPosition
 }
 
@@ -55,8 +58,7 @@ export interface BufferElementParams {
 }
 
 /**
- * BufferElement class:
- * Used to handle each [buffer binding array]{@link BufferBinding#value} view and data layout alignment.
+ * Used to handle each {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} view and data layout alignment.
  * Compute the exact alignment offsets needed to fill an {@link ArrayBuffer} that will be sent to a {@link GPUBuffer}, based on an input type and value.
  * Also update the view array at the correct offset.
  */
@@ -68,11 +70,11 @@ export class BufferElement {
   /** The key of the {@link BufferElement} */
   key: string
 
-  /** [Buffer layout]{@link BufferLayout} used to fill the [buffer binding array]{@link BufferBinding#value} at the right offsets */
+  /** {@link BufferLayout} used to fill the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} at the right offsets */
   bufferLayout: BufferLayout
 
   /**
-   * Object defining exactly at which place a binding should be inserted into the {@link BufferBinding#arrayBuffer}
+   * Object defining exactly at which place a binding should be inserted into the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
    */
   alignment: BufferElementAlignment
 
@@ -81,7 +83,7 @@ export class BufferElement {
 
   /**
    * BufferElement constructor
-   * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferElement}
+   * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}
    */
   constructor({ name, key, type = 'f32' }: BufferElementParams) {
     this.name = name
@@ -112,7 +114,7 @@ export class BufferElement {
   }
 
   /**
-   * Get the total number of bytes used by this {@link BufferElement} based on [alignment]{@link BufferElementAlignment} start and end offsets
+   * Get the total number of bytes used by this {@link BufferElement} based on {@link BufferElementAlignment | alignment} start and end offsets
    * @readonly
    */
   get byteCount(): number {
@@ -171,18 +173,18 @@ export class BufferElement {
   }
 
   /**
-   * Get the number of bytes at a given [position]{@link BufferElementAlignmentPosition}
-   * @param position - [position]{@link BufferElementAlignmentPosition} from which to count
-   * @returns - byte count at the given [position]{@link BufferElementAlignmentPosition}
+   * Get the number of bytes at a given {@link BufferElementAlignmentPosition | position}
+   * @param position - {@link BufferElementAlignmentPosition | position} from which to count
+   * @returns - byte count at the given {@link BufferElementAlignmentPosition | position}
    */
   getByteCountAtPosition(position: BufferElementAlignmentPosition = { row: 0, byte: 0 }): number {
     return position.row * bytesPerRow + position.byte
   }
 
   /**
-   * Check that a [position byte]{@link BufferElementAlignmentPosition#byte} does not overflow its max value (16)
-   * @param position - [position]{@link BufferElementAlignmentPosition} to check
-   * @returns - updated [position]{@link BufferElementAlignmentPosition#
+   * Check that a {@link BufferElementAlignmentPosition#byte | byte position} does not overflow its max value (16)
+   * @param position - {@link BufferElementAlignmentPosition | position}
+   * @returns - updated {@link BufferElementAlignmentPosition | position}
    */
   applyOverflowToPosition(
     position: BufferElementAlignmentPosition = { row: 0, byte: 0 }
@@ -197,9 +199,9 @@ export class BufferElement {
   }
 
   /**
-   * Get the number of bytes between two [positions]{@link BufferElementAlignmentPosition}
-   * @param p1 - first [position]{@link BufferElementAlignmentPosition}
-   * @param p2 - second [position]{@link BufferElementAlignmentPosition}
+   * Get the number of bytes between two {@link BufferElementAlignmentPosition | positions}
+   * @param p1 - first {@link BufferElementAlignmentPosition | position}
+   * @param p2 - second {@link BufferElementAlignmentPosition | position}
    * @returns - number of bytes
    */
   getByteCountBetweenPositions(
@@ -210,9 +212,9 @@ export class BufferElement {
   }
 
   /**
-   * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available [position]{@link BufferElementAlignmentPosition}
-   * @param nextPositionAvailable - next [position]{@link BufferElementAlignmentPosition} at which we should insert this element
-   * @returns - computed [alignment]{@link BufferElementAlignment}
+   * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available {@link BufferElementAlignmentPosition | position}
+   * @param nextPositionAvailable - next {@link BufferElementAlignmentPosition | position} at which we should insert this element
+   * @returns - computed {@link BufferElementAlignment | alignment}
    */
   getElementAlignment(
     nextPositionAvailable: BufferElementAlignmentPosition = { row: 0, byte: 0 }
@@ -250,25 +252,25 @@ export class BufferElement {
   }
 
   /**
-   * Set the [alignment]{@link BufferElementAlignment} from a [position]{@link BufferElementAlignmentPosition}
-   * @param position - [position]{@link BufferElementAlignmentPosition} at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   * Set the {@link BufferElementAlignment | alignment} from a {@link BufferElementAlignmentPosition | position}
+   * @param position - {@link BufferElementAlignmentPosition | position} at which to start inserting the values in the {@link !core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
    */
   setAlignmentFromPosition(position: BufferElementAlignmentPosition = { row: 0, byte: 0 }) {
     this.alignment = this.getElementAlignment(position)
   }
 
   /**
-   * Set the [alignment]{@link BufferElementAlignment} from an offset (byte count)
-   * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   * Set the {@link BufferElementAlignment | alignment} from an offset (byte count)
+   * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
    */
   setAlignment(startOffset = 0) {
     this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset))
   }
 
   /**
-   * Set the [view]{@link BufferElement#view}
-   * @param arrayBuffer - the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
-   * @param arrayView - the [buffer binding array buffer view]{@link BufferBinding#arrayView}
+   * Set the {@link view}
+   * @param arrayBuffer - the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
+   * @param arrayView - the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view}
    */
   setView(arrayBuffer: ArrayBuffer, arrayView: DataView) {
     this.view = new this.bufferLayout.View(
@@ -279,7 +281,7 @@ export class BufferElement {
   }
 
   /**
-   * Update the [view]{@link BufferElement#view} based on the new value
+   * Update the {@link view} based on the new value
    * @param value - new value to use
    */
   update(value) {
@@ -295,14 +297,12 @@ export class BufferElement {
     } else if ((value as Quat | Mat4).elements) {
       this.view.set((value as Quat | Mat4).elements)
     } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-      for (let i = 0; i < this.view.length; i++) {
-        this.view[i] = value[i] ? value[i] : 0
-      }
+      this.view.set(value as number[])
     }
   }
 
   /**
-   * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+   * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
    * @param result - {@link Float32Array} holding {@link GPUBuffer} data
    * @returns - extracted data from the {@link Float32Array}
    */

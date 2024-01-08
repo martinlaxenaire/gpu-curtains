@@ -1,13 +1,5 @@
 // core
-// https://github.com/tlecoz/TsJsonDoc
-/**
- * @typedef {module:BindGroup} BindGroup
- * @exports BindGroup
- */
 export { BindGroup } from './core/bindGroups/BindGroup'
-/**
- * @exports core/bindGroups/TextureBindGroup
- */
 export { TextureBindGroup } from './core/bindGroups/TextureBindGroup'
 export { Binding } from './core/bindings/Binding'
 export { BufferBinding } from './core/bindings/BufferBinding'

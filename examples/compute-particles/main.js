@@ -177,9 +177,7 @@ const computeParticles = /* wgsl */ `
     let maxLife: f32 = particlesStaticData[index].maxLife;
     
     // reset particle
-    if(life >= maxLife) {
-      life = 0.0;
-    }
+    life = select(life, 0.0, life >= maxLife);
     
     let lifeRatio = life / maxLife;
     var mixCurlOriginal = abs(lifeRatio * 2.0 - 1.0);
@@ -309,9 +307,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   console.log(gpuCurtains.renderer)
 
-  computePass.onRender(() => {
-    computePass.uniforms.params.time.value += 0.1
-  })
+  computePass
+    .onReady(() => console.log(computePass.material.getAddedShaderCode('compute')))
+    .onRender(() => {
+      computePass.uniforms.params.time.value += 0.1
+    })
 
   // now the render part
   gpuCurtains.camera.position.z = systemSize.z * 3
@@ -402,10 +402,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  particles.onRender(() => {
-    const instanceVertexBuffer = particles.geometry.getVertexBufferByName('instanceAttributes')
-    const particleBuffer = computePass.material.getBindingByName('particles')
+  particles
+    .onReady(() => {
+      const instanceVertexBuffer = particles.geometry.getVertexBufferByName('instanceAttributes')
+      const particleBuffer = computePass.material.getBindingByName('particles')
 
-    instanceVertexBuffer.buffer = particleBuffer?.buffer
-  })
+      instanceVertexBuffer.buffer = particleBuffer?.buffer
+    })
+    .onRender(() => {
+      // const instanceVertexBuffer = particles.geometry.getVertexBufferByName('instanceAttributes')
+      // const particleBuffer = computePass.material.getBindingByName('particles')
+      //
+      // instanceVertexBuffer.buffer = particleBuffer?.buffer
+    })
 })

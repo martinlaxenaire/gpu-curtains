@@ -84,11 +84,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       
       transformed = rotatedTransformed.xyz;
       
-      transformed.y += instanceIndex * scroll.strength * 0.0125;
+      //transformed.y -= instanceIndex * scroll.strength * 0.01;
       
       // avoid depth overlapping issues
       transformed.z -= 0.0001 * instanceIndex;
-      transformed.z -= instanceIndex * abs(scroll.strength) * 0.025;
+      transformed.z -= instanceIndex * abs(scroll.strength) * 0.1;
 
       vsOutput.position = getOutputPosition(camera, matrices, transformed);
       vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);

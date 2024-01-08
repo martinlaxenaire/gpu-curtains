@@ -4,15 +4,12 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
 import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
-import { BufferInterleavedArrayElement } from '../bindings/bufferElements/BufferInterleavedArrayElement'
 
 /**
- * ComputeMaterial class:
- * Create a Material specifically built to run computations on the GPU with a {@link ComputePass}
- * @extends Material
+ * Create a Material specifically built to run computations on the GPU with a {@link core/computePasses/ComputePass.ComputePass | ComputePass}
  */
 export class ComputeMaterial extends Material {
-  /** [Compute pipeline entry]{@link ComputePipelineEntry} used by this {@link ComputeMaterial} */
+  /** {@link ComputePipelineEntry | Compute pipeline entry} used by this {@link ComputeMaterial} */
   pipelineEntry: ComputePipelineEntry
   /** Options used to create this {@link ComputeMaterial} */
   options: ComputeMaterialOptions
@@ -20,13 +17,13 @@ export class ComputeMaterial extends Material {
   /** Default work group dispatch size to use with this {@link ComputeMaterial} */
   dispatchSize?: number | number[]
 
-  /** function assigned to the [useCustomRender]{@link ComputeMaterial#useCustomRender} callback */
+  /** function assigned to the {@link useCustomRender} callback */
   _useCustomRenderCallback: (pass: GPUComputePassEncoder) => void
 
   /**
    * ComputeMaterial constructor
-   * @param renderer - our [renderer]{@link Renderer} class object
-   * @param parameters - [parameters]{@link ComputeMaterialParams} used to create our {@link ComputeMaterial}
+   * @param renderer - our {@link Renderer} class object
+   * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputeMaterialParams) {
     // we could pass our curtains object OR our curtains renderer object
@@ -141,7 +138,7 @@ export class ComputeMaterial extends Material {
 
   /**
    * If we defined a custom render function instead of the default one, register the callback
-   * @param callback - callback to run instead of the default behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
+   * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}
    */
   useCustomRender(callback: (pass: GPUComputePassEncoder) => void) {
     if (callback) {
@@ -151,7 +148,7 @@ export class ComputeMaterial extends Material {
 
   /**
    * Render the material if it is ready:
-   * Set the current pipeline, and render all the [work groups]{@link ComputeMaterial#workGroups}
+   * Set the current pipeline, set the bind groups and dispatch the work groups
    * @param pass - current compute pass encoder
    */
   render(pass: GPUComputePassEncoder) {
@@ -193,9 +190,10 @@ export class ComputeMaterial extends Material {
   }
 
   /**
-   * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
-   * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
-   * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+   * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
+   * @param parameters - parameters used to get the result
+   * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
+   * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
    * @async
    * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */

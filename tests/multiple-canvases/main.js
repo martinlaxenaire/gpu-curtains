@@ -1,4 +1,4 @@
-import { GPUCurtains, GPUCameraRenderer, BoxGeometry, SphereGeometry, Mesh } from '../../src'
+import { GPUCurtains, GPUCameraRenderer, BoxGeometry, SphereGeometry, Mesh } from '../../src/index.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   // set up our WebGL context and append the canvas to our wrapper

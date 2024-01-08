@@ -1,4 +1,4 @@
-import { GPUCameraRenderer, Vec2, Vec3, BoxGeometry, SphereGeometry, Mesh, GPUDeviceManager } from '../../src'
+import { GPUCameraRenderer, Vec2, Vec3, BoxGeometry, SphereGeometry, Mesh, GPUDeviceManager } from '../../src/index.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
   const systemSize = 10

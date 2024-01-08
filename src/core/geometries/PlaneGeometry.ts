@@ -19,7 +19,7 @@ export interface PlaneGeometryParams extends GeometryBaseParams {
  */
 export class PlaneGeometry extends IndexedGeometry {
   /**
-   * Defines our {@link PlaneGeometry} definition based on the provided [parameters]{@link PlaneGeometryParams}
+   * Defines our {@link PlaneGeometry} definition based on the provided {@link PlaneGeometryParams | parameters}
    */
   definition: {
     /** unique id based on width and height segments, used to get {@link PlaneGeometry} from cache */
@@ -34,11 +34,7 @@ export class PlaneGeometry extends IndexedGeometry {
 
   /**
    * PlaneGeometry constructor
-   * @param {PlaneGeometryParams} [parameters={}] - parameters used to create our PlaneGeometry
-   * @param {number} [parameters.instancesCount=1] - number of instances to draw
-   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
-   * @param {number} [parameters.widthSegments=1] - number of segments along the X axis
-   * @param {number} [parameters.heightSegments=1] - number of segments along the Y axis
+   * @param parameters - {@link PlaneGeometryParams | parameters} used to create our PlaneGeometry
    */
   constructor({
     widthSegments = 1,
@@ -103,8 +99,8 @@ export class PlaneGeometry extends IndexedGeometry {
 
   /**
    * Compute the UV and position arrays based on our plane widthSegments and heightSegments values and return the corresponding attributes
-   * @param verticesCount - [number of vertices]{@link Geometry#verticesCount} of our {@link PlaneGeometry}
-   * @returns - our position and uv [attributes]{@link VertexBufferAttributeParams}
+   * @param verticesCount - {@link Geometry#verticesCount | number of vertices} of our {@link PlaneGeometry}
+   * @returns - our position and uv {@link VertexBufferAttributeParams | attributes}
    */
   getIndexedVerticesAndUVs(verticesCount: Geometry['verticesCount']): Record<string, VertexBufferAttributeParams> {
     // geometry vertices and UVs

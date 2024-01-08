@@ -1,4 +1,4 @@
-import { GPURenderer, GPURendererParams, ProjectedMesh, SceneObject } from './GPURenderer'
+import { GPURenderer, GPURendererParams, ProjectedMesh, RenderedMesh, SceneObject } from './GPURenderer'
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
@@ -9,26 +9,25 @@ import { AllowedBindGroups } from '../../types/BindGroups'
  * Parameters used to create a {@link GPUCameraRenderer}
  */
 export interface GPUCameraRendererParams extends GPURendererParams {
-  /** An object defining [camera perspective parameters]{@link CameraBasePerspectiveOptions} */
+  /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
   camera: CameraBasePerspectiveOptions
 }
 
 /**
- * GPUCameraRenderer class:
- * This renderer also creates a {@link Camera} and its associated [struct]{@link GPUCameraRenderer#cameraBufferBinding} and [bind group]{@link GPUCameraRenderer#cameraBindGroup}
- * @extends GPURenderer
+ * This renderer also creates a {@link Camera} and its associated {@link cameraBufferBinding | binding} and {@link cameraBindGroup | bind group}.
+ * Can be safely used to render compute passes and meshes that do not need to be tied to the DOM.
  */
 export class GPUCameraRenderer extends GPURenderer {
   /** {@link Camera} used by this {@link GPUCameraRenderer} */
   camera: Camera
-  /** [struct]{@link BufferBinding} handling the [camera]{@link GPUCameraRenderer#camera} matrices */
+  /** {@link BufferBinding | binding} handling the {@link camera} matrices */
   cameraBufferBinding: BufferBinding
-  /** [bind group]{@link BindGroup} handling the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} */
+  /** {@link BindGroup | bind group} handling the {@link cameraBufferBinding | camera buffer binding} */
   cameraBindGroup: BindGroup
 
   /**
    * GPUCameraRenderer constructor
-   * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
+   * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
    */
   constructor({
     deviceManager,
@@ -55,7 +54,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} is lost.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
    * Reset all our samplers, force all our scene objects and camera bind group to lose context.
    */
   loseContext() {
@@ -65,8 +64,8 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-   * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures, re-write our camera buffer binding.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} should be restored.
+   * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
    * @async
    */
   async restoreContext(): Promise<void> {
@@ -75,8 +74,8 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Set the [camera]{@link GPUCameraRenderer#camera}
-   * @param cameraParameters - [parameters]{@link CameraBasePerspectiveOptions} used to create the [camera]{@link GPUCameraRenderer#camera}
+   * Set the {@link camera}
+   * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
    */
   setCamera(cameraParameters: CameraBasePerspectiveOptions) {
     const width = this.boundingRect ? this.boundingRect.width : 1
@@ -98,20 +97,20 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
+   * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
    */
   onCameraMatricesChanged() {
     this.updateCameraBindings()
 
     this.meshes.forEach((mesh) => {
       if ('modelViewMatrix' in mesh) {
-        mesh.updateSizePositionAndProjection()
+        mesh.shouldUpdateMatrixStack()
       }
     })
   }
 
   /**
-   * Set the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
+   * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
    */
   setCameraBufferBinding() {
     this.cameraBufferBinding = new BufferBinding({
@@ -157,7 +156,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Create the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} buffers
+   * Create the {@link cameraBindGroup | camera bind group} buffers
    */
   setCameraBindGroup() {
     if (this.cameraBindGroup.shouldCreateBindGroup) {
@@ -167,7 +166,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Tell our [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its struct
+   * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its struct
    */
   updateCameraBindings() {
     this.cameraBufferBinding?.shouldUpdateBinding('model')
@@ -176,9 +175,9 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}, including [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraBindGroup | camera bind group}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {
     return this.deviceRenderedObjects.filter((object) => {
@@ -192,8 +191,8 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
-   * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
+   * Set our {@link camera} perspective matrix new parameters (fov, near plane and far plane)
+   * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
    */
   setPerspective({ fov, near, far }: CameraBasePerspectiveOptions = {}) {
     this.camera?.setPerspective({
@@ -207,15 +206,15 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Set our [camera]{@link GPUCameraRenderer#camera} position
-   * @param position - new [position]{@link Camera#position}
+   * Set our {@link camera} {@link Camera#position | position}
+   * @param position - new {@link Camera#position | position}
    */
   setCameraPosition(position: Vec3 = new Vec3(0, 0, 1)) {
     this.camera.position.copy(position)
   }
 
   /**
-   * Call our [super onResize method]{@link GPURenderer#onResize} and resize our [camera]{@link GPUCameraRenderer#camera} as well
+   * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
    */
   onResize() {
     super.onResize()
@@ -226,7 +225,7 @@ export class GPUCameraRenderer extends GPURenderer {
   /* RENDER */
 
   /**
-   * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
+   * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
    */
   updateCamera() {
     this.camera?.updateMatrixStack()
@@ -235,11 +234,11 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Render a single [Mesh]{@link ProjectedMesh} (binds the camera bind group if needed)
+   * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - [Mesh]{@link ProjectedMesh} to render
+   * @param mesh - {@link RenderedMesh | mesh} to render
    */
-  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: ProjectedMesh) {
+  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
 
     // bind camera if needed
@@ -252,7 +251,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
+   * {@link updateCamera | Update the camera} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {

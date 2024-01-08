@@ -2,7 +2,7 @@ import { Geometry } from './Geometry'
 import { GeometryParams } from '../../types/Geometries'
 
 /**
- * Defines the available options to create an [index buffer]{@link IndexedGeometry#indexBuffer}
+ * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
  */
 export interface IndexedGeometryIndexBufferOptions {
   /** index buffer format */
@@ -12,7 +12,7 @@ export interface IndexedGeometryIndexBufferOptions {
 }
 
 /**
- * Defines an [index buffer]{@link IndexedGeometry#indexBuffer}
+ * Defines an {@link IndexedGeometry#indexBuffer | index buffer}
  */
 export interface IndexBuffer {
   /** index buffer format */
@@ -26,9 +26,7 @@ export interface IndexBuffer {
 }
 
 /**
- * IndexedGeometry class:
  * Used to created an indexed geometry which holds an index array to use as indexBuffer
- * @extends Geometry
  */
 export class IndexedGeometry extends Geometry {
   /** Object containing our index buffer format & length, array and GPUBuffer */
@@ -36,10 +34,7 @@ export class IndexedGeometry extends Geometry {
 
   /**
    * IndexedGeometry constructor
-   * @param {GeometryParams} [parameters={}] - parameters used to create our IndexedGeometry
-   * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
-   * @param {number} [parameters.instancesCount=1] - number of instances to draw
-   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+   * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
    */
   constructor({
     verticesOrder = 'cw',
@@ -74,10 +69,8 @@ export class IndexedGeometry extends Geometry {
   }
 
   /**
-   *
-   * @param parameters - parameters used to create our index buffer
-   * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
-   * @param {Uint32Array} [parameters.array=Uint32Array]
+   * Set our {@link indexBuffer}
+   * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
    */
   setIndexBuffer({ bufferFormat = 'uint32', array = new Uint32Array(0) }: IndexedGeometryIndexBufferOptions) {
     this.indexBuffer = {

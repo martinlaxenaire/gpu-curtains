@@ -15,6 +15,9 @@ export interface RectCoords {
   left: number
 }
 
+/**
+ * Defines a size object
+ */
 export interface RectSize {
   /** width of the rectangle */
   width: number
@@ -51,15 +54,18 @@ export interface DOMElementBoundingRect extends RectCoords, RectBBox, DOMPositio
  * Parameters used to create a {@link DOMElement}
  */
 export interface DOMElementParams {
+  /** {@link HTMLElement} or string representing an {@link HTMLElement} selector of the element the resize observer should track */
   element?: string | Element
+  /** Order in which the {@link resizeManager} callback is executed */
   priority?: ResizeManagerEntry['priority']
+  /** Callback to tun when the {@link DOMElement#element | element} size changed */
   onSizeChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
+  /** Callback to tun when the {@link DOMElement#element | element} position changed */
   onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null
 }
 
 /**
- * DOMElement class:
- * Used to track a DOM Element size and position by using a resize observer provided by {@see ResizeManager}
+ * Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}
  */
 export class DOMElement {
   /** Timeout ID to throttle our resize events */
@@ -82,10 +88,7 @@ export class DOMElement {
 
   /**
    * DOMElement constructor
-   * @param parameters - parameters used to create our DOMElement
-   * @param {HTMLElement=} parameters.element - DOM HTML element to track
-   * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
-   * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
+   * @param parameters - {@link DOMElementParams | parameters} used to create our DOMElement
    */
   constructor(
     {
@@ -142,13 +145,16 @@ export class DOMElement {
   }
 
   /**
-   * Get or set our element's bounding rectangle
-   * @readonly
+   * Get our element bounding rectangle
    */
   get boundingRect(): DOMElementBoundingRect {
     return this._boundingRect
   }
 
+  /**
+   * Set our element bounding rectangle
+   * @param boundingRect - new bounding rectangle
+   */
   set boundingRect(boundingRect: DOMElementBoundingRect) {
     const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect)
 
@@ -189,6 +195,7 @@ export class DOMElement {
    */
   setSize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!this.element) return
+
     // only throttle if we have set our first value
     this.isResizing = !!this.boundingRect
 
@@ -197,7 +204,7 @@ export class DOMElement {
     this.#throttleResize = setTimeout(() => {
       this.isResizing = false
       this.#throttleResize = null
-    }, 50)
+    }, 25)
   }
 
   /**

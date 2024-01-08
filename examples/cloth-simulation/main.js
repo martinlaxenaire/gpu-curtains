@@ -315,7 +315,7 @@ const computeClothSim = /* wgsl */ `
     setVelocity(offset, pointVelocity + a * params.deltaTime);
     
     let pos = pointPosition + getVelocity(offset) * params.deltaTime;
-    setPosition(offset, vec4<f32>(pos.x, max(pos.y, -1.0), pos.zw));
+    setPosition(offset, vec4<f32>(pos.x, max(pos.y, params.floor), pos.zw));
   }
 `
 
@@ -357,11 +357,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     vertexPositionArray[i + 1] = positionArray[j + 1]
     vertexPositionArray[i + 2] = positionArray[j + 2]
 
-    //const xFixed = (Math.ceil(Math.abs(positionArray[j]) * (clothDefinition.x + 1)) / 2) % 5 === 0
-    const xFixed = Math.abs(positionArray[j]) === 1
+    const xPosIndex = Math.round((positionArray[j] + 1) * 0.5 * clothDefinition.x)
+    const isFixed = positionArray[j + 1] === 1 && xPosIndex % 4 === 0
 
-    //vertexPositionArray[i + 3] = positionArray[j + 1] === 1 && xFixed ? -1 : 0 // fixed point
-    vertexPositionArray[i + 3] = positionArray[j + 1] === 1 ? -1 : 0 // fixed point
+    vertexPositionArray[i + 3] = isFixed ? -1 : 0 // fixed point
 
     // explicitly set normals
     normalPositionArray[i] = 0
@@ -428,10 +427,13 @@ window.addEventListener('DOMContentLoaded', async () => {
             type: 'f32',
             value: 50,
           },
+          floor: {
+            type: 'f32',
+            value: -1.25,
+          },
           gravity: {
             type: 'vec3f',
             value: new Vec3(0, -0.0981, 0),
-            //value: new GPUCurtains.Vec3(0, -0.0375, 0),
           },
         },
       },
@@ -529,7 +531,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // now use renderer onBeforeRender callback to render our compute passes
   // nb sims compute per render impacts the speed at which the simulation runs
-  const nbSimsComputePerRender = Math.min(75, Math.ceil(200 / simulationSpeed))
+  const nbSimsComputePerRender = Math.min(75, Math.ceil(150 / simulationSpeed))
 
   // add a task to our renderer onBeforeRenderScene tasks queue manager
   gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
@@ -610,10 +612,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         //color: vec4f = vec4(shadedColor, 1.0);
         
         // debug normals
-        color = vec4(abs(normalize(fsInput.normal.xzy)), 1.0);
+        color = vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
         
         // debug force
-        color = vec4(abs(normalize(fsInput.force.xzy)), 1.0);
+        //color = vec4(normalize(fsInput.force) * 0.5 + 0.5, 1.0);
                       
         return color;
       }

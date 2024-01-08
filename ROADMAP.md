@@ -28,6 +28,7 @@
 - Errors / warning handling
 - Context lost handling
 - Examples & tests
+- Documentation (typedoc)
 
 ## TODO
 
@@ -35,4 +36,3 @@
 - Use render bundles?
 - Mesh raycasting?
 - More tests! (samplers, external video textures...)
-- Documentation (using JSDoc?)

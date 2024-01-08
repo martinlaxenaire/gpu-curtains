@@ -4,17 +4,16 @@ import { BufferBinding, BufferBindingParams } from './BufferBinding'
  * Parameters used to create a {@link WritableBufferBinding}
  */
 export interface WritableBufferBindingParams extends BufferBindingParams {
-  /** Whether whe should automatically copy the [resultBuffer]{@link inputs#resultBuffer} GPUBuffer content into our [result]{@link WritableBufferBinding#result} array */
+  /** Whether whe should automatically copy the {@link WritableBufferBinding#buffer | GPU buffer} content into our {@link WritableBufferBinding#resultBuffer | result GPU buffer} */
   shouldCopyResult?: boolean
 }
 
 /**
  * WritableBufferBinding class:
  * Used to create a BufferBindings object that can hold read/write storage struct.
- * @extends BufferBinding
  */
 export class WritableBufferBinding extends BufferBinding {
-  /** Flag indicating whether whe should automatically copy the resultBuffer GPUBuffer content into our {@link result} array */
+  /** Flag indicating whether whe should automatically copy the {@link buffer | GPU buffer} content into our {@link resultBuffer | result GPU buffer} */
   shouldCopyResult: boolean
   /** The result GPUBuffer */
   resultBuffer: GPUBuffer | null
@@ -23,7 +22,7 @@ export class WritableBufferBinding extends BufferBinding {
 
   /**
    * WritableBufferBinding constructor
-   * @param parameters - [parameters]{@link WritableBufferBindingParams} used to create our {@link WritableBufferBinding}
+   * @param parameters - {@link WritableBufferBindingParams | parameters} used to create our {@link WritableBufferBinding}
    */
   constructor({
     label = 'Work',

@@ -4,7 +4,7 @@ import { TextureBinding } from './TextureBinding';
 /** Defines a typed array */
 export type TypedArray = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
 /** Defines a typed array constructor */
-type TypedArrayConstructor = Int8ArrayConstructor | Uint8ArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor;
+export type TypedArrayConstructor = Int8ArrayConstructor | Uint8ArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor;
 /** Defines the possible WGSL variable types */
 export type WGSLVariableType = string;
 /**
@@ -45,7 +45,7 @@ export declare const getTextureBindingWGSLVarType: (binding: TextureBinding) => 
 /**
  * Get the correct [bind group layout]{@link GPUBindGroupLayout} resource type based on the given [binding type]{@link BindingType}
  * @param binding - [buffer binding]{@link BufferBinding} to use
- * @returns - [bind group layout]{@link GPUBindGroupLayout} resource type
+ * @returns - {@link GPUBindGroupLayout | bind group layout} resource type
  */
 export declare const getBindGroupLayoutBindingType: (binding: BufferBinding) => GPUBufferBindingType;
 /**
@@ -54,4 +54,3 @@ export declare const getBindGroupLayoutBindingType: (binding: BufferBinding) => 
  * @returns - [bind group layout]{@link GPUBindGroupLayout} resource type
  */
 export declare const getBindGroupLayoutTextureBindingType: (binding: TextureBinding) => GPUTextureBindingLayout | GPUExternalTextureBindingLayout | GPUStorageTextureBindingLayout | null;
-export {};

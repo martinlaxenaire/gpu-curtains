@@ -7,7 +7,7 @@ import { MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin'
 
 /**
  * PingPongPlane class:
- * Used to create a special type of [fullscreen quad]{@link FullscreenPlane} that allows to use the previous frame fragment shader output as an input texture.
+ * Used to create a special type of {@link FullscreenPlane} that allows to use the previous frame fragment shader output as an input texture.
  */
 export class PingPongPlane extends FullscreenPlane {
   /** {@link RenderTarget} content to use as an input */
@@ -15,8 +15,8 @@ export class PingPongPlane extends FullscreenPlane {
 
   /**
    * PingPongPlane constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
-   * @param parameters - [parameters]{@link MeshBaseRenderParams} use to create this {@link PingPongPlane}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
+   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseRenderParams) {
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
@@ -45,7 +45,7 @@ export class PingPongPlane extends FullscreenPlane {
   }
 
   /**
-   * Get our main [render texture]{@link RenderTexture}, the one that contains our ping pong content
+   * Get our main {@link RenderTexture}, the one that contains our ping pong content
    * @readonly
    */
   get renderTexture(): RenderTexture | undefined {
@@ -53,7 +53,7 @@ export class PingPongPlane extends FullscreenPlane {
   }
 
   /**
-   * Add the {@link PingPongPlane} to the renderer and the {@link Scene}
+   * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   addToScene() {
     this.renderer.pingPongPlanes.push(this)
@@ -64,7 +64,7 @@ export class PingPongPlane extends FullscreenPlane {
   }
 
   /**
-   * Remove the {@link PingPongPlane} from the renderer and the {@link Scene}
+   * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
     if (this.renderTarget) {

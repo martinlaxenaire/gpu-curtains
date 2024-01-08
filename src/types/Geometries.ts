@@ -56,7 +56,7 @@ export interface VertexBuffer {
   attributes: VertexBufferAttribute[]
   /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
   array?: Float32Array
-  /** {@link GPUBuffer} sent to the [render pipeline]{@link RenderPipelineEntry#pipeline} */
+  /** {@link GPUBuffer} sent to the [render pipeline]{@link core/pipelines/PipelineEntry.PipelineEntry#pipeline} */
   buffer?: GPUBuffer
 }
 
@@ -78,9 +78,9 @@ export interface VertexBufferParams {
 export interface GeometryOptions {
   /** Number of geometry instances to draw */
   instancesCount: number
-  /** Vertices order sent to the [render pipeline]{@link RenderPipelineEntry#pipeline} */
+  /** Vertices order sent to the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline} */
   verticesOrder?: GPUFrontFace
-  /** Topology to use with this [geometry]{@link Geometry}, sent to the [render pipeline]{@link RenderPipelineEntry#pipeline}. Whether to draw triangles, lines or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
+  /** Topology to use with this [geometry]{@link core/geometries/Geometry.Geometry}, sent to the [render pipeline]{@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline}. Whether to draw triangles, lines or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
   topology: GPUPrimitiveTopology
   /** Array of {@link VertexBufferParams} used to create {@link VertexBuffer} on geometry creation */
   vertexBuffers: VertexBufferParams[]

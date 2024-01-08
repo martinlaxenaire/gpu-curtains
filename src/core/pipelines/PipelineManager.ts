@@ -7,7 +7,7 @@ import {
   RenderPipelineEntryParams,
 } from '../../types/PipelineEntries'
 
-/** Defines all types of allowed {@link PipelineEntry} class objects */
+/** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
 
 /**
@@ -34,8 +34,8 @@ export class PipelineManager {
   }
 
   /**
-   * Checks if the provided [parameters]{@link RenderPipelineEntryBaseParams} belongs to an already created {@link RenderPipelineEntry}.
-   * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
+   * Checks if the provided {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+   * @param parameters - {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters}
    * @returns - the found {@link RenderPipelineEntry}, or null if not found
    */
   isSameRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry | null {
@@ -62,9 +62,9 @@ export class PipelineManager {
   }
 
   /**
-   * Check if a {@link RenderPipelineEntry} has already been created with the given [parameters]{@link RenderPipelineEntryBaseParams}.
-   * Use it if found, else create a new one and add it to the [pipelineEntries]{@link PipelineManager#pipelineEntries} array.
-   * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
+   * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
+   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
    * @returns - {@link RenderPipelineEntry}, either from cache or newly created
    */
   createRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry {
@@ -82,11 +82,11 @@ export class PipelineManager {
   }
 
   /**
-   * Checks if the provided [parameters]{@link PipelineEntryBaseParams} belongs to an already created {@link ComputePipelineEntry}.
-   * @param parameters - [ComputePipelineEntry parameters]{@link PipelineEntryBaseParams}
+   * Checks if the provided {@link PipelineEntryParams | parameters} belongs to an already created {@link ComputePipelineEntry}.
+   * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
    * @returns - the found {@link ComputePipelineEntry}, or null if not found
    */
-  isSameComputePipeline(parameters: PipelineEntryBaseParams) {
+  isSameComputePipeline(parameters: PipelineEntryParams) {
     const { shaders } = parameters
 
     return this.pipelineEntries
@@ -102,8 +102,9 @@ export class PipelineManager {
   }
 
   /**
-   * Create a new {@link ComputePipelineEntry}
-   * @param parameters - [PipelineEntry parameters]{@link PipelineEntryBaseParams}
+   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
+   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
    * @returns - newly created {@link ComputePipelineEntry}
    */
   createComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry {
@@ -121,9 +122,9 @@ export class PipelineManager {
   }
 
   /**
-   * Check if the given [pipeline entry]{@link AllowedPipelineEntries} is already set, if not set it
+   * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it
    * @param pass - current pass encoder
-   * @param pipelineEntry - the [pipeline entry]{@link AllowedPipelineEntries} to set
+   * @param pipelineEntry - the {@link AllowedPipelineEntries | PipelineEntry} to set
    */
   setCurrentPipeline(pass: GPURenderPassEncoder | GPUComputePassEncoder, pipelineEntry: AllowedPipelineEntries) {
     if (pipelineEntry.index !== this.currentPipelineIndex) {
@@ -133,7 +134,7 @@ export class PipelineManager {
   }
 
   /**
-   * Reset the [current pipeline index]{@link PipelineManager#currentPipelineIndex} so the next [pipeline entry]{@link AllowedPipelineEntries} will be set for sure
+   * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
    */
   resetCurrentPipeline() {
     this.currentPipelineIndex = null

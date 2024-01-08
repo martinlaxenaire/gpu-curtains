@@ -191,7 +191,7 @@ const generateMips = /* @__PURE__ */ (() => {
 class Binding {
   /**
    * Binding constructor
-   * @param parameters - [parameters]{@link BindingParams} used to create our {@link Binding}
+   * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
    */
   constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility }) {
     this.label = label;
@@ -312,8 +312,8 @@ const getBindGroupLayoutTextureBindingType = (binding) => {
 class Vec2 {
   /**
    * Vec2 constructor
-   * @param x=0 - X component of our [vector]{@link Vec2}
-   * @param y=x - Y component of our [vector]{@link Vec2}
+   * @param x - X component of our {@link Vec2}
+   * @param y - Y component of our {@link Vec2}
    */
   constructor(x = 0, y = x) {
     this.type = "Vec2";
@@ -321,34 +321,40 @@ class Vec2 {
     this._y = y;
   }
   /**
-   * Get/set the X component of the [vector]{@link Vec2}
-   * When set, can trigger [onChange]{@link Vec2#onChange} callback
-   * @readonly
+   * Get the X component of the {@link Vec2}
    */
   get x() {
     return this._x;
   }
+  /**
+   * Set the X component of the {@link Vec2}
+   * Can trigger {@link onChange} callback
+   * @param value - X component to set
+   */
   set x(value) {
     const changed = value !== this._x;
     this._x = value;
     changed && this._onChangeCallback && this._onChangeCallback();
   }
   /**
-   * Get/set the Y component of the [vector]{@link Vec2}
-   * When set, can trigger [onChange]{@link Vec2#onChange} callback
-   * @readonly
+   * Get the Y component of the {@link Vec2}
    */
   get y() {
     return this._y;
   }
+  /**
+   * Set the Y component of the {@link Vec2}
+   * Can trigger {@link onChange} callback
+   * @param value - Y component to set
+   */
   set y(value) {
     const changed = value !== this._y;
     this._y = value;
     changed && this._onChangeCallback && this._onChangeCallback();
   }
   /**
-   * Called when at least one component of the [vector]{@link Vec2} has changed
-   * @param callback - callback to run when at least one component of the [vector]{@link Vec2} has changed
+   * Called when at least one component of the {@link Vec2} has changed
+   * @param callback - callback to run when at least one component of the {@link Vec2} has changed
    * @returns - our {@link Vec2}
    */
   onChange(callback) {
@@ -358,10 +364,10 @@ class Vec2 {
     return this;
   }
   /**
-   * Set the [vector]{@link Vec2} from values
-   * @param x=0 - new X component to set
-   * @param y=x - new Y component to set
-   * @returns - this [vector]{@link Vec2} after being set
+   * Set the {@link Vec2} from values
+   * @param x - new X component to set
+   * @param y - new Y component to set
+   * @returns - this {@link Vec2} after being set
    */
   set(x = 0, y = x) {
     this.x = x;
@@ -369,9 +375,9 @@ class Vec2 {
     return this;
   }
   /**
-   * Add a [vector]{@link Vec2} to this [vector]{@link Vec2}
-   * @param vector - [vector]{@link Vec2} to add
-   * @returns - this [vector]{@link Vec2} after addition
+   * Add a {@link Vec2} to this {@link Vec2}
+   * @param vector - {@link Vec2} to add
+   * @returns - this {@link Vec2} after addition
    */
   add(vector = new Vec2()) {
     this.x += vector.x;
@@ -379,9 +385,9 @@ class Vec2 {
     return this;
   }
   /**
-   * Add a scalar to all the components of this [vector]{@link Vec2}
-   * @param value=0 - number to add
-   * @returns - this [vector]{@link Vec2} after addition
+   * Add a scalar to all the components of this {@link Vec2}
+   * @param value - number to add
+   * @returns - this {@link Vec2} after addition
    */
   addScalar(value = 0) {
     this.x += value;
@@ -389,9 +395,9 @@ class Vec2 {
     return this;
   }
   /**
-   * Subtract a [vector]{@link Vec2} from this [vector]{@link Vec2}
-   * @param vector - [vector]{@link Vec2} to subtract
-   * @returns - this [vector]{@link Vec2} after subtraction
+   * Subtract a {@link Vec2} from this {@link Vec2}
+   * @param vector - {@link Vec2} to subtract
+   * @returns - this {@link Vec2} after subtraction
    */
   sub(vector = new Vec2()) {
     this.x -= vector.x;
@@ -399,9 +405,9 @@ class Vec2 {
     return this;
   }
   /**
-   * Subtract a scalar to all the components of this [vector]{@link Vec2}
-   * @param value=0 - number to subtract
-   * @returns - this [vector]{@link Vec2} after subtraction
+   * Subtract a scalar to all the components of this {@link Vec2}
+   * @param value - number to subtract
+   * @returns - this {@link Vec2} after subtraction
    */
   subScalar(value = 0) {
     this.x -= value;
@@ -409,9 +415,9 @@ class Vec2 {
     return this;
   }
   /**
-   * Multiply a [vector]{@link Vec2} with this [vector]{@link Vec2}
-   * @param vector - [vector]{@link Vec2} to multiply with
-   * @returns - this [vector]{@link Vec2} after multiplication
+   * Multiply a {@link Vec2} with this {@link Vec2}
+   * @param vector - {@link Vec2} to multiply with
+   * @returns - this {@link Vec2} after multiplication
    */
   multiply(vector = new Vec2(1)) {
     this.x *= vector.x;
@@ -419,9 +425,9 @@ class Vec2 {
     return this;
   }
   /**
-   * Multiply all components of this [vector]{@link Vec2} with a scalar
-   * @param value=1 - number to multiply with
-   * @returns - this [vector]{@link Vec2} after multiplication
+   * Multiply all components of this {@link Vec2} with a scalar
+   * @param value - number to multiply with
+   * @returns - this {@link Vec2} after multiplication
    */
   multiplyScalar(value = 1) {
     this.x *= value;
@@ -429,9 +435,9 @@ class Vec2 {
     return this;
   }
   /**
-   * Copy a [vector]{@link Vec2} into this [vector]{@link Vec2}
-   * @param vector - [vector]{@link Vec2} to copy
-   * @returns - this [vector]{@link Vec2} after copy
+   * Copy a {@link Vec2} into this {@link Vec2}
+   * @param vector - {@link Vec2} to copy
+   * @returns - this {@link Vec2} after copy
    */
   copy(vector = new Vec2()) {
     this.x = vector.x;
@@ -439,16 +445,16 @@ class Vec2 {
     return this;
   }
   /**
-   * Clone this [vector]{@link Vec2}
-   * @returns - cloned [vector]{@link Vec2}
+   * Clone this {@link Vec2}
+   * @returns - cloned {@link Vec2}
    */
   clone() {
     return new Vec2(this.x, this.y);
   }
   /**
-   * Apply max values to this [vector]{@link Vec2} components
-   * @param vector - [vector]{@link Vec2} representing max values
-   * @returns - [vector]{@link Vec2} with max values applied
+   * Apply max values to this {@link Vec2} components
+   * @param vector - {@link Vec2} representing max values
+   * @returns - {@link Vec2} with max values applied
    */
   max(vector = new Vec2()) {
     this.x = Math.max(this.x, vector.x);
@@ -456,9 +462,9 @@ class Vec2 {
     return this;
   }
   /**
-   * Apply min values to this [vector]{@link Vec2} components
-   * @param vector - [vector]{@link Vec2} representing min values
-   * @returns - [vector]{@link Vec2} with min values applied
+   * Apply min values to this {@link Vec2} components
+   * @param vector - {@link Vec2} representing min values
+   * @returns - {@link Vec2} with min values applied
    */
   min(vector = new Vec2()) {
     this.x = Math.min(this.x, vector.x);
@@ -466,30 +472,30 @@ class Vec2 {
     return this;
   }
   /**
-   * Check if 2 [vectors]{@link Vec2} are equal
-   * @param vector - [vector]{@link Vec2} to compare
-   * @returns - whether the [vectors]{@link Vec2} are equals or not
+   * Check if 2 {@link Vec2} are equal
+   * @param vector - {@link Vec2} to compare
+   * @returns - whether the {@link Vec2} are equals or not
    */
   equals(vector = new Vec2()) {
     return this.x === vector.x && this.y === vector.y;
   }
   /**
-   * Get the square length of this [vector]{@link Vec2}
-   * @returns - square length of this [vector]{@link Vec2}
+   * Get the square length of this {@link Vec2}
+   * @returns - square length of this {@link Vec2}
    */
   lengthSq() {
     return this.x * this.x + this.y * this.y;
   }
   /**
-   * Get the length of this [vector]{@link Vec2}
-   * @returns - length of this [vector]{@link Vec2}
+   * Get the length of this {@link Vec2}
+   * @returns - length of this {@link Vec2}
    */
   length() {
     return Math.sqrt(this.lengthSq());
   }
   /**
-   * Normalize this [vector]{@link Vec2}
-   * @returns - normalized [vector]{@link Vec2}
+   * Normalize this {@link Vec2}
+   * @returns - normalized {@link Vec2}
    */
   normalize() {
     let len = this.x * this.x + this.y * this.y;
@@ -501,18 +507,18 @@ class Vec2 {
     return this;
   }
   /**
-   * Calculate the dot product of 2 [vectors]{@link Vec2}
-   * @param vector - [vector]{@link Vec2} to use for dot product
-   * @returns - dot product of the 2 [vectors]{@link Vec2}
+   * Calculate the dot product of 2 {@link Vec2}
+   * @param vector - {@link Vec2} to use for dot product
+   * @returns - dot product of the 2 {@link Vec2}
    */
   dot(vector = new Vec2()) {
     return this.x * vector.x + this.y * vector.y;
   }
   /**
-   * Calculate the linear interpolation of this [vector]{@link Vec2} by given [vector]{@link Vec2} and alpha, where alpha is the percent distance along the line
-   * @param vector - [vector]{@link Vec2} to interpolate towards
-   * @param alpha=1 - interpolation factor in the [0, 1] interval
-   * @returns - this [vector]{@link Vec2} after linear interpolation
+   * Calculate the linear interpolation of this {@link Vec2} by given {@link Vec2} and alpha, where alpha is the percent distance along the line
+   * @param vector - {@link Vec2} to interpolate towards
+   * @param [alpha=1] - interpolation factor in the [0, 1] interval
+   * @returns - this {@link Vec2} after linear interpolation
    */
   lerp(vector = new Vec2(), alpha = 1) {
     this.x += (vector.x - this.x) * alpha;
@@ -523,8 +529,8 @@ class Vec2 {
 class Quat {
   /**
    * Quat constructor
-   * @param elements - initial array to use
-   * @param axisOrder='XYZ' - axis order to use
+   * @param [elements] - initial array to use
+   * @param [axisOrder='XYZ'] - axis order to use
    */
   constructor(elements = new Float32Array([0, 0, 0, 1]), axisOrder = "XYZ") {
     this.type = "Quat";
@@ -532,9 +538,9 @@ class Quat {
     this.axisOrder = axisOrder;
   }
   /**
-   * Sets the [quaternion]{@link Quat} values from an array
+   * Sets the {@link Quat} values from an array
    * @param array - an array of at least 4 elements
-   * @returns - this [quaternion]{@link Quat} after being set
+   * @returns - this {@link Quat} after being set
    */
   setFromArray(array = new Float32Array([0, 0, 0, 1])) {
     this.elements[0] = array[0];
@@ -544,9 +550,9 @@ class Quat {
     return this;
   }
   /**
-   * Sets the [quaternion]{@link Quat} axis order
+   * Sets the {@link Quat} axis order
    * @param axisOrder - axis order to use
-   * @returns - this [quaternion]{@link Quat} after axis order has been set
+   * @returns - this {@link Quat} after axis order has been set
    */
   setAxisOrder(axisOrder = "XYZ") {
     axisOrder = axisOrder.toUpperCase();
@@ -565,9 +571,9 @@ class Quat {
     return this;
   }
   /**
-   * Copy a [quaternion]{@link Quat} into this [quaternion]{@link Quat}
-   * @param quaternion - [quaternion]{@link Quat} to copy
-   * @returns - this [quaternion]{@link Quat} after copy
+   * Copy a {@link Quat} into this {@link Quat}
+   * @param quaternion - {@link Quat} to copy
+   * @returns - this {@link Quat} after copy
    */
   copy(quaternion = new Quat()) {
     this.elements = quaternion.elements;
@@ -575,24 +581,24 @@ class Quat {
     return this;
   }
   /**
-   * Clone a [quaternion]{@link Quat}
-   * @returns - cloned [quaternion]{@link Quat}
+   * Clone a {@link Quat}
+   * @returns - cloned {@link Quat}
    */
   clone() {
     return new Quat().copy(this);
   }
   /**
-   * Check if 2 [quaternions]{@link Quat} are equal
-   * @param quaternion - [quaternion]{@link Quat} to check against
-   * @returns - whether the [quaternions]{@link Quat} are equal or not
+   * Check if 2 {@link Quat} are equal
+   * @param quaternion - {@link Quat} to check against
+   * @returns - whether the {@link Quat} are equal or not
    */
   equals(quaternion = new Quat()) {
     return this.elements[0] === quaternion.elements[0] && this.elements[1] === quaternion.elements[1] && this.elements[2] === quaternion.elements[2] && this.elements[3] === quaternion.elements[3] && this.axisOrder === quaternion.axisOrder;
   }
   /**
-   * Sets a rotation [quaternion]{@link Quat} using Euler angles [vector]{@link Vec3} and its axis order
-   * @param vector - rotation [vector]{@link Vec3} to set our [quaternion]{@link Quat} from
-   * @returns - [quaternion]{@link Quat} after having applied the rotation
+   * Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order
+   * @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from
+   * @returns - {@link Quat} after having applied the rotation
    */
   setFromVec3(vector = new Vec3()) {
     const ax = vector.x * 0.5;
@@ -638,10 +644,10 @@ class Quat {
     return this;
   }
   /**
-   * Set a [quaternion]{@link Quat} from a rotation axis [vector]{@link Vec3} and an angle
-   * @param axis - normalized [vector]{@link Vec3} around which to rotate
+   * Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle
+   * @param axis - normalized {@link Vec3 | vector} around which to rotate
    * @param angle - angle (in radians) to rotate
-   * @returns - [quaternion]{@link Quat} after having applied the rotation
+   * @returns - {@link Quat} after having applied the rotation
    */
   setFromAxisAngle(axis = new Vec3(), angle = 0) {
     const halfAngle = angle / 2, s = Math.sin(halfAngle);
@@ -652,9 +658,9 @@ class Quat {
     return this;
   }
   /**
-   * Set a [quaternion]{@link Quat} from a rotation [matrix]{@link Mat4}
-   * @param matrix - rotation [matrix]{@link Mat4} to use
-   * @returns - [quaternion]{@link Quat} after having applied the rotation
+   * Set a {@link Quat} from a rotation {@link Mat4 | matrix}
+   * @param matrix - rotation {@link Mat4 | matrix} to use
+   * @returns - {@link Quat} after having applied the rotation
    */
   setFromRotationMatrix(matrix) {
     const te = matrix.elements, m11 = te[0], m12 = te[4], m13 = te[8], m21 = te[1], m22 = te[5], m23 = te[9], m31 = te[2], m32 = te[6], m33 = te[10], trace = m11 + m22 + m33;
@@ -733,7 +739,7 @@ class Mat4 {
    * @param n43 number
    * @param n44 number
    *
-   * @returns - this [matrix]{@link Mat4} after being set
+   * @returns - this {@link Mat4} after being set
    */
   set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
     const te = this.elements;
@@ -756,8 +762,8 @@ class Mat4 {
     return this;
   }
   /**
-   * Sets the [matrix]{@link Mat4} to an identity matrix
-   * @returns - this [matrix]{@link Mat4} after being set
+   * Sets the {@link Mat4} to an identity matrix
+   * @returns - this {@link Mat4} after being set
    */
   identity() {
     this.set(
@@ -781,9 +787,9 @@ class Mat4 {
     return this;
   }
   /**
-   * Sets the [matrix]{@link Mat4} values from an array
+   * Sets the {@link Mat4} values from an array
    * @param array - array to use
-   * @returns - this [matrix]{@link Mat4} after being set
+   * @returns - this {@link Mat4} after being set
    */
   // prettier-ignore
   setFromArray(array = new Float32Array([
@@ -810,9 +816,9 @@ class Mat4 {
     return this;
   }
   /**
-   * Copy another [matrix]{@link Mat4}
+   * Copy another {@link Mat4}
    * @param matrix
-   * @returns - this [matrix]{@link Mat4} after being set
+   * @returns - this {@link Mat4} after being set
    */
   copy(matrix = new Mat4()) {
     const array = matrix.elements;
@@ -835,33 +841,33 @@ class Mat4 {
     return this;
   }
   /**
-   * Clone a [matrix]{@link Mat4}
-   * @returns - cloned [matrix]{@link Mat4}
+   * Clone a {@link Mat4}
+   * @returns - cloned {@link Mat4}
    */
   clone() {
     return new Mat4().copy(this);
   }
   /**
-   * Multiply this [matrix]{@link Mat4} with another [matrix]{@link Mat4}
-   * @param matrix - [matrix]{@link Mat4} to multiply with
-   * @returns - this [matrix]{@link Mat4} after multiplication
+   * Multiply this {@link Mat4} with another {@link Mat4}
+   * @param matrix - {@link Mat4} to multiply with
+   * @returns - this {@link Mat4} after multiplication
    */
   multiply(matrix = new Mat4()) {
     return this.multiplyMatrices(this, matrix);
   }
   /**
-   * Multiply another [matrix]{@link Mat4} with this [matrix]{@link Mat4}
-   * @param matrix - [matrix]{@link Mat4} to multiply with
-   * @returns - this [matrix]{@link Mat4} after multiplication
+   * Multiply another {@link Mat4} with this {@link Mat4}
+   * @param matrix - {@link Mat4} to multiply with
+   * @returns - this {@link Mat4} after multiplication
    */
   premultiply(matrix = new Mat4()) {
     return this.multiplyMatrices(matrix, this);
   }
   /**
-   * Multiply two [matrices]{@link Mat4}
-   * @param a - first [matrix]{@link Mat4}
-   * @param b - second [matrix]{@link Mat4}
-   * @returns - [matrix]{@link Mat4} resulting from the multiplication
+   * Multiply two {@link Mat4}
+   * @param a - first {@link Mat4}
+   * @param b - second {@link Mat4}
+   * @returns - {@link Mat4} resulting from the multiplication
    */
   multiplyMatrices(a = new Mat4(), b = new Mat4()) {
     const ae = a.elements;
@@ -894,9 +900,9 @@ class Mat4 {
     return this;
   }
   /**
-   * [Premultiply]{@link Mat4#premultiply} this [matrix]{@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
-   * @param vector - translation [vector]{@link Vec3} to use
-   * @returns - this [matrix]{@link Mat4} after the premultiply translate operation
+   * {@link premultiply} this {@link Mat4} by a translate matrix (i.e. translateMatrix = new Mat4().translate(vector))
+   * @param vector - translation {@link Vec3 | vector} to use
+   * @returns - this {@link Mat4} after the premultiply translate operation
    */
   premultiplyTranslate(vector = new Vec3()) {
     const a11 = 1;
@@ -931,9 +937,9 @@ class Mat4 {
     return this;
   }
   /**
-   * [Premultiply]{@link Mat4#premultiply} this [matrix]{@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
-   * @param vector - scale [vector]{@link Vec3} to use
-   * @returns - this [matrix]{@link Mat4} after the premultiply scale operation
+   * {@link premultiply} this {@link Mat4} by a scale matrix (i.e. translateMatrix = new Mat4().scale(vector))
+   * @param vector - scale {@link Vec3 | vector} to use
+   * @returns - this {@link Mat4} after the premultiply scale operation
    */
   premultiplyScale(vector = new Vec3()) {
     const be = this.elements;
@@ -965,8 +971,8 @@ class Mat4 {
     return this;
   }
   /**
-   * Get the [matrix]{@link Mat4} inverse
-   * @returns - the [matrix]{@link Mat4} inverted
+   * Get the {@link Mat4} inverse
+   * @returns - the {@link Mat4} inverted
    */
   invert() {
     const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
@@ -993,16 +999,16 @@ class Mat4 {
     return this;
   }
   /**
-   * Clone and invert the [matrix]{@link Mat4}
-   * @returns - inverted cloned [matrix]{@link Mat4}
+   * Clone and invert the {@link Mat4}
+   * @returns - inverted cloned {@link Mat4}
    */
   getInverse() {
     return this.clone().invert();
   }
   /**
-   * Translate a [matrix]{@link Mat4}
-   * @param vector - translation [vector]{@link Vec3} to use
-   * @returns - translated [matrix]{@link Mat4}
+   * Translate a {@link Mat4}
+   * @param vector - translation {@link Vec3 | vector} to use
+   * @returns - translated {@link Mat4}
    */
   translate(vector = new Vec3()) {
     const a = this.elements;
@@ -1013,9 +1019,9 @@ class Mat4 {
     return this;
   }
   /**
-   * Scale a [matrix]{@link Mat4}
-   * @param vector - scale [vector]{@link Vec3} to use
-   * @returns - scaled [matrix]{@link Mat4}
+   * Scale a {@link Mat4}
+   * @param vector - scale {@link Vec3 | vector} to use
+   * @returns - scaled {@link Mat4}
    */
   scale(vector = new Vec3()) {
     const a = this.elements;
@@ -1034,9 +1040,9 @@ class Mat4 {
     return this;
   }
   /**
-   * Rotate a [matrix]{@link Mat4} from a [quaternion]{@link Quat}
-   * @param quaternion - [quaternion]{@link Vec3} to use
-   * @returns - rotated [matrix]{@link Mat4}
+   * Rotate a {@link Mat4} from a {@link Quat | quaternion}
+   * @param quaternion - {@link Quat | quaternion} to use
+   * @returns - rotated {@link Mat4}
    */
   rotateFromQuaternion(quaternion = new Quat()) {
     const te = this.elements;
@@ -1057,11 +1063,11 @@ class Mat4 {
     return this;
   }
   /**
-   * Set this [matrix]{@link Mat4} as a rotation matrix based on an eye, target and up [vectors]{@link Vec3}
-   * @param eye - [position]{@link Vec3} of the object that should be rotated
-   * @param target - [target]{@link Vec3} to look at
-   * @param up - up [vector]{@link Vec3}
-   * @returns - rotated [matrix]{@link Mat4}
+   * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
+   * @param eye - {@link Vec3 | position vector} of the object that should be rotated
+   * @param target - {@link Vec3 | target vector} to look at
+   * @param up - up {@link Vec3 | vector}
+   * @returns - rotated {@link Mat4}
    */
   lookAt(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
     const te = this.elements;
@@ -1094,14 +1100,14 @@ class Mat4 {
     return this;
   }
   /**
-   * Creates a [matrix]{@link Mat4} from a [quaternion]{@link Quat} rotation, [vector]{@link Vec3} translation and [vector]{@link Vec3} scale
+   * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
    * Equivalent for applying translation, rotation and scale matrices but much faster
    * Source code from: http://glmatrix.net/docs/mat4.js.html
    *
-   * @param translation - translation [vector]{@link Vec3} to use
-   * @param quaternion - [quaternion]{@link Quat} to use
-   * @param scale - translation [vector]{@link Vec3} to use
-   * @returns - transformed [matrix]{@link Mat4}
+   * @param translation - translation {@link Vec3 | vector} to use
+   * @param quaternion - {@link Quat | quaternion} to use
+   * @param scale - translation {@link Vec3 | vector} to use
+   * @returns - transformed {@link Mat4}
    */
   compose(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1)) {
     const matrix = this.elements;
@@ -1140,15 +1146,15 @@ class Mat4 {
     return this;
   }
   /**
-   * Creates a [matrix]{@link Mat4} from a [quaternion]{@link Quat} rotation, [vector]{@link Vec3} translation and [vector]{@link Vec3} scale, rotating and scaling around the given [origin]{@link Vec3}
+   * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale, rotating and scaling around the given {@link Vec3 | origin vector}
    * Equivalent for applying translation, rotation and scale matrices but much faster
    * Source code from: http://glmatrix.net/docs/mat4.js.html
    *
-   * @param translation - translation [vector]{@link Vec3} to use
-   * @param quaternion - [quaternion]{@link Quat} to use
-   * @param scale - translation [vector]{@link Vec3} to use
-   * @param origin - origin [vector]{@link Vec3} around which to scale and rotate
-   * @returns - transformed [matrix]{@link Mat4}
+   * @param translation - translation {@link Vec3 | vector} to use
+   * @param quaternion - {@link Quat | quaternion} to use
+   * @param scale - translation {@link Vec3 | vector} to use
+   * @param origin - origin {@link Vec3 | vector} around which to scale and rotate
+   * @returns - transformed {@link Mat4}
    */
   composeFromOrigin(translation = new Vec3(), quaternion = new Quat(), scale = new Vec3(1), origin = new Vec3()) {
     const matrix = this.elements;
@@ -1202,9 +1208,9 @@ class Mat4 {
 class Vec3 {
   /**
    * Vec3 constructor
-   * @param x=0 - X component of our [vector]{@link Vec3}
-   * @param y=x - Y component of our [vector]{@link Vec3}
-   * @param z=x - Z component of our [vector]{@link Vec3}
+   * @param x - X component of our {@link Vec3}
+   * @param y - Y component of our {@link Vec3}
+   * @param z - Z component of our {@link Vec3}
    */
   constructor(x = 0, y = x, z = x) {
     this.type = "Vec3";
@@ -1213,47 +1219,56 @@ class Vec3 {
     this._z = z;
   }
   /**
-   * Get/set the X component of the [vector]{@link Vec3}
-   * When set, can trigger [onChange]{@link Vec3#onChange} callback
-   * @readonly
+   * Get the X component of the {@link Vec3}
    */
   get x() {
     return this._x;
   }
+  /**
+   * Set the X component of the {@link Vec3}
+   * Can trigger {@link onChange} callback
+   * @param value - X component to set
+   */
   set x(value) {
     const changed = value !== this._x;
     this._x = value;
     changed && this._onChangeCallback && this._onChangeCallback();
   }
   /**
-   * Get/set the Y component of the [vector]{@link Vec3}
-   * When set, can trigger [onChange]{@link Vec3#onChange} callback
-   * @readonly
+   * Get the Y component of the {@link Vec3}
    */
   get y() {
     return this._y;
   }
+  /**
+   * Set the Y component of the {@link Vec3}
+   * Can trigger {@link onChange} callback
+   * @param value - Y component to set
+   */
   set y(value) {
     const changed = value !== this._y;
     this._y = value;
     changed && this._onChangeCallback && this._onChangeCallback();
   }
   /**
-   * Get/set the Z component of the [vector]{@link Vec3}
-   * When set, can trigger [onChange]{@link Vec3#onChange} callback
-   * @readonly
+   * Get the Z component of the {@link Vec3}
    */
   get z() {
     return this._z;
   }
+  /**
+   * Set the Z component of the {@link Vec3}
+   * Can trigger {@link onChange} callback
+   * @param value - Z component to set
+   */
   set z(value) {
     const changed = value !== this._z;
     this._z = value;
     changed && this._onChangeCallback && this._onChangeCallback();
   }
   /**
-   * Called when at least one component of the [vector]{@link Vec3} has changed
-   * @param callback - callback to run when at least one component of the [vector]{@link Vec3} has changed
+   * Called when at least one component of the {@link Vec3} has changed
+   * @param callback - callback to run when at least one component of the {@link Vec3} has changed
    * @returns - our {@link Vec3}
    */
   onChange(callback) {
@@ -1263,11 +1278,11 @@ class Vec3 {
     return this;
   }
   /**
-   * Set the [vector]{@link Vec3} from values
-   * @param x=0 - new X component to set
-   * @param y=0 - new Y component to set
-   * @param z=0 - new Z component to set
-   * @returns - this [vector]{@link Vec3} after being set
+   * Set the {@link Vec3} from values
+   * @param x - new X component to set
+   * @param y - new Y component to set
+   * @param z - new Z component to set
+   * @returns - this {@link Vec3} after being set
    */
   set(x = 0, y = 0, z = 0) {
     this.x = x;
@@ -1276,9 +1291,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Add a [vector]{@link Vec3} to this [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to add
-   * @returns - this [vector]{@link Vec3} after addition
+   * Add a {@link Vec3} to this {@link Vec3}
+   * @param vector - {@link Vec3} to add
+   * @returns - this {@link Vec3} after addition
    */
   add(vector = new Vec3()) {
     this.x += vector.x;
@@ -1287,9 +1302,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Add a scalar to all the components of this [vector]{@link Vec3}
-   * @param value=0 - number to add
-   * @returns - this [vector]{@link Vec3} after addition
+   * Add a scalar to all the components of this {@link Vec3}
+   * @param value - number to add
+   * @returns - this {@link Vec3} after addition
    */
   addScalar(value = 0) {
     this.x += value;
@@ -1298,9 +1313,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Subtract a [vector]{@link Vec3} from this [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to subtract
-   * @returns - this [vector]{@link Vec3} after subtraction
+   * Subtract a {@link Vec3} from this {@link Vec3}
+   * @param vector - {@link Vec3} to subtract
+   * @returns - this {@link Vec3} after subtraction
    */
   sub(vector = new Vec3()) {
     this.x -= vector.x;
@@ -1309,9 +1324,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Subtract a scalar to all the components of this [vector]{@link Vec3}
-   * @param value=0 - number to subtract
-   * @returns - this [vector]{@link Vec3} after subtraction
+   * Subtract a scalar to all the components of this {@link Vec3}
+   * @param value - number to subtract
+   * @returns - this {@link Vec3} after subtraction
    */
   subScalar(value = 0) {
     this.x -= value;
@@ -1320,9 +1335,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Multiply a [vector]{@link Vec3} with this [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to multiply with
-   * @returns - this [vector]{@link Vec3} after multiplication
+   * Multiply a {@link Vec3} with this {@link Vec3}
+   * @param vector - {@link Vec3} to multiply with
+   * @returns - this {@link Vec3} after multiplication
    */
   multiply(vector = new Vec3(1)) {
     this.x *= vector.x;
@@ -1331,9 +1346,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Multiply all components of this [vector]{@link Vec3} with a scalar
-   * @param value=1 - number to multiply with
-   * @returns - this [vector]{@link Vec3} after multiplication
+   * Multiply all components of this {@link Vec3} with a scalar
+   * @param value - number to multiply with
+   * @returns - this {@link Vec3} after multiplication
    */
   multiplyScalar(value = 1) {
     this.x *= value;
@@ -1342,9 +1357,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Copy a [vector]{@link Vec3} into this [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to copy
-   * @returns - this [vector]{@link Vec3} after copy
+   * Copy a {@link Vec3} into this {@link Vec3}
+   * @param vector - {@link Vec3} to copy
+   * @returns - this {@link Vec3} after copy
    */
   copy(vector = new Vec3()) {
     this.x = vector.x;
@@ -1353,16 +1368,16 @@ class Vec3 {
     return this;
   }
   /**
-   * Clone this [vector]{@link Vec3}
-   * @returns - cloned [vector]{@link Vec3}
+   * Clone this {@link Vec3}
+   * @returns - cloned {@link Vec3}
    */
   clone() {
     return new Vec3(this.x, this.y, this.z);
   }
   /**
-   * Apply max values to this [vector]{@link Vec3} components
-   * @param vector - [vector]{@link Vec3} representing max values
-   * @returns - [vector]{@link Vec3} with max values applied
+   * Apply max values to this {@link Vec3} components
+   * @param vector - {@link Vec3} representing max values
+   * @returns - {@link Vec3} with max values applied
    */
   max(vector = new Vec3()) {
     this.x = Math.max(this.x, vector.x);
@@ -1371,9 +1386,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Apply min values to this [vector]{@link Vec3} components
-   * @param vector - [vector]{@link Vec3} representing min values
-   * @returns - [vector]{@link Vec3} with min values applied
+   * Apply min values to this {@link Vec3} components
+   * @param vector - {@link Vec3} representing min values
+   * @returns - {@link Vec3} with min values applied
    */
   min(vector = new Vec3()) {
     this.x = Math.min(this.x, vector.x);
@@ -1382,30 +1397,30 @@ class Vec3 {
     return this;
   }
   /**
-   * Check if 2 [vectors]{@link Vec3} are equal
-   * @param vector - [vector]{@link Vec3} to compare
-   * @returns - whether the [vectors]{@link Vec3} are equals or not
+   * Check if 2 {@link Vec3} are equal
+   * @param vector - {@link Vec3} to compare
+   * @returns - whether the {@link Vec3} are equals or not
    */
   equals(vector = new Vec3()) {
     return this.x === vector.x && this.y === vector.y && this.z === vector.z;
   }
   /**
-   * Get the square length of this [vector]{@link Vec3}
-   * @returns - square length of this [vector]{@link Vec3}
+   * Get the square length of this {@link Vec3}
+   * @returns - square length of this {@link Vec3}
    */
   lengthSq() {
     return this.x * this.x + this.y * this.y + this.z * this.z;
   }
   /**
-   * Get the length of this [vector]{@link Vec3}
-   * @returns - length of this [vector]{@link Vec3}
+   * Get the length of this {@link Vec3}
+   * @returns - length of this {@link Vec3}
    */
   length() {
     return Math.sqrt(this.lengthSq());
   }
   /**
-   * Normalize this [vector]{@link Vec3}
-   * @returns - normalized [vector]{@link Vec3}
+   * Normalize this {@link Vec3}
+   * @returns - normalized {@link Vec3}
    */
   normalize() {
     let len = this.lengthSq();
@@ -1418,26 +1433,26 @@ class Vec3 {
     return this;
   }
   /**
-   * Calculate the dot product of 2 [vectors]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to use for dot product
-   * @returns - dot product of the 2 [vectors]{@link Vec3}
+   * Calculate the dot product of 2 {@link Vec3}
+   * @param vector - {@link Vec3} to use for dot product
+   * @returns - dot product of the 2 {@link Vec3}
    */
   dot(vector = new Vec3()) {
     return this.x * vector.x + this.y * vector.y + this.z * vector.z;
   }
   /**
-   * Get the cross product of this [vector]{@link Vec3} with another [vector]{@link Vec3}
-   * @param vector - [vector]{@link Vec3} to use for cross product
-   * @returns - this [vector]{@link Vec3} after cross product
+   * Get the cross product of this {@link Vec3} with another {@link Vec3}
+   * @param vector - {@link Vec3} to use for cross product
+   * @returns - this {@link Vec3} after cross product
    */
   cross(vector = new Vec3()) {
     return this.crossVectors(this, vector);
   }
   /**
-   * Set this [vector]{@link Vec3} as the result of the cross product of two [vectors]{@link Vec3}
-   * @param a - first [vector]{@link Vec3} to use for cross product
-   * @param b - second [vector]{@link Vec3} to use for cross product
-   * @returns - this [vector]{@link Vec3} after cross product
+   * Set this {@link Vec3} as the result of the cross product of two {@link Vec3}
+   * @param a - first {@link Vec3} to use for cross product
+   * @param b - second {@link Vec3} to use for cross product
+   * @returns - this {@link Vec3} after cross product
    */
   crossVectors(a = new Vec3(), b = new Vec3()) {
     const ax = a.x, ay = a.y, az = a.z;
@@ -1448,10 +1463,10 @@ class Vec3 {
     return this;
   }
   /**
-   * Calculate the linear interpolation of this [vector]{@link Vec3} by given [vector]{@link Vec3} and alpha, where alpha is the percent distance along the line
-   * @param vector - [vector]{@link Vec3} to interpolate towards
-   * @param alpha=1 - interpolation factor in the [0, 1] interval
-   * @returns - this [vector]{@link Vec3} after linear interpolation
+   * Calculate the linear interpolation of this {@link Vec3} by given {@link Vec3} and alpha, where alpha is the percent distance along the line
+   * @param vector - {@link Vec3} to interpolate towards
+   * @param alpha - interpolation factor in the [0, 1] interval
+   * @returns - this {@link Vec3} after linear interpolation
    */
   lerp(vector = new Vec3(), alpha = 1) {
     this.x += (vector.x - this.x) * alpha;
@@ -1460,11 +1475,11 @@ class Vec3 {
     return this;
   }
   /**
-   * Apply a [matrix]{@link Mat4} to a [vector]{@link Vec3}
-   * Useful to convert a position [vector]{@link Vec3} from plane local world to webgl space using projection view matrix for example
+   * Apply a {@link Mat4 | matrix} to a {@link Vec3}
+   * Useful to convert a position {@link Vec3} from plane local world to webgl space using projection view matrix for example
    * Source code from: http://glmatrix.net/docs/vec3.js.html
-   * @param matrix - [matrix]{@link Mat4} to use
-   * @returns - this [vector]{@link Vec3} after [matrix]{@link Mat4} application
+   * @param matrix - {@link Mat4 | matrix} to use
+   * @returns - this {@link Vec3} after {@link Mat4 | matrix} application
    */
   applyMat4(matrix = new Mat4()) {
     const x = this._x, y = this._y, z = this._z;
@@ -1477,9 +1492,9 @@ class Vec3 {
     return this;
   }
   /**
-   * Apply a [quaternion]{@link Quat} (rotation in 3D space) to this [vector]{@link Vec3}
-   * @param quaternion - [quaternion]{@link Quat} to use
-   * @returns - this [vector]{@link Vec3} with the transformation applied
+   * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}
+   * @param quaternion - {@link Quat | quaternion} to use
+   * @returns - this {@link Vec3} with the transformation applied
    */
   applyQuat(quaternion = new Quat()) {
     const x = this.x, y = this.y, z = this.z;
@@ -1494,28 +1509,28 @@ class Vec3 {
     return this;
   }
   /**
-   * Rotate a [vector]{@link Vec3} around and axis by a given angle
-   * @param axis - normalized [vector]{@link Vec3} around which to rotate
+   * Rotate a {@link Vec3} around and axis by a given angle
+   * @param axis - normalized {@link Vec3} around which to rotate
    * @param angle - angle (in radians) to rotate
-   * @param quaternion - optional [quaternion]{@link Quat} to use for rotation computations
-   * @returns - this [vector]{@link Vec3} with the rotation applied
+   * @param quaternion - optional {@link Quat | quaternion} to use for rotation computations
+   * @returns - this {@link Vec3} with the rotation applied
    */
   applyAxisAngle(axis = new Vec3(), angle = 0, quaternion = new Quat()) {
     return this.applyQuat(quaternion.setFromAxisAngle(axis, angle));
   }
   /**
-   * Project a 3D coordinate [vector]{@link Vec3} to a 2D coordinate [vector]{@link Vec3}
-   * @param camera - [camera]{@link Camera} to use for projection
-   * @returns - projected [vector]{@link Vec3}
+   * Project a 3D coordinate {@link Vec3} to a 2D coordinate {@link Vec3}
+   * @param camera - {@link Camera} to use for projection
+   * @returns - projected {@link Vec3}
    */
   project(camera) {
     this.applyMat4(camera.viewMatrix).applyMat4(camera.projectionMatrix);
     return this;
   }
   /**
-   * Unproject a 2D coordinate [vector]{@link Vec3} to 3D coordinate [vector]{@link Vec3}
-   * @param camera - [camera]{@link Camera} to use for projection
-   * @returns - unprojected [vector]{@link Vec3}
+   * Unproject a 2D coordinate {@link Vec3} to 3D coordinate {@link Vec3}
+   * @param camera - {@link Camera} to use for projection
+   * @returns - unprojected {@link Vec3}
    */
   unproject(camera) {
     this.applyMat4(camera.projectionMatrix.getInverse()).applyMat4(camera.modelMatrix);
@@ -1528,7 +1543,7 @@ const bytesPerRow = slotsPerRow * bytesPerSlot;
 class BufferElement {
   /**
    * BufferElement constructor
-   * @param parameters - [parameters]{@link BufferElementParams} used to create our {@link BufferElement}
+   * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}
    */
   constructor({ name, key, type = "f32" }) {
     this.name = name;
@@ -1554,7 +1569,7 @@ class BufferElement {
     return this.alignment.end.row - this.alignment.start.row + 1;
   }
   /**
-   * Get the total number of bytes used by this {@link BufferElement} based on [alignment]{@link BufferElementAlignment} start and end offsets
+   * Get the total number of bytes used by this {@link BufferElement} based on {@link BufferElementAlignment | alignment} start and end offsets
    * @readonly
    */
   get byteCount() {
@@ -1606,17 +1621,17 @@ class BufferElement {
     };
   }
   /**
-   * Get the number of bytes at a given [position]{@link BufferElementAlignmentPosition}
-   * @param position - [position]{@link BufferElementAlignmentPosition} from which to count
-   * @returns - byte count at the given [position]{@link BufferElementAlignmentPosition}
+   * Get the number of bytes at a given {@link BufferElementAlignmentPosition | position}
+   * @param position - {@link BufferElementAlignmentPosition | position} from which to count
+   * @returns - byte count at the given {@link BufferElementAlignmentPosition | position}
    */
   getByteCountAtPosition(position = { row: 0, byte: 0 }) {
     return position.row * bytesPerRow + position.byte;
   }
   /**
-   * Check that a [position byte]{@link BufferElementAlignmentPosition#byte} does not overflow its max value (16)
-   * @param position - [position]{@link BufferElementAlignmentPosition} to check
-   * @returns - updated [position]{@link BufferElementAlignmentPosition#
+   * Check that a {@link BufferElementAlignmentPosition#byte | byte position} does not overflow its max value (16)
+   * @param position - {@link BufferElementAlignmentPosition | position}
+   * @returns - updated {@link BufferElementAlignmentPosition | position}
    */
   applyOverflowToPosition(position = { row: 0, byte: 0 }) {
     if (position.byte > bytesPerRow - 1) {
@@ -1627,18 +1642,18 @@ class BufferElement {
     return position;
   }
   /**
-   * Get the number of bytes between two [positions]{@link BufferElementAlignmentPosition}
-   * @param p1 - first [position]{@link BufferElementAlignmentPosition}
-   * @param p2 - second [position]{@link BufferElementAlignmentPosition}
+   * Get the number of bytes between two {@link BufferElementAlignmentPosition | positions}
+   * @param p1 - first {@link BufferElementAlignmentPosition | position}
+   * @param p2 - second {@link BufferElementAlignmentPosition | position}
    * @returns - number of bytes
    */
   getByteCountBetweenPositions(p1 = { row: 0, byte: 0 }, p2 = { row: 0, byte: 0 }) {
     return Math.abs(this.getByteCountAtPosition(p2) - this.getByteCountAtPosition(p1));
   }
   /**
-   * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available [position]{@link BufferElementAlignmentPosition}
-   * @param nextPositionAvailable - next [position]{@link BufferElementAlignmentPosition} at which we should insert this element
-   * @returns - computed [alignment]{@link BufferElementAlignment}
+   * Compute the right alignment (i.e. start and end rows and bytes) given the size and align properties and the next available {@link BufferElementAlignmentPosition | position}
+   * @param nextPositionAvailable - next {@link BufferElementAlignmentPosition | position} at which we should insert this element
+   * @returns - computed {@link BufferElementAlignment | alignment}
    */
   getElementAlignment(nextPositionAvailable = { row: 0, byte: 0 }) {
     const alignment = {
@@ -1662,23 +1677,23 @@ class BufferElement {
     return alignment;
   }
   /**
-   * Set the [alignment]{@link BufferElementAlignment} from a [position]{@link BufferElementAlignmentPosition}
-   * @param position - [position]{@link BufferElementAlignmentPosition} at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   * Set the {@link BufferElementAlignment | alignment} from a {@link BufferElementAlignmentPosition | position}
+   * @param position - {@link BufferElementAlignmentPosition | position} at which to start inserting the values in the {@link !core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
    */
   setAlignmentFromPosition(position = { row: 0, byte: 0 }) {
     this.alignment = this.getElementAlignment(position);
   }
   /**
-   * Set the [alignment]{@link BufferElementAlignment} from an offset (byte count)
-   * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   * Set the {@link BufferElementAlignment | alignment} from an offset (byte count)
+   * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
    */
   setAlignment(startOffset = 0) {
     this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
   }
   /**
-   * Set the [view]{@link BufferElement#view}
-   * @param arrayBuffer - the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
-   * @param arrayView - the [buffer binding array buffer view]{@link BufferBinding#arrayView}
+   * Set the {@link view}
+   * @param arrayBuffer - the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
+   * @param arrayView - the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view}
    */
   setView(arrayBuffer, arrayView) {
     this.view = new this.bufferLayout.View(
@@ -1688,7 +1703,7 @@ class BufferElement {
     );
   }
   /**
-   * Update the [view]{@link BufferElement#view} based on the new value
+   * Update the {@link view} based on the new value
    * @param value - new value to use
    */
   update(value) {
@@ -1704,13 +1719,11 @@ class BufferElement {
     } else if (value.elements) {
       this.view.set(value.elements);
     } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-      for (let i = 0; i < this.view.length; i++) {
-        this.view[i] = value[i] ? value[i] : 0;
-      }
+      this.view.set(value);
     }
   }
   /**
-   * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+   * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
    * @param result - {@link Float32Array} holding {@link GPUBuffer} data
    * @returns - extracted data from the {@link Float32Array}
    */
@@ -1721,7 +1734,7 @@ class BufferElement {
 class BufferArrayElement extends BufferElement {
   /**
    * BufferArrayElement constructor
-   * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferArrayElement}
+   * @param parameters - {@link BufferArrayElementParams | parameters} used to create our {@link BufferArrayElement}
    */
   constructor({ name, key, type = "f32", arrayLength = 1 }) {
     super({ name, key, type });
@@ -1729,25 +1742,25 @@ class BufferArrayElement extends BufferElement {
     this.numElements = this.arrayLength / this.bufferLayout.numElements;
   }
   /**
-   * Get the stride between two elements of the array in indices
+   * Get the array stride between two elements of the array, in indices
    * @readonly
    */
-  get strideToIndex() {
-    return this.stride / bytesPerSlot;
+  get arrayStrideToIndex() {
+    return this.arrayStride / bytesPerSlot;
   }
   /**
-   * Set the [alignment]{@link BufferElementAlignment}
-   * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the stride between two array elements. Using the stride and the total number of elements, we can easily get the end alignment position.
-   * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   * Set the {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment}
+   * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the arrayStride between two array elements. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
+   * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array buffer}
    */
   setAlignment(startOffset = 0) {
     super.setAlignment(startOffset);
     const nextAlignment = this.getElementAlignment(this.getPositionAtOffset(this.endOffset + 1));
-    this.stride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end);
-    this.alignment.end = this.getPositionAtOffset(this.endOffset + this.stride * (this.numElements - 1));
+    this.arrayStride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end);
+    this.alignment.end = this.getPositionAtOffset(this.endOffset + this.arrayStride * (this.numElements - 1));
   }
   /**
-   * Update the [view]{@link BufferElement#view} based on the new value
+   * Update the {@link view} based on the new value
    * @param value - new value to use
    */
   update(value) {
@@ -1769,11 +1782,11 @@ class BufferArrayElement extends BufferElement {
 class BufferInterleavedArrayElement extends BufferArrayElement {
   /**
    * BufferInterleavedArrayElement constructor
-   * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferInterleavedArrayElement}
+   * @param parameters - {@link BufferArrayElementParams | parameters} used to create our {@link BufferInterleavedArrayElement}
    */
   constructor({ name, key, type = "f32", arrayLength = 1 }) {
     super({ name, key, type, arrayLength });
-    this.stride = 1;
+    this.arrayStride = 1;
     this.arrayLength = arrayLength;
     this.numElements = this.arrayLength / this.bufferLayout.numElements;
   }
@@ -1785,20 +1798,20 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
     return this.bufferLayout.size * this.numElements;
   }
   /**
-   * Set the [alignment]{@link BufferElementAlignment}
-   * To compute how arrays are packed, we need to compute the stride between two elements beforehand and pass it here. Using the stride and the total number of elements, we can easily get the end alignment position.
-   * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   * Set the {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment}
+   * To compute how arrays are packed, we need to compute the arrayStride between two elements beforehand and pass it here. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
+   * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
    * @param stride - Stride in the {@link ArrayBuffer} between two elements of the array
    */
   setAlignment(startOffset = 0, stride = 0) {
     this.alignment = this.getElementAlignment(this.getPositionAtOffset(startOffset));
-    this.stride = stride;
+    this.arrayStride = stride;
     this.alignment.end = this.getPositionAtOffset(this.endOffset + stride * (this.numElements - 1));
   }
   /**
-   * Set the [view]{@link BufferInterleavedArrayElement#view} and [viewSetFunction]{@link BufferInterleavedArrayElement#viewSetFunction}
-   * @param arrayBuffer - the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
-   * @param arrayView - the [buffer binding array buffer view]{@link BufferBinding#arrayView}
+   * Set the {@link view} and {@link viewSetFunction}
+   * @param arrayBuffer - the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array}
+   * @param arrayView - the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view}
    */
   setView(arrayBuffer, arrayView) {
     this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.numElements);
@@ -1817,7 +1830,7 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
     })(arrayView);
   }
   /**
-   * Update the [view]{@link BufferArrayElement#view} based on the new value, and then update the [buffer binding array view]{@link BufferBinding#arrayView} using sub arrays
+   * Update the {@link view} based on the new value, and then update the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view} using sub arrays
    * @param value - new value to use
    */
   update(value) {
@@ -1827,20 +1840,20 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
         i * this.bufferLayout.numElements,
         i * this.bufferLayout.numElements + this.bufferLayout.numElements
       );
-      const startByteOffset = this.startOffset + i * this.stride;
+      const startByteOffset = this.startOffset + i * this.arrayStride;
       subarray.forEach((value2, index) => {
         this.viewSetFunction(startByteOffset + index * this.bufferLayout.View.BYTES_PER_ELEMENT, value2, true);
       });
     }
   }
   /**
-   * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link BufferBinding}
+   * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
    * @param result - {@link Float32Array} holding {@link GPUBuffer} data
    */
   extractDataFromBufferResult(result) {
     const interleavedResult = new Float32Array(this.arrayLength);
     for (let i = 0; i < this.numElements; i++) {
-      const resultOffset = this.startOffsetToIndex + i * this.strideToIndex;
+      const resultOffset = this.startOffsetToIndex + i * this.arrayStrideToIndex;
       for (let j = 0; j < this.bufferLayout.numElements; j++) {
         interleavedResult[i * this.bufferLayout.numElements + j] = result[resultOffset + j];
       }
@@ -1851,13 +1864,7 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
 class BufferBinding extends Binding {
   /**
    * BufferBinding constructor
-   * @param parameters - parameters used to create our BufferBindings
-   * @param {string=} parameters.label - binding label
-   * @param {string=} parameters.name - binding name
-   * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {MaterialShadersType=} parameters.visibility - shader visibility
-   * @param {boolean=} parameters.useStruct - whether to use structured WGSL variables
-   * @param {Object.<string, Input>} parameters.bindings - struct inputs
+   * @param parameters - {@link BufferBindingParams | parameters} used to create our BufferBindings
    */
   constructor({
     label = "Uniform",
@@ -1887,7 +1894,8 @@ class BufferBinding extends Binding {
     this.setWGSLFragment();
   }
   /**
-   * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#buffer}
+   * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
+   * @readonly
    */
   get resourceLayout() {
     return {
@@ -1897,14 +1905,15 @@ class BufferBinding extends Binding {
     };
   }
   /**
-   * Get [bind group resource]{@link GPUBindGroupEntry#resource}
+   * Get {@link GPUBindGroupEntry#resource | bind group resource}
+   * @readonly
    */
   get resource() {
     return { buffer: this.buffer };
   }
   /**
-   * Format input struct and set our {@link inputs}
-   * @param bindings - struct inputs
+   * Format bindings struct and set our {@link inputs}
+   * @param bindings - bindings inputs
    */
   setBindings(bindings) {
     Object.keys(bindings).forEach((bindingKey) => {
@@ -1932,7 +1941,7 @@ class BufferBinding extends Binding {
   }
   /**
    * Set our buffer attributes:
-   * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link value} typed array accordingly.
+   * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link arrayBuffer} typed array accordingly.
    */
   setBufferAttributes() {
     const arrayBindings = Object.keys(this.inputs).filter(
@@ -2078,7 +2087,7 @@ class BufferBinding extends Binding {
     }
   }
   /**
-   * Set a binding shouldUpdate flag to true to update our {@link value} array during next render.
+   * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
    * @param bindingName - the binding name/key to update
    */
   shouldUpdateBinding(bindingName = "") {
@@ -2088,8 +2097,8 @@ class BufferBinding extends Binding {
   }
   /**
    * Executed at the beginning of a Material render call.
-   * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link value} array.
-   * Also sets the {@link shouldUpdate} property to true so the {@link BindGroup} knows it will need to update the {@link GPUBuffer}.
+   * If any of the {@link inputs} has changed, run its onBeforeUpdate callback then updates our {@link arrayBuffer} array.
+   * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
     Object.keys(this.inputs).forEach((bindingKey) => {
@@ -2104,9 +2113,10 @@ class BufferBinding extends Binding {
     });
   }
   /**
-   * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the [buffer]{@link BufferBinding#buffer} data of this {@link BufferBinding}
-   * @param result - {@link Float32Array} holding {@link GPUBuffer} data
-   * @param bufferElementName - name of the {@link BufferElement} to use to extract the data
+   * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the {@link BufferBinding#buffer | GPU buffer} data of this {@link BufferBinding}
+   * @param parameters - parameters used to extract the data
+   * @param parameters.result - {@link Float32Array} holding {@link GPUBuffer} data
+   * @param parameters.bufferElementName - name of the {@link BufferElement} to use to extract the data
    * @returns - extracted data from the {@link Float32Array}
    */
   extractBufferElementDataFromBufferResult({
@@ -2124,7 +2134,7 @@ class BufferBinding extends Binding {
 class WritableBufferBinding extends BufferBinding {
   /**
    * WritableBufferBinding constructor
-   * @param parameters - [parameters]{@link WritableBufferBindingParams} used to create our {@link WritableBufferBinding}
+   * @param parameters - {@link WritableBufferBindingParams | parameters} used to create our {@link WritableBufferBinding}
    */
   constructor({
     label = "Work",
@@ -2150,8 +2160,8 @@ class WritableBufferBinding extends BufferBinding {
 class BindGroup {
   /**
    * BindGroup constructor
-   * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param {BindGroupParams=} parameters - [parameters]{@link BindGroupParams} used to create our {@link BindGroup}
+   * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+   * @param parameters - {@link BindGroupParams | parameters} used to create our {@link BindGroup}
    */
   constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
     this.type = "BindGroup";
@@ -2178,8 +2188,8 @@ class BindGroup {
     this.renderer.addBindGroup(this);
   }
   /**
-   * Sets our [BindGroup index]{@link BindGroup#index}
-   * @param index - [BindGroup index]{@link BindGroup#index}
+   * Sets our {@link BindGroup#index | bind group index}
+   * @param index - {@link BindGroup#index | bind group index} to set
    */
   setIndex(index) {
     this.index = index;
@@ -2200,8 +2210,8 @@ class BindGroup {
   }
   /**
    * Creates Bindings based on a list of inputs
-   * @param bindingType - [binding type]{@link Binding#bindingType}
-   * @param inputs - [inputs]{@link ReadOnlyInputBindings} that will be used to create the binding
+   * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}
+   * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding
    * @returns - a {@link bindings} array
    */
   createInputBindings(bindingType = "uniform", inputs = {}) {
@@ -2266,7 +2276,7 @@ class BindGroup {
     this.setBindGroup();
   }
   /**
-   * Reset the [bindGroup entries]{@link BindGroup#entries#bindGroup}, recreates them and then recreate the [bind group]{@link BindGroup#bindGroup}
+   * Reset the {@link BindGroup#entries.bindGroup | bindGroup entries}, recreates them and then recreate the {@link BindGroup#bindGroup | GPU bind group}
    */
   resetBindGroup() {
     this.entries.bindGroup = [];
@@ -2279,7 +2289,7 @@ class BindGroup {
     this.setBindGroup();
   }
   /**
-   * Reset the [bindGroupLayout entries]{@link BindGroup#entries#bindGroupLayout}, recreates them and then recreate the [bind group layout]{@link BindGroup#bindGroupLayout}
+   * Reset the {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entries}, recreates them and then recreate the {@link BindGroup#bindGroupLayout | GPU bind group layout}
    */
   resetBindGroupLayout() {
     this.entries.bindGroupLayout = [];
@@ -2293,7 +2303,7 @@ class BindGroup {
     this.setBindGroupLayout();
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
    */
   loseContext() {
     this.resetEntries();
@@ -2308,7 +2318,7 @@ class BindGroup {
     this.needsPipelineFlush = true;
   }
   /**
-   * Get all [bind group struct]{@link BindGroup#bindings} that handle a {@link GPUBuffer}
+   * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
    */
   get bufferBindings() {
     return this.bindings.filter(
@@ -2400,8 +2410,8 @@ class BindGroup {
     });
   }
   /**
-   * Update the {@link BindGroup}, which means update its [buffer struct]{@link BindGroup#bufferBindings} and [reset it]{@link BindGroup#resetBindGroup} if needed.
-   * Called at each render from the parent {@link Material}
+   * Update the {@link BindGroup}, which means update its {@link BindGroup#bufferBindings | buffer bindings} and {@link BindGroup#resetBindGroup | reset it} if needed.
+   * Called at each render from the parent {@link core/materials/Material.Material | material}
    */
   update() {
     this.updateBufferBindings();
@@ -2491,7 +2501,7 @@ class BindGroup {
 class TextureBinding extends Binding {
   /**
    * TextureBinding constructor
-   * @param parameters - [parameters]{@link TextureBindingParams} used to create our {@link TextureBinding}
+   * @param parameters - {@link TextureBindingParams | parameters} used to create our {@link TextureBinding}
    */
   constructor({
     label = "Texture",
@@ -2519,25 +2529,30 @@ class TextureBinding extends Binding {
     this.setWGSLFragment();
   }
   /**
-   * Get bind group layout entry resource, either for [texture]{@link GPUBindGroupLayoutEntry#texture} or [externalTexture]{@link GPUBindGroupLayoutEntry#externalTexture}
+   * Get bind group layout entry resource, either for {@link GPUBindGroupLayoutEntry#texture | texture} or {@link GPUBindGroupLayoutEntry#externalTexture | external texture}
+   * @readonly
    */
   get resourceLayout() {
     return getBindGroupLayoutTextureBindingType(this);
   }
   /**
-   * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+   * Get the {@link GPUBindGroupEntry#resource | bind group resource}
    */
   get resource() {
     return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view" }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
   }
+  /**
+   * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+   * @param value - new bind group resource
+   */
   set resource(value) {
     if (value || this.texture)
       this.shouldResetBindGroup = true;
     this.texture = value;
   }
   /**
-   * Set or update our [bindingType]{@link Binding#bindingType} and our WGSL code snippet
-   * @param bindingType - the new [binding type]{@link Binding#bindingType}
+   * Set or update our {@link Binding#bindingType | bindingType} and our WGSL code snippet
+   * @param bindingType - the new {@link Binding#bindingType | binding type}
    */
   setBindingType(bindingType) {
     if (bindingType !== this.bindingType) {
@@ -2564,7 +2579,7 @@ class Object3D {
   }
   /* TRANSFORMS */
   /**
-   * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+   * Set our transforms properties and {@link math/Vec3.Vec3#onChange | vectors onChange} callbacks
    */
   setTransforms() {
     this.transforms = {
@@ -2584,85 +2599,101 @@ class Object3D {
     this.transformOrigin.onChange(() => this.applyTransformOrigin());
   }
   /**
-   * Get/set our rotation vector
-   * @readonly
+   * Get our rotation {@link math/Vec3.Vec3 | vector}
    */
   get rotation() {
     return this.transforms.rotation;
   }
+  /**
+   * Set our rotation {@link math/Vec3.Vec3 | vector}
+   * @param value - new rotation {@link math/Vec3.Vec3 | vector}
+   */
   set rotation(value) {
     this.transforms.rotation = value;
     this.applyRotation();
   }
   /**
-   * Get/set our quaternion
-   * @readonly
+   * Get our {@link math/Quat.Quat | quaternion}
    */
   get quaternion() {
     return this.transforms.quaternion;
   }
+  /**
+   * Set our {@link math/Quat.Quat | quaternion}
+   * @param value - new {@link math/Quat.Quat | quaternion}
+   */
   set quaternion(value) {
     this.transforms.quaternion = value;
   }
   /**
-   * Get/set our position vector
-   * @readonly
+   * Get our position {@link math/Vec3.Vec3 | vector}
    */
   get position() {
     return this.transforms.position.world;
   }
+  /**
+   * Set our position {@link math/Vec3.Vec3 | vector}
+   * @param value - new position {@link math/Vec3.Vec3 | vector}
+   */
   set position(value) {
     this.transforms.position.world = value;
   }
   /**
-   * Get/set our scale vector
+   * Get our scale {@link math/Vec3.Vec3 | vector}
    * @readonly
    */
   get scale() {
     return this.transforms.scale;
   }
+  /**
+   * Set our scale {@link math/Vec3.Vec3 | vector}
+   * @param value - new scale {@link math/Vec3.Vec3 | vector}
+   */
   set scale(value) {
     this.transforms.scale = value;
     this.applyScale();
   }
   /**
-   * Get/set our transform origin vector
-   * @readonly
+   * Get our transform origin {@link math/Vec3.Vec3 | vector}
    */
   get transformOrigin() {
     return this.transforms.origin.model;
   }
+  /**
+   * Set our transform origin {@link math/Vec3.Vec3 | vector}
+   * @param value - new transform origin {@link math/Vec3.Vec3 | vector}
+   */
   set transformOrigin(value) {
     this.transforms.origin.model = value;
   }
   /**
-   * Apply our rotation and tell our model matrix to update
+   * Apply our rotation and tell our {@link modelMatrix | model matrix} to update
    */
   applyRotation() {
     this.quaternion.setFromVec3(this.rotation);
     this.shouldUpdateModelMatrix();
   }
   /**
-   * Tell our model matrix to update
+   * Tell our {@link modelMatrix | model matrix} to update
    */
   applyPosition() {
     this.shouldUpdateModelMatrix();
   }
   /**
-   * Tell our model matrix to update
+   * Tell our {@link modelMatrix | model matrix} to update
    */
   applyScale() {
     this.shouldUpdateModelMatrix();
   }
   /**
-   * Tell our model matrix to update
+   * Tell our {@link modelMatrix | model matrix} to update
    */
   applyTransformOrigin() {
     this.shouldUpdateModelMatrix();
   }
   /* MATRICES */
   /**
-   * Set our model matrix
+   * Set our {@link modelMatrix | model matrix}
    */
   setMatrices() {
     this.matrices = {
@@ -2674,25 +2705,28 @@ class Object3D {
     };
   }
   /**
-   * Get/set our model matrix
-   * @readonly
+   * Get our {@link math/Mat4.Mat4 | model matrix}
    */
   get modelMatrix() {
     return this.matrices.model.matrix;
   }
+  /**
+   * Set our {@link math/Mat4.Mat4 | model matrix}
+   * @param value - new {@link math/Mat4.Mat4 | model matrix}
+   */
   set modelMatrix(value) {
     this.matrices.model.matrix = value;
     this.shouldUpdateModelMatrix();
   }
   /**
-   * Set our model matrix shouldUpdate flag to true (tell it to update)
+   * Set our {@link modelMatrix | model matrix} shouldUpdate flag to true (tell it to update)
    */
   shouldUpdateModelMatrix() {
     this.matrices.model.shouldUpdate = true;
   }
   /**
-   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-   * @param target - [target]{@link Vec3} to look at
+   * Rotate this {@link Object3D} so it looks at the {@link math/Vec3.Vec3 | target}
+   * @param target - {@link math/Vec3.Vec3 | target} to look at
    */
   lookAt(target = new Vec3()) {
     const rotationMatrix = new Mat4().lookAt(target, this.position);
@@ -2700,7 +2734,7 @@ class Object3D {
     this.shouldUpdateModelMatrix();
   }
   /**
-   * Update our model matrix
+   * Update our {@link modelMatrix | model matrix}
    */
   updateModelMatrix() {
     this.modelMatrix = this.modelMatrix.composeFromOrigin(
@@ -2714,12 +2748,6 @@ class Object3D {
    * Callback to run if at least one matrix of the stack has been updated
    */
   onAfterMatrixStackUpdate() {
-  }
-  /**
-   * Tell our model matrix to update
-   */
-  updateSizeAndPosition() {
-    this.shouldUpdateModelMatrix();
   }
   /**
    * Check at each render whether we should update our matrices, and update them if needed
@@ -2751,8 +2779,8 @@ const defaultTextureParams = {
 class Texture extends Object3D {
   /**
    * Texture constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-   * @param parameters - [parameters]{@link TextureParams} used to create this {@link Texture}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
    */
   constructor(renderer, parameters = defaultTextureParams) {
     super();
@@ -2810,7 +2838,7 @@ class Texture extends Object3D {
     this.createTexture();
   }
   /**
-   * Set our [struct]{@link Texture#bindings}
+   * Set our {@link bindings}
    */
   setBindings() {
     this.bindings = [
@@ -2825,30 +2853,36 @@ class Texture extends Object3D {
     ];
   }
   /**
-   * Get our [texture binding]{@link TextureBinding}
+   * Get our {@link TextureBinding | GPU texture binding}
    * @readonly
    */
   get textureBinding() {
     return this.bindings[0];
   }
   /**
-   * Get/set our [texture parent]{@link Texture#_parent}
-   * @readonly
+   * Get our texture {@link parent}
    */
   get parent() {
     return this._parent;
   }
+  /**
+   * Set our texture {@link parent}
+   * @param value - texture {@link parent} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
+   */
   set parent(value) {
     this._parent = value;
     this.resize();
   }
   /**
-   * Get/set whether our [texture source]{@link Texture#source} has loaded
-   * @readonly
+   * Get whether our {@link source} has been loaded
    */
   get sourceLoaded() {
     return this._sourceLoaded;
   }
+  /**
+   * Set whether our {@link source} has been loaded
+   * @param value - boolean flag indicating if the {@link source} has been loaded
+   */
   set sourceLoaded(value) {
     if (value && !this.sourceLoaded) {
       this._onSourceLoadedCallback && this._onSourceLoadedCallback();
@@ -2856,12 +2890,15 @@ class Texture extends Object3D {
     this._sourceLoaded = value;
   }
   /**
-   * Get/set whether our [texture source]{@link Texture#source} has been uploaded
-   * @readonly
+   * Get whether our {@link source} has been uploaded
    */
   get sourceUploaded() {
     return this._sourceUploaded;
   }
+  /**
+   * Set whether our {@link source} has been uploaded
+   * @param value - boolean flag indicating if the {@link source} has been uploaded
+   */
   set sourceUploaded(value) {
     if (value && !this.sourceUploaded) {
       this._onSourceUploadedCallback && this._onSourceUploadedCallback();
@@ -2869,7 +2906,7 @@ class Texture extends Object3D {
     this._sourceUploaded = value;
   }
   /**
-   * Set our [texture transforms object]{@link Texture#transforms}
+   * Set our texture {@link transforms} object
    */
   setTransforms() {
     super.setTransforms();
@@ -2878,7 +2915,7 @@ class Texture extends Object3D {
   }
   /* TEXTURE MATRIX */
   /**
-   * Update the [texture model matrix]{@link Texture#modelMatrix}
+   * Update the {@link modelMatrix}
    */
   updateModelMatrix() {
     if (!this.parent)
@@ -2887,9 +2924,7 @@ class Texture extends Object3D {
     const parentWidth = this.parent.boundingRect ? this.parent.boundingRect.width * parentScale.x : this.size.width;
     const parentHeight = this.parent.boundingRect ? this.parent.boundingRect.height * parentScale.y : this.size.height;
     const parentRatio = parentWidth / parentHeight;
-    const sourceWidth = this.size.width;
-    const sourceHeight = this.size.height;
-    const sourceRatio = sourceWidth / sourceHeight;
+    const sourceRatio = this.size.width / this.size.height;
     if (parentWidth > parentHeight) {
       __privateGet(this, _parentRatio).set(parentRatio, 1, 1);
       __privateGet(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
@@ -2903,7 +2938,7 @@ class Texture extends Object3D {
     this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet(this, _coverScale)).premultiplyScale(__privateGet(this, _parentRatio)).premultiply(__privateGet(this, _rotationMatrix)).premultiplyScale(__privateGet(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
   }
   /**
-   * Our [model matrix]{@link Texture#modelMatrix} has been updated, tell the [texture matrix binding]{@link Texture#textureMatrix} to update as well
+   * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
    */
   onAfterMatrixStackUpdate() {
     this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
@@ -2919,8 +2954,8 @@ class Texture extends Object3D {
     this.shouldUpdateModelMatrix();
   }
   /**
-   * Get the number of mip levels create based on [texture source size]{@link Texture#size}
-   * @param sizes
+   * Get the number of mip levels create based on {@link size}
+   * @param sizes - Array containing our texture width, height and depth
    * @returns - number of mip levels
    */
   getNumMipLevels(...sizes) {
@@ -2935,7 +2970,7 @@ class Texture extends Object3D {
     this.shouldUpdate = false;
   }
   /**
-   * Import an [external texture]{@link GPUExternalTexture} from the {@link Renderer}, update the [texture binding]{@link Texture#textureBinding} and its [bind group]{@link BindGroup}
+   * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the  {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
    */
   uploadVideoTexture() {
     this.externalTexture = this.renderer.importExternalTexture(this.source);
@@ -2945,8 +2980,8 @@ class Texture extends Object3D {
     this.sourceUploaded = true;
   }
   /**
-   * Copy a [texture]{@link Texture}
-   * @param texture - [texture]{@link Texture} to copy
+   * Copy a {@link Texture}
+   * @param texture - {@link Texture} to copy
    */
   copy(texture) {
     if (this.options.sourceType === "externalVideo" && texture.options.sourceType !== "externalVideo") {
@@ -2980,7 +3015,7 @@ class Texture extends Object3D {
     }
   }
   /**
-   * Set the [texture]{@link Texture#texture}
+   * Set the {@link texture | GPU texture}
    */
   createTexture() {
     var _a;
@@ -3003,7 +3038,7 @@ class Texture extends Object3D {
   }
   /* SOURCES */
   /**
-   * Set the [size]{@link Texture#size} based on [texture source]{@link Texture#source}
+   * Set the {@link size} based on the {@link source}
    */
   setSourceSize() {
     this.size = {
@@ -3013,7 +3048,7 @@ class Texture extends Object3D {
     };
   }
   /**
-   * Load an [image]{@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a [texture source]{@link Texture#source}
+   * Load an {@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a {@link source}
    * @async
    * @param url - URL of the image to load
    * @returns - the newly created {@link ImageBitmap}
@@ -3024,7 +3059,7 @@ class Texture extends Object3D {
     return await createImageBitmap(blob, { colorSpaceConversion: "none" });
   }
   /**
-   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
+   * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link source} and create the {@link GPUTexture}
    * @async
    * @param source - the image URL or {@link HTMLImageElement} to load
    * @returns - the newly created {@link ImageBitmap}
@@ -3053,7 +3088,7 @@ class Texture extends Object3D {
   // WebCodecs may be the way to go when time comes!
   // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
   /**
-   * Set our [shouldUpdate]{@link Texture#shouldUpdate} flag to true at each new video frame
+   * Set our {@link shouldUpdate} flag to true at each new video frame
    */
   onVideoFrameCallback() {
     if (this.videoFrameCallbackId) {
@@ -3062,9 +3097,9 @@ class Texture extends Object3D {
     }
   }
   /**
-   * Callback to run when a [video]{@link HTMLVideoElement} has loaded (when it has enough data to play).
-   * Set the [video]{@link HTMLVideoElement} as a [texture source]{@link Texture#source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
-   * @param video - the newly loaded [video]{@link HTMLVideoElement}
+   * Callback to run when a {@link HTMLVideoElement} has loaded (when it has enough data to play).
+   * Set the {@link HTMLVideoElement} as a {@link source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
+   * @param video - the newly loaded {@link HTMLVideoElement}
    */
   onVideoLoaded(video) {
     var _a;
@@ -3088,14 +3123,14 @@ class Texture extends Object3D {
     }
   }
   /**
-   * Get whether the [texture source]{@link Texture#source} is a video
+   * Get whether the {@link source} is a video
    * @readonly
    */
   get isVideoSource() {
     return this.source && (this.options.sourceType === "video" || this.options.sourceType === "externalVideo");
   }
   /**
-   * Load a video from a URL or {@link HTMLVideoElement} and register [onVideoLoaded]{@link Texture#onVideoLoaded} callback
+   * Load a video from a URL or {@link HTMLVideoElement} and register {@link onVideoLoaded} callback
    * @param source - the video URL or {@link HTMLVideoElement} to load
    */
   loadVideo(source) {
@@ -3126,8 +3161,8 @@ class Texture extends Object3D {
     }
   }
   /**
-   * Load a [canvas]{@link HTMLCanvasElement}, use it as a [texture source]{@link Texture#source} and create the {@link GPUTexture}
-   * @param source
+   * Load a {@link HTMLCanvasElement}, use it as a {@link source} and create the {@link GPUTexture}
+   * @param source - the {@link HTMLCanvasElement} to use
    */
   loadCanvas(source) {
     this.options.source = source;
@@ -3142,8 +3177,8 @@ class Texture extends Object3D {
   }
   /* EVENTS */
   /**
-   * Callback to run when the [texture source]{@link Texture#source} has loaded
-   * @param callback - callback to run when the [texture source]{@link Texture#source} has loaded
+   * Callback to run when the {@link source} has been loaded
+   * @param callback - callback to run when the {@link source} has been loaded
    * @returns - our {@link Texture}
    */
   onSourceLoaded(callback) {
@@ -3153,8 +3188,8 @@ class Texture extends Object3D {
     return this;
   }
   /**
-   * Callback to run when the [texture source]{@link Texture#source} has been uploaded
-   * @param callback - callback to run when the [texture source]{@link Texture#source} been uploaded
+   * Callback to run when the {@link source} has been uploaded
+   * @param callback - callback to run when the {@link source} been uploaded
    * @returns - our {@link Texture}
    */
   onSourceUploaded(callback) {
@@ -3166,7 +3201,7 @@ class Texture extends Object3D {
   /* RENDER */
   /**
    * Render a {@link Texture}:
-   * - Update its [model matrix]{@link Texture#modelMatrix} and [struct]{@link Texture#bindings} if needed
+   * - Update its {@link modelMatrix} and {@link bindings} if needed
    * - Upload the texture if it needs to be done
    */
   render() {
@@ -3212,8 +3247,8 @@ _rotationMatrix = new WeakMap();
 class TextureBindGroup extends BindGroup {
   /**
    * TextureBindGroup constructor
-   * @param {(Renderer|GPUCurtains)} renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param {TextureBindGroupParams=} parameters - [parameters]{@link TextureBindGroupParams} used to create our {@link TextureBindGroup}
+   * @param  renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
+   * @param parameters - {@link TextureBindGroupParams | parameters} used to create our {@link TextureBindGroup}
    */
   constructor(renderer, { label, index = 0, bindings = [], uniforms, storages, textures = [], samplers = [] } = {}) {
     const type = "TextureBindGroup";
@@ -3273,10 +3308,10 @@ class TextureBindGroup extends BindGroup {
     return !this.bindGroup && !!this.bindings.length && !this.textures.find((texture) => !(texture.texture || texture.externalTexture)) && !this.samplers.find((sampler) => !sampler.sampler);
   }
   /**
-   * Update the [bind group textures]{@link TextureBindGroup#textures}:
+   * Update the {@link TextureBindGroup#textures | bind group textures}:
    * - Check if they need to copy their source texture
    * - Upload texture if needed
-   * - Check if the [bind group layout]{@link TextureBindGroup#bindGroupLayout} and/or [bing group]{@link TextureBindGroup#bindGroup} need an update
+   * - Check if the {@link TextureBindGroup#bindGroupLayout | GPU bind group layout} and/or {@link TextureBindGroup#bindGroup | GPU bind group} need an update
    */
   updateTextures() {
     this.textures.forEach((texture, textureIndex) => {
@@ -3291,7 +3326,7 @@ class TextureBindGroup extends BindGroup {
     });
   }
   /**
-   * Update the {@link TextureBindGroup}, which means update its [textures]{@link TextureBindGroup#textures}, then update its [buffer struct]{@link TextureBindGroup#bufferBindings} and finally[reset it]{@link TextureBindGroup#resetBindGroup} if needed
+   * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed
    */
   update() {
     this.updateTextures();
@@ -3309,12 +3344,7 @@ class TextureBindGroup extends BindGroup {
 class SamplerBinding extends Binding {
   /**
    * SamplerBinding constructor
-   * @param parameters - parameters used to create our SamplerBindings
-   * @param {string=} parameters.label - binding label
-   * @param {string=} parameters.name - binding name
-   * @param {BindingType="uniform"} parameters.bindingType - binding type
-   * @param {MaterialShadersType=} parameters.visibility - shader visibility
-   * @param {SamplerBindingResource=} parameters.resource - a GPUSampler
+   * @param parameters - {@link SamplerBindingParams | parameters} used to create our SamplerBindings
    */
   constructor({
     label = "Sampler",
@@ -3335,7 +3365,8 @@ class SamplerBinding extends Binding {
     this.setWGSLFragment();
   }
   /**
-   * Get [bind group layout entry resource]{@link GPUBindGroupLayoutEntry#sampler}
+   * Get {@link GPUBindGroupLayoutEntry#sampler | bind group layout entry resource}
+   * @readonly
    */
   get resourceLayout() {
     return {
@@ -3346,11 +3377,15 @@ class SamplerBinding extends Binding {
     };
   }
   /**
-   * Get/set [bind group resource]{@link GPUBindGroupEntry#resource}
+   * Get the {@link GPUBindGroupEntry#resource | bind group resource}
    */
   get resource() {
     return this.sampler;
   }
+  /**
+   * Set the {@link GPUBindGroupEntry#resource | bind group resource}
+   * @param value - new bind group resource
+   */
   set resource(value) {
     if (value && this.sampler)
       this.shouldResetBindGroup = true;
@@ -3366,7 +3401,7 @@ class SamplerBinding extends Binding {
 class Camera extends Object3D {
   /**
    * Camera constructor
-   * @param parameters - [parameters]{@link CameraParams} used to create our {@link Camera}
+   * @param parameters - {@link CameraParams | parameters} used to create our {@link Camera}
    */
   constructor({
     fov = 50,
@@ -3453,12 +3488,15 @@ class Camera extends Object3D {
     this.matrices.view.shouldUpdate = true;
   }
   /**
-   * Get / set the {@link Camera} [field of view]{@link Camera##fov}. Update the {@link projectionMatrix} only if the field of view actually changed
-   * @readonly
+   * Get the {@link Camera} {@link fov | field of view}
    */
   get fov() {
     return __privateGet(this, _fov);
   }
+  /**
+   * Set the {@link Camera} {@link fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
+   * @param fov - new field of view
+   */
   set fov(fov) {
     fov = Math.max(1, Math.min(fov ?? this.fov, 179));
     if (fov !== this.fov) {
@@ -3469,12 +3507,15 @@ class Camera extends Object3D {
     this.setCSSPerspective();
   }
   /**
-   * Get / set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
-   * @readonly
+   * Get the {@link Camera} {@link near} plane value.
    */
   get near() {
     return __privateGet(this, _near);
   }
+  /**
+   * Set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
+   * @param near - new near plane value
+   */
   set near(near) {
     near = Math.max(near ?? this.near, 0.01);
     if (near !== this.near) {
@@ -3483,12 +3524,15 @@ class Camera extends Object3D {
     }
   }
   /**
-   * Get / set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
-   * @readonly
+   * Get / set the {@link Camera} {@link far} plane value.
    */
   get far() {
     return __privateGet(this, _far);
   }
+  /**
+   * Set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
+   * @param far - new far plane value
+   */
   set far(far) {
     far = Math.max(far ?? this.far, this.near + 1);
     if (far !== this.far) {
@@ -3497,18 +3541,21 @@ class Camera extends Object3D {
     }
   }
   /**
-   * Get / set the {@link Camera} {@link pixelRatio} value. Update the {@link projectionMatrix} only if the pixel ratio actually changed
-   * @readonly
+   * Get the {@link Camera} {@link pixelRatio} value.
    */
   get pixelRatio() {
     return __privateGet(this, _pixelRatio);
   }
+  /**
+   * Set the {@link Camera} {@link pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
+   * @param pixelRatio - new pixel ratio value
+   */
   set pixelRatio(pixelRatio) {
     __privateSet(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
     this.setCSSPerspective();
   }
   /**
-   * Sets the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
+   * Set the {@link Camera} {@link width} and {@link height}. Update the {@link projectionMatrix} only if the width or height actually changed
    * @param size - {@link width} and {@link height} values to use
    */
   setSize({ width, height }) {
@@ -3521,8 +3568,8 @@ class Camera extends Object3D {
     this.setCSSPerspective();
   }
   /**
-   * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if our {@link shouldUpdate} flag is true
-   * @param parameters - [parameters]{@link CameraPerspectiveOptions} to use for the perspective
+   * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if neededs
+   * @param parameters - {@link CameraPerspectiveOptions | parameters} to use for the perspective
    */
   setPerspective({
     fov = this.fov,
@@ -3539,13 +3586,13 @@ class Camera extends Object3D {
     this.far = far;
   }
   /**
-   * Callback to run when the [camera model matrix]{@link Camera#modelMatrix} has been updated
+   * Callback to run when the camera{@link modelMatrix | model matrix} has been updated
    */
   onAfterMatrixStackUpdate() {
     this.onMatricesChanged();
   }
   /**
-   * Sets a {@link CSSPerspective} property based on {@link width}, {@link height}, {@link pixelRatio} and {@link fov}
+   * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}
    * Used to translate planes along the Z axis using pixel units as CSS would do
    * Taken from {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value}
    */
@@ -3575,8 +3622,8 @@ class Camera extends Object3D {
     };
   }
   /**
-   * Rotate this {@link Object3D} so it looks at the [target]{@link Vec3}
-   * @param target - [target]{@link Vec3} to look at
+   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+   * @param target - {@link Vec3 | target} to look at
    */
   lookAt(target = new Vec3()) {
     const rotationMatrix = new Mat4().lookAt(this.position, target);
@@ -3627,8 +3674,8 @@ _pixelRatio = new WeakMap();
 class Sampler {
   /**
    * Sampler constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
-   * @param parameters - [parameters]{@link SamplerParams} used to create this {@link Sampler}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
+   * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}
    */
   constructor(renderer, {
     label = "Sampler",
@@ -3673,7 +3720,7 @@ class Sampler {
     this.sampler = this.renderer.createSampler(this);
   }
   /**
-   * Set the [binding]{@link SamplerBinding}
+   * Set the {@link SamplerBinding | binding}
    */
   createBinding() {
     this.binding = new SamplerBinding({
@@ -3696,8 +3743,8 @@ const defaultRenderTextureParams = {
 class RenderTexture {
   /**
    * RenderTexture constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-   * @param parameters - [parameters]{@link RenderTextureParams} used to create this {@link RenderTexture}
+   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
+   * @param parameters - {@link RenderTextureParams | parameters} used to create this {@link RenderTexture}
    */
   constructor(renderer, parameters = defaultRenderTextureParams) {
     renderer = renderer && renderer.renderer || renderer;
@@ -3727,7 +3774,7 @@ class RenderTexture {
     this.createTexture();
   }
   /**
-   * Create the [texture]{@link GPUTexture} (or copy it from source) and update the [binding resource]{@link TextureBinding#resource}
+   * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
    */
   createTexture() {
     var _a;
@@ -3752,7 +3799,7 @@ class RenderTexture {
     this.textureBinding.resource = this.texture;
   }
   /**
-   * Set our [struct]{@link RenderTexture#bindings}
+   * Set our {@link RenderTexture#bindings | bindings}
    */
   setBindings() {
     this.bindings = [
@@ -3766,15 +3813,15 @@ class RenderTexture {
     ];
   }
   /**
-   * Get our [texture binding]{@link TextureBinding}
+   * Get our {@link TextureBinding | texture binding}
    * @readonly
    */
   get textureBinding() {
     return this.bindings[0];
   }
   /**
-   * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the [bind group]{@link BindGroup} to update
-   * @param size - the optional new [size]{@link RectSize} to set
+   * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
+   * @param size - the optional new {@link RectSize | size} to set
    */
   resize(size = null) {
     if (!size) {
@@ -3805,14 +3852,8 @@ class RenderTexture {
 class Material {
   /**
    * Material constructor
-   * @param {(Renderer|GPUCurtains)} renderer - our renderer class object
-   * @param {MaterialParams} parameters - parameters used to create our Material
-   * @param {string} parameters.label - Material label
-   * @param {boolean} parameters.useAsyncPipeline - whether the pipeline should be compiled asynchronously
-   * @param {MaterialShaders} parameters.shaders - our Material shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our Material {@see BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@see BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@see Sampler}
+   * @param renderer - our renderer class object
+   * @param parameters - {@link types/Materials.MaterialParams | parameters} used to create our Material
    */
   constructor(renderer, parameters) {
     this.type = "Material";
@@ -3857,8 +3898,8 @@ class Material {
     return !!(this.renderer.ready && this.pipelineEntry && this.pipelineEntry.pipeline && this.pipelineEntry.ready);
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
    */
   loseContext() {
     this.textures.forEach((texture) => {
@@ -3874,7 +3915,7 @@ class Material {
     this.pipelineEntry.pipeline = null;
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} has been restored to recreate our bind groups.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
    */
   restoreContext() {
     this.samplers.forEach((sampler) => {
@@ -3961,15 +4002,15 @@ class Material {
     });
   }
   /**
-   * Get the main [texture bind group]{@link TextureBindGroup} created by this {@link Material} to manage all textures related struct
+   * Get the main {@link TextureBindGroup | texture bind group} created by this {@link Material} to manage all textures related struct
    * @readonly
    */
   get texturesBindGroup() {
     return this.texturesBindGroups[0];
   }
   /**
-   * Process all {@see BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
-   * @param bindGroup - The {@see BindGroup} to process
+   * Process all {@link BindGroup} struct and add them to the corresponding objects based on their binding types. Also store them in a inputsBindings array to facilitate further access to struct.
+   * @param bindGroup - The {@link BindGroup} to process
    */
   processBindGroupBindings(bindGroup) {
     bindGroup.bindings.forEach((inputBinding) => {
@@ -4021,11 +4062,12 @@ class Material {
     });
   }
   /**
-   * Clones a {@see BindGroup} from a list of buffers
+   * Clones a {@link BindGroup} from a list of buffers
    * Useful to create a new bind group with already created buffers, but swapped
-   * @param bindGroup - the BindGroup to clone
-   * @param bindings - our input binding buffers
-   * @param keepLayout - whether we should keep original bind group layout or not
+   * @param parameters - parameters used to clone the {@link BindGroup | bind group}
+   * @param parameters.bindGroup - the BindGroup to clone
+   * @param parameters.bindings - our input binding buffers
+   * @param parameters.keepLayout - whether we should keep original bind group layout or not
    * @returns - the cloned BindGroup
    */
   cloneBindGroup({
@@ -4040,7 +4082,7 @@ class Material {
     return clone;
   }
   /**
-   * Get a corresponding {@see BindGroup} or {@see TextureBindGroup} from one of its binding name/key
+   * Get a corresponding {@link BindGroup} or {@link TextureBindGroup} from one of its binding name/key
    * @param bindingName - the binding name/key to look for
    * @returns - bind group found or null if not found
    */
@@ -4073,10 +4115,10 @@ class Material {
     this.clonedBindGroups = [];
   }
   /**
-   * [Update]{@link BindGroup#update} all bind groups:
-   * - Update all [textures bind groups]{@link Material#texturesBindGroups} textures
-   * - Update its [buffer struct]{@link BindGroup#bufferBindings}
-   * - Check if it eventually needs a [reset]{@link BindGroup#resetBindGroup}
+   * {@link BindGroup#update | Update} all bind groups:
+   * - Update all {@link texturesBindGroups | textures bind groups} textures
+   * - Update its {@link BindGroup#bufferBindings | buffer bindings}
+   * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}
    * - Check if we need to flush the pipeline
    */
   updateBindGroups() {
@@ -4090,7 +4132,7 @@ class Material {
   }
   /* INPUTS */
   /**
-   * Look for a [binding]{@link BindGroupBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+   * Look for a {@link BindGroupBindingElement | binding} by name in all {@link inputsBindings | input bindings}
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
@@ -4098,7 +4140,7 @@ class Material {
     return this.inputsBindings.find((binding) => binding.name === bindingName);
   }
   /**
-   * Look for a [buffer binding]{@link BindGroupBufferBindingElement} by name in all [input bindings]{@link Material#inputsBindings}
+   * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}
    * @param bindingName - the binding name or key
    * @returns - the found binding, or null if not found
    */
@@ -4126,7 +4168,7 @@ class Material {
   }
   /* SAMPLERS & TEXTURES */
   /**
-   * Prepare our textures array and set the {@see TextureBindGroup}
+   * Prepare our textures array and set the {@link TextureBindGroup}
    */
   setTextures() {
     var _a, _b;
@@ -4159,8 +4201,8 @@ class Material {
     }
   }
   /**
-   * Destroy a [texture]{@link Texture} or [render texture]{@link RenderTexture}, only if it is not used by another object
-   * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to eventually destroy
+   * Destroy a {@link Texture} or {@link RenderTexture}, only if it is not used by another object or cached.
+   * @param texture - {@link Texture} or {@link RenderTexture} to eventually destroy
    */
   destroyTexture(texture) {
     if (texture.options.cache)
@@ -4220,8 +4262,8 @@ class Material {
     return result;
   }
   /**
-   * Map the content of a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
-   * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
+   * Map the content of a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
    * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
    */
@@ -4237,9 +4279,10 @@ class Material {
     }
   }
   /**
-   * Map the content of a specific [buffer element]{@link BufferElement} belonging to a [binding buffer]{@link BufferBinding#buffer} and put a copy of the data into a {@link Float32Array}
-   * @param bindingName - The name of the [input binding]{@link Material#inputsBindings} from which to map the [buffer]{@link BufferBinding#buffer}
-   * @param bufferElementName - The name of the [buffer element]{@link BufferElement} from which to extract the data afterwards
+   * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * @param parameters - parameters used to get the result
+   * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+   * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
    * @returns - {@link Float32Array} holding {@link GPUBuffer} data
    */
   async getBufferElementResultByNames({
@@ -4262,8 +4305,8 @@ class Material {
   /**
    * Called before rendering the Material.
    * First, check if we need to create our bind groups or pipeline
-   * Then render the [textures]{@link Material#textures}
-   * Finally updates all the [bind groups]{@link Material#bindGroups}
+   * Then render the {@link textures}
+   * Finally updates all the {@link bindGroups | bind groups}
    */
   onBeforeRender() {
     this.compileMaterial();
@@ -4303,8 +4346,8 @@ class Material {
 class ComputeMaterial extends Material {
   /**
    * ComputeMaterial constructor
-   * @param renderer - our [renderer]{@link Renderer} class object
-   * @param parameters - [parameters]{@link ComputeMaterialParams} used to create our {@link ComputeMaterial}
+   * @param renderer - our {@link Renderer} class object
+   * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
    */
   constructor(renderer, parameters) {
     renderer = renderer && renderer.renderer || renderer;
@@ -4396,7 +4439,7 @@ class ComputeMaterial extends Material {
   /* RENDER */
   /**
    * If we defined a custom render function instead of the default one, register the callback
-   * @param callback - callback to run instead of the default behaviour, which is to set the [bind groups]{@link ComputeMaterial#bindGroups} and dispatch the work groups based on the [default dispatch size]{@link ComputeMaterial#dispatchSize}
+   * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}
    */
   useCustomRender(callback) {
     if (callback) {
@@ -4405,7 +4448,7 @@ class ComputeMaterial extends Material {
   }
   /**
    * Render the material if it is ready:
-   * Set the current pipeline, and render all the [work groups]{@link ComputeMaterial#workGroups}
+   * Set the current pipeline, set the bind groups and dispatch the work groups
    * @param pass - current compute pass encoder
    */
   render(pass) {
@@ -4436,9 +4479,10 @@ class ComputeMaterial extends Material {
     });
   }
   /**
-   * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
-   * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
-   * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+   * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
+   * @param parameters - parameters used to get the result
+   * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
+   * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
    * @async
    * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
@@ -4464,7 +4508,7 @@ class ComputePass {
   /**
    * ComputePass constructor
    * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
-   * @param parameters - [parameters]{@link ComputePassParams} used to create our {@link ComputePass}
+   * @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}
    */
   constructor(renderer, parameters = {}) {
     __privateAdd(this, _autoRender, void 0);
@@ -4572,21 +4616,21 @@ class ComputePass {
     this.material = new ComputeMaterial(this.renderer, computeParameters);
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+   * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
    */
   loseContext() {
     this.material.loseContext();
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} has been restored
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
    */
   restoreContext() {
     this.material.restoreContext();
   }
   /* TEXTURES */
   /**
-   * Get our [compute material textures array]{@link ComputeMaterial#textures}
+   * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
    * @readonly
    */
   get textures() {
@@ -4594,7 +4638,7 @@ class ComputePass {
     return ((_a = this.material) == null ? void 0 : _a.textures) || [];
   }
   /**
-   * Get our [compute material render textures array]{@link ComputeMaterial#renderTextures}
+   * Get our {@link ComputeMaterial#renderTextures | ComputeMaterial render textures array}
    * @readonly
    */
   get renderTextures() {
@@ -4603,7 +4647,7 @@ class ComputePass {
   }
   /**
    * Create a new {@link Texture}
-   * @param options - [Texture options]{@link TextureParams}
+   * @param options - {@link TextureParams | Texture parameters}
    * @returns - newly created {@link Texture}
    */
   createTexture(options) {
@@ -4626,7 +4670,7 @@ class ComputePass {
   }
   /**
    * Create a new {@link RenderTexture}
-   * @param  options - [RenderTexture options]{@link RenderTextureParams}
+   * @param  options - {@link RenderTextureParams | RenderTexture parameters}
    * @returns - newly created {@link RenderTexture}
    */
   createRenderTexture(options) {
@@ -4645,7 +4689,7 @@ class ComputePass {
     this.material.addTexture(renderTexture);
   }
   /**
-   * Get our [compute material uniforms]{@link ComputeMaterial#uniforms}
+   * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}
    * @readonly
    */
   get uniforms() {
@@ -4653,7 +4697,7 @@ class ComputePass {
     return (_a = this.material) == null ? void 0 : _a.uniforms;
   }
   /**
-   * Get our [compute material storages]{@link ComputeMaterial#storages}
+   * Get our {@link ComputeMaterial#storages | ComputeMaterial storages}
    * @readonly
    */
   get storages() {
@@ -4709,15 +4753,15 @@ class ComputePass {
   }
   /**
    * Callback used to run a custom render function instead of the default one.
-   * @param callback - callback to run instead of the default [work groups render]{@link ComputeMaterial#renderWorkGroup} function
+   * @param callback - callback to run instead of the default render behaviour
    */
   useCustomRender(callback) {
     this.material.useCustomRender(callback);
     return this;
   }
   /**
-   * Callback to run after the {@link Renderer} has been resized
-   * @param callback - callback to run just after {@link GPURenderer} has been resized
+   * Callback to run after the {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
+   * @param callback - callback to run just after {@link core/renderers/GPURenderer.GPURenderer | renderer} has been resized
    */
   onAfterResize(callback) {
     if (callback) {
@@ -4756,7 +4800,7 @@ class ComputePass {
   }
   /**
    * Render our compute pass
-   * Basically just check if our {@link GPURenderer} is ready, and then render our {@link ComputeMaterial}
+   * Basically just check if our {@link core/renderers/GPURenderer.GPURenderer | renderer} is ready, and then render our {@link ComputeMaterial}
    * @param pass
    */
   render(pass) {
@@ -4775,9 +4819,10 @@ class ComputePass {
     (_a = this.material) == null ? void 0 : _a.copyBufferToResult(commandEncoder);
   }
   /**
-   * Get the [result buffer]{@link WritableBufferBinding#resultBuffer} content by [binding]{@link WritableBufferBinding} and [buffer element]{@link BufferElement} names
-   * @param bindingName - [binding name]{@link WritableBufferBinding#name} from which to get the result
-   * @param bufferElementName - optional [buffer element]{@link BufferElement} (i.e. struct member) name if the result needs to be restrained to only one element
+   * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
+   * @param parameters - parameters used to get the result
+   * @param parameters.bindingName - {@link core/bindings/WritableBufferBinding.WritableBufferBinding#name | binding name} from which to get the result
+   * @param parameters.bufferElementName - optional {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} (i.e. struct member) name if the result needs to be restrained to only one element
    * @async
    * @returns - the mapped content of the {@link GPUBuffer} as a {@link Float32Array}
    */
@@ -4808,17 +4853,17 @@ const points = [new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new 
 class Box3 {
   /**
    * Box3 constructor
-   * @param min - min [vector]{@link Vec3} of the {@link Box3}
-   * @param max - max [vector]{@link Vec3} of the {@link Box3}
+   * @param min - min {@link Vec3 | vector} of the {@link Box3}
+   * @param max - max {@link Vec3 | vector} of the {@link Box3}
    */
   constructor(min = new Vec3(Infinity), max = new Vec3(-Infinity)) {
     this.min = min;
     this.max = max;
   }
   /**
-   * Set a {@link Box3} from two min and max [vectors]{@link Vec3}
-   * @param min - min [vector]{@link Vec3} of the {@link Box3}
-   * @param max - max [vector]{@link Vec3} of the {@link Box3}
+   * Set a {@link Box3} from two min and max {@link Vec3 | vectors}
+   * @param min - min {@link Vec3 | vector} of the {@link Box3}
+   * @param max - max {@link Vec3 | vector} of the {@link Box3}
    */
   set(min = new Vec3(Infinity), max = new Vec3(-Infinity)) {
     this.min.copy(min);
@@ -4834,23 +4879,23 @@ class Box3 {
   }
   /**
    * Get the {@link Box3} center
-   * @returns - [Center vector]{@link Vec3} of the {@link Box3}
+   * @returns - {@link Vec3 | center vector} of the {@link Box3}
    */
   getCenter() {
     return this.max.clone().add(this.min).multiplyScalar(0.5);
   }
   /**
    * Get the {@link Box3} size
-   * @returns - [Size vector]{@link Vec3} of the {@link Box3}
+   * @returns - {@link Vec3 | size vector} of the {@link Box3}
    */
   getSize() {
     return this.max.clone().sub(this.min);
   }
   /**
-   * Apply a [matrix]{@link Mat4} to a {@link Box3}
-   * Useful to apply a transformation [matrix]{@link Mat4} to a {@link Box3}
-   * @param matrix - [matrix]{@link Mat4} to use
-   * @returns - this {@link Box3} after [matrix]{@link Mat4} application
+   * Apply a {@link Mat4 | matrix} to a {@link Box3}
+   * Useful to apply a transformation {@link Mat4 | matrix} to a {@link Box3}
+   * @param matrix - {@link Mat4 | matrix} to use
+   * @returns - this {@link Box3} after {@link Mat4 | matrix} application
    */
   applyMat4(matrix = new Mat4()) {
     const corners = [];
@@ -4886,7 +4931,7 @@ const defaultDOMFrustumMargins = {
 class DOMFrustum {
   /**
    * DOMFrustum constructor
-   * @param {DOMFrustumParams} parameters - [parameters]{@link DOMFrustumParams} used to create our {@link DOMFrustum}
+   * @param {DOMFrustumParams} parameters - {@link DOMFrustumParams | parameters} used to create our {@link DOMFrustum}
    */
   constructor({
     boundingBox = new Box3(),
@@ -4987,10 +5032,7 @@ class DOMFrustum {
 class Geometry {
   /**
    * Geometry constructor
-   * @param [parameters={}] - parameters used to create our Geometry
-   * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
-   * @param {number} [parameters.instancesCount=1] - number of instances to draw
-   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+   * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
    */
   constructor({
     verticesOrder = "cw",
@@ -5043,11 +5085,8 @@ class Geometry {
   }
   /**
    * Add a vertex buffer to our Geometry, set its attributes and return it
-   * @param [parameters={}] - vertex buffer parameters
-   * @param [parameters.stepMode="vertex"] - GPU vertex step mode
-   * @param [parameters.name] - vertex buffer name
-   * @param [parameters.attributes=[]] - vertex buffer attributes
-   * @returns - newly created [vertex buffer]{@link VertexBuffer}
+   * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
+   * @returns - newly created {@link VertexBuffer | vertex buffer}
    */
   addVertexBuffer({ stepMode = "vertex", name, attributes = [] } = {}) {
     const vertexBuffer = {
@@ -5070,21 +5109,14 @@ class Geometry {
   /**
    * Get a vertex buffer by name
    * @param name - our vertex buffer name
-   * @returns - found [vertex buffer]{@link VertexBuffer} or null if not found
+   * @returns - found {@link VertexBuffer | vertex buffer} or null if not found
    */
   getVertexBufferByName(name = "") {
     return this.vertexBuffers.find((vertexBuffer) => vertexBuffer.name === name);
   }
   /**
    * Set a vertex buffer attribute
-   * @param parameters - attributes parameters
-   * @param {VertexBuffer=} parameters.vertexBuffer - vertex buffer holding this attribute
-   * @param {string} parameters.name - attribute name
-   * @param {WGSLVariableType} [parameters.type="vec3f"] - attribute type
-   * @param {GPUVertexFormat} [parameters.bufferFormat="float32x3"] - attribute buffer format
-   * @param {number} [parameters.size=3] - attribute size
-   * @param {Float32Array} [parameters.array=Float32Array] - attribute array
-   * @param {number} [parameters.verticesStride=1] - number of vertices used by this attribute, i.e. insert one for every X vertices
+   * @param parameters - attributes {@link VertexBufferAttributeParams | parameters}
    */
   setAttribute({
     vertexBuffer = this.vertexBuffers[0],
@@ -5143,7 +5175,7 @@ class Geometry {
   /**
    * Get an attribute by name
    * @param name - name of the attribute to find
-   * @returns - found [attribute]{@link VertexBufferAttribute} or null if not found
+   * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
    */
   getAttributeByName(name) {
     let attribute;
@@ -5269,10 +5301,7 @@ setWGSLFragment_fn = function() {
 class IndexedGeometry extends Geometry {
   /**
    * IndexedGeometry constructor
-   * @param {GeometryParams} [parameters={}] - parameters used to create our IndexedGeometry
-   * @param {GPUFrontFace} [parameters.verticesOrder="cw"] - vertices order to pass to the GPURenderPipeline
-   * @param {number} [parameters.instancesCount=1] - number of instances to draw
-   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
+   * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
    */
   constructor({
     verticesOrder = "cw",
@@ -5298,10 +5327,8 @@ class IndexedGeometry extends Geometry {
     return this.verticesCount < 256 * 256;
   }
   /**
-   *
-   * @param parameters - parameters used to create our index buffer
-   * @param {GPUIndexFormat} [parameters.bufferFormat="uint32"]
-   * @param {Uint32Array} [parameters.array=Uint32Array]
+   * Set our {@link indexBuffer}
+   * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
    */
   setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0) }) {
     this.indexBuffer = {
@@ -5341,11 +5368,7 @@ class IndexedGeometry extends Geometry {
 class PlaneGeometry extends IndexedGeometry {
   /**
    * PlaneGeometry constructor
-   * @param {PlaneGeometryParams} [parameters={}] - parameters used to create our PlaneGeometry
-   * @param {number} [parameters.instancesCount=1] - number of instances to draw
-   * @param {VertexBufferParams} [parameters.vertexBuffers=[]] - vertex buffers to use
-   * @param {number} [parameters.widthSegments=1] - number of segments along the X axis
-   * @param {number} [parameters.heightSegments=1] - number of segments along the Y axis
+   * @param parameters - {@link PlaneGeometryParams | parameters} used to create our PlaneGeometry
    */
   constructor({
     widthSegments = 1,
@@ -5394,8 +5417,8 @@ class PlaneGeometry extends IndexedGeometry {
   }
   /**
    * Compute the UV and position arrays based on our plane widthSegments and heightSegments values and return the corresponding attributes
-   * @param verticesCount - [number of vertices]{@link Geometry#verticesCount} of our {@link PlaneGeometry}
-   * @returns - our position and uv [attributes]{@link VertexBufferAttributeParams}
+   * @param verticesCount - {@link Geometry#verticesCount | number of vertices} of our {@link PlaneGeometry}
+   * @returns - our position and uv {@link VertexBufferAttributeParams | attributes}
    */
   getIndexedVerticesAndUVs(verticesCount) {
     const uv = {
@@ -5446,21 +5469,7 @@ class RenderMaterial extends Material {
   /**
    * RenderMaterial constructor
    * @param renderer - our renderer class object
-   * @param parameters - parameters used to create our Material
-   * @param {string} parameters.label - RenderMaterial label
-   * @param {AllowedGeometries} parameters.geometry - geometry to draw
-   * @param {boolean} parameters.useAsyncPipeline - whether the {@link RenderPipelineEntry} should be compiled asynchronously
-   * @param {MaterialShaders} parameters.shaders - our RenderMaterial shader codes and entry points
-   * @param {BindGroupInputs} parameters.inputs - our RenderMaterial {@link BindGroup} inputs
-   * @param {BindGroup[]} parameters.bindGroups - already created {@link BindGroup} to use
-   * @param {Sampler[]} parameters.samplers - array of {@link Sampler}
-   * @param {RenderMaterialRenderingOptions} parameters.rendering - RenderMaterial rendering options to pass to the {@link RenderPipelineEntry}
-   * @param {boolean} parameters.rendering.useProjection - whether to use the Camera bind group with this material
-   * @param {boolean} parameters.rendering.transparent - impacts the {@link RenderPipelineEntry} blend properties
-   * @param {boolean} parameters.rendering.depthWriteEnabled - whether to write to the depth buffer or not
-   * @param {GPUCompareFunction} parameters.rendering.depthCompare - depth compare function to use
-   * @param {GPUCullMode} parameters.rendering.cullMode - cull mode to use
-   * @param {Geometry['verticesOrder']} parameters.rendering.verticesOrder - vertices order to use
+   * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
    */
   constructor(renderer, parameters) {
     renderer = renderer && renderer.renderer || renderer;
@@ -5598,26 +5607,26 @@ function MeshBaseMixin(Base) {
     /**
          * MeshBase constructor
          * @typedef MeshBaseParams
-         * @property {string=} label - MeshBase label
-         * @property {boolean=} autoRender - whether we should add this MeshBase to our {@link Scene} to let it handle the rendering process automatically
+         * @property {string} [label] - MeshBase label
+         * @property {boolean} [autoRender] - whether we should add this MeshBase to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
          * @property {AllowedGeometries} geometry - geometry to draw
-         * @property {boolean=} useAsyncPipeline - whether the {@link RenderPipelineEntry} should be compiled asynchronously
+         * @property {boolean} [useAsyncPipeline] - whether the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} should be compiled asynchronously
          * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
-         * @property {BindGroupInputs=} inputs - our MeshBase {@link BindGroup} inputs
-         * @property {BindGroup[]=} bindGroups - already created {@link BindGroup} to use
-         * @property {boolean=} transparent - impacts the {@link RenderPipelineEntry} blend properties
-         * @property {GPUCullMode=} cullMode - cull mode to use
-         * @property {boolean=} visible - whether this Mesh should be visible (drawn) or not
-         * @property {number=} renderOrder - controls the order in which this Mesh should be rendered by our {@link Scene}
-         * @property {RenderTarget=} renderTarget - {@link RenderTarget} to render onto if any
-         * @property {ExternalTextureParams=} texturesOptions - textures options to apply
-         * @property {Sampler[]=} samplers - array of {@link Sampler}
+         * @property {BindGroupInputs} [inputs] - our MeshBase {@link BindGroup} inputs
+         * @property {BindGroup[]} [bindGroups] - already created {@link BindGroup} to use
+         * @property {boolean} [transparent] - impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} blend properties
+         * @property {GPUCullMode} [cullMode] - cull mode to use
+         * @property {boolean} [visible] - whether this Mesh should be visible (drawn) or not
+         * @property {number} [renderOrder] - controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene}
+         * @property {RenderTarget} [renderTarget] - {@link RenderTarget} to render onto if any
+         * @property {ExternalTextureParams} [texturesOptions] - textures options to apply
+         * @property {Sampler[]} [samplers] - array of {@link Sampler}
          *
          * @typedef MeshBaseArrayParams
          * @type {array}
-         * @property {(Renderer|GPUCurtains)} 0 - our [renderer]{@link Renderer} class object
+         * @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
          * @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
-         * @property {MeshBaseParams} 2 - [Mesh base parameters]{@link MeshBaseParams}
+         * @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
     
          * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
          */
@@ -5707,7 +5716,7 @@ function MeshBaseMixin(Base) {
     }
     /* SCENE */
     /**
-     * Add a Mesh to the renderer and the {@link Scene}
+     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     addToScene() {
       this.renderer.meshes.push(this);
@@ -5716,7 +5725,7 @@ function MeshBaseMixin(Base) {
       }
     }
     /**
-     * Remove a Mesh from the renderer and the {@link Scene}
+     * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
       if (__privateGet(this, _autoRender3)) {
@@ -5725,7 +5734,7 @@ function MeshBaseMixin(Base) {
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
     }
     /**
-     * Set a new {@link Renderer} for this {@link MeshBase}
+     * Set a new {@link Renderer} for this Mesh
      * @param renderer - new {@link Renderer} to set
      */
     setRenderer(renderer) {
@@ -5750,8 +5759,8 @@ function MeshBaseMixin(Base) {
       }
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been lost to prepare everything for restoration.
-     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the {@link MeshBase}
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
+     * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext() {
       this.geometry.vertexBuffers.forEach((vertexBuffer) => {
@@ -5763,7 +5772,7 @@ function MeshBaseMixin(Base) {
       this.material.loseContext();
     }
     /**
-     * Called when the [renderer device]{@link GPURenderer#device} has been restored
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext() {
       this.material.restoreContext();
@@ -5846,7 +5855,7 @@ function MeshBaseMixin(Base) {
     /* MATERIAL */
     /**
      * Set a Mesh transparent property, then set its material
-     * @param meshParameters - [RenderMaterial parameters]{@link RenderMaterialParams}
+     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */
     setMaterial(meshParameters) {
       var _a2;
@@ -5865,7 +5874,7 @@ function MeshBaseMixin(Base) {
     }
     /* TEXTURES */
     /**
-     * Get our [render material textures array]{@link RenderMaterial#textures}
+     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
      * @readonly
      */
     get textures() {
@@ -5873,7 +5882,7 @@ function MeshBaseMixin(Base) {
       return ((_a2 = this.material) == null ? void 0 : _a2.textures) || [];
     }
     /**
-     * Get our [render material render textures array]{@link RenderMaterial#renderTextures}
+     * Get our {@link RenderMaterial#renderTextures | RenderMaterial render textures array}
      * @readonly
      */
     get renderTextures() {
@@ -5882,7 +5891,7 @@ function MeshBaseMixin(Base) {
     }
     /**
      * Create a new {@link Texture}
-     * @param options - [Texture options]{@link TextureParams}
+     * @param options - {@link TextureParams | Texture parameters}
      * @returns - newly created {@link Texture}
      */
     createTexture(options) {
@@ -5913,7 +5922,7 @@ function MeshBaseMixin(Base) {
     }
     /**
      * Create a new {@link RenderTexture}
-     * @param  options - [RenderTexture options]{@link RenderTextureParams}
+     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
      * @returns - newly created {@link RenderTexture}
      */
     createRenderTexture(options) {
@@ -5933,7 +5942,7 @@ function MeshBaseMixin(Base) {
     }
     /**
      * Assign or remove a {@link RenderTarget} to this Mesh
-     * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
      * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
      */
     setRenderTarget(renderTarget) {
@@ -5974,7 +5983,7 @@ function MeshBaseMixin(Base) {
      * Resize the Mesh's textures
      * @param boundingRect
      */
-    resize(boundingRect = null) {
+    resize(boundingRect) {
       var _a2;
       this.resizeRenderTextures();
       if (super.resize) {
@@ -6076,11 +6085,11 @@ function MeshBaseMixin(Base) {
     }
     /**
      * Render our Mesh
-     * - Execute [onBeforeRenderPass]{@link MeshBase#onBeforeRenderPass}
-     * - Stop here if [renderer]{@link Renderer} is not ready or Mesh is not [visible]{@link MeshBase#visible}
+     * - Execute {@link onBeforeRenderPass}
+     * - Stop here if {@link Renderer} is not ready or Mesh is not {@link visible}
      * - Execute super render call if it exists
-     * - [Render]{@link MeshBase#onRenderPass} our {@link RenderMaterial} and geometry
-     * - Execute [onAfterRenderPass]{@link MeshBase#onAfterRenderPass}
+     * - {@link onRenderPass | render} our {@link material} and {@link geometry}
+     * - Execute {@link onAfterRenderPass}
      * @param pass - current render pass encoder
      */
     render(pass) {
@@ -6095,7 +6104,7 @@ function MeshBaseMixin(Base) {
     }
     /* DESTROY */
     /**
-     * Remove the Mesh from the {@link Scene} and destroy it
+     * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
      */
     remove() {
       this.removeFromScene();
@@ -6139,23 +6148,23 @@ class CacheManager {
     this.planeGeometries = [];
   }
   /**
-   * Check if a given [plane geometry]{@link PlaneGeometry} is already cached based on its [definition id]{@link PlaneGeometry#definition.id}
-   * @param planeGeometry - [plane geometry]{@link PlaneGeometry} to check
-   * @returns - [plane geometry]{@link PlaneGeometry} found or null if not found
+   * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition.id | definition id}
+   * @param planeGeometry - {@link PlaneGeometry} to check
+   * @returns - {@link PlaneGeometry} found or null if not found
    */
   getPlaneGeometry(planeGeometry) {
     return this.planeGeometries.find((element) => element.definition.id === planeGeometry.definition.id);
   }
   /**
-   * Check if a given [plane geometry]{@link PlaneGeometry} is already cached based on its [definition]{@link PlaneGeometry#definition}
-   * @param planeGeometryID - [plane geometry definition id]{@link PlaneGeometry#definition.id}
-   * @returns - [plane geometry]{@link PlaneGeometry} found or null if not found
+   * Check if a given {@link PlaneGeometry} is already cached based on its {@link PlaneGeometry#definition | definition id}
+   * @param planeGeometryID - {@link PlaneGeometry#definition.id | PlaneGeometry definition id}
+   * @returns - {@link PlaneGeometry} found or null if not found
    */
   getPlaneGeometryByID(planeGeometryID) {
     return this.planeGeometries.find((element) => element.definition.id === planeGeometryID);
   }
   /**
-   * Add a [plane geometry]{@link PlaneGeometry} to our cache [plane geometries array]{@link CacheManager#planeGeometries}
+   * Add a {@link PlaneGeometry} to our cache {@link planeGeometries} array
    * @param planeGeometry
    */
   addPlaneGeometry(planeGeometry) {
@@ -6173,8 +6182,8 @@ class FullscreenPlane extends MeshBaseMixin(class {
 }) {
   /**
    * FullscreenPlane constructor
-   * @param renderer- [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
-   * @param parameters - [parameters]{@link MeshBaseRenderParams} use to create this {@link FullscreenPlane}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link FullscreenPlane}
+   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
    */
   constructor(renderer, parameters = {}) {
     renderer = renderer && renderer.renderer || renderer;
@@ -6204,10 +6213,10 @@ class FullscreenPlane extends MeshBaseMixin(class {
     super.resize(boundingRect);
   }
   /**
-   * Take the pointer [vector]{@link Vec2} position relative to the document and returns it relative to our {@link FullscreenPlane}
+   * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link FullscreenPlane}
    * It ranges from -1 to 1 on both axis
-   * @param mouseCoords - pointer [vector]{@link Vec2} coordinates
-   * @returns - the mapped [vector]{@link Vec2} coordinates in the [-1, 1] range
+   * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
+   * @returns - the mapped {@link Vec2 | vector} coordinates in the [-1, 1] range
    */
   mouseToPlaneCoords(mouseCoords = new Vec2()) {
     return new Vec2(
@@ -6221,7 +6230,6 @@ class ProjectedObject3D extends Object3D {
    * ProjectedObject3D constructor
    * @param renderer - our renderer class object
    */
-  // TODO just use the Camera instead?
   constructor(renderer) {
     super();
     renderer = renderer && renderer.renderer || renderer;
@@ -6280,37 +6288,43 @@ class ProjectedObject3D extends Object3D {
     };
   }
   /**
-   * Get/set our model view matrix
-   * @readonly
+   * Get our {@link modelViewMatrix | model view matrix}
    */
   get modelViewMatrix() {
     return this.matrices.modelView.matrix;
   }
+  /**
+   * Set our {@link modelViewMatrix | model view matrix}
+   * @param value - new {@link modelViewMatrix | model view matrix}
+   */
   set modelViewMatrix(value) {
     this.matrices.modelView.matrix = value;
     this.matrices.modelView.shouldUpdate = true;
   }
   /**
-   * Get our camera view matrix
+   * Get our {@link Camera#viewMatrix | camera view matrix}
    * @readonly
    */
   get viewMatrix() {
     return this.camera.viewMatrix;
   }
   /**
-   * Get our camera projection matrix
+   * Get our {@link Camera#projectionMatrix | camera projection matrix}
    * @readonly
    */
   get projectionMatrix() {
     return this.camera.projectionMatrix;
   }
   /**
-   * Get/set our model view projection matrix
-   * @readonly
+   * Get our {@link modelViewProjectionMatrix | model view projection matrix}
    */
   get modelViewProjectionMatrix() {
     return this.matrices.modelViewProjection.matrix;
   }
+  /**
+   * Set our {@link modelViewProjectionMatrix | model view projection matrix}
+   * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
+   */
   set modelViewProjectionMatrix(value) {
     this.matrices.modelViewProjection.matrix = value;
     this.matrices.modelViewProjection.shouldUpdate = true;
@@ -6325,7 +6339,7 @@ class ProjectedObject3D extends Object3D {
   /**
    * Tell all our matrices to update
    */
-  updateSizePositionAndProjection() {
+  shouldUpdateMatrixStack() {
     this.shouldUpdateModelMatrix();
     this.shouldUpdateProjectionMatrixStack();
   }
@@ -6362,7 +6376,7 @@ struct VSOutput {
 
 @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
   // normals
-  return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
+  return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`
 );
 const defaultTransformedMeshParams = {
@@ -6422,7 +6436,7 @@ function MeshTransformedMixin(Base) {
       };
       this.setDOMFrustum();
       this.geometry = geometry;
-      this.updateSizePositionAndProjection();
+      this.shouldUpdateMatrixStack();
     }
     /* SHADERS */
     /**
@@ -6480,7 +6494,7 @@ function MeshTransformedMixin(Base) {
     /* MATERIAL */
     /**
      * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
-     * @param meshParameters - [RenderMaterial parameters]{@link RenderMaterialParams}
+     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */
     setMaterial(meshParameters) {
       const matricesUniforms = {
@@ -6523,7 +6537,7 @@ function MeshTransformedMixin(Base) {
      * Resize our {@link MeshTransformedBaseClass}
      * @param boundingRect - the new bounding rectangle
      */
-    resize(boundingRect = null) {
+    resize(boundingRect) {
       if (this.domFrustum)
         this.domFrustum.setContainerBoundingRect(this.renderer.boundingRect);
       super.resize(boundingRect);
@@ -6547,8 +6561,8 @@ function MeshTransformedMixin(Base) {
      * Tell the model and projection matrices to update.
      * Here because else typescript is confused
      */
-    updateSizePositionAndProjection() {
-      super.updateSizePositionAndProjection();
+    shouldUpdateMatrixStack() {
+      super.shouldUpdateMatrixStack();
     }
     /**
      * Update the model and projection matrices if needed.
@@ -6595,7 +6609,7 @@ function MeshTransformedMixin(Base) {
      * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
      * First, we update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
      * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
-     * Finally we call [Mesh base onBeforeRenderPass]{@link MeshBaseClass#onBeforeRenderPass} super
+     * Finally we call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
      */
     onBeforeRenderPass() {
       this.updateMatrixStack();
@@ -6633,7 +6647,7 @@ let pipelineId = 0;
 class PipelineEntry {
   /**
    * PipelineEntry constructor
-   * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link PipelineEntry}
+   * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link PipelineEntry}
    */
   constructor(parameters) {
     this.type = "PipelineEntry";
@@ -6657,22 +6671,22 @@ class PipelineEntry {
     };
   }
   /**
-   * Get whether the [pipeline]{@link PipelineEntry#pipeline} is ready, i.e. successfully compiled
+   * Get whether the {@link pipeline} is ready, i.e. successfully compiled
    * @readonly
    */
   get ready() {
     return !this.status.compiling && this.status.compiled && !this.status.error;
   }
   /**
-   * Get whether the [pipeline]{@link PipelineEntry#pipeline} is ready to be compiled, i.e. we have already not already tried to compile it, and it's not currently compiling neither
+   * Get whether the {@link pipeline} is ready to be compiled, i.e. we have already not already tried to compile it, and it's not currently compiling neither
    * @readonly
    */
   get canCompile() {
     return !this.status.compiling && !this.status.compiled && !this.status.error;
   }
   /**
-   * Set our [pipeline entry bind groups]{@link PipelineEntry#bindGroups}
-   * @param bindGroups - [bind groups]{@link Material#bindGroups} to use with this {@link PipelineEntry}
+   * Set our {@link PipelineEntry#bindGroups | pipeline entry bind groups}
+   * @param bindGroups - {@link core/materials/Material.Material#bindGroups | bind groups} to use with this {@link PipelineEntry}
    */
   setPipelineEntryBindGroups(bindGroups) {
     this.bindGroups = bindGroups;
@@ -6682,7 +6696,7 @@ class PipelineEntry {
    * Create a {@link GPUShaderModule}
    * @param parameters - Parameters used
    * @param parameters.code - patched WGSL code string
-   * @param parameters.type - [shader type]{@link MaterialShadersType}
+   * @param parameters.type - {@link MaterialShadersType | shader type}
    * @returns - compiled {@link GPUShaderModule} if successful
    */
   createShaderModule({ code = "", type = "vertex" }) {
@@ -6728,7 +6742,7 @@ ${formattedMessage}`);
   createShaders() {
   }
   /**
-   * Create the [pipeline entry layout]{@link PipelineEntry#layout}
+   * Create the pipeline entry {@link layout}
    */
   createPipelineLayout() {
     this.layout = this.renderer.createPipelineLayout({
@@ -6742,9 +6756,9 @@ ${formattedMessage}`);
   createPipelineDescriptor() {
   }
   /**
-   * Flush a {@link PipelineEntry}, i.e. reset its [bind groups]{@link PipelineEntry#bindGroups}, [layout]{@link PipelineEntry#layout} and descriptor and recompile the [pipeline]{@link PipelineEntry#pipeline}
+   * Flush a {@link PipelineEntry}, i.e. reset its {@link bindGroups | bind groups}, {@link layout} and descriptor and recompile the {@link pipeline}
    * Used when one of the bind group or rendering property has changed
-   * @param newBindGroups - new [bind groups]{@link PipelineEntry#bindGroups} in case they have changed
+   * @param newBindGroups - new {@link bindGroups | bind groups} in case they have changed
    */
   flushPipelineEntry(newBindGroups = []) {
     this.status.compiling = false;
@@ -6754,7 +6768,7 @@ ${formattedMessage}`);
     this.compilePipelineEntry();
   }
   /**
-   * Set up a [pipeline]{@link PipelineEntry#pipeline} by creating the shaders, the [layout]{@link PipelineEntry#layout} and the descriptor
+   * Set up a {@link pipeline} by creating the shaders, the {@link layout} and the descriptor
    */
   compilePipelineEntry() {
     this.status.compiling = true;
@@ -6821,7 +6835,7 @@ const ProjectedShaderChunks = {
 class RenderPipelineEntry extends PipelineEntry {
   /**
    * RenderPipelineEntry constructor
-   * @param parameters - [parameters]{@link RenderPipelineEntryParams} used to create this {@link RenderPipelineEntry}
+   * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
    */
   constructor(parameters) {
     let { renderer } = parameters;
@@ -6876,15 +6890,15 @@ class RenderPipelineEntry extends PipelineEntry {
   // TODO! need to chose whether we should silently add the camera bind group here
   // or explicitly in the RenderMaterial class createBindGroups() method
   /**
-   * Merge our [pipeline entry bind groups]{@link RenderPipelineEntry#bindGroups} with the [camera bind group]{@link CameraRenderer#cameraBindGroup} if needed and set them
-   * @param bindGroups - [bind groups]{@link RenderMaterial#bindGroups} to use with this {@link RenderPipelineEntry}
+   * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link CameraRenderer#cameraBindGroup | camera bind group} if needed and set them
+   * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
    */
   setPipelineEntryBindGroups(bindGroups) {
     this.bindGroups = "cameraBindGroup" in this.renderer && this.options.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
   }
   /**
-   * Set {@link RenderPipelineEntry} properties (in this case the [bind groups]{@link RenderPipelineEntry#bindGroups} and [attributes]{@link RenderPipelineEntry#attributes})
-   * @param parameters - the [bind groups]{@link RenderMaterial#bindGroups} and [attributes]{@link RenderMaterial#attributes} to use
+   * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
+   * @param parameters - the {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} and {@link core/materials/RenderMaterial.RenderMaterial#attributes | attributes} to use
    */
   setPipelineEntryProperties(parameters) {
     const { attributes, bindGroups } = parameters;
@@ -6893,7 +6907,7 @@ class RenderPipelineEntry extends PipelineEntry {
   }
   /* SHADERS */
   /**
-   * Patch the shaders by appending all the necessary shader chunks, [bind groups]{@link RenderPipelineEntry#bindGroups}) and [attributes]{@link RenderPipelineEntry#attributes} WGSL code fragments to the given [parameter shader code]{@link PipelineEntryParams#shaders}
+   * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
    */
   patchShaders() {
     this.shaders.vertex.head = "";
@@ -6973,7 +6987,7 @@ ${this.shaders.vertex.head}`;
   }
   /* SETUP */
   /**
-   * Create the [shaders]{@link RenderPipelineEntry#shaders}: patch them and create the {@link GPUShaderModule}
+   * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
    */
   createShaders() {
     this.patchShaders();
@@ -6987,7 +7001,7 @@ ${this.shaders.vertex.head}`;
     });
   }
   /**
-   * Create the [render pipeline descriptor]{@link RenderPipelineEntry#descriptor}
+   * Create the render pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module)
@@ -7056,7 +7070,7 @@ ${this.shaders.vertex.head}`;
     };
   }
   /**
-   * Create the [render pipeline]{@link RenderPipelineEntry#pipeline}
+   * Create the render {@link pipeline}
    */
   createRenderPipeline() {
     if (!this.shaders.vertex.module || !this.shaders.fragment.module)
@@ -7069,7 +7083,7 @@ ${this.shaders.vertex.head}`;
     }
   }
   /**
-   * Asynchronously create the [render pipeline]{@link RenderPipelineEntry#pipeline}
+   * Asynchronously create the render {@link pipeline}
    * @async
    * @returns - void promise result
    */
@@ -7087,7 +7101,7 @@ ${this.shaders.vertex.head}`;
     }
   }
   /**
-   * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [render pipeline]{@link RenderPipelineEntry#pipeline}
+   * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our render {@link pipeline}
    * @async
    */
   async compilePipelineEntry() {
@@ -7105,7 +7119,7 @@ ${this.shaders.vertex.head}`;
 class ComputePipelineEntry extends PipelineEntry {
   /**
    * ComputePipelineEntry constructor
-   * @param parameters - [parameters]{@link PipelineEntryParams} used to create this {@link ComputePipelineEntry}
+   * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
    */
   constructor(parameters) {
     let { renderer } = parameters;
@@ -7125,8 +7139,8 @@ class ComputePipelineEntry extends PipelineEntry {
     this.descriptor = null;
   }
   /**
-   * Set {@link ComputePipelineEntry} properties (in this case the [bind groups]{@link ComputePipelineEntry#bindGroups})
-   * @param parameters - the [bind groups]{@link ComputeMaterial#bindGroups} to use
+   * Set {@link ComputePipelineEntry} properties (in this case the {@link bindGroups | bind groups})
+   * @param parameters - the {@link core/materials/ComputeMaterial.ComputeMaterial#bindGroups | bind groups} to use
    */
   setPipelineEntryProperties(parameters) {
     const { bindGroups } = parameters;
@@ -7134,7 +7148,7 @@ class ComputePipelineEntry extends PipelineEntry {
   }
   /* SHADERS */
   /**
-   * Patch the shaders by appending all the [bind groups]{@link ComputePipelineEntry#bindGroups}) WGSL code fragments to the given [parameter shader code]{@link PipelineEntryParams#shaders}
+   * Patch the shaders by appending all the {@link bindGroups | bind groups}) WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
    */
   patchShaders() {
     this.shaders.compute.head = "";
@@ -7174,7 +7188,7 @@ ${this.shaders.compute.head}`;
   }
   /* SETUP */
   /**
-   * Create the [shaders]{@link ComputePipelineEntry#shaders}: patch them and create the {@link GPUShaderModule}
+   * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
    */
   createShaders() {
     this.patchShaders();
@@ -7184,7 +7198,7 @@ ${this.shaders.compute.head}`;
     });
   }
   /**
-   * Create the [compute pipeline descriptor]{@link ComputePipelineEntry#descriptor}
+   * Create the compute pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
     if (!this.shaders.compute.module)
@@ -7199,7 +7213,7 @@ ${this.shaders.compute.head}`;
     };
   }
   /**
-   * Create the [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * Create the compute {@link pipeline}
    */
   createComputePipeline() {
     if (!this.shaders.compute.module)
@@ -7212,7 +7226,7 @@ ${this.shaders.compute.head}`;
     }
   }
   /**
-   * Asynchronously create the [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * Asynchronously create the compute {@link pipeline}
    * @async
    * @returns - void promise result
    */
@@ -7230,7 +7244,7 @@ ${this.shaders.compute.head}`;
     }
   }
   /**
-   * Call [super compilePipelineEntry]{@link PipelineEntry#compilePipelineEntry} method, then create our [compute pipeline]{@link ComputePipelineEntry#pipeline}
+   * Call {@link PipelineEntry#compilePipelineEntry | PipelineEntry compilePipelineEntry} method, then create our compute {@link pipeline}
    * @async
    */
   async compilePipelineEntry() {
@@ -7252,8 +7266,8 @@ class PipelineManager {
     this.pipelineEntries = [];
   }
   /**
-   * Checks if the provided [parameters]{@link RenderPipelineEntryBaseParams} belongs to an already created {@link RenderPipelineEntry}.
-   * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
+   * Checks if the provided {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+   * @param parameters - {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters}
    * @returns - the found {@link RenderPipelineEntry}, or null if not found
    */
   isSameRenderPipeline(parameters) {
@@ -7264,9 +7278,9 @@ class PipelineManager {
     });
   }
   /**
-   * Check if a {@link RenderPipelineEntry} has already been created with the given [parameters]{@link RenderPipelineEntryBaseParams}.
-   * Use it if found, else create a new one and add it to the [pipelineEntries]{@link PipelineManager#pipelineEntries} array.
-   * @param parameters - [RenderPipelineEntry parameters]{@link RenderPipelineEntryBaseParams}
+   * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
+   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
    * @returns - {@link RenderPipelineEntry}, either from cache or newly created
    */
   createRenderPipeline(parameters) {
@@ -7280,8 +7294,8 @@ class PipelineManager {
     }
   }
   /**
-   * Checks if the provided [parameters]{@link PipelineEntryBaseParams} belongs to an already created {@link ComputePipelineEntry}.
-   * @param parameters - [ComputePipelineEntry parameters]{@link PipelineEntryBaseParams}
+   * Checks if the provided {@link PipelineEntryParams | parameters} belongs to an already created {@link ComputePipelineEntry}.
+   * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
    * @returns - the found {@link ComputePipelineEntry}, or null if not found
    */
   isSameComputePipeline(parameters) {
@@ -7292,8 +7306,9 @@ class PipelineManager {
     });
   }
   /**
-   * Create a new {@link ComputePipelineEntry}
-   * @param parameters - [PipelineEntry parameters]{@link PipelineEntryBaseParams}
+   * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
+   * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
+   * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
    * @returns - newly created {@link ComputePipelineEntry}
    */
   createComputePipeline(parameters) {
@@ -7307,9 +7322,9 @@ class PipelineManager {
     }
   }
   /**
-   * Check if the given [pipeline entry]{@link AllowedPipelineEntries} is already set, if not set it
+   * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it
    * @param pass - current pass encoder
-   * @param pipelineEntry - the [pipeline entry]{@link AllowedPipelineEntries} to set
+   * @param pipelineEntry - the {@link AllowedPipelineEntries | PipelineEntry} to set
    */
   setCurrentPipeline(pass, pipelineEntry) {
     if (pipelineEntry.index !== this.currentPipelineIndex) {
@@ -7318,7 +7333,7 @@ class PipelineManager {
     }
   }
   /**
-   * Reset the [current pipeline index]{@link PipelineManager#currentPipelineIndex} so the next [pipeline entry]{@link AllowedPipelineEntries} will be set for sure
+   * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
    */
   resetCurrentPipeline() {
     this.currentPipelineIndex = null;
@@ -7343,15 +7358,15 @@ class ResizeManager {
     });
   }
   /**
-   * Set [shouldWatch]{@link ResizeManager#shouldWatch}
+   * Set {@link shouldWatch}
    * @param shouldWatch - whether to watch or not
    */
   useObserver(shouldWatch = true) {
     this.shouldWatch = shouldWatch;
   }
   /**
-   * Track an [element]{@link HTMLElement} size change and execute a callback function when it happens
-   * @param entry - [entry]{@link ResizeManagerEntry} to watch
+   * Track an {@link HTMLElement} size change and execute a callback function when it happens
+   * @param entry - {@link ResizeManagerEntry | entry} to watch
    */
   observe({ element, priority, callback }) {
     if (!element || !this.shouldWatch)
@@ -7365,8 +7380,8 @@ class ResizeManager {
     this.entries.push(entry);
   }
   /**
-   * Unobserve an [element]{@link HTMLElement} and remove it from our [entries array]{@link ResizeManager#entries}
-   * @param element - [element]{@link HTMLElement} to unobserve
+   * Unobserve an {@link HTMLElement} and remove it from our {@link entries} array
+   * @param element - {@link HTMLElement} to unobserve
    */
   unobserve(element) {
     this.resizeObserver.unobserve(element);
@@ -7383,10 +7398,7 @@ const resizeManager = new ResizeManager();
 class DOMElement {
   /**
    * DOMElement constructor
-   * @param parameters - parameters used to create our DOMElement
-   * @param {HTMLElement=} parameters.element - DOM HTML element to track
-   * @param {function=} parameters.onSizeChanged - callback to run when element's size changed
-   * @param {function=} parameters.onPositionChanged - callback to run when element's position changed
+   * @param parameters - {@link DOMElementParams | parameters} used to create our DOMElement
    */
   constructor({
     element = document.body,
@@ -7431,12 +7443,15 @@ class DOMElement {
     return !["x", "y", "left", "top", "right", "bottom", "width", "height"].some((k) => rect1[k] !== rect2[k]);
   }
   /**
-   * Get or set our element's bounding rectangle
-   * @readonly
+   * Get our element bounding rectangle
    */
   get boundingRect() {
     return this._boundingRect;
   }
+  /**
+   * Set our element bounding rectangle
+   * @param boundingRect - new bounding rectangle
+   */
   set boundingRect(boundingRect) {
     const isSameRect = !!this.boundingRect && this.compareBoundingRect(boundingRect, this.boundingRect);
     this._boundingRect = {
@@ -7478,7 +7493,7 @@ class DOMElement {
     __privateSet(this, _throttleResize, setTimeout(() => {
       this.isResizing = false;
       __privateSet(this, _throttleResize, null);
-    }, 50));
+    }, 25));
   }
   /**
    * Destroy our DOMElement - remove from resize observer and clear throttle timeout
@@ -7494,9 +7509,9 @@ _throttleResize = new WeakMap();
 class DOMObject3D extends ProjectedObject3D {
   /**
    * DOMObject3D constructor
-   * @param renderer - [Curtains renderer]{@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link Plane}
+   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}
    * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
-   * @param parameters - [parameters]{@link DOMObject3DParams} used to create this {@link DOMObject3D}
+   * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
    */
   constructor(renderer, element, parameters) {
     super(renderer);
@@ -7526,23 +7541,28 @@ class DOMObject3D extends ProjectedObject3D {
     this.setDOMElement(element);
   }
   /**
-   * Set the [DOMElement]{@link DOMObject3D#domElement}
+   * Set the {@link domElement | DOM Element}
    * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
    */
   setDOMElement(element) {
     this.domElement = new DOMElement({
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
-      onPositionChanged: (boundingRect) => {
-        if (this.watchScroll) {
-          this.size.document = boundingRect;
-          this.updateSizeAndPosition();
-        }
-      }
+      onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect)
     });
   }
   /**
-   * Reset the [DOMElement]{@link DOMObject3D#domElement}
+   * Update size and position when the {@link domElement | DOM Element} position changed
+   * @param boundingRect - the new bounding rectangle
+   */
+  onPositionChanged(boundingRect) {
+    if (this.watchScroll) {
+      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
+      this.updateSizeAndPosition();
+    }
+  }
+  /**
+   * Reset the {@link domElement | DOMElement}
    * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
    */
   resetDOMElement(element) {
@@ -7557,29 +7577,29 @@ class DOMObject3D extends ProjectedObject3D {
   updateSizeAndPosition() {
     this.setWorldSizes();
     this.applyPosition();
-    super.updateSizeAndPosition();
+    this.shouldUpdateModelMatrix();
   }
   /**
    * Update the {@link DOMObject3D} sizes, position and projection
    */
-  updateSizePositionAndProjection() {
+  shouldUpdateMatrixStack() {
     this.updateSizeAndPosition();
-    super.updateSizePositionAndProjection();
+    super.shouldUpdateMatrixStack();
   }
   /**
    * Resize the {@link DOMObject3D}
-   * @param boundingRect - new [DOM Element]{@link DOMObject3D#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+   * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
-  resize(boundingRect = null) {
+  resize(boundingRect) {
     var _a;
     if (!boundingRect && (!this.domElement || ((_a = this.domElement) == null ? void 0 : _a.isResizing)))
       return;
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-    this.updateSizePositionAndProjection();
+    this.shouldUpdateMatrixStack();
   }
   /* BOUNDING BOXES GETTERS */
   /**
-   * Get the [DOM Element]{@link DOMObject3D#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+   * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    * @readonly
    */
   get boundingRect() {
@@ -7587,7 +7607,7 @@ class DOMObject3D extends ProjectedObject3D {
   }
   /* TRANSFOMS */
   /**
-   * Set our transforms properties and [onChange]{@link Vec3#onChange} callbacks
+   * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks
    */
   setTransforms() {
     super.setTransforms();
@@ -7598,61 +7618,76 @@ class DOMObject3D extends ProjectedObject3D {
     this.transformOrigin.onChange(() => this.setWorldTransformOrigin());
   }
   /**
-   * Get/set the [additional translation relative to the document]{@link DOMObject3DTransforms#position.document}
+   * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
    */
   get documentPosition() {
     return this.transforms.position.document;
   }
+  /**
+   * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+   * @param value - additional translation relative to the document to apply
+   */
   set documentPosition(value) {
     this.transforms.position.document = value;
     this.applyPosition();
   }
   /**
-   * Get the [DOMObject3D DOM element]{@link DOMObject3D#domElement} scale in world space
+   * Get the {@link domElement | DOM element} scale in world space
+   * @readonly
    */
   get DOMObjectWorldScale() {
     return __privateGet(this, _DOMObjectWorldScale).clone();
   }
   /**
-   * Get the {@link DOMObject3D} scale in world space (accounting for [scale]{@link DOMObject3D#scale})
+   * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
+   * @readonly
    */
   get worldScale() {
     return this.DOMObjectWorldScale.multiply(this.scale);
   }
   /**
    * Get the {@link DOMObject3D} position in world space
+   * @readonly
    */
   get worldPosition() {
     return __privateGet(this, _DOMObjectWorldPosition).clone();
   }
   /**
-   * Get/set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+   * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
    */
   get transformOrigin() {
     return this.transforms.origin.model;
   }
+  /**
+   * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+   * @param value - new transform origin
+   */
   set transformOrigin(value) {
     this.transforms.origin.model = value;
     this.setWorldTransformOrigin();
   }
   /**
-   * Get/set the {@link DOMObject3D} transform origin in world space
+   * Get the {@link DOMObject3D} transform origin in world space
    */
   get worldTransformOrigin() {
     return this.transforms.origin.world;
   }
+  /**
+   * Set the {@link DOMObject3D} transform origin in world space
+   * @param value - new world space transform origin
+   */
   set worldTransformOrigin(value) {
     this.transforms.origin.world = value;
   }
   /**
-   * Set the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} using its world position and document translation converted to world space
+   * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
    */
   applyPosition() {
     this.applyDocumentPosition();
     super.applyPosition();
   }
   /**
-   * Compute the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} using its world position and document translation converted to world space
+   * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
    */
   applyDocumentPosition() {
     let worldPosition = new Vec3(0, 0, 0);
@@ -7676,7 +7711,7 @@ class DOMObject3D extends ProjectedObject3D {
   }
   /* MATRICES */
   /**
-   * Update the [model matrix]{@link DOMObject3D#modelMatrix} accounting the [DOMObject3D world position]{@link DOMObject3D##DOMObjectWorldPosition} and [DOMObject3D world scale]{@link DOMObject3D##DOMObjectWorldScale}
+   * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
    */
   updateModelMatrix() {
     this.modelMatrix.composeFromOrigin(
@@ -7688,8 +7723,8 @@ class DOMObject3D extends ProjectedObject3D {
     this.modelMatrix.scale(__privateGet(this, _DOMObjectWorldScale));
   }
   /**
-   * Convert a document position [vector]{@link Vec3} to a world position [vector]{@link Vec3}
-   * @param vector - document position [vector]{@link Vec3} converted to world space
+   * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}
+   * @param vector - document position {@link Vec3 | vector} converted to world space
    */
   documentToWorldSpace(vector = new Vec3()) {
     return new Vec3(
@@ -7699,7 +7734,7 @@ class DOMObject3D extends ProjectedObject3D {
     );
   }
   /**
-   * Set the [DOMOBject3D world size]{@link DOMObject3D#size.world} and set the {@link DOMObject3D} world transform origin
+   * Set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
    */
   setWorldSizes() {
     const containerBoundingRect = this.renderer.boundingRect;
@@ -7735,8 +7770,8 @@ class DOMObject3D extends ProjectedObject3D {
     this.shouldUpdateProjectionMatrixStack();
   }
   /**
-   * Update the [DOMOBject3D DOMElement]{@link DOMObject3D#domElement} scroll position
-   * @param delta - last [scroll delta values]{@link ScrollManager#delta}
+   * Update the {@link domElement | DOM Element} scroll position
+   * @param delta - last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}
    */
   updateScrollPosition(delta = { x: 0, y: 0 }) {
     if (delta.x || delta.y) {
@@ -7760,9 +7795,9 @@ const defaultDOMMeshParams = {
 class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
   /**
    * DOMMesh constructor
-   * @param renderer - [Curtains renderer]{@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
+   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
    * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}
-   * @param parameters - [parameters]{@link DOMMeshParams} used to create this {@link DOMMesh}
+   * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}
    */
   constructor(renderer, element, parameters) {
     super(renderer, element, { ...defaultDOMMeshParams, ...parameters });
@@ -7778,7 +7813,7 @@ class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
     this.setInitSources();
   }
   /**
-   * Get/set whether our [material]{@link DOMMesh#material} and [geometry]{@link DOMMesh#geometry} are ready
+   * Get/set whether our {@link material} and {@link geometry} are ready
    * @readonly
    */
   get ready() {
@@ -7804,21 +7839,21 @@ class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
     }
   }
   /**
-   * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its [sources are ready]{@link DOMMesh#sourcesReady} and its [material]{@link DOMMesh#material} and [geometry]{@link DOMMesh#geometry} are ready.
+   * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its {@link sourcesReady | sources are ready} and its {@link material} and {@link geometry} are ready.
    * @readonly
    */
   get DOMMeshReady() {
     return this.ready && this.sourcesReady;
   }
   /**
-   * Add a {@link DOMMesh} to the renderer and the {@link Scene}
+   * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   addToScene() {
     super.addToScene();
     this.renderer.domMeshes.push(this);
   }
   /**
-   * Remove a {@link DOMMesh} from the renderer and the {@link Scene}
+   * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
     super.removeFromScene();
@@ -7827,7 +7862,7 @@ class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
     );
   }
   /**
-   * Load initial {@link DOMMesh} sources if needed and create associated [textures]{@link Texture}
+   * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
    */
   setInitSources() {
     let loaderSize = 0;
@@ -7876,7 +7911,7 @@ class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
     }
   }
   /**
-   * Reset/change a [DOMMesh element]{@link DOMMesh#domElement}
+   * Reset/change the {@link domElement | DOM Element}
    * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
    */
   resetDOMElement(element) {
@@ -7889,7 +7924,7 @@ class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
     }
   }
   /**
-   * Get our [DOM Element]{@link DOMMesh#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
+   * Get our {@link DOMMesh#domElement | DOM Element} {@link core/DOM/DOMElement.DOMElement#boundingRect | bounding rectangle} accounting for current {@link core/renderers/GPURenderer.GPURenderer#pixelRatio | renderer pixel ratio}
    */
   get pixelRatioBoundingRect() {
     const devicePixelRatio = window.devicePixelRatio ?? 1;
@@ -7910,7 +7945,7 @@ class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
   }
   /**
    * Create a new {@link RenderTexture}
-   * @param  options - [RenderTexture options]{@link RenderTextureParams}
+   * @param  options - {@link RenderTextureParams | RenderTexture parameters}
    * @returns - newly created {@link RenderTexture}
    */
   createRenderTexture(options) {
@@ -7931,8 +7966,8 @@ class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
   }
   /* EVENTS */
   /**
-   * Called each time one of the initial sources associated [texture]{@link Texture} has been uploaded to the GPU
-   * @param callback - callback to call each time a [texture]{@link Texture} has been uploaded to the GPU
+   * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
+   * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
    * @returns - our {@link DOMMesh}
    */
   onLoading(callback) {
@@ -7953,9 +7988,9 @@ const defaultPlaneParams = {
 class Plane extends DOMMesh {
   /**
    * Plane constructor
-   * @param renderer - [Curtains renderer]{@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link Plane}
+   * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link Plane}
    * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link Plane}
-   * @param parameters - [parameters]{@link PlaneParams} used to create this {@link Plane}
+   * @param parameters - {@link PlaneParams | parameters} used to create this {@link Plane}
    */
   constructor(renderer, element, parameters = {}) {
     renderer = renderer && renderer.renderer || renderer;
@@ -7981,10 +8016,10 @@ class Plane extends DOMMesh {
     this.type = "Plane";
   }
   /**
-   * Take the pointer [vector]{@link Vec2} position relative to the document and returns it relative to our {@link Plane}
+   * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link Plane}
    * It ranges from -1 to 1 on both axis
-   * @param mouseCoords - pointer [vector]{@link Vec2} coordinates
-   * @returns - raycasted [vector]{@link Vec2} coordinates relative to the {@link Plane}
+   * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
+   * @returns - raycasted {@link Vec2 | vector} coordinates relative to the {@link Plane}
    */
   mouseToPlaneCoords(mouseCoords = new Vec2()) {
     const worldMouse = {
@@ -8021,7 +8056,7 @@ class Plane extends DOMMesh {
 class Scene {
   /**
    * Scene constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
    */
   constructor({ renderer }) {
     renderer = renderer && renderer.renderer || renderer;
@@ -8029,11 +8064,11 @@ class Scene {
     this.renderer = renderer;
     this.computePassEntries = [];
     this.renderPassEntries = {
-      /** Array of [render pass entries]{@link RenderPassEntry} that will handle [ping pong planes]{@link PingPongPlane}. Each [ping pong plane]{@link PingPongPlane} will be added as a distinct [render pass entry]{@link RenderPassEntry} here */
+      /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here */
       pingPong: [],
-      /** Array of [render pass entries]{@link RenderPassEntry} that will render to a specific [render target]{@link RenderTarget}. Each [render target]{@link RenderTarget} will be added as a distinct [render pass entry]{@link RenderPassEntry} here */
+      /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
       renderTarget: [],
-      /** Array of [render pass entries]{@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any [render target]{@link RenderTarget} assigned. Following entries will be created for every global [post processing passes]{@link ShaderPass} */
+      /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
       screen: [
         // add our basic scene entry
         {
@@ -8057,16 +8092,20 @@ class Scene {
       ]
     };
   }
+  /**
+   * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
+   * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
+   */
   getRenderPassEntryLength(renderPassEntry) {
     if (!renderPassEntry) {
       return 0;
     } else {
-      return renderPassEntry.element ? 1 : 0 + renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
+      return renderPassEntry.element ? 1 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
     }
   }
   /**
-   * Add a [compute pass]{@link ComputePass} to our scene [computePassEntries array]{@link Scene#computePassEntries}
-   * @param computePass - [compute pass]{@link ComputePass} to add
+   * Add a {@link ComputePass} to our scene {@link computePassEntries} array
+   * @param computePass - {@link ComputePass} to add
    */
   addComputePass(computePass) {
     this.computePassEntries.push(computePass);
@@ -8079,16 +8118,16 @@ class Scene {
     });
   }
   /**
-   * Remove a [compute pass]{@link ComputePass} from our scene [computePassEntries array]{@link Scene#computePassEntries}
-   * @param computePass - [compute pass]{@link ComputePass} to remove
+   * Remove a {@link ComputePass} from our scene {@link computePassEntries} array
+   * @param computePass - {@link ComputePass} to remove
    */
   removeComputePass(computePass) {
     this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
   }
   /**
-   * Add a [render target]{@link RenderTarget} to our scene [renderPassEntries renderTarget array]{@link Scene#renderPassEntries.renderTarget}.
-   * Every Meshes later added to this [render target]{@link RenderTarget} will be rendered to the [render target render texture]{@link RenderTarget#renderTexture} using the [render target render pass descriptor]{@link RenderTarget#renderPass.descriptor}
-   * @param renderTarget - [render target]{@link RenderTarget} to add
+   * Add a {@link RenderTarget} to our scene {@link renderPassEntries} renderTarget array.
+   * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
+   * @param renderTarget - {@link RenderTarget} to add
    */
   addRenderTarget(renderTarget) {
     if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
@@ -8112,8 +8151,8 @@ class Scene {
       });
   }
   /**
-   * Remove a [render target]{@link RenderTarget} from our scene [renderPassEntries renderTarget array]{@link Scene#renderPassEntries.renderTarget}.
-   * @param renderTarget - [render target]{@link RenderTarget} to add
+   * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} renderTarget array.
+   * @param renderTarget - {@link RenderTarget} to add
    */
   removeRenderTarget(renderTarget) {
     this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
@@ -8121,9 +8160,9 @@ class Scene {
     );
   }
   /**
-   * Get the correct [render pass entry]{@link Scene#renderPassEntries} (either [renderTarget]{@link Scene#renderPassEntries.renderTarget} or [screen]{@link Scene#renderPassEntries.screen}) [stack]{@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+   * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} renderTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
    * @param mesh - Mesh to check
-   * @returns - the corresponding [render pass entry stack]{@link Stack}
+   * @returns - the corresponding render pass entry {@link Stack}
    */
   getMeshProjectionStack(mesh) {
     const renderPassEntry = mesh.renderTarget ? this.renderPassEntries.renderTarget.find(
@@ -8133,8 +8172,8 @@ class Scene {
     return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
   }
   /**
-   * Add a Mesh to the correct [render pass entry]{@link Scene#renderPassEntries} [stack]{@link Stack} array.
-   * Meshes are then ordered by their [indexes (order of creation]){@link MeshBase#index}, position along the Z axis in case they are transparent and then [renderOrder]{@link MeshBase#renderOrder}
+   * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
+   * Meshes are then ordered by their {@link core/meshes/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
    * @param mesh - Mesh to add
    */
   addMesh(mesh) {
@@ -8171,11 +8210,11 @@ class Scene {
     }
   }
   /**
-   * Add a [shader pass]{@link ShaderPass} to our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}.
-   * Before rendering the [shader pass]{@link ShaderPass}, we will copy the correct input texture into its [render texture]{@link ShaderPass#renderTexture}
-   * This also handles the [renderPassEntries screen array]{@link Scene#renderPassEntries.screen} entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-   * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4
-   * @param shaderPass - [shader pass]{@link ShaderPass} to add
+   * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
+   * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
+   * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
+   * {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
+   * @param shaderPass - {@link ShaderPass} to add
    */
   addShaderPass(shaderPass) {
     this.renderPassEntries.screen.push({
@@ -8184,8 +8223,6 @@ class Scene {
       renderTexture: null,
       onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
         if (!shaderPass.renderTarget) {
-          if (!shaderPass.renderTexture.texture)
-            console.log(shaderPass.renderTexture);
           if (shaderPass.renderTexture) {
             commandEncoder.copyTextureToTexture(
               {
@@ -8224,8 +8261,8 @@ class Scene {
     });
   }
   /**
-   * Remove a [shader pass]{@link ShaderPass} from our scene [renderPassEntries screen array]{@link Scene#renderPassEntries.screen}
-   * @param shaderPass - [shader pass]{@link ShaderPass} to remove
+   * Remove a {@link ShaderPass} from our scene {@link renderPassEntries} screen array
+   * @param shaderPass - {@link ShaderPass} to remove
    */
   removeShaderPass(shaderPass) {
     this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
@@ -8233,9 +8270,9 @@ class Scene {
     );
   }
   /**
-   * Add a [ping pong plane]{@link PingPongPlane} to our scene [renderPassEntries pingPong array]{@link Scene#renderPassEntries.pingPong}.
-   * After rendering the [ping pong plane]{@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture} so we'll be able to use it as an input for the next pass
-   * minimal code example: https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p
+   * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
+   * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
+   * {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
    * @param pingPongPlane
    */
   addPingPongPlane(pingPongPlane) {
@@ -8261,8 +8298,8 @@ class Scene {
     this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);
   }
   /**
-   * Remove a [ping pong plane]{@link PingPongPlane} from our scene [renderPassEntries pingPong array]{@link Scene#renderPassEntries.pingPong}.
-   * @param pingPongPlane - [ping pong plane]{@link PingPongPlane} to remove
+   * Remove a {@link PingPongPlane} from our scene {@link renderPassEntries} pingPong array.
+   * @param pingPongPlane - {@link PingPongPlane} to remove
    */
   removePingPongPlane(pingPongPlane) {
     this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
@@ -8270,16 +8307,16 @@ class Scene {
     );
   }
   /**
-   * Here we render a [render pass entry]{@link RenderPassEntry}:
-   * - Set its [render pass descriptor]{@link RenderPass#descriptor} resolve target and get it at as swap chain texture
-   * - Execute [onBeforeRenderPass]{@link RenderPassEntry#onBeforeRenderPass} callback if specified
-   * - Begin the [render pass]{@link GPURenderPassEncoder} using our [render pass descriptor]{@link RenderPass#descriptor}
-   * - Render the single element if specified or the [render pass entry stack]{@link Stack}: draw unprojected opaque / transparent meshes first, then set [camera bind group]{@link CameraRenderer#cameraBindGroup} and draw projected opaque / transparent meshes
-   * - End the [render pass]{@link GPURenderPassEncoder}
-   * - Execute [onAfterRenderPass]{@link RenderPassEntry#onAfterRenderPass} callback if specified
-   * - Reset [pipeline manager current pipeline]{@link PipelineManager#currentPipelineIndex}
+   * Here we render a {@link RenderPassEntry}:
+   * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
+   * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
+   * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
+   * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link CameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
+   * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
+   * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
+   * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param renderPassEntry - [entry]{@link RenderPassEntry} to render
+   * @param renderPassEntry - {@link RenderPassEntry} to render
    */
   renderSinglePassEntry(commandEncoder, renderPassEntry) {
     var _a;
@@ -8311,8 +8348,8 @@ class Scene {
   }
   /**
    * Render our {@link Scene}
-   * - Render [compute pass entries]{@link Scene#computePassEntries} first
-   * - Then our [render pass entries]{@link Scene#renderPassEntries}
+   * - Render {@link computePassEntries} first
+   * - Then our {@link renderPassEntries}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
@@ -8340,8 +8377,8 @@ class Scene {
 class RenderPass {
   /**
    * RenderPass constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
-   * @param parameters - [parameters]{@link RenderPassParams} used to create this {@link RenderPass}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
+   * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
    */
   constructor(renderer, {
     label = "Render Pass",
@@ -8370,7 +8407,7 @@ class RenderPass {
     this.setRenderPassDescriptor();
   }
   /**
-   * Set our [render pass depth texture]{@link RenderPass#depthTexture}
+   * Set our {@link depthTexture | depth texture}
    */
   createDepthTexture() {
     this.depthTexture = this.renderer.createTexture({
@@ -8382,7 +8419,7 @@ class RenderPass {
     });
   }
   /**
-   * Set our [render pass render texture]{@link RenderPass#renderTexture}
+   * Set our {@link renderTexture | render texture}
    */
   createRenderTexture() {
     this.renderTexture = this.renderer.createTexture({
@@ -8394,7 +8431,7 @@ class RenderPass {
     });
   }
   /**
-   * Reset our [render pass depth texture]{@link RenderPass#depthTexture}
+   * Reset our {@link depthTexture | depth texture}
    */
   resetRenderPassDepth() {
     if (this.depthTexture) {
@@ -8404,7 +8441,7 @@ class RenderPass {
     this.descriptor.depthStencilAttachment.view = this.depthTexture.createView();
   }
   /**
-   * Reset our [render pass render texture]{@link RenderPass#renderTexture}
+   * Reset our {@link renderTexture | render texture}
    */
   resetRenderPassView() {
     if (this.renderTexture) {
@@ -8414,7 +8451,7 @@ class RenderPass {
     this.descriptor.colorAttachments[0].view = this.renderTexture.createView();
   }
   /**
-   * Set our [render pass descriptor]{@link RenderPass#descriptor}
+   * Set our render pass {@link descriptor}
    */
   setRenderPassDescriptor() {
     this.descriptor = {
@@ -8445,8 +8482,8 @@ class RenderPass {
     };
   }
   /**
-   * Set our [render pass size]{@link RenderPass#size}
-   * @param boundingRect - [bounding rectangle]{@link DOMElementBoundingRect} from which to get the width and height
+   * Set our render pass {@link size}
+   * @param boundingRect - {@link DOMElementBoundingRect | bounding rectangle} from which to get the width and height
    */
   setSize(boundingRect) {
     this.size = {
@@ -8456,7 +8493,7 @@ class RenderPass {
   }
   /**
    * Resize our {@link RenderPass}: set its size and recreate the textures
-   * @param boundingRect - new [bounding rectangle]{@link DOMElementBoundingRect}
+   * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
    */
   resize(boundingRect) {
     this.setSize(boundingRect);
@@ -8465,8 +8502,8 @@ class RenderPass {
     this.resetRenderPassView();
   }
   /**
-   * Set our [load operation]{@link GPULoadOp}
-   * @param loadOp - new [load operation]{@link GPULoadOp} to use
+   * Set our {@link GPULoadOp | load operation}
+   * @param loadOp - new {@link GPULoadOp | load operation} to use
    */
   setLoadOp(loadOp = "clear") {
     this.options.loadOp = loadOp;
@@ -8475,8 +8512,8 @@ class RenderPass {
     }
   }
   /**
-   * Set our [clear value]{@link GPUColor}
-   * @param clearValue - new [clear value]{@link GPUColor} to use
+   * Set our {@link GPUColor | clear colors value}
+   * @param clearValue - new {@link GPUColor | clear colors value} to use
    */
   setClearValue(clearValue = [0, 0, 0, 0]) {
     this.options.clearValue = clearValue;
@@ -8503,10 +8540,10 @@ class TasksQueueManager {
     this.queue = [];
   }
   /**
-   * Add a [task item]{@link TaskQueueItem} to the queue
-   * @param callback - callback to add to the [task queue item]{@link TaskQueueItem}
-   * @param parameters - [parameters]{@link TaskQueueItemParams} of the [task queue item]{@link TaskQueueItem} to add
-   * @returns - [ID]{@link TaskQueueItem#id} of the new [task queue item]{@link TaskQueueItem}, useful to later the remove the task id needed
+   * Add a {@link TaskQueueItem | task queue item} to the queue
+   * @param callback - callback to add to the {@link TaskQueueItem | task queue item}
+   * @param parameters - {@link TaskQueueItemParams | parameters} of the {@link TaskQueueItem | task queue item} to add
+   * @returns - {@link TaskQueueItem#id | id} of the new {@link TaskQueueItem | task queue item}, useful to later remove the task if needed
    */
   add(callback = (args) => {
   }, { order = this.queue.length, once = false } = {}) {
@@ -8524,14 +8561,14 @@ class TasksQueueManager {
     return task.id;
   }
   /**
-   * Remove a [task item]{@link TaskQueueItem} from the queue
-   * @param taskId
+   * Remove a {@link TaskQueueItem | task queue item} from the queue
+   * @param taskId - {@link TaskQueueItem#id | id} of the new {@link TaskQueueItem | task queue item} to remove
    */
   remove(taskId = 0) {
     this.queue = this.queue.filter((task) => task.id !== taskId);
   }
   /**
-   * Execute the [tasks queue]{@link TasksQueueManager#queue}
+   * Execute the {@link TasksQueueManager#queue | tasks queue array}
    */
   execute(args) {
     this.queue.forEach((task) => {
@@ -8546,7 +8583,7 @@ _taskCount = new WeakMap();
 class GPURenderer {
   /**
    * GPURenderer constructor
-   * @param parameters - [parameters]{@link GPURendererParams} used to create this {@link GPURenderer}
+   * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
    */
   constructor({
     deviceManager,
@@ -8577,6 +8614,8 @@ class GPURenderer {
     this.canvas = isContainerCanvas ? container : document.createElement("canvas");
     this.domElement = new DOMElement({
       element: container,
+      priority: 5,
+      // renderer callback need to be called first
       onSizeChanged: (boundingRect) => this.resize(boundingRect)
     });
     if (!isContainerCanvas) {
@@ -8587,8 +8626,8 @@ class GPURenderer {
     }
   }
   /**
-   * Set [canvas]{@link GPURenderer#canvas} size
-   * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+   * Set {@link canvas} size
+   * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
   setSize(boundingRect) {
     const devicePixelRatio = window.devicePixelRatio ?? 1;
@@ -8604,7 +8643,7 @@ class GPURenderer {
   }
   /**
    * Resize our {@link GPURenderer}
-   * @param boundingRect - new [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+   * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
   resize(boundingRect = null) {
     if (!this.domElement && !boundingRect)
@@ -8626,12 +8665,22 @@ class GPURenderer {
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
     this.meshes.forEach((mesh) => {
-      if (!("domElement" in mesh))
+      if (!("domElement" in mesh)) {
         mesh.resize(this.boundingRect);
+      } else {
+        this.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (!mesh.domElement.isResizing) {
+              mesh.domElement.setSize();
+            }
+          },
+          { once: true }
+        );
+      }
     });
   }
   /**
-   * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect}
+   * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
   get boundingRect() {
     var _a;
@@ -8652,7 +8701,7 @@ class GPURenderer {
     }
   }
   /**
-   * Get our [DOM Element]{@link GPURenderer#domElement} [bounding rectangle]{@link DOMElement#boundingRect} accounting for current [pixel ratio]{@link GPURenderer#pixelRatio}
+   * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle} accounting for current {@link pixelRatio | pixel ratio}
    */
   get pixelRatioBoundingRect() {
     const devicePixelRatio = window.devicePixelRatio ?? 1;
@@ -8673,56 +8722,56 @@ class GPURenderer {
   }
   /* USEFUL DEVICE MANAGER OBJECTS */
   /**
-   * Get our [device]{@link GPUDeviceManager#device}
+   * Get our {@link GPUDeviceManager#device | device}
    * @readonly
    */
   get device() {
     return this.deviceManager.device;
   }
   /**
-   * Get whether our {@link GPUDeviceManager} is ready (i.e. its [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} are set) and its size is set
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) and its size is set
    * @readonly
    */
   get ready() {
     return this.deviceManager.ready && !!this.canvas.style.width;
   }
   /**
-   * Get our [device manager production flag]{@link GPUDeviceManager#production}
+   * Get our {@link GPUDeviceManager#production | GPUDeviceManager production flag}
    * @readonly
    */
   get production() {
     return this.deviceManager.production;
   }
   /**
-   * Get all the created [samplers]{@link GPUDeviceManager#samplers}
+   * Get all the created {@link GPUDeviceManager#samplers | samplers}
    * @readonly
    */
   get samplers() {
     return this.deviceManager.samplers;
   }
   /**
-   * Get all the created [buffers]{@link GPUDeviceManager#buffers}
+   * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}
    * @readonly
    */
   get buffers() {
     return this.deviceManager.buffers;
   }
   /**
-   * Get the [pipeline manager]{@link GPUDeviceManager#pipelineManager}
+   * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
    * @readonly
    */
   get pipelineManager() {
     return this.deviceManager.pipelineManager;
   }
   /**
-   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the [device manager]{@link GPUDeviceManager}
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by the {@link GPUDeviceManager}
    * @readonly
    */
   get deviceRenderedObjects() {
     return this.deviceManager.deviceRenderedObjects;
   }
   /**
-   * Configure our [context]{@link context} with the given options
+   * Configure our {@link context} with the given options
    */
   configureContext() {
     this.context.configure({
@@ -8735,7 +8784,7 @@ class GPURenderer {
     });
   }
   /**
-   * Set our [context]{@link GPURenderer#context} if possible and set [main render pass]{@link GPURenderer#renderPass} and [scene]{@link GPURenderer#scene}
+   * Set our {@link context} if possible and set {@link renderPass | main render pass} and {@link scene}
    */
   setContext() {
     this.context = this.canvas.getContext("webgpu");
@@ -8746,15 +8795,15 @@ class GPURenderer {
     }
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} is lost.
+   * Called when the {@link GPUDeviceManager#device | device} is lost.
    * Force all our scene objects to lose context.
    */
   loseContext() {
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-   * Reset the adapter, device and configure context again, restore our scene objects context, resize the render textures.
+   * Called when the {@link GPUDeviceManager#device | device} should be restored.
+   * Configure the context again, resize the {@link RenderTarget | render targets} and {@link RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context.
    * @async
    */
   restoreContext() {
@@ -8767,16 +8816,17 @@ class GPURenderer {
   }
   /* PIPELINES, SCENE & MAIN RENDER PASS */
   /**
-   * Set our [main render pass]{@link GPURenderer#renderPass} that will be used to render the result of our draw commands back to the screen
+   * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
    */
   setMainRenderPass() {
     this.renderPass = new RenderPass(this, {
       label: "Main render pass",
-      depth: true
+      depth: true,
+      targetFormat: this.preferredFormat
     });
   }
   /**
-   * Set our [scene]{@link GPURenderer#scene}
+   * Set our {@link scene}
    */
   setScene() {
     this.scene = new Scene({ renderer: this });
@@ -8784,7 +8834,7 @@ class GPURenderer {
   /* BUFFERS & BINDINGS */
   /**
    * Create a {@link GPUBuffer}
-   * @param bufferDescriptor - [buffer descriptor]{@link GPUBufferDescriptor}
+   * @param bufferDescriptor - {@link GPUBufferDescriptor | GPU buffer descriptor}
    * @returns - newly created {@link GPUBuffer}
    */
   createBuffer(bufferDescriptor) {
@@ -8794,9 +8844,9 @@ class GPURenderer {
     return buffer;
   }
   /**
-   * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
-   * @param buffer - [buffer]{@link GPUBuffer} to remove
-   * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
+   * Remove a {@link GPUBuffer} from our {@link GPUDeviceManager#buffers | GPU buffers array}
+   * @param buffer - {@link GPUBuffer} to remove
+   * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
    */
   removeBuffer(buffer, originalLabel) {
     this.deviceManager.removeBuffer(buffer, originalLabel);
@@ -8804,8 +8854,8 @@ class GPURenderer {
   /**
    * Write to a {@link GPUBuffer}
    * @param buffer - {@link GPUBuffer} to write to
-   * @param bufferOffset - [buffer offset]{@link GPUSize64}
-   * @param data - [data]{@link BufferSource} to write
+   * @param bufferOffset - {@link GPUSize64 | buffer offset}
+   * @param data - {@link BufferSource | data} to write
    */
   queueWriteBuffer(buffer, bufferOffset, data) {
     var _a;
@@ -8816,7 +8866,7 @@ class GPURenderer {
    * @param parameters - parameters used to realize the copy
    * @param parameters.srcBuffer - source {@link GPUBuffer}
    * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
-   * @param [parameters.commandEncoder] - [command encoder]{@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
+   * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
    * @returns - destination {@link GPUBuffer} after copy
    */
   copyBufferToBuffer({
@@ -8857,29 +8907,29 @@ class GPURenderer {
   }
   /* BIND GROUPS & LAYOUTS */
   /**
-   * Get all created [bind groups]{@link AllowedBindGroups} tracked by our {@link GPUDeviceManager}
+   * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
    * @readonly
    */
   get bindGroups() {
     return this.deviceManager.bindGroups;
   }
   /**
-   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
-   * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+   * Add a {@link AllowedBindGroups | bind group} to our {@link GPUDeviceManager#bindGroups | bind groups array}
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to add
    */
   addBindGroup(bindGroup) {
     this.deviceManager.addBindGroup(bindGroup);
   }
   /**
-   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
-   * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+   * Remove a {@link AllowedBindGroups | bind group} from our {@link GPUDeviceManager#bindGroups | bind groups array}
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
    */
   removeBindGroup(bindGroup) {
     this.deviceManager.removeBindGroup(bindGroup);
   }
   /**
    * Create a {@link GPUBindGroupLayout}
-   * @param bindGroupLayoutDescriptor - [bind group layout descriptor]{@link GPUBindGroupLayoutDescriptor}
+   * @param bindGroupLayoutDescriptor - {@link GPUBindGroupLayoutDescriptor | GPU bind group layout descriptor}
    * @returns - newly created {@link GPUBindGroupLayout}
    */
   createBindGroupLayout(bindGroupLayoutDescriptor) {
@@ -8888,7 +8938,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUBindGroup}
-   * @param bindGroupDescriptor - [bind group descriptor]{@link GPUBindGroupDescriptor}
+   * @param bindGroupDescriptor - {@link GPUBindGroupDescriptor | GPU bind group descriptor}
    * @returns - newly created {@link GPUBindGroup}
    */
   createBindGroup(bindGroupDescriptor) {
@@ -8898,7 +8948,7 @@ class GPURenderer {
   /* SHADERS & PIPELINES */
   /**
    * Create a {@link GPUShaderModule}
-   * @param shaderModuleDescriptor - [shader module descriptor]{@link shaderModuleDescriptor}
+   * @param shaderModuleDescriptor - {@link shaderModuleDescriptor | shader module descriptor}
    * @returns - newly created {@link GPUShaderModule}
    */
   createShaderModule(shaderModuleDescriptor) {
@@ -8907,7 +8957,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUPipelineLayout}
-   * @param pipelineLayoutDescriptor - [pipeline layout descriptor]{@link GPUPipelineLayoutDescriptor}
+   * @param pipelineLayoutDescriptor - {@link GPUPipelineLayoutDescriptor | GPU pipeline layout descriptor}
    * @returns - newly created {@link GPUPipelineLayout}
    */
   createPipelineLayout(pipelineLayoutDescriptor) {
@@ -8916,7 +8966,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPURenderPipeline}
-   * @param pipelineDescriptor - [render pipeline descriptor]{@link GPURenderPipelineDescriptor}
+   * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
    * @returns - newly created {@link GPURenderPipeline}
    */
   createRenderPipeline(pipelineDescriptor) {
@@ -8926,7 +8976,7 @@ class GPURenderer {
   /**
    * Asynchronously create a {@link GPURenderPipeline}
    * @async
-   * @param pipelineDescriptor - [render pipeline descriptor]{@link GPURenderPipelineDescriptor}
+   * @param pipelineDescriptor - {@link GPURenderPipelineDescriptor | GPU render pipeline descriptor}
    * @returns - newly created {@link GPURenderPipeline}
    */
   async createRenderPipelineAsync(pipelineDescriptor) {
@@ -8935,7 +8985,7 @@ class GPURenderer {
   }
   /**
    * Create a {@link GPUComputePipeline}
-   * @param pipelineDescriptor - [compute pipeline descriptor]{@link GPUComputePipelineDescriptor}
+   * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
    * @returns - newly created {@link GPUComputePipeline}
    */
   createComputePipeline(pipelineDescriptor) {
@@ -8945,7 +8995,7 @@ class GPURenderer {
   /**
    * Asynchronously create a {@link GPUComputePipeline}
    * @async
-   * @param pipelineDescriptor - [compute pipeline descriptor]{@link GPUComputePipelineDescriptor}
+   * @param pipelineDescriptor - {@link GPUComputePipelineDescriptor | GPU compute pipeline descriptor}
    * @returns - newly created {@link GPUComputePipeline}
    */
   async createComputePipelineAsync(pipelineDescriptor) {
@@ -8954,43 +9004,43 @@ class GPURenderer {
   }
   /* TEXTURES */
   /**
-   * Get all created [textures]{@link Texture} tracked by our {@link GPUDeviceManager}
+   * Get all created {@link Texture} tracked by our {@link GPUDeviceManager}
    * @readonly
    */
   get textures() {
     return this.deviceManager.textures;
   }
   /**
-   * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
-   * @param texture - [texture]{@link Texture} to add
+   * Add a {@link Texture} to our {@link GPUDeviceManager#textures | textures array}
+   * @param texture - {@link Texture} to add
    */
   addTexture(texture) {
     this.deviceManager.addTexture(texture);
   }
   /**
-   * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
-   * @param texture - [texture]{@link Texture} to remove
+   * Remove a {@link Texture} from our {@link GPUDeviceManager#textures | textures array}
+   * @param texture - {@link Texture} to remove
    */
   removeTexture(texture) {
     this.deviceManager.removeTexture(texture);
   }
   /**
-   * Add a [render texture]{@link RenderTexture} to our [render textures array]{@link GPUDeviceManager#renderTextures}
-   * @param texture - [render texture]{@link RenderTexture} to add
+   * Add a {@link RenderTexture} to our {@link renderTextures} array
+   * @param texture - {@link RenderTexture} to add
    */
   addRenderTexture(texture) {
     this.renderTextures.push(texture);
   }
   /**
-   * Remove a [render texture]{@link RenderTexture} from our [render textures array]{@link GPUDeviceManager#renderTextures}
-   * @param texture - [render texture]{@link RenderTexture} to remove
+   * Remove a {@link RenderTexture} from our {@link renderTextures} array
+   * @param texture - {@link RenderTexture} to remove
    */
   removeRenderTexture(texture) {
     this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid);
   }
   /**
    * Create a {@link GPUTexture}
-   * @param textureDescriptor - [texture descriptor]{@link GPUTextureDescriptor}
+   * @param textureDescriptor - {@link GPUTextureDescriptor | GPU texture descriptor}
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor) {
@@ -8998,24 +9048,24 @@ class GPURenderer {
     return (_a = this.device) == null ? void 0 : _a.createTexture(textureDescriptor);
   }
   /**
-   * Upload a [texture]{@link Texture} to the GPU
-   * @param texture - [texture]{@link Texture} to upload
+   * Upload a {@link Texture#texture | texture} to the GPU
+   * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
    */
   uploadTexture(texture) {
     this.deviceManager.uploadTexture(texture);
   }
   /**
-   * Import an [external texture]{@link GPUExternalTexture}
-   * @param video - [video]{@link HTMLVideoElement} source
-   * @returns - [external texture]{@link GPUExternalTexture}
+   * Import a {@link GPUExternalTexture}
+   * @param video - {@link HTMLVideoElement} source
+   * @returns - {@link GPUExternalTexture}
    */
   importExternalTexture(video) {
     var _a;
     return (_a = this.device) == null ? void 0 : _a.importExternalTexture({ source: video });
   }
   /**
-   * Check if a {@link Sampler} has already been created with the same [parameters]{@link Sampler#options}.
-   * Use it if found, else create a new one and add it to the [device manager samplers array]{@link GPUDeviceManager#samplers}.
+   * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
+   * Use it if found, else create a new one and add it to the {@link GPUDeviceManager#samplers | samplers array}.
    * @param sampler - {@link Sampler} to create
    * @returns - the {@link GPUSampler}
    */
@@ -9037,8 +9087,8 @@ class GPURenderer {
     }
   }
   /**
-   * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#sampler}
-   * @param sampler - [sampler]{@link Sampler} to remove
+   * Remove a {@link Sampler} from our {@link GPUDeviceManager#samplers | samplers array}
+   * @param sampler - {@link Sampler} to remove
    */
   removeSampler(sampler) {
     this.deviceManager.removeSampler(sampler);
@@ -9069,16 +9119,16 @@ class GPURenderer {
     this.renderTextures = [];
   }
   /**
-   * Get all this [renderer]{@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
+   * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
    * @readonly
    */
   get renderedObjects() {
     return [...this.computePasses, ...this.meshes, ...this.shaderPasses, ...this.pingPongPlanes];
   }
   /**
-   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to check
    */
   getObjectsByBindGroup(bindGroup) {
     return this.deviceRenderedObjects.filter((object) => {
@@ -9090,9 +9140,9 @@ class GPURenderer {
     });
   }
   /**
-   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [texture]{@link Texture} or [render texture]{@link RenderTexture}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link Texture} or {@link RenderTexture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param texture - [texture]{@link Texture} or [render texture]{@link RenderTexture} to check
+   * @param texture - {@link Texture} or {@link RenderTexture} to check
    */
   getObjectsByTexture(texture) {
     return this.deviceRenderedObjects.filter((object) => {
@@ -9102,7 +9152,7 @@ class GPURenderer {
   /* EVENTS */
   /**
    * Assign a callback function to _onBeforeRenderCallback
-   * @param callback - callback to run just before the [renderer render method]{@link GPURenderer#render} will be executed
+   * @param callback - callback to run just before the {@link render} method will be executed
    * @returns - our {@link GPURenderer}
    */
   onBeforeRender(callback) {
@@ -9113,7 +9163,7 @@ class GPURenderer {
   }
   /**
    * Assign a callback function to _onAfterRenderCallback
-   * @param callback - callback to run just after the [renderer render method]{@link GPURenderer#render} has been executed
+   * @param callback - callback to run just after the {@link render} method has been executed
    * @returns - our {@link GPURenderer}
    */
   onAfterRender(callback) {
@@ -9135,10 +9185,10 @@ class GPURenderer {
   }
   /* RENDER */
   /**
-   * Set the current [render pass descriptor]{@link RenderPass#descriptor} texture [view]{@link GPURenderPassColorAttachment#view} or [resolveTarget]{@link GPURenderPassColorAttachment#resolveTarget} (depending on whether we're using multisampling)
-   * @param renderPass - current [render pass]{@link RenderPass}
-   * @param renderTexture - [render texture]{@link GPUTexture} to use, or the [context]{@link GPURenderer#context} [current texture]{@link GPUTexture} if null
-   * @returns - the [current render texture]{@link GPUTexture}
+   * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} or {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+   * @param renderPass - current {@link RenderPass}
+   * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
+   * @returns - the {@link GPUTexture | current render texture}
    */
   setRenderPassCurrentTexture(renderPass, renderTexture = null) {
     if (!renderTexture) {
@@ -9153,9 +9203,9 @@ class GPURenderer {
     return renderTexture;
   }
   /**
-   * Render a single [Compute pass]{@link ComputePass}
+   * Render a single {@link ComputePass}
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param computePass - [Compute pass]{@link ComputePass}
+   * @param computePass - {@link ComputePass}
    */
   renderSingleComputePass(commandEncoder, computePass) {
     const pass = commandEncoder.beginComputePass();
@@ -9164,9 +9214,9 @@ class GPURenderer {
     computePass.copyBufferToResult(commandEncoder);
   }
   /**
-   * Render a single [Mesh]{@link ProjectedMesh}
+   * Render a single {@link RenderedMesh | Mesh}
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - [Mesh]{@link ProjectedMesh} to render
+   * @param mesh - {@link RenderedMesh | Mesh} to render
    */
   renderSingleMesh(commandEncoder, mesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9174,8 +9224,8 @@ class GPURenderer {
     pass.end();
   }
   /**
-   * Render an array of objects (either [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) once. This method won't call any of the renderer render hooks like [onBeforeRender]{@link GPURenderer#onBeforeRender}, [onAfterRender]{@link GPURenderer#onAfterRender}
-   * @param objects - Array of [Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass} to render
+   * Render an array of objects (either {@link RenderedMesh | Meshes} or {@link ComputePass}) once. This method won't call any of the renderer render hooks like {@link onBeforeRender}, {@link onAfterRender}
+   * @param objects - Array of {@link RenderedMesh | Meshes} or {@link ComputePass} to render
    */
   renderOnce(objects) {
     var _a, _b;
@@ -9195,7 +9245,7 @@ class GPURenderer {
     this.pipelineManager.resetCurrentPipeline();
   }
   /**
-   * Force to clear a {@link GPURenderer} content to its [clear value]{@link RenderPass#options#clearValue} by rendering and empty pass.
+   * Force to clear a {@link GPURenderer} content to its {@link RenderPass#options.clearValue | clear value} by rendering and empty pass.
    * @param commandEncoder
    */
   forceClear(commandEncoder) {
@@ -9213,7 +9263,7 @@ class GPURenderer {
     }
   }
   /**
-   * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} before the {@link GPUCommandEncoder} has been created
+   * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created
    */
   onBeforeCommandEncoder() {
     if (!this.ready)
@@ -9221,8 +9271,7 @@ class GPURenderer {
     this.onBeforeCommandEncoderCreation.execute();
   }
   /**
-   * Called by the [GPUDeviceManager render method]{@link GPUDeviceManager#render} after the {@link GPUCommandEncoder} has been created.
-   * Used to handle our [textures queue]{@link GPURenderer#texturesQueue}
+   * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} after the {@link GPUCommandEncoder} has been created.
    */
   onAfterCommandEncoder() {
     if (!this.ready)
@@ -9258,7 +9307,7 @@ class GPURenderer {
 class GPUCameraRenderer extends GPURenderer {
   /**
    * GPUCameraRenderer constructor
-   * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCameraRenderer}
+   * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
    */
   constructor({
     deviceManager,
@@ -9282,7 +9331,7 @@ class GPUCameraRenderer extends GPURenderer {
     this.setCamera(camera);
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} is lost.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
    * Reset all our samplers, force all our scene objects and camera bind group to lose context.
    */
   loseContext() {
@@ -9290,8 +9339,8 @@ class GPUCameraRenderer extends GPURenderer {
     this.cameraBindGroup.loseContext();
   }
   /**
-   * Called when the [renderer device]{@link GPURenderer#device} should be restored.
-   * Reset the adapter, device and configure context again, reset our samplers, restore our scene objects context, resize the render textures, re-write our camera buffer binding.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} should be restored.
+   * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
    * @async
    */
   async restoreContext() {
@@ -9299,8 +9348,8 @@ class GPUCameraRenderer extends GPURenderer {
     return super.restoreContext();
   }
   /**
-   * Set the [camera]{@link GPUCameraRenderer#camera}
-   * @param cameraParameters - [parameters]{@link CameraBasePerspectiveOptions} used to create the [camera]{@link GPUCameraRenderer#camera}
+   * Set the {@link camera}
+   * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
    */
   setCamera(cameraParameters) {
     const width = this.boundingRect ? this.boundingRect.width : 1;
@@ -9319,18 +9368,18 @@ class GPUCameraRenderer extends GPURenderer {
     this.setCameraBufferBinding();
   }
   /**
-   * Update the [projected meshes]{@link MeshTransformedBaseClass} sizes and positions when the [camera]{@link GPUCurtainsRenderer#camera} [position]{@link Camera#position} changes
+   * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
    */
   onCameraMatricesChanged() {
     this.updateCameraBindings();
     this.meshes.forEach((mesh) => {
       if ("modelViewMatrix" in mesh) {
-        mesh.updateSizePositionAndProjection();
+        mesh.shouldUpdateMatrixStack();
       }
     });
   }
   /**
-   * Set the [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} and [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}
+   * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
    */
   setCameraBufferBinding() {
     this.cameraBufferBinding = new BufferBinding({
@@ -9373,7 +9422,7 @@ class GPUCameraRenderer extends GPURenderer {
     });
   }
   /**
-   * Create the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} buffers
+   * Create the {@link cameraBindGroup | camera bind group} buffers
    */
   setCameraBindGroup() {
     if (this.cameraBindGroup.shouldCreateBindGroup) {
@@ -9382,7 +9431,7 @@ class GPUCameraRenderer extends GPURenderer {
     }
   }
   /**
-   * Tell our [camera buffer struct]{@link GPUCameraRenderer#cameraBufferBinding} that we should update its struct
+   * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its struct
    */
   updateCameraBindings() {
     var _a, _b, _c;
@@ -9391,9 +9440,9 @@ class GPUCameraRenderer extends GPURenderer {
     (_c = this.cameraBufferBinding) == null ? void 0 : _c.shouldUpdateBinding("projection");
   }
   /**
-   * Get all objects ([Meshes]{@link ProjectedMesh} or [Compute passes]{@link ComputePass}) using a given [bind group]{@link AllowedBindGroups}, including [camera bind group]{@link GPUCameraRenderer#cameraBindGroup}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraBindGroup | camera bind group}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param bindGroup - [bind group]{@link AllowedBindGroups} to check
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to check
    */
   getObjectsByBindGroup(bindGroup) {
     return this.deviceRenderedObjects.filter((object) => {
@@ -9406,8 +9455,8 @@ class GPUCameraRenderer extends GPURenderer {
     });
   }
   /**
-   * Set our [camera]{@link GPUCameraRenderer#camera} perspective matrix new parameters (fov, near plane and far plane)
-   * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
+   * Set our {@link camera} perspective matrix new parameters (fov, near plane and far plane)
+   * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
    */
   setPerspective({ fov, near, far } = {}) {
     var _a;
@@ -9421,14 +9470,14 @@ class GPUCameraRenderer extends GPURenderer {
     });
   }
   /**
-   * Set our [camera]{@link GPUCameraRenderer#camera} position
-   * @param position - new [position]{@link Camera#position}
+   * Set our {@link camera} {@link Camera#position | position}
+   * @param position - new {@link Camera#position | position}
    */
   setCameraPosition(position = new Vec3(0, 0, 1)) {
     this.camera.position.copy(position);
   }
   /**
-   * Call our [super onResize method]{@link GPURenderer#onResize} and resize our [camera]{@link GPUCameraRenderer#camera} as well
+   * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
    */
   onResize() {
     super.onResize();
@@ -9437,7 +9486,7 @@ class GPUCameraRenderer extends GPURenderer {
   }
   /* RENDER */
   /**
-   * Update the camera model matrix, check if the [camera bind group]{@link GPUCameraRenderer#cameraBindGroup} should be created, create it if needed and then update it
+   * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
    */
   updateCamera() {
     var _a, _b;
@@ -9446,9 +9495,9 @@ class GPUCameraRenderer extends GPURenderer {
     (_b = this.cameraBindGroup) == null ? void 0 : _b.update();
   }
   /**
-   * Render a single [Mesh]{@link ProjectedMesh} (binds the camera bind group if needed)
+   * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
    * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - [Mesh]{@link ProjectedMesh} to render
+   * @param mesh - {@link RenderedMesh | mesh} to render
    */
   renderSingleMesh(commandEncoder, mesh) {
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9459,7 +9508,7 @@ class GPUCameraRenderer extends GPURenderer {
     pass.end();
   }
   /**
-   * [Update the camera]{@link GPUCameraRenderer#updateCamera} and then call our [super render method]{@link GPURenderer#render}
+   * {@link updateCamera | Update the camera} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
@@ -9480,7 +9529,7 @@ class GPUCameraRenderer extends GPURenderer {
 class GPUDeviceManager {
   /**
    * GPUDeviceManager constructor
-   * @param parameters - [parameters]{@link GPUDeviceManagerParams} used to create this {@link GPUDeviceManager}
+   * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
    */
   constructor({
     label,
@@ -9507,14 +9556,14 @@ class GPUDeviceManager {
     this.setDeviceObjects();
   }
   /**
-   * Set our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible
+   * Set our {@link adapter} and {@link device} if possible
    */
   async setAdapterAndDevice() {
     await this.setAdapter();
     await this.setDevice();
   }
   /**
-   * Set up our [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} and all the already created [renderers]{@link GPUDeviceManager#renderers} contexts
+   * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
    */
   async init() {
     await this.setAdapterAndDevice();
@@ -9527,7 +9576,7 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Set our [adapter]{@link GPUDeviceManager#adapter} if possible.
+   * Set our {@link adapter} if possible.
    * The adapter represents a specific GPU. Some devices have multiple GPUs.
    * @async
    */
@@ -9544,7 +9593,7 @@ class GPUDeviceManager {
     });
   }
   /**
-   * Set our [device]{@link GPUDeviceManager#device}
+   * Set our {@link device}
    * @async
    */
   async setDevice() {
@@ -9570,13 +9619,13 @@ class GPUDeviceManager {
     });
   }
   /**
-   * Set our [pipeline manager]{@link GPUDeviceManager#pipelineManager}
+   * Set our {@link pipelineManager | pipeline manager}
    */
   setPipelineManager() {
     this.pipelineManager = new PipelineManager();
   }
   /**
-   * Called when the [device]{@link GPUDeviceManager#device} is lost.
+   * Called when the {@link device} is lost.
    * Reset all our renderers
    */
   loseDevice() {
@@ -9586,7 +9635,7 @@ class GPUDeviceManager {
     this.buffers = [];
   }
   /**
-   * Called when the [device]{@link GPUDeviceManager#device} should be restored.
+   * Called when the {@link device} should be restored.
    * Restore all our renderers
    */
   async restoreDevice() {
@@ -9614,29 +9663,29 @@ class GPUDeviceManager {
     this.texturesQueue = [];
   }
   /**
-   * Add a [renderer]{@link Renderer} to our [renderers array]{@link GPUDeviceManager#renderers}
-   * @param renderer - [renderer]{@link Renderer} to add
+   * Add a {@link Renderer} to our {@link renderers} array
+   * @param renderer - {@link Renderer} to add
    */
   addRenderer(renderer) {
     this.renderers.push(renderer);
   }
   /**
-   * Remove a [renderer]{@link Renderer} from our [renderers array]{@link GPUDeviceManager#renderers}
-   * @param renderer - [renderer]{@link Renderer} to remove
+   * Remove a {@link Renderer} from our {@link renderers} array
+   * @param renderer - {@link Renderer} to remove
    */
   removeRenderer(renderer) {
     this.renderers = this.renderers.filter((r) => r.uuid !== renderer.uuid);
   }
   /**
-   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this [device manager]{@link GPUDeviceManager}
+   * Get all the rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes) created by this {@link GPUDeviceManager}
    * @readonly
    */
   get deviceRenderedObjects() {
     return this.renderers.map((renderer) => renderer.renderedObjects).flat();
   }
   /**
-   * Add a [bind group]{@link AllowedBindGroups} to our [bind groups array]{@link GPUDeviceManager#bindGroups}
-   * @param bindGroup - [bind group]{@link AllowedBindGroups} to add
+   * Add a {@link AllowedBindGroups | bind group} to our {@link bindGroups | bind groups array}
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to add
    */
   addBindGroup(bindGroup) {
     if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
@@ -9644,23 +9693,23 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Remove a [bind group]{@link AllowedBindGroups} from our [bind groups array]{@link GPUDeviceManager#bindGroups}
-   * @param bindGroup - [bind group]{@link AllowedBindGroups} to remove
+   * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
+   * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
    */
   removeBindGroup(bindGroup) {
     this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
   }
   /**
-   * Add a [buffer]{@link GPUBuffer} to our our [buffers array]{@link GPUDeviceManager#buffers}
-   * @param buffer - [buffer]{@link GPUBuffer} to add
+   * Add a {@link GPUBuffer} to our our {@link buffers} array
+   * @param buffer - {@link GPUBuffer} to add
    */
   addBuffer(buffer) {
     this.buffers.push(buffer);
   }
   /**
-   * Remove a [buffer]{@link GPUBuffer} from our [buffers array]{@link GPUDeviceManager#buffers}
-   * @param buffer - [buffer]{@link GPUBuffer} to remove
-   * @param [originalLabel] - original [buffer]{@link GPUBuffer} label in case it has been swapped
+   * Remove a {@link GPUBuffer} from our {@link buffers} array
+   * @param buffer - {@link GPUBuffer} to remove
+   * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
    */
   removeBuffer(buffer, originalLabel) {
     if (buffer) {
@@ -9670,29 +9719,29 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Add a [sampler]{@link Sampler} to our [samplers array]{@link GPUDeviceManager#samplers}
-   * @param sampler - [sampler]{@link Sampler} to add
+   * Add a {@link Sampler} to our {@link samplers} array
+   * @param sampler - {@link Sampler} to add
    */
   addSampler(sampler) {
     this.samplers.push(sampler);
   }
   /**
-   * Remove a [sampler]{@link Sampler} from our [samplers array]{@link GPUDeviceManager#samplers}
-   * @param sampler - [sampler]{@link Sampler} to remove
+   * Remove a {@link Sampler} from our {@link samplers} array
+   * @param sampler - {@link Sampler} to remove
    */
   removeSampler(sampler) {
     this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
   }
   /**
-   * Add a [texture]{@link Texture} to our [textures array]{@link GPUDeviceManager#textures}
-   * @param texture - [texture]{@link Texture} to add
+   * Add a {@link Texture} to our {@link textures} array
+   * @param texture - {@link Texture} to add
    */
   addTexture(texture) {
     this.textures.push(texture);
   }
   /**
-   * Upload a [texture]{@link Texture} to the GPU
-   * @param texture - [texture]{@link Texture} to upload
+   * Upload a {@link Texture#texture | texture} to the GPU
+   * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
    */
   uploadTexture(texture) {
     var _a, _b;
@@ -9711,7 +9760,7 @@ class GPUDeviceManager {
         }
         this.texturesQueue.push(texture);
       } catch ({ message }) {
-        throwError(`GPURenderer: could not upload texture: ${texture.options.name} because: ${message}`);
+        throwError(`GPUDeviceManager: could not upload texture: ${texture.options.name} because: ${message}`);
       }
     } else {
       (_b = this.device) == null ? void 0 : _b.queue.writeTexture(
@@ -9723,12 +9772,22 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Remove a [texture]{@link Texture} from our [textures array]{@link GPUDeviceManager#textures}
-   * @param texture - [texture]{@link Texture} to remove
+   * Remove a {@link Texture} from our {@link textures} array
+   * @param texture - {@link Texture} to remove
    */
   removeTexture(texture) {
     this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
   }
+  /**
+   * Render everything:
+   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onBeforeCommandEncoder | onBeforeCommandEncoder} callbacks
+   * - create a {@link GPUCommandEncoder}
+   * - render all our {@link renderers}
+   * - submit our {@link GPUCommandBuffer}
+   * - upload {@link Texture#texture | textures} that do not have a parent
+   * - empty our {@link texturesQueue} array
+   * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
+   */
   render() {
     var _a, _b;
     if (!this.ready)
@@ -9746,7 +9805,7 @@ class GPUDeviceManager {
     this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder());
   }
   /**
-   * Destroy the {@link GPUDeviceManager} and its [renderers]{@link GPUDeviceManager#renderers}
+   * Destroy the {@link GPUDeviceManager} and its {@link renderers}
    */
   destroy() {
     var _a;
@@ -9762,8 +9821,8 @@ class GPUDeviceManager {
 class RenderTarget {
   /**
    * RenderTarget constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
-   * @param parameters - [parameters]{@link RenderTargetParams} use to create this {@link RenderTarget}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
+   * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
    */
   constructor(renderer, parameters) {
     __privateAdd(this, _autoRender2, void 0);
@@ -9800,7 +9859,7 @@ class RenderTarget {
     this.addToScene();
   }
   /**
-   * Add the {@link RenderTarget} to the renderer and the {@link Scene}
+   * Add the {@link RenderTarget} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   addToScene() {
     this.renderer.renderTargets.push(this);
@@ -9809,7 +9868,7 @@ class RenderTarget {
     }
   }
   /**
-   * Remove the {@link RenderTarget} from the renderer and the {@link Scene}
+   * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
     if (__privateGet(this, _autoRender2)) {
@@ -9818,8 +9877,8 @@ class RenderTarget {
     this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
   }
   /**
-   * Resize our [render pass]{@link RenderTarget#renderPass} and [render texture]{@link RenderTarget#renderTexture}
-   * @param boundingRect - new [bounding rectangle]{@link DOMElementBoundingRect}
+   * Resize our {@link renderPass} and {@link renderTexture}
+   * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
    */
   resize(boundingRect) {
     var _a, _b;
@@ -9858,8 +9917,8 @@ _autoRender2 = new WeakMap();
 class ShaderPass extends FullscreenPlane {
   /**
    * ShaderPass constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-   * @param parameters - [parameters]{@link ShaderPassParams} use to create this {@link ShaderPass}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
+   * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
    */
   constructor(renderer, parameters) {
     var _a;
@@ -9876,7 +9935,7 @@ class ShaderPass extends FullscreenPlane {
     });
   }
   /**
-   * Get our main [render texture]{@link RenderTexture}, the one that contains our post processed content
+   * Get our main {@link RenderTexture}, the one that contains our post processed content
    * @readonly
    */
   get renderTexture() {
@@ -9884,8 +9943,8 @@ class ShaderPass extends FullscreenPlane {
   }
   /**
    * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
-   * Since this manipulates the {@link Scene} stacks, it can be used to remove a RenderTarget as well.
-   * Also copy or remove the [render target render texture]{@link RenderTarget#renderTexture} into the [shader pass render texture]{@link ShaderPass#renderTexture}
+   * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+   * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
    * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
    */
   setRenderTarget(renderTarget) {
@@ -9898,7 +9957,7 @@ class ShaderPass extends FullscreenPlane {
     }
   }
   /**
-   * Add the {@link ShaderPass} to the renderer and the {@link Scene}
+   * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   addToScene() {
     this.renderer.shaderPasses.push(this);
@@ -9907,7 +9966,7 @@ class ShaderPass extends FullscreenPlane {
     }
   }
   /**
-   * Remove the {@link ShaderPass} from the renderer and the {@link Scene}
+   * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
     if (this.renderTarget) {
@@ -9922,8 +9981,8 @@ class ShaderPass extends FullscreenPlane {
 class PingPongPlane extends FullscreenPlane {
   /**
    * PingPongPlane constructor
-   * @param renderer - [renderer]{@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
-   * @param parameters - [parameters]{@link MeshBaseRenderParams} use to create this {@link PingPongPlane}
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
+   * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
    */
   constructor(renderer, parameters = {}) {
     var _a;
@@ -9944,14 +10003,14 @@ class PingPongPlane extends FullscreenPlane {
     });
   }
   /**
-   * Get our main [render texture]{@link RenderTexture}, the one that contains our ping pong content
+   * Get our main {@link RenderTexture}, the one that contains our ping pong content
    * @readonly
    */
   get renderTexture() {
     return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
   }
   /**
-   * Add the {@link PingPongPlane} to the renderer and the {@link Scene}
+   * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   addToScene() {
     this.renderer.pingPongPlanes.push(this);
@@ -9960,7 +10019,7 @@ class PingPongPlane extends FullscreenPlane {
     }
   }
   /**
-   * Remove the {@link PingPongPlane} from the renderer and the {@link Scene}
+   * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
     if (this.renderTarget) {
@@ -9975,7 +10034,7 @@ class PingPongPlane extends FullscreenPlane {
 class GPUCurtainsRenderer extends GPUCameraRenderer {
   /**
    * GPUCurtainsRenderer constructor
-   * @param parameters - [parameters]{@link GPUCameraRendererParams} used to create this {@link GPUCurtainsRenderer}
+   * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}
    */
   constructor({
     deviceManager,
@@ -9998,7 +10057,7 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
     this.type = "GPUCurtainsRenderer";
   }
   /**
-   * Add the [DOM Meshes]{@link GPUCurtainsRenderer#domMeshes} to our tracked elements
+   * Add the {@link GPUCurtainsRenderer#domMeshes | domMeshes} to our tracked elements
    */
   setRendererObjects() {
     super.setRendererObjects();
@@ -10008,7 +10067,7 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
 class ScrollManager {
   /**
    * ScrollManager constructor
-   * @param parameters - [parameters]{@link ScrollManagerParams} used to create this {@link ScrollManager}
+   * @param parameters - {@link ScrollManagerParams | parameters} used to create this {@link ScrollManager}
    */
   constructor({
     scroll = { x: 0, y: 0 },
@@ -10021,24 +10080,21 @@ class ScrollManager {
     this.delta = delta;
     this.shouldWatch = shouldWatch;
     this.onScroll = onScroll;
-    this.handler = this.scrollHandler.bind(this, true);
     if (this.shouldWatch) {
-      window.addEventListener("scroll", this.handler, { passive: true });
+      window.addEventListener("scroll", this.setScroll.bind(this), { passive: true });
     }
   }
   /**
    * Called by the scroll event listener
    */
-  scrollHandler() {
+  setScroll() {
     this.updateScrollValues({ x: window.pageXOffset, y: window.pageYOffset });
   }
   /**
    * Updates the scroll manager X and Y scroll values as well as last X and Y deltas
-   * Internally called by the scroll handler
+   * Internally called by the scroll event listener
    * Could be called externally as well if the user wants to handle the scroll by himself
-   * @param parameters - scroll values
-   * @param parameters.x - scroll value along X axis
-   * @param parameters.y - scroll value along Y axis
+   * @param parameters - {@link core/DOM/DOMElement.DOMPosition | scroll values}
    */
   updateScrollValues({ x, y }) {
     const lastScroll = this.scroll;
@@ -10056,14 +10112,14 @@ class ScrollManager {
    */
   destroy() {
     if (this.shouldWatch) {
-      window.removeEventListener("scroll", this.handler, { passive: true });
+      window.removeEventListener("scroll", this.setScroll.bind(this), { passive: true });
     }
   }
 }
 class GPUCurtains {
   /**
    * GPUCurtains constructor
-   * @param parameters - [parameters]{@link GPUCurtainsParams} used to create this {@link GPUCurtains}
+   * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}
    */
   constructor({
     container,
@@ -10104,7 +10160,7 @@ class GPUCurtains {
     }
   }
   /**
-   * Set the [container]{@link GPUCurtains#container}
+   * Set the {@link container}
    * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
    */
   setContainer(container) {
@@ -10132,7 +10188,7 @@ class GPUCurtains {
     this.setCurtains();
   }
   /**
-   * Set the default [curtains renderer]{@link GPUCurtainsRenderer}
+   * Set the default {@link GPUCurtainsRenderer | renderer}
    */
   setMainRenderer() {
     this.createCurtainsRenderer({
@@ -10147,42 +10203,42 @@ class GPUCurtains {
     });
   }
   /**
-   * Patch the options with default values before creating a [renderer]{@link Renderer}
-   * @param options - options to patch
+   * Patch the options with default values before creating a {@link Renderer}
+   * @param parameters - parameters to patch
    */
-  patchRendererOptions(options) {
-    if (options.pixelRatio === void 0)
-      options.pixelRatio = this.options.pixelRatio;
-    if (options.sampleCount === void 0)
-      options.sampleCount = this.options.sampleCount;
-    return options;
+  patchRendererOptions(parameters) {
+    if (parameters.pixelRatio === void 0)
+      parameters.pixelRatio = this.options.pixelRatio;
+    if (parameters.sampleCount === void 0)
+      parameters.sampleCount = this.options.sampleCount;
+    return parameters;
   }
   /**
    * Create a new {@link GPURenderer} instance
-   * @param options - [options]{@link GPURendererParams} to use
+   * @param parameters - {@link GPURendererParams | parameters} to use
    */
-  createRenderer(options) {
-    options = this.patchRendererOptions(options);
-    return new GPURenderer({ ...options, deviceManager: this.deviceManager });
+  createRenderer(parameters) {
+    parameters = this.patchRendererOptions(parameters);
+    return new GPURenderer({ ...parameters, deviceManager: this.deviceManager });
   }
   /**
    * Create a new {@link GPUCameraRenderer} instance
-   * @param options - [options]{@link GPUCameraRendererParams} to use
+   * @param parameters - {@link GPUCameraRendererParams | parameters} to use
    */
-  createCameraRenderer(options) {
-    options = this.patchRendererOptions(options);
-    return new GPUCameraRenderer({ ...options, deviceManager: this.deviceManager });
+  createCameraRenderer(parameters) {
+    parameters = this.patchRendererOptions(parameters);
+    return new GPUCameraRenderer({ ...parameters, deviceManager: this.deviceManager });
   }
   /**
    * Create a new {@link GPUCurtainsRenderer} instance
-   * @param options - [options]{@link GPUCameraRendererParams} to use
+   * @param parameters - {@link GPUCameraRendererParams | parameters} to use
    */
-  createCurtainsRenderer(options) {
-    options = this.patchRendererOptions(options);
-    return new GPUCurtainsRenderer({ ...options, deviceManager: this.deviceManager });
+  createCurtainsRenderer(parameters) {
+    parameters = this.patchRendererOptions(parameters);
+    return new GPUCurtainsRenderer({ ...parameters, deviceManager: this.deviceManager });
   }
   /**
-   * Set our [device manager]{@link GPUDeviceManager}
+   * Set our {@link GPUDeviceManager}
    */
   setDeviceManager() {
     this.deviceManager = new GPUDeviceManager({
@@ -10193,7 +10249,7 @@ class GPUCurtains {
     });
   }
   /**
-   * Get all created [renderers]{@link Renderer}
+   * Get all created {@link Renderer}
    * @readonly
    */
   get renderers() {
@@ -10207,20 +10263,20 @@ class GPUCurtains {
     return this.renderers[0];
   }
   /**
-   * Set the [device manager]{@link GPUDeviceManager} [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device} if possible, then set all created [renderers]{@link Renderer} contexts
+   * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts
    */
   async setDevice() {
     await this.deviceManager.init();
   }
   /**
-   * Restore the [adapter]{@link GPUDeviceManager#adapter} and [device]{@link GPUDeviceManager#device}
+   * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
    * @async
    */
   async restoreContext() {
     await this.deviceManager.restoreDevice();
   }
   /**
-   * Set the various event listeners, set the [curtains renderer]{@link GPUCurtainsRenderer}, append the [canvas]{@link HTMLCanvasElement} to our [container]{@link GPUCurtains#container} and start rendering if needed
+   * Set the various event listeners, set the {@link GPUCurtainsRenderer} and start rendering if needed
    */
   setCurtains() {
     this.initEvents();
@@ -10231,7 +10287,7 @@ class GPUCurtains {
   }
   /* RENDERER TRACKED OBJECTS */
   /**
-   * Get all the created [ping pong planes]{@link PingPongPlane}
+   * Get all the created {@link PingPongPlane}
    * @readonly
    */
   get pingPongPlanes() {
@@ -10239,7 +10295,7 @@ class GPUCurtains {
     return (_a = this.renderers) == null ? void 0 : _a.map((renderer) => renderer.pingPongPlanes).flat();
   }
   /**
-   * Get all the created [shader passes]{@link ShaderPass}
+   * Get all the created {@link ShaderPass}
    * @readonly
    */
   get shaderPasses() {
@@ -10247,7 +10303,7 @@ class GPUCurtains {
     return (_a = this.renderers) == null ? void 0 : _a.map((renderer) => renderer.shaderPasses).flat();
   }
   /**
-   * Get all the created [meshes]{@link MeshBase}
+   * Get all the created {@link ProjectedMesh | projected meshes}
    * @readonly
    */
   get meshes() {
@@ -10255,7 +10311,7 @@ class GPUCurtains {
     return (_a = this.renderers) == null ? void 0 : _a.map((renderer) => renderer.meshes).flat();
   }
   /**
-   * Get all the created [DOM Meshes]{@link DOMMesh} (including [planes]{@link Plane})
+   * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
    * @readonly
    */
   get domMeshes() {
@@ -10263,14 +10319,14 @@ class GPUCurtains {
     return (_a = this.renderers) == null ? void 0 : _a.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domMeshes).flat();
   }
   /**
-   * Get all the created [planes]{@link Plane}
+   * Get all the created {@link Plane | planes}
    * @readonly
    */
   get planes() {
     return this.domMeshes.filter((domMesh) => domMesh instanceof Plane);
   }
   /**
-   * Get all the created [compute passes]{@link ComputePass}
+   * Get all the created {@link ComputePass | compute passes}
    * @readonly
    */
   get computePasses() {
@@ -10278,7 +10334,7 @@ class GPUCurtains {
     return (_a = this.renderers) == null ? void 0 : _a.map((renderer) => renderer.computePasses).flat();
   }
   /**
-   * Get the [default curtains renderer camera]{@link GPUCurtainsRenderer#camera}
+   * Get the {@link GPUCurtainsRenderer#camera | default GPUCurtainsRenderer camera}
    * @readonly
    */
   get camera() {
@@ -10286,23 +10342,23 @@ class GPUCurtains {
     return (_a = this.renderer) == null ? void 0 : _a.camera;
   }
   /**
-   * Set the [default curtains renderer camera perspective]{@link GPUCurtainsRenderer#setPerspective}
-   * @param parameters - [parameters]{@link CameraBasePerspectiveOptions} to use for the perspective
+   * Set the {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} perspective
+   * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
    */
   setPerspective({ fov = 50, near = 0.01, far = 50 } = {}) {
     var _a;
     (_a = this.renderer) == null ? void 0 : _a.setPerspective({ fov, near, far });
   }
   /**
-   * Set the default [curtains renderer camera position]{@link GPUCurtainsRenderer#setCameraPosition}
-   * @param position - new [position]{@link Camera#position}
+   * Set the default {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} {@link Camera#position | position}
+   * @param position - new {@link Camera#position | position}
    */
   setCameraPosition(position = new Vec3(0, 0, 1)) {
     var _a;
     (_a = this.renderer) == null ? void 0 : _a.setCameraPosition(position);
   }
   /**
-   * Get our [default curtains renderer bounding rectangle]{@link GPUCurtainsRenderer#boundingRect}
+   * Get our {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer bounding rectangle}
    */
   get boundingRect() {
     var _a;
@@ -10310,7 +10366,7 @@ class GPUCurtains {
   }
   /* SCROLL */
   /**
-   * Set the [scroll manager]{@link GPUCurtains#scrollManager}
+   * Set the {@link scrollManager}
    */
   initScroll() {
     this.scrollManager = new ScrollManager({
@@ -10328,8 +10384,8 @@ class GPUCurtains {
     });
   }
   /**
-   * Update all [DOMMeshes scroll position]{@link DOMMesh#updateScrollPosition}
-   * @param delta - last [scroll delta values]{@link ScrollManager#delta}
+   * Update all {@link DOMMesh#updateScrollPosition | DOMMesh scroll positions}
+   * @param delta - last {@link ScrollManager#delta | scroll delta values}
    */
   updateScroll(delta = { x: 0, y: 0 }) {
     this.domMeshes.forEach((mesh) => {
@@ -10340,21 +10396,21 @@ class GPUCurtains {
     this._onScrollCallback && this._onScrollCallback();
   }
   /**
-   * Update our [scrollManager scroll values]{@link ScrollManager#scroll}. Called each time the scroll has changed if [watchScroll]{@link GPUCurtainsOptions#watchScroll} is set to true. Could be called externally as well.
-   * @param scroll
+   * Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.
+   * @param scroll - new {@link DOMPosition | scroll values}
    */
   updateScrollValues(scroll = { x: 0, y: 0 }) {
     this.scrollManager.updateScrollValues(scroll);
   }
   /**
-   * Get our [scrollManager scroll deltas]{@link ScrollManager#delta}
+   * Get our {@link ScrollManager#delta | scrollManager delta values}
    * @readonly
    */
   get scrollDelta() {
     return this.scrollManager.delta;
   }
   /**
-   * Get our [scrollManager scroll values]{@link ScrollManager#scroll}
+   * Get our {@link ScrollManager#scroll | scrollManager scroll values}
    * @readonly
    */
   get scrollValues() {
@@ -10381,8 +10437,8 @@ class GPUCurtains {
     return this;
   }
   /**
-   * Called each time the [scroll values]{@link ScrollManager#scroll} changed
-   * @param callback - callback to run each time the [scroll values]{@link ScrollManager#scroll} changed
+   * Called each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
+   * @param callback - callback to run each time the {@link ScrollManager#scroll | scrollManager scroll values} changed
    * @returns - our {@link GPUCurtains}
    */
   onScroll(callback) {
@@ -10392,8 +10448,8 @@ class GPUCurtains {
     return this;
   }
   /**
-   * Called if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
-   * @param callback - callback to run if there's been an error while trying to create the [device]{@link GPUDeviceManager#device}
+   * Called if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
+   * @param callback - callback to run if there's been an error while trying to create the {@link GPUDeviceManager#device | device}
    * @returns - our {@link GPUCurtains}
    */
   onError(callback) {
@@ -10403,8 +10459,8 @@ class GPUCurtains {
     return this;
   }
   /**
-   * Called whenever the [device]{@link GPUDeviceManager#device} is lost
-   * @param callback - callback to run whenever the [device]{@link GPUDeviceManager#device} is lost
+   * Called whenever the {@link GPUDeviceManager#device | device} is lost
+   * @param callback - callback to run whenever the {@link GPUDeviceManager#device | device} is lost
    * @returns - our {@link GPUCurtains}
    */
   onContextLost(callback) {
@@ -10421,14 +10477,14 @@ class GPUCurtains {
     this.animationFrameID = window.requestAnimationFrame(this.animate.bind(this));
   }
   /**
-   * Renderer our [renderers]{@link GPUCurtains#renderers}
+   * Render our {@link GPUDeviceManager}
    */
   render() {
     this._onRenderCallback && this._onRenderCallback();
     this.deviceManager.render();
   }
   /**
-   * Destroy our {@link GPUCurtains} and [device manager]{@link GPUDeviceManager}
+   * Destroy our {@link GPUCurtains} and {@link GPUDeviceManager}
    */
   destroy() {
     var _a;

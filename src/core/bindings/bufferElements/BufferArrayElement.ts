@@ -5,26 +5,24 @@ import { throwWarning } from '../../../utils/utils'
  * Parameters used to create a {@link BufferArrayElement}
  */
 export interface BufferArrayElementParams extends BufferElementParams {
-  /** Initial length of the input [buffer binding array]{@link BufferBinding#value} */
+  /** Initial length of the input {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} */
   arrayLength: number
 }
 
 /**
- * BufferArrayElement class:
- * Used to handle specific array [buffer binding]{@link BufferBinding} types
- * @extends BufferElement
+ * Used to handle specific array {@link core/bindings/BufferBinding.BufferBinding | buffer binding} types
  */
 export class BufferArrayElement extends BufferElement {
-  /** Initial length of the input [buffer binding array]{@link BufferBinding#value} */
+  /** Initial length of the input {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} */
   arrayLength: number
-  /** Total number of elements (i.e. {@link arrayLength} divided by [buffer layout number of elements]{@link BufferLayout#numElements} */
+  /** Total number of elements (i.e. {@link arrayLength} divided by {@link core/bindings/utils.BufferLayout | buffer layout} number of elements */
   numElements: number
-  /** Stride in the {@link ArrayBuffer} between two elements of the array in bytes */
-  stride: number
+  /** Number of bytes in the {@link ArrayBuffer} between two elements {@link startOffset} */
+  arrayStride: number
 
   /**
    * BufferArrayElement constructor
-   * @param parameters - [parameters]{@link BufferArrayElementParams} used to create our {@link BufferArrayElement}
+   * @param parameters - {@link BufferArrayElementParams | parameters} used to create our {@link BufferArrayElement}
    */
   constructor({ name, key, type = 'f32', arrayLength = 1 }: BufferArrayElementParams) {
     super({ name, key, type })
@@ -34,30 +32,30 @@ export class BufferArrayElement extends BufferElement {
   }
 
   /**
-   * Get the stride between two elements of the array in indices
+   * Get the array stride between two elements of the array, in indices
    * @readonly
    */
-  get strideToIndex(): number {
-    return this.stride / bytesPerSlot
+  get arrayStrideToIndex(): number {
+    return this.arrayStride / bytesPerSlot
   }
 
   /**
-   * Set the [alignment]{@link BufferElementAlignment}
-   * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the stride between two array elements. Using the stride and the total number of elements, we can easily get the end alignment position.
-   * @param startOffset - offset at which to start inserting the values in the [buffer binding array buffer]{@link BufferBinding#arrayBuffer}
+   * Set the {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment}
+   * To compute how arrays are packed, we get the second item alignment as well and use it to calculate the arrayStride between two array elements. Using the arrayStride and the total number of elements, we can easily get the end alignment position.
+   * @param startOffset - offset at which to start inserting the values in the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array buffer}
    */
   setAlignment(startOffset = 0) {
     super.setAlignment(startOffset)
 
     // repeat for a second element to know how things are laid out
     const nextAlignment = this.getElementAlignment(this.getPositionAtOffset(this.endOffset + 1))
-    this.stride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end)
+    this.arrayStride = this.getByteCountBetweenPositions(this.alignment.end, nextAlignment.end)
 
-    this.alignment.end = this.getPositionAtOffset(this.endOffset + this.stride * (this.numElements - 1))
+    this.alignment.end = this.getPositionAtOffset(this.endOffset + this.arrayStride * (this.numElements - 1))
   }
 
   /**
-   * Update the [view]{@link BufferElement#view} based on the new value
+   * Update the {@link view} based on the new value
    * @param value - new value to use
    */
   update(value) {
@@ -65,7 +63,7 @@ export class BufferArrayElement extends BufferElement {
       let valueIndex = 0
 
       const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT
-      // stride is our view length divided by the number of elements in our array
+      // arrayStride is our view length divided by the number of elements in our array
       const stride = Math.ceil(viewLength / this.numElements)
 
       for (let i = 0; i < this.numElements; i++) {

@@ -1,28 +1,24 @@
 import { Texture } from '../core/textures/Texture'
-import { ShaderPass } from '../core/renderPasses/ShaderPass'
-import { FullscreenPlane } from '../core/meshes/FullscreenPlane'
-import { DOMProjectedMesh } from '../core/renderers/GPURenderer'
-import { Mesh } from '../core/meshes/Mesh'
-import { PingPongPlane } from '../curtains/meshes/PingPongPlane'
+import { RenderedMesh } from '../core/renderers/GPURenderer'
 import { RectSize } from '../core/DOM/DOMElement'
 
 /**
- * Parameters used to copy an external image to texture, i.e. that will be uploaded to the GPU using [copyExternalImageToTexture]{@link GPUQueue#copyExternalImageToTexture}
+ * Parameters used to copy an external image to texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}
  */
 export interface ExternalTextureParams {
   /** Whether to generate mips */
   generateMips?: boolean
   /** Whether to flip the source along the Y axis */
   flipY?: boolean
-  /** The [texture format]{@link GPUTextureFormat} to use */
+  /** The {@link GPUTextureFormat | texture format} to use */
   format?: GPUTextureFormat
   /** Solid color used by temporary texture to display while loading the source */
   placeholderColor?: [number, number, number, number]
   /** Whether video textures should use {@link GPUExternalTexture} or not */
   useExternalTextures?: boolean
-  /** The [texture view dimension ]{@link GPUTextureViewDimension} to use */
+  /** The {@link GPUTextureViewDimension | texture view dimension} to use */
   viewDimension?: GPUTextureViewDimension
-  /** Whether to keep the [texture]{@link Texture#texture} in the [renderer]{@link GPURenderer} cache when a {@link Material} tries to destroy it */
+  /** Whether to keep the {@link Texture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material} tries to destroy it */
   cache?: boolean
 }
 
@@ -32,7 +28,7 @@ export interface ExternalTextureParams {
 export interface TextureBaseParams extends ExternalTextureParams {
   /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link Texture} to use in the [struct]{@link Binding} */
+  /** Name of the {@link Texture} to use in the {@link core/bindings/Binding.Binding | binding} */
   name?: string
 }
 
@@ -44,10 +40,10 @@ export interface TextureParams extends TextureBaseParams {
   fromTexture?: Texture | null
 }
 
-/** Allowed [texture]{@link Texture} source to use */
+/** Allowed {@link Texture} source to use */
 //export type TextureSource = GPUImageCopyExternalImageSource | HTMLImageElement | RenderPass | null
 export type TextureSource = GPUImageCopyExternalImageSource | HTMLImageElement | null
-/** Allowed [texture]{@link Texture} source type to use */
+/** Allowed {@link Texture} source type to use */
 export type TextureSourceType = 'image' | 'canvas' | 'video' | 'externalVideo' | null
 
 /**
@@ -69,6 +65,6 @@ export interface TextureSize extends RectSize {
 }
 
 /**
- * Allowed [texture]{@link Texture} parent (can be any type of Mesh)
+ * Allowed {@link Texture} parent (can be any type of Mesh)
  */
-export type TextureParent = null | Mesh | DOMProjectedMesh | ShaderPass | FullscreenPlane | PingPongPlane
+export type TextureParent = null | RenderedMesh
