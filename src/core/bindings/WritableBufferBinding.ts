@@ -9,8 +9,9 @@ export interface WritableBufferBindingParams extends BufferBindingParams {
 }
 
 /**
- * WritableBufferBinding class:
- * Used to create a BufferBindings object that can hold read/write storage struct.
+ * Used to create a {@link BufferBinding} that can hold read/write storage bindings along with a {@link WritableBufferBinding#resultBuffer | result GPU buffer} that can be used to get data back from the GPU.
+ *
+ * Note that it is automatically created by the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} when a {@link types/BindGroups.BindGroupInputs#storages | storages input} has its {@link BufferBindingParams#access | access} property set to `"read_write"`.
  */
 export class WritableBufferBinding extends BufferBinding {
   /** Flag indicating whether whe should automatically copy the {@link buffer | GPU buffer} content into our {@link resultBuffer | result GPU buffer} */

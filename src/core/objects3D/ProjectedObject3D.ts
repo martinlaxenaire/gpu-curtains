@@ -10,9 +10,7 @@ export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' |
 export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>
 
 /**
- * ProjectedObject3D class:
- * Used to create 3D objects with transform and projection matrices based on a {@link Camera}
- * @extends Object3D
+ * Used to apply the {@link Camera#projectionMatrix | projection} and {@link Camera#viewMatrix | view} matrices of a {@link Camera} to an {@link Object3D} in order to compute {@link ProjectedObject3D#modelViewMatrix | modelView} and {@link ProjectedObject3D#modelViewProjectionMatrix | modelViewProjection} matrices.
  */
 export class ProjectedObject3D extends Object3D {
   /** {@link Camera | Camera} object used to compute {@link ProjectedObject3D#modelViewMatrix | model view} and {@link ProjectedObject3D#modelViewProjectionMatrix | model view projection} matrices */

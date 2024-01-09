@@ -41,7 +41,16 @@ export type CameraObject3DMatricesType = Object3DMatricesType | 'projection' | '
 export type CameraObject3DMatrices = Record<CameraObject3DMatricesType, Object3DTransformMatrix>
 
 /**
- * Used to create a perspective camera and its matrices (projection, model, view).
+ * Used to create a perspective {@link Camera} and its projection, model and view matrices.
+ *
+ * {@link curtains/renderers/GPUCurtainsRenderer.GPUCurtainsRenderer | GPUCurtainsRenderer} and {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer | GPUCameraRenderer} automatically create their own {@link Camera} under the hood, so it is unlikely you'd have to create one by yourself.
+ *
+ * {@link Camera} default perspective settings are:
+ * - {@link Camera#fov | field of view}: 50
+ * - {@link Camera#near | near plane}: 0.01
+ * - {@link Camera#far | far plane}: 150
+ *
+ * Also note that the {@link Camera} default {@link Camera#position | position} is set at `(0, 0, 10)` so the object created with a default size do not appear too big nor too small.
  */
 export class Camera extends Object3D {
   /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera} */
@@ -75,7 +84,7 @@ export class Camera extends Object3D {
     {
       fov = 50,
       near = 0.01,
-      far = 50,
+      far = 150,
       width = 1,
       height = 1,
       pixelRatio = 1,
@@ -127,7 +136,7 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Get/set our view matrix
+   * Get our view matrix
    * @readonly
    */
   get viewMatrix(): Mat4 {
@@ -140,7 +149,7 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Get/set our projection matrix
+   * Get our projection matrix
    * @readonly
    */
   get projectionMatrix(): Mat4 {
@@ -265,7 +274,7 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if neededs
+   * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if needed.
    * @param parameters - {@link CameraPerspectiveOptions | parameters} to use for the perspective
    */
   setPerspective({
@@ -284,7 +293,7 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Callback to run when the camera{@link modelMatrix | model matrix} has been updated
+   * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
    */
   onAfterMatrixStackUpdate() {
     // callback because matrices changed
@@ -292,9 +301,9 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}
-   * Used to translate planes along the Z axis using pixel units as CSS would do
-   * Taken from {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value}
+   * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.<br>
+   * Used to translate planes along the Z axis using pixel units as CSS would do.<br>
+   * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
    */
   setCSSPerspective() {
     this.CSSPerspective =
@@ -305,9 +314,9 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Sets visible width / height at a given z-depth from our {@link Camera} parameters
-   * Taken from {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269}
-   * @param depth - depth to use for calcs
+   * Sets visible width / height at a given z-depth from our {@link Camera} parameters.<br>
+   * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
+   * @param depth - depth to use for calculations
    */
   setScreenRatios(depth = 0) {
     // compensate for cameras not positioned at z=0
@@ -331,7 +340,7 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+   * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
    * @param target - {@link Vec3 | target} to look at
    */
   lookAt(target: Vec3 = new Vec3()) {

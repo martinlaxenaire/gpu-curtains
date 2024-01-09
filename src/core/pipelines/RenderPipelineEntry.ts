@@ -14,9 +14,7 @@ import { AllowedBindGroups, BindGroupBufferBindingElement } from '../../types/Bi
 import { RenderMaterialAttributes } from '../../types/Materials'
 
 /**
- * RenderPipelineEntry class:
- * Used to create a pipeline entry specifically designed to draw meshes.
- * @extends PipelineEntry
+ * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
  */
 export class RenderPipelineEntry extends PipelineEntry {
   /** Shaders to use with this {@link RenderPipelineEntry} */

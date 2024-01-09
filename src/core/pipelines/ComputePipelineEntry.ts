@@ -6,7 +6,7 @@ import { BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
- * Used to create a pipeline entry specifically designed to handle compute passes.
+ * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
  */
 export class ComputePipelineEntry extends PipelineEntry {
   /** Shaders to use with this {@link ComputePipelineEntry} */

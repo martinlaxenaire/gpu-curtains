@@ -65,7 +65,7 @@ export interface DOMElementParams {
 }
 
 /**
- * Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}
+ * Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}.
  */
 export class DOMElement {
   /** Timeout ID to throttle our resize events */

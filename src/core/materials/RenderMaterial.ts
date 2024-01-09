@@ -12,7 +12,7 @@ import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { RenderPipelineEntryParams } from '../../types/PipelineEntries'
 
 /**
- * Create a Material specifically built to draw vertices
+ * Create a {@link Material} specifically built to draw vertices. Internally used by all kind of Meshes.
  */
 export class RenderMaterial extends Material {
   /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial} */

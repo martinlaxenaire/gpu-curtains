@@ -45,9 +45,28 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement
 
 /**
- * Used to format {@link BufferBindingParams#struct | struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
- * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.
- * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. "array\<f32\>", "array\<vec3f\>" etc.)
+ * Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.<br>
+ * It will also create WGSL Structs and variables according to the BufferBindings inputs parameters.<br>
+ * The WGSL structs and variables declaration may vary based on the input types, especially if there's one or more arrays involved (i.e. `array<f32>`, `array<vec3f>` etc.).
+ *
+ * @example
+ * ```javascript
+ * // create a GPU buffer binding
+ * const bufferBinding = new BufferBinding({
+ *   name: 'params', // name of the WGSL object
+ *   bindingType: 'uniform', // should be 'storage' for large arrays
+ *   struct: {
+ *     opacity: {
+ *       type: 'f32',
+ *       value: 1,
+ *     },
+ *     mousePosition: {
+ *       type: 'vec2f',
+ *       value: new Vec2(),
+ *     },
+ *   },
+ * })
+ * ```
  */
 export class BufferBinding extends Binding {
   /** Flag to indicate whether this {@link BufferBinding} {@link bufferElements | buffer elements} should be packed in a single structured object or if each one of them should be a separate binding. */

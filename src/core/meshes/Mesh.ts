@@ -9,6 +9,23 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
  * TODO!
  * @extends MeshTransformedMixin
  * @mixes {MeshBaseMixin}
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a mesh with a box geometry
+ * const mesh = new Mesh(gpuCurtains, {
+ *   geometry: new BoxGeometry(),
+ * })
+ * ```
  */
 export class Mesh extends MeshTransformedMixin(ProjectedObject3D) {
   constructor(renderer: CameraRenderer | GPUCurtains, parameters = {} as MeshBaseParams) {

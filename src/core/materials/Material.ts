@@ -14,8 +14,10 @@ import { generateUUID } from '../../utils/utils'
 import { BufferElement } from '../bindings/bufferElements/BufferElement'
 
 /**
- * Used as a base to create a material.
- * The goal of material is to create and update the bind groups (including textures and samplers), create a pipeline and use them to render.
+ * Used as a base to create a {@link Material}.<br>
+ * The purpose of {@link Material} is to create and update the {@link BindGroup | bind groups} and their bindings (GPU buffers, textures and samplers), create a {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} and use them to {@link Material#render | render}.
+ *
+ * This class is not intended to be used as is, but as a base for {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} classes.
  */
 export class Material {
   /** The type of the {@link Material} */

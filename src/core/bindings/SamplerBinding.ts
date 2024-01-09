@@ -15,8 +15,10 @@ export interface SamplerBindingParams extends BindingParams {
 }
 
 /**
- * SamplerBinding class:
- * Used to handle GPUSampler struct
+ * Used to handle GPUSampler bindings.
+ *
+ * Provide both {@link SamplerBinding#resourceLayout | resourceLayout} and {@link SamplerBinding#resource | resource} to the {@link GPUBindGroupLayout} and {@link GPUBindGroup}.<br>
+ * Also create the appropriate WGSL code snippet to add to the shaders.
  */
 export class SamplerBinding extends Binding {
   /** Our {@link SamplerBinding} resource, i.e. a {@link GPUSampler} */

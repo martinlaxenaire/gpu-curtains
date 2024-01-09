@@ -15,8 +15,46 @@ import { TextureBindGroupParams } from './TextureBindGroup'
 import { BindingType } from '../bindings/Binding'
 
 /**
- * Used to handle all inputs data sent to the GPU. Data (buffers, textures or samplers) are organised by Bindings.
- * It creates GPUBuffer, GPUBindGroup and GPUBindGroupLayout that are used by the GPU Pipelines.
+ * Used to handle all inputs data sent to the GPU.<br>
+ * In WebGPU, data (buffers, textures or samplers, called bindings) are organised by bind groups, containing those bindings.
+ *
+ * A {@link BindGroup} is responsible for creating each {@link BufferBinding} {@link GPUBuffer} and then the {@link GPUBindGroup} and {@link GPUBindGroupLayout} that are used to create {@link GPUComputePipeline} or {@link GPURenderPipeline}.<br>
+ * Those are generally automatically created by the {@link core/materials/Material.Material | Material} using this {@link BindGroup}. If you need to manually create them, you will have to call its {@link BindGroup#createBindGroup | `createBindGroup()` method}
+ *
+ * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a GPUTexture is uploaded).<br>
+ * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#resource_layout_objects | binding resource layout} changes, its {@link BindGroup#bindGroupLayout | bindGroupLayout} and {@link BindGroup#bindGroup | bindGroup} will be recreated, and the {@link GPUComputePipeline} or {@link GPURenderPipeline} will be recreated as well.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * const bindGroup = new BindGroup(gpuCurtains, {
+ *   uniforms: {
+ *     params: {
+ *       struct: {
+ *         opacity: {
+ *           type: 'f32',
+ *           value: 1,
+ *         },
+ *         mousePosition: {
+ *           type: 'vec2f',
+ *           value: new Vec2(),
+ *         },
+ *       },
+ *     },
+ *   },
+ * })
+ *
+ * // create the GPU buffer, bindGroupLayout and bindGroup
+ * bindGroup.createBindGroup()
+ * ```
  */
 export class BindGroup {
   /** The type of the {@link BindGroup} */
@@ -183,7 +221,7 @@ export class BindGroup {
   }
 
   /**
-   * Create buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
+   * Create the GPU buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
    */
   createBindGroup() {
     this.fillEntries()
