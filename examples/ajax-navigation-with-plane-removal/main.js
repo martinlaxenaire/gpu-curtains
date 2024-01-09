@@ -2,6 +2,9 @@ import { getPageContent, isBackNavigation, onLinkNavigate, transitionHelper } fr
 import { GPUCurtains, Texture, Plane } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('DOMContentLoaded', async () => {
+  const transitionDuration = 0.5 // in seconds
+  document.documentElement.style.setProperty('--transition-duration', `${transitionDuration}s`)
+
   // curtains
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
@@ -98,7 +101,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      return textureSample(planeTexture, defaultSampler, fsInput.uv);
+      var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
+      color.a *= global.opacity;
+      return color;
     }
   `
 
@@ -129,6 +134,14 @@ window.addEventListener('DOMContentLoaded', async () => {
               },
             },
           },
+          global: {
+            struct: {
+              opacity: {
+                type: 'f32',
+                value: 0,
+              },
+            },
+          },
         },
         textures: (() => {
           // set the right texture
@@ -151,6 +164,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       })
 
       plane.onRender(() => plane.uniforms.frames.elapsed.value++)
+
+      gsap.to(plane.uniforms.global.opacity, {
+        value: 1,
+        duration: transitionDuration,
+      })
 
       planes.push(plane)
     })
