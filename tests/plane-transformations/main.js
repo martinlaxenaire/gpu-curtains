@@ -54,7 +54,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'fsMain',
       },
     },
-    cullMode: 'none',
+    //cullMode: 'none',
     uniforms: {
       mouse: {
         struct: {
@@ -75,7 +75,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  console.log(plane.material.pipelineEntry)
+  console.log(plane.geometry.vertexBuffers[0].attributes[0].array)
+  console.log(plane.geometry.indexBuffer.array)
+  console.log(plane.material.pipelineEntry.options.verticesOrder)
 
   const setMouseAspect = () => {
     plane.uniforms.mouse.aspect.value = plane.boundingRect.width / plane.boundingRect.height

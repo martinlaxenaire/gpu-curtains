@@ -5033,7 +5033,7 @@ class Geometry {
    * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
    */
   constructor({
-    verticesOrder = "cw",
+    verticesOrder = "ccw",
     topology = "triangle-list",
     instancesCount = 1,
     vertexBuffers = []
@@ -5302,7 +5302,7 @@ class IndexedGeometry extends Geometry {
    * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
    */
   constructor({
-    verticesOrder = "cw",
+    verticesOrder = "ccw",
     topology = "triangle-list",
     instancesCount = 1,
     vertexBuffers = []
@@ -5424,7 +5424,6 @@ class PlaneGeometry extends IndexedGeometry {
       type: "vec2f",
       bufferFormat: "float32x2",
       size: 2,
-      bufferLength: verticesCount * 2,
       array: new Float32Array(verticesCount * 2)
     };
     const position = {
@@ -5433,7 +5432,6 @@ class PlaneGeometry extends IndexedGeometry {
       bufferFormat: "float32x3",
       // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
       size: 3,
-      bufferLength: verticesCount * 3,
       array: new Float32Array(verticesCount * 3)
     };
     const normal = {
@@ -5442,7 +5440,6 @@ class PlaneGeometry extends IndexedGeometry {
       bufferFormat: "float32x3",
       // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
       size: 3,
-      bufferLength: verticesCount * 3,
       array: new Float32Array(verticesCount * 3)
     };
     let positionOffset = 0;
@@ -6832,9 +6829,9 @@ class RenderPipelineEntry extends PipelineEntry {
         module: null
       },
       full: {
+        head: "",
         code: "",
         module: null
-        // TODO useless?
       }
     };
     this.descriptor = null;
@@ -6878,22 +6875,36 @@ class RenderPipelineEntry extends PipelineEntry {
     this.shaders.vertex.code = "";
     this.shaders.fragment.head = "";
     this.shaders.fragment.code = "";
+    this.shaders.full.head = "";
+    this.shaders.full.code = "";
     for (const chunk in ShaderChunks.vertex) {
       this.shaders.vertex.head = `${ShaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
+      this.shaders.full.head = `${ShaderChunks.vertex[chunk]}
+${this.shaders.full.head}`;
     }
     for (const chunk in ShaderChunks.fragment) {
       this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}
 ${this.shaders.fragment.head}`;
+      if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
+        this.shaders.full.head = `${ShaderChunks.fragment[chunk]}
+${this.shaders.full.head}`;
+      }
     }
     if (this.options.useProjection) {
       for (const chunk in ProjectedShaderChunks.vertex) {
         this.shaders.vertex.head = `${ProjectedShaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
+        this.shaders.full.head = `${ProjectedShaderChunks.vertex[chunk]}
+${this.shaders.full.head}`;
       }
       for (const chunk in ProjectedShaderChunks.fragment) {
         this.shaders.fragment.head = `${ProjectedShaderChunks.fragment[chunk]}
 ${this.shaders.fragment.head}`;
+        if (this.shaders.full.head.indexOf(ProjectedShaderChunks.fragment[chunk]) === -1) {
+          this.shaders.full.head = `${ProjectedShaderChunks.fragment[chunk]}
+${this.shaders.full.head}`;
+        }
       }
     }
     const groupsBindings = [];
@@ -6942,12 +6953,30 @@ ${this.shaders.fragment.head}`;
 `;
         }
       }
+      if (groupBinding.wgslStructFragment && this.shaders.full.head.indexOf(groupBinding.wgslStructFragment) === -1) {
+        this.shaders.full.head = `
+${groupBinding.wgslStructFragment}
+${this.shaders.full.head}`;
+      }
+      if (this.shaders.full.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+        this.shaders.full.head = `${this.shaders.full.head}
+@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
+        if (groupBinding.newLine)
+          this.shaders.full.head += `
+`;
+      }
     });
     this.shaders.vertex.head = `${this.attributes.wgslStructFragment}
 ${this.shaders.vertex.head}`;
+    this.shaders.full.head = `${this.attributes.wgslStructFragment}
+${this.shaders.full.head}`;
     this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code;
     this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code;
-    this.shaders.full.code = this.shaders.vertex.code + "\n" + this.shaders.fragment.code;
+    if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) {
+      this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
+    } else {
+      this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+    }
   }
   /* SETUP */
   /**
@@ -6955,12 +6984,13 @@ ${this.shaders.vertex.head}`;
    */
   createShaders() {
     this.patchShaders();
+    const isSameShader = this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0;
     this.shaders.vertex.module = this.createShaderModule({
-      code: this.shaders.vertex.code,
+      code: this.shaders[isSameShader ? "full" : "vertex"].code,
       type: "vertex"
     });
     this.shaders.fragment.module = this.createShaderModule({
-      code: this.shaders.fragment.code,
+      code: this.shaders[isSameShader ? "full" : "fragment"].code,
       type: "fragment"
     });
   }

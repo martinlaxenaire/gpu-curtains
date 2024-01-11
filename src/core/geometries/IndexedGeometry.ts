@@ -67,7 +67,7 @@ export class IndexedGeometry extends Geometry {
    * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
    */
   constructor({
-    verticesOrder = 'cw',
+    verticesOrder = 'ccw',
     topology = 'triangle-list',
     instancesCount = 1,
     vertexBuffers = [],

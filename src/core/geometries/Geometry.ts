@@ -67,7 +67,7 @@ export class Geometry {
    * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
    */
   constructor({
-    verticesOrder = 'cw',
+    verticesOrder = 'ccw',
     topology = 'triangle-list',
     instancesCount = 1,
     vertexBuffers = [],

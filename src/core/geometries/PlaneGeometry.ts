@@ -15,6 +15,16 @@ export interface PlaneGeometryParams extends GeometryBaseParams {
 /**
  * Used to create an indexed plane geometry based on the number of segments along the X and Y axis.
  *
+ * This is how it will look for a 3x2 quad. Indexing will take care of drawing the right vertices in the right order.
+ * <pre>
+ *  0---1---2---3
+ *  |  /|  /|  /|
+ *  |/  |/  |/  |
+ *  4---5---6---7
+ *  |  /|  /|  /|
+ *  |/  |/  |/  |
+ *  8---9---10--11
+ * </pre>
  * @example
  * ```javascript
  * const planeGeometry = new PlaneGeometry()
@@ -46,6 +56,7 @@ export class PlaneGeometry extends IndexedGeometry {
     vertexBuffers = [],
     topology,
   }: PlaneGeometryParams = {}) {
+    // plane geometries vertices are defined in the clockwise order
     super({ verticesOrder: 'cw', topology, instancesCount, vertexBuffers })
 
     this.type = 'PlaneGeometry'
@@ -112,7 +123,6 @@ export class PlaneGeometry extends IndexedGeometry {
       type: 'vec2f',
       bufferFormat: 'float32x2',
       size: 2,
-      bufferLength: verticesCount * 2,
       array: new Float32Array(verticesCount * 2),
     }
 
@@ -122,7 +132,6 @@ export class PlaneGeometry extends IndexedGeometry {
       bufferFormat: 'float32x3',
       // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
       size: 3,
-      bufferLength: verticesCount * 3,
       array: new Float32Array(verticesCount * 3),
     }
 
@@ -132,7 +141,6 @@ export class PlaneGeometry extends IndexedGeometry {
       bufferFormat: 'float32x3',
       // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
       size: 3,
-      bufferLength: verticesCount * 3,
       array: new Float32Array(verticesCount * 3),
     }
 

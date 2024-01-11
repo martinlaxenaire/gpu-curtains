@@ -102,6 +102,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
 }
 /**
  * Used to mix Mesh properties and methods defined in {@link ProjectedMeshBaseClass} with a {@link MeshBaseMixin} mixed with a given Base of type {@link ProjectedObject3D} or {@link DOMObject3D}.
+ * @exports
  * @param Base - the class to mix onto, should be of {@link ProjectedObject3D} or {@link DOMObject3D} type
  * @returns - the mixed classes.
  */

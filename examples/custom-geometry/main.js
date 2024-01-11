@@ -100,33 +100,33 @@ window.addEventListener('DOMContentLoaded', async () => {
   // prettier-ignore
   const vertices = new Float32Array([
     // front face
-    -1, -1, 1,
-    0, 1, 0,
     1, -1, 1,
+    0, 1, 0,
+    -1, -1, 1,
 
     // right face
-    1, -1, 1,
-    0, 1, 0,
     1, -1, -1,
+    0, 1, 0,
+    1, -1, 1,
 
     // back face
-    1, -1, -1,
-    0, 1, 0,
     -1, -1, -1,
+    0, 1, 0,
+    1, -1, -1,
 
     // left face
-    -1, -1, -1,
-    0, 1, 0,
     -1, -1, 1,
+    0, 1, 0,
+    -1, -1, -1,
 
     // bottom first
-    -1, -1, 1,
-    1, -1, -1,
     -1, -1, -1,
-    // bottom second
     1, -1, -1,
     -1, -1, 1,
-    1, -1, 1
+    // bottom second
+    1, -1, 1,
+    -1, -1, 1,
+    1, -1, -1,
   ])
 
   // prettier-ignore
@@ -150,7 +150,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     type: 'vec3f',
     bufferFormat: 'float32x3',
     size: 3,
-    bufferLength: vertices.length,
     array: vertices,
   })
 
@@ -159,7 +158,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     type: 'vec3f',
     bufferFormat: 'float32x3',
     size: 3,
-    bufferLength: verticesColors.length,
     array: verticesColors,
     verticesStride: 3, // insert one face color for every 3 vertices
   })
