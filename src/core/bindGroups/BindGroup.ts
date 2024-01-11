@@ -18,10 +18,18 @@ import { BindingType } from '../bindings/Binding'
  * Used to handle all inputs data sent to the GPU.<br>
  * In WebGPU, data (buffers, textures or samplers, called bindings) are organised by bind groups, containing those bindings.
  *
+ * ## Bindings
+ *
  * A {@link BindGroup} is responsible for creating each {@link BufferBinding} {@link GPUBuffer} and then the {@link GPUBindGroup} and {@link GPUBindGroupLayout} that are used to create {@link GPUComputePipeline} or {@link GPURenderPipeline}.<br>
  * Those are generally automatically created by the {@link core/materials/Material.Material | Material} using this {@link BindGroup}. If you need to manually create them, you will have to call its {@link BindGroup#createBindGroup | `createBindGroup()` method}
  *
- * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a GPUTexture is uploaded).<br>
+ * ### Samplers and textures
+ *
+ * A {@link BindGroup} is best suited to handle {@link GPUBuffer} only bindings. If you need to handle {@link GPUSampler}, a {@link GPUTexture} or a {@link GPUExternalTexture}, you should use a {@link core/bindGroups/TextureBindGroup.TextureBindGroup | TextureBindGroup} instead.
+ *
+ * ### Updating a GPUBindGroup or GPUBindGroupLayout
+ *
+ * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroup#resource | binding resource} changes, its {@link BindGroup#bindGroup | bindGroup} will be recreated (usually, when a {@link GPUTexture} is uploaded).<br>
  * Each time one of the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#resource_layout_objects | binding resource layout} changes, its {@link BindGroup#bindGroupLayout | bindGroupLayout} and {@link BindGroup#bindGroup | bindGroup} will be recreated, and the {@link GPUComputePipeline} or {@link GPURenderPipeline} will be recreated as well.
  *
  * @example
@@ -36,6 +44,7 @@ import { BindingType } from '../bindings/Binding'
  * await gpuCurtains.setDevice()
  *
  * const bindGroup = new BindGroup(gpuCurtains, {
+ *   label: 'My bind group',
  *   uniforms: {
  *     params: {
  *       struct: {

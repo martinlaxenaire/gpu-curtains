@@ -16,7 +16,7 @@ export interface TextureBindGroupParams extends BindGroupParams {
 /**
  * Used to regroup all {@link types/BindGroups.BindGroupBindingElement | bindings} related to textures (texture, texture matrices buffers and samplers) into one single specific {@link BindGroup}.
  *
- * Responsible for uploading video textures if needed.
+ * Also responsible for uploading video textures if needed.
  *
  * @example
  * ```javascript
@@ -37,6 +37,7 @@ export interface TextureBindGroupParams extends BindGroupParams {
  *
  * // create a texture bind group using that render texture
  * const textureBindGroup = new TextureBindGroup(gpuCurtains, {
+ *   label: 'My texture bind group',
  *   textures: [renderTexture],
  *   uniforms: {
  *     params: {

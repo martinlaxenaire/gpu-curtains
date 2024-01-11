@@ -14,8 +14,31 @@ export interface ShaderPassParams extends MeshBaseRenderParams {
 }
 
 /**
- * Used to apply post processing, i.e. render meshes to a {@link RenderTexture} and then draw a {@link FullscreenPlane} using that texture as an input.
- * A ShaderPass could either post process the whole scene or just a bunch of meshes using a {@link RenderTarget}.
+ * Used to apply postprocessing, i.e. draw meshes to a {@link RenderTexture} and then draw a {@link FullscreenPlane} using that texture as an input.
+ *
+ * A ShaderPass could either post process the whole scene or just a bunch of meshes using a specific {@link RenderTarget}.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a ShaderPass
+ * const shaderPass = new ShaderPass(gpuCurtain, {
+ *   label: 'My shader pass',
+ *   shaders: {
+ *     fragment: {
+ *       code: shaderPassCode, // assume it is a valid WGSL fragment shader
+ *     },
+ *   },
+ * })
+ * ```
  */
 export class ShaderPass extends FullscreenPlane {
   /** {@link RenderTarget} content to use as an input if specified */

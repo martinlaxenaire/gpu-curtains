@@ -14,6 +14,7 @@ export interface PlaneGeometryParams extends GeometryBaseParams {
  * Used to create an indexed plane geometry based on the number of segments along the X and Y axis.
  *
  * This is how it will look for a 3x2 quad. Indexing will take care of drawing the right vertices in the right order.
+ *
  * <pre>
  *  0---1---2---3
  *  |  /|  /|  /|
@@ -23,6 +24,7 @@ export interface PlaneGeometryParams extends GeometryBaseParams {
  *  |/  |/  |/  |
  *  8---9---10--11
  * </pre>
+ *
  * @example
  * ```javascript
  * const planeGeometry = new PlaneGeometry()

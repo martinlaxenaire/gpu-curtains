@@ -54,7 +54,7 @@ let computePassIndex = 0
  * const nbParticles = 100_000
  *
  * const computePass = new ComputePass(gpuCurtains, {
- *   label: 'Compute pass',
+ *   label: 'My compute pass',
  *   shaders: {
  *     compute: {
  *       code: computeShaderCode, // assume it is a valid WGSL compute shader

@@ -22,8 +22,7 @@ export interface RenderPassOptions {
  */
 export type RenderPassParams = Partial<RenderPassOptions>;
 /**
- * RenderPass class:
- * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a specific {@link GPURenderPassDescriptor | render pass descriptor} (i.e. render to a specific {@link GPUTexture})
+ * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#renderTexture | renderTexture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
  */
 export declare class RenderPass {
     /** {@link Renderer} used by this {@link RenderPass} */

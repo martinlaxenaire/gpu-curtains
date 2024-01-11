@@ -44,6 +44,8 @@ export interface Object3DTransforms {
 
 /**
  * Used to create an object with transformation properties such as position, scale, rotation and transform origin {@link Vec3 | vectors} and a {@link Quat | quaternion} in order to compute a {@link Mat4 | model matrix}.
+ *
+ * The transformations {@link Vec3 | vectors} are reactive to changes, which mean that updating one of their components will automatically update the {@link Mat4 | model matrix}.
  */
 export class Object3D {
   /** {@link Object3DTransforms | Transformation object} of the {@link Object3D} */

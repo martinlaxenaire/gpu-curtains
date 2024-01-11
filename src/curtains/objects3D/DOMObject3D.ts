@@ -44,7 +44,9 @@ export interface DOMObject3DParams {
 }
 
 /**
- * Used to create 3D objects with transform and projection matrices based on a {@link Camera} and an {@link HTMLElement}
+ * This special kind of {@link ProjectedObject3D} uses an {@link HTMLElement} to convert the corresponding X and Y {@link DOMObject3D#scale | scale} and {@link DOMObject3D#position | position} relative to the 3D world space.
+ *
+ * Internally used by the {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} and {@link curtains/meshes/Plane.Plane | Plane}
  */
 export class DOMObject3D extends ProjectedObject3D {
   /** {@link GPUCurtainsRenderer} used to create this {@link DOMObject3D} */

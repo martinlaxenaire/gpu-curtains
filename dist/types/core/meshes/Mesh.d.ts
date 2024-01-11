@@ -4,7 +4,12 @@ import { MeshBaseParams } from './mixins/MeshBaseMixin';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 declare const Mesh_base: import("./mixins/MeshBaseMixin").MixinConstructor<import("./mixins/ProjectedMeshBaseMixin").ProjectedMeshBaseClass> & typeof ProjectedObject3D;
 /**
- * Create a Mesh, with model and projection matrices.
+ * Create a 3D Mesh.
+ *
+ * A 3D Mesh is a basically a {@link ProjectedObject3D} with a {@link core/geometries/Geometry.Geometry | Geometry} and a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
+ *
+ * You need to pass at least a valid {@link core/geometries/Geometry.Geometry | Geometry} as parameter.<br>
+ * If no shaders are provided, it will use the normals colors as default shading.
  *
  * @example
  * ```javascript
@@ -18,12 +23,19 @@ declare const Mesh_base: import("./mixins/MeshBaseMixin").MixinConstructor<impor
  * await gpuCurtains.setDevice()
  *
  * // create a mesh with a box geometry
+ * // will use the normals colors as default shading
  * const mesh = new Mesh(gpuCurtains, {
+ *   label: 'My mesh',
  *   geometry: new BoxGeometry(),
  * })
  * ```
  */
 export declare class Mesh extends Mesh_base {
-    constructor(renderer: CameraRenderer | GPUCurtains, parameters?: MeshBaseParams);
+    /**
+     * Mesh constructor
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
+     * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
+     */
+    constructor(renderer: CameraRenderer | GPUCurtains, parameters: MeshBaseParams);
 }
 export {};

@@ -10,7 +10,7 @@ export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry;
  * The end goal is to cache pipelines and reuse them (as well as bind groups).<br>
  * Also responsible for setting the current pass encoder pipeline in order to avoid redundant setPipeline calls.<br>
  * Created internally by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager | GPUDeviceManager}.<br>
- * see: {@link https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change | WebGPU Bind Group best practices}
+ * @see {@link https://toji.dev/webgpu-best-practices/bind-groups#grouping-resources-based-on-frequency-of-change | WebGPU Bind Group best practices}
  */
 export declare class PipelineManager {
     /** The type of the {@link PipelineManager} */

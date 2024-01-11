@@ -6,6 +6,13 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry';
 /**
  * Create a {@link Material} specifically built to run computations on the GPU. Internally used by {@link core/computePasses/ComputePass.ComputePass | ComputePass}.
+ *
+ * ## Compute pipeline
+ *
+ * A {@link ComputeMaterial} automatically creates a {@link ComputePipelineEntry}. Once all the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} have been created, they are sent with the compute shader code to the {@link ComputePipelineEntry}, which is in turns responsible for creating the {@link GPUComputePipeline}.
+ *
+ * After the {@link GPUComputePipeline} has been successfully compiled, the {@link ComputeMaterial} is considered to be ready and it can start running the compute shader computations.
+ *
  */
 export declare class ComputeMaterial extends Material {
     /** {@link ComputePipelineEntry | Compute pipeline entry} used by this {@link ComputeMaterial} */

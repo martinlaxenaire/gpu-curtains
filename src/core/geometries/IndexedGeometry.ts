@@ -26,7 +26,11 @@ export interface IndexBuffer {
 }
 
 /**
- * Used to create an indexed geometry which holds an index array to use as indexBuffer.
+ * Used to create an {@link IndexedGeometry} which holds an index array to use as an index buffer.
+ *
+ * The index array represents the order in which the attributes should be processed. This allows to create smaller vertex, uv and normal arrays.
+ *
+ * During the {@link IndexedGeometry#render | render}, the {@link IndexedGeometry} is responsible for setting the {@link IndexedGeometry#vertexBuffers | vertexBuffers} and drawing the indexed vertices.
  *
  * @example
  * ```javascript

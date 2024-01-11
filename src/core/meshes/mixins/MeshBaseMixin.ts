@@ -59,7 +59,7 @@ export interface MeshBaseOptions {
 }
 
 /** @const - Default Mesh parameters to merge with user defined parameters */
-const defaultMeshBaseParams = {
+const defaultMeshBaseParams: MeshBaseParams = {
   // geometry
   geometry: new Geometry(),
   // material
@@ -75,12 +75,15 @@ const defaultMeshBaseParams = {
   renderOrder: 0,
   // textures
   texturesOptions: {},
-} as MeshBaseParams
+}
 
 // based on https://stackoverflow.com/a/75673107/13354068
 // we declare first a class, and then the mixin with a return type
 /**
- * MeshBaseClass - MeshBase typescript definition
+ * This class describes the properties and methods to set up a basic Mesh, implemented in the {@link MeshBaseMixin}:
+ * - Set and render the {@link Geometry} and {@link RenderMaterial}
+ * - Add helpers to create {@link Texture} and {@link RenderTexture}
+ * - Handle resizing, device lost/restoration and destroying the resources
  */
 export declare class MeshBaseClass {
   /** The type of the {@link MeshBaseClass} */
@@ -357,16 +360,14 @@ export declare class MeshBaseClass {
 export type MixinConstructor<T = {}> = new (...args: any[]) => T
 
 /**
- * Used to mix basic Mesh properties and methods defined in {@link MeshBaseClass} with a given Base of type {@link Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} or an empty class.
+ * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link Texture} and {@link RenderTexture}) with a given Base of type {@link Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
  * @exports MeshBaseMixin
  * @param Base - the class to mix onto
- * @returns - the mixed classes.
+ * @returns - the mixed classes, creating a basic Mesh.
  */
 function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstructor<MeshBaseClass> & TBase {
   /**
    * MeshBase defines our base properties and methods
-   * @mixin
-   * @alias MeshBase
    */
   return class MeshBase extends Base implements MeshBaseClass {
     /** The type of the {@link MeshBase} */

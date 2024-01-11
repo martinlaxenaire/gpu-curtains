@@ -6212,7 +6212,7 @@ struct VertexOutput {
   class ProjectedObject3D extends Object3D {
     /**
      * ProjectedObject3D constructor
-     * @param renderer - our renderer class object
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
      */
     constructor(renderer) {
       super();
@@ -6601,7 +6601,12 @@ struct VSOutput {
     };
   }
   class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
-    constructor(renderer, parameters = {}) {
+    /**
+     * Mesh constructor
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
+     * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
+     */
+    constructor(renderer, parameters) {
       renderer = renderer && renderer.renderer || renderer;
       isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
       super(renderer, null, parameters);
@@ -7978,8 +7983,6 @@ ${this.shaders.compute.head}`;
   const defaultPlaneParams = {
     label: "Plane",
     // geometry
-    //widthSegments: 1,
-    //heightSegments: 1,
     instancesCount: 1,
     vertexBuffers: []
   };
@@ -8211,7 +8214,7 @@ ${this.shaders.compute.head}`;
      * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
      * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
      * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-     * {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
+     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
      * @param shaderPass - {@link ShaderPass} to add
      */
     addShaderPass(shaderPass) {
@@ -8270,7 +8273,7 @@ ${this.shaders.compute.head}`;
     /**
      * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
      * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
-     * {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
+     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
      * @param pingPongPlane
      */
     addPingPongPlane(pingPongPlane) {

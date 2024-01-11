@@ -75,6 +75,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     geometry: new BoxGeometry(),
   })
 
+  console.log(cube)
+
   cube.position.x = 1.5
 
   const cubeBBox = document.createElement('div')

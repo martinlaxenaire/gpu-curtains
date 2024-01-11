@@ -1,6 +1,7 @@
 /**
- * Really basic Vector2 class used for vector calculations
- * Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Vector2.js and http://glmatrix.net/docs/vec2.js.html
+ * Really basic 2D vector class used for vector calculations
+ * @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector2.js
+ * @see http://glmatrix.net/docs/vec2.js.html
  */
 export declare class Vec2 {
     /** The type of the {@link Vec2} */

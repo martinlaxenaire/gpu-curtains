@@ -15,6 +15,15 @@ import { RenderMaterialAttributes } from '../../types/Materials'
 
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
+ *
+ * ## Shaders patching
+ *
+ * The {@link RenderPipelineEntry} uses each of its {@link RenderPipelineEntry#bindGroups | bind groups} {@link core/bindings/Binding.Binding | Binding} to patch the given compute shader before creating the {@link GPUShaderModule}.<br>
+ * It will prepend every {@link core/bindings/Binding.Binding | Binding} WGSL code snippets (or fragments) with the correct bind group and bindings indices.
+ *
+ * ## Pipeline compilation
+ *
+ * The {@link RenderPipelineEntry} will then create a {@link GPURenderPipeline} (asynchronously by default).
  */
 export class RenderPipelineEntry extends PipelineEntry {
   /** Shaders to use with this {@link RenderPipelineEntry} */

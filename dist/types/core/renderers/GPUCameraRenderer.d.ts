@@ -14,7 +14,7 @@ export interface GPUCameraRendererParams extends GPURendererParams {
 }
 /**
  * This renderer also creates a {@link Camera} and its associated {@link cameraBufferBinding | binding} and {@link cameraBindGroup | bind group}.<br>
- * Can be safely used to render compute passes and meshes that do not need to be tied to the DOM.
+ * Can be safely used to render compute passes and meshes if they do not need to be tied to the DOM.
  *
  * @example
  * ```javascript

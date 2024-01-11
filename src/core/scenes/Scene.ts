@@ -52,7 +52,18 @@ export type RenderPassEntriesType = 'pingPong' | 'renderTarget' | 'screen'
 export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
 /**
- * Used to render everything that needs to be rendered (compute passes and meshes) in the right order with the right pass descriptors and target textures, perform textures copy at the right time, etc.
+ * Used to by the {@link Renderer} render everything that needs to be rendered (compute passes and meshes) in the right order with the right pass descriptors and target textures, perform textures copy at the right time, etc.
+ *
+ * ## Render order
+ *
+ * - Run all the {@link ComputePass} first, sorted by their {@link ComputePass#renderOrder | renderOrder}
+ * - Then render all {@link renderPassEntries} pingPong entries Meshes, sorted by their {@link PingPongPlane#renderOrder | renderOrder}
+ * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries:
+ *   - First, the opaque unprojected Meshes (i.e. opaque {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
+ *   - Then, the transparent unprojected Meshes (i.e. transparent {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
+ *   - Then, the opaque projected Meshes (i.e. opaque {@link core/meshes/Mesh.Mesh | Mesh}, {@link DOMMesh} or {@link Plane}), sorted by their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
+ *   - Finally, the transparent projected Meshes (i.e. transparent {@link core/meshes/Mesh.Mesh | Mesh}, {@link DOMMesh} or {@link Plane}), sorted by their Z position and then their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
+ * - Finally all Meshes that need to be rendered directly to the {@link renderPassEntries} screen (the {@link Renderer} current texture), in the same order than above.
  */
 export class Scene {
   /** {@link Renderer} used by this {@link Scene} */
@@ -264,7 +275,7 @@ export class Scene {
    * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
    * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
    * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-   * {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
+   * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
    * @param shaderPass - {@link ShaderPass} to add
    */
   addShaderPass(shaderPass: ShaderPass) {
@@ -333,7 +344,7 @@ export class Scene {
   /**
    * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
    * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
-   * {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
+   * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
    * @param pingPongPlane
    */
   addPingPongPlane(pingPongPlane: PingPongPlane) {

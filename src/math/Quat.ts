@@ -5,8 +5,8 @@ import { Mat4 } from './Mat4'
 export type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX'
 
 /**
- * Really basic Quaternion class used for 3D rotation calculations
- * Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Quaternion.js
+ * Really basic quaternion class used for 3D rotation calculations
+ * @see https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js
  */
 export class Quat {
   /** The type of the {@link Quat} */

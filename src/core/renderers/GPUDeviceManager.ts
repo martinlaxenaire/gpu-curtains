@@ -21,9 +21,11 @@ export interface GPUDeviceManagerParams {
 }
 
 /**
- * GPUDeviceManager class:
  * Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
- * Will also keep a track of all the {@link Renderer | renderers}, {@link Sampler | samplers} and {@link GPUBuffer | GPU buffers} created.
+ *
+ * It will create all the GPU objects that need a {@link GPUDevice | device} to do so, as well as a {@link PipelineManager}. It will also keep a track of all the {@link Renderer}, {@link AllowedBindGroups | bind groups}, {@link Sampler}, {@link Texture} and {@link GPUBuffer | GPU buffers} created.
+ *
+ * The {@link GPUDeviceManager} is also responsible for creating the {@link GPUCommandBuffer}, rendering all the {@link Renderer} and then submitting the {@link GPUCommandBuffer} at each {@link GPUDeviceManager#render | render} calls.
  */
 export class GPUDeviceManager {
   /** Number of times a {@link GPUDevice} has been created */

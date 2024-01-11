@@ -1,8 +1,9 @@
 import { Vec3 } from './Vec3';
 import { Quat } from './Quat';
 /**
- * This is a really basic Matrix4 class used for matrix calculations
- * Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js and http://glmatrix.net/docs/mat4.js.html
+ * Really basic 4x4 matrix class used for matrix calculations.
+ * @see https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js
+ * @see http://glmatrix.net/docs/mat4.js.html
  */
 export declare class Mat4 {
     /** The type of the {@link Mat4} */

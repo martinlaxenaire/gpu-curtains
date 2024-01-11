@@ -35,6 +35,18 @@ export interface GPUCurtainsParams extends Partial<Omit<GPUCurtainsOptions, 'con
 }
 /**
  * Used as a global class to create a {@link GPUCurtainsRenderer}, create all objects that need a reference to a renderer, listen to various events such as scroll and resize and render.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ * ```
  */
 export declare class GPUCurtains {
     /** The type of this {@link GPUCurtains} */

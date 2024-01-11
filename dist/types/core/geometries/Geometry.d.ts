@@ -2,8 +2,10 @@
 import { Box3 } from '../../math/Box3';
 import { GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams } from '../../types/Geometries';
 /**
- * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes.<br>
- * Holds all attributes arrays, bounding box and handle WGSL code snippet for the vertex shader input attributes.
+ * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
+ * Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.
+ *
+ * During the {@link Geometry#render | render}, the {@link Geometry} is responsible for setting the {@link Geometry#vertexBuffers | vertexBuffers} and drawing the vertices.
  *
  * @example
  * ```javascript

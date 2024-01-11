@@ -38,7 +38,9 @@ const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
 export interface ProjectedMeshBaseOptions extends MeshBaseOptions, Partial<ProjectedMeshBaseParams> {}
 
 /**
- * ProjectedMeshBaseClass - MeshTransformedBase typescript definition
+ * This class describes the properties and methods to set up a Projected Mesh (i.e. a basic {@link MeshBaseClass | Mesh} with {@link ProjectedObject3D} transformations matrices and a {@link core/camera/Camera.Camera | Camera} to use for projection), implemented in the {@link ProjectedMeshBaseMixin}:
+ * - Handle the frustum culling (check if the {@link ProjectedObject3D} currently lies inside the {@link core/camera/Camera.Camera | Camera} frustum)
+ * - Add callbacks for when the Mesh enters or leaves the {@link core/camera/Camera.Camera | Camera} frustum
  */
 export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   /** The {@link CameraRenderer} used */
@@ -132,18 +134,16 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
 }
 
 /**
- * Used to mix Mesh properties and methods defined in {@link ProjectedMeshBaseClass} with a {@link MeshBaseMixin} mixed with a given Base of type {@link ProjectedObject3D} or {@link DOMObject3D}.
+ * Used to add the properties and methods defined in {@link ProjectedMeshBaseClass} to the {@link MeshBaseClass} and mix it with a given Base of type {@link ProjectedObject3D} or {@link DOMObject3D}.
  * @exports
  * @param Base - the class to mix onto, should be of {@link ProjectedObject3D} or {@link DOMObject3D} type
- * @returns - the mixed classes.
+ * @returns - the mixed classes, creating a Projected Mesh.
  */
 function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D>>(
   Base: TBase
 ): MixinConstructor<ProjectedMeshBaseClass> & TBase {
   /**
    * ProjectedMeshBase defines our base properties and methods
-   * @mixin
-   * @alias ProjectedMeshBase
    */
   return class ProjectedMeshBase extends MeshBaseMixin(Base) {
     /** The {@link CameraRenderer} used */

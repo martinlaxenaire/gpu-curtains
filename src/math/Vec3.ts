@@ -3,8 +3,9 @@ import { Quat } from './Quat'
 import { Camera } from '../core/camera/Camera'
 
 /**
- * Really basic Vector3 class used for vector calculations
- * Highly based on https://github.com/mrdoob/three.js/blob/dev/src/math/Vector3.js and http://glmatrix.net/docs/vec3.js.html
+ * Really basic 3D vector class used for vector calculations
+ * @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector3.js
+ * @see http://glmatrix.net/docs/vec3.js.html
  */
 export class Vec3 {
   /** The type of the {@link Vec3} */

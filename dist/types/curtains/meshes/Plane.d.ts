@@ -12,8 +12,27 @@ export interface PlaneParams extends DOMMeshBaseParams, PlaneGeometryParams {
     geometry?: PlaneGeometry;
 }
 /**
- * Used to create a special {@link DOMMesh} class object with a specific {@link PlaneGeometry}.
+ * Used to create a special {@link DOMMesh} class object using a {@link PlaneGeometry}.
  * This means a quad that looks like an ordinary {@link HTMLElement} but with WebGPU rendering capabilities.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a Plane,
+ * // assuming there's a HTML element with the "plane" ID in the DOM
+ * // will use the normals colors as default shading
+ * const plane = new Plane(gpuCurtains, '#plane', {
+ *   label: 'My plane',
+ * })
+ * ```
  */
 export declare class Plane extends DOMMesh {
     /**

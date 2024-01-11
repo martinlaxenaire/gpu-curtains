@@ -58,7 +58,8 @@ export interface DOMElementParams {
     onPositionChanged?: (boundingRect: DOMElementBoundingRect | null) => void | null;
 }
 /**
- * Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}.
+ * Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}.<br>
+ * Execute callbacks when the bounding rectangle of the DOM Element changes, which means when its size and/or position change.
  */
 export declare class DOMElement {
     #private;
