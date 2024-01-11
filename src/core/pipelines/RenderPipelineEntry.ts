@@ -68,8 +68,9 @@ export class RenderPipelineEntry extends PipelineEntry {
         module: null,
       },
       full: {
+        head: '',
         code: '',
-        module: null, // TODO useless?
+        module: null,
       },
     }
 
@@ -124,23 +125,35 @@ export class RenderPipelineEntry extends PipelineEntry {
     this.shaders.vertex.code = ''
     this.shaders.fragment.head = ''
     this.shaders.fragment.code = ''
+    this.shaders.full.head = ''
+    this.shaders.full.code = ''
 
     // first add chunks
     for (const chunk in ShaderChunks.vertex) {
       this.shaders.vertex.head = `${ShaderChunks.vertex[chunk]}\n${this.shaders.vertex.head}`
+      this.shaders.full.head = `${ShaderChunks.vertex[chunk]}\n${this.shaders.full.head}`
     }
 
     for (const chunk in ShaderChunks.fragment) {
       this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
+
+      if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
+        this.shaders.full.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
+      }
     }
 
     if (this.options.useProjection) {
       for (const chunk in ProjectedShaderChunks.vertex) {
         this.shaders.vertex.head = `${ProjectedShaderChunks.vertex[chunk]}\n${this.shaders.vertex.head}`
+        this.shaders.full.head = `${ProjectedShaderChunks.vertex[chunk]}\n${this.shaders.full.head}`
       }
 
       for (const chunk in ProjectedShaderChunks.fragment) {
         this.shaders.fragment.head = `${ProjectedShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
+
+        if (this.shaders.full.head.indexOf(ProjectedShaderChunks.fragment[chunk]) === -1) {
+          this.shaders.full.head = `${ProjectedShaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
+        }
       }
     }
 
@@ -205,15 +218,35 @@ export class RenderPipelineEntry extends PipelineEntry {
           if (groupBinding.newLine) this.shaders.fragment.head += `\n`
         }
       }
+
+      if (groupBinding.wgslStructFragment && this.shaders.full.head.indexOf(groupBinding.wgslStructFragment) === -1) {
+        this.shaders.full.head = `\n${groupBinding.wgslStructFragment}\n${this.shaders.full.head}`
+      }
+
+      if (this.shaders.full.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+        this.shaders.full.head = `${this.shaders.full.head}\n@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`
+
+        if (groupBinding.newLine) this.shaders.full.head += `\n`
+      }
     })
 
     // add attributes to vertex shader only
     this.shaders.vertex.head = `${this.attributes.wgslStructFragment}\n${this.shaders.vertex.head}`
+    this.shaders.full.head = `${this.attributes.wgslStructFragment}\n${this.shaders.full.head}`
 
     this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code
     this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code
 
-    this.shaders.full.code = this.shaders.vertex.code + '\n' + this.shaders.fragment.code
+    // check if its one shader string with different entry points
+    if (
+      this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint &&
+      this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0
+    ) {
+      this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code
+    } else {
+      this.shaders.full.code =
+        this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code
+    }
   }
 
   /* SETUP */
@@ -224,13 +257,17 @@ export class RenderPipelineEntry extends PipelineEntry {
   createShaders() {
     this.patchShaders()
 
+    const isSameShader =
+      this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint &&
+      this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0
+
     this.shaders.vertex.module = this.createShaderModule({
-      code: this.shaders.vertex.code,
+      code: this.shaders[isSameShader ? 'full' : 'vertex'].code,
       type: 'vertex',
     })
 
     this.shaders.fragment.module = this.createShaderModule({
-      code: this.shaders.fragment.code,
+      code: this.shaders[isSameShader ? 'full' : 'fragment'].code,
       type: 'fragment',
     })
   }

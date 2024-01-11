@@ -10,14 +10,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await gpuCurtains.setDevice()
 
-  const meshVs = /* wgsl */ `  
+  const meshShader = /* wgsl */ `  
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) originalUv: vec2f,
       @location(1) uv: vec2f,
     };
 
-    @vertex fn main(
+    @vertex fn vsMain(
       attributes: Attributes,
     ) -> VSOutput {    
       var vsOutput : VSOutput;
@@ -28,16 +28,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       
       return vsOutput;
     }
-  `
-
-  const meshFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) originalUv: vec2f,
-      @location(1) uv: vec2f,
-    };
-  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+    
+    @fragment fn fsMain(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
       
       var mousePosition: vec2f = getVertex2DToUVCoords(mouse.position);
@@ -54,10 +46,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   const plane = new Plane(gpuCurtains, '.plane', {
     shaders: {
       vertex: {
-        code: meshVs,
+        code: meshShader,
+        entryPoint: 'vsMain',
       },
       fragment: {
-        code: meshFs,
+        code: meshShader,
+        entryPoint: 'fsMain',
       },
     },
     cullMode: 'none',
@@ -80,6 +74,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     },
   })
+
+  console.log(plane.material.pipelineEntry)
 
   const setMouseAspect = () => {
     plane.uniforms.mouse.aspect.value = plane.boundingRect.width / plane.boundingRect.height
