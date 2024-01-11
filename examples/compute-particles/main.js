@@ -16,43 +16,45 @@ const computeParticles = /* wgsl */ `
   ) {
     let index = GlobalInvocationID.x;
     
-    let fIndex: f32 = f32(index);
-    let nbParticles: f32 = f32(arrayLength(&particles.position));
-    let PI: f32 = 3.14159265359;
-    
-    // calculate a random particle max life
-    // max life is in number of frames
-    var maxLife: f32 = 250.0 + round( max(rand11(asin(fIndex * PI / nbParticles)), 0.0) * 1500.0 );
-    particlesStaticData[index].maxLife = maxLife;
-    
-    // now set a different initial life for each particle
-    var initLife: f32 = round( maxLife * max(rand11(acos(fIndex * PI / nbParticles)), 0.0) );
-    
-    particles.position[index].w = initLife;
-    particlesStaticData[index].position.w = initLife;
-    
-    // now the positions
-    // calculate an initial random position along a sphere the size of our system
-    var position: vec3f;
-    position.x = rand11(cos(fIndex * PI / nbParticles)) * 2.0 - 1.0;
-    position.y = rand11(sin(fIndex * PI / nbParticles)) * 2.0 - 1.0;
-    position.z = rand11(atan(fIndex * PI / nbParticles)) * 2.0 - 1.0;
-    
-    let posLength = length(position);
-    if(posLength > 1.0) {
-      position *= 1.0 / posLength;
+    if(index < arrayLength(&particles.position)) {
+      let nbParticles: f32 = f32(arrayLength(&particles.position));
+      let fIndex: f32 = f32(index);
+      let PI: f32 = 3.14159265359;
+      
+      // calculate a random particle max life
+      // max life is in number of frames
+      var maxLife: f32 = 250.0 + round( max(rand11(asin(fIndex * PI / nbParticles)), 0.0) * 1500.0 );
+      particlesStaticData[index].maxLife = maxLife;
+      
+      // now set a different initial life for each particle
+      var initLife: f32 = round( maxLife * max(rand11(acos(fIndex * PI / nbParticles)), 0.0) );
+      
+      particles.position[index].w = initLife;
+      particlesStaticData[index].position.w = initLife;
+      
+      // now the positions
+      // calculate an initial random position along a sphere the size of our system
+      var position: vec3f;
+      position.x = rand11(cos(fIndex * PI / nbParticles)) * 2.0 - 1.0;
+      position.y = rand11(sin(fIndex * PI / nbParticles)) * 2.0 - 1.0;
+      position.z = rand11(atan(fIndex * PI / nbParticles)) * 2.0 - 1.0;
+      
+      let posLength = length(position);
+      if(posLength > 1.0) {
+        position *= 1.0 / posLength;
+      }
+      
+      position = normalize(position) * params.systemSize;
+      
+      // write positions
+      particles.position[index].x = position.x;
+      particles.position[index].y = position.y;
+      particles.position[index].z = position.z;
+      
+      particlesStaticData[index].position.x = position.x;
+      particlesStaticData[index].position.y = position.y;
+      particlesStaticData[index].position.z = position.z;
     }
-    
-    position = normalize(position) * params.systemSize;
-    
-    // write positions
-    particles.position[index].x = position.x;
-    particles.position[index].y = position.y;
-    particles.position[index].z = position.z;
-    
-    particlesStaticData[index].position.x = position.x;
-    particlesStaticData[index].position.y = position.y;
-    particlesStaticData[index].position.z = position.z;
   }
   
   
@@ -169,26 +171,28 @@ const computeParticles = /* wgsl */ `
   ) {
     let index = GlobalInvocationID.x;
     
-    var vPos: vec3f = particles.position[index].xyz;
-    var life: f32 = particles.position[index].w;
-    
-    life += 1.0;
-    
-    let maxLife: f32 = particlesStaticData[index].maxLife;
-    
-    // reset particle
-    life = select(life, 0.0, life >= maxLife);
-    
-    let lifeRatio = life / maxLife;
-    var mixCurlOriginal = abs(lifeRatio * 2.0 - 1.0);
-    mixCurlOriginal = 0.85 + pow(mixCurlOriginal, 0.25) * 0.15;
-    
-    let curlPos: vec3f = curl( vPos * params.frequency + params.time * 0.05 ) * params.amplitude;
-    vPos = mix(particlesStaticData[index].position.xyz, vPos + curlPos, mixCurlOriginal);
-
-    
-    // Write back      
-    particles.position[index] = vec4(vPos, life);
+    if(index < arrayLength(&particles.position)) {
+      var vPos: vec3f = particles.position[index].xyz;
+      var life: f32 = particles.position[index].w;
+      
+      life += 1.0;
+      
+      let maxLife: f32 = particlesStaticData[index].maxLife;
+      
+      // reset particle
+      life = select(life, 0.0, life >= maxLife);
+      
+      let lifeRatio = life / maxLife;
+      var mixCurlOriginal = abs(lifeRatio * 2.0 - 1.0);
+      mixCurlOriginal = 0.85 + pow(mixCurlOriginal, 0.25) * 0.15;
+      
+      let curlPos: vec3f = curl( vPos * params.frequency + params.time * 0.05 ) * params.amplitude;
+      vPos = mix(particlesStaticData[index].position.xyz, vPos + curlPos, mixCurlOriginal);
+  
+      
+      // Write back      
+      particles.position[index] = vec4(vPos, life);
+    }
   }
 `
 

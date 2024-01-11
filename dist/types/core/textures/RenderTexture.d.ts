@@ -37,8 +37,28 @@ export interface RenderTextureParams extends RenderTextureBaseParams {
     fromTexture?: RenderTexture | Texture | null;
 }
 /**
- * Used to create {@link GPUTexture | texture} that can be used as copy source/destination for {@link core/renderPasses/RenderPass.RenderPass | RenderPass} and {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget}.
+ * Used to create {@link GPUTexture | texture} that can be used as copy source/destination for {@link core/renderPasses/RenderPass.RenderPass | RenderPass} and {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget}.<br >
  * Basically useful for copying anything outputted to the screen at one point or another.
+ *
+ * Will create a {@link GPUTexture} and its associated {@link TextureBinding}.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a render texture
+ * const renderTexture = new RenderTexture(gpuCurtains, {
+ *   label: 'My render texture',
+ *   name: 'renderTexture',
+ * })
+ * ```
  */
 export declare class RenderTexture {
     /** {@link Renderer | renderer} used by this {@link RenderTexture} */

@@ -1,6 +1,6 @@
 import { PlaneGeometry } from '../core/geometries/PlaneGeometry';
 /**
- * Used to cache {@link PlaneGeometry} and avoid as many large array computations as possible.
+ * Used to cache {@link PlaneGeometry} and avoid as many large array computations as possible.<br>
  * Could be improved to handle other caches.
  */
 export declare class CacheManager {

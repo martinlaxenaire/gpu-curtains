@@ -8,9 +8,7 @@ export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' |
 /** Defines all possible {@link Object3DTransformMatrix | matrix object} used by our {@link ProjectedObject3D} */
 export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>;
 /**
- * ProjectedObject3D class:
- * Used to create 3D objects with transform and projection matrices based on a {@link Camera}
- * @extends Object3D
+ * Used to apply the {@link Camera#projectionMatrix | projection} and {@link Camera#viewMatrix | view} matrices of a {@link Camera} to an {@link Object3D}, in order to compute {@link ProjectedObject3D#modelViewMatrix | modelView} and {@link ProjectedObject3D#modelViewProjectionMatrix | modelViewProjection} matrices.
  */
 export declare class ProjectedObject3D extends Object3D {
     /** {@link Camera | Camera} object used to compute {@link ProjectedObject3D#modelViewMatrix | model view} and {@link ProjectedObject3D#modelViewProjectionMatrix | model view projection} matrices */
@@ -19,7 +17,7 @@ export declare class ProjectedObject3D extends Object3D {
     matrices: ProjectedObject3DMatrices;
     /**
      * ProjectedObject3D constructor
-     * @param renderer - our renderer class object
+     * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
      */
     constructor(renderer: CameraRenderer | GPUCurtains);
     /**

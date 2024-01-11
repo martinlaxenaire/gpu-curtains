@@ -1,16 +1,38 @@
-import { MeshBaseRenderParams } from './MeshBaseMixin';
+import { MeshBaseRenderParams } from './mixins/MeshBaseMixin';
 import { Renderer } from '../renderers/utils';
 import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement';
 import { Vec2 } from '../../math/Vec2';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-declare const FullscreenPlane_base: import("./MeshBaseMixin").MixinConstructor<import("./MeshBaseMixin").MeshBaseClass> & {
+declare const FullscreenPlane_base: import("./mixins/MeshBaseMixin").MixinConstructor<import("./mixins/MeshBaseMixin").MeshBaseClass> & {
     new (): {};
 };
 /**
- * Create a fullscreen quad, useful for post processing or background effects.
- * TODO!
- * @extends MeshBaseMixin
- * @mixes {class {}}
+ * Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
+ *
+ * It consists of a {@link PlaneGeometry} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} and a few utilities method to help create {@link core/textures/Texture.Texture | Texture} and {@link core/textures/RenderTexture.RenderTexture | RenderTexture}.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a fullscreen plane
+ * // will use the normals colors as default shading
+ * const fullscreenPlane = new FullscreenPlane(gpuCurtains, {
+ *   label: 'My fullscreen plane',
+ *   shaders: {
+ *     fragment: {
+ *       code: fragmentCode, // assume it is a valid WGSL fragment shader
+ *     },
+ *   },
+ * })
+ * ```
  */
 export declare class FullscreenPlane extends FullscreenPlane_base {
     /** The type of the {@link FullscreenPlane} */

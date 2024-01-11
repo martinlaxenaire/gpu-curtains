@@ -11,7 +11,23 @@ export interface RenderTargetParams extends RenderPassParams {
     autoRender?: boolean;
 }
 /**
- * Used to render meshes to a {@link RenderPass} {@link RenderTexture} instead of directly to screen
+ * Used to draw meshes to a {@link RenderPass#renderTexture | RenderPass renderTexture} instead of directly to screen.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * const renderTarget = new RenderTarget(gpuCurtains, {
+ *   label: 'My render target',
+ * })
+ * ```
  */
 export declare class RenderTarget {
     #private;

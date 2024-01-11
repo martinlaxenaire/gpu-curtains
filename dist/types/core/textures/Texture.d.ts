@@ -8,7 +8,29 @@ import { TextureOptions, TextureParams, TextureParent, TextureSize, TextureSourc
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
  * Used to create {@link GPUTexture} or {@link GPUExternalTexture} from different kinds of {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
- * Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}
+ *
+ * Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a render texture
+ * const imageTexture = new Texture(gpuCurtains, {
+ *   label: 'My image texture',
+ *   name: 'imageTexture',
+ * })
+ *
+ * // load an image
+ * await imageTexture.loadImage(document.querySelector('img'))
+ * ```
  */
 export declare class Texture extends Object3D {
     #private;

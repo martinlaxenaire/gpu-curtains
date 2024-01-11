@@ -18,7 +18,7 @@ export interface ExternalTextureParams {
   useExternalTextures?: boolean
   /** The {@link GPUTextureViewDimension | texture view dimension} to use */
   viewDimension?: GPUTextureViewDimension
-  /** Whether to keep the {@link Texture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material} tries to destroy it */
+  /** Whether to keep the {@link Texture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material | Material} tries to destroy it */
   cache?: boolean
 }
 

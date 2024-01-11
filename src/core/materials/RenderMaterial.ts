@@ -12,7 +12,13 @@ import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { RenderPipelineEntryParams } from '../../types/PipelineEntries'
 
 /**
- * Create a Material specifically built to draw vertices
+ * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
+ *
+ * ## Render pipeline
+ *
+ * A {@link RenderMaterial} automatically creates a {@link RenderPipelineEntry}. Once all the {@link BindGroup} have been created, they are sent with the shaders code and the {@link RenderMaterialOptions#rendering | rendering options} to the {@link RenderPipelineEntry}, which is in turns responsible for creating the {@link GPURenderPipeline}.
+ *
+ * After the {@link GPURenderPipeline} has been successfully compiled, the {@link RenderMaterial} is considered to be ready.
  */
 export class RenderMaterial extends Material {
   /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial} */

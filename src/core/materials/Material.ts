@@ -14,8 +14,20 @@ import { generateUUID } from '../../utils/utils'
 import { BufferElement } from '../bindings/bufferElements/BufferElement'
 
 /**
- * Used as a base to create a material.
- * The goal of material is to create and update the bind groups (including textures and samplers), create a pipeline and use them to render.
+ * Used as a base to create a {@link Material}.<br>
+ * The purpose of {@link Material} is to create and update the {@link BindGroup | bind groups} and their bindings (GPU buffers, textures and samplers), create a {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} and use them to {@link Material#render | render}.
+ *
+ * ## Bind groups
+ *
+ * A {@link Material} automatically creates a {@link TextureBindGroup}, but it is actually added to the active {@link Material#bindGroups | bind groups array} only if necessary, which means if your shaders use a {@link GPUSampler}, a {@link GPUTexture} or a {@link GPUExternalTexture}.
+ *
+ * Another {@link BindGroup} will be created if you pass any {@link MaterialParams#uniforms | uniforms} or {@link MaterialParams#storages | storages} parameters.
+ *
+ * Finally, you can also pass already created {@link BindGroup} to a {@link Material} via the {@link MaterialParams#bindGroups | bindGroups} parameter.
+ *
+ * ----
+ *
+ * Note that this class is not intended to be used as is, but as a base for {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} classes.
  */
 export class Material {
   /** The type of the {@link Material} */

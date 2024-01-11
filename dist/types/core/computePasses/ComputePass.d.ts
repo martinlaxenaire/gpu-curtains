@@ -29,8 +29,47 @@ export interface ComputePassOptions {
 export interface ComputePassParams extends Partial<ComputePassOptions>, MaterialParams {
 }
 /**
- * Used to create a compute pass, i.e. run computations on the GPU.
- * A compute pass is basically made of a {@link ComputeMaterial} that handles most of the process.
+ * Used to create a {@link ComputePass}, i.e. run computations on the GPU.<br>
+ * A {@link ComputePass} is basically a wrapper around a {@link ComputeMaterial} that handles most of the process.
+ *
+ * The default render behaviour of a {@link ComputePass} is to set its {@link core/bindGroups/BindGroup.BindGroup | bind groups} and then dispatch the workgroups based on the provided {@link ComputeMaterial#dispatchSize | dispatchSize}.<br>
+ * However, most of the time you'd want a slightly more complex behaviour. The {@link ComputePass#useCustomRender | `useCustomRender` hook} lets you define a totally custom behaviour, but you'll have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // let's assume we are going to compute the positions of 100.000 particles
+ * const nbParticles = 100_000
+ *
+ * const computePass = new ComputePass(gpuCurtains, {
+ *   label: 'My compute pass',
+ *   shaders: {
+ *     compute: {
+ *       code: computeShaderCode, // assume it is a valid WGSL compute shader
+ *     },
+ *   },
+ *   dispatchSize: Math.ceil(nbParticles / 64),
+ *   storages: {
+ *     particles: {
+ *       access: 'read_write',
+ *       struct: {
+ *         position: {
+ *           type: 'array<vec4f>',
+ *           value: new Float32Array(nbParticles * 4),
+ *         },
+ *       },
+ *     },
+ *   },
+ * })
+ * ```
  */
 export declare class ComputePass {
     #private;
@@ -165,7 +204,7 @@ export declare class ComputePass {
     onAfterRender(callback: () => void): ComputePass;
     /**
      * Callback used to run a custom render function instead of the default one.
-     * @param callback - callback to run instead of the default render behaviour
+     * @param callback - Your custom render function where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
      */
     useCustomRender(callback: (pass: GPUComputePassEncoder) => void): ComputePass;
     /**

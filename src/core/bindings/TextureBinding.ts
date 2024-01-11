@@ -19,8 +19,10 @@ export interface TextureBindingParams extends BindingParams {
 }
 
 /**
- * TextureBinding class:
- * Used to handle {@link GPUTexture} and {@link GPUExternalTexture} bindings
+ * Used to handle {@link GPUTexture} and {@link GPUExternalTexture} bindings.
+ *
+ * Provide both {@link TextureBinding#resourceLayout | resourceLayout} and {@link TextureBinding#resource | resource} to the {@link GPUBindGroupLayout} and {@link GPUBindGroup}.<br>
+ * Also create the appropriate WGSL code snippet to add to the shaders.
  */
 export class TextureBinding extends Binding {
   /** Our {@link TextureBinding} resource, i.e. a {@link GPUTexture} or {@link GPUExternalTexture} */

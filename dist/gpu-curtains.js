@@ -2268,7 +2268,7 @@ class BindGroup {
     };
   }
   /**
-   * Create buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
+   * Create the GPU buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
    */
   createBindGroup() {
     this.fillEntries();
@@ -2579,7 +2579,7 @@ class Object3D {
   }
   /* TRANSFORMS */
   /**
-   * Set our transforms properties and {@link math/Vec3.Vec3#onChange | vectors onChange} callbacks
+   * Set our transforms properties and {@link Vec3#onChange | vectors onChange} callbacks
    */
   setTransforms() {
     this.transforms = {
@@ -2599,69 +2599,68 @@ class Object3D {
     this.transformOrigin.onChange(() => this.applyTransformOrigin());
   }
   /**
-   * Get our rotation {@link math/Vec3.Vec3 | vector}
+   * Get our rotation {@link Vec3 | vector}
    */
   get rotation() {
     return this.transforms.rotation;
   }
   /**
-   * Set our rotation {@link math/Vec3.Vec3 | vector}
-   * @param value - new rotation {@link math/Vec3.Vec3 | vector}
+   * Set our rotation {@link Vec3 | vector}
+   * @param value - new rotation {@link Vec3 | vector}
    */
   set rotation(value) {
     this.transforms.rotation = value;
     this.applyRotation();
   }
   /**
-   * Get our {@link math/Quat.Quat | quaternion}
+   * Get our {@link Quat | quaternion}
    */
   get quaternion() {
     return this.transforms.quaternion;
   }
   /**
-   * Set our {@link math/Quat.Quat | quaternion}
-   * @param value - new {@link math/Quat.Quat | quaternion}
+   * Set our {@link Quat | quaternion}
+   * @param value - new {@link Quat | quaternion}
    */
   set quaternion(value) {
     this.transforms.quaternion = value;
   }
   /**
-   * Get our position {@link math/Vec3.Vec3 | vector}
+   * Get our position {@link Vec3 | vector}
    */
   get position() {
     return this.transforms.position.world;
   }
   /**
-   * Set our position {@link math/Vec3.Vec3 | vector}
-   * @param value - new position {@link math/Vec3.Vec3 | vector}
+   * Set our position {@link Vec3 | vector}
+   * @param value - new position {@link Vec3 | vector}
    */
   set position(value) {
     this.transforms.position.world = value;
   }
   /**
-   * Get our scale {@link math/Vec3.Vec3 | vector}
-   * @readonly
+   * Get our scale {@link Vec3 | vector}
    */
   get scale() {
     return this.transforms.scale;
   }
   /**
-   * Set our scale {@link math/Vec3.Vec3 | vector}
-   * @param value - new scale {@link math/Vec3.Vec3 | vector}
+   * Set our scale {@link Vec3 | vector}
+   * @param value - new scale {@link Vec3 | vector}
    */
   set scale(value) {
     this.transforms.scale = value;
     this.applyScale();
   }
   /**
-   * Get our transform origin {@link math/Vec3.Vec3 | vector}
+   * Get our transform origin {@link Vec3 | vector}
    */
   get transformOrigin() {
     return this.transforms.origin.model;
   }
   /**
-   * Set our transform origin {@link math/Vec3.Vec3 | vector}
-   * @param value - new transform origin {@link math/Vec3.Vec3 | vector}
+   * Set our transform origin {@link Vec3 | vector}
+   * @param value - new transform origin {@link Vec3 | vector}
    */
   set transformOrigin(value) {
     this.transforms.origin.model = value;
@@ -2705,14 +2704,14 @@ class Object3D {
     };
   }
   /**
-   * Get our {@link math/Mat4.Mat4 | model matrix}
+   * Get our {@link Mat4 | model matrix}
    */
   get modelMatrix() {
     return this.matrices.model.matrix;
   }
   /**
-   * Set our {@link math/Mat4.Mat4 | model matrix}
-   * @param value - new {@link math/Mat4.Mat4 | model matrix}
+   * Set our {@link Mat4 | model matrix}
+   * @param value - new {@link Mat4 | model matrix}
    */
   set modelMatrix(value) {
     this.matrices.model.matrix = value;
@@ -2725,8 +2724,8 @@ class Object3D {
     this.matrices.model.shouldUpdate = true;
   }
   /**
-   * Rotate this {@link Object3D} so it looks at the {@link math/Vec3.Vec3 | target}
-   * @param target - {@link math/Vec3.Vec3 | target} to look at
+   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+   * @param target - {@link Vec3 | target} to look at
    */
   lookAt(target = new Vec3()) {
     const rotationMatrix = new Mat4().lookAt(target, this.position);
@@ -3310,8 +3309,7 @@ class TextureBindGroup extends BindGroup {
   /**
    * Update the {@link TextureBindGroup#textures | bind group textures}:
    * - Check if they need to copy their source texture
-   * - Upload texture if needed
-   * - Check if the {@link TextureBindGroup#bindGroupLayout | GPU bind group layout} and/or {@link TextureBindGroup#bindGroup | GPU bind group} need an update
+   * - Upload video texture if needed
    */
   updateTextures() {
     this.textures.forEach((texture, textureIndex) => {
@@ -3406,7 +3404,7 @@ class Camera extends Object3D {
   constructor({
     fov = 50,
     near = 0.01,
-    far = 50,
+    far = 150,
     width = 1,
     height = 1,
     pixelRatio = 1,
@@ -3452,7 +3450,7 @@ class Camera extends Object3D {
     };
   }
   /**
-   * Get/set our view matrix
+   * Get our view matrix
    * @readonly
    */
   get viewMatrix() {
@@ -3463,7 +3461,7 @@ class Camera extends Object3D {
     this.matrices.view.shouldUpdate = true;
   }
   /**
-   * Get/set our projection matrix
+   * Get our projection matrix
    * @readonly
    */
   get projectionMatrix() {
@@ -3568,7 +3566,7 @@ class Camera extends Object3D {
     this.setCSSPerspective();
   }
   /**
-   * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if neededs
+   * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if needed.
    * @param parameters - {@link CameraPerspectiveOptions | parameters} to use for the perspective
    */
   setPerspective({
@@ -3586,15 +3584,15 @@ class Camera extends Object3D {
     this.far = far;
   }
   /**
-   * Callback to run when the camera{@link modelMatrix | model matrix} has been updated
+   * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
    */
   onAfterMatrixStackUpdate() {
     this.onMatricesChanged();
   }
   /**
-   * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}
-   * Used to translate planes along the Z axis using pixel units as CSS would do
-   * Taken from {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value}
+   * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.<br>
+   * Used to translate planes along the Z axis using pixel units as CSS would do.<br>
+   * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
    */
   setCSSPerspective() {
     this.CSSPerspective = Math.pow(
@@ -3603,9 +3601,9 @@ class Camera extends Object3D {
     ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
   }
   /**
-   * Sets visible width / height at a given z-depth from our {@link Camera} parameters
-   * Taken from {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269}
-   * @param depth - depth to use for calcs
+   * Sets visible width / height at a given z-depth from our {@link Camera} parameters.<br>
+   * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
+   * @param depth - depth to use for calculations
    */
   setScreenRatios(depth = 0) {
     const cameraOffset = this.position.z;
@@ -3622,7 +3620,7 @@ class Camera extends Object3D {
     };
   }
   /**
-   * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+   * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
    * @param target - {@link Vec3 | target} to look at
    */
   lookAt(target = new Vec3()) {
@@ -4438,8 +4436,8 @@ class ComputeMaterial extends Material {
   }
   /* RENDER */
   /**
-   * If we defined a custom render function instead of the default one, register the callback
-   * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}
+   * If a custom render function has been defined instead of the default one, register the callback
+   * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}. This is where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
    */
   useCustomRender(callback) {
     if (callback) {
@@ -4753,7 +4751,7 @@ class ComputePass {
   }
   /**
    * Callback used to run a custom render function instead of the default one.
-   * @param callback - callback to run instead of the default render behaviour
+   * @param callback - Your custom render function where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
    */
   useCustomRender(callback) {
     this.material.useCustomRender(callback);
@@ -5035,7 +5033,7 @@ class Geometry {
    * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
    */
   constructor({
-    verticesOrder = "cw",
+    verticesOrder = "ccw",
     topology = "triangle-list",
     instancesCount = 1,
     vertexBuffers = []
@@ -5304,7 +5302,7 @@ class IndexedGeometry extends Geometry {
    * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
    */
   constructor({
-    verticesOrder = "cw",
+    verticesOrder = "ccw",
     topology = "triangle-list",
     instancesCount = 1,
     vertexBuffers = []
@@ -5426,7 +5424,6 @@ class PlaneGeometry extends IndexedGeometry {
       type: "vec2f",
       bufferFormat: "float32x2",
       size: 2,
-      bufferLength: verticesCount * 2,
       array: new Float32Array(verticesCount * 2)
     };
     const position = {
@@ -5435,7 +5432,6 @@ class PlaneGeometry extends IndexedGeometry {
       bufferFormat: "float32x3",
       // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
       size: 3,
-      bufferLength: verticesCount * 3,
       array: new Float32Array(verticesCount * 3)
     };
     const normal = {
@@ -5444,7 +5440,6 @@ class PlaneGeometry extends IndexedGeometry {
       bufferFormat: "float32x3",
       // nb of triangles * 3 vertices per triangle * 3 coordinates per triangle
       size: 3,
-      bufferLength: verticesCount * 3,
       array: new Float32Array(verticesCount * 3)
     };
     let positionOffset = 0;
@@ -5605,31 +5600,16 @@ function MeshBaseMixin(Base) {
   var _autoRender3, _a;
   return _a = class extends Base {
     /**
-         * MeshBase constructor
-         * @typedef MeshBaseParams
-         * @property {string} [label] - MeshBase label
-         * @property {boolean} [autoRender] - whether we should add this MeshBase to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
-         * @property {AllowedGeometries} geometry - geometry to draw
-         * @property {boolean} [useAsyncPipeline] - whether the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} should be compiled asynchronously
-         * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
-         * @property {BindGroupInputs} [inputs] - our MeshBase {@link BindGroup} inputs
-         * @property {BindGroup[]} [bindGroups] - already created {@link BindGroup} to use
-         * @property {boolean} [transparent] - impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} blend properties
-         * @property {GPUCullMode} [cullMode] - cull mode to use
-         * @property {boolean} [visible] - whether this Mesh should be visible (drawn) or not
-         * @property {number} [renderOrder] - controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene}
-         * @property {RenderTarget} [renderTarget] - {@link RenderTarget} to render onto if any
-         * @property {ExternalTextureParams} [texturesOptions] - textures options to apply
-         * @property {Sampler[]} [samplers] - array of {@link Sampler}
-         *
-         * @typedef MeshBaseArrayParams
-         * @type {array}
-         * @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
-         * @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
-         * @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
-    
-         * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
-         */
+     * MeshBase constructor
+     *
+     * @typedef MeshBaseArrayParams
+     * @type {array}
+     * @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
+     * @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
+     * @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
+     *
+     * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
+     */
     constructor(...params) {
       super(
         params[0],
@@ -6228,7 +6208,7 @@ class FullscreenPlane extends MeshBaseMixin(class {
 class ProjectedObject3D extends Object3D {
   /**
    * ProjectedObject3D constructor
-   * @param renderer - our renderer class object
+   * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link ProjectedObject3D}
    */
   constructor(renderer) {
     super();
@@ -6379,8 +6359,7 @@ struct VSOutput {
   return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`
 );
-const defaultTransformedMeshParams = {
-  //useProjection: true,
+const defaultProjectedMeshParams = {
   // frustum culling and visibility
   frustumCulled: true,
   DOMFrustumMargins: {
@@ -6390,28 +6369,24 @@ const defaultTransformedMeshParams = {
     left: 0
   }
 };
-function MeshTransformedMixin(Base) {
-  return class MeshTransformedBase extends MeshBaseMixin(Base) {
+function ProjectedMeshBaseMixin(Base) {
+  return class ProjectedMeshBase extends MeshBaseMixin(Base) {
     /**
-         * MeshTransformedBase constructor
-         * @typedef {TransformedMeshParameters} TransformedMeshBaseParameters
-         * @extends MeshBaseParams
-         * @property {boolean} frustumCulled - whether to use frustum culling
-         * @property {RectCoords} DOMFrustumMargins - frustum margins to apply when frustum culling
-         *
-         * @typedef MeshBaseArrayParams
-         * @type {array}
-         * @property {(CameraRenderer|GPUCurtains)} 0 - our renderer class object
-         * @property {(string|HTMLElement|null)} 1 - the DOM HTML Element that can be bound to a Mesh
-         * @property {TransformedMeshParameters} 2 - Mesh parameters
-    
-         * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
-         */
+     * ProjectedMeshBase constructor
+     *
+     * @typedef MeshBaseArrayParams
+     * @type {array}
+     * @property {(CameraRenderer|GPUCurtains)} 0 - our renderer class object
+     * @property {(string|HTMLElement|null)} 1 - the DOM HTML Element that can be bound to a Mesh
+     * @property {ProjectedMeshParameters} 2 - Projected Mesh parameters
+     *
+     * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
+     */
     constructor(...params) {
       super(
         params[0],
         params[1],
-        { ...defaultTransformedMeshParams, ...params[2], ...{ useProjection: true } }
+        { ...defaultProjectedMeshParams, ...params[2], ...{ useProjection: true } }
       );
       this._onReEnterViewCallback = () => {
       };
@@ -6419,7 +6394,7 @@ function MeshTransformedMixin(Base) {
       };
       let renderer = params[0];
       const parameters = {
-        ...defaultTransformedMeshParams,
+        ...defaultProjectedMeshParams,
         ...params[2],
         ...{ useProjection: true }
       };
@@ -6534,7 +6509,7 @@ function MeshTransformedMixin(Base) {
     }
     /* SIZE & TRANSFORMS */
     /**
-     * Resize our {@link MeshTransformedBaseClass}
+     * Resize our {@link ProjectedMeshBaseClass}
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect) {
@@ -6558,20 +6533,6 @@ function MeshTransformedMixin(Base) {
       return (_a = this.domFrustum) == null ? void 0 : _a.projectedBoundingRect;
     }
     /**
-     * Tell the model and projection matrices to update.
-     * Here because else typescript is confused
-     */
-    shouldUpdateMatrixStack() {
-      super.shouldUpdateMatrixStack();
-    }
-    /**
-     * Update the model and projection matrices if needed.
-     * Here because else typescript is confused
-     */
-    updateMatrixStack() {
-      super.updateMatrixStack();
-    }
-    /**
      * At least one of the matrix has been updated, update according uniforms and frustum
      */
     onAfterMatrixStackUpdate() {
@@ -6584,7 +6545,7 @@ function MeshTransformedMixin(Base) {
     /* EVENTS */
     /**
      * Assign a callback function to _onReEnterViewCallback
-     * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
+     * @param callback - callback to run when {@link ProjectedMeshBaseClass} is reentering the view frustum
      * @returns - our Mesh
      */
     onReEnterView(callback) {
@@ -6595,7 +6556,7 @@ function MeshTransformedMixin(Base) {
     }
     /**
      * Assign a callback function to _onLeaveViewCallback
-     * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
+     * @param callback - callback to run when {@link ProjectedMeshBaseClass} is leaving the view frustum
      * @returns - our Mesh
      */
     onLeaveView(callback) {
@@ -6635,8 +6596,13 @@ function MeshTransformedMixin(Base) {
     }
   };
 }
-class Mesh extends MeshTransformedMixin(ProjectedObject3D) {
-  constructor(renderer, parameters = {}) {
+class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
+  /**
+   * Mesh constructor
+   * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
+   * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
+   */
+  constructor(renderer, parameters) {
     renderer = renderer && renderer.renderer || renderer;
     isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
     super(renderer, null, parameters);
@@ -6868,9 +6834,9 @@ class RenderPipelineEntry extends PipelineEntry {
         module: null
       },
       full: {
+        head: "",
         code: "",
         module: null
-        // TODO useless?
       }
     };
     this.descriptor = null;
@@ -6914,22 +6880,36 @@ class RenderPipelineEntry extends PipelineEntry {
     this.shaders.vertex.code = "";
     this.shaders.fragment.head = "";
     this.shaders.fragment.code = "";
+    this.shaders.full.head = "";
+    this.shaders.full.code = "";
     for (const chunk in ShaderChunks.vertex) {
       this.shaders.vertex.head = `${ShaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
+      this.shaders.full.head = `${ShaderChunks.vertex[chunk]}
+${this.shaders.full.head}`;
     }
     for (const chunk in ShaderChunks.fragment) {
       this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}
 ${this.shaders.fragment.head}`;
+      if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
+        this.shaders.full.head = `${ShaderChunks.fragment[chunk]}
+${this.shaders.full.head}`;
+      }
     }
     if (this.options.useProjection) {
       for (const chunk in ProjectedShaderChunks.vertex) {
         this.shaders.vertex.head = `${ProjectedShaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
+        this.shaders.full.head = `${ProjectedShaderChunks.vertex[chunk]}
+${this.shaders.full.head}`;
       }
       for (const chunk in ProjectedShaderChunks.fragment) {
         this.shaders.fragment.head = `${ProjectedShaderChunks.fragment[chunk]}
 ${this.shaders.fragment.head}`;
+        if (this.shaders.full.head.indexOf(ProjectedShaderChunks.fragment[chunk]) === -1) {
+          this.shaders.full.head = `${ProjectedShaderChunks.fragment[chunk]}
+${this.shaders.full.head}`;
+        }
       }
     }
     const groupsBindings = [];
@@ -6978,12 +6958,30 @@ ${this.shaders.fragment.head}`;
 `;
         }
       }
+      if (groupBinding.wgslStructFragment && this.shaders.full.head.indexOf(groupBinding.wgslStructFragment) === -1) {
+        this.shaders.full.head = `
+${groupBinding.wgslStructFragment}
+${this.shaders.full.head}`;
+      }
+      if (this.shaders.full.head.indexOf(groupBinding.wgslGroupFragment) === -1) {
+        this.shaders.full.head = `${this.shaders.full.head}
+@group(${groupBinding.groupIndex}) @binding(${groupBinding.bindIndex}) ${groupBinding.wgslGroupFragment}`;
+        if (groupBinding.newLine)
+          this.shaders.full.head += `
+`;
+      }
     });
     this.shaders.vertex.head = `${this.attributes.wgslStructFragment}
 ${this.shaders.vertex.head}`;
+    this.shaders.full.head = `${this.attributes.wgslStructFragment}
+${this.shaders.full.head}`;
     this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code;
     this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code;
-    this.shaders.full.code = this.shaders.vertex.code + "\n" + this.shaders.fragment.code;
+    if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) {
+      this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
+    } else {
+      this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+    }
   }
   /* SETUP */
   /**
@@ -6991,12 +6989,13 @@ ${this.shaders.vertex.head}`;
    */
   createShaders() {
     this.patchShaders();
+    const isSameShader = this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0;
     this.shaders.vertex.module = this.createShaderModule({
-      code: this.shaders.vertex.code,
+      code: this.shaders[isSameShader ? "full" : "vertex"].code,
       type: "vertex"
     });
     this.shaders.fragment.module = this.createShaderModule({
-      code: this.shaders.fragment.code,
+      code: this.shaders[isSameShader ? "full" : "fragment"].code,
       type: "fragment"
     });
   }
@@ -7792,7 +7791,7 @@ const defaultDOMMeshParams = {
   autoloadSources: true,
   watchScroll: true
 };
-class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
+class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   /**
    * DOMMesh constructor
    * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
@@ -7980,8 +7979,6 @@ class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
 const defaultPlaneParams = {
   label: "Plane",
   // geometry
-  //widthSegments: 1,
-  //heightSegments: 1,
   instancesCount: 1,
   vertexBuffers: []
 };
@@ -8173,7 +8170,7 @@ class Scene {
   }
   /**
    * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-   * Meshes are then ordered by their {@link core/meshes/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
+   * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
    * @param mesh - Mesh to add
    */
   addMesh(mesh) {
@@ -8213,7 +8210,7 @@ class Scene {
    * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
    * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
    * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-   * {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
+   * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
    * @param shaderPass - {@link ShaderPass} to add
    */
   addShaderPass(shaderPass) {
@@ -8272,7 +8269,7 @@ class Scene {
   /**
    * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
    * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
-   * {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
+   * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
    * @param pingPongPlane
    */
   addPingPongPlane(pingPongPlane) {

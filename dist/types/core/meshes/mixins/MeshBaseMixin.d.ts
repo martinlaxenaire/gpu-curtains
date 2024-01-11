@@ -1,15 +1,15 @@
 /// <reference types="dist" />
-import { Renderer } from '../renderers/utils';
-import { RenderMaterial } from '../materials/RenderMaterial';
-import { Texture } from '../textures/Texture';
-import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture';
-import { ExternalTextureParams, TextureParams } from '../../types/Textures';
-import { RenderTarget } from '../renderPasses/RenderTarget';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { Material } from '../materials/Material';
-import { DOMElementBoundingRect } from '../DOM/DOMElement';
-import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials';
-import { MeshTransformedBaseClass } from './MeshTransformedMixin';
+import { Renderer } from '../../renderers/utils';
+import { RenderMaterial } from '../../materials/RenderMaterial';
+import { Texture } from '../../textures/Texture';
+import { RenderTexture, RenderTextureParams } from '../../textures/RenderTexture';
+import { ExternalTextureParams, TextureParams } from '../../../types/Textures';
+import { RenderTarget } from '../../renderPasses/RenderTarget';
+import { GPUCurtains } from '../../../curtains/GPUCurtains';
+import { Material } from '../../materials/Material';
+import { DOMElementBoundingRect } from '../../DOM/DOMElement';
+import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials';
+import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
 export interface MeshBaseRenderParams extends RenderMaterialParams {
     /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
@@ -47,7 +47,10 @@ export interface MeshBaseOptions {
     useAsyncPipeline?: boolean;
 }
 /**
- * MeshBaseClass - MeshBase typescript definition
+ * This class describes the properties and methods to set up a basic Mesh, implemented in the {@link MeshBaseMixin}:
+ * - Set and render the {@link Geometry} and {@link RenderMaterial}
+ * - Add helpers to create {@link Texture} and {@link RenderTexture}
+ * - Handle resizing, device lost/restoration and destroying the resources
  */
 export declare class MeshBaseClass {
     /** The type of the {@link MeshBaseClass} */
@@ -91,31 +94,31 @@ export declare class MeshBaseClass {
      * @param callback - callback to run when {@link MeshBaseClass} is ready
      * @returns - our Mesh
      */
-    onReady: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
+    onReady: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass;
     /**
      * Assign a callback function to _onBeforeRenderCallback
      * @param callback - callback to run just before {@link MeshBaseClass} will be rendered
      * @returns - our Mesh
      */
-    onBeforeRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
+    onBeforeRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass;
     /**
      * Assign a callback function to _onRenderCallback
      * @param callback - callback to run when {@link MeshBaseClass} is rendered
      * @returns - our Mesh
      */
-    onRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
+    onRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass;
     /**
      * Assign a callback function to _onAfterRenderCallback
      * @param callback - callback to run just after {@link MeshBaseClass} has been rendered
      * @returns - our Mesh
      */
-    onAfterRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
+    onAfterRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass;
     /**
      * Assign a callback function to _onBeforeRenderCallback
      * @param callback - callback to run just after {@link MeshBaseClass} has been resized
      * @returns - our Mesh
      */
-    onAfterResize: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass;
+    onAfterResize: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass;
     /**
      * {@link MeshBaseClass} constructor
      * @param renderer - our {@link Renderer} class object
@@ -279,13 +282,14 @@ export declare class MeshBaseClass {
  * that the type being passed in is a class.
  * We use a generic version which can apply a constraint on
  * the class which this mixin is applied to
+ * @typeParam T - the base constructor
  */
 export type MixinConstructor<T = {}> = new (...args: any[]) => T;
 /**
- * Used to mix basic Mesh properties and methods defined in {@link MeshBaseClass} with a given Base of type {@link Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} or an empty class.
+ * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link Texture} and {@link RenderTexture}) with a given Base of type {@link Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
  * @exports MeshBaseMixin
- * @param {*} Base - the class to mix onto
- * @returns {module:MeshBaseMixin~MeshBase} - the mixin class.
+ * @param Base - the class to mix onto
+ * @returns - the mixed classes, creating a basic Mesh.
  */
 declare function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstructor<MeshBaseClass> & TBase;
-export default MeshBaseMixin;
+export { MeshBaseMixin };

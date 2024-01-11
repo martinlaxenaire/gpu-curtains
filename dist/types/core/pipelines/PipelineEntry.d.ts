@@ -4,8 +4,8 @@ import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { MaterialShadersType } from '../../types/Materials';
 /**
- * Used as a base class to create a pipeline entry.
- * PipelineEntry roles are:s
+ * Used as a base class to create a pipeline entry.<br>
+ * {@link PipelineEntry} roles are:
  * - Patch the given {@link core/materials/Material.Material | Material} shaders code and create the corresponding {@link GPUShaderModule}.
  * - Create a {@link GPUPipelineLayout | pipeline layout} with the given {@link core/materials/Material.Material#bindGroups | bind groups}
  * - Create a GPU pipeline

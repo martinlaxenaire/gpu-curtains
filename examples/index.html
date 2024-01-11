@@ -167,10 +167,6 @@
         `
 
         const sphereGeometry = new SphereGeometry()
-        const satelliteGeometry = new SphereGeometry({
-          widthSegments: 5,
-          heightSegments: 3,
-        })
 
         const sphereMesh = new DOMMesh(gpuCurtains, '#sphere', {
           label: 'Main Sphere',
@@ -183,13 +179,14 @@
           sphereMesh.scale.z = sphereMesh.worldScale.y
         }
 
-        sphereMesh.onAfterResize(updateSphereScale)
+        sphereMesh.onAfterResize(updateSphereScale).onRender(() => (sphereMesh.rotation.y += 0.01))
+        updateSphereScale()
 
         // now the cubes
         for (let i = 0; i < 25; i++) {
           const satelliteMesh = new DOMMesh(gpuCurtains, '#sphere', {
             label: 'Cube ' + i,
-            geometry: satelliteGeometry,
+            geometry: sphereGeometry,
             watchScroll: false,
           })
 
@@ -224,31 +221,25 @@
             satelliteMesh.scale.z = satelliteMesh.worldScale.y
           }
 
-          satelliteMesh.onAfterResize(updateSatelliteScale)
-
           const speed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
 
           let closeFactor = 0
 
-          satelliteMesh
-            .onRender(() => {
-              satelliteMesh.userData.angle += speed
+          satelliteMesh.onAfterResize(updateSatelliteScale).onRender(() => {
+            satelliteMesh.userData.angle += speed
 
-              //closeFactor += 0.01
+            closeFactor += speed
 
-              const orbitPosition = satelliteMesh.userData.orbitPosition
-                .clone()
-                .multiplyScalar(Math.cos(closeFactor) * 0.5 + 0.5)
-                .applyAxisAngle(satelliteMesh.userData.axisAngle, satelliteMesh.userData.angle)
+            const orbitPosition = satelliteMesh.userData.orbitPosition
+              .clone()
+              //.multiplyScalar((Math.cos(closeFactor) * 0.5 + 0.5) * 0.25 + 0.75)
+              .applyAxisAngle(satelliteMesh.userData.axisAngle, satelliteMesh.userData.angle)
 
-              satelliteMesh.position.copy(orbitPosition)
+            satelliteMesh.position.copy(orbitPosition)
 
-              // look at our main sphere
-              satelliteMesh.lookAt(sphereMesh.position)
-            })
-            .onLeaveView(() => {
-              console.log('left view', satelliteMesh.options.label)
-            })
+            // look at our main sphere
+            satelliteMesh.lookAt(sphereMesh.position)
+          })
 
           updateSatelliteScale()
         }

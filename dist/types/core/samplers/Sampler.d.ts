@@ -13,8 +13,26 @@ export interface SamplerParams extends SamplerOptions {
     name: string;
 }
 /**
- * Sampler class:
- * Used to create a {@link GPUSampler} and its associated {@link SamplerBinding}
+ * Used to create a {@link GPUSampler} and its associated {@link SamplerBinding}.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * const mirrorSampler = new Sampler(gpuCurtains, {
+ *   label: 'Mirror sampler',
+ *   name: 'mirrorSampler',
+ *   addressModeU: 'mirror-repeat',
+ *   addressModeV: 'mirror-repeat',
+ * })
+ * ```
  */
 export declare class Sampler {
     /** The type of the {@link Sampler} */

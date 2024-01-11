@@ -28,8 +28,13 @@ export interface BindingParams {
     visibility?: MaterialShadersType | null;
 }
 /**
- * Used as a shell to build actual binding upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
+ * Used as a shell to build actual bindings upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
+ *
  * Ultimately the goal of a {@link Binding} element is to provide correct resources for {@link GPUBindGroupLayoutEntry} and {@link GPUBindGroupEntry}
+ *
+ * ## WGSL
+ *
+ * Each {@link Binding} creates its own WGSL code snippet variable declaration, using structured types or not.
  */
 export declare class Binding {
     /** The label of the {@link Binding} */

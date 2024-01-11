@@ -35,7 +35,7 @@ export interface InputBase {
   type: WGSLVariableType
   /** {@link InputBase} name */
   name?: string
-  /** callback to run before updating the [binding]{@link BindGroupBufferBindingElement} using this {@link InputBase} */
+  /** callback to run before updating the {@link BindGroupBufferBindingElement | binding} using this {@link InputBase} */
   onBeforeUpdate?: () => void
 }
 
@@ -57,50 +57,50 @@ export type ReadOnlyInputBindings = Record<string, BufferBindingParams>
 export type ReadWriteInputBindings = Record<string, BufferBindingParams | WritableBufferBindingParams>
 
 /**
- * Defines a specific type of {@link core/bindings/Binding.Binding} that handles a {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer} array to be sent to a {@link GPUBuffer}
+ * Defines a specific type of {@link core/bindings/Binding.Binding | binding} that handles an {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | array buffer} to be sent to a {@link GPUBuffer}
  */
 export type BindGroupBufferBindingElement = BufferBinding | WritableBufferBinding
 /**
- * Defines all kind of possible textures/ samplers {@link core/bindings/Binding.Binding}
+ * Defines all kind of possible textures/ samplers {@link core/bindings/Binding.Binding | Binding}
  */
 export type BindGroupTextureSamplerElement = SamplerBinding | TextureBinding
 /**
- * Defines all kind of possible {@link core/bindings/Binding.Binding}
+ * Defines all kind of possible {@link core/bindings/Binding.Binding | Binding}
  */
 export type BindGroupBindingElement = BindGroupBufferBindingElement | BindGroupTextureSamplerElement
 /**
- * Defines all kind of possible {@link core/bindGroups/BindGroup.BindGroup}
+ * Defines all kind of possible {@link core/bindGroups/BindGroup.BindGroup | BindGroup}
  */
 export type AllowedBindGroups = BindGroup | TextureBindGroup
 
 /**
- * Uniforms and storages [bind group]{@link AllowedBindGroups} inputs
+ * Uniforms and storages {@link AllowedBindGroups | bind group} inputs
  */
 export interface BindGroupInputs {
-  /** uniforms input to pass to a {@link core/bindGroups/BindGroup.BindGroup} */
+  /** uniforms input to pass to a {@link core/bindGroups/BindGroup.BindGroup | BindGroup} */
   uniforms?: ReadOnlyInputBindings
-  /** read only or read/write storages input to pass to a {@link core/bindGroups/BindGroup.BindGroup} */
+  /** read only or read/write storages input to pass to a {@link core/bindGroups/BindGroup.BindGroup | BindGroup} */
   storages?: ReadWriteInputBindings
 }
 
 /**
- * An object defining all possible {@link core/bindGroups/BindGroup.BindGroup} class instancing parameters
+ * An object defining all possible {@link core/bindGroups/BindGroup.BindGroup | BindGroup} class instancing parameters
  */
 export interface BindGroupParams extends BindGroupInputs {
-  /** {@link core/bindGroups/BindGroup.BindGroup} label */
+  /** {@link core/bindGroups/BindGroup.BindGroup | BindGroup} label */
   label?: string
-  /** {@link core/bindGroups/BindGroup.BindGroup} index (used to generate shader code) */
+  /** {@link core/bindGroups/BindGroup.BindGroup | BindGroup} index (used to generate shader code) */
   index?: number
-  /** array of already created [struct]{@link BindGroupBindingElement} (buffers, texture, etc.) to pass to this {@link core/bindGroups/BindGroup.BindGroup} */
+  /** array of already created {@link BindGroupBindingElement | bindings} (buffers, texture, etc.) to pass to this {@link core/bindGroups/BindGroup.BindGroup | BindGroup} */
   bindings?: BindGroupBindingElement[]
 }
 
 /**
- * An object used to define {@link core/bindGroups/BindGroup.BindGroup} entries
+ * An object used to define {@link core/bindGroups/BindGroup.BindGroup | BindGroup} entries
  */
 export interface BindGroupEntries {
-  /** [GPUBindGroupLayout descriptor]{@link GPUBindGroupLayoutDescriptor} entries */
+  /** {@link GPUBindGroupLayoutDescriptor | GPUBindGroupLayout descriptor} entries */
   bindGroupLayout: GPUBindGroupLayoutEntry[]
-  /** [GPUBindGroup descriptor]{@link GPUBindGroupDescriptor} entries */
+  /** {@link GPUBindGroupDescriptor | GPUBindGroup descriptor} entries */
   bindGroup: GPUBindGroupEntry[]
 }

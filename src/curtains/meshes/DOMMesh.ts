@@ -1,7 +1,7 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D'
 import { isCurtainsRenderer } from '../../core/renderers/utils'
-import MeshTransformedMixin from '../../core/meshes/MeshTransformedMixin'
-import { MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin'
+import { ProjectedMeshBaseMixin } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
+import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
 import { throwWarning } from '../../utils/utils'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
@@ -35,12 +35,31 @@ const defaultDOMMeshParams = {
 } as DOMMeshBaseParams
 
 /**
- * Create a {@link core/meshes/Mesh.Mesh | Mesh} based on a {@link DOMObject3D}, which allow the {@link core/meshes/Mesh.Mesh | Mesh} to be scaled and positioned based on a {@link HTMLElement} {@link DOMElementBoundingRect | bounding rectangle}
- * TODO!
- * @extends MeshTransformedMixin
- * @mixes {MeshBaseMixin}
+ * Create a {@link core/meshes/Mesh.Mesh | Mesh} based on a {@link DOMObject3D}, which allow the {@link core/meshes/Mesh.Mesh | Mesh} to be scaled and positioned based on a {@link HTMLElement} {@link DOMElementBoundingRect | bounding rectangle}.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a DOMMesh with a box geometry,
+ * // assuming there's a HTML element with the "mesh" ID in the DOM
+ * // will use the normals colors as default shading
+ * const domMesh = new DOMMesh(gpuCurtains, '#mesh', {
+ *   label: 'My DOM Mesh',
+ *   geometry: new BoxGeometry(),
+ * })
+ * ```
  */
-export class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
+export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
+  /** {@link GPUCurtainsRenderer} used to create this {@link DOMObject3D} */
+  renderer: GPUCurtainsRenderer
   /** Whether to automatically create a {@link Texture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
   autoloadSources: boolean
   /** Whether all the sources have been successfully loaded */

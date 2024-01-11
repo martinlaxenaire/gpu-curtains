@@ -1,17 +1,43 @@
 import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import MeshTransformedMixin from './MeshTransformedMixin'
-import { MeshBaseParams } from './MeshBaseMixin'
+import { ProjectedMeshBaseMixin } from './mixins/ProjectedMeshBaseMixin'
+import { MeshBaseParams } from './mixins/MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
- * Create a Mesh, with model and projection matrices.
- * TODO!
- * @extends MeshTransformedMixin
- * @mixes {MeshBaseMixin}
+ * Create a 3D Mesh.
+ *
+ * A 3D Mesh is a basically a {@link ProjectedObject3D} with a {@link core/geometries/Geometry.Geometry | Geometry} and a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
+ *
+ * You need to pass at least a valid {@link core/geometries/Geometry.Geometry | Geometry} as parameter.<br>
+ * If no shaders are provided, it will use the normals colors as default shading.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a mesh with a box geometry
+ * // will use the normals colors as default shading
+ * const mesh = new Mesh(gpuCurtains, {
+ *   label: 'My mesh',
+ *   geometry: new BoxGeometry(),
+ * })
+ * ```
  */
-export class Mesh extends MeshTransformedMixin(ProjectedObject3D) {
-  constructor(renderer: CameraRenderer | GPUCurtains, parameters = {} as MeshBaseParams) {
+export class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
+  /**
+   * Mesh constructor
+   * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
+   * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
+   */
+  constructor(renderer: CameraRenderer | GPUCurtains, parameters: MeshBaseParams) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
 

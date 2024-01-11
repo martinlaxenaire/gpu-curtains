@@ -7,7 +7,7 @@ export interface BufferArrayElementParams extends BufferElementParams {
     arrayLength: number;
 }
 /**
- * Used to handle specific array {@link core/bindings/BufferBinding.BufferBinding | buffer binding} types
+ * Used to handle specific array {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} types
  */
 export declare class BufferArrayElement extends BufferElement {
     /** Initial length of the input {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} */

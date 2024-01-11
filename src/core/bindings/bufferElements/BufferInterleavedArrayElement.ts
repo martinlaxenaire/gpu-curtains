@@ -1,7 +1,7 @@
 import { BufferArrayElement, BufferArrayElementParams } from './BufferArrayElement'
 
 /**
- * Used to compute alignment when dealing with arrays of struct
+ * Used to compute alignment when dealing with arrays of Struct
  */
 export class BufferInterleavedArrayElement extends BufferArrayElement {
   /** Corresponding {@link DataView} set function based on {@link view} type */

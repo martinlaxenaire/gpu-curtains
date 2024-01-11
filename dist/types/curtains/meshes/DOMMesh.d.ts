@@ -1,5 +1,5 @@
 import { DOMObject3D } from '../objects3D/DOMObject3D';
-import { MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin';
+import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
 import { Texture } from '../../core/textures/Texture';
@@ -22,14 +22,33 @@ export interface DOMMeshParams extends DOMMeshBaseParams {
     /** {@link core/geometries/Geometry.Geometry | Geometry} to use with the {@link DOMMesh} */
     geometry: AllowedGeometries;
 }
-declare const DOMMesh_base: import("../../core/meshes/MeshBaseMixin").MixinConstructor<import("../../core/meshes/MeshTransformedMixin").MeshTransformedBaseClass> & typeof DOMObject3D;
+declare const DOMMesh_base: import("../../core/meshes/mixins/MeshBaseMixin").MixinConstructor<import("../../core/meshes/mixins/ProjectedMeshBaseMixin").ProjectedMeshBaseClass> & typeof DOMObject3D;
 /**
- * Create a {@link core/meshes/Mesh.Mesh | Mesh} based on a {@link DOMObject3D}, which allow the {@link core/meshes/Mesh.Mesh | Mesh} to be scaled and positioned based on a {@link HTMLElement} {@link DOMElementBoundingRect | bounding rectangle}
- * TODO!
- * @extends MeshTransformedMixin
- * @mixes {MeshBaseMixin}
+ * Create a {@link core/meshes/Mesh.Mesh | Mesh} based on a {@link DOMObject3D}, which allow the {@link core/meshes/Mesh.Mesh | Mesh} to be scaled and positioned based on a {@link HTMLElement} {@link DOMElementBoundingRect | bounding rectangle}.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a DOMMesh with a box geometry,
+ * // assuming there's a HTML element with the "mesh" ID in the DOM
+ * // will use the normals colors as default shading
+ * const domMesh = new DOMMesh(gpuCurtains, '#mesh', {
+ *   label: 'My DOM Mesh',
+ *   geometry: new BoxGeometry(),
+ * })
+ * ```
  */
 export declare class DOMMesh extends DOMMesh_base {
+    /** {@link GPUCurtainsRenderer} used to create this {@link DOMObject3D} */
+    renderer: GPUCurtainsRenderer;
     /** Whether to automatically create a {@link Texture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
     autoloadSources: boolean;
     /** Whether all the sources have been successfully loaded */

@@ -14,7 +14,50 @@ export interface TextureBindGroupParams extends BindGroupParams {
     samplers?: Sampler[];
 }
 /**
- * Used to regroup all {@link types/BindGroups.BindGroupBindingElement | bindings} related to textures (texture, texture matrices buffers and sampler) into one single specific bind group.
+ * Used to regroup all {@link types/BindGroups.BindGroupBindingElement | bindings} related to textures (texture, texture matrices buffers and samplers) into one single specific {@link BindGroup}.
+ *
+ * Also responsible for uploading video textures if needed.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a render texture
+ * const renderTexture = new RenderTexture(gpuCurtains, {
+ *   label: 'Input texture',
+ *   name: 'inputTexture',
+ * })
+ *
+ * // create a texture bind group using that render texture
+ * const textureBindGroup = new TextureBindGroup(gpuCurtains, {
+ *   label: 'My texture bind group',
+ *   textures: [renderTexture],
+ *   uniforms: {
+ *     params: {
+ *       struct: {
+ *         opacity: {
+ *           type: 'f32',
+ *           value: 1,
+ *         },
+ *         mousePosition: {
+ *           type: 'vec2f',
+ *           value: new Vec2(),
+ *         },
+ *       },
+ *     },
+ *   },
+ * })
+ *
+ * // create the GPU buffer, bindGroupLayout and bindGroup
+ * textureBindGroup.createBindGroup()
+ * ```
  */
 export declare class TextureBindGroup extends BindGroup {
     /**
@@ -52,8 +95,7 @@ export declare class TextureBindGroup extends BindGroup {
     /**
      * Update the {@link TextureBindGroup#textures | bind group textures}:
      * - Check if they need to copy their source texture
-     * - Upload texture if needed
-     * - Check if the {@link TextureBindGroup#bindGroupLayout | GPU bind group layout} and/or {@link TextureBindGroup#bindGroup | GPU bind group} need an update
+     * - Upload video texture if needed
      */
     updateTextures(): void;
     /**

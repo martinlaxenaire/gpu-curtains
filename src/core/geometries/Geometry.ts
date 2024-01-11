@@ -10,15 +10,44 @@ import {
 } from '../../types/Geometries'
 
 /**
- * Used to create a Geometry from given parameters like instances count or geometry attributes.
- * Holds all attributes arrays, bounding box and handle WGSL code snippet for the vertex shader input attributes.
+ * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
+ * Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.
+ *
+ * During the {@link Geometry#render | render}, the {@link Geometry} is responsible for setting the {@link Geometry#vertexBuffers | vertexBuffers} and drawing the vertices.
+ *
+ * @example
+ * ```javascript
+ * const vertices = new Float32Array([
+ *   // first triangle
+ *    1,  1,  0,
+ *    1, -1,  0,
+ *   -1, -1,  0,
+ *
+ *   // second triangle
+ *    1,  1,  0,
+ *   -1, -1,  0,
+ *   -1,  1,  0
+ * ])
+ *
+ * // create a quad geometry made of 2 triangles
+ * const geometry = new Geometry()
+ *
+ * geometry.setAttribute({
+ *   name: 'position',
+ *   type: 'vec3f',
+ *   bufferFormat: 'float32x3',
+ *   size: 3,
+ *   bufferLength: vertices.length,
+ *   array: vertices,
+ * })
+ * ```
  */
 export class Geometry {
   /** Number of vertices defined by this geometry */
   verticesCount: number
   /** Vertices order to be drawn by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} */
   verticesOrder: GPUFrontFace
-  /** Topology to use with this {@link Geometry}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
+  /** {@link https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology | Topology} to use with this {@link Geometry}, i.e. whether to draw triangles or points */
   topology: GPUPrimitiveTopology
   /** Number of instances of this geometry to draw */
   instancesCount: number
@@ -40,7 +69,7 @@ export class Geometry {
    * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
    */
   constructor({
-    verticesOrder = 'cw',
+    verticesOrder = 'ccw',
     topology = 'triangle-list',
     instancesCount = 1,
     vertexBuffers = [],

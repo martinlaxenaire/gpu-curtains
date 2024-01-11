@@ -3,10 +3,31 @@ import { RenderTarget } from '../../core/renderPasses/RenderTarget';
 import { FullscreenPlane } from '../../core/meshes/FullscreenPlane';
 import { GPUCurtains } from '../GPUCurtains';
 import { RenderTexture } from '../../core/textures/RenderTexture';
-import { MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin';
+import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin';
 /**
- * PingPongPlane class:
  * Used to create a special type of {@link FullscreenPlane} that allows to use the previous frame fragment shader output as an input texture.
+ *
+ * @example
+ * ```javascript
+ * // set our main GPUCurtains instance
+ * const gpuCurtains = new GPUCurtains({
+ *   container: '#canvas' // selector of our WebGPU canvas container
+ * })
+ *
+ * // set the GPU device
+ * // note this is asynchronous
+ * await gpuCurtains.setDevice()
+ *
+ * // create a PingPongPlane
+ * const shaderPass = new PingPongPlane(gpuCurtain, {
+ *   label: 'My ping pong plane',
+ *   shaders: {
+ *     fragment: {
+ *       code: pingPongCode, // assume it is a valid WGSL fragment shader
+ *     },
+ *   },
+ * })
+ * ```
  */
 export declare class PingPongPlane extends FullscreenPlane {
     /** {@link RenderTarget} content to use as an input */

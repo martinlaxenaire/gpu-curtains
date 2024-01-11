@@ -13,7 +13,7 @@ export interface ScrollManagerParams {
     onScroll?: (delta?: DOMPosition) => void;
 }
 /**
- * Used to keep track of our scroll position, scroll deltas and trigger an onScroll callback
+ * Used to keep track of our scroll position, scroll deltas and trigger an onScroll callback.<br>
  * Could either listen to the native scroll event or be hooked to any scroll (natural or virtual) scroll event
  */
 export declare class ScrollManager {

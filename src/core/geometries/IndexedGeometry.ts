@@ -26,7 +26,41 @@ export interface IndexBuffer {
 }
 
 /**
- * Used to created an indexed geometry which holds an index array to use as indexBuffer
+ * Used to create an {@link IndexedGeometry} which holds an index array to use as an index buffer.
+ *
+ * The index array represents the order in which the attributes should be processed. This allows to create smaller vertex, uv and normal arrays.
+ *
+ * During the {@link IndexedGeometry#render | render}, the {@link IndexedGeometry} is responsible for setting the {@link IndexedGeometry#vertexBuffers | vertexBuffers} and drawing the indexed vertices.
+ *
+ * @example
+ * ```javascript
+ * const vertices = new Float32Array([
+ *   -1, -1,  0,
+ *    1, -1,  0,
+ *   -1,  1,  0,
+ *    1,  1,  0
+ * ])
+ *
+ * // vertices index (order in which they should be drawn)
+ * const indexArray = new Uint16Array([0, 2, 1, 1, 2, 3])
+ *
+ * // create an indexed quad geometry made of 4 vertices
+ * const indexedGeometry = new IndexedGeometry()
+ *
+ * indexedGeometry.setAttribute({
+ *   name: 'position',
+ *   type: 'vec3f',
+ *   bufferFormat: 'float32x3',
+ *   size: 3,
+ *   bufferLength: vertices.length,
+ *   array: vertices,
+ * })
+ *
+ * indexedGeometry.setIndexBuffer({
+ *   array: indexArray,
+ *   bufferFormat: 'uint16',
+ * })
+ * ```
  */
 export class IndexedGeometry extends Geometry {
   /** Object containing our index buffer format & length, array and GPUBuffer */
@@ -37,7 +71,7 @@ export class IndexedGeometry extends Geometry {
    * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
    */
   constructor({
-    verticesOrder = 'cw',
+    verticesOrder = 'ccw',
     topology = 'triangle-list',
     instancesCount = 1,
     vertexBuffers = [],

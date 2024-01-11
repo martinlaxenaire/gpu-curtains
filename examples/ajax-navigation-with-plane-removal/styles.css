@@ -1,7 +1,11 @@
+:root {
+  --transition-duration: 1s;
+}
+
 @media screen {
   ::view-transition-old(root),
   ::view-transition-new(root) {
-    animation-duration: 1s;
+    animation-duration: var(--transition-duration);
   }
 
   #loader {

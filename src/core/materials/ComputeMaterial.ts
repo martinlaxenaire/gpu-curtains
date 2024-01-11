@@ -6,7 +6,14 @@ import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
 import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
 
 /**
- * Create a Material specifically built to run computations on the GPU with a {@link core/computePasses/ComputePass.ComputePass | ComputePass}
+ * Create a {@link Material} specifically built to run computations on the GPU. Internally used by {@link core/computePasses/ComputePass.ComputePass | ComputePass}.
+ *
+ * ## Compute pipeline
+ *
+ * A {@link ComputeMaterial} automatically creates a {@link ComputePipelineEntry}. Once all the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} have been created, they are sent with the compute shader code to the {@link ComputePipelineEntry}, which is in turns responsible for creating the {@link GPUComputePipeline}.
+ *
+ * After the {@link GPUComputePipeline} has been successfully compiled, the {@link ComputeMaterial} is considered to be ready and it can start running the compute shader computations.
+ *
  */
 export class ComputeMaterial extends Material {
   /** {@link ComputePipelineEntry | Compute pipeline entry} used by this {@link ComputeMaterial} */
@@ -137,8 +144,8 @@ export class ComputeMaterial extends Material {
   /* RENDER */
 
   /**
-   * If we defined a custom render function instead of the default one, register the callback
-   * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}
+   * If a custom render function has been defined instead of the default one, register the callback
+   * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}. This is where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
    */
   useCustomRender(callback: (pass: GPUComputePassEncoder) => void) {
     if (callback) {

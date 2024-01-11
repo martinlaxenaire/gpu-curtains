@@ -13,6 +13,11 @@ export interface BoxGeometryParams extends GeometryBaseParams {
 }
 /**
  * Helper to easily create 3D box indexed geometries.
+ *
+ * @example
+ * ```javascript
+ * const boxGeometry = new BoxGeometry()
+ * ```
  */
 export declare class BoxGeometry extends IndexedGeometry {
     constructor({ widthSegments, heightSegments, depthSegments, instancesCount, vertexBuffers, topology, }?: BoxGeometryParams);
