@@ -1,4 +1,4 @@
-import MeshBaseMixin, { MeshBaseRenderParams } from './MeshBaseMixin'
+import { MeshBaseMixin, MeshBaseRenderParams } from './mixins/MeshBaseMixin'
 import { isRenderer, Renderer } from '../renderers/utils'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
 import { DOMElement, DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
@@ -8,9 +8,6 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
  * Create a fullscreen quad, useful for post processing or background effects.
- * TODO!
- * @extends MeshBaseMixin
- * @mixes {class {}}
  */
 export class FullscreenPlane extends MeshBaseMixin(class {}) {
   /** The type of the {@link FullscreenPlane} */

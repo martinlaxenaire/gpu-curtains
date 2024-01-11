@@ -11,9 +11,12 @@ export interface PlaneGeometryParams extends GeometryBaseParams {
     heightSegments?: number;
 }
 /**
- * PlaneGeometry class:
  * Used to create an indexed plane geometry based on the number of segments along the X and Y axis.
- * @extends IndexedGeometry
+ *
+ * @example
+ * ```javascript
+ * const planeGeometry = new PlaneGeometry()
+ * ```
  */
 export declare class PlaneGeometry extends IndexedGeometry {
     /**

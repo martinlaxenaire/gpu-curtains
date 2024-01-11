@@ -2,8 +2,35 @@
 import { Box3 } from '../../math/Box3';
 import { GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams } from '../../types/Geometries';
 /**
- * Used to create a Geometry from given parameters like instances count or geometry attributes.
+ * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes.<br>
  * Holds all attributes arrays, bounding box and handle WGSL code snippet for the vertex shader input attributes.
+ *
+ * @example
+ * ```javascript
+ * const vertices = new Float32Array([
+ *   // first triangle
+ *    1,  1,  0,
+ *    1, -1,  0,
+ *   -1, -1,  0,
+ *
+ *   // second triangle
+ *    1,  1,  0,
+ *   -1, -1,  0,
+ *   -1,  1,  0
+ * ])
+ *
+ * // create a quad geometry made of 2 triangles
+ * const geometry = new Geometry()
+ *
+ * geometry.setAttribute({
+ *   name: 'position',
+ *   type: 'vec3f',
+ *   bufferFormat: 'float32x3',
+ *   size: 3,
+ *   bufferLength: vertices.length,
+ *   array: vertices,
+ * })
+ * ```
  */
 export declare class Geometry {
     #private;
@@ -11,7 +38,7 @@ export declare class Geometry {
     verticesCount: number;
     /** Vertices order to be drawn by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} */
     verticesOrder: GPUFrontFace;
-    /** Topology to use with this {@link Geometry}, i.e. whether to draw triangles or points (see https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology) */
+    /** {@link https://www.w3.org/TR/webgpu/#enumdef-gpuprimitivetopology | Topology} to use with this {@link Geometry}, i.e. whether to draw triangles or points */
     topology: GPUPrimitiveTopology;
     /** Number of instances of this geometry to draw */
     instancesCount: number;

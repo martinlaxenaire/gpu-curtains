@@ -13,8 +13,25 @@ export interface GPUCameraRendererParams extends GPURendererParams {
     camera: CameraBasePerspectiveOptions;
 }
 /**
- * This renderer also creates a {@link Camera} and its associated {@link cameraBufferBinding | binding} and {@link cameraBindGroup | bind group}.
+ * This renderer also creates a {@link Camera} and its associated {@link cameraBufferBinding | binding} and {@link cameraBindGroup | bind group}.<br>
  * Can be safely used to render compute passes and meshes that do not need to be tied to the DOM.
+ *
+ * @example
+ * ```javascript
+ * // first, we need a WebGPU device, that's what GPUDeviceManager is for
+ * const gpuDeviceManager = new GPUDeviceManager({
+ *   label: 'Custom device manager',
+ * })
+ *
+ * // we need to wait for the WebGPU device to be created
+ * await gpuDeviceManager.init()
+ *
+ * // then we can create a camera renderer
+ * const gpuCameraRenderer = new GPUCameraRenderer({
+ *   deviceManager: gpuDeviceManager, // we need the WebGPU device to create the renderer context
+ *   container: document.querySelector('#canvas'),
+ * })
+ * ```
  */
 export declare class GPUCameraRenderer extends GPURenderer {
     /** {@link Camera} used by this {@link GPUCameraRenderer} */

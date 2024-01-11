@@ -3,7 +3,7 @@ import { RenderTarget } from '../../core/renderPasses/RenderTarget'
 import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
 import { GPUCurtains } from '../GPUCurtains'
 import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture'
-import { MeshBaseRenderParams } from '../../core/meshes/MeshBaseMixin'
+import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
 
 /**
  * PingPongPlane class:

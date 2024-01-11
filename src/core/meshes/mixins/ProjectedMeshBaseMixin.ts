@@ -1,31 +1,29 @@
-import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
-import { DOMFrustum } from '../DOM/DOMFrustum'
-import MeshBaseMixin, { MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMElementBoundingRect, RectCoords } from '../DOM/DOMElement'
-import { Mat4 } from '../../math/Mat4'
-import { RenderMaterialParams } from '../../types/Materials'
-import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import { DOMObject3D } from '../../curtains/objects3D/DOMObject3D'
-import default_projected_vsWgsl from '../shaders/chunks/default_projected_vs.wgsl'
-import default_normal_fsWgsl from '../shaders/chunks/default_normal_fs.wgsl'
+import { CameraRenderer, isCameraRenderer, Renderer } from '../../renderers/utils'
+import { DOMFrustum } from '../../DOM/DOMFrustum'
+import { MeshBaseMixin, MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin'
+import { GPUCurtains } from '../../../curtains/GPUCurtains'
+import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement'
+import { RenderMaterialParams } from '../../../types/Materials'
+import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
+import { DOMObject3D } from '../../../curtains/objects3D/DOMObject3D'
+import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl'
+import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl'
 
 /**
- * Base parameters used to create a TransformedMesh
+ * Base parameters used to create a ProjectedMesh
  */
-export interface TransformedMeshBaseParams {
-  /** Whether this TransformedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-  frustumCulled: boolean
-  /** Margins (in pixels) to applied to the {@link MeshTransformedBaseClass#domFrustum | DOM Frustum} to determine if this TransformedMesh should be frustum culled or not */
-  DOMFrustumMargins: RectCoords
+export interface ProjectedMeshBaseParams {
+  /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
+  frustumCulled?: boolean
+  /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
+  DOMFrustumMargins?: RectCoords
 }
 
-/** Parameters used to create a TransformedMesh */
-export interface TransformedMeshParameters extends MeshBaseParams, TransformedMeshBaseParams {}
+/** Parameters used to create a ProjectedMesh */
+export interface ProjectedMeshParameters extends MeshBaseParams, ProjectedMeshBaseParams {}
 
-/** @const - Default TransformedMesh parameters to merge with user defined parameters */
-const defaultTransformedMeshParams: TransformedMeshBaseParams = {
-  //useProjection: true,
+/** @const - Default ProjectedMesh parameters to merge with user defined parameters */
+const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
   // frustum culling and visibility
   frustumCulled: true,
   DOMFrustumMargins: {
@@ -36,18 +34,20 @@ const defaultTransformedMeshParams: TransformedMeshBaseParams = {
   },
 }
 
-/** Base options used to create this TransformedMesh */
-export interface TransformedMeshBaseOptions extends MeshBaseOptions, Partial<TransformedMeshBaseParams> {}
+/** Base options used to create this ProjectedMesh */
+export interface ProjectedMeshBaseOptions extends MeshBaseOptions, Partial<ProjectedMeshBaseParams> {}
 
 /**
- * MeshTransformedBaseClass - MeshTransformedBase typescript definition
+ * ProjectedMeshBaseClass - MeshTransformedBase typescript definition
  */
-export declare class MeshTransformedBaseClass extends MeshBaseClass {
-  /** The TransformedMesh {@link DOMFrustum} class object */
+export declare class ProjectedMeshBaseClass extends MeshBaseClass {
+  /** The {@link CameraRenderer} used */
+  renderer: CameraRenderer
+  /** The ProjectedMesh {@link DOMFrustum} class object */
   domFrustum: DOMFrustum
-  /** Whether this TransformedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
+  /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
   frustumCulled: boolean
-  /** Margins (in pixels) to applied to the {@link MeshTransformedBaseClass#domFrustum | DOM Frustum} to determine if this TransformedMesh should be frustum culled or not */
+  /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
   DOMFrustumMargins: RectCoords
 
   // callbacks
@@ -57,12 +57,12 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
   _onLeaveViewCallback: () => void
 
   /**
-   * {@link MeshTransformedBaseClass} constructor
+   * {@link ProjectedMeshBaseClass} constructor
    * @param renderer - our {@link CameraRenderer} class object
    * @param element - a DOM HTML Element that can be bound to a Mesh
-   * @param parameters - {@link MeshBaseParams | Mesh base parameters}
+   * @param parameters - {@link ProjectedMeshParameters | Projected Mesh base parameters}
    */
-  constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: MeshBaseParams)
+  constructor(renderer: CameraRenderer, element: HTMLElement | null, parameters: ProjectedMeshParameters)
 
   /**
    * Set default shaders if one or both of them are missing
@@ -98,32 +98,22 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
   get projectedBoundingRect(): DOMElementBoundingRect
 
   /**
-   * Tell the model and projection matrices to update.
-   */
-  shouldUpdateMatrixStack(): void
-
-  /**
-   * Update the model and projection matrices if needed.
-   */
-  updateMatrixStack(): void
-
-  /**
    * At least one of the matrix has been updated, update according uniforms and frustum
    */
   onAfterMatrixStackUpdate(): void
 
   /**
    * Assign a callback function to _onReEnterViewCallback
-   * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
+   * @param callback - callback to run when {@link ProjectedMeshBaseClass} is reentering the view frustum
    * @returns - our Mesh
    */
-  onReEnterView: (callback: () => void) => MeshTransformedBaseClass
+  onReEnterView: (callback: () => void) => ProjectedMeshBaseClass
   /**
    * Assign a callback function to _onLeaveViewCallback
-   * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
+   * @param callback - callback to run when {@link ProjectedMeshBaseClass} is leaving the view frustum
    * @returns - our Mesh
    */
-  onLeaveView: (callback: () => void) => MeshTransformedBaseClass
+  onLeaveView: (callback: () => void) => ProjectedMeshBaseClass
 
   /**
    * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
@@ -141,47 +131,32 @@ export declare class MeshTransformedBaseClass extends MeshBaseClass {
   onRenderPass(pass: GPURenderPassEncoder): void
 }
 
-// export type TransformedObject3D = ProjectedObject3D | DOMObject3D
-// export type MeshTransformedMixinBaseType<T extends TransformedObject3D> = T extends DOMObject3D
-//   ? DOMObject3D
-//   : ProjectedObject3D
-//
-// export type MeshTransformedMixinReturn<T extends TransformedObject3D> = T extends DOMObject3D
-//   ? MeshTransformedBaseClass & DOMObject3D
-//   : MeshTransformedBaseClass & ProjectedObject3D
-
 /**
- * MeshBase Mixin:
- * Used to mix Mesh properties and methods defined in {@link MeshTransformedBaseClass} with a {@link MeshBaseMixin} mixed with a given Base of type {@link ProjectedObject3D} or {@link DOMObject3D}.
- * @exports MeshTransformedMixin
- * @param {*} Base - the class to mix onto, should be of {@link ProjectedObject3D} or {@link DOMObject3D} type
- * @returns {module:MeshTransformedMixin~MeshTransformedBase} - the mixin class.
+ * Used to mix Mesh properties and methods defined in {@link ProjectedMeshBaseClass} with a {@link MeshBaseMixin} mixed with a given Base of type {@link ProjectedObject3D} or {@link DOMObject3D}.
+ * @exports
+ * @param Base - the class to mix onto, should be of {@link ProjectedObject3D} or {@link DOMObject3D} type
+ * @returns - the mixed classes.
  */
-// using ReturnType of the previous mixin
-// https://stackoverflow.com/a/65417255/13354068
-// that seems to work as well: function MeshTransformedMixin<TBase extends MixinConstructor<MeshBaseClass>>
-
-// function MeshTransformedMixin<TBase extends new (...args: any[]) => TransformedObject3D>(
-//   Base: TBase
-// ): new (...args: any[]) => MeshTransformedMixinReturn<TBase> {
-function MeshTransformedMixin<TBase extends MixinConstructor>(
+function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D>>(
   Base: TBase
-): MixinConstructor<MeshTransformedBaseClass> & TBase {
+): MixinConstructor<ProjectedMeshBaseClass> & TBase {
   /**
-   * MeshTransformedBase defines our base properties and methods
+   * ProjectedMeshBase defines our base properties and methods
    * @mixin
-   * @alias MeshTransformedBase
+   * @alias ProjectedMeshBase
    */
-  return class MeshTransformedBase extends MeshBaseMixin(Base) {
-    /** The TransformedMesh {@link DOMFrustum} class object */
+  return class ProjectedMeshBase extends MeshBaseMixin(Base) {
+    /** The {@link CameraRenderer} used */
+    renderer: CameraRenderer
+    /** The ProjectedMesh {@link DOMFrustum} class object */
     domFrustum: DOMFrustum
-    /** Whether this TransformedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
+    /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
     frustumCulled: boolean
-    /** Margins (in pixels) to applied to the {@link MeshTransformedBaseClass#domFrustum | DOM Frustum} to determine if this TransformedMesh should be frustum culled or not */
+    /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins: RectCoords
 
-    /** Options used to create this {@link MeshTransformedBaseClass} */
-    options: TransformedMeshBaseOptions
+    /** Options used to create this {@link ProjectedMeshBaseClass} */
+    options: ProjectedMeshBaseOptions
 
     // callbacks / events
     /** function assigned to the {@link onReEnterView} callback */
@@ -193,41 +168,32 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
       /* allow empty callback */
     }
 
-    // TODO we need to find a way to tell typescript that this mixin can only use ProjectedObject3D | DOMObject3D as Base!
-    modelMatrix: Mat4
-    modelViewMatrix: Mat4
-    modelViewProjectionMatrix: Mat4
-
     /**
-     * MeshTransformedBase constructor
-     * @typedef {TransformedMeshParameters} TransformedMeshBaseParameters
-     * @extends MeshBaseParams
-     * @property {boolean} frustumCulled - whether to use frustum culling
-     * @property {RectCoords} DOMFrustumMargins - frustum margins to apply when frustum culling
+     * ProjectedMeshBase constructor
      *
      * @typedef MeshBaseArrayParams
      * @type {array}
      * @property {(CameraRenderer|GPUCurtains)} 0 - our renderer class object
      * @property {(string|HTMLElement|null)} 1 - the DOM HTML Element that can be bound to a Mesh
-     * @property {TransformedMeshParameters} 2 - Mesh parameters
-
+     * @property {ProjectedMeshParameters} 2 - Projected Mesh parameters
+     *
      * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
      */
     constructor(...params: any[]) {
       super(
         params[0] as CameraRenderer | GPUCurtains,
         params[1] as HTMLElement | string,
-        { ...defaultTransformedMeshParams, ...params[2], ...{ useProjection: true } } as TransformedMeshParameters
+        { ...defaultProjectedMeshParams, ...params[2], ...{ useProjection: true } } as ProjectedMeshParameters
       )
 
       let renderer = params[0]
 
-      // for this mesh to use projection!
+      // force this mesh to use projection!
       const parameters = {
-        ...defaultTransformedMeshParams,
+        ...defaultProjectedMeshParams,
         ...params[2],
         ...{ useProjection: true },
-      } as TransformedMeshParameters
+      } as ProjectedMeshParameters
 
       this.type = 'MeshTransformed'
 
@@ -354,8 +320,6 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
         },
       }
 
-      // if (!meshParameters.inputs) meshParameters.inputs = { uniforms: {} }
-      // meshParameters.inputs.uniforms.matrices = matricesUniforms
       if (!meshParameters.uniforms) meshParameters.uniforms = {}
       meshParameters.uniforms.matrices = matricesUniforms
 
@@ -365,7 +329,7 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
     /* SIZE & TRANSFORMS */
 
     /**
-     * Resize our {@link MeshTransformedBaseClass}
+     * Resize our {@link ProjectedMeshBaseClass}
      * @param boundingRect - the new bounding rectangle
      */
     resize(boundingRect?: DOMElementBoundingRect | null) {
@@ -378,7 +342,6 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
      * Apply scale and resize textures
      */
     applyScale() {
-      // @ts-ignore
       super.applyScale()
 
       // resize textures on scale change!
@@ -391,24 +354,6 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
      */
     get projectedBoundingRect(): DOMElementBoundingRect {
       return this.domFrustum?.projectedBoundingRect
-    }
-
-    /**
-     * Tell the model and projection matrices to update.
-     * Here because else typescript is confused
-     */
-    shouldUpdateMatrixStack() {
-      // @ts-ignore
-      super.shouldUpdateMatrixStack()
-    }
-
-    /**
-     * Update the model and projection matrices if needed.
-     * Here because else typescript is confused
-     */
-    updateMatrixStack() {
-      // @ts-ignore
-      super.updateMatrixStack()
     }
 
     /**
@@ -426,10 +371,10 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
 
     /**
      * Assign a callback function to _onReEnterViewCallback
-     * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
+     * @param callback - callback to run when {@link ProjectedMeshBaseClass} is reentering the view frustum
      * @returns - our Mesh
      */
-    onReEnterView(callback: () => void): MeshTransformedBaseClass {
+    onReEnterView(callback: () => void): ProjectedMeshBaseClass {
       if (callback) {
         this._onReEnterViewCallback = callback
       }
@@ -439,10 +384,10 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
 
     /**
      * Assign a callback function to _onLeaveViewCallback
-     * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
+     * @param callback - callback to run when {@link ProjectedMeshBaseClass} is leaving the view frustum
      * @returns - our Mesh
      */
-    onLeaveView(callback: () => void): MeshTransformedBaseClass {
+    onLeaveView(callback: () => void): ProjectedMeshBaseClass {
       if (callback) {
         this._onLeaveViewCallback = callback
       }
@@ -486,7 +431,7 @@ function MeshTransformedMixin<TBase extends MixinConstructor>(
         this.geometry.render(pass)
       }
     }
-  } /* as MixinConstructor<MeshTransformedBaseClass & InstanceType<TBase>>*/
+  }
 }
 
-export default MeshTransformedMixin
+export { ProjectedMeshBaseMixin }

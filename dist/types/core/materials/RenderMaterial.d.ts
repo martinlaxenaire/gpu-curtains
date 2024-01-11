@@ -4,7 +4,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { AllowedGeometries, RenderMaterialAttributes, RenderMaterialOptions, RenderMaterialParams } from '../../types/Materials';
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry';
 /**
- * Create a Material specifically built to draw vertices
+ * Create a {@link Material} specifically built to draw vertices. Internally used by all kind of Meshes.
  */
 export declare class RenderMaterial extends Material {
     /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial} */

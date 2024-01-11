@@ -1,16 +1,13 @@
-import { MeshBaseRenderParams } from './MeshBaseMixin';
+import { MeshBaseRenderParams } from './mixins/MeshBaseMixin';
 import { Renderer } from '../renderers/utils';
 import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement';
 import { Vec2 } from '../../math/Vec2';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-declare const FullscreenPlane_base: import("./MeshBaseMixin").MixinConstructor<import("./MeshBaseMixin").MeshBaseClass> & {
+declare const FullscreenPlane_base: import("./mixins/MeshBaseMixin").MixinConstructor<import("./mixins/MeshBaseMixin").MeshBaseClass> & {
     new (): {};
 };
 /**
  * Create a fullscreen quad, useful for post processing or background effects.
- * TODO!
- * @extends MeshBaseMixin
- * @mixes {class {}}
  */
 export declare class FullscreenPlane extends FullscreenPlane_base {
     /** The type of the {@link FullscreenPlane} */

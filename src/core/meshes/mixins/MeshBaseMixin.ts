@@ -1,21 +1,21 @@
-import { generateUUID, throwWarning } from '../../utils/utils'
-import { isRenderer, Renderer } from '../renderers/utils'
-import { RenderMaterial } from '../materials/RenderMaterial'
-import { Texture } from '../textures/Texture'
-import { Geometry } from '../geometries/Geometry'
-import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
-import { ExternalTextureParams, TextureParams, TextureParent } from '../../types/Textures'
-import { RenderTarget } from '../renderPasses/RenderTarget'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { ProjectedMesh } from '../renderers/GPURenderer'
-import { Material } from '../materials/Material'
-import { DOMElementBoundingRect } from '../DOM/DOMElement'
-import { AllowedGeometries, RenderMaterialParams } from '../../types/Materials'
-import { Object3D } from '../objects3D/Object3D'
-import { MeshTransformedBaseClass } from './MeshTransformedMixin'
-import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
-import default_fsWgsl from '../shaders/chunks/default_fs.wgsl'
-//import { TransformedObject3D } from './MeshTransformedMixin'
+import { generateUUID, throwWarning } from '../../../utils/utils'
+import { isRenderer, Renderer } from '../../renderers/utils'
+import { RenderMaterial } from '../../materials/RenderMaterial'
+import { Texture } from '../../textures/Texture'
+import { Geometry } from '../../geometries/Geometry'
+import { RenderTexture, RenderTextureParams } from '../../textures/RenderTexture'
+import { ExternalTextureParams, TextureParams, TextureParent } from '../../../types/Textures'
+import { RenderTarget } from '../../renderPasses/RenderTarget'
+import { GPUCurtains } from '../../../curtains/GPUCurtains'
+import { ProjectedMesh } from '../../renderers/GPURenderer'
+import { Material } from '../../materials/Material'
+import { DOMElementBoundingRect } from '../../DOM/DOMElement'
+import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials'
+import { Object3D } from '../../objects3D/Object3D'
+import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
+import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl'
+import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl'
+//import { TransformedObject3D } from './ProjectedMeshBaseMixin'
 
 let meshIndex = 0
 
@@ -132,31 +132,31 @@ export declare class MeshBaseClass {
    * @param callback - callback to run when {@link MeshBaseClass} is ready
    * @returns - our Mesh
    */
-  onReady: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
+  onReady: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
   /**
    * Assign a callback function to _onBeforeRenderCallback
    * @param callback - callback to run just before {@link MeshBaseClass} will be rendered
    * @returns - our Mesh
    */
-  onBeforeRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
+  onBeforeRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
   /**
    * Assign a callback function to _onRenderCallback
    * @param callback - callback to run when {@link MeshBaseClass} is rendered
    * @returns - our Mesh
    */
-  onRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
+  onRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
   /**
    * Assign a callback function to _onAfterRenderCallback
    * @param callback - callback to run just after {@link MeshBaseClass} has been rendered
    * @returns - our Mesh
    */
-  onAfterRender: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
+  onAfterRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
   /**
    * Assign a callback function to _onBeforeRenderCallback
    * @param callback - callback to run just after {@link MeshBaseClass} has been resized
    * @returns - our Mesh
    */
-  onAfterResize: (callback: () => void) => MeshBaseClass | MeshTransformedBaseClass
+  onAfterResize: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
 
   /**
    * {@link MeshBaseClass} constructor
@@ -352,20 +352,15 @@ export declare class MeshBaseClass {
  * that the type being passed in is a class.
  * We use a generic version which can apply a constraint on
  * the class which this mixin is applied to
+ * @typeParam T - the base constructor
  */
 export type MixinConstructor<T = {}> = new (...args: any[]) => T
-// declare type EmptyClass = Record<never, unknown>
-//
-// export type MeshBaseMixinParam = TransformedObject3D | EmptyClass
-// export type MeshBaseMixinReturn<T extends MeshBaseMixinParam> = T extends Object3D
-//   ? MixinConstructor<MeshBaseClass> & T
-//   : MixinConstructor<MeshBaseClass>
 
 /**
  * Used to mix basic Mesh properties and methods defined in {@link MeshBaseClass} with a given Base of type {@link Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} or an empty class.
  * @exports MeshBaseMixin
- * @param {*} Base - the class to mix onto
- * @returns {module:MeshBaseMixin~MeshBase} - the mixin class.
+ * @param Base - the class to mix onto
+ * @returns - the mixed classes.
  */
 function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstructor<MeshBaseClass> & TBase {
   /**
@@ -434,28 +429,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
     /**
      * MeshBase constructor
-     * @typedef MeshBaseParams
-     * @property {string} [label] - MeshBase label
-     * @property {boolean} [autoRender] - whether we should add this MeshBase to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
-     * @property {AllowedGeometries} geometry - geometry to draw
-     * @property {boolean} [useAsyncPipeline] - whether the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} should be compiled asynchronously
-     * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
-     * @property {BindGroupInputs} [inputs] - our MeshBase {@link BindGroup} inputs
-     * @property {BindGroup[]} [bindGroups] - already created {@link BindGroup} to use
-     * @property {boolean} [transparent] - impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} blend properties
-     * @property {GPUCullMode} [cullMode] - cull mode to use
-     * @property {boolean} [visible] - whether this Mesh should be visible (drawn) or not
-     * @property {number} [renderOrder] - controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene}
-     * @property {RenderTarget} [renderTarget] - {@link RenderTarget} to render onto if any
-     * @property {ExternalTextureParams} [texturesOptions] - textures options to apply
-     * @property {Sampler[]} [samplers] - array of {@link Sampler}
      *
      * @typedef MeshBaseArrayParams
      * @type {array}
      * @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
      * @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
      * @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
-
+     *
      * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
      */
     constructor(...params: any[]) {
@@ -906,7 +886,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run when {@link MeshBase} is ready
      * @returns - our Mesh
      */
-    onReady(callback: () => void): MeshBase | MeshTransformedBaseClass {
+    onReady(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
         this._onReadyCallback = callback
       }
@@ -919,7 +899,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run just before {@link MeshBase} will be rendered
      * @returns - our Mesh
      */
-    onBeforeRender(callback: () => void): MeshBase | MeshTransformedBaseClass {
+    onBeforeRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
         this._onBeforeRenderCallback = callback
       }
@@ -932,7 +912,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run when {@link MeshBase} is rendered
      * @returns - our Mesh
      */
-    onRender(callback: () => void): MeshBase | MeshTransformedBaseClass {
+    onRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
         this._onRenderCallback = callback
       }
@@ -945,7 +925,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run just after {@link MeshBase} has been rendered
      * @returns - our Mesh
      */
-    onAfterRender(callback: () => void): MeshBase | MeshTransformedBaseClass {
+    onAfterRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
         this._onAfterRenderCallback = callback
       }
@@ -958,7 +938,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param callback - callback to run just after {@link MeshBase} has been resized
      * @returns - our Mesh
      */
-    onAfterResize(callback: () => void): MeshBase | MeshTransformedBaseClass {
+    onAfterResize(callback: () => void): MeshBase | ProjectedMeshBaseClass {
       if (callback) {
         this._onAfterResizeCallback = callback
       }
@@ -1086,4 +1066,4 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
   }
 }
 
-export default MeshBaseMixin
+export { MeshBaseMixin }

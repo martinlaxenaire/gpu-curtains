@@ -2272,7 +2272,7 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Create buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
+     * Create the GPU buffers, {@link bindings}, {@link entries}, {@link bindGroupLayout} and {@link bindGroup}
      */
     createBindGroup() {
       this.fillEntries();
@@ -2583,7 +2583,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /* TRANSFORMS */
     /**
-     * Set our transforms properties and {@link math/Vec3.Vec3#onChange | vectors onChange} callbacks
+     * Set our transforms properties and {@link Vec3#onChange | vectors onChange} callbacks
      */
     setTransforms() {
       this.transforms = {
@@ -2603,69 +2603,68 @@ var __privateMethod = (obj, member, method) => {
       this.transformOrigin.onChange(() => this.applyTransformOrigin());
     }
     /**
-     * Get our rotation {@link math/Vec3.Vec3 | vector}
+     * Get our rotation {@link Vec3 | vector}
      */
     get rotation() {
       return this.transforms.rotation;
     }
     /**
-     * Set our rotation {@link math/Vec3.Vec3 | vector}
-     * @param value - new rotation {@link math/Vec3.Vec3 | vector}
+     * Set our rotation {@link Vec3 | vector}
+     * @param value - new rotation {@link Vec3 | vector}
      */
     set rotation(value) {
       this.transforms.rotation = value;
       this.applyRotation();
     }
     /**
-     * Get our {@link math/Quat.Quat | quaternion}
+     * Get our {@link Quat | quaternion}
      */
     get quaternion() {
       return this.transforms.quaternion;
     }
     /**
-     * Set our {@link math/Quat.Quat | quaternion}
-     * @param value - new {@link math/Quat.Quat | quaternion}
+     * Set our {@link Quat | quaternion}
+     * @param value - new {@link Quat | quaternion}
      */
     set quaternion(value) {
       this.transforms.quaternion = value;
     }
     /**
-     * Get our position {@link math/Vec3.Vec3 | vector}
+     * Get our position {@link Vec3 | vector}
      */
     get position() {
       return this.transforms.position.world;
     }
     /**
-     * Set our position {@link math/Vec3.Vec3 | vector}
-     * @param value - new position {@link math/Vec3.Vec3 | vector}
+     * Set our position {@link Vec3 | vector}
+     * @param value - new position {@link Vec3 | vector}
      */
     set position(value) {
       this.transforms.position.world = value;
     }
     /**
-     * Get our scale {@link math/Vec3.Vec3 | vector}
-     * @readonly
+     * Get our scale {@link Vec3 | vector}
      */
     get scale() {
       return this.transforms.scale;
     }
     /**
-     * Set our scale {@link math/Vec3.Vec3 | vector}
-     * @param value - new scale {@link math/Vec3.Vec3 | vector}
+     * Set our scale {@link Vec3 | vector}
+     * @param value - new scale {@link Vec3 | vector}
      */
     set scale(value) {
       this.transforms.scale = value;
       this.applyScale();
     }
     /**
-     * Get our transform origin {@link math/Vec3.Vec3 | vector}
+     * Get our transform origin {@link Vec3 | vector}
      */
     get transformOrigin() {
       return this.transforms.origin.model;
     }
     /**
-     * Set our transform origin {@link math/Vec3.Vec3 | vector}
-     * @param value - new transform origin {@link math/Vec3.Vec3 | vector}
+     * Set our transform origin {@link Vec3 | vector}
+     * @param value - new transform origin {@link Vec3 | vector}
      */
     set transformOrigin(value) {
       this.transforms.origin.model = value;
@@ -2709,14 +2708,14 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Get our {@link math/Mat4.Mat4 | model matrix}
+     * Get our {@link Mat4 | model matrix}
      */
     get modelMatrix() {
       return this.matrices.model.matrix;
     }
     /**
-     * Set our {@link math/Mat4.Mat4 | model matrix}
-     * @param value - new {@link math/Mat4.Mat4 | model matrix}
+     * Set our {@link Mat4 | model matrix}
+     * @param value - new {@link Mat4 | model matrix}
      */
     set modelMatrix(value) {
       this.matrices.model.matrix = value;
@@ -2729,8 +2728,8 @@ var __privateMethod = (obj, member, method) => {
       this.matrices.model.shouldUpdate = true;
     }
     /**
-     * Rotate this {@link Object3D} so it looks at the {@link math/Vec3.Vec3 | target}
-     * @param target - {@link math/Vec3.Vec3 | target} to look at
+     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+     * @param target - {@link Vec3 | target} to look at
      */
     lookAt(target = new Vec3()) {
       const rotationMatrix = new Mat4().lookAt(target, this.position);
@@ -3314,8 +3313,7 @@ var __privateMethod = (obj, member, method) => {
     /**
      * Update the {@link TextureBindGroup#textures | bind group textures}:
      * - Check if they need to copy their source texture
-     * - Upload texture if needed
-     * - Check if the {@link TextureBindGroup#bindGroupLayout | GPU bind group layout} and/or {@link TextureBindGroup#bindGroup | GPU bind group} need an update
+     * - Upload video texture if needed
      */
     updateTextures() {
       this.textures.forEach((texture, textureIndex) => {
@@ -3410,7 +3408,7 @@ var __privateMethod = (obj, member, method) => {
     constructor({
       fov = 50,
       near = 0.01,
-      far = 50,
+      far = 150,
       width = 1,
       height = 1,
       pixelRatio = 1,
@@ -3456,7 +3454,7 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Get/set our view matrix
+     * Get our view matrix
      * @readonly
      */
     get viewMatrix() {
@@ -3467,7 +3465,7 @@ var __privateMethod = (obj, member, method) => {
       this.matrices.view.shouldUpdate = true;
     }
     /**
-     * Get/set our projection matrix
+     * Get our projection matrix
      * @readonly
      */
     get projectionMatrix() {
@@ -3572,7 +3570,7 @@ var __privateMethod = (obj, member, method) => {
       this.setCSSPerspective();
     }
     /**
-     * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if neededs
+     * Sets the {@link Camera} perspective. Update the {@link projectionMatrix} if needed.
      * @param parameters - {@link CameraPerspectiveOptions | parameters} to use for the perspective
      */
     setPerspective({
@@ -3590,15 +3588,15 @@ var __privateMethod = (obj, member, method) => {
       this.far = far;
     }
     /**
-     * Callback to run when the camera{@link modelMatrix | model matrix} has been updated
+     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
      */
     onAfterMatrixStackUpdate() {
       this.onMatricesChanged();
     }
     /**
-     * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}
-     * Used to translate planes along the Z axis using pixel units as CSS would do
-     * Taken from {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value}
+     * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.<br>
+     * Used to translate planes along the Z axis using pixel units as CSS would do.<br>
+     * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
      */
     setCSSPerspective() {
       this.CSSPerspective = Math.pow(
@@ -3607,9 +3605,9 @@ var __privateMethod = (obj, member, method) => {
       ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
     }
     /**
-     * Sets visible width / height at a given z-depth from our {@link Camera} parameters
-     * Taken from {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269}
-     * @param depth - depth to use for calcs
+     * Sets visible width / height at a given z-depth from our {@link Camera} parameters.<br>
+     * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
+     * @param depth - depth to use for calculations
      */
     setScreenRatios(depth = 0) {
       const cameraOffset = this.position.z;
@@ -3626,7 +3624,7 @@ var __privateMethod = (obj, member, method) => {
       };
     }
     /**
-     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+     * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
      * @param target - {@link Vec3 | target} to look at
      */
     lookAt(target = new Vec3()) {
@@ -4442,8 +4440,8 @@ var __privateMethod = (obj, member, method) => {
     }
     /* RENDER */
     /**
-     * If we defined a custom render function instead of the default one, register the callback
-     * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}
+     * If a custom render function has been defined instead of the default one, register the callback
+     * @param callback - callback to run instead of the default render behaviour, which is to set the {@link bindGroups | bind groups} and dispatch the work groups based on the {@link dispatchSize | default dispatch size}. This is where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
      */
     useCustomRender(callback) {
       if (callback) {
@@ -4757,7 +4755,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Callback used to run a custom render function instead of the default one.
-     * @param callback - callback to run instead of the default render behaviour
+     * @param callback - Your custom render function where you will have to set all the {@link core/bindGroups/BindGroup.BindGroup | bind groups} and dispatch the workgroups by yourself.
      */
     useCustomRender(callback) {
       this.material.useCustomRender(callback);
@@ -5609,31 +5607,16 @@ struct VertexOutput {
     var _autoRender3, _a;
     return _a = class extends Base {
       /**
-           * MeshBase constructor
-           * @typedef MeshBaseParams
-           * @property {string} [label] - MeshBase label
-           * @property {boolean} [autoRender] - whether we should add this MeshBase to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
-           * @property {AllowedGeometries} geometry - geometry to draw
-           * @property {boolean} [useAsyncPipeline] - whether the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} should be compiled asynchronously
-           * @property {MaterialShaders} shaders - our MeshBase shader codes and entry points
-           * @property {BindGroupInputs} [inputs] - our MeshBase {@link BindGroup} inputs
-           * @property {BindGroup[]} [bindGroups] - already created {@link BindGroup} to use
-           * @property {boolean} [transparent] - impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} blend properties
-           * @property {GPUCullMode} [cullMode] - cull mode to use
-           * @property {boolean} [visible] - whether this Mesh should be visible (drawn) or not
-           * @property {number} [renderOrder] - controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene}
-           * @property {RenderTarget} [renderTarget] - {@link RenderTarget} to render onto if any
-           * @property {ExternalTextureParams} [texturesOptions] - textures options to apply
-           * @property {Sampler[]} [samplers] - array of {@link Sampler}
-           *
-           * @typedef MeshBaseArrayParams
-           * @type {array}
-           * @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
-           * @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
-           * @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
-      
-           * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
-           */
+       * MeshBase constructor
+       *
+       * @typedef MeshBaseArrayParams
+       * @type {array}
+       * @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
+       * @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
+       * @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
+       *
+       * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
+       */
       constructor(...params) {
         super(
           params[0],
@@ -6383,8 +6366,7 @@ struct VSOutput {
   return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`
   );
-  const defaultTransformedMeshParams = {
-    //useProjection: true,
+  const defaultProjectedMeshParams = {
     // frustum culling and visibility
     frustumCulled: true,
     DOMFrustumMargins: {
@@ -6394,28 +6376,24 @@ struct VSOutput {
       left: 0
     }
   };
-  function MeshTransformedMixin(Base) {
-    return class MeshTransformedBase extends MeshBaseMixin(Base) {
+  function ProjectedMeshBaseMixin(Base) {
+    return class ProjectedMeshBase extends MeshBaseMixin(Base) {
       /**
-           * MeshTransformedBase constructor
-           * @typedef {TransformedMeshParameters} TransformedMeshBaseParameters
-           * @extends MeshBaseParams
-           * @property {boolean} frustumCulled - whether to use frustum culling
-           * @property {RectCoords} DOMFrustumMargins - frustum margins to apply when frustum culling
-           *
-           * @typedef MeshBaseArrayParams
-           * @type {array}
-           * @property {(CameraRenderer|GPUCurtains)} 0 - our renderer class object
-           * @property {(string|HTMLElement|null)} 1 - the DOM HTML Element that can be bound to a Mesh
-           * @property {TransformedMeshParameters} 2 - Mesh parameters
-      
-           * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
-           */
+       * ProjectedMeshBase constructor
+       *
+       * @typedef MeshBaseArrayParams
+       * @type {array}
+       * @property {(CameraRenderer|GPUCurtains)} 0 - our renderer class object
+       * @property {(string|HTMLElement|null)} 1 - the DOM HTML Element that can be bound to a Mesh
+       * @property {ProjectedMeshParameters} 2 - Projected Mesh parameters
+       *
+       * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
+       */
       constructor(...params) {
         super(
           params[0],
           params[1],
-          { ...defaultTransformedMeshParams, ...params[2], ...{ useProjection: true } }
+          { ...defaultProjectedMeshParams, ...params[2], ...{ useProjection: true } }
         );
         this._onReEnterViewCallback = () => {
         };
@@ -6423,7 +6401,7 @@ struct VSOutput {
         };
         let renderer = params[0];
         const parameters = {
-          ...defaultTransformedMeshParams,
+          ...defaultProjectedMeshParams,
           ...params[2],
           ...{ useProjection: true }
         };
@@ -6538,7 +6516,7 @@ struct VSOutput {
       }
       /* SIZE & TRANSFORMS */
       /**
-       * Resize our {@link MeshTransformedBaseClass}
+       * Resize our {@link ProjectedMeshBaseClass}
        * @param boundingRect - the new bounding rectangle
        */
       resize(boundingRect) {
@@ -6562,20 +6540,6 @@ struct VSOutput {
         return (_a = this.domFrustum) == null ? void 0 : _a.projectedBoundingRect;
       }
       /**
-       * Tell the model and projection matrices to update.
-       * Here because else typescript is confused
-       */
-      shouldUpdateMatrixStack() {
-        super.shouldUpdateMatrixStack();
-      }
-      /**
-       * Update the model and projection matrices if needed.
-       * Here because else typescript is confused
-       */
-      updateMatrixStack() {
-        super.updateMatrixStack();
-      }
-      /**
        * At least one of the matrix has been updated, update according uniforms and frustum
        */
       onAfterMatrixStackUpdate() {
@@ -6588,7 +6552,7 @@ struct VSOutput {
       /* EVENTS */
       /**
        * Assign a callback function to _onReEnterViewCallback
-       * @param callback - callback to run when {@link MeshTransformedBaseClass} is reentering the view frustum
+       * @param callback - callback to run when {@link ProjectedMeshBaseClass} is reentering the view frustum
        * @returns - our Mesh
        */
       onReEnterView(callback) {
@@ -6599,7 +6563,7 @@ struct VSOutput {
       }
       /**
        * Assign a callback function to _onLeaveViewCallback
-       * @param callback - callback to run when {@link MeshTransformedBaseClass} is leaving the view frustum
+       * @param callback - callback to run when {@link ProjectedMeshBaseClass} is leaving the view frustum
        * @returns - our Mesh
        */
       onLeaveView(callback) {
@@ -6639,7 +6603,7 @@ struct VSOutput {
       }
     };
   }
-  class Mesh extends MeshTransformedMixin(ProjectedObject3D) {
+  class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
     constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
@@ -7796,7 +7760,7 @@ ${this.shaders.compute.head}`;
     autoloadSources: true,
     watchScroll: true
   };
-  class DOMMesh extends MeshTransformedMixin(DOMObject3D) {
+  class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     /**
      * DOMMesh constructor
      * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
@@ -8177,7 +8141,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-     * Meshes are then ordered by their {@link core/meshes/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
+     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
      * @param mesh - Mesh to add
      */
     addMesh(mesh) {

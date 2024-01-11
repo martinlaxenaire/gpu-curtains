@@ -19,6 +19,11 @@ export interface SphereGeometryParams extends GeometryBaseParams {
 }
 /**
  * Helper to easily create 3D sphere indexed geometries.
+ *
+ * @example
+ * ```javascript
+ * const sphereGeometry = new SphereGeometry()
+ * ```
  */
 export declare class SphereGeometry extends IndexedGeometry {
     constructor({ widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength, instancesCount, vertexBuffers, topology, }?: SphereGeometryParams);

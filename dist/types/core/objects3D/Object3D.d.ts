@@ -7,38 +7,38 @@ export type Object3DMatricesType = 'model';
  * Defines an {@link Object3D} matrix object
  */
 export interface Object3DTransformMatrix {
-    /** The {@link math/Mat4.Mat4 | matrix} used */
+    /** The {@link Mat4 | matrix} used */
     matrix: Mat4;
-    /** Whether we should update the {@link math/Mat4.Mat4 | matrix} */
+    /** Whether we should update the {@link Mat4 | matrix} */
     shouldUpdate: boolean;
-    /** Function to update our {@link math/Mat4.Mat4 | matrix} */
+    /** Function to update our {@link Mat4 | matrix} */
     onUpdate: () => void;
 }
 /** Defines all possible {@link Object3DTransformMatrix | matrix object} used by our {@link Object3D} */
 export type Object3DMatrices = Record<Object3DMatricesType, Object3DTransformMatrix>;
 /**
- * Defines all necessary {@link math/Vec3.Vec3 | vectors}/{@link math/Quat.Quat | quaternions} to compute a 3D {@link math/Mat4.Mat4 | model matrix}
+ * Defines all necessary {@link Vec3 | vectors}/{@link Quat | quaternions} to compute a 3D {@link Mat4 | model matrix}
  */
 export interface Object3DTransforms {
     /** Transformation origin object */
     origin: {
-        /** Transformation origin {@link math/Vec3.Vec3 | vector} relative to the {@link Object3D} */
+        /** Transformation origin {@link Vec3 | vector} relative to the {@link Object3D} */
         model: Vec3;
     };
-    /** Model {@link math/Quat.Quat | quaternion} defining its rotation in 3D space */
+    /** Model {@link Quat | quaternion} defining its rotation in 3D space */
     quaternion: Quat;
-    /** Model rotation {@link math/Vec3.Vec3 | vector} used to compute its {@link math/Quat.Quat | quaternion} */
+    /** Model rotation {@link Vec3 | vector} used to compute its {@link Quat | quaternion} */
     rotation: Vec3;
     /** Position object */
     position: {
-        /** Position {@link math/Vec3.Vec3 | vector} relative to the 3D world */
+        /** Position {@link Vec3 | vector} relative to the 3D world */
         world: Vec3;
     };
-    /** Model 3D scale {@link math/Vec3.Vec3 | vector} */
+    /** Model 3D scale {@link Vec3 | vector} */
     scale: Vec3;
 }
 /**
- * Used to create an object with transformation properties and a model matrix
+ * Used to create an object with transformation properties such as position, scale, rotation and transform origin {@link Vec3 | vectors} and a {@link Quat | quaternion} in order to compute a {@link Mat4 | model matrix}.
  */
 export declare class Object3D {
     /** {@link Object3DTransforms | Transformation object} of the {@link Object3D} */
@@ -50,53 +50,52 @@ export declare class Object3D {
      */
     constructor();
     /**
-     * Set our transforms properties and {@link math/Vec3.Vec3#onChange | vectors onChange} callbacks
+     * Set our transforms properties and {@link Vec3#onChange | vectors onChange} callbacks
      */
     setTransforms(): void;
     /**
-     * Get our rotation {@link math/Vec3.Vec3 | vector}
+     * Get our rotation {@link Vec3 | vector}
      */
     get rotation(): Vec3;
     /**
-     * Set our rotation {@link math/Vec3.Vec3 | vector}
-     * @param value - new rotation {@link math/Vec3.Vec3 | vector}
+     * Set our rotation {@link Vec3 | vector}
+     * @param value - new rotation {@link Vec3 | vector}
      */
     set rotation(value: Vec3);
     /**
-     * Get our {@link math/Quat.Quat | quaternion}
+     * Get our {@link Quat | quaternion}
      */
     get quaternion(): Quat;
     /**
-     * Set our {@link math/Quat.Quat | quaternion}
-     * @param value - new {@link math/Quat.Quat | quaternion}
+     * Set our {@link Quat | quaternion}
+     * @param value - new {@link Quat | quaternion}
      */
     set quaternion(value: Quat);
     /**
-     * Get our position {@link math/Vec3.Vec3 | vector}
+     * Get our position {@link Vec3 | vector}
      */
     get position(): Vec3;
     /**
-     * Set our position {@link math/Vec3.Vec3 | vector}
-     * @param value - new position {@link math/Vec3.Vec3 | vector}
+     * Set our position {@link Vec3 | vector}
+     * @param value - new position {@link Vec3 | vector}
      */
     set position(value: Vec3);
     /**
-     * Get our scale {@link math/Vec3.Vec3 | vector}
-     * @readonly
+     * Get our scale {@link Vec3 | vector}
      */
     get scale(): Vec3;
     /**
-     * Set our scale {@link math/Vec3.Vec3 | vector}
-     * @param value - new scale {@link math/Vec3.Vec3 | vector}
+     * Set our scale {@link Vec3 | vector}
+     * @param value - new scale {@link Vec3 | vector}
      */
     set scale(value: Vec3);
     /**
-     * Get our transform origin {@link math/Vec3.Vec3 | vector}
+     * Get our transform origin {@link Vec3 | vector}
      */
     get transformOrigin(): Vec3;
     /**
-     * Set our transform origin {@link math/Vec3.Vec3 | vector}
-     * @param value - new transform origin {@link math/Vec3.Vec3 | vector}
+     * Set our transform origin {@link Vec3 | vector}
+     * @param value - new transform origin {@link Vec3 | vector}
      */
     set transformOrigin(value: Vec3);
     /**
@@ -120,12 +119,12 @@ export declare class Object3D {
      */
     setMatrices(): void;
     /**
-     * Get our {@link math/Mat4.Mat4 | model matrix}
+     * Get our {@link Mat4 | model matrix}
      */
     get modelMatrix(): Mat4;
     /**
-     * Set our {@link math/Mat4.Mat4 | model matrix}
-     * @param value - new {@link math/Mat4.Mat4 | model matrix}
+     * Set our {@link Mat4 | model matrix}
+     * @param value - new {@link Mat4 | model matrix}
      */
     set modelMatrix(value: Mat4);
     /**
@@ -133,8 +132,8 @@ export declare class Object3D {
      */
     shouldUpdateModelMatrix(): void;
     /**
-     * Rotate this {@link Object3D} so it looks at the {@link math/Vec3.Vec3 | target}
-     * @param target - {@link math/Vec3.Vec3 | target} to look at
+     * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
+     * @param target - {@link Vec3 | target} to look at
      */
     lookAt(target?: Vec3): void;
     /**

@@ -2,7 +2,7 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane';
 import { Renderer } from '../renderers/utils';
 import { RenderTarget } from './RenderTarget';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { MeshBaseRenderParams } from '../meshes/MeshBaseMixin';
+import { MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin';
 import { RenderTexture } from '../textures/RenderTexture';
 /**
  * Parameters used to create a {@link ShaderPass}

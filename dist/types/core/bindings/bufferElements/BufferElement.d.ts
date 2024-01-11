@@ -39,6 +39,17 @@ export interface BufferElementParams {
  * Used to handle each {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | buffer binding array} view and data layout alignment.
  * Compute the exact alignment offsets needed to fill an {@link ArrayBuffer} that will be sent to a {@link GPUBuffer}, based on an input type and value.
  * Also update the view array at the correct offset.
+ *
+ * So all our struct need to be packed into our arrayBuffer using a precise layout.
+ * They will be stored in rows, each row made of 4 slots and each slots made of 4 bytes. Depending on the binding element type, its row and slot may vary and we may have to insert empty padded values.
+ * All in all it looks like that:<br>
+ * <pre>
+ *          slot 0    slot 1    slot 2    slot 3
+ * row 0 | _ _ _ _ | _ _ _ _ | _ _ _ _ | _ _ _ _ |
+ * row 1 | _ _ _ _ | _ _ _ _ | _ _ _ _ | _ _ _ _ |
+ * row 2 | _ _ _ _ | _ _ _ _ | _ _ _ _ | _ _ _ _ |
+ * </pre>
+ * see https://webgpufundamentals.org/webgpu/lessons/resources/wgsl-offset-computer.html
  */
 export declare class BufferElement {
     /** The name of the {@link BufferElement} */

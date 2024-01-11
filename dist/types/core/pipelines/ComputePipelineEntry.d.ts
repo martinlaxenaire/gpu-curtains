@@ -2,7 +2,7 @@
 import { PipelineEntry } from './PipelineEntry';
 import { PipelineEntryParams, PipelineEntryPropertiesParams, PipelineEntryShaders } from '../../types/PipelineEntries';
 /**
- * Used to create a pipeline entry specifically designed to handle compute passes.
+ * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
  */
 export declare class ComputePipelineEntry extends PipelineEntry {
     /** Shaders to use with this {@link ComputePipelineEntry} */
