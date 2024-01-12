@@ -20,7 +20,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // instanced custom geometry mesh grid
   // we will basically recreate https://threejs.org/examples/?q=instanc#webgl_instancing_dynamic
   const instancesGrid = new Vec3(10, 10, 10) // nb of instances per rows / cols
-  const instancesGridGap = new Vec3(3, 3, 3) // gap between instances
+  const instancesGridGap = new Vec3(5, 5, 5) // gap between instances
 
   const meshVs = /* wgsl */ `  
     struct VSOutput {
@@ -205,7 +205,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.log(geometry.getVertexBufferByName('attributes'), mesh)
 
   // move camera back
-  gpuCurtains.camera.position.z = 50
+  gpuCurtains.camera.position.z = 100
 
   mesh.onRender(() => {
     mesh.uniforms.frames.elapsed.value++
