@@ -1,0 +1,6 @@
+/examples
+/docs
+/tests
+/website
+*.html
+*.css

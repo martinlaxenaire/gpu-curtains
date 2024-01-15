@@ -1,6 +1,6 @@
 import { GPUCurtains, Plane, ShaderPass } from '../../dist/gpu-curtains.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // lerp
   const lerp = (start = 0, end = 1, amount = 0.1) => {
     return (1 - amount) * start + amount * end

@@ -1,6 +1,6 @@
 import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, SphereGeometry, Mesh } from '../../dist/gpu-curtains.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // here is an example of how we can use a GPUDeviceManager and a simple GPUCameraRenderer instead of the whole GPUCurtains package
   // this shows us how to use gpu-curtains as a basic genuine 3D engine, not specifically related to DOM objects
   const systemSize = 10

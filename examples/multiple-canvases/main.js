@@ -1,6 +1,6 @@
 import { GPUCurtains, PlaneGeometry, Sampler, Plane } from '../../dist/gpu-curtains.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // first dynamically build the planes elements
   const buildPlaneHTMLElement = (index) => {
     const isFront = Math.random() > 0.5
@@ -8,6 +8,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           <img
             src="https://source.unsplash.com/featured/720x720/?nature&${index}"
             crossorigin=""
+            loading="lazy"
             data-texture-name="planeTexture"
           />
         </div>`

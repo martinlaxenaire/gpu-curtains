@@ -6,7 +6,6 @@ import { RenderTexture } from '../core/textures/RenderTexture';
 import { Sampler } from '../core/samplers/Sampler';
 import { Geometry } from '../core/geometries/Geometry';
 import { IndexedGeometry } from '../core/geometries/IndexedGeometry';
-import { PlaneGeometry } from '../core/geometries/PlaneGeometry';
 /** Shaders types that can be used by a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
 export type RenderMaterialShadersType = 'vertex' | 'fragment';
 /** Shaders types that can be used by a {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} */
@@ -93,7 +92,7 @@ export interface RenderMaterialAttributes {
     vertexBuffers?: Geometry['vertexBuffers'];
 }
 /** Defines all basic allowed geometries */
-export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry;
+export type AllowedGeometries = Geometry | IndexedGeometry;
 /**
  * Base rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}
  */

@@ -1,6 +1,6 @@
 import { GPUCurtains, BoxGeometry, Mesh, Plane, ShaderPass } from '../../src/index.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',

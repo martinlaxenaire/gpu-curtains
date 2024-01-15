@@ -25,21 +25,20 @@ The project was initially conceived as a WebGPU port of [curtains.js](https://gi
 
 ```css
 body {
-    /* make the body fits our viewport */
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    margin: 0;
-    overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
 }
 
 #canvas {
-    /* make the canvas wrapper fits the viewport as well */
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+  /* make the canvas wrapper fits the viewport */
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100vh;
 }
 ```
 
@@ -48,7 +47,7 @@ body {
 ```javascript
 import { Curtains, Mesh } from 'gpu-curtains';
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // set our main GPUCurtains instance
   // it will handle everything we need
   // a WebGPU device and a renderer with its scene,

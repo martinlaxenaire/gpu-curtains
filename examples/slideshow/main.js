@@ -1,8 +1,6 @@
 import { GPUCurtains, Plane } from '../../dist/gpu-curtains.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
-  console.log(window)
-
+window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',

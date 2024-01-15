@@ -196,7 +196,7 @@ const computeParticles = /* wgsl */ `
   }
 `
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // number of particles instances
   const nbParticles = 1_000_000
   //const nbParticles = 500_000

@@ -1,6 +1,6 @@
 import { GPUCameraRenderer, Vec2, Vec3, BoxGeometry, SphereGeometry, Mesh, GPUDeviceManager } from '../../src/index.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   const systemSize = 10
 
   // here is an example of how we can use a simple GPUCameraRenderer instead of GPUCurtains

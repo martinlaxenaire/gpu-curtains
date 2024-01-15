@@ -28,7 +28,7 @@ var __privateMethod = (obj, member, method) => {
   __accessCheck(obj, member, "access private method");
   return method;
 };
-var _parentRatio, _sourceRatio, _coverScale, _rotationMatrix, _fov, _near, _far, _pixelRatio, _autoRender, _setWGSLFragment, setWGSLFragment_fn, _throttleResize, _DOMObjectWorldPosition, _DOMObjectWorldScale, _taskCount, _autoRender2;
+var _parentRatio, _sourceRatio, _coverScale, _rotationMatrix, _fov, _near, _far, _pixelRatio, _autoRender, _setWGSLFragment, setWGSLFragment_fn, _DOMObjectWorldPosition, _DOMObjectWorldScale, _taskCount, _autoRender2;
 const generateUUID = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = Math.random() * 16 | 0, v = c === "x" ? r : r & 3 | 8;
@@ -7407,8 +7407,6 @@ class DOMElement {
     onPositionChanged = (boundingRect = null) => {
     }
   } = {}) {
-    __privateAdd(this, _throttleResize, void 0);
-    __privateSet(this, _throttleResize, null);
     if (typeof element === "string") {
       this.element = document.querySelector(element);
       if (!this.element) {
@@ -7487,24 +7485,16 @@ class DOMElement {
   setSize(boundingRect = null) {
     if (!this.element)
       return;
-    this.isResizing = !!this.boundingRect;
     this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
-    __privateSet(this, _throttleResize, setTimeout(() => {
-      this.isResizing = false;
-      __privateSet(this, _throttleResize, null);
-    }, 25));
+    this.isResizing = false;
   }
   /**
    * Destroy our DOMElement - remove from resize observer and clear throttle timeout
    */
   destroy() {
     this.resizeManager.unobserve(this.element);
-    if (__privateGet(this, _throttleResize)) {
-      clearTimeout(__privateGet(this, _throttleResize));
-    }
   }
 }
-_throttleResize = new WeakMap();
 class DOMObject3D extends ProjectedObject3D {
   /**
    * DOMObject3D constructor

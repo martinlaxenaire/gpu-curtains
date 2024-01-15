@@ -34,6 +34,7 @@
     "build:docs": "rimraf docs && typedoc --options typedoc.json",
     "build:types": "rimraf dist/types && tsc --allowJs -d --emitDeclarationOnly",
     "build:main": "vite build",
-    "build:dist": "yarn build:types && yarn build:main"
+    "build:dist": "yarn build:types && yarn build:main",
+    "build": "yarn build:dist && yarn build:docs"
   }
 }

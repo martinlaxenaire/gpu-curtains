@@ -62,7 +62,6 @@ export interface DOMElementParams {
  * Execute callbacks when the bounding rectangle of the DOM Element changes, which means when its size and/or position change.
  */
 export declare class DOMElement {
-    #private;
     /** The HTML element to track */
     element: HTMLElement;
     /** Priority at which this element {@link onSizeChanged} function must be called */

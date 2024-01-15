@@ -38,7 +38,6 @@ export interface GPURendererParams {
   alphaMode?: GPUCanvasAlphaMode
 }
 
-// TODO should be GPUCurtainsRenderer props?
 /** Any Mesh that is bound to a DOM Element */
 export type DOMProjectedMesh = DOMMesh | Plane
 /** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */

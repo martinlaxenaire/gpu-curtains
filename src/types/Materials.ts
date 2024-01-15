@@ -113,8 +113,7 @@ export interface RenderMaterialAttributes {
 }
 
 /** Defines all basic allowed geometries */
-// TODO this should instead check if it has Geometry as deep parent
-export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry
+export type AllowedGeometries = Geometry | IndexedGeometry
 
 /**
  * Base rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}
