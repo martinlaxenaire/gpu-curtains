@@ -20,6 +20,9 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
+**Code example**
+If possible, provide a minimal code example demonstrating the issue, using one of the online code editor tool (codepen, jsfiddle, codesandbox...)
+
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
