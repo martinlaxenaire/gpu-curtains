@@ -650,6 +650,8 @@ window.addEventListener('load', async () => {
 
   const pointer = new Vec2(Infinity)
   const velocity = new Vec2(0)
+  const minVelocity = new Vec2(-100)
+  const maxVelocity = new Vec2(100)
   let pointerTimer
 
   window.addEventListener('pointermove', (e) => {
@@ -658,6 +660,8 @@ window.addEventListener('load', async () => {
     } else {
       velocity.set(e.clientX - pointer.x, e.clientY - pointer.y)
     }
+
+    velocity.clamp(minVelocity, maxVelocity)
 
     pointer.set(e.clientX, e.clientY)
 

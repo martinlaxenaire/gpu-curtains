@@ -371,6 +371,8 @@ export class CurtainsClothSim {
 
     this.pointer = new Vec2(Infinity)
     this.velocity = new Vec2(0)
+    this.minVelocity = new Vec2(-100)
+    this.maxVelocity = new Vec2(100)
     this.pointerTimer = null
 
     window.addEventListener('pointermove', this.onPointerMove.bind(this))
@@ -382,6 +384,8 @@ export class CurtainsClothSim {
     } else {
       this.velocity.set(e.clientX - this.pointer.x, e.clientY - this.pointer.y)
     }
+
+    this.velocity.clamp(this.minVelocity, this.maxVelocity)
 
     this.pointer.set(e.clientX, e.clientY)
 

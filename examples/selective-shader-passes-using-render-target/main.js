@@ -41,8 +41,6 @@ window.addEventListener('load', async () => {
       document.body.classList.add('no-curtains')
     })
 
-  console.log(gpuCurtains)
-
   // We don't want to see our pass texture top/bottom edges
   // so we're going to use a custom sampler with mirror repeat
   const mirrorSampler = new Sampler(gpuCurtains, {
@@ -82,7 +80,10 @@ window.addEventListener('load', async () => {
   `
 
   // first we're going to render large planes into a grayscale pass
-  const grayscaleTarget = new RenderTarget(gpuCurtains, { label: 'Large planes distortion render target' })
+  const grayscaleTarget = new RenderTarget(gpuCurtains, {
+    label: 'Large planes distortion render target',
+    sampleCount: 1,
+  })
 
   const largePlaneEls = document.querySelectorAll('.large-plane')
   largePlaneEls.forEach((largePlaneEl, index) => {
@@ -157,6 +158,7 @@ window.addEventListener('load', async () => {
   // now render the small planes into a RGB shift pass
   const rgbShiftTarget = new RenderTarget(gpuCurtains, {
     label: 'Small planes RGB render target',
+    sampleCount: 1,
   })
 
   const smallPlaneEls = document.querySelectorAll('.small-plane')

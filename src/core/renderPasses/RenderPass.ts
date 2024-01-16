@@ -17,6 +17,8 @@ export interface RenderPassOptions {
   clearValue: GPUColor
   /** Optional format of the color attachment texture */
   targetFormat: GPUTextureFormat
+  /** Whether the {@link RenderPass#renderTexture | renderTexture} should use multisampling or not */
+  sampleCount: GPUSize32
 }
 
 /**
@@ -41,8 +43,8 @@ export class RenderPass {
   /** Size of the textures sources */
   size: RectSize
 
-  /** Whether the {@link Renderer} is using multisampling */
-  sampleCount: Renderer['sampleCount']
+  /** The {@link RenderPass} sample count (i.e. whether it should use multisampled antialiasing) */
+  sampleCount: GPUSize32
 
   /** Depth {@link GPUTexture} to use with this {@link RenderPass} if it handles depth */
   depthTexture: GPUTexture | undefined
@@ -64,6 +66,7 @@ export class RenderPass {
       loadOp = 'clear',
       clearValue = [0, 0, 0, 0],
       targetFormat,
+      sampleCount = 1,
     } = {} as RenderPassParams
   ) {
     // we could pass our curtains object OR our curtains renderer object
@@ -83,9 +86,11 @@ export class RenderPass {
       targetFormat: targetFormat ?? this.renderer.preferredFormat,
     } as RenderPassOptions
 
+    this.setClearValue(clearValue)
+
     this.setSize(this.renderer.pixelRatioBoundingRect)
 
-    this.sampleCount = this.renderer.sampleCount
+    this.sampleCount = sampleCount
 
     // if needed, create a depth texture before our descriptor
     if (this.options.depth) this.createDepthTexture()
@@ -222,11 +227,20 @@ export class RenderPass {
   }
 
   /**
-   * Set our {@link GPUColor | clear colors value}
+   * Set our {@link GPUColor | clear colors value}.<br>
+   * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
    * @param clearValue - new {@link GPUColor | clear colors value} to use
    */
   setClearValue(clearValue: GPUColor = [0, 0, 0, 0]) {
-    this.options.clearValue = clearValue
+    if (this.renderer.alphaMode === 'premultiplied') {
+      const alpha = clearValue[3]
+      clearValue[0] = Math.min(clearValue[0], alpha)
+      clearValue[1] = Math.min(clearValue[1], alpha)
+      clearValue[2] = Math.min(clearValue[2], alpha)
+    } else {
+      this.options.clearValue = clearValue
+    }
+
     if (this.descriptor && this.descriptor.colorAttachments) {
       this.descriptor.colorAttachments[0].clearValue = clearValue
     }

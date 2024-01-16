@@ -93,10 +93,10 @@ export class GPUCurtains {
   constructor({
     container,
     pixelRatio = window.devicePixelRatio ?? 1,
-    sampleCount = 4,
     preferredFormat,
     alphaMode = 'premultiplied',
     production = false,
+    renderPass,
     camera,
     autoRender = true,
     autoResize = true,
@@ -107,11 +107,11 @@ export class GPUCurtains {
     this.options = {
       container,
       pixelRatio,
-      sampleCount,
       camera,
       production,
       preferredFormat,
       alphaMode,
+      renderPass,
       autoRender,
       autoResize,
       watchScroll,
@@ -165,9 +165,9 @@ export class GPUCurtains {
       // TODO ...this.options?
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
-      sampleCount: this.options.sampleCount,
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
+      renderPass: this.options.renderPass,
       camera: this.options.camera,
     })
   }
@@ -178,7 +178,6 @@ export class GPUCurtains {
    */
   patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(parameters: T): T {
     if (parameters.pixelRatio === undefined) parameters.pixelRatio = this.options.pixelRatio
-    if (parameters.sampleCount === undefined) parameters.sampleCount = this.options.sampleCount
 
     return parameters
   }

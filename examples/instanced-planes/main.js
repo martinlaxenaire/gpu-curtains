@@ -140,6 +140,7 @@ window.addEventListener('load', async () => {
       bottom: 200,
       left: 0,
     },
+    transparent: true,
     uniforms: {
       scroll: {
         label: 'Scroll',

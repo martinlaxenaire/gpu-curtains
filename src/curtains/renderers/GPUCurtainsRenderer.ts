@@ -33,18 +33,18 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     deviceManager,
     container,
     pixelRatio = 1,
-    sampleCount = 4,
     preferredFormat,
     alphaMode = 'premultiplied',
+    renderPass,
     camera,
   }: GPUCameraRendererParams) {
     super({
       deviceManager,
       container,
       pixelRatio,
-      sampleCount,
       preferredFormat,
       alphaMode,
+      renderPass,
       camera,
     } as GPUCameraRendererParams)
 

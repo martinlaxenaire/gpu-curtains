@@ -2,7 +2,7 @@
 import { PipelineManager } from '../pipelines/PipelineManager';
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement';
 import { Scene } from '../scenes/Scene';
-import { RenderPass } from '../renderPasses/RenderPass';
+import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass';
 import { ComputePass } from '../computePasses/ComputePass';
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane';
 import { ShaderPass } from '../renderPasses/ShaderPass';
@@ -27,12 +27,17 @@ export interface GPURendererParams {
     container: string | HTMLElement;
     /** Pixel ratio to use for rendering */
     pixelRatio?: number;
-    /** Whether to use multisampling, and if so its value */
-    sampleCount?: GPUSize32;
     /** Texture rendering {@link GPUTextureFormat | preferred format} */
     preferredFormat?: GPUTextureFormat;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
+    /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
+    renderPass: {
+        /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
+        depth: RenderPassParams['depth'];
+        /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
+        sampleCount: RenderPassParams['sampleCount'];
+    };
 }
 /** Any Mesh that is bound to a DOM Element */
 export type DOMProjectedMesh = DOMMesh | Plane;
@@ -65,6 +70,8 @@ export declare class GPURenderer {
     preferredFormat: null | GPUTextureFormat;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
+    /** Options used to create this {@link GPURenderer} */
+    options: GPURendererParams;
     /** The final {@link RenderPass | render pass} to render our result to screen */
     renderPass: RenderPass;
     /** The {@link Scene} used */
@@ -81,8 +88,6 @@ export declare class GPURenderer {
     meshes: ProjectedMesh[];
     /** An array containing all our created {@link RenderTexture} */
     renderTextures: RenderTexture[];
-    /** Whether to use multisampling, and if so its value */
-    sampleCount: GPUSize32;
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** {@link DOMElement} that will track our canvas container size */
@@ -105,7 +110,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, sampleCount, preferredFormat, alphaMode, }: GPURendererParams);
+    constructor({ deviceManager, container, pixelRatio, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
     /**
      * Set {@link canvas} size
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}

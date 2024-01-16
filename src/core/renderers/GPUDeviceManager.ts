@@ -335,7 +335,7 @@ export class GPUDeviceManager {
             source: texture.source as GPUImageCopyExternalImageSource,
             flipY: texture.options.flipY,
           } as GPUImageCopyExternalImage,
-          { texture: texture.texture as GPUTexture },
+          { texture: texture.texture as GPUTexture, premultipliedAlpha: texture.options.premultipliedAlpha },
           { width: texture.size.width, height: texture.size.height }
         )
 

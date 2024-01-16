@@ -16,6 +16,8 @@ export interface RenderPassOptions {
     clearValue: GPUColor;
     /** Optional format of the color attachment texture */
     targetFormat: GPUTextureFormat;
+    /** Whether the {@link RenderPass#renderTexture | renderTexture} should use multisampling or not */
+    sampleCount: GPUSize32;
 }
 /**
  * Parameters used to create a {@link RenderPass}
@@ -35,8 +37,8 @@ export declare class RenderPass {
     options: RenderPassOptions;
     /** Size of the textures sources */
     size: RectSize;
-    /** Whether the {@link Renderer} is using multisampling */
-    sampleCount: Renderer['sampleCount'];
+    /** The {@link RenderPass} sample count (i.e. whether it should use multisampled antialiasing) */
+    sampleCount: GPUSize32;
     /** Depth {@link GPUTexture} to use with this {@link RenderPass} if it handles depth */
     depthTexture: GPUTexture | undefined;
     /** Render {@link GPUTexture} to use with this {@link RenderPass} */
@@ -48,7 +50,7 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, depth, loadOp, clearValue, targetFormat, }?: Partial<RenderPassOptions>);
+    constructor(renderer: Renderer | GPUCurtains, { label, depth, loadOp, clearValue, targetFormat, sampleCount, }?: Partial<RenderPassOptions>);
     /**
      * Set our {@link depthTexture | depth texture}
      */
@@ -85,7 +87,8 @@ export declare class RenderPass {
      */
     setLoadOp(loadOp?: GPULoadOp): void;
     /**
-     * Set our {@link GPUColor | clear colors value}
+     * Set our {@link GPUColor | clear colors value}.<br>
+     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
      * @param clearValue - new {@link GPUColor | clear colors value} to use
      */
     setClearValue(clearValue?: GPUColor): void;

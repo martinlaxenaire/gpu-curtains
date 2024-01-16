@@ -111,6 +111,13 @@ export declare class Vec2 {
      */
     min(vector?: Vec2): Vec2;
     /**
+     * Clamp this {@link Vec2} components by min and max {@link Vec2} vectors
+     * @param min - minimum {@link Vec2} components to compare with
+     * @param max - maximum {@link Vec2} components to compare with
+     * @returns - clamped {@link Vec2}
+     */
+    clamp(min?: Vec2, max?: Vec2): Vec2;
+    /**
      * Check if 2 {@link Vec2} are equal
      * @param vector - {@link Vec2} to compare
      * @returns - whether the {@link Vec2} are equals or not

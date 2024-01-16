@@ -52,6 +52,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       blend,
       targetFormat,
       useProjection,
+      sampleCount,
     } = parameters
 
     // we could pass our curtains object OR our curtains renderer object
@@ -96,6 +97,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       blend,
       targetFormat,
       useProjection,
+      sampleCount,
     }
   }
 
@@ -349,9 +351,9 @@ export class RenderPipelineEntry extends PipelineEntry {
         depthCompare: this.options.depthCompare,
         format: 'depth24plus',
       },
-      ...(this.renderer.sampleCount > 1 && {
+      ...(this.options.sampleCount > 1 && {
         multisample: {
-          count: this.renderer.sampleCount,
+          count: this.options.sampleCount,
         },
       }),
     } as GPURenderPipelineDescriptor

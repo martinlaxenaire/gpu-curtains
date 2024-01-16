@@ -1,7 +1,7 @@
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
-import { RenderPass } from '../renderPasses/RenderPass'
+import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass'
 import { generateUUID, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
@@ -30,12 +30,18 @@ export interface GPURendererParams {
   container: string | HTMLElement
   /** Pixel ratio to use for rendering */
   pixelRatio?: number
-  /** Whether to use multisampling, and if so its value */
-  sampleCount?: GPUSize32
   /** Texture rendering {@link GPUTextureFormat | preferred format} */
   preferredFormat?: GPUTextureFormat
   /** Set the {@link GPUCanvasContext | context} alpha mode */
   alphaMode?: GPUCanvasAlphaMode
+
+  /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
+  renderPass?: {
+    /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
+    depth: RenderPassParams['depth']
+    /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
+    sampleCount: RenderPassParams['sampleCount']
+  }
 }
 
 /** Any Mesh that is bound to a DOM Element */
@@ -52,6 +58,7 @@ export type SceneObject = RenderedMesh | ComputePass
  * A renderer is responsible for:
  * - Setting a {@link GPUCanvasContext | context}
  * - Handling the {@link HTMLCanvasElement | canvas} onto everything is drawn
+ * - Creating a {@link RenderPass} that will handle our render and depth textures and the render pass descriptor
  * - Keeping track of every specific class objects created relative to computing and rendering
  * - Creating a {@link Scene} class that will take care of the rendering process of all previously mentioned objects
  */
@@ -73,6 +80,9 @@ export class GPURenderer {
   /** Set the {@link GPUCanvasContext | context} alpha mode */
   alphaMode?: GPUCanvasAlphaMode
 
+  /** Options used to create this {@link GPURenderer} */
+  options: GPURendererParams
+
   /** The final {@link RenderPass | render pass} to render our result to screen */
   renderPass: RenderPass
   /** The {@link Scene} used */
@@ -91,8 +101,6 @@ export class GPURenderer {
   /** An array containing all our created {@link RenderTexture} */
   renderTextures: RenderTexture[]
 
-  /** Whether to use multisampling, and if so its value */
-  sampleCount: GPUSize32
   /** Pixel ratio to use for rendering */
   pixelRatio: number
 
@@ -130,9 +138,9 @@ export class GPURenderer {
     deviceManager,
     container,
     pixelRatio = 1,
-    sampleCount = 4,
     preferredFormat,
     alphaMode = 'premultiplied',
+    renderPass,
   }: GPURendererParams) {
     this.type = 'GPURenderer'
     this.uuid = generateUUID()
@@ -140,8 +148,19 @@ export class GPURenderer {
     this.deviceManager = deviceManager
     this.deviceManager.addRenderer(this)
 
+    // render pass default values
+    renderPass = { ...{ depth: true, sampleCount: 4 }, ...renderPass }
+
+    this.options = {
+      deviceManager,
+      container,
+      pixelRatio,
+      preferredFormat,
+      alphaMode,
+      renderPass,
+    }
+
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
-    this.sampleCount = sampleCount
     this.alphaMode = alphaMode
 
     this.preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
@@ -409,8 +428,9 @@ export class GPURenderer {
   setMainRenderPass() {
     this.renderPass = new RenderPass(this, {
       label: 'Main render pass',
-      depth: true,
+      depth: this.options.renderPass.depth,
       targetFormat: this.preferredFormat,
+      sampleCount: this.options.renderPass.sampleCount,
     })
   }
 
@@ -836,7 +856,7 @@ export class GPURenderer {
       renderTexture.label = `${this.type} context current texture`
     }
 
-    if (this.sampleCount > 1) {
+    if (renderPass.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
     } else {
       renderPass.descriptor.colorAttachments[0].view = renderTexture.createView()

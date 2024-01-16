@@ -9,7 +9,7 @@ window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
-    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
   })
 
   await gpuCurtains.setDevice()

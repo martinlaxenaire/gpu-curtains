@@ -472,6 +472,17 @@ class Vec2 {
     return this;
   }
   /**
+   * Clamp this {@link Vec2} components by min and max {@link Vec2} vectors
+   * @param min - minimum {@link Vec2} components to compare with
+   * @param max - maximum {@link Vec2} components to compare with
+   * @returns - clamped {@link Vec2}
+   */
+  clamp(min = new Vec2(), max = new Vec2()) {
+    this.x = Math.max(min.x, Math.min(max.x, this.x));
+    this.y = Math.max(min.y, Math.min(max.y, this.y));
+    return this;
+  }
+  /**
    * Check if 2 {@link Vec2} are equal
    * @param vector - {@link Vec2} to compare
    * @returns - whether the {@link Vec2} are equals or not
@@ -1394,6 +1405,18 @@ class Vec3 {
     this.x = Math.min(this.x, vector.x);
     this.y = Math.min(this.y, vector.y);
     this.z = Math.min(this.z, vector.z);
+    return this;
+  }
+  /**
+   * Clamp this {@link Vec3} components by min and max {@link Vec3} vectors
+   * @param min - minimum {@link Vec3} components to compare with
+   * @param max - maximum {@link Vec3} components to compare with
+   * @returns - clamped {@link Vec3}
+   */
+  clamp(min = new Vec3(), max = new Vec3()) {
+    this.x = Math.max(min.x, Math.min(max.x, this.x));
+    this.y = Math.max(min.y, Math.min(max.y, this.y));
+    this.z = Math.max(min.z, Math.min(max.z, this.z));
     return this;
   }
   /**
@@ -2768,6 +2791,7 @@ const defaultTextureParams = {
   generateMips: false,
   flipY: false,
   format: "rgba8unorm",
+  premultipliedAlpha: true,
   placeholderColor: [0, 0, 0, 255],
   // default to black
   useExternalTextures: true,
@@ -2824,7 +2848,6 @@ class Texture extends Object3D {
           name: this.options.name + "Matrix",
           type: "mat4x4f",
           value: this.modelMatrix
-          //onBeforeUpdate: () => this.updateTextureMatrix(),
         }
       }
     });
@@ -2995,6 +3018,7 @@ class Texture extends Object3D {
     this.options.generateMips = texture.options.generateMips;
     this.options.flipY = texture.options.flipY;
     this.options.format = texture.options.format;
+    this.options.premultipliedAlpha = texture.options.premultipliedAlpha;
     this.options.placeholderColor = texture.options.placeholderColor;
     this.options.useExternalTextures = texture.options.useExternalTextures;
     this.sourceLoaded = texture.sourceLoaded;
@@ -5521,6 +5545,25 @@ class RenderMaterial extends Material {
       await this.compilePipelineEntry();
     }
   }
+  /**
+   * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
+   * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+   */
+  setRenderingOptions(renderingOptions = {}) {
+    const newProperties = Object.keys(renderingOptions).filter(
+      (key) => renderingOptions[key] !== this.options.rendering[key]
+    );
+    this.options.rendering = { ...this.options.rendering, ...renderingOptions };
+    if (this.pipelineEntry) {
+      this.pipelineEntry.options = { ...this.pipelineEntry.options, ...this.options.rendering };
+      if (this.pipelineEntry.ready && newProperties.length) {
+        throwWarning(
+          `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties.map((key) => `"${key}": ${renderingOptions[key]}`).join(", ")} }`
+        );
+        this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+      }
+    }
+  }
   /* ATTRIBUTES */
   /**
    * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
@@ -5647,6 +5690,7 @@ function MeshBaseMixin(Base) {
         autoRender,
         ...meshParameters
       } = parameters;
+      meshParameters.sampleCount = this.renderer.renderPass.sampleCount;
       this.options = {
         ...this.options ?? {},
         // merge possible lower options?
@@ -5699,7 +5743,11 @@ function MeshBaseMixin(Base) {
      * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     addToScene() {
+      var _a2;
       this.renderer.meshes.push(this);
+      (_a2 = this.material) == null ? void 0 : _a2.setRenderingOptions({
+        sampleCount: this.renderTarget ? this.renderTarget.renderPass.sampleCount : this.renderer.renderPass.sampleCount
+      });
       if (__privateGet(this, _autoRender3)) {
         this.renderer.scene.addMesh(this);
       }
@@ -5737,6 +5785,20 @@ function MeshBaseMixin(Base) {
           { once: true }
         );
       }
+    }
+    /**
+     * Assign or remove a {@link RenderTarget} to this Mesh
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     */
+    setRenderTarget(renderTarget) {
+      if (renderTarget && renderTarget.type !== "RenderTarget") {
+        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`);
+        return;
+      }
+      this.removeFromScene();
+      this.renderTarget = renderTarget;
+      this.addToScene();
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -5919,20 +5981,6 @@ function MeshBaseMixin(Base) {
      */
     addRenderTexture(renderTexture) {
       this.material.addTexture(renderTexture);
-    }
-    /**
-     * Assign or remove a {@link RenderTarget} to this Mesh
-     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
-     */
-    setRenderTarget(renderTarget) {
-      if (renderTarget && renderTarget.type !== "RenderTarget") {
-        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`);
-        return;
-      }
-      this.removeFromScene();
-      this.renderTarget = renderTarget;
-      this.addToScene();
     }
     /* BINDINGS */
     /**
@@ -6644,7 +6692,7 @@ class PipelineEntry {
     return !this.status.compiling && this.status.compiled && !this.status.error;
   }
   /**
-   * Get whether the {@link pipeline} is ready to be compiled, i.e. we have already not already tried to compile it, and it's not currently compiling neither
+   * Get whether the {@link pipeline} is ready to be compiled, i.e. we have not already tried to compile it, and it's not currently compiling neither
    * @readonly
    */
   get canCompile() {
@@ -6815,7 +6863,8 @@ class RenderPipelineEntry extends PipelineEntry {
       topology,
       blend,
       targetFormat,
-      useProjection
+      useProjection,
+      sampleCount
     } = parameters;
     renderer = renderer && renderer.renderer || renderer;
     const type = "RenderPipelineEntry";
@@ -6850,7 +6899,8 @@ class RenderPipelineEntry extends PipelineEntry {
       topology,
       blend,
       targetFormat,
-      useProjection
+      useProjection,
+      sampleCount
     };
   }
   // TODO! need to chose whether we should silently add the camera bind group here
@@ -7061,9 +7111,9 @@ ${this.shaders.full.head}`;
         depthCompare: this.options.depthCompare,
         format: "depth24plus"
       },
-      ...this.renderer.sampleCount > 1 && {
+      ...this.options.sampleCount > 1 && {
         multisample: {
-          count: this.renderer.sampleCount
+          count: this.options.sampleCount
         }
       }
     };
@@ -7270,10 +7320,10 @@ class PipelineManager {
    * @returns - the found {@link RenderPipelineEntry}, or null if not found
    */
   isSameRenderPipeline(parameters) {
-    const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, topology } = parameters;
+    const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, topology, sampleCount } = parameters;
     return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
       const { options } = pipelineEntry;
-      return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint && cullMode === options.cullMode && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && verticesOrder === options.verticesOrder && topology === options.topology;
+      return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint && cullMode === options.cullMode && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && sampleCount === options.sampleCount && verticesOrder === options.verticesOrder && topology === options.topology;
     });
   }
   /**
@@ -8372,7 +8422,8 @@ class RenderPass {
     depth = true,
     loadOp = "clear",
     clearValue = [0, 0, 0, 0],
-    targetFormat
+    targetFormat,
+    sampleCount = 1
   } = {}) {
     renderer = renderer && renderer.renderer || renderer;
     isRenderer(renderer, "RenderPass");
@@ -8386,8 +8437,9 @@ class RenderPass {
       clearValue,
       targetFormat: targetFormat ?? this.renderer.preferredFormat
     };
+    this.setClearValue(clearValue);
     this.setSize(this.renderer.pixelRatioBoundingRect);
-    this.sampleCount = this.renderer.sampleCount;
+    this.sampleCount = sampleCount;
     if (this.options.depth)
       this.createDepthTexture();
     this.createRenderTexture();
@@ -8499,11 +8551,19 @@ class RenderPass {
     }
   }
   /**
-   * Set our {@link GPUColor | clear colors value}
+   * Set our {@link GPUColor | clear colors value}.<br>
+   * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
    * @param clearValue - new {@link GPUColor | clear colors value} to use
    */
   setClearValue(clearValue = [0, 0, 0, 0]) {
-    this.options.clearValue = clearValue;
+    if (this.renderer.alphaMode === "premultiplied") {
+      const alpha = clearValue[3];
+      clearValue[0] = Math.min(clearValue[0], alpha);
+      clearValue[1] = Math.min(clearValue[1], alpha);
+      clearValue[2] = Math.min(clearValue[2], alpha);
+    } else {
+      this.options.clearValue = clearValue;
+    }
     if (this.descriptor && this.descriptor.colorAttachments) {
       this.descriptor.colorAttachments[0].clearValue = clearValue;
     }
@@ -8576,9 +8636,9 @@ class GPURenderer {
     deviceManager,
     container,
     pixelRatio = 1,
-    sampleCount = 4,
     preferredFormat,
-    alphaMode = "premultiplied"
+    alphaMode = "premultiplied",
+    renderPass
   }) {
     var _a;
     this._onBeforeRenderCallback = (commandEncoder) => {
@@ -8591,8 +8651,16 @@ class GPURenderer {
     this.uuid = generateUUID();
     this.deviceManager = deviceManager;
     this.deviceManager.addRenderer(this);
+    renderPass = { ...{ depth: true, sampleCount: 4 }, ...renderPass };
+    this.options = {
+      deviceManager,
+      container,
+      pixelRatio,
+      preferredFormat,
+      alphaMode,
+      renderPass
+    };
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
-    this.sampleCount = sampleCount;
     this.alphaMode = alphaMode;
     this.preferredFormat = preferredFormat ?? ((_a = this.deviceManager.gpu) == null ? void 0 : _a.getPreferredCanvasFormat());
     this.setTasksQueues();
@@ -8808,8 +8876,9 @@ class GPURenderer {
   setMainRenderPass() {
     this.renderPass = new RenderPass(this, {
       label: "Main render pass",
-      depth: true,
-      targetFormat: this.preferredFormat
+      depth: this.options.renderPass.depth,
+      targetFormat: this.preferredFormat,
+      sampleCount: this.options.renderPass.sampleCount
     });
   }
   /**
@@ -9182,7 +9251,7 @@ class GPURenderer {
       renderTexture = this.context.getCurrentTexture();
       renderTexture.label = `${this.type} context current texture`;
     }
-    if (this.sampleCount > 1) {
+    if (renderPass.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView();
     } else {
       renderPass.descriptor.colorAttachments[0].view = renderTexture.createView();
@@ -9300,21 +9369,25 @@ class GPUCameraRenderer extends GPURenderer {
     deviceManager,
     container,
     pixelRatio = 1,
-    sampleCount = 4,
     preferredFormat,
     alphaMode = "premultiplied",
+    renderPass,
     camera = {}
   }) {
     super({
       deviceManager,
       container,
       pixelRatio,
-      sampleCount,
       preferredFormat,
-      alphaMode
+      alphaMode,
+      renderPass
     });
     this.type = "GPUCameraRenderer";
     camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
+    this.options = {
+      ...this.options,
+      camera
+    };
     this.setCamera(camera);
   }
   /**
@@ -9739,7 +9812,7 @@ class GPUDeviceManager {
             source: texture.source,
             flipY: texture.options.flipY
           },
-          { texture: texture.texture },
+          { texture: texture.texture, premultipliedAlpha: texture.options.premultipliedAlpha },
           { width: texture.size.width, height: texture.size.height }
         );
         if (texture.texture.mipLevelCount > 1) {
@@ -9819,12 +9892,13 @@ class RenderTarget {
     this.type = "RenderTarget";
     this.renderer = renderer;
     this.uuid = generateUUID();
-    const { label, depth, loadOp, clearValue, targetFormat, autoRender } = parameters;
+    const { label, depth, loadOp, clearValue, targetFormat, autoRender, sampleCount } = parameters;
     this.options = {
       label,
       depth,
       loadOp,
       clearValue,
+      sampleCount,
       targetFormat: targetFormat ?? this.renderer.preferredFormat,
       autoRender
     };
@@ -9836,7 +9910,8 @@ class RenderTarget {
       depth: this.options.depth,
       loadOp: this.options.loadOp,
       clearValue: this.options.clearValue,
-      targetFormat: this.options.targetFormat
+      targetFormat: this.options.targetFormat,
+      sampleCount: this.options.sampleCount
     });
     this.renderTexture = new RenderTexture(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Texture` : "Render Target Render Texture",
@@ -10027,18 +10102,18 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
     deviceManager,
     container,
     pixelRatio = 1,
-    sampleCount = 4,
     preferredFormat,
     alphaMode = "premultiplied",
+    renderPass,
     camera
   }) {
     super({
       deviceManager,
       container,
       pixelRatio,
-      sampleCount,
       preferredFormat,
       alphaMode,
+      renderPass,
       camera
     });
     this.type = "GPUCurtainsRenderer";
@@ -10111,10 +10186,10 @@ class GPUCurtains {
   constructor({
     container,
     pixelRatio = window.devicePixelRatio ?? 1,
-    sampleCount = 4,
     preferredFormat,
     alphaMode = "premultiplied",
     production = false,
+    renderPass,
     camera,
     autoRender = true,
     autoResize = true,
@@ -10132,11 +10207,11 @@ class GPUCurtains {
     this.options = {
       container,
       pixelRatio,
-      sampleCount,
       camera,
       production,
       preferredFormat,
       alphaMode,
+      renderPass,
       autoRender,
       autoResize,
       watchScroll
@@ -10183,9 +10258,9 @@ class GPUCurtains {
       // TODO ...this.options?
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
-      sampleCount: this.options.sampleCount,
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
+      renderPass: this.options.renderPass,
       camera: this.options.camera
     });
   }
@@ -10196,8 +10271,6 @@ class GPUCurtains {
   patchRendererOptions(parameters) {
     if (parameters.pixelRatio === void 0)
       parameters.pixelRatio = this.options.pixelRatio;
-    if (parameters.sampleCount === void 0)
-      parameters.sampleCount = this.options.sampleCount;
     return parameters;
   }
   /**

@@ -473,6 +473,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ...meshParameters
       } = parameters
 
+      // set default sample count
+      meshParameters.sampleCount = this.renderer.renderPass.sampleCount
+
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
         label: label ?? 'Mesh ' + this.renderer.meshes.length,
@@ -539,6 +542,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     addToScene() {
       this.renderer.meshes.push(this as unknown as ProjectedMesh)
 
+      // update sample count if needed
+      this.material?.setRenderingOptions({
+        sampleCount: this.renderTarget
+          ? this.renderTarget.renderPass.sampleCount
+          : this.renderer.renderPass.sampleCount,
+      })
+
       if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
       }
@@ -592,6 +602,23 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           { once: true }
         )
       }
+    }
+
+    /**
+     * Assign or remove a {@link RenderTarget} to this Mesh
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     */
+    setRenderTarget(renderTarget: RenderTarget | null) {
+      if (renderTarget && renderTarget.type !== 'RenderTarget') {
+        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
+        return
+      }
+
+      // ensure the mesh is in the correct scene stack
+      this.removeFromScene()
+      this.renderTarget = renderTarget
+      this.addToScene()
     }
 
     /**
@@ -810,23 +837,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     addRenderTexture(renderTexture: RenderTexture) {
       this.material.addTexture(renderTexture)
-    }
-
-    /**
-     * Assign or remove a {@link RenderTarget} to this Mesh
-     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
-     */
-    setRenderTarget(renderTarget: RenderTarget | null) {
-      if (renderTarget && renderTarget.type !== 'RenderTarget') {
-        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
-        return
-      }
-
-      // ensure the mesh is in the correct scene stack
-      this.removeFromScene()
-      this.renderTarget = renderTarget
-      this.addToScene()
     }
 
     /* BINDINGS */

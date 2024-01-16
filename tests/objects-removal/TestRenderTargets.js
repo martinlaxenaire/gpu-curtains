@@ -1,8 +1,13 @@
-import { Plane, RenderTarget, Sampler, ShaderPass } from '../../src/index.js'
+import { GPURenderer, Plane, RenderTarget, Sampler, ShaderPass } from '../../src/index.js'
 
 export class TestRenderTargets {
   constructor({ gpuCurtains }) {
     this.gpuCurtains = gpuCurtains
+
+    // const renderer = new GPURenderer({
+    //   deviceManager: this.gpuCurtains.deviceManager,
+    // })
+    console.log(this.gpuCurtains.renderer.options)
 
     this.lerp = (start = 0, end = 1, amount = 0.1) => {
       return (1 - amount) * start + amount * end
@@ -74,7 +79,10 @@ export class TestRenderTargets {
   `
 
     // first we're going to render large planes into a grayscale pass
-    this.grayscaleTarget = new RenderTarget(this.gpuCurtains, { label: 'Large planes distortion render target' })
+    this.grayscaleTarget = new RenderTarget(this.gpuCurtains, {
+      label: 'Large planes distortion render target',
+      sampleCount: 1,
+    })
     this.largePlanes = []
 
     const largePlaneEls = document.querySelectorAll('.large-plane')
@@ -151,6 +159,7 @@ export class TestRenderTargets {
     // now render the small planes into a RGB shift pass
     this.rgbShiftTarget = new RenderTarget(this.gpuCurtains, {
       label: 'Small planes RGB render target',
+      sampleCount: 1,
     })
 
     this.smallPlanes = []
@@ -173,6 +182,14 @@ export class TestRenderTargets {
       })
 
       this.smallPlanes.push(smallPlane)
+
+      // force flushing the pipeline just to test
+      setTimeout(() => {
+        smallPlane.material.setRenderingOptions({
+          transparent: true,
+          cullMode: 'none',
+        })
+      }, 2000)
     })
 
     const rgbShiftFs = /* wgsl */ `

@@ -7,9 +7,11 @@ import {
   RenderMaterialAttributes,
   RenderMaterialOptions,
   RenderMaterialParams,
+  RenderMaterialRenderingOptions,
 } from '../../types/Materials'
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { RenderPipelineEntryParams } from '../../types/PipelineEntries'
+import { throwWarning } from '../../utils/utils'
 
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
@@ -102,6 +104,34 @@ export class RenderMaterial extends Material {
     if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryProperties()
       await this.compilePipelineEntry()
+    }
+  }
+
+  /**
+   * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
+   * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+   */
+  setRenderingOptions(renderingOptions: Partial<RenderMaterialRenderingOptions> = {}) {
+    const newProperties = Object.keys(renderingOptions).filter(
+      (key) => renderingOptions[key] !== this.options.rendering[key]
+    )
+
+    this.options.rendering = { ...this.options.rendering, ...renderingOptions }
+
+    if (this.pipelineEntry) {
+      this.pipelineEntry.options = { ...this.pipelineEntry.options, ...this.options.rendering }
+
+      if (this.pipelineEntry.ready && newProperties.length) {
+        throwWarning(
+          `${
+            this.options.label
+          }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties
+            .map((key) => `"${key}": ${renderingOptions[key]}`)
+            .join(', ')} }`
+        )
+
+        this.pipelineEntry.flushPipelineEntry(this.bindGroups)
+      }
     }
   }
 
