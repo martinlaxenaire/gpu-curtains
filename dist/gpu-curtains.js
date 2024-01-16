@@ -3776,7 +3776,7 @@ class RenderTexture {
     this.uuid = generateUUID();
     this.options = { ...defaultRenderTextureParams, ...parameters };
     if (!this.options.format) {
-      this.options.format = this.renderer.preferredFormat;
+      this.options.format = this.renderer.options.preferredFormat;
     }
     this.size = this.options.size ?? {
       width: this.renderer.pixelRatioBoundingRect.width,
@@ -5690,7 +5690,7 @@ function MeshBaseMixin(Base) {
         autoRender,
         ...meshParameters
       } = parameters;
-      meshParameters.sampleCount = this.renderer.renderPass.sampleCount;
+      meshParameters.sampleCount = this.renderer.renderPass.options.sampleCount;
       this.options = {
         ...this.options ?? {},
         // merge possible lower options?
@@ -5746,7 +5746,7 @@ function MeshBaseMixin(Base) {
       var _a2;
       this.renderer.meshes.push(this);
       (_a2 = this.material) == null ? void 0 : _a2.setRenderingOptions({
-        sampleCount: this.renderTarget ? this.renderTarget.renderPass.sampleCount : this.renderer.renderPass.sampleCount
+        sampleCount: this.renderTarget ? this.renderTarget.renderPass.options.sampleCount : this.renderer.renderPass.options.sampleCount
       });
       if (__privateGet(this, _autoRender3)) {
         this.renderer.scene.addMesh(this);
@@ -7094,7 +7094,7 @@ ${this.shaders.full.head}`;
         entryPoint: this.options.shaders.fragment.entryPoint,
         targets: [
           {
-            format: this.options.targetFormat ?? this.renderer.preferredFormat,
+            format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
             ...blend && {
               blend
             }
@@ -8423,7 +8423,7 @@ class RenderPass {
     loadOp = "clear",
     clearValue = [0, 0, 0, 0],
     targetFormat,
-    sampleCount = 1
+    sampleCount = 4
   } = {}) {
     renderer = renderer && renderer.renderer || renderer;
     isRenderer(renderer, "RenderPass");
@@ -8435,11 +8435,11 @@ class RenderPass {
       depth,
       loadOp,
       clearValue,
-      targetFormat: targetFormat ?? this.renderer.preferredFormat
+      sampleCount,
+      targetFormat: targetFormat ?? this.renderer.options.preferredFormat
     };
     this.setClearValue(clearValue);
     this.setSize(this.renderer.pixelRatioBoundingRect);
-    this.sampleCount = sampleCount;
     if (this.options.depth)
       this.createDepthTexture();
     this.createRenderTexture();
@@ -8454,7 +8454,7 @@ class RenderPass {
       size: [this.size.width, this.size.height],
       format: "depth24plus",
       usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      sampleCount: this.sampleCount
+      sampleCount: this.options.sampleCount
     });
   }
   /**
@@ -8464,7 +8464,7 @@ class RenderPass {
     this.renderTexture = this.renderer.createTexture({
       label: this.options.label + " color attachment texture",
       size: [this.size.width, this.size.height],
-      sampleCount: this.sampleCount,
+      sampleCount: this.options.sampleCount,
       format: this.options.targetFormat,
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING
     });
@@ -8651,7 +8651,8 @@ class GPURenderer {
     this.uuid = generateUUID();
     this.deviceManager = deviceManager;
     this.deviceManager.addRenderer(this);
-    renderPass = { ...{ depth: true, sampleCount: 4 }, ...renderPass };
+    renderPass = { ...{ depth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
+    preferredFormat = preferredFormat ?? ((_a = this.deviceManager.gpu) == null ? void 0 : _a.getPreferredCanvasFormat());
     this.options = {
       deviceManager,
       container,
@@ -8662,7 +8663,6 @@ class GPURenderer {
     };
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
     this.alphaMode = alphaMode;
-    this.preferredFormat = preferredFormat ?? ((_a = this.deviceManager.gpu) == null ? void 0 : _a.getPreferredCanvasFormat());
     this.setTasksQueues();
     this.setRendererObjects();
     const isContainerCanvas = container instanceof HTMLCanvasElement;
@@ -8831,7 +8831,7 @@ class GPURenderer {
   configureContext() {
     this.context.configure({
       device: this.device,
-      format: this.preferredFormat,
+      format: this.options.preferredFormat,
       alphaMode: this.alphaMode,
       // needed so we can copy textures for post processing usage
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
@@ -8876,9 +8876,8 @@ class GPURenderer {
   setMainRenderPass() {
     this.renderPass = new RenderPass(this, {
       label: "Main render pass",
-      depth: this.options.renderPass.depth,
-      targetFormat: this.preferredFormat,
-      sampleCount: this.options.renderPass.sampleCount
+      targetFormat: this.options.preferredFormat,
+      ...this.options.renderPass
     });
   }
   /**
@@ -9251,7 +9250,7 @@ class GPURenderer {
       renderTexture = this.context.getCurrentTexture();
       renderTexture.label = `${this.type} context current texture`;
     }
-    if (renderPass.sampleCount > 1) {
+    if (renderPass.options.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView();
     } else {
       renderPass.descriptor.colorAttachments[0].view = renderTexture.createView();
@@ -9899,7 +9898,7 @@ class RenderTarget {
       loadOp,
       clearValue,
       sampleCount,
-      targetFormat: targetFormat ?? this.renderer.preferredFormat,
+      targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       autoRender
     };
     if (autoRender !== void 0) {

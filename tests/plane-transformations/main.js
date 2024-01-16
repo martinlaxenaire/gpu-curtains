@@ -121,6 +121,15 @@ window.addEventListener('load', async () => {
 
   const planeFolder = gui.addFolder('Plane')
 
+  planeFolder
+    .add(plane.material.options.rendering, 'cullMode', ['front', 'back', 'none'])
+    .name('Cull mode')
+    .onChange((value) => {
+      plane.material.setRenderingOptions({
+        cullMode: value,
+      })
+    })
+
   const positionFolder = planeFolder.addFolder('DOM Position')
   positionFolder
     .add(plane.documentPosition, 'x', -1 * gpuCurtains.boundingRect.width, gpuCurtains.boundingRect.width, 20)

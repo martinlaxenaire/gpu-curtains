@@ -474,7 +474,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       } = parameters
 
       // set default sample count
-      meshParameters.sampleCount = this.renderer.renderPass.sampleCount
+      meshParameters.sampleCount = this.renderer.renderPass.options.sampleCount
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
@@ -545,8 +545,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       // update sample count if needed
       this.material?.setRenderingOptions({
         sampleCount: this.renderTarget
-          ? this.renderTarget.renderPass.sampleCount
-          : this.renderer.renderPass.sampleCount,
+          ? this.renderTarget.renderPass.options.sampleCount
+          : this.renderer.renderPass.options.sampleCount,
       })
 
       if (this.#autoRender) {

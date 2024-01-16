@@ -182,14 +182,6 @@ export class TestRenderTargets {
       })
 
       this.smallPlanes.push(smallPlane)
-
-      // force flushing the pipeline just to test
-      setTimeout(() => {
-        smallPlane.material.setRenderingOptions({
-          transparent: true,
-          cullMode: 'none',
-        })
-      }, 2000)
     })
 
     const rgbShiftFs = /* wgsl */ `

@@ -41,6 +41,8 @@ export interface GPURendererParams {
     depth: RenderPassParams['depth']
     /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
     sampleCount: RenderPassParams['sampleCount']
+    /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
+    clearValue: GPUColor
   }
 }
 
@@ -75,8 +77,6 @@ export class GPURenderer {
   canvas: HTMLCanvasElement
   /** The WebGPU {@link GPUCanvasContext | context} used */
   context: null | GPUCanvasContext
-  /** Texture rendering {@link GPUTextureFormat | preferred format} */
-  preferredFormat: null | GPUTextureFormat
   /** Set the {@link GPUCanvasContext | context} alpha mode */
   alphaMode?: GPUCanvasAlphaMode
 
@@ -149,7 +149,8 @@ export class GPURenderer {
     this.deviceManager.addRenderer(this)
 
     // render pass default values
-    renderPass = { ...{ depth: true, sampleCount: 4 }, ...renderPass }
+    renderPass = { ...{ depth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
+    preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
 
     this.options = {
       deviceManager,
@@ -162,8 +163,6 @@ export class GPURenderer {
 
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.alphaMode = alphaMode
-
-    this.preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
 
     this.setTasksQueues()
     this.setRendererObjects()
@@ -370,7 +369,7 @@ export class GPURenderer {
   configureContext() {
     this.context.configure({
       device: this.device,
-      format: this.preferredFormat,
+      format: this.options.preferredFormat,
       alphaMode: this.alphaMode,
       // needed so we can copy textures for post processing usage
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
@@ -428,9 +427,8 @@ export class GPURenderer {
   setMainRenderPass() {
     this.renderPass = new RenderPass(this, {
       label: 'Main render pass',
-      depth: this.options.renderPass.depth,
-      targetFormat: this.preferredFormat,
-      sampleCount: this.options.renderPass.sampleCount,
+      targetFormat: this.options.preferredFormat,
+      ...this.options.renderPass,
     })
   }
 
@@ -856,7 +854,7 @@ export class GPURenderer {
       renderTexture.label = `${this.type} context current texture`
     }
 
-    if (renderPass.sampleCount > 1) {
+    if (renderPass.options.sampleCount > 1) {
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView()
     } else {
       renderPass.descriptor.colorAttachments[0].view = renderTexture.createView()

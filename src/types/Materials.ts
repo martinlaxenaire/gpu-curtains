@@ -133,7 +133,7 @@ export interface RenderMaterialBaseRenderingOptions {
   blend?: GPUBlendState
   /** Optional texture format of the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} color target. Default to the renderer preferred format. */
   targetFormat: GPUTextureFormat
-  /** The {@link core/renderPasses/RenderPass.RenderPass#sampleCount | sampleCount} of the {@link core/renderPasses/RenderPass.RenderPass | RenderPass} onto which we'll be drawing. Set internally. */
+  /** The {@link core/renderPasses/RenderPass.RenderPassOptions#sampleCount | sampleCount} of the {@link core/renderPasses/RenderPass.RenderPass | RenderPass} onto which we'll be drawing. Set internally. */
   sampleCount: GPUSize32
 }
 

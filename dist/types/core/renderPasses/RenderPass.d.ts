@@ -37,8 +37,6 @@ export declare class RenderPass {
     options: RenderPassOptions;
     /** Size of the textures sources */
     size: RectSize;
-    /** The {@link RenderPass} sample count (i.e. whether it should use multisampled antialiasing) */
-    sampleCount: GPUSize32;
     /** Depth {@link GPUTexture} to use with this {@link RenderPass} if it handles depth */
     depthTexture: GPUTexture | undefined;
     /** Render {@link GPUTexture} to use with this {@link RenderPass} */

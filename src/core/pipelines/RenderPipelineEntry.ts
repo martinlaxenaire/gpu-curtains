@@ -334,7 +334,7 @@ export class RenderPipelineEntry extends PipelineEntry {
         entryPoint: this.options.shaders.fragment.entryPoint,
         targets: [
           {
-            format: this.options.targetFormat ?? this.renderer.preferredFormat,
+            format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
             ...(blend && {
               blend,
             }),

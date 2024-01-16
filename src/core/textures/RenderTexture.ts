@@ -116,7 +116,7 @@ export class RenderTexture {
     this.options = { ...defaultRenderTextureParams, ...parameters }
 
     if (!this.options.format) {
-      this.options.format = this.renderer.preferredFormat
+      this.options.format = this.renderer.options.preferredFormat
     }
 
     // sizes

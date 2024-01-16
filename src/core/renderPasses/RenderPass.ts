@@ -43,9 +43,6 @@ export class RenderPass {
   /** Size of the textures sources */
   size: RectSize
 
-  /** The {@link RenderPass} sample count (i.e. whether it should use multisampled antialiasing) */
-  sampleCount: GPUSize32
-
   /** Depth {@link GPUTexture} to use with this {@link RenderPass} if it handles depth */
   depthTexture: GPUTexture | undefined
   /** Render {@link GPUTexture} to use with this {@link RenderPass} */
@@ -66,7 +63,7 @@ export class RenderPass {
       loadOp = 'clear',
       clearValue = [0, 0, 0, 0],
       targetFormat,
-      sampleCount = 1,
+      sampleCount = 4,
     } = {} as RenderPassParams
   ) {
     // we could pass our curtains object OR our curtains renderer object
@@ -83,14 +80,13 @@ export class RenderPass {
       depth,
       loadOp,
       clearValue,
-      targetFormat: targetFormat ?? this.renderer.preferredFormat,
+      sampleCount,
+      targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
     } as RenderPassOptions
 
     this.setClearValue(clearValue)
 
     this.setSize(this.renderer.pixelRatioBoundingRect)
-
-    this.sampleCount = sampleCount
 
     // if needed, create a depth texture before our descriptor
     if (this.options.depth) this.createDepthTexture()
@@ -108,7 +104,7 @@ export class RenderPass {
       size: [this.size.width, this.size.height],
       format: 'depth24plus',
       usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      sampleCount: this.sampleCount,
+      sampleCount: this.options.sampleCount,
     })
   }
 
@@ -119,7 +115,7 @@ export class RenderPass {
     this.renderTexture = this.renderer.createTexture({
       label: this.options.label + ' color attachment texture',
       size: [this.size.width, this.size.height],
-      sampleCount: this.sampleCount,
+      sampleCount: this.options.sampleCount,
       format: this.options.targetFormat,
       usage:
         GPUTextureUsage.RENDER_ATTACHMENT |

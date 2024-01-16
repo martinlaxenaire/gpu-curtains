@@ -74,7 +74,7 @@ export class RenderTarget {
       loadOp,
       clearValue,
       sampleCount,
-      targetFormat: targetFormat ?? this.renderer.preferredFormat,
+      targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       autoRender,
     }
 

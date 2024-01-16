@@ -32,11 +32,13 @@ export interface GPURendererParams {
     /** Set the {@link GPUCanvasContext | context} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
     /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
-    renderPass: {
+    renderPass?: {
         /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
         depth: RenderPassParams['depth'];
         /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
         sampleCount: RenderPassParams['sampleCount'];
+        /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
+        clearValue: GPUColor;
     };
 }
 /** Any Mesh that is bound to a DOM Element */
@@ -52,6 +54,7 @@ export type SceneObject = RenderedMesh | ComputePass;
  * A renderer is responsible for:
  * - Setting a {@link GPUCanvasContext | context}
  * - Handling the {@link HTMLCanvasElement | canvas} onto everything is drawn
+ * - Creating a {@link RenderPass} that will handle our render and depth textures and the render pass descriptor
  * - Keeping track of every specific class objects created relative to computing and rendering
  * - Creating a {@link Scene} class that will take care of the rendering process of all previously mentioned objects
  */
@@ -66,8 +69,6 @@ export declare class GPURenderer {
     canvas: HTMLCanvasElement;
     /** The WebGPU {@link GPUCanvasContext | context} used */
     context: null | GPUCanvasContext;
-    /** Texture rendering {@link GPUTextureFormat | preferred format} */
-    preferredFormat: null | GPUTextureFormat;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
     /** Options used to create this {@link GPURenderer} */
