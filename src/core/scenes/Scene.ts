@@ -279,11 +279,9 @@ export class Scene {
    * @param shaderPass - {@link ShaderPass} to add
    */
   addShaderPass(shaderPass: ShaderPass) {
-    this.renderPassEntries.screen.push({
-      renderPass: this.renderer.renderPass, // render directly to screen
-      renderTexture: null,
-      onBeforeRenderPass: (commandEncoder, swapChainTexture) => {
-        if (!shaderPass.renderTarget) {
+    const onBeforeRenderPass = shaderPass.renderTarget
+      ? null
+      : (commandEncoder, swapChainTexture) => {
           // draw the content into our render texture
           // if it's a global post processing pass, copy the context current texture into its renderTexture
           if (shaderPass.renderTexture) {
@@ -301,11 +299,34 @@ export class Scene {
           // if we want to post process the whole scene, clear render pass content
           this.renderer.renderPass.setLoadOp('clear')
         }
-      },
-      onAfterRenderPass: null,
+
+    const onAfterRenderPass = shaderPass.renderTarget
+      ? (commandEncoder, swapChainTexture) => {
+          // if we render to a target, copy the result so we can chain render to textures
+          if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture) {
+            commandEncoder.copyTextureToTexture(
+              {
+                texture: swapChainTexture,
+              },
+              {
+                texture: shaderPass.renderTarget.renderTexture.texture,
+              },
+              [shaderPass.renderTarget.renderTexture.size.width, shaderPass.renderTarget.renderTexture.size.height]
+            )
+          }
+        }
+      : null
+
+    const shaderPassEntry = {
+      renderPass: this.renderer.renderPass, // render directly to screen
+      renderTexture: null,
+      onBeforeRenderPass,
+      onAfterRenderPass,
       element: shaderPass,
       stack: null, // explicitly set to null
-    })
+    }
+
+    this.renderPassEntries.screen.push(shaderPassEntry)
 
     // screen passes are sorted by 2 criteria
     // first we draw render passes that have a render target OR our scene pass, ordered by renderOrder
@@ -383,6 +404,31 @@ export class Scene {
   }
 
   /**
+   * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
+   * @param object - The object from which we want to get the parent {@link RenderPassEntry}
+   * @returns - the {@link RenderPassEntry} if found
+   */
+  getObjectRenderPassEntry(object: RenderedMesh | RenderTarget): RenderPassEntry | undefined {
+    if (object instanceof RenderTarget) {
+      return this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === object.renderPass.uuid)
+    } else if (object instanceof PingPongPlane) {
+      return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid)
+    } else if (object instanceof ShaderPass) {
+      return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid)
+    } else {
+      const entryType = object.renderTarget ? 'renderTarget' : 'screen'
+      return this.renderPassEntries[entryType].find((entry) => {
+        return [
+          ...entry.stack.unProjected.opaque,
+          ...entry.stack.unProjected.transparent,
+          ...entry.stack.projected.opaque,
+          ...entry.stack.projected.transparent,
+        ].some((mesh) => mesh.uuid === object.uuid)
+      })
+    }
+  }
+
+  /**
    * Here we render a {@link RenderPassEntry}:
    * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
    * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
@@ -456,7 +502,7 @@ export class Scene {
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0
 
-      this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
+      this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry, index) => {
         // early bail if there's nothing to draw
         if (!this.getRenderPassEntryLength(renderPassEntry)) return
 

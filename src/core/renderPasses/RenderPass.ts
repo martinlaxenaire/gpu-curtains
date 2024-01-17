@@ -103,7 +103,7 @@ export class RenderPass {
       label: this.options.label + ' depth attachment texture',
       size: [this.size.width, this.size.height],
       format: 'depth24plus',
-      usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
       sampleCount: this.options.sampleCount,
     })
   }
@@ -180,7 +180,7 @@ export class RenderPass {
         depthStencilAttachment: {
           view: this.depthTexture.createView(),
 
-          depthClearValue: 1.0,
+          depthClearValue: 1,
           depthLoadOp: 'clear',
           depthStoreOp: 'store',
         },
@@ -212,13 +212,25 @@ export class RenderPass {
   }
 
   /**
-   * Set our {@link GPULoadOp | load operation}
+   * Set the {@link descriptor} {@link GPULoadOp | load operation}
    * @param loadOp - new {@link GPULoadOp | load operation} to use
    */
   setLoadOp(loadOp: GPULoadOp = 'clear') {
     this.options.loadOp = loadOp
-    if (this.descriptor && this.descriptor.colorAttachments) {
-      this.descriptor.colorAttachments[0].loadOp = loadOp
+    if (this.descriptor) {
+      if (this.descriptor.colorAttachments) {
+        this.descriptor.colorAttachments[0].loadOp = loadOp
+      }
+    }
+  }
+
+  /**
+   * Set the {@link descriptor} {@link GPULoadOp | depth load operation}
+   * @param depthLoadOp - new {@link GPULoadOp | depth load operation} to use
+   */
+  setDepthLoadOp(depthLoadOp: GPULoadOp = 'clear') {
+    if (this.options.depth && this.descriptor.depthStencilAttachment) {
+      this.descriptor.depthStencilAttachment.depthLoadOp = depthLoadOp
     }
   }
 

@@ -80,10 +80,15 @@ export declare class RenderPass {
      */
     resize(boundingRect: DOMElementBoundingRect): void;
     /**
-     * Set our {@link GPULoadOp | load operation}
+     * Set the {@link descriptor} {@link GPULoadOp | load operation}
      * @param loadOp - new {@link GPULoadOp | load operation} to use
      */
     setLoadOp(loadOp?: GPULoadOp): void;
+    /**
+     * Set the {@link descriptor} {@link GPULoadOp | depth load operation}
+     * @param depthLoadOp - new {@link GPULoadOp | depth load operation} to use
+     */
+    setDepthLoadOp(depthLoadOp?: GPULoadOp): void;
     /**
      * Set our {@link GPUColor | clear colors value}.<br>
      * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.

@@ -293,6 +293,27 @@ export class TestRenderTargets {
       this.finalShaderPass.uniforms.scrollEffect.strength.value = this.scrollEffect
     })
 
+    const postProShader = /* wgsl */ `
+    struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+      };
+
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+
+        return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), round(fsInput.uv.y * 3.0) / 3.0 );
+      }
+  `
+
+    this.additionalPostProPass = new ShaderPass(this.gpuCurtains, {
+      shaders: {
+        fragment: {
+          code: postProShader,
+        },
+      },
+    })
+
     console.log('TEST RT init', this.gpuCurtains.renderer)
   }
 
@@ -306,6 +327,7 @@ export class TestRenderTargets {
     this.rgbShiftPass.remove()
 
     this.finalShaderPass.remove()
+    this.additionalPostProPass.remove()
 
     console.log('TEST RT destroy', this.gpuCurtains.renderer)
   }
