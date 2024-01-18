@@ -123,6 +123,8 @@ export interface RenderMaterialBaseRenderingOptions {
   useProjection: boolean
   /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#blend | blend property} */
   transparent: boolean
+  /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should write to the depth buffer */
+  depth: boolean
   /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should enable depth write */
   depthWriteEnabled: boolean
   /** Depth function to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */

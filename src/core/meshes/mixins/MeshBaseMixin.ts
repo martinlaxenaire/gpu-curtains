@@ -68,6 +68,7 @@ const defaultMeshBaseParams: MeshBaseParams = {
   useProjection: false,
   // rendering
   cullMode: 'back',
+  depth: true,
   depthWriteEnabled: true,
   depthCompare: 'less',
   transparent: false,

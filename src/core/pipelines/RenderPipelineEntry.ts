@@ -41,19 +41,7 @@ export class RenderPipelineEntry extends PipelineEntry {
    */
   constructor(parameters: RenderPipelineEntryParams) {
     let { renderer } = parameters
-    const {
-      label,
-      cullMode,
-      depthWriteEnabled,
-      depthCompare,
-      transparent,
-      verticesOrder,
-      topology,
-      blend,
-      targetFormat,
-      useProjection,
-      sampleCount,
-    } = parameters
+    const { label, ...renderingOptions } = parameters
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
@@ -88,17 +76,8 @@ export class RenderPipelineEntry extends PipelineEntry {
 
     this.options = {
       ...this.options,
-      cullMode,
-      depthWriteEnabled,
-      depthCompare,
-      transparent,
-      verticesOrder,
-      topology,
-      blend,
-      targetFormat,
-      useProjection,
-      sampleCount,
-    }
+      ...renderingOptions,
+    } as RenderPipelineEntryOptions
   }
 
   // TODO! need to chose whether we should silently add the camera bind group here
@@ -346,11 +325,13 @@ export class RenderPipelineEntry extends PipelineEntry {
         frontFace: this.options.verticesOrder,
         cullMode: this.options.cullMode,
       },
-      depthStencil: {
-        depthWriteEnabled: this.options.depthWriteEnabled,
-        depthCompare: this.options.depthCompare,
-        format: 'depth24plus',
-      },
+      ...(this.options.depth && {
+        depthStencil: {
+          depthWriteEnabled: this.options.depthWriteEnabled,
+          depthCompare: this.options.depthCompare,
+          format: 'depth24plus',
+        },
+      }),
       ...(this.options.sampleCount > 1 && {
         multisample: {
           count: this.options.sampleCount,
