@@ -240,6 +240,7 @@ export class GPURenderer {
     this.renderPass?.resize(this.pixelRatioBoundingRect)
     this.postProcessingPass?.resize(this.pixelRatioBoundingRect)
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
+    this.renderTextures.forEach((renderTexture) => renderTexture.resize())
 
     // force compute passes onAfterResize callback
     this.computePasses.forEach((computePass) => computePass.resize())

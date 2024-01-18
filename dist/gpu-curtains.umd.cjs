@@ -278,7 +278,7 @@ var __privateMethod = (obj, member, method) => {
     if (binding.bindingType === "externalTexture") {
       return `var ${binding.name}: texture_external;`;
     }
-    return binding.bindingType === "storageTexture" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : `var ${binding.name}: texture_${binding.options.viewDimension}<f32>;`;
+    return binding.bindingType === "storageTexture" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depthTexture" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension};` : `var ${binding.name}: texture_${binding.options.viewDimension}<f32>;`;
   };
   const getBindGroupLayoutBindingType = (binding) => {
     if (binding.bindingType === "storage" && binding.options.access === "read_write") {
@@ -304,8 +304,17 @@ var __privateMethod = (obj, member, method) => {
         case "texture":
           return {
             texture: {
-              //multisampled: true,
+              multisampled: binding.options.multisampled,
               viewDimension: binding.options.viewDimension
+            }
+          };
+        case "depthTexture":
+          return {
+            texture: {
+              multisampled: binding.options.multisampled,
+              format: binding.options.format,
+              viewDimension: binding.options.viewDimension,
+              sampleType: "depth"
             }
           };
         default:
@@ -2444,10 +2453,15 @@ var __privateMethod = (obj, member, method) => {
       this.updateBufferBindings();
       const needsReset = this.bindings.some((binding) => binding.shouldResetBindGroup);
       const resetBindGroupLayout = this.bindings.some((binding) => binding.shouldResetBindGroupLayout);
-      this.bindings.forEach((binding) => {
-        binding.shouldResetBindGroup = false;
-        binding.shouldResetBindGroupLayout = false;
-      });
+      this.renderer.onAfterCommandEncoderSubmission.add(
+        () => {
+          this.bindings.forEach((binding) => {
+            binding.shouldResetBindGroup = false;
+            binding.shouldResetBindGroupLayout = false;
+          });
+        },
+        { once: true }
+      );
       if (resetBindGroupLayout) {
         this.resetBindGroupLayout();
         this.needsPipelineFlush = true;
@@ -2538,7 +2552,8 @@ var __privateMethod = (obj, member, method) => {
       texture,
       format = "rgba8unorm",
       access = "write",
-      viewDimension = "2d"
+      viewDimension = "2d",
+      multisampled = false
     }) {
       bindingType = bindingType ?? "texture";
       if (bindingType === "storageTexture") {
@@ -2550,7 +2565,8 @@ var __privateMethod = (obj, member, method) => {
         texture,
         format,
         access,
-        viewDimension
+        viewDimension,
+        multisampled
       };
       this.resource = texture;
       this.setWGSLFragment();
@@ -3783,8 +3799,8 @@ var __privateMethod = (obj, member, method) => {
         this.options.format = this.renderer.options.preferredFormat;
       }
       this.size = this.options.size ?? {
-        width: this.renderer.pixelRatioBoundingRect.width,
-        height: this.renderer.pixelRatioBoundingRect.height,
+        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
         depth: 1
       };
       this.setBindings();
@@ -3800,14 +3816,25 @@ var __privateMethod = (obj, member, method) => {
       this.createTexture();
     }
     /**
+     * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
+     * @param texture - {@link GPUTexture} to copy
+     */
+    copyGPUTexture(texture) {
+      this.size = {
+        width: texture.width,
+        height: texture.height,
+        depth: texture.depthOrArrayLayers
+      };
+      this.texture = texture;
+      this.textureBinding.resource = this.texture;
+    }
+    /**
      * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
      */
     createTexture() {
       var _a;
       if (this.options.fromTexture) {
-        this.size = this.options.fromTexture.size;
-        this.texture = this.options.fromTexture.texture;
-        this.textureBinding.resource = this.texture;
+        this.copyGPUTexture(this.options.fromTexture.texture);
         return;
       }
       (_a = this.texture) == null ? void 0 : _a.destroy();
@@ -3819,7 +3846,7 @@ var __privateMethod = (obj, member, method) => {
         usage: (
           // TODO let user chose?
           // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-          this.options.usage === "texture" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+          this.options.usage !== "storageTexture" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
         )
       });
       this.textureBinding.resource = this.texture;
@@ -3834,7 +3861,9 @@ var __privateMethod = (obj, member, method) => {
           name: this.options.name,
           texture: this.texture,
           bindingType: this.options.usage,
-          viewDimension: this.options.viewDimension
+          format: this.options.format,
+          viewDimension: this.options.viewDimension,
+          ...this.options.usage === "depthTexture" && this.renderer.renderPass.options.sampleCount > 1 && { multisampled: true }
         })
       ];
     }
@@ -3852,8 +3881,8 @@ var __privateMethod = (obj, member, method) => {
     resize(size = null) {
       if (!size) {
         size = {
-          width: this.renderer.pixelRatioBoundingRect.width,
-          height: this.renderer.pixelRatioBoundingRect.height,
+          width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+          height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
           depth: 1
         };
       }
@@ -5909,7 +5938,7 @@ struct VertexOutput {
         this.transparent = meshParameters.transparent;
         this.setShaders();
         this.material = new RenderMaterial(this.renderer, meshParameters);
-        (_a2 = this.material.options.textures) == null ? void 0 : _a2.forEach((texture) => this.onTextureAdded(texture));
+        (_a2 = this.material.options.textures) == null ? void 0 : _a2.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
       }
       /**
        * Set Mesh material attributes
@@ -6010,7 +6039,7 @@ struct VertexOutput {
        */
       resizeRenderTextures() {
         var _a2;
-        (_a2 = this.renderTextures) == null ? void 0 : _a2.filter((renderTexture) => renderTexture.options.usage === "texture").forEach((renderTexture) => renderTexture.resize());
+        (_a2 = this.renderTextures) == null ? void 0 : _a2.filter((renderTexture) => renderTexture.options.usage !== "storageTexture").forEach((renderTexture) => renderTexture.resize());
       }
       /**
        * Resize the Mesh's textures
@@ -7682,7 +7711,7 @@ struct VSOutput {
         label: this.options.label + " depth attachment texture",
         size: [this.size.width, this.size.height],
         format: "depth24plus",
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
         sampleCount: this.options.sampleCount
       });
     }
@@ -9015,6 +9044,7 @@ struct VSOutput {
       (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
       (_b = this.postProcessingPass) == null ? void 0 : _b.resize(this.pixelRatioBoundingRect);
       this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
+      this.renderTextures.forEach((renderTexture) => renderTexture.resize());
       this.computePasses.forEach((computePass) => computePass.resize());
       this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
       this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));

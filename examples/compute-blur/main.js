@@ -183,6 +183,7 @@ window.addEventListener('load', async () => {
     textures: [blurredTexture],
   })
 
+  // this is another way to do it
   // const blurredTexture = shaderPass.createRenderTexture({
   //   label: 'Blur render texture',
   //   name: 'blurredTexture',

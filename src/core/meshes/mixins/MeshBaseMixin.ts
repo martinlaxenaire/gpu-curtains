@@ -747,7 +747,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.material = new RenderMaterial(this.renderer, meshParameters)
       // add eventual textures passed as parameters
-      this.material.options.textures?.forEach((texture) => this.onTextureAdded(texture))
+      this.material.options.textures
+        ?.filter((texture) => texture instanceof Texture)
+        .forEach((texture) => this.onTextureAdded(texture))
     }
 
     /**
@@ -865,7 +867,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     resizeRenderTextures() {
       this.renderTextures
-        ?.filter((renderTexture) => renderTexture.options.usage === 'texture')
+        ?.filter((renderTexture) => renderTexture.options.usage !== 'storageTexture')
         .forEach((renderTexture) => renderTexture.resize())
     }
 

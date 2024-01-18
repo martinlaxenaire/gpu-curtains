@@ -87,6 +87,11 @@ export declare class RenderTexture {
      */
     copy(texture: RenderTexture | Texture): void;
     /**
+     * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
+     * @param texture - {@link GPUTexture} to copy
+     */
+    copyGPUTexture(texture: GPUTexture): void;
+    /**
      * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
      */
     createTexture(): void;

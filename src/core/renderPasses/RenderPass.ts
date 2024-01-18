@@ -122,7 +122,7 @@ export class RenderPass {
       label: this.options.label + ' depth attachment texture',
       size: [this.size.width, this.size.height],
       format: 'depth24plus',
-      usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
       sampleCount: this.options.sampleCount,
     })
   }

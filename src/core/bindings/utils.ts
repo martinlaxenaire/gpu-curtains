@@ -125,6 +125,10 @@ export const getTextureBindingWGSLVarType = (binding: TextureBinding): string =>
 
   return binding.bindingType === 'storageTexture'
     ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;`
+    : binding.bindingType === 'depthTexture'
+    ? `var ${binding.name}: texture_depth${binding.options.multisampled ? '_multisampled' : ''}_${
+        binding.options.viewDimension
+      };`
     : `var ${binding.name}: texture_${binding.options.viewDimension}<f32>;`
 }
 
@@ -165,8 +169,17 @@ export const getBindGroupLayoutTextureBindingType = (
       case 'texture':
         return {
           texture: {
-            //multisampled: true,
+            multisampled: binding.options.multisampled,
             viewDimension: binding.options.viewDimension,
+          } as GPUTextureBindingLayout,
+        }
+      case 'depthTexture':
+        return {
+          texture: {
+            multisampled: binding.options.multisampled,
+            format: binding.options.format,
+            viewDimension: binding.options.viewDimension,
+            sampleType: 'depth',
           } as GPUTextureBindingLayout,
         }
       default:
