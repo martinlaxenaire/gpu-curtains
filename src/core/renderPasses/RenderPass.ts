@@ -61,10 +61,10 @@ export class RenderPass {
     renderer: Renderer | GPUCurtains,
     {
       label = 'Render Pass',
+      sampleCount = 4,
       loadOp = 'clear' as GPULoadOp,
       clearValue = [0, 0, 0, 0],
       targetFormat,
-      sampleCount = 4,
       depth = true,
       depthTexture,
       depthLoadOp = 'clear' as GPULoadOp,
@@ -279,6 +279,8 @@ export class RenderPass {
    */
   destroy() {
     this.renderTexture?.destroy()
-    this.depthTexture?.destroy()
+    if (!this.options.depthTexture && this.depthTexture) {
+      this.depthTexture.destroy()
+    }
   }
 }
