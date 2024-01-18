@@ -119,6 +119,7 @@ window.addEventListener('load', async () => {
 
   const blankRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Blank render target',
+    depthLoadOp: 'load',
   })
 
   for (let i = 0; i < 50; i++) {
@@ -189,6 +190,11 @@ window.addEventListener('load', async () => {
     },
   })
 
+  const blurSettings = {
+    spread: 10,
+    weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
+  }
+
   const hBlurPassFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
@@ -222,11 +228,11 @@ window.addEventListener('load', async () => {
         struct: {
           weight: {
             type: 'array<f32>',
-            value: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
+            value: blurSettings.weight,
           },
           spread: {
             type: 'f32',
-            value: 10,
+            value: blurSettings.spread,
           },
         },
       },
@@ -266,11 +272,11 @@ window.addEventListener('load', async () => {
         struct: {
           weight: {
             type: 'array<f32>',
-            value: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
+            value: blurSettings.weight,
           },
           spread: {
             type: 'f32',
-            value: 10,
+            value: (blurSettings.spread * gpuCameraRenderer.boundingRect.width) / gpuCameraRenderer.boundingRect.height,
           },
         },
       },
@@ -285,6 +291,11 @@ window.addEventListener('load', async () => {
     //     dstFactor: 'one',
     //   },
     // },
+  })
+
+  vBlurPass.onAfterResize(() => {
+    vBlurPass.storages.params.spread.value =
+      (blurSettings.spread * gpuCameraRenderer.boundingRect.width) / gpuCameraRenderer.boundingRect.height
   })
 
   const blankPass = new ShaderPass(gpuCameraRenderer, {
@@ -304,122 +315,43 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const blankPassSceneEntry = gpuCameraRenderer.scene.getObjectRenderPassEntry(blankPass)
-  blankPassSceneEntry.onBeforeRenderPass = (commandEncoder) => {
-    // copy the selective bloom depth texture content (i.e. the spheres) into our blank render target depth texture
-    commandEncoder.copyTextureToTexture(
-      {
-        texture: selectiveBloomTarget.renderPass.depthTexture,
-      },
-      {
-        texture: blankRenderTarget.renderPass.depthTexture,
-      },
-      [blankRenderTarget.renderPass.depthTexture.width, blankRenderTarget.renderPass.depthTexture.height]
-    )
+  // not needed anymore!
+  // const blankPassSceneEntry = gpuCameraRenderer.scene.getObjectRenderPassEntry(blankPass)
+  // blankPassSceneEntry.onBeforeRenderPass = (commandEncoder) => {
+  //   // copy the selective bloom depth texture content (i.e. the spheres) into our blank render target depth texture
+  //   commandEncoder.copyTextureToTexture(
+  //     {
+  //       texture: selectiveBloomTarget.renderPass.depthTexture,
+  //     },
+  //     {
+  //       texture: blankRenderTarget.renderPass.depthTexture,
+  //     },
+  //     [blankRenderTarget.renderPass.depthTexture.width, blankRenderTarget.renderPass.depthTexture.height]
+  //   )
+  //   // tell our blank render target render pass not to clear its depth texture before drawing the cubes
+  //   blankRenderTarget.renderPass.setDepthLoadOp('load')
+  // }
 
-    // tell our blank render target render pass not to clear its depth texture before drawing the cubes
-    blankRenderTarget.renderPass.setDepthLoadOp('load')
-  }
-
-  // test bloom
-  // const bloomPassFs1 = /* wgsl */ `
+  // const postProShader = /* wgsl */ `
   //   struct VSOutput {
-  //     @builtin(position) position: vec4f,
-  //     @location(0) uv: vec2f,
-  //   };
+  //       @builtin(position) position: vec4f,
+  //       @location(0) uv: vec2f,
+  //     };
   //
-  //   @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-  //     var sum: vec4f = vec4(0);
+  //     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  //       var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
   //
-  //     var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-  //
-  //     for(var i: i32 = -4 ; i < 4; i++) {
-  //       for (var j: i32 = -3; j < 3; j++) {
-  //         sum += textureSample(renderTexture, defaultSampler, fsInput.uv + vec2(f32(j), f32(i)) * 0.004) * 0.25;
-  //       }
+  //       return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.x, 0.5) );
   //     }
-  //
-  //     if (color.r < 0.3) {
-  //       return sum * sum * 0.012 + color;
-  //     }
-  //     else {
-  //       if (color.r < 0.5) {
-  //         return sum * sum * 0.009 + color;
-  //       }
-  //       else {
-  //         return sum * sum * 0.0075 + color;
-  //       }
-  //     }
-  //   }
   // `
   //
-  // const bloomPass1 = new ShaderPass(gpuCameraRenderer, {
-  //   renderTarget: selectiveBloomTarget,
+  // const postProPass = new ShaderPass(gpuCameraRenderer, {
   //   shaders: {
   //     fragment: {
-  //       code: bloomPassFs1,
-  //     },
-  //   },
-  // })
-
-  // const bloomPassFs2 = /* wgsl */ `
-  //   struct VSOutput {
-  //     @builtin(position) position: vec4f,
-  //     @location(0) uv: vec2f,
-  //   };
-  //
-  //   @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-  //     var sum: vec4f = vec4(0);
-  //
-  //     // mess of for loops due to gpu compiler/hardware limitations
-  //     for(var j: i32 = -2 ; j <= 2; j++) {
-  //       for(var i: i32 = -2; i <= 2 ; i++) {
-  //         sum += textureSample(renderTexture, defaultSampler, fsInput.uv + vec2(f32(j), f32(i)) * params.kernel);
-  //       }
-  //     }
-  //
-  //     sum /= 25.0;
-  //
-  //     var s: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-  //     var color: vec4f = s;
-  //
-  //     // use the blurred colour if it's bright enough
-  //     if(length(sum) > params.threshold) {
-  //         color += sum * params.scale;
-  //     }
-  //
-  //     return color;
-  //   }
-  // `
-  //
-  // const bloomPass2 = new ShaderPass(gpuCameraRenderer, {
-  //   renderTarget: selectiveBloomTarget,
-  //   shaders: {
-  //     fragment: {
-  //       code: bloomPassFs2,
-  //     },
-  //   },
-  //   uniforms: {
-  //     params: {
-  //       struct: {
-  //         kernel: {
-  //           type: 'f32',
-  //           value: 0.001953125,
-  //         },
-  //         scale: {
-  //           type: 'f32',
-  //           value: 1.5,
-  //         },
-  //         threshold: {
-  //           type: 'f32',
-  //           value: 0.1,
-  //         },
-  //       },
+  //       code: postProShader,
   //     },
   //   },
   // })
 
   console.log(gpuCameraRenderer)
-
-  //const lastPass = new ShaderPass(gpuCameraRenderer)
 })

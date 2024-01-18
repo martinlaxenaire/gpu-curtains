@@ -5635,6 +5635,7 @@ struct VertexOutput {
     useProjection: false,
     // rendering
     cullMode: "back",
+    depth: true,
     depthWriteEnabled: true,
     depthCompare: "less",
     transparent: false,
@@ -6857,19 +6858,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      */
     constructor(parameters) {
       let { renderer } = parameters;
-      const {
-        label,
-        cullMode,
-        depthWriteEnabled,
-        depthCompare,
-        transparent,
-        verticesOrder,
-        topology,
-        blend,
-        targetFormat,
-        useProjection,
-        sampleCount
-      } = parameters;
+      const { label, ...renderingOptions } = parameters;
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
@@ -6895,16 +6884,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
       this.descriptor = null;
       this.options = {
         ...this.options,
-        cullMode,
-        depthWriteEnabled,
-        depthCompare,
-        transparent,
-        verticesOrder,
-        topology,
-        blend,
-        targetFormat,
-        useProjection,
-        sampleCount
+        ...renderingOptions
       };
     }
     // TODO! need to chose whether we should silently add the camera bind group here
@@ -7110,10 +7090,12 @@ ${this.shaders.full.head}`;
           frontFace: this.options.verticesOrder,
           cullMode: this.options.cullMode
         },
-        depthStencil: {
-          depthWriteEnabled: this.options.depthWriteEnabled,
-          depthCompare: this.options.depthCompare,
-          format: "depth24plus"
+        ...this.options.depth && {
+          depthStencil: {
+            depthWriteEnabled: this.options.depthWriteEnabled,
+            depthCompare: this.options.depthCompare,
+            format: "depth24plus"
+          }
         },
         ...this.options.sampleCount > 1 && {
           multisample: {
@@ -7324,10 +7306,20 @@ ${this.shaders.compute.head}`;
      * @returns - the found {@link RenderPipelineEntry}, or null if not found
      */
     isSameRenderPipeline(parameters) {
-      const { shaders, cullMode, depthWriteEnabled, depthCompare, transparent, verticesOrder, topology, sampleCount } = parameters;
+      const {
+        shaders,
+        cullMode,
+        depth,
+        depthWriteEnabled,
+        depthCompare,
+        transparent,
+        verticesOrder,
+        topology,
+        sampleCount
+      } = parameters;
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint && cullMode === options.cullMode && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && sampleCount === options.sampleCount && verticesOrder === options.verticesOrder && topology === options.topology;
+        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint && cullMode === options.cullMode && depth === options.depth && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && sampleCount === options.sampleCount && verticesOrder === options.verticesOrder && topology === options.topology;
       });
     }
     /**
@@ -7582,6 +7574,7 @@ struct VSOutput {
           entryPoint: "main"
         };
       }
+      parameters.depth = false;
       super(renderer, parameters);
       this.type = "ShaderPass";
       this.createRenderTexture({
@@ -7642,11 +7635,14 @@ struct VSOutput {
      */
     constructor(renderer, {
       label = "Render Pass",
-      depth = true,
       loadOp = "clear",
       clearValue = [0, 0, 0, 0],
       targetFormat,
-      sampleCount = 4
+      sampleCount = 4,
+      depth = true,
+      depthTexture,
+      depthLoadOp = "clear",
+      depthClearValue = 1
     } = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "RenderPass");
@@ -7655,16 +7651,22 @@ struct VSOutput {
       this.renderer = renderer;
       this.options = {
         label,
-        depth,
+        sampleCount,
+        // color
         loadOp,
         clearValue,
-        sampleCount,
-        targetFormat: targetFormat ?? this.renderer.options.preferredFormat
+        targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
+        // depth
+        depth,
+        ...depthTexture !== void 0 && { depthTexture },
+        depthLoadOp,
+        depthClearValue
       };
       this.setClearValue(clearValue);
       this.setSize(this.renderer.pixelRatioBoundingRect);
-      if (this.options.depth)
+      if (this.options.depth) {
         this.createDepthTexture();
+      }
       this.createRenderTexture();
       this.setRenderPassDescriptor();
     }
@@ -7672,11 +7674,15 @@ struct VSOutput {
      * Set our {@link depthTexture | depth texture}
      */
     createDepthTexture() {
+      if (this.options.depthTexture) {
+        this.depthTexture = this.options.depthTexture;
+        return;
+      }
       this.depthTexture = this.renderer.createTexture({
         label: this.options.label + " depth attachment texture",
         size: [this.size.width, this.size.height],
         format: "depth24plus",
-        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
         sampleCount: this.options.sampleCount
       });
     }
@@ -7696,7 +7702,7 @@ struct VSOutput {
      * Reset our {@link depthTexture | depth texture}
      */
     resetRenderPassDepth() {
-      if (this.depthTexture) {
+      if (!this.options.depthTexture && this.depthTexture) {
         this.depthTexture.destroy();
       }
       this.createDepthTexture();
@@ -7736,8 +7742,9 @@ struct VSOutput {
         ...this.options.depth && {
           depthStencilAttachment: {
             view: this.depthTexture.createView(),
-            depthClearValue: 1,
-            depthLoadOp: "clear",
+            depthClearValue: this.options.depthClearValue,
+            // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
+            depthLoadOp: this.options.depthLoadOp,
             depthStoreOp: "store"
           }
         }
@@ -7780,6 +7787,7 @@ struct VSOutput {
      * @param depthLoadOp - new {@link GPULoadOp | depth load operation} to use
      */
     setDepthLoadOp(depthLoadOp = "clear") {
+      this.options.depthLoadOp = depthLoadOp;
       if (this.options.depth && this.descriptor.depthStencilAttachment) {
         this.descriptor.depthStencilAttachment.depthLoadOp = depthLoadOp;
       }
@@ -7825,13 +7833,10 @@ struct VSOutput {
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, depth, loadOp, clearValue, targetFormat, autoRender, sampleCount } = parameters;
+      const { label, targetFormat, autoRender, ...renderPassParams } = parameters;
       this.options = {
         label,
-        depth,
-        loadOp,
-        clearValue,
-        sampleCount,
+        ...renderPassParams,
         targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
         autoRender
       };
@@ -7840,11 +7845,10 @@ struct VSOutput {
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
-        depth: this.options.depth,
-        loadOp: this.options.loadOp,
-        clearValue: this.options.clearValue,
         targetFormat: this.options.targetFormat,
-        sampleCount: this.options.sampleCount
+        depthTexture: this.renderer.renderPass.depthTexture,
+        // always use one depth texture for everything
+        ...renderPassParams
       });
       this.renderTexture = new RenderTexture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target Render Texture",
@@ -7877,6 +7881,7 @@ struct VSOutput {
      */
     resize(boundingRect) {
       var _a, _b;
+      this.renderPass.options.depthTexture = this.renderer.renderPass.depthTexture;
       (_a = this.renderPass) == null ? void 0 : _a.resize(boundingRect);
       (_b = this.renderTexture) == null ? void 0 : _b.resize();
     }
@@ -7921,9 +7926,11 @@ struct VSOutput {
       isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
       parameters.renderTarget = new RenderTarget(renderer, {
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
+        depth: false,
         ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
       });
       parameters.transparent = false;
+      parameters.depth = false;
       parameters.label = parameters.label ?? "PingPongPlane " + ((_a = renderer.pingPongPlanes) == null ? void 0 : _a.length);
       super(renderer, parameters);
       this.type = "PingPongPlane";
@@ -8683,7 +8690,7 @@ struct VSOutput {
             [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
           );
         }
-        this.renderer.renderPass.setLoadOp("clear");
+        this.renderer.postProcessingPass.setLoadOp("clear");
       };
       const onAfterRenderPass = shaderPass.renderTarget ? (commandEncoder, swapChainTexture) => {
         if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture) {
@@ -8699,7 +8706,7 @@ struct VSOutput {
         }
       } : null;
       const shaderPassEntry = {
-        renderPass: this.renderer.renderPass,
+        renderPass: this.renderer.postProcessingPass,
         // render directly to screen
         renderTexture: null,
         onBeforeRenderPass,
@@ -9004,8 +9011,9 @@ struct VSOutput {
      * Resize all tracked objects
      */
     onResize() {
-      var _a;
+      var _a, _b;
       (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
+      (_b = this.postProcessingPass) == null ? void 0 : _b.resize(this.pixelRatioBoundingRect);
       this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
       this.computePasses.forEach((computePass) => computePass.resize());
       this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
@@ -9153,9 +9161,10 @@ struct VSOutput {
      * @async
      */
     restoreContext() {
-      var _a;
+      var _a, _b;
       this.configureContext();
       (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
+      (_b = this.postProcessingPass) == null ? void 0 : _b.resize(this.pixelRatioBoundingRect);
       this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
       this.renderTextures.forEach((renderTexture) => renderTexture.createTexture());
       this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
@@ -9169,6 +9178,13 @@ struct VSOutput {
         label: "Main render pass",
         targetFormat: this.options.preferredFormat,
         ...this.options.renderPass
+      });
+      this.postProcessingPass = new RenderPass(this, {
+        label: "Post processing render pass",
+        targetFormat: this.options.preferredFormat,
+        depth: false,
+        sampleCount: this.options.renderPass.sampleCount
+        // TODO?
       });
     }
     /**
@@ -9641,13 +9657,14 @@ struct VSOutput {
      * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
      */
     destroy() {
-      var _a, _b, _c;
+      var _a, _b, _c, _d;
       (_a = this.domElement) == null ? void 0 : _a.destroy();
       (_b = this.renderPass) == null ? void 0 : _b.destroy();
+      (_c = this.postProcessingPass) == null ? void 0 : _c.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
       this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
       this.renderTextures.forEach((texture) => texture.destroy());
-      (_c = this.context) == null ? void 0 : _c.unconfigure();
+      (_d = this.context) == null ? void 0 : _d.unconfigure();
     }
   }
   class GPUCameraRenderer extends GPURenderer {

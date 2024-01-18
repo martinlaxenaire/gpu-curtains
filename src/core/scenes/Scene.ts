@@ -297,7 +297,7 @@ export class Scene {
           }
 
           // if we want to post process the whole scene, clear render pass content
-          this.renderer.renderPass.setLoadOp('clear')
+          this.renderer.postProcessingPass.setLoadOp('clear')
         }
 
     const onAfterRenderPass = shaderPass.renderTarget
@@ -318,7 +318,7 @@ export class Scene {
       : null
 
     const shaderPassEntry = {
-      renderPass: this.renderer.renderPass, // render directly to screen
+      renderPass: this.renderer.postProcessingPass, // render directly to screen
       renderTexture: null,
       onBeforeRenderPass,
       onAfterRenderPass,
@@ -511,6 +511,10 @@ export class Scene {
         renderPassEntry.renderPass.setLoadOp(
           renderPassEntryType === 'screen' && passDrawnCount !== 0 ? 'load' : 'clear'
         )
+
+        // renderPassEntry.renderPass.setDepthLoadOp(
+        //   renderPassEntryType === 'renderTarget' && passDrawnCount !== 0 ? 'load' : 'clear'
+        // )
 
         passDrawnCount++
 

@@ -95,6 +95,8 @@ window.addEventListener('load', async () => {
     },
   })
 
+  console.log(gpuCurtains)
+
   // lost context
 
   const loseCtxButton = document.querySelector('#lose-context-button')

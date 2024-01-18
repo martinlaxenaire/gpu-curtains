@@ -4,27 +4,29 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectSize } from '../DOM/DOMElement'
 
 /**
- * Options used to create this {@link RenderPass}
+ * Parameters used to create this {@link RenderPass}
  */
-export interface RenderPassOptions {
+export interface RenderPassParams {
   /** The label of the {@link RenderPass}, sent to various GPU objects for debugging purpose */
-  label: string
-  /** Whether this {@link RenderPass} should handle a depth texture */
-  depth: boolean
+  label?: string
   /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
-  loadOp: GPULoadOp
+  loadOp?: GPULoadOp
   /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
-  clearValue: GPUColor
+  clearValue?: GPUColor
   /** Optional format of the color attachment texture */
   targetFormat: GPUTextureFormat
   /** Whether the {@link RenderPass#renderTexture | renderTexture} should use multisampling or not */
-  sampleCount: GPUSize32
-}
+  sampleCount?: GPUSize32
 
-/**
- * Parameters used to create a {@link RenderPass}
- */
-export type RenderPassParams = Partial<RenderPassOptions>
+  /** Whether this {@link RenderPass} should handle a depth texture */
+  depth?: boolean
+  /** Whether this {@link RenderPass} should use an already created depth texture */
+  depthTexture?: GPUTexture
+  /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
+  depthLoadOp?: GPULoadOp
+  /** The depth clear value to clear to before drawing this {@link RenderPass} */
+  depthClearValue?: GPURenderPassDepthStencilAttachment['depthClearValue']
+}
 
 /**
  * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#renderTexture | renderTexture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
@@ -38,7 +40,7 @@ export class RenderPass {
   readonly uuid: string
 
   /** Options used to create this {@link RenderPass} */
-  options: RenderPassOptions
+  options: RenderPassParams
 
   /** Size of the textures sources */
   size: RectSize
@@ -59,11 +61,14 @@ export class RenderPass {
     renderer: Renderer | GPUCurtains,
     {
       label = 'Render Pass',
-      depth = true,
-      loadOp = 'clear',
+      loadOp = 'clear' as GPULoadOp,
       clearValue = [0, 0, 0, 0],
       targetFormat,
       sampleCount = 4,
+      depth = true,
+      depthTexture,
+      depthLoadOp = 'clear' as GPULoadOp,
+      depthClearValue = 1,
     } = {} as RenderPassParams
   ) {
     // we could pass our curtains object OR our curtains renderer object
@@ -77,19 +82,27 @@ export class RenderPass {
     this.renderer = renderer
     this.options = {
       label,
-      depth,
+      sampleCount,
+      // color
       loadOp,
       clearValue,
-      sampleCount,
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
-    } as RenderPassOptions
+      // depth
+      depth,
+      ...(depthTexture !== undefined && { depthTexture }),
+      depthLoadOp,
+      depthClearValue,
+    }
 
     this.setClearValue(clearValue)
 
     this.setSize(this.renderer.pixelRatioBoundingRect)
 
     // if needed, create a depth texture before our descriptor
-    if (this.options.depth) this.createDepthTexture()
+    if (this.options.depth) {
+      this.createDepthTexture()
+    }
+
     this.createRenderTexture()
 
     this.setRenderPassDescriptor()
@@ -99,11 +112,17 @@ export class RenderPass {
    * Set our {@link depthTexture | depth texture}
    */
   createDepthTexture() {
+    // just use our option depth texture if it is sets
+    if (this.options.depthTexture) {
+      this.depthTexture = this.options.depthTexture
+      return
+    }
+
     this.depthTexture = this.renderer.createTexture({
       label: this.options.label + ' depth attachment texture',
       size: [this.size.width, this.size.height],
       format: 'depth24plus',
-      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT,
       sampleCount: this.options.sampleCount,
     })
   }
@@ -129,7 +148,7 @@ export class RenderPass {
    * Reset our {@link depthTexture | depth texture}
    */
   resetRenderPassDepth() {
-    if (this.depthTexture) {
+    if (!this.options.depthTexture && this.depthTexture) {
       // Destroy the previous depth target
       this.depthTexture.destroy()
     }
@@ -179,9 +198,9 @@ export class RenderPass {
       ...(this.options.depth && {
         depthStencilAttachment: {
           view: this.depthTexture.createView(),
-
-          depthClearValue: 1,
-          depthLoadOp: 'clear',
+          depthClearValue: this.options.depthClearValue,
+          // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
+          depthLoadOp: this.options.depthLoadOp,
           depthStoreOp: 'store',
         },
       }),
@@ -229,6 +248,7 @@ export class RenderPass {
    * @param depthLoadOp - new {@link GPULoadOp | depth load operation} to use
    */
   setDepthLoadOp(depthLoadOp: GPULoadOp = 'clear') {
+    this.options.depthLoadOp = depthLoadOp
     if (this.options.depth && this.descriptor.depthStencilAttachment) {
       this.descriptor.depthStencilAttachment.depthLoadOp = depthLoadOp
     }

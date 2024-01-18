@@ -81,7 +81,7 @@ export class TestRenderTargets {
     // first we're going to render large planes into a grayscale pass
     this.grayscaleTarget = new RenderTarget(this.gpuCurtains, {
       label: 'Large planes distortion render target',
-      sampleCount: 1,
+      //sampleCount: 1,
     })
     this.largePlanes = []
 
@@ -159,7 +159,7 @@ export class TestRenderTargets {
     // now render the small planes into a RGB shift pass
     this.rgbShiftTarget = new RenderTarget(this.gpuCurtains, {
       label: 'Small planes RGB render target',
-      sampleCount: 1,
+      //sampleCount: 1,
     })
 
     this.smallPlanes = []

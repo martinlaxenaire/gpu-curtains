@@ -12,6 +12,9 @@ window.addEventListener('load', async () => {
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    renderPass: {
+      //sampleCount: 1,
+    },
   })
 
   await gpuCurtains.setDevice()
@@ -82,7 +85,7 @@ window.addEventListener('load', async () => {
   // first we're going to render large planes into a grayscale pass
   const grayscaleTarget = new RenderTarget(gpuCurtains, {
     label: 'Large planes distortion render target',
-    sampleCount: 1,
+    //sampleCount: 1,
   })
 
   const largePlaneEls = document.querySelectorAll('.large-plane')
@@ -150,15 +153,10 @@ window.addEventListener('load', async () => {
     grayscalePass.uniforms.scrollEffect.strength.value = scrollEffect
   })
 
-  // setTimeout(() => {
-  //   grayscalePass.remove()
-  //   console.log(gpuCurtains.renderer.scene)
-  // }, 5000)
-
   // now render the small planes into a RGB shift pass
   const rgbShiftTarget = new RenderTarget(gpuCurtains, {
     label: 'Small planes RGB render target',
-    sampleCount: 1,
+    //sampleCount: 1,
   })
 
   const smallPlaneEls = document.querySelectorAll('.small-plane')

@@ -71,6 +71,9 @@ export class ShaderPass extends FullscreenPlane {
       }
     }
 
+    // force the post processing passes to not use depth
+    parameters.depth = false
+
     super(renderer, parameters)
 
     this.type = 'ShaderPass'

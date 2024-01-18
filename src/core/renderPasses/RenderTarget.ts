@@ -66,14 +66,11 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, depth, loadOp, clearValue, targetFormat, autoRender, sampleCount } = parameters
+    const { label, targetFormat, autoRender, ...renderPassParams } = parameters
 
     this.options = {
       label,
-      depth,
-      loadOp,
-      clearValue,
-      sampleCount,
+      ...renderPassParams,
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       autoRender,
     }
@@ -84,11 +81,9 @@ export class RenderTarget {
 
     this.renderPass = new RenderPass(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Pass` : 'Render Target Render Pass',
-      depth: this.options.depth,
-      loadOp: this.options.loadOp,
-      clearValue: this.options.clearValue,
       targetFormat: this.options.targetFormat,
-      sampleCount: this.options.sampleCount,
+      depthTexture: this.renderer.renderPass.depthTexture, // always use one depth texture for everything
+      ...renderPassParams,
     })
 
     // this is the texture that will be resolved when setting the current render pass texture
@@ -128,6 +123,8 @@ export class RenderTarget {
    * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
    */
   resize(boundingRect: DOMElementBoundingRect) {
+    // reset the newly created renderer render pass depth texture
+    this.renderPass.options.depthTexture = this.renderer.renderPass.depthTexture
     this.renderPass?.resize(boundingRect)
     this.renderTexture?.resize()
   }

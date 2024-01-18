@@ -73,8 +73,10 @@ export declare class GPURenderer {
     alphaMode?: GPUCanvasAlphaMode;
     /** Options used to create this {@link GPURenderer} */
     options: GPURendererParams;
-    /** The final {@link RenderPass | render pass} to render our result to screen */
+    /** The {@link RenderPass | render pass} used to render our result to screen */
     renderPass: RenderPass;
+    /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
+    postProcessingPass: RenderPass;
     /** The {@link Scene} used */
     scene: Scene;
     /** An array containing all our created {@link ComputePass} */

@@ -47,11 +47,13 @@ export class PingPongPlane extends FullscreenPlane {
     // we will render into a separate texture
     parameters.renderTarget = new RenderTarget(renderer, {
       label: parameters.label ? parameters.label + ' render target' : 'Ping Pong render target',
+      depth: false,
       ...(parameters.targetFormat && { targetFormat: parameters.targetFormat }),
     })
 
-    // no blending for ping pong planes
+    // no blending and depth for ping pong planes
     parameters.transparent = false
+    parameters.depth = false
     parameters.label = parameters.label ?? 'PingPongPlane ' + renderer.pingPongPlanes?.length
 
     super(renderer, parameters)

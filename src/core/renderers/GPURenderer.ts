@@ -19,6 +19,7 @@ import { AllowedBindGroups } from '../../types/BindGroups'
 import { RenderTexture } from '../textures/RenderTexture'
 import { GPUDeviceManager } from './GPUDeviceManager'
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
+import { RenderPipelineEntryOptions } from '../../types/PipelineEntries'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -83,8 +84,10 @@ export class GPURenderer {
   /** Options used to create this {@link GPURenderer} */
   options: GPURendererParams
 
-  /** The final {@link RenderPass | render pass} to render our result to screen */
+  /** The {@link RenderPass | render pass} used to render our result to screen */
   renderPass: RenderPass
+  /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
+  postProcessingPass: RenderPass
   /** The {@link Scene} used */
   scene: Scene
 
@@ -235,6 +238,7 @@ export class GPURenderer {
   onResize() {
     // resize render & shader passes
     this.renderPass?.resize(this.pixelRatioBoundingRect)
+    this.postProcessingPass?.resize(this.pixelRatioBoundingRect)
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
 
     // force compute passes onAfterResize callback
@@ -410,6 +414,7 @@ export class GPURenderer {
 
     // resize render passes/recreate their textures
     this.renderPass?.resize(this.pixelRatioBoundingRect)
+    this.postProcessingPass?.resize(this.pixelRatioBoundingRect)
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
 
     // recreate all render textures
@@ -425,10 +430,19 @@ export class GPURenderer {
    * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
    */
   setMainRenderPass() {
+    // TODO handle multisampling differently?
+    // cf: https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html#you-do-not-have-to-set-a-resolve-target-on-every-render-pass
     this.renderPass = new RenderPass(this, {
       label: 'Main render pass',
       targetFormat: this.options.preferredFormat,
       ...this.options.renderPass,
+    })
+
+    this.postProcessingPass = new RenderPass(this, {
+      label: 'Post processing render pass',
+      targetFormat: this.options.preferredFormat,
+      depth: false,
+      sampleCount: this.options.renderPass.sampleCount, // TODO?
     })
   }
 
@@ -976,6 +990,7 @@ export class GPURenderer {
 
     // destroy render passes
     this.renderPass?.destroy()
+    this.postProcessingPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
