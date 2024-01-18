@@ -87,7 +87,7 @@ window.addEventListener('load', async () => {
       var light: f32 = smoothstep(0.15, 1.0, dot(normal, lightPos));
     
       var ambientLight: f32 = 1.0 - shading.lightStrength;
-      return color.rgb * light * shading.lightStrength + color.rgb * ambientLight;
+      return color.rgb * light * shading.lightStrength + color.rgb * shading.ambientLightStrength;
     }
     
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
@@ -103,7 +103,9 @@ window.addEventListener('load', async () => {
   const sphereColor1 = new Vec3(0, 1, 1)
   const sphereColor2 = new Vec3(1, 0, 1)
   const cubeColor = new Vec3(0.125, 0.125, 0.125)
-  const lightPosition = new Vec3(0, systemSize * 4, 0)
+  const lightPosition = new Vec3(systemSize, systemSize * 4, 0)
+  const lightStrength = 0.6
+  const ambientLightStrength = 0.5
 
   for (let i = 0; i < 50; i++) {
     const isCube = Math.random() > 0.5
@@ -130,7 +132,11 @@ window.addEventListener('load', async () => {
             },
             lightStrength: {
               type: 'f32',
-              value: 0.5,
+              value: lightStrength,
+            },
+            ambientLightStrength: {
+              type: 'f32',
+              value: ambientLightStrength,
             },
           },
         },
