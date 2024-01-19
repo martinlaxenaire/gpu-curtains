@@ -129,7 +129,9 @@ export const getTextureBindingWGSLVarType = (binding: TextureBinding): string =>
     ? `var ${binding.name}: texture_depth${binding.options.multisampled ? '_multisampled' : ''}_${
         binding.options.viewDimension
       };`
-    : `var ${binding.name}: texture_${binding.options.viewDimension}<f32>;`
+    : `var ${binding.name}: texture${binding.options.multisampled ? '_multisampled' : ''}_${
+        binding.options.viewDimension
+      }<f32>;`
 }
 
 /**

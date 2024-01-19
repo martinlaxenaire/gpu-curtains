@@ -1,7 +1,7 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMElementBoundingRect, RectSize } from '../DOM/DOMElement'
+import { RenderTexture } from '../textures/RenderTexture'
 
 /**
  * Parameters used to create this {@link RenderPass}
@@ -15,13 +15,13 @@ export interface RenderPassParams {
   clearValue?: GPUColor
   /** Optional format of the color attachment texture */
   targetFormat: GPUTextureFormat
-  /** Whether the {@link RenderPass#renderTexture | renderTexture} should use multisampling or not */
+  /** Whether the {@link RenderPass#viewTexture | view texture} should use multisampling or not */
   sampleCount?: GPUSize32
 
   /** Whether this {@link RenderPass} should handle a depth texture */
   depth?: boolean
   /** Whether this {@link RenderPass} should use an already created depth texture */
-  depthTexture?: GPUTexture
+  depthTexture?: RenderTexture
   /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
   depthLoadOp?: GPULoadOp
   /** The depth clear value to clear to before drawing this {@link RenderPass} */
@@ -29,7 +29,7 @@ export interface RenderPassParams {
 }
 
 /**
- * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#renderTexture | renderTexture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
+ * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#viewTexture | view texture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
  */
 export class RenderPass {
   /** {@link Renderer} used by this {@link RenderPass} */
@@ -42,13 +42,13 @@ export class RenderPass {
   /** Options used to create this {@link RenderPass} */
   options: RenderPassParams
 
-  /** Size of the textures sources */
-  size: RectSize
+  /** Depth {@link RenderTexture} to use with this {@link RenderPass} if it should handle depth */
+  depthTexture: RenderTexture | undefined
+  /** Color attachment {@link RenderTexture} to use with this {@link RenderPass} */
+  viewTexture: RenderTexture
+  /** Resolve {@link RenderTexture} to use with this {@link RenderPass} if it is using multisampling */
+  //resolveTexture: RenderTexture | undefined
 
-  /** Depth {@link GPUTexture} to use with this {@link RenderPass} if it handles depth */
-  depthTexture: GPUTexture | undefined
-  /** Render {@link GPUTexture} to use with this {@link RenderPass} */
-  renderTexture: GPUTexture
   /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
   descriptor: GPURenderPassDescriptor
 
@@ -96,14 +96,25 @@ export class RenderPass {
 
     this.setClearValue(clearValue)
 
-    this.setSize(this.renderer.pixelRatioBoundingRect)
-
     // if needed, create a depth texture before our descriptor
     if (this.options.depth) {
       this.createDepthTexture()
     }
 
-    this.createRenderTexture()
+    this.viewTexture = new RenderTexture(this.renderer, {
+      label: this.options.label + ' view texture',
+      name: 'viewTexture',
+      format: this.options.targetFormat,
+      sampleCount: this.options.sampleCount,
+    })
+
+    // if (this.options.sampleCount > 1) {
+    //   this.resolveTexture = new RenderTexture(this.renderer, {
+    //     label: this.options.label + ' resolve texture',
+    //     name: 'resolveTexture',
+    //     format: this.options.targetFormat,
+    //   })
+    // }
 
     this.setRenderPassDescriptor()
   }
@@ -118,29 +129,12 @@ export class RenderPass {
       return
     }
 
-    this.depthTexture = this.renderer.createTexture({
-      label: this.options.label + ' depth attachment texture',
-      size: [this.size.width, this.size.height],
+    this.depthTexture = new RenderTexture(this.renderer, {
+      label: this.options.label + ' depth texture',
+      name: 'depthTexture',
+      usage: 'depthTexture',
       format: 'depth24plus',
-      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
       sampleCount: this.options.sampleCount,
-    })
-  }
-
-  /**
-   * Set our {@link renderTexture | render texture}
-   */
-  createRenderTexture() {
-    this.renderTexture = this.renderer.createTexture({
-      label: this.options.label + ' color attachment texture',
-      size: [this.size.width, this.size.height],
-      sampleCount: this.options.sampleCount,
-      format: this.options.targetFormat,
-      usage:
-        GPUTextureUsage.RENDER_ATTACHMENT |
-        GPUTextureUsage.COPY_SRC |
-        GPUTextureUsage.COPY_DST |
-        GPUTextureUsage.TEXTURE_BINDING,
     })
   }
 
@@ -148,30 +142,40 @@ export class RenderPass {
    * Reset our {@link depthTexture | depth texture}
    */
   resetRenderPassDepth() {
-    if (!this.options.depthTexture && this.depthTexture) {
-      // Destroy the previous depth target
-      this.depthTexture.destroy()
-    }
+    this.depthTexture.forceResize({
+      width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+      height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+      depth: 1,
+    })
 
-    // recreate depth texture
-    this.createDepthTexture()
-
-    this.descriptor.depthStencilAttachment.view = this.depthTexture.createView()
+    this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
+      label: this.depthTexture.options.label + ' view',
+    })
   }
 
   /**
-   * Reset our {@link renderTexture | render texture}
+   * Reset our {@link viewTexture | view texture}
    */
   resetRenderPassView() {
-    // set view
-    if (this.renderTexture) {
-      // Destroy the previous render target
-      this.renderTexture.destroy()
-    }
+    this.viewTexture.forceResize({
+      width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+      height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+      depth: 1,
+    })
 
-    this.createRenderTexture()
+    this.descriptor.colorAttachments[0].view = this.viewTexture.texture.createView({
+      label: this.viewTexture.options.label + ' view',
+    })
 
-    this.descriptor.colorAttachments[0].view = this.renderTexture.createView()
+    // if (this.options.sampleCount > 1) {
+    //   this.resolveTexture.forceResize({
+    //     width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+    //     height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+    //     depth: 1,
+    //   })
+    //
+    //   this.descriptor.colorAttachments[0].resolveTarget = this.resolveTexture.texture.createView()
+    // }
   }
 
   /**
@@ -183,7 +187,14 @@ export class RenderPass {
       colorAttachments: [
         {
           // view: <- to be filled out when we set our render pass view
-          view: this.renderTexture.createView(),
+          view: this.viewTexture.texture.createView({
+            label: this.viewTexture.options.label + ' view',
+          }),
+          // ...(this.options.sampleCount > 1 && {
+          //   resolveTarget: this.resolveTexture.texture.createView({
+          //     label: this.resolveTexture.options.label + ' view',
+          //   }),
+          // }),
           // clear values
           clearValue: this.options.clearValue,
           // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
@@ -197,7 +208,9 @@ export class RenderPass {
       ],
       ...(this.options.depth && {
         depthStencilAttachment: {
-          view: this.depthTexture.createView(),
+          view: this.depthTexture.texture.createView({
+            label: this.depthTexture.options.label + ' view',
+          }),
           depthClearValue: this.options.depthClearValue,
           // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
           depthLoadOp: this.options.depthLoadOp,
@@ -208,23 +221,9 @@ export class RenderPass {
   }
 
   /**
-   * Set our render pass {@link size}
-   * @param boundingRect - {@link DOMElementBoundingRect | bounding rectangle} from which to get the width and height
+   * Resize our {@link RenderPass}: reset its {@link RenderTexture}
    */
-  setSize(boundingRect: DOMElementBoundingRect) {
-    this.size = {
-      width: Math.floor(boundingRect.width),
-      height: Math.floor(boundingRect.height),
-    }
-  }
-
-  /**
-   * Resize our {@link RenderPass}: set its size and recreate the textures
-   * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
-   */
-  resize(boundingRect: DOMElementBoundingRect) {
-    this.setSize(boundingRect)
-
+  resize() {
     // reset textures
     if (this.options.depth) this.resetRenderPassDepth()
     this.resetRenderPassView()
@@ -278,9 +277,11 @@ export class RenderPass {
    * Destroy our {@link RenderPass}
    */
   destroy() {
-    this.renderTexture?.destroy()
+    this.viewTexture?.destroy()
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy()
     }
+
+    //this.resolveTexture?.destroy()
   }
 }

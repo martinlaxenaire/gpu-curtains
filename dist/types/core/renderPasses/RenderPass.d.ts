@@ -1,7 +1,7 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { DOMElementBoundingRect, RectSize } from '../DOM/DOMElement';
+import { RenderTexture } from '../textures/RenderTexture';
 /**
  * Parameters used to create this {@link RenderPass}
  */
@@ -14,19 +14,19 @@ export interface RenderPassParams {
     clearValue?: GPUColor;
     /** Optional format of the color attachment texture */
     targetFormat: GPUTextureFormat;
-    /** Whether the {@link RenderPass#renderTexture | renderTexture} should use multisampling or not */
+    /** Whether the {@link RenderPass#viewTexture | view texture} should use multisampling or not */
     sampleCount?: GPUSize32;
     /** Whether this {@link RenderPass} should handle a depth texture */
     depth?: boolean;
     /** Whether this {@link RenderPass} should use an already created depth texture */
-    depthTexture?: GPUTexture;
+    depthTexture?: RenderTexture;
     /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
     depthLoadOp?: GPULoadOp;
     /** The depth clear value to clear to before drawing this {@link RenderPass} */
     depthClearValue?: GPURenderPassDepthStencilAttachment['depthClearValue'];
 }
 /**
- * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#renderTexture | renderTexture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
+ * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#viewTexture | view texture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
  */
 export declare class RenderPass {
     /** {@link Renderer} used by this {@link RenderPass} */
@@ -37,12 +37,11 @@ export declare class RenderPass {
     readonly uuid: string;
     /** Options used to create this {@link RenderPass} */
     options: RenderPassParams;
-    /** Size of the textures sources */
-    size: RectSize;
-    /** Depth {@link GPUTexture} to use with this {@link RenderPass} if it handles depth */
-    depthTexture: GPUTexture | undefined;
-    /** Render {@link GPUTexture} to use with this {@link RenderPass} */
-    renderTexture: GPUTexture;
+    /** Depth {@link RenderTexture} to use with this {@link RenderPass} if it should handle depth */
+    depthTexture: RenderTexture | undefined;
+    /** Color attachment {@link RenderTexture} to use with this {@link RenderPass} */
+    viewTexture: RenderTexture;
+    /** Resolve {@link RenderTexture} to use with this {@link RenderPass} if it is using multisampling */
     /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
     descriptor: GPURenderPassDescriptor;
     /**
@@ -50,21 +49,17 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, loadOp, clearValue, targetFormat, sampleCount, depth, depthTexture, depthLoadOp, depthClearValue, }?: RenderPassParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, loadOp, clearValue, targetFormat, depth, depthTexture, depthLoadOp, depthClearValue, }?: RenderPassParams);
     /**
      * Set our {@link depthTexture | depth texture}
      */
     createDepthTexture(): void;
     /**
-     * Set our {@link renderTexture | render texture}
-     */
-    createRenderTexture(): void;
-    /**
      * Reset our {@link depthTexture | depth texture}
      */
     resetRenderPassDepth(): void;
     /**
-     * Reset our {@link renderTexture | render texture}
+     * Reset our {@link viewTexture | view texture}
      */
     resetRenderPassView(): void;
     /**
@@ -72,15 +67,9 @@ export declare class RenderPass {
      */
     setRenderPassDescriptor(): void;
     /**
-     * Set our render pass {@link size}
-     * @param boundingRect - {@link DOMElementBoundingRect | bounding rectangle} from which to get the width and height
+     * Resize our {@link RenderPass}: reset its {@link RenderTexture}
      */
-    setSize(boundingRect: DOMElementBoundingRect): void;
-    /**
-     * Resize our {@link RenderPass}: set its size and recreate the textures
-     * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
-     */
-    resize(boundingRect: DOMElementBoundingRect): void;
+    resize(): void;
     /**
      * Set the {@link descriptor} {@link GPULoadOp | load operation}
      * @param loadOp - new {@link GPULoadOp | load operation} to use

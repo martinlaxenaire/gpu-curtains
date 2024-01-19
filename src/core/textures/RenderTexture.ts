@@ -32,6 +32,8 @@ export interface RenderTextureBaseParams {
   access?: BindingMemoryAccessType
   /** Optional {@link RenderTexture#texture | texture} view dimension to use */
   viewDimension?: GPUTextureViewDimension
+  /** Sample count of the {@link RenderTexture#texture | texture}, used for multisampling */
+  sampleCount?: GPUSize32
 }
 
 /**
@@ -50,6 +52,7 @@ const defaultRenderTextureParams: RenderTextureParams = {
   access: 'write',
   fromTexture: null,
   viewDimension: '2d',
+  sampleCount: 1,
 }
 
 /**
@@ -175,6 +178,7 @@ export class RenderTexture {
       format: this.options.format,
       size: [this.size.width, this.size.height, this.size.depth],
       dimensions: this.options.viewDimension === '1d' ? '1d' : this.options.viewDimension === '3d' ? '3d' : '2d',
+      sampleCount: this.options.sampleCount,
       usage:
         // TODO let user chose?
         // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
@@ -202,8 +206,7 @@ export class RenderTexture {
         bindingType: this.options.usage,
         format: this.options.format,
         viewDimension: this.options.viewDimension,
-        ...(this.options.usage === 'depthTexture' &&
-          this.renderer.renderPass.options.sampleCount > 1 && { multisampled: true }),
+        multisampled: this.options.sampleCount > 1,
       } as TextureBindingParams),
     ]
   }
@@ -217,8 +220,17 @@ export class RenderTexture {
   }
 
   /**
+   * Force a {@link RenderTexture} to be recreated with the new size
+   * @param size - new {@link TextureSize | size} to set
+   */
+  forceResize(size: TextureSize) {
+    this.size = size
+    this.createTexture()
+  }
+
+  /**
    * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
-   * @param size - the optional new {@link RectSize | size} to set
+   * @param size - the optional new {@link TextureSize | size} to set
    */
   resize(size: TextureSize | null = null) {
     if (!size) {
@@ -234,8 +246,7 @@ export class RenderTexture {
       return
     }
 
-    this.size = size
-    this.createTexture()
+    this.forceResize(size)
   }
 
   /**

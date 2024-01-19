@@ -142,7 +142,6 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-      //var depth: f32 = textureSample(depthTexture, defaultSampler, fsInput.uv);
             
       let rawDepth = textureLoad(
         depthTexture,
@@ -150,9 +149,9 @@ window.addEventListener('load', async () => {
         0
       );
       // remap depth into something a bit more visible
-      let depth = (1.0 - rawDepth) * 500.0;
+      let depth = (1.0 - rawDepth) * 75.0 * params.systemSize;
 
-      return mix( texture, vec4(vec3(depth, 0.0, 0.0), texture.a), step(fsInput.uv.x, 0.5) );
+      return mix( texture, vec4(vec3(0.0, depth, depth), texture.a), step(fsInput.uv.x, 0.5) );
     }
   `
 
@@ -162,6 +161,16 @@ window.addEventListener('load', async () => {
         code: postProShader,
       },
     },
+    uniforms: {
+      params: {
+        struct: {
+          systemSize: {
+            type: 'f32',
+            value: systemSize,
+          },
+        },
+      },
+    },
   })
 
   const depthTexture = postProPass.createRenderTexture({
@@ -169,14 +178,9 @@ window.addEventListener('load', async () => {
     name: 'depthTexture',
     usage: 'depthTexture',
     format: 'depth24plus',
+    fromTexture: gpuCameraRenderer.renderPass.depthTexture,
+    sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
   })
 
-  depthTexture.copyGPUTexture(gpuCameraRenderer.renderPass.depthTexture)
-
-  postProPass.onAfterResize(() => {
-    depthTexture.copyGPUTexture(gpuCameraRenderer.renderPass.depthTexture)
-  })
-
-  console.log(depthTexture)
   console.log(gpuCameraRenderer)
 })

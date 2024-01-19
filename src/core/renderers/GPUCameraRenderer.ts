@@ -55,6 +55,7 @@ export class GPUCameraRenderer extends GPURenderer {
     pixelRatio = 1,
     preferredFormat,
     alphaMode = 'premultiplied',
+    multisampled = true,
     renderPass,
     camera = {},
   }: GPUCameraRendererParams) {
@@ -64,6 +65,7 @@ export class GPUCameraRenderer extends GPURenderer {
       pixelRatio,
       preferredFormat,
       alphaMode,
+      multisampled,
       renderPass,
     })
 

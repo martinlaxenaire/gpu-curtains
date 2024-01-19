@@ -11,7 +11,7 @@ export interface RenderTargetParams extends RenderPassParams {
     autoRender?: boolean;
 }
 /**
- * Used to draw meshes to a {@link RenderPass#renderTexture | RenderPass renderTexture} instead of directly to screen.
+ * Used to draw meshes to a {@link RenderPass#viewTexture | RenderPass view texture} instead of directly to screen.
  *
  * @example
  * ```javascript

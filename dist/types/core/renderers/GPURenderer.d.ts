@@ -31,6 +31,8 @@ export interface GPURendererParams {
     preferredFormat?: GPUTextureFormat;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
+    /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
+    multisampled?: boolean;
     /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
     renderPass?: {
         /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
@@ -73,10 +75,13 @@ export declare class GPURenderer {
     alphaMode?: GPUCanvasAlphaMode;
     /** Options used to create this {@link GPURenderer} */
     options: GPURendererParams;
+    /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
+    multisampled: boolean;
     /** The {@link RenderPass | render pass} used to render our result to screen */
     renderPass: RenderPass;
     /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
     postProcessingPass: RenderPass;
+    /** {@link RenderPass | Multisampled render pass} used by an internal {@link ShaderPass} for MSAA, if {@link multisampled} is set to `true` */
     /** The {@link Scene} used */
     scene: Scene;
     /** An array containing all our created {@link ComputePass} */
@@ -113,7 +118,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
+    constructor({ deviceManager, container, pixelRatio, preferredFormat, alphaMode, multisampled, renderPass, }: GPURendererParams);
     /**
      * Set {@link canvas} size
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
@@ -193,7 +198,7 @@ export declare class GPURenderer {
     /**
      * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
      */
-    setMainRenderPass(): void;
+    setMainRenderPasses(): void;
     /**
      * Set our {@link scene}
      */
@@ -397,7 +402,7 @@ export declare class GPURenderer {
      */
     onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
-     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} or {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
      * @param renderPass - current {@link RenderPass}
      * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
      * @returns - the {@link GPUTexture | current render texture}

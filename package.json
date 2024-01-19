@@ -13,8 +13,23 @@
   },
   "name": "gpu-curtains",
   "version": "0.0.1",
-  "description": "gpu-curtains is attempt at porting curtainsjs library to WebGPU",
-  "author": "Martin Laxenaire",
+  "description": "gpu-curtains is a WebGPU rendering engine aiming at synchronizing 3D objects scale and position with DOM HTML elements",
+  "keywords": [
+    "webgpu"
+  ],
+  "author": {
+    "name": "Martin Laxenaire",
+    "email": "martin.laxenaire@gmail.com",
+    "url": "https://martin-laxenaire.fr/"
+  },
+  "homepage": "https://martinlaxenaire.github.io",
+  "bugs": {
+    "url": "https://github.com/martinlaxenaire/gpu-curtains/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/martinlaxenaire/gpu-curtains.git"
+  },
   "license": "MIT",
   "private": true,
   "dependencies": {},
@@ -24,8 +39,14 @@
   ],
   "main": "./dist/gpu-curtains.umd.js",
   "module": "./dist/gpu-curtains.js",
-  "exports": "./dist/gpu-curtains.js",
+  "exports": {
+    ".": {
+      "import": "./dist/gpu-curtains.js",
+      "require": "./dist/gpu-curtains.umd.cjs"
+    }
+  },
   "directories": {
+    "docs": "docs",
     "example": "examples",
     "test": "tests"
   },
@@ -34,7 +55,8 @@
     "build:docs": "rimraf docs && typedoc --options typedoc.json",
     "build:types": "rimraf dist/types && tsc --allowJs -d --emitDeclarationOnly",
     "build:main": "vite build",
-    "build:dist": "yarn build:types && yarn build:main",
+    "build:minified": "vite build --config vite.minified.config.js",
+    "build:dist": "yarn build:types && yarn build:main && yarn build:minified",
     "build": "yarn build:dist && yarn build:docs"
   }
 }

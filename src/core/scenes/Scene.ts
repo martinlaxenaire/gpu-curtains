@@ -512,10 +512,6 @@ export class Scene {
           renderPassEntryType === 'screen' && passDrawnCount !== 0 ? 'load' : 'clear'
         )
 
-        // renderPassEntry.renderPass.setDepthLoadOp(
-        //   renderPassEntryType === 'renderTarget' && passDrawnCount !== 0 ? 'load' : 'clear'
-        // )
-
         passDrawnCount++
 
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)

@@ -14,7 +14,7 @@ export interface RenderTargetParams extends RenderPassParams {
 }
 
 /**
- * Used to draw meshes to a {@link RenderPass#renderTexture | RenderPass renderTexture} instead of directly to screen.
+ * Used to draw meshes to a {@link RenderPass#viewTexture | RenderPass view texture} instead of directly to screen.
  *
  * @example
  * ```javascript
@@ -82,7 +82,7 @@ export class RenderTarget {
     this.renderPass = new RenderPass(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Pass` : 'Render Target Render Pass',
       targetFormat: this.options.targetFormat,
-      depthTexture: this.renderer.renderPass.depthTexture, // always use one depth texture for everything
+      depthTexture: this.renderer.renderPass.depthTexture, // reuse renderer depth texture for every pass
       ...renderPassParams,
     })
 
@@ -124,12 +124,11 @@ export class RenderTarget {
    */
   resize(boundingRect: DOMElementBoundingRect) {
     // reset the newly created renderer render pass depth texture
-    this.renderPass.options.depthTexture = this.renderer.renderPass.depthTexture
-    this.renderPass?.resize(boundingRect)
+    this.renderPass.options.depthTexture.texture = this.renderer.renderPass.depthTexture.texture
+    this.renderPass?.resize()
     this.renderTexture?.resize()
   }
 
-  // alias
   /**
    * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
    */

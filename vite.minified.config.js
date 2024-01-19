@@ -2,11 +2,11 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   build: {
-    minify: false,
+    minify: true,
     lib: {
       entry: 'src',
       formats: ['es', 'umd'],
-      fileName: 'gpu-curtains',
+      fileName: 'gpu-curtains.min',
       name: 'GPUCurtains',
     },
     emptyOutDir: false,

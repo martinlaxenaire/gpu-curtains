@@ -237,7 +237,7 @@ window.addEventListener('load', async () => {
   `
 
   const blurSettings = {
-    spread: 5,
+    spread: 3,
     weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
   }
 

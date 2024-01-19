@@ -278,7 +278,7 @@ var __privateMethod = (obj, member, method) => {
     if (binding.bindingType === "externalTexture") {
       return `var ${binding.name}: texture_external;`;
     }
-    return binding.bindingType === "storageTexture" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depthTexture" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension};` : `var ${binding.name}: texture_${binding.options.viewDimension}<f32>;`;
+    return binding.bindingType === "storageTexture" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depthTexture" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension}<f32>;`;
   };
   const getBindGroupLayoutBindingType = (binding) => {
     if (binding.bindingType === "storage" && binding.options.access === "read_write") {
@@ -3780,7 +3780,8 @@ var __privateMethod = (obj, member, method) => {
     usage: "texture",
     access: "write",
     fromTexture: null,
-    viewDimension: "2d"
+    viewDimension: "2d",
+    sampleCount: 1
   };
   class RenderTexture {
     /**
@@ -3843,6 +3844,7 @@ var __privateMethod = (obj, member, method) => {
         format: this.options.format,
         size: [this.size.width, this.size.height, this.size.depth],
         dimensions: this.options.viewDimension === "1d" ? "1d" : this.options.viewDimension === "3d" ? "3d" : "2d",
+        sampleCount: this.options.sampleCount,
         usage: (
           // TODO let user chose?
           // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
@@ -3863,7 +3865,7 @@ var __privateMethod = (obj, member, method) => {
           bindingType: this.options.usage,
           format: this.options.format,
           viewDimension: this.options.viewDimension,
-          ...this.options.usage === "depthTexture" && this.renderer.renderPass.options.sampleCount > 1 && { multisampled: true }
+          multisampled: this.options.sampleCount > 1
         })
       ];
     }
@@ -3875,8 +3877,16 @@ var __privateMethod = (obj, member, method) => {
       return this.bindings[0];
     }
     /**
+     * Force a {@link RenderTexture} to be recreated with the new size
+     * @param size - new {@link TextureSize | size} to set
+     */
+    forceResize(size) {
+      this.size = size;
+      this.createTexture();
+    }
+    /**
      * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
-     * @param size - the optional new {@link RectSize | size} to set
+     * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size = null) {
       if (!size) {
@@ -3889,8 +3899,7 @@ var __privateMethod = (obj, member, method) => {
       if (size.width === this.size.width && size.height === this.size.height && size.depth === this.size.depth) {
         return;
       }
-      this.size = size;
-      this.createTexture();
+      this.forceResize(size);
     }
     /**
      * Destroy our {@link RenderTexture}
@@ -5724,7 +5733,7 @@ struct VertexOutput {
           autoRender,
           ...meshParameters
         } = parameters;
-        meshParameters.sampleCount = this.renderer.renderPass.options.sampleCount;
+        meshParameters.sampleCount = meshParameters.sampleCount ?? this.renderer.renderPass.options.sampleCount;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
@@ -7664,10 +7673,10 @@ struct VSOutput {
      */
     constructor(renderer, {
       label = "Render Pass",
+      sampleCount = 4,
       loadOp = "clear",
       clearValue = [0, 0, 0, 0],
       targetFormat,
-      sampleCount = 4,
       depth = true,
       depthTexture,
       depthLoadOp = "clear",
@@ -7692,11 +7701,15 @@ struct VSOutput {
         depthClearValue
       };
       this.setClearValue(clearValue);
-      this.setSize(this.renderer.pixelRatioBoundingRect);
       if (this.options.depth) {
         this.createDepthTexture();
       }
-      this.createRenderTexture();
+      this.viewTexture = new RenderTexture(this.renderer, {
+        label: this.options.label + " view texture",
+        name: "viewTexture",
+        format: this.options.targetFormat,
+        sampleCount: this.options.sampleCount
+      });
       this.setRenderPassDescriptor();
     }
     /**
@@ -7707,45 +7720,39 @@ struct VSOutput {
         this.depthTexture = this.options.depthTexture;
         return;
       }
-      this.depthTexture = this.renderer.createTexture({
-        label: this.options.label + " depth attachment texture",
-        size: [this.size.width, this.size.height],
+      this.depthTexture = new RenderTexture(this.renderer, {
+        label: this.options.label + " depth texture",
+        name: "depthTexture",
+        usage: "depthTexture",
         format: "depth24plus",
-        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
         sampleCount: this.options.sampleCount
-      });
-    }
-    /**
-     * Set our {@link renderTexture | render texture}
-     */
-    createRenderTexture() {
-      this.renderTexture = this.renderer.createTexture({
-        label: this.options.label + " color attachment texture",
-        size: [this.size.width, this.size.height],
-        sampleCount: this.options.sampleCount,
-        format: this.options.targetFormat,
-        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING
       });
     }
     /**
      * Reset our {@link depthTexture | depth texture}
      */
     resetRenderPassDepth() {
-      if (!this.options.depthTexture && this.depthTexture) {
-        this.depthTexture.destroy();
-      }
-      this.createDepthTexture();
-      this.descriptor.depthStencilAttachment.view = this.depthTexture.createView();
+      this.depthTexture.forceResize({
+        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+        depth: 1
+      });
+      this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
+        label: this.depthTexture.options.label + " view"
+      });
     }
     /**
-     * Reset our {@link renderTexture | render texture}
+     * Reset our {@link viewTexture | view texture}
      */
     resetRenderPassView() {
-      if (this.renderTexture) {
-        this.renderTexture.destroy();
-      }
-      this.createRenderTexture();
-      this.descriptor.colorAttachments[0].view = this.renderTexture.createView();
+      this.viewTexture.forceResize({
+        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+        depth: 1
+      });
+      this.descriptor.colorAttachments[0].view = this.viewTexture.texture.createView({
+        label: this.viewTexture.options.label + " view"
+      });
     }
     /**
      * Set our render pass {@link descriptor}
@@ -7756,7 +7763,14 @@ struct VSOutput {
         colorAttachments: [
           {
             // view: <- to be filled out when we set our render pass view
-            view: this.renderTexture.createView(),
+            view: this.viewTexture.texture.createView({
+              label: this.viewTexture.options.label + " view"
+            }),
+            // ...(this.options.sampleCount > 1 && {
+            //   resolveTarget: this.resolveTexture.texture.createView({
+            //     label: this.resolveTexture.options.label + ' view',
+            //   }),
+            // }),
             // clear values
             clearValue: this.options.clearValue,
             // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
@@ -7770,7 +7784,9 @@ struct VSOutput {
         ],
         ...this.options.depth && {
           depthStencilAttachment: {
-            view: this.depthTexture.createView(),
+            view: this.depthTexture.texture.createView({
+              label: this.depthTexture.options.label + " view"
+            }),
             depthClearValue: this.options.depthClearValue,
             // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
             depthLoadOp: this.options.depthLoadOp,
@@ -7780,21 +7796,9 @@ struct VSOutput {
       };
     }
     /**
-     * Set our render pass {@link size}
-     * @param boundingRect - {@link DOMElementBoundingRect | bounding rectangle} from which to get the width and height
+     * Resize our {@link RenderPass}: reset its {@link RenderTexture}
      */
-    setSize(boundingRect) {
-      this.size = {
-        width: Math.floor(boundingRect.width),
-        height: Math.floor(boundingRect.height)
-      };
-    }
-    /**
-     * Resize our {@link RenderPass}: set its size and recreate the textures
-     * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
-     */
-    resize(boundingRect) {
-      this.setSize(boundingRect);
+    resize() {
       if (this.options.depth)
         this.resetRenderPassDepth();
       this.resetRenderPassView();
@@ -7843,9 +7847,11 @@ struct VSOutput {
      * Destroy our {@link RenderPass}
      */
     destroy() {
-      var _a, _b;
-      (_a = this.renderTexture) == null ? void 0 : _a.destroy();
-      (_b = this.depthTexture) == null ? void 0 : _b.destroy();
+      var _a;
+      (_a = this.viewTexture) == null ? void 0 : _a.destroy();
+      if (!this.options.depthTexture && this.depthTexture) {
+        this.depthTexture.destroy();
+      }
     }
   }
   class RenderTarget {
@@ -7876,7 +7882,7 @@ struct VSOutput {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
         targetFormat: this.options.targetFormat,
         depthTexture: this.renderer.renderPass.depthTexture,
-        // always use one depth texture for everything
+        // reuse renderer depth texture for every pass
         ...renderPassParams
       });
       this.renderTexture = new RenderTexture(this.renderer, {
@@ -7910,11 +7916,10 @@ struct VSOutput {
      */
     resize(boundingRect) {
       var _a, _b;
-      this.renderPass.options.depthTexture = this.renderer.renderPass.depthTexture;
-      (_a = this.renderPass) == null ? void 0 : _a.resize(boundingRect);
+      this.renderPass.options.depthTexture.texture = this.renderer.renderPass.depthTexture.texture;
+      (_a = this.renderPass) == null ? void 0 : _a.resize();
       (_b = this.renderTexture) == null ? void 0 : _b.resize();
     }
-    // alias
     /**
      * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
      */
@@ -8965,6 +8970,7 @@ struct VSOutput {
       pixelRatio = 1,
       preferredFormat,
       alphaMode = "premultiplied",
+      multisampled = true,
       renderPass
     }) {
       var _a;
@@ -8986,6 +8992,7 @@ struct VSOutput {
         pixelRatio,
         preferredFormat,
         alphaMode,
+        multisampled,
         renderPass
       };
       this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
@@ -9041,8 +9048,8 @@ struct VSOutput {
      */
     onResize() {
       var _a, _b;
-      (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
-      (_b = this.postProcessingPass) == null ? void 0 : _b.resize(this.pixelRatioBoundingRect);
+      (_a = this.renderPass) == null ? void 0 : _a.resize();
+      (_b = this.postProcessingPass) == null ? void 0 : _b.resize();
       this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
       this.renderTextures.forEach((renderTexture) => renderTexture.resize());
       this.computePasses.forEach((computePass) => computePass.resize());
@@ -9174,7 +9181,7 @@ struct VSOutput {
       this.context = this.canvas.getContext("webgpu");
       if (this.device) {
         this.configureContext();
-        this.setMainRenderPass();
+        this.setMainRenderPasses();
         this.setScene();
       }
     }
@@ -9193,17 +9200,23 @@ struct VSOutput {
     restoreContext() {
       var _a, _b;
       this.configureContext();
-      (_a = this.renderPass) == null ? void 0 : _a.resize(this.pixelRatioBoundingRect);
-      (_b = this.postProcessingPass) == null ? void 0 : _b.resize(this.pixelRatioBoundingRect);
+      this.renderTextures.forEach((renderTexture) => {
+        renderTexture.forceResize({
+          width: Math.floor(this.pixelRatioBoundingRect.width),
+          height: Math.floor(this.pixelRatioBoundingRect.height),
+          depth: 1
+        });
+      });
+      (_a = this.renderPass) == null ? void 0 : _a.resize();
+      (_b = this.postProcessingPass) == null ? void 0 : _b.resize();
       this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
-      this.renderTextures.forEach((renderTexture) => renderTexture.createTexture());
       this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
     /**
      * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
      */
-    setMainRenderPass() {
+    setMainRenderPasses() {
       this.renderPass = new RenderPass(this, {
         label: "Main render pass",
         targetFormat: this.options.preferredFormat,
@@ -9577,7 +9590,7 @@ struct VSOutput {
     }
     /* RENDER */
     /**
-     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} or {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
      * @param renderPass - current {@link RenderPass}
      * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
      * @returns - the {@link GPUTexture | current render texture}
@@ -9588,9 +9601,16 @@ struct VSOutput {
         renderTexture.label = `${this.type} context current texture`;
       }
       if (renderPass.options.sampleCount > 1) {
-        renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView();
+        renderPass.descriptor.colorAttachments[0].view = renderPass.viewTexture.texture.createView({
+          label: renderPass.viewTexture.options.label + " view"
+        });
+        renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
+          label: renderTexture.label + " resolve target view"
+        });
       } else {
-        renderPass.descriptor.colorAttachments[0].view = renderTexture.createView();
+        renderPass.descriptor.colorAttachments[0].view = renderTexture.createView({
+          label: renderTexture.label + " view"
+        });
       }
       return renderTexture;
     }
@@ -9708,6 +9728,7 @@ struct VSOutput {
       pixelRatio = 1,
       preferredFormat,
       alphaMode = "premultiplied",
+      multisampled = true,
       renderPass,
       camera = {}
     }) {
@@ -9717,6 +9738,7 @@ struct VSOutput {
         pixelRatio,
         preferredFormat,
         alphaMode,
+        multisampled,
         renderPass
       });
       this.type = "GPUCameraRenderer";
@@ -10226,6 +10248,7 @@ struct VSOutput {
       pixelRatio = 1,
       preferredFormat,
       alphaMode = "premultiplied",
+      multisampled = true,
       renderPass,
       camera
     }) {
@@ -10236,6 +10259,7 @@ struct VSOutput {
         preferredFormat,
         alphaMode,
         renderPass,
+        multisampled,
         camera
       });
       this.type = "GPUCurtainsRenderer";
@@ -10311,6 +10335,7 @@ struct VSOutput {
       preferredFormat,
       alphaMode = "premultiplied",
       production = false,
+      multisampled = true,
       renderPass,
       camera,
       autoRender = true,
@@ -10333,6 +10358,7 @@ struct VSOutput {
         production,
         preferredFormat,
         alphaMode,
+        multisampled,
         renderPass,
         autoRender,
         autoResize,
@@ -10382,6 +10408,7 @@ struct VSOutput {
         pixelRatio: this.options.pixelRatio,
         preferredFormat: this.options.preferredFormat,
         alphaMode: this.options.alphaMode,
+        multisampled: this.options.multisampled,
         renderPass: this.options.renderPass,
         camera: this.options.camera
       });
