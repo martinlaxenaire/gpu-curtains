@@ -80,7 +80,7 @@ fn main(
 }
 `
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
@@ -183,6 +183,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     textures: [blurredTexture],
   })
 
+  // this is another way to do it
   // const blurredTexture = shaderPass.createRenderTexture({
   //   label: 'Blur render texture',
   //   name: 'blurredTexture',

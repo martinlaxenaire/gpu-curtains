@@ -4,6 +4,7 @@ import { RenderTarget } from './RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin'
 import { RenderTexture } from '../textures/RenderTexture'
+import default_pass_fsWGSl from '../shaders/chunks/default_pass_fs.wgsl'
 
 /**
  * Parameters used to create a {@link ShaderPass}
@@ -49,7 +50,7 @@ export class ShaderPass extends FullscreenPlane {
    * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
    * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
    */
-  constructor(renderer: Renderer | GPUCurtains, parameters: ShaderPassParams) {
+  constructor(renderer: Renderer | GPUCurtains, parameters: ShaderPassParams = {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
 
@@ -58,6 +59,20 @@ export class ShaderPass extends FullscreenPlane {
     // force transparency to allow for correct blending between successive passes
     parameters.transparent = true
     parameters.label = parameters.label ?? 'ShaderPass ' + renderer.shaderPasses?.length
+
+    if (!parameters.shaders) {
+      parameters.shaders = {}
+    }
+
+    if (!parameters.shaders.fragment) {
+      parameters.shaders.fragment = {
+        code: default_pass_fsWGSl,
+        entryPoint: 'main',
+      }
+    }
+
+    // force the post processing passes to not use depth
+    parameters.depth = false
 
     super(renderer, parameters)
 

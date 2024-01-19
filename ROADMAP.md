@@ -25,10 +25,9 @@
 
 ## Work in progress
 
-- Errors / warning handling
-- Context lost handling
 - Examples & tests
 - Documentation (typedoc)
+- Build tool
 
 ## TODO
 

@@ -14,6 +14,8 @@ export interface TextureBindingParams extends BindingParams {
     access?: BindingMemoryAccessType;
     /** The {@link GPUTexture | texture} view dimension to use */
     viewDimension?: GPUTextureViewDimension;
+    /** Whethe the {@link GPUTexture | texture} is a multisampled texture. Mainly used internally by depth textures if needed. */
+    multisampled?: boolean;
 }
 /**
  * Used to handle {@link GPUTexture} and {@link GPUExternalTexture} bindings.
@@ -32,7 +34,7 @@ export declare class TextureBinding extends Binding {
      * TextureBinding constructor
      * @param parameters - {@link TextureBindingParams | parameters} used to create our {@link TextureBinding}
      */
-    constructor({ label, name, bindingType, visibility, texture, format, access, viewDimension, }: TextureBindingParams);
+    constructor({ label, name, bindingType, visibility, texture, format, access, viewDimension, multisampled, }: TextureBindingParams);
     /**
      * Get bind group layout entry resource, either for {@link GPUBindGroupLayoutEntry#texture | texture} or {@link GPUBindGroupLayoutEntry#externalTexture | external texture}
      * @readonly

@@ -68,6 +68,7 @@ const defaultMeshBaseParams: MeshBaseParams = {
   useProjection: false,
   // rendering
   cullMode: 'back',
+  depth: true,
   depthWriteEnabled: true,
   depthCompare: 'less',
   transparent: false,
@@ -473,6 +474,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ...meshParameters
       } = parameters
 
+      // set default sample count
+      meshParameters.sampleCount = meshParameters.sampleCount ?? this.renderer.renderPass.options.sampleCount
+
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
         label: label ?? 'Mesh ' + this.renderer.meshes.length,
@@ -539,6 +543,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     addToScene() {
       this.renderer.meshes.push(this as unknown as ProjectedMesh)
 
+      // update sample count if needed
+      this.material?.setRenderingOptions({
+        sampleCount: this.renderTarget
+          ? this.renderTarget.renderPass.options.sampleCount
+          : this.renderer.renderPass.options.sampleCount,
+      })
+
       if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
       }
@@ -592,6 +603,23 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           { once: true }
         )
       }
+    }
+
+    /**
+     * Assign or remove a {@link RenderTarget} to this Mesh
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     */
+    setRenderTarget(renderTarget: RenderTarget | null) {
+      if (renderTarget && renderTarget.type !== 'RenderTarget') {
+        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
+        return
+      }
+
+      // ensure the mesh is in the correct scene stack
+      this.removeFromScene()
+      this.renderTarget = renderTarget
+      this.addToScene()
     }
 
     /**
@@ -719,7 +747,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.material = new RenderMaterial(this.renderer, meshParameters)
       // add eventual textures passed as parameters
-      this.material.options.textures?.forEach((texture) => this.onTextureAdded(texture))
+      this.material.options.textures
+        ?.filter((texture) => texture instanceof Texture)
+        .forEach((texture) => this.onTextureAdded(texture))
     }
 
     /**
@@ -812,23 +842,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.material.addTexture(renderTexture)
     }
 
-    /**
-     * Assign or remove a {@link RenderTarget} to this Mesh
-     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
-     */
-    setRenderTarget(renderTarget: RenderTarget | null) {
-      if (renderTarget && renderTarget.type !== 'RenderTarget') {
-        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
-        return
-      }
-
-      // ensure the mesh is in the correct scene stack
-      this.removeFromScene()
-      this.renderTarget = renderTarget
-      this.addToScene()
-    }
-
     /* BINDINGS */
 
     /**
@@ -854,7 +867,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     resizeRenderTextures() {
       this.renderTextures
-        ?.filter((renderTexture) => renderTexture.options.usage === 'texture')
+        ?.filter((renderTexture) => renderTexture.options.usage !== 'storageTexture')
         .forEach((renderTexture) => renderTexture.resize())
     }
 

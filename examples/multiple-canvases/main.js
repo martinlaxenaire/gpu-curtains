@@ -1,6 +1,6 @@
-import { GPUCurtains, PlaneGeometry, Sampler, Plane } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, Plane } from '../../dist/gpu-curtains.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // first dynamically build the planes elements
   const buildPlaneHTMLElement = (index) => {
     const isFront = Math.random() > 0.5
@@ -8,6 +8,7 @@ window.addEventListener('DOMContentLoaded', async () => {
           <img
             src="https://source.unsplash.com/featured/720x720/?nature&${index}"
             crossorigin=""
+            loading="lazy"
             data-texture-name="planeTexture"
           />
         </div>`
@@ -45,7 +46,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     .onRender(() => {
       // update our planes deformation
       // increase/decrease the effect
-      scrollEffect = lerp(scrollEffect, 0, 0.075)
+      scrollEffect = lerp(scrollEffect, 0, 0.1)
     })
     .onScroll(() => {
       // get scroll deltas to apply the effect on scroll
@@ -148,11 +149,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     // notice that gpuCurtains.renderer matches the default renderer created by the GPUCurtains instance
     const plane = new Plane(gpuCurtains.renderer, planeEl, params)
 
-    plane.position.z = Math.random() * 3 // allow for an easy parallax effect
+    plane.position.z = Math.sqrt(Math.random()) * 2.5 // allow for an easy parallax effect
 
     plane.onRender(() => {
       // update the uniform
-      plane.uniforms.deformation.strength.value = scrollEffect
+      plane.uniforms.deformation.strength.value = Math.abs(scrollEffect)
     })
   })
 
@@ -162,11 +163,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     params.label = 'Back plane ' + index
     const plane = new Plane(backCurtainsRenderer, planeEl, params)
 
-    plane.position.z = -3 * Math.random() // allow for an easy parallax effect
+    plane.position.z = -2.5 * Math.sqrt(Math.random()) // allow for an easy parallax effect
 
     plane.onRender(() => {
       // update the uniform
-      plane.uniforms.deformation.strength.value = scrollEffect
+      plane.uniforms.deformation.strength.value = -Math.abs(scrollEffect)
     })
   })
 })

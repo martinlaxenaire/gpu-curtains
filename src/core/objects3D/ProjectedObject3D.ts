@@ -25,7 +25,6 @@ export class ProjectedObject3D extends Object3D {
    */
   constructor(renderer: CameraRenderer | GPUCurtains) {
     super()
-    // TODO just use the Camera instead?
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
 

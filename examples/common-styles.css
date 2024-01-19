@@ -2,14 +2,17 @@
 
 @media screen {
   :root {
+    --script-font: 'Permanent Marker', sans-serif;
     --text-font: 'Montserrat', Verdana, sans-serif;
-    --font-size: 18px;
 
     --light-color: #ffffff;
     --dark-color: #222222;
     --dark-color-rgb: 34, 34, 34;
-    /*--primary-color: #ee6557;*/
+
     --primary-color: #00ffff;
+    --primary-color-rgb: 0, 255, 255;
+    --secondary-color: #ff00ff;
+    --secondary-color-rgb: 255, 0, 255;
   }
 
   /*** layout ***/
@@ -46,6 +49,10 @@
 
   a {
     color: inherit;
+  }
+
+  a:hover {
+    text-decoration: none;
   }
 
   .large-container {
@@ -94,15 +101,14 @@
 
   .primary-button {
     display: inline-block;
-    padding: 0.375em 0.75em;
-    border-radius: 1.075em;
+    padding: 0.225em 0.5em 0.275em 0.5em;
+    border-radius: 1.05em;
     box-sizing: border-box;
-    /*background: var(--primary-color);
-    color: var(--light-color);*/
-
+    font-family: var(--text-font);
     background: rgba(var(--dark-color-rgb), 0.75);
     color: var(--primary-color);
     border: 2px solid var(--primary-color);
+    transition: background 0.3s linear, border-color 0.3s linear, color 0.3s linear;
   }
 
   a.primary-button {
@@ -111,7 +117,6 @@
 
   button.primary-button {
     cursor: pointer;
-    /*border: inherit;*/
     font: inherit;
   }
 
@@ -122,24 +127,12 @@
     border-color: var(--light-color);
   }
 
-  #back-to-lib-link {
-    position: fixed;
-    top: 0;
-    right: 0;
-    z-index: 1;
-    font-size: 0.85em;
-    /** temp **/
-    display: none;
-  }
-
   #source-code-link {
     position: fixed;
     bottom: 1em;
     right: 1em;
     font-weight: bold;
     z-index: 1;
-    /** temp **/
-    display: none;
   }
 
   /*** overlay titles ***/
@@ -171,7 +164,7 @@
     top: 0;
     left: 0;
     height: 100vh;
-    height: 100svh;
+    height: 100lvh;
     width: 100vw;
   }
 }

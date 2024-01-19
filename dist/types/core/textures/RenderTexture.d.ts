@@ -28,6 +28,8 @@ export interface RenderTextureBaseParams {
     access?: BindingMemoryAccessType;
     /** Optional {@link RenderTexture#texture | texture} view dimension to use */
     viewDimension?: GPUTextureViewDimension;
+    /** Sample count of the {@link RenderTexture#texture | texture}, used for multisampling */
+    sampleCount?: GPUSize32;
 }
 /**
  * Parameters used to create a {@link RenderTexture}
@@ -87,6 +89,11 @@ export declare class RenderTexture {
      */
     copy(texture: RenderTexture | Texture): void;
     /**
+     * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
+     * @param texture - {@link GPUTexture} to copy
+     */
+    copyGPUTexture(texture: GPUTexture): void;
+    /**
      * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
      */
     createTexture(): void;
@@ -100,8 +107,13 @@ export declare class RenderTexture {
      */
     get textureBinding(): TextureBinding;
     /**
+     * Force a {@link RenderTexture} to be recreated with the new size
+     * @param size - new {@link TextureSize | size} to set
+     */
+    forceResize(size: TextureSize): void;
+    /**
      * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
-     * @param size - the optional new {@link RectSize | size} to set
+     * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size?: TextureSize | null): void;
     /**

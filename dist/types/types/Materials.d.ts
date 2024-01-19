@@ -6,7 +6,6 @@ import { RenderTexture } from '../core/textures/RenderTexture';
 import { Sampler } from '../core/samplers/Sampler';
 import { Geometry } from '../core/geometries/Geometry';
 import { IndexedGeometry } from '../core/geometries/IndexedGeometry';
-import { PlaneGeometry } from '../core/geometries/PlaneGeometry';
 /** Shaders types that can be used by a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
 export type RenderMaterialShadersType = 'vertex' | 'fragment';
 /** Shaders types that can be used by a {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial} */
@@ -93,7 +92,7 @@ export interface RenderMaterialAttributes {
     vertexBuffers?: Geometry['vertexBuffers'];
 }
 /** Defines all basic allowed geometries */
-export type AllowedGeometries = Geometry | IndexedGeometry | PlaneGeometry;
+export type AllowedGeometries = Geometry | IndexedGeometry;
 /**
  * Base rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline}
  */
@@ -102,6 +101,8 @@ export interface RenderMaterialBaseRenderingOptions {
     useProjection: boolean;
     /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#blend | blend property} */
     transparent: boolean;
+    /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should write to the depth buffer */
+    depth: boolean;
     /** Whether this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should enable depth write */
     depthWriteEnabled: boolean;
     /** Depth function to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
@@ -112,6 +113,8 @@ export interface RenderMaterialBaseRenderingOptions {
     blend?: GPUBlendState;
     /** Optional texture format of the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} color target. Default to the renderer preferred format. */
     targetFormat: GPUTextureFormat;
+    /** The {@link core/renderPasses/RenderPass.RenderPassParams#sampleCount | sampleCount} of the {@link core/renderPasses/RenderPass.RenderPass | RenderPass} onto which we'll be drawing. Set internally. */
+    sampleCount: GPUSize32;
 }
 /** Rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
 export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRenderingOptions {

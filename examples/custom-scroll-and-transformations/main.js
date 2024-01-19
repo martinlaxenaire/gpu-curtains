@@ -1,11 +1,12 @@
 import { GPUCurtains, Vec2, Sampler, Plane } from '../../dist/gpu-curtains.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   const buildPlaneHTMLElement = (index) => {
     return `<div class="plane">
           <img
             src="https://source.unsplash.com/featured/720x720/?nature&${index}"
             crossorigin=""
+            loading="lazy"
             data-texture-name="planeTexture"
           />
         </div>`

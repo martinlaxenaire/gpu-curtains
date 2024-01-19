@@ -1,6 +1,6 @@
 import { GPUCurtains, BoxGeometry, SphereGeometry, Mesh } from '../../src/index.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   const stats = new Stats()
 
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom

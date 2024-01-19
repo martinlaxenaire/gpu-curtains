@@ -42,6 +42,9 @@ export class GPUCameraRenderer extends GPURenderer {
   /** {@link BindGroup | bind group} handling the {@link cameraBufferBinding | camera buffer binding} */
   cameraBindGroup: BindGroup
 
+  /** Options used to create this {@link GPUCameraRenderer} */
+  options: GPUCameraRendererParams
+
   /**
    * GPUCameraRenderer constructor
    * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
@@ -50,23 +53,31 @@ export class GPUCameraRenderer extends GPURenderer {
     deviceManager,
     container,
     pixelRatio = 1,
-    sampleCount = 4,
     preferredFormat,
     alphaMode = 'premultiplied',
+    multisampled = true,
+    renderPass,
     camera = {},
   }: GPUCameraRendererParams) {
     super({
       deviceManager,
       container,
       pixelRatio,
-      sampleCount,
       preferredFormat,
       alphaMode,
+      multisampled,
+      renderPass,
     })
 
     this.type = 'GPUCameraRenderer'
 
     camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera }
+
+    this.options = {
+      ...this.options,
+      camera,
+    }
+
     this.setCamera(camera)
   }
 

@@ -1,28 +1,32 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { DOMElementBoundingRect, RectSize } from '../DOM/DOMElement';
+import { RenderTexture } from '../textures/RenderTexture';
 /**
- * Options used to create this {@link RenderPass}
+ * Parameters used to create this {@link RenderPass}
  */
-export interface RenderPassOptions {
+export interface RenderPassParams {
     /** The label of the {@link RenderPass}, sent to various GPU objects for debugging purpose */
-    label: string;
-    /** Whether this {@link RenderPass} should handle a depth texture */
-    depth: boolean;
+    label?: string;
     /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
-    loadOp: GPULoadOp;
+    loadOp?: GPULoadOp;
     /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
-    clearValue: GPUColor;
+    clearValue?: GPUColor;
     /** Optional format of the color attachment texture */
     targetFormat: GPUTextureFormat;
+    /** Whether the {@link RenderPass#viewTexture | view texture} should use multisampling or not */
+    sampleCount?: GPUSize32;
+    /** Whether this {@link RenderPass} should handle a depth texture */
+    depth?: boolean;
+    /** Whether this {@link RenderPass} should use an already created depth texture */
+    depthTexture?: RenderTexture;
+    /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
+    depthLoadOp?: GPULoadOp;
+    /** The depth clear value to clear to before drawing this {@link RenderPass} */
+    depthClearValue?: GPURenderPassDepthStencilAttachment['depthClearValue'];
 }
 /**
- * Parameters used to create a {@link RenderPass}
- */
-export type RenderPassParams = Partial<RenderPassOptions>;
-/**
- * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#renderTexture | renderTexture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
+ * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#viewTexture | view texture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
  */
 export declare class RenderPass {
     /** {@link Renderer} used by this {@link RenderPass} */
@@ -32,15 +36,12 @@ export declare class RenderPass {
     /** The universal unique id of this {@link RenderPass} */
     readonly uuid: string;
     /** Options used to create this {@link RenderPass} */
-    options: RenderPassOptions;
-    /** Size of the textures sources */
-    size: RectSize;
-    /** Whether the {@link Renderer} is using multisampling */
-    sampleCount: Renderer['sampleCount'];
-    /** Depth {@link GPUTexture} to use with this {@link RenderPass} if it handles depth */
-    depthTexture: GPUTexture | undefined;
-    /** Render {@link GPUTexture} to use with this {@link RenderPass} */
-    renderTexture: GPUTexture;
+    options: RenderPassParams;
+    /** Depth {@link RenderTexture} to use with this {@link RenderPass} if it should handle depth */
+    depthTexture: RenderTexture | undefined;
+    /** Color attachment {@link RenderTexture} to use with this {@link RenderPass} */
+    viewTexture: RenderTexture;
+    /** Resolve {@link RenderTexture} to use with this {@link RenderPass} if it is using multisampling */
     /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
     descriptor: GPURenderPassDescriptor;
     /**
@@ -48,21 +49,17 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, depth, loadOp, clearValue, targetFormat, }?: Partial<RenderPassOptions>);
+    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, loadOp, clearValue, targetFormat, depth, depthTexture, depthLoadOp, depthClearValue, }?: RenderPassParams);
     /**
      * Set our {@link depthTexture | depth texture}
      */
     createDepthTexture(): void;
     /**
-     * Set our {@link renderTexture | render texture}
-     */
-    createRenderTexture(): void;
-    /**
      * Reset our {@link depthTexture | depth texture}
      */
     resetRenderPassDepth(): void;
     /**
-     * Reset our {@link renderTexture | render texture}
+     * Reset our {@link viewTexture | view texture}
      */
     resetRenderPassView(): void;
     /**
@@ -70,22 +67,22 @@ export declare class RenderPass {
      */
     setRenderPassDescriptor(): void;
     /**
-     * Set our render pass {@link size}
-     * @param boundingRect - {@link DOMElementBoundingRect | bounding rectangle} from which to get the width and height
+     * Resize our {@link RenderPass}: reset its {@link RenderTexture}
      */
-    setSize(boundingRect: DOMElementBoundingRect): void;
+    resize(): void;
     /**
-     * Resize our {@link RenderPass}: set its size and recreate the textures
-     * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
-     */
-    resize(boundingRect: DOMElementBoundingRect): void;
-    /**
-     * Set our {@link GPULoadOp | load operation}
+     * Set the {@link descriptor} {@link GPULoadOp | load operation}
      * @param loadOp - new {@link GPULoadOp | load operation} to use
      */
     setLoadOp(loadOp?: GPULoadOp): void;
     /**
-     * Set our {@link GPUColor | clear colors value}
+     * Set the {@link descriptor} {@link GPULoadOp | depth load operation}
+     * @param depthLoadOp - new {@link GPULoadOp | depth load operation} to use
+     */
+    setDepthLoadOp(depthLoadOp?: GPULoadOp): void;
+    /**
+     * Set our {@link GPUColor | clear colors value}.<br>
+     * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
      * @param clearValue - new {@link GPUColor | clear colors value} to use
      */
     setClearValue(clearValue?: GPUColor): void;

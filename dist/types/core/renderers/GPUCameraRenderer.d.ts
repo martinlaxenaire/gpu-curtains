@@ -40,11 +40,13 @@ export declare class GPUCameraRenderer extends GPURenderer {
     cameraBufferBinding: BufferBinding;
     /** {@link BindGroup | bind group} handling the {@link cameraBufferBinding | camera buffer binding} */
     cameraBindGroup: BindGroup;
+    /** Options used to create this {@link GPUCameraRenderer} */
+    options: GPUCameraRendererParams;
     /**
      * GPUCameraRenderer constructor
      * @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, sampleCount, preferredFormat, alphaMode, camera, }: GPUCameraRendererParams);
+    constructor({ deviceManager, container, pixelRatio, preferredFormat, alphaMode, multisampled, renderPass, camera, }: GPUCameraRendererParams);
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
      * Reset all our samplers, force all our scene objects and camera bind group to lose context.

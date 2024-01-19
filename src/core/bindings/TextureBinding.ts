@@ -16,6 +16,8 @@ export interface TextureBindingParams extends BindingParams {
   access?: BindingMemoryAccessType
   /** The {@link GPUTexture | texture} view dimension to use */
   viewDimension?: GPUTextureViewDimension
+  /** Whethe the {@link GPUTexture | texture} is a multisampled texture. Mainly used internally by depth textures if needed. */
+  multisampled?: boolean
 }
 
 /**
@@ -45,6 +47,7 @@ export class TextureBinding extends Binding {
     format = 'rgba8unorm',
     access = 'write',
     viewDimension = '2d',
+    multisampled = false,
   }: TextureBindingParams) {
     bindingType = bindingType ?? 'texture'
 
@@ -60,6 +63,7 @@ export class TextureBinding extends Binding {
       format,
       access,
       viewDimension,
+      multisampled,
     }
 
     this.resource = texture // should be a texture or an external texture

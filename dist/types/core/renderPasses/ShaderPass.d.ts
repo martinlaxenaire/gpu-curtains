@@ -46,7 +46,7 @@ export declare class ShaderPass extends FullscreenPlane {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
      * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, parameters: ShaderPassParams);
+    constructor(renderer: Renderer | GPUCurtains, parameters?: ShaderPassParams);
     /**
      * Get our main {@link RenderTexture}, the one that contains our post processed content
      * @readonly

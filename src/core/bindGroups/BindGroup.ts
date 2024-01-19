@@ -418,10 +418,17 @@ export class BindGroup {
     const needsReset = this.bindings.some((binding) => binding.shouldResetBindGroup)
     const resetBindGroupLayout = this.bindings.some((binding) => binding.shouldResetBindGroupLayout)
 
-    this.bindings.forEach((binding) => {
-      binding.shouldResetBindGroup = false
-      binding.shouldResetBindGroupLayout = false
-    })
+    // since other bind groups might be using that binding
+    // wait for the end of the render loop to reset the bindings flags
+    this.renderer.onAfterCommandEncoderSubmission.add(
+      () => {
+        this.bindings.forEach((binding) => {
+          binding.shouldResetBindGroup = false
+          binding.shouldResetBindGroupLayout = false
+        })
+      },
+      { once: true }
+    )
 
     if (resetBindGroupLayout) {
       this.resetBindGroupLayout()

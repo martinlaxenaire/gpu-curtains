@@ -1,6 +1,6 @@
 import { GPUCurtains, Sampler, RenderTarget, Plane, ShaderPass } from '../../dist/gpu-curtains.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // lerp
   const lerp = (start = 0, end = 1, amount = 0.1) => {
     return (1 - amount) * start + amount * end
@@ -12,6 +12,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    renderPass: {
+      //sampleCount: 1,
+    },
   })
 
   await gpuCurtains.setDevice()
@@ -40,8 +43,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       // display original images
       document.body.classList.add('no-curtains')
     })
-
-  console.log(gpuCurtains)
 
   // We don't want to see our pass texture top/bottom edges
   // so we're going to use a custom sampler with mirror repeat
@@ -82,7 +83,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   `
 
   // first we're going to render large planes into a grayscale pass
-  const grayscaleTarget = new RenderTarget(gpuCurtains, { label: 'Large planes distortion render target' })
+  const grayscaleTarget = new RenderTarget(gpuCurtains, {
+    label: 'Large planes distortion render target',
+    //sampleCount: 1,
+  })
 
   const largePlaneEls = document.querySelectorAll('.large-plane')
   largePlaneEls.forEach((largePlaneEl, index) => {
@@ -149,14 +153,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     grayscalePass.uniforms.scrollEffect.strength.value = scrollEffect
   })
 
-  // setTimeout(() => {
-  //   grayscalePass.remove()
-  //   console.log(gpuCurtains.renderer.scene)
-  // }, 5000)
-
   // now render the small planes into a RGB shift pass
   const rgbShiftTarget = new RenderTarget(gpuCurtains, {
     label: 'Small planes RGB render target',
+    //sampleCount: 1,
   })
 
   const smallPlaneEls = document.querySelectorAll('.small-plane')

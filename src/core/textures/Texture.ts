@@ -17,6 +17,7 @@ const defaultTextureParams: TextureParams = {
   generateMips: false,
   flipY: false,
   format: 'rgba8unorm',
+  premultipliedAlpha: true,
   placeholderColor: [0, 0, 0, 255], // default to black
   useExternalTextures: true,
   fromTexture: null,
@@ -160,7 +161,6 @@ export class Texture extends Object3D {
           name: this.options.name + 'Matrix',
           type: 'mat4x4f',
           value: this.modelMatrix,
-          //onBeforeUpdate: () => this.updateTextureMatrix(),
         },
       },
     })
@@ -412,6 +412,7 @@ export class Texture extends Object3D {
     this.options.generateMips = texture.options.generateMips
     this.options.flipY = texture.options.flipY
     this.options.format = texture.options.format
+    this.options.premultipliedAlpha = texture.options.premultipliedAlpha
     this.options.placeholderColor = texture.options.placeholderColor
     this.options.useExternalTextures = texture.options.useExternalTextures
 
@@ -558,7 +559,7 @@ export class Texture extends Object3D {
       if (this.options.useExternalTextures) {
         this.options.sourceType = 'externalVideo'
 
-        // texture struct will be set when uploading external texture
+        // texture binding will be set when uploading external texture
         // meanwhile, destroy previous texture
         this.texture?.destroy()
       } else {

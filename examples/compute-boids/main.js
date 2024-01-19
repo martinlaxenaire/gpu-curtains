@@ -9,7 +9,12 @@ import {
 } from '../../dist/gpu-curtains.js'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
+  // lerp
+  const lerp = (start = 0, end = 1, amount = 0.1) => {
+    return (1 - amount) * start + amount * end
+  }
+
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
@@ -48,6 +53,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var vPos = particlesA[index].position;
       var vVel = particlesA[index].velocity;
       
+      var mouseVel = vec2(0.0);
       var cMass = vec2(0.0);
       var cVel = vec2(0.0);
       var colVel = vec2(0.0);
@@ -58,6 +64,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       var minSystemSize: f32 = min(params.systemSize.x, params.systemSize.y);
       
       var particlesArrayLength = arrayLength(&particlesA);
+      
+      if(distance(vPos, params.mousePosition) < minSystemSize * params.mouseRadius) {
+        mouseVel += (vPos - params.mousePosition) * params.mouseVelocity * minSystemSize;
+      } 
     
       for (var i = 0u; i < particlesArrayLength; i++) {
         if (i == index) {
@@ -88,9 +98,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
       
       vVel += (cMass * params.rule1Scale) + (colVel * params.rule2Scale) + (cVel * params.rule3Scale);
-    
+
       // clamp velocity for a more pleasing simulation
       vVel = normalize(vVel) * clamp(length(vVel), 0.0, minSystemSize * 0.1);
+      
+      vVel += mouseVel;
       
       // kinematic update
       vPos = vec2(vPos + (vVel * params.deltaT));
@@ -156,6 +168,18 @@ window.addEventListener('DOMContentLoaded', async () => {
       rule3Scale: {
         type: 'f32',
         value: 0.005,
+      },
+      mousePosition: {
+        type: 'vec2f',
+        value: new Vec2(),
+      },
+      mouseVelocity: {
+        type: 'f32',
+        value: 0,
+      },
+      mouseRadius: {
+        type: 'f32',
+        value: 0.25,
       },
     },
   })
@@ -245,6 +269,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       // useful to get the WGSL struct and variables code generated based on input struct
       console.log(computeBoidsPass.material.getAddedShaderCode('compute'))
     })
+    .onRender(() => {
+      computeBoidsPass.uniforms.params.mouseVelocity.value = lerp(
+        computeBoidsPass.uniforms.params.mouseVelocity.value,
+        0,
+        0.5
+      )
+    })
     .onAfterResize(() => {
       const cameraRatio = gpuCurtains.camera.screenRatio.height * particleShrinkScale * 0.5
       const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
@@ -328,4 +359,22 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       instanceVertexBuffer.buffer = particleBuffer?.buffer
     })
+
+  // mouse interaction
+  const mousePosition = new Vec2(Infinity)
+  const lastMousePosition = mousePosition.clone()
+
+  window.addEventListener('pointermove', (e) => {
+    mousePosition.set(e.clientX / gpuCurtains.boundingRect.width, 1 - e.clientY / gpuCurtains.boundingRect.height)
+
+    computeBoidsPass.uniforms.params.mousePosition.value
+      .copy(mousePosition)
+      .multiplyScalar(2)
+      .addScalar(-1)
+      .multiply(systemSize)
+
+    computeBoidsPass.uniforms.params.mouseVelocity.value = mousePosition.clone().sub(lastMousePosition).length()
+
+    lastMousePosition.copy(mousePosition)
+  })
 })

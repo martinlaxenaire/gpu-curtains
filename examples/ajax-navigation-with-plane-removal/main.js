@@ -1,7 +1,7 @@
 import { getPageContent, isBackNavigation, onLinkNavigate, transitionHelper } from './view-transitions-api-utils.js'
 import { GPUCurtains, Texture, Plane } from '../../dist/gpu-curtains.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   const transitionDuration = 0.5 // in seconds
   document.documentElement.style.setProperty('--transition-duration', `${transitionDuration}s`)
 

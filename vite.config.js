@@ -6,7 +6,7 @@ export default defineConfig({
     lib: {
       entry: 'src',
       formats: ['es', 'umd'],
-      filename: 'gpu-curtains',
+      fileName: 'gpu-curtains',
       name: 'GPUCurtains',
     },
     emptyOutDir: false,
@@ -18,9 +18,6 @@ export default defineConfig({
       //   format: 'umd',
       //   name: 'window',
       // },
-      output: {
-        footer: '/*  test **/',
-      },
     },
   },
 })

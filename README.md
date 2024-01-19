@@ -10,6 +10,51 @@ Although it can theoretically be used as a genuine 3D engine, its main purpose i
 
 The project was initially conceived as a WebGPU port of [curtains.js](https://github.com/martinlaxenaire/curtainsjs). It turned out to be a complete rewrite of the library instead, but with a very similar API.
 
+## Usage
+
+You can directly download the files and start using the ES6 modules:
+
+#### ES modules
+
+```javascript
+import { GPUCurtains } from 'path/to/lib/gpu-curtains/dist/gpu-curtains.js'
+
+window.addEventListener('load', async () => {
+  // set our main GPUCurtains instance
+  // it will handle everything we need
+  // a WebGPU device and a renderer with its scene,
+  // requestAnimationFrame, resize and scroll events...
+  const gpuCurtains = new GPUCurtains({
+    container: '#canvas'
+  })
+
+  // set the GPU device
+  // note this is asynchronous
+  await gpuCurtains.setDevice()
+  
+  // now create some magic!
+})
+```
+
+Or you can use one of your favorite package manager:
+
+#### npm
+
+```
+npm i gpu-curtains
+```
+
+#### yarn
+
+```
+yarn add gpu-curtains
+```
+
+## Documentation and examples
+
+- [API documentation](https://martinlaxenaire.github.io/gpu-curtains/docs/)
+- [Official examples](https://martinlaxenaire.github.io/gpu-curtains/examples/)
+
 ## Basic example
 
 ### HTML
@@ -25,21 +70,20 @@ The project was initially conceived as a WebGPU port of [curtains.js](https://gi
 
 ```css
 body {
-    /* make the body fits our viewport */
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    margin: 0;
-    overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
 }
 
 #canvas {
-    /* make the canvas wrapper fits the viewport as well */
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+  /* make the canvas wrapper fits the viewport */
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100vh;
 }
 ```
 
@@ -48,7 +92,7 @@ body {
 ```javascript
 import { Curtains, Mesh } from 'gpu-curtains';
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // set our main GPUCurtains instance
   // it will handle everything we need
   // a WebGPU device and a renderer with its scene,
@@ -74,6 +118,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 })
 ```
 
-### Roadmap
+## Limitations
 
-See the [roadmap](ROADMAP.md) for details on the current work in progress.
+Since gpu-curtains is mostly made to create quads based on HTML elements, it lacks some of the most common 3D engines features. For example, there's no real scene graphs (any mesh `modelMatrix` can also be considered as its world matrix).
+
+If you need a real 3D engine that could handle complex geometries or advanced rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
+
+## Acknowledgements
+
+Some parts of the code (mostly the math classes) have been ported or adapted from other existing open source libraries like [three.js](https://github.com/mrdoob/three.js) and [glmatrix](https://github.com/toji/gl-matrix).
+
+The [WebGPU samples](https://github.com/webgpu/webgpu-samples) (some of gpu-curtains compute shaders examples are ported from here) and [WebGPU fundamentals](https://webgpufundamentals.org/) were very helpful to help with the basic concepts of WebGPU. If you want to understand a bit more how it's working under the hood, do not hesitate to check those.
+
+A big thanks to the members of the [WebGPU matrix chan](https://matrix.to/#/#WebGPU:matrix.org) that were always super kinds and very helpful as well.
+
+### Changelog and roadmap
+
+- [Releases](https://github.com/martinlaxenaire/gpu-curtains/releases)
+- See the [roadmap](ROADMAP.md) for details on the current work in progress.

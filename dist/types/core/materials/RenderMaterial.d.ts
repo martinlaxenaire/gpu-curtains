@@ -1,7 +1,7 @@
 import { Material } from './Material';
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { AllowedGeometries, RenderMaterialAttributes, RenderMaterialOptions, RenderMaterialParams } from '../../types/Materials';
+import { AllowedGeometries, RenderMaterialAttributes, RenderMaterialOptions, RenderMaterialParams, RenderMaterialRenderingOptions } from '../../types/Materials';
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry';
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
@@ -39,6 +39,11 @@ export declare class RenderMaterial extends Material {
      * @async
      */
     compileMaterial(): Promise<void>;
+    /**
+     * Set or reset one of the {@link RenderMaterialRenderingOptions | rendering options}. Should be use with great caution, because if the {@link RenderPipelineEntry#pipeline | render pipeline} has already been compiled, it can cause a pipeline flush.
+     * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
+     */
+    setRenderingOptions(renderingOptions?: Partial<RenderMaterialRenderingOptions>): void;
     /**
      * Compute geometry if needed and get all useful geometry properties needed to create attributes buffers
      * @param geometry - the geometry to draw

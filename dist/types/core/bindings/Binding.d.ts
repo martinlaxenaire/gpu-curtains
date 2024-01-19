@@ -3,7 +3,7 @@ import { MaterialShadersType } from '../../types/Materials';
 import { TextureBinding } from './TextureBinding';
 import { SamplerBinding } from './SamplerBinding';
 /** Defines all kind of texture binding types */
-export type TextureBindingType = 'texture' | 'externalTexture' | 'storageTexture';
+export type TextureBindingType = 'texture' | 'externalTexture' | 'storageTexture' | 'depthTexture';
 /** Defines all kind of binding types  */
 export type BindingType = 'uniform' | 'storage' | TextureBindingType | 'sampler';
 /** Defines buffer binding memory access types (read only or read/write) */

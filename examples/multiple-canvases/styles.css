@@ -6,7 +6,7 @@
     top: 0;
     left: 0;
     height: 100vh;
-    height: 100svh;
+    height: 100lvh;
     width: 100vw;
     z-index: 3;
     pointer-events: none;
@@ -17,7 +17,7 @@
     top: 0;
     left: 0;
     height: 100vh;
-    height: 100svh;
+    height: 100lvh;
     width: 100vw;
     z-index: 1;
     pointer-events: none;
@@ -52,7 +52,7 @@
     left: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: space-around;
     align-items: center;
     opacity: 0;
     transition: opacity 0.5s;

@@ -205,6 +205,19 @@ export class Vec2 {
   }
 
   /**
+   * Clamp this {@link Vec2} components by min and max {@link Vec2} vectors
+   * @param min - minimum {@link Vec2} components to compare with
+   * @param max - maximum {@link Vec2} components to compare with
+   * @returns - clamped {@link Vec2}
+   */
+  clamp(min: Vec2 = new Vec2(), max: Vec2 = new Vec2()): Vec2 {
+    this.x = Math.max(min.x, Math.min(max.x, this.x))
+    this.y = Math.max(min.y, Math.min(max.y, this.y))
+
+    return this
+  }
+
+  /**
    * Check if 2 {@link Vec2} are equal
    * @param vector - {@link Vec2} to compare
    * @returns - whether the {@link Vec2} are equals or not

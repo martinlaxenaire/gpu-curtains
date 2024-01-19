@@ -2,7 +2,7 @@
 import { PipelineManager } from '../pipelines/PipelineManager';
 import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement';
 import { Scene } from '../scenes/Scene';
-import { RenderPass } from '../renderPasses/RenderPass';
+import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass';
 import { ComputePass } from '../computePasses/ComputePass';
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane';
 import { ShaderPass } from '../renderPasses/ShaderPass';
@@ -27,12 +27,21 @@ export interface GPURendererParams {
     container: string | HTMLElement;
     /** Pixel ratio to use for rendering */
     pixelRatio?: number;
-    /** Whether to use multisampling, and if so its value */
-    sampleCount?: GPUSize32;
     /** Texture rendering {@link GPUTextureFormat | preferred format} */
     preferredFormat?: GPUTextureFormat;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
+    /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
+    multisampled?: boolean;
+    /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
+    renderPass?: {
+        /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
+        depth: RenderPassParams['depth'];
+        /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
+        sampleCount: RenderPassParams['sampleCount'];
+        /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
+        clearValue: GPUColor;
+    };
 }
 /** Any Mesh that is bound to a DOM Element */
 export type DOMProjectedMesh = DOMMesh | Plane;
@@ -47,6 +56,7 @@ export type SceneObject = RenderedMesh | ComputePass;
  * A renderer is responsible for:
  * - Setting a {@link GPUCanvasContext | context}
  * - Handling the {@link HTMLCanvasElement | canvas} onto everything is drawn
+ * - Creating a {@link RenderPass} that will handle our render and depth textures and the render pass descriptor
  * - Keeping track of every specific class objects created relative to computing and rendering
  * - Creating a {@link Scene} class that will take care of the rendering process of all previously mentioned objects
  */
@@ -61,12 +71,17 @@ export declare class GPURenderer {
     canvas: HTMLCanvasElement;
     /** The WebGPU {@link GPUCanvasContext | context} used */
     context: null | GPUCanvasContext;
-    /** Texture rendering {@link GPUTextureFormat | preferred format} */
-    preferredFormat: null | GPUTextureFormat;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
-    /** The final {@link RenderPass | render pass} to render our result to screen */
+    /** Options used to create this {@link GPURenderer} */
+    options: GPURendererParams;
+    /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
+    multisampled: boolean;
+    /** The {@link RenderPass | render pass} used to render our result to screen */
     renderPass: RenderPass;
+    /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
+    postProcessingPass: RenderPass;
+    /** {@link RenderPass | Multisampled render pass} used by an internal {@link ShaderPass} for MSAA, if {@link multisampled} is set to `true` */
     /** The {@link Scene} used */
     scene: Scene;
     /** An array containing all our created {@link ComputePass} */
@@ -81,8 +96,6 @@ export declare class GPURenderer {
     meshes: ProjectedMesh[];
     /** An array containing all our created {@link RenderTexture} */
     renderTextures: RenderTexture[];
-    /** Whether to use multisampling, and if so its value */
-    sampleCount: GPUSize32;
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** {@link DOMElement} that will track our canvas container size */
@@ -105,7 +118,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, sampleCount, preferredFormat, alphaMode, }: GPURendererParams);
+    constructor({ deviceManager, container, pixelRatio, preferredFormat, alphaMode, multisampled, renderPass, }: GPURendererParams);
     /**
      * Set {@link canvas} size
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
@@ -185,7 +198,7 @@ export declare class GPURenderer {
     /**
      * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
      */
-    setMainRenderPass(): void;
+    setMainRenderPasses(): void;
     /**
      * Set our {@link scene}
      */
@@ -389,7 +402,7 @@ export declare class GPURenderer {
      */
     onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
-     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} or {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
      * @param renderPass - current {@link RenderPass}
      * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
      * @returns - the {@link GPUTexture | current render texture}

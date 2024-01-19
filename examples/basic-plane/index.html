@@ -34,18 +34,9 @@
 
     <div id="page">
       <div class="plane">
-        <img src="https://source.unsplash.com/featured/1920x1280/?nature" crossorigin="" />
+        <img src="https://source.unsplash.com/featured/1920x1280/?nature" crossorigin="" loading="lazy" />
       </div>
     </div>
-
-    <a
-      href="https://www.curtainsjs.com/"
-      title="back to curtains.js website"
-      id="back-to-lib-link"
-      class="primary-button"
-      target="_blank"
-      >back to curtains.js website</a
-    >
 
     <a
       href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/basic-plane/index.html"
@@ -59,7 +50,7 @@
     <script type="module">
       import { GPUCurtains, Plane } from '../../dist/gpu-curtains.js'
 
-      window.addEventListener('DOMContentLoaded', async () => {
+      window.addEventListener('load', async () => {
         // set up our WebGL context and append the canvas to our wrapper
         const gpuCurtains = new GPUCurtains({
           container: '#canvas',

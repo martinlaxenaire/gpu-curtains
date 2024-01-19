@@ -4,7 +4,7 @@ import { GPUCameraRenderer, Vec2, Vec3, Mesh, PlaneGeometry, BoxGeometry, GPUDev
 // - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
 // - test camera position, rotation, lookAt, fov
 // - test frustum culling
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',

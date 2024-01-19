@@ -69,9 +69,6 @@ export interface DOMElementParams {
  * Execute callbacks when the bounding rectangle of the DOM Element changes, which means when its size and/or position change.
  */
 export class DOMElement {
-  /** Timeout ID to throttle our resize events */
-  #throttleResize: null | ReturnType<typeof setTimeout> = null
-
   /** The HTML element to track */
   element: HTMLElement
   /** Priority at which this element {@link onSizeChanged} function must be called */
@@ -197,15 +194,9 @@ export class DOMElement {
   setSize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!this.element) return
 
-    // only throttle if we have set our first value
-    this.isResizing = !!this.boundingRect
-
     this.boundingRect = boundingRect ?? this.element.getBoundingClientRect()
 
-    this.#throttleResize = setTimeout(() => {
-      this.isResizing = false
-      this.#throttleResize = null
-    }, 25)
+    this.isResizing = false
   }
 
   /**
@@ -213,9 +204,5 @@ export class DOMElement {
    */
   destroy() {
     this.resizeManager.unobserve(this.element)
-
-    if (this.#throttleResize) {
-      clearTimeout(this.#throttleResize)
-    }
   }
 }

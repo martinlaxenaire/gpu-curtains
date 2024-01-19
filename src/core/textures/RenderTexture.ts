@@ -32,6 +32,8 @@ export interface RenderTextureBaseParams {
   access?: BindingMemoryAccessType
   /** Optional {@link RenderTexture#texture | texture} view dimension to use */
   viewDimension?: GPUTextureViewDimension
+  /** Sample count of the {@link RenderTexture#texture | texture}, used for multisampling */
+  sampleCount?: GPUSize32
 }
 
 /**
@@ -50,6 +52,7 @@ const defaultRenderTextureParams: RenderTextureParams = {
   access: 'write',
   fromTexture: null,
   viewDimension: '2d',
+  sampleCount: 1,
 }
 
 /**
@@ -116,13 +119,13 @@ export class RenderTexture {
     this.options = { ...defaultRenderTextureParams, ...parameters }
 
     if (!this.options.format) {
-      this.options.format = this.renderer.preferredFormat
+      this.options.format = this.renderer.options.preferredFormat
     }
 
     // sizes
     this.size = this.options.size ?? {
-      width: this.renderer.pixelRatioBoundingRect.width,
-      height: this.renderer.pixelRatioBoundingRect.height,
+      width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+      height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
       depth: 1,
     }
 
@@ -144,15 +147,27 @@ export class RenderTexture {
   }
 
   /**
+   * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
+   * @param texture - {@link GPUTexture} to copy
+   */
+  copyGPUTexture(texture: GPUTexture) {
+    this.size = {
+      width: texture.width,
+      height: texture.height,
+      depth: texture.depthOrArrayLayers,
+    }
+
+    this.texture = texture
+    this.textureBinding.resource = this.texture
+  }
+
+  /**
    * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
    */
   createTexture() {
     if (this.options.fromTexture) {
-      // update size
-      this.size = this.options.fromTexture.size
-      // just copy the original GPUTexture and update the binding
-      this.texture = this.options.fromTexture.texture
-      this.textureBinding.resource = this.texture
+      // copy the GPU texture
+      this.copyGPUTexture(this.options.fromTexture.texture)
       return
     }
 
@@ -163,10 +178,11 @@ export class RenderTexture {
       format: this.options.format,
       size: [this.size.width, this.size.height, this.size.depth],
       dimensions: this.options.viewDimension === '1d' ? '1d' : this.options.viewDimension === '3d' ? '3d' : '2d',
+      sampleCount: this.options.sampleCount,
       usage:
         // TODO let user chose?
         // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-        this.options.usage === 'texture'
+        this.options.usage !== 'storageTexture'
           ? GPUTextureUsage.TEXTURE_BINDING |
             GPUTextureUsage.COPY_SRC |
             GPUTextureUsage.COPY_DST |
@@ -188,7 +204,9 @@ export class RenderTexture {
         name: this.options.name,
         texture: this.texture,
         bindingType: this.options.usage,
+        format: this.options.format,
         viewDimension: this.options.viewDimension,
+        multisampled: this.options.sampleCount > 1,
       } as TextureBindingParams),
     ]
   }
@@ -202,14 +220,23 @@ export class RenderTexture {
   }
 
   /**
+   * Force a {@link RenderTexture} to be recreated with the new size
+   * @param size - new {@link TextureSize | size} to set
+   */
+  forceResize(size: TextureSize) {
+    this.size = size
+    this.createTexture()
+  }
+
+  /**
    * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
-   * @param size - the optional new {@link RectSize | size} to set
+   * @param size - the optional new {@link TextureSize | size} to set
    */
   resize(size: TextureSize | null = null) {
     if (!size) {
       size = {
-        width: this.renderer.pixelRatioBoundingRect.width,
-        height: this.renderer.pixelRatioBoundingRect.height,
+        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
         depth: 1,
       }
     }
@@ -219,8 +246,7 @@ export class RenderTexture {
       return
     }
 
-    this.size = size
-    this.createTexture()
+    this.forceResize(size)
   }
 
   /**

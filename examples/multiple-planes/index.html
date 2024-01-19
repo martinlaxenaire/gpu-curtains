@@ -18,7 +18,7 @@
     <div id="canvas"></div>
 
     <div id="page">
-      <h1>Multi planes + AJAX load simulation</h1>
+      <h1>Multiple planes + AJAX load simulation</h1>
 
       <div id="planes" class="large-container">
         <div class="plane-wrapper">
@@ -28,6 +28,7 @@
               <img
                 src="https://source.unsplash.com/featured/1920x1280/?nature&1"
                 crossorigin=""
+                loading="lazy"
                 data-texture-name="planeTexture"
               />
             </div>
@@ -41,6 +42,7 @@
               <img
                 src="https://source.unsplash.com/featured/1920x1280/?nature&2"
                 crossorigin=""
+                loading="lazy"
                 data-texture-name="planeTexture"
               />
             </div>
@@ -54,6 +56,7 @@
               <img
                 src="https://source.unsplash.com/featured/1920x1280/?nature&3"
                 crossorigin=""
+                loading="lazy"
                 data-texture-name="planeTexture"
               />
             </div>
@@ -67,6 +70,7 @@
               <img
                 src="https://source.unsplash.com/featured/1920x1280/?nature&4"
                 crossorigin=""
+                loading="lazy"
                 data-texture-name="planeTexture"
               />
             </div>
@@ -78,15 +82,6 @@
         <button id="add-more-planes" class="primary-button">Add more planes (simulates AJAX lazy load)</button>
       </div>
     </div>
-
-    <a
-      href="https://www.curtainsjs.com/"
-      title="back to curtains.js website"
-      id="back-to-lib-link"
-      class="primary-button"
-      target="_blank"
-      >back to curtains.js website</a
-    >
 
     <a
       href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/multiple-planes/main.js"

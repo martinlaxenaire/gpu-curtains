@@ -12,6 +12,8 @@ export interface ExternalTextureParams {
   flipY?: boolean
   /** The {@link GPUTextureFormat | texture format} to use */
   format?: GPUTextureFormat
+  /** Whether this texture should be premultiplied or not */
+  premultipliedAlpha?: boolean
   /** Solid color used by temporary texture to display while loading the source */
   placeholderColor?: [number, number, number, number]
   /** Whether video textures should use {@link GPUExternalTexture} or not */

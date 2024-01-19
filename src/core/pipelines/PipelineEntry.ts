@@ -76,7 +76,7 @@ export class PipelineEntry {
   }
 
   /**
-   * Get whether the {@link pipeline} is ready to be compiled, i.e. we have already not already tried to compile it, and it's not currently compiling neither
+   * Get whether the {@link pipeline} is ready to be compiled, i.e. we have not already tried to compile it, and it's not currently compiling neither
    * @readonly
    */
   get canCompile(): boolean {

@@ -1,6 +1,16 @@
-import { GPUCameraRenderer, Vec2, Vec3, BoxGeometry, SphereGeometry, Mesh, GPUDeviceManager } from '../../src/index.js'
+import {
+  GPUCameraRenderer,
+  Vec2,
+  Vec3,
+  BoxGeometry,
+  SphereGeometry,
+  Mesh,
+  GPUDeviceManager,
+  ShaderPass,
+  RenderTarget,
+} from '../../src/index.js'
 
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
   const systemSize = 10
 
   // here is an example of how we can use a simple GPUCameraRenderer instead of GPUCurtains
@@ -21,6 +31,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       far: systemSize * 10,
+    },
+    renderPass: {
+      //sampleCount: 1,
     },
   })
 
@@ -104,8 +117,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   const sphereGeometry = new SphereGeometry()
 
   for (let i = 0; i < 50; i++) {
+    const isCube = Math.random() > 0.5
     const mesh = new Mesh(gpuCameraRenderer, {
-      geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
+      geometry: isCube ? cubeGeometry : sphereGeometry,
     })
 
     mesh.position.x = Math.random() * systemSize * 2 - systemSize
@@ -119,4 +133,54 @@ window.addEventListener('DOMContentLoaded', async () => {
       mesh.rotation.z += rotationSpeed
     })
   }
+
+  const postProShader = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+            
+      let rawDepth = textureLoad(
+        depthTexture,
+        vec2<i32>(floor(fsInput.position.xy)),
+        0
+      );
+      // remap depth into something a bit more visible
+      let depth = (1.0 - rawDepth) * 75.0 * params.systemSize;
+
+      return mix( texture, vec4(vec3(0.0, depth, depth), texture.a), step(fsInput.uv.x, 0.5) );
+    }
+  `
+
+  const postProPass = new ShaderPass(gpuCameraRenderer, {
+    shaders: {
+      fragment: {
+        code: postProShader,
+      },
+    },
+    uniforms: {
+      params: {
+        struct: {
+          systemSize: {
+            type: 'f32',
+            value: systemSize,
+          },
+        },
+      },
+    },
+  })
+
+  const depthTexture = postProPass.createRenderTexture({
+    label: 'Depth texture',
+    name: 'depthTexture',
+    usage: 'depthTexture',
+    format: 'depth24plus',
+    fromTexture: gpuCameraRenderer.renderPass.depthTexture,
+    sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
+  })
+
+  console.log(gpuCameraRenderer)
 })

@@ -14,7 +14,7 @@ export interface RenderTargetParams extends RenderPassParams {
 }
 
 /**
- * Used to draw meshes to a {@link RenderPass#renderTexture | RenderPass renderTexture} instead of directly to screen.
+ * Used to draw meshes to a {@link RenderPass#viewTexture | RenderPass view texture} instead of directly to screen.
  *
  * @example
  * ```javascript
@@ -66,14 +66,12 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, depth, loadOp, clearValue, targetFormat, autoRender } = parameters
+    const { label, targetFormat, autoRender, ...renderPassParams } = parameters
 
     this.options = {
       label,
-      depth,
-      loadOp,
-      clearValue,
-      targetFormat: targetFormat ?? this.renderer.preferredFormat,
+      ...renderPassParams,
+      targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       autoRender,
     }
 
@@ -83,10 +81,9 @@ export class RenderTarget {
 
     this.renderPass = new RenderPass(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Pass` : 'Render Target Render Pass',
-      depth: this.options.depth,
-      loadOp: this.options.loadOp,
-      clearValue: this.options.clearValue,
       targetFormat: this.options.targetFormat,
+      depthTexture: this.renderer.renderPass.depthTexture, // reuse renderer depth texture for every pass
+      ...renderPassParams,
     })
 
     // this is the texture that will be resolved when setting the current render pass texture
@@ -126,11 +123,12 @@ export class RenderTarget {
    * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
    */
   resize(boundingRect: DOMElementBoundingRect) {
-    this.renderPass?.resize(boundingRect)
+    // reset the newly created renderer render pass depth texture
+    this.renderPass.options.depthTexture.texture = this.renderer.renderPass.depthTexture.texture
+    this.renderPass?.resize()
     this.renderTexture?.resize()
   }
 
-  // alias
   /**
    * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
    */
