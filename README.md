@@ -2,7 +2,7 @@
 
 > :warning: WIP
 
-#### WebGPU rendering engine
+#### DOM 2 WebGPU rendering engine
 
 gpu-curtains is a small, lightweight WebGPU rendering engine library.
 
