@@ -31,13 +31,12 @@
     "url": "https://github.com/martinlaxenaire/gpu-curtains.git"
   },
   "license": "MIT",
-  "private": true,
   "dependencies": {},
   "type": "module",
   "files": [
     "dist"
   ],
-  "main": "./dist/gpu-curtains.umd.js",
+  "main": "./dist/gpu-curtains.umd.cjs",
   "module": "./dist/gpu-curtains.js",
   "exports": {
     ".": {
