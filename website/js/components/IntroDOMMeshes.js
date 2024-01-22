@@ -1,5 +1,5 @@
 import { BoxGeometry, DOMMesh, SphereGeometry } from '../../../dist/gpu-curtains.js'
-import normalsOpacityFs from '../shaders/normals-opacity-fs.wgsl'
+import normalsOpacityFs from '../shaders/normals-opacity-fs.wgsl.js'
 
 export class IntroDOMMeshes {
   constructor({ gpuCurtains, scrollObserver }) {

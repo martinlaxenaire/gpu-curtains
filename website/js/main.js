@@ -1,8 +1,8 @@
 import { GPUCurtains } from '../../dist/gpu-curtains.js'
-import { CurtainsClothSim } from './components/CurtainsClothSim'
-import { IntroDOMMeshes } from './components/IntroDOMMeshes'
-import { TexturesPlanes } from './components/TexturesPlanes'
-import { ComputeFeature } from './components/ComputeFeature'
+import { CurtainsClothSim } from './components/CurtainsClothSim.js'
+import { IntroDOMMeshes } from './components/IntroDOMMeshes.js'
+import { TexturesPlanes } from './components/TexturesPlanes.js'
+import { ComputeFeature } from './components/ComputeFeature.js'
 import { ScrollObserver } from './utils/ScrollObserver.js'
 
 window.addEventListener('load', async () => {
