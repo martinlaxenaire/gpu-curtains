@@ -10,14 +10,22 @@ export default defineConfig({
       name: 'GPUCurtains',
     },
     emptyOutDir: false,
-    rollupOptions: {
-      // input: 'src/index.js',
-      // output: {
-      //   dir: 'dist',
-      //   entryFileNames: 'gpu-curtains.umd.js',
-      //   format: 'umd',
-      //   name: 'window',
-      // },
-    },
+    // rollupOptions: {
+    //   input: 'src/index.js',
+    //   output: [
+    //     {
+    //       dir: 'dist',
+    //       entryFileNames: 'gpu-curtains.js',
+    //       format: 'es',
+    //     },
+    //     {
+    //       dir: 'dist',
+    //       entryFileNames: 'gpu-curtains.umd.js',
+    //       format: 'umd',
+    //       name: 'window',
+    //       extend: true,
+    //     },
+    //   ],
+    // },
   },
 })
