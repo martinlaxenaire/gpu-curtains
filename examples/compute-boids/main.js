@@ -9,6 +9,7 @@ import {
 } from '../../dist/gpu-curtains.js'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
+
 window.addEventListener('load', async () => {
   // lerp
   const lerp = (start = 0, end = 1, amount = 0.1) => {

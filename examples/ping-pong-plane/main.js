@@ -1,5 +1,7 @@
 import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from '../../dist/gpu-curtains.js'
 
+// originally inspired by https://oframe.github.io/ogl/examples/mouse-flowmap.html
+
 window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({

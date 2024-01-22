@@ -83,7 +83,7 @@ body {
   top: 0;
   right: 0;
   width: 100%;
-  height: 100vh;
+  height: 100lvh;
 }
 ```
 
@@ -124,11 +124,17 @@ Since gpu-curtains is mostly made to create quads based on HTML elements, it lac
 
 If you need a real 3D engine that could handle complex geometries or advanced rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
 
+## Contributing
+
+Contribution are more than welcome! Please refer to the [contribution guidelines](CONTRIBUTING.md).
+
 ## Acknowledgements
 
 Some parts of the code (mostly the math classes) have been ported or adapted from other existing open source libraries like [three.js](https://github.com/mrdoob/three.js) and [glmatrix](https://github.com/toji/gl-matrix).
 
-The [WebGPU samples](https://github.com/webgpu/webgpu-samples) (some of gpu-curtains compute shaders examples are ported from here) and [WebGPU fundamentals](https://webgpufundamentals.org/) were very helpful to help with the basic concepts of WebGPU. If you want to understand a bit more how it's working under the hood, do not hesitate to check those.
+Some of the examples are also ported and/or inspired by other online open-source WebGL or WebGPU examples. In any case the source should always be credited in the code. If a credit is missing, feel free to reach out or make a PR.
+
+The [WebGPU samples](https://github.com/webgpu/webgpu-samples) and [WebGPU fundamentals](https://webgpufundamentals.org/) were very helpful to help with the basic concepts of WebGPU. If you want to understand a bit more how it's working under the hood, do not hesitate to check those.
 
 A big thanks to the members of the [WebGPU matrix chan](https://matrix.to/#/#WebGPU:matrix.org) that were always super kinds and very helpful as well.
 
