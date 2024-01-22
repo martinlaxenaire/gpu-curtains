@@ -1,4 +1,4 @@
-import { GPUCurtains, BoxGeometry, SphereGeometry, DOMMesh, Sampler } from '../../dist/gpu-curtains.js'
+import { BoxGeometry, DOMMesh, GPUCurtains, Sampler, SphereGeometry } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper
@@ -87,8 +87,6 @@ window.addEventListener('load', async () => {
         generateMips: true,
       },
     })
-
-    console.log(cubeMesh)
 
     const updateCubeScaleAndPosition = () => {
       // scale our cube along the Z axis based on its height (Y axis)

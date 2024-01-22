@@ -123,18 +123,13 @@ export class RenderPass {
    * Set our {@link depthTexture | depth texture}
    */
   createDepthTexture() {
-    // just use our option depth texture if it is sets
-    if (this.options.depthTexture) {
-      this.depthTexture = this.options.depthTexture
-      return
-    }
-
     this.depthTexture = new RenderTexture(this.renderer, {
       label: this.options.label + ' depth texture',
       name: 'depthTexture',
       usage: 'depthTexture',
       format: 'depth24plus',
       sampleCount: this.options.sampleCount,
+      ...(this.options.depthTexture && { fromTexture: this.options.depthTexture }),
     })
   }
 
@@ -278,6 +273,7 @@ export class RenderPass {
    */
   destroy() {
     this.viewTexture?.destroy()
+
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy()
     }

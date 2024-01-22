@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec3, Geometry, Mesh } from '../../dist/gpu-curtains.js'
+import { Geometry, GPUCurtains, Mesh, Vec3 } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper
@@ -126,7 +126,7 @@ window.addEventListener('load', async () => {
     // bottom second
     1, -1, 1,
     -1, -1, 1,
-    1, -1, -1,
+    1, -1, -1
   ])
 
   // prettier-ignore
@@ -136,7 +136,7 @@ window.addEventListener('load', async () => {
     140, 33, 85, // back face color
     92, 26, 27, // left face color
     174, 212, 23, // bottom face color
-    174, 212, 23, // bottom face color
+    174, 212, 23 // bottom face color
   ]
 
   const verticesColors = new Float32Array(colors.map((value) => value / 255))
@@ -201,8 +201,6 @@ window.addEventListener('load', async () => {
   }
 
   const mesh = new Mesh(gpuCurtains, params)
-
-  console.log(geometry.getVertexBufferByName('attributes'), mesh)
 
   // move camera back
   gpuCurtains.camera.position.z = 100

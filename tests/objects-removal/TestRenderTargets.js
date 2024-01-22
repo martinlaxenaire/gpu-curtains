@@ -1,4 +1,4 @@
-import { GPURenderer, Plane, RenderTarget, Sampler, ShaderPass } from '../../src/index.js'
+import { Plane, RenderTarget, Sampler, ShaderPass } from '../../src/index.js'
 
 export class TestRenderTargets {
   constructor({ gpuCurtains }) {

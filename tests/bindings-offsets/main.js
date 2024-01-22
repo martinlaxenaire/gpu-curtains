@@ -1,4 +1,4 @@
-import { GPUCurtains, BufferBinding, Vec2, Vec3 } from '../../src/index.js'
+import { BufferBinding, GPUCurtains, Vec2, Vec3 } from '../../src/index.js'
 
 window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper

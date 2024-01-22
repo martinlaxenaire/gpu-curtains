@@ -1,4 +1,4 @@
-import { GPUCurtains, Sampler, Plane } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, Plane, Sampler } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {
   // lerp
@@ -157,8 +157,6 @@ window.addEventListener('load', async () => {
   planeElements.forEach((planeEl, planeIndex) => {
     const plane = new Plane(gpuCurtains, planeEl, params)
     planes.push(plane)
-
-    console.log(plane)
 
     handlePlane(plane)
   })

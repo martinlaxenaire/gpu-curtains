@@ -17,6 +17,7 @@ export interface BufferBindingInput extends InputBase {
 
   /** Get the {@link InputValue | input value} */
   get value(): InputValue
+
   /** Set the {@link InputValue | input value} */
   set value(value: InputValue)
 

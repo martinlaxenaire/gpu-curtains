@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec2, Sampler, Plane } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, Plane, Sampler, Vec2 } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {
   const buildPlaneHTMLElement = (index) => {

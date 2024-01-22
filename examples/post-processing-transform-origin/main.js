@@ -199,6 +199,4 @@ window.addEventListener('load', async () => {
     // update the uniform
     shaderPass.uniforms.rotation.effect.value = rotationEffect
   })
-
-  console.log(shaderPass)
 })

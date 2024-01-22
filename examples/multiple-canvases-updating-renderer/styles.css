@@ -1,0 +1,33 @@
+@media screen {
+  /*** canvas ***/
+  #canvas-front {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100 lvh;
+    width: 100vw;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  #canvas-back {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100 lvh;
+    width: 100vw;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /*** content ***/
+  #page {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}

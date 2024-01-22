@@ -14,10 +14,11 @@
 - Compute passes
 - Scene class
 - Scroll + resize, frustum culling check
-- Texture & RenderTexture (with storage) classes
+- Texture & RenderTexture (with storage & depth) classes
 - Sampler class
 - Shader passes
 - RenderTarget (render to textures)
+- RenderPass (render pass descriptors)
 - PingPong
 - Plane raycasting
 - Basic CacheManager
@@ -31,7 +32,7 @@
 
 ## TODO
 
-- constants for WebGPU flags/usages?
+- constants for WebGPU buffers and textures flags/usages + add to options/parameters?
 - Use render bundles?
 - Mesh raycasting?
 - More tests! (samplers, external video textures...)

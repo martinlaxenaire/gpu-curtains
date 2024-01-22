@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec2, Sampler, PingPongPlane, Plane, RenderTexture } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../dist/gpu-curtains.js'
 
 // originally inspired by https://oframe.github.io/ogl/examples/mouse-flowmap.html
 
@@ -151,8 +151,6 @@ window.addEventListener('load', async () => {
         gpuCurtains.renderer.boundingRect.width / gpuCurtains.renderer.boundingRect.height
     })
 
-  console.log(flowMap)
-
   const displacedFlowMapVs = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
@@ -249,6 +247,4 @@ window.addEventListener('load', async () => {
   //   name: 'flowMapTexture',
   //   fromTexture: flowMap.renderTexture,
   // })
-
-  console.log(displacedPlane, gpuCurtains.renderer.scene)
 })

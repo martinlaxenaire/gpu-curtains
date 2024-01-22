@@ -1,11 +1,11 @@
 import {
-  GPUDeviceManager,
-  GPUCameraRenderer,
   BoxGeometry,
-  SphereGeometry,
+  GPUCameraRenderer,
+  GPUDeviceManager,
   Mesh,
-  Vec3,
   ShaderPass,
+  SphereGeometry,
+  Vec3,
 } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {

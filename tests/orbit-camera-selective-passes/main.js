@@ -1,13 +1,14 @@
 import {
+  BoxGeometry,
   GPUCameraRenderer,
+  GPUDeviceManager,
+  Mesh,
+  RenderTarget,
+  RenderTexture,
+  ShaderPass,
+  SphereGeometry,
   Vec2,
   Vec3,
-  BoxGeometry,
-  SphereGeometry,
-  Mesh,
-  GPUDeviceManager,
-  ShaderPass,
-  RenderTarget,
 } from '../../src/index.js'
 
 window.addEventListener('load', async () => {
@@ -113,13 +114,27 @@ window.addEventListener('load', async () => {
   const cubeGeometry = new BoxGeometry()
   const sphereGeometry = new SphereGeometry()
 
-  const selectiveBloomTarget = new RenderTarget(gpuCameraRenderer, {
-    label: 'Selective bloom render target',
-  })
-
   const blankRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Blank render target',
-    depthLoadOp: 'load',
+    depthTexture: new RenderTexture(gpuCameraRenderer, {
+      label: 'Cube depth texture',
+      name: 'cubeDepthTexture',
+      usage: 'depthTexture',
+      format: 'depth24plus',
+      sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
+    }),
+  })
+
+  const selectiveBloomTarget = new RenderTarget(gpuCameraRenderer, {
+    label: 'Selective bloom render target',
+    //depthLoadOp: 'load',
+    depthTexture: new RenderTexture(gpuCameraRenderer, {
+      label: 'Sphere depth texture',
+      name: 'sphereDepthTexture',
+      usage: 'depthTexture',
+      format: 'depth24plus',
+      sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
+    }),
   })
 
   for (let i = 0; i < 50; i++) {
@@ -127,6 +142,7 @@ window.addEventListener('load', async () => {
     const mesh = new Mesh(gpuCameraRenderer, {
       geometry: isCube ? cubeGeometry : sphereGeometry,
       renderTarget: isCube ? blankRenderTarget : selectiveBloomTarget,
+      transparent: true,
     })
 
     mesh.position.x = Math.random() * systemSize * 2 - systemSize
@@ -140,6 +156,117 @@ window.addEventListener('load', async () => {
       mesh.rotation.z += rotationSpeed
     })
   }
+
+  // dithering pass
+  // from https://www.shadertoy.com/view/ltSSzW
+  const ditherFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    
+    fn modulo(x: vec2f, y: vec2f) -> vec2f {
+      return x - y * floor(x / y);
+    }
+    
+    fn getValue(brightness: f32, pos: vec2f) -> bool {
+      
+      // do the simple math first
+      if (brightness > 16.0/17.0) {
+        return false;
+      }
+      
+      if (brightness < 01.0/17.0) {
+        return true;
+      }
+      
+      var pixel: vec2f = vec2( floor( modulo( (pos + 0.5) / params.pixelSize, vec2(4.0)) ) );
+      
+      var x: i32 = i32(pixel.x);
+      var y: i32 = i32(pixel.y);
+      var result: bool = false;
+      
+      // compute the 16 values by hand, store when it's a match
+      if (x == 0 && y == 0) {
+        result = brightness < 16.0/17.0;
+      } else if (x == 2 && y == 2) {
+        result = brightness < 15.0/17.0;
+      } else if (x == 2 && y == 0) {
+        result = brightness < 14.0/17.0;
+      } else if (x == 0 && y == 2) {
+        result = brightness < 13.0/17.0;
+      } else if (x == 1 && y == 1) {
+        result = brightness < 12.0/17.0;
+      } else if (x == 3 && y == 3) {
+        result = brightness < 11.0/17.0;
+      } else if (x == 3 && y == 1) {
+        result = brightness < 10.0/17.0;
+      } else if (x == 1 && y == 3) {
+        result = brightness < 09.0/17.0;
+      } else if (x == 1 && y == 0) {
+        result = brightness < 08.0/17.0;
+      } else if (x == 3 && y == 2) {
+        result = brightness < 07.0/17.0;
+      } else if (x == 3 && y == 0) {
+        result = brightness < 06.0/17.0;
+      } else if (x == 0 && y == 1) {
+        result =	brightness < 05.0/17.0;
+      } else if (x == 1 && y == 2) {
+        result = brightness < 04.0/17.0;
+      } else if (x == 2 && y == 3) {
+        result = brightness < 03.0/17.0;
+      } else if (x == 2 && y == 1) {
+        result = brightness < 02.0/17.0;
+      } else if (x == 0 && y == 3) {
+        result = brightness < 01.0/17.0;
+      }
+          
+      return result;
+    }
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      
+      var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+      
+      var grayscale: f32 = color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
+      
+      var dither: f32 = select(0.0, 1.0, getValue( grayscale, fsInput.uv * params.resolution )) * color.a;
+      
+      return vec4(vec3(dither) * color.rgb, color.a * dither);
+    }
+  `
+
+  const ditherPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'dither pass',
+    renderTarget: selectiveBloomTarget,
+    shaders: {
+      fragment: {
+        code: ditherFs,
+      },
+    },
+    uniforms: {
+      params: {
+        struct: {
+          resolution: {
+            type: 'vec2f',
+            value: new Vec2(gpuCameraRenderer.boundingRect.width, gpuCameraRenderer.boundingRect.height),
+          },
+          pixelSize: {
+            type: 'f32',
+            value: 1.5,
+          },
+        },
+      },
+    },
+  })
+
+  ditherPass.onAfterResize(() => {
+    ditherPass.uniforms.params.resolution.value.set(
+      gpuCameraRenderer.boundingRect.width,
+      gpuCameraRenderer.boundingRect.height
+    )
+  })
 
   const brigthnessPassFs = /* wgsl */ `
     struct VSOutput {
@@ -162,8 +289,6 @@ window.addEventListener('load', async () => {
       
       var brightness: f32 = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
       var result: vec4f = mix(vec4(0), color, step(params.threshold, brightness));
-      
-      
       
       //return brightnessMatrix( 0.325 ) * color;
       return result;
@@ -191,7 +316,7 @@ window.addEventListener('load', async () => {
   })
 
   const blurSettings = {
-    spread: 10,
+    spread: 4,
     weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
   }
 
@@ -298,7 +423,31 @@ window.addEventListener('load', async () => {
       (blurSettings.spread * gpuCameraRenderer.boundingRect.width) / gpuCameraRenderer.boundingRect.height
   })
 
+  const inverseShader = /* wgsl */ `
+    struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+      };
+
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+
+        return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.x, 0.5) );
+      }
+  `
+
+  // const inversePass = new ShaderPass(gpuCameraRenderer, {
+  //   label: 'inverse pass',
+  //   renderTarget: selectiveBloomTarget,
+  //   shaders: {
+  //     fragment: {
+  //       code: inverseShader,
+  //     },
+  //   },
+  // })
+
   const blankPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'blank pass',
     renderTarget: blankRenderTarget,
     //transparent: true,
     blend: {
@@ -315,43 +464,68 @@ window.addEventListener('load', async () => {
     },
   })
 
-  // not needed anymore!
-  // const blankPassSceneEntry = gpuCameraRenderer.scene.getObjectRenderPassEntry(blankPass)
-  // blankPassSceneEntry.onBeforeRenderPass = (commandEncoder) => {
-  //   // copy the selective bloom depth texture content (i.e. the spheres) into our blank render target depth texture
-  //   commandEncoder.copyTextureToTexture(
-  //     {
-  //       texture: selectiveBloomTarget.renderPass.depthTexture,
-  //     },
-  //     {
-  //       texture: blankRenderTarget.renderPass.depthTexture,
-  //     },
-  //     [blankRenderTarget.renderPass.depthTexture.width, blankRenderTarget.renderPass.depthTexture.height]
-  //   )
-  //   // tell our blank render target render pass not to clear its depth texture before drawing the cubes
-  //   blankRenderTarget.renderPass.setDepthLoadOp('load')
-  // }
+  const blendShader = /* wgsl */ `
+    struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+      };
 
-  // const postProShader = /* wgsl */ `
-  //   struct VSOutput {
-  //       @builtin(position) position: vec4f,
-  //       @location(0) uv: vec2f,
-  //     };
-  //
-  //     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-  //       var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-  //
-  //       return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.x, 0.5) );
-  //     }
-  // `
-  //
-  // const postProPass = new ShaderPass(gpuCameraRenderer, {
-  //   shaders: {
-  //     fragment: {
-  //       code: postProShader,
-  //     },
-  //   },
-  // })
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var cubeColor: vec4f = textureSample(cubeRenderTexture, defaultSampler, fsInput.uv);
+        var sphereColor: vec4f = textureSample(sphereRenderTexture, defaultSampler, fsInput.uv);
+        
+        let rawCubeDepth = textureLoad(
+          cubeDepthTexture,
+          vec2<i32>(floor(fsInput.position.xy)),
+          0
+        );
+        
+        let rawSphereDepth = textureLoad(
+          sphereDepthTexture,
+          vec2<i32>(floor(fsInput.position.xy)),
+          0
+        );
+        
+        var color: vec4f = select(cubeColor, mix(sphereColor, cubeColor, (1.0 - sphereColor.a)), rawCubeDepth > rawSphereDepth);
 
-  console.log(gpuCameraRenderer)
+        return color;
+      }
+  `
+
+  const blendPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'blend pass',
+    shaders: {
+      fragment: {
+        code: blendShader,
+      },
+    },
+  })
+
+  const cubeRenderTexture = blendPass.createRenderTexture({
+    name: 'cubeRenderTexture',
+    fromTexture: blankPass.renderTexture,
+  })
+
+  const cubeDepthTexture = blendPass.createRenderTexture({
+    name: 'cubeDepthTexture',
+    usage: 'depthTexture',
+    format: 'depth24plus',
+    fromTexture: blankRenderTarget.options.depthTexture,
+    sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
+  })
+
+  const sphereRenderTexture = blendPass.createRenderTexture({
+    name: 'sphereRenderTexture',
+    fromTexture: vBlurPass.renderTexture,
+  })
+
+  const sphereDepthTexture = blendPass.createRenderTexture({
+    name: 'sphereDepthTexture',
+    usage: 'depthTexture',
+    format: 'depth24plus',
+    fromTexture: selectiveBloomTarget.options.depthTexture,
+    sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
+  })
+
+  console.log(gpuCameraRenderer.scene)
 })

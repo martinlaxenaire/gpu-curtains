@@ -4,7 +4,6 @@ import { GPUCurtains } from '../GPUCurtains'
 import { isCurtainsRenderer } from '../../core/renderers/utils'
 import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition, RectBBox } from '../../core/DOM/DOMElement'
 import { Vec3 } from '../../math/Vec3'
-import { Camera } from '../../core/camera/Camera'
 import { Object3DTransforms } from '../../core/objects3D/Object3D'
 
 /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */

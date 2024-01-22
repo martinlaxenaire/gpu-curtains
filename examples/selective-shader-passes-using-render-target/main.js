@@ -1,4 +1,4 @@
-import { GPUCurtains, Sampler, RenderTarget, Plane, ShaderPass } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, Plane, RenderTarget, Sampler, ShaderPass } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {
   // lerp
@@ -285,6 +285,4 @@ window.addEventListener('load', async () => {
   finalShaderPass.onRender(() => {
     finalShaderPass.uniforms.scrollEffect.strength.value = scrollEffect
   })
-
-  console.log(gpuCurtains.renderer.scene)
 })

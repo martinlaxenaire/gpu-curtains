@@ -6,7 +6,7 @@ import {
   VertexBuffer,
   VertexBufferAttribute,
   VertexBufferAttributeParams,
-  VertexBufferParams,
+  VertexBufferParams
 } from '../../types/Geometries'
 
 /**

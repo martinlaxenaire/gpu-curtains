@@ -1,5 +1,5 @@
-import { getPageContent, isBackNavigation, onLinkNavigate, transitionHelper } from './view-transitions-api-utils.js'
-import { GPUCurtains, Texture, Plane } from '../../dist/gpu-curtains.js'
+import { getPageContent, onLinkNavigate } from './view-transitions-api-utils.js'
+import { GPUCurtains, Plane, Texture } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {
   const transitionDuration = 0.5 // in seconds
@@ -41,8 +41,6 @@ window.addEventListener('load', async () => {
       })
 
       texture.onSourceLoaded(() => {
-        console.log('texture source loaded', texture)
-
         percentLoaded++
 
         loaderEl.innerText = Math.round((100 * percentLoaded) / images.length) + '%'
@@ -172,12 +170,9 @@ window.addEventListener('load', async () => {
 
       planes.push(plane)
     })
-
-    console.log('planes added', planes)
   }
 
   const removePlanes = () => {
-    console.log('remove planes', planes)
     planes.forEach((plane) => plane.remove())
     planes = []
   }

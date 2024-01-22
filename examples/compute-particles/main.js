@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec3, BindGroup, ComputePass, Geometry, Mesh } from '../../dist/gpu-curtains.js'
+import { BindGroup, ComputePass, Geometry, GPUCurtains, Mesh, Vec3 } from '../../dist/gpu-curtains.js'
 
 // inspired by https://barradeau.com/blog/?p=621
 // and https://www.clicktorelease.com/code/polygon-shredder/
@@ -308,8 +308,6 @@ window.addEventListener('load', async () => {
 
   // we're done with our first compute pass, remove it
   computeInitDataPass.remove()
-
-  console.log(gpuCurtains.renderer)
 
   computePass
     .onReady(() => console.log(computePass.material.getAddedShaderCode('compute')))

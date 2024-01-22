@@ -8,7 +8,7 @@ import {
   BindGroupBufferBindingElement,
   BindGroupEntries,
   BindGroupParams,
-  ReadOnlyInputBindings,
+  ReadOnlyInputBindings
 } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { TextureBindGroupParams } from './TextureBindGroup'
