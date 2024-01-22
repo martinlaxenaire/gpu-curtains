@@ -1,7 +1,8 @@
 import { BindGroup, ComputePass, Plane, PlaneGeometry, Vec2, Vec3 } from '../../../dist/gpu-curtains.js'
-import { computeClothSim } from '../shaders/compute-cloth.wgsl'
-import { clothFs, clothVs } from '../shaders/curtains-cloth.wgsl'
+import { computeClothSim } from '../shaders/compute-cloth.wgsl.js'
+import { clothFs, clothVs } from '../shaders/curtains-cloth.wgsl.js'
 
+// Ported and adapted from https://github.com/Yuu6883/WebGPUDemo
 export class CurtainsClothSim {
   constructor({ gpuCurtains }) {
     this.gpuCurtains = gpuCurtains

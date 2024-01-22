@@ -1,6 +1,6 @@
 import { Vec3, ComputePass, BoxGeometry, Mesh, ShaderPass } from '../../../dist/gpu-curtains.js'
-import { computeFeatureInstances } from '../shaders/compute-feature-instances.wgsl'
-import { featureInstancesFs, featureInstancesVs } from '../shaders/feature-instances.wgsl'
+import { computeFeatureInstances } from '../shaders/compute-feature-instances.wgsl.js'
+import { featureInstancesFs, featureInstancesVs } from '../shaders/feature-instances.wgsl.js'
 
 // inspired by the https://threejsinstancing.com/ homepage animation
 // from Daniel Velasquez: https://twitter.com/anemolito
