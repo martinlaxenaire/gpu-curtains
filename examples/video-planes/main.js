@@ -109,9 +109,7 @@ window.addEventListener('load', async () => {
   externalVideoPlane
     .onLoading((texture) => {
       texture.source.play()
-      console.log('external texture loaded', texture)
     })
-    .onReady(() => console.log('external video plane ready'))
     .onRender(() => {
       // update our time uniform value
       externalVideoPlane.uniforms.frames.elapsed.value++
@@ -142,9 +140,7 @@ window.addEventListener('load', async () => {
   videoPlane
     .onLoading((texture) => {
       texture.source.play()
-      console.log('video texture loaded', texture)
     })
-    .onReady(() => console.log('video plane ready'))
     .onRender(() => {
       // update our time uniform value
       videoPlane.uniforms.frames.elapsed.value++

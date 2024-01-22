@@ -7,7 +7,7 @@ import {
   RenderMaterialAttributes,
   RenderMaterialOptions,
   RenderMaterialParams,
-  RenderMaterialRenderingOptions,
+  RenderMaterialRenderingOptions
 } from '../../types/Materials'
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { RenderPipelineEntryParams } from '../../types/PipelineEntries'

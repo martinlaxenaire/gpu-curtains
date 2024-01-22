@@ -6,6 +6,9 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    renderPass: {
+      sampleCount: 1, // no need for MSAA here!
+    },
   })
 
   await gpuCurtains.setDevice()
@@ -146,12 +149,7 @@ window.addEventListener('load', async () => {
     fromTexture: plane.textures[slideshowState.nextTextureIndex],
   })
 
-  console.log(plane)
-
   plane
-    .onLoading((texture) => {
-      console.log('texture uploaded!', texture)
-    })
     .onReady(() => {
       document.body.classList.remove('is-waiting')
       const button = planeElements.querySelector('button')
@@ -211,9 +209,4 @@ window.addEventListener('load', async () => {
       // update our transition timer uniform
       plane.uniforms.transition.timer.value = slideshowState.transitionTimer
     })
-
-  // setTimeout(() => {
-  //   gpuCurtains.destroy()
-  //   console.log(plane, gpuCurtains)
-  // }, 5000)
 })

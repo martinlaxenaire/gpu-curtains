@@ -1,4 +1,4 @@
-import { GPUCurtains, PlaneGeometry, Sampler, Plane } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, Plane, PlaneGeometry, Sampler } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {
   // lerp
@@ -182,8 +182,6 @@ window.addEventListener('load', async () => {
   planeElements.forEach((planeEl, planeIndex) => {
     params.label = 'Plane' + planeIndex
     const plane = new Plane(gpuCurtains, planeEl, params)
-
-    console.log(plane)
 
     // check if our plane is defined and use it
     plane.onRender(() => {

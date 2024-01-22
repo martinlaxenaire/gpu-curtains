@@ -5,7 +5,6 @@ import { RenderTexture } from '../core/textures/RenderTexture'
 import { Sampler } from '../core/samplers/Sampler'
 import { Geometry } from '../core/geometries/Geometry'
 import { IndexedGeometry } from '../core/geometries/IndexedGeometry'
-import { PlaneGeometry } from '../core/geometries/PlaneGeometry'
 
 /* MATERIAL */
 

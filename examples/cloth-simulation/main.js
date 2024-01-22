@@ -1,4 +1,4 @@
-import { GPUCurtains, Vec2, Vec3, PlaneGeometry, BindGroup, ComputePass, Plane } from '../../dist/gpu-curtains.js'
+import { BindGroup, ComputePass, GPUCurtains, Plane, PlaneGeometry, Vec2, Vec3 } from '../../dist/gpu-curtains.js'
 
 // Port of https://github.com/Yuu6883/WebGPUDemo
 
@@ -527,8 +527,6 @@ window.addEventListener('load', async () => {
     dispatchSize: [Math.ceil((clothDefinition.x + 1) / 14), Math.ceil((clothDefinition.y + 1) / 14)],
   })
 
-  console.log({ computeForcesPass, computeUpdatePass, computeNormalPass })
-
   // now use renderer onBeforeRender callback to render our compute passes
   // nb sims compute per render impacts the speed at which the simulation runs
   const nbSimsComputePerRender = Math.min(75, Math.ceil(150 / simulationSpeed))
@@ -637,8 +635,6 @@ window.addEventListener('load', async () => {
   }
 
   const plane = new Plane(gpuCurtains, '#cloth', params)
-
-  console.log(plane)
 
   plane.onRender(() => {
     // update cloth vertex buffer with resulting buffer from compute passes

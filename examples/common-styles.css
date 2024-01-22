@@ -16,7 +16,6 @@
   }
 
   /*** layout ***/
-
   html,
   body {
     height: 100%;
@@ -98,7 +97,6 @@
   }
 
   /*** buttons ***/
-
   .primary-button {
     display: inline-block;
     padding: 0.225em 0.5em 0.275em 0.5em;
@@ -136,7 +134,6 @@
   }
 
   /*** overlay titles ***/
-
   .overlay-title {
     display: inline-block;
     padding: 0.125em 0.5em;
@@ -158,13 +155,12 @@
   }
 
   /*** canvas ***/
-
   #canvas {
     position: fixed;
     top: 0;
     left: 0;
     height: 100vh;
-    height: 100lvh;
+    height: 100 lvh;
     width: 100vw;
   }
 }

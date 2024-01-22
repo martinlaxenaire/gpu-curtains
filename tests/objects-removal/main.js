@@ -1,4 +1,4 @@
-import { getPageContent, isBackNavigation, onLinkNavigate, transitionHelper } from './view-transitions-api-utils.js'
+import { getPageContent, onLinkNavigate } from './view-transitions-api-utils.js'
 import { GPUCurtains } from '../../src/index.js'
 import { TestRenderTargets } from './TestRenderTargets.js'
 import { TestPingPong } from './TestPingPong.js'

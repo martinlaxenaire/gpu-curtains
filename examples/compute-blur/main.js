@@ -1,12 +1,11 @@
 import {
+  BufferBinding,
+  ComputePass,
   GPUCurtains,
-  Texture,
+  Plane,
   RenderTexture,
   ShaderPass,
-  BufferBinding,
-  TextureBindGroup,
-  ComputePass,
-  Plane,
+  TextureBindGroup
 } from '../../dist/gpu-curtains.js'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/imageBlur
@@ -191,8 +190,6 @@ window.addEventListener('load', async () => {
   //   format,
   // })
 
-  console.log(shaderPass)
-
   const inputTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute input texture',
     name: 'inputTexture',
@@ -267,8 +264,6 @@ window.addEventListener('load', async () => {
     keepLayout: true, // allows for bind groups ping pong
   })
 
-  console.log({ textureBindGroup, outputTextureBindGroup1, outputTextureBindGroup2 })
-
   const computeBlurPass = new ComputePass(gpuCurtains.renderer, {
     label: 'Compute blur',
     shaders: {
@@ -294,11 +289,6 @@ window.addEventListener('load', async () => {
       },
     },
   })
-
-  // computeBlurPass.onReady(() => {
-  //   console.log('ready', computeBlurPass)
-  //   console.log(computeBlurPass.material.getBindingByName('params'))
-  // })
 
   // use a custom render function
   // here the pipeline has already been set

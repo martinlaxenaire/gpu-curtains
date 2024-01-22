@@ -7,9 +7,9 @@
 .plane {
   position: absolute;
   top: 10vh;
-  top: 10svh;
+  top: 10 svh;
   left: 10%;
   width: 80%;
   height: 80vh;
-  height: 80svh;
+  height: 80 svh;
 }

@@ -1,13 +1,12 @@
 import {
+  BoxGeometry,
   GPUCameraRenderer,
+  GPUDeviceManager,
+  Mesh,
+  ShaderPass,
+  SphereGeometry,
   Vec2,
   Vec3,
-  BoxGeometry,
-  SphereGeometry,
-  Mesh,
-  GPUDeviceManager,
-  ShaderPass,
-  RenderTarget,
 } from '../../src/index.js'
 
 window.addEventListener('load', async () => {
@@ -148,6 +147,7 @@ window.addEventListener('load', async () => {
         vec2<i32>(floor(fsInput.position.xy)),
         0
       );
+      
       // remap depth into something a bit more visible
       let depth = (1.0 - rawDepth) * 75.0 * params.systemSize;
 

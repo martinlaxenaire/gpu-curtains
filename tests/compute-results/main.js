@@ -1,5 +1,4 @@
-//import { GPUDeviceManager, GPURenderer, Vec2, ComputePass } from '../../dist/gpu-curtains.js'
-import { GPUDeviceManager, GPURenderer, Vec2, ComputePass } from '../../src/index.js'
+import { ComputePass, GPUDeviceManager, GPURenderer, Vec2 } from '../../src/index.js'
 
 window.addEventListener('load', async () => {
   const start = performance.now()
@@ -15,7 +14,7 @@ window.addEventListener('load', async () => {
     container: '#canvas',
   })
 
-  const compute2DNoiseShader = `
+  const compute2DNoiseShader = /* wgsl */ `
     // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39#perlin-noise
     // MIT License. © Stefan Gustavson, Munrocket
     //

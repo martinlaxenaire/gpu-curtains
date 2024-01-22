@@ -1,10 +1,9 @@
 import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
 import {
-  PipelineEntryBaseParams,
   PipelineEntryParams,
   RenderPipelineEntryBaseParams,
-  RenderPipelineEntryParams,
+  RenderPipelineEntryParams
 } from '../../types/PipelineEntries'
 
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */

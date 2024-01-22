@@ -1,7 +1,7 @@
 import { MeshBaseMixin, MeshBaseRenderParams } from './mixins/MeshBaseMixin'
 import { isRenderer, Renderer } from '../renderers/utils'
 import { PlaneGeometry } from '../geometries/PlaneGeometry'
-import { DOMElement, DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
+import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
 import { Vec2 } from '../../math/Vec2'
 import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtains } from '../../curtains/GPUCurtains'

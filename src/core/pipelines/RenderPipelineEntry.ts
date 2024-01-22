@@ -7,7 +7,7 @@ import {
   PipelineEntryShaders,
   RenderPipelineEntryOptions,
   RenderPipelineEntryParams,
-  RenderPipelineEntryPropertiesParams,
+  RenderPipelineEntryPropertiesParams
 } from '../../types/PipelineEntries'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { AllowedBindGroups, BindGroupBufferBindingElement } from '../../types/BindGroups'

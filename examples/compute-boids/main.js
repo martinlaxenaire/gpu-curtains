@@ -1,11 +1,11 @@
 import {
-  GPUCurtains,
-  Vec2,
-  BufferBinding,
   BindGroup,
+  BufferBinding,
   ComputePass,
-  SphereGeometry,
+  GPUCurtains,
   Mesh,
+  SphereGeometry,
+  Vec2
 } from '../../dist/gpu-curtains.js'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
@@ -347,19 +347,15 @@ window.addEventListener('load', async () => {
   sphereMesh.scale.y = 1 / particleShrinkScale
   sphereMesh.scale.z = 1 / particleShrinkScale
 
-  sphereMesh
-    .onReady(() => {
-      //console.log(cubeMesh.material.getAddedShaderCode('vertex'))
-    })
-    .onRender(() => {
-      const instanceVertexBuffer = sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
+  sphereMesh.onRender(() => {
+    const instanceVertexBuffer = sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
 
-      // ping pong our buffers here
-      // always send to the instance positions buffer the one onto which we've just written
-      const particleBuffer = pingPong % 2 === 0 ? particlesBufferBindingB : particlesBufferBindingA
+    // ping pong our buffers here
+    // always send to the instance positions buffer the one onto which we've just written
+    const particleBuffer = pingPong % 2 === 0 ? particlesBufferBindingB : particlesBufferBindingA
 
-      instanceVertexBuffer.buffer = particleBuffer?.buffer
-    })
+    instanceVertexBuffer.buffer = particleBuffer?.buffer
+  })
 
   // mouse interaction
   const mousePosition = new Vec2(Infinity)

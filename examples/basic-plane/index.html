@@ -59,8 +59,6 @@
 
         await gpuCurtains.setDevice()
 
-        console.log(gpuCurtains)
-
         const vertexShader = /* wgsl */ `
           struct VSOutput {
               @builtin(position) position: vec4f,
@@ -153,7 +151,6 @@
         const planeElement = document.querySelector('.plane')
 
         const plane = new Plane(gpuCurtains, planeElement, params)
-        console.log(plane.material)
 
         plane.onRender(() => {
           // update our time uniform value
