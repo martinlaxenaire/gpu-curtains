@@ -20,7 +20,10 @@ The [documentation](https://martinlaxenaire.github.io/gpu-curtains/docs/) is aut
 
 Before submitting any PR, you must ensure the project is building without throwing any error by running `npm run build` or `yarn build`. Please add a detailed description of your PR.
 
-If your PR includes a new feature, it would be highly appreciated that you'd add at least a test case to the `/tests/` directory.
+If your PR includes a new feature, it would be highly appreciated that you'd add at least a test case to the `/tests/` directory:
+
+- [Tests repository directory](https://github.com/martinlaxenaire/gpu-curtains/tests/)
+- [Tests online directory](https://martinlaxenaire.github.io/gpu-curtains/tests/)
 
 ## Past and future evolutions
 
