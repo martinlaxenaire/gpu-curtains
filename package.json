@@ -13,16 +13,23 @@
   },
   "name": "gpu-curtains",
   "version": "0.0.1",
-  "description": "gpu-curtains is a WebGPU rendering engine aiming at synchronizing 3D objects scale and position with DOM HTML elements",
+  "description": "gpu-curtains is a WebGPU rendering engine that make 3D objects scale and position match with associated DOM HTML elements",
   "keywords": [
-    "webgpu"
+    "webgpu",
+    "dom",
+    "html5",
+    "javascript",
+    "3d",
+    "canvas",
+    "curtains",
+    "gpu-curtains"
   ],
   "author": {
     "name": "Martin Laxenaire",
     "email": "martin.laxenaire@gmail.com",
     "url": "https://martin-laxenaire.fr/"
   },
-  "homepage": "https://martinlaxenaire.github.io",
+  "homepage": "https://martinlaxenaire.github.io/",
   "bugs": {
     "url": "https://github.com/martinlaxenaire/gpu-curtains/issues"
   },
@@ -45,7 +52,7 @@
     }
   },
   "directories": {
-    "docs": "docs",
+    "doc": "docs",
     "example": "examples",
     "test": "tests"
   },
