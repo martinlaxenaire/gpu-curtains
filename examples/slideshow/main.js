@@ -56,6 +56,7 @@ window.addEventListener('load', async () => {
       }
     `
 
+  // port of https://gl-transitions.com/editor/windowslice
   const fragmentShader = /* wgsl */ `
       struct VSOutput {
         @builtin(position) position: vec4f,
@@ -68,7 +69,6 @@ window.addEventListener('load', async () => {
         var activeColor: vec4f = textureSample(activeTexture, defaultSampler, fsInput.activeUv);
         var nextColor: vec4f = textureSample(nextTexture, defaultSampler, fsInput.nextUv);
         
-        // port of https://gl-transitions.com/editor/windowslice
         var progress: f32 = transition.timer / transition.duration;
         
         var smoothProgress: f32 = smoothstep(

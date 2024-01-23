@@ -14,7 +14,8 @@
     transition: opacity 0.5s ease-out;
   }
 
-  .planes-loaded #loader {
+  .planes-loaded #loader,
+  .no-curtains #loader {
     opacity: 0;
   }
 

@@ -1,3 +1,7 @@
+<div text-align="center">
+    <img src="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1080-720.jpg" width="500" alt="gpu-curtains" />
+</div>
+
 # gpu-curtains
 
 > :warning: WIP
@@ -138,7 +142,7 @@ The [WebGPU samples](https://github.com/webgpu/webgpu-samples) and [WebGPU funda
 
 A big thanks to the members of the [WebGPU matrix chan](https://matrix.to/#/#WebGPU:matrix.org) that were always super kinds and very helpful as well.
 
-### Changelog and roadmap
+## Changelog and roadmap
 
 - [Releases](https://github.com/martinlaxenaire/gpu-curtains/releases)
 - See the [roadmap](ROADMAP.md) for details on the current work in progress.
