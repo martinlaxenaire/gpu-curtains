@@ -1025,7 +1025,7 @@ export class GPURenderer {
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
     this.onBeforeRenderScene.execute(commandEncoder)
 
-    this.scene.render(commandEncoder)
+    this.scene?.render(commandEncoder)
 
     // TODO not working
     // if (this.options.multisampled && this.multisamplingPass) {
