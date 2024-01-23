@@ -2447,22 +2447,24 @@ class BindGroup {
    */
   update() {
     this.updateBufferBindings();
-    const needsReset = this.bindings.some((binding) => binding.shouldResetBindGroup);
-    const resetBindGroupLayout = this.bindings.some((binding) => binding.shouldResetBindGroupLayout);
-    this.renderer.onAfterCommandEncoderSubmission.add(
-      () => {
-        this.bindings.forEach((binding) => {
-          binding.shouldResetBindGroup = false;
-          binding.shouldResetBindGroupLayout = false;
-        });
-      },
-      { once: true }
-    );
-    if (resetBindGroupLayout) {
+    const needBindGroupReset = this.bindings.some((binding) => binding.shouldResetBindGroup);
+    const needBindGroupLayoutReset = this.bindings.some((binding) => binding.shouldResetBindGroupLayout);
+    if (needBindGroupReset || needBindGroupLayoutReset) {
+      this.renderer.onAfterCommandEncoderSubmission.add(
+        () => {
+          this.bindings.forEach((binding) => {
+            binding.shouldResetBindGroup = false;
+            binding.shouldResetBindGroupLayout = false;
+          });
+        },
+        { once: true }
+      );
+    }
+    if (needBindGroupLayoutReset) {
       this.resetBindGroupLayout();
       this.needsPipelineFlush = true;
     }
-    if (needsReset) {
+    if (needBindGroupReset) {
       this.resetBindGroup();
     }
   }

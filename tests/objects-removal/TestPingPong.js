@@ -1,16 +1,6 @@
-import { PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../src/index.js'
-
 export class TestPingPong {
   constructor({ gpuCurtains }) {
     this.gpuCurtains = gpuCurtains
-
-    this.mouse = new Vec2()
-    this.velocity = new Vec2()
-    // used for vector lerping
-    this.nullVector = new Vec2()
-    this.lastMouse = this.mouse.clone()
-    // if we should update the velocity or not
-    this.updateVelocity = false
 
     this.init()
   }
@@ -35,7 +25,18 @@ export class TestPingPong {
     this.updateVelocity = true
   }
 
-  init() {
+  async init() {
+    const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+    const { PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } = await import(path)
+
+    this.mouse = new Vec2()
+    this.velocity = new Vec2()
+    // used for vector lerping
+    this.nullVector = new Vec2()
+    this.lastMouse = this.mouse.clone()
+    // if we should update the velocity or not
+    this.updateVelocity = false
+
     const flowMapFS = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,

@@ -1,10 +1,11 @@
-import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, PlaneGeometry, Vec2, Vec3 } from '../../src/index.js'
-
 // Goals of this test:
 // - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
 // - test camera position, rotation, lookAt, fov
 // - test frustum culling
 window.addEventListener('load', async () => {
+  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, PlaneGeometry, Vec2, Vec3 } = await import(path)
+
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',

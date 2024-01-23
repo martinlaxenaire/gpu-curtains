@@ -8,7 +8,7 @@ import {
   BindGroupBufferBindingElement,
   BindGroupEntries,
   BindGroupParams,
-  ReadOnlyInputBindings
+  ReadOnlyInputBindings,
 } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { TextureBindGroupParams } from './TextureBindGroup'
@@ -415,28 +415,30 @@ export class BindGroup {
   update() {
     this.updateBufferBindings()
 
-    const needsReset = this.bindings.some((binding) => binding.shouldResetBindGroup)
-    const resetBindGroupLayout = this.bindings.some((binding) => binding.shouldResetBindGroupLayout)
+    const needBindGroupReset = this.bindings.some((binding) => binding.shouldResetBindGroup)
+    const needBindGroupLayoutReset = this.bindings.some((binding) => binding.shouldResetBindGroupLayout)
 
     // since other bind groups might be using that binding
     // wait for the end of the render loop to reset the bindings flags
-    this.renderer.onAfterCommandEncoderSubmission.add(
-      () => {
-        this.bindings.forEach((binding) => {
-          binding.shouldResetBindGroup = false
-          binding.shouldResetBindGroupLayout = false
-        })
-      },
-      { once: true }
-    )
+    if (needBindGroupReset || needBindGroupLayoutReset) {
+      this.renderer.onAfterCommandEncoderSubmission.add(
+        () => {
+          this.bindings.forEach((binding) => {
+            binding.shouldResetBindGroup = false
+            binding.shouldResetBindGroupLayout = false
+          })
+        },
+        { once: true }
+      )
+    }
 
-    if (resetBindGroupLayout) {
+    if (needBindGroupLayoutReset) {
       this.resetBindGroupLayout()
       // bind group layout has changed, we have to recreate the pipeline
       this.needsPipelineFlush = true
     }
 
-    if (needsReset) {
+    if (needBindGroupReset) {
       this.resetBindGroup()
     }
   }
