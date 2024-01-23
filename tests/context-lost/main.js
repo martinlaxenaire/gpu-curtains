@@ -1,6 +1,8 @@
-import { BoxGeometry, GPUCurtains, Mesh, Plane, ShaderPass } from '../../src/index.js'
-
+// Goal of this test is checking if device lost/restoration works
 window.addEventListener('load', async () => {
+  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const { BoxGeometry, GPUCurtains, Mesh, Plane, ShaderPass } = await import(path)
+
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',

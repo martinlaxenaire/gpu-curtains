@@ -476,6 +476,11 @@
     overflow: hidden;
   }
 
+  .no-curtains #compute-feature-canvas,
+  .no-curtains #features-particles-helper {
+    display: none;
+  }
+
   #features-particles-helper h3 {
     font-size: 1em;
     font-family: var(--script-font);

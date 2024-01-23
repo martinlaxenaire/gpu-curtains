@@ -1,15 +1,9 @@
-import {
-  BoxGeometry,
-  GPUCameraRenderer,
-  GPUDeviceManager,
-  Mesh,
-  ShaderPass,
-  SphereGeometry,
-  Vec2,
-  Vec3,
-} from '../../src/index.js'
-
+// Goal of this test is to test and help visualize depth textures
 window.addEventListener('load', async () => {
+  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, ShaderPass, SphereGeometry, Vec2, Vec3 } =
+    await import(path)
+
   const systemSize = 10
 
   // here is an example of how we can use a simple GPUCameraRenderer instead of GPUCurtains

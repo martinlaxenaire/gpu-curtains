@@ -1,6 +1,8 @@
-import { GPUCurtains, Plane, Vec2 } from '../../src/index.js'
-
+// Goal of this test is to help debug plane transformations and raycasting
 window.addEventListener('load', async () => {
+  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const { GPUCurtains, Plane, Vec2 } = await import(path)
+
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',

@@ -1,5 +1,3 @@
-import { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } from '../../src/index.js'
-
 export class TestComputePasses {
   constructor({ gpuCurtains }) {
     this.gpuCurtains = gpuCurtains
@@ -7,7 +5,10 @@ export class TestComputePasses {
     this.init()
   }
 
-  init() {
+  async init() {
+    const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+    const { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } = await import(path)
+
     // number of particles instances
     this.numParticles = 2500
     // how much we're going to shrink the original geometry

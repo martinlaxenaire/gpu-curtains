@@ -1,6 +1,8 @@
-import { BufferBinding, GPUCurtains, Vec2, Vec3 } from '../../src/index.js'
-
+// Goal of this test is to help debug and visualize buffer binding alignments
 window.addEventListener('load', async () => {
+  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const { BufferBinding, GPUCurtains, Vec2, Vec3 } = await import(path)
+
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
@@ -221,8 +223,8 @@ window.addEventListener('load', async () => {
       // now the elements themselves
       const totalNumElements = bindingElement.numElements ?? 1
       for (let i = 0; i < totalNumElements; i++) {
-        const stride = bindingElement.stride ?? 0
-        let newStartOffset = startOffset + i * stride
+        const arrayStride = bindingElement.arrayStride ?? 0
+        let newStartOffset = startOffset + i * arrayStride
 
         if (previousEndOffset < newStartOffset) {
           const offsetDiff = newStartOffset - previousEndOffset - 1
@@ -275,7 +277,7 @@ window.addEventListener('load', async () => {
             size: interleavedBufferElement.bufferLayout.size,
             numElements: interleavedBufferElement.bufferLayout.numElements,
             startOffset: interleavedBufferElement.startOffset,
-            stride: interleavedBufferElement.stride,
+            arrayStride: interleavedBufferElement.arrayStride,
             //entries: [interleavedBufferElement.interleavedAlignment.entries[i]],
             index: regularBufferElements.length + index,
             loopIndex: i,
@@ -286,7 +288,7 @@ window.addEventListener('load', async () => {
       console.log(interleavedEntries)
 
       interleavedEntries.forEach((interleavedEntry) => {
-        const newStartOffset = interleavedEntry.startOffset + interleavedEntry.loopIndex * interleavedEntry.stride
+        const newStartOffset = interleavedEntry.startOffset + interleavedEntry.loopIndex * interleavedEntry.arrayStride
 
         // add empty padded slots before entry if needed
         if (previousEndOffset < newStartOffset) {

@@ -1,5 +1,3 @@
-import { Plane, RenderTarget, Sampler, ShaderPass } from '../../src/index.js'
-
 export class TestRenderTargets {
   constructor({ gpuCurtains }) {
     this.gpuCurtains = gpuCurtains
@@ -39,7 +37,10 @@ export class TestRenderTargets {
     this.init()
   }
 
-  init() {
+  async init() {
+    const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+    const { Plane, RenderTarget, Sampler, ShaderPass } = await import(path)
+
     // We don't want to see our pass texture top/bottom edges
     // so we're going to use a custom sampler with mirror repeat
     const mirrorSampler = new Sampler(this.gpuCurtains, {

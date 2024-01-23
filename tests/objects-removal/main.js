@@ -1,10 +1,14 @@
 import { getPageContent, onLinkNavigate } from './view-transitions-api-utils.js'
-import { GPUCurtains } from '../../src/index.js'
 import { TestRenderTargets } from './TestRenderTargets.js'
 import { TestPingPong } from './TestPingPong.js'
 import { TestComputePasses } from './TestComputePasses.js'
 
+// Goal of this test is to check if various objects remove() work well
+// and if there's no memory leaks
 window.addEventListener('load', async () => {
+  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const { GPUCurtains } = await import(path)
+
   // curtains
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({

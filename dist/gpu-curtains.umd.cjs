@@ -2451,22 +2451,24 @@ var __privateMethod = (obj, member, method) => {
      */
     update() {
       this.updateBufferBindings();
-      const needsReset = this.bindings.some((binding) => binding.shouldResetBindGroup);
-      const resetBindGroupLayout = this.bindings.some((binding) => binding.shouldResetBindGroupLayout);
-      this.renderer.onAfterCommandEncoderSubmission.add(
-        () => {
-          this.bindings.forEach((binding) => {
-            binding.shouldResetBindGroup = false;
-            binding.shouldResetBindGroupLayout = false;
-          });
-        },
-        { once: true }
-      );
-      if (resetBindGroupLayout) {
+      const needBindGroupReset = this.bindings.some((binding) => binding.shouldResetBindGroup);
+      const needBindGroupLayoutReset = this.bindings.some((binding) => binding.shouldResetBindGroupLayout);
+      if (needBindGroupReset || needBindGroupLayoutReset) {
+        this.renderer.onAfterCommandEncoderSubmission.add(
+          () => {
+            this.bindings.forEach((binding) => {
+              binding.shouldResetBindGroup = false;
+              binding.shouldResetBindGroupLayout = false;
+            });
+          },
+          { once: true }
+        );
+      }
+      if (needBindGroupLayoutReset) {
         this.resetBindGroupLayout();
         this.needsPipelineFlush = true;
       }
-      if (needsReset) {
+      if (needBindGroupReset) {
         this.resetBindGroup();
       }
     }
@@ -9692,11 +9694,12 @@ struct VSOutput {
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
+      var _a;
       if (!this.ready)
         return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
       this.onBeforeRenderScene.execute(commandEncoder);
-      this.scene.render(commandEncoder);
+      (_a = this.scene) == null ? void 0 : _a.render(commandEncoder);
       this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
       this.onAfterRenderScene.execute(commandEncoder);
     }
@@ -9998,15 +10001,17 @@ struct VSOutput {
      */
     async setAdapter() {
       var _a, _b;
-      this.adapter = await ((_a = this.gpu) == null ? void 0 : _a.requestAdapter().catch(() => {
+      try {
+        this.adapter = await ((_a = this.gpu) == null ? void 0 : _a.requestAdapter());
+        (_b = this.adapter) == null ? void 0 : _b.requestAdapterInfo().then((infos) => {
+          this.adapterInfos = infos;
+        });
+      } catch (error) {
         setTimeout(() => {
           this.onError();
           throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
         }, 0);
-      }));
-      (_b = this.adapter) == null ? void 0 : _b.requestAdapterInfo().then((infos) => {
-        this.adapterInfos = infos;
-      });
+      }
     }
     /**
      * Set our {@link device}
@@ -10018,8 +10023,10 @@ struct VSOutput {
         this.device = await ((_a = this.adapter) == null ? void 0 : _a.requestDevice({
           label: this.label + " " + this.index
         }));
-        this.ready = true;
-        this.index++;
+        if (this.device) {
+          this.ready = true;
+          this.index++;
+        }
       } catch (error) {
         setTimeout(() => {
           this.onError();
