@@ -147,7 +147,7 @@ export declare class Scene {
     removePingPongPlane(pingPongPlane: PingPongPlane): void;
     /**
      * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
-     * @param object - The object from which we want to get the parent {@link RenderPassEntry}
+     * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
      * @returns - the {@link RenderPassEntry} if found
      */
     getObjectRenderPassEntry(object: RenderedMesh | RenderTarget): RenderPassEntry | undefined;

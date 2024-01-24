@@ -60,6 +60,6 @@ export interface TextureSize extends RectSize {
     depth?: number;
 }
 /**
- * Allowed {@link Texture} parent (can be any type of Mesh)
+ * Allowed {@link Texture} parentMesh (can be any type of Mesh)
  */
 export type TextureParent = null | RenderedMesh;

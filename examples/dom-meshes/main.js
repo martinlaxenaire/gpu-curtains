@@ -29,7 +29,7 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {    
       var vsOutput : VSOutput;
       
-      vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, meshTextureMatrix);
       vsOutput.normal = attributes.normal;
       

@@ -158,7 +158,7 @@ export class TestPingPong {
       ) -> VSOutput {
         var vsOutput: VSOutput;
       
-        vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+        vsOutput.position = getOutputPosition(attributes.position);
       
         // used for the flow map texture
         vsOutput.uv = attributes.uv;

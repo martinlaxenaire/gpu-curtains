@@ -375,7 +375,7 @@ export class GPUDeviceManager {
    * - create a {@link GPUCommandEncoder}
    * - render all our {@link renderers}
    * - submit our {@link GPUCommandBuffer}
-   * - upload {@link Texture#texture | textures} that do not have a parent
+   * - upload {@link Texture#texture | textures} that do not have a parentMesh
    * - empty our {@link texturesQueue} array
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
    */
@@ -392,9 +392,9 @@ export class GPUDeviceManager {
     this.device?.queue.submit([commandBuffer])
 
     // handle textures
-    // first check if media textures without parent need to be uploaded
+    // first check if media textures without parentMesh need to be uploaded
     this.textures
-      .filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded)
+      .filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded)
       .forEach((texture) => this.uploadTexture(texture))
 
     // no need to use device.queue.onSubmittedWorkDone

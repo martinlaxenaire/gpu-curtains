@@ -78,7 +78,7 @@ window.addEventListener('load', async () => {
       transformed.y += instanceGridPosition.y;
       transformed.z += instanceGridPosition.z;
               
-      vsOutput.position = getOutputPosition(camera, matrices, transformed);
+      vsOutput.position = getOutputPosition(transformed);
       vsOutput.color = attributes.color;
       
       return vsOutput;

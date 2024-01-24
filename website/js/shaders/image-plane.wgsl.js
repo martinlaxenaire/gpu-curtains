@@ -15,7 +15,7 @@ struct VSOutput {
       attributes.position.z - cos(3.141595 * attributes.position.y * 0.5) * deformation.strength * 2.0
   );
 
-  vsOutput.position = getOutputPosition(camera, matrices, transformed);
+  vsOutput.position = getOutputPosition(transformed);
   vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
 
   return vsOutput;

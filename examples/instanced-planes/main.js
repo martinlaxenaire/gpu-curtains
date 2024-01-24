@@ -90,7 +90,7 @@ window.addEventListener('load', async () => {
       transformed.z -= 0.0001 * instanceIndex;
       transformed.z -= instanceIndex * abs(scroll.strength) * 0.1;
 
-      vsOutput.position = getOutputPosition(camera, matrices, transformed);
+      vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
       vsOutput.instanceIndex = instanceIndex;
     

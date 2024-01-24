@@ -2,8 +2,10 @@ import { Vec3 } from '../../math/Vec3'
 import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
 
+let objectIndex = 0
+
 /** Defines all kind of possible {@link Object3D} matrix types */
-export type Object3DMatricesType = 'model'
+export type Object3DMatricesType = 'model' | 'world'
 
 /**
  * Defines an {@link Object3D} matrix object
@@ -43,9 +45,11 @@ export interface Object3DTransforms {
 }
 
 /**
- * Used to create an object with transformation properties such as position, scale, rotation and transform origin {@link Vec3 | vectors} and a {@link Quat | quaternion} in order to compute a {@link Mat4 | model matrix}.
+ * Used to create an object with transformation properties such as position, scale, rotation and transform origin {@link Vec3 | vectors} and a {@link Quat | quaternion} in order to compute the {@link Object3D#modelMatrix | model matrix} and {@link Object3D#worldMatrix | world matrix}.
  *
- * The transformations {@link Vec3 | vectors} are reactive to changes, which mean that updating one of their components will automatically update the {@link Mat4 | model matrix}.
+ * If an {@link Object3D} does not have any {@link Object3D#parent | parent}, then its {@link Object3D#modelMatrix | model matrix} and {@link Object3D#worldMatrix | world matrix} are the same.
+ *
+ * The transformations {@link Vec3 | vectors} are reactive to changes, which mean that updating one of their components will automatically update the {@link Object3D#modelMatrix | model matrix} and {@link Object3D#worldMatrix | world matrix}.
  */
 export class Object3D {
   /** {@link Object3DTransforms | Transformation object} of the {@link Object3D} */
@@ -53,12 +57,46 @@ export class Object3D {
   /** {@link Object3DMatrices | Matrices object} of the {@link Object3D} */
   matrices: Object3DMatrices
 
+  /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix | world matrix} */
+  private _parent: null | Object3D
+  /** Children {@link Object3D} in the scene graph, used to compute their own {@link worldMatrix | world matrix} */
+  children: Object3D[]
+
+  /** Index (order of creation) of this {@link Object3D}. Used in the {@link parent} / {@link children} relation. */
+  object3DIndex: number
+
   /**
    * Object3D constructor
    */
   constructor() {
+    this.parent = null
+    this.children = []
+
+    Object.defineProperty(this as Object3D, 'object3DIndex', { value: objectIndex++ })
+
     this.setMatrices()
     this.setTransforms()
+  }
+
+  /* PARENT */
+
+  /**
+   * Get the parent of this {@link Object3D} if any
+   */
+  get parent(): Object3D | null {
+    return this._parent
+  }
+
+  /**
+   * Set the parent of this {@link Object3D}
+   * @param value - new parent to set, could be an {@link Object3D} or null
+   */
+  set parent(value: Object3D | null) {
+    if (this.parent) {
+      this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex)
+    }
+    this._parent = value
+    this._parent?.children.push(this)
   }
 
   /* TRANSFORMS */
@@ -196,7 +234,7 @@ export class Object3D {
   /* MATRICES */
 
   /**
-   * Set our {@link modelMatrix | model matrix}
+   * Set our {@link modelMatrix | model matrix} and {@link worldMatrix | world matrix}
    */
   setMatrices() {
     this.matrices = {
@@ -204,6 +242,11 @@ export class Object3D {
         matrix: new Mat4(),
         shouldUpdate: false,
         onUpdate: () => this.updateModelMatrix(),
+      },
+      world: {
+        matrix: new Mat4(),
+        shouldUpdate: false,
+        onUpdate: () => this.updateWorldMatrix(),
       },
     }
   }
@@ -229,6 +272,30 @@ export class Object3D {
    */
   shouldUpdateModelMatrix() {
     this.matrices.model.shouldUpdate = true
+    this.shouldUpdateWorldMatrix()
+  }
+
+  /**
+   * Get our {@link Mat4 | world matrix}
+   */
+  get worldMatrix(): Mat4 {
+    return this.matrices.world.matrix
+  }
+
+  /**
+   * Set our {@link Mat4 | world matrix}
+   * @param value - new {@link Mat4 | world matrix}
+   */
+  set worldMatrix(value: Mat4) {
+    this.matrices.world.matrix = value
+    this.shouldUpdateWorldMatrix()
+  }
+
+  /**
+   * Set our {@link worldMatrix | world matrix} shouldUpdate flag to true (tell it to update)
+   */
+  shouldUpdateWorldMatrix() {
+    this.matrices.world.shouldUpdate = true
   }
 
   /**
@@ -252,30 +319,57 @@ export class Object3D {
       this.scale,
       this.transformOrigin
     )
+
+    // tell our world matrix to update
+    this.shouldUpdateWorldMatrix()
+  }
+
+  /**
+   * Update our {@link worldMatrix | model matrix}
+   */
+  updateWorldMatrix() {
+    if (!this.parent) {
+      this.worldMatrix.copy(this.modelMatrix)
+    } else {
+      this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix)
+    }
+
+    // update the children world matrix as well
+    this.children.forEach((child) => {
+      child.shouldUpdateWorldMatrix()
+    })
   }
 
   /**
    * Callback to run if at least one matrix of the stack has been updated
    */
   onAfterMatrixStackUpdate() {
-    /* allow empty callback */
+    /* will be used by the classes extending Object3D */
   }
 
   /**
    * Check at each render whether we should update our matrices, and update them if needed
    */
   updateMatrixStack() {
+    // if it has a parent and it is an Object3D
+    // it means nothing updates it in the render loop, so do it from here
+    if (this.parent && this.parent.constructor.name === 'Object3D') {
+      this.parent.updateMatrixStack()
+    }
+
     // check if at least one matrix should update
     const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate)
 
-    for (const matrixName in this.matrices) {
-      if (this.matrices[matrixName].shouldUpdate) {
-        this.matrices[matrixName].onUpdate()
-        this.matrices[matrixName].shouldUpdate = false
+    if (matrixShouldUpdate) {
+      for (const matrixName in this.matrices) {
+        if (this.matrices[matrixName].shouldUpdate) {
+          this.matrices[matrixName].onUpdate()
+          this.matrices[matrixName].shouldUpdate = false
+        }
       }
-    }
 
-    // callback to run if at least one matrix of the stack has been updated
-    if (matrixShouldUpdate) this.onAfterMatrixStackUpdate()
+      // callback to run if at least one matrix of the stack has been updated
+      this.onAfterMatrixStackUpdate()
+    }
   }
 }

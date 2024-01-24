@@ -43,7 +43,7 @@ window.addEventListener('load', async () => {
         var vsOutput: VSOutput;
 
        
-        vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+        vsOutput.position = getOutputPosition(attributes.position);
 
         // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
         vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);

@@ -77,8 +77,8 @@ export class Texture extends Object3D {
   /** The bindings used by this {@link Texture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
   bindings: BindGroupBindingElement[]
 
-  /** {@link Texture} parent if any */
-  private _parent: TextureParent
+  /** {@link Texture} parentMesh if any */
+  private _parentMesh: TextureParent
 
   /** Whether the source has been loaded */
   private _sourceLoaded: boolean
@@ -90,7 +90,7 @@ export class Texture extends Object3D {
   /** {@link HTMLVideoElement.requestVideoFrameCallback | requestVideoFrameCallback} returned id if used */
   videoFrameCallbackId: null | number
 
-  /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parent} {@link RectSize | size} */
+  /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link RectSize | size} */
   #parentRatio: Vec3 = new Vec3(1)
   /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
   #sourceRatio: Vec3 = new Vec3(1)
@@ -167,7 +167,7 @@ export class Texture extends Object3D {
 
     this.setBindings()
 
-    this._parent = null
+    this._parentMesh = null
 
     this.sourceLoaded = false
     this.sourceUploaded = false
@@ -202,18 +202,18 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Get our texture {@link parent}
+   * Get our texture {@link parentMesh}
    */
-  get parent(): TextureParent {
-    return this._parent
+  get parentMesh(): TextureParent {
+    return this._parentMesh
   }
 
   /**
-   * Set our texture {@link parent}
-   * @param value - texture {@link parent} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
+   * Set our texture {@link parentMesh}
+   * @param value - texture {@link parentMesh} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
    */
-  set parent(value: TextureParent) {
-    this._parent = value
+  set parentMesh(value: TextureParent) {
+    this._parentMesh = value
     this.resize()
   }
 
@@ -271,17 +271,17 @@ export class Texture extends Object3D {
    * Update the {@link modelMatrix}
    */
   updateModelMatrix() {
-    if (!this.parent) return
+    if (!this.parentMesh) return
 
-    const parentScale = (this.parent as DOMProjectedMesh).scale
-      ? (this.parent as DOMProjectedMesh).scale
+    const parentScale = (this.parentMesh as DOMProjectedMesh).scale
+      ? (this.parentMesh as DOMProjectedMesh).scale
       : new Vec3(1, 1, 1)
 
-    const parentWidth = (this.parent as DOMProjectedMesh).boundingRect
-      ? (this.parent as DOMProjectedMesh).boundingRect.width * parentScale.x
+    const parentWidth = (this.parentMesh as DOMProjectedMesh).boundingRect
+      ? (this.parentMesh as DOMProjectedMesh).boundingRect.width * parentScale.x
       : this.size.width
-    const parentHeight = (this.parent as DOMProjectedMesh).boundingRect
-      ? (this.parent as DOMProjectedMesh).boundingRect.height * parentScale.y
+    const parentHeight = (this.parentMesh as DOMProjectedMesh).boundingRect
+      ? (this.parentMesh as DOMProjectedMesh).boundingRect.height * parentScale.y
       : this.size.height
 
     const parentRatio = parentWidth / parentHeight

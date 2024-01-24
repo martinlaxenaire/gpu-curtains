@@ -10,7 +10,7 @@ struct VertexOutput {
 ) -> VertexOutput {
   var vsOutput: VertexOutput;
 
-  vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+  vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
   vsOutput.normal = attributes.normal;
   

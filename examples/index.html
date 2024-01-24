@@ -138,7 +138,7 @@
           </li>
           <li>
             <a href="camera-renderer-selective-dithering/index.html" target="_blank">
-              GPUCameraRenderer, camera rotation and selective dithering pass
+              GPUCameraRenderer, Object3D pivot rotation and selective dithering pass
             </a>
           </li>
         </ul>
@@ -146,7 +146,7 @@
     </div>
 
     <script type="module">
-      import { GPUCurtains, SphereGeometry, DOMMesh, Vec3 } from '../dist/gpu-curtains.js'
+      import { GPUCurtains, SphereGeometry, DOMMesh, Vec3, Object3D } from '../dist/gpu-curtains.js'
 
       window.addEventListener('DOMContentLoaded', async () => {
         // set up our WebGL context and append the canvas to our wrapper
@@ -157,42 +157,6 @@
         })
 
         await gpuCurtains.setDevice()
-
-        const meshVs = /* wgsl */ `
-          struct VSOutput {
-            @builtin(position) position: vec4f,
-            @location(0) uv: vec2f,
-            @location(1) normal: vec3f,
-          };
-
-          @vertex fn main(
-            attributes: Attributes,
-          ) -> VSOutput {
-            var vsOutput : VSOutput;
-
-            var transformed: vec3f = attributes.position;
-            //transformed = transformed + attributes.normal * vec3(deformation.strength * sin(transformed.y * 10.0 + deformation.time * 0.05));
-
-            vsOutput.position = getOutputPosition(camera, matrices, transformed);
-            vsOutput.uv = attributes.uv;
-            vsOutput.normal = attributes.normal;
-
-            return vsOutput;
-          }
-        `
-
-        const meshFs = /* wgsl */ `
-          struct VSOutput {
-            @builtin(position) position: vec4f,
-            @location(0) uv: vec2f,
-            @location(1) normal: vec3f,
-          };
-
-          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-            // debug normals
-            return vec4(fsInput.normal * 0.5 + 0.5, 1.0);
-          }
-        `
 
         const sphereGeometry = new SphereGeometry()
 
@@ -210,63 +174,62 @@
         sphereMesh.onAfterResize(updateSphereScale).onRender(() => (sphereMesh.rotation.y += 0.01))
         updateSphereScale()
 
-        // now the cubes
-        for (let i = 0; i < 25; i++) {
+        // now the satellites
+        const nbSatellites = 25
+        for (let i = 0; i < nbSatellites; i++) {
           const satelliteMesh = new DOMMesh(gpuCurtains, '#sphere', {
             label: 'Cube ' + i,
             geometry: sphereGeometry,
             watchScroll: false,
           })
 
+          // create a different pivot for each satellite
+          const pivot = new Object3D()
+
+          // random rotation speed
+          const pivotRotationSpeed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
+          // set the quaternion axis order
+          pivot.quaternion.setAxisOrder('ZYX')
+          // random init rotation values
+          pivot.rotation.y = Math.random() * Math.PI * 2
+          pivot.rotation.z = Math.random() * Math.PI * 2
+
+          // now add the satellite to our pivot
+          satelliteMesh.parent = pivot
+
+          // set satellite scale
+          const scale = 0.1 + Math.random() * 0.15
+
+          satelliteMesh.scale.x = scale
+          satelliteMesh.scale.y = scale
+
+          const minDistanceRatio = 1.5 * Math.random()
+
           const updateSatelliteScale = () => {
-            const scale = 0.1 + Math.random() * 0.15
+            // copy the main sphere world position
+            pivot.position.copy(sphereMesh.worldPosition)
 
             // get the DOM #sphere size in the world space
             const sphereSize = sphereMesh.DOMObjectWorldScale.y
 
             // min distance so that the satellite sphere lies exactly at the border of our main sphere
             const minDistance = sphereSize + sphereSize * scale
-            const distance = minDistance + Math.random() * sphereSize * 1.5
+            const distance = minDistance + sphereSize * minDistanceRatio
 
-            satelliteMesh.userData.angle = Math.random() * Math.PI
-
-            const positionAngle = Math.random() * Math.PI * 2
-
-            satelliteMesh.userData.orbitPosition = new Vec3(
-              Math.cos(positionAngle) * distance,
-              Math.sin(positionAngle) * distance,
-              0
-            )
-
-            const axisAngle = new Vec3(0, Math.sin(positionAngle), Math.cos(positionAngle)).normalize()
-
-            satelliteMesh.userData.axisAngle = satelliteMesh.userData.orbitPosition.clone().cross(axisAngle).normalize()
-
-            satelliteMesh.scale.x = scale
-            satelliteMesh.scale.y = scale
+            // since we set the pivot position relative to our sphere world position
+            // satellite position should be offseted by the same amount
+            satelliteMesh.position.x = distance - sphereMesh.worldPosition.x
 
             // scale our sphere along the Z axis based on its height (Y axis scale)
             satelliteMesh.scale.z = satelliteMesh.worldScale.y
           }
 
-          const speed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
-
-          let closeFactor = 0
-
           satelliteMesh.onAfterResize(updateSatelliteScale).onRender(() => {
-            satelliteMesh.userData.angle += speed
+            // rotate the pivot
+            pivot.rotation.y += pivotRotationSpeed
 
-            closeFactor += speed
-
-            const orbitPosition = satelliteMesh.userData.orbitPosition
-              .clone()
-              //.multiplyScalar((Math.cos(closeFactor) * 0.5 + 0.5) * 0.25 + 0.75)
-              .applyAxisAngle(satelliteMesh.userData.axisAngle, satelliteMesh.userData.angle)
-
-            satelliteMesh.position.copy(orbitPosition)
-
-            // look at our main sphere
-            satelliteMesh.lookAt(sphereMesh.position)
+            // look at our pivot center
+            satelliteMesh.lookAt()
           })
 
           updateSatelliteScale()

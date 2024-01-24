@@ -65,7 +65,7 @@ window.addEventListener('load', async () => {
         var planeDeformation: f32 = sin((attributes.position.x * 0.5 + 0.5) * 3.141592) * sin(deformation.strength / 90.0);
         transformed.y += planeDeformation;
         
-        vsOutput.position = getOutputPosition(camera, matrices, transformed);
+        vsOutput.position = getOutputPosition(transformed);
         vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
       
         return vsOutput;

@@ -299,8 +299,6 @@ export class CurtainsClothSim {
 
     this.plane = new Plane(this.gpuCurtains, '#cloth', params)
 
-    console.log(this.plane)
-
     const canvasTexture = this.plane.createTexture({
       label: 'Canvas texture',
       name: 'canvasTexture',

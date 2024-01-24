@@ -296,26 +296,22 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
             name: 'model',
             type: 'mat4x4f',
             value: this.modelMatrix,
-            onBeforeUpdate: () => {
-              matricesUniforms.struct.model.value = this.modelMatrix
-            },
+          },
+          world: {
+            name: 'world',
+            type: 'mat4x4f',
+            value: this.worldMatrix,
           },
           modelView: {
-            // model view matrix (model matrix multiplied by camera view matrix)
+            // model view matrix (world matrix multiplied by camera view matrix)
             name: 'modelView',
             type: 'mat4x4f',
             value: this.modelViewMatrix,
-            onBeforeUpdate: () => {
-              matricesUniforms.struct.modelView.value = this.modelViewMatrix
-            },
           },
           modelViewProjection: {
             name: 'modelViewProjection',
             type: 'mat4x4f',
             value: this.modelViewProjectionMatrix,
-            onBeforeUpdate: () => {
-              matricesUniforms.struct.modelViewProjection.value = this.modelViewProjectionMatrix
-            },
           },
         },
       }
