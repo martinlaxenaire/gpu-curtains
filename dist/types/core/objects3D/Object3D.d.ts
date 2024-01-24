@@ -2,7 +2,7 @@ import { Vec3 } from '../../math/Vec3';
 import { Quat } from '../../math/Quat';
 import { Mat4 } from '../../math/Mat4';
 /** Defines all kind of possible {@link Object3D} matrix types */
-export type Object3DMatricesType = 'model';
+export type Object3DMatricesType = 'model' | 'world';
 /**
  * Defines an {@link Object3D} matrix object
  */
@@ -38,19 +38,36 @@ export interface Object3DTransforms {
     scale: Vec3;
 }
 /**
- * Used to create an object with transformation properties such as position, scale, rotation and transform origin {@link Vec3 | vectors} and a {@link Quat | quaternion} in order to compute a {@link Mat4 | model matrix}.
+ * Used to create an object with transformation properties such as position, scale, rotation and transform origin {@link Vec3 | vectors} and a {@link Quat | quaternion} in order to compute the {@link Object3D#modelMatrix | model matrix} and {@link Object3D#worldMatrix | world matrix}.
  *
- * The transformations {@link Vec3 | vectors} are reactive to changes, which mean that updating one of their components will automatically update the {@link Mat4 | model matrix}.
+ * If an {@link Object3D} does not have any {@link Object3D#parent | parent}, then its {@link Object3D#modelMatrix | model matrix} and {@link Object3D#worldMatrix | world matrix} are the same.
+ *
+ * The transformations {@link Vec3 | vectors} are reactive to changes, which mean that updating one of their components will automatically update the {@link Object3D#modelMatrix | model matrix} and {@link Object3D#worldMatrix | world matrix}.
  */
 export declare class Object3D {
     /** {@link Object3DTransforms | Transformation object} of the {@link Object3D} */
     transforms: Object3DTransforms;
     /** {@link Object3DMatrices | Matrices object} of the {@link Object3D} */
     matrices: Object3DMatrices;
+    /** Parent {@link Object3D} in the scene graph, used to compute the {@link worldMatrix | world matrix} */
+    private _parent;
+    /** Children {@link Object3D} in the scene graph, used to compute their own {@link worldMatrix | world matrix} */
+    children: Object3D[];
+    /** Index (order of creation) of this {@link Object3D}. Used in the {@link parent} / {@link children} relation. */
+    object3DIndex: number;
     /**
      * Object3D constructor
      */
     constructor();
+    /**
+     * Get the parent of this {@link Object3D} if any
+     */
+    get parent(): Object3D | null;
+    /**
+     * Set the parent of this {@link Object3D}
+     * @param value - new parent to set, could be an {@link Object3D} or null
+     */
+    set parent(value: Object3D | null);
     /**
      * Set our transforms properties and {@link Vec3#onChange | vectors onChange} callbacks
      */
@@ -117,7 +134,7 @@ export declare class Object3D {
      */
     applyTransformOrigin(): void;
     /**
-     * Set our {@link modelMatrix | model matrix}
+     * Set our {@link modelMatrix | model matrix} and {@link worldMatrix | world matrix}
      */
     setMatrices(): void;
     /**
@@ -134,6 +151,19 @@ export declare class Object3D {
      */
     shouldUpdateModelMatrix(): void;
     /**
+     * Get our {@link Mat4 | world matrix}
+     */
+    get worldMatrix(): Mat4;
+    /**
+     * Set our {@link Mat4 | world matrix}
+     * @param value - new {@link Mat4 | world matrix}
+     */
+    set worldMatrix(value: Mat4);
+    /**
+     * Set our {@link worldMatrix | world matrix} shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateWorldMatrix(): void;
+    /**
      * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
      * @param target - {@link Vec3 | target} to look at
      */
@@ -142,6 +172,10 @@ export declare class Object3D {
      * Update our {@link modelMatrix | model matrix}
      */
     updateModelMatrix(): void;
+    /**
+     * Update our {@link worldMatrix | model matrix}
+     */
+    updateWorldMatrix(): void;
     /**
      * Callback to run if at least one matrix of the stack has been updated
      */

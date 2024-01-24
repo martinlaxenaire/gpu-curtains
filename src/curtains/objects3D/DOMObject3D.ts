@@ -327,6 +327,8 @@ export class DOMObject3D extends ProjectedObject3D {
     // we need to scale our meshes, from a square to a right sized rectangle
     // we're doing this after our transformation matrix because this scale transformation always have the same origin
     this.modelMatrix.scale(this.#DOMObjectWorldScale)
+
+    this.shouldUpdateWorldMatrix()
   }
 
   /**

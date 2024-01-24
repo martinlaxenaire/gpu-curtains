@@ -255,7 +255,7 @@ export class TestComputePasses {
       
       var transformed: vec3f = attributes.position + vec3(attributes.instancePosition.xy, 0);
               
-      vsOutput.position = getOutputPosition(camera, matrices, transformed);
+      vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = attributes.uv;
       vsOutput.normal = attributes.normal;
       

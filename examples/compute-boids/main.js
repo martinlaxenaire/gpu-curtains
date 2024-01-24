@@ -5,7 +5,7 @@ import {
   GPUCurtains,
   Mesh,
   SphereGeometry,
-  Vec2
+  Vec2,
 } from '../../dist/gpu-curtains.js'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
@@ -297,7 +297,7 @@ window.addEventListener('load', async () => {
       
       var transformed: vec3f = attributes.position + vec3(attributes.instancePosition.xy, 0);
               
-      vsOutput.position = getOutputPosition(camera, matrices, transformed);
+      vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = attributes.uv;
       vsOutput.normal = attributes.normal;
       

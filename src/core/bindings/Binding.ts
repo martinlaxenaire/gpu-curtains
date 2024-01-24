@@ -54,9 +54,9 @@ export class Binding {
   /** Options used to create this {@link Binding} */
   options: BindingParams
 
-  /** Flag indicating whether we should recreate the parent {@link core/bindGroups/BindGroup.BindGroup#bindGroup | bind group}, usually when a resource has changed */
+  /** Flag indicating whether we should recreate the parentMesh {@link core/bindGroups/BindGroup.BindGroup#bindGroup | bind group}, usually when a resource has changed */
   shouldResetBindGroup: boolean
-  /** Flag indicating whether we should recreate the parent {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout}, usually when a resource layout has changed */
+  /** Flag indicating whether we should recreate the parentMesh {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout}, usually when a resource layout has changed */
   shouldResetBindGroupLayout: boolean
 
   /**

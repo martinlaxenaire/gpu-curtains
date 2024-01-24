@@ -138,7 +138,7 @@
           </li>
           <li>
             <a href="camera-renderer-selective-dithering/index.html" target="_blank">
-              GPUCameraRenderer, camera rotation and selective dithering pass
+              GPUCameraRenderer, Object3D pivot rotation and selective dithering pass
             </a>
           </li>
         </ul>
@@ -173,7 +173,7 @@
             var transformed: vec3f = attributes.position;
             //transformed = transformed + attributes.normal * vec3(deformation.strength * sin(transformed.y * 10.0 + deformation.time * 0.05));
 
-            vsOutput.position = getOutputPosition(camera, matrices, transformed);
+            vsOutput.position = getOutputPosition(transformed);
             vsOutput.uv = attributes.uv;
             vsOutput.normal = attributes.normal;
 

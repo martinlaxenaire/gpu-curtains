@@ -78,7 +78,7 @@ export class ProjectedObject3D extends Object3D {
         shouldUpdate: false,
         onUpdate: () => {
           // our model view matrix is our model matrix multiplied with our camera view matrix
-          this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.modelMatrix)
+          this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix)
         },
       },
       modelViewProjection: {
@@ -147,6 +147,14 @@ export class ProjectedObject3D extends Object3D {
   shouldUpdateProjectionMatrixStack() {
     this.matrices.modelView.shouldUpdate = true
     this.matrices.modelViewProjection.shouldUpdate = true
+  }
+
+  /**
+   * When the world matrix update, tell our projection matrix to update as well
+   */
+  shouldUpdateWorldMatrix() {
+    super.shouldUpdateWorldMatrix()
+    this.shouldUpdateProjectionMatrixStack()
   }
 
   /**

@@ -168,7 +168,7 @@ export declare class BindGroup {
     updateBufferBindings(): void;
     /**
      * Update the {@link BindGroup}, which means update its {@link BindGroup#bufferBindings | buffer bindings} and {@link BindGroup#resetBindGroup | reset it} if needed.
-     * Called at each render from the parent {@link core/materials/Material.Material | material}
+     * Called at each render from the parentMesh {@link core/materials/Material.Material | material}
      */
     update(): void;
     /**

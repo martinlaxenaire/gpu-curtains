@@ -54,8 +54,8 @@ export declare class Texture extends Object3D {
     textureMatrix: BufferBinding;
     /** The bindings used by this {@link Texture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
     bindings: BindGroupBindingElement[];
-    /** {@link Texture} parent if any */
-    private _parent;
+    /** {@link Texture} parentMesh if any */
+    private _parentMesh;
     /** Whether the source has been loaded */
     private _sourceLoaded;
     /** Whether the source has been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array} */
@@ -84,14 +84,14 @@ export declare class Texture extends Object3D {
      */
     get textureBinding(): TextureBinding;
     /**
-     * Get our texture {@link parent}
+     * Get our texture {@link parentMesh}
      */
-    get parent(): TextureParent;
+    get parentMesh(): TextureParent;
     /**
-     * Set our texture {@link parent}
-     * @param value - texture {@link parent} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
+     * Set our texture {@link parentMesh}
+     * @param value - texture {@link parentMesh} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
      */
-    set parent(value: TextureParent);
+    set parentMesh(value: TextureParent);
     /**
      * Get whether our {@link source} has been loaded
      */

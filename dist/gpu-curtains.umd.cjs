@@ -1644,7 +1644,7 @@ var __privateMethod = (obj, member, method) => {
      * @readonly
      */
     get endOffsetToIndex() {
-      return this.endOffset / bytesPerSlot;
+      return Math.floor(this.endOffset / bytesPerSlot);
     }
     /**
      * Get the position at given offset (i.e. byte index)
@@ -1759,7 +1759,7 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /**
-     * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
+     * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data
      * @returns - extracted data from the {@link Float32Array}
      */
@@ -1883,7 +1883,7 @@ var __privateMethod = (obj, member, method) => {
       }
     }
     /**
-     * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
+     * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data
      */
     extractDataFromBufferResult(result) {
@@ -2447,7 +2447,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /**
      * Update the {@link BindGroup}, which means update its {@link BindGroup#bufferBindings | buffer bindings} and {@link BindGroup#resetBindGroup | reset it} if needed.
-     * Called at each render from the parent {@link core/materials/Material.Material | material}
+     * Called at each render from the parentMesh {@link core/materials/Material.Material | material}
      */
     update() {
       this.updateBufferBindings();
@@ -2614,13 +2614,36 @@ var __privateMethod = (obj, member, method) => {
       this.wgslGroupFragment = [`${getTextureBindingWGSLVarType(this)}`];
     }
   }
+  let objectIndex = 0;
   class Object3D {
     /**
      * Object3D constructor
      */
     constructor() {
+      this.parent = null;
+      this.children = [];
+      Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
       this.setMatrices();
       this.setTransforms();
+    }
+    /* PARENT */
+    /**
+     * Get the parent of this {@link Object3D} if any
+     */
+    get parent() {
+      return this._parent;
+    }
+    /**
+     * Set the parent of this {@link Object3D}
+     * @param value - new parent to set, could be an {@link Object3D} or null
+     */
+    set parent(value) {
+      var _a;
+      if (this.parent) {
+        this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+      }
+      this._parent = value;
+      (_a = this._parent) == null ? void 0 : _a.children.push(this);
     }
     /* TRANSFORMS */
     /**
@@ -2737,7 +2760,7 @@ var __privateMethod = (obj, member, method) => {
     }
     /* MATRICES */
     /**
-     * Set our {@link modelMatrix | model matrix}
+     * Set our {@link modelMatrix | model matrix} and {@link worldMatrix | world matrix}
      */
     setMatrices() {
       this.matrices = {
@@ -2745,6 +2768,11 @@ var __privateMethod = (obj, member, method) => {
           matrix: new Mat4(),
           shouldUpdate: false,
           onUpdate: () => this.updateModelMatrix()
+        },
+        world: {
+          matrix: new Mat4(),
+          shouldUpdate: false,
+          onUpdate: () => this.updateWorldMatrix()
         }
       };
     }
@@ -2767,6 +2795,27 @@ var __privateMethod = (obj, member, method) => {
      */
     shouldUpdateModelMatrix() {
       this.matrices.model.shouldUpdate = true;
+      this.shouldUpdateWorldMatrix();
+    }
+    /**
+     * Get our {@link Mat4 | world matrix}
+     */
+    get worldMatrix() {
+      return this.matrices.world.matrix;
+    }
+    /**
+     * Set our {@link Mat4 | world matrix}
+     * @param value - new {@link Mat4 | world matrix}
+     */
+    set worldMatrix(value) {
+      this.matrices.world.matrix = value;
+      this.shouldUpdateWorldMatrix();
+    }
+    /**
+     * Set our {@link worldMatrix | world matrix} shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateWorldMatrix() {
+      this.matrices.world.shouldUpdate = true;
     }
     /**
      * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
@@ -2787,6 +2836,20 @@ var __privateMethod = (obj, member, method) => {
         this.scale,
         this.transformOrigin
       );
+      this.shouldUpdateWorldMatrix();
+    }
+    /**
+     * Update our {@link worldMatrix | model matrix}
+     */
+    updateWorldMatrix() {
+      if (!this.parent) {
+        this.worldMatrix.copy(this.modelMatrix);
+      } else {
+        this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
+      }
+      this.children.forEach((child) => {
+        child.shouldUpdateWorldMatrix();
+      });
     }
     /**
      * Callback to run if at least one matrix of the stack has been updated
@@ -2797,15 +2860,19 @@ var __privateMethod = (obj, member, method) => {
      * Check at each render whether we should update our matrices, and update them if needed
      */
     updateMatrixStack() {
-      const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate);
-      for (const matrixName in this.matrices) {
-        if (this.matrices[matrixName].shouldUpdate) {
-          this.matrices[matrixName].onUpdate();
-          this.matrices[matrixName].shouldUpdate = false;
-        }
+      if (this.parent && this.parent.constructor.name === "Object3D") {
+        this.parent.updateMatrixStack();
       }
-      if (matrixShouldUpdate)
+      const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate);
+      if (matrixShouldUpdate) {
+        for (const matrixName in this.matrices) {
+          if (this.matrices[matrixName].shouldUpdate) {
+            this.matrices[matrixName].onUpdate();
+            this.matrices[matrixName].shouldUpdate = false;
+          }
+        }
         this.onAfterMatrixStackUpdate();
+      }
     }
   }
   const defaultTextureParams = {
@@ -2874,7 +2941,7 @@ var __privateMethod = (obj, member, method) => {
         }
       });
       this.setBindings();
-      this._parent = null;
+      this._parentMesh = null;
       this.sourceLoaded = false;
       this.sourceUploaded = false;
       this.shouldUpdate = false;
@@ -2904,17 +2971,17 @@ var __privateMethod = (obj, member, method) => {
       return this.bindings[0];
     }
     /**
-     * Get our texture {@link parent}
+     * Get our texture {@link parentMesh}
      */
-    get parent() {
-      return this._parent;
+    get parentMesh() {
+      return this._parentMesh;
     }
     /**
-     * Set our texture {@link parent}
-     * @param value - texture {@link parent} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
+     * Set our texture {@link parentMesh}
+     * @param value - texture {@link parentMesh} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
      */
-    set parent(value) {
-      this._parent = value;
+    set parentMesh(value) {
+      this._parentMesh = value;
       this.resize();
     }
     /**
@@ -2962,11 +3029,11 @@ var __privateMethod = (obj, member, method) => {
      * Update the {@link modelMatrix}
      */
     updateModelMatrix() {
-      if (!this.parent)
+      if (!this.parentMesh)
         return;
-      const parentScale = this.parent.scale ? this.parent.scale : new Vec3(1, 1, 1);
-      const parentWidth = this.parent.boundingRect ? this.parent.boundingRect.width * parentScale.x : this.size.width;
-      const parentHeight = this.parent.boundingRect ? this.parent.boundingRect.height * parentScale.y : this.size.height;
+      const parentScale = this.parentMesh.scale ? this.parentMesh.scale : new Vec3(1, 1, 1);
+      const parentWidth = this.parentMesh.boundingRect ? this.parentMesh.boundingRect.width * parentScale.x : this.size.width;
+      const parentHeight = this.parentMesh.boundingRect ? this.parentMesh.boundingRect.height * parentScale.y : this.size.height;
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
@@ -5415,7 +5482,7 @@ var __privateMethod = (obj, member, method) => {
       pass.setIndexBuffer(this.indexBuffer.buffer, this.indexBuffer.bufferFormat);
     }
     /**
-     * Override the parent draw method to draw indexed geometry
+     * Override the parentMesh draw method to draw indexed geometry
      * @param pass - current render pass
      */
     drawGeometry(pass) {
@@ -6005,7 +6072,7 @@ struct VertexOutput {
        * @param texture - newly created Texture
        */
       onTextureAdded(texture) {
-        texture.parent = this;
+        texture.parentMesh = this;
       }
       /**
        * Create a new {@link RenderTexture}
@@ -6348,7 +6415,7 @@ struct VertexOutput {
           matrix: new Mat4(),
           shouldUpdate: false,
           onUpdate: () => {
-            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.modelMatrix);
+            this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
           }
         },
         modelViewProjection: {
@@ -6410,6 +6477,13 @@ struct VertexOutput {
       this.matrices.modelViewProjection.shouldUpdate = true;
     }
     /**
+     * When the world matrix update, tell our projection matrix to update as well
+     */
+    shouldUpdateWorldMatrix() {
+      super.shouldUpdateWorldMatrix();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
      * Tell all our matrices to update
      */
     shouldUpdateMatrixStack() {
@@ -6431,7 +6505,7 @@ struct VertexOutput {
 ) -> VertexOutput {
   var vsOutput: VertexOutput;
 
-  vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+  vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
   vsOutput.normal = attributes.normal;
   
@@ -6571,27 +6645,23 @@ struct VSOutput {
             model: {
               name: "model",
               type: "mat4x4f",
-              value: this.modelMatrix,
-              onBeforeUpdate: () => {
-                matricesUniforms.struct.model.value = this.modelMatrix;
-              }
+              value: this.modelMatrix
+            },
+            world: {
+              name: "world",
+              type: "mat4x4f",
+              value: this.worldMatrix
             },
             modelView: {
-              // model view matrix (model matrix multiplied by camera view matrix)
+              // model view matrix (world matrix multiplied by camera view matrix)
               name: "modelView",
               type: "mat4x4f",
-              value: this.modelViewMatrix,
-              onBeforeUpdate: () => {
-                matricesUniforms.struct.modelView.value = this.modelViewMatrix;
-              }
+              value: this.modelViewMatrix
             },
             modelViewProjection: {
               name: "modelViewProjection",
               type: "mat4x4f",
-              value: this.modelViewProjectionMatrix,
-              onBeforeUpdate: () => {
-                matricesUniforms.struct.modelViewProjection.value = this.modelViewProjectionMatrix;
-              }
+              value: this.modelViewProjectionMatrix
             }
           }
         };
@@ -6839,8 +6909,8 @@ ${formattedMessage}`);
   const get_output_position = (
     /* wgsl */
     `
-fn getOutputPosition(camera: Camera, matrices: Matrices, position: vec3f) -> vec4f {
-  return camera.projection * matrices.modelView * vec4f(position, 1.0);
+fn getOutputPosition(position: vec3f) -> vec4f {
+  return matrices.modelViewProjection * vec4f(position, 1.0);
 }`
   );
   const get_uv_cover = (
@@ -8217,6 +8287,7 @@ struct VSOutput {
         this.worldTransformOrigin
       );
       this.modelMatrix.scale(__privateGet(this, _DOMObjectWorldScale));
+      this.shouldUpdateWorldMatrix();
     }
     /**
      * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}
@@ -8815,7 +8886,7 @@ struct VSOutput {
     }
     /**
      * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
-     * @param object - The object from which we want to get the parent {@link RenderPassEntry}
+     * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
      * @returns - the {@link RenderPassEntry} if found
      */
     getObjectRenderPassEntry(object) {
@@ -10207,7 +10278,7 @@ struct VSOutput {
      * - create a {@link GPUCommandEncoder}
      * - render all our {@link renderers}
      * - submit our {@link GPUCommandBuffer}
-     * - upload {@link Texture#texture | textures} that do not have a parent
+     * - upload {@link Texture#texture | textures} that do not have a parentMesh
      * - empty our {@link texturesQueue} array
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
      */
@@ -10220,7 +10291,7 @@ struct VSOutput {
       this.renderers.forEach((renderer) => renderer.render(commandEncoder));
       const commandBuffer = commandEncoder.finish();
       (_b = this.device) == null ? void 0 : _b.queue.submit([commandBuffer]);
-      this.textures.filter((texture) => !texture.parent && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
+      this.textures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
       this.texturesQueue.forEach((texture) => {
         texture.sourceUploaded = true;
       });

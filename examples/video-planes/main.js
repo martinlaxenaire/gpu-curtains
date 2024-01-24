@@ -42,7 +42,7 @@ window.addEventListener('load', async () => {
           attributes.position.z - waveSinusoid * strength
       );
   
-      vsOutput.position = getOutputPosition(camera, matrices, transformed);
+      vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = getUVCover(attributes.uv, videoTextureMatrix);
   
       return vsOutput;

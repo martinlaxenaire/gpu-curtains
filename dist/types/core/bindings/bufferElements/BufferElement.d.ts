@@ -158,7 +158,7 @@ export declare class BufferElement {
      */
     update(value: any): void;
     /**
-     * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
+     * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data
      * @returns - extracted data from the {@link Float32Array}
      */

@@ -91,7 +91,7 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
   }
 
   /**
-   * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parent {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
+   * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
    * @param result - {@link Float32Array} holding {@link GPUBuffer} data
    */
   extractDataFromBufferResult(result: Float32Array) {
