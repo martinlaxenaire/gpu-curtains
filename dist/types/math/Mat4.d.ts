@@ -150,4 +150,10 @@ export declare class Mat4 {
      * @returns - transformed {@link Mat4}
      */
     composeFromOrigin(translation?: Vec3, quaternion?: Quat, scale?: Vec3, origin?: Vec3): Mat4;
+    /**
+     * Get the translation {@link Vec3} component of a {@link Mat4}
+     * @param position - {@link Vec3} to set
+     * @returns - translation {@link Vec3} component of this {@link Mat4}
+     */
+    getTranslation(position?: Vec3): Vec3;
 }

@@ -1224,6 +1224,14 @@ class Mat4 {
     matrix[15] = 1;
     return this;
   }
+  /**
+   * Get the translation {@link Vec3} component of a {@link Mat4}
+   * @param position - {@link Vec3} to set
+   * @returns - translation {@link Vec3} component of this {@link Mat4}
+   */
+  getTranslation(position = new Vec3()) {
+    return position.set(this.elements[12], this.elements[13], this.elements[14]);
+  }
 }
 class Vec3 {
   /**

@@ -174,8 +174,9 @@
         sphereMesh.onAfterResize(updateSphereScale).onRender(() => (sphereMesh.rotation.y += 0.01))
         updateSphereScale()
 
-        // now the cubes
-        for (let i = 0; i < 25; i++) {
+        // now the satellites
+        const nbSatellites = 25
+        for (let i = 0; i < nbSatellites; i++) {
           const satelliteMesh = new DOMMesh(gpuCurtains, '#sphere', {
             label: 'Cube ' + i,
             geometry: sphereGeometry,
