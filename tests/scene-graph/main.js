@@ -57,7 +57,7 @@ window.addEventListener('load', async () => {
       pivot.rotation.y += pivotRotationSpeed
 
       //cube.rotation.x += 0.01
-      cube.lookAt()
+      cube.lookAt(pivot.position)
     })
   }
 })
