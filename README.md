@@ -58,6 +58,7 @@ yarn add gpu-curtains
 
 - [API documentation](https://martinlaxenaire.github.io/gpu-curtains/docs/)
 - [Official examples](https://martinlaxenaire.github.io/gpu-curtains/examples/)
+- [Website](https://martinlaxenaire.github.io/gpu-curtains/)
 
 ## Basic example
 

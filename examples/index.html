@@ -12,7 +12,7 @@
       property="og:image"
       content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
     />
-    <meta property="og:url" content="https://martinlaxenaire.github.io/gpu-curtains/examples/index.html" />
+    <meta property="og:url" content="https://martinlaxenaire.github.io/gpu-curtains/examples/" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <link href="common-styles.css" rel="stylesheet" />
@@ -47,84 +47,80 @@
         <h2>Planes</h2>
         <ul>
           <li>
-            <a href="./basic-plane/index.html" target="_blank">Basic plane</a>
+            <a href="./basic-plane/" target="_blank">Basic plane</a>
           </li>
           <li>
-            <a href="./multiple-planes/index.html" target="_blank">Multiple planes</a>
+            <a href="./multiple-planes/" target="_blank">Multiple planes</a>
           </li>
           <li>
-            <a href="./slideshow/index.html" target="_blank">Slideshow</a>
+            <a href="./slideshow/" target="_blank">Slideshow</a>
           </li>
           <li>
-            <a href="./video-planes/index.html" target="_blank">Video planes</a>
+            <a href="./video-planes/" target="_blank">Video planes</a>
           </li>
           <li>
-            <a href="./canvas-text/index.html" target="_blank">Canvas text</a>
+            <a href="./canvas-text/" target="_blank">Canvas text</a>
           </li>
           <li>
-            <a href="./instanced-planes/index.html" target="_blank">Instanced planes</a>
+            <a href="./instanced-planes/" target="_blank">Instanced planes</a>
           </li>
           <li>
-            <a href="./ajax-navigation-with-plane-removal/index.html" target="_blank"
-              >AJAX navigation with plane removal</a
-            >
+            <a href="./ajax-navigation-with-plane-removal/" target="_blank">AJAX navigation with plane removal</a>
           </li>
           <li>
-            <a href="./custom-scroll-and-transformations/index.html" target="_blank"
-              >Custom scroll and plane transformations</a
-            >
+            <a href="./custom-scroll-and-transformations/" target="_blank">Custom scroll and plane transformations</a>
           </li>
         </ul>
         <h2>Meshes</h2>
         <ul>
           <li>
-            <a href="./full-screen-plane-shader/index.html" target="_blank">FullscreenPlane shader</a>
+            <a href="./full-screen-plane-shader/" target="_blank">FullscreenPlane shader</a>
           </li>
           <li>
-            <a href="./custom-geometry/index.html" target="_blank">Custom instanced geometry</a>
+            <a href="./custom-geometry/" target="_blank">Custom instanced geometry</a>
           </li>
           <li>
-            <a href="./dom-meshes/index.html" target="_blank">DOM Meshes</a>
+            <a href="./dom-meshes/" target="_blank">DOM Meshes</a>
           </li>
         </ul>
         <h2>Post processing / render to texture</h2>
         <ul>
           <li>
-            <a href="./post-processing-transform-origin/index.html" target="_blank"
+            <a href="./post-processing-transform-origin/" target="_blank"
               >Post processing and custom transform origin</a
             >
           </li>
           <li>
-            <a href="./selective-shader-passes-using-render-target/index.html" target="_blank"
+            <a href="./selective-shader-passes-using-render-target/" target="_blank"
               >Selective shader passes using render targets</a
             >
           </li>
           <li>
-            <a href="./ping-pong-plane/index.html" target="_blank">Ping pong plane</a>
+            <a href="./ping-pong-plane/" target="_blank">Ping pong plane</a>
           </li>
         </ul>
         <h2>Compute passes</h2>
         <ul>
           <li>
-            <a href="compute-boids/index.html" target="_blank">Compute boids</a>
+            <a href="compute-boids/" target="_blank">Compute boids</a>
           </li>
           <li>
-            <a href="compute-particles/index.html" target="_blank">Compute curl particles</a>
+            <a href="compute-particles/" target="_blank">Compute curl particles</a>
           </li>
           <li>
-            <a href="./cloth-simulation/index.html" target="_blank">Cloth simulation</a>
+            <a href="./cloth-simulation/" target="_blank">Cloth simulation</a>
           </li>
           <li>
-            <a href="./compute-blur/index.html" target="_blank">Compute blur</a>
+            <a href="./compute-blur/" target="_blank">Compute blur</a>
           </li>
         </ul>
         <h2>Renderers</h2>
         <ul>
           <li>
-            <a href="./multiple-canvases/index.html" target="_blank">Multiple canvases using one device</a>
+            <a href="./multiple-canvases/" target="_blank">Multiple canvases using one device</a>
           </li>
           <li>
-            <a href="./multiple-canvases-updating-renderer/index.html" target="_blank"
+            <a href="./multiple-canvases-updating-renderer/" target="_blank"
               >Multiple canvases and updating renderers at runtime</a
             >
           </li>
@@ -132,12 +128,12 @@
         <h2>Advanced rendering</h2>
         <ul>
           <li>
-            <a href="camera-renderer-transforms-bloom-pass/index.html" target="_blank">
+            <a href="camera-renderer-transforms-bloom-pass/" target="_blank">
               GPUCameraRenderer, camera rotation and bloom pass
             </a>
           </li>
           <li>
-            <a href="camera-renderer-selective-dithering/index.html" target="_blank">
+            <a href="camera-renderer-selective-dithering/" target="_blank">
               GPUCameraRenderer, Object3D pivot rotation and selective dithering pass
             </a>
           </li>
@@ -146,7 +142,7 @@
     </div>
 
     <script type="module">
-      import { GPUCurtains, SphereGeometry, DOMMesh, Vec3, Object3D } from '../dist/gpu-curtains.js'
+      import { GPUCurtains, SphereGeometry, DOMMesh, Object3D } from '../dist/gpu-curtains.js'
 
       window.addEventListener('DOMContentLoaded', async () => {
         // set up our WebGL context and append the canvas to our wrapper

@@ -15,7 +15,7 @@ import {
 // while preserving the depth buffer
 // unfortunately, if you'd want to apply more than one pass to a set of meshes,
 // you'd have to do it another way
-// see https://github.com/martinlaxenaire/gpu-curtains/blob/main/tests/orbit-camera-selective-passes/index.html
+// see https://github.com/martinlaxenaire/gpu-curtains/blob/main/tests/orbit-camera-selective-passes/main.js
 window.addEventListener('load', async () => {
   const systemSize = 10
 
