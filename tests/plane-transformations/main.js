@@ -1,6 +1,6 @@
 // Goal of this test is to help debug plane transformations and raycasting
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
   const { GPUCurtains, Plane, Vec2 } = await import(path)
 
   // set up our WebGL context and append the canvas to our wrapper
@@ -24,7 +24,7 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {    
       var vsOutput : VSOutput;
                     
-      vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.originalUv = attributes.uv;
       vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
       

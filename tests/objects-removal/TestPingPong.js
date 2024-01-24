@@ -26,7 +26,7 @@ export class TestPingPong {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+    const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
     const { PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } = await import(path)
 
     this.mouse = new Vec2()
@@ -158,7 +158,7 @@ export class TestPingPong {
       ) -> VSOutput {
         var vsOutput: VSOutput;
       
-        vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+        vsOutput.position = getOutputPosition(attributes.position);
       
         // used for the flow map texture
         vsOutput.uv = attributes.uv;

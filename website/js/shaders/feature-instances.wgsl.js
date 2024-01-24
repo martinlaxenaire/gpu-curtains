@@ -37,16 +37,16 @@ export const featureInstancesVs = /* wgsl */ `
     transformed.y += attributes.instancePosition.y;
     transformed.z += attributes.instancePosition.z;
     
-    vsOutput.position = getOutputPosition(camera, matrices, transformed);
+    vsOutput.position = getOutputPosition(transformed);
     
     // normals
     var rotatedNormal: vec4f = vec4(attributes.normal, 1.0) * rotationMatrix(vec3(0.0, 1.0, 0.0), angle);
     
-    // vsOutput.normal = getOutputPosition(camera, matrices, rotatedNormal.xyz).xyz;
+    // vsOutput.normal = getOutputPosition(rotatedNormal.xyz).xyz;
     // vsOutput.normal = (vsOutput.position * rotatedNormal).xyz;
     // vsOutput.normal = rotatedNormal.xyz;
     
-    vsOutput.normal = (matrices.model * rotatedNormal).xyz;
+    vsOutput.normal = (matrices.world * rotatedNormal).xyz;
     
     vsOutput.angle = attributes.instancePosition.w / (3.141592 * 2.0);
     

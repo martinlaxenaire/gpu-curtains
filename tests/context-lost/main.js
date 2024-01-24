@@ -1,6 +1,6 @@
 // Goal of this test is checking if device lost/restoration works
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
   const { BoxGeometry, GPUCurtains, Mesh, Plane, ShaderPass } = await import(path)
 
   // set up our WebGL context and append the canvas to our wrapper
@@ -43,7 +43,7 @@ window.addEventListener('load', async () => {
         var vsOutput: VSOutput;
 
        
-        vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+        vsOutput.position = getOutputPosition(attributes.position);
 
         // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
         vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);

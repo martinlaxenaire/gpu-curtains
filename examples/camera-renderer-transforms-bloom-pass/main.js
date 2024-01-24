@@ -66,9 +66,9 @@ window.addEventListener('load', async () => {
     ) -> VertexOutput {
       var vsOutput: VertexOutput;
     
-      vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
-      vsOutput.normal = normalize((matrices.model * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
       //vsOutput.normal = attributes.normal;
       
       return vsOutput;

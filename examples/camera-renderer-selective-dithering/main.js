@@ -2,19 +2,20 @@ import {
   BoxGeometry,
   GPUCameraRenderer,
   GPUDeviceManager,
+  Object3D,
   Mesh,
   RenderTarget,
   ShaderPass,
   SphereGeometry,
   Vec2,
-  Vec3
+  Vec3,
 } from '../../dist/gpu-curtains.js'
 
 // this examples demonstrates how we can apply a post processing effect to a specific set of meshes
 // while preserving the depth buffer
 // unfortunately, if you'd want to apply more than one pass to a set of meshes,
 // you'd have to do it another way
-// see https://github.com/martinlaxenaire/gpu-curtains/blob/main/tests/orbit-camera-selective-passes/index.html
+// see https://github.com/martinlaxenaire/gpu-curtains/blob/main/tests/orbit-camera-selective-passes/main.js
 window.addEventListener('load', async () => {
   const systemSize = 10
 
@@ -42,12 +43,13 @@ window.addEventListener('load', async () => {
 
   // set the camera initial position and transform origin, so we can rotate around our scene center
   camera.position.z = systemSize * 3.25
-  camera.transformOrigin.z = -camera.position.z
+
+  // instead of rotating the camera, we're going to use an Object3D as pivot
+  const pivot = new Object3D()
 
   // render our scene manually
   const animate = () => {
-    camera.rotation.y += 0.01
-
+    pivot.rotation.y -= 0.01
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
@@ -69,9 +71,9 @@ window.addEventListener('load', async () => {
     ) -> VertexOutput {
       var vsOutput: VertexOutput;
     
-      vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
-      vsOutput.normal = normalize((matrices.model * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
       //vsOutput.normal = attributes.normal;
       
       return vsOutput;
@@ -162,6 +164,9 @@ window.addEventListener('load', async () => {
         },
       },
     })
+
+    // add the pivot as parent
+    mesh.parent = pivot
 
     mesh.position.x = Math.random() * systemSize * 2 - systemSize
     mesh.position.y = Math.random() * systemSize * 2 - systemSize

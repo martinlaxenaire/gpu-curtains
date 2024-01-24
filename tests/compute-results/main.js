@@ -1,6 +1,6 @@
 // Goal of this test is to ensure the various buffer copy methods work
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
   const { ComputePass, GPUDeviceManager, GPURenderer, Vec2 } = await import(path)
 
   const start = performance.now()

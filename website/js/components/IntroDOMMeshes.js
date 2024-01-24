@@ -84,8 +84,6 @@ export class IntroDOMMeshes {
     this.scrollObserver.observe({
       element: parentContainer,
       onElVisible: () => {
-        console.log('cubes visible', this)
-
         this.cubeTween.play()
       },
     })

@@ -9,11 +9,11 @@
     "rimraf": "^5.0.5",
     "typedoc": "^0.25.6",
     "typescript": "^5.1.3",
-    "vite": "^5.0.7"
+    "vite": "^5.0.12"
   },
   "name": "gpu-curtains",
   "version": "0.0.1",
-  "description": "gpu-curtains is a WebGPU rendering engine that make 3D objects scale and position match with associated DOM HTML elements",
+  "description": "gpu-curtains is a WebGPU rendering engine that helps synchronizing 3D objects scale and position with associated DOM HTML elements",
   "keywords": [
     "webgpu",
     "dom",
@@ -51,6 +51,7 @@
       "require": "./dist/gpu-curtains.umd.cjs"
     }
   },
+  "types": "./dist/index.d.ts",
   "directories": {
     "doc": "docs",
     "example": "examples",

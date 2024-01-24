@@ -6,7 +6,7 @@ export class TestComputePasses {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+    const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
     const { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } = await import(path)
 
     // number of particles instances
@@ -255,7 +255,7 @@ export class TestComputePasses {
       
       var transformed: vec3f = attributes.position + vec3(attributes.instancePosition.xy, 0);
               
-      vsOutput.position = getOutputPosition(camera, matrices, transformed);
+      vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = attributes.uv;
       vsOutput.normal = attributes.normal;
       

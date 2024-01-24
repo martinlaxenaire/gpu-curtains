@@ -38,7 +38,7 @@ export class TestRenderTargets {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+    const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
     const { Plane, RenderTarget, Sampler, ShaderPass } = await import(path)
 
     // We don't want to see our pass texture top/bottom edges
@@ -61,7 +61,7 @@ export class TestRenderTargets {
     ) -> VSOutput {
       var vsOutput: VSOutput;
   
-      vsOutput.position = getOutputPosition(camera, matrices, attributes.position);
+      vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
   
       return vsOutput;

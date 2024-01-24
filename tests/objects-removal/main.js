@@ -6,7 +6,7 @@ import { TestComputePasses } from './TestComputePasses.js'
 // Goal of this test is to check if various objects remove() work well
 // and if there's no memory leaks
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
   const { GPUCurtains } = await import(path)
 
   // curtains

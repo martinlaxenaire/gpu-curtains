@@ -329,7 +329,7 @@ window.addEventListener('load', async () => {
       var vsOutput : VSOutput;
       
       var transformed: vec3f = attributes.instancePosition.xyz;
-      vsOutput.position = getOutputPosition(camera, matrices, transformed);
+      vsOutput.position = getOutputPosition(transformed);
       
       return vsOutput;
     }

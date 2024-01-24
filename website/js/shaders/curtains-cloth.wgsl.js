@@ -14,7 +14,7 @@ export const clothVs = /* wgsl */ `
                 
         var transformed: vec3f = attributes.clothPosition.xyz;
         
-        vsOutput.position = getOutputPosition(camera, matrices, transformed);
+        vsOutput.position = getOutputPosition(transformed);
       
         vsOutput.uv = attributes.uv;
         vsOutput.normal = attributes.clothNormal.xyz;

@@ -814,7 +814,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param texture - newly created Texture
      */
     onTextureAdded(texture: Texture) {
-      texture.parent = this as unknown as TextureParent
+      texture.parentMesh = this as unknown as TextureParent
     }
 
     /**

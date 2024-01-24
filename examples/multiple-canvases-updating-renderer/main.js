@@ -1,4 +1,4 @@
-import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Vec3 } from '../../dist/gpu-curtains.js'
+import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Object3D, Vec3 } from '../../dist/gpu-curtains.js'
 
 window.addEventListener('load', async () => {
   const systemSize = 15
@@ -41,62 +41,65 @@ window.addEventListener('load', async () => {
 
   animate()
 
-  gpuFrontCameraRenderer.camera.position.z = systemSize * 2.5
-  gpuBackCameraRenderer.camera.position.z = systemSize * 2.5
+  gpuFrontCameraRenderer.camera.position.z = systemSize * 3
+  gpuBackCameraRenderer.camera.position.z = systemSize * 3
 
   for (let i = 0; i < 15; i++) {
-    // compute the initial position
-    const angle = Math.random() * Math.PI
-    const startingAngle = Math.random() * Math.PI * 2
+    // create a different pivot for each satellite
+    const pivot = new Object3D()
 
-    const distance = systemSize * 0.25 + Math.random() * systemSize * 0.75
+    // set the quaternion axis order
+    pivot.quaternion.setAxisOrder('ZYX')
+    // random init rotation values
+    pivot.rotation.y = Math.random() * Math.PI * 2
+    pivot.rotation.z = Math.random() * Math.PI * 2
 
-    const initOrbitPosition = new Vec3(Math.cos(startingAngle) * distance, Math.sin(startingAngle) * distance, 0)
-
-    const initAxisAngle = new Vec3(0, Math.sin(startingAngle), Math.cos(startingAngle)).normalize()
-    const axisAngle = initOrbitPosition.clone().cross(initAxisAngle).normalize()
-
-    const orbitPosition = initOrbitPosition.clone().applyAxisAngle(axisAngle, angle)
-
-    // set renderer based on initial depth position
-    const cubeMesh = new Mesh(orbitPosition.z >= 0 ? gpuFrontCameraRenderer : gpuBackCameraRenderer, {
+    // renderers will be updated in the render loop based on world position
+    const cubeMesh = new Mesh(gpuBackCameraRenderer, {
       label: 'Cube ' + i,
       geometry: new BoxGeometry(),
     })
 
-    cubeMesh.userData.angle = angle
-    cubeMesh.userData.orbitPosition = initOrbitPosition
+    // now add the satellite to our pivot
+    cubeMesh.parent = pivot
 
-    cubeMesh.userData.axisAngle = axisAngle
+    // random distance
+    const distance = systemSize * 0.375 + Math.random() * systemSize * 0.625
+    cubeMesh.position.x = distance
 
-    cubeMesh.position.copy(orbitPosition)
-
-    cubeMesh.userData.speed = new Vec3(
+    // random rotation speed
+    const rotationSpeed = new Vec3(
       (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5),
       (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5),
-      (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5) // position angle
+      (Math.random() * 0.01 + 0.005) * Math.sign(Math.random() - 0.5) // pivot rotation speed
     )
 
+    const currentWorldPosition = new Vec3()
+    // get current world position
+    cubeMesh.worldMatrix.getTranslation(currentWorldPosition)
+    const lastWorldPosition = currentWorldPosition.clone()
+
     cubeMesh.onRender(() => {
-      cubeMesh.rotation.x += cubeMesh.userData.speed.x
-      cubeMesh.rotation.z += cubeMesh.userData.speed.y
+      // update current world position
+      cubeMesh.worldMatrix.getTranslation(currentWorldPosition)
 
-      cubeMesh.userData.angle += cubeMesh.userData.speed.z
+      cubeMesh.rotation.x += rotationSpeed.x
+      cubeMesh.rotation.z += rotationSpeed.y
 
-      const orbitPosition = cubeMesh.userData.orbitPosition
-        .clone()
-        .applyAxisAngle(cubeMesh.userData.axisAngle, cubeMesh.userData.angle)
+      // rotate the pivot
+      pivot.rotation.y += rotationSpeed.z
 
       // switching renderers at runtime based on depth position!
-      if (cubeMesh.position.z <= 0 && orbitPosition.z > 0) {
+      if (lastWorldPosition.z <= 0 && currentWorldPosition.z > 0) {
         cubeMesh.setRenderer(gpuFrontCameraRenderer)
       }
 
-      if (cubeMesh.position.z >= 0 && orbitPosition.z < 0) {
+      if (lastWorldPosition.z >= 0 && currentWorldPosition.z < 0) {
         cubeMesh.setRenderer(gpuBackCameraRenderer)
       }
 
-      cubeMesh.position.copy(orbitPosition)
+      // update last world position for next render depth comparison
+      cubeMesh.worldMatrix.getTranslation(lastWorldPosition)
     })
   }
 })

@@ -1,4 +1,4 @@
-<div text-align="center">
+<div style="display: flex; justify-content: center;">
     <img src="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1080-720.jpg" width="500" alt="gpu-curtains" />
 </div>
 
@@ -6,7 +6,7 @@
 
 > :warning: WIP
 
-#### DOM 2 WebGPU rendering engine
+### DOM 2 WebGPU rendering engine
 
 gpu-curtains is a small, lightweight WebGPU rendering engine library.
 
@@ -58,6 +58,7 @@ yarn add gpu-curtains
 
 - [API documentation](https://martinlaxenaire.github.io/gpu-curtains/docs/)
 - [Official examples](https://martinlaxenaire.github.io/gpu-curtains/examples/)
+- [Website](https://martinlaxenaire.github.io/gpu-curtains/)
 
 ## Basic example
 
@@ -124,7 +125,7 @@ window.addEventListener('load', async () => {
 
 ## Limitations
 
-Since gpu-curtains is mostly made to create quads based on HTML elements, it lacks some of the most common 3D engines features. For example, there's no real scene graphs (any mesh `modelMatrix` can also be considered as its world matrix).
+Since gpu-curtains is mostly made to create quads based on HTML elements, it may lack some common 3D engines features.
 
 If you need a real 3D engine that could handle complex geometries or advanced rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
 

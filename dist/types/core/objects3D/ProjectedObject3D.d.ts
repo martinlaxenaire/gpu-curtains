@@ -73,6 +73,10 @@ export declare class ProjectedObject3D extends Object3D {
      */
     shouldUpdateProjectionMatrixStack(): void;
     /**
+     * When the world matrix update, tell our projection matrix to update as well
+     */
+    shouldUpdateWorldMatrix(): void;
+    /**
      * Tell all our matrices to update
      */
     shouldUpdateMatrixStack(): void;
