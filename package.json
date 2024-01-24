@@ -51,6 +51,7 @@
       "require": "./dist/gpu-curtains.umd.cjs"
     }
   },
+  "types": "./dist/index.d.ts",
   "directories": {
     "doc": "docs",
     "example": "examples",

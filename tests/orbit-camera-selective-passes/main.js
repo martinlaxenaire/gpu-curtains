@@ -1,6 +1,6 @@
 // Goal of this test is to try to mix selective passes
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
   const {
     BoxGeometry,
     GPUCameraRenderer,

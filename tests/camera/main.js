@@ -3,7 +3,7 @@
 // - test camera position, rotation, lookAt, fov
 // - test frustum culling
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.js' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
   const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, PlaneGeometry, Vec2, Vec3 } = await import(path)
 
   // create a device manager

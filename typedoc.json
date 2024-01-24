@@ -3,6 +3,7 @@
   "entryPoints": [
     "src/**/*.ts"
   ],
+  "exclude": ["src/index.ts"],
   "out": "docs",
   "sort": ["source-order"],
   "validation": {
