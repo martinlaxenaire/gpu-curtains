@@ -135,11 +135,11 @@ export class TestPingPong {
 
         // update velocity
         if (!this.updateVelocity) {
-          this.velocity.lerp(this.nullVector.set(0, 0), 0.5)
+          this.velocity.lerp(this.nullVector.set(0), 0.5)
         }
         this.updateVelocity = false
 
-        this.flowMap.uniforms.flowmap.velocity.value = this.velocity.lerp(this.nullVector.set(0, 0), 0.1)
+        this.flowMap.uniforms.flowmap.velocity.value = this.velocity.lerp(this.nullVector.set(0), 0.1)
       })
       .onAfterResize(() => {
         this.flowMap.uniforms.flowmap.aspect.value =

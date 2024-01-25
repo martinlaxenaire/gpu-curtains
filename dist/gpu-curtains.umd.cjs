@@ -1316,7 +1316,7 @@ var __privateMethod = (obj, member, method) => {
      * @param z - new Z component to set
      * @returns - this {@link Vec3} after being set
      */
-    set(x = 0, y = 0, z = 0) {
+    set(x = 0, y = x, z = x) {
       this.x = x;
       this.y = y;
       this.z = z;

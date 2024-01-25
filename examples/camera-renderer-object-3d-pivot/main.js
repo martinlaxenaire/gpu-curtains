@@ -97,7 +97,7 @@ window.addEventListener('load', async () => {
     const pivot = new Object3D()
 
     // shrink everything
-    pivot.scale.set(0.2, 0.2, 0.2)
+    pivot.scale.set(0.2)
 
     const pivotRotationSpeed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
 
@@ -145,7 +145,7 @@ window.addEventListener('load', async () => {
       },
     })
 
-    pivotSphere.scale.set(0.2, 0.2, 0.2)
+    pivotSphere.scale.set(0.2)
     // add pivot as parent
     pivotSphere.parent = pivot
 

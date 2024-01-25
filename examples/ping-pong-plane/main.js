@@ -140,7 +140,7 @@ window.addEventListener('load', async () => {
 
       // update velocity
       if (!updateVelocity) {
-        velocity.lerp(nullVector.set(0, 0), 0.5)
+        velocity.lerp(nullVector.set(0), 0.5)
       }
       updateVelocity = false
 
