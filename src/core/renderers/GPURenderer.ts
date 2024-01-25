@@ -333,11 +333,11 @@ export class GPURenderer {
   }
 
   /**
-   * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) and its size is set
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) its {@link context} is set and its size is set
    * @readonly
    */
   get ready(): boolean {
-    return this.deviceManager.ready && !!this.canvas.style.width
+    return this.deviceManager.ready && !!this.context && !!this.canvas.style.width
   }
 
   /**

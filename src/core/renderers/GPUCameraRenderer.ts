@@ -79,6 +79,10 @@ export class GPUCameraRenderer extends GPURenderer {
     }
 
     this.setCamera(camera)
+
+    if (this.ready && !this.cameraBufferBinding) {
+      this.setCameraBufferBinding()
+    }
   }
 
   /**
@@ -87,7 +91,7 @@ export class GPUCameraRenderer extends GPURenderer {
   setContext() {
     super.setContext()
 
-    if (this.device) {
+    if (this.ready && this.camera && !this.cameraBufferBinding) {
       this.setCameraBufferBinding()
     }
   }
@@ -196,7 +200,7 @@ export class GPUCameraRenderer extends GPURenderer {
    * Create the {@link cameraBindGroup | camera bind group} buffers
    */
   setCameraBindGroup() {
-    if (this.cameraBindGroup.shouldCreateBindGroup) {
+    if (this.cameraBindGroup && this.cameraBindGroup.shouldCreateBindGroup) {
       this.cameraBindGroup.setIndex(0)
       this.cameraBindGroup.createBindGroup()
     }

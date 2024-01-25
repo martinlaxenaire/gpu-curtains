@@ -147,7 +147,7 @@ export declare class GPURenderer {
      */
     get device(): GPUDevice | undefined;
     /**
-     * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) and its size is set
+     * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) its {@link context} is set and its size is set
      * @readonly
      */
     get ready(): boolean;
