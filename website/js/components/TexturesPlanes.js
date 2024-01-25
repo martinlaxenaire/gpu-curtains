@@ -59,7 +59,6 @@ export class TexturesPlanes {
         texture.scale.set(scaleIncrease, scaleIncrease, 1)
 
         if (texture.isVideoSource) {
-          texture.source.playbackRate = 2
           texture.source.play()
         }
       })
