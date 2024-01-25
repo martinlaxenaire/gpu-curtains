@@ -26,13 +26,14 @@
 
 ## Work in progress
 
-- Examples & tests
 - Documentation (typedoc)
 - Build tool
 
-## TODO
+## TODO / possible improvements
 
 - constants for WebGPU buffers and textures flags/usages + add to options/parameters?
-- Use render bundles?
+- Use render bundles? Probably not suited to the library tho
+- Use indirect draw calls?
+- MRT (allow to write to multiple textures/output via the `targets` property of the RenderPipeline + colorAttachements of the RenderPass descriptor: see [deferred rendering example WebGPU samples example](https://webgpu.github.io/webgpu-samples/samples/deferredRendering))?
 - Mesh raycasting?
-- More tests! (samplers, external video textures...)
+- More examples & tests?

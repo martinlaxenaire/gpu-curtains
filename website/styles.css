@@ -2,7 +2,7 @@
 
 @media screen {
   :root {
-    --font-size: clamp(14px, 1.75vw, 28px);
+    --font-size: clamp(14px, max(1.75vw, 1.75vh), 28px);
 
     --height-spacing: 15vh;
     --height-spacing: 15svh;
@@ -51,6 +51,10 @@
   .section,
   .text-section {
     margin: var(--height-spacing) 0;
+  }
+
+  .text-section p {
+    text-wrap: pretty;
   }
 
   .text-section-main {
@@ -530,11 +534,7 @@
   }
 }
 
-@media screen and (orientation: portrait) {
-  :root {
-    --font-size: clamp(14px, 4vw, 28px);
-  }
-
+@media screen and (max-aspect-ratio: 10 / 8) {
   .container {
     padding: 0 1rem;
   }
