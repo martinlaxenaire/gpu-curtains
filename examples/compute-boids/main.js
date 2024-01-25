@@ -365,8 +365,10 @@ window.addEventListener('load', async () => {
   const mousePosition = new Vec2(Infinity)
   const lastMousePosition = mousePosition.clone()
 
-  window.addEventListener('pointermove', (e) => {
-    mousePosition.set(e.clientX / gpuCurtains.boundingRect.width, 1 - e.clientY / gpuCurtains.boundingRect.height)
+  const onPointerMove = (e) => {
+    const { clientX, clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e
+
+    mousePosition.set(clientX / gpuCurtains.boundingRect.width, 1 - clientY / gpuCurtains.boundingRect.height)
 
     computeBoidsPass.uniforms.params.mousePosition.value
       .copy(mousePosition)
@@ -377,5 +379,8 @@ window.addEventListener('load', async () => {
     computeBoidsPass.uniforms.params.mouseVelocity.value = mousePosition.clone().sub(lastMousePosition).length()
 
     lastMousePosition.copy(mousePosition)
-  })
+  }
+
+  window.addEventListener('mousemove', onPointerMove)
+  window.addEventListener('touchmove', onPointerMove)
 })

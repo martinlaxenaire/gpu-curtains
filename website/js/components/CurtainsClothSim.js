@@ -374,19 +374,22 @@ export class CurtainsClothSim {
     this.maxVelocity = new Vec2(100)
     this.pointerTimer = null
 
-    window.addEventListener('pointermove', this.onPointerMove.bind(this))
+    window.addEventListener('mousemove', this.onPointerMove.bind(this))
+    window.addEventListener('touchmove', this.onPointerMove.bind(this))
   }
 
   onPointerMove(e) {
+    const { clientX, clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e
+
     if (this.pointer.x === Infinity) {
       this.velocity.set(0)
     } else {
-      this.velocity.set(e.clientX - this.pointer.x, e.clientY - this.pointer.y)
+      this.velocity.set(clientX - this.pointer.x, clientY - this.pointer.y)
     }
 
     this.velocity.clamp(this.minVelocity, this.maxVelocity)
 
-    this.pointer.set(e.clientX, e.clientY)
+    this.pointer.set(clientX, clientY)
 
     if (this.plane && this.computeForcesPass) {
       if (this.pointerTimer) clearTimeout(this.pointerTimer)
@@ -411,7 +414,8 @@ export class CurtainsClothSim {
 
     this.gpuCurtains.renderer.onBeforeRenderScene.remove(this.computeTaskId)
 
-    window.removeEventListener('pointermove', this.onPointerMove.bind(this))
+    window.removeEventListener('mousemove', this.onPointerMove.bind(this))
+    window.removeEventListener('touchmove', this.onPointerMove.bind(this))
 
     this.computeUpdatePass.remove()
     this.computeNormalPass.remove()
