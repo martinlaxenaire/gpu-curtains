@@ -7,12 +7,11 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
-  await gpuCurtains.setDevice()
-
   gpuCurtains.onError(() => {
-    // display original images
     document.body.classList.add('no-curtains')
   })
+
+  await gpuCurtains.setDevice()
 
   const shader = /* wgsl */ `
     // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39

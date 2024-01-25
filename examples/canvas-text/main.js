@@ -7,12 +7,11 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
-  await gpuCurtains.setDevice()
-
   gpuCurtains.onError(() => {
-    // display original images
     document.body.classList.add('no-curtains')
   })
+
+  await gpuCurtains.setDevice()
 
   const planeVs = /* wgsl */ `
       struct VSOutput {
@@ -90,14 +89,22 @@ window.addEventListener('load', async () => {
     },
   })
 
+  // create our text texture as soon as our plane has been created
   const canvasTexture = textPlane.createTexture({
     label: 'Canvas texture',
     name: 'canvasTexture',
   })
 
-  // create our text texture as soon as our plane has been created
-  // first we need a canvas
+  const canvasResolution = window.devicePixelRatio
+
+  // then we need a canvas
   const canvas = document.createElement('canvas')
+  // works with an offscreen canvas too!
+  // const canvas = new OffscreenCanvas(
+  //   textPlane.boundingRect.width * canvasResolution,
+  //   textPlane.boundingRect.height * canvasResolution
+  // )
+
   const context = canvas.getContext('2d')
 
   const writeCanvasText = () => {
@@ -105,8 +112,6 @@ window.addEventListener('load', async () => {
 
     const htmlPlaneWidth = textPlane.boundingRect.width
     const htmlPlaneHeight = textPlane.boundingRect.height
-
-    const canvasResolution = window.devicePixelRatio
 
     // set sizes
     canvas.width = htmlPlaneWidth * canvasResolution

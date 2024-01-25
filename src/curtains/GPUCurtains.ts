@@ -222,7 +222,10 @@ export class GPUCurtains {
     this.deviceManager = new GPUDeviceManager({
       label: 'GPUCurtains default device',
       production: this.options.production,
-      onError: () => this._onErrorCallback && this._onErrorCallback(),
+      onError: () =>
+        setTimeout(() => {
+          this._onErrorCallback && this._onErrorCallback()
+        }, 0),
       onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
     })
   }

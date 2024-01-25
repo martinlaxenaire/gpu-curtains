@@ -18,6 +18,11 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
   })
 
+  gpuCurtains.onError(() => {
+    // display original images
+    document.body.classList.add('no-curtains')
+  })
+
   await gpuCurtains.setDevice()
 
   gpuCurtains
@@ -41,10 +46,6 @@ window.addEventListener('load', async () => {
       }
 
       scrollEffect = lerp(scrollEffect, delta.y, 0.05)
-    })
-    .onError(() => {
-      // display original images
-      document.body.classList.add('no-curtains')
     })
 
   const vertexShader = /* wgsl */ `

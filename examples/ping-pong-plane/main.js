@@ -9,12 +9,12 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
-  await gpuCurtains.setDevice()
-
   gpuCurtains.onError(() => {
     // display original images
     document.body.classList.add('no-curtains')
   })
+
+  await gpuCurtains.setDevice()
 
   const mouse = new Vec2()
   const velocity = new Vec2()
@@ -140,7 +140,7 @@ window.addEventListener('load', async () => {
 
       // update velocity
       if (!updateVelocity) {
-        velocity.lerp(nullVector.set(0, 0), 0.5)
+        velocity.lerp(nullVector.set(0), 0.5)
       }
       updateVelocity = false
 

@@ -67,6 +67,11 @@
           pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
         })
 
+        gpuCurtains.onError(() => {
+          // display original images
+          document.body.classList.add('no-curtains')
+        })
+
         await gpuCurtains.setDevice()
 
         const vertexShader = /* wgsl */ `

@@ -7,12 +7,12 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
-  await gpuCurtains.setDevice()
-
   gpuCurtains.onError(() => {
     // display original videos
     document.body.classList.add('no-curtains')
   })
+
+  await gpuCurtains.setDevice()
 
   const videoVs = /* wgsl */ `
     struct VSOutput {

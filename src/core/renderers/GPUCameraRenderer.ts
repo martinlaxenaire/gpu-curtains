@@ -82,6 +82,17 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
+   * {@link GPURenderer#setContext | Set the renderer context} then create the camera bindings
+   */
+  setContext() {
+    super.setContext()
+
+    if (this.device) {
+      this.setCameraBufferBinding()
+    }
+  }
+
+  /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
    * Reset all our samplers, force all our scene objects and camera bind group to lose context.
    */
@@ -120,8 +131,6 @@ export class GPUCameraRenderer extends GPURenderer {
         this.onCameraMatricesChanged()
       },
     })
-
-    this.setCameraBufferBinding()
   }
 
   /**

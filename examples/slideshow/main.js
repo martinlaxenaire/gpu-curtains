@@ -11,12 +11,12 @@ window.addEventListener('load', async () => {
     },
   })
 
-  await gpuCurtains.setDevice()
-
   gpuCurtains.onError(() => {
     // display original medias
     document.body.classList.add('no-curtains')
   })
+
+  await gpuCurtains.setDevice()
 
   // get our plane element
   const planeElements = document.querySelector('#multi-textures-plane')

@@ -17,6 +17,11 @@ window.addEventListener('load', async () => {
     },
   })
 
+  gpuCurtains.onError(() => {
+    // display original images
+    document.body.classList.add('no-curtains')
+  })
+
   await gpuCurtains.setDevice()
 
   gpuCurtains
@@ -38,10 +43,6 @@ window.addEventListener('load', async () => {
       if (Math.abs(delta.y) > Math.abs(scrollEffect)) {
         scrollEffect = lerp(scrollEffect, delta.y, 0.5)
       }
-    })
-    .onError(() => {
-      // display original images
-      document.body.classList.add('no-curtains')
     })
 
   // We don't want to see our pass texture top/bottom edges

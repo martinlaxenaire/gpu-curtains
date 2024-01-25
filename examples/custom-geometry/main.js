@@ -10,12 +10,11 @@ window.addEventListener('load', async () => {
     },
   })
 
-  await gpuCurtains.setDevice()
-
   gpuCurtains.onError(() => {
-    // display original images
     document.body.classList.add('no-curtains')
   })
+
+  await gpuCurtains.setDevice()
 
   // instanced custom geometry mesh grid
   // we will basically recreate https://threejs.org/examples/?q=instanc#webgl_instancing_dynamic

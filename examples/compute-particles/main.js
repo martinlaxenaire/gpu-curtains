@@ -212,6 +212,10 @@ window.addEventListener('load', async () => {
     },
   })
 
+  gpuCurtains.onError(() => {
+    document.body.classList.add('no-curtains')
+  })
+
   await gpuCurtains.setDevice()
 
   // The basic idea here is to place instanced points on a sphere surface

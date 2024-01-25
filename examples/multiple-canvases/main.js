@@ -40,6 +40,11 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
   })
 
+  gpuCurtains.onError(() => {
+    // display original images
+    document.body.classList.add('no-curtains')
+  })
+
   await gpuCurtains.setDevice()
 
   gpuCurtains
@@ -65,10 +70,6 @@ window.addEventListener('load', async () => {
       if (Math.abs(delta.y) > Math.abs(scrollEffect)) {
         scrollEffect = lerp(scrollEffect, delta.y, 0.2)
       }
-    })
-    .onError(() => {
-      // display original images
-      document.body.classList.add('no-curtains')
     })
 
   // create the back renderer
