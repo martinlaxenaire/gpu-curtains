@@ -68,19 +68,16 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
+  gpuCurtains.onError(() => {
+    // display original images
+    document.body.classList.add('no-curtains')
+  })
+
   await gpuCurtains.setDevice()
 
-  gpuCurtains
-    .onRender(() => {
-      rotationEffect = lerp(rotationEffect, 0, 0.05)
-    })
-    .onError(() => {
-      // display original images
-      document.body.classList.add('no-curtains')
-    }) /*.onContextLost(() => {
-     // on context lost, try to restore the context
-     gpuCurtains.restoreContext();
-    })*/
+  gpuCurtains.onRender(() => {
+    rotationEffect = lerp(rotationEffect, 0, 0.05)
+  })
 
   // add the planes
   const planeVs = /* wgsl */ `

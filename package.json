@@ -58,7 +58,7 @@
     "test": "tests"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build:docs": "rimraf docs && typedoc --options typedoc.json",
     "build:types": "rimraf dist/types && tsc --allowJs -d --emitDeclarationOnly",
     "build:main": "vite build",

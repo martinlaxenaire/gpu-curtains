@@ -35,16 +35,16 @@ window.addEventListener('load', async () => {
     watchScroll: false,
   })
 
+  gpuCurtains.onError(() => {
+    document.body.classList.add('no-curtains')
+  })
+
   await gpuCurtains.setDevice()
 
-  gpuCurtains
-    .onRender(() => {
-      lenis.raf(performance.now())
-    })
-    .onError(() => {
-      // display original images
-      document.body.classList.add('no-curtains')
-    })
+  // should be hooked on a gsap ticker instead
+  gpuCurtains.onRender(() => {
+    lenis.raf(performance.now())
+  })
 
   lenis.on('scroll', (scroll) => {
     gpuCurtains.updateScrollValues({ x: 0, y: scroll.scroll })

@@ -87,12 +87,12 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
-  await gpuCurtains.setDevice()
-
   gpuCurtains.onError(() => {
     // display original medias
     document.body.classList.add('no-curtains')
   })
+
+  await gpuCurtains.setDevice()
 
   // first add all our planes
   const planeVs = /* wgsl */ `

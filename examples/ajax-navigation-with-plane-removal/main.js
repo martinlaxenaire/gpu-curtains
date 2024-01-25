@@ -12,6 +12,11 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
+  gpuCurtains.onError(() => {
+    // display original medias
+    document.body.classList.add('no-curtains')
+  })
+
   await gpuCurtains.setDevice()
 
   // usually data come from a CMS but here it's hardcoded for more simplicity

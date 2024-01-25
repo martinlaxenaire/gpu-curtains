@@ -5810,7 +5810,7 @@ struct VertexOutput {
           autoRender,
           ...meshParameters
         } = parameters;
-        meshParameters.sampleCount = meshParameters.sampleCount ?? this.renderer.renderPass.options.sampleCount;
+        meshParameters.sampleCount = meshParameters.sampleCount ?? (this.renderer && this.renderer.renderPass) ? this.renderer.renderPass.options.sampleCount : 1;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
@@ -9829,6 +9829,15 @@ struct VSOutput {
       this.setCamera(camera);
     }
     /**
+     * {@link GPURenderer#setContext | Set the renderer context} then create the camera bindings
+     */
+    setContext() {
+      super.setContext();
+      if (this.device) {
+        this.setCameraBufferBinding();
+      }
+    }
+    /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
      * Reset all our samplers, force all our scene objects and camera bind group to lose context.
      */
@@ -9863,7 +9872,6 @@ struct VSOutput {
           this.onCameraMatricesChanged();
         }
       });
-      this.setCameraBufferBinding();
     }
     /**
      * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
@@ -10044,12 +10052,6 @@ struct VSOutput {
       this.onError = onError;
       this.onDeviceLost = onDeviceLost;
       this.gpu = navigator.gpu;
-      if (!this.gpu) {
-        setTimeout(() => {
-          this.onError();
-          throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
-        }, 0);
-      }
       this.setPipelineManager();
       this.setDeviceObjects();
     }
@@ -10080,16 +10082,18 @@ struct VSOutput {
      */
     async setAdapter() {
       var _a, _b;
+      if (!this.gpu) {
+        this.onError();
+        throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
+      }
       try {
         this.adapter = await ((_a = this.gpu) == null ? void 0 : _a.requestAdapter());
         (_b = this.adapter) == null ? void 0 : _b.requestAdapterInfo().then((infos) => {
           this.adapterInfos = infos;
         });
       } catch (error) {
-        setTimeout(() => {
-          this.onError();
-          throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
-        }, 0);
+        this.onError();
+        throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
       }
     }
     /**
@@ -10107,10 +10111,8 @@ struct VSOutput {
           this.index++;
         }
       } catch (error) {
-        setTimeout(() => {
-          this.onError();
-          throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
-        }, 0);
+        this.onError();
+        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
       }
       (_b = this.device) == null ? void 0 : _b.lost.then((info) => {
         throwWarning(`${this.label}: WebGPU device was lost: ${info.message}`);
@@ -10536,7 +10538,9 @@ struct VSOutput {
       this.deviceManager = new GPUDeviceManager({
         label: "GPUCurtains default device",
         production: this.options.production,
-        onError: () => this._onErrorCallback && this._onErrorCallback(),
+        onError: () => setTimeout(() => {
+          this._onErrorCallback && this._onErrorCallback();
+        }, 0),
         onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info)
       });
     }

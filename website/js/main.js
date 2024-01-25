@@ -17,6 +17,11 @@ window.addEventListener('load', async () => {
     },
   })
 
+  gpuCurtains.onError(() => {
+    // display original medias
+    document.body.classList.add('no-curtains')
+  })
+
   const scrollObserver = new ScrollObserver()
 
   document.querySelectorAll('.section, .text-section').forEach((section) => {
@@ -51,11 +56,6 @@ window.addEventListener('load', async () => {
 
   // set WebGPU device and context
   await gpuCurtains.setDevice()
-
-  gpuCurtains.onError(() => {
-    // display original medias
-    document.body.classList.add('no-curtains')
-  })
 
   const cloth = document.querySelector('#cloth')
   if (cloth) {

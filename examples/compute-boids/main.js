@@ -22,6 +22,10 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
+  gpuCurtains.onError(() => {
+    document.body.classList.add('no-curtains')
+  })
+
   await gpuCurtains.setDevice()
 
   // number of particles instances

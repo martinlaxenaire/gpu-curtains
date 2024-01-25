@@ -92,13 +92,6 @@ export class GPUDeviceManager {
 
     this.gpu = navigator.gpu
 
-    if (!this.gpu) {
-      setTimeout(() => {
-        this.onError()
-        throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
-      }, 0)
-    }
-
     this.setPipelineManager()
     this.setDeviceObjects()
   }
@@ -133,16 +126,19 @@ export class GPUDeviceManager {
    * @async
    */
   async setAdapter() {
+    if (!this.gpu) {
+      this.onError()
+      throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
+    }
+
     try {
       this.adapter = await this.gpu?.requestAdapter()
       ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
         this.adapterInfos = infos
       })
     } catch (error) {
-      setTimeout(() => {
-        this.onError()
-        throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
-      }, 0)
+      this.onError()
+      throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
     }
   }
 
@@ -161,10 +157,8 @@ export class GPUDeviceManager {
         this.index++
       }
     } catch (error) {
-      setTimeout(() => {
-        this.onError()
-        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
-      }, 0)
+      this.onError()
+      throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
     }
 
     this.device?.lost.then((info) => {
