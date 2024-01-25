@@ -9194,11 +9194,11 @@ class GPURenderer {
     return this.deviceManager.device;
   }
   /**
-   * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) and its size is set
+   * Get whether our {@link GPUDeviceManager} is ready (i.e. its {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} are set) its {@link context} is set and its size is set
    * @readonly
    */
   get ready() {
-    return this.deviceManager.ready && !!this.canvas.style.width;
+    return this.deviceManager.ready && !!this.context && !!this.canvas.style.width;
   }
   /**
    * Get our {@link GPUDeviceManager#production | GPUDeviceManager production flag}
@@ -9823,13 +9823,16 @@ class GPUCameraRenderer extends GPURenderer {
       camera
     };
     this.setCamera(camera);
+    if (this.ready && !this.cameraBufferBinding) {
+      this.setCameraBufferBinding();
+    }
   }
   /**
    * {@link GPURenderer#setContext | Set the renderer context} then create the camera bindings
    */
   setContext() {
     super.setContext();
-    if (this.device) {
+    if (this.ready && this.camera && !this.cameraBufferBinding) {
       this.setCameraBufferBinding();
     }
   }
@@ -9927,7 +9930,7 @@ class GPUCameraRenderer extends GPURenderer {
    * Create the {@link cameraBindGroup | camera bind group} buffers
    */
   setCameraBindGroup() {
-    if (this.cameraBindGroup.shouldCreateBindGroup) {
+    if (this.cameraBindGroup && this.cameraBindGroup.shouldCreateBindGroup) {
       this.cameraBindGroup.setIndex(0);
       this.cameraBindGroup.createBindGroup();
     }
