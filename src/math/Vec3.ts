@@ -108,7 +108,7 @@ export class Vec3 {
    * @param z - new Z component to set
    * @returns - this {@link Vec3} after being set
    */
-  set(x = 0, y = 0, z = 0): Vec3 {
+  set(x = 0, y = x, z = x): Vec3 {
     this.x = x
     this.y = y
     this.z = z

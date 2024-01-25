@@ -1,8 +1,10 @@
 // Check if the scene graph (i.e. parent / children object 3D relationship) works
 // test model / world matrices
+import { Vec3 } from '../../dist/gpu-curtains.js'
+
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
-  const { Object3D, BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Vec3 } = await import(path)
+  const { Object3D, BoxGeometry, SphereGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Vec3 } = await import(path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -26,38 +28,50 @@ window.addEventListener('load', async () => {
 
   animate()
 
-  for (let i = 0; i < 15; i++) {
-    const pivot = new Object3D()
+  const centerPivot = new Object3D()
 
-    pivot.scale.set(0.2, 0.2, 0.2)
+  const centerSphere = new Mesh(gpuCameraRenderer, {
+    geometry: new SphereGeometry(),
+  })
 
-    const pivotRotationSpeed = (Math.random() - 0.5) * 0.02
-    pivot.quaternion.setAxisOrder('ZYX')
-    pivot.rotation.z = Math.random() * Math.PI * 2
+  centerSphere.scale.set(0.25)
 
-    const cube = new Mesh(gpuCameraRenderer, {
-      label: 'Cube ' + i,
-      geometry: new BoxGeometry(),
-    })
+  centerSphere.parent = centerPivot
 
-    cube.position.x = 25 * Math.random() - 12.5
-    cube.position.y = 25 * Math.random() - 12.5
-    cube.position.z = 25 * Math.random() - 12.5
+  centerSphere.onRender(() => {
+    centerPivot.rotation.z += 0.02
+  })
 
-    cube.parent = pivot
+  const orbitCube = new Mesh(gpuCameraRenderer, {
+    geometry: new BoxGeometry(),
+  })
 
-    // let time = 0
-    let time = i * 25
+  orbitCube.scale.set(1.25)
+  orbitCube.position.x = 10
 
-    cube.onRender(() => {
-      time++
+  orbitCube.parent = centerSphere
 
-      pivot.position.x = Math.sin(time * 0.01) * 3
+  orbitCube.onRender(() => {
+    orbitCube.rotation.y += 0.02
+  })
 
-      pivot.rotation.y += pivotRotationSpeed
+  const orbitSphere = new Mesh(gpuCameraRenderer, {
+    geometry: new SphereGeometry(),
+  })
 
-      //cube.rotation.x += 0.01
-      cube.lookAt(pivot.position)
-    })
-  }
+  orbitSphere.scale.set(1.25)
+  orbitSphere.position.x = 5
+  orbitSphere.parent = orbitCube
+
+  orbitSphere.onRender(() => {
+    orbitSphere.rotation.x += 0.02
+  })
+
+  const orbitCube2 = new Mesh(gpuCameraRenderer, {
+    geometry: new BoxGeometry(),
+  })
+
+  orbitCube2.scale.set(1.25)
+  orbitCube2.position.x = 5
+  orbitCube2.parent = orbitSphere
 })
