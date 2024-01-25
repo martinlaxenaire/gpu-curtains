@@ -10,6 +10,7 @@
     overflow: hidden;
     width: 90%;
     height: 90vh;
+    /* prettier-ignore */
     height: 90svh;
   }
 
