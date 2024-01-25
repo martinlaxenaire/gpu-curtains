@@ -650,16 +650,18 @@ window.addEventListener('load', async () => {
   const maxVelocity = new Vec2(100)
   let pointerTimer
 
-  window.addEventListener('pointermove', (e) => {
+  const onPointerMove = (e) => {
+    const { clientX, clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e
+
     if (pointer.x === Infinity) {
       velocity.set(0)
     } else {
-      velocity.set(e.clientX - pointer.x, e.clientY - pointer.y)
+      velocity.set(clientX - pointer.x, clientY - pointer.y)
     }
 
     velocity.clamp(minVelocity, maxVelocity)
 
-    pointer.set(e.clientX, e.clientY)
+    pointer.set(clientX, clientY)
 
     if (plane && computeForcesPass) {
       if (pointerTimer) clearTimeout(pointerTimer)
@@ -676,5 +678,8 @@ window.addEventListener('load', async () => {
         computeForcesPass.uniforms.interaction.pointerVelocity.value.set(0)
       }, 25)
     }
-  })
+  }
+
+  window.addEventListener('mousemove', onPointerMove)
+  window.addEventListener('touchmove', onPointerMove)
 })

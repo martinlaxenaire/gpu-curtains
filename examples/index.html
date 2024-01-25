@@ -17,7 +17,17 @@
 
     <link href="common-styles.css" rel="stylesheet" />
 
+    <link
+      rel="icon"
+      type="image/jpg"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.jpg"
+    />
+
     <style>
+      ul li {
+        margin: 0.15rem 0;
+      }
+
       #sphere {
         position: fixed;
         z-index: -1;
@@ -44,7 +54,15 @@
     <div id="page">
       <div class="large-container">
         <h1>Useful gpu-curtains examples</h1>
-        <h2>Planes</h2>
+        <p>
+          Here you'll find some examples covering various usages and possibilities.<br />
+          They are globally ordered by difficulty, from the most basic to the most complex one.<br />
+          Their source code is available on the
+          <a href="https://github.com/martinlaxenaire/gpu-curtains/tree/main/examples" target="_blank"
+            >repository examples directory</a
+          >.
+        </p>
+        <h2 class="overlay-title">Planes</h2>
         <ul>
           <li>
             <a href="./basic-plane/" target="_blank">Basic plane</a>
@@ -71,7 +89,7 @@
             <a href="./custom-scroll-and-transformations/" target="_blank">Custom scroll and plane transformations</a>
           </li>
         </ul>
-        <h2>Meshes</h2>
+        <h2 class="overlay-title">Meshes</h2>
         <ul>
           <li>
             <a href="./full-screen-plane-shader/" target="_blank">FullscreenPlane shader</a>
@@ -86,7 +104,7 @@
             <a href="./camera-renderer-object-3d-pivot/" target="_blank">GPUCameraRenderer and Object3D as pivots</a>
           </li>
         </ul>
-        <h2>Post processing / render to texture</h2>
+        <h2 class="overlay-title">Post processing / render to texture</h2>
         <ul>
           <li>
             <a href="./post-processing-transform-origin/" target="_blank"
@@ -102,7 +120,7 @@
             <a href="./ping-pong-plane/" target="_blank">Ping pong plane</a>
           </li>
         </ul>
-        <h2>Compute passes</h2>
+        <h2 class="overlay-title">Compute passes</h2>
         <ul>
           <li>
             <a href="compute-boids/" target="_blank">Compute boids</a>
@@ -117,7 +135,7 @@
             <a href="./compute-blur/" target="_blank">Compute blur</a>
           </li>
         </ul>
-        <h2>Renderers</h2>
+        <h2 class="overlay-title">Renderers</h2>
         <ul>
           <li>
             <a href="./multiple-canvases/" target="_blank">Multiple canvases using one device</a>
@@ -128,7 +146,7 @@
             >
           </li>
         </ul>
-        <h2>Advanced rendering</h2>
+        <h2 class="overlay-title">Advanced rendering</h2>
         <ul>
           <li>
             <a href="camera-renderer-transforms-bloom-pass/" target="_blank">

@@ -8,9 +8,12 @@
   #cloth {
     position: relative;
     overflow: hidden;
-    /*width: calc(100% - 4rem);
-    height: calc(100vh - 4rem);*/
     width: 90%;
     height: 90vh;
+    height: 90svh;
+  }
+
+  .no-curtains #cloth {
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
   }
 }

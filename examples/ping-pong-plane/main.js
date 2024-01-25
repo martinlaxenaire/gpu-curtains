@@ -113,27 +113,6 @@ window.addEventListener('load', async () => {
   })
 
   flowMap
-    .onReady(() => {
-      window.addEventListener('mousemove', (e) => {
-        // velocity is our mouse position minus our mouse last position
-        lastMouse.copy(mouse)
-
-        // touch event
-        if (e.targetTouches) {
-          mouse.set(e.targetTouches[0].clientX, e.targetTouches[0].clientY)
-        }
-        // mouse event
-        else {
-          mouse.set(e.clientX, e.clientY)
-        }
-
-        // divided by a frame duration (roughly)
-        velocity.set((mouse.x - lastMouse.x) / 16, (mouse.y - lastMouse.y) / 16)
-
-        // we should update the velocity
-        updateVelocity = true
-      })
-    })
     .onRender(() => {
       // update mouse position
       flowMap.uniforms.flowmap.mousePosition.value = flowMap.mouseToPlaneCoords(mouse)
@@ -247,4 +226,22 @@ window.addEventListener('load', async () => {
   //   name: 'flowMapTexture',
   //   fromTexture: flowMap.renderTexture,
   // })
+
+  const onPointerMove = (e) => {
+    const { clientX, clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e
+
+    // velocity is our mouse position minus our mouse last position
+    lastMouse.copy(mouse)
+
+    mouse.set(clientX, clientY)
+
+    // divided by a frame duration (roughly)
+    velocity.set((mouse.x - lastMouse.x) / 16, (mouse.y - lastMouse.y) / 16)
+
+    // we should update the velocity
+    updateVelocity = true
+  }
+
+  window.addEventListener('mousemove', onPointerMove)
+  window.addEventListener('touchmove', onPointerMove)
 })
