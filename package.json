@@ -13,7 +13,7 @@
   },
   "name": "gpu-curtains",
   "version": "0.0.1",
-  "description": "gpu-curtains is a WebGPU rendering engine that helps synchronizing 3D objects scale and position with associated DOM HTML elements",
+  "description": "gpu-curtains is a WebGPU rendering engine focused on mapping 3d objects to DOM elements; It allows users to synchronize values such as position, sizing, or scale between them.",
   "keywords": [
     "webgpu",
     "dom",
