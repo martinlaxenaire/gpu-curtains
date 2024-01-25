@@ -24,7 +24,11 @@
     />
 
     <style>
-      ul li {
+      #examples ul {
+        margin: 1rem 0 2rem 0;
+      }
+
+      #examples ul li {
         margin: 0.15rem 0;
       }
 
@@ -52,7 +56,24 @@
     <div id="sphere"></div>
 
     <div id="page">
-      <div class="large-container">
+      <header id="header">
+        <nav id="main-menu" class="container">
+          <h1><a href="/">gpu-curtains</a></h1>
+          <ul>
+            <li>
+              <a class="primary-button" href="https://github.com/martinlaxenaire/gpu-curtains">Repository</a>
+            </li>
+            <li>
+              <a class="primary-button" href="../docs/">Docs</a>
+            </li>
+            <li>
+              <a class="primary-button active" href="../examples/">Examples</a>
+            </li>
+          </ul>
+        </nav>
+      </header>
+
+      <div id="examples" class="large-container">
         <h1>Useful gpu-curtains examples</h1>
         <p>
           Here you'll find some examples covering various usages and possibilities.<br />

@@ -5,7 +5,8 @@
     top: 0;
     left: 0;
     height: 100vh;
-    height: 100 lvh;
+    /* prettier ignore */
+    height: 100lvh;
     width: 100vw;
     z-index: 3;
     pointer-events: none;
@@ -16,7 +17,8 @@
     top: 0;
     left: 0;
     height: 100vh;
-    height: 100 lvh;
+    /* prettier ignore */
+    height: 100lvh;
     width: 100vw;
     z-index: 1;
     pointer-events: none;

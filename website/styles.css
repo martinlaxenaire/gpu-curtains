@@ -1,9 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Permanent+Marker&family=Vampiro+One&display=swap');
-
 @media screen {
   :root {
-    --font-size: clamp(14px, max(1.75vw, 1.75vh), 28px);
-
     --height-spacing: 15vh;
     --height-spacing: 15svh;
   }
@@ -14,30 +10,12 @@
     box-sizing: border-box;
   }
 
-  html {
-    font-size: var(--font-size);
-    line-height: 1.4;
-  }
-
   #page {
     overflow: hidden;
   }
 
-  h1,
-  h2,
-  h3 {
-    font-family: var(--script-font);
-    font-weight: normal;
-    margin: 0;
-    padding: 0;
-  }
-
   .primary-color {
     color: var(--primary-color);
-  }
-
-  .container {
-    padding: 0 2rem;
   }
 
   .grid {
@@ -65,7 +43,7 @@
   .text-section-sub {
     grid-column: 8 / 13;
     padding-top: calc(3rem + var(--height-spacing));
-    font-size: 0.725rem;
+    font-size: 0.85rem;
     text-align: left;
   }
 
@@ -81,7 +59,7 @@
 
   .text-section-main-title {
     margin: 0;
-    font-size: 2rem;
+    font-size: 2.25rem;
   }
 
   .text-section-main-title span {
@@ -145,142 +123,6 @@
     border-radius: 1em;
   }
 
-  /** header **/
-
-  #header {
-    position: fixed;
-    width: 100%;
-    z-index: 1;
-    font-size: 0.675rem;
-    pointer-events: none;
-  }
-
-  #header a {
-    pointer-events: auto;
-    text-decoration: none;
-  }
-
-  #main-menu {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  #main-menu ul {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  #main-menu ul li {
-    margin: 0 0 0 1em;
-  }
-
-  #main-menu h1 {
-    margin: 0;
-    font-size: 1.75em;
-    overflow: hidden;
-  }
-
-  #main-menu h1 a {
-    display: inline-block;
-    padding: 0.25em;
-    position: relative;
-  }
-
-  #main-menu h1 a::after {
-    content: '';
-    position: absolute;
-    z-index: -1;
-    top: 1.3em;
-    left: 50%;
-    transform: translate3d(-50%, 0, 0);
-    background-color: var(--primary-color);
-    background-image: linear-gradient(to right, rgba(var(--primary-color-rgb), 0), rgba(var(--secondary-color-rgb), 1));
-    clip-path: polygon(
-      100% 50%,
-      100% 100%,
-      0px 100%,
-      0px 0px,
-      100% 0px,
-      100% 50%,
-      80% 50%,
-      79.8509% 47.013%,
-      79.4052% 44.0556%,
-      78.6672% 41.1573%,
-      77.6443% 38.347%,
-      76.3466% 35.6524%,
-      74.7872% 33.1004%,
-      72.9813% 30.7164%,
-      70.9471% 28.524%,
-      68.7047% 26.5451%,
-      66.2764% 24.7992%,
-      63.6863% 23.3038%,
-      60.9602% 22.0738%,
-      58.1252% 21.1213%,
-      55.2094% 20.4558%,
-      52.2419% 20.0839%,
-      49.2521% 20.0093%,
-      46.2697% 20.2328%,
-      43.3244% 20.7522%,
-      40.4454% 21.5622%,
-      37.6614% 22.6548%,
-      35% 24.0192%,
-      32.4877% 25.6419%,
-      30.1494% 27.5066%,
-      28.0084% 29.5948%,
-      26.086% 31.8859%,
-      24.4013% 34.3569%,
-      22.9709% 36.9835%,
-      21.8092% 39.7394%,
-      20.9277% 42.5973%,
-      20.3351% 45.5287%,
-      20.0373% 48.5046%,
-      20.0373% 51.4954%,
-      20.3351% 54.4713%,
-      20.9277% 57.4027%,
-      21.8092% 60.2606%,
-      22.9709% 63.0165%,
-      24.4013% 65.6431%,
-      26.086% 68.1141%,
-      28.0084% 70.4052%,
-      30.1494% 72.4934%,
-      32.4877% 74.3581%,
-      35% 75.9808%,
-      37.6614% 77.3452%,
-      40.4454% 78.4378%,
-      43.3244% 79.2478%,
-      46.2697% 79.7672%,
-      49.2521% 79.9907%,
-      52.2419% 79.9161%,
-      55.2094% 79.5442%,
-      58.1252% 78.8787%,
-      60.9602% 77.9262%,
-      63.6863% 76.6962%,
-      66.2764% 75.2008%,
-      68.7047% 73.4549%,
-      70.9471% 71.476%,
-      72.9813% 69.2836%,
-      74.7872% 66.8996%,
-      76.3466% 64.3476%,
-      77.6443% 61.653%,
-      78.6672% 58.8427%,
-      79.4052% 55.9444%,
-      79.8509% 52.987%,
-      80% 50%
-    );
-    width: 250%;
-    height: 50%;
-    border-radius: 55%;
-
-    transition: background-color 0.35s ease-in-out;
-  }
-
-  #main-menu h1 a:hover::after {
-    background-color: var(--secondary-color);
-  }
-
   #content {
     margin: 0 auto;
   }
@@ -293,7 +135,7 @@
     width: calc(100% - 4rem);
     height: calc(100vh - 4.75rem);
     height: calc(100svh - 4.75rem);
-    margin: 2.75rem 2rem 2rem 2rem;
+    margin: 3.25rem 2rem 2rem 2rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -535,10 +377,6 @@
 }
 
 @media screen and (max-aspect-ratio: 10 / 8) {
-  .container {
-    padding: 0 1rem;
-  }
-
   .grid {
     grid-template-columns: repeat(6, [col-start] 1fr);
     gap: 0.5rem;
