@@ -6,7 +6,7 @@ export class TestComputePasses {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
+    const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
     const { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2 } = await import(path)
 
     // number of particles instances

@@ -1,6 +1,6 @@
 // real basic stress test
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
   const { BoxGeometry, GPUCurtains, Mesh, SphereGeometry } = await import(path)
 
   const stats = new Stats()

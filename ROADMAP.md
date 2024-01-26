@@ -26,11 +26,11 @@
 
 ## Work in progress
 
-- Documentation (typedoc)
-- Build tool
+- N/A
 
 ## TODO / possible improvements
 
+- Improve typedoc documentation?
 - constants for WebGPU buffers and textures flags/usages + add to options/parameters?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?

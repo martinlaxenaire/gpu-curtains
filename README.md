@@ -1,10 +1,21 @@
+# gpu-curtains
+
 <div align="center">
     <img src="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1080-720.jpg" width="500" alt="gpu-curtains" />
 </div>
 
-# gpu-curtains
+[Website](https://martinlaxenaire.github.io/gpu-curtains/) - [Documentation](https://martinlaxenaire.github.io/gpu-curtains/docs/) - [Examples](https://martinlaxenaire.github.io/gpu-curtains/examples/)
 
 > :warning: WIP
+
+<p align="center">
+    <a href="https://npmjs.org/package/gpu-curtains">
+        <img src="https://img.shields.io/npm/v/gpu-curtains" alt="version" />
+    </a>
+    <a href="https://bundlephobia.com/result?p=gpu-curtains">
+        <img src="https://img.shields.io/bundlephobia/minzip/gpu-curtains" alt="size" />
+    </a>
+</p>
 
 ### DOM 2 WebGPU rendering engine
 
@@ -21,7 +32,7 @@ You can directly download the files and start using the ES6 modules:
 #### ES modules
 
 ```javascript
-import { GPUCurtains } from 'path/to/lib/gpu-curtains/dist/gpu-curtains.js'
+import { GPUCurtains } from 'path/to/dist/gpu-curtains.mjs'
 
 window.addEventListener('load', async () => {
   // set our main GPUCurtains instance
@@ -35,7 +46,7 @@ window.addEventListener('load', async () => {
   // set the GPU device
   // note this is asynchronous
   await gpuCurtains.setDevice()
-  
+
   // now create some magic!
 })
 ```
@@ -52,6 +63,12 @@ npm i gpu-curtains
 
 ```
 yarn add gpu-curtains
+```
+
+In a browser, you can use the UMD files located in the `dist` directory:
+
+```html
+<script src="path/to/dist/gpu-curtains.umd.min.cjs"></script>
 ```
 
 ## Documentation and examples
@@ -137,13 +154,13 @@ Contribution are more than welcome! Please refer to the [contribution guidelines
 
 Some parts of the code (mostly the math classes) have been ported or adapted from other existing open source libraries like [three.js](https://github.com/mrdoob/three.js) and [glmatrix](https://github.com/toji/gl-matrix).
 
-Some of the examples are also ported and/or inspired by other online open-source WebGL or WebGPU examples. In any case the source should always be credited in the code. If a credit is missing, feel free to reach out or make a PR.
+Some examples are also ported and/or inspired by other online open-source WebGL or WebGPU examples. In any case the source should always be credited in the code. If a credit is missing, feel free to reach out or make a PR.
 
-The [WebGPU samples](https://github.com/webgpu/webgpu-samples) and [WebGPU fundamentals](https://webgpufundamentals.org/) were very helpful to help with the basic concepts of WebGPU. If you want to understand a bit more how it's working under the hood, do not hesitate to check those.
+The [WebGPU samples](https://github.com/webgpu/webgpu-samples), [WebGPU fundamentals](https://webgpufundamentals.org/) and [WebGPU best practices](https://toji.dev/webgpu-best-practices/) were very helpful to help with the basic concepts of WebGPU. If you want to understand a bit more how it's working under the hood, do not hesitate to check those.
 
 A big thanks to the members of the [WebGPU matrix chan](https://matrix.to/#/#WebGPU:matrix.org) that were always super kinds and very helpful as well.
 
 ## Changelog and roadmap
 
 - [Releases](https://github.com/martinlaxenaire/gpu-curtains/releases)
-- See the [roadmap](ROADMAP.md) for details on the current work in progress.
+- See the [roadmap](ROADMAP.md) for details on the current work in progress and possible improvements.

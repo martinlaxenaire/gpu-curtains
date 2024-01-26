@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane, ShaderPass } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, Plane, ShaderPass } from '../../dist/gpu-curtains.mjs'
 
 window.addEventListener('load', async () => {
   // lerp

@@ -1,4 +1,4 @@
-import { BindGroup, ComputePass, Geometry, GPUCurtains, Mesh, Vec3 } from '../../dist/gpu-curtains.js'
+import { BindGroup, ComputePass, Geometry, GPUCurtains, Mesh, Vec3 } from '../../dist/gpu-curtains.mjs'
 
 // inspired by https://barradeau.com/blog/?p=621
 // and https://www.clicktorelease.com/code/polygon-shredder/

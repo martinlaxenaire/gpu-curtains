@@ -26,7 +26,7 @@ export class TestPingPong {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
+    const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
     const { PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } = await import(path)
 
     this.mouse = new Vec2()

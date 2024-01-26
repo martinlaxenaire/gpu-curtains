@@ -1,4 +1,4 @@
-import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Object3D, Vec3 } from '../../dist/gpu-curtains.js'
+import { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Object3D, Vec3 } from '../../dist/gpu-curtains.mjs'
 
 window.addEventListener('load', async () => {
   const systemSize = 15

@@ -1,4 +1,4 @@
-import { BoxGeometry, DOMMesh, SphereGeometry } from '../../../dist/gpu-curtains.js'
+import { BoxGeometry, DOMMesh, SphereGeometry } from '../../../dist/gpu-curtains.mjs'
 import normalsOpacityFs from '../shaders/normals-opacity-fs.wgsl.js'
 
 export class IntroDOMMeshes {

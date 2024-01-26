@@ -11,11 +11,9 @@ import { ProjectedMesh } from '../../renderers/GPURenderer'
 import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials'
-import { Object3D } from '../../objects3D/Object3D'
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
 import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl'
 import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl'
-//import { TransformedObject3D } from './ProjectedMeshBaseMixin'
 
 let meshIndex = 0
 
@@ -361,7 +359,7 @@ export declare class MeshBaseClass {
 export type MixinConstructor<T = {}> = new (...args: any[]) => T
 
 /**
- * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link Texture} and {@link RenderTexture}) with a given Base of type {@link Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
+ * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link Texture} and {@link RenderTexture}) with a given Base of type {@link core/objects3D/Object3D.Object3D | Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
  * @exports MeshBaseMixin
  * @param Base - the class to mix onto
  * @returns - the mixed classes, creating a basic Mesh.

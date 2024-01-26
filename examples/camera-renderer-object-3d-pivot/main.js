@@ -6,7 +6,7 @@ import {
   BoxGeometry,
   SphereGeometry,
   Vec3,
-} from '../../dist/gpu-curtains.js'
+} from '../../dist/gpu-curtains.mjs'
 
 window.addEventListener('load', async () => {
   // here is an example of how we can use a GPUDeviceManager and a simple GPUCameraRenderer instead of the whole GPUCurtains package

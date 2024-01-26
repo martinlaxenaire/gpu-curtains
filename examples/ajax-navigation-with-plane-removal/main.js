@@ -1,5 +1,5 @@
 import { getPageContent, onLinkNavigate } from './view-transitions-api-utils.js'
-import { GPUCurtains, Plane, Texture } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, Plane, Texture } from '../../dist/gpu-curtains.mjs'
 
 window.addEventListener('load', async () => {
   const transitionDuration = 0.5 // in seconds

@@ -1,6 +1,6 @@
 // Goal of this test is to help debug any issue due to scroll or resize
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
   const { BoxGeometry, DOMMesh, GPUCurtains, Sampler, SphereGeometry } = await import(path)
 
   // set up our WebGL context and append the canvas to our wrapper
