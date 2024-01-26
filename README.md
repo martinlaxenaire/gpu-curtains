@@ -1,8 +1,10 @@
+# gpu-curtains
+
 <div align="center">
     <img src="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1080-720.jpg" width="500" alt="gpu-curtains" />
 </div>
 
-# gpu-curtains
+[Website](https://martinlaxenaire.github.io/gpu-curtains/) - [Documentation](https://martinlaxenaire.github.io/gpu-curtains/docs/) - [Examples](https://martinlaxenaire.github.io/gpu-curtains/examples/)
 
 > :warning: WIP
 

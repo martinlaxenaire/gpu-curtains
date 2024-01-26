@@ -9827,18 +9827,7 @@ struct VSOutput {
         camera
       };
       this.setCamera(camera);
-      if (this.ready && !this.cameraBufferBinding) {
-        this.setCameraBufferBinding();
-      }
-    }
-    /**
-     * {@link GPURenderer#setContext | Set the renderer context} then create the camera bindings
-     */
-    setContext() {
-      super.setContext();
-      if (this.ready && this.camera && !this.cameraBufferBinding) {
-        this.setCameraBufferBinding();
-      }
+      this.setCameraBindGroupAndBinding();
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -9890,7 +9879,7 @@ struct VSOutput {
     /**
      * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
      */
-    setCameraBufferBinding() {
+    setCameraBindGroupAndBinding() {
       this.cameraBufferBinding = new BufferBinding({
         label: "Camera",
         name: "camera",

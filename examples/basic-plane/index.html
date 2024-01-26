@@ -67,76 +67,81 @@
       import { GPUCurtains, Plane } from '../../dist/gpu-curtains.js'
 
       window.addEventListener('load', async () => {
-        // set up our WebGL context and append the canvas to our wrapper
+        // set our main GPUCurtains instance it will handle everything we need
+        // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
         const gpuCurtains = new GPUCurtains({
           container: '#canvas',
           pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
         })
 
+        // error should be handled before trying to set the device
         gpuCurtains.onError(() => {
-          // display original images
+          // display original image
           document.body.classList.add('no-curtains')
         })
 
+        // set the GPU device (note this is asynchronous)
         await gpuCurtains.setDevice()
 
+        // a basic vertex shader with a 'wavy' displacement
         const vertexShader = /* wgsl */ `
           struct VSOutput {
-              @builtin(position) position: vec4f,
-              @location(0) uv: vec2f,
-            };
+            @builtin(position) position: vec4f,
+            @location(0) uv: vec2f,
+          };
 
-            @vertex fn main(
-              attributes: Attributes,
-            ) -> VSOutput {
-              var vsOutput: VSOutput;
+          @vertex fn main(
+            attributes: Attributes,
+          ) -> VSOutput {
+            var vsOutput: VSOutput;
 
-              var strength: f32 = 0.2;
-              var nbWaves: f32 = 3.0;
+            var strength: f32 = 0.2;
+            var nbWaves: f32 = 3.0;
 
-              // map vertices coordinates to the 0->1 range on the X axis
-              var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
+            // map vertices coordinates to the 0->1 range on the X axis
+            var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
 
-              // notice how the "uniforms" struct name matches our bindings object name property
-              var time: f32 = frames.elapsed * 0.0375;
+            // notice how the "uniforms" struct name matches our bindings object name property
+            var time: f32 = frames.elapsed * 0.0375;
 
-              var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
+            var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
 
-              var transformed: vec3f = vec3(
-                  attributes.position.x,
-                  attributes.position.y,
-                  attributes.position.z - waveSinusoid * strength
-              );
+            var transformed: vec3f = vec3(
+                attributes.position.x,
+                attributes.position.y,
+                attributes.position.z - waveSinusoid * strength
+            );
 
-              // the library automatically also append utility functions to the shaders
-              // 'getOutputPosition' is used to compute the actual vertices positions based on the model view projection matrix
-              // this is actually what it does:
-              // vsOutput.position = matrices.modelViewProjection * vec4f(transformed, 1.0);
-              vsOutput.position = getOutputPosition(transformed);
+            // the library automatically also append utility functions to the shaders
+            // 'getOutputPosition' is used to compute the actual vertices positions based on the model view projection matrix
+            // this is actually what it does:
+            // vsOutput.position = matrices.modelViewProjection * vec4f(transformed, 1.0);
+            vsOutput.position = getOutputPosition(transformed);
 
-              // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
-              // this is actually what it does:
-              // vsOutput.uv = (texture0Matrix * vec4f(attributes.uv, 0.0, 1.0)).xy;
-              vsOutput.uv = getUVCover(attributes.uv, texture0Matrix);
+            // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
+            // this is actually what it does:
+            // vsOutput.uv = (texture0Matrix * vec4f(attributes.uv, 0.0, 1.0)).xy;
+            vsOutput.uv = getUVCover(attributes.uv, texture0Matrix);
 
-              return vsOutput;
-            }
-      `
+            return vsOutput;
+          }
+        `
 
+        // the fragment shader just displays our texture
         const fragmentShader = /* wgsl */ `
           struct VSOutput {
-              @builtin(position) position: vec4f,
-              @location(0) uv: vec2f,
-            };
+            @builtin(position) position: vec4f,
+            @location(0) uv: vec2f,
+          };
 
-            @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-              var texture: vec4f = textureSample(texture0, defaultSampler, fsInput.uv);
+          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+            var texture: vec4f = textureSample(texture0, defaultSampler, fsInput.uv);
 
-              return texture;
-            }
-      `
+            return texture;
+          }
+        `
 
-        // set our initial parameters (basic uniforms)
+        // set our initial parameters
         const params = {
           // geometry parameters
           widthSegments: 20,
@@ -151,6 +156,7 @@
               entryPoint: 'main',
             },
           },
+          // uniforms
           uniforms: {
             // this will add the following WGSL code snippet to your shaders:
             //
@@ -175,10 +181,12 @@
         // get our plane element
         const planeElement = document.querySelector('.plane')
 
+        // create a plane
         const plane = new Plane(gpuCurtains, planeElement, params)
 
+        // use the 'onRender' callback, executed each frame before actually drawing the plane
         plane.onRender(() => {
-          // update our time uniform value
+          // update our time uniform valueZ
           // notice the shortcut here, the struct property is omitted
           plane.uniforms.frames.elapsed.value++
         })
