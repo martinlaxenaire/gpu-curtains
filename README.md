@@ -8,6 +8,15 @@
 
 > :warning: WIP
 
+<p align="center">
+    <a href="https://npmjs.org/package/gpu-curtains">
+        <img src="https://img.shields.io/npm/v/gpu-curtains" alt="version" />
+    </a>
+    <a href="https://bundlephobia.com/result?p=gpu-curtains">
+        <img src="https://img.shields.io/bundlephobia/minzip/gpu-curtains" alt="size" />
+    </a>
+</p>
+
 ### DOM 2 WebGPU rendering engine
 
 gpu-curtains is a small, lightweight WebGPU rendering engine library.
@@ -23,7 +32,7 @@ You can directly download the files and start using the ES6 modules:
 #### ES modules
 
 ```javascript
-import { GPUCurtains } from 'path/to/lib/gpu-curtains/dist/gpu-curtains.js'
+import { GPUCurtains } from 'path/to/dist/gpu-curtains.mjs'
 
 window.addEventListener('load', async () => {
   // set our main GPUCurtains instance
@@ -37,7 +46,7 @@ window.addEventListener('load', async () => {
   // set the GPU device
   // note this is asynchronous
   await gpuCurtains.setDevice()
-  
+
   // now create some magic!
 })
 ```
@@ -54,6 +63,12 @@ npm i gpu-curtains
 
 ```
 yarn add gpu-curtains
+```
+
+In a browser, you can use the UMD files located in the `dist` directory:
+
+```html
+<script src="path/to/dist/gpu-curtains.umd.min.cjs"></script>
 ```
 
 ## Documentation and examples

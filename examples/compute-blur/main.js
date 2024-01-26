@@ -6,7 +6,7 @@ import {
   RenderTexture,
   ShaderPass,
   TextureBindGroup,
-} from '../../dist/gpu-curtains.js'
+} from '../../dist/gpu-curtains.mjs'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/imageBlur
 

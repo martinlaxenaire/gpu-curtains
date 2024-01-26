@@ -1,4 +1,4 @@
-import { FullscreenPlane, GPUCurtains } from '../../dist/gpu-curtains.js'
+import { FullscreenPlane, GPUCurtains } from '../../dist/gpu-curtains.mjs'
 
 window.addEventListener('load', async () => {
   // set up our WebGL context and append the canvas to our wrapper

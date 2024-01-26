@@ -1,4 +1,4 @@
-import { GPUCurtains } from '../../dist/gpu-curtains.js'
+import { GPUCurtains } from '../../dist/gpu-curtains.mjs'
 import { CurtainsClothSim } from './components/CurtainsClothSim.js'
 import { IntroDOMMeshes } from './components/IntroDOMMeshes.js'
 import { TexturesPlanes } from './components/TexturesPlanes.js'

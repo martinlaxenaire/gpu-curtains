@@ -1,6 +1,6 @@
 // Goal of this test is multiple renderers handling
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.js'
+  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
   const { BoxGeometry, GPUCurtains, Mesh } = await import(path)
 
   // set up our WebGL context and append the canvas to our wrapper

@@ -102,7 +102,7 @@ export class GPUCurtains {
     autoRender = true,
     autoResize = true,
     watchScroll = true,
-  }: GPUCurtainsParams) {
+  }: GPUCurtainsParams = {}) {
     this.type = 'CurtainsGPU'
 
     this.options = {

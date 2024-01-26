@@ -1,4 +1,4 @@
-import { Plane } from '../../../dist/gpu-curtains.js'
+import { Plane } from '../../../dist/gpu-curtains.mjs'
 import { imagePlaneFs, imagePlaneVs } from '../shaders/image-plane.wgsl.js'
 
 export class TexturesPlanes {

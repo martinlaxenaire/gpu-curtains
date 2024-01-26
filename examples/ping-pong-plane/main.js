@@ -1,4 +1,4 @@
-import { GPUCurtains, PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../dist/gpu-curtains.js'
+import { GPUCurtains, PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../dist/gpu-curtains.mjs'
 
 // originally inspired by https://oframe.github.io/ogl/examples/mouse-flowmap.html
 

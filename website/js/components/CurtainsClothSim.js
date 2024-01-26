@@ -1,4 +1,4 @@
-import { BindGroup, ComputePass, Plane, PlaneGeometry, Vec2, Vec3 } from '../../../dist/gpu-curtains.js'
+import { BindGroup, ComputePass, Plane, PlaneGeometry, Vec2, Vec3 } from '../../../dist/gpu-curtains.mjs'
 import { computeClothSim } from '../shaders/compute-cloth.wgsl.js'
 import { clothFs, clothVs } from '../shaders/curtains-cloth.wgsl.js'
 
