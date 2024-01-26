@@ -139,13 +139,13 @@ Contribution are more than welcome! Please refer to the [contribution guidelines
 
 Some parts of the code (mostly the math classes) have been ported or adapted from other existing open source libraries like [three.js](https://github.com/mrdoob/three.js) and [glmatrix](https://github.com/toji/gl-matrix).
 
-Some of the examples are also ported and/or inspired by other online open-source WebGL or WebGPU examples. In any case the source should always be credited in the code. If a credit is missing, feel free to reach out or make a PR.
+Some examples are also ported and/or inspired by other online open-source WebGL or WebGPU examples. In any case the source should always be credited in the code. If a credit is missing, feel free to reach out or make a PR.
 
-The [WebGPU samples](https://github.com/webgpu/webgpu-samples) and [WebGPU fundamentals](https://webgpufundamentals.org/) were very helpful to help with the basic concepts of WebGPU. If you want to understand a bit more how it's working under the hood, do not hesitate to check those.
+The [WebGPU samples](https://github.com/webgpu/webgpu-samples), [WebGPU fundamentals](https://webgpufundamentals.org/) and [WebGPU best practices](https://toji.dev/webgpu-best-practices/) were very helpful to help with the basic concepts of WebGPU. If you want to understand a bit more how it's working under the hood, do not hesitate to check those.
 
 A big thanks to the members of the [WebGPU matrix chan](https://matrix.to/#/#WebGPU:matrix.org) that were always super kinds and very helpful as well.
 
 ## Changelog and roadmap
 
 - [Releases](https://github.com/martinlaxenaire/gpu-curtains/releases)
-- See the [roadmap](ROADMAP.md) for details on the current work in progress.
+- See the [roadmap](ROADMAP.md) for details on the current work in progress and possible improvements.
