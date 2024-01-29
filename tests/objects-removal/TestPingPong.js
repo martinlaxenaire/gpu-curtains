@@ -236,6 +236,7 @@ export class TestPingPong {
       ],
     })
     console.log('TEST PING PONG init', this.gpuCurtains.deviceManager)
+    this.gpuCurtains.renderer.scene.logRenderCommands()
   }
 
   destroy() {

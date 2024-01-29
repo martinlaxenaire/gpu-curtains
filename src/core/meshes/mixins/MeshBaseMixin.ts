@@ -1025,7 +1025,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         super.render()
       }
 
+      !this.renderer.production && pass.pushDebugGroup(this.options.label)
+
       this.onRenderPass(pass)
+
+      !this.renderer.production && pass.popDebugGroup()
 
       this.onAfterRenderPass()
     }

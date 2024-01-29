@@ -114,6 +114,7 @@ window.addEventListener('load', async () => {
   for (let i = 0; i < 50; i++) {
     const isCube = Math.random() > 0.5
     const mesh = new Mesh(gpuCameraRenderer, {
+      label: isCube ? 'Cube ' + i : 'Sphere ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
       shaders: {
         vertex: {
@@ -189,7 +190,8 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const brigthnessPass = new ShaderPass(gpuCameraRenderer, {
+  const brightnessPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Brightness pass',
     shaders: {
       fragment: {
         code: brigthnessPassFs,
@@ -246,6 +248,7 @@ window.addEventListener('load', async () => {
   }
 
   const hBlurPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Horizontal blur pass',
     shaders: {
       fragment: {
         code: hBlurPassFs,
@@ -301,6 +304,7 @@ window.addEventListener('load', async () => {
   `
 
   const vBlurPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Vertical blur pass',
     shaders: {
       fragment: {
         code: vBlurPassFs,
@@ -362,6 +366,7 @@ window.addEventListener('load', async () => {
   `
 
   const blendPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Blend pass',
     shaders: {
       fragment: {
         code: blendPassFs,
@@ -389,6 +394,7 @@ window.addEventListener('load', async () => {
 
   // pass the original scene pass result to our blend pass
   blendPass.createRenderTexture({
+    label: 'Scene texture',
     name: 'sceneTexture',
     fromTexture: scenePass.renderTexture,
   })

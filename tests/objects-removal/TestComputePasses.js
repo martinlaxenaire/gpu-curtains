@@ -206,7 +206,7 @@ export class TestComputePasses {
 
     // the compute pass
     this.computeBoidsPass = new ComputePass(this.gpuCurtains, {
-      label: 'Compute test',
+      label: 'Compute boids',
       shaders: {
         compute: {
           code: computeBoids,
@@ -320,6 +320,8 @@ export class TestComputePasses {
       })
 
     console.log('TEST COMPUTE init', this.gpuCurtains.renderer)
+
+    this.gpuCurtains.renderer.scene.logRenderCommands()
   }
 
   destroy() {

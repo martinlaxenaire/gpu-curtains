@@ -186,7 +186,7 @@
 
         // use the 'onRender' callback, executed each frame before actually drawing the plane
         plane.onRender(() => {
-          // update our time uniform valueZ
+          // update our elapsed frames uniform value
           // notice the shortcut here, the struct property is omitted
           plane.uniforms.frames.elapsed.value++
         })

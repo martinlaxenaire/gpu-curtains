@@ -116,6 +116,7 @@ window.addEventListener('load', async () => {
   const cubeGeometry = new BoxGeometry()
   const sphereGeometry = new SphereGeometry()
 
+  // two render targets with specific depth textures
   const blankRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Blank render target',
     depthTexture: new RenderTexture(gpuCameraRenderer, {
@@ -129,7 +130,6 @@ window.addEventListener('load', async () => {
 
   const selectiveBloomTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Selective bloom render target',
-    //depthLoadOp: 'load',
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Sphere depth texture',
       name: 'sphereDepthTexture',
@@ -240,7 +240,7 @@ window.addEventListener('load', async () => {
   `
 
   const ditherPass = new ShaderPass(gpuCameraRenderer, {
-    label: 'dither pass',
+    label: 'Dither pass',
     renderTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
@@ -256,7 +256,7 @@ window.addEventListener('load', async () => {
           },
           pixelSize: {
             type: 'f32',
-            value: 1.5,
+            value: 2.5,
           },
         },
       },
@@ -299,6 +299,7 @@ window.addEventListener('load', async () => {
 
   // brightness pass
   const brigthnessPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Brightness pass',
     renderTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
@@ -344,6 +345,7 @@ window.addEventListener('load', async () => {
 
   // horizontal blur pass
   const hBlurPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Horizontal blur pass',
     renderTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
@@ -388,6 +390,7 @@ window.addEventListener('load', async () => {
 
   // vertical blur pass
   const vBlurPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Vertical blur pass',
     renderTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
@@ -438,18 +441,18 @@ window.addEventListener('load', async () => {
       }
   `
 
-  // const inversePass = new ShaderPass(gpuCameraRenderer, {
-  //   label: 'inverse pass',
-  //   renderTarget: selectiveBloomTarget,
-  //   shaders: {
-  //     fragment: {
-  //       code: inverseShader,
-  //     },
-  //   },
-  // })
+  const inversePass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Inverse pass',
+    renderTarget: selectiveBloomTarget,
+    shaders: {
+      fragment: {
+        code: inverseShader,
+      },
+    },
+  })
 
   const blankPass = new ShaderPass(gpuCameraRenderer, {
-    label: 'blank pass',
+    label: 'Blank pass',
     renderTarget: blankRenderTarget,
     //transparent: true,
     blend: {
@@ -495,7 +498,7 @@ window.addEventListener('load', async () => {
   `
 
   const blendPass = new ShaderPass(gpuCameraRenderer, {
-    label: 'blend pass',
+    label: 'Blend pass',
     shaders: {
       fragment: {
         code: blendShader,
@@ -530,4 +533,5 @@ window.addEventListener('load', async () => {
   })
 
   console.log(gpuCameraRenderer.scene)
+  gpuCameraRenderer.scene.logRenderCommands()
 })

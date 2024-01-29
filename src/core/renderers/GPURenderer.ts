@@ -571,11 +571,13 @@ export class GPURenderer {
 
     if (!hasCommandEncoder) {
       commandEncoder = this.device?.createCommandEncoder({ label: 'Copy buffer command encoder' })
+      !this.production && commandEncoder.pushDebugGroup('Copy buffer command encoder')
     }
 
     commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size)
 
     if (!hasCommandEncoder) {
+      !this.production && commandEncoder.popDebugGroup()
       const commandBuffer = commandEncoder.finish()
       this.device?.queue.submit([commandBuffer])
     }
@@ -956,8 +958,9 @@ export class GPURenderer {
    */
   renderOnce(objects: SceneObject[]) {
     const commandEncoder = this.device?.createCommandEncoder({
-      label: 'Renderer once command encoder',
+      label: 'Render once command encoder',
     })
+    !this.production && commandEncoder.pushDebugGroup('Render once command encoder')
 
     this.pipelineManager.resetCurrentPipeline()
 
@@ -969,6 +972,7 @@ export class GPURenderer {
       }
     })
 
+    !this.production && commandEncoder.popDebugGroup()
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
 
@@ -985,6 +989,7 @@ export class GPURenderer {
 
     if (!hasCommandEncoder) {
       commandEncoder = this.device?.createCommandEncoder({ label: 'Force clear command encoder' })
+      !this.production && commandEncoder.pushDebugGroup('Force clear command encoder')
     }
 
     this.setRenderPassCurrentTexture(this.renderPass)
@@ -992,6 +997,7 @@ export class GPURenderer {
     pass.end()
 
     if (!hasCommandEncoder) {
+      !this.production && commandEncoder.popDebugGroup()
       const commandBuffer = commandEncoder.finish()
       this.device?.queue.submit([commandBuffer])
     }
