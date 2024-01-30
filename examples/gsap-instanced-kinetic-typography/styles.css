@@ -1,0 +1,40 @@
+@media screen {
+  #page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    opacity: 0;
+  }
+
+  .no-curtains #page {
+    opacity: 1;
+  }
+
+  h1 {
+    text-align: center;
+    position: relative;
+    padding: 0;
+    margin: 0;
+  }
+
+  .kinetic-plane {
+    display: block;
+    padding: 0 0.125em;
+    font-size: 2rem;
+    font-family: var(--text-font);
+    font-weight: 700;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate3d(-50%, -50%, 0);
+    text-transform: uppercase;
+  }
+
+  .no-curtains .kinetic-plane {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: translate3d(0, 0, 0);
+  }
+}
