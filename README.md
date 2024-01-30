@@ -51,7 +51,7 @@ window.addEventListener('load', async () => {
 })
 ```
 
-Or you can use one of your favorite package manager:
+You can also use one of your favorite package manager:
 
 #### npm
 
@@ -65,10 +65,27 @@ npm i gpu-curtains
 yarn add gpu-curtains
 ```
 
+Finally, you can load the library from a CDN. You should always target a specific version (append `@x.x.x`) rather than the latest one in order to avoid breaking changes.
+
+```javascript
+import { ... } from 'https://esm.run/gpu-curtains'
+// or
+import { ... } from 'https://cdn.skypack.dev/gpu-curtains'
+// or use another cdn...
+```
+
+#### UMD files
+
 In a browser, you can use the UMD files located in the `dist` directory:
 
 ```html
-<script src="path/to/dist/gpu-curtains.umd.min.cjs"></script>
+<script src="path/to/dist/gpu-curtains.umd.min.js"></script>
+```
+
+Or use a CDN:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/gpu-curtains"></script>
 ```
 
 ## Documentation and examples

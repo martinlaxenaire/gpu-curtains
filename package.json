@@ -46,7 +46,7 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/gpu-curtains.umd.cjs",
+  "main": "./dist/gpu-curtains.umd.js",
   "module": "dist/gpu-curtains.mjs",
   "exports": {
     ".": {
@@ -55,7 +55,7 @@
         "types": "./dist/types/index.d.ts",
         "default": "./dist/gpu-curtains.mjs"
       },
-      "require": "./dist/gpu-curtains.umd.cjs",
+      "require": "./dist/gpu-curtains.umd.js",
       "default": "./dist/gpu-curtains.mjs"
     },
     "./package.json": "./package.json"

@@ -8,17 +8,17 @@ export default [
       {
         file: 'dist/gpu-curtains.mjs',
         format: 'es',
-        sourcemap: 'inline',
+        sourcemap: true,
       },
       {
-        file: 'dist/gpu-curtains.umd.cjs',
+        file: 'dist/gpu-curtains.umd.js',
         format: 'umd',
         name: 'window',
         extend: true,
-        sourcemap: 'inline',
+        sourcemap: true,
       },
       {
-        file: 'dist/gpu-curtains.umd.min.cjs',
+        file: 'dist/gpu-curtains.umd.min.js',
         format: 'umd',
         name: 'window',
         extend: true,
