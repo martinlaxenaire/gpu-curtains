@@ -35,9 +35,6 @@ export interface GPURendererParams {
   /** Set the {@link GPUCanvasContext | context} alpha mode */
   alphaMode?: GPUCanvasAlphaMode
 
-  /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
-  multisampled?: boolean
-
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
   renderPass?: {
     /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
@@ -86,15 +83,10 @@ export class GPURenderer {
   /** Options used to create this {@link GPURenderer} */
   options: GPURendererParams
 
-  /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
-  multisampled: boolean
   /** The {@link RenderPass | render pass} used to render our result to screen */
   renderPass: RenderPass
   /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
   postProcessingPass: RenderPass
-
-  /** {@link RenderPass | Multisampled render pass} used by an internal {@link ShaderPass} for MSAA, if {@link multisampled} is set to `true` */
-  //multisamplingPass: RenderPass | undefined
 
   /** The {@link Scene} used */
   scene: Scene
@@ -151,7 +143,6 @@ export class GPURenderer {
     pixelRatio = 1,
     preferredFormat,
     alphaMode = 'premultiplied',
-    multisampled = true,
     renderPass,
   }: GPURendererParams) {
     this.type = 'GPURenderer'
@@ -170,7 +161,6 @@ export class GPURenderer {
       pixelRatio,
       preferredFormat,
       alphaMode,
-      multisampled,
       renderPass,
     }
 
@@ -249,7 +239,6 @@ export class GPURenderer {
     // resize render & shader passes
     this.renderPass?.resize()
     this.postProcessingPass?.resize()
-    //this.multisamplingPass?.resize()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
     this.renderTextures.forEach((renderTexture) => renderTexture.resize())
@@ -437,7 +426,6 @@ export class GPURenderer {
     // resize render passes/recreate their textures
     this.renderPass?.resize()
     this.postProcessingPass?.resize()
-    //this.multisamplingPass?.resize()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
 
@@ -465,27 +453,6 @@ export class GPURenderer {
       depth: false,
       sampleCount: this.options.renderPass.sampleCount, // TODO?
     })
-
-    // TODO
-    // if (this.options.multisampled) {
-    //   this.multisamplingPass = new RenderPass(this, {
-    //     label: 'MSAA render pass',
-    //     targetFormat: this.options.preferredFormat,
-    //     depth: false,
-    //     loadOp: 'load',
-    //     sampleCount: 4,
-    //   })
-    //
-    //   const resolveTexture = new RenderTexture(this, {
-    //     label: 'MSAA render pass resolve texture',
-    //     name: 'resolveTexture',
-    //     format: this.options.preferredFormat,
-    //   })
-    //
-    //   this.multisamplingPass.descriptor.colorAttachments[0].resolveTarget = resolveTexture.texture.createView({
-    //     label: 'MSAA render pass resolve texture view',
-    //   })
-    // }
   }
 
   /**
@@ -1033,12 +1000,6 @@ export class GPURenderer {
 
     this.scene?.render(commandEncoder)
 
-    // TODO not working
-    // if (this.options.multisampled && this.multisamplingPass) {
-    //   const pass = commandEncoder.beginRenderPass(this.multisamplingPass.descriptor)
-    //   pass.end()
-    // }
-
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
     this.onAfterRenderScene.execute(commandEncoder)
   }
@@ -1052,7 +1013,6 @@ export class GPURenderer {
     // destroy render passes
     this.renderPass?.destroy()
     this.postProcessingPass?.destroy()
-    //this.multisamplingPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())

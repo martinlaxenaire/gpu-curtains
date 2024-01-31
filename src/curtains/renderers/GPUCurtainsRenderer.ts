@@ -35,7 +35,6 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     pixelRatio = 1,
     preferredFormat,
     alphaMode = 'premultiplied',
-    multisampled = true,
     renderPass,
     camera,
   }: GPUCameraRendererParams) {
@@ -46,7 +45,6 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
       preferredFormat,
       alphaMode,
       renderPass,
-      multisampled,
       camera,
     } as GPUCameraRendererParams)
 

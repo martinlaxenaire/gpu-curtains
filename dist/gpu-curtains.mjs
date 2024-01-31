@@ -9290,7 +9290,6 @@ class GPURenderer {
     pixelRatio = 1,
     preferredFormat,
     alphaMode = "premultiplied",
-    multisampled = true,
     renderPass
   }) {
     // callbacks / events
@@ -9315,7 +9314,6 @@ class GPURenderer {
       pixelRatio,
       preferredFormat,
       alphaMode,
-      multisampled,
       renderPass
     };
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
@@ -10038,7 +10036,6 @@ class GPUCameraRenderer extends GPURenderer {
     pixelRatio = 1,
     preferredFormat,
     alphaMode = "premultiplied",
-    multisampled = true,
     renderPass,
     camera = {}
   }) {
@@ -10048,7 +10045,6 @@ class GPUCameraRenderer extends GPURenderer {
       pixelRatio,
       preferredFormat,
       alphaMode,
-      multisampled,
       renderPass
     });
     this.type = "GPUCameraRenderer";
@@ -10551,7 +10547,6 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
     pixelRatio = 1,
     preferredFormat,
     alphaMode = "premultiplied",
-    multisampled = true,
     renderPass,
     camera
   }) {
@@ -10562,7 +10557,6 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
       preferredFormat,
       alphaMode,
       renderPass,
-      multisampled,
       camera
     });
     this.type = "GPUCurtainsRenderer";
@@ -10640,7 +10634,6 @@ class GPUCurtains {
     preferredFormat,
     alphaMode = "premultiplied",
     production = false,
-    multisampled = true,
     renderPass,
     camera,
     autoRender = true,
@@ -10668,7 +10661,6 @@ class GPUCurtains {
       production,
       preferredFormat,
       alphaMode,
-      multisampled,
       renderPass,
       autoRender,
       autoResize,
@@ -10718,7 +10710,6 @@ class GPUCurtains {
       pixelRatio: this.options.pixelRatio,
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
-      multisampled: this.options.multisampled,
       renderPass: this.options.renderPass,
       camera: this.options.camera
     });

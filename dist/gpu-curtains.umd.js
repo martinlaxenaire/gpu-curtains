@@ -9296,7 +9296,6 @@ struct VSOutput {
       pixelRatio = 1,
       preferredFormat,
       alphaMode = "premultiplied",
-      multisampled = true,
       renderPass
     }) {
       // callbacks / events
@@ -9321,7 +9320,6 @@ struct VSOutput {
         pixelRatio,
         preferredFormat,
         alphaMode,
-        multisampled,
         renderPass
       };
       this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
@@ -10044,7 +10042,6 @@ struct VSOutput {
       pixelRatio = 1,
       preferredFormat,
       alphaMode = "premultiplied",
-      multisampled = true,
       renderPass,
       camera = {}
     }) {
@@ -10054,7 +10051,6 @@ struct VSOutput {
         pixelRatio,
         preferredFormat,
         alphaMode,
-        multisampled,
         renderPass
       });
       this.type = "GPUCameraRenderer";
@@ -10557,7 +10553,6 @@ struct VSOutput {
       pixelRatio = 1,
       preferredFormat,
       alphaMode = "premultiplied",
-      multisampled = true,
       renderPass,
       camera
     }) {
@@ -10568,7 +10563,6 @@ struct VSOutput {
         preferredFormat,
         alphaMode,
         renderPass,
-        multisampled,
         camera
       });
       this.type = "GPUCurtainsRenderer";
@@ -10646,7 +10640,6 @@ struct VSOutput {
       preferredFormat,
       alphaMode = "premultiplied",
       production = false,
-      multisampled = true,
       renderPass,
       camera,
       autoRender = true,
@@ -10674,7 +10667,6 @@ struct VSOutput {
         production,
         preferredFormat,
         alphaMode,
-        multisampled,
         renderPass,
         autoRender,
         autoResize,
@@ -10724,7 +10716,6 @@ struct VSOutput {
         pixelRatio: this.options.pixelRatio,
         preferredFormat: this.options.preferredFormat,
         alphaMode: this.options.alphaMode,
-        multisampled: this.options.multisampled,
         renderPass: this.options.renderPass,
         camera: this.options.camera
       });
