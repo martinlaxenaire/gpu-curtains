@@ -200,7 +200,7 @@ window.addEventListener('load', async () => {
   const tempTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute temp texture',
     name: 'outputTexture',
-    usage: 'storageTexture',
+    usage: 'storage',
     format,
     size: inputTexture.size,
   })
@@ -208,7 +208,7 @@ window.addEventListener('load', async () => {
   const outputTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute output texture',
     name: 'outputTexture',
-    usage: 'storageTexture',
+    usage: 'storage',
     format,
     size: inputTexture.size,
   })

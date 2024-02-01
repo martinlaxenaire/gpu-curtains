@@ -10,7 +10,7 @@ import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { ProjectedMesh } from '../../renderers/GPURenderer'
 import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
-import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials'
+import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
 import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl'
 import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl'
@@ -69,6 +69,7 @@ const defaultMeshBaseParams: MeshBaseParams = {
   depth: true,
   depthWriteEnabled: true,
   depthCompare: 'less',
+  depthFormat: 'depth24plus',
   transparent: false,
   visible: true,
   renderOrder: 0,
@@ -675,7 +676,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           }
         }
 
-        if (!shaders.fragment || !shaders.fragment.code) {
+        if (shaders.fragment === undefined || (shaders.fragment && !(shaders.fragment as ShaderOptions).code)) {
           shaders.fragment = {
             code: default_fsWgsl,
             entryPoint: 'main',
@@ -868,7 +869,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     resizeRenderTextures() {
       this.renderTextures
-        ?.filter((renderTexture) => renderTexture.options.usage !== 'storageTexture')
+        ?.filter((renderTexture) => renderTexture.options.usage !== 'storage')
         .forEach((renderTexture) => renderTexture.resize())
     }
 

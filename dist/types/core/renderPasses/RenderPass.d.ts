@@ -8,22 +8,26 @@ import { RenderTexture } from '../textures/RenderTexture';
 export interface RenderPassParams {
     /** The label of the {@link RenderPass}, sent to various GPU objects for debugging purpose */
     label?: string;
+    /** Whether the {@link RenderPass#viewTexture | view texture} should use multisampling or not */
+    sampleCount?: GPUSize32;
+    /** Whether this {@link RenderPass} should handle a view texture */
+    useColorAttachments?: boolean;
     /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
     loadOp?: GPULoadOp;
     /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
     clearValue?: GPUColor;
     /** Optional format of the color attachment texture */
     targetFormat: GPUTextureFormat;
-    /** Whether the {@link RenderPass#viewTexture | view texture} should use multisampling or not */
-    sampleCount?: GPUSize32;
     /** Whether this {@link RenderPass} should handle a depth texture */
-    depth?: boolean;
+    useDepth?: boolean;
     /** Whether this {@link RenderPass} should use an already created depth texture */
     depthTexture?: RenderTexture;
     /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
     depthLoadOp?: GPULoadOp;
     /** The depth clear value to clear to before drawing this {@link RenderPass} */
     depthClearValue?: GPURenderPassDepthStencilAttachment['depthClearValue'];
+    /** Optional format of the depth texture */
+    depthFormat?: GPUTextureFormat;
 }
 /**
  * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#viewTexture | view texture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
@@ -41,7 +45,6 @@ export declare class RenderPass {
     depthTexture: RenderTexture | undefined;
     /** Color attachment {@link RenderTexture} to use with this {@link RenderPass} */
     viewTexture: RenderTexture;
-    /** Resolve {@link RenderTexture} to use with this {@link RenderPass} if it is using multisampling */
     /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
     descriptor: GPURenderPassDescriptor;
     /**
@@ -49,7 +52,7 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, loadOp, clearValue, targetFormat, depth, depthTexture, depthLoadOp, depthClearValue, }?: RenderPassParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, useColorAttachments, loadOp, clearValue, targetFormat, useDepth, depthTexture, depthLoadOp, depthClearValue, depthFormat, }?: RenderPassParams);
     /**
      * Set our {@link depthTexture | depth texture}
      */

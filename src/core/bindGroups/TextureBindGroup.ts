@@ -155,7 +155,7 @@ export class TextureBindGroup extends BindGroup {
    * - Upload video texture if needed
    */
   updateTextures() {
-    this.textures.forEach((texture, textureIndex) => {
+    this.textures.forEach((texture) => {
       // copy textures that need it on first init, but only when original texture is ready
       if (texture instanceof Texture) {
         if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {

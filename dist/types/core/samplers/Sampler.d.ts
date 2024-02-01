@@ -56,7 +56,7 @@ export declare class Sampler {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Sampler}
      * @param parameters - {@link SamplerParams | parameters} used to create this {@link Sampler}
      */
-    constructor(renderer: GPUCurtains | Renderer, { label, name, addressModeU, addressModeV, magFilter, minFilter, mipmapFilter, maxAnisotropy, type, }?: SamplerParams);
+    constructor(renderer: GPUCurtains | Renderer, { label, name, addressModeU, addressModeV, magFilter, minFilter, mipmapFilter, maxAnisotropy, type, compare, }?: SamplerParams);
     /**
      * Set the {@link GPUSampler}
      */

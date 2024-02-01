@@ -1,5 +1,4 @@
 import { Binding, BindingParams } from './Binding'
-import { SamplerOptions } from '../samplers/Sampler'
 
 /** Defines a {@link SamplerBinding} {@link SamplerBinding#resource | resource} */
 export type SamplerBindingResource = GPUSampler | null
@@ -11,7 +10,7 @@ export interface SamplerBindingParams extends BindingParams {
   /** {@link SamplerBinding} {@link GPUBindGroup | GPU bind group} resource */
   sampler: SamplerBindingResource
   /** The bind group layout binding {@link GPUSamplerBindingLayout#type | type} of this {@link GPUSampler | GPU sampler} */
-  type: SamplerOptions['type']
+  type: GPUSamplerBindingType
 }
 
 /**
@@ -91,6 +90,8 @@ export class SamplerBinding extends Binding {
    * Set the correct WGSL code snippet.
    */
   setWGSLFragment() {
-    this.wgslGroupFragment = [`var ${this.name}: ${this.bindingType};`]
+    this.wgslGroupFragment = [
+      `var ${this.name}: ${this.options.type === 'comparison' ? `${this.bindingType}_comparison` : this.bindingType};`,
+    ]
   }
 }

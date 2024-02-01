@@ -23,7 +23,11 @@ export interface RenderTextureBaseParams {
 
   /** Optional size of the {@link RenderTexture#texture | texture} */
   size?: TextureSize
-  /** Whether to use this {@link RenderTexture} as a regular or storage texture */
+
+  /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
+  autoResize?: boolean
+
+  /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
   usage?: RenderTextureBindingType
   /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
   format?: GPUTextureFormat
@@ -47,6 +51,7 @@ export interface RenderTextureParams extends RenderTextureBaseParams {
 const defaultRenderTextureParams: RenderTextureParams = {
   label: 'RenderTexture',
   name: 'renderTexture',
+  autoResize: true,
   usage: 'texture',
   access: 'write',
   fromTexture: null,
@@ -181,7 +186,7 @@ export class RenderTexture {
       usage:
         // TODO let user chose?
         // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-        this.options.usage !== 'storageTexture'
+        this.options.usage !== 'storage'
           ? GPUTextureUsage.TEXTURE_BINDING |
             GPUTextureUsage.COPY_SRC |
             GPUTextureUsage.COPY_DST |
@@ -223,6 +228,8 @@ export class RenderTexture {
    * @param size - new {@link TextureSize | size} to set
    */
   forceResize(size: TextureSize) {
+    if (!this.options.autoResize) return
+
     this.size = size
     this.createTexture()
   }
@@ -232,6 +239,8 @@ export class RenderTexture {
    * @param size - the optional new {@link TextureSize | size} to set
    */
   resize(size: TextureSize | null = null) {
+    if (!this.options.autoResize) return
+
     if (!size) {
       size = {
         width: Math.floor(this.renderer.pixelRatioBoundingRect.width),

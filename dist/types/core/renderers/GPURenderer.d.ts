@@ -34,7 +34,7 @@ export interface GPURendererParams {
     /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
     renderPass?: {
         /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
-        depth: RenderPassParams['depth'];
+        useDepth: RenderPassParams['useDepth'];
         /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
         sampleCount: RenderPassParams['sampleCount'];
         /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */

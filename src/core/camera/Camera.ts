@@ -124,7 +124,7 @@ export class Camera extends Object3D {
         matrix: new Mat4(),
         shouldUpdate: false,
         onUpdate: () => {
-          this.viewMatrix.copy(this.modelMatrix).invert()
+          this.viewMatrix.copy(this.worldMatrix).invert()
         },
       },
       projection: {
@@ -174,6 +174,14 @@ export class Camera extends Object3D {
   updateModelMatrix() {
     super.updateModelMatrix()
     this.setScreenRatios()
+    this.matrices.view.shouldUpdate = true
+  }
+
+  /**
+   * Update our world matrix and tell our view matrix to update as well
+   */
+  updateWorldMatrix() {
+    super.updateWorldMatrix()
     this.matrices.view.shouldUpdate = true
   }
 

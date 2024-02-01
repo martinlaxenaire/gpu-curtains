@@ -29,8 +29,8 @@ export interface ShaderOptions {
 export interface MaterialShaders {
     /** Vertex {@link ShaderOptions | shader options} */
     vertex?: ShaderOptions;
-    /** Fragment {@link ShaderOptions | shader options} */
-    fragment?: ShaderOptions;
+    /** Fragment {@link ShaderOptions | shader options}. Could be set to false to only render to a depth texture. */
+    fragment?: ShaderOptions | boolean;
     /** Compute {@link ShaderOptions | shader options} */
     compute?: ShaderOptions;
 }
@@ -107,6 +107,8 @@ export interface RenderMaterialBaseRenderingOptions {
     depthWriteEnabled: boolean;
     /** Depth function to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
     depthCompare: GPUCompareFunction;
+    /** Format of the depth texture to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
+    depthFormat: GPUTextureFormat;
     /** Cull mode to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
     cullMode: GPUCullMode;
     /** Custom blending to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. Can override default transparent blending if set */

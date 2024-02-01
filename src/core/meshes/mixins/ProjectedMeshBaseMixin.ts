@@ -3,7 +3,7 @@ import { DOMFrustum } from '../../DOM/DOMFrustum'
 import { MeshBaseClass, MeshBaseMixin, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin'
 import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement'
-import { RenderMaterialParams } from '../../../types/Materials'
+import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
 import { DOMObject3D } from '../../../curtains/objects3D/DOMObject3D'
 import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl'
@@ -248,7 +248,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
           }
         }
 
-        if (!shaders.fragment || !shaders.fragment.code) {
+        if (shaders.fragment === undefined || (shaders.fragment && !(shaders.fragment as ShaderOptions).code)) {
           shaders.fragment = {
             code: default_normal_fsWgsl,
             entryPoint: 'main',

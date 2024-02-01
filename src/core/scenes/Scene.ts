@@ -443,10 +443,9 @@ export class Scene {
    */
   renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry) {
     // set the pass texture to render to
-    const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
-      renderPassEntry.renderPass,
-      renderPassEntry.renderTexture?.texture
-    )
+    const swapChainTexture = renderPassEntry.renderPass.options.useColorAttachments
+      ? this.renderer.setRenderPassCurrentTexture(renderPassEntry.renderPass, renderPassEntry.renderTexture?.texture)
+      : null
 
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture)
 
@@ -561,19 +560,24 @@ export class Scene {
         // early bail if there's nothing to draw
         if (!this.getRenderPassEntryLength(renderPassEntry)) return
 
-        const destination = renderPassEntry.renderTexture
+        const destination = !renderPassEntry.renderPass.options.useColorAttachments
+          ? undefined
+          : renderPassEntry.renderTexture
           ? `${renderPassEntry.renderTexture.options.label}`
           : 'Context current texture'
 
         let descriptor = renderPassEntry.renderPass.options.label
 
         const operations = {
-          loadOp:
-            renderPassEntryType === 'screen' && passDrawnCount > 0 ? 'load' : renderPassEntry.renderPass.options.loadOp,
+          loadOp: renderPassEntry.renderPass.options.useColorAttachments
+            ? renderPassEntryType === 'screen' && passDrawnCount > 0
+              ? 'load'
+              : renderPassEntry.renderPass.options.loadOp
+            : undefined,
           depthLoadOp: undefined,
         }
 
-        if (renderPassEntry.renderPass.options.depth) {
+        if (renderPassEntry.renderPass.options.useDepth) {
           operations.depthLoadOp = renderPassEntry.renderPass.options.depthLoadOp
         }
 

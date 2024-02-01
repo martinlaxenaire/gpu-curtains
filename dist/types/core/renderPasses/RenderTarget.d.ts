@@ -2,7 +2,6 @@ import { Renderer } from '../renderers/utils';
 import { RenderPass, RenderPassParams } from './RenderPass';
 import { RenderTexture } from '../textures/RenderTexture';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { DOMElementBoundingRect } from '../DOM/DOMElement';
 /**
  * Parameters used to create a {@link RenderTarget}
  */
@@ -59,9 +58,8 @@ export declare class RenderTarget {
     removeFromScene(): void;
     /**
      * Resize our {@link renderPass} and {@link renderTexture}
-     * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
      */
-    resize(boundingRect: DOMElementBoundingRect): void;
+    resize(): void;
     /**
      * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
      */

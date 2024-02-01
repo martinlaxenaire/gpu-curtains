@@ -3,7 +3,6 @@ import { RenderPass, RenderPassParams } from './RenderPass'
 import { RenderTexture } from '../textures/RenderTexture'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
 /**
  * Parameters used to create a {@link RenderTarget}
@@ -66,14 +65,15 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, targetFormat, autoRender, ...renderPassParams } = parameters
+    const { label, targetFormat, depthTexture, autoRender, ...renderPassParams } = parameters
 
     this.options = {
       label,
       ...renderPassParams,
+      ...(depthTexture && { depthTexture }),
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       autoRender,
-    }
+    } as RenderTargetParams
 
     if (autoRender !== undefined) {
       this.#autoRender = autoRender
@@ -82,7 +82,7 @@ export class RenderTarget {
     this.renderPass = new RenderPass(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Pass` : 'Render Target Render Pass',
       targetFormat: this.options.targetFormat,
-      depthTexture: this.renderer.renderPass.depthTexture, // reuse renderer depth texture for every pass
+      depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture, // reuse renderer depth texture for every pass
       ...renderPassParams,
     })
 
@@ -120,11 +120,15 @@ export class RenderTarget {
 
   /**
    * Resize our {@link renderPass} and {@link renderTexture}
-   * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
    */
-  resize(boundingRect: DOMElementBoundingRect) {
-    // reset the newly created renderer render pass depth texture
-    this.renderPass.options.depthTexture.texture = this.renderer.renderPass.depthTexture.texture
+  resize() {
+    // reset the newly created depth texture
+    console.log(this.renderer.renderPass.depthTexture.texture)
+
+    this.renderPass.options.depthTexture.texture = this.options.depthTexture
+      ? this.options.depthTexture.texture
+      : this.renderer.renderPass.depthTexture.texture
+
     this.renderPass?.resize()
     this.renderTexture?.resize()
   }

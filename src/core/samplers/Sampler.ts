@@ -72,6 +72,7 @@ export class Sampler {
       mipmapFilter = 'linear',
       maxAnisotropy = 1,
       type = 'filtering',
+      compare,
     } = {} as SamplerParams
   ) {
     this.type = 'Sampler'
@@ -103,6 +104,7 @@ export class Sampler {
       mipmapFilter,
       maxAnisotropy,
       type,
+      ...(compare !== undefined && { compare }),
     } as SamplerOptions
 
     this.createSampler()

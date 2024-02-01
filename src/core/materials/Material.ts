@@ -6,7 +6,7 @@ import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
 import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding'
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups'
 import { Texture } from '../textures/Texture'
-import { FullShadersType, MaterialOptions, MaterialParams } from '../../types/Materials'
+import { FullShadersType, MaterialOptions, MaterialParams, ShaderOptions } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture } from '../textures/RenderTexture'
 import { Binding } from '../bindings/Binding'
@@ -506,7 +506,8 @@ export class Material {
     // is it used in our shaders?
     if (
       (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1) ||
-      (this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1) ||
+      (this.options.shaders.fragment &&
+        (this.options.shaders.fragment as ShaderOptions).code.indexOf(texture.options.name) !== -1) ||
       (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1)
     ) {
       this.texturesBindGroup.addTexture(texture)
@@ -570,7 +571,8 @@ export class Material {
     // is it used in our shaders?
     if (
       (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(sampler.name) !== -1) ||
-      (this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(sampler.name) !== -1) ||
+      (this.options.shaders.fragment &&
+        (this.options.shaders.fragment as ShaderOptions).code.indexOf(sampler.name) !== -1) ||
       (this.options.shaders.compute && this.options.shaders.compute.code.indexOf(sampler.name) !== -1)
     ) {
       this.texturesBindGroup.addSampler(sampler)

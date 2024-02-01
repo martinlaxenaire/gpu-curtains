@@ -20,7 +20,9 @@ export interface RenderTextureBaseParams {
     name?: string;
     /** Optional size of the {@link RenderTexture#texture | texture} */
     size?: TextureSize;
-    /** Whether to use this {@link RenderTexture} as a regular or storage texture */
+    /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
+    autoResize?: boolean;
+    /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
     usage?: RenderTextureBindingType;
     /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
     format?: GPUTextureFormat;

@@ -38,7 +38,7 @@ export interface GPURendererParams {
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
   renderPass?: {
     /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
-    depth: RenderPassParams['depth']
+    useDepth: RenderPassParams['useDepth']
     /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
     sampleCount: RenderPassParams['sampleCount']
     /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
@@ -152,7 +152,7 @@ export class GPURenderer {
     this.deviceManager.addRenderer(this)
 
     // render pass default values
-    renderPass = { ...{ depth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
+    renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
     preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
 
     this.options = {
@@ -240,7 +240,7 @@ export class GPURenderer {
     this.renderPass?.resize()
     this.postProcessingPass?.resize()
 
-    this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
+    this.renderTargets.forEach((renderTarget) => renderTarget.resize())
     this.renderTextures.forEach((renderTexture) => renderTexture.resize())
 
     // force compute passes onAfterResize callback
@@ -427,7 +427,7 @@ export class GPURenderer {
     this.renderPass?.resize()
     this.postProcessingPass?.resize()
 
-    this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
+    this.renderTargets.forEach((renderTarget) => renderTarget.resize())
 
     // restore context of all our scene objects
     this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext())
@@ -445,12 +445,12 @@ export class GPURenderer {
       label: 'Main render pass',
       targetFormat: this.options.preferredFormat,
       ...this.options.renderPass,
-    })
+    } as RenderPassParams)
 
     this.postProcessingPass = new RenderPass(this, {
       label: 'Post processing render pass',
       targetFormat: this.options.preferredFormat,
-      depth: false,
+      useDepth: false,
       sampleCount: this.options.renderPass.sampleCount, // TODO?
     })
   }

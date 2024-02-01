@@ -1,6 +1,6 @@
 // Goal of this test is to try to mix selective passes
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
   const {
     BoxGeometry,
     GPUCameraRenderer,
@@ -12,7 +12,7 @@ window.addEventListener('load', async () => {
     SphereGeometry,
     Vec2,
     Vec3,
-  } = await import(path)
+  } = await import(/* @vite-ignore */ path)
 
   const systemSize = 10
 
@@ -122,7 +122,7 @@ window.addEventListener('load', async () => {
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Cube depth texture',
       name: 'cubeDepthTexture',
-      usage: 'depthTexture',
+      usage: 'depth',
       format: 'depth24plus',
       sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
     }),
@@ -256,7 +256,7 @@ window.addEventListener('load', async () => {
           },
           pixelSize: {
             type: 'f32',
-            value: 2.5,
+            value: 2,
           },
         },
       },
@@ -513,7 +513,7 @@ window.addEventListener('load', async () => {
 
   const cubeDepthTexture = blendPass.createRenderTexture({
     name: 'cubeDepthTexture',
-    usage: 'depthTexture',
+    usage: 'depth',
     format: 'depth24plus',
     fromTexture: blankRenderTarget.options.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
@@ -526,7 +526,7 @@ window.addEventListener('load', async () => {
 
   const sphereDepthTexture = blendPass.createRenderTexture({
     name: 'sphereDepthTexture',
-    usage: 'depthTexture',
+    usage: 'depth',
     format: 'depth24plus',
     fromTexture: selectiveBloomTarget.options.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,

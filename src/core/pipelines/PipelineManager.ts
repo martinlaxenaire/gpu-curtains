@@ -3,8 +3,9 @@ import { ComputePipelineEntry } from './ComputePipelineEntry'
 import {
   PipelineEntryParams,
   RenderPipelineEntryBaseParams,
-  RenderPipelineEntryParams
+  RenderPipelineEntryParams,
 } from '../../types/PipelineEntries'
+import { ShaderOptions } from '../../types/Materials'
 
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
@@ -55,11 +56,18 @@ export class PipelineManager {
       .find((pipelineEntry: RenderPipelineEntry) => {
         const { options } = pipelineEntry
 
+        // TODO ugly :(
+
+        const sameFragmentShader =
+          (!shaders.fragment && !options.shaders.fragment) ||
+          ((shaders.fragment as ShaderOptions).code?.localeCompare((options.shaders.fragment as ShaderOptions).code) ===
+            0 &&
+            (shaders.fragment as ShaderOptions).entryPoint === (options.shaders.fragment as ShaderOptions).entryPoint)
+
         return (
           shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 &&
           shaders.vertex.entryPoint === options.shaders.vertex.entryPoint &&
-          shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 &&
-          shaders.fragment.entryPoint === options.shaders.fragment.entryPoint &&
+          sameFragmentShader &&
           cullMode === options.cullMode &&
           depth === options.depth &&
           depthWriteEnabled === options.depthWriteEnabled &&

@@ -30,7 +30,7 @@ export declare class RenderPipelineEntry extends PipelineEntry {
      */
     constructor(parameters: RenderPipelineEntryParams);
     /**
-     * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link CameraRenderer#cameraBindGroup | camera bind group} if needed and set them
+     * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} if needed and set them
      * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
      */
     setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]): void;
@@ -40,9 +40,14 @@ export declare class RenderPipelineEntry extends PipelineEntry {
      */
     setPipelineEntryProperties(parameters: RenderPipelineEntryPropertiesParams): void;
     /**
-     * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
+     * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link types/PipelineEntries.PipelineEntryParams#shaders | parameter shader code}
      */
     patchShaders(): void;
+    /**
+     * Get whether the shaders modules have been created
+     * @readonly
+     */
+    get shadersModulesReady(): boolean;
     /**
      * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
      */

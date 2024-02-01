@@ -7,7 +7,8 @@ import {
   RenderMaterialAttributes,
   RenderMaterialOptions,
   RenderMaterialParams,
-  RenderMaterialRenderingOptions
+  RenderMaterialRenderingOptions,
+  ShaderOptions,
 } from '../../types/Materials'
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { RenderPipelineEntryParams } from '../../types/PipelineEntries'
@@ -55,8 +56,8 @@ export class RenderMaterial extends Material {
       shaders.vertex.entryPoint = 'main'
     }
 
-    if (!shaders.fragment.entryPoint) {
-      shaders.fragment.entryPoint = 'main'
+    if (shaders.fragment && !(shaders.fragment as ShaderOptions).entryPoint) {
+      ;(shaders.fragment as ShaderOptions).entryPoint = 'main'
     }
 
     this.options = {

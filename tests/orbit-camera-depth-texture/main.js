@@ -1,8 +1,8 @@
 // Goal of this test is to test and help visualize depth textures
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
   const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, ShaderPass, SphereGeometry, Vec2, Vec3 } =
-    await import(path)
+    await import(/* @vite-ignore */ path)
 
   const systemSize = 10
 
@@ -170,7 +170,7 @@ window.addEventListener('load', async () => {
   const depthTexture = postProPass.createRenderTexture({
     label: 'Depth texture',
     name: 'depthTexture',
-    usage: 'depthTexture',
+    usage: 'depth',
     format: 'depth24plus',
     fromTexture: gpuCameraRenderer.renderPass.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,

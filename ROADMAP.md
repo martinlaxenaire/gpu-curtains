@@ -4,7 +4,7 @@
 
 - GPUDeviceManager (can handle multiple renderers / canvases)
 - Renderers (GPURenderer, GPUCameraRenderer, GPUCurtainsRenderer)
-- Object3D, ProjectedObject3D, DOMObject3D
+- Scene graph with Object3D, ProjectedObject3D, DOMObject3D
 - Camera
 - Geometries
 - Materials (Material, RenderMaterial, ComputeMaterial)
@@ -13,25 +13,26 @@
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
 - Compute passes
 - Scene class
-- Scroll + resize, frustum culling check
 - Texture & RenderTexture (with storage & depth) classes
 - Sampler class
-- Shader passes
 - RenderTarget (render to textures)
 - RenderPass (render pass descriptors)
-- PingPong
+- Shader passes
+- PingPongPlane
 - Plane raycasting
 - Basic CacheManager
+- Scroll + resize, frustum culling check
 - GPUCurtains
 
 ## Work in progress
 
-- N/A
+- Shadow mapping implementation
+- Examples & tests
 
 ## TODO / possible improvements
 
 - Improve typedoc documentation?
-- constants for WebGPU buffers and textures flags/usages + add to options/parameters?
+- Use constants for WebGPU buffers and textures flags/usages? Add to options/parameters?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
 - MRT (allow to write to multiple textures/output via the `targets` property of the RenderPipeline + colorAttachements of the RenderPass descriptor: see [deferred rendering example WebGPU samples example](https://webgpu.github.io/webgpu-samples/samples/deferredRendering))?

@@ -1,7 +1,7 @@
 // real basic stress test
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
-  const { BoxGeometry, GPUCurtains, Mesh, SphereGeometry } = await import(path)
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const { BoxGeometry, GPUCurtains, Mesh, SphereGeometry } = await import(/* @vite-ignore */ path)
 
   const stats = new Stats()
 
@@ -20,6 +20,7 @@ window.addEventListener('load', async () => {
       near: systemSize,
       far: systemSize * 4,
     },
+    //production: true, // you can always gain a couple fps by not tracking the errors
   })
 
   await gpuCurtains.setDevice()
@@ -43,6 +44,7 @@ window.addEventListener('load', async () => {
   for (let i = 0; i < 3000; i++) {
     const mesh = new Mesh(gpuCurtains, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
+      //frustumCulled: false, // you can also gain a few fps without checking for frustum
     })
 
     mesh.position.x = Math.random() * systemSize * 2 * aspectRatio - systemSize * aspectRatio

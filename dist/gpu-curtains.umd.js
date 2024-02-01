@@ -252,7 +252,7 @@
     if (binding.bindingType === "externalTexture") {
       return `var ${binding.name}: texture_external;`;
     }
-    return binding.bindingType === "storageTexture" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depthTexture" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension}<f32>;`;
+    return binding.bindingType === "storage" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depth" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension}<f32>;`;
   };
   const getBindGroupLayoutBindingType = (binding) => {
     if (binding.bindingType === "storage" && binding.options.access === "read_write") {
@@ -268,7 +268,7 @@
       switch (binding.bindingType) {
         case "externalTexture":
           return { externalTexture: {} };
-        case "storageTexture":
+        case "storage":
           return {
             storageTexture: {
               format: binding.options.format,
@@ -282,7 +282,7 @@
               viewDimension: binding.options.viewDimension
             }
           };
-        case "depthTexture":
+        case "depth":
           return {
             texture: {
               multisampled: binding.options.multisampled,
@@ -2550,7 +2550,7 @@
       multisampled = false
     }) {
       bindingType = bindingType ?? "texture";
-      if (bindingType === "storageTexture") {
+      if (bindingType === "storage") {
         visibility = "compute";
       }
       super({ label, name, bindingType, visibility });
@@ -3433,7 +3433,7 @@
      * - Upload video texture if needed
      */
     updateTextures() {
-      this.textures.forEach((texture, textureIndex) => {
+      this.textures.forEach((texture) => {
         if (texture instanceof Texture) {
           if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
             texture.copy(texture.options.fromTexture);
@@ -3515,7 +3515,9 @@
      * Set the correct WGSL code snippet.
      */
     setWGSLFragment() {
-      this.wgslGroupFragment = [`var ${this.name}: ${this.bindingType};`];
+      this.wgslGroupFragment = [
+        `var ${this.name}: ${this.options.type === "comparison" ? `${this.bindingType}_comparison` : this.bindingType};`
+      ];
     }
   }
 
@@ -3581,7 +3583,7 @@
           matrix: new Mat4(),
           shouldUpdate: false,
           onUpdate: () => {
-            this.viewMatrix.copy(this.modelMatrix).invert();
+            this.viewMatrix.copy(this.worldMatrix).invert();
           }
         },
         projection: {
@@ -3625,6 +3627,13 @@
     updateModelMatrix() {
       super.updateModelMatrix();
       this.setScreenRatios();
+      this.matrices.view.shouldUpdate = true;
+    }
+    /**
+     * Update our world matrix and tell our view matrix to update as well
+     */
+    updateWorldMatrix() {
+      super.updateWorldMatrix();
       this.matrices.view.shouldUpdate = true;
     }
     /**
@@ -3827,7 +3836,8 @@
       minFilter = "linear",
       mipmapFilter = "linear",
       maxAnisotropy = 1,
-      type = "filtering"
+      type = "filtering",
+      compare
     } = {}) {
       this.type = "Sampler";
       this.uuid = generateUUID();
@@ -3849,7 +3859,8 @@
         minFilter,
         mipmapFilter,
         maxAnisotropy,
-        type
+        type,
+        ...compare !== void 0 && { compare }
       };
       this.createSampler();
       this.createBinding();
@@ -3877,6 +3888,7 @@
   const defaultRenderTextureParams = {
     label: "RenderTexture",
     name: "renderTexture",
+    autoResize: true,
     usage: "texture",
     access: "write",
     fromTexture: null,
@@ -3947,7 +3959,7 @@
         usage: (
           // TODO let user chose?
           // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-          this.options.usage !== "storageTexture" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+          this.options.usage !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
         )
       });
       this.textureBinding.resource = this.texture;
@@ -3980,6 +3992,8 @@
      * @param size - new {@link TextureSize | size} to set
      */
     forceResize(size) {
+      if (!this.options.autoResize)
+        return;
       this.size = size;
       this.createTexture();
     }
@@ -3988,6 +4002,8 @@
      * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size = null) {
+      if (!this.options.autoResize)
+        return;
       if (!size) {
         size = {
           width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
@@ -5679,7 +5695,7 @@
       if (!shaders.vertex.entryPoint) {
         shaders.vertex.entryPoint = "main";
       }
-      if (!shaders.fragment.entryPoint) {
+      if (shaders.fragment && !shaders.fragment.entryPoint) {
         shaders.fragment.entryPoint = "main";
       }
       this.options = {
@@ -5833,6 +5849,7 @@ struct VertexOutput {
     depth: true,
     depthWriteEnabled: true,
     depthCompare: "less",
+    depthFormat: "depth24plus",
     transparent: false,
     visible: true,
     renderOrder: 0,
@@ -6048,7 +6065,7 @@ struct VertexOutput {
               entryPoint: "main"
             };
           }
-          if (!shaders.fragment || !shaders.fragment.code) {
+          if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
             shaders.fragment = {
               code: default_fsWgsl,
               entryPoint: "main"
@@ -6204,7 +6221,7 @@ struct VertexOutput {
        * Resize the Mesh's render textures only if they're not storage textures
        */
       resizeRenderTextures() {
-        this.renderTextures?.filter((renderTexture) => renderTexture.options.usage !== "storageTexture").forEach((renderTexture) => renderTexture.resize());
+        this.renderTextures?.filter((renderTexture) => renderTexture.options.usage !== "storage").forEach((renderTexture) => renderTexture.resize());
       }
       /**
        * Resize the Mesh's textures
@@ -6700,7 +6717,7 @@ struct VSOutput {
               entryPoint: "main"
             };
           }
-          if (!shaders.fragment || !shaders.fragment.code) {
+          if (shaders.fragment === void 0 || shaders.fragment && !shaders.fragment.code) {
             shaders.fragment = {
               code: default_normal_fsWgsl,
               entryPoint: "main"
@@ -7102,7 +7119,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
     // TODO! need to chose whether we should silently add the camera bind group here
     // or explicitly in the RenderMaterial class createBindGroups() method
     /**
-     * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link CameraRenderer#cameraBindGroup | camera bind group} if needed and set them
+     * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} if needed and set them
      * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
      */
     setPipelineEntryBindGroups(bindGroups) {
@@ -7119,7 +7136,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
     }
     /* SHADERS */
     /**
-     * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
+     * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link types/PipelineEntries.PipelineEntryParams#shaders | parameter shader code}
      */
     patchShaders() {
       this.shaders.vertex.head = "";
@@ -7134,12 +7151,14 @@ ${this.shaders.vertex.head}`;
         this.shaders.full.head = `${ShaderChunks.vertex[chunk]}
 ${this.shaders.full.head}`;
       }
-      for (const chunk in ShaderChunks.fragment) {
-        this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}
+      if (this.options.shaders.fragment) {
+        for (const chunk in ShaderChunks.fragment) {
+          this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}
 ${this.shaders.fragment.head}`;
-        if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
-          this.shaders.full.head = `${ShaderChunks.fragment[chunk]}
+          if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
+            this.shaders.full.head = `${ShaderChunks.fragment[chunk]}
 ${this.shaders.full.head}`;
+          }
         }
       }
       if (this.options.useProjection) {
@@ -7149,12 +7168,14 @@ ${this.shaders.vertex.head}`;
           this.shaders.full.head = `${ProjectedShaderChunks.vertex[chunk]}
 ${this.shaders.full.head}`;
         }
-        for (const chunk in ProjectedShaderChunks.fragment) {
-          this.shaders.fragment.head = `${ProjectedShaderChunks.fragment[chunk]}
+        if (this.options.shaders.fragment) {
+          for (const chunk in ProjectedShaderChunks.fragment) {
+            this.shaders.fragment.head = `${ProjectedShaderChunks.fragment[chunk]}
 ${this.shaders.fragment.head}`;
-          if (this.shaders.full.head.indexOf(ProjectedShaderChunks.fragment[chunk]) === -1) {
-            this.shaders.full.head = `${ProjectedShaderChunks.fragment[chunk]}
+            if (this.shaders.full.head.indexOf(ProjectedShaderChunks.fragment[chunk]) === -1) {
+              this.shaders.full.head = `${ProjectedShaderChunks.fragment[chunk]}
 ${this.shaders.full.head}`;
+            }
           }
         }
       }
@@ -7190,7 +7211,7 @@ ${this.shaders.vertex.head}`;
 `;
           }
         }
-        if (groupBinding.visibility === GPUShaderStage.FRAGMENT || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)) {
+        if (this.options.shaders.fragment && (groupBinding.visibility === GPUShaderStage.FRAGMENT || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE))) {
           if (groupBinding.wgslStructFragment && this.shaders.fragment.head.indexOf(groupBinding.wgslStructFragment) === -1) {
             this.shaders.fragment.head = `
 ${groupBinding.wgslStructFragment}
@@ -7222,34 +7243,46 @@ ${this.shaders.vertex.head}`;
       this.shaders.full.head = `${this.attributes.wgslStructFragment}
 ${this.shaders.full.head}`;
       this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code;
-      this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code;
-      if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) {
-        this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
-      } else {
-        this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+      if (typeof this.options.shaders.fragment === "object")
+        this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code;
+      if (typeof this.options.shaders.fragment === "object") {
+        if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) {
+          this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
+        } else {
+          this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+        }
       }
     }
     /* SETUP */
+    /**
+     * Get whether the shaders modules have been created
+     * @readonly
+     */
+    get shadersModulesReady() {
+      return !(!this.shaders.vertex.module || this.options.shaders.fragment && !this.shaders.fragment.module);
+    }
     /**
      * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
      */
     createShaders() {
       this.patchShaders();
-      const isSameShader = this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0;
+      const isSameShader = typeof this.options.shaders.fragment === "object" && this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0;
       this.shaders.vertex.module = this.createShaderModule({
         code: this.shaders[isSameShader ? "full" : "vertex"].code,
         type: "vertex"
       });
-      this.shaders.fragment.module = this.createShaderModule({
-        code: this.shaders[isSameShader ? "full" : "fragment"].code,
-        type: "fragment"
-      });
+      if (this.options.shaders.fragment) {
+        this.shaders.fragment.module = this.createShaderModule({
+          code: this.shaders[isSameShader ? "full" : "fragment"].code,
+          type: "fragment"
+        });
+      }
     }
     /**
      * Create the render pipeline {@link descriptor}
      */
     createPipelineDescriptor() {
-      if (!this.shaders.vertex.module || !this.shaders.fragment.module)
+      if (!this.shadersModulesReady)
         return;
       let vertexLocationIndex = -1;
       const blend = this.options.blend ?? (this.options.transparent && {
@@ -7285,17 +7318,19 @@ ${this.shaders.full.head}`;
             };
           })
         },
-        fragment: {
-          module: this.shaders.fragment.module,
-          entryPoint: this.options.shaders.fragment.entryPoint,
-          targets: [
-            {
-              format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
-              ...blend && {
-                blend
+        ...this.options.shaders.fragment && {
+          fragment: {
+            module: this.shaders.fragment.module,
+            entryPoint: this.options.shaders.fragment.entryPoint,
+            targets: [
+              {
+                format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
+                ...blend && {
+                  blend
+                }
               }
-            }
-          ]
+            ]
+          }
         },
         primitive: {
           topology: this.options.topology,
@@ -7306,7 +7341,7 @@ ${this.shaders.full.head}`;
           depthStencil: {
             depthWriteEnabled: this.options.depthWriteEnabled,
             depthCompare: this.options.depthCompare,
-            format: "depth24plus"
+            format: this.options.depthFormat
           }
         },
         ...this.options.sampleCount > 1 && {
@@ -7320,7 +7355,7 @@ ${this.shaders.full.head}`;
      * Create the render {@link pipeline}
      */
     createRenderPipeline() {
-      if (!this.shaders.vertex.module || !this.shaders.fragment.module)
+      if (!this.shadersModulesReady)
         return;
       try {
         this.pipeline = this.renderer.createRenderPipeline(this.descriptor);
@@ -7533,7 +7568,8 @@ ${this.shaders.compute.head}`;
       } = parameters;
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && shaders.fragment.code.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint && cullMode === options.cullMode && depth === options.depth && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && sampleCount === options.sampleCount && verticesOrder === options.verticesOrder && topology === options.topology;
+        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || shaders.fragment.code?.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint;
+        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && sameFragmentShader && cullMode === options.cullMode && depth === options.depth && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && sampleCount === options.sampleCount && verticesOrder === options.verticesOrder && topology === options.topology;
       });
     }
     /**
@@ -7854,13 +7890,15 @@ struct VSOutput {
     constructor(renderer, {
       label = "Render Pass",
       sampleCount = 4,
+      useColorAttachments = true,
       loadOp = "clear",
       clearValue = [0, 0, 0, 0],
       targetFormat,
-      depth = true,
-      depthTexture,
+      useDepth = true,
+      depthTexture = null,
       depthLoadOp = "clear",
-      depthClearValue = 1
+      depthClearValue = 1,
+      depthFormat = "depth24plus"
     } = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "RenderPass");
@@ -7871,49 +7909,59 @@ struct VSOutput {
         label,
         sampleCount,
         // color
+        useColorAttachments,
         loadOp,
         clearValue,
         targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
         // depth
-        depth,
+        useDepth,
         ...depthTexture !== void 0 && { depthTexture },
         depthLoadOp,
-        depthClearValue
+        depthClearValue,
+        depthFormat
       };
       this.setClearValue(clearValue);
-      if (this.options.depth) {
+      if (this.options.useDepth) {
         this.createDepthTexture();
       }
-      this.viewTexture = new RenderTexture(this.renderer, {
-        label: this.options.label + " view texture",
-        name: "viewTexture",
-        format: this.options.targetFormat,
-        sampleCount: this.options.sampleCount
-      });
+      if (this.options.useColorAttachments) {
+        this.viewTexture = new RenderTexture(this.renderer, {
+          label: this.options.label + " view texture",
+          name: "viewTexture",
+          format: this.options.targetFormat,
+          sampleCount: this.options.sampleCount
+        });
+      }
       this.setRenderPassDescriptor();
     }
     /**
      * Set our {@link depthTexture | depth texture}
      */
     createDepthTexture() {
-      this.depthTexture = new RenderTexture(this.renderer, {
-        label: this.options.label + " depth texture",
-        name: "depthTexture",
-        usage: "depthTexture",
-        format: "depth24plus",
-        sampleCount: this.options.sampleCount,
-        ...this.options.depthTexture && { fromTexture: this.options.depthTexture }
-      });
+      if (this.options.depthTexture) {
+        this.depthTexture = this.options.depthTexture;
+      } else {
+        this.depthTexture = new RenderTexture(this.renderer, {
+          label: this.options.label + " depth texture",
+          name: "depthTexture",
+          usage: "depth",
+          format: this.options.depthFormat,
+          sampleCount: this.options.sampleCount
+        });
+      }
     }
     /**
      * Reset our {@link depthTexture | depth texture}
      */
     resetRenderPassDepth() {
-      this.depthTexture.forceResize({
-        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
-        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
-        depth: 1
-      });
+      const { width, height } = this.renderer.pixelRatioBoundingRect;
+      if (this.depthTexture.options.autoResize && this.depthTexture.texture.width !== Math.floor(width) || this.depthTexture.texture.height !== Math.floor(height)) {
+        this.depthTexture.forceResize({
+          width: Math.floor(width),
+          height: Math.floor(height),
+          depth: 1
+        });
+      }
       this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
         label: this.depthTexture.options.label + " view"
       });
@@ -7937,17 +7985,12 @@ struct VSOutput {
     setRenderPassDescriptor() {
       this.descriptor = {
         label: this.options.label + " descriptor",
-        colorAttachments: [
+        colorAttachments: this.options.useColorAttachments ? [
           {
             // view: <- to be filled out when we set our render pass view
             view: this.viewTexture.texture.createView({
-              label: this.viewTexture.options.label + " view"
+              label: this.viewTexture.texture.label + " view"
             }),
-            // ...(this.options.sampleCount > 1 && {
-            //   resolveTarget: this.resolveTexture.texture.createView({
-            //     label: this.resolveTexture.options.label + ' view',
-            //   }),
-            // }),
             // clear values
             clearValue: this.options.clearValue,
             // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
@@ -7958,11 +8001,11 @@ struct VSOutput {
             // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
             storeOp: "store"
           }
-        ],
-        ...this.options.depth && {
+        ] : [],
+        ...this.options.useDepth && {
           depthStencilAttachment: {
             view: this.depthTexture.texture.createView({
-              label: this.depthTexture.options.label + " view"
+              label: this.depthTexture.texture.label + " view"
             }),
             depthClearValue: this.options.depthClearValue,
             // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
@@ -7976,9 +8019,10 @@ struct VSOutput {
      * Resize our {@link RenderPass}: reset its {@link RenderTexture}
      */
     resize() {
-      if (this.options.depth)
+      if (this.options.useDepth)
         this.resetRenderPassDepth();
-      this.resetRenderPassView();
+      if (this.options.useColorAttachments)
+        this.resetRenderPassView();
     }
     /**
      * Set the {@link descriptor} {@link GPULoadOp | load operation}
@@ -7986,7 +8030,7 @@ struct VSOutput {
      */
     setLoadOp(loadOp = "clear") {
       this.options.loadOp = loadOp;
-      if (this.descriptor) {
+      if (this.options.useColorAttachments && this.descriptor) {
         if (this.descriptor.colorAttachments) {
           this.descriptor.colorAttachments[0].loadOp = loadOp;
         }
@@ -7998,7 +8042,7 @@ struct VSOutput {
      */
     setDepthLoadOp(depthLoadOp = "clear") {
       this.options.depthLoadOp = depthLoadOp;
-      if (this.options.depth && this.descriptor.depthStencilAttachment) {
+      if (this.options.useDepth && this.descriptor.depthStencilAttachment) {
         this.descriptor.depthStencilAttachment.depthLoadOp = depthLoadOp;
       }
     }
@@ -8064,10 +8108,11 @@ struct VSOutput {
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, targetFormat, autoRender, ...renderPassParams } = parameters;
+      const { label, targetFormat, depthTexture, autoRender, ...renderPassParams } = parameters;
       this.options = {
         label,
         ...renderPassParams,
+        ...depthTexture && { depthTexture },
         targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
         autoRender
       };
@@ -8077,7 +8122,7 @@ struct VSOutput {
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
         targetFormat: this.options.targetFormat,
-        depthTexture: this.renderer.renderPass.depthTexture,
+        depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture,
         // reuse renderer depth texture for every pass
         ...renderPassParams
       });
@@ -8108,10 +8153,10 @@ struct VSOutput {
     }
     /**
      * Resize our {@link renderPass} and {@link renderTexture}
-     * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
      */
-    resize(boundingRect) {
-      this.renderPass.options.depthTexture.texture = this.renderer.renderPass.depthTexture.texture;
+    resize() {
+      console.log(this.renderer.renderPass.depthTexture.texture);
+      this.renderPass.options.depthTexture.texture = this.options.depthTexture ? this.options.depthTexture.texture : this.renderer.renderPass.depthTexture.texture;
       this.renderPass?.resize();
       this.renderTexture?.resize();
     }
@@ -8154,7 +8199,7 @@ struct VSOutput {
       isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
       parameters.renderTarget = new RenderTarget(renderer, {
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
-        depth: false,
+        useDepth: false,
         ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
       });
       parameters.transparent = false;
@@ -9063,10 +9108,7 @@ struct VSOutput {
      * @param renderPassEntry - {@link RenderPassEntry} to render
      */
     renderSinglePassEntry(commandEncoder, renderPassEntry) {
-      const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
-        renderPassEntry.renderPass,
-        renderPassEntry.renderTexture?.texture
-      );
+      const swapChainTexture = renderPassEntry.renderPass.options.useColorAttachments ? this.renderer.setRenderPassCurrentTexture(renderPassEntry.renderPass, renderPassEntry.renderTexture?.texture) : null;
       renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
       const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
       !this.renderer.production && pass.pushDebugGroup(
@@ -9147,13 +9189,13 @@ struct VSOutput {
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
           if (!this.getRenderPassEntryLength(renderPassEntry))
             return;
-          const destination = renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : "Context current texture";
+          const destination = !renderPassEntry.renderPass.options.useColorAttachments ? void 0 : renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : "Context current texture";
           let descriptor = renderPassEntry.renderPass.options.label;
           const operations = {
-            loadOp: renderPassEntryType === "screen" && passDrawnCount > 0 ? "load" : renderPassEntry.renderPass.options.loadOp,
+            loadOp: renderPassEntry.renderPass.options.useColorAttachments ? renderPassEntryType === "screen" && passDrawnCount > 0 ? "load" : renderPassEntry.renderPass.options.loadOp : void 0,
             depthLoadOp: void 0
           };
-          if (renderPassEntry.renderPass.options.depth) {
+          if (renderPassEntry.renderPass.options.useDepth) {
             operations.depthLoadOp = renderPassEntry.renderPass.options.depthLoadOp;
           }
           passDrawnCount++;
@@ -9312,7 +9354,7 @@ struct VSOutput {
       this.uuid = generateUUID();
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
-      renderPass = { ...{ depth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
+      renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
       preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
       this.options = {
         deviceManager,
@@ -9376,7 +9418,7 @@ struct VSOutput {
     onResize() {
       this.renderPass?.resize();
       this.postProcessingPass?.resize();
-      this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
+      this.renderTargets.forEach((renderTarget) => renderTarget.resize());
       this.renderTextures.forEach((renderTexture) => renderTexture.resize());
       this.computePasses.forEach((computePass) => computePass.resize());
       this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
@@ -9533,7 +9575,7 @@ struct VSOutput {
       });
       this.renderPass?.resize();
       this.postProcessingPass?.resize();
-      this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect));
+      this.renderTargets.forEach((renderTarget) => renderTarget.resize());
       this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
@@ -9549,7 +9591,7 @@ struct VSOutput {
       this.postProcessingPass = new RenderPass(this, {
         label: "Post processing render pass",
         targetFormat: this.options.preferredFormat,
-        depth: false,
+        useDepth: false,
         sampleCount: this.options.renderPass.sampleCount
         // TODO?
       });
