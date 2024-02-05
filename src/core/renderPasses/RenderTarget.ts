@@ -13,7 +13,11 @@ export interface RenderTargetParams extends RenderPassParams {
 }
 
 /**
- * Used to draw meshes to a {@link RenderPass#viewTexture | RenderPass view texture} instead of directly to screen.
+ * Used to draw meshes to a {@link RenderPass#viewTextures | RenderPass view textures} instead of directly to screen.
+ *
+ * The meshes assigned to a {@link RenderTarget} will be drawn before the other objects in the {@link Scene} rendering loop.
+ *
+ * If the {@link RenderPass} created handle color attachments, is multisampled and {@link RenderPass#options.shouldUpdateView | should update view}, then a {@link RenderPass#renderTexture | RenderTexture} will be created to resolve the content of the current view. This {@link RenderPass#renderTexture | RenderTexture} could therefore usually be used to manipulate the current content of this {@link RenderTarget}.
  *
  * @example
  * ```javascript
@@ -45,7 +49,7 @@ export class RenderTarget {
   /** {@link RenderPass} used by this {@link RenderTarget} */
   renderPass: RenderPass
   /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link core/renderers/GPURenderer.GPURenderer#setRenderPassCurrentTexture | setting the current texture} */
-  renderTexture: RenderTexture
+  renderTexture?: RenderTexture
 
   /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
   #autoRender = true
@@ -86,12 +90,14 @@ export class RenderTarget {
       ...renderPassParams,
     })
 
-    // this is the texture that will be resolved when setting the current render pass texture
-    this.renderTexture = new RenderTexture(this.renderer, {
-      label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target Render Texture',
-      name: 'renderTexture',
-      format: this.options.targetFormat,
-    })
+    if (renderPassParams.useColorAttachments !== false && renderPassParams.shouldUpdateView !== false) {
+      // this is the texture that will be resolved when setting the current render pass texture
+      this.renderTexture = new RenderTexture(this.renderer, {
+        label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target render texture',
+        name: 'renderTexture',
+        format: this.options.targetFormat,
+      })
+    }
 
     this.addToScene()
   }
@@ -119,7 +125,7 @@ export class RenderTarget {
   }
 
   /**
-   * Resize our {@link renderPass} and {@link renderTexture}
+   * Resize our {@link renderPass}
    */
   resize() {
     // reset the newly created depth texture
@@ -128,7 +134,6 @@ export class RenderTarget {
       : this.renderer.renderPass.depthTexture.texture
 
     this.renderPass?.resize()
-    this.renderTexture?.resize()
   }
 
   /**
