@@ -51,7 +51,7 @@ export class TextureBinding extends Binding {
   }: TextureBindingParams) {
     bindingType = bindingType ?? 'texture'
 
-    if (bindingType === 'storageTexture') {
+    if (bindingType === 'storage') {
       visibility = 'compute'
     }
 

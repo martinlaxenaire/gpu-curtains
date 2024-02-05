@@ -96,7 +96,6 @@ export class GPUCurtains {
     preferredFormat,
     alphaMode = 'premultiplied',
     production = false,
-    multisampled = true,
     renderPass,
     camera,
     autoRender = true,
@@ -112,7 +111,6 @@ export class GPUCurtains {
       production,
       preferredFormat,
       alphaMode,
-      multisampled,
       renderPass,
       autoRender,
       autoResize,
@@ -169,7 +167,6 @@ export class GPUCurtains {
       pixelRatio: this.options.pixelRatio,
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
-      multisampled: this.options.multisampled,
       renderPass: this.options.renderPass,
       camera: this.options.camera,
     })

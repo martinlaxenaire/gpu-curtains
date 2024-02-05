@@ -3,7 +3,6 @@ import { RenderPass, RenderPassParams } from './RenderPass'
 import { RenderTexture } from '../textures/RenderTexture'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { DOMElementBoundingRect } from '../DOM/DOMElement'
 
 /**
  * Parameters used to create a {@link RenderTarget}
@@ -14,7 +13,11 @@ export interface RenderTargetParams extends RenderPassParams {
 }
 
 /**
- * Used to draw meshes to a {@link RenderPass#viewTexture | RenderPass view texture} instead of directly to screen.
+ * Used to draw meshes to a {@link RenderPass#viewTextures | RenderPass view textures} instead of directly to screen.
+ *
+ * The meshes assigned to a {@link RenderTarget} will be drawn before the other objects in the {@link core/scenes/Scene.Scene | Scene} rendering loop.s
+ *
+ * If the {@link RenderPass} created handle color attachments, is multisampled and {@link RenderPass#options.shouldUpdateView | should update view}, then a {@link RenderTarget#renderTexture | RenderTexture} will be created to resolve the content of the current view. This {@link RenderTarget#renderTexture | RenderTexture} could therefore usually be used to manipulate the current content of this {@link RenderTarget}.
  *
  * @example
  * ```javascript
@@ -46,7 +49,7 @@ export class RenderTarget {
   /** {@link RenderPass} used by this {@link RenderTarget} */
   renderPass: RenderPass
   /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link core/renderers/GPURenderer.GPURenderer#setRenderPassCurrentTexture | setting the current texture} */
-  renderTexture: RenderTexture
+  renderTexture?: RenderTexture
 
   /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
   #autoRender = true
@@ -66,14 +69,15 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, targetFormat, autoRender, ...renderPassParams } = parameters
+    const { label, targetFormat, depthTexture, autoRender, ...renderPassParams } = parameters
 
     this.options = {
       label,
       ...renderPassParams,
+      ...(depthTexture && { depthTexture }),
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
-      autoRender,
-    }
+      autoRender: autoRender === undefined ? true : autoRender,
+    } as RenderTargetParams
 
     if (autoRender !== undefined) {
       this.#autoRender = autoRender
@@ -82,16 +86,18 @@ export class RenderTarget {
     this.renderPass = new RenderPass(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Pass` : 'Render Target Render Pass',
       targetFormat: this.options.targetFormat,
-      depthTexture: this.renderer.renderPass.depthTexture, // reuse renderer depth texture for every pass
+      depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture, // reuse renderer depth texture for every pass
       ...renderPassParams,
     })
 
-    // this is the texture that will be resolved when setting the current render pass texture
-    this.renderTexture = new RenderTexture(this.renderer, {
-      label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target Render Texture',
-      name: 'renderTexture',
-      format: this.options.targetFormat,
-    })
+    if (renderPassParams.useColorAttachments !== false && renderPassParams.shouldUpdateView !== false) {
+      // this is the texture that will be resolved when setting the current render pass texture
+      this.renderTexture = new RenderTexture(this.renderer, {
+        label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target render texture',
+        name: 'renderTexture',
+        format: this.options.targetFormat,
+      })
+    }
 
     this.addToScene()
   }
@@ -119,14 +125,15 @@ export class RenderTarget {
   }
 
   /**
-   * Resize our {@link renderPass} and {@link renderTexture}
-   * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
+   * Resize our {@link renderPass}
    */
-  resize(boundingRect: DOMElementBoundingRect) {
-    // reset the newly created renderer render pass depth texture
-    this.renderPass.options.depthTexture.texture = this.renderer.renderPass.depthTexture.texture
+  resize() {
+    // reset the newly created depth texture
+    this.renderPass.options.depthTexture.texture = this.options.depthTexture
+      ? this.options.depthTexture.texture
+      : this.renderer.renderPass.depthTexture.texture
+
     this.renderPass?.resize()
-    this.renderTexture?.resize()
   }
 
   /**

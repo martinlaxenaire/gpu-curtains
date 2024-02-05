@@ -22,6 +22,12 @@
       type="image/png"
       href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
     />
+
+    <style>
+      #tests ul li {
+        margin: 0.15rem 0;
+      }
+    </style>
   </head>
   <body>
     <div id="page">
@@ -42,7 +48,7 @@
         </nav>
       </header>
 
-      <div class="large-container">
+      <div id="tests" class="large-container">
         <h1>gpu-curtains tests</h1>
         <ul>
           <li>
@@ -67,7 +73,7 @@
             <a href="orbit-camera-depth-texture/" target="_blank">Orbit camera and depth texture</a>
           </li>
           <li>
-            <a href="orbit-camera-selective-passes/" target="_blank">Orbit camera and selective bloom</a>
+            <a href="orbit-camera-selective-passes/" target="_blank">Orbit camera and selective passes</a>
           </li>
           <li>
             <a href="./plane-transformations/" target="_blank">Plane transformations</a>
@@ -77,6 +83,9 @@
           </li>
           <li>
             <a href="./scroll-resize/" target="_blank">Scroll and resize</a>
+          </li>
+          <li>
+            <a href="./shadow-mapping/" target="_blank">Shadow mapping</a>
           </li>
           <li>
             <a href="./stress-test/" target="_blank">Stress test</a>

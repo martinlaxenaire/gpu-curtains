@@ -1,9 +1,9 @@
 // Goal of this test is to help debug plane transformations and raycasting
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
-  const { GPUCurtains, Plane, Vec2 } = await import(path)
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const { GPUCurtains, Plane, Vec2 } = await import(/* @vite-ignore */ path)
 
-  // set up our WebGL context and append the canvas to our wrapper
+  // set up our WebGPU context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example

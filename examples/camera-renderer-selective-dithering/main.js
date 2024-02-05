@@ -135,6 +135,7 @@ window.addEventListener('load', async () => {
   for (let i = 0; i < 50; i++) {
     const isCube = Math.random() > 0.5
     const mesh = new Mesh(gpuCameraRenderer, {
+      label: isCube ? 'Cube ' + i : 'Sphere ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
       renderTarget: isCube ? blankRenderTarget : selectiveDitheringTarget,
       shaders: {

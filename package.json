@@ -15,7 +15,7 @@
     "vite": "^5.0.12"
   },
   "name": "gpu-curtains",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "gpu-curtains is a WebGPU rendering engine focused on mapping 3d objects to DOM elements; It allows users to synchronize values such as position, sizing, or scale between them.",
   "keywords": [
     "webgpu",
@@ -46,7 +46,7 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/gpu-curtains.umd.cjs",
+  "main": "./dist/gpu-curtains.umd.js",
   "module": "dist/gpu-curtains.mjs",
   "exports": {
     ".": {
@@ -55,7 +55,7 @@
         "types": "./dist/types/index.d.ts",
         "default": "./dist/gpu-curtains.mjs"
       },
-      "require": "./dist/gpu-curtains.umd.cjs",
+      "require": "./dist/gpu-curtains.umd.js",
       "default": "./dist/gpu-curtains.mjs"
     },
     "./package.json": "./package.json"

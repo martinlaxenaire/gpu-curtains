@@ -2,7 +2,6 @@ import { Renderer } from '../renderers/utils';
 import { RenderPass, RenderPassParams } from './RenderPass';
 import { RenderTexture } from '../textures/RenderTexture';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { DOMElementBoundingRect } from '../DOM/DOMElement';
 /**
  * Parameters used to create a {@link RenderTarget}
  */
@@ -11,7 +10,11 @@ export interface RenderTargetParams extends RenderPassParams {
     autoRender?: boolean;
 }
 /**
- * Used to draw meshes to a {@link RenderPass#viewTexture | RenderPass view texture} instead of directly to screen.
+ * Used to draw meshes to a {@link RenderPass#viewTextures | RenderPass view textures} instead of directly to screen.
+ *
+ * The meshes assigned to a {@link RenderTarget} will be drawn before the other objects in the {@link core/scenes/Scene.Scene | Scene} rendering loop.s
+ *
+ * If the {@link RenderPass} created handle color attachments, is multisampled and {@link RenderPass#options.shouldUpdateView | should update view}, then a {@link RenderTarget#renderTexture | RenderTexture} will be created to resolve the content of the current view. This {@link RenderTarget#renderTexture | RenderTexture} could therefore usually be used to manipulate the current content of this {@link RenderTarget}.
  *
  * @example
  * ```javascript
@@ -42,7 +45,7 @@ export declare class RenderTarget {
     /** {@link RenderPass} used by this {@link RenderTarget} */
     renderPass: RenderPass;
     /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link core/renderers/GPURenderer.GPURenderer#setRenderPassCurrentTexture | setting the current texture} */
-    renderTexture: RenderTexture;
+    renderTexture?: RenderTexture;
     /**
      * RenderTarget constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
@@ -58,10 +61,9 @@ export declare class RenderTarget {
      */
     removeFromScene(): void;
     /**
-     * Resize our {@link renderPass} and {@link renderTexture}
-     * @param boundingRect - new {@link DOMElementBoundingRect | bounding rectangle}
+     * Resize our {@link renderPass}
      */
-    resize(boundingRect: DOMElementBoundingRect): void;
+    resize(): void;
     /**
      * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
      */

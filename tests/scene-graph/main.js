@@ -1,10 +1,11 @@
 // Check if the scene graph (i.e. parent / children object 3D relationship) works
 // test model / world matrices
-import { Vec3 } from '../../dist/gpu-curtains.mjs'
 
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
-  const { Object3D, BoxGeometry, SphereGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, Vec3 } = await import(path)
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const { Object3D, BoxGeometry, SphereGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh } = await import(
+    /* @vite-ignore */ path
+  )
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({

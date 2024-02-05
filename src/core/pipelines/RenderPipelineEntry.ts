@@ -1,17 +1,16 @@
 import { PipelineEntry } from './PipelineEntry'
 import { ProjectedShaderChunks, ShaderChunks } from '../shaders/ShaderChunks'
-import { CameraRenderer, isRenderer, Renderer } from '../renderers/utils'
+import { isRenderer, Renderer } from '../renderers/utils'
 import { throwError } from '../../utils/utils'
 import {
-  PipelineEntryParams,
   PipelineEntryShaders,
   RenderPipelineEntryOptions,
   RenderPipelineEntryParams,
-  RenderPipelineEntryPropertiesParams
+  RenderPipelineEntryPropertiesParams,
 } from '../../types/PipelineEntries'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { AllowedBindGroups, BindGroupBufferBindingElement } from '../../types/BindGroups'
-import { RenderMaterialAttributes } from '../../types/Materials'
+import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
 
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
@@ -83,7 +82,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   // TODO! need to chose whether we should silently add the camera bind group here
   // or explicitly in the RenderMaterial class createBindGroups() method
   /**
-   * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link CameraRenderer#cameraBindGroup | camera bind group} if needed and set them
+   * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} if needed and set them
    * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
    */
   setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]) {
@@ -108,7 +107,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   /* SHADERS */
 
   /**
-   * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link PipelineEntryParams#shaders | parameter shader code}
+   * Patch the shaders by appending all the necessary shader chunks, {@link bindGroups | bind groups}) and {@link attributes} WGSL code fragments to the given {@link types/PipelineEntries.PipelineEntryParams#shaders | parameter shader code}
    */
   patchShaders() {
     this.shaders.vertex.head = ''
@@ -124,11 +123,13 @@ export class RenderPipelineEntry extends PipelineEntry {
       this.shaders.full.head = `${ShaderChunks.vertex[chunk]}\n${this.shaders.full.head}`
     }
 
-    for (const chunk in ShaderChunks.fragment) {
-      this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
+    if (this.options.shaders.fragment) {
+      for (const chunk in ShaderChunks.fragment) {
+        this.shaders.fragment.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
 
-      if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
-        this.shaders.full.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
+        if (this.shaders.full.head.indexOf(ShaderChunks.fragment[chunk]) === -1) {
+          this.shaders.full.head = `${ShaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
+        }
       }
     }
 
@@ -138,11 +139,13 @@ export class RenderPipelineEntry extends PipelineEntry {
         this.shaders.full.head = `${ProjectedShaderChunks.vertex[chunk]}\n${this.shaders.full.head}`
       }
 
-      for (const chunk in ProjectedShaderChunks.fragment) {
-        this.shaders.fragment.head = `${ProjectedShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
+      if (this.options.shaders.fragment) {
+        for (const chunk in ProjectedShaderChunks.fragment) {
+          this.shaders.fragment.head = `${ProjectedShaderChunks.fragment[chunk]}\n${this.shaders.fragment.head}`
 
-        if (this.shaders.full.head.indexOf(ProjectedShaderChunks.fragment[chunk]) === -1) {
-          this.shaders.full.head = `${ProjectedShaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
+          if (this.shaders.full.head.indexOf(ProjectedShaderChunks.fragment[chunk]) === -1) {
+            this.shaders.full.head = `${ProjectedShaderChunks.fragment[chunk]}\n${this.shaders.full.head}`
+          }
         }
       }
     }
@@ -190,8 +193,9 @@ export class RenderPipelineEntry extends PipelineEntry {
       }
 
       if (
-        groupBinding.visibility === GPUShaderStage.FRAGMENT ||
-        groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)
+        this.options.shaders.fragment &&
+        (groupBinding.visibility === GPUShaderStage.FRAGMENT ||
+          groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE))
       ) {
         // do not duplicate structs
         if (
@@ -225,21 +229,33 @@ export class RenderPipelineEntry extends PipelineEntry {
     this.shaders.full.head = `${this.attributes.wgslStructFragment}\n${this.shaders.full.head}`
 
     this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code
-    this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code
+
+    if (typeof this.options.shaders.fragment === 'object')
+      this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code
 
     // check if its one shader string with different entry points
-    if (
-      this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint &&
-      this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0
-    ) {
-      this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code
-    } else {
-      this.shaders.full.code =
-        this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code
+    if (typeof this.options.shaders.fragment === 'object') {
+      if (
+        this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint &&
+        this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0
+      ) {
+        this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code
+      } else {
+        this.shaders.full.code =
+          this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code
+      }
     }
   }
 
   /* SETUP */
+
+  /**
+   * Get whether the shaders modules have been created
+   * @readonly
+   */
+  get shadersModulesReady(): boolean {
+    return !(!this.shaders.vertex.module || (this.options.shaders.fragment && !this.shaders.fragment.module))
+  }
 
   /**
    * Create the {@link shaders}: patch them and create the {@link GPUShaderModule}
@@ -248,6 +264,7 @@ export class RenderPipelineEntry extends PipelineEntry {
     this.patchShaders()
 
     const isSameShader =
+      typeof this.options.shaders.fragment === 'object' &&
       this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint &&
       this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0
 
@@ -256,17 +273,19 @@ export class RenderPipelineEntry extends PipelineEntry {
       type: 'vertex',
     })
 
-    this.shaders.fragment.module = this.createShaderModule({
-      code: this.shaders[isSameShader ? 'full' : 'fragment'].code,
-      type: 'fragment',
-    })
+    if (this.options.shaders.fragment) {
+      this.shaders.fragment.module = this.createShaderModule({
+        code: this.shaders[isSameShader ? 'full' : 'fragment'].code,
+        type: 'fragment',
+      })
+    }
   }
 
   /**
    * Create the render pipeline {@link descriptor}
    */
   createPipelineDescriptor() {
-    if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
+    if (!this.shadersModulesReady) return
 
     let vertexLocationIndex = -1
 
@@ -308,18 +327,21 @@ export class RenderPipelineEntry extends PipelineEntry {
           }
         }),
       },
-      fragment: {
-        module: this.shaders.fragment.module,
-        entryPoint: this.options.shaders.fragment.entryPoint,
-        targets: [
-          {
-            format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
-            ...(blend && {
-              blend,
-            }),
-          },
-        ],
-      },
+      ...(this.options.shaders.fragment && {
+        fragment: {
+          module: this.shaders.fragment.module,
+          entryPoint: (this.options.shaders.fragment as ShaderOptions).entryPoint,
+          targets: [
+            {
+              format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
+              ...(blend && {
+                blend,
+              }),
+            },
+            ...(this.options.additionalTargets ?? []), // merge with additional targets if any
+          ],
+        },
+      }),
       primitive: {
         topology: this.options.topology,
         frontFace: this.options.verticesOrder,
@@ -329,7 +351,7 @@ export class RenderPipelineEntry extends PipelineEntry {
         depthStencil: {
           depthWriteEnabled: this.options.depthWriteEnabled,
           depthCompare: this.options.depthCompare,
-          format: 'depth24plus',
+          format: this.options.depthFormat,
         },
       }),
       ...(this.options.sampleCount > 1 && {
@@ -344,7 +366,7 @@ export class RenderPipelineEntry extends PipelineEntry {
    * Create the render {@link pipeline}
    */
   createRenderPipeline() {
-    if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
+    if (!this.shadersModulesReady) return
 
     try {
       this.pipeline = this.renderer.createRenderPipeline(this.descriptor)
@@ -360,7 +382,7 @@ export class RenderPipelineEntry extends PipelineEntry {
    * @returns - void promise result
    */
   async createRenderPipelineAsync(): Promise<void> {
-    if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
+    if (!this.shadersModulesReady) return
 
     try {
       this.pipeline = await this.renderer.createRenderPipelineAsync(this.descriptor)

@@ -1,6 +1,5 @@
 /// <reference types="dist" />
 import { Binding, BindingParams } from './Binding';
-import { SamplerOptions } from '../samplers/Sampler';
 /** Defines a {@link SamplerBinding} {@link SamplerBinding#resource | resource} */
 export type SamplerBindingResource = GPUSampler | null;
 /**
@@ -10,7 +9,7 @@ export interface SamplerBindingParams extends BindingParams {
     /** {@link SamplerBinding} {@link GPUBindGroup | GPU bind group} resource */
     sampler: SamplerBindingResource;
     /** The bind group layout binding {@link GPUSamplerBindingLayout#type | type} of this {@link GPUSampler | GPU sampler} */
-    type: SamplerOptions['type'];
+    type: GPUSamplerBindingType;
 }
 /**
  * Used to handle GPUSampler bindings.

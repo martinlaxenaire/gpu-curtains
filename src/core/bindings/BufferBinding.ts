@@ -176,6 +176,9 @@ export class BufferBinding extends Binding {
         }
       }
 
+      // force the binding to have a name
+      binding.name = bindings[bindingKey].name ?? bindingKey
+
       // define a "value" getter/setter so we can now when to update the buffer binding
       Object.defineProperty(binding, 'value', {
         get() {

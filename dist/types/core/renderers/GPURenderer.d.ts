@@ -31,12 +31,10 @@ export interface GPURendererParams {
     preferredFormat?: GPUTextureFormat;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
     alphaMode?: GPUCanvasAlphaMode;
-    /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
-    multisampled?: boolean;
     /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
     renderPass?: {
         /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
-        depth: RenderPassParams['depth'];
+        useDepth: RenderPassParams['useDepth'];
         /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
         sampleCount: RenderPassParams['sampleCount'];
         /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
@@ -75,13 +73,10 @@ export declare class GPURenderer {
     alphaMode?: GPUCanvasAlphaMode;
     /** Options used to create this {@link GPURenderer} */
     options: GPURendererParams;
-    /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
-    multisampled: boolean;
     /** The {@link RenderPass | render pass} used to render our result to screen */
     renderPass: RenderPass;
     /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
     postProcessingPass: RenderPass;
-    /** {@link RenderPass | Multisampled render pass} used by an internal {@link ShaderPass} for MSAA, if {@link multisampled} is set to `true` */
     /** The {@link Scene} used */
     scene: Scene;
     /** An array containing all our created {@link ComputePass} */
@@ -118,7 +113,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, preferredFormat, alphaMode, multisampled, renderPass, }: GPURendererParams);
+    constructor({ deviceManager, container, pixelRatio, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
     /**
      * Set {@link canvas} size
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
@@ -407,7 +402,7 @@ export declare class GPURenderer {
      * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
      * @returns - the {@link GPUTexture | current render texture}
      */
-    setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture | null): GPUTexture;
+    setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture | null): GPUTexture | null;
     /**
      * Render a single {@link ComputePass}
      * @param commandEncoder - current {@link GPUCommandEncoder}

@@ -4,7 +4,6 @@ import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
 import { Texture } from '../../core/textures/Texture';
 import { AllowedGeometries } from '../../types/Materials';
-import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture';
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement';
 /**
  * Base parameters to create a {@link DOMMesh}
@@ -100,16 +99,6 @@ export declare class DOMMesh extends DOMMesh_base {
      * Get our {@link DOMMesh#domElement | DOM Element} {@link core/DOM/DOMElement.DOMElement#boundingRect | bounding rectangle} accounting for current {@link core/renderers/GPURenderer.GPURenderer#pixelRatio | renderer pixel ratio}
      */
     get pixelRatioBoundingRect(): DOMElementBoundingRect;
-    /**
-     * Create a new {@link RenderTexture}
-     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-     * @returns - newly created {@link RenderTexture}
-     */
-    createRenderTexture(options: RenderTextureParams): RenderTexture;
-    /**
-     * Resize the Mesh's render textures only if they're not storage textures
-     */
-    resizeRenderTextures(): void;
     /**
      * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
      * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU

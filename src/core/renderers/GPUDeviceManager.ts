@@ -379,9 +379,11 @@ export class GPUDeviceManager {
     this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder())
 
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + ' command encoder' })
+    !this.production && commandEncoder.pushDebugGroup(this.label + ' command encoder: main render loop')
 
     this.renderers.forEach((renderer) => renderer.render(commandEncoder))
 
+    !this.production && commandEncoder.popDebugGroup()
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
 

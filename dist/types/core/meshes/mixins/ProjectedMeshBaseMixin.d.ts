@@ -17,6 +17,8 @@ export interface ProjectedMeshBaseParams {
 /** Parameters used to create a ProjectedMesh */
 export interface ProjectedMeshParameters extends MeshBaseParams, ProjectedMeshBaseParams {
 }
+export interface ProjectedRenderMaterialParams extends RenderMaterialParams, ProjectedMeshBaseParams {
+}
 /** Base options used to create this ProjectedMesh */
 export interface ProjectedMeshBaseOptions extends MeshBaseOptions, Partial<ProjectedMeshBaseParams> {
 }
@@ -57,7 +59,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */
-    setMaterial(meshParameters: RenderMaterialParams): void;
+    setMaterial(meshParameters: ProjectedRenderMaterialParams): void;
     /**
      * Resize our Mesh
      * @param boundingRect - the new bounding rectangle

@@ -35,13 +35,10 @@ export interface GPURendererParams {
   /** Set the {@link GPUCanvasContext | context} alpha mode */
   alphaMode?: GPUCanvasAlphaMode
 
-  /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
-  multisampled?: boolean
-
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters */
   renderPass?: {
     /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true` */
-    depth: RenderPassParams['depth']
+    useDepth: RenderPassParams['useDepth']
     /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4` */
     sampleCount: RenderPassParams['sampleCount']
     /** The {@link GPUColor | color values} to clear to before drawing the {@link GPURenderer#renderPass | renderer RenderPass}. Default to `[0, 0, 0, 0]` */
@@ -86,15 +83,10 @@ export class GPURenderer {
   /** Options used to create this {@link GPURenderer} */
   options: GPURendererParams
 
-  /** Whether the {@link GPURenderer} should add an extra {@link ShaderPass} MSAA pass after drawing the whole scene. */
-  multisampled: boolean
   /** The {@link RenderPass | render pass} used to render our result to screen */
   renderPass: RenderPass
   /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth */
   postProcessingPass: RenderPass
-
-  /** {@link RenderPass | Multisampled render pass} used by an internal {@link ShaderPass} for MSAA, if {@link multisampled} is set to `true` */
-  //multisamplingPass: RenderPass | undefined
 
   /** The {@link Scene} used */
   scene: Scene
@@ -151,7 +143,6 @@ export class GPURenderer {
     pixelRatio = 1,
     preferredFormat,
     alphaMode = 'premultiplied',
-    multisampled = true,
     renderPass,
   }: GPURendererParams) {
     this.type = 'GPURenderer'
@@ -161,7 +152,7 @@ export class GPURenderer {
     this.deviceManager.addRenderer(this)
 
     // render pass default values
-    renderPass = { ...{ depth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
+    renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
     preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat()
 
     this.options = {
@@ -170,7 +161,6 @@ export class GPURenderer {
       pixelRatio,
       preferredFormat,
       alphaMode,
-      multisampled,
       renderPass,
     }
 
@@ -246,13 +236,16 @@ export class GPURenderer {
    * Resize all tracked objects
    */
   onResize() {
+    // resize render textures first
+    this.renderTextures.forEach((renderTexture) => {
+      renderTexture.resize()
+    })
+
     // resize render & shader passes
     this.renderPass?.resize()
     this.postProcessingPass?.resize()
-    //this.multisamplingPass?.resize()
 
-    this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
-    this.renderTextures.forEach((renderTexture) => renderTexture.resize())
+    this.renderTargets.forEach((renderTarget) => renderTarget.resize())
 
     // force compute passes onAfterResize callback
     this.computePasses.forEach((computePass) => computePass.resize())
@@ -427,19 +420,14 @@ export class GPURenderer {
 
     // recreate all render textures first
     this.renderTextures.forEach((renderTexture) => {
-      renderTexture.forceResize({
-        width: Math.floor(this.pixelRatioBoundingRect.width),
-        height: Math.floor(this.pixelRatioBoundingRect.height),
-        depth: 1,
-      })
+      renderTexture.createTexture()
     })
 
     // resize render passes/recreate their textures
     this.renderPass?.resize()
     this.postProcessingPass?.resize()
-    //this.multisamplingPass?.resize()
 
-    this.renderTargets.forEach((renderTarget) => renderTarget.resize(this.pixelRatioBoundingRect))
+    this.renderTargets.forEach((renderTarget) => renderTarget.resize())
 
     // restore context of all our scene objects
     this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext())
@@ -457,35 +445,14 @@ export class GPURenderer {
       label: 'Main render pass',
       targetFormat: this.options.preferredFormat,
       ...this.options.renderPass,
-    })
+    } as RenderPassParams)
 
     this.postProcessingPass = new RenderPass(this, {
       label: 'Post processing render pass',
       targetFormat: this.options.preferredFormat,
-      depth: false,
+      useDepth: false,
       sampleCount: this.options.renderPass.sampleCount, // TODO?
     })
-
-    // TODO
-    // if (this.options.multisampled) {
-    //   this.multisamplingPass = new RenderPass(this, {
-    //     label: 'MSAA render pass',
-    //     targetFormat: this.options.preferredFormat,
-    //     depth: false,
-    //     loadOp: 'load',
-    //     sampleCount: 4,
-    //   })
-    //
-    //   const resolveTexture = new RenderTexture(this, {
-    //     label: 'MSAA render pass resolve texture',
-    //     name: 'resolveTexture',
-    //     format: this.options.preferredFormat,
-    //   })
-    //
-    //   this.multisamplingPass.descriptor.colorAttachments[0].resolveTarget = resolveTexture.texture.createView({
-    //     label: 'MSAA render pass resolve texture view',
-    //   })
-    // }
   }
 
   /**
@@ -571,11 +538,13 @@ export class GPURenderer {
 
     if (!hasCommandEncoder) {
       commandEncoder = this.device?.createCommandEncoder({ label: 'Copy buffer command encoder' })
+      !this.production && commandEncoder.pushDebugGroup('Copy buffer command encoder')
     }
 
     commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size)
 
     if (!hasCommandEncoder) {
+      !this.production && commandEncoder.popDebugGroup()
       const commandBuffer = commandEncoder.finish()
       this.device?.queue.submit([commandBuffer])
     }
@@ -904,15 +873,19 @@ export class GPURenderer {
    * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
    * @returns - the {@link GPUTexture | current render texture}
    */
-  setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture: GPUTexture | null = null) {
+  setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture: GPUTexture | null = null): GPUTexture | null {
+    if (!renderPass.options.colorAttachments.length || !renderPass.options.shouldUpdateView) {
+      return null
+    }
+
     if (!renderTexture) {
       renderTexture = this.context.getCurrentTexture()
       renderTexture.label = `${this.type} context current texture`
     }
 
     if (renderPass.options.sampleCount > 1) {
-      renderPass.descriptor.colorAttachments[0].view = renderPass.viewTexture.texture.createView({
-        label: renderPass.viewTexture.options.label + ' view',
+      renderPass.descriptor.colorAttachments[0].view = renderPass.viewTextures[0].texture.createView({
+        label: renderPass.viewTextures[0].options.label + ' view',
       })
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
         label: renderTexture.label + ' resolve target view',
@@ -956,8 +929,9 @@ export class GPURenderer {
    */
   renderOnce(objects: SceneObject[]) {
     const commandEncoder = this.device?.createCommandEncoder({
-      label: 'Renderer once command encoder',
+      label: 'Render once command encoder',
     })
+    !this.production && commandEncoder.pushDebugGroup('Render once command encoder')
 
     this.pipelineManager.resetCurrentPipeline()
 
@@ -969,6 +943,7 @@ export class GPURenderer {
       }
     })
 
+    !this.production && commandEncoder.popDebugGroup()
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
 
@@ -985,6 +960,7 @@ export class GPURenderer {
 
     if (!hasCommandEncoder) {
       commandEncoder = this.device?.createCommandEncoder({ label: 'Force clear command encoder' })
+      !this.production && commandEncoder.pushDebugGroup('Force clear command encoder')
     }
 
     this.setRenderPassCurrentTexture(this.renderPass)
@@ -992,6 +968,7 @@ export class GPURenderer {
     pass.end()
 
     if (!hasCommandEncoder) {
+      !this.production && commandEncoder.popDebugGroup()
       const commandBuffer = commandEncoder.finish()
       this.device?.queue.submit([commandBuffer])
     }
@@ -1027,12 +1004,6 @@ export class GPURenderer {
 
     this.scene?.render(commandEncoder)
 
-    // TODO not working
-    // if (this.options.multisampled && this.multisamplingPass) {
-    //   const pass = commandEncoder.beginRenderPass(this.multisamplingPass.descriptor)
-    //   pass.end()
-    // }
-
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
     this.onAfterRenderScene.execute(commandEncoder)
   }
@@ -1046,7 +1017,6 @@ export class GPURenderer {
     // destroy render passes
     this.renderPass?.destroy()
     this.postProcessingPass?.destroy()
-    //this.multisamplingPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())

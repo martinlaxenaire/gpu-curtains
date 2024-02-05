@@ -89,6 +89,10 @@ export declare class Camera extends Object3D {
      */
     updateModelMatrix(): void;
     /**
+     * Update our world matrix and tell our view matrix to update as well
+     */
+    updateWorldMatrix(): void;
+    /**
      * Get the {@link Camera} {@link fov | field of view}
      */
     get fov(): number;

@@ -1,7 +1,7 @@
 // Goal of this test is to help debug texture transformations
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
-  const { GPUCurtains, Plane } = await import(path)
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const { GPUCurtains, Plane } = await import(/* @vite-ignore */ path)
 
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({

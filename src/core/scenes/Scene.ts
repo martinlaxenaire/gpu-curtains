@@ -9,6 +9,7 @@ import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { RenderPass } from '../renderPasses/RenderPass'
 import { RenderTexture } from '../textures/RenderTexture'
+import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
 
 /**
  * Meshes rendering order is dependant of their transparency setting
@@ -130,7 +131,9 @@ export class Scene {
       return 0
     } else {
       return renderPassEntry.element
-        ? 1
+        ? renderPassEntry.element.visible
+          ? 1
+          : 0
         : renderPassEntry.stack.unProjected.opaque.length +
             renderPassEntry.stack.unProjected.transparent.length +
             renderPassEntry.stack.projected.opaque.length +
@@ -284,7 +287,7 @@ export class Scene {
       : (commandEncoder, swapChainTexture) => {
           // draw the content into our render texture
           // if it's a global post processing pass, copy the context current texture into its renderTexture
-          if (shaderPass.renderTexture) {
+          if (shaderPass.renderTexture && swapChainTexture) {
             commandEncoder.copyTextureToTexture(
               {
                 texture: swapChainTexture,
@@ -303,7 +306,7 @@ export class Scene {
     const onAfterRenderPass = shaderPass.renderTarget
       ? (commandEncoder, swapChainTexture) => {
           // if we render to a target, copy the result so we can chain render to textures
-          if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture) {
+          if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture && swapChainTexture) {
             commandEncoder.copyTextureToTexture(
               {
                 texture: swapChainTexture,
@@ -451,6 +454,14 @@ export class Scene {
 
     // now begin our actual render pass
     const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor)
+    !this.renderer.production &&
+      pass.pushDebugGroup(
+        renderPassEntry.element
+          ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor`
+          : `Render stack pass using ${renderPassEntry.renderPass.options.label}${
+              renderPassEntry.renderTexture ? ' onto ' + renderPassEntry.renderTexture.options.label : ''
+            }`
+      )
 
     // pass entries can have a single element or a stack
     if (renderPassEntry.element) {
@@ -475,6 +486,7 @@ export class Scene {
       }
     }
 
+    !this.renderer.production && pass.popDebugGroup()
     pass.end()
 
     renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
@@ -502,7 +514,7 @@ export class Scene {
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0
 
-      this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry, index) => {
+      this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         // early bail if there's nothing to draw
         if (!this.getRenderPassEntryLength(renderPassEntry)) return
 
@@ -517,5 +529,117 @@ export class Scene {
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)
       })
     }
+  }
+
+  /**
+   * Logs all the main commands executed during each {@link Scene#render | Scene render} calls.
+   */
+  logRenderCommands() {
+    const renderCommands = []
+
+    this.computePassEntries.forEach((computePass) => {
+      renderCommands.push({
+        command: 'Render ComputePass',
+        content: computePass.options.label,
+      })
+
+      computePass.material.bindGroups.forEach((bindGroup) => {
+        bindGroup.bufferBindings.forEach((binding: WritableBufferBinding) => {
+          if (binding.shouldCopyResult) {
+            renderCommands.push({
+              command: `Copy buffer to buffer`,
+              source: `${binding.name} buffer`,
+              destination: `${binding.name} result buffer`,
+            })
+          }
+        })
+      })
+    })
+
+    for (const renderPassEntryType in this.renderPassEntries) {
+      let passDrawnCount = 0
+
+      this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
+        // early bail if there's nothing to draw
+        if (!this.getRenderPassEntryLength(renderPassEntry)) return
+
+        const destination = !renderPassEntry.renderPass.options.useColorAttachments
+          ? undefined
+          : renderPassEntry.renderTexture
+          ? `${renderPassEntry.renderTexture.options.label}`
+          : renderPassEntry.renderPass.options.colorAttachments.length > 1
+          ? 'Multiple render target'
+          : 'Context current texture'
+
+        let descriptor = renderPassEntry.renderPass.options.label
+
+        const operations = {
+          loadOp: renderPassEntry.renderPass.options.useColorAttachments
+            ? renderPassEntryType === 'screen' && passDrawnCount > 0
+              ? 'load'
+              : renderPassEntry.renderPass.options.loadOp
+            : undefined,
+          depthLoadOp: undefined,
+        }
+
+        if (renderPassEntry.renderPass.options.useDepth) {
+          operations.depthLoadOp = renderPassEntry.renderPass.options.depthLoadOp
+        }
+
+        passDrawnCount++
+
+        if (renderPassEntry.element) {
+          if (renderPassEntry.element.type === 'ShaderPass' && !renderPassEntry.element.renderTarget) {
+            renderCommands.push({
+              command: `Copy texture to texture`,
+              source: destination,
+              destination: `${renderPassEntry.element.options.label} renderTexture`,
+            })
+
+            operations.loadOp = 'clear'
+          }
+
+          descriptor += ' ' + JSON.stringify(operations)
+
+          renderCommands.push({
+            command: `Render ${renderPassEntry.element.type}`,
+            source: renderPassEntry.element.options.label,
+            destination,
+            descriptor,
+          })
+
+          if (renderPassEntry.element.type === 'ShaderPass' && renderPassEntry.element.renderTarget) {
+            renderCommands.push({
+              command: `Copy texture to texture`,
+              source: destination,
+              destination: `${renderPassEntry.element.renderTarget.options.label} renderTexture`,
+            })
+          } else if (renderPassEntry.element.type === 'PingPongPlane') {
+            renderCommands.push({
+              command: `Copy texture to texture`,
+              source: destination,
+              destination: `${renderPassEntry.element.renderTexture.options.label}`,
+            })
+          }
+        } else if (renderPassEntry.stack) {
+          descriptor += ' ' + JSON.stringify(operations)
+
+          for (const stackType in renderPassEntry.stack) {
+            for (const objectType in renderPassEntry.stack[stackType]) {
+              if (renderPassEntry.stack[stackType][objectType].length) {
+                renderCommands.push({
+                  command: `Render stack (${stackType} ${objectType} objects)`,
+                  source: renderPassEntry.stack[stackType][objectType],
+                  destination,
+                  descriptor,
+                })
+              }
+            }
+          }
+        }
+      })
+    }
+
+    console.table(renderCommands)
   }
 }

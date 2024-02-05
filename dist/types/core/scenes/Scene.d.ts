@@ -171,4 +171,8 @@ export declare class Scene {
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder: GPUCommandEncoder): void;
+    /**
+     * Logs all the main commands executed during each {@link Scene#render | Scene render} calls.
+     */
+    logRenderCommands(): void;
 }

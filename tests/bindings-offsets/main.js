@@ -1,7 +1,7 @@
 // Goal of this test is to help debug and visualize buffer binding alignments
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index' : '../../dist/gpu-curtains.mjs'
-  const { BufferBinding, GPUCurtains, Vec2, Vec3 } = await import(path)
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const { BufferBinding, GPUCurtains, Vec2, Vec3 } = await import(/* @vite-ignore */ path)
 
   // set up our WebGL context and append the canvas to our wrapper
   const gpuCurtains = new GPUCurtains({

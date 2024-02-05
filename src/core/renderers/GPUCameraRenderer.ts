@@ -55,7 +55,6 @@ export class GPUCameraRenderer extends GPURenderer {
     pixelRatio = 1,
     preferredFormat,
     alphaMode = 'premultiplied',
-    multisampled = true,
     renderPass,
     camera = {},
   }: GPUCameraRendererParams) {
@@ -65,13 +64,12 @@ export class GPUCameraRenderer extends GPURenderer {
       pixelRatio,
       preferredFormat,
       alphaMode,
-      multisampled,
       renderPass,
     })
 
     this.type = 'GPUCameraRenderer'
 
-    camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera }
+    camera = { ...{ fov: 50, near: 0.01, far: 150 }, ...camera }
 
     this.options = {
       ...this.options,

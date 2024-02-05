@@ -168,8 +168,8 @@ export class ComputePass {
       shaders,
       ...(autoRender !== undefined && { autoRender }),
       ...(renderOrder !== undefined && { renderOrder }),
-      ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       ...(dispatchSize !== undefined && { dispatchSize }),
+      useAsyncPipeline: useAsyncPipeline === undefined ? true : useAsyncPipeline,
       texturesOptions, // TODO default
     }
 
@@ -471,7 +471,11 @@ export class ComputePass {
     // no point to render if the WebGPU device is not ready
     if (!this.renderer.ready) return
 
+    !this.renderer.production && pass.pushDebugGroup(this.options.label)
+
     this.onRenderPass(pass)
+
+    !this.renderer.production && pass.popDebugGroup()
 
     this.onAfterRenderPass()
   }

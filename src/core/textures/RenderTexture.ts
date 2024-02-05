@@ -21,9 +21,10 @@ export interface RenderTextureBaseParams {
   /** Name of the {@link RenderTexture} to use in the {@link TextureBinding | texture binding} */
   name?: string
 
-  /** Optional size of the {@link RenderTexture#texture | texture} */
-  size?: TextureSize
-  /** Whether to use this {@link RenderTexture} as a regular or storage texture */
+  /** Optional fixed size of the {@link RenderTexture#texture | texture}. If set, the {@link RenderTexture} will never be resized and always keep that size. */
+  fixedSize?: TextureSize
+
+  /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
   usage?: RenderTextureBindingType
   /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
   format?: GPUTextureFormat
@@ -98,6 +99,9 @@ export class RenderTexture {
   /** Array of {@link core/bindings/Binding.Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding} */
   bindings: BindGroupBindingElement[]
 
+  /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
+  #autoResize = true
+
   /**
    * RenderTexture constructor
    * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
@@ -122,10 +126,14 @@ export class RenderTexture {
     }
 
     // sizes
-    this.size = this.options.size ?? {
+    this.size = this.options.fixedSize ?? {
       width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
       height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
       depth: 1,
+    }
+
+    if (this.options.fixedSize) {
+      this.#autoResize = false
     }
 
     // struct
@@ -166,6 +174,7 @@ export class RenderTexture {
   createTexture() {
     if (this.options.fromTexture) {
       // copy the GPU texture
+      this.options.format = this.options.fromTexture.options.format
       this.copyGPUTexture(this.options.fromTexture.texture)
       return
     }
@@ -175,13 +184,13 @@ export class RenderTexture {
     this.texture = this.renderer.createTexture({
       label: this.options.label,
       format: this.options.format,
-      size: [this.size.width, this.size.height, this.size.depth],
+      size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension === '1d' ? '1d' : this.options.viewDimension === '3d' ? '3d' : '2d',
       sampleCount: this.options.sampleCount,
       usage:
         // TODO let user chose?
         // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-        this.options.usage !== 'storageTexture'
+        this.options.usage !== 'storage'
           ? GPUTextureUsage.TEXTURE_BINDING |
             GPUTextureUsage.COPY_SRC |
             GPUTextureUsage.COPY_DST |
@@ -219,19 +228,12 @@ export class RenderTexture {
   }
 
   /**
-   * Force a {@link RenderTexture} to be recreated with the new size
-   * @param size - new {@link TextureSize | size} to set
-   */
-  forceResize(size: TextureSize) {
-    this.size = size
-    this.createTexture()
-  }
-
-  /**
    * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
    * @param size - the optional new {@link TextureSize | size} to set
    */
   resize(size: TextureSize | null = null) {
+    if (!this.#autoResize) return
+
     if (!size) {
       size = {
         width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
@@ -245,7 +247,8 @@ export class RenderTexture {
       return
     }
 
-    this.forceResize(size)
+    this.size = size
+    this.createTexture()
   }
 
   /**

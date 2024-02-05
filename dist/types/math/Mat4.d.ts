@@ -93,7 +93,7 @@ export declare class Mat4 {
     premultiplyScale(vector?: Vec3): Mat4;
     /**
      * Get the {@link Mat4} inverse
-     * @returns - the {@link Mat4} inverted
+     * @returns - the inverted {@link Mat4}
      */
     invert(): Mat4;
     /**
@@ -101,6 +101,11 @@ export declare class Mat4 {
      * @returns - inverted cloned {@link Mat4}
      */
     getInverse(): Mat4;
+    /**
+     * Transpose this {@link Mat4}
+     * @returns - the transposed {@link Mat4}
+     */
+    transpose(): Mat4;
     /**
      * Translate a {@link Mat4}
      * @param vector - translation {@link Vec3 | vector} to use
