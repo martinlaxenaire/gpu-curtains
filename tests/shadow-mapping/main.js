@@ -183,8 +183,9 @@ window.addEventListener('load', async () => {
     
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
-      vsOutput.normal = attributes.normal;
-      //vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
+      //vsOutput.normal = attributes.normal;
+      //vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
       
       // XY is in (-1, 1) space, Z is in (0, 1) space
       let posFromLight = lightning.lightViewProjectionMatrix * matrices.world * vec4(attributes.position, 1.0);
@@ -325,7 +326,7 @@ window.addEventListener('load', async () => {
 
   createMeshDepthMaterial(sphere)
 
-  sphere.position.y = 4
+  sphere.position.y = 3
   sphere.scale.set(2)
 
   // create floor
@@ -377,7 +378,7 @@ window.addEventListener('load', async () => {
 
   createMeshDepthMaterial(floor)
 
-  floor.rotation.x = -Math.PI / 2
+  floor.rotation.x = Math.PI / 2
   floor.scale.set(20, 20, 1)
 
   // now add the depth pre-pass
