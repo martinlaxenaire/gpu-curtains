@@ -6,6 +6,8 @@ import { RenderTexture } from '../textures/RenderTexture'
 export interface ColorAttachmentParams {
   /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
   loadOp?: GPULoadOp
+  /** The {@link GPUStoreOp | store operation} to perform while drawing this {@link RenderPass} */
+  storeOp?: GPUStoreOp
   /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
   clearValue?: GPUColor
   /** Optional format of the color attachment texture */
@@ -19,7 +21,7 @@ export interface RenderPassParams {
   /** The label of the {@link RenderPass}, sent to various GPU objects for debugging purpose */
   label?: string
 
-  /** Whether the {@link RenderPass#viewTexture | view texture} should use multisampling or not */
+  /** Whether the {@link RenderPass | view and depth textures} should use multisampling or not */
   sampleCount?: GPUSize32
 
   /** Whether this {@link RenderPass} should handle a view texture */
@@ -28,6 +30,8 @@ export interface RenderPassParams {
   shouldUpdateView?: boolean
   /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
   loadOp?: GPULoadOp
+  /** The {@link GPUStoreOp | store operation} to perform while drawing this {@link RenderPass} */
+  storeOp?: GPUStoreOp
   /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
   clearValue?: GPUColor
   /** Optional format of the color attachment texture */
@@ -41,14 +45,16 @@ export interface RenderPassParams {
   depthTexture?: RenderTexture
   /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
   depthLoadOp?: GPULoadOp
+  /** The {@link GPUStoreOp | depth store operation} to perform while drawing this {@link RenderPass} */
+  depthStoreOp?: GPUStoreOp
   /** The depth clear value to clear to before drawing this {@link RenderPass} */
-  depthClearValue?: GPURenderPassDepthStencilAttachment['depthClearValue']
+  depthClearValue?: number
   /** Optional format of the depth texture */
   depthFormat?: GPUTextureFormat
 }
 
 /**
- * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to a {@link RenderPass#viewTexture | view texture} using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
+ * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link GPURenderPassDescriptor | render pass descriptor}.
  */
 export class RenderPass {
   /** {@link Renderer} used by this {@link RenderPass} */
@@ -84,6 +90,7 @@ export class RenderPass {
       useColorAttachments = true,
       shouldUpdateView = true,
       loadOp = 'clear' as GPULoadOp,
+      storeOp = 'store' as GPUStoreOp,
       clearValue = [0, 0, 0, 0],
       targetFormat,
       colorAttachments = [],
@@ -91,6 +98,7 @@ export class RenderPass {
       useDepth = true,
       depthTexture = null,
       depthLoadOp = 'clear' as GPULoadOp,
+      depthStoreOp = 'store' as GPUStoreOp,
       depthClearValue = 1,
       depthFormat = 'depth24plus' as GPUTextureFormat,
     } = {} as RenderPassParams
@@ -108,6 +116,7 @@ export class RenderPass {
     if (useColorAttachments) {
       const defaultColorAttachment = {
         loadOp,
+        storeOp,
         clearValue,
         targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       }
@@ -115,7 +124,9 @@ export class RenderPass {
       if (!colorAttachments.length) {
         colorAttachments = [defaultColorAttachment]
       } else {
-        colorAttachments[0] = { ...defaultColorAttachment, ...colorAttachments[0] }
+        colorAttachments = colorAttachments.map((colorAttachment) => {
+          return { ...defaultColorAttachment, ...colorAttachment }
+        })
       }
     }
 
@@ -126,6 +137,7 @@ export class RenderPass {
       useColorAttachments,
       shouldUpdateView,
       loadOp,
+      storeOp,
       clearValue,
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       colorAttachments,
@@ -133,6 +145,7 @@ export class RenderPass {
       useDepth,
       ...(depthTexture !== undefined && { depthTexture }),
       depthLoadOp,
+      depthStoreOp,
       depthClearValue,
       depthFormat,
     }
@@ -206,7 +219,7 @@ export class RenderPass {
           // storeOp: 'store' means store the result of what we draw.
           // We could also pass 'discard' which would throw away what we draw.
           // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
-          storeOp: 'store',
+          storeOp: colorAttachment.storeOp,
         }
       }),
 
@@ -218,7 +231,7 @@ export class RenderPass {
           depthClearValue: this.options.depthClearValue,
           // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
           depthLoadOp: this.options.depthLoadOp,
-          depthStoreOp: 'store',
+          depthStoreOp: this.options.depthStoreOp,
         },
       }),
     } as GPURenderPassDescriptor
@@ -235,13 +248,11 @@ export class RenderPass {
       })
     }
 
-    if (this.options.useColorAttachments) {
-      this.viewTextures.forEach((viewTexture, index) => {
-        this.descriptor.colorAttachments[index].view = viewTexture.texture.createView({
-          label: viewTexture.options.label + ' view',
-        })
+    this.viewTextures.forEach((viewTexture, index) => {
+      this.descriptor.colorAttachments[index].view = viewTexture.texture.createView({
+        label: viewTexture.options.label + ' view',
       })
-    }
+    })
   }
 
   /**

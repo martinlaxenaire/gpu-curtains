@@ -49,7 +49,7 @@ window.addEventListener('load', async () => {
   camera.lookAt(new Vec3(0, 2, 0))
 
   gpuCurtains.onRender(() => {
-    cameraPivot.rotation.y += 0.01
+    cameraPivot.rotation.y -= 0.01
   })
 
   const lightPos = [10, 30, 15]
