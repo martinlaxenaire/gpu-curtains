@@ -183,8 +183,8 @@ window.addEventListener('load', async () => {
 
     // cubeMesh.position.x = (i - 5) * 3
     // cubeMesh.position.z = (i - 5) * 3
-    cubeMesh.position.x = Math.random() * 20 - 10
-    cubeMesh.position.z = Math.random() * 20 - 10
+    cubeMesh.position.x = Math.random() * 30 - 15
+    cubeMesh.position.z = Math.random() * 30 - 15
     cubeMesh.position.y = Math.random() * 3 + 2
 
     let rotationSpeed = Math.random() * 0.02 - 0.01
@@ -253,7 +253,7 @@ window.addEventListener('load', async () => {
     sampleCount,
   })
 
-  const nbLights = 50
+  const nbLights = 125
   const lightsRadius = new Float32Array(nbLights)
   const lightsPositions = new Float32Array(4 * nbLights)
   const lightsColors = new Float32Array(3 * nbLights)

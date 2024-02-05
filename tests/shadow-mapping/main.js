@@ -27,6 +27,8 @@ window.addEventListener('load', async () => {
     Sampler,
     Object3D,
     Mat4,
+    Plane,
+    BufferBinding,
   } = await import(/* @vite-ignore */ path)
 
   // set up our WebGPU context and append the canvas to our wrapper
@@ -53,14 +55,14 @@ window.addEventListener('load', async () => {
     cameraPivot.rotation.y -= 0.01
   })
 
-  const lightPos = [10, 30, 15]
+  const lightPos = [10, 20, 10]
   const orthoSettings = {
-    left: -40,
-    right: 40,
-    bottom: -40,
-    top: 40,
-    near: -50,
-    far: 250,
+    left: -30,
+    right: 30,
+    bottom: -30,
+    top: 30,
+    near: 0.1,
+    far: 100,
   }
 
   // using Mat4
@@ -95,13 +97,13 @@ window.addEventListener('load', async () => {
   makeOrtho(curtainsLightProjectionMatrix, orthoSettings)
 
   const curtainsLightViewProjMatrix = new Mat4().multiplyMatrices(
-    curtainsLightViewMatrix,
-    curtainsLightProjectionMatrix
+    curtainsLightProjectionMatrix,
+    curtainsLightViewMatrix
   )
 
   // using wgpu-matrix
 
-  const upVector = vec3.fromValues(0, 1, 0)
+  const upVector = vec3.fromValues(0, 0, 1)
   const origin = vec3.fromValues(0, 0, 0)
   const wgpuLightPosition = vec3.fromValues(lightPos[0], lightPos[1], lightPos[2])
   const wgpuLightViewMatrix = mat4.lookAt(wgpuLightPosition, origin, upVector)
@@ -123,6 +125,8 @@ window.addEventListener('load', async () => {
 
   const lightPosition = wgpuLightPosition
   const lightViewProjMatrix = wgpuLightViewProjMatrix
+  // const lightPosition = curtainsLightPosition
+  // const lightViewProjMatrix = curtainsLightViewProjMatrix
 
   //const shadowMapTextureFormat = 'depth32float'
   const shadowMapTextureFormat = 'depth24plus'
@@ -143,7 +147,6 @@ window.addEventListener('load', async () => {
     useColorAttachments: false,
     depthTexture: shadowDepthTexture,
     sampleCount: 1,
-    //depthLoadOp: 'load',
   })
 
   const lessCompareSampler = new Sampler(gpuCurtains, {
@@ -152,8 +155,6 @@ window.addEventListener('load', async () => {
     compare: 'less',
     type: 'comparison',
   })
-
-  console.log('depth target', depthTarget)
 
   const depthVs = /* wgsl */ `
     struct VertexOutput {
@@ -183,6 +184,7 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
       vsOutput.normal = attributes.normal;
+      //vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
       
       // XY is in (-1, 1) space, Z is in (0, 1) space
       let posFromLight = lightning.lightViewProjectionMatrix * matrices.world * vec4(attributes.position, 1.0);
@@ -239,179 +241,175 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const depthMaterial = new RenderMaterial(gpuCurtains, {
-    label: 'Depth render material',
+  const lightBufferBinding = new BufferBinding({
+    name: 'lightning',
+    bindingType: 'uniform',
+    struct: {
+      lightViewProjectionMatrix: {
+        type: 'mat4x4f',
+        value: lightViewProjMatrix,
+      },
+      lightPosition: {
+        type: 'vec3f',
+        value: lightPosition,
+      },
+    },
+  })
+
+  const depthMeshes = []
+
+  const createMeshDepthMaterial = (mesh) => {
+    mesh.userData.depthMaterial = new RenderMaterial(gpuCurtains, {
+      label: mesh.label + ' Depth render material',
+      ...mesh.material.options.rendering,
+      shaders: {
+        vertex: {
+          code: depthVs,
+        },
+        fragment: false,
+      },
+      sampleCount: depthTarget.renderPass.options.sampleCount,
+      bindings: [lightBufferBinding, mesh.material.getBufferBindingByName('matrices')],
+    })
+
+    mesh.userData.depthMaterial.setAttributesFromGeometry(mesh.geometry)
+
+    // keep track of original material as well
+    mesh.userData.originalMaterial = mesh.material
+
+    depthMeshes.push(mesh)
+  }
+
+  // create sphere
+
+  const sphereGeometry = new SphereGeometry()
+
+  const sphere = new Mesh(gpuCurtains, {
+    label: 'Sphere',
+    geometry: sphereGeometry,
+    renderTextures: [shadowDepthTexture],
+    samplers: [lessCompareSampler],
     shaders: {
       vertex: {
-        code: depthVs,
+        code: meshVs,
       },
-      fragment: false,
+      fragment: {
+        code: meshFs,
+      },
     },
-    depthFormat: shadowMapTextureFormat,
+    bindings: [lightBufferBinding],
     uniforms: {
-      lightning: {
+      shading: {
         struct: {
-          lightViewProjectionMatrix: {
-            type: 'mat4x4f',
-            value: lightViewProjMatrix,
-          },
-          lightPosition: {
+          color: {
             type: 'vec3f',
-            value: lightPosition,
+            value: new Vec3(1, 0, 1),
+          },
+        },
+      },
+      normals: {
+        struct: {
+          inverseTransposeMatrix: {
+            type: 'mat4x4f',
+            value: new Mat4(),
           },
         },
       },
     },
   })
 
-  //await depthMaterial.compileMaterial()
-  console.log(depthMaterial)
+  sphere.onRender(() => {
+    if (sphere.uniforms.normals) {
+      sphere.uniforms.normals.inverseTransposeMatrix.value.copy(sphere.worldMatrix).invert().transpose()
+      sphere.material.shouldUpdateInputsBindings('normals', 'inverseTransposeMatrix')
+    }
+  })
 
-  const spheres = {
-    depth: new Mesh(gpuCurtains, {
-      label: 'Sphere depth',
-      geometry: new SphereGeometry(),
-      renderTarget: depthTarget,
-      shaders: {
-        vertex: {
-          code: depthVs,
-        },
-        fragment: false,
+  createMeshDepthMaterial(sphere)
+
+  sphere.position.y = 4
+  sphere.scale.set(2)
+
+  // create floor
+
+  const planeGeometry = new PlaneGeometry()
+
+  const floor = new Mesh(gpuCurtains, {
+    label: 'Floor',
+    geometry: planeGeometry,
+    renderTextures: [shadowDepthTexture],
+    samplers: [lessCompareSampler],
+    frustumCulled: false, // always draw the floor
+    cullMode: 'none',
+    shaders: {
+      vertex: {
+        code: meshVs,
       },
-      depthFormat: shadowMapTextureFormat,
-      uniforms: {
-        lightning: {
-          struct: {
-            lightViewProjectionMatrix: {
-              type: 'mat4x4f',
-              value: lightViewProjMatrix,
-            },
-            lightPosition: {
-              type: 'vec3f',
-              value: lightPosition,
-            },
+      fragment: {
+        code: meshFs,
+      },
+    },
+    bindings: [lightBufferBinding],
+    uniforms: {
+      shading: {
+        struct: {
+          color: {
+            type: 'vec3f',
+            value: new Vec3(0.5),
           },
         },
       },
-    }),
-    screen: new Mesh(gpuCurtains, {
-      label: 'Sphere screen',
-      geometry: new SphereGeometry(),
-      renderTextures: [shadowDepthTexture],
-      samplers: [lessCompareSampler],
-      shaders: {
-        vertex: {
-          code: meshVs,
-        },
-        fragment: {
-          code: meshFs,
-        },
-      },
-      uniforms: {
-        lightning: {
-          struct: {
-            lightViewProjectionMatrix: {
-              type: 'mat4x4f',
-              value: lightViewProjMatrix,
-            },
-            lightPosition: {
-              type: 'vec3f',
-              value: lightPosition,
-            },
-          },
-        },
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: new Vec3(1, 0, 1),
-            },
+      normals: {
+        struct: {
+          inverseTransposeMatrix: {
+            type: 'mat4x4f',
+            value: new Mat4(),
           },
         },
       },
-    }),
-  }
+    },
+  })
 
-  spheres.depth.position.y = 4
-  spheres.screen.position.y = 4
+  floor.onRender(() => {
+    if (floor.uniforms.normals) {
+      floor.uniforms.normals.inverseTransposeMatrix.value.copy(floor.worldMatrix).invert().transpose()
+      floor.material.shouldUpdateInputsBindings('normals', 'inverseTransposeMatrix')
+    }
+  })
 
-  spheres.depth.scale.set(2)
-  spheres.screen.scale.set(2)
+  createMeshDepthMaterial(floor)
 
-  console.log(spheres)
+  floor.rotation.x = -Math.PI / 2
+  floor.scale.set(20, 20, 1)
 
-  const floors = {
-    depth: new Mesh(gpuCurtains, {
-      geometry: new PlaneGeometry(),
-      renderTarget: depthTarget,
-      shaders: {
-        vertex: {
-          code: depthVs,
-        },
-        fragment: false,
-      },
-      depthFormat: shadowMapTextureFormat,
-      frustumCulled: false, // always draw the floor
-      cullMode: 'none',
-      uniforms: {
-        lightning: {
-          struct: {
-            lightViewProjectionMatrix: {
-              type: 'mat4x4f',
-              value: lightViewProjMatrix,
-            },
-            lightPosition: {
-              type: 'vec3f',
-              value: lightPosition,
-            },
-          },
-        },
-      },
-    }),
-    screen: new Mesh(gpuCurtains, {
-      geometry: new PlaneGeometry(),
-      frustumCulled: false, // always draw the floor
-      cullMode: 'none',
-      renderTextures: [shadowDepthTexture],
-      samplers: [lessCompareSampler],
-      shaders: {
-        vertex: {
-          code: meshVs,
-        },
-        fragment: {
-          code: meshFs,
-        },
-      },
-      uniforms: {
-        lightning: {
-          struct: {
-            lightViewProjectionMatrix: {
-              type: 'mat4x4f',
-              value: lightViewProjMatrix,
-            },
-            lightPosition: {
-              type: 'vec3f',
-              value: lightPosition,
-            },
-          },
-        },
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: new Vec3(0.5, 0.5, 0.5),
-            },
-          },
-        },
-      },
-    }),
-  }
+  // now add the depth pre-pass
+  gpuCurtains.renderer.onBeforeRenderScene.add((commandEncoder) => {
+    // assign depth material to meshes
+    depthMeshes.forEach((mesh) => {
+      mesh.material = mesh.userData.depthMaterial
+    })
 
-  floors.depth.rotation.x = -Math.PI / 2
-  floors.screen.rotation.x = -Math.PI / 2
+    // reset renderer current pipeline
+    gpuCurtains.renderer.pipelineManager.resetCurrentPipeline()
 
-  floors.depth.scale.set(20, 20, 1)
-  floors.screen.scale.set(20, 20, 1)
+    // begin depth pass
+    const depthPass = commandEncoder.beginRenderPass(depthTarget.renderPass.descriptor)
+    // set camera bind group
+    depthPass.setBindGroup(gpuCurtains.renderer.cameraBindGroup.index, gpuCurtains.renderer.cameraBindGroup.bindGroup)
+
+    // render meshes with their depth material
+    depthMeshes.forEach((mesh) => {
+      mesh.render(depthPass)
+    })
+
+    depthPass.end()
+
+    // reset depth meshes material to use the original
+    // so the scene renders them normally
+    depthMeshes.forEach((mesh) => {
+      mesh.material = mesh.userData.originalMaterial
+    })
+  })
 
   console.log(gpuCurtains)
 
@@ -420,7 +418,7 @@ window.addEventListener('load', async () => {
   const debugDepthVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
+      @location(0) originalPosition: vec4f,
     };
 
     @vertex fn main(
@@ -428,13 +426,10 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
 
-      vsOutput.position = vec4(
-        attributes.position * vec3(params.size, params.size * params.aspect, 1.0) - vec3(0.8, 0.8, 0.0),
-        1.0
-      );
       
-      vsOutput.uv = attributes.uv;
-
+      vsOutput.position = matrices.model * vec4(attributes.position, 1.0);
+      vsOutput.originalPosition = vec4(attributes.position, 1.0);
+      
       return vsOutput;
     }
   `
@@ -442,31 +437,37 @@ window.addEventListener('load', async () => {
   const debugDepthFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
+      @location(0) originalPosition: vec4f,
     };
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
+      // reconstruct uvs
+      let size = vec2f(textureDimensions(depthTexture).xy);
+      var pos = (fsInput.originalPosition.xy + 1.0) * (size.xy * 0.5);
+      
+    
       let rawDepth = textureLoad(
         depthTexture,
-        vec2<i32>(floor(vec2(fsInput.position.x, fsInput.position.y))),
+        vec2<i32>(floor(vec2(pos))),
         0
       );
       
       // remap depth into something a bit more visible
-      let depth = (1.0 - rawDepth) * 1.0;
+      let depth = (1.0 - rawDepth);
       
-      var color: vec4f = vec4(depth, depth, depth, 1.0);
+      var color: vec4f = vec4(vec3(depth), 1.0);
 
       return color;
     }
   `
+
+  const scale = new Vec3(0.2, 0.2 * (gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height), 1)
 
   const debugPlane = new Mesh(gpuCurtains, {
     label: 'Debug depth plane',
     geometry: new PlaneGeometry(),
     depthWriteEnabled: false,
     frustumCulled: false,
-    transparent: true,
     cullMode: 'none',
     shaders: {
       vertex: {
@@ -479,13 +480,9 @@ window.addEventListener('load', async () => {
     uniforms: {
       params: {
         struct: {
-          aspect: {
-            type: 'f32',
-            value: gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height,
-          },
-          size: {
-            type: 'f32',
-            value: 0.2,
+          scale: {
+            type: 'vec3f',
+            value: scale,
           },
         },
       },
@@ -496,9 +493,16 @@ window.addEventListener('load', async () => {
     label: 'Debug depth texture',
     name: 'depthTexture',
     usage: 'depth',
-    //format: shadowMapTextureFormat,
     fromTexture: shadowDepthTexture,
-    //fromTexture: depthTarget.renderPass.depthTexture,
+  })
+
+  debugPlane.transformOrigin.set(-1, -1, 0)
+
+  debugPlane.scale.copy(scale)
+
+  debugPlane.onAfterResize(() => {
+    scale.set(0.2, 0.2 * (gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height), 1)
+    debugPlane.scale.copy(scale)
   })
 
   gpuCurtains.renderer.scene.logRenderCommands()

@@ -173,6 +173,8 @@ export class RenderPass {
   createDepthTexture() {
     if (this.options.depthTexture) {
       this.depthTexture = this.options.depthTexture
+      // adjust depth format as well
+      this.options.depthFormat = this.options.depthTexture.options.format
     } else {
       this.depthTexture = new RenderTexture(this.renderer, {
         label: this.options.label + ' depth texture',

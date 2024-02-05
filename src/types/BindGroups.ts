@@ -81,6 +81,8 @@ export interface BindGroupInputs {
   uniforms?: ReadOnlyInputBindings
   /** read only or read/write storages input to pass to a {@link core/bindGroups/BindGroup.BindGroup | BindGroup} */
   storages?: ReadWriteInputBindings
+  /** array of already created {@link BindGroupBindingElement | bindings} (buffers, texture, etc.) to pass to this {@link core/bindGroups/BindGroup.BindGroup | BindGroup} */
+  bindings?: BindGroupBindingElement[]
 }
 
 /**
@@ -91,8 +93,6 @@ export interface BindGroupParams extends BindGroupInputs {
   label?: string
   /** {@link core/bindGroups/BindGroup.BindGroup | BindGroup} index (used to generate shader code) */
   index?: number
-  /** array of already created {@link BindGroupBindingElement | bindings} (buffers, texture, etc.) to pass to this {@link core/bindGroups/BindGroup.BindGroup | BindGroup} */
-  bindings?: BindGroupBindingElement[]
 }
 
 /**

@@ -89,8 +89,18 @@ export class Material {
 
     this.uuid = generateUUID()
 
-    const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, samplers, textures, renderTextures } =
-      parameters
+    const {
+      shaders,
+      label,
+      useAsyncPipeline,
+      uniforms,
+      storages,
+      bindings,
+      bindGroups,
+      samplers,
+      textures,
+      renderTextures,
+    } = parameters
 
     this.options = {
       shaders,
@@ -98,6 +108,7 @@ export class Material {
       ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       ...(uniforms !== undefined && { uniforms }),
       ...(storages !== undefined && { storages }),
+      ...(bindings !== undefined && { bindings }),
       ...(bindGroups !== undefined && { bindGroups }),
       ...(samplers !== undefined && { samplers }),
       ...(textures !== undefined && { textures }),
@@ -247,11 +258,12 @@ export class Material {
     this.inputsBindGroups = []
     this.inputsBindings = []
 
-    if (this.options.uniforms || this.options.storages) {
+    if (this.options.uniforms || this.options.storages || this.options.bindings) {
       const inputsBindGroup = new BindGroup(this.renderer, {
         label: this.options.label + ': Bindings bind group',
         uniforms: this.options.uniforms,
         storages: this.options.storages,
+        bindings: this.options.bindings,
       })
 
       this.processBindGroupBindings(inputsBindGroup)

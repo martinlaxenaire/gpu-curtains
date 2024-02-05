@@ -174,6 +174,7 @@ export class RenderTexture {
   createTexture() {
     if (this.options.fromTexture) {
       // copy the GPU texture
+      this.options.format = this.options.fromTexture.options.format
       this.copyGPUTexture(this.options.fromTexture.texture)
       return
     }
