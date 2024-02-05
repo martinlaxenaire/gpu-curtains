@@ -541,17 +541,40 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* SCENE */
 
     /**
-     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
      */
     addToScene() {
       this.renderer.meshes.push(this as unknown as ProjectedMesh)
 
-      // update sample count if needed
-      this.material?.setRenderingOptions({
-        sampleCount: this.renderTarget
-          ? this.renderTarget.renderPass.options.sampleCount
-          : this.renderer.renderPass.options.sampleCount,
-      })
+      const renderPassOptions = this.renderTarget
+        ? this.renderTarget.renderPass.options
+        : this.renderer.renderPass.options
+
+      // a Mesh render material rendering options MUST match the render pass descriptor used to draw it!
+      const renderingOptions = {
+        sampleCount: renderPassOptions.sampleCount,
+        // color attachments
+        ...(renderPassOptions.colorAttachments.length && {
+          targetFormat: renderPassOptions.colorAttachments[0].targetFormat,
+          // multiple render targets?
+          ...(renderPassOptions.colorAttachments.length > 1 && {
+            additionalTargets: renderPassOptions.colorAttachments
+              .filter((c, i) => i > 0)
+              .map((colorAttachment) => {
+                return {
+                  format: colorAttachment.targetFormat,
+                }
+              }),
+          }),
+        }),
+        // depth
+        depth: renderPassOptions.useDepth,
+        ...(renderPassOptions.useDepth && {
+          depthFormat: renderPassOptions.depthFormat,
+        }),
+      }
+
+      this.material?.setRenderingOptions(renderingOptions)
 
       if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
@@ -875,6 +898,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         // @ts-ignore
         super.resize(boundingRect)
       }
+
+      this.renderTextures?.forEach((renderTexture) => {
+        // copy from original textures again if needed
+        if (renderTexture.options.fromTexture) {
+          renderTexture.copy(renderTexture.options.fromTexture)
+        }
+      })
 
       // resize textures
       this.textures?.forEach((texture) => {

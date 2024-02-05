@@ -127,7 +127,14 @@ export class RenderMaterial extends Material {
           `${
             this.options.label
           }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties
-            .map((key) => `"${key}": ${renderingOptions[key]}`)
+            .map(
+              (key) =>
+                `"${key}": ${
+                  Array.isArray(renderingOptions[key])
+                    ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(', ')
+                    : renderingOptions[key]
+                }`
+            )
             .join(', ')} }`
         )
 

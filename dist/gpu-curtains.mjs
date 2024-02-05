@@ -967,7 +967,7 @@ class Mat4 {
   }
   /**
    * Get the {@link Mat4} inverse
-   * @returns - the {@link Mat4} inverted
+   * @returns - the inverted {@link Mat4}
    */
   invert() {
     const te = this.elements, n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15], t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44, t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44, t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44, t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
@@ -999,6 +999,33 @@ class Mat4 {
    */
   getInverse() {
     return this.clone().invert();
+  }
+  /**
+   * Transpose this {@link Mat4}
+   * @returns - the transposed {@link Mat4}
+   */
+  transpose() {
+    let t;
+    const te = this.elements;
+    t = te[1];
+    te[1] = te[4];
+    te[4] = t;
+    t = te[2];
+    te[2] = te[8];
+    te[8] = t;
+    t = te[3];
+    te[3] = te[12];
+    te[12] = t;
+    t = te[6];
+    te[6] = te[9];
+    te[9] = t;
+    t = te[7];
+    te[7] = te[13];
+    te[13] = t;
+    t = te[11];
+    te[11] = te[14];
+    te[14] = t;
+    return this;
   }
   /**
    * Translate a {@link Mat4}
@@ -1943,6 +1970,7 @@ class BufferBinding extends Binding {
           binding[key] = bindings[bindingKey][key];
         }
       }
+      binding.name = bindings[bindingKey].name ?? bindingKey;
       Object.defineProperty(binding, "value", {
         get() {
           return binding._value;
@@ -2862,15 +2890,15 @@ class Object3D {
   }
 }
 
-var __accessCheck$7 = (obj, member, msg) => {
+var __accessCheck$8 = (obj, member, msg) => {
   if (!member.has(obj))
     throw TypeError("Cannot " + msg);
 };
-var __privateGet$6 = (obj, member, getter) => {
-  __accessCheck$7(obj, member, "read from private field");
+var __privateGet$7 = (obj, member, getter) => {
+  __accessCheck$8(obj, member, "read from private field");
   return getter ? getter.call(obj) : member.get(obj);
 };
-var __privateAdd$7 = (obj, member, value) => {
+var __privateAdd$8 = (obj, member, value) => {
   if (member.has(obj))
     throw TypeError("Cannot add the same private member more than once");
   member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -2898,13 +2926,13 @@ class Texture extends Object3D {
   constructor(renderer, parameters = defaultTextureParams) {
     super();
     /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link RectSize | size} */
-    __privateAdd$7(this, _parentRatio, new Vec3(1));
+    __privateAdd$8(this, _parentRatio, new Vec3(1));
     /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
-    __privateAdd$7(this, _sourceRatio, new Vec3(1));
+    __privateAdd$8(this, _sourceRatio, new Vec3(1));
     /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
-    __privateAdd$7(this, _coverScale, new Vec3(1));
+    __privateAdd$8(this, _coverScale, new Vec3(1));
     /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
-    __privateAdd$7(this, _rotationMatrix, new Mat4());
+    __privateAdd$8(this, _rotationMatrix, new Mat4());
     // callbacks / events
     /** function assigned to the {@link onSourceLoaded} callback */
     this._onSourceLoadedCallback = () => {
@@ -3041,16 +3069,16 @@ class Texture extends Object3D {
     const parentRatio = parentWidth / parentHeight;
     const sourceRatio = this.size.width / this.size.height;
     if (parentWidth > parentHeight) {
-      __privateGet$6(this, _parentRatio).set(parentRatio, 1, 1);
-      __privateGet$6(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
+      __privateGet$7(this, _parentRatio).set(parentRatio, 1, 1);
+      __privateGet$7(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
     } else {
-      __privateGet$6(this, _parentRatio).set(1, 1 / parentRatio, 1);
-      __privateGet$6(this, _sourceRatio).set(1, sourceRatio, 1);
+      __privateGet$7(this, _parentRatio).set(1, 1 / parentRatio, 1);
+      __privateGet$7(this, _sourceRatio).set(1, sourceRatio, 1);
     }
-    const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$6(this, _parentRatio).x * __privateGet$6(this, _sourceRatio).x : __privateGet$6(this, _sourceRatio).y * __privateGet$6(this, _parentRatio).y;
-    __privateGet$6(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
-    __privateGet$6(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
-    this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$6(this, _coverScale)).premultiplyScale(__privateGet$6(this, _parentRatio)).premultiply(__privateGet$6(this, _rotationMatrix)).premultiplyScale(__privateGet$6(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
+    const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$7(this, _parentRatio).x * __privateGet$7(this, _sourceRatio).x : __privateGet$7(this, _sourceRatio).y * __privateGet$7(this, _parentRatio).y;
+    __privateGet$7(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
+    __privateGet$7(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
+    this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$7(this, _coverScale)).premultiplyScale(__privateGet$7(this, _parentRatio)).premultiply(__privateGet$7(this, _rotationMatrix)).premultiplyScale(__privateGet$7(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
   }
   /**
    * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
@@ -3515,21 +3543,21 @@ class SamplerBinding extends Binding {
   }
 }
 
-var __accessCheck$6 = (obj, member, msg) => {
+var __accessCheck$7 = (obj, member, msg) => {
   if (!member.has(obj))
     throw TypeError("Cannot " + msg);
 };
-var __privateGet$5 = (obj, member, getter) => {
-  __accessCheck$6(obj, member, "read from private field");
+var __privateGet$6 = (obj, member, getter) => {
+  __accessCheck$7(obj, member, "read from private field");
   return getter ? getter.call(obj) : member.get(obj);
 };
-var __privateAdd$6 = (obj, member, value) => {
+var __privateAdd$7 = (obj, member, value) => {
   if (member.has(obj))
     throw TypeError("Cannot add the same private member more than once");
   member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 };
-var __privateSet$4 = (obj, member, value, setter) => {
-  __accessCheck$6(obj, member, "write to private field");
+var __privateSet$5 = (obj, member, value, setter) => {
+  __accessCheck$7(obj, member, "write to private field");
   setter ? setter.call(obj, value) : member.set(obj, value);
   return value;
 };
@@ -3551,13 +3579,13 @@ class Camera extends Object3D {
   } = {}) {
     super();
     /** Private {@link Camera} field of view */
-    __privateAdd$6(this, _fov, void 0);
+    __privateAdd$7(this, _fov, void 0);
     /** Private {@link Camera} near plane */
-    __privateAdd$6(this, _near, void 0);
+    __privateAdd$7(this, _near, void 0);
     /** Private {@link Camera} far plane */
-    __privateAdd$6(this, _far, void 0);
+    __privateAdd$7(this, _far, void 0);
     /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
-    __privateAdd$6(this, _pixelRatio, void 0);
+    __privateAdd$7(this, _pixelRatio, void 0);
     this.position.set(0, 0, 10);
     this.onMatricesChanged = onMatricesChanged;
     this.size = {
@@ -3634,7 +3662,7 @@ class Camera extends Object3D {
    * Get the {@link Camera} {@link fov | field of view}
    */
   get fov() {
-    return __privateGet$5(this, _fov);
+    return __privateGet$6(this, _fov);
   }
   /**
    * Set the {@link Camera} {@link fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
@@ -3643,7 +3671,7 @@ class Camera extends Object3D {
   set fov(fov) {
     fov = Math.max(1, Math.min(fov ?? this.fov, 179));
     if (fov !== this.fov) {
-      __privateSet$4(this, _fov, fov);
+      __privateSet$5(this, _fov, fov);
       this.shouldUpdateProjectionMatrix();
     }
     this.setScreenRatios();
@@ -3653,7 +3681,7 @@ class Camera extends Object3D {
    * Get the {@link Camera} {@link near} plane value.
    */
   get near() {
-    return __privateGet$5(this, _near);
+    return __privateGet$6(this, _near);
   }
   /**
    * Set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
@@ -3662,7 +3690,7 @@ class Camera extends Object3D {
   set near(near) {
     near = Math.max(near ?? this.near, 0.01);
     if (near !== this.near) {
-      __privateSet$4(this, _near, near);
+      __privateSet$5(this, _near, near);
       this.shouldUpdateProjectionMatrix();
     }
   }
@@ -3670,7 +3698,7 @@ class Camera extends Object3D {
    * Get / set the {@link Camera} {@link far} plane value.
    */
   get far() {
-    return __privateGet$5(this, _far);
+    return __privateGet$6(this, _far);
   }
   /**
    * Set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
@@ -3679,7 +3707,7 @@ class Camera extends Object3D {
   set far(far) {
     far = Math.max(far ?? this.far, this.near + 1);
     if (far !== this.far) {
-      __privateSet$4(this, _far, far);
+      __privateSet$5(this, _far, far);
       this.shouldUpdateProjectionMatrix();
     }
   }
@@ -3687,14 +3715,14 @@ class Camera extends Object3D {
    * Get the {@link Camera} {@link pixelRatio} value.
    */
   get pixelRatio() {
-    return __privateGet$5(this, _pixelRatio);
+    return __privateGet$6(this, _pixelRatio);
   }
   /**
    * Set the {@link Camera} {@link pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
    * @param pixelRatio - new pixel ratio value
    */
   set pixelRatio(pixelRatio) {
-    __privateSet$4(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+    __privateSet$5(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
     this.setCSSPerspective();
   }
   /**
@@ -3879,10 +3907,28 @@ class Sampler {
   }
 }
 
+var __accessCheck$6 = (obj, member, msg) => {
+  if (!member.has(obj))
+    throw TypeError("Cannot " + msg);
+};
+var __privateGet$5 = (obj, member, getter) => {
+  __accessCheck$6(obj, member, "read from private field");
+  return getter ? getter.call(obj) : member.get(obj);
+};
+var __privateAdd$6 = (obj, member, value) => {
+  if (member.has(obj))
+    throw TypeError("Cannot add the same private member more than once");
+  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+};
+var __privateSet$4 = (obj, member, value, setter) => {
+  __accessCheck$6(obj, member, "write to private field");
+  setter ? setter.call(obj, value) : member.set(obj, value);
+  return value;
+};
+var _autoResize;
 const defaultRenderTextureParams = {
   label: "RenderTexture",
   name: "renderTexture",
-  autoResize: true,
   usage: "texture",
   access: "write",
   fromTexture: null,
@@ -3896,6 +3942,8 @@ class RenderTexture {
    * @param parameters - {@link RenderTextureParams | parameters} used to create this {@link RenderTexture}
    */
   constructor(renderer, parameters = defaultRenderTextureParams) {
+    /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
+    __privateAdd$6(this, _autoResize, true);
     renderer = renderer && renderer.renderer || renderer;
     isRenderer(renderer, parameters.label ? parameters.label + " RenderTexture" : "RenderTexture");
     this.type = "RenderTexture";
@@ -3905,11 +3953,14 @@ class RenderTexture {
     if (!this.options.format) {
       this.options.format = this.renderer.options.preferredFormat;
     }
-    this.size = this.options.size ?? {
+    this.size = this.options.fixedSize ?? {
       width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
       height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
       depth: 1
     };
+    if (this.options.fixedSize) {
+      __privateSet$4(this, _autoResize, false);
+    }
     this.setBindings();
     this.renderer.addRenderTexture(this);
     this.createTexture();
@@ -3947,7 +3998,7 @@ class RenderTexture {
     this.texture = this.renderer.createTexture({
       label: this.options.label,
       format: this.options.format,
-      size: [this.size.width, this.size.height, this.size.depth],
+      size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension === "1d" ? "1d" : this.options.viewDimension === "3d" ? "3d" : "2d",
       sampleCount: this.options.sampleCount,
       usage: (
@@ -3982,21 +4033,11 @@ class RenderTexture {
     return this.bindings[0];
   }
   /**
-   * Force a {@link RenderTexture} to be recreated with the new size
-   * @param size - new {@link TextureSize | size} to set
-   */
-  forceResize(size) {
-    if (!this.options.autoResize)
-      return;
-    this.size = size;
-    this.createTexture();
-  }
-  /**
    * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
    * @param size - the optional new {@link TextureSize | size} to set
    */
   resize(size = null) {
-    if (!this.options.autoResize)
+    if (!__privateGet$5(this, _autoResize))
       return;
     if (!size) {
       size = {
@@ -4008,7 +4049,8 @@ class RenderTexture {
     if (size.width === this.size.width && size.height === this.size.height && size.depth === this.size.depth) {
       return;
     }
-    this.forceResize(size);
+    this.size = size;
+    this.createTexture();
   }
   /**
    * Destroy our {@link RenderTexture}
@@ -4021,6 +4063,7 @@ class RenderTexture {
     this.texture = null;
   }
 }
+_autoResize = new WeakMap();
 
 class Material {
   /**
@@ -4749,8 +4792,8 @@ class ComputePass {
       shaders,
       ...autoRender !== void 0 && { autoRender },
       ...renderOrder !== void 0 && { renderOrder },
-      ...useAsyncPipeline !== void 0 && { useAsyncPipeline },
       ...dispatchSize !== void 0 && { dispatchSize },
+      useAsyncPipeline: useAsyncPipeline === void 0 ? true : useAsyncPipeline,
       texturesOptions
       // TODO default
     };
@@ -5746,7 +5789,9 @@ class RenderMaterial extends Material {
       this.pipelineEntry.options = { ...this.pipelineEntry.options, ...this.options.rendering };
       if (this.pipelineEntry.ready && newProperties.length) {
         throwWarning(
-          `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties.map((key) => `"${key}": ${renderingOptions[key]}`).join(", ")} }`
+          `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties.map(
+            (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
+          ).join(", ")} }`
         );
         this.pipelineEntry.flushPipelineEntry(this.bindGroups);
       }
@@ -5838,6 +5883,7 @@ const defaultMeshBaseParams = {
   shaders: {},
   autoRender: true,
   useProjection: false,
+  useAsyncPipeline: true,
   // rendering
   cullMode: "back",
   depth: true,
@@ -5957,13 +6003,32 @@ function MeshBaseMixin(Base) {
     }
     /* SCENE */
     /**
-     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
      */
     addToScene() {
       this.renderer.meshes.push(this);
-      this.material?.setRenderingOptions({
-        sampleCount: this.renderTarget ? this.renderTarget.renderPass.options.sampleCount : this.renderer.renderPass.options.sampleCount
-      });
+      const renderPassOptions = this.renderTarget ? this.renderTarget.renderPass.options : this.renderer.renderPass.options;
+      const renderingOptions = {
+        sampleCount: renderPassOptions.sampleCount,
+        // color attachments
+        ...renderPassOptions.colorAttachments.length && {
+          targetFormat: renderPassOptions.colorAttachments[0].targetFormat,
+          // multiple render targets?
+          ...renderPassOptions.colorAttachments.length > 1 && {
+            additionalTargets: renderPassOptions.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
+              return {
+                format: colorAttachment.targetFormat
+              };
+            })
+          }
+        },
+        // depth
+        depth: renderPassOptions.useDepth,
+        ...renderPassOptions.useDepth && {
+          depthFormat: renderPassOptions.depthFormat
+        }
+      };
+      this.material?.setRenderingOptions(renderingOptions);
       if (__privateGet$3(this, _autoRender)) {
         this.renderer.scene.addMesh(this);
       }
@@ -6212,20 +6277,18 @@ function MeshBaseMixin(Base) {
     }
     /* RESIZE */
     /**
-     * Resize the Mesh's render textures only if they're not storage textures
-     */
-    resizeRenderTextures() {
-      this.renderTextures?.filter((renderTexture) => renderTexture.options.usage !== "storage").forEach((renderTexture) => renderTexture.resize());
-    }
-    /**
      * Resize the Mesh's textures
      * @param boundingRect
      */
     resize(boundingRect) {
-      this.resizeRenderTextures();
       if (super.resize) {
         super.resize(boundingRect);
       }
+      this.renderTextures?.forEach((renderTexture) => {
+        if (renderTexture.options.fromTexture) {
+          renderTexture.copy(renderTexture.options.fromTexture);
+        }
+      });
       this.textures?.forEach((texture) => {
         texture.resize();
       });
@@ -6743,9 +6806,10 @@ function ProjectedMeshBaseMixin(Base) {
     /* MATERIAL */
     /**
      * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
-     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+     * @param meshParameters - {@link ProjectedRenderMaterialParams | RenderMaterial parameters}
      */
     setMaterial(meshParameters) {
+      const { frustumCulled, DOMFrustumMargins, ...materialParameters } = meshParameters;
       const matricesUniforms = {
         label: "Matrices",
         struct: {
@@ -6772,10 +6836,10 @@ function ProjectedMeshBaseMixin(Base) {
           }
         }
       };
-      if (!meshParameters.uniforms)
-        meshParameters.uniforms = {};
-      meshParameters.uniforms.matrices = matricesUniforms;
-      super.setMaterial(meshParameters);
+      if (!materialParameters.uniforms)
+        materialParameters.uniforms = {};
+      materialParameters.uniforms.matrices = matricesUniforms;
+      super.setMaterial(materialParameters);
     }
     /* SIZE & TRANSFORMS */
     /**
@@ -7322,7 +7386,9 @@ ${this.shaders.full.head}`;
               ...blend && {
                 blend
               }
-            }
+            },
+            ...this.options.additionalTargets ?? []
+            // merge with additional targets if any
           ]
         }
       },
@@ -7364,7 +7430,7 @@ ${this.shaders.full.head}`;
    * @returns - void promise result
    */
   async createRenderPipelineAsync() {
-    if (!this.shaders.vertex.module || !this.shaders.fragment.module)
+    if (!this.shadersModulesReady)
       return;
     try {
       this.pipeline = await this.renderer.createRenderPipelineAsync(this.descriptor);
@@ -7884,13 +7950,19 @@ class RenderPass {
   constructor(renderer, {
     label = "Render Pass",
     sampleCount = 4,
+    // color
     useColorAttachments = true,
+    shouldUpdateView = true,
     loadOp = "clear",
+    storeOp = "store",
     clearValue = [0, 0, 0, 0],
     targetFormat,
+    colorAttachments = [],
+    // depth
     useDepth = true,
     depthTexture = null,
     depthLoadOp = "clear",
+    depthStoreOp = "store",
     depthClearValue = 1,
     depthFormat = "depth24plus"
   } = {}) {
@@ -7899,18 +7971,37 @@ class RenderPass {
     this.type = "RenderPass";
     this.uuid = generateUUID();
     this.renderer = renderer;
+    if (useColorAttachments) {
+      const defaultColorAttachment = {
+        loadOp,
+        storeOp,
+        clearValue,
+        targetFormat: targetFormat ?? this.renderer.options.preferredFormat
+      };
+      if (!colorAttachments.length) {
+        colorAttachments = [defaultColorAttachment];
+      } else {
+        colorAttachments = colorAttachments.map((colorAttachment) => {
+          return { ...defaultColorAttachment, ...colorAttachment };
+        });
+      }
+    }
     this.options = {
       label,
       sampleCount,
       // color
       useColorAttachments,
+      shouldUpdateView,
       loadOp,
+      storeOp,
       clearValue,
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
+      colorAttachments,
       // depth
       useDepth,
       ...depthTexture !== void 0 && { depthTexture },
       depthLoadOp,
+      depthStoreOp,
       depthClearValue,
       depthFormat
     };
@@ -7918,18 +8009,14 @@ class RenderPass {
     if (this.options.useDepth) {
       this.createDepthTexture();
     }
+    this.viewTextures = [];
     if (this.options.useColorAttachments) {
-      this.viewTexture = new RenderTexture(this.renderer, {
-        label: this.options.label + " view texture",
-        name: "viewTexture",
-        format: this.options.targetFormat,
-        sampleCount: this.options.sampleCount
-      });
+      this.createViewTextures();
     }
     this.setRenderPassDescriptor();
   }
   /**
-   * Set our {@link depthTexture | depth texture}
+   * Create and set our {@link depthTexture | depth texture}
    */
   createDepthTexture() {
     if (this.options.depthTexture) {
@@ -7945,32 +8032,18 @@ class RenderPass {
     }
   }
   /**
-   * Reset our {@link depthTexture | depth texture}
+   * Create and set our {@link viewTextures | view textures}
    */
-  resetRenderPassDepth() {
-    const { width, height } = this.renderer.pixelRatioBoundingRect;
-    if (this.depthTexture.options.autoResize && this.depthTexture.texture.width !== Math.floor(width) || this.depthTexture.texture.height !== Math.floor(height)) {
-      this.depthTexture.forceResize({
-        width: Math.floor(width),
-        height: Math.floor(height),
-        depth: 1
-      });
-    }
-    this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
-      label: this.depthTexture.options.label + " view"
-    });
-  }
-  /**
-   * Reset our {@link viewTexture | view texture}
-   */
-  resetRenderPassView() {
-    this.viewTexture.forceResize({
-      width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
-      height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
-      depth: 1
-    });
-    this.descriptor.colorAttachments[0].view = this.viewTexture.texture.createView({
-      label: this.viewTexture.options.label + " view"
+  createViewTextures() {
+    this.options.colorAttachments.forEach((colorAttachment, index) => {
+      this.viewTextures.push(
+        new RenderTexture(this.renderer, {
+          label: `${this.options.label} colorAttachment[${index}] view texture`,
+          name: `colorAttachment${index}ViewTexture`,
+          format: colorAttachment.targetFormat,
+          sampleCount: this.options.sampleCount
+        })
+      );
     });
   }
   /**
@@ -7979,23 +8052,23 @@ class RenderPass {
   setRenderPassDescriptor() {
     this.descriptor = {
       label: this.options.label + " descriptor",
-      colorAttachments: this.options.useColorAttachments ? [
-        {
-          // view: <- to be filled out when we set our render pass view
-          view: this.viewTexture.texture.createView({
-            label: this.viewTexture.texture.label + " view"
+      colorAttachments: this.options.colorAttachments.map((colorAttachment, index) => {
+        return {
+          // view
+          view: this.viewTextures[index].texture.createView({
+            label: this.viewTextures[index].texture.label + " view"
           }),
           // clear values
-          clearValue: this.options.clearValue,
+          clearValue: colorAttachment.clearValue,
           // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
           // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what's already there.
-          loadOp: this.options.loadOp,
+          loadOp: colorAttachment.loadOp,
           // storeOp: 'store' means store the result of what we draw.
           // We could also pass 'discard' which would throw away what we draw.
           // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
-          storeOp: "store"
-        }
-      ] : [],
+          storeOp: colorAttachment.storeOp
+        };
+      }),
       ...this.options.useDepth && {
         depthStencilAttachment: {
           view: this.depthTexture.texture.createView({
@@ -8004,7 +8077,7 @@ class RenderPass {
           depthClearValue: this.options.depthClearValue,
           // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
           depthLoadOp: this.options.depthLoadOp,
-          depthStoreOp: "store"
+          depthStoreOp: this.options.depthStoreOp
         }
       }
     };
@@ -8013,20 +8086,27 @@ class RenderPass {
    * Resize our {@link RenderPass}: reset its {@link RenderTexture}
    */
   resize() {
-    if (this.options.useDepth)
-      this.resetRenderPassDepth();
-    if (this.options.useColorAttachments)
-      this.resetRenderPassView();
+    if (this.options.useDepth) {
+      this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
+        label: this.depthTexture.options.label + " view"
+      });
+    }
+    this.viewTextures.forEach((viewTexture, index) => {
+      this.descriptor.colorAttachments[index].view = viewTexture.texture.createView({
+        label: viewTexture.options.label + " view"
+      });
+    });
   }
   /**
    * Set the {@link descriptor} {@link GPULoadOp | load operation}
    * @param loadOp - new {@link GPULoadOp | load operation} to use
+   * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
    */
-  setLoadOp(loadOp = "clear") {
+  setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
     this.options.loadOp = loadOp;
     if (this.options.useColorAttachments && this.descriptor) {
-      if (this.descriptor.colorAttachments) {
-        this.descriptor.colorAttachments[0].loadOp = loadOp;
+      if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+        this.descriptor.colorAttachments[colorAttachmentIndex].loadOp = loadOp;
       }
     }
   }
@@ -8044,8 +8124,9 @@ class RenderPass {
    * Set our {@link GPUColor | clear colors value}.<br>
    * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
    * @param clearValue - new {@link GPUColor | clear colors value} to use
+   * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
    */
-  setClearValue(clearValue = [0, 0, 0, 0]) {
+  setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
     if (this.renderer.alphaMode === "premultiplied") {
       const alpha = clearValue[3];
       clearValue[0] = Math.min(clearValue[0], alpha);
@@ -8054,15 +8135,15 @@ class RenderPass {
     } else {
       this.options.clearValue = clearValue;
     }
-    if (this.descriptor && this.descriptor.colorAttachments) {
-      this.descriptor.colorAttachments[0].clearValue = clearValue;
+    if (this.descriptor && this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+      this.descriptor.colorAttachments[colorAttachmentIndex].clearValue = clearValue;
     }
   }
   /**
    * Destroy our {@link RenderPass}
    */
   destroy() {
-    this.viewTexture?.destroy();
+    this.viewTextures.forEach((viewTexture) => viewTexture.destroy());
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy();
     }
@@ -8108,7 +8189,7 @@ class RenderTarget {
       ...renderPassParams,
       ...depthTexture && { depthTexture },
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
-      autoRender
+      autoRender: autoRender === void 0 ? true : autoRender
     };
     if (autoRender !== void 0) {
       __privateSet$1(this, _autoRender, autoRender);
@@ -8120,11 +8201,13 @@ class RenderTarget {
       // reuse renderer depth texture for every pass
       ...renderPassParams
     });
-    this.renderTexture = new RenderTexture(this.renderer, {
-      label: this.options.label ? `${this.options.label} Render Texture` : "Render Target Render Texture",
-      name: "renderTexture",
-      format: this.options.targetFormat
-    });
+    if (renderPassParams.useColorAttachments !== false && renderPassParams.shouldUpdateView !== false) {
+      this.renderTexture = new RenderTexture(this.renderer, {
+        label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
+        name: "renderTexture",
+        format: this.options.targetFormat
+      });
+    }
     this.addToScene();
   }
   /**
@@ -8146,13 +8229,11 @@ class RenderTarget {
     this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
   }
   /**
-   * Resize our {@link renderPass} and {@link renderTexture}
+   * Resize our {@link renderPass}
    */
   resize() {
-    console.log(this.renderer.renderPass.depthTexture.texture);
     this.renderPass.options.depthTexture.texture = this.options.depthTexture ? this.options.depthTexture.texture : this.renderer.renderPass.depthTexture.texture;
     this.renderPass?.resize();
-    this.renderTexture?.resize();
   }
   /**
    * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
@@ -8690,26 +8771,6 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       }
     );
   }
-  /**
-   * Create a new {@link RenderTexture}
-   * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-   * @returns - newly created {@link RenderTexture}
-   */
-  createRenderTexture(options) {
-    options = {
-      ...options,
-      size: { width: this.pixelRatioBoundingRect.width, height: this.pixelRatioBoundingRect.height }
-    };
-    return super.createRenderTexture(options);
-  }
-  /**
-   * Resize the Mesh's render textures only if they're not storage textures
-   */
-  resizeRenderTextures() {
-    this.renderTextures?.filter((renderTexture) => renderTexture.options.usage === "texture").forEach(
-      (renderTexture) => renderTexture.resize({ width: this.pixelRatioBoundingRect.width, height: this.pixelRatioBoundingRect.height })
-    );
-  }
   /* EVENTS */
   /**
    * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
@@ -8846,7 +8907,7 @@ class Scene {
     if (!renderPassEntry) {
       return 0;
     } else {
-      return renderPassEntry.element ? 1 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
+      return renderPassEntry.element ? renderPassEntry.element.visible ? 1 : 0 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
     }
   }
   /**
@@ -8964,7 +9025,7 @@ class Scene {
    */
   addShaderPass(shaderPass) {
     const onBeforeRenderPass = shaderPass.renderTarget ? null : (commandEncoder, swapChainTexture) => {
-      if (shaderPass.renderTexture) {
+      if (shaderPass.renderTexture && swapChainTexture) {
         commandEncoder.copyTextureToTexture(
           {
             texture: swapChainTexture
@@ -8978,7 +9039,7 @@ class Scene {
       this.renderer.postProcessingPass.setLoadOp("clear");
     };
     const onAfterRenderPass = shaderPass.renderTarget ? (commandEncoder, swapChainTexture) => {
-      if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture) {
+      if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture && swapChainTexture) {
         commandEncoder.copyTextureToTexture(
           {
             texture: swapChainTexture
@@ -9102,7 +9163,10 @@ class Scene {
    * @param renderPassEntry - {@link RenderPassEntry} to render
    */
   renderSinglePassEntry(commandEncoder, renderPassEntry) {
-    const swapChainTexture = renderPassEntry.renderPass.options.useColorAttachments ? this.renderer.setRenderPassCurrentTexture(renderPassEntry.renderPass, renderPassEntry.renderTexture?.texture) : null;
+    const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
+      renderPassEntry.renderPass,
+      renderPassEntry.renderTexture?.texture
+    );
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
     const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
     !this.renderer.production && pass.pushDebugGroup(
@@ -9410,10 +9474,12 @@ class GPURenderer {
    * Resize all tracked objects
    */
   onResize() {
+    this.renderTextures.forEach((renderTexture) => {
+      renderTexture.resize();
+    });
     this.renderPass?.resize();
     this.postProcessingPass?.resize();
     this.renderTargets.forEach((renderTarget) => renderTarget.resize());
-    this.renderTextures.forEach((renderTexture) => renderTexture.resize());
     this.computePasses.forEach((computePass) => computePass.resize());
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
@@ -9561,11 +9627,7 @@ class GPURenderer {
   restoreContext() {
     this.configureContext();
     this.renderTextures.forEach((renderTexture) => {
-      renderTexture.forceResize({
-        width: Math.floor(this.pixelRatioBoundingRect.width),
-        height: Math.floor(this.pixelRatioBoundingRect.height),
-        depth: 1
-      });
+      renderTexture.createTexture();
     });
     this.renderPass?.resize();
     this.postProcessingPass?.resize();
@@ -9944,13 +10006,16 @@ class GPURenderer {
    * @returns - the {@link GPUTexture | current render texture}
    */
   setRenderPassCurrentTexture(renderPass, renderTexture = null) {
+    if (!renderPass.options.colorAttachments.length || !renderPass.options.shouldUpdateView) {
+      return null;
+    }
     if (!renderTexture) {
       renderTexture = this.context.getCurrentTexture();
       renderTexture.label = `${this.type} context current texture`;
     }
     if (renderPass.options.sampleCount > 1) {
-      renderPass.descriptor.colorAttachments[0].view = renderPass.viewTexture.texture.createView({
-        label: renderPass.viewTexture.options.label + " view"
+      renderPass.descriptor.colorAttachments[0].view = renderPass.viewTextures[0].texture.createView({
+        label: renderPass.viewTextures[0].options.label + " view"
       });
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
         label: renderTexture.label + " resolve target view"
@@ -10090,7 +10155,7 @@ class GPUCameraRenderer extends GPURenderer {
       renderPass
     });
     this.type = "GPUCameraRenderer";
-    camera = { ...{ fov: 50, near: 0.01, far: 50 }, ...camera };
+    camera = { ...{ fov: 50, near: 0.01, far: 150 }, ...camera };
     this.options = {
       ...this.options,
       camera

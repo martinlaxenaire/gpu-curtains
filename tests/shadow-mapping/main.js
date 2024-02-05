@@ -18,6 +18,7 @@ window.addEventListener('load', async () => {
   const {
     PlaneGeometry,
     GPUCurtains,
+    RenderMaterial,
     Mesh,
     SphereGeometry,
     RenderTexture,
@@ -237,6 +238,34 @@ window.addEventListener('load', async () => {
       //return vec4(lightingFactor * albedo, 1.0);
     }
   `
+
+  const depthMaterial = new RenderMaterial(gpuCurtains, {
+    label: 'Depth render material',
+    shaders: {
+      vertex: {
+        code: depthVs,
+      },
+      fragment: false,
+    },
+    depthFormat: shadowMapTextureFormat,
+    uniforms: {
+      lightning: {
+        struct: {
+          lightViewProjectionMatrix: {
+            type: 'mat4x4f',
+            value: lightViewProjMatrix,
+          },
+          lightPosition: {
+            type: 'vec3f',
+            value: lightPosition,
+          },
+        },
+      },
+    },
+  })
+
+  //await depthMaterial.compileMaterial()
+  console.log(depthMaterial)
 
   const spheres = {
     depth: new Mesh(gpuCurtains, {

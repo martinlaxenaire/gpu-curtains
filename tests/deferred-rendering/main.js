@@ -158,7 +158,7 @@ window.addEventListener('load', async () => {
       renderTarget: writeGBufferRenderTarget,
       additionalTargets: [
         {
-          format: 'rgba16float', // TODO automatically add based on renderTarget options.colorAttachments?
+          format: 'rgba16float', // this would be patched anyway if not set here
         },
       ],
       shaders: {

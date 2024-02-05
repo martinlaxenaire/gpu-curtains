@@ -22,6 +22,8 @@ export interface ProjectedMeshBaseParams {
 /** Parameters used to create a ProjectedMesh */
 export interface ProjectedMeshParameters extends MeshBaseParams, ProjectedMeshBaseParams {}
 
+export interface ProjectedRenderMaterialParams extends RenderMaterialParams, ProjectedMeshBaseParams {}
+
 /** @const - Default ProjectedMesh parameters to merge with user defined parameters */
 const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
   // frustum culling and visibility
@@ -80,7 +82,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
    * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
    * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
    */
-  setMaterial(meshParameters: RenderMaterialParams): void
+  setMaterial(meshParameters: ProjectedRenderMaterialParams): void
 
   /**
    * Resize our Mesh
@@ -285,9 +287,9 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
     /**
      * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
-     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+     * @param meshParameters - {@link ProjectedRenderMaterialParams | RenderMaterial parameters}
      */
-    setMaterial(meshParameters: RenderMaterialParams) {
+    setMaterial(meshParameters: ProjectedRenderMaterialParams) {
       const { frustumCulled, DOMFrustumMargins, ...materialParameters } = meshParameters
 
       // add matrices uniforms

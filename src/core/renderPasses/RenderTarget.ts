@@ -15,9 +15,9 @@ export interface RenderTargetParams extends RenderPassParams {
 /**
  * Used to draw meshes to a {@link RenderPass#viewTextures | RenderPass view textures} instead of directly to screen.
  *
- * The meshes assigned to a {@link RenderTarget} will be drawn before the other objects in the {@link Scene} rendering loop.
+ * The meshes assigned to a {@link RenderTarget} will be drawn before the other objects in the {@link core/scenes/Scene.Scene | Scene} rendering loop.s
  *
- * If the {@link RenderPass} created handle color attachments, is multisampled and {@link RenderPass#options.shouldUpdateView | should update view}, then a {@link RenderPass#renderTexture | RenderTexture} will be created to resolve the content of the current view. This {@link RenderPass#renderTexture | RenderTexture} could therefore usually be used to manipulate the current content of this {@link RenderTarget}.
+ * If the {@link RenderPass} created handle color attachments, is multisampled and {@link RenderPass#options.shouldUpdateView | should update view}, then a {@link RenderTarget#renderTexture | RenderTexture} will be created to resolve the content of the current view. This {@link RenderTarget#renderTexture | RenderTexture} could therefore usually be used to manipulate the current content of this {@link RenderTarget}.
  *
  * @example
  * ```javascript

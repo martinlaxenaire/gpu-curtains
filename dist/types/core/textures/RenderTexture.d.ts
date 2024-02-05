@@ -18,10 +18,8 @@ export interface RenderTextureBaseParams {
     label?: string;
     /** Name of the {@link RenderTexture} to use in the {@link TextureBinding | texture binding} */
     name?: string;
-    /** Optional size of the {@link RenderTexture#texture | texture} */
-    size?: TextureSize;
-    /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-    autoResize?: boolean;
+    /** Optional fixed size of the {@link RenderTexture#texture | texture}. If set, the {@link RenderTexture} will never be resized and always keep that size. */
+    fixedSize?: TextureSize;
     /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
     usage?: RenderTextureBindingType;
     /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
@@ -65,6 +63,7 @@ export interface RenderTextureParams extends RenderTextureBaseParams {
  * ```
  */
 export declare class RenderTexture {
+    #private;
     /** {@link Renderer | renderer} used by this {@link RenderTexture} */
     renderer: Renderer;
     /** The type of the {@link RenderTexture} */
@@ -108,11 +107,6 @@ export declare class RenderTexture {
      * @readonly
      */
     get textureBinding(): TextureBinding;
-    /**
-     * Force a {@link RenderTexture} to be recreated with the new size
-     * @param size - new {@link TextureSize | size} to set
-     */
-    forceResize(size: TextureSize): void;
     /**
      * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
      * @param size - the optional new {@link TextureSize | size} to set

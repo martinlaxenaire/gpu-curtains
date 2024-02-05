@@ -260,31 +260,6 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     )
   }
 
-  /**
-   * Create a new {@link RenderTexture}
-   * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-   * @returns - newly created {@link RenderTexture}
-   */
-  createRenderTexture(options: RenderTextureParams): RenderTexture {
-    options = {
-      ...options,
-      size: { width: this.pixelRatioBoundingRect.width, height: this.pixelRatioBoundingRect.height },
-    }
-
-    return super.createRenderTexture(options)
-  }
-
-  /**
-   * Resize the Mesh's render textures only if they're not storage textures
-   */
-  resizeRenderTextures() {
-    this.renderTextures
-      ?.filter((renderTexture) => renderTexture.options.usage === 'texture')
-      .forEach((renderTexture) =>
-        renderTexture.resize({ width: this.pixelRatioBoundingRect.width, height: this.pixelRatioBoundingRect.height })
-      )
-  }
-
   /* EVENTS */
 
   /**

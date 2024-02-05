@@ -3,6 +3,7 @@ import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture } from '../textures/RenderTexture'
 
+/** Define the parameters of a color attachment */
 export interface ColorAttachmentParams {
   /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
   loadOp?: GPULoadOp
@@ -36,7 +37,7 @@ export interface RenderPassParams {
   clearValue?: GPUColor
   /** Optional format of the color attachment texture */
   targetFormat: GPUTextureFormat
-
+  /** Define all the color attachments parameters to use here in case this {@link RenderPass} should output to multiple color attachments (Multiple Render Targets) */
   colorAttachments?: ColorAttachmentParams[]
 
   /** Whether this {@link RenderPass} should handle a depth texture */
@@ -184,7 +185,7 @@ export class RenderPass {
   }
 
   /**
-   * Create and set our {@link viewTexture | view textures}
+   * Create and set our {@link viewTextures | view textures}
    */
   createViewTextures() {
     this.options.colorAttachments.forEach((colorAttachment, index) => {

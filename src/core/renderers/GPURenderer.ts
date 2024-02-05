@@ -237,7 +237,9 @@ export class GPURenderer {
    */
   onResize() {
     // resize render textures first
-    this.renderTextures.forEach((renderTexture) => renderTexture.resize())
+    this.renderTextures.forEach((renderTexture) => {
+      renderTexture.resize()
+    })
 
     // resize render & shader passes
     this.renderPass?.resize()

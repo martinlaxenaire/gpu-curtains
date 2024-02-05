@@ -202,7 +202,6 @@ window.addEventListener('load', async () => {
     name: 'outputTexture',
     usage: 'storage',
     format,
-    size: inputTexture.size,
   })
 
   const outputTexture = new RenderTexture(gpuCurtains, {
@@ -210,7 +209,6 @@ window.addEventListener('load', async () => {
     name: 'outputTexture',
     usage: 'storage',
     format,
-    size: inputTexture.size,
   })
 
   // last but not least, tell our blurred texture that we want to use the compute blur output as source

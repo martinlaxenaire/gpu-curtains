@@ -402,7 +402,7 @@ export declare class GPURenderer {
      * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
      * @returns - the {@link GPUTexture | current render texture}
      */
-    setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture | null): GPUTexture;
+    setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture | null): GPUTexture | null;
     /**
      * Render a single {@link ComputePass}
      * @param commandEncoder - current {@link GPUCommandEncoder}
