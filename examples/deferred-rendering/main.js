@@ -1,25 +1,20 @@
-// Goal of this test is to test and help visualize depth textures
+import {
+  BoxGeometry,
+  GPUCameraRenderer,
+  GPUDeviceManager,
+  Mesh,
+  ShaderPass,
+  PlaneGeometry,
+  Mat4,
+  Vec2,
+  Vec3,
+  RenderTarget,
+  RenderTexture,
+  Object3D,
+} from '../../dist/gpu-curtains.mjs'
+
+// inspired by https://webgpu.github.io/webgpu-samples/samples/deferredRendering
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
-  const {
-    BoxGeometry,
-    GPUCameraRenderer,
-    GPUDeviceManager,
-    Mesh,
-    ShaderPass,
-    SphereGeometry,
-    PlaneGeometry,
-    Mat4,
-    Vec2,
-    Vec3,
-    RenderTarget,
-    RenderTexture,
-    Object3D,
-  } = await import(/* @vite-ignore */ path)
-
-  // here is an example of how we can use a simple GPUCameraRenderer instead of GPUCurtains
-  // this shows us how to use gpu-curtains as a basic genuine 3D engine, not related to DOM
-
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
@@ -38,24 +33,19 @@ window.addEventListener('load', async () => {
   // get the camera
   const { camera } = gpuCameraRenderer
 
+  // create a camera pivot
+  // so we can make the camera orbit while preserving a custom lookAt
   const cameraPivot = new Object3D()
 
   camera.parent = cameraPivot
-  camera.position.y = 12.5
+  camera.position.y = 10
   camera.position.z = 25
 
-  camera.lookAt(new Vec3(0, 2, 0))
-
-  // camera.position.y = 12.5
-  // camera.position.z = 25
-  // camera.lookAt()
-  //
-  // camera.position.y = 3
-  // camera.position.z = 20
+  camera.lookAt(new Vec3(0, 1, 0))
 
   // render our scene manually
   const animate = () => {
-    //camera.rotation.y += 0.01
+    // rotate our camera pivot
     cameraPivot.rotation.y += 0.005
 
     gpuDeviceManager.render()
@@ -68,6 +58,7 @@ window.addEventListener('load', async () => {
   // MSAA does not work with deferred rendering
   const sampleCount = 1
 
+  // Geometry buffer
   const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
     name: 'gBufferDepthTexture',
@@ -79,7 +70,7 @@ window.addEventListener('load', async () => {
   const writeGBufferRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Write GBuffer render target',
     sampleCount,
-    shouldUpdateView: false,
+    shouldUpdateView: false, // we don't want to render to the swap chain
     colorAttachments: [
       {
         loadOp: 'clear',
@@ -113,11 +104,7 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
       
-      // this is not the right way to do it!
-      //vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
-      //vsOutput.normal = normalize((matrices.modelView * vec4(attributes.normal, 0.0)).xyz);
       vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
-      //vsOutput.normal = attributes.normal;
       
       return vsOutput;
     }
@@ -139,7 +126,7 @@ window.addEventListener('load', async () => {
     
     @fragment fn main(fsInput: VSOutput) -> GBufferOutput {
       // faking some kind of checkerboard texture
-      let uv = floor(5.0 * fsInput.uv);
+      let uv = floor(params.checkerBoard * fsInput.uv);
       let c = 0.2 + 0.5 * ((uv.x + uv.y) - 2.0 * floor((uv.x + uv.y) / 2.0));
       
       var output : GBufferOutput;
@@ -151,7 +138,7 @@ window.addEventListener('load', async () => {
     }
   `
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 15; i++) {
     const cubeMesh = new Mesh(gpuCameraRenderer, {
       label: 'Cube ' + i,
       geometry: cubeGeometry,
@@ -178,22 +165,29 @@ window.addEventListener('load', async () => {
             },
           },
         },
+        params: {
+          struct: {
+            checkerBoard: {
+              type: 'vec2f',
+              value: new Vec2(5),
+            },
+          },
+        },
       },
     })
 
-    // cubeMesh.position.x = (i - 5) * 3
-    // cubeMesh.position.z = (i - 5) * 3
-    cubeMesh.position.x = Math.random() * 30 - 15
-    cubeMesh.position.z = Math.random() * 30 - 15
-    cubeMesh.position.y = Math.random() * 3 + 2
+    cubeMesh.position.x = Math.random() * 20 * Math.sign(Math.random() - 0.5)
+    cubeMesh.position.z = Math.random() * 20 * Math.sign(Math.random() - 0.5)
+    cubeMesh.position.y = Math.random() * 2 + 1.5
 
-    let rotationSpeed = Math.random() * 0.02 - 0.01
+    let rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
 
     cubeMesh.onRender(() => {
       cubeMesh.rotation.y += rotationSpeed
       cubeMesh.rotation.z += rotationSpeed
 
       cubeMesh.uniforms.normals.inverseTransposeMatrix.value.copy(cubeMesh.worldMatrix).invert().transpose()
+      // explicitly tell the uniform to update
       cubeMesh.material.shouldUpdateInputsBindings('normals', 'inverseTransposeMatrix')
     })
   }
@@ -224,6 +218,14 @@ window.addEventListener('load', async () => {
           },
         },
       },
+      params: {
+        struct: {
+          checkerBoard: {
+            type: 'vec2f',
+            value: new Vec2(20),
+          },
+        },
+      },
     },
   })
 
@@ -232,11 +234,11 @@ window.addEventListener('load', async () => {
 
   floor.onRender(() => {
     floor.uniforms.normals.inverseTransposeMatrix.value.copy(floor.worldMatrix).invert().transpose()
+    // explicitly tell the uniform to update
     floor.material.shouldUpdateInputsBindings('normals', 'inverseTransposeMatrix')
   })
 
-  console.log(gpuCameraRenderer.renderPass, writeGBufferRenderTarget, floor)
-
+  // create 2 textures based on our GBuffer MRT output
   const gBufferAlbedoTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer albedo texture',
     name: 'gBufferAlbedoTexture',
@@ -253,17 +255,18 @@ window.addEventListener('load', async () => {
     sampleCount,
   })
 
-  const nbLights = 125
+  // we could eventually make the light move in a compute shader
+  const nbLights = 75
   const lightsRadius = new Float32Array(nbLights)
   const lightsPositions = new Float32Array(4 * nbLights)
   const lightsColors = new Float32Array(3 * nbLights)
 
   for (let i = 0, j = 0, k = 0; i < nbLights; i++, j += 4, k += 3) {
-    lightsRadius[i] = 5 + Math.random() * 5
+    lightsRadius[i] = 5 + Math.random() * 7.5
 
-    lightsPositions[j] = Math.random() * 40 - 20
-    lightsPositions[j + 1] = Math.random() * 10
-    lightsPositions[j + 2] = Math.random() * 40 - 20
+    lightsPositions[j] = Math.random() * 20 * Math.sign(Math.random() - 0.5)
+    lightsPositions[j + 1] = Math.random() * 5 + 2.5
+    lightsPositions[j + 2] = Math.random() * 20 * Math.sign(Math.random() - 0.5)
     lightsPositions[j + 3] = 1
 
     lightsColors[k] = Math.random() * 0.75 + 0.25
@@ -339,6 +342,7 @@ window.addEventListener('load', async () => {
   `
 
   const deferredRenderingPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Deferred render pass',
     shaders: {
       fragment: {
         code: deferredPassFs,
@@ -380,6 +384,7 @@ window.addEventListener('load', async () => {
       .multiplyMatrices(camera.projectionMatrix, camera.viewMatrix)
       .invert()
 
+    // explicitly tell the uniform to update
     deferredRenderingPass.material.shouldUpdateInputsBindings('params', 'cameraInverseViewProjectionMatrix')
   })
 
@@ -450,7 +455,5 @@ window.addEventListener('load', async () => {
     }
   })
 
-  console.log(deferredRenderingPass)
-  console.log(gpuCameraRenderer.scene)
   gpuCameraRenderer.scene.logRenderCommands()
 })

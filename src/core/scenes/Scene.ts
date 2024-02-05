@@ -567,6 +567,8 @@ export class Scene {
           ? undefined
           : renderPassEntry.renderTexture
           ? `${renderPassEntry.renderTexture.options.label}`
+          : renderPassEntry.renderPass.options.colorAttachments.length > 1
+          ? 'Multiple render target'
           : 'Context current texture'
 
         let descriptor = renderPassEntry.renderPass.options.label

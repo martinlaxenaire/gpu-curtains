@@ -3991,6 +3991,7 @@ class RenderTexture {
    */
   createTexture() {
     if (this.options.fromTexture) {
+      this.options.format = this.options.fromTexture.options.format;
       this.copyGPUTexture(this.options.fromTexture.texture);
       return;
     }
@@ -4077,13 +4078,25 @@ class Material {
     isRenderer(renderer, this.type);
     this.renderer = renderer;
     this.uuid = generateUUID();
-    const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, samplers, textures, renderTextures } = parameters;
+    const {
+      shaders,
+      label,
+      useAsyncPipeline,
+      uniforms,
+      storages,
+      bindings,
+      bindGroups,
+      samplers,
+      textures,
+      renderTextures
+    } = parameters;
     this.options = {
       shaders,
       label,
-      ...useAsyncPipeline !== void 0 && { useAsyncPipeline },
+      useAsyncPipeline: useAsyncPipeline === void 0 ? true : useAsyncPipeline,
       ...uniforms !== void 0 && { uniforms },
       ...storages !== void 0 && { storages },
+      ...bindings !== void 0 && { bindings },
       ...bindGroups !== void 0 && { bindGroups },
       ...samplers !== void 0 && { samplers },
       ...textures !== void 0 && { textures },
@@ -4202,11 +4215,12 @@ class Material {
     this.storages = {};
     this.inputsBindGroups = [];
     this.inputsBindings = [];
-    if (this.options.uniforms || this.options.storages) {
+    if (this.options.uniforms || this.options.storages || this.options.bindings) {
       const inputsBindGroup = new BindGroup(this.renderer, {
         label: this.options.label + ": Bindings bind group",
         uniforms: this.options.uniforms,
-        storages: this.options.storages
+        storages: this.options.storages,
+        bindings: this.options.bindings
       });
       this.processBindGroupBindings(inputsBindGroup);
       this.inputsBindGroups.push(inputsBindGroup);
@@ -8021,6 +8035,7 @@ class RenderPass {
   createDepthTexture() {
     if (this.options.depthTexture) {
       this.depthTexture = this.options.depthTexture;
+      this.options.depthFormat = this.options.depthTexture.options.format;
     } else {
       this.depthTexture = new RenderTexture(this.renderer, {
         label: this.options.label + " depth texture",
@@ -9247,7 +9262,7 @@ class Scene {
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         if (!this.getRenderPassEntryLength(renderPassEntry))
           return;
-        const destination = !renderPassEntry.renderPass.options.useColorAttachments ? void 0 : renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : "Context current texture";
+        const destination = !renderPassEntry.renderPass.options.useColorAttachments ? void 0 : renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : renderPassEntry.renderPass.options.colorAttachments.length > 1 ? "Multiple render target" : "Context current texture";
         let descriptor = renderPassEntry.renderPass.options.label;
         const operations = {
           loadOp: renderPassEntry.renderPass.options.useColorAttachments ? renderPassEntryType === "screen" && passDrawnCount > 0 ? "load" : renderPassEntry.renderPass.options.loadOp : void 0,
