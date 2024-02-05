@@ -873,15 +873,19 @@ export class GPURenderer {
    * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
    * @returns - the {@link GPUTexture | current render texture}
    */
-  setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture: GPUTexture | null = null) {
+  setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture: GPUTexture | null = null): GPUTexture | null {
+    if (!renderPass.options.colorAttachments.length || !renderPass.options.shouldUpdateView) {
+      return null
+    }
+
     if (!renderTexture) {
       renderTexture = this.context.getCurrentTexture()
       renderTexture.label = `${this.type} context current texture`
     }
 
     if (renderPass.options.sampleCount > 1) {
-      renderPass.descriptor.colorAttachments[0].view = renderPass.viewTexture.texture.createView({
-        label: renderPass.viewTexture.options.label + ' view',
+      renderPass.descriptor.colorAttachments[0].view = renderPass.viewTextures[0].texture.createView({
+        label: renderPass.viewTextures[0].options.label + ' view',
       })
       renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
         label: renderTexture.label + ' resolve target view',

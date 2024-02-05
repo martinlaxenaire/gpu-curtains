@@ -138,6 +138,8 @@ export interface RenderMaterialBaseRenderingOptions {
   targetFormat: GPUTextureFormat
   /** The {@link core/renderPasses/RenderPass.RenderPassParams#sampleCount | sampleCount} of the {@link core/renderPasses/RenderPass.RenderPass | RenderPass} onto which we'll be drawing. Set internally. */
   sampleCount: GPUSize32
+
+  additionalTargets: GPUColorTargetState[]
 }
 
 /** Rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */

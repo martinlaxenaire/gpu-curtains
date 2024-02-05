@@ -370,7 +370,7 @@ export class Mat4 {
 
   /**
    * Get the {@link Mat4} inverse
-   * @returns - the {@link Mat4} inverted
+   * @returns - the inverted {@link Mat4}
    */
   invert() {
     // based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
@@ -455,6 +455,41 @@ export class Mat4 {
    */
   getInverse(): Mat4 {
     return this.clone().invert()
+  }
+
+  /**
+   * Transpose this {@link Mat4}
+   * @returns - the transposed {@link Mat4}
+   */
+  transpose(): Mat4 {
+    let t
+    const te = this.elements
+
+    t = te[1]
+    te[1] = te[4]
+    te[4] = t
+
+    t = te[2]
+    te[2] = te[8]
+    te[8] = t
+
+    t = te[3]
+    te[3] = te[12]
+    te[12] = t
+
+    t = te[6]
+    te[6] = te[9]
+    te[9] = t
+
+    t = te[7]
+    te[7] = te[13]
+    te[13] = t
+
+    t = te[11]
+    te[11] = te[14]
+    te[14] = t
+
+    return this
   }
 
   /**

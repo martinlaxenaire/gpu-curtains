@@ -131,7 +131,9 @@ export class Scene {
       return 0
     } else {
       return renderPassEntry.element
-        ? 1
+        ? renderPassEntry.element.visible
+          ? 1
+          : 0
         : renderPassEntry.stack.unProjected.opaque.length +
             renderPassEntry.stack.unProjected.transparent.length +
             renderPassEntry.stack.projected.opaque.length +
@@ -285,7 +287,7 @@ export class Scene {
       : (commandEncoder, swapChainTexture) => {
           // draw the content into our render texture
           // if it's a global post processing pass, copy the context current texture into its renderTexture
-          if (shaderPass.renderTexture) {
+          if (shaderPass.renderTexture && swapChainTexture) {
             commandEncoder.copyTextureToTexture(
               {
                 texture: swapChainTexture,
@@ -304,7 +306,7 @@ export class Scene {
     const onAfterRenderPass = shaderPass.renderTarget
       ? (commandEncoder, swapChainTexture) => {
           // if we render to a target, copy the result so we can chain render to textures
-          if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture) {
+          if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture && swapChainTexture) {
             commandEncoder.copyTextureToTexture(
               {
                 texture: swapChainTexture,
@@ -443,9 +445,10 @@ export class Scene {
    */
   renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry) {
     // set the pass texture to render to
-    const swapChainTexture = renderPassEntry.renderPass.options.useColorAttachments
-      ? this.renderer.setRenderPassCurrentTexture(renderPassEntry.renderPass, renderPassEntry.renderTexture?.texture)
-      : null
+    const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
+      renderPassEntry.renderPass,
+      renderPassEntry.renderTexture?.texture
+    )
 
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture)
 

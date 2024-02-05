@@ -288,6 +288,8 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */
     setMaterial(meshParameters: RenderMaterialParams) {
+      const { frustumCulled, DOMFrustumMargins, ...materialParameters } = meshParameters
+
       // add matrices uniforms
       const matricesUniforms = {
         label: 'Matrices',
@@ -316,10 +318,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         },
       }
 
-      if (!meshParameters.uniforms) meshParameters.uniforms = {}
-      meshParameters.uniforms.matrices = matricesUniforms
+      if (!materialParameters.uniforms) materialParameters.uniforms = {}
+      materialParameters.uniforms.matrices = matricesUniforms
 
-      super.setMaterial(meshParameters)
+      super.setMaterial(materialParameters)
     }
 
     /* SIZE & TRANSFORMS */

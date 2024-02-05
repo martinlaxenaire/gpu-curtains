@@ -64,6 +64,7 @@ const defaultMeshBaseParams: MeshBaseParams = {
   shaders: {},
   autoRender: true,
   useProjection: false,
+  useAsyncPipeline: true,
   // rendering
   cullMode: 'back',
   depth: true,

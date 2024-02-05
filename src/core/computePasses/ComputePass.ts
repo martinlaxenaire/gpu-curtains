@@ -168,8 +168,8 @@ export class ComputePass {
       shaders,
       ...(autoRender !== undefined && { autoRender }),
       ...(renderOrder !== undefined && { renderOrder }),
-      ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
       ...(dispatchSize !== undefined && { dispatchSize }),
+      useAsyncPipeline: useAsyncPipeline === undefined ? true : useAsyncPipeline,
       texturesOptions, // TODO default
     }
 

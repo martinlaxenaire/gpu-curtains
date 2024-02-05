@@ -338,6 +338,7 @@ export class RenderPipelineEntry extends PipelineEntry {
                 blend,
               }),
             },
+            ...(this.options.additionalTargets ?? []), // merge with additional targets if any
           ],
         },
       }),
@@ -381,7 +382,7 @@ export class RenderPipelineEntry extends PipelineEntry {
    * @returns - void promise result
    */
   async createRenderPipelineAsync(): Promise<void> {
-    if (!this.shaders.vertex.module || !this.shaders.fragment.module) return
+    if (!this.shadersModulesReady) return
 
     try {
       this.pipeline = await this.renderer.createRenderPipelineAsync(this.descriptor)

@@ -72,7 +72,7 @@ export class RenderTarget {
       ...renderPassParams,
       ...(depthTexture && { depthTexture }),
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
-      autoRender,
+      autoRender: autoRender === undefined ? true : autoRender,
     } as RenderTargetParams
 
     if (autoRender !== undefined) {
@@ -123,8 +123,6 @@ export class RenderTarget {
    */
   resize() {
     // reset the newly created depth texture
-    console.log(this.renderer.renderPass.depthTexture.texture)
-
     this.renderPass.options.depthTexture.texture = this.options.depthTexture
       ? this.options.depthTexture.texture
       : this.renderer.renderPass.depthTexture.texture

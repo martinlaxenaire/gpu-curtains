@@ -3,6 +3,15 @@ import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture } from '../textures/RenderTexture'
 
+export interface ColorAttachmentParams {
+  /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
+  loadOp?: GPULoadOp
+  /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
+  clearValue?: GPUColor
+  /** Optional format of the color attachment texture */
+  targetFormat: GPUTextureFormat
+}
+
 /**
  * Parameters used to create this {@link RenderPass}
  */
@@ -15,12 +24,16 @@ export interface RenderPassParams {
 
   /** Whether this {@link RenderPass} should handle a view texture */
   useColorAttachments?: boolean
+  /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
+  shouldUpdateView?: boolean
   /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
   loadOp?: GPULoadOp
   /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
   clearValue?: GPUColor
   /** Optional format of the color attachment texture */
   targetFormat: GPUTextureFormat
+
+  colorAttachments?: ColorAttachmentParams[]
 
   /** Whether this {@link RenderPass} should handle a depth texture */
   useDepth?: boolean
@@ -50,8 +63,9 @@ export class RenderPass {
 
   /** Depth {@link RenderTexture} to use with this {@link RenderPass} if it should handle depth */
   depthTexture: RenderTexture | undefined
-  /** Color attachment {@link RenderTexture} to use with this {@link RenderPass} */
-  viewTexture: RenderTexture
+
+  /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments view textures */
+  viewTextures: RenderTexture[]
 
   /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
   descriptor: GPURenderPassDescriptor
@@ -66,10 +80,14 @@ export class RenderPass {
     {
       label = 'Render Pass',
       sampleCount = 4,
+      // color
       useColorAttachments = true,
+      shouldUpdateView = true,
       loadOp = 'clear' as GPULoadOp,
       clearValue = [0, 0, 0, 0],
       targetFormat,
+      colorAttachments = [],
+      // depth
       useDepth = true,
       depthTexture = null,
       depthLoadOp = 'clear' as GPULoadOp,
@@ -86,14 +104,31 @@ export class RenderPass {
     this.uuid = generateUUID()
 
     this.renderer = renderer
+
+    if (useColorAttachments) {
+      const defaultColorAttachment = {
+        loadOp,
+        clearValue,
+        targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
+      }
+
+      if (!colorAttachments.length) {
+        colorAttachments = [defaultColorAttachment]
+      } else {
+        colorAttachments[0] = { ...defaultColorAttachment, ...colorAttachments[0] }
+      }
+    }
+
     this.options = {
       label,
       sampleCount,
       // color
       useColorAttachments,
+      shouldUpdateView,
       loadOp,
       clearValue,
       targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
+      colorAttachments,
       // depth
       useDepth,
       ...(depthTexture !== undefined && { depthTexture }),
@@ -109,20 +144,17 @@ export class RenderPass {
       this.createDepthTexture()
     }
 
+    // if needed, create a view texture before our descriptor
+    this.viewTextures = []
     if (this.options.useColorAttachments) {
-      this.viewTexture = new RenderTexture(this.renderer, {
-        label: this.options.label + ' view texture',
-        name: 'viewTexture',
-        format: this.options.targetFormat,
-        sampleCount: this.options.sampleCount,
-      })
+      this.createViewTextures()
     }
 
     this.setRenderPassDescriptor()
   }
 
   /**
-   * Set our {@link depthTexture | depth texture}
+   * Create and set our {@link depthTexture | depth texture}
    */
   createDepthTexture() {
     if (this.options.depthTexture) {
@@ -136,6 +168,22 @@ export class RenderPass {
         sampleCount: this.options.sampleCount,
       })
     }
+  }
+
+  /**
+   * Create and set our {@link viewTexture | view textures}
+   */
+  createViewTextures() {
+    this.options.colorAttachments.forEach((colorAttachment, index) => {
+      this.viewTextures.push(
+        new RenderTexture(this.renderer, {
+          label: `${this.options.label} colorAttachment[${index}] view texture`,
+          name: `colorAttachment${index}ViewTexture`,
+          format: colorAttachment.targetFormat,
+          sampleCount: this.options.sampleCount,
+        })
+      )
+    })
   }
 
   /**
@@ -163,15 +211,17 @@ export class RenderPass {
   /**
    * Reset our {@link viewTexture | view texture}
    */
-  resetRenderPassView() {
-    this.viewTexture.forceResize({
-      width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
-      height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
-      depth: 1,
-    })
+  resetRenderPassViews() {
+    this.viewTextures.forEach((viewTexture, index) => {
+      viewTexture.forceResize({
+        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
+        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+        depth: 1,
+      })
 
-    this.descriptor.colorAttachments[0].view = this.viewTexture.texture.createView({
-      label: this.viewTexture.options.label + ' view',
+      this.descriptor.colorAttachments[index].view = viewTexture.texture.createView({
+        label: viewTexture.options.label + ' view',
+      })
     })
   }
 
@@ -181,25 +231,24 @@ export class RenderPass {
   setRenderPassDescriptor() {
     this.descriptor = {
       label: this.options.label + ' descriptor',
-      colorAttachments: this.options.useColorAttachments
-        ? [
-            {
-              // view: <- to be filled out when we set our render pass view
-              view: this.viewTexture.texture.createView({
-                label: this.viewTexture.texture.label + ' view',
-              }),
-              // clear values
-              clearValue: this.options.clearValue,
-              // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
-              // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what's already there.
-              loadOp: this.options.loadOp,
-              // storeOp: 'store' means store the result of what we draw.
-              // We could also pass 'discard' which would throw away what we draw.
-              // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
-              storeOp: 'store',
-            },
-          ]
-        : [],
+      colorAttachments: this.options.colorAttachments.map((colorAttachment, index) => {
+        return {
+          // view
+          view: this.viewTextures[index].texture.createView({
+            label: this.viewTextures[index].texture.label + ' view',
+          }),
+          // clear values
+          clearValue: colorAttachment.clearValue,
+          // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
+          // The other option is 'load' which means load the existing contents of the texture into the GPU so we can draw over what's already there.
+          loadOp: colorAttachment.loadOp,
+          // storeOp: 'store' means store the result of what we draw.
+          // We could also pass 'discard' which would throw away what we draw.
+          // see https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html
+          storeOp: 'store',
+        }
+      }),
+
       ...(this.options.useDepth && {
         depthStencilAttachment: {
           view: this.depthTexture.texture.createView({
@@ -220,18 +269,21 @@ export class RenderPass {
   resize() {
     // reset textures
     if (this.options.useDepth) this.resetRenderPassDepth()
-    if (this.options.useColorAttachments) this.resetRenderPassView()
+    if (this.options.useColorAttachments) {
+      this.resetRenderPassViews()
+    }
   }
 
   /**
    * Set the {@link descriptor} {@link GPULoadOp | load operation}
    * @param loadOp - new {@link GPULoadOp | load operation} to use
+   * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
    */
-  setLoadOp(loadOp: GPULoadOp = 'clear') {
+  setLoadOp(loadOp: GPULoadOp = 'clear', colorAttachmentIndex = 0) {
     this.options.loadOp = loadOp
     if (this.options.useColorAttachments && this.descriptor) {
-      if (this.descriptor.colorAttachments) {
-        this.descriptor.colorAttachments[0].loadOp = loadOp
+      if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+        this.descriptor.colorAttachments[colorAttachmentIndex].loadOp = loadOp
       }
     }
   }
@@ -251,8 +303,9 @@ export class RenderPass {
    * Set our {@link GPUColor | clear colors value}.<br>
    * Beware that if the {@link renderer} is using {@link core/renderers/GPURenderer.GPURenderer#alphaMode | premultiplied alpha mode}, your R, G and B channels should be premultiplied by your alpha channel.
    * @param clearValue - new {@link GPUColor | clear colors value} to use
+   * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
    */
-  setClearValue(clearValue: GPUColor = [0, 0, 0, 0]) {
+  setClearValue(clearValue: GPUColor = [0, 0, 0, 0], colorAttachmentIndex = 0) {
     if (this.renderer.alphaMode === 'premultiplied') {
       const alpha = clearValue[3]
       clearValue[0] = Math.min(clearValue[0], alpha)
@@ -262,8 +315,8 @@ export class RenderPass {
       this.options.clearValue = clearValue
     }
 
-    if (this.descriptor && this.descriptor.colorAttachments) {
-      this.descriptor.colorAttachments[0].clearValue = clearValue
+    if (this.descriptor && this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+      this.descriptor.colorAttachments[colorAttachmentIndex].clearValue = clearValue
     }
   }
 
@@ -271,7 +324,7 @@ export class RenderPass {
    * Destroy our {@link RenderPass}
    */
   destroy() {
-    this.viewTexture?.destroy()
+    this.viewTextures.forEach((viewTexture) => viewTexture.destroy())
 
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy()

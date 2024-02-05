@@ -126,6 +126,12 @@ export class RenderTexture {
       this.options.format = this.renderer.options.preferredFormat
     }
 
+    // BEGIN TODO!!!
+    // a RenderTexture could be linked to a renderer (default) or DOMMesh,
+    // in which cased it will be resized by them following their bounding rect
+    // or it could have a fixed size (depth texture for example) and never be resized!!
+    // END TODO!!
+
     // sizes
     this.size = this.options.size ?? {
       width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
