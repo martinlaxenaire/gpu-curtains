@@ -16,7 +16,7 @@
 - Texture & RenderTexture (with storage & depth) classes
 - Sampler class
 - RenderTarget (render to textures)
-- RenderPass (render pass descriptors)
+- RenderPass (render pass descriptors) with MRT support
 - Shader passes
 - PingPongPlane
 - Plane raycasting
@@ -35,6 +35,5 @@
 - Use constants for WebGPU buffers and textures flags/usages? Add to options/parameters?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
-- MRT (allow to write to multiple textures/output via the `targets` property of the RenderPipeline + colorAttachements of the RenderPass descriptor: see [deferred rendering example WebGPU samples example](https://webgpu.github.io/webgpu-samples/samples/deferredRendering))?
 - Mesh raycasting?
 - More examples & tests?
