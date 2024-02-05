@@ -105,7 +105,7 @@ export class Material {
     this.options = {
       shaders,
       label,
-      ...(useAsyncPipeline !== undefined && { useAsyncPipeline }),
+      useAsyncPipeline: useAsyncPipeline === undefined ? true : useAsyncPipeline,
       ...(uniforms !== undefined && { uniforms }),
       ...(storages !== undefined && { storages }),
       ...(bindings !== undefined && { bindings }),
