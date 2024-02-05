@@ -208,7 +208,6 @@ window.addEventListener('load', async () => {
       @location(2) shadowPos: vec3f,
     };
     
-    const albedo = vec3<f32>(0.9);
     const ambientFactor = 0.2;
     
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
@@ -237,7 +236,6 @@ window.addEventListener('load', async () => {
       let lightingFactor = min(ambientFactor + visibility * lambertFactor, 1.0);
 
       return vec4(lightingFactor * shading.color, 1.0);
-      //return vec4(lightingFactor * albedo, 1.0);
     }
   `
 
