@@ -187,45 +187,6 @@ export class RenderPass {
   }
 
   /**
-   * Reset our {@link depthTexture | depth texture}
-   */
-  resetRenderPassDepth() {
-    const { width, height } = this.renderer.pixelRatioBoundingRect
-
-    if (
-      (this.depthTexture.options.autoResize && this.depthTexture.texture.width !== Math.floor(width)) ||
-      this.depthTexture.texture.height !== Math.floor(height)
-    ) {
-      this.depthTexture.forceResize({
-        width: Math.floor(width),
-        height: Math.floor(height),
-        depth: 1,
-      })
-    }
-
-    this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
-      label: this.depthTexture.options.label + ' view',
-    })
-  }
-
-  /**
-   * Reset our {@link viewTexture | view texture}
-   */
-  resetRenderPassViews() {
-    this.viewTextures.forEach((viewTexture, index) => {
-      viewTexture.forceResize({
-        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
-        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
-        depth: 1,
-      })
-
-      this.descriptor.colorAttachments[index].view = viewTexture.texture.createView({
-        label: viewTexture.options.label + ' view',
-      })
-    })
-  }
-
-  /**
    * Set our render pass {@link descriptor}
    */
   setRenderPassDescriptor() {
@@ -267,10 +228,19 @@ export class RenderPass {
    * Resize our {@link RenderPass}: reset its {@link RenderTexture}
    */
   resize() {
-    // reset textures
-    if (this.options.useDepth) this.resetRenderPassDepth()
+    // reassign textures
+    if (this.options.useDepth) {
+      this.descriptor.depthStencilAttachment.view = this.depthTexture.texture.createView({
+        label: this.depthTexture.options.label + ' view',
+      })
+    }
+
     if (this.options.useColorAttachments) {
-      this.resetRenderPassViews()
+      this.viewTextures.forEach((viewTexture, index) => {
+        this.descriptor.colorAttachments[index].view = viewTexture.texture.createView({
+          label: viewTexture.options.label + ' view',
+        })
+      })
     }
   }
 

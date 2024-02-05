@@ -866,22 +866,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* RESIZE */
 
     /**
-     * Resize the Mesh's render textures only if they're not storage textures
-     */
-    resizeRenderTextures() {
-      this.renderTextures
-        ?.filter((renderTexture) => renderTexture.options.usage !== 'storage')
-        .forEach((renderTexture) => renderTexture.resize())
-    }
-
-    /**
      * Resize the Mesh's textures
      * @param boundingRect
      */
     resize(boundingRect?: DOMElementBoundingRect | null) {
-      // resize render textures first
-      this.resizeRenderTextures()
-
       // @ts-ignore
       if (super.resize) {
         // @ts-ignore

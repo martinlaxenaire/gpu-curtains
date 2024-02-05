@@ -236,12 +236,14 @@ export class GPURenderer {
    * Resize all tracked objects
    */
   onResize() {
+    // resize render textures first
+    this.renderTextures.forEach((renderTexture) => renderTexture.resize())
+
     // resize render & shader passes
     this.renderPass?.resize()
     this.postProcessingPass?.resize()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.resize())
-    this.renderTextures.forEach((renderTexture) => renderTexture.resize())
 
     // force compute passes onAfterResize callback
     this.computePasses.forEach((computePass) => computePass.resize())
@@ -416,11 +418,7 @@ export class GPURenderer {
 
     // recreate all render textures first
     this.renderTextures.forEach((renderTexture) => {
-      renderTexture.forceResize({
-        width: Math.floor(this.pixelRatioBoundingRect.width),
-        height: Math.floor(this.pixelRatioBoundingRect.height),
-        depth: 1,
-      })
+      renderTexture.createTexture()
     })
 
     // resize render passes/recreate their textures

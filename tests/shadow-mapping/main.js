@@ -131,12 +131,10 @@ window.addEventListener('load', async () => {
     name: 'shadowDepthTexture',
     usage: 'depth',
     format: shadowMapTextureFormat,
-    size: {
+    fixedSize: {
       width: 1024,
       height: 1024,
-      depth: 1,
     },
-    autoResize: false,
   })
 
   const depthTarget = new RenderTarget(gpuCurtains, {

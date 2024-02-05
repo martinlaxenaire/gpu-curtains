@@ -253,7 +253,7 @@ window.addEventListener('load', async () => {
     sampleCount,
   })
 
-  const nbLights = 125
+  const nbLights = 50
   const lightsRadius = new Float32Array(nbLights)
   const lightsPositions = new Float32Array(4 * nbLights)
   const lightsColors = new Float32Array(3 * nbLights)
