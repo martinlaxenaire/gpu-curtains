@@ -1,8 +1,15 @@
 import { Vec3 } from './Vec3'
 import { Quat } from './Quat'
 
+const xAxis = new Vec3()
+const yAxis = new Vec3()
+const zAxis = new Vec3()
+
 /**
- * Really basic 4x4 matrix class used for matrix calculations.
+ * Basic 4x4 matrix class used for matrix calculations.
+ *
+ * Note that like three.js, the constructor and {@link set} method take arguments in row-major order, while internally they are stored in the {@link elements} array in column-major order.
+ *
  * @see https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js
  * @see http://glmatrix.net/docs/mat4.js.html
  */
@@ -509,6 +516,15 @@ export class Mat4 {
   }
 
   /**
+   * Get the translation {@link Vec3} component of a {@link Mat4}
+   * @param position - {@link Vec3} to set
+   * @returns - translation {@link Vec3} component of this {@link Mat4}
+   */
+  getTranslation(position = new Vec3()): Vec3 {
+    return position.set(this.elements[12], this.elements[13], this.elements[14])
+  }
+
+  /**
    * Scale a {@link Mat4}
    * @param vector - scale {@link Vec3 | vector} to use
    * @returns - scaled {@link Mat4}
@@ -569,56 +585,6 @@ export class Mat4 {
     te[2] = xz - wy
     te[6] = yz + wx
     te[10] = 1 - (xx + yy)
-
-    return this
-  }
-
-  /**
-   * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
-   * @param eye - {@link Vec3 | position vector} of the object that should be rotated
-   * @param target - {@link Vec3 | target vector} to look at
-   * @param up - up {@link Vec3 | vector}
-   * @returns - rotated {@link Mat4}
-   */
-  lookAt(eye: Vec3 = new Vec3(), target: Vec3 = new Vec3(), up: Vec3 = new Vec3(0, 1, 0)): Mat4 {
-    const te = this.elements
-
-    // TODO optimize all those vectors created each time
-
-    const _z = eye.clone().sub(target)
-
-    if (_z.lengthSq() === 0) {
-      // eye and target are in the same position
-      _z.z = 1
-    }
-
-    _z.normalize()
-    const _x = new Vec3().crossVectors(up, _z)
-
-    if (_x.lengthSq() === 0) {
-      // up and z are parallel
-      if (Math.abs(up.z) === 1) {
-        _z.x += 0.0001
-      } else {
-        _z.z += 0.0001
-      }
-
-      _z.normalize()
-      _x.crossVectors(up, _z)
-    }
-
-    _x.normalize()
-    const _y = new Vec3().crossVectors(_z, _x)
-
-    te[0] = _x.x
-    te[4] = _y.x
-    te[8] = _z.x
-    te[1] = _x.y
-    te[5] = _y.y
-    te[9] = _z.y
-    te[2] = _x.z
-    te[6] = _y.z
-    te[10] = _z.z
 
     return this
   }
@@ -757,11 +723,197 @@ export class Mat4 {
   }
 
   /**
-   * Get the translation {@link Vec3} component of a {@link Mat4}
-   * @param position - {@link Vec3} to set
-   * @returns - translation {@link Vec3} component of this {@link Mat4}
+   * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
+   * @param eye - {@link Vec3 | position vector} of the object that should be rotated
+   * @param target - {@link Vec3 | target vector} to look at
+   * @param up - up {@link Vec3 | vector}
+   * @returns - rotated {@link Mat4}
    */
-  getTranslation(position = new Vec3()): Vec3 {
-    return position.set(this.elements[12], this.elements[13], this.elements[14])
+  lookAt(eye: Vec3 = new Vec3(), target: Vec3 = new Vec3(), up: Vec3 = new Vec3(0, 1, 0)): Mat4 {
+    const te = this.elements
+
+    zAxis.copy(eye).sub(target)
+
+    if (zAxis.lengthSq() === 0) {
+      // eye and target are in the same position
+      zAxis.z = 1
+    }
+
+    zAxis.normalize()
+    xAxis.crossVectors(up, zAxis)
+
+    if (xAxis.lengthSq() === 0) {
+      // up and z are parallel
+      if (Math.abs(up.z) === 1) {
+        zAxis.x += 0.0001
+      } else {
+        zAxis.z += 0.0001
+      }
+
+      zAxis.normalize()
+      xAxis.crossVectors(up, zAxis)
+    }
+
+    xAxis.normalize()
+    yAxis.crossVectors(zAxis, xAxis)
+
+    te[0] = xAxis.x
+    te[1] = xAxis.y
+    te[2] = xAxis.z
+    te[3] = 0
+    te[4] = yAxis.x
+    te[5] = yAxis.y
+    te[6] = yAxis.z
+    te[7] = 0
+    te[8] = zAxis.x
+    te[9] = zAxis.y
+    te[10] = zAxis.z
+    te[11] = 0
+    te[12] = eye.x
+    te[13] = eye.y
+    te[14] = eye.z
+    te[15] = 1
+
+    return this
+  }
+
+  /**
+   * Compute a view {@link Mat4} matrix.
+   *
+   * This is a view matrix which transforms all other objects
+   * to be in the space of the view defined by the parameters.
+   *
+   * @param eye - the position of the object.
+   * @param target - the position meant to be aimed at.
+   * @param up - a vector pointing up.
+   * @returns - the view {@link Mat4} matrix.
+   */
+  makeView(eye: Vec3 = new Vec3(), target: Vec3 = new Vec3(), up: Vec3 = new Vec3(0, 1, 0)): Mat4 {
+    // TODO can easily be confused with lookAt
+
+    zAxis.copy(eye).sub(target).normalize()
+    xAxis.crossVectors(up, zAxis).normalize()
+    yAxis.crossVectors(zAxis, xAxis).normalize()
+
+    const te = this.elements
+
+    te[0] = xAxis.x
+    te[1] = yAxis.x
+    te[2] = zAxis.x
+    te[3] = 0
+    te[4] = xAxis.y
+    te[5] = yAxis.y
+    te[6] = zAxis.y
+    te[7] = 0
+    te[8] = xAxis.z
+    te[9] = yAxis.z
+    te[10] = zAxis.z
+    te[11] = 0
+
+    te[12] = -(xAxis.x * eye.x + xAxis.y * eye.y + xAxis.z * eye.z)
+    te[13] = -(yAxis.x * eye.x + yAxis.y * eye.y + yAxis.z * eye.z)
+    te[14] = -(zAxis.x * eye.x + zAxis.y * eye.y + zAxis.z * eye.z)
+    te[15] = 1
+
+    return this
+  }
+
+  /**
+   * Create an orthographic {@link Mat4} matrix based on the parameters. Transforms from
+   *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
+   *  * and 0 to +1 in z.
+   *
+   * @param parameters - parameters used to create the camera orthographic matrix.
+   * @param parameters.left - the left side of the camera near clipping plane viewport.
+   * @param parameters.right - the right side of the camera near clipping plane viewport.
+   * @param parameters.bottom - the bottom of the camera near clipping plane viewport.
+   * @param parameters.top - the top of the camera near clipping plane viewport.
+   * @param parameters.near - the camera near plane.
+   * @param parameters.far - the camera far plane.
+   * @returns - the camera orthographic {@link Mat4} matrix.
+   */
+  makeOrthographic({
+    left,
+    right,
+    bottom,
+    top,
+    near,
+    far,
+  }: {
+    left: number
+    right: number
+    bottom: number
+    top: number
+    near: number
+    far: number
+  }): Mat4 {
+    const te = this.elements
+
+    te[0] = 2 / (right - left)
+    te[1] = 0
+    te[2] = 0
+    te[3] = 0
+
+    te[4] = 0
+    te[5] = 2 / (top - bottom)
+    te[6] = 0
+    te[7] = 0
+
+    te[8] = 0
+    te[9] = 0
+    te[10] = 1 / (near - far)
+    te[11] = 0
+
+    te[12] = (right + left) / (left - right)
+    te[13] = (top + bottom) / (bottom - top)
+    te[14] = near / (near - far)
+    te[15] = 1
+
+    return this
+  }
+
+  /**
+   * Create a perspective {@link Mat4} matrix based on the parameters.
+   *
+   * Note, The matrix generated sends the viewing frustum to the unit box.
+   * We assume a unit box extending from -1 to 1 in the x and y dimensions and
+   * from -1 to 1 in the z dimension, as three.js and more generally WebGL handles it.
+   *
+   * @param parameters - parameters used to create the camera perspective matrix.
+   * @param parameters.fov - the camera field of view (in radians).
+   * @param parameters.aspect - the camera aspect ratio (width / height).
+   * @param parameters.near - the camera near plane.
+   * @param parameters.far - the camera far plane.
+   * @returns - the camera perspective {@link Mat4} matrix.
+   */
+  makePerspective({ fov, aspect, near, far }: { fov: number; aspect: number; near: number; far: number }): Mat4 {
+    // TODO handle z from 0 to 1 like https://github.com/greggman/wgpu-matrix/blob/main/src/mat4-impl.ts#L756 does it?
+    // It would be aligned with the WebGPU specs but it breaks the Camera screenRatio and DOMObject3D position calcs
+
+    const top = near * Math.tan((Math.PI / 180) * 0.5 * fov)
+    const height = 2 * top
+    const width = aspect * height
+    const left = -0.5 * width
+
+    const right = left + width
+    const bottom = top - height
+
+    const x = (2 * near) / (right - left)
+    const y = (2 * near) / (top - bottom)
+
+    const a = (right + left) / (right - left)
+    const b = (top + bottom) / (top - bottom)
+    const c = -(far + near) / (far - near)
+    const d = (-2 * far * near) / (far - near)
+
+    // prettier-ignore
+    this.set(
+      x, 0, 0, 0,
+      0, y, 0, 0,
+      a, b, c, -1,
+      0, 0, d, 0
+    )
+
+    return this
   }
 }

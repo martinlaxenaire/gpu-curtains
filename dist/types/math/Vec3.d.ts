@@ -105,6 +105,18 @@ export declare class Vec3 {
      */
     multiplyScalar(value?: number): Vec3;
     /**
+     * Divide a {@link Vec3} with this {@link Vec3}
+     * @param vector - {@link Vec3} to divide with
+     * @returns - this {@link Vec3} after division
+     */
+    divide(vector?: Vec3): Vec3;
+    /**
+     * Divide all components of this {@link Vec3} with a scalar
+     * @param value - number to divide with
+     * @returns - this {@link Vec3} after division
+     */
+    divideScalar(value?: number): Vec3;
+    /**
      * Copy a {@link Vec3} into this {@link Vec3}
      * @param vector - {@link Vec3} to copy
      * @returns - this {@link Vec3} after copy
@@ -188,7 +200,7 @@ export declare class Vec3 {
      * @param matrix - {@link Mat4 | matrix} to use
      * @returns - this {@link Vec3} after {@link Mat4 | matrix} application
      */
-    applyMat4(matrix?: Mat4): Vec3;
+    applyMat4(matrix: Mat4): Vec3;
     /**
      * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}
      * @param quaternion - {@link Quat | quaternion} to use

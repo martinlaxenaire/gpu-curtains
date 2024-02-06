@@ -362,30 +362,11 @@ export class Camera extends Object3D {
    * Updates the {@link Camera} {@link projectionMatrix}
    */
   updateProjectionMatrix() {
-    const aspect = this.size.width / this.size.height
-
-    const top = this.near * Math.tan((Math.PI / 180) * 0.5 * this.fov)
-    const height = 2 * top
-    const width = aspect * height
-    const left = -0.5 * width
-
-    const right = left + width
-    const bottom = top - height
-
-    const x = (2 * this.near) / (right - left)
-    const y = (2 * this.near) / (top - bottom)
-
-    const a = (right + left) / (right - left)
-    const b = (top + bottom) / (top - bottom)
-    const c = -(this.far + this.near) / (this.far - this.near)
-    const d = (-2 * this.far * this.near) / (this.far - this.near)
-
-    // prettier-ignore
-    this.projectionMatrix.set(
-      x, 0, 0, 0,
-      0, y, 0, 0,
-      a, b, c, -1,
-      0, 0, d, 0
-    )
+    this.projectionMatrix.makePerspective({
+      fov: this.fov,
+      aspect: this.size.width / this.size.height,
+      near: this.near,
+      far: this.far,
+    })
   }
 }

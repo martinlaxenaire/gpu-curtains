@@ -146,7 +146,7 @@ window.addEventListener('load', async () => {
   // to create a sense of "organized chaos"
   const gridDefinition = new Vec2(6, 6)
   const cellGridIndex = new Vec2()
-  const cellSize = new Vec2(systemSize.x / gridDefinition.x, systemSize.y / gridDefinition.y)
+  const cellSize = new Vec2(systemSize.x, systemSize.y).divide(gridDefinition)
 
   for (let i = 0; i < gridDefinition.x * gridDefinition.y; i++) {
     const cubeMesh = new Mesh(gpuCameraRenderer, {
@@ -199,7 +199,7 @@ window.addEventListener('load', async () => {
 
     cubeMesh.position.y = Math.random() * 2 + 1.5
 
-    let rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
+    const rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
 
     cubeMesh.onRender(() => {
       cubeMesh.rotation.y += rotationSpeed

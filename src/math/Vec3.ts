@@ -195,6 +195,32 @@ export class Vec3 {
   }
 
   /**
+   * Divide a {@link Vec3} with this {@link Vec3}
+   * @param vector - {@link Vec3} to divide with
+   * @returns - this {@link Vec3} after division
+   */
+  divide(vector: Vec3 = new Vec3(1)): Vec3 {
+    this.x /= vector.x
+    this.y /= vector.y
+    this.z /= vector.z
+
+    return this
+  }
+
+  /**
+   * Divide all components of this {@link Vec3} with a scalar
+   * @param value - number to divide with
+   * @returns - this {@link Vec3} after division
+   */
+  divideScalar(value = 1): Vec3 {
+    this.x /= value
+    this.y /= value
+    this.z /= value
+
+    return this
+  }
+
+  /**
    * Copy a {@link Vec3} into this {@link Vec3}
    * @param vector - {@link Vec3} to copy
    * @returns - this {@link Vec3} after copy
@@ -357,7 +383,7 @@ export class Vec3 {
    * @param matrix - {@link Mat4 | matrix} to use
    * @returns - this {@link Vec3} after {@link Mat4 | matrix} application
    */
-  applyMat4(matrix: Mat4 = new Mat4()): Vec3 {
+  applyMat4(matrix: Mat4): Vec3 {
     const x = this._x,
       y = this._y,
       z = this._z

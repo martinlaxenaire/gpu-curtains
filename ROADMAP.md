@@ -26,7 +26,6 @@
 
 ## Work in progress
 
-- Shadow mapping implementation
 - Examples & tests
 
 ## TODO / possible improvements
