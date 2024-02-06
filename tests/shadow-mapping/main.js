@@ -103,7 +103,7 @@ window.addEventListener('load', async () => {
 
   // using wgpu-matrix
 
-  const upVector = vec3.fromValues(0, 0, 1)
+  const upVector = vec3.fromValues(0, 1, 0)
   const origin = vec3.fromValues(0, 0, 0)
   const wgpuLightPosition = vec3.fromValues(lightPos[0], lightPos[1], lightPos[2])
   const wgpuLightViewMatrix = mat4.lookAt(wgpuLightPosition, origin, upVector)
@@ -171,7 +171,7 @@ window.addEventListener('load', async () => {
   const meshVs = /* wgsl */ `
     struct VertexOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
+      @location(0) fragPosition: vec3f,
       @location(1) normal: vec3f,
       @location(2) shadowPos: vec3f,
     };
@@ -182,9 +182,7 @@ window.addEventListener('load', async () => {
       var vsOutput: VertexOutput;
     
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = attributes.uv;
-      //vsOutput.normal = attributes.normal;
-      //vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.fragPosition = attributes.position;
       vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
       
       // XY is in (-1, 1) space, Z is in (0, 1) space
@@ -204,7 +202,7 @@ window.addEventListener('load', async () => {
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
+      @location(0) fragPosition: vec3f,
       @location(1) normal: vec3f,
       @location(2) shadowPos: vec3f,
     };
@@ -233,7 +231,7 @@ window.addEventListener('load', async () => {
       }
       visibility /= 9.0;
       
-      let lambertFactor = max(dot(normalize(lightning.lightPosition - fsInput.position.xyz), normalize(fsInput.normal)), 0.0);
+      let lambertFactor = max(dot(normalize(lightning.lightPosition - fsInput.fragPosition.xyz), normalize(fsInput.normal)), 0.0);
       let lightingFactor = min(ambientFactor + visibility * lambertFactor, 1.0);
 
       return vec4(lightingFactor * shading.color, 1.0);
@@ -326,7 +324,7 @@ window.addEventListener('load', async () => {
 
   createMeshDepthMaterial(sphere)
 
-  sphere.position.y = 3
+  sphere.position.y = 4
   sphere.scale.set(2)
 
   // create floor
@@ -378,7 +376,7 @@ window.addEventListener('load', async () => {
 
   createMeshDepthMaterial(floor)
 
-  floor.rotation.x = Math.PI / 2
+  floor.rotation.x = -Math.PI / 2
   floor.scale.set(20, 20, 1)
 
   // now add the depth pre-pass
