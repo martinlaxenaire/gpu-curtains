@@ -43,7 +43,7 @@ window.addEventListener('load', async () => {
   camera.position.y = systemSize.y * 2
   camera.position.z = systemSize.z * 1.5
 
-  camera.lookAt(new Vec3(0, systemSize.y * 0.375, 0))
+  camera.lookAt(new Vec3(0, systemSize.y * 0.125, 0))
 
   // render our scene manually
   const animate = () => {
