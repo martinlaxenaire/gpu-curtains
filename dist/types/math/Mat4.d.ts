@@ -1,7 +1,10 @@
 import { Vec3 } from './Vec3';
 import { Quat } from './Quat';
 /**
- * Really basic 4x4 matrix class used for matrix calculations.
+ * Basic 4x4 matrix class used for matrix calculations.
+ *
+ * Note that like three.js, the constructor and {@link set} method take arguments in row-major order, while internally they are stored in the {@link elements} array in column-major order.
+ *
  * @see https://github.com/mrdoob/three.js/blob/dev/src/math/Matrix4.js
  * @see http://glmatrix.net/docs/mat4.js.html
  */
@@ -113,6 +116,12 @@ export declare class Mat4 {
      */
     translate(vector?: Vec3): Mat4;
     /**
+     * Get the translation {@link Vec3} component of a {@link Mat4}
+     * @param position - {@link Vec3} to set
+     * @returns - translation {@link Vec3} component of this {@link Mat4}
+     */
+    getTranslation(position?: Vec3): Vec3;
+    /**
      * Scale a {@link Mat4}
      * @param vector - scale {@link Vec3 | vector} to use
      * @returns - scaled {@link Mat4}
@@ -124,14 +133,6 @@ export declare class Mat4 {
      * @returns - rotated {@link Mat4}
      */
     rotateFromQuaternion(quaternion?: Quat): Mat4;
-    /**
-     * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
-     * @param eye - {@link Vec3 | position vector} of the object that should be rotated
-     * @param target - {@link Vec3 | target vector} to look at
-     * @param up - up {@link Vec3 | vector}
-     * @returns - rotated {@link Mat4}
-     */
-    lookAt(eye?: Vec3, target?: Vec3, up?: Vec3): Mat4;
     /**
      * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
      * Equivalent for applying translation, rotation and scale matrices but much faster
@@ -156,9 +157,65 @@ export declare class Mat4 {
      */
     composeFromOrigin(translation?: Vec3, quaternion?: Quat, scale?: Vec3, origin?: Vec3): Mat4;
     /**
-     * Get the translation {@link Vec3} component of a {@link Mat4}
-     * @param position - {@link Vec3} to set
-     * @returns - translation {@link Vec3} component of this {@link Mat4}
+     * Set this {@link Mat4} as a rotation matrix based on an eye, target and up {@link Vec3 | vectors}
+     * @param eye - {@link Vec3 | position vector} of the object that should be rotated
+     * @param target - {@link Vec3 | target vector} to look at
+     * @param up - up {@link Vec3 | vector}
+     * @returns - rotated {@link Mat4}
      */
-    getTranslation(position?: Vec3): Vec3;
+    lookAt(eye?: Vec3, target?: Vec3, up?: Vec3): Mat4;
+    /**
+     * Compute a view {@link Mat4} matrix.
+     *
+     * This is a view matrix which transforms all other objects
+     * to be in the space of the view defined by the parameters.
+     *
+     * @param eye - the position of the object.
+     * @param target - the position meant to be aimed at.
+     * @param up - a vector pointing up.
+     * @returns - the view {@link Mat4} matrix.
+     */
+    makeView(eye?: Vec3, target?: Vec3, up?: Vec3): Mat4;
+    /**
+     * Create an orthographic {@link Mat4} matrix based on the parameters. Transforms from
+     *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
+     *  * and 0 to +1 in z.
+     *
+     * @param parameters - parameters used to create the camera orthographic matrix.
+     * @param parameters.left - the left side of the camera near clipping plane viewport.
+     * @param parameters.right - the right side of the camera near clipping plane viewport.
+     * @param parameters.bottom - the bottom of the camera near clipping plane viewport.
+     * @param parameters.top - the top of the camera near clipping plane viewport.
+     * @param parameters.near - the camera near plane.
+     * @param parameters.far - the camera far plane.
+     * @returns - the camera orthographic {@link Mat4} matrix.
+     */
+    makeOrthographic({ left, right, bottom, top, near, far, }: {
+        left: number;
+        right: number;
+        bottom: number;
+        top: number;
+        near: number;
+        far: number;
+    }): Mat4;
+    /**
+     * Create a perspective {@link Mat4} matrix based on the parameters.
+     *
+     * Note, The matrix generated sends the viewing frustum to the unit box.
+     * We assume a unit box extending from -1 to 1 in the x and y dimensions and
+     * from -1 to 1 in the z dimension, as three.js and more generally WebGL handles it.
+     *
+     * @param parameters - parameters used to create the camera perspective matrix.
+     * @param parameters.fov - the camera field of view (in radians).
+     * @param parameters.aspect - the camera aspect ratio (width / height).
+     * @param parameters.near - the camera near plane.
+     * @param parameters.far - the camera far plane.
+     * @returns - the camera perspective {@link Mat4} matrix.
+     */
+    makePerspective({ fov, aspect, near, far }: {
+        fov: number;
+        aspect: number;
+        near: number;
+        far: number;
+    }): Mat4;
 }

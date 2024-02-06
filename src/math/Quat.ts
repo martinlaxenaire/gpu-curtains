@@ -108,7 +108,7 @@ export class Quat {
    * @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from
    * @returns - {@link Quat} after having applied the rotation
    */
-  setFromVec3(vector: Vec3 = new Vec3()): Quat {
+  setFromVec3(vector: Vec3): Quat {
     const ax = vector.x * 0.5
     const ay = vector.y * 0.5
     const az = vector.z * 0.5
@@ -162,7 +162,7 @@ export class Quat {
    * @param angle - angle (in radians) to rotate
    * @returns - {@link Quat} after having applied the rotation
    */
-  setFromAxisAngle(axis: Vec3 = new Vec3(), angle = 0): Quat {
+  setFromAxisAngle(axis: Vec3, angle = 0): Quat {
     // https://github.com/mrdoob/three.js/blob/dev/src/math/Quaternion.js#L275
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
 

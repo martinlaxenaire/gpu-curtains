@@ -161,6 +161,30 @@ export class Vec2 {
   }
 
   /**
+   * Divide a {@link Vec2} with this {@link Vec2}
+   * @param vector - {@link Vec2} to divide with
+   * @returns - this {@link Vec2} after division
+   */
+  divide(vector: Vec2 = new Vec2(1)): Vec2 {
+    this.x /= vector.x
+    this.y /= vector.y
+
+    return this
+  }
+
+  /**
+   * Divide all components of this {@link Vec2} with a scalar
+   * @param value - number to divide with
+   * @returns - this {@link Vec2} after division
+   */
+  divideScalar(value = 1): Vec2 {
+    this.x /= value
+    this.y /= value
+
+    return this
+  }
+
+  /**
    * Copy a {@link Vec2} into this {@link Vec2}
    * @param vector - {@link Vec2} to copy
    * @returns - this {@link Vec2} after copy

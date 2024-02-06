@@ -53,14 +53,14 @@ export declare class Quat {
      * @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from
      * @returns - {@link Quat} after having applied the rotation
      */
-    setFromVec3(vector?: Vec3): Quat;
+    setFromVec3(vector: Vec3): Quat;
     /**
      * Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle
      * @param axis - normalized {@link Vec3 | vector} around which to rotate
      * @param angle - angle (in radians) to rotate
      * @returns - {@link Quat} after having applied the rotation
      */
-    setFromAxisAngle(axis?: Vec3, angle?: number): Quat;
+    setFromAxisAngle(axis: Vec3, angle?: number): Quat;
     /**
      * Set a {@link Quat} from a rotation {@link Mat4 | matrix}
      * @param matrix - rotation {@link Mat4 | matrix} to use
