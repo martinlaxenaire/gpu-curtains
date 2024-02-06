@@ -30,6 +30,8 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
   })
 
+  const systemSize = new Vec3(30, 10, 30)
+
   // get the camera
   const { camera } = gpuCameraRenderer
 
@@ -38,10 +40,10 @@ window.addEventListener('load', async () => {
   const cameraPivot = new Object3D()
 
   camera.parent = cameraPivot
-  camera.position.y = 10
-  camera.position.z = 25
+  camera.position.y = systemSize.y * 2
+  camera.position.z = systemSize.z * 1.5
 
-  camera.lookAt(new Vec3(0, 1, 0))
+  camera.lookAt(new Vec3(0, systemSize.y * 0.375, 0))
 
   // render our scene manually
   const animate = () => {
@@ -126,19 +128,27 @@ window.addEventListener('load', async () => {
     
     @fragment fn main(fsInput: VSOutput) -> GBufferOutput {
       // faking some kind of checkerboard texture
-      let uv = floor(params.checkerBoard * fsInput.uv);
-      let c = 0.2 + 0.5 * ((uv.x + uv.y) - 2.0 * floor((uv.x + uv.y) / 2.0));
+      //let uv = floor(params.checkerBoard * fsInput.uv);
+      //var c = 0.2 + 0.5 * ((uv.x + uv.y) - 2.0 * floor((uv.x + uv.y) / 2.0));
+      //c = 0.5;
       
       var output : GBufferOutput;
       
       output.normal = vec4(normalize(fsInput.normal), 1.0);
-      output.albedo = vec4(vec3(c, c, c), 1.0);
+      output.albedo = vec4(shading.color, 1.0);
     
       return output;
     }
   `
 
-  for (let i = 0; i < 15; i++) {
+  // we are going to put the cubes in cell grid
+  // and then move them randomly a bit in their cells
+  // to create a sense of "organized chaos"
+  const gridDefinition = new Vec2(6, 6)
+  const cellGridIndex = new Vec2()
+  const cellSize = new Vec2(systemSize.x / gridDefinition.x, systemSize.y / gridDefinition.y)
+
+  for (let i = 0; i < gridDefinition.x * gridDefinition.y; i++) {
     const cubeMesh = new Mesh(gpuCameraRenderer, {
       label: 'Cube ' + i,
       geometry: cubeGeometry,
@@ -165,19 +175,28 @@ window.addEventListener('load', async () => {
             },
           },
         },
-        params: {
+        shading: {
           struct: {
-            checkerBoard: {
-              type: 'vec2f',
-              value: new Vec2(5),
+            color: {
+              type: 'vec3f',
+              value: new Vec3(0.75),
             },
           },
         },
       },
     })
 
-    cubeMesh.position.x = Math.random() * 20 * Math.sign(Math.random() - 0.5)
-    cubeMesh.position.z = Math.random() * 20 * Math.sign(Math.random() - 0.5)
+    // put in a grid
+    cellGridIndex.set(
+      (i % gridDefinition.x) - (gridDefinition.x - 1) * 0.5,
+      Math.floor(i / gridDefinition.y) - (gridDefinition.y - 1) * 0.5
+    )
+
+    cubeMesh.position.x =
+      cellGridIndex.x * (systemSize.x / (gridDefinition.x * 0.5)) + (Math.random() - 0.5) * cellSize.x * 1.25
+    cubeMesh.position.z =
+      cellGridIndex.y * (systemSize.z / (gridDefinition.y * 0.5)) + (Math.random() - 0.5) * cellSize.y * 1.25
+
     cubeMesh.position.y = Math.random() * 2 + 1.5
 
     let rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
@@ -218,11 +237,11 @@ window.addEventListener('load', async () => {
           },
         },
       },
-      params: {
+      shading: {
         struct: {
-          checkerBoard: {
-            type: 'vec2f',
-            value: new Vec2(20),
+          color: {
+            type: 'vec3f',
+            value: new Vec3(0.5),
           },
         },
       },
@@ -230,7 +249,7 @@ window.addEventListener('load', async () => {
   })
 
   floor.rotation.x = -Math.PI / 2
-  floor.scale.set(20, 20, 1)
+  floor.scale.set(systemSize.x, systemSize.z, 1)
 
   floor.onRender(() => {
     floor.uniforms.normals.inverseTransposeMatrix.value.copy(floor.worldMatrix).invert().transpose()
@@ -256,22 +275,27 @@ window.addEventListener('load', async () => {
   })
 
   // we could eventually make the light move in a compute shader
-  const nbLights = 75
+  const nbLights = 100
   const lightsRadius = new Float32Array(nbLights)
   const lightsPositions = new Float32Array(4 * nbLights)
   const lightsColors = new Float32Array(3 * nbLights)
+  const blue = new Vec3(0, 1, 1)
+  const pink = new Vec3(1, 0, 1)
+  const color = new Vec3()
 
   for (let i = 0, j = 0, k = 0; i < nbLights; i++, j += 4, k += 3) {
-    lightsRadius[i] = 5 + Math.random() * 7.5
+    lightsRadius[i] = 7.5 + Math.random() * 7.5
 
-    lightsPositions[j] = Math.random() * 20 * Math.sign(Math.random() - 0.5)
+    lightsPositions[j] = Math.random() * systemSize.x * Math.sign(Math.random() - 0.5)
     lightsPositions[j + 1] = Math.random() * 5 + 2.5
-    lightsPositions[j + 2] = Math.random() * 20 * Math.sign(Math.random() - 0.5)
+    lightsPositions[j + 2] = Math.random() * systemSize.z * Math.sign(Math.random() - 0.5)
     lightsPositions[j + 3] = 1
 
-    lightsColors[k] = Math.random() * 0.75 + 0.25
-    lightsColors[k + 1] = Math.random() * 0.75 + 0.25
-    lightsColors[k + 2] = Math.random() * 0.75 + 0.25
+    color.copy(pink).lerp(blue, Math.random())
+
+    lightsColors[k] = color.x
+    lightsColors[k + 1] = color.y
+    lightsColors[k + 2] = color.z
   }
 
   // DEFERRED RENDERING
