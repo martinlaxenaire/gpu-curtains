@@ -153,7 +153,7 @@ window.addEventListener('load', async () => {
   }
 
   // add our planes and handle them
-  planeElements.forEach((planeEl, planeIndex) => {
+  planeElements.forEach((planeEl) => {
     const plane = new Plane(gpuCurtains, planeEl, params)
     planes.push(plane)
 

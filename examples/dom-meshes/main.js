@@ -82,8 +82,8 @@ window.addEventListener('load', async () => {
         }),
       ],
       texturesOptions: {
-        // display a redish color while textures are loading
-        placeholderColor: [238, 101, 87, 255],
+        // random placeholder color between pink and blue
+        placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 1] : [0, 255, 255, 1],
         generateMips: true,
       },
     })
@@ -123,7 +123,13 @@ window.addEventListener('load', async () => {
           entryPoint: 'main',
         },
       },
+      texturesOptions: {
+        // random placeholder color between pink and blue
+        placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 1] : [0, 255, 255, 1],
+      },
     })
+
+    console.log(sphereMesh)
 
     const updateSphereScale = () => {
       // scale our sphere along the Z axis based on its height (Y axis)

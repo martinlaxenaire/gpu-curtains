@@ -147,6 +147,9 @@ window.addEventListener('load', async () => {
   const frontPlanes = document.querySelectorAll('.front-plane')
   frontPlanes.forEach((planeEl, index) => {
     params.label = 'Front plane ' + index
+    // random placeholder color between pink and blue
+    params.texturesOptions.placeholderColor = Math.random() > 0.5 ? [255, 0, 255, 1] : [0, 255, 255, 1]
+
     // notice that gpuCurtains.renderer matches the default renderer created by the GPUCurtains instance
     const plane = new Plane(gpuCurtains.renderer, planeEl, params)
 
