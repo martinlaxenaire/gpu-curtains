@@ -2,6 +2,7 @@ import { throwError } from '../../utils/utils'
 import { GPURenderer } from './GPURenderer'
 import { GPUCameraRenderer } from './GPUCameraRenderer'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
+import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
 
 /**
  * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}
