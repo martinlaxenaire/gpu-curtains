@@ -5898,6 +5898,7 @@ class RenderMaterial extends Material {
     if (shaders.fragment && !shaders.fragment.entryPoint) {
       shaders.fragment.entryPoint = "main";
     }
+    renderingOptions.targetFormat = renderingOptions.targetFormat ?? this.renderer.options.preferredFormat;
     this.options = {
       ...this.options,
       shaders,

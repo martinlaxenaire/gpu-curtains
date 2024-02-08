@@ -32,7 +32,7 @@ window.addEventListener('load', async () => {
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
-    watchScroll: false,
+    watchScroll: false, // we're going to do it manually with lenis 'scroll' callback
   })
 
   gpuCurtains.onError(() => {
@@ -125,6 +125,9 @@ window.addEventListener('load', async () => {
   // add our planes and handle them
   planeElements.forEach((planeEl, planeIndex) => {
     params.label = 'Plane' + planeIndex
+    // random placeholder color while textures are loading
+    params.texturesOptions.placeholderColor = Math.random() > 0.5 ? [255, 0, 255, 1] : [0, 255, 255, 1]
+
     const plane = new Plane(gpuCurtains, planeEl, { ...params, renderOrder: -planeIndex })
 
     // check if our plane is defined and use it

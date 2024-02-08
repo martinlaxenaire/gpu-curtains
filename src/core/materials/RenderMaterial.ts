@@ -60,6 +60,9 @@ export class RenderMaterial extends Material {
       ;(shaders.fragment as ShaderOptions).entryPoint = 'main'
     }
 
+    // patch target format if not set
+    renderingOptions.targetFormat = renderingOptions.targetFormat ?? this.renderer.options.preferredFormat
+
     this.options = {
       ...this.options,
       shaders,
