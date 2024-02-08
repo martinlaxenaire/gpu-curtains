@@ -247,6 +247,10 @@
     border-radius: 50%;
   }
 
+  .intro-cube-mesh {
+    margin: 0.75rem 0;
+  }
+
   .no-curtains .intro-dom-mesh {
     background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
     border: none;

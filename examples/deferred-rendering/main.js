@@ -207,7 +207,7 @@ window.addEventListener('load', async () => {
 
       cubeMesh.uniforms.normals.inverseTransposeMatrix.value.copy(cubeMesh.worldMatrix).invert().transpose()
       // explicitly tell the uniform to update
-      cubeMesh.material.shouldUpdateInputsBindings('normals', 'inverseTransposeMatrix')
+      cubeMesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
     })
   }
 
@@ -254,7 +254,7 @@ window.addEventListener('load', async () => {
   floor.onRender(() => {
     floor.uniforms.normals.inverseTransposeMatrix.value.copy(floor.worldMatrix).invert().transpose()
     // explicitly tell the uniform to update
-    floor.material.shouldUpdateInputsBindings('normals', 'inverseTransposeMatrix')
+    floor.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
   })
 
   // create 2 textures based on our GBuffer MRT output
@@ -403,13 +403,15 @@ window.addEventListener('load', async () => {
     },
   })
 
+  console.log(deferredRenderingPass.uniforms.params.cameraInverseViewProjectionMatrix)
+
   deferredRenderingPass.onRender(() => {
     deferredRenderingPass.uniforms.params.cameraInverseViewProjectionMatrix.value
       .multiplyMatrices(camera.projectionMatrix, camera.viewMatrix)
       .invert()
 
     // explicitly tell the uniform to update
-    deferredRenderingPass.material.shouldUpdateInputsBindings('params', 'cameraInverseViewProjectionMatrix')
+    deferredRenderingPass.uniforms.params.cameraInverseViewProjectionMatrix.shouldUpdate = true
   })
 
   // DEBUG VIEW
