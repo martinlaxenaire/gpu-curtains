@@ -397,13 +397,6 @@ export declare class GPURenderer {
      */
     onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
-     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-     * @param renderPass - current {@link RenderPass}
-     * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
-     * @returns - the {@link GPUTexture | current render texture}
-     */
-    setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture?: GPUTexture | null): GPUTexture | null;
-    /**
      * Render a single {@link ComputePass}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      * @param computePass - {@link ComputePass}

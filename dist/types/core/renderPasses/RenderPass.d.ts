@@ -107,6 +107,12 @@ export declare class RenderPass {
      */
     setClearValue(clearValue?: GPUColor, colorAttachmentIndex?: number): void;
     /**
+     * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
+     * @returns - the {@link GPUTexture | current render texture}
+     */
+    updateView(renderTexture?: GPUTexture | null): GPUTexture | null;
+    /**
      * Destroy our {@link RenderPass}
      */
     destroy(): void;

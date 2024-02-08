@@ -48,7 +48,7 @@ export class RenderTarget {
 
   /** {@link RenderPass} used by this {@link RenderTarget} */
   renderPass: RenderPass
-  /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link core/renderers/GPURenderer.GPURenderer#setRenderPassCurrentTexture | setting the current texture} */
+  /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture} */
   renderTexture?: RenderTexture
 
   /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */

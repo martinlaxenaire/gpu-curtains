@@ -12,6 +12,7 @@ window.addEventListener('load', async () => {
     SphereGeometry,
     Vec2,
     Vec3,
+    logSceneCommands,
   } = await import(/* @vite-ignore */ path)
 
   const systemSize = 10
@@ -533,5 +534,5 @@ window.addEventListener('load', async () => {
   })
 
   console.log(gpuCameraRenderer.scene)
-  gpuCameraRenderer.scene.logRenderCommands()
+  logSceneCommands(gpuCameraRenderer)
 })

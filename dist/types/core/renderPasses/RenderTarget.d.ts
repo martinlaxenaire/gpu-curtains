@@ -44,7 +44,7 @@ export declare class RenderTarget {
     options: RenderTargetParams;
     /** {@link RenderPass} used by this {@link RenderTarget} */
     renderPass: RenderPass;
-    /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link core/renderers/GPURenderer.GPURenderer#setRenderPassCurrentTexture | setting the current texture} */
+    /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture} */
     renderTexture?: RenderTexture;
     /**
      * RenderTarget constructor

@@ -53,3 +53,6 @@ export { Vec3 } from './math/Vec3'
 // extras
 export { BoxGeometry } from './extras/geometries/BoxGeometry'
 export { SphereGeometry } from './extras/geometries/SphereGeometry'
+
+// debug
+export * from './utils/debug'

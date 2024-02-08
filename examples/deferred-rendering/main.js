@@ -478,6 +478,4 @@ window.addEventListener('load', async () => {
       debugViewPass.visible = false
     }
   })
-
-  gpuCameraRenderer.scene.logRenderCommands()
 })

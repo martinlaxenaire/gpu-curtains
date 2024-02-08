@@ -8304,6 +8304,33 @@ class RenderPass {
     }
   }
   /**
+   * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+   * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
+   * @returns - the {@link GPUTexture | current render texture}
+   */
+  updateView(renderTexture = null) {
+    if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
+      return null;
+    }
+    if (!renderTexture) {
+      renderTexture = this.renderer.context.getCurrentTexture();
+      renderTexture.label = `${this.type} context current texture`;
+    }
+    if (this.options.sampleCount > 1) {
+      this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({
+        label: this.viewTextures[0].options.label + " view"
+      });
+      this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
+        label: renderTexture.label + " resolve target view"
+      });
+    } else {
+      this.descriptor.colorAttachments[0].view = renderTexture.createView({
+        label: renderTexture.label + " view"
+      });
+    }
+    return renderTexture;
+  }
+  /**
    * Destroy our {@link RenderPass}
    */
   destroy() {
@@ -9327,10 +9354,7 @@ class Scene {
    * @param renderPassEntry - {@link RenderPassEntry} to render
    */
   renderSinglePassEntry(commandEncoder, renderPassEntry) {
-    const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
-      renderPassEntry.renderPass,
-      renderPassEntry.renderTexture?.texture
-    );
+    const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
     const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
     !this.renderer.production && pass.pushDebugGroup(
@@ -9383,91 +9407,6 @@ class Scene {
         this.renderSinglePassEntry(commandEncoder, renderPassEntry);
       });
     }
-  }
-  /**
-   * Logs all the main commands executed during each {@link Scene#render | Scene render} calls.
-   */
-  logRenderCommands() {
-    const renderCommands = [];
-    this.computePassEntries.forEach((computePass) => {
-      renderCommands.push({
-        command: "Render ComputePass",
-        content: computePass.options.label
-      });
-      computePass.material.bindGroups.forEach((bindGroup) => {
-        bindGroup.bufferBindings.forEach((binding) => {
-          if (binding.shouldCopyResult) {
-            renderCommands.push({
-              command: `Copy buffer to buffer`,
-              source: `${binding.name} buffer`,
-              destination: `${binding.name} result buffer`
-            });
-          }
-        });
-      });
-    });
-    for (const renderPassEntryType in this.renderPassEntries) {
-      let passDrawnCount = 0;
-      this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-        if (!this.getRenderPassEntryLength(renderPassEntry))
-          return;
-        const destination = !renderPassEntry.renderPass.options.useColorAttachments ? void 0 : renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : renderPassEntry.renderPass.options.colorAttachments.length > 1 ? "Multiple render target" : "Context current texture";
-        let descriptor = renderPassEntry.renderPass.options.label;
-        const operations = {
-          loadOp: renderPassEntry.renderPass.options.useColorAttachments ? renderPassEntryType === "screen" && passDrawnCount > 0 ? "load" : renderPassEntry.renderPass.options.loadOp : void 0,
-          depthLoadOp: void 0
-        };
-        if (renderPassEntry.renderPass.options.useDepth) {
-          operations.depthLoadOp = renderPassEntry.renderPass.options.depthLoadOp;
-        }
-        passDrawnCount++;
-        if (renderPassEntry.element) {
-          if (renderPassEntry.element.type === "ShaderPass" && !renderPassEntry.element.renderTarget) {
-            renderCommands.push({
-              command: `Copy texture to texture`,
-              source: destination,
-              destination: `${renderPassEntry.element.options.label} renderTexture`
-            });
-            operations.loadOp = "clear";
-          }
-          descriptor += " " + JSON.stringify(operations);
-          renderCommands.push({
-            command: `Render ${renderPassEntry.element.type}`,
-            source: renderPassEntry.element.options.label,
-            destination,
-            descriptor
-          });
-          if (renderPassEntry.element.type === "ShaderPass" && renderPassEntry.element.renderTarget) {
-            renderCommands.push({
-              command: `Copy texture to texture`,
-              source: destination,
-              destination: `${renderPassEntry.element.renderTarget.options.label} renderTexture`
-            });
-          } else if (renderPassEntry.element.type === "PingPongPlane") {
-            renderCommands.push({
-              command: `Copy texture to texture`,
-              source: destination,
-              destination: `${renderPassEntry.element.renderTexture.options.label}`
-            });
-          }
-        } else if (renderPassEntry.stack) {
-          descriptor += " " + JSON.stringify(operations);
-          for (const stackType in renderPassEntry.stack) {
-            for (const objectType in renderPassEntry.stack[stackType]) {
-              if (renderPassEntry.stack[stackType][objectType].length) {
-                renderCommands.push({
-                  command: `Render stack (${stackType} ${objectType} objects)`,
-                  source: renderPassEntry.stack[stackType][objectType],
-                  destination,
-                  descriptor
-                });
-              }
-            }
-          }
-        }
-      });
-    }
-    console.table(renderCommands);
   }
 }
 
@@ -10164,34 +10103,6 @@ class GPURenderer {
   }
   /* RENDER */
   /**
-   * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-   * @param renderPass - current {@link RenderPass}
-   * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
-   * @returns - the {@link GPUTexture | current render texture}
-   */
-  setRenderPassCurrentTexture(renderPass, renderTexture = null) {
-    if (!renderPass.options.colorAttachments.length || !renderPass.options.shouldUpdateView) {
-      return null;
-    }
-    if (!renderTexture) {
-      renderTexture = this.context.getCurrentTexture();
-      renderTexture.label = `${this.type} context current texture`;
-    }
-    if (renderPass.options.sampleCount > 1) {
-      renderPass.descriptor.colorAttachments[0].view = renderPass.viewTextures[0].texture.createView({
-        label: renderPass.viewTextures[0].options.label + " view"
-      });
-      renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
-        label: renderTexture.label + " resolve target view"
-      });
-    } else {
-      renderPass.descriptor.colorAttachments[0].view = renderTexture.createView({
-        label: renderTexture.label + " view"
-      });
-    }
-    return renderTexture;
-  }
-  /**
    * Render a single {@link ComputePass}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    * @param computePass - {@link ComputePass}
@@ -10244,7 +10155,7 @@ class GPURenderer {
       commandEncoder = this.device?.createCommandEncoder({ label: "Force clear command encoder" });
       !this.production && commandEncoder.pushDebugGroup("Force clear command encoder");
     }
-    this.setRenderPassCurrentTexture(this.renderPass);
+    this.renderPass.updateView();
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
     pass.end();
     if (!hasCommandEncoder) {
@@ -11450,5 +11361,91 @@ class SphereGeometry extends IndexedGeometry {
   }
 }
 
-export { BindGroup, Binding, Box3, BoxGeometry, BufferBinding, Camera, ComputeMaterial, ComputePass, ComputePipelineEntry, DOMElement, DOMFrustum, DOMMesh, DOMObject3D, FullscreenPlane, GPUCameraRenderer, GPUCurtains, GPUCurtainsRenderer, GPUDeviceManager, GPURenderer, Geometry, IndexedGeometry, Mat4, Material, Mesh, Object3D, PingPongPlane, PipelineEntry, PipelineManager, Plane, PlaneGeometry, ProjectedObject3D, Quat, RenderMaterial, RenderPass, RenderPipelineEntry, RenderTarget, RenderTexture, Sampler, SamplerBinding, Scene, ShaderPass, SphereGeometry, Texture, TextureBindGroup, TextureBinding, Vec2, Vec3, WritableBufferBinding };
+const logSceneCommands = (renderer) => {
+  const { scene } = renderer;
+  if (!scene)
+    return;
+  const renderCommands = [];
+  scene.computePassEntries.forEach((computePass) => {
+    renderCommands.push({
+      command: "Render ComputePass",
+      content: computePass.options.label
+    });
+    computePass.material.bindGroups.forEach((bindGroup) => {
+      bindGroup.bufferBindings.forEach((binding) => {
+        if (binding.shouldCopyResult) {
+          renderCommands.push({
+            command: `Copy buffer to buffer`,
+            source: `${binding.name} buffer`,
+            destination: `${binding.name} result buffer`
+          });
+        }
+      });
+    });
+  });
+  for (const renderPassEntryType in scene.renderPassEntries) {
+    let passDrawnCount = 0;
+    scene.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
+      if (!scene.getRenderPassEntryLength(renderPassEntry))
+        return;
+      const destination = !renderPassEntry.renderPass.options.useColorAttachments ? void 0 : renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : renderPassEntry.renderPass.options.colorAttachments.length > 1 ? "Multiple render target" : "Context current texture";
+      let descriptor = renderPassEntry.renderPass.options.label;
+      const operations = {
+        loadOp: renderPassEntry.renderPass.options.useColorAttachments ? renderPassEntryType === "screen" && passDrawnCount > 0 ? "load" : renderPassEntry.renderPass.options.loadOp : void 0,
+        depthLoadOp: void 0
+      };
+      if (renderPassEntry.renderPass.options.useDepth) {
+        operations.depthLoadOp = renderPassEntry.renderPass.options.depthLoadOp;
+      }
+      passDrawnCount++;
+      if (renderPassEntry.element) {
+        if (renderPassEntry.element.type === "ShaderPass" && !renderPassEntry.element.renderTarget) {
+          renderCommands.push({
+            command: `Copy texture to texture`,
+            source: destination,
+            destination: `${renderPassEntry.element.options.label} renderTexture`
+          });
+          operations.loadOp = "clear";
+        }
+        descriptor += " " + JSON.stringify(operations);
+        renderCommands.push({
+          command: `Render ${renderPassEntry.element.type}`,
+          source: renderPassEntry.element.options.label,
+          destination,
+          descriptor
+        });
+        if (renderPassEntry.element.type === "ShaderPass" && renderPassEntry.element.renderTarget) {
+          renderCommands.push({
+            command: `Copy texture to texture`,
+            source: destination,
+            destination: `${renderPassEntry.element.renderTarget.options.label} renderTexture`
+          });
+        } else if (renderPassEntry.element.type === "PingPongPlane") {
+          renderCommands.push({
+            command: `Copy texture to texture`,
+            source: destination,
+            destination: `${renderPassEntry.element.renderTexture.options.label}`
+          });
+        }
+      } else if (renderPassEntry.stack) {
+        descriptor += " " + JSON.stringify(operations);
+        for (const stackType in renderPassEntry.stack) {
+          for (const objectType in renderPassEntry.stack[stackType]) {
+            if (renderPassEntry.stack[stackType][objectType].length) {
+              renderCommands.push({
+                command: `Render stack (${stackType} ${objectType} objects)`,
+                source: renderPassEntry.stack[stackType][objectType],
+                destination,
+                descriptor
+              });
+            }
+          }
+        }
+      }
+    });
+  }
+  console.table(renderCommands);
+};
+
+export { BindGroup, Binding, Box3, BoxGeometry, BufferBinding, Camera, ComputeMaterial, ComputePass, ComputePipelineEntry, DOMElement, DOMFrustum, DOMMesh, DOMObject3D, FullscreenPlane, GPUCameraRenderer, GPUCurtains, GPUCurtainsRenderer, GPUDeviceManager, GPURenderer, Geometry, IndexedGeometry, Mat4, Material, Mesh, Object3D, PingPongPlane, PipelineEntry, PipelineManager, Plane, PlaneGeometry, ProjectedObject3D, Quat, RenderMaterial, RenderPass, RenderPipelineEntry, RenderTarget, RenderTexture, Sampler, SamplerBinding, Scene, ShaderPass, SphereGeometry, Texture, TextureBindGroup, TextureBinding, Vec2, Vec3, WritableBufferBinding, logSceneCommands };
 //# sourceMappingURL=gpu-curtains.mjs.map
