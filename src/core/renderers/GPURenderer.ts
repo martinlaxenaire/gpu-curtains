@@ -868,38 +868,6 @@ export class GPURenderer {
   /* RENDER */
 
   /**
-   * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-   * @param renderPass - current {@link RenderPass}
-   * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
-   * @returns - the {@link GPUTexture | current render texture}
-   */
-  setRenderPassCurrentTexture(renderPass: RenderPass, renderTexture: GPUTexture | null = null): GPUTexture | null {
-    if (!renderPass.options.colorAttachments.length || !renderPass.options.shouldUpdateView) {
-      return null
-    }
-
-    if (!renderTexture) {
-      renderTexture = this.context.getCurrentTexture()
-      renderTexture.label = `${this.type} context current texture`
-    }
-
-    if (renderPass.options.sampleCount > 1) {
-      renderPass.descriptor.colorAttachments[0].view = renderPass.viewTextures[0].texture.createView({
-        label: renderPass.viewTextures[0].options.label + ' view',
-      })
-      renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
-        label: renderTexture.label + ' resolve target view',
-      })
-    } else {
-      renderPass.descriptor.colorAttachments[0].view = renderTexture.createView({
-        label: renderTexture.label + ' view',
-      })
-    }
-
-    return renderTexture
-  }
-
-  /**
    * Render a single {@link ComputePass}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    * @param computePass - {@link ComputePass}
@@ -963,7 +931,7 @@ export class GPURenderer {
       !this.production && commandEncoder.pushDebugGroup('Force clear command encoder')
     }
 
-    this.setRenderPassCurrentTexture(this.renderPass)
+    this.renderPass.updateView()
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
     pass.end()
 

@@ -445,10 +445,7 @@ export class Scene {
    */
   renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry) {
     // set the pass texture to render to
-    const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
-      renderPassEntry.renderPass,
-      renderPassEntry.renderTexture?.texture
-    )
+    const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture)
 
     renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture)
 
