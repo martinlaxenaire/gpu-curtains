@@ -306,7 +306,7 @@ export class RenderPass {
 
   /**
    * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-   * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
+   * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
    * @returns - the {@link GPUTexture | current render texture}
    */
   updateView(renderTexture: GPUTexture | null = null): GPUTexture | null {

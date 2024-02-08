@@ -8310,6 +8310,33 @@ struct VSOutput {
       }
     }
     /**
+     * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
+     * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
+     * @returns - the {@link GPUTexture | current render texture}
+     */
+    updateView(renderTexture = null) {
+      if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
+        return null;
+      }
+      if (!renderTexture) {
+        renderTexture = this.renderer.context.getCurrentTexture();
+        renderTexture.label = `${this.type} context current texture`;
+      }
+      if (this.options.sampleCount > 1) {
+        this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({
+          label: this.viewTextures[0].options.label + " view"
+        });
+        this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
+          label: renderTexture.label + " resolve target view"
+        });
+      } else {
+        this.descriptor.colorAttachments[0].view = renderTexture.createView({
+          label: renderTexture.label + " view"
+        });
+      }
+      return renderTexture;
+    }
+    /**
      * Destroy our {@link RenderPass}
      */
     destroy() {
@@ -9333,10 +9360,7 @@ struct VSOutput {
      * @param renderPassEntry - {@link RenderPassEntry} to render
      */
     renderSinglePassEntry(commandEncoder, renderPassEntry) {
-      const swapChainTexture = this.renderer.setRenderPassCurrentTexture(
-        renderPassEntry.renderPass,
-        renderPassEntry.renderTexture?.texture
-      );
+      const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
       renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
       const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
       !this.renderer.production && pass.pushDebugGroup(
@@ -10085,34 +10109,6 @@ struct VSOutput {
     }
     /* RENDER */
     /**
-     * Set the current {@link RenderPass#descriptor | render pass descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-     * @param renderPass - current {@link RenderPass}
-     * @param renderTexture - {@link GPUTexture} to use, or the {@link context} {@link GPUTexture | current texture} if null
-     * @returns - the {@link GPUTexture | current render texture}
-     */
-    setRenderPassCurrentTexture(renderPass, renderTexture = null) {
-      if (!renderPass.options.colorAttachments.length || !renderPass.options.shouldUpdateView) {
-        return null;
-      }
-      if (!renderTexture) {
-        renderTexture = this.context.getCurrentTexture();
-        renderTexture.label = `${this.type} context current texture`;
-      }
-      if (renderPass.options.sampleCount > 1) {
-        renderPass.descriptor.colorAttachments[0].view = renderPass.viewTextures[0].texture.createView({
-          label: renderPass.viewTextures[0].options.label + " view"
-        });
-        renderPass.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
-          label: renderTexture.label + " resolve target view"
-        });
-      } else {
-        renderPass.descriptor.colorAttachments[0].view = renderTexture.createView({
-          label: renderTexture.label + " view"
-        });
-      }
-      return renderTexture;
-    }
-    /**
      * Render a single {@link ComputePass}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      * @param computePass - {@link ComputePass}
@@ -10165,7 +10161,7 @@ struct VSOutput {
         commandEncoder = this.device?.createCommandEncoder({ label: "Force clear command encoder" });
         !this.production && commandEncoder.pushDebugGroup("Force clear command encoder");
       }
-      this.setRenderPassCurrentTexture(this.renderPass);
+      this.renderPass.updateView();
       const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
       pass.end();
       if (!hasCommandEncoder) {
