@@ -305,9 +305,11 @@ window.addEventListener('load', async () => {
     const rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
 
     mesh.onRender(() => {
+      // onRender is called when rendering the depth pass and the shading pass
+      // be sure we're actually rendering the shading pass
       if (mesh.uniforms.normals) {
         mesh.uniforms.normals.inverseTransposeMatrix.value.copy(mesh.worldMatrix).invert().transpose()
-        mesh.material.shouldUpdateInputsBindings('normals', 'inverseTransposeMatrix')
+        mesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
 
         mesh.rotation.y += rotationSpeed
         mesh.rotation.z += rotationSpeed
@@ -369,9 +371,11 @@ window.addEventListener('load', async () => {
     })
 
     wall.onRender(() => {
+      // onRender is called when rendering the depth pass and the shading pass
+      // be sure we're actually rendering the shading pass
       if (wall.uniforms.normals) {
         wall.uniforms.normals.inverseTransposeMatrix.value.copy(wall.worldMatrix).invert().transpose()
-        wall.material.shouldUpdateInputsBindings('normals', 'inverseTransposeMatrix')
+        wall.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
       }
     })
 
