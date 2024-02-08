@@ -9634,7 +9634,7 @@ struct VSOutput {
     get pixelRatioBoundingRect() {
       const devicePixelRatio = window.devicePixelRatio ?? 1;
       const scaleBoundingRect = this.pixelRatio / devicePixelRatio;
-      return Object.keys(this.boundingRect).reduce(
+      const pixelRatioBoundingRect = Object.keys(this.boundingRect).reduce(
         (a, key) => ({ ...a, [key]: this.boundingRect[key] * scaleBoundingRect }),
         {
           x: 0,
@@ -9647,6 +9647,17 @@ struct VSOutput {
           left: 0
         }
       );
+      pixelRatioBoundingRect.width = Math.min(this.canvas.width, pixelRatioBoundingRect.width);
+      pixelRatioBoundingRect.height = Math.min(this.canvas.height, pixelRatioBoundingRect.height);
+      pixelRatioBoundingRect.right = Math.min(
+        pixelRatioBoundingRect.width + pixelRatioBoundingRect.left,
+        pixelRatioBoundingRect.right
+      );
+      pixelRatioBoundingRect.bottom = Math.min(
+        pixelRatioBoundingRect.height + pixelRatioBoundingRect.top,
+        pixelRatioBoundingRect.bottom
+      );
+      return pixelRatioBoundingRect;
     }
     /* USEFUL DEVICE MANAGER OBJECTS */
     /**
