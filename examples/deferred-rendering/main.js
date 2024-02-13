@@ -403,8 +403,6 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(deferredRenderingPass.uniforms.params.cameraInverseViewProjectionMatrix)
-
   deferredRenderingPass.onRender(() => {
     deferredRenderingPass.uniforms.params.cameraInverseViewProjectionMatrix.value
       .multiplyMatrices(camera.projectionMatrix, camera.viewMatrix)

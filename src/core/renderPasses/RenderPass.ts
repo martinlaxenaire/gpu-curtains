@@ -311,12 +311,19 @@ export class RenderPass {
    */
   updateView(renderTexture: GPUTexture | null = null): GPUTexture | null {
     if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
-      return null
+      // resolve texture in case we need it, but do not update view
+      if (renderTexture && this.options.sampleCount > 1) {
+        this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
+          label: renderTexture.label + ' resolve target view',
+        })
+      }
+
+      return renderTexture
     }
 
     if (!renderTexture) {
       renderTexture = this.renderer.context.getCurrentTexture()
-      renderTexture.label = `${this.type} context current texture`
+      renderTexture.label = `${this.renderer.type} context current texture`
     }
 
     if (this.options.sampleCount > 1) {

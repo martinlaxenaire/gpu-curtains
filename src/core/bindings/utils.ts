@@ -173,6 +173,7 @@ export const getBindGroupLayoutTextureBindingType = (
           texture: {
             multisampled: binding.options.multisampled,
             viewDimension: binding.options.viewDimension,
+            sampleType: binding.options.multisampled ? 'unfilterable-float' : 'float',
           } as GPUTextureBindingLayout,
         }
       case 'depth':
