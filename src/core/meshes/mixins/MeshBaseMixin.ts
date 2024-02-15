@@ -14,6 +14,7 @@ import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../..
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin'
 import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl'
 import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl'
+import { RenderPass } from '../../renderPasses/RenderPass'
 
 let meshIndex = 0
 
@@ -192,6 +193,12 @@ export declare class MeshBaseClass {
    * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene(): void
+
+  /**
+   * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+   * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+   */
+  setRenderingOptionsForRenderPass(renderPass: RenderPass): void
 
   /**
    * Set a new {@link Renderer} for this Mesh
@@ -475,10 +482,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       } = parameters
 
       // set default sample count
-      meshParameters.sampleCount =
-        meshParameters.sampleCount ?? (this.renderer && this.renderer.renderPass)
-          ? this.renderer.renderPass.options.sampleCount
-          : 1
+      meshParameters.sampleCount = !!meshParameters.sampleCount
+        ? meshParameters.sampleCount
+        : this.renderer && this.renderer.renderPass
+        ? this.renderer.renderPass.options.sampleCount
+        : 1
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
@@ -546,35 +554,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     addToScene() {
       this.renderer.meshes.push(this as unknown as ProjectedMesh)
 
-      const renderPassOptions = this.renderTarget
-        ? this.renderTarget.renderPass.options
-        : this.renderer.renderPass.options
-
-      // a Mesh render material rendering options MUST match the render pass descriptor used to draw it!
-      const renderingOptions = {
-        sampleCount: renderPassOptions.sampleCount,
-        // color attachments
-        ...(renderPassOptions.colorAttachments.length && {
-          targetFormat: renderPassOptions.colorAttachments[0].targetFormat,
-          // multiple render targets?
-          ...(renderPassOptions.colorAttachments.length > 1 && {
-            additionalTargets: renderPassOptions.colorAttachments
-              .filter((c, i) => i > 0)
-              .map((colorAttachment) => {
-                return {
-                  format: colorAttachment.targetFormat,
-                }
-              }),
-          }),
-        }),
-        // depth
-        depth: renderPassOptions.useDepth,
-        ...(renderPassOptions.useDepth && {
-          depthFormat: renderPassOptions.depthFormat,
-        }),
-      }
-
-      this.material?.setRenderingOptions(renderingOptions)
+      this.setRenderingOptionsForRenderPass(this.renderTarget ? this.renderTarget.renderPass : this.renderer.renderPass)
 
       if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
@@ -590,6 +570,38 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       }
 
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
+    }
+
+    /**
+     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+     */
+    setRenderingOptionsForRenderPass(renderPass: RenderPass) {
+      // a Mesh render material rendering options MUST match the render pass descriptor used to draw it!
+      const renderingOptions = {
+        sampleCount: renderPass.options.sampleCount,
+        // color attachments
+        ...(renderPass.options.colorAttachments.length && {
+          targetFormat: renderPass.options.colorAttachments[0].targetFormat,
+          // multiple render targets?
+          ...(renderPass.options.colorAttachments.length > 1 && {
+            additionalTargets: renderPass.options.colorAttachments
+              .filter((c, i) => i > 0)
+              .map((colorAttachment) => {
+                return {
+                  format: colorAttachment.targetFormat,
+                }
+              }),
+          }),
+        }),
+        // depth
+        depth: renderPass.options.useDepth,
+        ...(renderPass.options.useDepth && {
+          depthFormat: renderPass.options.depthFormat,
+        }),
+      }
+
+      this.material?.setRenderingOptions(renderingOptions)
     }
 
     /**
@@ -969,7 +981,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onBeforeRenderCallback
+     * Assign a callback function to _onAfterResizeCallback
      * @param callback - callback to run just after {@link MeshBase} has been resized
      * @returns - our Mesh
      */
