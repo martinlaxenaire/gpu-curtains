@@ -129,7 +129,7 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
       //vsOutput.fragPosition = matrices.modelView * vec4(attributes.position, 1.0);
       
-      vsOutput.normal = normalize((normals.inverseTransposeMatrix * camera.view * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
       
       return vsOutput;
     }
@@ -219,7 +219,8 @@ window.addEventListener('load', async () => {
     cubeMesh.parent = objectsPivot
 
     cubeMesh.onRender(() => {
-      cubeMesh.uniforms.normals.inverseTransposeMatrix.value.copy(cubeMesh.worldMatrix).invert().transpose()
+      // IMPORTANT: normals are in VIEW SPACE
+      cubeMesh.uniforms.normals.inverseTransposeMatrix.value.copy(cubeMesh.modelViewMatrix).invert().transpose()
       // explicitly tell the uniform to update
       cubeMesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
     })
@@ -476,7 +477,7 @@ window.addEventListener('load', async () => {
     }
  
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
-      var resolution: vec2f = vec2f(textureDimensions(gBufferDepthTexture));
+      var resolution: vec2f = vec2f(textureDimensions(renderTexture));
       var noiseResolution: vec2f = vec2f(textureDimensions(noiseTexture));
       var screenPosition: vec2f = fsInput.position.xy;
       
@@ -487,7 +488,7 @@ window.addEventListener('load', async () => {
       );
 
       var noiseScale = resolution / noiseResolution;
-      var random = vec3( textureSample( noiseTexture, repeatSampler, fsInput.position.xy * noiseScale ).r );
+      var random = vec3( textureSample( noiseTexture, repeatSampler, fsInput.uv * noiseScale ).r );
 
 			if ( depth == 1.0 ) {
 
@@ -582,12 +583,11 @@ window.addEventListener('load', async () => {
         struct: {
           radius: {
             type: 'f32',
-            value: systemSize.z / 25,
+            value: systemSize.z / 12.5,
           },
           bias: {
             type: 'f32',
             value: systemSize.z / 400,
-            //value: 0.025,
           },
         },
       },
@@ -617,10 +617,12 @@ window.addEventListener('load', async () => {
   })
 
   occlusionPass.onRender(() => {
+    occlusionPass.uniforms.camera.projectionMatrix.value.copy(camera.projectionMatrix)
     occlusionPass.uniforms.camera.inverseProjectionMatrix.value.copy(camera.projectionMatrix).invert()
 
     // explicitly tell the uniform to update
-    occlusionPass.uniforms.camera.inverseProjectionMatrix.shouldUpdate = true
+    occlusionPass.material.shouldUpdateInputsBindings('camera')
+    //occlusionPass.uniforms.camera.inverseProjectionMatrix.shouldUpdate = true
   })
 
   // ------------------------------------
