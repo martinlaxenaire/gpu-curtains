@@ -149,27 +149,18 @@ export class GPUCameraRenderer extends GPURenderer {
           name: 'model',
           type: 'mat4x4f',
           value: this.camera.modelMatrix,
-          onBeforeUpdate: () => {
-            this.cameraBufferBinding.inputs.model.value = this.camera.modelMatrix
-          },
         },
         view: {
           // camera view matrix
           name: 'view',
           type: 'mat4x4f',
           value: this.camera.viewMatrix,
-          onBeforeUpdate: () => {
-            this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix
-          },
         },
         projection: {
           // camera projection matrix
           name: 'projection',
           type: 'mat4x4f',
           value: this.camera.projectionMatrix,
-          onBeforeUpdate: () => {
-            this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix
-          },
         },
       },
     })
