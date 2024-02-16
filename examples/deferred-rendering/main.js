@@ -430,7 +430,7 @@ window.addEventListener('load', async () => {
           0
         );
         // remap depth into something a bit more visible
-        let depth = (1.0 - rawDepth) * 500.0;
+        let depth = (1.0 - rawDepth) * 100.0;
         result = vec4(depth);
       } else if (fsInput.uv.x < 0.66667) {
         result = textureLoad(
