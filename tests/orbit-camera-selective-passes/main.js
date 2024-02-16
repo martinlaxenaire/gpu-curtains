@@ -120,6 +120,7 @@ window.addEventListener('load', async () => {
   // two render targets with specific depth textures
   const blankRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Blank render target',
+    shouldUpdateView: false,
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Cube depth texture',
       name: 'cubeDepthTexture',
@@ -317,10 +318,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    },
   })
 
   const blurSettings = {
-    spread: 4,
+    spread: 10,
     weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
   }
 
@@ -452,24 +465,6 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const blankPass = new ShaderPass(gpuCameraRenderer, {
-    label: 'Blank pass',
-    renderTarget: blankRenderTarget,
-    //transparent: true,
-    blend: {
-      color: {
-        operation: 'add',
-        srcFactor: 'src-alpha',
-        dstFactor: 'one-minus-src-alpha',
-      },
-      alpha: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
-      },
-    },
-  })
-
   const blendShader = /* wgsl */ `
     struct VSOutput {
         @builtin(position) position: vec4f,
@@ -491,8 +486,9 @@ window.addEventListener('load', async () => {
           vec2<i32>(floor(fsInput.position.xy)),
           0
         );
-        
-        var color: vec4f = select(cubeColor, mix(sphereColor, cubeColor, (1.0 - sphereColor.a)), rawCubeDepth > rawSphereDepth);
+                
+        var color: vec4f = cubeColor * (1.0 - sphereColor.a) + sphereColor;
+        color = select(color, cubeColor, rawSphereDepth > rawCubeDepth);
 
         return color;
       }
@@ -509,7 +505,7 @@ window.addEventListener('load', async () => {
 
   const cubeRenderTexture = blendPass.createRenderTexture({
     name: 'cubeRenderTexture',
-    fromTexture: blankPass.renderTexture,
+    fromTexture: blankRenderTarget.renderTexture,
   })
 
   const cubeDepthTexture = blendPass.createRenderTexture({
@@ -522,7 +518,7 @@ window.addEventListener('load', async () => {
 
   const sphereRenderTexture = blendPass.createRenderTexture({
     name: 'sphereRenderTexture',
-    fromTexture: vBlurPass.renderTexture,
+    fromTexture: inversePass.renderTexture,
   })
 
   const sphereDepthTexture = blendPass.createRenderTexture({

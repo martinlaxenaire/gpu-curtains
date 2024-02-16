@@ -90,7 +90,7 @@ export class RenderTarget {
       ...renderPassParams,
     })
 
-    if (renderPassParams.useColorAttachments !== false && renderPassParams.shouldUpdateView !== false) {
+    if (renderPassParams.useColorAttachments !== false) {
       // this is the texture that will be resolved when setting the current render pass texture
       this.renderTexture = new RenderTexture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target render texture',

@@ -90,7 +90,7 @@ export class RenderTexture {
   /** The {@link GPUTexture} used */
   texture: GPUTexture
 
-  /** Size of the {@link RenderTexture#texture | texture} source, usually our {@link Renderer#pixelRatioBoundingRect | renderer pixel ratio bounding rect} */
+  /** Size of the {@link RenderTexture#texture | texture} source, usually our {@link Renderer#displayBoundingRect | renderer display bounding rectangle size} */
   size: TextureSize
 
   /** Options used to create this {@link RenderTexture} */
@@ -127,8 +127,8 @@ export class RenderTexture {
 
     // sizes
     this.size = this.options.fixedSize ?? {
-      width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
-      height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+      width: Math.floor(this.renderer.displayBoundingRect.width),
+      height: Math.floor(this.renderer.displayBoundingRect.height),
       depth: 1,
     }
 
@@ -236,8 +236,8 @@ export class RenderTexture {
 
     if (!size) {
       size = {
-        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
-        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+        width: Math.floor(this.renderer.displayBoundingRect.width),
+        height: Math.floor(this.renderer.displayBoundingRect.height),
         depth: 1,
       }
     }

@@ -72,7 +72,7 @@ export declare class RenderTexture {
     readonly uuid: string;
     /** The {@link GPUTexture} used */
     texture: GPUTexture;
-    /** Size of the {@link RenderTexture#texture | texture} source, usually our {@link Renderer#pixelRatioBoundingRect | renderer pixel ratio bounding rect} */
+    /** Size of the {@link RenderTexture#texture | texture} source, usually our {@link Renderer#displayBoundingRect | renderer display bounding rectangle size} */
     size: TextureSize;
     /** Options used to create this {@link RenderTexture} */
     options: RenderTextureParams;

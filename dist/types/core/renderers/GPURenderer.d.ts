@@ -135,7 +135,12 @@ export declare class GPURenderer {
     /**
      * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle} accounting for current {@link pixelRatio | pixel ratio}
      */
-    get pixelRatioBoundingRect(): DOMElementBoundingRect;
+    get displayBoundingRect(): DOMElementBoundingRect;
+    /**
+     * Get the display bounding rectangle accounting for current {@link pixelRatio | pixel ratio} and max texture dimensions
+     * @param boundingRect - bounding rectangle to check against
+     */
+    getScaledDisplayBoundingRect(boundingRect: DOMElementBoundingRect): DOMElementBoundingRect;
     /**
      * Get our {@link GPUDeviceManager#device | device}
      * @readonly

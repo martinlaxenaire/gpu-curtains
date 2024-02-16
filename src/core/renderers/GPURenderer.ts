@@ -197,23 +197,11 @@ export class GPURenderer {
    * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
   setSize(boundingRect: DOMElementBoundingRect) {
-    const devicePixelRatio = window.devicePixelRatio ?? 1
-    const scaleBoundingRect = this.pixelRatio / devicePixelRatio
-
     this.canvas.style.width = Math.floor(boundingRect.width) + 'px'
     this.canvas.style.height = Math.floor(boundingRect.height) + 'px'
 
-    const renderingSize = {
-      width: Math.floor(boundingRect.width * scaleBoundingRect),
-      height: Math.floor(boundingRect.height * scaleBoundingRect),
-    }
-
-    this.canvas.width = this.device
-      ? Math.min(renderingSize.width, this.device.limits.maxTextureDimension2D)
-      : renderingSize.width
-    this.canvas.height = this.device
-      ? Math.min(renderingSize.height, this.device.limits.maxTextureDimension2D)
-      : renderingSize.height
+    this.canvas.width = this.getScaledDisplayBoundingRect(boundingRect).width
+    this.canvas.height = this.getScaledDisplayBoundingRect(boundingRect).height
   }
 
   /**
@@ -296,12 +284,20 @@ export class GPURenderer {
   /**
    * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle} accounting for current {@link pixelRatio | pixel ratio}
    */
-  get pixelRatioBoundingRect(): DOMElementBoundingRect {
+  get displayBoundingRect(): DOMElementBoundingRect {
+    return this.getScaledDisplayBoundingRect(this.boundingRect)
+  }
+
+  /**
+   * Get the display bounding rectangle accounting for current {@link pixelRatio | pixel ratio} and max texture dimensions
+   * @param boundingRect - bounding rectangle to check against
+   */
+  getScaledDisplayBoundingRect(boundingRect: DOMElementBoundingRect): DOMElementBoundingRect {
     const devicePixelRatio = window.devicePixelRatio ?? 1
     const scaleBoundingRect = this.pixelRatio / devicePixelRatio
 
-    const pixelRatioBoundingRect = Object.keys(this.boundingRect).reduce(
-      (a, key) => ({ ...a, [key]: this.boundingRect[key] * scaleBoundingRect }),
+    const displayBoundingRect = Object.keys(boundingRect).reduce(
+      (a, key) => ({ ...a, [key]: boundingRect[key] * scaleBoundingRect }),
       {
         x: 0,
         y: 0,
@@ -314,18 +310,22 @@ export class GPURenderer {
       }
     )
 
-    pixelRatioBoundingRect.width = Math.min(this.canvas.width, pixelRatioBoundingRect.width)
-    pixelRatioBoundingRect.height = Math.min(this.canvas.height, pixelRatioBoundingRect.height)
-    pixelRatioBoundingRect.right = Math.min(
-      pixelRatioBoundingRect.width + pixelRatioBoundingRect.left,
-      pixelRatioBoundingRect.right
-    )
-    pixelRatioBoundingRect.bottom = Math.min(
-      pixelRatioBoundingRect.height + pixelRatioBoundingRect.top,
-      pixelRatioBoundingRect.bottom
-    )
+    // clamp width and height based on limits
+    if (this.device) {
+      displayBoundingRect.width = Math.min(this.device.limits.maxTextureDimension2D, displayBoundingRect.width)
+      displayBoundingRect.height = Math.min(this.device.limits.maxTextureDimension2D, displayBoundingRect.height)
 
-    return pixelRatioBoundingRect
+      displayBoundingRect.right = Math.min(
+        displayBoundingRect.width + displayBoundingRect.left,
+        displayBoundingRect.right
+      )
+      displayBoundingRect.bottom = Math.min(
+        displayBoundingRect.height + displayBoundingRect.top,
+        displayBoundingRect.bottom
+      )
+    }
+
+    return displayBoundingRect
   }
 
   /* USEFUL DEVICE MANAGER OBJECTS */
@@ -464,7 +464,7 @@ export class GPURenderer {
       label: 'Post processing render pass',
       targetFormat: this.options.preferredFormat,
       useDepth: false,
-      sampleCount: this.options.renderPass.sampleCount, // TODO?
+      sampleCount: 1, // no need to perform MSAA on a fullscreen quad
     })
   }
 
