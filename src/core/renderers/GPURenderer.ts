@@ -464,7 +464,7 @@ export class GPURenderer {
       label: 'Post processing render pass',
       targetFormat: this.options.preferredFormat,
       useDepth: false,
-      sampleCount: this.options.renderPass.sampleCount, // TODO?
+      sampleCount: 1, // no need to perform MSAA on a fullscreen quad
     })
   }
 

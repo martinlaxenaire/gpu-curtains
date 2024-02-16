@@ -60,6 +60,13 @@ export class ShaderPass extends FullscreenPlane {
     parameters.transparent = true
     parameters.label = parameters.label ?? 'ShaderPass ' + renderer.shaderPasses?.length
 
+    // set default sample count to post processing render pass
+    parameters.sampleCount = !!parameters.sampleCount
+      ? parameters.sampleCount
+      : renderer && renderer.postProcessingPass
+      ? renderer && renderer.postProcessingPass.options.sampleCount
+      : 1
+
     if (!parameters.shaders) {
       parameters.shaders = {}
     }

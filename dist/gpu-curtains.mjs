@@ -8049,6 +8049,7 @@ class ShaderPass extends FullscreenPlane {
     isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
     parameters.transparent = true;
     parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
+    parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
     if (!parameters.shaders) {
       parameters.shaders = {};
     }
@@ -9778,8 +9779,8 @@ class GPURenderer {
       label: "Post processing render pass",
       targetFormat: this.options.preferredFormat,
       useDepth: false,
-      sampleCount: this.options.renderPass.sampleCount
-      // TODO?
+      sampleCount: 1
+      // no need to perform MSAA on a fullscreen quad
     });
   }
   /**
@@ -10325,28 +10326,19 @@ class GPUCameraRenderer extends GPURenderer {
           // camera model matrix
           name: "model",
           type: "mat4x4f",
-          value: this.camera.modelMatrix,
-          onBeforeUpdate: () => {
-            this.cameraBufferBinding.inputs.model.value = this.camera.modelMatrix;
-          }
+          value: this.camera.modelMatrix
         },
         view: {
           // camera view matrix
           name: "view",
           type: "mat4x4f",
-          value: this.camera.viewMatrix,
-          onBeforeUpdate: () => {
-            this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix;
-          }
+          value: this.camera.viewMatrix
         },
         projection: {
           // camera projection matrix
           name: "projection",
           type: "mat4x4f",
-          value: this.camera.projectionMatrix,
-          onBeforeUpdate: () => {
-            this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix;
-          }
+          value: this.camera.projectionMatrix
         }
       }
     });
