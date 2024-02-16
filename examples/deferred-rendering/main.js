@@ -152,7 +152,7 @@ window.addEventListener('load', async () => {
     const cubeMesh = new Mesh(gpuCameraRenderer, {
       label: 'Cube ' + i,
       geometry: cubeGeometry,
-      renderTarget: writeGBufferRenderTarget,
+      outputTarget: writeGBufferRenderTarget,
       additionalTargets: [
         {
           format: 'rgba16float', // this would be patched anyway if not set here
@@ -214,7 +214,7 @@ window.addEventListener('load', async () => {
   const floor = new Mesh(gpuCameraRenderer, {
     label: 'Floor',
     geometry: new PlaneGeometry(),
-    renderTarget: writeGBufferRenderTarget,
+    outputTarget: writeGBufferRenderTarget,
     additionalTargets: [
       {
         format: 'rgba16float',

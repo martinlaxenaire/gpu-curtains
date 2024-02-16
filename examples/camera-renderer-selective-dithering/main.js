@@ -137,7 +137,7 @@ window.addEventListener('load', async () => {
     const mesh = new Mesh(gpuCameraRenderer, {
       label: isCube ? 'Cube ' + i : 'Sphere ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
-      renderTarget: isCube ? blankRenderTarget : selectiveDitheringTarget,
+      outputTarget: isCube ? blankRenderTarget : selectiveDitheringTarget,
       shaders: {
         vertex: {
           code: meshVs,
@@ -188,7 +188,7 @@ window.addEventListener('load', async () => {
   // blank pass, just render the cubes
   const blankCubePass = new ShaderPass(gpuCameraRenderer, {
     label: 'Blank pass',
-    renderTarget: blankRenderTarget,
+    inputTarget: blankRenderTarget,
   })
 
   // render the spheres on top with a dithering pass
@@ -272,7 +272,7 @@ window.addEventListener('load', async () => {
 
   const ditherPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Selective dither pass',
-    renderTarget: selectiveDitheringTarget,
+    inputTarget: selectiveDitheringTarget,
     shaders: {
       fragment: {
         code: ditherFs,

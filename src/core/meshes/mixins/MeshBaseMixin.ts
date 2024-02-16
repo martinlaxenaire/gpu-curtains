@@ -26,7 +26,7 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
   /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
   renderOrder?: number
   /** {@link RenderTarget} to render this Mesh to */
-  renderTarget?: RenderTarget
+  outputTarget?: RenderTarget
   /** Parameters used by this Mesh to create a {@link Texture} */
   texturesOptions?: ExternalTextureParams
 }
@@ -50,7 +50,7 @@ export interface MeshBaseOptions {
   /** Parameters used by this Mesh to create a {@link Texture} */
   texturesOptions?: ExternalTextureParams
   /** {@link RenderTarget} to render this Mesh to, if any */
-  renderTarget?: RenderTarget | null
+  outputTarget?: RenderTarget | null
   /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
   autoRender?: boolean
   /** Whether to compile this Mesh {@link RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
@@ -106,7 +106,7 @@ export declare class MeshBaseClass {
   geometry: MeshBaseParams['geometry']
 
   /** {@link RenderTarget} to render this Mesh to, if any */
-  renderTarget: null | RenderTarget
+  outputTarget: null | RenderTarget
 
   /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
   renderOrder: number
@@ -295,9 +295,9 @@ export declare class MeshBaseClass {
   /**
    * Assign or remove a {@link RenderTarget} to this Mesh
    * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-   * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+   * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
    */
-  setRenderTarget(renderTarget: RenderTarget | null): void
+  setOutputTarget(outputTarget: RenderTarget | null): void
 
   /**
    * Get the current {@link RenderMaterial} uniforms
@@ -396,7 +396,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     geometry: MeshBaseParams['geometry']
 
     /** {@link RenderTarget} to render this Mesh to, if any */
-    renderTarget: null | RenderTarget
+    outputTarget: null | RenderTarget
 
     /** Controls the order in which this {@link MeshBase} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number
@@ -475,7 +475,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         geometry,
         visible,
         renderOrder,
-        renderTarget,
+        outputTarget,
         texturesOptions,
         autoRender,
         ...meshParameters
@@ -493,12 +493,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         label: label ?? 'Mesh ' + this.renderer.meshes.length,
         shaders,
         texturesOptions,
-        ...(renderTarget !== undefined && { renderTarget }),
+        ...(outputTarget !== undefined && { outputTarget }),
         ...(autoRender !== undefined && { autoRender }),
         ...(meshParameters.useAsyncPipeline !== undefined && { useAsyncPipeline: meshParameters.useAsyncPipeline }),
       }
 
-      this.renderTarget = renderTarget ?? null
+      this.outputTarget = outputTarget ?? null
 
       this.geometry = geometry
 
@@ -554,7 +554,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     addToScene() {
       this.renderer.meshes.push(this as unknown as ProjectedMesh)
 
-      this.setRenderingOptionsForRenderPass(this.renderTarget ? this.renderTarget.renderPass : this.renderer.renderPass)
+      this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass)
 
       if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
@@ -646,17 +646,17 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /**
      * Assign or remove a {@link RenderTarget} to this Mesh
      * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
      */
-    setRenderTarget(renderTarget: RenderTarget | null) {
-      if (renderTarget && renderTarget.type !== 'RenderTarget') {
-        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
+    setOutputTarget(outputTarget: RenderTarget | null) {
+      if (outputTarget && outputTarget.type !== 'RenderTarget') {
+        throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget}`)
         return
       }
 
       // ensure the mesh is in the correct scene stack
       this.removeFromScene()
-      this.renderTarget = renderTarget
+      this.outputTarget = outputTarget
       this.addToScene()
     }
 

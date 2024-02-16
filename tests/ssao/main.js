@@ -173,7 +173,7 @@ window.addEventListener('load', async () => {
     const cubeMesh = new Mesh(gpuCameraRenderer, {
       label: 'Cube ' + i,
       geometry: cubeGeometry,
-      renderTarget: writeGBufferRenderTarget,
+      outputTarget: writeGBufferRenderTarget,
       additionalTargets: [
         {
           format: 'rgba16float', // this would be patched anyway if not set here
@@ -457,7 +457,11 @@ window.addEventListener('load', async () => {
     label: 'SSAO render target',
     sampleCount,
     shouldUpdateView: false,
+    qualityRatio: 0.5,
+    useDepth: false,
   })
+
+  console.log(ssaoTarget)
 
   const occlusionFs = /* wgsl */ `
     struct VSOutput {
@@ -477,7 +481,9 @@ window.addEventListener('load', async () => {
     }
  
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
-      var resolution: vec2f = vec2f(textureDimensions(renderTexture));
+      var renderResolution: vec2f = vec2f(textureDimensions(renderTexture));
+      var gBufferResolution: vec2f = vec2f(textureDimensions(renderTexture));
+      //var resolution: vec2f = vec2f(textureDimensions(gBufferDepthTexture)) * 0.5;
       var noiseResolution: vec2f = vec2f(textureDimensions(noiseTexture));
       var screenPosition: vec2f = fsInput.position.xy;
       
@@ -487,7 +493,7 @@ window.addEventListener('load', async () => {
         0
       );
 
-      var noiseScale = resolution / noiseResolution;
+      var noiseScale = renderResolution / noiseResolution;
       var random = vec3( textureSample( noiseTexture, repeatSampler, fsInput.uv * noiseScale ).r );
 
 			if ( depth == 1.0 ) {
@@ -504,7 +510,7 @@ window.addEventListener('load', async () => {
         //   0
         // ).xyz;
         
-        var viewPosition = viewPosFromScreenCoords( screenPosition / resolution, depth );
+        var viewPosition = viewPosFromScreenCoords( screenPosition / renderResolution, depth );
         			          
 			  var normal: vec3f = textureLoad(
           gBufferNormalTexture,
@@ -550,7 +556,7 @@ window.addEventListener('load', async () => {
           
           var offsetDepth = textureLoad(
             gBufferDepthTexture,
-            vec2<i32>(floor(offsetUV * resolution)),
+            vec2<i32>(floor(offsetUV * renderResolution)),
             0
           );
           
@@ -572,7 +578,7 @@ window.addEventListener('load', async () => {
 
   const occlusionPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Occlusion pass',
-    renderTarget: ssaoTarget,
+    outputTarget: ssaoTarget,
     shaders: {
       fragment: {
         code: occlusionFs,
@@ -664,13 +670,15 @@ window.addEventListener('load', async () => {
 
   const blurOcclusionPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Blur pass',
-    renderTarget: ssaoTarget,
+    inputTarget: ssaoTarget,
     shaders: {
       fragment: {
         code: blurOcclusionPassFs,
       },
     },
   })
+
+  console.log(occlusionPass, blurOcclusionPass)
 
   // ------------------------------------
   // SHADING / LIGHTNING PASS

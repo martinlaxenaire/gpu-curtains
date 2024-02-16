@@ -145,7 +145,7 @@ window.addEventListener('load', async () => {
     const isCube = Math.random() > 0.5
     const mesh = new Mesh(gpuCameraRenderer, {
       geometry: isCube ? cubeGeometry : sphereGeometry,
-      renderTarget: isCube ? blankRenderTarget : selectiveBloomTarget,
+      outputTarget: isCube ? blankRenderTarget : selectiveBloomTarget,
       transparent: true,
     })
 
@@ -243,7 +243,7 @@ window.addEventListener('load', async () => {
 
   const ditherPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Dither pass',
-    renderTarget: selectiveBloomTarget,
+    inputTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
         code: ditherFs,
@@ -302,7 +302,7 @@ window.addEventListener('load', async () => {
   // brightness pass
   const brigthnessPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Brightness pass',
-    renderTarget: selectiveBloomTarget,
+    inputTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
         code: brigthnessPassFs,
@@ -360,7 +360,7 @@ window.addEventListener('load', async () => {
   // horizontal blur pass
   const hBlurPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Horizontal blur pass',
-    renderTarget: selectiveBloomTarget,
+    inputTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
         code: hBlurPassFs,
@@ -405,7 +405,7 @@ window.addEventListener('load', async () => {
   // vertical blur pass
   const vBlurPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Vertical blur pass',
-    renderTarget: selectiveBloomTarget,
+    inputTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
         code: vBlurPassFs,
@@ -457,7 +457,7 @@ window.addEventListener('load', async () => {
 
   const inversePass = new ShaderPass(gpuCameraRenderer, {
     label: 'Inverse pass',
-    renderTarget: selectiveBloomTarget,
+    inputTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
         code: inverseShader,

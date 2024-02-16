@@ -5,13 +5,18 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin'
 import { RenderTexture } from '../textures/RenderTexture'
 import default_pass_fsWGSl from '../shaders/chunks/default_pass_fs.wgsl'
+import { throwWarning } from '../../utils/utils'
 
 /**
  * Parameters used to create a {@link ShaderPass}
  */
 export interface ShaderPassParams extends MeshBaseRenderParams {
-  /** Optional {@link RenderTarget} to assign to the {@link ShaderPass} */
-  renderTarget?: RenderTarget
+  /** Optional output {@link RenderTarget} to assign to the {@link ShaderPass} */
+  outputTarget?: RenderTarget
+
+  // TODO
+  /** Optional input {@link RenderTarget} to assign to the {@link ShaderPass} */
+  inputTarget?: RenderTarget
 }
 
 /**
@@ -43,7 +48,11 @@ export interface ShaderPassParams extends MeshBaseRenderParams {
  */
 export class ShaderPass extends FullscreenPlane {
   /** {@link RenderTarget} content to use as an input if specified */
-  renderTarget: RenderTarget | undefined
+  outputTarget: RenderTarget | undefined
+
+  // TODO
+  /** Optional input {@link RenderTarget} to assign to the {@link ShaderPass} */
+  inputTarget: RenderTarget | undefined
 
   /**
    * ShaderPass constructor
@@ -83,12 +92,18 @@ export class ShaderPass extends FullscreenPlane {
 
     super(renderer, parameters)
 
+    if (parameters.inputTarget) {
+      this.setInputTarget(parameters.inputTarget)
+    }
+
     this.type = 'ShaderPass'
 
     this.createRenderTexture({
       label: parameters.label ? `${parameters.label} render texture` : 'Shader pass render texture',
       name: 'renderTexture',
-      fromTexture: this.renderTarget ? this.renderTarget.renderTexture : null,
+      fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+      ...(this.outputTarget &&
+        this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }),
     })
   }
 
@@ -104,16 +119,51 @@ export class ShaderPass extends FullscreenPlane {
    * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
    * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
    * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
-   * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+   * @param outputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
    */
-  setRenderTarget(renderTarget: RenderTarget | null) {
-    super.setRenderTarget(renderTarget)
+  setOutputTarget(outputTarget: RenderTarget | null) {
+    //super.setOutputTarget(outputTarget)
 
-    if (renderTarget) {
-      this.renderTexture.copy(this.renderTarget.renderTexture)
-    } else {
-      this.renderTexture.options.fromTexture = null
-      this.renderTexture.createTexture()
+    if (outputTarget && outputTarget.type !== 'RenderTarget') {
+      throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget}`)
+      return
+    }
+
+    // ensure the mesh is in the correct scene stack
+    this.removeFromScene()
+    this.outputTarget = outputTarget
+
+    this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass)
+
+    this.addToScene()
+  }
+
+  // TODO
+  /**
+   * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+   * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+   * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
+   * @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+   */
+  setInputTarget(inputTarget: RenderTarget | null) {
+    if (inputTarget && inputTarget.type !== 'RenderTarget') {
+      throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`)
+      return
+    }
+
+    // ensure the mesh is in the correct scene stack
+    this.removeFromScene()
+    this.inputTarget = inputTarget
+    this.addToScene()
+
+    // it might not have been created yet
+    if (this.renderTexture) {
+      if (inputTarget) {
+        this.renderTexture.copy(this.inputTarget.renderTexture)
+      } else {
+        this.renderTexture.options.fromTexture = null
+        this.renderTexture.createTexture()
+      }
     }
   }
 
@@ -132,8 +182,8 @@ export class ShaderPass extends FullscreenPlane {
    * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
-    if (this.renderTarget) {
-      this.renderTarget.destroy()
+    if (this.outputTarget) {
+      this.outputTarget.destroy()
     }
 
     if (this.autoRender) {

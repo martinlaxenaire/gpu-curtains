@@ -8065,7 +8065,7 @@ class ShaderPass extends FullscreenPlane {
     this.createRenderTexture({
       label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
       name: "renderTexture",
-      fromTexture: this.renderTarget ? this.renderTarget.renderTexture : null
+      fromTexture: this.outputTarget ? this.outputTarget.renderTexture : null
     });
   }
   /**
@@ -8082,9 +8082,9 @@ class ShaderPass extends FullscreenPlane {
    * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
    */
   setRenderTarget(renderTarget) {
-    super.setRenderTarget(renderTarget);
+    super.setOutputTarget(renderTarget);
     if (renderTarget) {
-      this.renderTexture.copy(this.renderTarget.renderTexture);
+      this.renderTexture.copy(this.outputTarget.renderTexture);
     } else {
       this.renderTexture.options.fromTexture = null;
       this.renderTexture.createTexture();
@@ -8103,8 +8103,8 @@ class ShaderPass extends FullscreenPlane {
    * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
-    if (this.renderTarget) {
-      this.renderTarget.destroy();
+    if (this.outputTarget) {
+      this.outputTarget.destroy();
     }
     if (this.autoRender) {
       this.renderer.scene.removeShaderPass(this);
@@ -8451,14 +8451,14 @@ class RenderTarget {
    */
   destroy() {
     this.renderer.meshes.forEach((mesh) => {
-      if (mesh.renderTarget && mesh.renderTarget.uuid === this.uuid) {
-        mesh.setRenderTarget(null);
+      if (mesh.outputTarget && mesh.outputTarget.uuid === this.uuid) {
+        mesh.setOutputTarget(null);
       }
     });
     this.renderer.shaderPasses.forEach((shaderPass) => {
-      if (shaderPass.renderTarget && shaderPass.renderTarget.uuid === this.uuid) {
-        shaderPass.renderTarget = null;
-        shaderPass.setRenderTarget(null);
+      if (shaderPass.outputTarget && shaderPass.outputTarget.uuid === this.uuid) {
+        shaderPass.outputTarget = null;
+        shaderPass.setOutputTarget(null);
       }
     });
     this.removeFromScene();
@@ -8513,8 +8513,8 @@ class PingPongPlane extends FullscreenPlane {
    * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
-    if (this.renderTarget) {
-      this.renderTarget.destroy();
+    if (this.outputTarget) {
+      this.outputTarget.destroy();
     }
     if (this.autoRender) {
       this.renderer.scene.removePingPongPlane(this);
@@ -9137,7 +9137,7 @@ class Scene {
     this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
   }
   /**
-   * Add a {@link RenderTarget} to our scene {@link renderPassEntries} renderTarget array.
+   * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
    * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
    * @param renderTarget - {@link RenderTarget} to add
    */
@@ -9163,7 +9163,7 @@ class Scene {
       });
   }
   /**
-   * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} renderTarget array.
+   * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
    * @param renderTarget - {@link RenderTarget} to add
    */
   removeRenderTarget(renderTarget) {
@@ -9172,7 +9172,7 @@ class Scene {
     );
   }
   /**
-   * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} renderTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+   * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
    * @param mesh - Mesh to check
    * @returns - the corresponding render pass entry {@link Stack}
    */
@@ -9268,10 +9268,10 @@ class Scene {
     };
     this.renderPassEntries.screen.push(shaderPassEntry);
     this.renderPassEntries.screen.sort((a, b) => {
-      const isPostProA = a.element && !a.element.renderTarget;
+      const isPostProA = a.element && !a.element.outputTarget;
       const renderOrderA = a.element ? a.element.renderOrder : 0;
       const indexA = a.element ? a.element.index : 0;
-      const isPostProB = b.element && !b.element.renderTarget;
+      const isPostProB = b.element && !b.element.outputTarget;
       const renderOrderB = b.element ? b.element.renderOrder : 0;
       const indexB = b.element ? b.element.index : 0;
       if (isPostProA && !isPostProB) {

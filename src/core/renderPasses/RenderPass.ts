@@ -25,6 +25,9 @@ export interface RenderPassParams {
   /** Whether the {@link RenderPass | view and depth textures} should use multisampling or not */
   sampleCount?: GPUSize32
 
+  /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#displayBoundingRect | renderer display bounding rectangle}. Used mainly to shrink the rendered definition. */
+  qualityRatio?: number
+
   /** Whether this {@link RenderPass} should handle a view texture */
   useColorAttachments?: boolean
   /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
@@ -87,6 +90,7 @@ export class RenderPass {
     {
       label = 'Render Pass',
       sampleCount = 4,
+      qualityRatio = 1,
       // color
       useColorAttachments = true,
       shouldUpdateView = true,
@@ -134,6 +138,7 @@ export class RenderPass {
     this.options = {
       label,
       sampleCount,
+      qualityRatio,
       // color
       useColorAttachments,
       shouldUpdateView,
@@ -182,6 +187,7 @@ export class RenderPass {
         usage: 'depth',
         format: this.options.depthFormat,
         sampleCount: this.options.sampleCount,
+        qualityRatio: this.options.qualityRatio,
       })
     }
   }
@@ -197,6 +203,7 @@ export class RenderPass {
           name: `colorAttachment${index}ViewTexture`,
           format: colorAttachment.targetFormat,
           sampleCount: this.options.sampleCount,
+          qualityRatio: this.options.qualityRatio,
         })
       )
     })

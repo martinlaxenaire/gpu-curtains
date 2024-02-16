@@ -30,7 +30,7 @@ export interface RenderTargetParams extends RenderPassParams {
  * // note this is asynchronous
  * await gpuCurtains.setDevice()
  *
- * const renderTarget = new RenderTarget(gpuCurtains, {
+ * const outputTarget = new RenderTarget(gpuCurtains, {
  *   label: 'My render target',
  * })
  * ```
@@ -96,6 +96,7 @@ export class RenderTarget {
         label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target render texture',
         name: 'renderTexture',
         format: this.options.targetFormat,
+        ...(this.options.qualityRatio !== undefined && { qualityRatio: this.options.qualityRatio }),
       })
     }
 
@@ -149,17 +150,17 @@ export class RenderTarget {
   destroy() {
     // release mesh struct
     this.renderer.meshes.forEach((mesh) => {
-      if (mesh.renderTarget && mesh.renderTarget.uuid === this.uuid) {
-        mesh.setRenderTarget(null)
+      if (mesh.outputTarget && mesh.outputTarget.uuid === this.uuid) {
+        mesh.setOutputTarget(null)
       }
     })
 
     // release shader passes struct
     this.renderer.shaderPasses.forEach((shaderPass) => {
-      if (shaderPass.renderTarget && shaderPass.renderTarget.uuid === this.uuid) {
+      if (shaderPass.outputTarget && shaderPass.outputTarget.uuid === this.uuid) {
         // force render target to null before removing / re-adding to scene
-        shaderPass.renderTarget = null
-        shaderPass.setRenderTarget(null)
+        shaderPass.outputTarget = null
+        shaderPass.setOutputTarget(null)
       }
     })
 
