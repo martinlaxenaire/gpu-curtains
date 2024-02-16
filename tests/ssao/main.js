@@ -35,7 +35,7 @@ window.addEventListener('load', async () => {
   // we need to wait for the device to be created
   await gpuDeviceManager.init()
 
-  const systemSize = new Vec3(60, 30, 60)
+  const systemSize = new Vec3(200, 200, 200)
 
   // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
@@ -43,8 +43,9 @@ window.addEventListener('load', async () => {
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
-      near: 1,
-      far: systemSize.z * 6,
+      fov: 65,
+      near: systemSize.z * 0.25,
+      far: systemSize.z * 3.5,
     },
   })
 
@@ -54,14 +55,18 @@ window.addEventListener('load', async () => {
   // create a camera pivot
   // so we can make the camera orbit while preserving a custom lookAt
   const objectsPivot = new Object3D()
+  const cameraPivot = new Object3D()
 
-  camera.position.z = systemSize.z * 3
+  //camera.position.z = systemSize.z * 2.5
+  camera.parent = cameraPivot
+  camera.position.z = systemSize.z * 2.5
 
   // render our scene manually
   const animate = () => {
     // rotate our object pivot
-    objectsPivot.rotation.x += 0.005
-    objectsPivot.rotation.y += 0.0025
+    //objectsPivot.rotation.x += 0.005
+    //objectsPivot.rotation.y += 0.0025
+    cameraPivot.rotation.y += 0.005
 
     gpuDeviceManager.render()
 
@@ -100,6 +105,11 @@ window.addEventListener('load', async () => {
         clearValue: [0, 0, 0, 0],
         targetFormat: 'rgba16float', // normals
       },
+      // {
+      //   loadOp: 'clear',
+      //   clearValue: [0, 0, 0, 0],
+      //   targetFormat: 'rgba16float', // position
+      // },
     ],
     depthTexture: gBufferDepthTexture,
   })
@@ -107,8 +117,8 @@ window.addEventListener('load', async () => {
   const writeGBufferVs = /*wgsl */ `
     struct VertexOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
+      @location(0) normal: vec3f,
+      //@location(1) fragPosition: vec4f,
     };
     
     @vertex fn main(
@@ -117,9 +127,9 @@ window.addEventListener('load', async () => {
       var vsOutput: VertexOutput;
     
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = attributes.uv;
+      //vsOutput.fragPosition = matrices.modelView * vec4(attributes.position, 1.0);
       
-      vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize((normals.inverseTransposeMatrix * camera.view * vec4(attributes.normal, 0.0)).xyz);
       
       return vsOutput;
     }
@@ -128,15 +138,14 @@ window.addEventListener('load', async () => {
   const writeGBufferFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
+      @location(0) normal: vec3f,
+      //@location(1) fragPosition: vec4f,
     };
     
     struct GBufferOutput {
-      // Textures: diffuse color, specular color, smoothness, emissive etc. could go here
       @location(0) albedo : vec4<f32>,
-      
       @location(1) normal : vec4<f32>,
+      //@location(2) position: vec4<f32>,
     };
     
     @fragment fn main(fsInput: VSOutput) -> GBufferOutput {      
@@ -144,6 +153,7 @@ window.addEventListener('load', async () => {
       
       output.normal = vec4(normalize(fsInput.normal), 1.0);
       output.albedo = vec4(shading.color, 1.0);
+      //output.position = vec4(fsInput.fragPosition.xyz, 1.0);
     
       return output;
     }
@@ -204,7 +214,7 @@ window.addEventListener('load', async () => {
     cubeMesh.rotation.y = Math.random()
     cubeMesh.rotation.z = Math.random()
 
-    cubeMesh.scale.set(Math.random() * 10 + 1)
+    cubeMesh.scale.set(Math.random() * 50 + 10)
 
     cubeMesh.parent = objectsPivot
 
@@ -219,7 +229,6 @@ window.addEventListener('load', async () => {
   const gBufferAlbedoTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer albedo texture',
     name: 'gBufferAlbedoTexture',
-    //format: writeGBufferRenderTarget.renderPass.options.colorAttachments[0].targetFormat,
     fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[0],
     sampleCount,
   })
@@ -227,10 +236,16 @@ window.addEventListener('load', async () => {
   const gBufferNormalTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer normal texture',
     name: 'gBufferNormalTexture',
-    //format: writeGBufferRenderTarget.renderPass.options.colorAttachments[1].targetFormat,
     fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[1],
     sampleCount,
   })
+
+  // const gBufferPositionTexture = new RenderTexture(gpuCameraRenderer, {
+  //   label: 'GBuffer position texture',
+  //   name: 'gBufferPositionTexture',
+  //   fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[2],
+  //   sampleCount,
+  // })
 
   // ------------------------------------
   // CREATE A 4x4 3D NOISE TEXTURE WITH A COMPUTE SHADER
@@ -355,7 +370,8 @@ window.addEventListener('load', async () => {
     label: 'Noise compute texture',
     name: 'noiseComputeTexture',
     usage: 'storage',
-    format: 'rgba8unorm',
+    format: 'rgba16float',
+    //format: 'rgba8unorm',
     fixedSize: {
       width: noiseSize.x,
       height: noiseSize.y,
@@ -420,8 +436,8 @@ window.addEventListener('load', async () => {
 
   // 32 vec4f
   const kernelSize = 32
-  const sampleKernels = new Float32Array(kernelSize * 4)
-  for (let i = 0, j = 0; i < kernelSize; i++, j += 4) {
+  const sampleKernels = new Float32Array(kernelSize * 3)
+  for (let i = 0, j = 0; i < kernelSize; i++, j += 3) {
     const sample = new Vec3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random())
 
     sample.normalize()
@@ -434,7 +450,6 @@ window.addEventListener('load', async () => {
     sampleKernels[j] = sample.x
     sampleKernels[j + 1] = sample.y
     sampleKernels[j + 2] = sample.z
-    sampleKernels[j + 3] = 1 // padded
   }
 
   const ssaoTarget = new RenderTarget(gpuCameraRenderer, {
@@ -449,59 +464,29 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
     
-    fn unpackRGBToNormal( rgb: vec3f ) -> vec3f {
-      return 2.0 * rgb.xyz - 1.0;
-    }
     
-    fn getDepth( screenPosition: vec2f ) -> f32 {
-			return textureLoad(
+    // from https://stackoverflow.com/a/46118945/13354068
+    // or we could use worldPosFromScreenCoords() and multiply it by the camera view matrix
+    fn viewPosFromScreenCoords(coords: vec2<f32>, depth: f32) -> vec3f {
+      let clipPos: vec4f = vec4(coords.x * 2.0 - 1.0, (1.0 - coords.y) * 2.0 - 1.0, depth, 1.0);
+      var viewPosH: vec4f = camera.inverseProjectionMatrix * clipPos;
+      var viewPos: vec3f = viewPosH.xyz / viewPosH.w;
+      
+      return viewPos;
+    }
+ 
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
+      var resolution: vec2f = vec2f(textureDimensions(gBufferDepthTexture));
+      var noiseResolution: vec2f = vec2f(textureDimensions(noiseTexture));
+      var screenPosition: vec2f = fsInput.position.xy;
+      
+      let depth: f32 = textureLoad(
         gBufferDepthTexture,
         vec2<i32>(floor(screenPosition)),
         0
       );
-		}
-    
-    fn getViewPosition( screenPosition: vec2f, depth: f32, viewZ: f32 ) -> vec3f {
-			var clipW: f32 = camera.projectionMatrix[2][3] * viewZ + camera.projectionMatrix[3][3];
-			var clipPosition: vec4f = vec4( ( vec3( screenPosition, depth ) - 0.5 ) * 2.0, 1.0 );
-			clipPosition *= clipW; // unprojection.
-			return ( camera.inverseProjectionMatrix * clipPosition ).xyz;
-		}
 
-		fn getViewNormal( screenPosition: vec2f ) -> vec3f {
-			return unpackRGBToNormal( textureLoad(
-        gBufferNormalTexture,
-        vec2<i32>(floor(screenPosition)),
-        0
-      ).xyz );
-		}
-    
-    
-    fn perspectiveDepthToViewZ( depth: f32, near: f32, far: f32 ) -> f32 {
-      // maps perspective depth in [ 0, 1 ] to viewZ
-      return ( near * far ) / ( ( far - near ) * depth - far );
-    }
-    
-    fn viewZToOrthographicDepth( viewZ: f32, near: f32, far: f32 ) -> f32 {
-      // -near maps to 0; -far maps to 1
-      return ( viewZ + near ) / ( near - far );
-    }
-    
-    fn getLinearDepth( screenPosition: vec2f, near: f32, far: f32 ) -> f32 {
-
-			var fragCoordZ: f32 = getDepth( screenPosition );
-      var viewZ: f32 = perspectiveDepthToViewZ( fragCoordZ, near, far );
-      return viewZToOrthographicDepth( viewZ, near, far );
-
-		}
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
-    
-      let depth = getDepth( fsInput.position.xy );
-      
-      var resolution: vec2f = vec2f(textureDimensions(gBufferDepthTexture));
-
-      var noiseScale = vec2( resolution.x / 4.0, resolution.y / 4.0 );
+      var noiseScale = resolution / noiseResolution;
       var random = vec3( textureSample( noiseTexture, repeatSampler, fsInput.position.xy * noiseScale ).r );
 
 			if ( depth == 1.0 ) {
@@ -509,48 +494,74 @@ window.addEventListener('load', async () => {
 				return vec4( 1.0 ); // don't influence background
 				
 			} else {
-
-				var viewZ: f32 = perspectiveDepthToViewZ( depth, camera.near, camera.far );
-
-				var viewPosition: vec3f = getViewPosition( fsInput.position.xy, depth, viewZ );
-				var viewNormal: vec3f = getViewNormal( fsInput.position.xy );
-				
-
-				// compute matrix used to reorient a kernel vector
-
-				var tangent: vec3f = normalize( random - viewNormal * dot( random, viewNormal ) );
+			  
+			  // this is how we'd do it if we had created a position texture
+			  // in the geometry buffer
+			  // var viewPosition = textureLoad(
+        //   gBufferPositionTexture,
+        //   vec2<i32>(floor(screenPosition)),
+        //   0
+        // ).xyz;
+        
+        var viewPosition = viewPosFromScreenCoords( screenPosition / resolution, depth );
+        			          
+			  var viewNormal: vec3f = textureLoad(
+          gBufferNormalTexture,
+          vec2<i32>(floor(screenPosition)),
+          0
+        ).xyz;
+			
+			  var tangent: vec3f = normalize( random - viewNormal * dot( random, viewNormal ) );
 				var bitangent: vec3f = cross( viewNormal, tangent );
 				var kernelMatrix: mat3x3f = mat3x3f( tangent, bitangent, viewNormal );
-
+				
 				var occlusion = 0.0;
 
 				for (var i = 0u; i < arrayLength(&kernel.samples); i++) {
 
 					var sampleVector: vec3f = kernelMatrix * kernel.samples[i].xyz; // reorient sample vector in view space
 					var samplePoint: vec3f = viewPosition + ( sampleVector * params.radius ); // calculate sample point
-
-					var samplePointNDC: vec4f = camera.projectionMatrix * vec4( samplePoint, 1.0 ); // project point and calculate NDC
-					samplePointNDC /= samplePointNDC.w;
-
-					var samplePointUv: vec2f = samplePointNDC.xy * 0.5 + 0.5; // compute uv coordinates
-
-					var realDepth: f32 = getLinearDepth( samplePointUv, camera.near, camera.far ); // get linear depth from depth texture
-					var sampleDepth: f32 = viewZToOrthographicDepth( samplePoint.z, camera.near, camera.far ); // compute linear depth of the sample view Z value
-					var delta: f32 = sampleDepth - realDepth;
-
-					if ( delta > params.minDistance && delta < params.maxDistance ) { // if fragment is before sample point, increase occlusion
 					
-            var intensity = smoothstep(0.0, 1.0, params.radius / abs(sampleDepth - realDepth));
-						occlusion += intensity;
-
-					}
-
+					var offset = vec4( samplePoint, 1.0 );
+					offset = camera.projectionMatrix * offset;
+					
+					// perspective divide
+					offset /= offset.w;   
+					            
+          // transform to range 0.0 - 1.0
+          // + invert Y coords
+          var offsetUV = vec2(
+            offset.x * 0.5 + 0.5,
+            -1.0 * offset.y * 0.5 + 0.5
+          );
+          
+          // this is how we'd do it if we had created a position texture
+			    // in the geometry buffer
+          // var sampleDepth = textureLoad(
+          //   gBufferPositionTexture,
+          //   vec2<i32>(floor(offsetUV * resolution)), // from 0.0 - 1.0 to resolution
+          //   0
+          // ).z;
+          
+          
+          var offsetDepth = textureLoad(
+            gBufferDepthTexture,
+            vec2<i32>(floor(offsetUV * resolution)),
+            0
+          );
+          
+          var sampleDepth = viewPosFromScreenCoords( offsetUV.xy, offsetDepth ).z;
+         
+          var rangeCheck = smoothstep(0.0, 1.0, params.radius / abs(viewPosition.z - sampleDepth));
+          
+          if(sampleDepth >= samplePoint.z + params.bias) {
+            occlusion += rangeCheck;
+          }
 				}
 
 				occlusion = clamp( occlusion / f32( arrayLength(&kernel.samples) ), 0.0, 1.0 );
 
 				return vec4( vec3( 1.0 - occlusion ), 1.0 );
-
 			}
     }
   `
@@ -564,21 +575,19 @@ window.addEventListener('load', async () => {
       },
     },
     renderTextures: [gBufferDepthTexture, gBufferNormalTexture, noiseTexture],
+    //renderTextures: [gBufferDepthTexture, gBufferNormalTexture, gBufferPositionTexture, noiseTexture],
     samplers: [repeatSampler],
     uniforms: {
       params: {
         struct: {
           radius: {
             type: 'f32',
-            value: 2,
+            value: systemSize.z / 25,
           },
-          minDistance: {
+          bias: {
             type: 'f32',
-            value: 0.02,
-          },
-          maxDistance: {
-            type: 'f32',
-            value: 0.15,
+            value: systemSize.z / 400,
+            //value: 0.025,
           },
         },
       },
@@ -592,14 +601,6 @@ window.addEventListener('load', async () => {
             type: 'mat4x4f',
             value: camera.projectionMatrix.getInverse(),
           },
-          near: {
-            type: 'f32',
-            value: camera.near,
-          },
-          far: {
-            type: 'f32',
-            value: camera.far,
-          },
         },
       },
     },
@@ -607,12 +608,19 @@ window.addEventListener('load', async () => {
       kernel: {
         struct: {
           samples: {
-            type: 'array<vec4f>',
+            type: 'array<vec3f>',
             value: sampleKernels,
           },
         },
       },
     },
+  })
+
+  occlusionPass.onRender(() => {
+    occlusionPass.uniforms.camera.inverseProjectionMatrix.value.copy(camera.projectionMatrix).invert()
+
+    // explicitly tell the uniform to update
+    occlusionPass.uniforms.camera.inverseProjectionMatrix.shouldUpdate = true
   })
 
   // ------------------------------------
@@ -626,22 +634,22 @@ window.addEventListener('load', async () => {
     };
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {  
-      var resolution: vec2f = vec2f(textureDimensions(occlusionTexture).xy);
+      var resolution: vec2f = vec2f(textureDimensions(renderTexture).xy);
       var texelSize: vec2f = ( 1.0 / resolution );
 			var result: f32 = 0.0;
 
-			for (var i: i32 = - 2; i <= 2; i ++ ) {
+			for (var i: i32 = - 2; i < 2; i ++ ) {
 
-				for ( var j: i32 = - 2; j <= 2; j ++ ) {
+				for ( var j: i32 = - 2; j < 2; j ++ ) {
 
 					var offset: vec2f = ( vec2( f32( i ), f32( j ) ) ) * texelSize;
-					result += textureSample( occlusionTexture, defaultSampler, fsInput.uv + offset ).r;
+					result += textureSample( renderTexture, defaultSampler, fsInput.uv + offset ).r;
 
 				}
 
 			}
 
-			return vec4( vec3( result / ( 5.0 * 5.0 ) ), 1.0 );
+			return vec4( vec3( result / ( 4.0 * 4.0 ) ), 1.0 );
     }
   `
 
@@ -655,28 +663,21 @@ window.addEventListener('load', async () => {
     },
   })
 
-  blurOcclusionPass.createRenderTexture({
-    label: 'Occlusion texture',
-    name: 'occlusionTexture',
-    fromTexture: occlusionPass.renderTexture,
-  })
-
   // ------------------------------------
   // SHADING / LIGHTNING PASS
   // ------------------------------------
 
-  // we could eventually make the light move in a compute shader
-  const nbLights = 50
+  const nbLights = 25
   const lightsRadius = new Float32Array(nbLights)
   const lightsPositions = new Float32Array(4 * nbLights)
   const lightsColors = new Float32Array(3 * nbLights)
 
   for (let i = 0, j = 0, k = 0; i < nbLights; i++, j += 4, k += 3) {
-    lightsRadius[i] = systemSize.z + Math.random() * systemSize.z * 3
+    lightsRadius[i] = systemSize.z * 2 + Math.random() * systemSize.z * 4
 
-    lightsPositions[j] = (systemSize.x + Math.random() * systemSize.x * 1.5) * Math.sign(Math.random() - 0.5)
-    lightsPositions[j + 1] = (systemSize.y + Math.random() * systemSize.y * 1.5) * Math.sign(Math.random() - 0.5)
-    lightsPositions[j + 2] = (systemSize.z + Math.random() * systemSize.z * 1.5) * Math.sign(Math.random() - 0.5)
+    lightsPositions[j] = (systemSize.x * 1.25 + Math.random() * systemSize.x * 1.5) * Math.sign(Math.random() - 0.5)
+    lightsPositions[j + 1] = (systemSize.y * 1.25 + Math.random() * systemSize.y * 1.5) * Math.sign(Math.random() - 0.5)
+    lightsPositions[j + 2] = (systemSize.z * 1.25 + Math.random() * systemSize.z * 1.5) * Math.sign(Math.random() - 0.5)
     lightsPositions[j + 3] = 1
 
     const color = Math.random() * 0.25 + 0.75
@@ -692,7 +693,7 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
     
-    fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
+    fn worldPosFromScreenCoords(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
       // reconstruct world-space position from the screen coordinate.
       let posClip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
       let posWorldW = camera.inverseViewProjectionMatrix * posClip;
@@ -701,7 +702,7 @@ window.addEventListener('load', async () => {
     }
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {    
-      var blurredOcclusion = textureSample(blurredOcclusionTexture, defaultSampler, fsInput.uv);
+      var blurredOcclusion = textureSample(renderTexture, defaultSampler, fsInput.uv);
      
       var result : vec3<f32>;
 
@@ -717,8 +718,8 @@ window.addEventListener('load', async () => {
       }
     
       let bufferSize = textureDimensions(gBufferDepthTexture);
-      let coordUV = fsInput.position.xy / vec2<f32>(bufferSize);
-      let position = world_from_screen_coord(coordUV, depth);
+      let coordUV = fsInput.position.xy / vec2<f32>(bufferSize); // 0.0 - 1.0 range
+      let position = worldPosFromScreenCoords(coordUV, depth);
     
       let normal = textureLoad(
         gBufferNormalTexture,
@@ -743,15 +744,20 @@ window.addEventListener('load', async () => {
           lambert * pow(1.0 - distance / lights[i].radius, 2.0) * lights[i].color * albedo
         );
       }
-                
-      var occlusion = select(1.0, blurredOcclusion.r, params.useAO > 0.1);
-          
+                          
       // ambient * occlusion
-      result += vec3(0.3 * occlusion);
+      result += vec3(0.3 * blurredOcclusion.r);
       
-      var lightOrAlbedo: vec4f = select(vec4(albedo.rgb * occlusion, 1.0), vec4(result, 1.0), params.useLights > 0.1);
+      
+      
+      if(params.displayResult == 1.0) {
+        return vec4(blurredOcclusion.rgb, 1.0);
+      }
+      
+      return vec4(result, 1.0);
+      
     
-      return select(lightOrAlbedo, vec4(blurredOcclusion.rgb, 1.0), params.useSSAOOnly > 0.1);
+      //return select(vec4(result, 1.0), vec4(blurredOcclusion.rgb, 1.0), params.useSSAOOnly > 0.1);
     }
   `
 
@@ -774,17 +780,13 @@ window.addEventListener('load', async () => {
       },
       params: {
         struct: {
-          useSSAOOnly: {
+          displayResult: {
             type: 'f32',
             value: 0,
           },
-          useAO: {
+          useSSAOOnly: {
             type: 'f32',
-            value: 1,
-          },
-          useLights: {
-            type: 'f32',
-            value: 1,
+            value: 0,
           },
         },
       },
@@ -809,12 +811,6 @@ window.addEventListener('load', async () => {
     },
   })
 
-  ssaoPass.createRenderTexture({
-    label: 'Blurred occlusion texture',
-    name: 'blurredOcclusionTexture',
-    fromTexture: blurOcclusionPass.renderTexture,
-  })
-
   ssaoPass.onRender(() => {
     ssaoPass.uniforms.camera.inverseViewProjectionMatrix.value
       .multiplyMatrices(camera.projectionMatrix, camera.viewMatrix)
@@ -824,10 +820,10 @@ window.addEventListener('load', async () => {
     ssaoPass.uniforms.camera.inverseViewProjectionMatrix.shouldUpdate = true
   })
 
-  // debug button
+  // debug buttons
   const toggleSSAOButton = document.querySelector('#show-ssao')
   toggleSSAOButton.addEventListener('click', () => {
     toggleSSAOButton.classList.toggle('active')
-    ssaoPass.uniforms.params.useSSAOOnly.value = ssaoPass.uniforms.params.useSSAOOnly.value === 1 ? 0 : 1
+    ssaoPass.uniforms.params.displayResult.value = ssaoPass.uniforms.params.displayResult.value !== 1 ? 1 : 0
   })
 })

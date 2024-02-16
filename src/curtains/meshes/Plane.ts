@@ -112,8 +112,8 @@ export class Plane extends DOMMesh {
 
     // convert mouse position to 3d normalised device coordinates (from [-1, -1] to [1, 1])
     const worldMouse = {
-      x: 2 * (mouseCoords.x / this.renderer.pixelRatioBoundingRect.width) - 1,
-      y: 2 * (1 - mouseCoords.y / this.renderer.pixelRatioBoundingRect.height) - 1,
+      x: 2 * (mouseCoords.x / this.renderer.displayBoundingRect.width) - 1,
+      y: 2 * (1 - mouseCoords.y / this.renderer.displayBoundingRect.height) - 1,
     }
 
     const rayOrigin = this.camera.position.clone()

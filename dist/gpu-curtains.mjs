@@ -273,7 +273,8 @@ const getBindGroupLayoutTextureBindingType = (binding) => {
         return {
           texture: {
             multisampled: binding.options.multisampled,
-            viewDimension: binding.options.viewDimension
+            viewDimension: binding.options.viewDimension,
+            sampleType: binding.options.multisampled ? "unfilterable-float" : "float"
           }
         };
       case "depth":
@@ -3743,7 +3744,7 @@ class Camera extends Object3D {
    */
   constructor({
     fov = 50,
-    near = 0.01,
+    near = 0.1,
     far = 150,
     width = 1,
     height = 1,
@@ -4103,8 +4104,8 @@ class RenderTexture {
       this.options.format = this.renderer.options.preferredFormat;
     }
     this.size = this.options.fixedSize ?? {
-      width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
-      height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+      width: Math.floor(this.renderer.displayBoundingRect.width),
+      height: Math.floor(this.renderer.displayBoundingRect.height),
       depth: 1
     };
     if (this.options.fixedSize) {
@@ -4191,8 +4192,8 @@ class RenderTexture {
       return;
     if (!size) {
       size = {
-        width: Math.floor(this.renderer.pixelRatioBoundingRect.width),
-        height: Math.floor(this.renderer.pixelRatioBoundingRect.height),
+        width: Math.floor(this.renderer.displayBoundingRect.width),
+        height: Math.floor(this.renderer.displayBoundingRect.height),
         depth: 1
       };
     }
@@ -6117,7 +6118,7 @@ function MeshBaseMixin(Base) {
         autoRender,
         ...meshParameters
       } = parameters;
-      meshParameters.sampleCount = meshParameters.sampleCount ?? (this.renderer && this.renderer.renderPass) ? this.renderer.renderPass.options.sampleCount : 1;
+      meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
       this.options = {
         ...this.options ?? {},
         // merge possible lower options?
@@ -6171,28 +6172,7 @@ function MeshBaseMixin(Base) {
      */
     addToScene() {
       this.renderer.meshes.push(this);
-      const renderPassOptions = this.renderTarget ? this.renderTarget.renderPass.options : this.renderer.renderPass.options;
-      const renderingOptions = {
-        sampleCount: renderPassOptions.sampleCount,
-        // color attachments
-        ...renderPassOptions.colorAttachments.length && {
-          targetFormat: renderPassOptions.colorAttachments[0].targetFormat,
-          // multiple render targets?
-          ...renderPassOptions.colorAttachments.length > 1 && {
-            additionalTargets: renderPassOptions.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
-              return {
-                format: colorAttachment.targetFormat
-              };
-            })
-          }
-        },
-        // depth
-        depth: renderPassOptions.useDepth,
-        ...renderPassOptions.useDepth && {
-          depthFormat: renderPassOptions.depthFormat
-        }
-      };
-      this.material?.setRenderingOptions(renderingOptions);
+      this.setRenderingOptionsForRenderPass(this.renderTarget ? this.renderTarget.renderPass : this.renderer.renderPass);
       if (__privateGet$3(this, _autoRender)) {
         this.renderer.scene.addMesh(this);
       }
@@ -6205,6 +6185,33 @@ function MeshBaseMixin(Base) {
         this.renderer.scene.removeMesh(this);
       }
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+    }
+    /**
+     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+     */
+    setRenderingOptionsForRenderPass(renderPass) {
+      const renderingOptions = {
+        sampleCount: renderPass.options.sampleCount,
+        // color attachments
+        ...renderPass.options.colorAttachments.length && {
+          targetFormat: renderPass.options.colorAttachments[0].targetFormat,
+          // multiple render targets?
+          ...renderPass.options.colorAttachments.length > 1 && {
+            additionalTargets: renderPass.options.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
+              return {
+                format: colorAttachment.targetFormat
+              };
+            })
+          }
+        },
+        // depth
+        depth: renderPass.options.useDepth,
+        ...renderPass.options.useDepth && {
+          depthFormat: renderPass.options.depthFormat
+        }
+      };
+      this.material?.setRenderingOptions(renderingOptions);
     }
     /**
      * Set a new {@link Renderer} for this Mesh
@@ -6504,7 +6511,7 @@ function MeshBaseMixin(Base) {
       return this;
     }
     /**
-     * Assign a callback function to _onBeforeRenderCallback
+     * Assign a callback function to _onAfterResizeCallback
      * @param callback - callback to run just after {@link MeshBase} has been resized
      * @returns - our Mesh
      */
@@ -8311,11 +8318,16 @@ class RenderPass {
    */
   updateView(renderTexture = null) {
     if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
-      return null;
+      if (renderTexture && this.options.sampleCount > 1) {
+        this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
+          label: renderTexture.label + " resolve target view"
+        });
+      }
+      return renderTexture;
     }
     if (!renderTexture) {
       renderTexture = this.renderer.context.getCurrentTexture();
-      renderTexture.label = `${this.type} context current texture`;
+      renderTexture.label = `${this.renderer.type} context current texture`;
     }
     if (this.options.sampleCount > 1) {
       this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({
@@ -8393,7 +8405,7 @@ class RenderTarget {
       // reuse renderer depth texture for every pass
       ...renderPassParams
     });
-    if (renderPassParams.useColorAttachments !== false && renderPassParams.shouldUpdateView !== false) {
+    if (renderPassParams.useColorAttachments !== false) {
       this.renderTexture = new RenderTexture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
         name: "renderTexture",
@@ -9021,8 +9033,8 @@ class Plane extends DOMMesh {
    */
   mouseToPlaneCoords(mouseCoords = new Vec2()) {
     const worldMouse = {
-      x: 2 * (mouseCoords.x / this.renderer.pixelRatioBoundingRect.width) - 1,
-      y: 2 * (1 - mouseCoords.y / this.renderer.pixelRatioBoundingRect.height) - 1
+      x: 2 * (mouseCoords.x / this.renderer.displayBoundingRect.width) - 1,
+      y: 2 * (1 - mouseCoords.y / this.renderer.displayBoundingRect.height) - 1
     };
     const rayOrigin = this.camera.position.clone();
     const rayDirection = new Vec3(worldMouse.x, worldMouse.y, -0.5);
@@ -9550,16 +9562,10 @@ class GPURenderer {
    * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
   setSize(boundingRect) {
-    const devicePixelRatio = window.devicePixelRatio ?? 1;
-    const scaleBoundingRect = this.pixelRatio / devicePixelRatio;
     this.canvas.style.width = Math.floor(boundingRect.width) + "px";
     this.canvas.style.height = Math.floor(boundingRect.height) + "px";
-    const renderingSize = {
-      width: Math.floor(boundingRect.width * scaleBoundingRect),
-      height: Math.floor(boundingRect.height * scaleBoundingRect)
-    };
-    this.canvas.width = this.device ? Math.min(renderingSize.width, this.device.limits.maxTextureDimension2D) : renderingSize.width;
-    this.canvas.height = this.device ? Math.min(renderingSize.height, this.device.limits.maxTextureDimension2D) : renderingSize.height;
+    this.canvas.width = this.getScaledDisplayBoundingRect(boundingRect).width;
+    this.canvas.height = this.getScaledDisplayBoundingRect(boundingRect).height;
   }
   /**
    * Resize our {@link GPURenderer}
@@ -9625,11 +9631,18 @@ class GPURenderer {
   /**
    * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle} accounting for current {@link pixelRatio | pixel ratio}
    */
-  get pixelRatioBoundingRect() {
+  get displayBoundingRect() {
+    return this.getScaledDisplayBoundingRect(this.boundingRect);
+  }
+  /**
+   * Get the display bounding rectangle accounting for current {@link pixelRatio | pixel ratio} and max texture dimensions
+   * @param boundingRect - bounding rectangle to check against
+   */
+  getScaledDisplayBoundingRect(boundingRect) {
     const devicePixelRatio = window.devicePixelRatio ?? 1;
     const scaleBoundingRect = this.pixelRatio / devicePixelRatio;
-    const pixelRatioBoundingRect = Object.keys(this.boundingRect).reduce(
-      (a, key) => ({ ...a, [key]: this.boundingRect[key] * scaleBoundingRect }),
+    const displayBoundingRect = Object.keys(boundingRect).reduce(
+      (a, key) => ({ ...a, [key]: boundingRect[key] * scaleBoundingRect }),
       {
         x: 0,
         y: 0,
@@ -9641,17 +9654,19 @@ class GPURenderer {
         left: 0
       }
     );
-    pixelRatioBoundingRect.width = Math.min(this.canvas.width, pixelRatioBoundingRect.width);
-    pixelRatioBoundingRect.height = Math.min(this.canvas.height, pixelRatioBoundingRect.height);
-    pixelRatioBoundingRect.right = Math.min(
-      pixelRatioBoundingRect.width + pixelRatioBoundingRect.left,
-      pixelRatioBoundingRect.right
-    );
-    pixelRatioBoundingRect.bottom = Math.min(
-      pixelRatioBoundingRect.height + pixelRatioBoundingRect.top,
-      pixelRatioBoundingRect.bottom
-    );
-    return pixelRatioBoundingRect;
+    if (this.device) {
+      displayBoundingRect.width = Math.min(this.device.limits.maxTextureDimension2D, displayBoundingRect.width);
+      displayBoundingRect.height = Math.min(this.device.limits.maxTextureDimension2D, displayBoundingRect.height);
+      displayBoundingRect.right = Math.min(
+        displayBoundingRect.width + displayBoundingRect.left,
+        displayBoundingRect.right
+      );
+      displayBoundingRect.bottom = Math.min(
+        displayBoundingRect.height + displayBoundingRect.top,
+        displayBoundingRect.bottom
+      );
+    }
+    return displayBoundingRect;
   }
   /* USEFUL DEVICE MANAGER OBJECTS */
   /**
@@ -10242,7 +10257,7 @@ class GPUCameraRenderer extends GPURenderer {
       renderPass
     });
     this.type = "GPUCameraRenderer";
-    camera = { ...{ fov: 50, near: 0.01, far: 150 }, ...camera };
+    camera = { ...{ fov: 50, near: 0.1, far: 150 }, ...camera };
     this.options = {
       ...this.options,
       camera

@@ -83,7 +83,7 @@ export class Camera extends Object3D {
   constructor(
     {
       fov = 50,
-      near = 0.01,
+      near = 0.1,
       far = 150,
       width = 1,
       height = 1,

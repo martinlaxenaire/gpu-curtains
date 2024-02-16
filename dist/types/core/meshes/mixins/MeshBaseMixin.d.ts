@@ -10,6 +10,7 @@ import { Material } from '../../materials/Material';
 import { DOMElementBoundingRect } from '../../DOM/DOMElement';
 import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
+import { RenderPass } from '../../renderPasses/RenderPass';
 export interface MeshBaseRenderParams extends RenderMaterialParams {
     /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
@@ -145,6 +146,11 @@ export declare class MeshBaseClass {
      * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene(): void;
+    /**
+     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+     */
+    setRenderingOptionsForRenderPass(renderPass: RenderPass): void;
     /**
      * Set a new {@link Renderer} for this Mesh
      * @param renderer - new {@link Renderer} to set
