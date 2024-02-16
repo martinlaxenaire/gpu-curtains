@@ -219,8 +219,8 @@ window.addEventListener('load', async () => {
     cubeMesh.parent = objectsPivot
 
     cubeMesh.onRender(() => {
-      // IMPORTANT: normals are in VIEW SPACE
-      cubeMesh.uniforms.normals.inverseTransposeMatrix.value.copy(cubeMesh.modelViewMatrix).invert().transpose()
+      // normals will be converted in view space in the occlusion shader
+      cubeMesh.uniforms.normals.inverseTransposeMatrix.value.copy(cubeMesh.worldMatrix).invert().transpose()
       // explicitly tell the uniform to update
       cubeMesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
     })
@@ -506,11 +506,14 @@ window.addEventListener('load', async () => {
         
         var viewPosition = viewPosFromScreenCoords( screenPosition / resolution, depth );
         			          
-			  var viewNormal: vec3f = textureLoad(
+			  var normal: vec3f = textureLoad(
           gBufferNormalTexture,
           vec2<i32>(floor(screenPosition)),
           0
         ).xyz;
+        
+        // from world space normals to view space normals
+        var viewNormal: vec3f = normalize((camera.viewMatrix * vec4(normal, 0.0)).xyz);
 			
 			  var tangent: vec3f = normalize( random - viewNormal * dot( random, viewNormal ) );
 				var bitangent: vec3f = cross( viewNormal, tangent );
@@ -587,12 +590,16 @@ window.addEventListener('load', async () => {
           },
           bias: {
             type: 'f32',
-            value: systemSize.z / 400,
+            value: systemSize.z / 200,
           },
         },
       },
       camera: {
         struct: {
+          viewMatrix: {
+            type: 'mat4x4f',
+            value: camera.viewMatrix,
+          },
           projectionMatrix: {
             type: 'mat4x4f',
             value: camera.projectionMatrix,
@@ -617,12 +624,12 @@ window.addEventListener('load', async () => {
   })
 
   occlusionPass.onRender(() => {
+    occlusionPass.uniforms.camera.viewMatrix.value.copy(camera.viewMatrix)
     occlusionPass.uniforms.camera.projectionMatrix.value.copy(camera.projectionMatrix)
     occlusionPass.uniforms.camera.inverseProjectionMatrix.value.copy(camera.projectionMatrix).invert()
 
-    // explicitly tell the uniform to update
+    // explicitly tell all the camera uniforms to update
     occlusionPass.material.shouldUpdateInputsBindings('camera')
-    //occlusionPass.uniforms.camera.inverseProjectionMatrix.shouldUpdate = true
   })
 
   // ------------------------------------
