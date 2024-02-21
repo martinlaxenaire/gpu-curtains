@@ -10,7 +10,7 @@
 // ref OpenGL tutorial: https://learnopengl.com/Advanced-Lighting/SSAO
 // Occlusion pass code has been ported from three.js SSAO: https://github.com/mrdoob/three.js/blob/dev/examples/jsm/shaders/SSAOShader.js
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
     GPUDeviceManager,
     GPUCameraRenderer,
@@ -45,7 +45,7 @@ window.addEventListener('load', async () => {
     camera: {
       fov: 65,
       near: systemSize.z * 0.25,
-      far: systemSize.z * 3.5,
+      far: systemSize.z * 4,
     },
   })
 
@@ -165,8 +165,9 @@ window.addEventListener('load', async () => {
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
+  const nbCubes = 100
 
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < nbCubes; i++) {
     const randomColor = Math.random()
     const color = randomColor < 0.33 ? blue : randomColor < 0.66 ? pink : grey
 
@@ -456,12 +457,10 @@ window.addEventListener('load', async () => {
   const ssaoTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'SSAO render target',
     sampleCount,
-    shouldUpdateView: false,
-    qualityRatio: 0.5,
-    useDepth: false,
+    //shouldUpdateView: false,
+    qualityRatio: 0.5, // decrease quality to improve perf!
+    useDepth: false, // no need for depth
   })
-
-  console.log(ssaoTarget)
 
   const occlusionFs = /* wgsl */ `
     struct VSOutput {
@@ -480,12 +479,13 @@ window.addEventListener('load', async () => {
       return viewPos;
     }
  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
-      var renderResolution: vec2f = vec2f(textureDimensions(renderTexture));
-      var gBufferResolution: vec2f = vec2f(textureDimensions(renderTexture));
-      //var resolution: vec2f = vec2f(textureDimensions(gBufferDepthTexture)) * 0.5;
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {             
+      var outputResolution: vec2f = vec2f(textureDimensions(renderTexture));  
+      var inputResolution: vec2f = vec2f(textureDimensions(gBufferDepthTexture));
+      var scaledResolution = inputResolution / outputResolution;
+            
       var noiseResolution: vec2f = vec2f(textureDimensions(noiseTexture));
-      var screenPosition: vec2f = fsInput.position.xy;
+      var screenPosition: vec2f = fsInput.position.xy * scaledResolution;
       
       let depth: f32 = textureLoad(
         gBufferDepthTexture,
@@ -493,7 +493,7 @@ window.addEventListener('load', async () => {
         0
       );
 
-      var noiseScale = renderResolution / noiseResolution;
+      var noiseScale = outputResolution / noiseResolution;
       var random = vec3( textureSample( noiseTexture, repeatSampler, fsInput.uv * noiseScale ).r );
 
 			if ( depth == 1.0 ) {
@@ -510,7 +510,7 @@ window.addEventListener('load', async () => {
         //   0
         // ).xyz;
         
-        var viewPosition = viewPosFromScreenCoords( screenPosition / renderResolution, depth );
+        var viewPosition = viewPosFromScreenCoords( screenPosition / inputResolution, depth );
         			          
 			  var normal: vec3f = textureLoad(
           gBufferNormalTexture,
@@ -556,7 +556,7 @@ window.addEventListener('load', async () => {
           
           var offsetDepth = textureLoad(
             gBufferDepthTexture,
-            vec2<i32>(floor(offsetUV * renderResolution)),
+            vec2<i32>(floor(offsetUV * inputResolution)),
             0
           );
           
@@ -678,7 +678,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(occlusionPass, blurOcclusionPass)
+  console.log(gpuCameraRenderer.scene)
 
   // ------------------------------------
   // SHADING / LIGHTNING PASS

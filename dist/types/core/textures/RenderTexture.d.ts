@@ -20,6 +20,8 @@ export interface RenderTextureBaseParams {
     name?: string;
     /** Optional fixed size of the {@link RenderTexture#texture | texture}. If set, the {@link RenderTexture} will never be resized and always keep that size. */
     fixedSize?: TextureSize;
+    /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#displayBoundingRect | renderer display bounding rectangle} or {@link fixedSize}. Used mainly to shrink render target definition. */
+    qualityRatio?: number;
     /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
     usage?: RenderTextureBindingType;
     /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */

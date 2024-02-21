@@ -1,4 +1,4 @@
-import { BindGroup, ComputePass, GPUCurtains, Plane, PlaneGeometry, Vec2, Vec3 } from '../../dist/gpu-curtains.mjs'
+import { BindGroup, ComputePass, GPUCurtains, Plane, PlaneGeometry, Vec2, Vec3 } from '../../dist/esm/index.mjs'
 
 // Port of https://github.com/Yuu6883/WebGPUDemo
 

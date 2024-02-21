@@ -6,7 +6,7 @@ export class TestComputePasses {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+    const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
     const { BindGroup, BufferBinding, ComputePass, Mesh, SphereGeometry, Vec2, logSceneCommands } = await import(
       /* @vite-ignore */ path
     )

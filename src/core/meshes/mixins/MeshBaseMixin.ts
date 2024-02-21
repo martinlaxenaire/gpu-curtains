@@ -25,7 +25,7 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
   visible?: boolean
   /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
   renderOrder?: number
-  /** {@link RenderTarget} to render this Mesh to */
+  /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
   outputTarget?: RenderTarget
   /** Parameters used by this Mesh to create a {@link Texture} */
   texturesOptions?: ExternalTextureParams
@@ -49,7 +49,7 @@ export interface MeshBaseOptions {
   shaders?: MeshBaseParams['shaders']
   /** Parameters used by this Mesh to create a {@link Texture} */
   texturesOptions?: ExternalTextureParams
-  /** {@link RenderTarget} to render this Mesh to, if any */
+  /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
   outputTarget?: RenderTarget | null
   /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
   autoRender?: boolean
@@ -105,7 +105,7 @@ export declare class MeshBaseClass {
   /** {@link AllowedGeometries | Geometry} used by this {@link MeshBaseClass} */
   geometry: MeshBaseParams['geometry']
 
-  /** {@link RenderTarget} to render this Mesh to, if any */
+  /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
   outputTarget: null | RenderTarget
 
   /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
@@ -481,9 +481,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ...meshParameters
       } = parameters
 
+      this.outputTarget = outputTarget ?? null
+
       // set default sample count
       meshParameters.sampleCount = !!meshParameters.sampleCount
         ? meshParameters.sampleCount
+        : this.outputTarget
+        ? this.outputTarget.renderPass.options.sampleCount
         : this.renderer && this.renderer.renderPass
         ? this.renderer.renderPass.options.sampleCount
         : 1
@@ -497,8 +501,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ...(autoRender !== undefined && { autoRender }),
         ...(meshParameters.useAsyncPipeline !== undefined && { useAsyncPipeline: meshParameters.useAsyncPipeline }),
       }
-
-      this.outputTarget = outputTarget ?? null
 
       this.geometry = geometry
 

@@ -18,8 +18,8 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
     visible?: boolean;
     /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder?: number;
-    /** {@link RenderTarget} to render this Mesh to */
-    renderTarget?: RenderTarget;
+    /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
+    outputTarget?: RenderTarget;
     /** Parameters used by this Mesh to create a {@link Texture} */
     texturesOptions?: ExternalTextureParams;
 }
@@ -40,8 +40,8 @@ export interface MeshBaseOptions {
     shaders?: MeshBaseParams['shaders'];
     /** Parameters used by this Mesh to create a {@link Texture} */
     texturesOptions?: ExternalTextureParams;
-    /** {@link RenderTarget} to render this Mesh to, if any */
-    renderTarget?: RenderTarget | null;
+    /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
+    outputTarget?: RenderTarget | null;
     /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
     /** Whether to compile this Mesh {@link RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
@@ -68,8 +68,8 @@ export declare class MeshBaseClass {
     material: RenderMaterial;
     /** {@link AllowedGeometries | Geometry} used by this {@link MeshBaseClass} */
     geometry: MeshBaseParams['geometry'];
-    /** {@link RenderTarget} to render this Mesh to, if any */
-    renderTarget: null | RenderTarget;
+    /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
+    outputTarget: null | RenderTarget;
     /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number;
     /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
@@ -230,9 +230,9 @@ export declare class MeshBaseClass {
     /**
      * Assign or remove a {@link RenderTarget} to this Mesh
      * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
      */
-    setRenderTarget(renderTarget: RenderTarget | null): void;
+    setOutputTarget(outputTarget: RenderTarget | null): void;
     /**
      * Get the current {@link RenderMaterial} uniforms
      * @readonly

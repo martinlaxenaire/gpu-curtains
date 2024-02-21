@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane, Sampler, Vec2 } from '../../dist/gpu-curtains.mjs'
+import { GPUCurtains, Plane, Sampler, Vec2 } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   const buildPlaneHTMLElement = (index) => {

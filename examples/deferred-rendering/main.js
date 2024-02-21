@@ -11,7 +11,7 @@ import {
   RenderTarget,
   RenderTexture,
   Object3D,
-} from '../../dist/gpu-curtains.mjs'
+} from '../../dist/esm/index.mjs'
 
 // inspired by https://webgpu.github.io/webgpu-samples/samples/deferredRendering
 window.addEventListener('load', async () => {

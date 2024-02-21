@@ -9,7 +9,7 @@ import {
   SphereGeometry,
   Vec2,
   Vec3,
-} from '../../dist/gpu-curtains.mjs'
+} from '../../dist/esm/index.mjs'
 
 // this examples demonstrates how we can apply a post processing effect to a specific set of meshes
 // while preserving the depth buffer

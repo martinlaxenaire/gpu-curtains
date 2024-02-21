@@ -47,16 +47,16 @@
     "dist"
   ],
   "main": "./dist/gpu-curtains.umd.js",
-  "module": "dist/gpu-curtains.mjs",
+  "module": "dist/esm/index.mjs",
   "exports": {
     ".": {
-      "module": "./dist/gpu-curtains.mjs",
+      "module": "./dist/esm/index.mjs",
       "import": {
         "types": "./dist/types/index.d.ts",
-        "default": "./dist/gpu-curtains.mjs"
+        "default": "./dist/esm/index.mjs"
       },
       "require": "./dist/gpu-curtains.umd.js",
-      "default": "./dist/gpu-curtains.mjs"
+      "default": "./dist/esm/index.mjs"
     },
     "./package.json": "./package.json"
   },
@@ -70,7 +70,7 @@
     "dev": "vite --host",
     "build:docs": "rimraf docs && typedoc --options typedoc.json",
     "build:types": "rimraf dist/types && tsc --allowJs -d --emitDeclarationOnly",
-    "build:lib": "rollup -c",
+    "build:lib": "rimraf dist/esm && rollup -c",
     "build:dist": "yarn build:types && yarn build:lib",
     "build": "yarn build:dist && yarn build:docs"
   }

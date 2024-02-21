@@ -26,7 +26,7 @@ export class TestPingPong {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+    const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
     const { PingPongPlane, Plane, RenderTexture, Sampler, Vec2, logSceneCommands } = await import(
       /* @vite-ignore */ path
     )

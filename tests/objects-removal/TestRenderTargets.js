@@ -38,7 +38,7 @@ export class TestRenderTargets {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+    const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
     const { Plane, RenderTarget, Sampler, ShaderPass } = await import(/* @vite-ignore */ path)
 
     // We don't want to see our pass texture top/bottom edges

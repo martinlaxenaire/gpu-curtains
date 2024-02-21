@@ -6,8 +6,11 @@ export default [
     input: 'src/index.ts',
     output: [
       {
-        file: 'dist/gpu-curtains.mjs',
+        dir: 'dist/esm',
         format: 'es',
+        preserveModules: true,
+        preserveModulesRoot: 'src',
+        entryFileNames: '[name].mjs',
         sourcemap: true,
       },
       {

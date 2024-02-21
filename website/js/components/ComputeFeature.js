@@ -1,4 +1,4 @@
-import { Vec3, ComputePass, BoxGeometry, Mesh, ShaderPass } from '../../../dist/gpu-curtains.mjs'
+import { Vec3, ComputePass, BoxGeometry, Mesh, ShaderPass } from '../../../dist/esm/index.mjs'
 import { computeFeatureInstances } from '../shaders/compute-feature-instances.wgsl.js'
 import { featureInstancesFs, featureInstancesVs } from '../shaders/feature-instances.wgsl.js'
 

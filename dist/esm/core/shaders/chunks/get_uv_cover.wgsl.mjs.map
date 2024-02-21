@@ -1,0 +1,1 @@
+{"version":3,"file":"get_uv_cover.wgsl.mjs","sources":["../../../../../src/core/shaders/chunks/get_uv_cover.wgsl.js"],"sourcesContent":["export default /* wgsl */ `\nfn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {\n  return (textureMatrix * vec4f(uv, 0.0, 1.0)).xy;\n}`\n"],"names":[],"mappings":"AAAA,mBAAA;AAAA;AAAA,EAA0B,CAAA;AAAA;AAAA;AAAA,CAAA,CAAA;AAAA;;;;"}

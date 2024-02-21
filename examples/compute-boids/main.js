@@ -6,7 +6,7 @@ import {
   Mesh,
   SphereGeometry,
   Vec2,
-} from '../../dist/gpu-curtains.mjs'
+} from '../../dist/esm/index.mjs'
 
 // Port of https://webgpu.github.io/webgpu-samples/samples/computeBoids
 

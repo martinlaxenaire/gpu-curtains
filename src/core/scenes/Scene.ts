@@ -286,7 +286,9 @@ export class Scene {
         ? null
         : (commandEncoder, swapChainTexture) => {
             // draw the content into our render texture
-            // if it's a global post processing pass, copy the context current texture into its renderTexture
+            // if it's a global postprocessing pass, copy the context current texture into its renderTexture
+            // we don't need to do that if it has an inputTarget
+            // because in this case its renderTexture is already a copy of the render target content
             if (shaderPass.renderTexture && swapChainTexture) {
               commandEncoder.copyTextureToTexture(
                 {
@@ -303,25 +305,28 @@ export class Scene {
             this.renderer.postProcessingPass.setLoadOp('clear')
           }
 
-    const onAfterRenderPass = shaderPass.inputTarget
-      ? (commandEncoder, swapChainTexture) => {
-          // if we render to a target, copy the result so we can chain render to textures
-          if (shaderPass.inputTarget && shaderPass.inputTarget.renderTexture && swapChainTexture) {
+    const onAfterRenderPass = shaderPass.outputTarget
+      ? null
+      : (commandEncoder, swapChainTexture) => {
+          // if we rendered to the screen,
+          // copy the context current texture result back into the shaderPass renderTexture
+          if (shaderPass.renderTexture && swapChainTexture) {
             commandEncoder.copyTextureToTexture(
               {
                 texture: swapChainTexture,
               },
               {
-                texture: shaderPass.inputTarget.renderTexture.texture,
+                texture: shaderPass.renderTexture.texture,
               },
-              [shaderPass.inputTarget.renderTexture.size.width, shaderPass.inputTarget.renderTexture.size.height]
+              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
             )
           }
         }
-      : null
 
     const shaderPassEntry = {
-      renderPass: this.renderer.postProcessingPass, // render directly to screen
+      // use output target or postprocessing render pass
+      renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
+      // render to output target renderTexture or directly to screen
       renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
       onBeforeRenderPass,
       onAfterRenderPass,
@@ -332,14 +337,14 @@ export class Scene {
     this.renderPassEntries.screen.push(shaderPassEntry)
 
     // screen passes are sorted by 2 criteria
-    // first we draw render passes that have a render target OR our scene pass, ordered by renderOrder
-    // then we draw our full post processing pass, ordered by renderOrder
+    // first we draw render passes that have an output target OR our main render pass, ordered by renderOrder
+    // then we draw our full postprocessing pass, ordered by renderOrder
     this.renderPassEntries.screen.sort((a, b) => {
-      const isPostProA = a.element && !(a.element as ShaderPass).inputTarget
+      const isPostProA = a.element && !a.element.outputTarget
       const renderOrderA = a.element ? a.element.renderOrder : 0
       const indexA = a.element ? a.element.index : 0
 
-      const isPostProB = b.element && !(b.element as ShaderPass).inputTarget
+      const isPostProB = b.element && !b.element.outputTarget
       const renderOrderB = b.element ? b.element.renderOrder : 0
       const indexB = b.element ? b.element.index : 0
 

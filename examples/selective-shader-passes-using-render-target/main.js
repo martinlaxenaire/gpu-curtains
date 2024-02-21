@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane, RenderTarget, Sampler, ShaderPass } from '../../dist/gpu-curtains.mjs'
+import { GPUCurtains, Plane, RenderTarget, Sampler, ShaderPass } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   // lerp
@@ -124,7 +124,7 @@ window.addEventListener('load', async () => {
 
   const grayscalePass = new ShaderPass(gpuCurtains, {
     label: 'Large plane shader pass',
-    //outputTarget: grayscaleTarget, // we could do that directly
+    //inputTarget: grayscaleTarget, // we could do that directly
     //renderOrder: 1, // uncomment to draw large planes above small planes
     shaders: {
       fragment: {
@@ -147,7 +147,7 @@ window.addEventListener('load', async () => {
     samplers: [mirrorSampler],
   })
 
-  grayscalePass.setRenderTarget(grayscaleTarget)
+  grayscalePass.setInputTarget(grayscaleTarget)
 
   grayscalePass.onRender(() => {
     // update the uniform
@@ -198,7 +198,7 @@ window.addEventListener('load', async () => {
 
   const rgbShiftPass = new ShaderPass(gpuCurtains, {
     label: 'Small plane shader pass',
-    outputTarget: rgbShiftTarget,
+    inputTarget: rgbShiftTarget,
     shaders: {
       fragment: {
         code: rgbShiftFs,

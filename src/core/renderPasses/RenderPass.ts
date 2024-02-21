@@ -313,18 +313,11 @@ export class RenderPass {
 
   /**
    * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-   * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
-   * @returns - the {@link GPUTexture | current render texture}
+   * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
+   * @returns - the {@link GPUTexture | texture} to render to.
    */
   updateView(renderTexture: GPUTexture | null = null): GPUTexture | null {
     if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
-      // resolve texture in case we need it, but do not update view
-      if (renderTexture && this.options.sampleCount > 1) {
-        this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
-          label: renderTexture.label + ' resolve target view',
-        })
-      }
-
       return renderTexture
     }
 

@@ -24,7 +24,7 @@ export interface RenderTextureBaseParams {
   /** Optional fixed size of the {@link RenderTexture#texture | texture}. If set, the {@link RenderTexture} will never be resized and always keep that size. */
   fixedSize?: TextureSize
 
-  /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#displayBoundingRect | renderer display bounding rectangle}. Used mainly to shrink render target definition. */
+  /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#displayBoundingRect | renderer display bounding rectangle} or {@link fixedSize}. Used mainly to shrink render target definition. */
   qualityRatio?: number
 
   /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
@@ -130,11 +130,17 @@ export class RenderTexture {
     }
 
     // sizes
-    this.size = this.options.fixedSize ?? {
-      width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
-      height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
-      depth: 1,
-    }
+    this.size = this.options.fixedSize
+      ? {
+          width: this.options.fixedSize.width * this.options.qualityRatio,
+          height: this.options.fixedSize.height * this.options.qualityRatio,
+          depth: this.options.fixedSize.depth,
+        }
+      : {
+          width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
+          height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
+          depth: 1,
+        }
 
     if (this.options.fixedSize) {
       this.#autoResize = false
