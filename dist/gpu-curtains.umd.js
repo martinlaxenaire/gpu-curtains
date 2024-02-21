@@ -6139,7 +6139,7 @@ struct VertexOutput {
           texturesOptions,
           ...outputTarget !== void 0 && { outputTarget },
           ...autoRender !== void 0 && { autoRender },
-          ...meshParameters.useAsyncPipeline !== void 0 && { useAsyncPipeline: meshParameters.useAsyncPipeline }
+          ...meshParameters
         };
         this.geometry = geometry;
         if (autoRender !== void 0) {
@@ -6151,9 +6151,9 @@ struct VertexOutput {
         this.userData = {};
         this.computeGeometry();
         this.setMaterial({
-          label: this.options.label,
-          shaders: this.options.shaders,
-          ...{ ...meshParameters, verticesOrder: geometry.verticesOrder, topology: geometry.topology }
+          ...this.cleanupRenderMaterialParameters({ ...this.options }),
+          verticesOrder: geometry.verticesOrder,
+          topology: geometry.topology
         });
         this.addToScene();
       }
@@ -6196,33 +6196,6 @@ struct VertexOutput {
           this.renderer.scene.removeMesh(this);
         }
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
-      }
-      /**
-       * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
-       * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
-       */
-      setRenderingOptionsForRenderPass(renderPass) {
-        const renderingOptions = {
-          sampleCount: renderPass.options.sampleCount,
-          // color attachments
-          ...renderPass.options.colorAttachments.length && {
-            targetFormat: renderPass.options.colorAttachments[0].targetFormat,
-            // multiple render targets?
-            ...renderPass.options.colorAttachments.length > 1 && {
-              additionalTargets: renderPass.options.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
-                return {
-                  format: colorAttachment.targetFormat
-                };
-              })
-            }
-          },
-          // depth
-          depth: renderPass.options.useDepth,
-          ...renderPass.options.useDepth && {
-            depthFormat: renderPass.options.depthFormat
-          }
-        };
-        this.material?.setRenderingOptions(renderingOptions);
       }
       /**
        * Set a new {@link Renderer} for this Mesh
@@ -6358,6 +6331,44 @@ struct VertexOutput {
         }
       }
       /* MATERIAL */
+      /**
+       * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+       * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+       */
+      setRenderingOptionsForRenderPass(renderPass) {
+        const renderingOptions = {
+          sampleCount: renderPass.options.sampleCount,
+          // color attachments
+          ...renderPass.options.colorAttachments.length && {
+            targetFormat: renderPass.options.colorAttachments[0].targetFormat,
+            // multiple render targets?
+            ...renderPass.options.colorAttachments.length > 1 && {
+              additionalTargets: renderPass.options.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
+                return {
+                  format: colorAttachment.targetFormat
+                };
+              })
+            }
+          },
+          // depth
+          depth: renderPass.options.useDepth,
+          ...renderPass.options.useDepth && {
+            depthFormat: renderPass.options.depthFormat
+          }
+        };
+        this.material?.setRenderingOptions(renderingOptions);
+      }
+      /**
+       * Hook used to clean up parameters before sending them to the {@link RenderMaterial}.
+       * @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
+       * @returns - cleaned parameters
+       */
+      cleanupRenderMaterialParameters(parameters) {
+        delete parameters.texturesOptions;
+        delete parameters.outputTarget;
+        delete parameters.autoRender;
+        return parameters;
+      }
       /**
        * Set a Mesh transparent property, then set its material
        * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
@@ -6987,11 +6998,21 @@ struct VSOutput {
       }
       /* MATERIAL */
       /**
+       * Hook used to clean up parameters before sending them to the material.
+       * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+       * @returns - cleaned parameters
+       */
+      cleanupRenderMaterialParameters(parameters) {
+        delete parameters.frustumCulled;
+        delete parameters.DOMFrustumMargins;
+        super.cleanupRenderMaterialParameters(parameters);
+        return parameters;
+      }
+      /**
        * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
-       * @param meshParameters - {@link ProjectedRenderMaterialParams | RenderMaterial parameters}
+       * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
        */
       setMaterial(meshParameters) {
-        const { frustumCulled, DOMFrustumMargins, ...materialParameters } = meshParameters;
         const matricesUniforms = {
           label: "Matrices",
           struct: {
@@ -7018,10 +7039,10 @@ struct VSOutput {
             }
           }
         };
-        if (!materialParameters.uniforms)
-          materialParameters.uniforms = {};
-        materialParameters.uniforms.matrices = matricesUniforms;
-        super.setMaterial(materialParameters);
+        if (!meshParameters.uniforms)
+          meshParameters.uniforms = {};
+        meshParameters.uniforms.matrices = matricesUniforms;
+        super.setMaterial(meshParameters);
       }
       /* SIZE & TRANSFORMS */
       /**
@@ -8087,15 +8108,26 @@ struct VSOutput {
       });
     }
     /**
-     * Get our main {@link RenderTexture}, the one that contains our post processed content
+     * Hook used to clean up parameters before sending them to the material.
+     * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+     * @returns - cleaned parameters
+     */
+    cleanupRenderMaterialParameters(parameters) {
+      delete parameters.copyOutputToRenderTexture;
+      delete parameters.inputTarget;
+      super.cleanupRenderMaterialParameters(parameters);
+      return parameters;
+    }
+    /**
+     * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
      * @readonly
      */
     get renderTexture() {
       return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
     }
-    // TODO
     /**
-     * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+     * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
+     *
      * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
      * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
      * @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
@@ -8214,7 +8246,7 @@ struct VSOutput {
         this.createDepthTexture();
       }
       this.viewTextures = [];
-      if (this.options.useColorAttachments) {
+      if (this.options.useColorAttachments && (!this.options.shouldUpdateView || this.options.sampleCount > 1)) {
         this.createViewTextures();
       }
       this.setRenderPassDescriptor();
@@ -8262,8 +8294,8 @@ struct VSOutput {
         colorAttachments: this.options.colorAttachments.map((colorAttachment, index) => {
           return {
             // view
-            view: this.viewTextures[index].texture.createView({
-              label: this.viewTextures[index].texture.label + " view"
+            view: this.viewTextures[index]?.texture.createView({
+              label: this.viewTextures[index]?.texture.label + " view"
             }),
             // clear values
             clearValue: colorAttachment.clearValue,
@@ -9273,7 +9305,7 @@ struct VSOutput {
         }
         this.renderer.postProcessingPass.setLoadOp("clear");
       };
-      const onAfterRenderPass = shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
+      const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
         if (shaderPass.renderTexture && swapChainTexture) {
           commandEncoder.copyTextureToTexture(
             {
@@ -9285,7 +9317,7 @@ struct VSOutput {
             [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
           );
         }
-      };
+      } : null;
       const shaderPassEntry = {
         // use output target or postprocessing render pass
         renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
@@ -11442,14 +11474,15 @@ struct VSOutput {
         let descriptor = renderPassEntry.renderPass.options.label;
         const operations = {
           loadOp: renderPassEntry.renderPass.options.useColorAttachments ? renderPassEntryType === "screen" && passDrawnCount > 0 ? "load" : renderPassEntry.renderPass.options.loadOp : void 0,
-          depthLoadOp: void 0
+          depthLoadOp: void 0,
+          sampleCount: renderPassEntry.renderPass.options.sampleCount
         };
         if (renderPassEntry.renderPass.options.useDepth) {
           operations.depthLoadOp = renderPassEntry.renderPass.options.depthLoadOp;
         }
         passDrawnCount++;
         if (renderPassEntry.element) {
-          if (renderPassEntry.element.type === "ShaderPass" && !renderPassEntry.element.renderTarget) {
+          if (renderPassEntry.element.type === "ShaderPass" && !(renderPassEntry.element.inputTarget || renderPassEntry.element.outputTarget)) {
             renderCommands.push({
               command: `Copy texture to texture`,
               source: destination,
@@ -11464,11 +11497,11 @@ struct VSOutput {
             destination,
             descriptor
           });
-          if (renderPassEntry.element.type === "ShaderPass" && renderPassEntry.element.renderTarget) {
+          if (renderPassEntry.element.type === "ShaderPass" && !renderPassEntry.element.outputTarget && renderPassEntry.element.options.copyOutputToRenderTexture) {
             renderCommands.push({
               command: `Copy texture to texture`,
               source: destination,
-              destination: `${renderPassEntry.element.renderTarget.options.label} renderTexture`
+              destination: `${renderPassEntry.element.options.label} renderTexture`
             });
           } else if (renderPassEntry.element.type === "PingPongPlane") {
             renderCommands.push({

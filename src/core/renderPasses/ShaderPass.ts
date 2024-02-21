@@ -2,7 +2,7 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { isRenderer, Renderer } from '../renderers/utils'
 import { RenderTarget } from './RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin'
+import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin'
 import { RenderTexture } from '../textures/RenderTexture'
 import default_pass_fsWGSl from '../shaders/chunks/default_pass_fs.wgsl'
 import { throwWarning } from '../../utils/utils'
@@ -13,6 +13,14 @@ import { throwWarning } from '../../utils/utils'
 export interface ShaderPassParams extends MeshBaseRenderParams {
   /** Optional input {@link RenderTarget} to assign to the {@link ShaderPass}. Used to automatically copy the content of the given {@link RenderTarget} texture into the {@link ShaderPass#renderTexture | ShaderPass renderTexture}. */
   inputTarget?: RenderTarget
+
+  /** Whether the result of this {@link ShaderPass} should be copied to the {@link ShaderPass#renderTexture | renderTexture} after each render. Default to false. */
+  copyOutputToRenderTexture?: boolean
+}
+
+export interface ShaderPassOptions extends MeshBaseOptions {
+  /** Whether the result of this {@link ShaderPass} should be copied to the {@link ShaderPass#renderTexture | renderTexture} after each render. Default to false. */
+  copyOutputToRenderTexture?: boolean
 }
 
 /**
@@ -45,6 +53,9 @@ export interface ShaderPassParams extends MeshBaseRenderParams {
 export class ShaderPass extends FullscreenPlane {
   /** Optional input {@link RenderTarget} to assign to the {@link ShaderPass}. Used to automatically copy the content of the given {@link RenderTarget} texture into the {@link ShaderPass#renderTexture | ShaderPass renderTexture}. */
   inputTarget: RenderTarget | undefined
+
+  /** Options used to create this {@link ShaderPass} */
+  options: ShaderPassOptions
 
   /**
    * ShaderPass constructor
@@ -105,16 +116,31 @@ export class ShaderPass extends FullscreenPlane {
   }
 
   /**
-   * Get our main {@link RenderTexture}, the one that contains our post processed content
+   * Hook used to clean up parameters before sending them to the material.
+   * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+   * @returns - cleaned parameters
+   */
+  cleanupRenderMaterialParameters(parameters: ShaderPassParams): MeshBaseRenderParams {
+    // patch mesh parameters
+    delete parameters.copyOutputToRenderTexture
+    delete parameters.inputTarget
+
+    super.cleanupRenderMaterialParameters(parameters)
+
+    return parameters
+  }
+
+  /**
+   * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
    * @readonly
    */
   get renderTexture(): RenderTexture | undefined {
     return this.renderTextures.find((texture) => texture.options.name === 'renderTexture')
   }
 
-  // TODO
   /**
-   * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+   * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
+   *
    * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
    * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
    * @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}

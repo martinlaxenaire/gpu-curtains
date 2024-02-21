@@ -73,7 +73,7 @@ class RenderPass {
       this.createDepthTexture();
     }
     this.viewTextures = [];
-    if (this.options.useColorAttachments) {
+    if (this.options.useColorAttachments && (!this.options.shouldUpdateView || this.options.sampleCount > 1)) {
       this.createViewTextures();
     }
     this.setRenderPassDescriptor();
@@ -121,8 +121,8 @@ class RenderPass {
       colorAttachments: this.options.colorAttachments.map((colorAttachment, index) => {
         return {
           // view
-          view: this.viewTextures[index].texture.createView({
-            label: this.viewTextures[index].texture.label + " view"
+          view: this.viewTextures[index]?.texture.createView({
+            label: this.viewTextures[index]?.texture.label + " view"
           }),
           // clear values
           clearValue: colorAttachment.clearValue,

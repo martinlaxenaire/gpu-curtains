@@ -678,7 +678,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(gpuCameraRenderer.scene)
+  console.log(gpuCameraRenderer.scene, blurOcclusionPass)
 
   // ------------------------------------
   // SHADING / LIGHTNING PASS

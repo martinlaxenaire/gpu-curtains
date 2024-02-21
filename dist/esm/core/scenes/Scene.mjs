@@ -183,7 +183,7 @@ class Scene {
       }
       this.renderer.postProcessingPass.setLoadOp("clear");
     };
-    const onAfterRenderPass = shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
+    const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
       if (shaderPass.renderTexture && swapChainTexture) {
         commandEncoder.copyTextureToTexture(
           {
@@ -195,7 +195,7 @@ class Scene {
           [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
         );
       }
-    };
+    } : null;
     const shaderPassEntry = {
       // use output target or postprocessing render pass
       renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,

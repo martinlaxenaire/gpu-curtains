@@ -116,11 +116,21 @@ function ProjectedMeshBaseMixin(Base) {
     }
     /* MATERIAL */
     /**
+     * Hook used to clean up parameters before sending them to the material.
+     * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+     * @returns - cleaned parameters
+     */
+    cleanupRenderMaterialParameters(parameters) {
+      delete parameters.frustumCulled;
+      delete parameters.DOMFrustumMargins;
+      super.cleanupRenderMaterialParameters(parameters);
+      return parameters;
+    }
+    /**
      * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
-     * @param meshParameters - {@link ProjectedRenderMaterialParams | RenderMaterial parameters}
+     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */
     setMaterial(meshParameters) {
-      const { frustumCulled, DOMFrustumMargins, ...materialParameters } = meshParameters;
       const matricesUniforms = {
         label: "Matrices",
         struct: {
@@ -147,10 +157,10 @@ function ProjectedMeshBaseMixin(Base) {
           }
         }
       };
-      if (!materialParameters.uniforms)
-        materialParameters.uniforms = {};
-      materialParameters.uniforms.matrices = matricesUniforms;
-      super.setMaterial(materialParameters);
+      if (!meshParameters.uniforms)
+        meshParameters.uniforms = {};
+      meshParameters.uniforms.matrices = matricesUniforms;
+      super.setMaterial(meshParameters);
     }
     /* SIZE & TRANSFORMS */
     /**

@@ -275,6 +275,18 @@ window.addEventListener('load', async () => {
         },
       },
     },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    },
   })
 
   const vBlurPassFs = /* wgsl */ `
@@ -320,16 +332,18 @@ window.addEventListener('load', async () => {
         },
       },
     },
-    // blend: {
-    //   color: {
-    //     srcFactor: 'one',
-    //     dstFactor: 'one',
-    //   },
-    //   alpha: {
-    //     srcFactor: 'one',
-    //     dstFactor: 'one',
-    //   },
-    // },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    },
   })
 
   vBlurPass.onAfterResize(() => {
@@ -366,6 +380,7 @@ window.addEventListener('load', async () => {
         code: blendBloomPassFs,
       },
     },
+    copyOutputToRenderTexture: true,
     uniforms: {
       params: {
         struct: {
@@ -382,6 +397,18 @@ window.addEventListener('load', async () => {
             value: 2.2,
           },
         },
+      },
+    },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
       },
     },
   })
@@ -467,7 +494,7 @@ window.addEventListener('load', async () => {
       
       var grayscale: f32 = color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
       
-      var dither: f32 = select(0.0, 1.0, getValue( grayscale, fsInput.uv * params.resolution ));
+      var dither: f32 = select(0.0, color.a, getValue( grayscale, fsInput.uv * params.resolution ));
       
       return vec4(vec3(dither) * color.rgb, color.a * dither);
     }
@@ -490,7 +517,7 @@ window.addEventListener('load', async () => {
           },
           pixelSize: {
             type: 'f32',
-            value: 2,
+            value: 1.5,
           },
         },
       },
@@ -537,7 +564,7 @@ window.addEventListener('load', async () => {
         var cubeColor: vec4f = textureSample(cubeRenderTexture, defaultSampler, fsInput.uv);        
         var sphereColor: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
         
-        var originalSphere: vec4f = textureSample(sphereRenderTexture, defaultSampler, fsInput.uv);
+        var bloomSphereColor: vec4f = textureSample(bloomSphereRenderTexture, defaultSampler, fsInput.uv);
         
         let rawCubeDepth = textureLoad(
           cubeDepthTexture,
@@ -554,9 +581,10 @@ window.addEventListener('load', async () => {
         var color: vec4f = cubeColor * (1.0 - sphereColor.a) + sphereColor;
         color = select(color, cubeColor, rawSphereDepth > rawCubeDepth);
         
-        //return originalSphere;
+        //return bloomSphereColor;
         
-        return color;
+        //return color;
+        return mix(color, bloomSphereColor, step(fsInput.uv.y, 0.5));
       }
   `
 
@@ -565,6 +593,18 @@ window.addEventListener('load', async () => {
     shaders: {
       fragment: {
         code: blendShader,
+      },
+    },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
       },
     },
   })
@@ -582,10 +622,12 @@ window.addEventListener('load', async () => {
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
   })
 
-  const sphereRenderTexture = blendPass.createRenderTexture({
-    name: 'sphereRenderTexture',
+  const bloomSphereTexture = blendPass.createRenderTexture({
+    name: 'bloomSphereRenderTexture',
     fromTexture: blendBloomPass.renderTexture,
   })
+
+  console.log(blendBloomPass)
 
   const sphereDepthTexture = blendPass.createRenderTexture({
     name: 'sphereDepthTexture',

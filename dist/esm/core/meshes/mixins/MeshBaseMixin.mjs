@@ -113,7 +113,7 @@ function MeshBaseMixin(Base) {
         texturesOptions,
         ...outputTarget !== void 0 && { outputTarget },
         ...autoRender !== void 0 && { autoRender },
-        ...meshParameters.useAsyncPipeline !== void 0 && { useAsyncPipeline: meshParameters.useAsyncPipeline }
+        ...meshParameters
       };
       this.geometry = geometry;
       if (autoRender !== void 0) {
@@ -125,9 +125,9 @@ function MeshBaseMixin(Base) {
       this.userData = {};
       this.computeGeometry();
       this.setMaterial({
-        label: this.options.label,
-        shaders: this.options.shaders,
-        ...{ ...meshParameters, verticesOrder: geometry.verticesOrder, topology: geometry.topology }
+        ...this.cleanupRenderMaterialParameters({ ...this.options }),
+        verticesOrder: geometry.verticesOrder,
+        topology: geometry.topology
       });
       this.addToScene();
     }
@@ -170,33 +170,6 @@ function MeshBaseMixin(Base) {
         this.renderer.scene.removeMesh(this);
       }
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
-    }
-    /**
-     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
-     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
-     */
-    setRenderingOptionsForRenderPass(renderPass) {
-      const renderingOptions = {
-        sampleCount: renderPass.options.sampleCount,
-        // color attachments
-        ...renderPass.options.colorAttachments.length && {
-          targetFormat: renderPass.options.colorAttachments[0].targetFormat,
-          // multiple render targets?
-          ...renderPass.options.colorAttachments.length > 1 && {
-            additionalTargets: renderPass.options.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
-              return {
-                format: colorAttachment.targetFormat
-              };
-            })
-          }
-        },
-        // depth
-        depth: renderPass.options.useDepth,
-        ...renderPass.options.useDepth && {
-          depthFormat: renderPass.options.depthFormat
-        }
-      };
-      this.material?.setRenderingOptions(renderingOptions);
     }
     /**
      * Set a new {@link Renderer} for this Mesh
@@ -332,6 +305,44 @@ function MeshBaseMixin(Base) {
       }
     }
     /* MATERIAL */
+    /**
+     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+     */
+    setRenderingOptionsForRenderPass(renderPass) {
+      const renderingOptions = {
+        sampleCount: renderPass.options.sampleCount,
+        // color attachments
+        ...renderPass.options.colorAttachments.length && {
+          targetFormat: renderPass.options.colorAttachments[0].targetFormat,
+          // multiple render targets?
+          ...renderPass.options.colorAttachments.length > 1 && {
+            additionalTargets: renderPass.options.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
+              return {
+                format: colorAttachment.targetFormat
+              };
+            })
+          }
+        },
+        // depth
+        depth: renderPass.options.useDepth,
+        ...renderPass.options.useDepth && {
+          depthFormat: renderPass.options.depthFormat
+        }
+      };
+      this.material?.setRenderingOptions(renderingOptions);
+    }
+    /**
+     * Hook used to clean up parameters before sending them to the {@link RenderMaterial}.
+     * @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
+     * @returns - cleaned parameters
+     */
+    cleanupRenderMaterialParameters(parameters) {
+      delete parameters.texturesOptions;
+      delete parameters.outputTarget;
+      delete parameters.autoRender;
+      return parameters;
+    }
     /**
      * Set a Mesh transparent property, then set its material
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}

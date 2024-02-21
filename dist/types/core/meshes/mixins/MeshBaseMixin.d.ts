@@ -147,11 +147,6 @@ export declare class MeshBaseClass {
      */
     removeFromScene(): void;
     /**
-     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
-     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
-     */
-    setRenderingOptionsForRenderPass(renderPass: RenderPass): void;
-    /**
      * Set a new {@link Renderer} for this Mesh
      * @param renderer - new {@link Renderer} to set
      */
@@ -181,6 +176,17 @@ export declare class MeshBaseClass {
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry(): void;
+    /**
+     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+     */
+    setRenderingOptionsForRenderPass(renderPass: RenderPass): void;
+    /**
+     * Hook used to clean up parameters before sending them to the material.
+     * @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
+     * @returns - cleaned parameters
+     */
+    cleanupRenderMaterialParameters(parameters: MeshBaseRenderParams): MeshBaseRenderParams;
     /**
      * Set a Mesh transparent property, then set its material
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}

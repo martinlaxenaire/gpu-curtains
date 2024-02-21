@@ -41,15 +41,26 @@ class ShaderPass extends FullscreenPlane {
     });
   }
   /**
-   * Get our main {@link RenderTexture}, the one that contains our post processed content
+   * Hook used to clean up parameters before sending them to the material.
+   * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+   * @returns - cleaned parameters
+   */
+  cleanupRenderMaterialParameters(parameters) {
+    delete parameters.copyOutputToRenderTexture;
+    delete parameters.inputTarget;
+    super.cleanupRenderMaterialParameters(parameters);
+    return parameters;
+  }
+  /**
+   * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
    * @readonly
    */
   get renderTexture() {
     return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
   }
-  // TODO
   /**
-   * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+   * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
+   *
    * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
    * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
    * @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}

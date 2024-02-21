@@ -305,23 +305,24 @@ export class Scene {
             this.renderer.postProcessingPass.setLoadOp('clear')
           }
 
-    const onAfterRenderPass = shaderPass.outputTarget
-      ? null
-      : (commandEncoder, swapChainTexture) => {
-          // if we rendered to the screen,
-          // copy the context current texture result back into the shaderPass renderTexture
-          if (shaderPass.renderTexture && swapChainTexture) {
-            commandEncoder.copyTextureToTexture(
-              {
-                texture: swapChainTexture,
-              },
-              {
-                texture: shaderPass.renderTexture.texture,
-              },
-              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-            )
+    const onAfterRenderPass =
+      !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture
+        ? (commandEncoder, swapChainTexture) => {
+            // if we rendered to the screen,
+            // copy the context current texture result back into the shaderPass renderTexture
+            if (shaderPass.renderTexture && swapChainTexture) {
+              commandEncoder.copyTextureToTexture(
+                {
+                  texture: swapChainTexture,
+                },
+                {
+                  texture: shaderPass.renderTexture.texture,
+                },
+                [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+              )
+            }
           }
-        }
+        : null
 
     const shaderPassEntry = {
       // use output target or postprocessing render pass
