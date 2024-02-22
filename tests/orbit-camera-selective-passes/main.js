@@ -531,29 +531,6 @@ window.addEventListener('load', async () => {
     )
   })
 
-  const inverseShader = /* wgsl */ `
-    struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-      };
-
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-
-        return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.x, 0.5) );
-      }
-  `
-
-  const inversePass = new ShaderPass(gpuCameraRenderer, {
-    label: 'Inverse pass',
-    //inputTarget: selectiveBloomTarget,
-    shaders: {
-      fragment: {
-        code: inverseShader,
-      },
-    },
-  })
-
   const blendShader = /* wgsl */ `
     struct VSOutput {
         @builtin(position) position: vec4f,

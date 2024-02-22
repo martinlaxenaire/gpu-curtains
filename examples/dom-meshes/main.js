@@ -1,7 +1,8 @@
 import { BoxGeometry, DOMMesh, GPUCurtains, Sampler, SphereGeometry } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
-  // set up our WebGL context and append the canvas to our wrapper
+  // set our main GPUCurtains instance it will handle everything we need
+  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     camera: {
