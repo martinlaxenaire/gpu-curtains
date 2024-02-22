@@ -98,17 +98,6 @@ window.addEventListener('load', async () => {
       bottom: 200,
       left: 0,
     },
-    uniforms: {
-      scroll: {
-        label: 'Scroll',
-        struct: {
-          strength: {
-            type: 'f32',
-            value: 0,
-          },
-        },
-      },
-    },
     samplers: [
       // Use mipmap nearest filter
       new Sampler(gpuCurtains, {

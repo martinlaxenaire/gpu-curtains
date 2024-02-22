@@ -139,16 +139,14 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: opacity 0.25s;
+    transition: opacity 0.5s ease-in;
+    background: rgb(128, 128, 255);
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
   }
 
   #cloth.canvas-texture-ready {
     /*-webkit-text-fill-color: transparent;*/
     opacity: 0;
-  }
-
-  .no-curtains #cloth {
-    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
   }
 
   #cloth span {
