@@ -1,32 +1,32 @@
-// Screen Space Ambient Occlusion test
+import {
+  GPUDeviceManager,
+  GPUCameraRenderer,
+  Object3D,
+  BoxGeometry,
+  Sampler,
+  Mesh,
+  ComputePass,
+  ShaderPass,
+  RenderTarget,
+  Vec2,
+  Vec3,
+  Mat4,
+  RenderTexture,
+} from '../../dist/esm/index.mjs'
+
+// Screen Space Ambient Occlusion
 //
-// Similarly to the deferred rendering examples, it's using a MRT
-// Where the meshes are rendered into mutliple textures for normals (floating point texture), albedo and depth
+// Similarly to the deferred rendering examples, it's using a geometry buffers
+// Where the meshes are rendered into multiple textures for normals (floating point texture), albedo and depth
 // We then have 3 more passes:
 // - an occlusion pass, where the actual occlusion is calculated
 // - a blur pass where the occlusion result is blurred to attenuate possible artifacts from previous pass
 // - a lightning pass where the blurred occlusion is applied to the ambient light + other lightnings applied
 //
-// ref OpenGL tutorial: https://learnopengl.com/Advanced-Lighting/SSAO
-// Occlusion pass code has been ported from three.js SSAO: https://github.com/mrdoob/three.js/blob/dev/examples/jsm/shaders/SSAOShader.js
+// see:
+// https://learnopengl.com/Advanced-Lighting/SSAO
+// https://github.com/mrdoob/three.js/blob/dev/examples/jsm/shaders/SSAOShader.js
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const {
-    GPUDeviceManager,
-    GPUCameraRenderer,
-    Object3D,
-    BoxGeometry,
-    Sampler,
-    Mesh,
-    ComputePass,
-    ShaderPass,
-    RenderTarget,
-    Vec2,
-    Vec3,
-    Mat4,
-    RenderTexture,
-  } = await import(/* @vite-ignore */ path)
-
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
@@ -54,18 +54,15 @@ window.addEventListener('load', async () => {
 
   // create a camera pivot
   // so we can make the camera orbit while preserving a custom lookAt
-  const objectsPivot = new Object3D()
   const cameraPivot = new Object3D()
+  const objectsPivot = new Object3D()
 
-  //camera.position.z = systemSize.z * 2.5
   camera.parent = cameraPivot
   camera.position.z = systemSize.z * 2.5
 
   // render our scene manually
   const animate = () => {
-    // rotate our object pivot
-    //objectsPivot.rotation.x += 0.005
-    //objectsPivot.rotation.y += 0.0025
+    // rotate our camera pivot
     cameraPivot.rotation.y += 0.005
 
     gpuDeviceManager.render()
@@ -79,7 +76,7 @@ window.addEventListener('load', async () => {
   // GEOMETRY BUFFER
   // ------------------------------------
 
-  // MSAA is too intensive with deferred rendering
+  // MSAA might be too intensive with deferred rendering
   const sampleCount = 1
 
   const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
@@ -91,9 +88,10 @@ window.addEventListener('load', async () => {
   })
 
   const writeGBufferRenderTarget = new RenderTarget(gpuCameraRenderer, {
-    label: 'Write GBuffer render target',
+    label: 'Geometry buffer render target',
     sampleCount,
     shouldUpdateView: false, // we don't want to render to the swap chain
+    depthTexture: gBufferDepthTexture,
     colorAttachments: [
       {
         loadOp: 'clear',
@@ -111,7 +109,6 @@ window.addEventListener('load', async () => {
       //   targetFormat: 'rgba16float', // position
       // },
     ],
-    depthTexture: gBufferDepthTexture,
   })
 
   const writeGBufferVs = /*wgsl */ `
@@ -159,11 +156,11 @@ window.addEventListener('load', async () => {
     }
   `
 
+  // now add objects to our scene
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
   const grey = new Vec3(0.6)
 
-  // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
   const nbCubes = 100
 
@@ -175,11 +172,16 @@ window.addEventListener('load', async () => {
       label: 'Cube ' + i,
       geometry: cubeGeometry,
       outputTarget: writeGBufferRenderTarget,
-      additionalTargets: [
-        {
-          format: 'rgba16float', // this would be patched anyway if not set here
-        },
-      ],
+      // we could manually specify the additional targets
+      // but it will be patched internally anyway!
+      // additionalTargets: [
+      //   {
+      //     format: 'rgba16float', // normals
+      //   },
+      //   // {
+      //   //   format: 'rgba16float', // position
+      //   // },
+      // ],
       shaders: {
         vertex: {
           code: writeGBufferVs,
@@ -242,6 +244,9 @@ window.addEventListener('load', async () => {
     sampleCount,
   })
 
+  // we could have used a position texture in the geometry buffer
+  // but we're going to rebuild the positions from the depth buffer instead
+  // directly in the occlusion pass
   // const gBufferPositionTexture = new RenderTexture(gpuCameraRenderer, {
   //   label: 'GBuffer position texture',
   //   name: 'gBufferPositionTexture',
@@ -372,8 +377,8 @@ window.addEventListener('load', async () => {
     label: 'Noise compute texture',
     name: 'noiseComputeTexture',
     usage: 'storage',
-    format: 'rgba16float',
-    //format: 'rgba8unorm',
+    //format: 'rgba16float',
+    format: 'rgba8unorm',
     fixedSize: {
       width: noiseSize.x,
       height: noiseSize.y,
@@ -400,7 +405,7 @@ window.addEventListener('load', async () => {
         code: compute3DNoiseShader,
       },
     },
-    autoRender: false, // we're going to render only on demand
+    autoRender: false, // we're going to render only once on demand
     dispatchSize: 1,
     renderTextures: [noiseComputeTexture],
     uniforms: {
@@ -418,6 +423,7 @@ window.addEventListener('load', async () => {
   // we should wait for pipeline compilation!
   compute3DNoise.material.compileMaterial().then(() => {
     // now run the compute pass just once
+    // it will fill our noise texture
     gpuCameraRenderer.renderOnce([compute3DNoise])
   })
 
@@ -457,7 +463,6 @@ window.addEventListener('load', async () => {
   const ssaoTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'SSAO render target',
     sampleCount,
-    //shouldUpdateView: false,
     qualityRatio: 0.5, // decrease quality to improve perf!
     useDepth: false, // no need for depth
   })
@@ -479,12 +484,15 @@ window.addEventListener('load', async () => {
       return viewPos;
     }
  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {             
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+    
+      // since the input and output resolutions are different
+      // because we've set a lower quality ratio
+      // we'll need to scale everything
       var outputResolution: vec2f = vec2f(textureDimensions(renderTexture));  
       var inputResolution: vec2f = vec2f(textureDimensions(gBufferDepthTexture));
       var scaledResolution = inputResolution / outputResolution;
-            
-      var noiseResolution: vec2f = vec2f(textureDimensions(noiseTexture));
+      
       var screenPosition: vec2f = fsInput.position.xy * scaledResolution;
       
       let depth: f32 = textureLoad(
@@ -492,6 +500,8 @@ window.addEventListener('load', async () => {
         vec2<i32>(floor(screenPosition)),
         0
       );
+      
+      var noiseResolution: vec2f = vec2f(textureDimensions(noiseTexture));
 
       var noiseScale = outputResolution / noiseResolution;
       var random = vec3( textureSample( noiseTexture, repeatSampler, fsInput.uv * noiseScale ).r );
@@ -549,7 +559,7 @@ window.addEventListener('load', async () => {
 			    // in the geometry buffer
           // var sampleDepth = textureLoad(
           //   gBufferPositionTexture,
-          //   vec2<i32>(floor(offsetUV * resolution)), // from 0.0 - 1.0 to resolution
+          //   vec2<i32>(floor(offsetUV * inputResolution)), // from 0.0 - 1.0 to resolution
           //   0
           // ).z;
           
@@ -578,7 +588,7 @@ window.addEventListener('load', async () => {
 
   const occlusionPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Occlusion pass',
-    outputTarget: ssaoTarget,
+    outputTarget: ssaoTarget, // output to our SSAO target with a lower resolution
     shaders: {
       fragment: {
         code: occlusionFs,
@@ -670,15 +680,13 @@ window.addEventListener('load', async () => {
 
   const blurOcclusionPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Blur pass',
-    inputTarget: ssaoTarget,
+    inputTarget: ssaoTarget, // use the result of our occlusion pass as input
     shaders: {
       fragment: {
         code: blurOcclusionPassFs,
       },
     },
   })
-
-  console.log(gpuCameraRenderer.scene, blurOcclusionPass)
 
   // ------------------------------------
   // SHADING / LIGHTNING PASS
@@ -690,7 +698,7 @@ window.addEventListener('load', async () => {
   const lightsColors = new Float32Array(3 * nbLights)
 
   for (let i = 0, j = 0, k = 0; i < nbLights; i++, j += 4, k += 3) {
-    lightsRadius[i] = systemSize.z * 2 + Math.random() * systemSize.z * 4
+    lightsRadius[i] = systemSize.z * 3 + Math.random() * systemSize.z * 3
 
     lightsPositions[j] = (systemSize.x * 1.25 + Math.random() * systemSize.x * 1.5) * Math.sign(Math.random() - 0.5)
     lightsPositions[j + 1] = (systemSize.y * 1.25 + Math.random() * systemSize.y * 1.5) * Math.sign(Math.random() - 0.5)
@@ -765,16 +773,11 @@ window.addEventListener('load', async () => {
       // ambient * occlusion
       result += vec3(0.3 * blurredOcclusion.r);
       
-      
-      
-      if(params.displayResult == 1.0) {
-        return vec4(blurredOcclusion.rgb, 1.0);
-      }
-      
-      return vec4(result, 1.0);
-      
-    
-      //return select(vec4(result, 1.0), vec4(blurredOcclusion.rgb, 1.0), params.useSSAOOnly > 0.1);
+      return select(
+        vec4(result, 1.0),
+        vec4(blurredOcclusion.rgb, 1.0),
+        bool(params.displaySSAOResult)
+      );
     }
   `
 
@@ -797,12 +800,8 @@ window.addEventListener('load', async () => {
       },
       params: {
         struct: {
-          displayResult: {
-            type: 'f32',
-            value: 0,
-          },
-          useSSAOOnly: {
-            type: 'f32',
+          displaySSAOResult: {
+            type: 'u32',
             value: 0,
           },
         },
@@ -841,6 +840,6 @@ window.addEventListener('load', async () => {
   const toggleSSAOButton = document.querySelector('#show-ssao')
   toggleSSAOButton.addEventListener('click', () => {
     toggleSSAOButton.classList.toggle('active')
-    ssaoPass.uniforms.params.displayResult.value = ssaoPass.uniforms.params.displayResult.value !== 1 ? 1 : 0
+    ssaoPass.uniforms.params.displaySSAOResult.value = ssaoPass.uniforms.params.displaySSAOResult.value === 0 ? 1 : 0
   })
 })
