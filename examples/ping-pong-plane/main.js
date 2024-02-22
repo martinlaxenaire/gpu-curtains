@@ -1,4 +1,4 @@
-import { GPUCurtains, PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../dist/gpu-curtains.mjs'
+import { GPUCurtains, PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../dist/esm/index.mjs'
 
 // originally inspired by https://oframe.github.io/ogl/examples/mouse-flowmap.html
 
@@ -7,6 +7,9 @@ window.addEventListener('load', async () => {
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    renderPass: {
+      sampleCount: 1, // no need for MSAA here!
+    },
   })
 
   gpuCurtains.onError(() => {

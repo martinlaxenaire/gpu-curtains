@@ -1,6 +1,6 @@
 // Goal of this test is multiple renderers handling
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { BoxGeometry, GPUCurtains, Mesh } = await import(/* @vite-ignore */ path)
 
   // set up our WebGL context and append the canvas to our wrapper

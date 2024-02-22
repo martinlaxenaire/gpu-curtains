@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane, PlaneGeometry, Sampler } from '../../dist/gpu-curtains.mjs'
+import { GPUCurtains, Plane, PlaneGeometry, Sampler } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   // lerp

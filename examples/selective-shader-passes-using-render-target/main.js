@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane, RenderTarget, Sampler, ShaderPass } from '../../dist/gpu-curtains.mjs'
+import { GPUCurtains, Plane, RenderTarget, Sampler, ShaderPass } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   // lerp
@@ -93,7 +93,7 @@ window.addEventListener('load', async () => {
   largePlaneEls.forEach((largePlaneEl, index) => {
     const largePlane = new Plane(gpuCurtains, largePlaneEl, {
       label: `Large plane ${index}`,
-      //renderTarget: grayscaleTarget, // we could do that directly
+      //outputTarget: grayscaleTarget, // we could do that directly
       shaders: {
         vertex: {
           code: planeVs,
@@ -104,7 +104,7 @@ window.addEventListener('load', async () => {
       },
     })
 
-    largePlane.setRenderTarget(grayscaleTarget)
+    largePlane.setOutputTarget(grayscaleTarget)
   })
 
   const grayscaleFs = /* wgsl */ `
@@ -124,7 +124,7 @@ window.addEventListener('load', async () => {
 
   const grayscalePass = new ShaderPass(gpuCurtains, {
     label: 'Large plane shader pass',
-    //renderTarget: grayscaleTarget, // we could do that directly
+    //inputTarget: grayscaleTarget, // we could do that directly
     //renderOrder: 1, // uncomment to draw large planes above small planes
     shaders: {
       fragment: {
@@ -147,7 +147,7 @@ window.addEventListener('load', async () => {
     samplers: [mirrorSampler],
   })
 
-  grayscalePass.setRenderTarget(grayscaleTarget)
+  grayscalePass.setInputTarget(grayscaleTarget)
 
   grayscalePass.onRender(() => {
     // update the uniform
@@ -164,7 +164,7 @@ window.addEventListener('load', async () => {
   smallPlaneEls.forEach((smallPlaneEl, index) => {
     const smallPlane = new Plane(gpuCurtains, smallPlaneEl, {
       label: `Small plane ${index}`,
-      renderTarget: rgbShiftTarget,
+      outputTarget: rgbShiftTarget,
       shaders: {
         vertex: {
           code: planeVs,
@@ -198,7 +198,7 @@ window.addEventListener('load', async () => {
 
   const rgbShiftPass = new ShaderPass(gpuCurtains, {
     label: 'Small plane shader pass',
-    renderTarget: rgbShiftTarget,
+    inputTarget: rgbShiftTarget,
     shaders: {
       fragment: {
         code: rgbShiftFs,

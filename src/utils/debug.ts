@@ -54,6 +54,7 @@ export const logSceneCommands = (renderer: Renderer) => {
             : renderPassEntry.renderPass.options.loadOp
           : undefined,
         depthLoadOp: undefined,
+        sampleCount: renderPassEntry.renderPass.options.sampleCount,
       }
 
       if (renderPassEntry.renderPass.options.useDepth) {
@@ -63,7 +64,10 @@ export const logSceneCommands = (renderer: Renderer) => {
       passDrawnCount++
 
       if (renderPassEntry.element) {
-        if (renderPassEntry.element.type === 'ShaderPass' && !renderPassEntry.element.renderTarget) {
+        if (
+          renderPassEntry.element.type === 'ShaderPass' &&
+          !(renderPassEntry.element.inputTarget || renderPassEntry.element.outputTarget)
+        ) {
           renderCommands.push({
             command: `Copy texture to texture`,
             source: destination,
@@ -82,11 +86,15 @@ export const logSceneCommands = (renderer: Renderer) => {
           descriptor,
         })
 
-        if (renderPassEntry.element.type === 'ShaderPass' && renderPassEntry.element.renderTarget) {
+        if (
+          renderPassEntry.element.type === 'ShaderPass' &&
+          !renderPassEntry.element.outputTarget &&
+          renderPassEntry.element.options.copyOutputToRenderTexture
+        ) {
           renderCommands.push({
             command: `Copy texture to texture`,
             source: destination,
-            destination: `${renderPassEntry.element.renderTarget.options.label} renderTexture`,
+            destination: `${renderPassEntry.element.options.label} renderTexture`,
           })
         } else if (renderPassEntry.element.type === 'PingPongPlane') {
           renderCommands.push({

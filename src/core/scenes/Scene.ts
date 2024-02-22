@@ -9,7 +9,6 @@ import { DOMMesh } from '../../curtains/meshes/DOMMesh'
 import { Plane } from '../../curtains/meshes/Plane'
 import { RenderPass } from '../renderPasses/RenderPass'
 import { RenderTexture } from '../textures/RenderTexture'
-import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
 
 /**
  * Meshes rendering order is dependant of their transparency setting
@@ -42,7 +41,7 @@ export interface RenderPassEntry {
   /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy */
   onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
   /** If this {@link RenderPassEntry} needs to render only one Mesh */
-  element: RenderedMesh | null
+  element: PingPongPlane | ShaderPass | null
   /** If this {@link RenderPassEntry} needs to render multiple Meshes, then use a {@link Stack} object */
   stack: Stack | null
 }
@@ -59,7 +58,7 @@ export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
  *
  * - Run all the {@link ComputePass} first, sorted by their {@link ComputePass#renderOrder | renderOrder}
  * - Then render all {@link renderPassEntries} pingPong entries Meshes, sorted by their {@link PingPongPlane#renderOrder | renderOrder}
- * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries:
+ * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} outputTarget entries:
  *   - First, the opaque unprojected Meshes (i.e. opaque {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
  *   - Then, the transparent unprojected Meshes (i.e. transparent {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
  *   - Then, the opaque projected Meshes (i.e. opaque {@link core/meshes/Mesh.Mesh | Mesh}, {@link DOMMesh} or {@link Plane}), sorted by their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
@@ -72,9 +71,9 @@ export class Scene {
   /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */
   computePassEntries: ComputePass[]
   /**
-   * A {@link RenderPassEntries} object that will contain every Meshes that need to be drawn, put inside each one of our three entries type arrays: 'pingPong', 'renderTarget' and 'screen'.
+   * A {@link RenderPassEntries} object that will contain every Meshes that need to be drawn, put inside each one of our three entries type arrays: 'pingPong', 'outputTarget' and 'screen'.
    * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes
-   * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries
+   * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} outputTarget entries
    * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen
    */
   renderPassEntries: RenderPassEntries
@@ -165,7 +164,7 @@ export class Scene {
   }
 
   /**
-   * Add a {@link RenderTarget} to our scene {@link renderPassEntries} renderTarget array.
+   * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
    * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
    * @param renderTarget - {@link RenderTarget} to add
    */
@@ -192,7 +191,7 @@ export class Scene {
   }
 
   /**
-   * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} renderTarget array.
+   * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
    * @param renderTarget - {@link RenderTarget} to add
    */
   removeRenderTarget(renderTarget: RenderTarget) {
@@ -202,15 +201,15 @@ export class Scene {
   }
 
   /**
-   * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} renderTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+   * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
    * @param mesh - Mesh to check
    * @returns - the corresponding render pass entry {@link Stack}
    */
   getMeshProjectionStack(mesh: ProjectedMesh): ProjectionStack {
     // first get correct render pass enty and stack
-    const renderPassEntry = mesh.renderTarget
+    const renderPassEntry = mesh.outputTarget
       ? this.renderPassEntries.renderTarget.find(
-          (passEntry) => passEntry.renderPass.uuid === mesh.renderTarget.renderPass.uuid
+          (passEntry) => passEntry.renderPass.uuid === mesh.outputTarget.renderPass.uuid
         )
       : this.renderPassEntries.screen[0]
 
@@ -282,47 +281,54 @@ export class Scene {
    * @param shaderPass - {@link ShaderPass} to add
    */
   addShaderPass(shaderPass: ShaderPass) {
-    const onBeforeRenderPass = shaderPass.renderTarget
-      ? null
-      : (commandEncoder, swapChainTexture) => {
-          // draw the content into our render texture
-          // if it's a global post processing pass, copy the context current texture into its renderTexture
-          if (shaderPass.renderTexture && swapChainTexture) {
-            commandEncoder.copyTextureToTexture(
-              {
-                texture: swapChainTexture,
-              },
-              {
-                texture: shaderPass.renderTexture.texture,
-              },
-              [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-            )
+    const onBeforeRenderPass =
+      shaderPass.inputTarget || shaderPass.outputTarget
+        ? null
+        : (commandEncoder, swapChainTexture) => {
+            // draw the content into our render texture
+            // if it's a global postprocessing pass, copy the context current texture into its renderTexture
+            // we don't need to do that if it has an inputTarget
+            // because in this case its renderTexture is already a copy of the render target content
+            if (shaderPass.renderTexture && swapChainTexture) {
+              commandEncoder.copyTextureToTexture(
+                {
+                  texture: swapChainTexture,
+                },
+                {
+                  texture: shaderPass.renderTexture.texture,
+                },
+                [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+              )
+            }
+
+            // if we want to post process the whole scene, clear render pass content
+            this.renderer.postProcessingPass.setLoadOp('clear')
           }
 
-          // if we want to post process the whole scene, clear render pass content
-          this.renderer.postProcessingPass.setLoadOp('clear')
-        }
-
-    const onAfterRenderPass = shaderPass.renderTarget
-      ? (commandEncoder, swapChainTexture) => {
-          // if we render to a target, copy the result so we can chain render to textures
-          if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture && swapChainTexture) {
-            commandEncoder.copyTextureToTexture(
-              {
-                texture: swapChainTexture,
-              },
-              {
-                texture: shaderPass.renderTarget.renderTexture.texture,
-              },
-              [shaderPass.renderTarget.renderTexture.size.width, shaderPass.renderTarget.renderTexture.size.height]
-            )
+    const onAfterRenderPass =
+      !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture
+        ? (commandEncoder, swapChainTexture) => {
+            // if we rendered to the screen,
+            // copy the context current texture result back into the shaderPass renderTexture
+            if (shaderPass.renderTexture && swapChainTexture) {
+              commandEncoder.copyTextureToTexture(
+                {
+                  texture: swapChainTexture,
+                },
+                {
+                  texture: shaderPass.renderTexture.texture,
+                },
+                [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+              )
+            }
           }
-        }
-      : null
+        : null
 
     const shaderPassEntry = {
-      renderPass: this.renderer.postProcessingPass, // render directly to screen
-      renderTexture: null,
+      // use output target or postprocessing render pass
+      renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
+      // render to output target renderTexture or directly to screen
+      renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
       onBeforeRenderPass,
       onAfterRenderPass,
       element: shaderPass,
@@ -332,14 +338,14 @@ export class Scene {
     this.renderPassEntries.screen.push(shaderPassEntry)
 
     // screen passes are sorted by 2 criteria
-    // first we draw render passes that have a render target OR our scene pass, ordered by renderOrder
-    // then we draw our full post processing pass, ordered by renderOrder
+    // first we draw render passes that have an output target OR our main render pass, ordered by renderOrder
+    // then we draw our full postprocessing pass, ordered by renderOrder
     this.renderPassEntries.screen.sort((a, b) => {
-      const isPostProA = a.element && !a.element.renderTarget
+      const isPostProA = a.element && !a.element.outputTarget
       const renderOrderA = a.element ? a.element.renderOrder : 0
       const indexA = a.element ? a.element.index : 0
 
-      const isPostProB = b.element && !b.element.renderTarget
+      const isPostProB = b.element && !b.element.outputTarget
       const renderOrderB = b.element ? b.element.renderOrder : 0
       const indexB = b.element ? b.element.index : 0
 
@@ -373,8 +379,8 @@ export class Scene {
    */
   addPingPongPlane(pingPongPlane: PingPongPlane) {
     this.renderPassEntries.pingPong.push({
-      renderPass: pingPongPlane.renderTarget.renderPass,
-      renderTexture: pingPongPlane.renderTarget.renderTexture,
+      renderPass: pingPongPlane.outputTarget.renderPass,
+      renderTexture: pingPongPlane.outputTarget.renderTexture,
       onBeforeRenderPass: null,
       onAfterRenderPass: (commandEncoder, swapChainTexture) => {
         // Copy the rendering results from the swapChainTexture into our |pingPongPlane texture|.
@@ -419,7 +425,7 @@ export class Scene {
     } else if (object instanceof ShaderPass) {
       return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid)
     } else {
-      const entryType = object.renderTarget ? 'renderTarget' : 'screen'
+      const entryType = object.outputTarget ? 'renderTarget' : 'screen'
       return this.renderPassEntries[entryType].find((entry) => {
         return [
           ...entry.stack.unProjected.opaque,

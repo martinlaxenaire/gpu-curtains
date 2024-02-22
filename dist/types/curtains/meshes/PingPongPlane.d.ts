@@ -31,7 +31,7 @@ import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin';
  */
 export declare class PingPongPlane extends FullscreenPlane {
     /** {@link RenderTarget} content to use as an input */
-    renderTarget: RenderTarget;
+    outputTarget: RenderTarget;
     /**
      * PingPongPlane constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}

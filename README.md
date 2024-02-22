@@ -39,7 +39,7 @@ You can directly download the files and start using the ES6 modules:
 #### ES modules
 
 ```javascript
-import { GPUCurtains } from 'path/to/dist/gpu-curtains.mjs'
+import { GPUCurtains } from 'path/to/dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   // set our main GPUCurtains instance

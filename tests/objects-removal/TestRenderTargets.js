@@ -38,7 +38,7 @@ export class TestRenderTargets {
   }
 
   async init() {
-    const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+    const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
     const { Plane, RenderTarget, Sampler, ShaderPass } = await import(/* @vite-ignore */ path)
 
     // We don't want to see our pass texture top/bottom edges
@@ -90,7 +90,7 @@ export class TestRenderTargets {
     largePlaneEls.forEach((largePlaneEl, index) => {
       const largePlane = new Plane(this.gpuCurtains, largePlaneEl, {
         label: `Large plane ${index}`,
-        //renderTarget: grayscaleTarget, // we could do that directly
+        //outputTarget: grayscaleTarget, // we could do that directly
         shaders: {
           vertex: {
             code: planeVs,
@@ -101,7 +101,7 @@ export class TestRenderTargets {
         },
       })
 
-      largePlane.setRenderTarget(this.grayscaleTarget)
+      largePlane.setOutputTarget(this.grayscaleTarget)
       this.largePlanes.push(largePlane)
     })
 
@@ -122,7 +122,7 @@ export class TestRenderTargets {
 
     this.grayscalePass = new ShaderPass(this.gpuCurtains, {
       label: 'Large plane shader pass',
-      //renderTarget: grayscaleTarget, // we could do that directly
+      //inputTarget: this.grayscaleTarget, // we could do that directly
       //renderOrder: 1, // uncomment to draw large planes above small planes
       shaders: {
         fragment: {
@@ -145,7 +145,7 @@ export class TestRenderTargets {
       samplers: [mirrorSampler],
     })
 
-    this.grayscalePass.setRenderTarget(this.grayscaleTarget)
+    this.grayscalePass.setInputTarget(this.grayscaleTarget)
 
     this.grayscalePass.onRender(() => {
       // update the uniform
@@ -169,7 +169,7 @@ export class TestRenderTargets {
     smallPlaneEls.forEach((smallPlaneEl, index) => {
       const smallPlane = new Plane(this.gpuCurtains, smallPlaneEl, {
         label: `Small plane ${index}`,
-        renderTarget: this.rgbShiftTarget,
+        outputTarget: this.rgbShiftTarget,
         shaders: {
           vertex: {
             code: planeVs,
@@ -205,7 +205,7 @@ export class TestRenderTargets {
 
     this.rgbShiftPass = new ShaderPass(this.gpuCurtains, {
       label: 'Small plane shader pass',
-      renderTarget: this.rgbShiftTarget,
+      inputTarget: this.rgbShiftTarget,
       shaders: {
         fragment: {
           code: rgbShiftFs,

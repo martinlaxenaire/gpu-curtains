@@ -13,7 +13,7 @@ import {
   Mat4,
   BoxGeometry,
   BufferBinding,
-} from '../../dist/gpu-curtains.mjs'
+} from '../../dist/esm/index.mjs'
 
 // Shadow mapping
 //
@@ -428,7 +428,7 @@ window.addEventListener('load', async () => {
   const debugDepthVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) originalPosition: vec4f,
+      @location(0) uv: vec2f,
     };
 
     @vertex fn main(
@@ -436,9 +436,9 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
 
-      
+      // just use the model matrix here, do not take the projection into account
       vsOutput.position = matrices.model * vec4(attributes.position, 1.0);
-      vsOutput.originalPosition = vec4(attributes.position, 1.0);
+      vsOutput.uv = attributes.uv;
       
       return vsOutput;
     }
@@ -447,18 +447,15 @@ window.addEventListener('load', async () => {
   const debugDepthFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) originalPosition: vec4f,
+      @location(0) uv: vec2f,
     };
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      // reconstruct uvs
-      let size = vec2f(textureDimensions(depthTexture).xy);
-      var pos = (fsInput.originalPosition.xy + 1.0) * (size.xy * 0.5);
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
       
-    
-      let rawDepth = textureLoad(
+      let rawDepth = textureSampleLevel(
         depthTexture,
-        vec2<i32>(floor(vec2(pos))),
+        defaultSampler,
+        fsInput.uv,
         0
       );
       

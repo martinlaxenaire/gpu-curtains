@@ -25,6 +25,9 @@ export interface RenderPassParams {
   /** Whether the {@link RenderPass | view and depth textures} should use multisampling or not */
   sampleCount?: GPUSize32
 
+  /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#displayBoundingRect | renderer display bounding rectangle}. Used mainly to shrink the rendered definition. */
+  qualityRatio?: number
+
   /** Whether this {@link RenderPass} should handle a view texture */
   useColorAttachments?: boolean
   /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
@@ -87,6 +90,7 @@ export class RenderPass {
     {
       label = 'Render Pass',
       sampleCount = 4,
+      qualityRatio = 1,
       // color
       useColorAttachments = true,
       shouldUpdateView = true,
@@ -134,6 +138,7 @@ export class RenderPass {
     this.options = {
       label,
       sampleCount,
+      qualityRatio,
       // color
       useColorAttachments,
       shouldUpdateView,
@@ -160,7 +165,7 @@ export class RenderPass {
 
     // if needed, create a view texture before our descriptor
     this.viewTextures = []
-    if (this.options.useColorAttachments) {
+    if (this.options.useColorAttachments && (!this.options.shouldUpdateView || this.options.sampleCount > 1)) {
       this.createViewTextures()
     }
 
@@ -182,6 +187,7 @@ export class RenderPass {
         usage: 'depth',
         format: this.options.depthFormat,
         sampleCount: this.options.sampleCount,
+        qualityRatio: this.options.qualityRatio,
       })
     }
   }
@@ -197,6 +203,7 @@ export class RenderPass {
           name: `colorAttachment${index}ViewTexture`,
           format: colorAttachment.targetFormat,
           sampleCount: this.options.sampleCount,
+          qualityRatio: this.options.qualityRatio,
         })
       )
     })
@@ -211,8 +218,8 @@ export class RenderPass {
       colorAttachments: this.options.colorAttachments.map((colorAttachment, index) => {
         return {
           // view
-          view: this.viewTextures[index].texture.createView({
-            label: this.viewTextures[index].texture.label + ' view',
+          view: this.viewTextures[index]?.texture.createView({
+            label: this.viewTextures[index]?.texture.label + ' view',
           }),
           // clear values
           clearValue: colorAttachment.clearValue,
@@ -306,18 +313,11 @@ export class RenderPass {
 
   /**
    * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-   * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
-   * @returns - the {@link GPUTexture | current render texture}
+   * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
+   * @returns - the {@link GPUTexture | texture} to render to.
    */
   updateView(renderTexture: GPUTexture | null = null): GPUTexture | null {
     if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
-      // resolve texture in case we need it, but do not update view
-      if (renderTexture && this.options.sampleCount > 1) {
-        this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
-          label: renderTexture.label + ' resolve target view',
-        })
-      }
-
       return renderTexture
     }
 
