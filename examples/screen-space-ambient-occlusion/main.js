@@ -77,7 +77,7 @@ window.addEventListener('load', async () => {
   // ------------------------------------
 
   // MSAA might be too intensive with deferred rendering
-  const sampleCount = 1
+  const sampleCount = 4
 
   const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
@@ -228,31 +228,6 @@ window.addEventListener('load', async () => {
       cubeMesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
     })
   }
-
-  // create 2 textures based on our GBuffer MRT output
-  const gBufferAlbedoTexture = new RenderTexture(gpuCameraRenderer, {
-    label: 'GBuffer albedo texture',
-    name: 'gBufferAlbedoTexture',
-    fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[0],
-    sampleCount,
-  })
-
-  const gBufferNormalTexture = new RenderTexture(gpuCameraRenderer, {
-    label: 'GBuffer normal texture',
-    name: 'gBufferNormalTexture',
-    fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[1],
-    sampleCount,
-  })
-
-  // we could have used a position texture in the geometry buffer
-  // but we're going to rebuild the positions from the depth buffer instead
-  // directly in the occlusion pass
-  // const gBufferPositionTexture = new RenderTexture(gpuCameraRenderer, {
-  //   label: 'GBuffer position texture',
-  //   name: 'gBufferPositionTexture',
-  //   fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[2],
-  //   sampleCount,
-  // })
 
   // ------------------------------------
   // CREATE A 4x4 3D NOISE TEXTURE WITH A COMPUTE SHADER
@@ -438,6 +413,38 @@ window.addEventListener('load', async () => {
   // OCCLUSION PASS
   // ------------------------------------
 
+  const ssaoTarget = new RenderTarget(gpuCameraRenderer, {
+    label: 'SSAO render target',
+    sampleCount,
+    qualityRatio: 0.75, // decrease quality to improve perf!
+    useDepth: false, // no need for depth
+  })
+
+  // create textures based on our Geometry Buffer MRT output
+  const gBufferAlbedoTexture = new RenderTexture(gpuCameraRenderer, {
+    label: 'GBuffer albedo texture',
+    name: 'gBufferAlbedoTexture',
+    fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[0],
+    sampleCount,
+  })
+
+  const gBufferNormalTexture = new RenderTexture(gpuCameraRenderer, {
+    label: 'GBuffer normal texture',
+    name: 'gBufferNormalTexture',
+    fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[1],
+    sampleCount,
+  })
+
+  // we could have used a position texture in the geometry buffer
+  // but we're going to rebuild the positions from the depth buffer instead
+  // directly in the occlusion pass
+  // const gBufferPositionTexture = new RenderTexture(gpuCameraRenderer, {
+  //   label: 'GBuffer position texture',
+  //   name: 'gBufferPositionTexture',
+  //   fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[2],
+  //   sampleCount,
+  // })
+
   const lerp = (a, b, alpha) => {
     return a + alpha * (b - a)
   }
@@ -459,13 +466,6 @@ window.addEventListener('load', async () => {
     sampleKernels[j + 1] = sample.y
     sampleKernels[j + 2] = sample.z
   }
-
-  const ssaoTarget = new RenderTarget(gpuCameraRenderer, {
-    label: 'SSAO render target',
-    sampleCount,
-    qualityRatio: 0.5, // decrease quality to improve perf!
-    useDepth: false, // no need for depth
-  })
 
   const occlusionFs = /* wgsl */ `
     struct VSOutput {
