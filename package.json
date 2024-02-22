@@ -47,7 +47,7 @@
     "dist"
   ],
   "main": "./dist/gpu-curtains.umd.js",
-  "module": "dist/esm/index.mjs",
+  "module": "./dist/esm/index.mjs",
   "exports": {
     ".": {
       "module": "./dist/esm/index.mjs",
