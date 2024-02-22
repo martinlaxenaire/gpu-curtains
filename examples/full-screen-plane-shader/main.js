@@ -1,10 +1,14 @@
-import { FullscreenPlane, GPUCurtains } from '../../dist/gpu-curtains.mjs'
+import { FullscreenPlane, GPUCurtains } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
-  // set up our WebGL context and append the canvas to our wrapper
+  // set our main GPUCurtains instance it will handle everything we need
+  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    renderPass: {
+      sampleCount: 1, // no need for MSAA here!
+    },
   })
 
   gpuCurtains.onError(() => {

@@ -1,6 +1,6 @@
 // Goal of this test is to try to mix selective passes
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
     BoxGeometry,
     GPUCameraRenderer,
@@ -51,7 +51,7 @@ window.addEventListener('load', async () => {
   })
 
   // set the camera initial position
-  cameraPosition.z = systemSize * 4
+  cameraPosition.z = systemSize * 3
 
   // render our scene manually
   const animate = () => {
@@ -120,7 +120,7 @@ window.addEventListener('load', async () => {
   // two render targets with specific depth textures
   const blankRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Blank render target',
-    shouldUpdateView: false,
+    //shouldUpdateView: false,
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Cube depth texture',
       name: 'cubeDepthTexture',
@@ -145,7 +145,7 @@ window.addEventListener('load', async () => {
     const isCube = Math.random() > 0.5
     const mesh = new Mesh(gpuCameraRenderer, {
       geometry: isCube ? cubeGeometry : sphereGeometry,
-      renderTarget: isCube ? blankRenderTarget : selectiveBloomTarget,
+      outputTarget: isCube ? blankRenderTarget : selectiveBloomTarget,
       transparent: true,
     })
 
@@ -160,6 +160,265 @@ window.addEventListener('load', async () => {
       mesh.rotation.z += rotationSpeed
     })
   }
+
+  // first scene pass
+  const initBloomPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Init pass',
+    inputTarget: selectiveBloomTarget,
+  })
+
+  const brigthnessPassFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    fn brightnessMatrix( brightness: f32 ) -> mat4x4f {
+      return mat4x4f( 1, 0, 0, 0,
+                 0, 1, 0, 0,
+                 0, 0, 1, 0,
+                 brightness, brightness, brightness, 1 );
+    }
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+      
+      // gamma?
+      color = pow(color, vec4(1.0 / 2.5));
+      
+      var brightness: f32 = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
+      var result: vec4f = mix(vec4(0), color, step(params.threshold, brightness));
+      
+      //return brightnessMatrix( 0.325 ) * color;
+      return result;
+    }
+  `
+
+  // brightness pass
+  const brigthnessPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Brightness pass',
+    //inputTarget: selectiveBloomTarget,
+    shaders: {
+      fragment: {
+        code: brigthnessPassFs,
+      },
+    },
+    uniforms: {
+      params: {
+        struct: {
+          threshold: {
+            type: 'f32',
+            value: 0.1,
+          },
+        },
+      },
+    },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    },
+  })
+
+  const blurSettings = {
+    spread: 5,
+    weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
+  }
+
+  const hBlurPassFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var texelOffset: vec2f = vec2f(1) / vec2f(textureDimensions(renderTexture, 0)) * params.spread;
+
+      var result: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv) * params.weight[0];
+
+      for(var i: u32 = 1; i < arrayLength(&params.weight); i++) {
+        result += textureSample(renderTexture, defaultSampler, fsInput.uv + vec2(texelOffset.x * f32(i), 0.0)) * params.weight[i];
+        result += textureSample(renderTexture, defaultSampler, fsInput.uv - vec2(texelOffset.x * f32(i), 0.0)) * params.weight[i];
+      }
+
+      return result;
+    }
+  `
+
+  // horizontal blur pass
+  const hBlurPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Horizontal blur pass',
+    //inputTarget: selectiveBloomTarget,
+    shaders: {
+      fragment: {
+        code: hBlurPassFs,
+      },
+    },
+    storages: {
+      params: {
+        struct: {
+          weight: {
+            type: 'array<f32>',
+            value: blurSettings.weight,
+          },
+          spread: {
+            type: 'f32',
+            value: blurSettings.spread,
+          },
+        },
+      },
+    },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    },
+  })
+
+  const vBlurPassFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var texelOffset: vec2f = vec2f(1) / vec2f(textureDimensions(renderTexture, 0)) * params.spread;
+
+      var result: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv) * params.weight[0];
+
+      for(var i: u32 = 1; i < arrayLength(&params.weight); i++) {
+        result += textureSample(renderTexture, defaultSampler, fsInput.uv + vec2(0.0, texelOffset.x * f32(i))) * params.weight[i];
+        result += textureSample(renderTexture, defaultSampler, fsInput.uv - vec2(0.0, texelOffset.x * f32(i))) * params.weight[i];
+      }
+
+      return result;
+    }
+  `
+
+  // vertical blur pass
+  const vBlurPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Vertical blur pass',
+    //inputTarget: selectiveBloomTarget,
+    shaders: {
+      fragment: {
+        code: vBlurPassFs,
+      },
+    },
+    storages: {
+      params: {
+        struct: {
+          weight: {
+            type: 'array<f32>',
+            value: blurSettings.weight,
+          },
+          spread: {
+            type: 'f32',
+            value: (blurSettings.spread * gpuCameraRenderer.boundingRect.width) / gpuCameraRenderer.boundingRect.height,
+          },
+        },
+      },
+    },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    },
+  })
+
+  vBlurPass.onAfterResize(() => {
+    vBlurPass.storages.params.spread.value =
+      (blurSettings.spread * gpuCameraRenderer.boundingRect.width) / gpuCameraRenderer.boundingRect.height
+  })
+
+  // blend pass: blend the original scene pass with the bloom result
+  const blendBloomPassFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
+    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {            
+      var scene: vec4f = textureSample(sceneTexture, defaultSampler, fsInput.uv);
+      var bloom: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+      var color: vec4f = scene + bloom * params.mult;
+    
+      // tone mapping
+      var result: vec4f = vec4(1.0) - exp(-color * params.exposure);
+    
+      // also gamma correct while we're at it       
+      result = pow(result, vec4(1.0 / params.gamma));
+      
+      return result;
+    }
+  `
+
+  const blendBloomPass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Blend bloom pass',
+    shaders: {
+      fragment: {
+        code: blendBloomPassFs,
+      },
+    },
+    copyOutputToRenderTexture: true,
+    uniforms: {
+      params: {
+        struct: {
+          mult: {
+            type: 'f32',
+            value: 1,
+          },
+          exposure: {
+            type: 'f32',
+            value: 1,
+          },
+          gamma: {
+            type: 'f32',
+            value: 2.2,
+          },
+        },
+      },
+    },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    },
+  })
+
+  // pass the original scene pass result to our blend pass
+  blendBloomPass.createRenderTexture({
+    label: 'Scene texture',
+    name: 'sceneTexture',
+    fromTexture: initBloomPass.renderTexture,
+  })
 
   // dithering pass
   // from https://www.shadertoy.com/view/ltSSzW
@@ -235,15 +494,15 @@ window.addEventListener('load', async () => {
       
       var grayscale: f32 = color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
       
-      var dither: f32 = select(0.0, 1.0, getValue( grayscale, fsInput.uv * params.resolution )) * color.a;
+      var dither: f32 = select(0.0, color.a, getValue( grayscale, fsInput.uv * params.resolution ));
       
-      return vec4(vec3(dither) * color.rgb, color.a * dither);
+      return vec4(vec3(dither) * color.rgb, dither);
     }
   `
 
   const ditherPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Dither pass',
-    renderTarget: selectiveBloomTarget,
+    //inputTarget: selectiveBloomTarget,
     shaders: {
       fragment: {
         code: ditherFs,
@@ -258,7 +517,7 @@ window.addEventListener('load', async () => {
           },
           pixelSize: {
             type: 'f32',
-            value: 2,
+            value: 1.5,
           },
         },
       },
@@ -272,199 +531,6 @@ window.addEventListener('load', async () => {
     )
   })
 
-  const brigthnessPassFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-    
-    fn brightnessMatrix( brightness: f32 ) -> mat4x4f {
-      return mat4x4f( 1, 0, 0, 0,
-                 0, 1, 0, 0,
-                 0, 0, 1, 0,
-                 brightness, brightness, brightness, 1 );
-    }
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-      
-      // gamma?
-      color = pow(color, vec4(1.0 / 2.5));
-      
-      var brightness: f32 = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
-      var result: vec4f = mix(vec4(0), color, step(params.threshold, brightness));
-      
-      //return brightnessMatrix( 0.325 ) * color;
-      return result;
-    }
-  `
-
-  // brightness pass
-  const brigthnessPass = new ShaderPass(gpuCameraRenderer, {
-    label: 'Brightness pass',
-    renderTarget: selectiveBloomTarget,
-    shaders: {
-      fragment: {
-        code: brigthnessPassFs,
-      },
-    },
-    uniforms: {
-      params: {
-        struct: {
-          threshold: {
-            type: 'f32',
-            value: 0.1,
-          },
-        },
-      },
-    },
-    blend: {
-      color: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
-      },
-      alpha: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
-      },
-    },
-  })
-
-  const blurSettings = {
-    spread: 10,
-    weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
-  }
-
-  const hBlurPassFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var texelOffset: vec2f = vec2f(1) / vec2f(textureDimensions(renderTexture, 0)) * params.spread;
-      
-      var result: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv) * params.weight[0];
-      
-      for(var i: u32 = 1; i < arrayLength(&params.weight); i++) {
-        result += textureSample(renderTexture, defaultSampler, fsInput.uv + vec2(texelOffset.x * f32(i), 0.0)) * params.weight[i];
-        result += textureSample(renderTexture, defaultSampler, fsInput.uv - vec2(texelOffset.x * f32(i), 0.0)) * params.weight[i];
-      }
-      
-      return result;
-    }
-  `
-
-  // horizontal blur pass
-  const hBlurPass = new ShaderPass(gpuCameraRenderer, {
-    label: 'Horizontal blur pass',
-    renderTarget: selectiveBloomTarget,
-    shaders: {
-      fragment: {
-        code: hBlurPassFs,
-      },
-    },
-    storages: {
-      params: {
-        struct: {
-          weight: {
-            type: 'array<f32>',
-            value: blurSettings.weight,
-          },
-          spread: {
-            type: 'f32',
-            value: blurSettings.spread,
-          },
-        },
-      },
-    },
-  })
-
-  const vBlurPassFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-    };
-
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var texelOffset: vec2f = vec2f(1) / vec2f(textureDimensions(renderTexture, 0)) * params.spread;
-      
-      var result: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv) * params.weight[0];
-      
-      for(var i: u32 = 1; i < arrayLength(&params.weight); i++) {
-        result += textureSample(renderTexture, defaultSampler, fsInput.uv + vec2(0.0, texelOffset.x * f32(i))) * params.weight[i];
-        result += textureSample(renderTexture, defaultSampler, fsInput.uv - vec2(0.0, texelOffset.x * f32(i))) * params.weight[i];
-      }
-      
-      return result;
-    }
-  `
-
-  // vertical blur pass
-  const vBlurPass = new ShaderPass(gpuCameraRenderer, {
-    label: 'Vertical blur pass',
-    renderTarget: selectiveBloomTarget,
-    shaders: {
-      fragment: {
-        code: vBlurPassFs,
-      },
-    },
-    storages: {
-      params: {
-        struct: {
-          weight: {
-            type: 'array<f32>',
-            value: blurSettings.weight,
-          },
-          spread: {
-            type: 'f32',
-            value: (blurSettings.spread * gpuCameraRenderer.boundingRect.width) / gpuCameraRenderer.boundingRect.height,
-          },
-        },
-      },
-    },
-    // blend: {
-    //   color: {
-    //     srcFactor: 'one',
-    //     dstFactor: 'one',
-    //   },
-    //   alpha: {
-    //     srcFactor: 'one',
-    //     dstFactor: 'one',
-    //   },
-    // },
-  })
-
-  vBlurPass.onAfterResize(() => {
-    vBlurPass.storages.params.spread.value =
-      (blurSettings.spread * gpuCameraRenderer.boundingRect.width) / gpuCameraRenderer.boundingRect.height
-  })
-
-  const inverseShader = /* wgsl */ `
-    struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-      };
-
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-
-        return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.x, 0.5) );
-      }
-  `
-
-  const inversePass = new ShaderPass(gpuCameraRenderer, {
-    label: 'Inverse pass',
-    renderTarget: selectiveBloomTarget,
-    shaders: {
-      fragment: {
-        code: inverseShader,
-      },
-    },
-  })
-
   const blendShader = /* wgsl */ `
     struct VSOutput {
         @builtin(position) position: vec4f,
@@ -472,8 +538,10 @@ window.addEventListener('load', async () => {
       };
 
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var cubeColor: vec4f = textureSample(cubeRenderTexture, defaultSampler, fsInput.uv);
-        var sphereColor: vec4f = textureSample(sphereRenderTexture, defaultSampler, fsInput.uv);
+        var cubeColor: vec4f = textureSample(cubeRenderTexture, defaultSampler, fsInput.uv);        
+        var sphereColor: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+        
+        var bloomSphereColor: vec4f = textureSample(bloomSphereRenderTexture, defaultSampler, fsInput.uv);
         
         let rawCubeDepth = textureLoad(
           cubeDepthTexture,
@@ -489,8 +557,11 @@ window.addEventListener('load', async () => {
                 
         var color: vec4f = cubeColor * (1.0 - sphereColor.a) + sphereColor;
         color = select(color, cubeColor, rawSphereDepth > rawCubeDepth);
-
-        return color;
+        
+        //return bloomSphereColor;
+        
+        //return color;
+        return mix(color, bloomSphereColor, step(fsInput.uv.y, 0.5));
       }
   `
 
@@ -499,6 +570,18 @@ window.addEventListener('load', async () => {
     shaders: {
       fragment: {
         code: blendShader,
+      },
+    },
+    blend: {
+      color: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        operation: 'add',
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
       },
     },
   })
@@ -516,10 +599,12 @@ window.addEventListener('load', async () => {
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
   })
 
-  const sphereRenderTexture = blendPass.createRenderTexture({
-    name: 'sphereRenderTexture',
-    fromTexture: inversePass.renderTexture,
+  const bloomSphereTexture = blendPass.createRenderTexture({
+    name: 'bloomSphereRenderTexture',
+    fromTexture: blendBloomPass.renderTexture,
   })
+
+  console.log(blendBloomPass)
 
   const sphereDepthTexture = blendPass.createRenderTexture({
     name: 'sphereDepthTexture',

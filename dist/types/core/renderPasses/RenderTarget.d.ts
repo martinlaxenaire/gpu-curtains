@@ -10,11 +10,13 @@ export interface RenderTargetParams extends RenderPassParams {
     autoRender?: boolean;
 }
 /**
- * Used to draw meshes to a {@link RenderPass#viewTextures | RenderPass view textures} instead of directly to screen.
+ * Used to draw to {@link RenderPass#viewTextures | RenderPass view textures} (and eventually {@link RenderPass#depthTexture | depth texture}) instead of directly to screen.
  *
- * The meshes assigned to a {@link RenderTarget} will be drawn before the other objects in the {@link core/scenes/Scene.Scene | Scene} rendering loop.s
+ * The meshes assigned to a {@link RenderTarget} will be drawn before the other objects in the {@link core/scenes/Scene.Scene | Scene} rendering loop.
  *
- * If the {@link RenderPass} created handle color attachments, is multisampled and {@link RenderPass#options.shouldUpdateView | should update view}, then a {@link RenderTarget#renderTexture | RenderTexture} will be created to resolve the content of the current view. This {@link RenderTarget#renderTexture | RenderTexture} could therefore usually be used to manipulate the current content of this {@link RenderTarget}.
+ * Can also be assigned as ShaderPass {@link core/renderPasses/ShaderPass.ShaderPass#inputTarget | input} or {@link core/renderPasses/ShaderPass.ShaderPass#outputTarget | output} targets.
+ *
+ * If the {@link RenderPass} created handle color attachments, then a {@link RenderTarget#renderTexture | RenderTexture} will be created to update and/or resolve the content of the current view. This {@link RenderTarget#renderTexture | RenderTexture} could therefore usually be used to access the current content of this {@link RenderTarget}.
  *
  * @example
  * ```javascript
@@ -27,7 +29,7 @@ export interface RenderTargetParams extends RenderPassParams {
  * // note this is asynchronous
  * await gpuCurtains.setDevice()
  *
- * const renderTarget = new RenderTarget(gpuCurtains, {
+ * const outputTarget = new RenderTarget(gpuCurtains, {
  *   label: 'My render target',
  * })
  * ```
@@ -51,7 +53,7 @@ export declare class RenderTarget {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
      * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
      */
-    constructor(renderer: Renderer | GPUCurtains, parameters: RenderTargetParams);
+    constructor(renderer: Renderer | GPUCurtains, parameters?: RenderTargetParams);
     /**
      * Add the {@link RenderTarget} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */

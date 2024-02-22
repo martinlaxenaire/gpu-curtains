@@ -36,7 +36,7 @@ export interface RenderPassEntry {
     /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy */
     onAfterRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null;
     /** If this {@link RenderPassEntry} needs to render only one Mesh */
-    element: RenderedMesh | null;
+    element: PingPongPlane | ShaderPass | null;
     /** If this {@link RenderPassEntry} needs to render multiple Meshes, then use a {@link Stack} object */
     stack: Stack | null;
 }
@@ -51,7 +51,7 @@ export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
  *
  * - Run all the {@link ComputePass} first, sorted by their {@link ComputePass#renderOrder | renderOrder}
  * - Then render all {@link renderPassEntries} pingPong entries Meshes, sorted by their {@link PingPongPlane#renderOrder | renderOrder}
- * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries:
+ * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} outputTarget entries:
  *   - First, the opaque unprojected Meshes (i.e. opaque {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
  *   - Then, the transparent unprojected Meshes (i.e. transparent {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane}, if any), sorted by their {@link core/meshes/FullscreenPlane.FullscreenPlane#renderOrder | renderOrder}
  *   - Then, the opaque projected Meshes (i.e. opaque {@link core/meshes/Mesh.Mesh | Mesh}, {@link DOMMesh} or {@link Plane}), sorted by their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
@@ -64,9 +64,9 @@ export declare class Scene {
     /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */
     computePassEntries: ComputePass[];
     /**
-     * A {@link RenderPassEntries} object that will contain every Meshes that need to be drawn, put inside each one of our three entries type arrays: 'pingPong', 'renderTarget' and 'screen'.
+     * A {@link RenderPassEntries} object that will contain every Meshes that need to be drawn, put inside each one of our three entries type arrays: 'pingPong', 'outputTarget' and 'screen'.
      * - The {@link Scene} will first render all {@link renderPassEntries} pingPong entries Meshes
-     * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} renderTarget entries
+     * - Then all Meshes that need to be rendered into specific {@link renderPassEntries} outputTarget entries
      * - Finally all Meshes that need to be rendered to the {@link renderPassEntries} screen
      */
     renderPassEntries: RenderPassEntries;
@@ -93,18 +93,18 @@ export declare class Scene {
      */
     removeComputePass(computePass: ComputePass): void;
     /**
-     * Add a {@link RenderTarget} to our scene {@link renderPassEntries} renderTarget array.
+     * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
      * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
      * @param renderTarget - {@link RenderTarget} to add
      */
     addRenderTarget(renderTarget: RenderTarget): void;
     /**
-     * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} renderTarget array.
+     * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
      * @param renderTarget - {@link RenderTarget} to add
      */
     removeRenderTarget(renderTarget: RenderTarget): void;
     /**
-     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} renderTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
      * @param mesh - Mesh to check
      * @returns - the corresponding render pass entry {@link Stack}
      */

@@ -21,6 +21,8 @@ export interface RenderPassParams {
     label?: string;
     /** Whether the {@link RenderPass | view and depth textures} should use multisampling or not */
     sampleCount?: GPUSize32;
+    /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#displayBoundingRect | renderer display bounding rectangle}. Used mainly to shrink the rendered definition. */
+    qualityRatio?: number;
     /** Whether this {@link RenderPass} should handle a view texture */
     useColorAttachments?: boolean;
     /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
@@ -71,7 +73,7 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, useColorAttachments, shouldUpdateView, loadOp, storeOp, clearValue, targetFormat, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, useColorAttachments, shouldUpdateView, loadOp, storeOp, clearValue, targetFormat, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
     /**
      * Create and set our {@link depthTexture | depth texture}
      */
@@ -108,8 +110,8 @@ export declare class RenderPass {
     setClearValue(clearValue?: GPUColor, colorAttachmentIndex?: number): void;
     /**
      * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-     * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
-     * @returns - the {@link GPUTexture | current render texture}
+     * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
+     * @returns - the {@link GPUTexture | texture} to render to.
      */
     updateView(renderTexture?: GPUTexture | null): GPUTexture | null;
     /**

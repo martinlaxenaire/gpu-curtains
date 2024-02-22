@@ -128,6 +128,9 @@
           <li>
             <a href="./camera-renderer-object-3d-pivot/" target="_blank">GPUCameraRenderer and Object3D as pivots</a>
           </li>
+          <li>
+            <a href="./cubemap/" target="_blank">Cubemap</a>
+          </li>
         </ul>
         <h2 class="overlay-title">Post processing / render to texture</h2>
         <ul>
@@ -191,15 +194,19 @@
           <li>
             <a href="shadow-mapping/" target="_blank">Shadow mapping</a>
           </li>
+          <li>
+            <a href="screen-space-ambient-occlusion/" target="_blank">Screen space ambient occlusion</a>
+          </li>
         </ul>
       </div>
     </div>
 
     <script type="module">
-      import { GPUCurtains, SphereGeometry, DOMMesh, Object3D } from '../dist/gpu-curtains.mjs'
+      import { GPUCurtains, SphereGeometry, DOMMesh, Object3D } from '../dist/esm/index.mjs'
 
-      window.addEventListener('DOMContentLoaded', async () => {
-        // set up our WebGL context and append the canvas to our wrapper
+      window.addEventListener('load', async () => {
+        // set our main GPUCurtains instance it will handle everything we need
+        // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
         const gpuCurtains = new GPUCurtains({
           container: '#canvas',
           watchScroll: false,

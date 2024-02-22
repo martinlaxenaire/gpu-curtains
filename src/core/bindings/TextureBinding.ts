@@ -88,7 +88,7 @@ export class TextureBinding extends Binding {
    */
   get resource(): GPUExternalTexture | GPUTextureView | null {
     return this.texture instanceof GPUTexture
-      ? this.texture.createView({ label: this.options.label + ' view' })
+      ? this.texture.createView({ label: this.options.label + ' view', dimension: this.options.viewDimension })
       : this.texture instanceof GPUExternalTexture
       ? this.texture
       : null

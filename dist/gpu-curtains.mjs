@@ -4083,7 +4083,8 @@ const defaultRenderTextureParams = {
   access: "write",
   fromTexture: null,
   viewDimension: "2d",
-  sampleCount: 1
+  sampleCount: 1,
+  qualityRatio: 1
 };
 class RenderTexture {
   /**
@@ -4103,9 +4104,13 @@ class RenderTexture {
     if (!this.options.format) {
       this.options.format = this.renderer.options.preferredFormat;
     }
-    this.size = this.options.fixedSize ?? {
-      width: Math.floor(this.renderer.displayBoundingRect.width),
-      height: Math.floor(this.renderer.displayBoundingRect.height),
+    this.size = this.options.fixedSize ? {
+      width: this.options.fixedSize.width * this.options.qualityRatio,
+      height: this.options.fixedSize.height * this.options.qualityRatio,
+      depth: this.options.fixedSize.depth
+    } : {
+      width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
+      height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
       depth: 1
     };
     if (this.options.fixedSize) {
@@ -4192,8 +4197,8 @@ class RenderTexture {
       return;
     if (!size) {
       size = {
-        width: Math.floor(this.renderer.displayBoundingRect.width),
-        height: Math.floor(this.renderer.displayBoundingRect.height),
+        width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
+        height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
         depth: 1
       };
     }
@@ -6113,23 +6118,23 @@ function MeshBaseMixin(Base) {
         geometry,
         visible,
         renderOrder,
-        renderTarget,
+        outputTarget,
         texturesOptions,
         autoRender,
         ...meshParameters
       } = parameters;
-      meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
+      this.outputTarget = outputTarget ?? null;
+      meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
       this.options = {
         ...this.options ?? {},
         // merge possible lower options?
         label: label ?? "Mesh " + this.renderer.meshes.length,
         shaders,
         texturesOptions,
-        ...renderTarget !== void 0 && { renderTarget },
+        ...outputTarget !== void 0 && { outputTarget },
         ...autoRender !== void 0 && { autoRender },
         ...meshParameters.useAsyncPipeline !== void 0 && { useAsyncPipeline: meshParameters.useAsyncPipeline }
       };
-      this.renderTarget = renderTarget ?? null;
       this.geometry = geometry;
       if (autoRender !== void 0) {
         __privateSet$2(this, _autoRender, autoRender);
@@ -6172,7 +6177,7 @@ function MeshBaseMixin(Base) {
      */
     addToScene() {
       this.renderer.meshes.push(this);
-      this.setRenderingOptionsForRenderPass(this.renderTarget ? this.renderTarget.renderPass : this.renderer.renderPass);
+      this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
       if (__privateGet$3(this, _autoRender)) {
         this.renderer.scene.addMesh(this);
       }
@@ -6241,15 +6246,15 @@ function MeshBaseMixin(Base) {
     /**
      * Assign or remove a {@link RenderTarget} to this Mesh
      * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
      */
-    setRenderTarget(renderTarget) {
-      if (renderTarget && renderTarget.type !== "RenderTarget") {
-        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`);
+    setOutputTarget(outputTarget) {
+      if (outputTarget && outputTarget.type !== "RenderTarget") {
+        throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget}`);
         return;
       }
       this.removeFromScene();
-      this.renderTarget = renderTarget;
+      this.outputTarget = outputTarget;
       this.addToScene();
     }
     /**
@@ -8061,11 +8066,18 @@ class ShaderPass extends FullscreenPlane {
     }
     parameters.depth = false;
     super(renderer, parameters);
+    if (parameters.inputTarget) {
+      this.setInputTarget(parameters.inputTarget);
+    }
+    if (this.outputTarget) {
+      this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
+    }
     this.type = "ShaderPass";
     this.createRenderTexture({
       label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
       name: "renderTexture",
-      fromTexture: this.renderTarget ? this.renderTarget.renderTexture : null
+      fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+      ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
     });
   }
   /**
@@ -8075,19 +8087,28 @@ class ShaderPass extends FullscreenPlane {
   get renderTexture() {
     return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
   }
+  // TODO
   /**
    * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
    * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
    * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
-   * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+   * @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
    */
-  setRenderTarget(renderTarget) {
-    super.setRenderTarget(renderTarget);
-    if (renderTarget) {
-      this.renderTexture.copy(this.renderTarget.renderTexture);
-    } else {
-      this.renderTexture.options.fromTexture = null;
-      this.renderTexture.createTexture();
+  setInputTarget(inputTarget) {
+    if (inputTarget && inputTarget.type !== "RenderTarget") {
+      throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`);
+      return;
+    }
+    this.removeFromScene();
+    this.inputTarget = inputTarget;
+    this.addToScene();
+    if (this.renderTexture) {
+      if (inputTarget) {
+        this.renderTexture.copy(this.inputTarget.renderTexture);
+      } else {
+        this.renderTexture.options.fromTexture = null;
+        this.renderTexture.createTexture();
+      }
     }
   }
   /**
@@ -8095,6 +8116,9 @@ class ShaderPass extends FullscreenPlane {
    */
   addToScene() {
     this.renderer.shaderPasses.push(this);
+    this.setRenderingOptionsForRenderPass(
+      this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
+    );
     if (this.autoRender) {
       this.renderer.scene.addShaderPass(this);
     }
@@ -8103,8 +8127,8 @@ class ShaderPass extends FullscreenPlane {
    * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
-    if (this.renderTarget) {
-      this.renderTarget.destroy();
+    if (this.outputTarget) {
+      this.outputTarget.destroy();
     }
     if (this.autoRender) {
       this.renderer.scene.removeShaderPass(this);
@@ -8121,7 +8145,8 @@ class RenderPass {
    */
   constructor(renderer, {
     label = "Render Pass",
-    sampleCount = 4,
+    sampleCount = 1,
+    qualityRatio = 1,
     // color
     useColorAttachments = true,
     shouldUpdateView = true,
@@ -8161,6 +8186,7 @@ class RenderPass {
     this.options = {
       label,
       sampleCount,
+      qualityRatio,
       // color
       useColorAttachments,
       shouldUpdateView,
@@ -8200,7 +8226,8 @@ class RenderPass {
         name: "depthTexture",
         usage: "depth",
         format: this.options.depthFormat,
-        sampleCount: this.options.sampleCount
+        sampleCount: this.options.sampleCount,
+        qualityRatio: this.options.qualityRatio
       });
     }
   }
@@ -8214,7 +8241,8 @@ class RenderPass {
           label: `${this.options.label} colorAttachment[${index}] view texture`,
           name: `colorAttachment${index}ViewTexture`,
           format: colorAttachment.targetFormat,
-          sampleCount: this.options.sampleCount
+          sampleCount: this.options.sampleCount,
+          qualityRatio: this.options.qualityRatio
         })
       );
     });
@@ -8314,16 +8342,11 @@ class RenderPass {
   }
   /**
    * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-   * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
-   * @returns - the {@link GPUTexture | current render texture}
+   * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
+   * @returns - the {@link GPUTexture | texture} to render to.
    */
   updateView(renderTexture = null) {
     if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
-      if (renderTexture && this.options.sampleCount > 1) {
-        this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
-          label: renderTexture.label + " resolve target view"
-        });
-      }
       return renderTexture;
     }
     if (!renderTexture) {
@@ -8410,7 +8433,8 @@ class RenderTarget {
       this.renderTexture = new RenderTexture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
         name: "renderTexture",
-        format: this.options.targetFormat
+        format: this.options.targetFormat,
+        ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
       });
     }
     this.addToScene();
@@ -8451,14 +8475,14 @@ class RenderTarget {
    */
   destroy() {
     this.renderer.meshes.forEach((mesh) => {
-      if (mesh.renderTarget && mesh.renderTarget.uuid === this.uuid) {
-        mesh.setRenderTarget(null);
+      if (mesh.outputTarget && mesh.outputTarget.uuid === this.uuid) {
+        mesh.setOutputTarget(null);
       }
     });
     this.renderer.shaderPasses.forEach((shaderPass) => {
-      if (shaderPass.renderTarget && shaderPass.renderTarget.uuid === this.uuid) {
-        shaderPass.renderTarget = null;
-        shaderPass.setRenderTarget(null);
+      if (shaderPass.outputTarget && shaderPass.outputTarget.uuid === this.uuid) {
+        shaderPass.outputTarget = null;
+        shaderPass.setOutputTarget(null);
       }
     });
     this.removeFromScene();
@@ -8477,7 +8501,7 @@ class PingPongPlane extends FullscreenPlane {
   constructor(renderer, parameters = {}) {
     renderer = renderer && renderer.renderer || renderer;
     isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
-    parameters.renderTarget = new RenderTarget(renderer, {
+    parameters.outputTarget = new RenderTarget(renderer, {
       label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
       useDepth: false,
       ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
@@ -8513,8 +8537,8 @@ class PingPongPlane extends FullscreenPlane {
    * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
-    if (this.renderTarget) {
-      this.renderTarget.destroy();
+    if (this.outputTarget) {
+      this.outputTarget.destroy();
     }
     if (this.autoRender) {
       this.renderer.scene.removePingPongPlane(this);
@@ -9137,7 +9161,7 @@ class Scene {
     this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
   }
   /**
-   * Add a {@link RenderTarget} to our scene {@link renderPassEntries} renderTarget array.
+   * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
    * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
    * @param renderTarget - {@link RenderTarget} to add
    */
@@ -9163,7 +9187,7 @@ class Scene {
       });
   }
   /**
-   * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} renderTarget array.
+   * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
    * @param renderTarget - {@link RenderTarget} to add
    */
   removeRenderTarget(renderTarget) {
@@ -9172,13 +9196,13 @@ class Scene {
     );
   }
   /**
-   * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} renderTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+   * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
    * @param mesh - Mesh to check
    * @returns - the corresponding render pass entry {@link Stack}
    */
   getMeshProjectionStack(mesh) {
-    const renderPassEntry = mesh.renderTarget ? this.renderPassEntries.renderTarget.find(
-      (passEntry) => passEntry.renderPass.uuid === mesh.renderTarget.renderPass.uuid
+    const renderPassEntry = mesh.outputTarget ? this.renderPassEntries.renderTarget.find(
+      (passEntry) => passEntry.renderPass.uuid === mesh.outputTarget.renderPass.uuid
     ) : this.renderPassEntries.screen[0];
     const { stack } = renderPassEntry;
     return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
@@ -9229,7 +9253,7 @@ class Scene {
    * @param shaderPass - {@link ShaderPass} to add
    */
   addShaderPass(shaderPass) {
-    const onBeforeRenderPass = shaderPass.renderTarget ? null : (commandEncoder, swapChainTexture) => {
+    const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
       if (shaderPass.renderTexture && swapChainTexture) {
         commandEncoder.copyTextureToTexture(
           {
@@ -9243,23 +9267,24 @@ class Scene {
       }
       this.renderer.postProcessingPass.setLoadOp("clear");
     };
-    const onAfterRenderPass = shaderPass.renderTarget ? (commandEncoder, swapChainTexture) => {
-      if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture && swapChainTexture) {
+    const onAfterRenderPass = shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
+      if (shaderPass.renderTexture && swapChainTexture) {
         commandEncoder.copyTextureToTexture(
           {
             texture: swapChainTexture
           },
           {
-            texture: shaderPass.renderTarget.renderTexture.texture
+            texture: shaderPass.renderTexture.texture
           },
-          [shaderPass.renderTarget.renderTexture.size.width, shaderPass.renderTarget.renderTexture.size.height]
+          [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
         );
       }
-    } : null;
+    };
     const shaderPassEntry = {
-      renderPass: this.renderer.postProcessingPass,
-      // render directly to screen
-      renderTexture: null,
+      // use output target or postprocessing render pass
+      renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
+      // render to output target renderTexture or directly to screen
+      renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
       onBeforeRenderPass,
       onAfterRenderPass,
       element: shaderPass,
@@ -9268,10 +9293,10 @@ class Scene {
     };
     this.renderPassEntries.screen.push(shaderPassEntry);
     this.renderPassEntries.screen.sort((a, b) => {
-      const isPostProA = a.element && !a.element.renderTarget;
+      const isPostProA = a.element && !a.element.outputTarget;
       const renderOrderA = a.element ? a.element.renderOrder : 0;
       const indexA = a.element ? a.element.index : 0;
-      const isPostProB = b.element && !b.element.renderTarget;
+      const isPostProB = b.element && !b.element.outputTarget;
       const renderOrderB = b.element ? b.element.renderOrder : 0;
       const indexB = b.element ? b.element.index : 0;
       if (isPostProA && !isPostProB) {
@@ -9302,8 +9327,8 @@ class Scene {
    */
   addPingPongPlane(pingPongPlane) {
     this.renderPassEntries.pingPong.push({
-      renderPass: pingPongPlane.renderTarget.renderPass,
-      renderTexture: pingPongPlane.renderTarget.renderTexture,
+      renderPass: pingPongPlane.outputTarget.renderPass,
+      renderTexture: pingPongPlane.outputTarget.renderTexture,
       onBeforeRenderPass: null,
       onAfterRenderPass: (commandEncoder, swapChainTexture) => {
         commandEncoder.copyTextureToTexture(
@@ -9344,7 +9369,7 @@ class Scene {
     } else if (object instanceof ShaderPass) {
       return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
     } else {
-      const entryType = object.renderTarget ? "renderTarget" : "screen";
+      const entryType = object.outputTarget ? "renderTarget" : "screen";
       return this.renderPassEntries[entryType].find((entry) => {
         return [
           ...entry.stack.unProjected.opaque,
@@ -9767,7 +9792,7 @@ class GPURenderer {
   }
   /* PIPELINES, SCENE & MAIN RENDER PASS */
   /**
-   * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
+   * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
    */
   setMainRenderPasses() {
     this.renderPass = new RenderPass(this, {
@@ -9778,9 +9803,9 @@ class GPURenderer {
     this.postProcessingPass = new RenderPass(this, {
       label: "Post processing render pass",
       targetFormat: this.options.preferredFormat,
+      // no need to handle depth or perform MSAA on a fullscreen quad
       useDepth: false,
       sampleCount: 1
-      // no need to perform MSAA on a fullscreen quad
     });
   }
   /**

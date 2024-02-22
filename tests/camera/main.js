@@ -3,7 +3,7 @@
 // - test camera position, rotation, lookAt, fov
 // - test frustum culling
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, PlaneGeometry, Vec2, Vec3 } = await import(
     /* @vite-ignore */ path
   )

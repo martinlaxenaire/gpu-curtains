@@ -1,9 +1,10 @@
 // Goal of this test is to help debug and visualize buffer binding alignments
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { BufferBinding, GPUCurtains, Vec2, Vec3 } = await import(/* @vite-ignore */ path)
 
-  // set up our WebGL context and append the canvas to our wrapper
+  // set our main GPUCurtains instance it will handle everything we need
+  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example

@@ -1,7 +1,8 @@
-import { GPUCurtains, Plane } from '../../dist/gpu-curtains.mjs'
+import { GPUCurtains, Plane } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
-  // set up our WebGL context and append the canvas to our wrapper
+  // set our main GPUCurtains instance it will handle everything we need
+  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize event...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example

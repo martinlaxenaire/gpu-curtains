@@ -32,7 +32,7 @@ import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
  */
 export class PingPongPlane extends FullscreenPlane {
   /** {@link RenderTarget} content to use as an input */
-  renderTarget: RenderTarget
+  outputTarget: RenderTarget
 
   /**
    * PingPongPlane constructor
@@ -45,7 +45,7 @@ export class PingPongPlane extends FullscreenPlane {
     isRenderer(renderer, parameters.label ? parameters.label + ' PingPongPlane' : 'PingPongPlane')
 
     // we will render into a separate texture
-    parameters.renderTarget = new RenderTarget(renderer, {
+    parameters.outputTarget = new RenderTarget(renderer, {
       label: parameters.label ? parameters.label + ' render target' : 'Ping Pong render target',
       useDepth: false,
       ...(parameters.targetFormat && { targetFormat: parameters.targetFormat }),
@@ -90,8 +90,8 @@ export class PingPongPlane extends FullscreenPlane {
    * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
   removeFromScene() {
-    if (this.renderTarget) {
-      this.renderTarget.destroy()
+    if (this.outputTarget) {
+      this.outputTarget.destroy()
     }
 
     if (this.autoRender) {

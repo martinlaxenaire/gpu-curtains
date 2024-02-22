@@ -24,6 +24,9 @@ export interface RenderTextureBaseParams {
   /** Optional fixed size of the {@link RenderTexture#texture | texture}. If set, the {@link RenderTexture} will never be resized and always keep that size. */
   fixedSize?: TextureSize
 
+  /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#displayBoundingRect | renderer display bounding rectangle} or {@link fixedSize}. Used mainly to shrink render target definition. */
+  qualityRatio?: number
+
   /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
   usage?: RenderTextureBindingType
   /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
@@ -53,6 +56,7 @@ const defaultRenderTextureParams: RenderTextureParams = {
   fromTexture: null,
   viewDimension: '2d',
   sampleCount: 1,
+  qualityRatio: 1,
 }
 
 /**
@@ -126,11 +130,17 @@ export class RenderTexture {
     }
 
     // sizes
-    this.size = this.options.fixedSize ?? {
-      width: Math.floor(this.renderer.displayBoundingRect.width),
-      height: Math.floor(this.renderer.displayBoundingRect.height),
-      depth: 1,
-    }
+    this.size = this.options.fixedSize
+      ? {
+          width: this.options.fixedSize.width * this.options.qualityRatio,
+          height: this.options.fixedSize.height * this.options.qualityRatio,
+          depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf('cube') !== -1 ? 6 : 1,
+        }
+      : {
+          width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
+          height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
+          depth: this.options.viewDimension.indexOf('cube') !== -1 ? 6 : 1,
+        }
 
     if (this.options.fixedSize) {
       this.#autoResize = false
@@ -185,7 +195,7 @@ export class RenderTexture {
       label: this.options.label,
       format: this.options.format,
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
-      dimensions: this.options.viewDimension === '1d' ? '1d' : this.options.viewDimension === '3d' ? '3d' : '2d',
+      dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
       usage:
         // TODO let user chose?
@@ -236,8 +246,8 @@ export class RenderTexture {
 
     if (!size) {
       size = {
-        width: Math.floor(this.renderer.displayBoundingRect.width),
-        height: Math.floor(this.renderer.displayBoundingRect.height),
+        width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
+        height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
         depth: 1,
       }
     }

@@ -449,11 +449,9 @@ export class GPURenderer {
   /* PIPELINES, SCENE & MAIN RENDER PASS */
 
   /**
-   * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
+   * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
    */
   setMainRenderPasses() {
-    // TODO handle multisampling differently?
-    // cf: https://webgpufundamentals.org/webgpu/lessons/webgpu-multisampling.html#you-do-not-have-to-set-a-resolve-target-on-every-render-pass
     this.renderPass = new RenderPass(this, {
       label: 'Main render pass',
       targetFormat: this.options.preferredFormat,
@@ -463,8 +461,9 @@ export class GPURenderer {
     this.postProcessingPass = new RenderPass(this, {
       label: 'Post processing render pass',
       targetFormat: this.options.preferredFormat,
+      // no need to handle depth or perform MSAA on a fullscreen quad
       useDepth: false,
-      sampleCount: 1, // no need to perform MSAA on a fullscreen quad
+      sampleCount: 1,
     })
   }
 

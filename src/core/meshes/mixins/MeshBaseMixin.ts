@@ -25,8 +25,8 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
   visible?: boolean
   /** Controls the order in which this Mesh should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
   renderOrder?: number
-  /** {@link RenderTarget} to render this Mesh to */
-  renderTarget?: RenderTarget
+  /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
+  outputTarget?: RenderTarget
   /** Parameters used by this Mesh to create a {@link Texture} */
   texturesOptions?: ExternalTextureParams
 }
@@ -49,8 +49,8 @@ export interface MeshBaseOptions {
   shaders?: MeshBaseParams['shaders']
   /** Parameters used by this Mesh to create a {@link Texture} */
   texturesOptions?: ExternalTextureParams
-  /** {@link RenderTarget} to render this Mesh to, if any */
-  renderTarget?: RenderTarget | null
+  /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
+  outputTarget?: RenderTarget | null
   /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
   autoRender?: boolean
   /** Whether to compile this Mesh {@link RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
@@ -105,8 +105,8 @@ export declare class MeshBaseClass {
   /** {@link AllowedGeometries | Geometry} used by this {@link MeshBaseClass} */
   geometry: MeshBaseParams['geometry']
 
-  /** {@link RenderTarget} to render this Mesh to, if any */
-  renderTarget: null | RenderTarget
+  /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
+  outputTarget: null | RenderTarget
 
   /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
   renderOrder: number
@@ -195,12 +195,6 @@ export declare class MeshBaseClass {
   removeFromScene(): void
 
   /**
-   * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
-   * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
-   */
-  setRenderingOptionsForRenderPass(renderPass: RenderPass): void
-
-  /**
    * Set a new {@link Renderer} for this Mesh
    * @param renderer - new {@link Renderer} to set
    */
@@ -236,6 +230,19 @@ export declare class MeshBaseClass {
    * Set our Mesh geometry: create buffers and add attributes to material
    */
   setGeometry(): void
+
+  /**
+   * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+   * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+   */
+  setRenderingOptionsForRenderPass(renderPass: RenderPass): void
+
+  /**
+   * Hook used to clean up parameters before sending them to the material.
+   * @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
+   * @returns - cleaned parameters
+   */
+  cleanupRenderMaterialParameters(parameters: MeshBaseRenderParams): MeshBaseRenderParams
 
   /**
    * Set a Mesh transparent property, then set its material
@@ -295,9 +302,9 @@ export declare class MeshBaseClass {
   /**
    * Assign or remove a {@link RenderTarget} to this Mesh
    * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-   * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+   * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
    */
-  setRenderTarget(renderTarget: RenderTarget | null): void
+  setOutputTarget(outputTarget: RenderTarget | null): void
 
   /**
    * Get the current {@link RenderMaterial} uniforms
@@ -396,7 +403,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     geometry: MeshBaseParams['geometry']
 
     /** {@link RenderTarget} to render this Mesh to, if any */
-    renderTarget: null | RenderTarget
+    outputTarget: null | RenderTarget
 
     /** Controls the order in which this {@link MeshBase} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number
@@ -475,15 +482,19 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         geometry,
         visible,
         renderOrder,
-        renderTarget,
+        outputTarget,
         texturesOptions,
         autoRender,
         ...meshParameters
       } = parameters
 
+      this.outputTarget = outputTarget ?? null
+
       // set default sample count
       meshParameters.sampleCount = !!meshParameters.sampleCount
         ? meshParameters.sampleCount
+        : this.outputTarget
+        ? this.outputTarget.renderPass.options.sampleCount
         : this.renderer && this.renderer.renderPass
         ? this.renderer.renderPass.options.sampleCount
         : 1
@@ -493,12 +504,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         label: label ?? 'Mesh ' + this.renderer.meshes.length,
         shaders,
         texturesOptions,
-        ...(renderTarget !== undefined && { renderTarget }),
+        ...(outputTarget !== undefined && { outputTarget }),
         ...(autoRender !== undefined && { autoRender }),
-        ...(meshParameters.useAsyncPipeline !== undefined && { useAsyncPipeline: meshParameters.useAsyncPipeline }),
+        ...meshParameters,
       }
-
-      this.renderTarget = renderTarget ?? null
 
       this.geometry = geometry
 
@@ -515,9 +524,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.computeGeometry()
 
       this.setMaterial({
-        label: this.options.label,
-        shaders: this.options.shaders,
-        ...{ ...meshParameters, verticesOrder: geometry.verticesOrder, topology: geometry.topology },
+        ...this.cleanupRenderMaterialParameters({ ...this.options }),
+        verticesOrder: geometry.verticesOrder,
+        topology: geometry.topology,
       } as RenderMaterialParams)
 
       this.addToScene()
@@ -554,7 +563,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     addToScene() {
       this.renderer.meshes.push(this as unknown as ProjectedMesh)
 
-      this.setRenderingOptionsForRenderPass(this.renderTarget ? this.renderTarget.renderPass : this.renderer.renderPass)
+      this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass)
 
       if (this.#autoRender) {
         this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
@@ -570,38 +579,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       }
 
       this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
-    }
-
-    /**
-     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
-     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
-     */
-    setRenderingOptionsForRenderPass(renderPass: RenderPass) {
-      // a Mesh render material rendering options MUST match the render pass descriptor used to draw it!
-      const renderingOptions = {
-        sampleCount: renderPass.options.sampleCount,
-        // color attachments
-        ...(renderPass.options.colorAttachments.length && {
-          targetFormat: renderPass.options.colorAttachments[0].targetFormat,
-          // multiple render targets?
-          ...(renderPass.options.colorAttachments.length > 1 && {
-            additionalTargets: renderPass.options.colorAttachments
-              .filter((c, i) => i > 0)
-              .map((colorAttachment) => {
-                return {
-                  format: colorAttachment.targetFormat,
-                }
-              }),
-          }),
-        }),
-        // depth
-        depth: renderPass.options.useDepth,
-        ...(renderPass.options.useDepth && {
-          depthFormat: renderPass.options.depthFormat,
-        }),
-      }
-
-      this.material?.setRenderingOptions(renderingOptions)
     }
 
     /**
@@ -646,17 +623,17 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /**
      * Assign or remove a {@link RenderTarget} to this Mesh
      * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+     * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
      */
-    setRenderTarget(renderTarget: RenderTarget | null) {
-      if (renderTarget && renderTarget.type !== 'RenderTarget') {
-        throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`)
+    setOutputTarget(outputTarget: RenderTarget | null) {
+      if (outputTarget && outputTarget.type !== 'RenderTarget') {
+        throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget}`)
         return
       }
 
       // ensure the mesh is in the correct scene stack
       this.removeFromScene()
-      this.renderTarget = renderTarget
+      this.outputTarget = outputTarget
       this.addToScene()
     }
 
@@ -773,6 +750,52 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /* MATERIAL */
+
+    /**
+     * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+     * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+     */
+    setRenderingOptionsForRenderPass(renderPass: RenderPass) {
+      // a Mesh render material rendering options MUST match the render pass descriptor used to draw it!
+      const renderingOptions = {
+        sampleCount: renderPass.options.sampleCount,
+        // color attachments
+        ...(renderPass.options.colorAttachments.length && {
+          targetFormat: renderPass.options.colorAttachments[0].targetFormat,
+          // multiple render targets?
+          ...(renderPass.options.colorAttachments.length > 1 && {
+            additionalTargets: renderPass.options.colorAttachments
+              .filter((c, i) => i > 0)
+              .map((colorAttachment) => {
+                return {
+                  format: colorAttachment.targetFormat,
+                }
+              }),
+          }),
+        }),
+        // depth
+        depth: renderPass.options.useDepth,
+        ...(renderPass.options.useDepth && {
+          depthFormat: renderPass.options.depthFormat,
+        }),
+      }
+
+      this.material?.setRenderingOptions(renderingOptions)
+    }
+
+    /**
+     * Hook used to clean up parameters before sending them to the {@link RenderMaterial}.
+     * @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
+     * @returns - cleaned parameters
+     */
+    cleanupRenderMaterialParameters(parameters: MeshBaseRenderParams): MeshBaseRenderParams {
+      // patch and set options, return mesh parameters
+      delete parameters.texturesOptions
+      delete parameters.outputTarget
+      delete parameters.autoRender
+
+      return parameters
+    }
 
     /**
      * Set a Mesh transparent property, then set its material

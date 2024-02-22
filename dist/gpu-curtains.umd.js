@@ -2098,7 +2098,7 @@
      * Get the {@link GPUBindGroupEntry#resource | bind group resource}
      */
     get resource() {
-      return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view" }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
+      return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view", dimension: this.options.viewDimension }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
     }
     /**
      * Set the {@link GPUBindGroupEntry#resource | bind group resource}
@@ -4089,7 +4089,8 @@
     access: "write",
     fromTexture: null,
     viewDimension: "2d",
-    sampleCount: 1
+    sampleCount: 1,
+    qualityRatio: 1
   };
   class RenderTexture {
     /**
@@ -4109,10 +4110,14 @@
       if (!this.options.format) {
         this.options.format = this.renderer.options.preferredFormat;
       }
-      this.size = this.options.fixedSize ?? {
-        width: Math.floor(this.renderer.displayBoundingRect.width),
-        height: Math.floor(this.renderer.displayBoundingRect.height),
-        depth: 1
+      this.size = this.options.fixedSize ? {
+        width: this.options.fixedSize.width * this.options.qualityRatio,
+        height: this.options.fixedSize.height * this.options.qualityRatio,
+        depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
+      } : {
+        width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
+        height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
+        depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
         __privateSet$4(this, _autoResize, false);
@@ -4156,7 +4161,7 @@
         label: this.options.label,
         format: this.options.format,
         size: [this.size.width, this.size.height, this.size.depth ?? 1],
-        dimensions: this.options.viewDimension === "1d" ? "1d" : this.options.viewDimension === "3d" ? "3d" : "2d",
+        dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
         usage: (
           // TODO let user chose?
@@ -4198,8 +4203,8 @@
         return;
       if (!size) {
         size = {
-          width: Math.floor(this.renderer.displayBoundingRect.width),
-          height: Math.floor(this.renderer.displayBoundingRect.height),
+          width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
+          height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
           depth: 1
         };
       }
@@ -6119,23 +6124,23 @@ struct VertexOutput {
           geometry,
           visible,
           renderOrder,
-          renderTarget,
+          outputTarget,
           texturesOptions,
           autoRender,
           ...meshParameters
         } = parameters;
-        meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
+        this.outputTarget = outputTarget ?? null;
+        meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
           label: label ?? "Mesh " + this.renderer.meshes.length,
           shaders,
           texturesOptions,
-          ...renderTarget !== void 0 && { renderTarget },
+          ...outputTarget !== void 0 && { outputTarget },
           ...autoRender !== void 0 && { autoRender },
-          ...meshParameters.useAsyncPipeline !== void 0 && { useAsyncPipeline: meshParameters.useAsyncPipeline }
+          ...meshParameters
         };
-        this.renderTarget = renderTarget ?? null;
         this.geometry = geometry;
         if (autoRender !== void 0) {
           __privateSet$2(this, _autoRender, autoRender);
@@ -6146,9 +6151,9 @@ struct VertexOutput {
         this.userData = {};
         this.computeGeometry();
         this.setMaterial({
-          label: this.options.label,
-          shaders: this.options.shaders,
-          ...{ ...meshParameters, verticesOrder: geometry.verticesOrder, topology: geometry.topology }
+          ...this.cleanupRenderMaterialParameters({ ...this.options }),
+          verticesOrder: geometry.verticesOrder,
+          topology: geometry.topology
         });
         this.addToScene();
       }
@@ -6178,7 +6183,7 @@ struct VertexOutput {
        */
       addToScene() {
         this.renderer.meshes.push(this);
-        this.setRenderingOptionsForRenderPass(this.renderTarget ? this.renderTarget.renderPass : this.renderer.renderPass);
+        this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
         if (__privateGet$3(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
         }
@@ -6191,33 +6196,6 @@ struct VertexOutput {
           this.renderer.scene.removeMesh(this);
         }
         this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
-      }
-      /**
-       * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
-       * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
-       */
-      setRenderingOptionsForRenderPass(renderPass) {
-        const renderingOptions = {
-          sampleCount: renderPass.options.sampleCount,
-          // color attachments
-          ...renderPass.options.colorAttachments.length && {
-            targetFormat: renderPass.options.colorAttachments[0].targetFormat,
-            // multiple render targets?
-            ...renderPass.options.colorAttachments.length > 1 && {
-              additionalTargets: renderPass.options.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
-                return {
-                  format: colorAttachment.targetFormat
-                };
-              })
-            }
-          },
-          // depth
-          depth: renderPass.options.useDepth,
-          ...renderPass.options.useDepth && {
-            depthFormat: renderPass.options.depthFormat
-          }
-        };
-        this.material?.setRenderingOptions(renderingOptions);
       }
       /**
        * Set a new {@link Renderer} for this Mesh
@@ -6247,15 +6225,15 @@ struct VertexOutput {
       /**
        * Assign or remove a {@link RenderTarget} to this Mesh
        * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-       * @param renderTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
+       * @param outputTarget - the RenderTarget to assign or null if we want to remove the current RenderTarget
        */
-      setRenderTarget(renderTarget) {
-        if (renderTarget && renderTarget.type !== "RenderTarget") {
-          throwWarning(`${this.options.label ?? this.type}: renderTarget is not a RenderTarget: ${renderTarget}`);
+      setOutputTarget(outputTarget) {
+        if (outputTarget && outputTarget.type !== "RenderTarget") {
+          throwWarning(`${this.options.label ?? this.type}: outputTarget is not a RenderTarget: ${outputTarget}`);
           return;
         }
         this.removeFromScene();
-        this.renderTarget = renderTarget;
+        this.outputTarget = outputTarget;
         this.addToScene();
       }
       /**
@@ -6353,6 +6331,44 @@ struct VertexOutput {
         }
       }
       /* MATERIAL */
+      /**
+       * Set or update the {@link RenderMaterial} {@link types/Materials.RenderMaterialRenderingOptions | rendering options} to match the {@link RenderPass#descriptor | RenderPass descriptor} used to draw this Mesh.
+       * @param renderPass - {@link RenderPass | RenderPass} used to draw this Mesh, default to the {@link core/renderers/GPURenderer.GPURenderer#renderPass | renderer renderPass}.
+       */
+      setRenderingOptionsForRenderPass(renderPass) {
+        const renderingOptions = {
+          sampleCount: renderPass.options.sampleCount,
+          // color attachments
+          ...renderPass.options.colorAttachments.length && {
+            targetFormat: renderPass.options.colorAttachments[0].targetFormat,
+            // multiple render targets?
+            ...renderPass.options.colorAttachments.length > 1 && {
+              additionalTargets: renderPass.options.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
+                return {
+                  format: colorAttachment.targetFormat
+                };
+              })
+            }
+          },
+          // depth
+          depth: renderPass.options.useDepth,
+          ...renderPass.options.useDepth && {
+            depthFormat: renderPass.options.depthFormat
+          }
+        };
+        this.material?.setRenderingOptions(renderingOptions);
+      }
+      /**
+       * Hook used to clean up parameters before sending them to the {@link RenderMaterial}.
+       * @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
+       * @returns - cleaned parameters
+       */
+      cleanupRenderMaterialParameters(parameters) {
+        delete parameters.texturesOptions;
+        delete parameters.outputTarget;
+        delete parameters.autoRender;
+        return parameters;
+      }
       /**
        * Set a Mesh transparent property, then set its material
        * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
@@ -6982,11 +6998,21 @@ struct VSOutput {
       }
       /* MATERIAL */
       /**
+       * Hook used to clean up parameters before sending them to the material.
+       * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+       * @returns - cleaned parameters
+       */
+      cleanupRenderMaterialParameters(parameters) {
+        delete parameters.frustumCulled;
+        delete parameters.DOMFrustumMargins;
+        super.cleanupRenderMaterialParameters(parameters);
+        return parameters;
+      }
+      /**
        * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
-       * @param meshParameters - {@link ProjectedRenderMaterialParams | RenderMaterial parameters}
+       * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
        */
       setMaterial(meshParameters) {
-        const { frustumCulled, DOMFrustumMargins, ...materialParameters } = meshParameters;
         const matricesUniforms = {
           label: "Matrices",
           struct: {
@@ -7013,10 +7039,10 @@ struct VSOutput {
             }
           }
         };
-        if (!materialParameters.uniforms)
-          materialParameters.uniforms = {};
-        materialParameters.uniforms.matrices = matricesUniforms;
-        super.setMaterial(materialParameters);
+        if (!meshParameters.uniforms)
+          meshParameters.uniforms = {};
+        meshParameters.uniforms.matrices = matricesUniforms;
+        super.setMaterial(meshParameters);
       }
       /* SIZE & TRANSFORMS */
       /**
@@ -8067,33 +8093,60 @@ struct VSOutput {
       }
       parameters.depth = false;
       super(renderer, parameters);
+      if (parameters.inputTarget) {
+        this.setInputTarget(parameters.inputTarget);
+      }
+      if (this.outputTarget) {
+        this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
+      }
       this.type = "ShaderPass";
       this.createRenderTexture({
         label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
         name: "renderTexture",
-        fromTexture: this.renderTarget ? this.renderTarget.renderTexture : null
+        fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+        ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
       });
     }
     /**
-     * Get our main {@link RenderTexture}, the one that contains our post processed content
+     * Hook used to clean up parameters before sending them to the material.
+     * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+     * @returns - cleaned parameters
+     */
+    cleanupRenderMaterialParameters(parameters) {
+      delete parameters.copyOutputToRenderTexture;
+      delete parameters.inputTarget;
+      super.cleanupRenderMaterialParameters(parameters);
+      return parameters;
+    }
+    /**
+     * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
      * @readonly
      */
     get renderTexture() {
       return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
     }
     /**
-     * Assign or remove a {@link RenderTarget} to this {@link ShaderPass}
+     * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
+     *
      * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
      * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
-     * @param renderTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+     * @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
      */
-    setRenderTarget(renderTarget) {
-      super.setRenderTarget(renderTarget);
-      if (renderTarget) {
-        this.renderTexture.copy(this.renderTarget.renderTexture);
-      } else {
-        this.renderTexture.options.fromTexture = null;
-        this.renderTexture.createTexture();
+    setInputTarget(inputTarget) {
+      if (inputTarget && inputTarget.type !== "RenderTarget") {
+        throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`);
+        return;
+      }
+      this.removeFromScene();
+      this.inputTarget = inputTarget;
+      this.addToScene();
+      if (this.renderTexture) {
+        if (inputTarget) {
+          this.renderTexture.copy(this.inputTarget.renderTexture);
+        } else {
+          this.renderTexture.options.fromTexture = null;
+          this.renderTexture.createTexture();
+        }
       }
     }
     /**
@@ -8101,6 +8154,9 @@ struct VSOutput {
      */
     addToScene() {
       this.renderer.shaderPasses.push(this);
+      this.setRenderingOptionsForRenderPass(
+        this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
+      );
       if (this.autoRender) {
         this.renderer.scene.addShaderPass(this);
       }
@@ -8109,8 +8165,8 @@ struct VSOutput {
      * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
-      if (this.renderTarget) {
-        this.renderTarget.destroy();
+      if (this.outputTarget) {
+        this.outputTarget.destroy();
       }
       if (this.autoRender) {
         this.renderer.scene.removeShaderPass(this);
@@ -8128,6 +8184,7 @@ struct VSOutput {
     constructor(renderer, {
       label = "Render Pass",
       sampleCount = 4,
+      qualityRatio = 1,
       // color
       useColorAttachments = true,
       shouldUpdateView = true,
@@ -8167,6 +8224,7 @@ struct VSOutput {
       this.options = {
         label,
         sampleCount,
+        qualityRatio,
         // color
         useColorAttachments,
         shouldUpdateView,
@@ -8188,7 +8246,7 @@ struct VSOutput {
         this.createDepthTexture();
       }
       this.viewTextures = [];
-      if (this.options.useColorAttachments) {
+      if (this.options.useColorAttachments && (!this.options.shouldUpdateView || this.options.sampleCount > 1)) {
         this.createViewTextures();
       }
       this.setRenderPassDescriptor();
@@ -8206,7 +8264,8 @@ struct VSOutput {
           name: "depthTexture",
           usage: "depth",
           format: this.options.depthFormat,
-          sampleCount: this.options.sampleCount
+          sampleCount: this.options.sampleCount,
+          qualityRatio: this.options.qualityRatio
         });
       }
     }
@@ -8220,7 +8279,8 @@ struct VSOutput {
             label: `${this.options.label} colorAttachment[${index}] view texture`,
             name: `colorAttachment${index}ViewTexture`,
             format: colorAttachment.targetFormat,
-            sampleCount: this.options.sampleCount
+            sampleCount: this.options.sampleCount,
+            qualityRatio: this.options.qualityRatio
           })
         );
       });
@@ -8234,8 +8294,8 @@ struct VSOutput {
         colorAttachments: this.options.colorAttachments.map((colorAttachment, index) => {
           return {
             // view
-            view: this.viewTextures[index].texture.createView({
-              label: this.viewTextures[index].texture.label + " view"
+            view: this.viewTextures[index]?.texture.createView({
+              label: this.viewTextures[index]?.texture.label + " view"
             }),
             // clear values
             clearValue: colorAttachment.clearValue,
@@ -8320,16 +8380,11 @@ struct VSOutput {
     }
     /**
      * Set the current {@link descriptor} texture {@link GPURenderPassColorAttachment#view | view} and {@link GPURenderPassColorAttachment#resolveTarget | resolveTarget} (depending on whether we're using multisampling)
-     * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null
-     * @returns - the {@link GPUTexture | current render texture}
+     * @param renderTexture - {@link GPUTexture} to use, or the {@link core/renderers/GPURenderer.GPURenderer#context | context} {@link GPUTexture | current texture} if null.
+     * @returns - the {@link GPUTexture | texture} to render to.
      */
     updateView(renderTexture = null) {
       if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
-        if (renderTexture && this.options.sampleCount > 1) {
-          this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
-            label: renderTexture.label + " resolve target view"
-          });
-        }
         return renderTexture;
       }
       if (!renderTexture) {
@@ -8386,7 +8441,7 @@ struct VSOutput {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
      * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
      */
-    constructor(renderer, parameters) {
+    constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
       __privateAdd$2(this, _autoRender, true);
       renderer = renderer && renderer.renderer || renderer;
@@ -8416,7 +8471,8 @@ struct VSOutput {
         this.renderTexture = new RenderTexture(this.renderer, {
           label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
           name: "renderTexture",
-          format: this.options.targetFormat
+          format: this.options.targetFormat,
+          ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
         });
       }
       this.addToScene();
@@ -8457,14 +8513,14 @@ struct VSOutput {
      */
     destroy() {
       this.renderer.meshes.forEach((mesh) => {
-        if (mesh.renderTarget && mesh.renderTarget.uuid === this.uuid) {
-          mesh.setRenderTarget(null);
+        if (mesh.outputTarget && mesh.outputTarget.uuid === this.uuid) {
+          mesh.setOutputTarget(null);
         }
       });
       this.renderer.shaderPasses.forEach((shaderPass) => {
-        if (shaderPass.renderTarget && shaderPass.renderTarget.uuid === this.uuid) {
-          shaderPass.renderTarget = null;
-          shaderPass.setRenderTarget(null);
+        if (shaderPass.outputTarget && shaderPass.outputTarget.uuid === this.uuid) {
+          shaderPass.outputTarget = null;
+          shaderPass.setOutputTarget(null);
         }
       });
       this.removeFromScene();
@@ -8483,7 +8539,7 @@ struct VSOutput {
     constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
-      parameters.renderTarget = new RenderTarget(renderer, {
+      parameters.outputTarget = new RenderTarget(renderer, {
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
         useDepth: false,
         ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
@@ -8519,8 +8575,8 @@ struct VSOutput {
      * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
-      if (this.renderTarget) {
-        this.renderTarget.destroy();
+      if (this.outputTarget) {
+        this.outputTarget.destroy();
       }
       if (this.autoRender) {
         this.renderer.scene.removePingPongPlane(this);
@@ -9143,7 +9199,7 @@ struct VSOutput {
       this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
     }
     /**
-     * Add a {@link RenderTarget} to our scene {@link renderPassEntries} renderTarget array.
+     * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
      * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
      * @param renderTarget - {@link RenderTarget} to add
      */
@@ -9169,7 +9225,7 @@ struct VSOutput {
         });
     }
     /**
-     * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} renderTarget array.
+     * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
      * @param renderTarget - {@link RenderTarget} to add
      */
     removeRenderTarget(renderTarget) {
@@ -9178,13 +9234,13 @@ struct VSOutput {
       );
     }
     /**
-     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} renderTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
      * @param mesh - Mesh to check
      * @returns - the corresponding render pass entry {@link Stack}
      */
     getMeshProjectionStack(mesh) {
-      const renderPassEntry = mesh.renderTarget ? this.renderPassEntries.renderTarget.find(
-        (passEntry) => passEntry.renderPass.uuid === mesh.renderTarget.renderPass.uuid
+      const renderPassEntry = mesh.outputTarget ? this.renderPassEntries.renderTarget.find(
+        (passEntry) => passEntry.renderPass.uuid === mesh.outputTarget.renderPass.uuid
       ) : this.renderPassEntries.screen[0];
       const { stack } = renderPassEntry;
       return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
@@ -9235,7 +9291,7 @@ struct VSOutput {
      * @param shaderPass - {@link ShaderPass} to add
      */
     addShaderPass(shaderPass) {
-      const onBeforeRenderPass = shaderPass.renderTarget ? null : (commandEncoder, swapChainTexture) => {
+      const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
         if (shaderPass.renderTexture && swapChainTexture) {
           commandEncoder.copyTextureToTexture(
             {
@@ -9249,23 +9305,24 @@ struct VSOutput {
         }
         this.renderer.postProcessingPass.setLoadOp("clear");
       };
-      const onAfterRenderPass = shaderPass.renderTarget ? (commandEncoder, swapChainTexture) => {
-        if (shaderPass.renderTarget && shaderPass.renderTarget.renderTexture && swapChainTexture) {
+      const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
+        if (shaderPass.renderTexture && swapChainTexture) {
           commandEncoder.copyTextureToTexture(
             {
               texture: swapChainTexture
             },
             {
-              texture: shaderPass.renderTarget.renderTexture.texture
+              texture: shaderPass.renderTexture.texture
             },
-            [shaderPass.renderTarget.renderTexture.size.width, shaderPass.renderTarget.renderTexture.size.height]
+            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
           );
         }
       } : null;
       const shaderPassEntry = {
-        renderPass: this.renderer.postProcessingPass,
-        // render directly to screen
-        renderTexture: null,
+        // use output target or postprocessing render pass
+        renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
+        // render to output target renderTexture or directly to screen
+        renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
         onBeforeRenderPass,
         onAfterRenderPass,
         element: shaderPass,
@@ -9274,10 +9331,10 @@ struct VSOutput {
       };
       this.renderPassEntries.screen.push(shaderPassEntry);
       this.renderPassEntries.screen.sort((a, b) => {
-        const isPostProA = a.element && !a.element.renderTarget;
+        const isPostProA = a.element && !a.element.outputTarget;
         const renderOrderA = a.element ? a.element.renderOrder : 0;
         const indexA = a.element ? a.element.index : 0;
-        const isPostProB = b.element && !b.element.renderTarget;
+        const isPostProB = b.element && !b.element.outputTarget;
         const renderOrderB = b.element ? b.element.renderOrder : 0;
         const indexB = b.element ? b.element.index : 0;
         if (isPostProA && !isPostProB) {
@@ -9308,8 +9365,8 @@ struct VSOutput {
      */
     addPingPongPlane(pingPongPlane) {
       this.renderPassEntries.pingPong.push({
-        renderPass: pingPongPlane.renderTarget.renderPass,
-        renderTexture: pingPongPlane.renderTarget.renderTexture,
+        renderPass: pingPongPlane.outputTarget.renderPass,
+        renderTexture: pingPongPlane.outputTarget.renderTexture,
         onBeforeRenderPass: null,
         onAfterRenderPass: (commandEncoder, swapChainTexture) => {
           commandEncoder.copyTextureToTexture(
@@ -9350,7 +9407,7 @@ struct VSOutput {
       } else if (object instanceof ShaderPass) {
         return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
       } else {
-        const entryType = object.renderTarget ? "renderTarget" : "screen";
+        const entryType = object.outputTarget ? "renderTarget" : "screen";
         return this.renderPassEntries[entryType].find((entry) => {
           return [
             ...entry.stack.unProjected.opaque,
@@ -9773,7 +9830,7 @@ struct VSOutput {
     }
     /* PIPELINES, SCENE & MAIN RENDER PASS */
     /**
-     * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
+     * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
      */
     setMainRenderPasses() {
       this.renderPass = new RenderPass(this, {
@@ -9784,9 +9841,9 @@ struct VSOutput {
       this.postProcessingPass = new RenderPass(this, {
         label: "Post processing render pass",
         targetFormat: this.options.preferredFormat,
+        // no need to handle depth or perform MSAA on a fullscreen quad
         useDepth: false,
         sampleCount: 1
-        // no need to perform MSAA on a fullscreen quad
       });
     }
     /**
@@ -11413,18 +11470,22 @@ struct VSOutput {
       scene.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
         if (!scene.getRenderPassEntryLength(renderPassEntry))
           return;
-        const destination = !renderPassEntry.renderPass.options.useColorAttachments ? void 0 : renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : renderPassEntry.renderPass.options.colorAttachments.length > 1 ? "Multiple render target" : "Context current texture";
+        const destination = !renderPassEntry.renderPass.options.useColorAttachments ? void 0 : renderPassEntry.renderPass.options.colorAttachments.length === 0 && renderPassEntry.renderPass.options.useDepth ? `${renderPassEntry.renderTexture.options.label} depth pass` : renderPassEntry.renderPass.options.colorAttachments.length > 1 ? `${renderPassEntry.renderTexture.options.label} multiple targets` : renderPassEntry.renderTexture ? `${renderPassEntry.renderTexture.options.label}` : "Context current texture";
         let descriptor = renderPassEntry.renderPass.options.label;
         const operations = {
           loadOp: renderPassEntry.renderPass.options.useColorAttachments ? renderPassEntryType === "screen" && passDrawnCount > 0 ? "load" : renderPassEntry.renderPass.options.loadOp : void 0,
-          depthLoadOp: void 0
+          depthLoadOp: void 0,
+          sampleCount: renderPassEntry.renderPass.options.sampleCount,
+          ...renderPassEntry.renderPass.options.qualityRatio !== 1 && {
+            qualityRatio: renderPassEntry.renderPass.options.qualityRatio
+          }
         };
         if (renderPassEntry.renderPass.options.useDepth) {
           operations.depthLoadOp = renderPassEntry.renderPass.options.depthLoadOp;
         }
         passDrawnCount++;
         if (renderPassEntry.element) {
-          if (renderPassEntry.element.type === "ShaderPass" && !renderPassEntry.element.renderTarget) {
+          if (renderPassEntry.element.type === "ShaderPass" && !(renderPassEntry.element.inputTarget || renderPassEntry.element.outputTarget)) {
             renderCommands.push({
               command: `Copy texture to texture`,
               source: destination,
@@ -11439,11 +11500,11 @@ struct VSOutput {
             destination,
             descriptor
           });
-          if (renderPassEntry.element.type === "ShaderPass" && renderPassEntry.element.renderTarget) {
+          if (renderPassEntry.element.type === "ShaderPass" && !renderPassEntry.element.outputTarget && renderPassEntry.element.options.copyOutputToRenderTexture) {
             renderCommands.push({
               command: `Copy texture to texture`,
               source: destination,
-              destination: `${renderPassEntry.element.renderTarget.options.label} renderTexture`
+              destination: `${renderPassEntry.element.options.label} renderTexture`
             });
           } else if (renderPassEntry.element.type === "PingPongPlane") {
             renderCommands.push({

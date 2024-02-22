@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane, Sampler, Vec2 } from '../../dist/gpu-curtains.mjs'
+import { GPUCurtains, Plane, Sampler, Vec2 } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   const buildPlaneHTMLElement = (index) => {
@@ -28,7 +28,8 @@ window.addEventListener('load', async () => {
   // get our planes elements
   let planeElements = document.querySelectorAll('.plane')
 
-  // set up our WebGL context and append the canvas to our wrapper
+  // set our main GPUCurtains instance it will handle everything we need
+  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
@@ -97,17 +98,6 @@ window.addEventListener('load', async () => {
       right: 0,
       bottom: 200,
       left: 0,
-    },
-    uniforms: {
-      scroll: {
-        label: 'Scroll',
-        struct: {
-          strength: {
-            type: 'f32',
-            value: 0,
-          },
-        },
-      },
     },
     samplers: [
       // Use mipmap nearest filter

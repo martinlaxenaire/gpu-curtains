@@ -39,10 +39,13 @@ export const logSceneCommands = (renderer: Renderer) => {
 
       const destination = !renderPassEntry.renderPass.options.useColorAttachments
         ? undefined
+        : renderPassEntry.renderPass.options.colorAttachments.length === 0 &&
+          renderPassEntry.renderPass.options.useDepth
+        ? `${renderPassEntry.renderTexture.options.label} depth pass`
+        : renderPassEntry.renderPass.options.colorAttachments.length > 1
+        ? `${renderPassEntry.renderTexture.options.label} multiple targets`
         : renderPassEntry.renderTexture
         ? `${renderPassEntry.renderTexture.options.label}`
-        : renderPassEntry.renderPass.options.colorAttachments.length > 1
-        ? 'Multiple render target'
         : 'Context current texture'
 
       let descriptor = renderPassEntry.renderPass.options.label
@@ -54,6 +57,10 @@ export const logSceneCommands = (renderer: Renderer) => {
             : renderPassEntry.renderPass.options.loadOp
           : undefined,
         depthLoadOp: undefined,
+        sampleCount: renderPassEntry.renderPass.options.sampleCount,
+        ...(renderPassEntry.renderPass.options.qualityRatio !== 1 && {
+          qualityRatio: renderPassEntry.renderPass.options.qualityRatio,
+        }),
       }
 
       if (renderPassEntry.renderPass.options.useDepth) {
@@ -63,7 +70,10 @@ export const logSceneCommands = (renderer: Renderer) => {
       passDrawnCount++
 
       if (renderPassEntry.element) {
-        if (renderPassEntry.element.type === 'ShaderPass' && !renderPassEntry.element.renderTarget) {
+        if (
+          renderPassEntry.element.type === 'ShaderPass' &&
+          !(renderPassEntry.element.inputTarget || renderPassEntry.element.outputTarget)
+        ) {
           renderCommands.push({
             command: `Copy texture to texture`,
             source: destination,
@@ -82,11 +92,15 @@ export const logSceneCommands = (renderer: Renderer) => {
           descriptor,
         })
 
-        if (renderPassEntry.element.type === 'ShaderPass' && renderPassEntry.element.renderTarget) {
+        if (
+          renderPassEntry.element.type === 'ShaderPass' &&
+          !renderPassEntry.element.outputTarget &&
+          renderPassEntry.element.options.copyOutputToRenderTexture
+        ) {
           renderCommands.push({
             command: `Copy texture to texture`,
             source: destination,
-            destination: `${renderPassEntry.element.renderTarget.options.label} renderTexture`,
+            destination: `${renderPassEntry.element.options.label} renderTexture`,
           })
         } else if (renderPassEntry.element.type === 'PingPongPlane') {
           renderCommands.push({

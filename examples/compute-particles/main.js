@@ -1,4 +1,4 @@
-import { BindGroup, ComputePass, Geometry, GPUCurtains, Mesh, Vec3 } from '../../dist/gpu-curtains.mjs'
+import { BindGroup, ComputePass, Geometry, GPUCurtains, Mesh, Vec3 } from '../../dist/esm/index.mjs'
 
 // inspired by https://barradeau.com/blog/?p=621
 // and https://www.clicktorelease.com/code/polygon-shredder/
@@ -202,7 +202,8 @@ window.addEventListener('load', async () => {
   //const nbParticles = 500_000
   const systemSize = new Vec3(150)
 
-  // set up our WebGL context and append the canvas to our wrapper
+  // set our main GPUCurtains instance it will handle everything we need
+  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance

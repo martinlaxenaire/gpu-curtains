@@ -1,6 +1,13 @@
 import { CameraRenderer, isCameraRenderer } from '../../renderers/utils'
 import { DOMFrustum } from '../../DOM/DOMFrustum'
-import { MeshBaseClass, MeshBaseMixin, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin'
+import {
+  MeshBaseClass,
+  MeshBaseMixin,
+  MeshBaseOptions,
+  MeshBaseParams,
+  MeshBaseRenderParams,
+  MixinConstructor,
+} from './MeshBaseMixin'
 import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement'
 import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
@@ -8,6 +15,7 @@ import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
 import { DOMObject3D } from '../../../curtains/objects3D/DOMObject3D'
 import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl'
 import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl'
+import { ShaderPassParams } from '../../renderPasses/ShaderPass'
 
 /**
  * Base parameters used to create a ProjectedMesh
@@ -286,12 +294,25 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     /* MATERIAL */
 
     /**
-     * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
-     * @param meshParameters - {@link ProjectedRenderMaterialParams | RenderMaterial parameters}
+     * Hook used to clean up parameters before sending them to the material.
+     * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+     * @returns - cleaned parameters
      */
-    setMaterial(meshParameters: ProjectedRenderMaterialParams) {
-      const { frustumCulled, DOMFrustumMargins, ...materialParameters } = meshParameters
+    cleanupRenderMaterialParameters(parameters: ProjectedRenderMaterialParams): MeshBaseRenderParams {
+      // patch mesh parameters
+      delete parameters.frustumCulled
+      delete parameters.DOMFrustumMargins
 
+      super.cleanupRenderMaterialParameters(parameters)
+
+      return parameters
+    }
+
+    /**
+     * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
+     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+     */
+    setMaterial(meshParameters: RenderMaterialParams) {
       // add matrices uniforms
       const matricesUniforms = {
         label: 'Matrices',
@@ -320,10 +341,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         },
       }
 
-      if (!materialParameters.uniforms) materialParameters.uniforms = {}
-      materialParameters.uniforms.matrices = matricesUniforms
+      if (!meshParameters.uniforms) meshParameters.uniforms = {}
+      meshParameters.uniforms.matrices = matricesUniforms
 
-      super.setMaterial(materialParameters)
+      super.setMaterial(meshParameters)
     }
 
     /* SIZE & TRANSFORMS */

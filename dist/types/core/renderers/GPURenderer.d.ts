@@ -196,7 +196,7 @@ export declare class GPURenderer {
      */
     restoreContext(): void;
     /**
-     * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen
+     * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
      */
     setMainRenderPasses(): void;
     /**

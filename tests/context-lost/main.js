@@ -1,9 +1,10 @@
 // Goal of this test is checking if device lost/restoration works
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/gpu-curtains.mjs'
+  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { BoxGeometry, GPUCurtains, Mesh, Plane, ShaderPass } = await import(/* @vite-ignore */ path)
 
-  // set up our WebGL context and append the canvas to our wrapper
+  // set our main GPUCurtains instance it will handle everything we need
+  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     watchScroll: false, // no need to listen for the scroll in this example
@@ -33,36 +34,36 @@ window.addEventListener('load', async () => {
 
   const vertexShader = /* wgsl */ `
     struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-      };
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
 
-      @vertex fn main(
-        attributes: Attributes,
-      ) -> VSOutput {
-        var vsOutput: VSOutput;
+    @vertex fn main(
+      attributes: Attributes,
+    ) -> VSOutput {
+      var vsOutput: VSOutput;
 
-       
-        vsOutput.position = getOutputPosition(attributes.position);
+     
+      vsOutput.position = getOutputPosition(attributes.position);
 
-        // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
-        vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
+      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
 
-        return vsOutput;
-      }
-`
+      return vsOutput;
+    }
+  `
 
   const fragmentShader = /* wgsl */ `
     struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-      };
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
 
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var texture: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var texture: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
 
-        return texture;
-      }
+      return texture;
+    }
   `
 
   const plane = new Plane(gpuCurtains, '.plane', {
