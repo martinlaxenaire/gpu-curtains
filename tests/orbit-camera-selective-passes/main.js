@@ -496,7 +496,7 @@ window.addEventListener('load', async () => {
       
       var dither: f32 = select(0.0, color.a, getValue( grayscale, fsInput.uv * params.resolution ));
       
-      return vec4(vec3(dither) * color.rgb, color.a * dither);
+      return vec4(vec3(dither) * color.rgb, dither);
     }
   `
 
