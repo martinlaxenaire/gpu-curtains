@@ -44,7 +44,7 @@ class TextureBinding extends Binding {
    * Get the {@link GPUBindGroupEntry#resource | bind group resource}
    */
   get resource() {
-    return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view" }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
+    return this.texture instanceof GPUTexture ? this.texture.createView({ label: this.options.label + " view", dimension: this.options.viewDimension }) : this.texture instanceof GPUExternalTexture ? this.texture : null;
   }
   /**
    * Set the {@link GPUBindGroupEntry#resource | bind group resource}

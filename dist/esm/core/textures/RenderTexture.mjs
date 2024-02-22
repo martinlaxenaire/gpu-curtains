@@ -52,11 +52,11 @@ class RenderTexture {
     this.size = this.options.fixedSize ? {
       width: this.options.fixedSize.width * this.options.qualityRatio,
       height: this.options.fixedSize.height * this.options.qualityRatio,
-      depth: this.options.fixedSize.depth
+      depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
     } : {
       width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
       height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
-      depth: 1
+      depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
     };
     if (this.options.fixedSize) {
       __privateSet(this, _autoResize, false);
@@ -100,7 +100,7 @@ class RenderTexture {
       label: this.options.label,
       format: this.options.format,
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
-      dimensions: this.options.viewDimension === "1d" ? "1d" : this.options.viewDimension === "3d" ? "3d" : "2d",
+      dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
       usage: (
         // TODO let user chose?

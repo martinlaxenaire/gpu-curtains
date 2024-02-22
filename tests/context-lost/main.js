@@ -34,36 +34,36 @@ window.addEventListener('load', async () => {
 
   const vertexShader = /* wgsl */ `
     struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-      };
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
 
-      @vertex fn main(
-        attributes: Attributes,
-      ) -> VSOutput {
-        var vsOutput: VSOutput;
+    @vertex fn main(
+      attributes: Attributes,
+    ) -> VSOutput {
+      var vsOutput: VSOutput;
 
-       
-        vsOutput.position = getOutputPosition(attributes.position);
+     
+      vsOutput.position = getOutputPosition(attributes.position);
 
-        // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
-        vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
+      // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
+      vsOutput.uv = getUVCover(attributes.uv, planeTextureMatrix);
 
-        return vsOutput;
-      }
-`
+      return vsOutput;
+    }
+  `
 
   const fragmentShader = /* wgsl */ `
     struct VSOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-      };
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+    };
 
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var texture: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+      var texture: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
 
-        return texture;
-      }
+      return texture;
+    }
   `
 
   const plane = new Plane(gpuCurtains, '.plane', {
