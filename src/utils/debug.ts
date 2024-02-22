@@ -39,10 +39,13 @@ export const logSceneCommands = (renderer: Renderer) => {
 
       const destination = !renderPassEntry.renderPass.options.useColorAttachments
         ? undefined
+        : renderPassEntry.renderPass.options.colorAttachments.length === 0 &&
+          renderPassEntry.renderPass.options.useDepth
+        ? `${renderPassEntry.renderTexture.options.label} depth pass`
+        : renderPassEntry.renderPass.options.colorAttachments.length > 1
+        ? `${renderPassEntry.renderTexture.options.label} multiple targets`
         : renderPassEntry.renderTexture
         ? `${renderPassEntry.renderTexture.options.label}`
-        : renderPassEntry.renderPass.options.colorAttachments.length > 1
-        ? 'Multiple render target'
         : 'Context current texture'
 
       let descriptor = renderPassEntry.renderPass.options.label
@@ -55,6 +58,9 @@ export const logSceneCommands = (renderer: Renderer) => {
           : undefined,
         depthLoadOp: undefined,
         sampleCount: renderPassEntry.renderPass.options.sampleCount,
+        ...(renderPassEntry.renderPass.options.qualityRatio !== 1 && {
+          qualityRatio: renderPassEntry.renderPass.options.qualityRatio,
+        }),
       }
 
       if (renderPassEntry.renderPass.options.useDepth) {

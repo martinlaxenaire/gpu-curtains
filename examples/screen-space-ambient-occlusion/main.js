@@ -12,6 +12,7 @@ import {
   Vec3,
   Mat4,
   RenderTexture,
+  logSceneCommands,
 } from '../../dist/esm/index.mjs'
 
 // Screen Space Ambient Occlusion
@@ -77,7 +78,7 @@ window.addEventListener('load', async () => {
   // ------------------------------------
 
   // MSAA might be too intensive with deferred rendering
-  const sampleCount = 4
+  const sampleCount = 1
 
   const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
@@ -842,4 +843,7 @@ window.addEventListener('load', async () => {
     toggleSSAOButton.classList.toggle('active')
     ssaoPass.uniforms.params.displaySSAOResult.value = ssaoPass.uniforms.params.displaySSAOResult.value === 0 ? 1 : 0
   })
+
+  // log the scene commands for a better understanding of what's going on
+  logSceneCommands(gpuCameraRenderer)
 })
