@@ -7,6 +7,9 @@ window.addEventListener('load', async () => {
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    renderPass: {
+      sampleCount: 1, // no need for MSAA here!
+    },
   })
 
   gpuCurtains.onError(() => {
