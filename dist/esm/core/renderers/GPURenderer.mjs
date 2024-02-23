@@ -2,7 +2,6 @@ import { DOMElement } from '../DOM/DOMElement.mjs';
 import { Scene } from '../scenes/Scene.mjs';
 import { RenderPass } from '../renderPasses/RenderPass.mjs';
 import { generateUUID, throwWarning } from '../../utils/utils.mjs';
-import { ComputePass } from '../computePasses/ComputePass.mjs';
 import { TasksQueueManager } from '../../utils/TasksQueueManager.mjs';
 
 class GPURenderer {
@@ -665,7 +664,7 @@ class GPURenderer {
     !this.production && commandEncoder.pushDebugGroup("Render once command encoder");
     this.pipelineManager.resetCurrentPipeline();
     objects.forEach((object) => {
-      if (object instanceof ComputePass) {
+      if (object.type === "ComputePass") {
         this.renderSingleComputePass(commandEncoder, object);
       } else {
         this.renderSingleMesh(commandEncoder, object);

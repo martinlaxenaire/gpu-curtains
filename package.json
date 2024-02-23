@@ -43,6 +43,7 @@
   "license": "MIT",
   "dependencies": {},
   "type": "module",
+  "sideEffects": false,
   "files": [
     "dist"
   ],
