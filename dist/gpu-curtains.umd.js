@@ -11596,4 +11596,3 @@ struct VSOutput {
   exports.logSceneCommands = logSceneCommands;
 
 }));
-//# sourceMappingURL=gpu-curtains.umd.js.map
