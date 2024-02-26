@@ -300,4 +300,3 @@ _DOMObjectWorldPosition = new WeakMap();
 _DOMObjectWorldScale = new WeakMap();
 
 export { DOMObject3D };
-//# sourceMappingURL=DOMObject3D.mjs.map

@@ -81,4 +81,3 @@ class Plane extends DOMMesh {
 }
 
 export { Plane };
-//# sourceMappingURL=Plane.mjs.map

@@ -76,4 +76,3 @@ class TextureBinding extends Binding {
 }
 
 export { TextureBinding };
-//# sourceMappingURL=TextureBinding.mjs.map

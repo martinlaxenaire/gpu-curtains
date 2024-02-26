@@ -134,4 +134,3 @@ const generateMips = /* @__PURE__ */ (() => {
 })();
 
 export { generateMips, isCameraRenderer, isCurtainsRenderer, isRenderer };
-//# sourceMappingURL=utils.mjs.map

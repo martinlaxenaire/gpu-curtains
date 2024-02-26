@@ -916,10 +916,10 @@ export class GPURenderer {
     this.pipelineManager.resetCurrentPipeline()
 
     objects.forEach((object) => {
-      if (object instanceof ComputePass) {
-        this.renderSingleComputePass(commandEncoder, object)
+      if (object.type === 'ComputePass') {
+        this.renderSingleComputePass(commandEncoder, object as ComputePass)
       } else {
-        this.renderSingleMesh(commandEncoder, object)
+        this.renderSingleMesh(commandEncoder, object as RenderedMesh)
       }
     })
 

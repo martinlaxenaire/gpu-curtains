@@ -90,4 +90,3 @@ class SphereGeometry extends IndexedGeometry {
 }
 
 export { SphereGeometry };
-//# sourceMappingURL=SphereGeometry.mjs.map

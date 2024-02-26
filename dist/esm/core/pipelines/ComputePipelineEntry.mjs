@@ -147,4 +147,3 @@ ${this.shaders.compute.head}`;
 }
 
 export { ComputePipelineEntry };
-//# sourceMappingURL=ComputePipelineEntry.mjs.map

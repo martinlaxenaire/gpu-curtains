@@ -219,4 +219,3 @@ class GPUCameraRenderer extends GPURenderer {
 }
 
 export { GPUCameraRenderer };
-//# sourceMappingURL=GPUCameraRenderer.mjs.map

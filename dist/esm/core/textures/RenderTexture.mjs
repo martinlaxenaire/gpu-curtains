@@ -167,4 +167,3 @@ class RenderTexture {
 _autoResize = new WeakMap();
 
 export { RenderTexture };
-//# sourceMappingURL=RenderTexture.mjs.map

@@ -58,4 +58,3 @@ class PingPongPlane extends FullscreenPlane {
 }
 
 export { PingPongPlane };
-//# sourceMappingURL=PingPongPlane.mjs.map

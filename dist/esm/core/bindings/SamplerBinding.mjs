@@ -61,4 +61,3 @@ class SamplerBinding extends Binding {
 }
 
 export { SamplerBinding };
-//# sourceMappingURL=SamplerBinding.mjs.map

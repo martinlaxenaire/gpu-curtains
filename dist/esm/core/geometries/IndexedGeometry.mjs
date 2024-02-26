@@ -68,4 +68,3 @@ class IndexedGeometry extends Geometry {
 }
 
 export { IndexedGeometry };
-//# sourceMappingURL=IndexedGeometry.mjs.map

@@ -247,7 +247,7 @@ export class Scene {
     similarMeshes.sort((a, b) => a.index - b.index)
 
     // sort by Z pos if transparent
-    if ((mesh instanceof DOMMesh || mesh instanceof Plane) && mesh.transparent) {
+    if ((mesh.type === 'DOMMesh' || mesh.type === 'Plane') && mesh.transparent) {
       similarMeshes.sort(
         (a, b) => (b as DOMProjectedMesh).documentPosition.z - (a as DOMProjectedMesh).documentPosition.z
       )
@@ -418,14 +418,16 @@ export class Scene {
    * @returns - the {@link RenderPassEntry} if found
    */
   getObjectRenderPassEntry(object: RenderedMesh | RenderTarget): RenderPassEntry | undefined {
-    if (object instanceof RenderTarget) {
-      return this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === object.renderPass.uuid)
-    } else if (object instanceof PingPongPlane) {
+    if (object.type === 'RenderTarget') {
+      return this.renderPassEntries.renderTarget.find(
+        (entry) => entry.renderPass.uuid === (object as RenderTarget).renderPass.uuid
+      )
+    } else if (object.type === 'PingPongPlane') {
       return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid)
-    } else if (object instanceof ShaderPass) {
+    } else if (object.type === 'ShaderPass') {
       return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid)
     } else {
-      const entryType = object.outputTarget ? 'renderTarget' : 'screen'
+      const entryType = (object as RenderedMesh).outputTarget ? 'renderTarget' : 'screen'
       return this.renderPassEntries[entryType].find((entry) => {
         return [
           ...entry.stack.unProjected.opaque,

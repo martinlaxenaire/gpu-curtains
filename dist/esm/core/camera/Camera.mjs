@@ -278,4 +278,3 @@ _far = new WeakMap();
 _pixelRatio = new WeakMap();
 
 export { Camera };
-//# sourceMappingURL=Camera.mjs.map

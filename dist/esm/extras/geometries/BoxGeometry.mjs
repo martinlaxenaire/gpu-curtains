@@ -94,4 +94,3 @@ class BoxGeometry extends IndexedGeometry {
 }
 
 export { BoxGeometry };
-//# sourceMappingURL=BoxGeometry.mjs.map

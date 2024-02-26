@@ -61,13 +61,8 @@ export interface PipelineEntryStatus {
  * Parameters used to add properties to the {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry}
  */
 export interface PipelineEntryPropertiesParams {
-    /** Array of {@link AllowedBindGroups | BindGroup} to use with this {@link core/pipelines/PipelineEntry.PipelineEntry#pipeline | pipeline} */
+    /** Array of {@link core/bindGroups/BindGroup.BindGroup | BindGroup} to use with this {@link core/pipelines/PipelineEntry.PipelineEntry#pipeline | pipeline} */
     bindGroups: MaterialBindGroups;
-}
-/**
- * Options used to create this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
- */
-export interface RenderPipelineEntryOptions extends PipelineEntryOptions, Partial<RenderMaterialRenderingOptions> {
 }
 /**
  * Parameters used to add properties to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
@@ -77,18 +72,24 @@ export interface RenderPipelineEntryPropertiesParams extends PipelineEntryProper
     attributes: RenderMaterialAttributes;
 }
 /**
- * Base parameters used to create a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
+ * Specific rendering parameters used to create a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
  */
-export interface RenderPipelineEntryBaseParams extends RenderMaterialRenderingOptions {
-    /** The label of the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}, sent to various GPU objects for debugging purpose */
-    label?: string;
-    /** Shaders to use with this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} */
-    shaders?: MaterialShaders;
+export interface RenderPipelineRenderingParams {
+    /** {@link RenderMaterialRenderingOptions | render material rendering options} used to create the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} */
+    rendering: RenderMaterialRenderingOptions;
 }
 /**
- * Parameters used to create this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
+ * Base parameters used to create a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
  */
-export interface RenderPipelineEntryParams extends RenderPipelineEntryBaseParams {
-    /** {@link Renderer} used to create this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}, or our {@link curtains/GPUCurtains | GPUCurtains} class object */
-    renderer: Renderer | GPUCurtains;
+export interface RenderPipelineEntryBaseParams extends PipelineEntryBaseParams, RenderPipelineRenderingParams {
+}
+/**
+ * Parameters used to create a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
+ */
+export interface RenderPipelineEntryParams extends PipelineEntryParams, RenderPipelineRenderingParams {
+}
+/**
+ * Options used to create this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
+ */
+export interface RenderPipelineEntryOptions extends PipelineEntryOptions, RenderPipelineRenderingParams {
 }

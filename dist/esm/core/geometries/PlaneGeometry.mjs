@@ -99,4 +99,3 @@ class PlaneGeometry extends IndexedGeometry {
 }
 
 export { PlaneGeometry };
-//# sourceMappingURL=PlaneGeometry.mjs.map

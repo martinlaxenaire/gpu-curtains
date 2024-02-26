@@ -19,4 +19,3 @@ struct VertexOutput {
 );
 
 export { default_vsWgsl as default };
-//# sourceMappingURL=default_vs.wgsl.mjs.map

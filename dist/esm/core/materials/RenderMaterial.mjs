@@ -33,7 +33,7 @@ class RenderMaterial extends Material {
       label: this.options.label + " render pipeline",
       shaders: this.options.shaders,
       useAsync: this.options.useAsyncPipeline,
-      ...this.options.rendering
+      rendering: this.options.rendering
     });
     this.attributes = null;
   }
@@ -74,7 +74,7 @@ class RenderMaterial extends Material {
     );
     this.options.rendering = { ...this.options.rendering, ...renderingOptions };
     if (this.pipelineEntry) {
-      this.pipelineEntry.options = { ...this.pipelineEntry.options, ...this.options.rendering };
+      this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
       if (this.pipelineEntry.ready && newProperties.length) {
         throwWarning(
           `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties.map(
@@ -118,4 +118,3 @@ class RenderMaterial extends Material {
 }
 
 export { RenderMaterial };
-//# sourceMappingURL=RenderMaterial.mjs.map

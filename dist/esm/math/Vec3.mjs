@@ -368,4 +368,3 @@ class Vec3 {
 }
 
 export { Vec3 };
-//# sourceMappingURL=Vec3.mjs.map

@@ -175,4 +175,3 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
 }
 
 export { DOMMesh };
-//# sourceMappingURL=DOMMesh.mjs.map

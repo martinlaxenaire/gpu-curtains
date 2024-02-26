@@ -510,4 +510,3 @@ class Material {
 }
 
 export { Material };
-//# sourceMappingURL=Material.mjs.map

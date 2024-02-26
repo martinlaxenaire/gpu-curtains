@@ -33,4 +33,3 @@ class Binding {
 }
 
 export { Binding };
-//# sourceMappingURL=Binding.mjs.map

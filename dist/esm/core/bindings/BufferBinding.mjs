@@ -280,4 +280,3 @@ class BufferBinding extends Binding {
 }
 
 export { BufferBinding };
-//# sourceMappingURL=BufferBinding.mjs.map

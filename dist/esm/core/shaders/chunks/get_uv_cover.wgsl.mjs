@@ -7,4 +7,3 @@ fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
 );
 
 export { get_uv_cover as default };
-//# sourceMappingURL=get_uv_cover.wgsl.mjs.map

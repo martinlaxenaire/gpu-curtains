@@ -18,4 +18,3 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 );
 
 export { get_vertex_to_uv_coords as default };
-//# sourceMappingURL=get_vertex_to_uv_coords.wgsl.mjs.map

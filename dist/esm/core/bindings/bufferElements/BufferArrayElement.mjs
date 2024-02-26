@@ -51,4 +51,3 @@ class BufferArrayElement extends BufferElement {
 }
 
 export { BufferArrayElement };
-//# sourceMappingURL=BufferArrayElement.mjs.map

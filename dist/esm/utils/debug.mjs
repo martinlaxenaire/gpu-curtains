@@ -89,4 +89,3 @@ const logSceneCommands = (renderer) => {
 };
 
 export { logSceneCommands };
-//# sourceMappingURL=debug.mjs.map

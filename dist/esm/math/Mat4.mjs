@@ -683,4 +683,3 @@ class Mat4 {
 }
 
 export { Mat4 };
-//# sourceMappingURL=Mat4.mjs.map

@@ -56,4 +56,3 @@ class ResizeManager {
 const resizeManager = new ResizeManager();
 
 export { ResizeManager, resizeManager };
-//# sourceMappingURL=ResizeManager.mjs.map

@@ -352,4 +352,3 @@ class BindGroup {
 }
 
 export { BindGroup };
-//# sourceMappingURL=BindGroup.mjs.map

@@ -130,4 +130,3 @@ class ProjectedObject3D extends Object3D {
 }
 
 export { ProjectedObject3D };
-//# sourceMappingURL=ProjectedObject3D.mjs.map

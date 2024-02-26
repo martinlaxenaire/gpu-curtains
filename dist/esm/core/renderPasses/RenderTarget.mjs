@@ -118,4 +118,3 @@ class RenderTarget {
 _autoRender = new WeakMap();
 
 export { RenderTarget };
-//# sourceMappingURL=RenderTarget.mjs.map

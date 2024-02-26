@@ -1,9 +1,4 @@
 import { isRenderer } from '../renderers/utils.mjs';
-import { ShaderPass } from '../renderPasses/ShaderPass.mjs';
-import { PingPongPlane } from '../../curtains/meshes/PingPongPlane.mjs';
-import { RenderTarget } from '../renderPasses/RenderTarget.mjs';
-import { DOMMesh } from '../../curtains/meshes/DOMMesh.mjs';
-import { Plane } from '../../curtains/meshes/Plane.mjs';
 
 class Scene {
   /**
@@ -141,7 +136,7 @@ class Scene {
     siblingMeshIndex = Math.max(0, siblingMeshIndex);
     similarMeshes.splice(siblingMeshIndex, 0, mesh);
     similarMeshes.sort((a, b) => a.index - b.index);
-    if ((mesh instanceof DOMMesh || mesh instanceof Plane) && mesh.transparent) {
+    if ((mesh.type === "DOMMesh" || mesh.type === "Plane") && mesh.transparent) {
       similarMeshes.sort(
         (a, b) => b.documentPosition.z - a.documentPosition.z
       );
@@ -278,11 +273,13 @@ class Scene {
    * @returns - the {@link RenderPassEntry} if found
    */
   getObjectRenderPassEntry(object) {
-    if (object instanceof RenderTarget) {
-      return this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === object.renderPass.uuid);
-    } else if (object instanceof PingPongPlane) {
+    if (object.type === "RenderTarget") {
+      return this.renderPassEntries.renderTarget.find(
+        (entry) => entry.renderPass.uuid === object.renderPass.uuid
+      );
+    } else if (object.type === "PingPongPlane") {
       return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
-    } else if (object instanceof ShaderPass) {
+    } else if (object.type === "ShaderPass") {
       return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
     } else {
       const entryType = object.outputTarget ? "renderTarget" : "screen";
@@ -366,4 +363,3 @@ class Scene {
 }
 
 export { Scene };
-//# sourceMappingURL=Scene.mjs.map

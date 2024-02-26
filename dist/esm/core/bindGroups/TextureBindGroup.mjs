@@ -100,4 +100,3 @@ class TextureBindGroup extends BindGroup {
 }
 
 export { TextureBindGroup };
-//# sourceMappingURL=TextureBindGroup.mjs.map

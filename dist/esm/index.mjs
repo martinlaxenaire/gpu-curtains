@@ -47,4 +47,3 @@ export { Vec3 } from './math/Vec3.mjs';
 export { BoxGeometry } from './extras/geometries/BoxGeometry.mjs';
 export { SphereGeometry } from './extras/geometries/SphereGeometry.mjs';
 export { logSceneCommands } from './utils/debug.mjs';
-//# sourceMappingURL=index.mjs.map

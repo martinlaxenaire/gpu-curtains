@@ -503,4 +503,3 @@ _coverScale = new WeakMap();
 _rotationMatrix = new WeakMap();
 
 export { Texture };
-//# sourceMappingURL=Texture.mjs.map

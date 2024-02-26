@@ -28,4 +28,3 @@ class WritableBufferBinding extends BufferBinding {
 }
 
 export { WritableBufferBinding };
-//# sourceMappingURL=WritableBufferBinding.mjs.map

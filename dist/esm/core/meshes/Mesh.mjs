@@ -17,4 +17,3 @@ class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
 }
 
 export { Mesh };
-//# sourceMappingURL=Mesh.mjs.map

@@ -285,4 +285,3 @@ setWGSLFragment_fn = function() {
 };
 
 export { Geometry };
-//# sourceMappingURL=Geometry.mjs.map

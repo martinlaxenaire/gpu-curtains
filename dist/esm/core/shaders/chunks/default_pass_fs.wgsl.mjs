@@ -12,4 +12,3 @@ struct VSOutput {
 );
 
 export { default_pass_fsWGSl as default };
-//# sourceMappingURL=default_pass_fs.wgsl.mjs.map

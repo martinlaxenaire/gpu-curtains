@@ -7,4 +7,3 @@ fn getOutputPosition(position: vec3f) -> vec4f {
 );
 
 export { get_output_position as default };
-//# sourceMappingURL=get_output_position.wgsl.mjs.map

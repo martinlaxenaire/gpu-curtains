@@ -7,4 +7,3 @@ var default_fsWgsl = (
 );
 
 export { default_fsWgsl as default };
-//# sourceMappingURL=default_fs.wgsl.mjs.map

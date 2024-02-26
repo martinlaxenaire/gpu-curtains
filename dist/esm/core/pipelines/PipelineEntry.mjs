@@ -58,7 +58,7 @@ class PipelineEntry {
    */
   createShaderModule({ code = "", type = "vertex" }) {
     const shaderModule = this.renderer.createShaderModule({
-      label: this.options.label + ": " + type + "Shader module",
+      label: this.options.label + ": " + type + " shader module",
       code
     });
     if ("getCompilationInfo" in shaderModule && !this.renderer.production) {
@@ -136,4 +136,3 @@ ${formattedMessage}`);
 }
 
 export { PipelineEntry };
-//# sourceMappingURL=PipelineEntry.mjs.map

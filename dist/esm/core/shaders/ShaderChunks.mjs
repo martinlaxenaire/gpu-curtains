@@ -27,4 +27,3 @@ const ProjectedShaderChunks = {
 };
 
 export { ProjectedShaderChunks, ShaderChunks };
-//# sourceMappingURL=ShaderChunks.mjs.map

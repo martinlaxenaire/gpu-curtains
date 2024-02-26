@@ -35,4 +35,3 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
 }
 
 export { GPUCurtainsRenderer };
-//# sourceMappingURL=GPUCurtainsRenderer.mjs.map

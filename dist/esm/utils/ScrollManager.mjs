@@ -52,4 +52,3 @@ class ScrollManager {
 }
 
 export { ScrollManager };
-//# sourceMappingURL=ScrollManager.mjs.map

@@ -9,8 +9,8 @@ class RenderPipelineEntry extends PipelineEntry {
    * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
    */
   constructor(parameters) {
-    let { renderer } = parameters;
-    const { label, ...renderingOptions } = parameters;
+    let { renderer, ...pipelineParams } = parameters;
+    const { label, ...renderingOptions } = pipelineParams;
     renderer = renderer && renderer.renderer || renderer;
     const type = "RenderPipelineEntry";
     isRenderer(renderer, label ? label + " " + type : type);
@@ -46,7 +46,7 @@ class RenderPipelineEntry extends PipelineEntry {
    * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
    */
   setPipelineEntryBindGroups(bindGroups) {
-    this.bindGroups = "cameraBindGroup" in this.renderer && this.options.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
+    this.bindGroups = "cameraBindGroup" in this.renderer && this.options.rendering.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
   }
   /**
    * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
@@ -84,7 +84,7 @@ ${this.shaders.full.head}`;
         }
       }
     }
-    if (this.options.useProjection) {
+    if (this.options.rendering.useProjection) {
       for (const chunk in ProjectedShaderChunks.vertex) {
         this.shaders.vertex.head = `${ProjectedShaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
@@ -208,7 +208,7 @@ ${this.shaders.full.head}`;
     if (!this.shadersModulesReady)
       return;
     let vertexLocationIndex = -1;
-    const blend = this.options.blend ?? (this.options.transparent && {
+    const blend = this.options.rendering.blend ?? (this.options.rendering.transparent && {
       color: {
         srcFactor: "src-alpha",
         dstFactor: "one-minus-src-alpha"
@@ -247,31 +247,31 @@ ${this.shaders.full.head}`;
           entryPoint: this.options.shaders.fragment.entryPoint,
           targets: [
             {
-              format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
+              format: this.options.rendering.targetFormat ?? this.renderer.options.preferredFormat,
               ...blend && {
                 blend
               }
             },
-            ...this.options.additionalTargets ?? []
+            ...this.options.rendering.additionalTargets ?? []
             // merge with additional targets if any
           ]
         }
       },
       primitive: {
-        topology: this.options.topology,
-        frontFace: this.options.verticesOrder,
-        cullMode: this.options.cullMode
+        topology: this.options.rendering.topology,
+        frontFace: this.options.rendering.verticesOrder,
+        cullMode: this.options.rendering.cullMode
       },
-      ...this.options.depth && {
+      ...this.options.rendering.depth && {
         depthStencil: {
-          depthWriteEnabled: this.options.depthWriteEnabled,
-          depthCompare: this.options.depthCompare,
-          format: this.options.depthFormat
+          depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+          depthCompare: this.options.rendering.depthCompare,
+          format: this.options.rendering.depthFormat
         }
       },
-      ...this.options.sampleCount > 1 && {
+      ...this.options.rendering.sampleCount > 1 && {
         multisample: {
-          count: this.options.sampleCount
+          count: this.options.rendering.sampleCount
         }
       }
     };
@@ -325,4 +325,3 @@ ${this.shaders.full.head}`;
 }
 
 export { RenderPipelineEntry };
-//# sourceMappingURL=RenderPipelineEntry.mjs.map

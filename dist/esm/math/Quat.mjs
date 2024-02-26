@@ -166,4 +166,3 @@ class Quat {
 }
 
 export { Quat };
-//# sourceMappingURL=Quat.mjs.map

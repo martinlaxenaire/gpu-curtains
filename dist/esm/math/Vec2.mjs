@@ -248,4 +248,3 @@ class Vec2 {
 }
 
 export { Vec2 };
-//# sourceMappingURL=Vec2.mjs.map

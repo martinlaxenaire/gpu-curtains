@@ -11,14 +11,12 @@ export default [
         preserveModules: true,
         preserveModulesRoot: 'src',
         entryFileNames: '[name].mjs',
-        sourcemap: true,
       },
       {
         file: 'dist/gpu-curtains.umd.js',
         format: 'umd',
         name: 'window',
         extend: true,
-        sourcemap: true,
       },
       {
         file: 'dist/gpu-curtains.umd.min.js',
@@ -26,6 +24,7 @@ export default [
         name: 'window',
         extend: true,
         plugins: [minify()],
+        sourcemap: true,
       },
     ],
   },

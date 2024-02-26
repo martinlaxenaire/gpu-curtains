@@ -104,4 +104,3 @@ class DOMElement {
 }
 
 export { DOMElement };
-//# sourceMappingURL=DOMElement.mjs.map

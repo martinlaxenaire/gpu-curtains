@@ -244,4 +244,3 @@ class RenderPass {
 }
 
 export { RenderPass };
-//# sourceMappingURL=RenderPass.mjs.map

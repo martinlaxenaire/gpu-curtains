@@ -8,26 +8,29 @@ class PipelineManager {
     this.pipelineEntries = [];
   }
   /**
-   * Checks if the provided {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
-   * @param parameters - {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters}
+   * Compare two {@link ShaderOptions | shader objects}
+   * @param shaderA - first {@link ShaderOptions | shader object} to compare
+   * @param shaderB - second {@link ShaderOptions | shader object} to compare
+   * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
+   */
+  compareShaders(shaderA, shaderB) {
+    return shaderA.code?.localeCompare(shaderB.code) === 0 && shaderA.entryPoint === shaderB.entryPoint;
+  }
+  /**
+   * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+   * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
    * @returns - the found {@link RenderPipelineEntry}, or null if not found
    */
   isSameRenderPipeline(parameters) {
-    const {
-      shaders,
-      cullMode,
-      depth,
-      depthWriteEnabled,
-      depthCompare,
-      transparent,
-      verticesOrder,
-      topology,
-      sampleCount
-    } = parameters;
     return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
       const { options } = pipelineEntry;
-      const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || shaders.fragment.code?.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint;
-      return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && sameFragmentShader && cullMode === options.cullMode && depth === options.depth && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && sampleCount === options.sampleCount && verticesOrder === options.verticesOrder && topology === options.topology;
+      const { shaders, rendering } = parameters;
+      const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
+      const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
+      const differentParams = Object.keys(options.rendering).filter(
+        (key) => options.rendering[key] !== rendering[key]
+      );
+      return !differentParams.length && sameVertexShader && sameFragmentShader;
     });
   }
   /**
@@ -55,7 +58,7 @@ class PipelineManager {
     const { shaders } = parameters;
     return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
       const { options } = pipelineEntry;
-      return shaders.compute.code.localeCompare(options.shaders.compute.code) === 0 && shaders.compute.entryPoint === options.shaders.compute.entryPoint;
+      return this.compareShaders(shaders.compute, options.shaders.compute);
     });
   }
   /**
@@ -94,4 +97,3 @@ class PipelineManager {
 }
 
 export { PipelineManager };
-//# sourceMappingURL=PipelineManager.mjs.map

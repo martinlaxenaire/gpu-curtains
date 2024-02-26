@@ -109,4 +109,3 @@ class ShaderPass extends FullscreenPlane {
 }
 
 export { ShaderPass };
-//# sourceMappingURL=ShaderPass.mjs.map

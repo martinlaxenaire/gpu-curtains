@@ -100,4 +100,3 @@ const getBindGroupLayoutTextureBindingType = (binding) => {
 };
 
 export { getBindGroupLayoutBindingType, getBindGroupLayoutTextureBindingType, getBindingWGSLVarType, getBufferLayout, getTextureBindingWGSLVarType };
-//# sourceMappingURL=utils.mjs.map

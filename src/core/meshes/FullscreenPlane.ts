@@ -63,6 +63,15 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
       cacheManager.addPlaneGeometry(geometry)
     }
 
+    // no vertex shader? patch uniforms/storages visibility
+    if (!parameters.shaders || !parameters.shaders.vertex) {
+      ;['uniforms', 'storages'].forEach((bindingType) => {
+        Object.keys(parameters[bindingType] ?? {}).forEach(
+          (bindingKey) => (parameters[bindingType][bindingKey].visibility = 'fragment')
+        )
+      })
+    }
+
     // @ts-ignore
     super(renderer, null, { geometry, ...parameters })
 

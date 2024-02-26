@@ -5921,7 +5921,7 @@
         label: this.options.label + " render pipeline",
         shaders: this.options.shaders,
         useAsync: this.options.useAsyncPipeline,
-        ...this.options.rendering
+        rendering: this.options.rendering
       });
       this.attributes = null;
     }
@@ -5962,7 +5962,7 @@
       );
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
-        this.pipelineEntry.options = { ...this.pipelineEntry.options, ...this.options.rendering };
+        this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
         if (this.pipelineEntry.ready && newProperties.length) {
           throwWarning(
             `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties.map(
@@ -6689,6 +6689,13 @@ struct VertexOutput {
         geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
         cacheManager.addPlaneGeometry(geometry);
       }
+      if (!parameters.shaders || !parameters.shaders.vertex) {
+        ["uniforms", "storages"].forEach((bindingType) => {
+          Object.keys(parameters[bindingType] ?? {}).forEach(
+            (bindingKey) => parameters[bindingType][bindingKey].visibility = "fragment"
+          );
+        });
+      }
       super(renderer, null, { geometry, ...parameters });
       this.size = {
         document: {
@@ -7205,7 +7212,7 @@ struct VSOutput {
      */
     createShaderModule({ code = "", type = "vertex" }) {
       const shaderModule = this.renderer.createShaderModule({
-        label: this.options.label + ": " + type + "Shader module",
+        label: this.options.label + ": " + type + " shader module",
         code
       });
       if ("getCompilationInfo" in shaderModule && !this.renderer.production) {
@@ -7347,8 +7354,8 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
      */
     constructor(parameters) {
-      let { renderer } = parameters;
-      const { label, ...renderingOptions } = parameters;
+      let { renderer, ...pipelineParams } = parameters;
+      const { label, ...renderingOptions } = pipelineParams;
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
@@ -7384,7 +7391,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
      */
     setPipelineEntryBindGroups(bindGroups) {
-      this.bindGroups = "cameraBindGroup" in this.renderer && this.options.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
+      this.bindGroups = "cameraBindGroup" in this.renderer && this.options.rendering.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
     }
     /**
      * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
@@ -7422,7 +7429,7 @@ ${this.shaders.full.head}`;
           }
         }
       }
-      if (this.options.useProjection) {
+      if (this.options.rendering.useProjection) {
         for (const chunk in ProjectedShaderChunks.vertex) {
           this.shaders.vertex.head = `${ProjectedShaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
@@ -7546,7 +7553,7 @@ ${this.shaders.full.head}`;
       if (!this.shadersModulesReady)
         return;
       let vertexLocationIndex = -1;
-      const blend = this.options.blend ?? (this.options.transparent && {
+      const blend = this.options.rendering.blend ?? (this.options.rendering.transparent && {
         color: {
           srcFactor: "src-alpha",
           dstFactor: "one-minus-src-alpha"
@@ -7585,31 +7592,31 @@ ${this.shaders.full.head}`;
             entryPoint: this.options.shaders.fragment.entryPoint,
             targets: [
               {
-                format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
+                format: this.options.rendering.targetFormat ?? this.renderer.options.preferredFormat,
                 ...blend && {
                   blend
                 }
               },
-              ...this.options.additionalTargets ?? []
+              ...this.options.rendering.additionalTargets ?? []
               // merge with additional targets if any
             ]
           }
         },
         primitive: {
-          topology: this.options.topology,
-          frontFace: this.options.verticesOrder,
-          cullMode: this.options.cullMode
+          topology: this.options.rendering.topology,
+          frontFace: this.options.rendering.verticesOrder,
+          cullMode: this.options.rendering.cullMode
         },
-        ...this.options.depth && {
+        ...this.options.rendering.depth && {
           depthStencil: {
-            depthWriteEnabled: this.options.depthWriteEnabled,
-            depthCompare: this.options.depthCompare,
-            format: this.options.depthFormat
+            depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+            depthCompare: this.options.rendering.depthCompare,
+            format: this.options.rendering.depthFormat
           }
         },
-        ...this.options.sampleCount > 1 && {
+        ...this.options.rendering.sampleCount > 1 && {
           multisample: {
-            count: this.options.sampleCount
+            count: this.options.rendering.sampleCount
           }
         }
       };
@@ -7813,26 +7820,29 @@ ${this.shaders.compute.head}`;
       this.pipelineEntries = [];
     }
     /**
-     * Checks if the provided {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
-     * @param parameters - {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters}
+     * Compare two {@link ShaderOptions | shader objects}
+     * @param shaderA - first {@link ShaderOptions | shader object} to compare
+     * @param shaderB - second {@link ShaderOptions | shader object} to compare
+     * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
+     */
+    compareShaders(shaderA, shaderB) {
+      return shaderA.code?.localeCompare(shaderB.code) === 0 && shaderA.entryPoint === shaderB.entryPoint;
+    }
+    /**
+     * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
      * @returns - the found {@link RenderPipelineEntry}, or null if not found
      */
     isSameRenderPipeline(parameters) {
-      const {
-        shaders,
-        cullMode,
-        depth,
-        depthWriteEnabled,
-        depthCompare,
-        transparent,
-        verticesOrder,
-        topology,
-        sampleCount
-      } = parameters;
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || shaders.fragment.code?.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint;
-        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && sameFragmentShader && cullMode === options.cullMode && depth === options.depth && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && sampleCount === options.sampleCount && verticesOrder === options.verticesOrder && topology === options.topology;
+        const { shaders, rendering } = parameters;
+        const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
+        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
+        const differentParams = Object.keys(options.rendering).filter(
+          (key) => options.rendering[key] !== rendering[key]
+        );
+        return !differentParams.length && sameVertexShader && sameFragmentShader;
       });
     }
     /**
@@ -7860,7 +7870,7 @@ ${this.shaders.compute.head}`;
       const { shaders } = parameters;
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        return shaders.compute.code.localeCompare(options.shaders.compute.code) === 0 && shaders.compute.entryPoint === options.shaders.compute.entryPoint;
+        return this.compareShaders(shaders.compute, options.shaders.compute);
       });
     }
     /**
@@ -8057,121 +8067,365 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var default_pass_fsWGSl = (
-    /* wgsl */
-    `
-struct VSOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-  return textureSample(renderTexture, defaultSampler, fsInput.uv);
-}`
-  );
-
-  class ShaderPass extends FullscreenPlane {
+  class Scene {
     /**
-     * ShaderPass constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-     * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
+     * Scene constructor
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
      */
-    constructor(renderer, parameters = {}) {
+    constructor({ renderer }) {
       renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
-      parameters.transparent = true;
-      parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
-      parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
-      if (!parameters.shaders) {
-        parameters.shaders = {};
+      isRenderer(renderer, "Scene");
+      this.renderer = renderer;
+      this.computePassEntries = [];
+      this.renderPassEntries = {
+        /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here */
+        pingPong: [],
+        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
+        renderTarget: [],
+        /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
+        screen: [
+          // add our basic scene entry
+          {
+            renderPass: this.renderer.renderPass,
+            renderTexture: null,
+            onBeforeRenderPass: null,
+            onAfterRenderPass: null,
+            element: null,
+            // explicitly set to null
+            stack: {
+              unProjected: {
+                opaque: [],
+                transparent: []
+              },
+              projected: {
+                opaque: [],
+                transparent: []
+              }
+            }
+          }
+        ]
+      };
+    }
+    /**
+     * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
+     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
+     */
+    getRenderPassEntryLength(renderPassEntry) {
+      if (!renderPassEntry) {
+        return 0;
+      } else {
+        return renderPassEntry.element ? renderPassEntry.element.visible ? 1 : 0 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
       }
-      if (!parameters.shaders.fragment) {
-        parameters.shaders.fragment = {
-          code: default_pass_fsWGSl,
-          entryPoint: "main"
-        };
-      }
-      parameters.depth = false;
-      super(renderer, parameters);
-      if (parameters.inputTarget) {
-        this.setInputTarget(parameters.inputTarget);
-      }
-      if (this.outputTarget) {
-        this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
-      }
-      this.type = "ShaderPass";
-      this.createRenderTexture({
-        label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-        name: "renderTexture",
-        fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
-        ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
+    }
+    /**
+     * Add a {@link ComputePass} to our scene {@link computePassEntries} array
+     * @param computePass - {@link ComputePass} to add
+     */
+    addComputePass(computePass) {
+      this.computePassEntries.push(computePass);
+      this.computePassEntries.sort((a, b) => {
+        if (a.renderOrder !== b.renderOrder) {
+          return a.renderOrder - b.renderOrder;
+        } else {
+          return a.index - b.index;
+        }
       });
     }
     /**
-     * Hook used to clean up parameters before sending them to the material.
-     * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
-     * @returns - cleaned parameters
+     * Remove a {@link ComputePass} from our scene {@link computePassEntries} array
+     * @param computePass - {@link ComputePass} to remove
      */
-    cleanupRenderMaterialParameters(parameters) {
-      delete parameters.copyOutputToRenderTexture;
-      delete parameters.inputTarget;
-      super.cleanupRenderMaterialParameters(parameters);
-      return parameters;
+    removeComputePass(computePass) {
+      this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
     }
     /**
-     * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
-     * @readonly
+     * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
+     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
+     * @param renderTarget - {@link RenderTarget} to add
      */
-    get renderTexture() {
-      return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
+    addRenderTarget(renderTarget) {
+      if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
+        this.renderPassEntries.renderTarget.push({
+          renderPass: renderTarget.renderPass,
+          renderTexture: renderTarget.renderTexture,
+          onBeforeRenderPass: null,
+          onAfterRenderPass: null,
+          element: null,
+          // explicitly set to null
+          stack: {
+            unProjected: {
+              opaque: [],
+              transparent: []
+            },
+            projected: {
+              opaque: [],
+              transparent: []
+            }
+          }
+        });
     }
     /**
-     * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
-     *
-     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-     * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
-     * @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+     * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
+     * @param renderTarget - {@link RenderTarget} to add
      */
-    setInputTarget(inputTarget) {
-      if (inputTarget && inputTarget.type !== "RenderTarget") {
-        throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`);
-        return;
-      }
-      this.removeFromScene();
-      this.inputTarget = inputTarget;
-      this.addToScene();
-      if (this.renderTexture) {
-        if (inputTarget) {
-          this.renderTexture.copy(this.inputTarget.renderTexture);
-        } else {
-          this.renderTexture.options.fromTexture = null;
-          this.renderTexture.createTexture();
+    removeRenderTarget(renderTarget) {
+      this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
+        (entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid
+      );
+    }
+    /**
+     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
+     * @param mesh - Mesh to check
+     * @returns - the corresponding render pass entry {@link Stack}
+     */
+    getMeshProjectionStack(mesh) {
+      const renderPassEntry = mesh.outputTarget ? this.renderPassEntries.renderTarget.find(
+        (passEntry) => passEntry.renderPass.uuid === mesh.outputTarget.renderPass.uuid
+      ) : this.renderPassEntries.screen[0];
+      const { stack } = renderPassEntry;
+      return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
+    }
+    /**
+     * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
+     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
+     * @param mesh - Mesh to add
+     */
+    addMesh(mesh) {
+      const projectionStack = this.getMeshProjectionStack(mesh);
+      const similarMeshes = mesh.transparent ? [...projectionStack.transparent] : [...projectionStack.opaque];
+      let siblingMeshIndex = -1;
+      for (let i = similarMeshes.length - 1; i >= 0; i--) {
+        if (similarMeshes[i].material.pipelineEntry.index === mesh.material.pipelineEntry.index) {
+          siblingMeshIndex = i + 1;
+          break;
         }
       }
+      siblingMeshIndex = Math.max(0, siblingMeshIndex);
+      similarMeshes.splice(siblingMeshIndex, 0, mesh);
+      similarMeshes.sort((a, b) => a.index - b.index);
+      if ((mesh.type === "DOMMesh" || mesh.type === "Plane") && mesh.transparent) {
+        similarMeshes.sort(
+          (a, b) => b.documentPosition.z - a.documentPosition.z
+        );
+      }
+      similarMeshes.sort((a, b) => a.renderOrder - b.renderOrder);
+      mesh.transparent ? projectionStack.transparent = similarMeshes : projectionStack.opaque = similarMeshes;
     }
     /**
-     * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a Mesh from our {@link Scene}
+     * @param mesh - Mesh to remove
      */
-    addToScene() {
-      this.renderer.shaderPasses.push(this);
-      this.setRenderingOptionsForRenderPass(
-        this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
+    removeMesh(mesh) {
+      const projectionStack = this.getMeshProjectionStack(mesh);
+      if (mesh.transparent) {
+        projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
+      } else {
+        projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+      }
+    }
+    /**
+     * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
+     * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
+     * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
+     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
+     * @param shaderPass - {@link ShaderPass} to add
+     */
+    addShaderPass(shaderPass) {
+      const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
+        if (shaderPass.renderTexture && swapChainTexture) {
+          commandEncoder.copyTextureToTexture(
+            {
+              texture: swapChainTexture
+            },
+            {
+              texture: shaderPass.renderTexture.texture
+            },
+            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+          );
+        }
+        this.renderer.postProcessingPass.setLoadOp("clear");
+      };
+      const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
+        if (shaderPass.renderTexture && swapChainTexture) {
+          commandEncoder.copyTextureToTexture(
+            {
+              texture: swapChainTexture
+            },
+            {
+              texture: shaderPass.renderTexture.texture
+            },
+            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
+          );
+        }
+      } : null;
+      const shaderPassEntry = {
+        // use output target or postprocessing render pass
+        renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
+        // render to output target renderTexture or directly to screen
+        renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
+        onBeforeRenderPass,
+        onAfterRenderPass,
+        element: shaderPass,
+        stack: null
+        // explicitly set to null
+      };
+      this.renderPassEntries.screen.push(shaderPassEntry);
+      this.renderPassEntries.screen.sort((a, b) => {
+        const isPostProA = a.element && !a.element.outputTarget;
+        const renderOrderA = a.element ? a.element.renderOrder : 0;
+        const indexA = a.element ? a.element.index : 0;
+        const isPostProB = b.element && !b.element.outputTarget;
+        const renderOrderB = b.element ? b.element.renderOrder : 0;
+        const indexB = b.element ? b.element.index : 0;
+        if (isPostProA && !isPostProB) {
+          return 1;
+        } else if (!isPostProA && isPostProB) {
+          return -1;
+        } else if (renderOrderA !== renderOrderB) {
+          return renderOrderA - renderOrderB;
+        } else {
+          return indexA - indexB;
+        }
+      });
+    }
+    /**
+     * Remove a {@link ShaderPass} from our scene {@link renderPassEntries} screen array
+     * @param shaderPass - {@link ShaderPass} to remove
+     */
+    removeShaderPass(shaderPass) {
+      this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
+        (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
       );
-      if (this.autoRender) {
-        this.renderer.scene.addShaderPass(this);
+    }
+    /**
+     * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
+     * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
+     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
+     * @param pingPongPlane
+     */
+    addPingPongPlane(pingPongPlane) {
+      this.renderPassEntries.pingPong.push({
+        renderPass: pingPongPlane.outputTarget.renderPass,
+        renderTexture: pingPongPlane.outputTarget.renderTexture,
+        onBeforeRenderPass: null,
+        onAfterRenderPass: (commandEncoder, swapChainTexture) => {
+          commandEncoder.copyTextureToTexture(
+            {
+              texture: swapChainTexture
+            },
+            {
+              texture: pingPongPlane.renderTexture.texture
+            },
+            [pingPongPlane.renderTexture.size.width, pingPongPlane.renderTexture.size.height]
+          );
+        },
+        element: pingPongPlane,
+        stack: null
+        // explicitly set to null
+      });
+      this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);
+    }
+    /**
+     * Remove a {@link PingPongPlane} from our scene {@link renderPassEntries} pingPong array.
+     * @param pingPongPlane - {@link PingPongPlane} to remove
+     */
+    removePingPongPlane(pingPongPlane) {
+      this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
+        (entry) => entry.element.uuid !== pingPongPlane.uuid
+      );
+    }
+    /**
+     * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
+     * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
+     * @returns - the {@link RenderPassEntry} if found
+     */
+    getObjectRenderPassEntry(object) {
+      if (object.type === "RenderTarget") {
+        return this.renderPassEntries.renderTarget.find(
+          (entry) => entry.renderPass.uuid === object.renderPass.uuid
+        );
+      } else if (object.type === "PingPongPlane") {
+        return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
+      } else if (object.type === "ShaderPass") {
+        return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
+      } else {
+        const entryType = object.outputTarget ? "renderTarget" : "screen";
+        return this.renderPassEntries[entryType].find((entry) => {
+          return [
+            ...entry.stack.unProjected.opaque,
+            ...entry.stack.unProjected.transparent,
+            ...entry.stack.projected.opaque,
+            ...entry.stack.projected.transparent
+          ].some((mesh) => mesh.uuid === object.uuid);
+        });
       }
     }
     /**
-     * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Here we render a {@link RenderPassEntry}:
+     * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
+     * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
+     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
+     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link CameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
+     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
+     * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
+     * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     * @param renderPassEntry - {@link RenderPassEntry} to render
      */
-    removeFromScene() {
-      if (this.outputTarget) {
-        this.outputTarget.destroy();
+    renderSinglePassEntry(commandEncoder, renderPassEntry) {
+      const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
+      renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
+      const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
+      !this.renderer.production && pass.pushDebugGroup(
+        renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
+      );
+      if (renderPassEntry.element) {
+        renderPassEntry.element.render(pass);
+      } else if (renderPassEntry.stack) {
+        renderPassEntry.stack.unProjected.opaque.forEach((mesh) => mesh.render(pass));
+        renderPassEntry.stack.unProjected.transparent.forEach((mesh) => mesh.render(pass));
+        if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+          if (this.renderer.cameraBindGroup) {
+            pass.setBindGroup(
+              this.renderer.cameraBindGroup.index,
+              this.renderer.cameraBindGroup.bindGroup
+            );
+          }
+          renderPassEntry.stack.projected.opaque.forEach((mesh) => mesh.render(pass));
+          renderPassEntry.stack.projected.transparent.forEach((mesh) => mesh.render(pass));
+        }
       }
-      if (this.autoRender) {
-        this.renderer.scene.removeShaderPass(this);
+      !this.renderer.production && pass.popDebugGroup();
+      pass.end();
+      renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
+      this.renderer.pipelineManager.resetCurrentPipeline();
+    }
+    /**
+     * Render our {@link Scene}
+     * - Render {@link computePassEntries} first
+     * - Then our {@link renderPassEntries}
+     * @param commandEncoder - current {@link GPUCommandEncoder}
+     */
+    render(commandEncoder) {
+      this.computePassEntries.forEach((computePass) => {
+        const pass = commandEncoder.beginComputePass();
+        computePass.render(pass);
+        pass.end();
+        computePass.copyBufferToResult(commandEncoder);
+        this.renderer.pipelineManager.resetCurrentPipeline();
+      });
+      for (const renderPassEntryType in this.renderPassEntries) {
+        let passDrawnCount = 0;
+        this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
+          if (!this.getRenderPassEntryLength(renderPassEntry))
+            return;
+          renderPassEntry.renderPass.setLoadOp(
+            renderPassEntryType === "screen" && passDrawnCount !== 0 ? "load" : "clear"
+          );
+          passDrawnCount++;
+          this.renderSinglePassEntry(commandEncoder, renderPassEntry);
+        });
       }
-      this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
     }
   }
 
@@ -8434,1083 +8688,12 @@ struct VSOutput {
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
-  var _autoRender;
-  class RenderTarget {
-    /**
-     * RenderTarget constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
-     * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
-     */
-    constructor(renderer, parameters = {}) {
-      /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$2(this, _autoRender, true);
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, "RenderTarget");
-      this.type = "RenderTarget";
-      this.renderer = renderer;
-      this.uuid = generateUUID();
-      const { label, targetFormat, depthTexture, autoRender, ...renderPassParams } = parameters;
-      this.options = {
-        label,
-        ...renderPassParams,
-        ...depthTexture && { depthTexture },
-        targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
-        autoRender: autoRender === void 0 ? true : autoRender
-      };
-      if (autoRender !== void 0) {
-        __privateSet$1(this, _autoRender, autoRender);
-      }
-      this.renderPass = new RenderPass(this.renderer, {
-        label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
-        targetFormat: this.options.targetFormat,
-        depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture,
-        // reuse renderer depth texture for every pass
-        ...renderPassParams
-      });
-      if (renderPassParams.useColorAttachments !== false) {
-        this.renderTexture = new RenderTexture(this.renderer, {
-          label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
-          name: "renderTexture",
-          format: this.options.targetFormat,
-          ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
-        });
-      }
-      this.addToScene();
-    }
-    /**
-     * Add the {@link RenderTarget} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
-     */
-    addToScene() {
-      this.renderer.renderTargets.push(this);
-      if (__privateGet$2(this, _autoRender)) {
-        this.renderer.scene.addRenderTarget(this);
-      }
-    }
-    /**
-     * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
-     */
-    removeFromScene() {
-      if (__privateGet$2(this, _autoRender)) {
-        this.renderer.scene.removeRenderTarget(this);
-      }
-      this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
-    }
-    /**
-     * Resize our {@link renderPass}
-     */
-    resize() {
-      this.renderPass.options.depthTexture.texture = this.options.depthTexture ? this.options.depthTexture.texture : this.renderer.renderPass.depthTexture.texture;
-      this.renderPass?.resize();
-    }
-    /**
-     * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
-     */
-    remove() {
-      this.destroy();
-    }
-    /**
-     * Destroy our {@link RenderTarget}
-     */
-    destroy() {
-      this.renderer.meshes.forEach((mesh) => {
-        if (mesh.outputTarget && mesh.outputTarget.uuid === this.uuid) {
-          mesh.setOutputTarget(null);
-        }
-      });
-      this.renderer.shaderPasses.forEach((shaderPass) => {
-        if (shaderPass.outputTarget && shaderPass.outputTarget.uuid === this.uuid) {
-          shaderPass.outputTarget = null;
-          shaderPass.setOutputTarget(null);
-        }
-      });
-      this.removeFromScene();
-      this.renderPass?.destroy();
-      this.renderTexture?.destroy();
-    }
-  }
-  _autoRender = new WeakMap();
-
-  class PingPongPlane extends FullscreenPlane {
-    /**
-     * PingPongPlane constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
-     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
-     */
-    constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
-      parameters.outputTarget = new RenderTarget(renderer, {
-        label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
-        useDepth: false,
-        ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
-      });
-      parameters.transparent = false;
-      parameters.depth = false;
-      parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
-      super(renderer, parameters);
-      this.type = "PingPongPlane";
-      this.createRenderTexture({
-        label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
-        name: "renderTexture",
-        ...parameters.targetFormat && { format: parameters.targetFormat }
-      });
-    }
-    /**
-     * Get our main {@link RenderTexture}, the one that contains our ping pong content
-     * @readonly
-     */
-    get renderTexture() {
-      return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
-    }
-    /**
-     * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
-     */
-    addToScene() {
-      this.renderer.pingPongPlanes.push(this);
-      if (this.autoRender) {
-        this.renderer.scene.addPingPongPlane(this);
-      }
-    }
-    /**
-     * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
-     */
-    removeFromScene() {
-      if (this.outputTarget) {
-        this.outputTarget.destroy();
-      }
-      if (this.autoRender) {
-        this.renderer.scene.removePingPongPlane(this);
-      }
-      this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
-    }
-  }
-
-  var __accessCheck$1 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateGet$1 = (obj, member, getter) => {
-    __accessCheck$1(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd$1 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var _DOMObjectWorldPosition, _DOMObjectWorldScale;
-  class DOMObject3D extends ProjectedObject3D {
-    /**
-     * DOMObject3D constructor
-     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
-     * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
-     */
-    constructor(renderer, element, parameters) {
-      super(renderer);
-      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
-      __privateAdd$1(this, _DOMObjectWorldPosition, new Vec3());
-      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
-      __privateAdd$1(this, _DOMObjectWorldScale, new Vec3());
-      renderer = renderer && renderer.renderer || renderer;
-      isCurtainsRenderer(renderer, "DOM3DObject");
-      this.renderer = renderer;
-      this.size = {
-        world: {
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0
-        },
-        document: {
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0
-        }
-      };
-      this.watchScroll = parameters.watchScroll;
-      this.camera = this.renderer.camera;
-      this.setDOMElement(element);
-    }
-    /**
-     * Set the {@link domElement | DOM Element}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
-     */
-    setDOMElement(element) {
-      this.domElement = new DOMElement({
-        element,
-        onSizeChanged: (boundingRect) => this.resize(boundingRect),
-        onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect)
-      });
-    }
-    /**
-     * Update size and position when the {@link domElement | DOM Element} position changed
-     * @param boundingRect - the new bounding rectangle
-     */
-    onPositionChanged(boundingRect) {
-      if (this.watchScroll) {
-        this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-        this.updateSizeAndPosition();
-      }
-    }
-    /**
-     * Reset the {@link domElement | DOMElement}
-     * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
-     */
-    resetDOMElement(element) {
-      if (this.domElement) {
-        this.domElement.destroy();
-      }
-      this.setDOMElement(element);
-    }
-    /**
-     * Update the {@link DOMObject3D} sizes and position
-     */
-    updateSizeAndPosition() {
-      this.setWorldSizes();
-      this.applyPosition();
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Update the {@link DOMObject3D} sizes, position and projection
-     */
-    shouldUpdateMatrixStack() {
-      this.updateSizeAndPosition();
-      super.shouldUpdateMatrixStack();
-    }
-    /**
-     * Resize the {@link DOMObject3D}
-     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
-     */
-    resize(boundingRect) {
-      if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
-        return;
-      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-      this.shouldUpdateMatrixStack();
-    }
-    /* BOUNDING BOXES GETTERS */
-    /**
-     * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
-     * @readonly
-     */
-    get boundingRect() {
-      return this.domElement.boundingRect;
-    }
-    /* TRANSFOMS */
-    /**
-     * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks
-     */
-    setTransforms() {
-      super.setTransforms();
-      this.transforms.origin.model.set(0.5, 0.5, 0);
-      this.transforms.origin.world = new Vec3();
-      this.transforms.position.document = new Vec3();
-      this.documentPosition.onChange(() => this.applyPosition());
-      this.transformOrigin.onChange(() => this.setWorldTransformOrigin());
-    }
-    /**
-     * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
-     */
-    get documentPosition() {
-      return this.transforms.position.document;
-    }
-    /**
-     * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
-     * @param value - additional translation relative to the document to apply
-     */
-    set documentPosition(value) {
-      this.transforms.position.document = value;
-      this.applyPosition();
-    }
-    /**
-     * Get the {@link domElement | DOM element} scale in world space
-     * @readonly
-     */
-    get DOMObjectWorldScale() {
-      return __privateGet$1(this, _DOMObjectWorldScale).clone();
-    }
-    /**
-     * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
-     * @readonly
-     */
-    get worldScale() {
-      return this.DOMObjectWorldScale.multiply(this.scale);
-    }
-    /**
-     * Get the {@link DOMObject3D} position in world space
-     * @readonly
-     */
-    get worldPosition() {
-      return __privateGet$1(this, _DOMObjectWorldPosition).clone();
-    }
-    /**
-     * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
-     */
-    get transformOrigin() {
-      return this.transforms.origin.model;
-    }
-    /**
-     * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
-     * @param value - new transform origin
-     */
-    set transformOrigin(value) {
-      this.transforms.origin.model = value;
-      this.setWorldTransformOrigin();
-    }
-    /**
-     * Get the {@link DOMObject3D} transform origin in world space
-     */
-    get worldTransformOrigin() {
-      return this.transforms.origin.world;
-    }
-    /**
-     * Set the {@link DOMObject3D} transform origin in world space
-     * @param value - new world space transform origin
-     */
-    set worldTransformOrigin(value) {
-      this.transforms.origin.world = value;
-    }
-    /**
-     * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
-     */
-    applyPosition() {
-      this.applyDocumentPosition();
-      super.applyPosition();
-    }
-    /**
-     * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
-     */
-    applyDocumentPosition() {
-      let worldPosition = new Vec3(0, 0, 0);
-      if (!this.documentPosition.equals(worldPosition)) {
-        worldPosition = this.documentToWorldSpace(this.documentPosition);
-      }
-      __privateGet$1(this, _DOMObjectWorldPosition).set(
-        this.position.x + this.size.world.left + worldPosition.x,
-        this.position.y + this.size.world.top + worldPosition.y,
-        this.position.z + this.documentPosition.z / this.camera.CSSPerspective
-      );
-    }
-    /**
-     * Apply the transform origin and set the {@link DOMObject3D} world transform origin
-     */
-    applyTransformOrigin() {
-      if (!this.size)
-        return;
-      this.setWorldTransformOrigin();
-      super.applyTransformOrigin();
-    }
-    /* MATRICES */
-    /**
-     * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
-     */
-    updateModelMatrix() {
-      this.modelMatrix.composeFromOrigin(
-        __privateGet$1(this, _DOMObjectWorldPosition),
-        this.quaternion,
-        this.scale,
-        this.worldTransformOrigin
-      );
-      this.modelMatrix.scale(__privateGet$1(this, _DOMObjectWorldScale));
-      this.shouldUpdateWorldMatrix();
-    }
-    /**
-     * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}
-     * @param vector - document position {@link Vec3 | vector} converted to world space
-     */
-    documentToWorldSpace(vector = new Vec3()) {
-      return new Vec3(
-        vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.screenRatio.width,
-        -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.screenRatio.height,
-        vector.z
-      );
-    }
-    /**
-     * Set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
-     */
-    setWorldSizes() {
-      const containerBoundingRect = this.renderer.boundingRect;
-      const planeCenter = {
-        x: this.size.document.width / 2 + this.size.document.left,
-        y: this.size.document.height / 2 + this.size.document.top
-      };
-      const containerCenter = {
-        x: containerBoundingRect.width / 2 + containerBoundingRect.left,
-        y: containerBoundingRect.height / 2 + containerBoundingRect.top
-      };
-      this.size.world = {
-        width: this.size.document.width / containerBoundingRect.width * this.camera.screenRatio.width / 2,
-        height: this.size.document.height / containerBoundingRect.height * this.camera.screenRatio.height / 2,
-        top: (containerCenter.y - planeCenter.y) / containerBoundingRect.height * this.camera.screenRatio.height,
-        left: (planeCenter.x - containerCenter.x) / containerBoundingRect.width * this.camera.screenRatio.width
-      };
-      __privateGet$1(this, _DOMObjectWorldScale).set(this.size.world.width, this.size.world.height, 1);
-      this.setWorldTransformOrigin();
-    }
-    /**
-     * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
-     */
-    setWorldTransformOrigin() {
-      this.transforms.origin.world = new Vec3(
-        (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-        this.size.world.width,
-        -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-        this.size.world.height,
-        this.transformOrigin.z
-      );
-      this.shouldUpdateModelMatrix();
-      this.shouldUpdateProjectionMatrixStack();
-    }
-    /**
-     * Update the {@link domElement | DOM Element} scroll position
-     * @param delta - last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}
-     */
-    updateScrollPosition(delta = { x: 0, y: 0 }) {
-      if (delta.x || delta.y) {
-        this.domElement.updateScrollPosition(delta);
-      }
-    }
-    /**
-     * Destroy our {@link DOMObject3D}
-     */
-    destroy() {
-      this.domElement?.destroy();
-    }
-  }
-  _DOMObjectWorldPosition = new WeakMap();
-  _DOMObjectWorldScale = new WeakMap();
-
-  const defaultDOMMeshParams = {
-    autoloadSources: true,
-    watchScroll: true
-  };
-  class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
-    /**
-     * DOMMesh constructor
-     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}
-     * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}
-     */
-    constructor(renderer, element, parameters) {
-      super(renderer, element, { ...defaultDOMMeshParams, ...parameters });
-      // callbacks / events
-      /** function assigned to the {@link onLoading} callback */
-      this._onLoadingCallback = (texture) => {
-      };
-      parameters = { ...defaultDOMMeshParams, ...parameters };
-      renderer = renderer && renderer.renderer || renderer;
-      isCurtainsRenderer(renderer, parameters.label ? parameters.label + " DOMMesh" : "DOMMesh");
-      this.type = "DOMMesh";
-      const { autoloadSources } = parameters;
-      this.autoloadSources = autoloadSources;
-      this.sourcesReady = false;
-      this.setInitSources();
-    }
-    /**
-     * Get/set whether our {@link material} and {@link geometry} are ready
-     * @readonly
-     */
-    get ready() {
-      return this._ready;
-    }
-    set ready(value) {
-      this._ready = value;
-      if (this.DOMMeshReady) {
-        this._onReadyCallback && this._onReadyCallback();
-      }
-    }
-    /**
-     * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded
-     * @readonly
-     */
-    get sourcesReady() {
-      return this._sourcesReady;
-    }
-    set sourcesReady(value) {
-      this._sourcesReady = value;
-      if (this.DOMMeshReady) {
-        this._onReadyCallback && this._onReadyCallback();
-      }
-    }
-    /**
-     * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its {@link sourcesReady | sources are ready} and its {@link material} and {@link geometry} are ready.
-     * @readonly
-     */
-    get DOMMeshReady() {
-      return this.ready && this.sourcesReady;
-    }
-    /**
-     * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
-     */
-    addToScene() {
-      super.addToScene();
-      this.renderer.domMeshes.push(this);
-    }
-    /**
-     * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
-     */
-    removeFromScene() {
-      super.removeFromScene();
-      this.renderer.domMeshes = this.renderer.domMeshes.filter(
-        (m) => m.uuid !== this.uuid
-      );
-    }
-    /**
-     * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
-     */
-    setInitSources() {
-      let loaderSize = 0;
-      let sourcesLoaded = 0;
-      if (this.autoloadSources) {
-        const images = this.domElement.element.querySelectorAll("img");
-        const videos = this.domElement.element.querySelectorAll("video");
-        const canvases = this.domElement.element.querySelectorAll("canvas");
-        loaderSize = images.length + videos.length + canvases.length;
-        const onSourceUploaded = (texture) => {
-          sourcesLoaded++;
-          this._onLoadingCallback && this._onLoadingCallback(texture);
-          if (sourcesLoaded === loaderSize) {
-            this.sourcesReady = true;
-          }
-        };
-        if (!loaderSize) {
-          this.sourcesReady = true;
-        }
-        if (images.length) {
-          images.forEach((image) => {
-            const texture = this.createTexture({
-              name: image.getAttribute("data-texture-name") ?? "texture" + this.textures.length
-            });
-            texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src);
-          });
-        }
-        if (videos.length) {
-          videos.forEach((video) => {
-            const texture = this.createTexture({
-              name: video.getAttribute("data-texture-name") ?? "texture" + this.textures.length
-            });
-            texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video);
-          });
-        }
-        if (canvases.length) {
-          canvases.forEach((canvas) => {
-            const texture = this.createTexture({
-              name: canvas.getAttribute("data-texture-name") ?? "texture" + this.textures.length
-            });
-            texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas);
-          });
-        }
-      } else {
-        this.sourcesReady = true;
-      }
-    }
-    /**
-     * Reset/change the {@link domElement | DOM Element}
-     * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
-     */
-    resetDOMElement(element) {
-      if (!!element) {
-        super.resetDOMElement(element);
-      } else if (!element && !this.renderer.production) {
-        throwWarning(
-          `${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`
-        );
-      }
-    }
-    /**
-     * Get our {@link DOMMesh#domElement | DOM Element} {@link core/DOM/DOMElement.DOMElement#boundingRect | bounding rectangle} accounting for current {@link core/renderers/GPURenderer.GPURenderer#pixelRatio | renderer pixel ratio}
-     */
-    get pixelRatioBoundingRect() {
-      const devicePixelRatio = window.devicePixelRatio ?? 1;
-      const scaleBoundingRect = this.renderer.pixelRatio / devicePixelRatio;
-      return Object.keys(this.domElement.boundingRect).reduce(
-        (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
-        {
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0,
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0
-        }
-      );
-    }
-    /* EVENTS */
-    /**
-     * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
-     * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
-     * @returns - our {@link DOMMesh}
-     */
-    onLoading(callback) {
-      if (callback) {
-        this._onLoadingCallback = callback;
-      }
-      return this;
-    }
-  }
-
-  const defaultPlaneParams = {
-    label: "Plane",
-    // geometry
-    instancesCount: 1,
-    vertexBuffers: []
-  };
-  class Plane extends DOMMesh {
-    /**
-     * Plane constructor
-     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link Plane}
-     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link Plane}
-     * @param parameters - {@link PlaneParams | parameters} used to create this {@link Plane}
-     */
-    constructor(renderer, element, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isCurtainsRenderer(renderer, parameters.label ? parameters.label + " Plane" : "Plane");
-      const params = { ...defaultPlaneParams, ...parameters };
-      let { geometry, widthSegments, heightSegments, ...DOMMeshParams2 } = params;
-      const { instancesCount, vertexBuffers, ...materialParams } = DOMMeshParams2;
-      if (!geometry || geometry.type !== "PlaneGeometry") {
-        widthSegments = widthSegments ?? 1;
-        heightSegments = heightSegments ?? 1;
-        const geometryID = widthSegments * heightSegments + widthSegments;
-        if (!vertexBuffers.length) {
-          geometry = cacheManager.getPlaneGeometryByID(geometryID);
-        }
-        if (!geometry) {
-          geometry = new PlaneGeometry({ widthSegments, heightSegments, instancesCount, vertexBuffers });
-          cacheManager.addPlaneGeometry(geometry);
-        } else {
-          geometry.instancesCount = instancesCount;
-        }
-      }
-      super(renderer, element, { geometry, ...materialParams });
-      this.type = "Plane";
-    }
-    /**
-     * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link Plane}
-     * It ranges from -1 to 1 on both axis
-     * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
-     * @returns - raycasted {@link Vec2 | vector} coordinates relative to the {@link Plane}
-     */
-    mouseToPlaneCoords(mouseCoords = new Vec2()) {
-      const worldMouse = {
-        x: 2 * (mouseCoords.x / this.renderer.displayBoundingRect.width) - 1,
-        y: 2 * (1 - mouseCoords.y / this.renderer.displayBoundingRect.height) - 1
-      };
-      const rayOrigin = this.camera.position.clone();
-      const rayDirection = new Vec3(worldMouse.x, worldMouse.y, -0.5);
-      rayDirection.unproject(this.camera);
-      rayDirection.sub(rayOrigin).normalize();
-      const planeNormals = new Vec3(0, 0, 1);
-      planeNormals.applyQuat(this.quaternion).normalize();
-      const result = new Vec3(0, 0, 0);
-      const denominator = planeNormals.dot(rayDirection);
-      if (Math.abs(denominator) >= 1e-4) {
-        const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix);
-        const planeOrigin = this.worldTransformOrigin.clone().add(this.worldPosition);
-        const rotatedOrigin = new Vec3(
-          this.worldPosition.x - planeOrigin.x,
-          this.worldPosition.y - planeOrigin.y,
-          this.worldPosition.z - planeOrigin.z
-        );
-        rotatedOrigin.applyQuat(this.quaternion);
-        planeOrigin.add(rotatedOrigin);
-        const distance = planeNormals.dot(planeOrigin.clone().sub(rayOrigin)) / denominator;
-        result.copy(rayOrigin.add(rayDirection.multiplyScalar(distance)));
-        result.applyMat4(inverseViewMatrix);
-      } else {
-        result.set(Infinity, Infinity, Infinity);
-      }
-      return new Vec2(result.x, result.y);
-    }
-  }
-
-  class Scene {
-    /**
-     * Scene constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
-     */
-    constructor({ renderer }) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, "Scene");
-      this.renderer = renderer;
-      this.computePassEntries = [];
-      this.renderPassEntries = {
-        /** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here */
-        pingPong: [],
-        /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
-        renderTarget: [],
-        /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
-        screen: [
-          // add our basic scene entry
-          {
-            renderPass: this.renderer.renderPass,
-            renderTexture: null,
-            onBeforeRenderPass: null,
-            onAfterRenderPass: null,
-            element: null,
-            // explicitly set to null
-            stack: {
-              unProjected: {
-                opaque: [],
-                transparent: []
-              },
-              projected: {
-                opaque: [],
-                transparent: []
-              }
-            }
-          }
-        ]
-      };
-    }
-    /**
-     * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
-     * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
-     */
-    getRenderPassEntryLength(renderPassEntry) {
-      if (!renderPassEntry) {
-        return 0;
-      } else {
-        return renderPassEntry.element ? renderPassEntry.element.visible ? 1 : 0 : renderPassEntry.stack.unProjected.opaque.length + renderPassEntry.stack.unProjected.transparent.length + renderPassEntry.stack.projected.opaque.length + renderPassEntry.stack.projected.transparent.length;
-      }
-    }
-    /**
-     * Add a {@link ComputePass} to our scene {@link computePassEntries} array
-     * @param computePass - {@link ComputePass} to add
-     */
-    addComputePass(computePass) {
-      this.computePassEntries.push(computePass);
-      this.computePassEntries.sort((a, b) => {
-        if (a.renderOrder !== b.renderOrder) {
-          return a.renderOrder - b.renderOrder;
-        } else {
-          return a.index - b.index;
-        }
-      });
-    }
-    /**
-     * Remove a {@link ComputePass} from our scene {@link computePassEntries} array
-     * @param computePass - {@link ComputePass} to remove
-     */
-    removeComputePass(computePass) {
-      this.computePassEntries = this.computePassEntries.filter((cP) => cP.uuid !== computePass.uuid);
-    }
-    /**
-     * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
-     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
-     * @param renderTarget - {@link RenderTarget} to add
-     */
-    addRenderTarget(renderTarget) {
-      if (!this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === renderTarget.renderPass.uuid))
-        this.renderPassEntries.renderTarget.push({
-          renderPass: renderTarget.renderPass,
-          renderTexture: renderTarget.renderTexture,
-          onBeforeRenderPass: null,
-          onAfterRenderPass: null,
-          element: null,
-          // explicitly set to null
-          stack: {
-            unProjected: {
-              opaque: [],
-              transparent: []
-            },
-            projected: {
-              opaque: [],
-              transparent: []
-            }
-          }
-        });
-    }
-    /**
-     * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-     * @param renderTarget - {@link RenderTarget} to add
-     */
-    removeRenderTarget(renderTarget) {
-      this.renderPassEntries.renderTarget = this.renderPassEntries.renderTarget.filter(
-        (entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid
-      );
-    }
-    /**
-     * Get the correct {@link renderPassEntries | render pass entry} (either {@link renderPassEntries} outputTarget or {@link renderPassEntries} screen) {@link Stack} onto which this Mesh should be added, depending on whether it's projected or not
-     * @param mesh - Mesh to check
-     * @returns - the corresponding render pass entry {@link Stack}
-     */
-    getMeshProjectionStack(mesh) {
-      const renderPassEntry = mesh.outputTarget ? this.renderPassEntries.renderTarget.find(
-        (passEntry) => passEntry.renderPass.uuid === mesh.outputTarget.renderPass.uuid
-      ) : this.renderPassEntries.screen[0];
-      const { stack } = renderPassEntry;
-      return mesh.material.options.rendering.useProjection ? stack.projected : stack.unProjected;
-    }
-    /**
-     * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
-     * @param mesh - Mesh to add
-     */
-    addMesh(mesh) {
-      const projectionStack = this.getMeshProjectionStack(mesh);
-      const similarMeshes = mesh.transparent ? [...projectionStack.transparent] : [...projectionStack.opaque];
-      let siblingMeshIndex = -1;
-      for (let i = similarMeshes.length - 1; i >= 0; i--) {
-        if (similarMeshes[i].material.pipelineEntry.index === mesh.material.pipelineEntry.index) {
-          siblingMeshIndex = i + 1;
-          break;
-        }
-      }
-      siblingMeshIndex = Math.max(0, siblingMeshIndex);
-      similarMeshes.splice(siblingMeshIndex, 0, mesh);
-      similarMeshes.sort((a, b) => a.index - b.index);
-      if ((mesh instanceof DOMMesh || mesh instanceof Plane) && mesh.transparent) {
-        similarMeshes.sort(
-          (a, b) => b.documentPosition.z - a.documentPosition.z
-        );
-      }
-      similarMeshes.sort((a, b) => a.renderOrder - b.renderOrder);
-      mesh.transparent ? projectionStack.transparent = similarMeshes : projectionStack.opaque = similarMeshes;
-    }
-    /**
-     * Remove a Mesh from our {@link Scene}
-     * @param mesh - Mesh to remove
-     */
-    removeMesh(mesh) {
-      const projectionStack = this.getMeshProjectionStack(mesh);
-      if (mesh.transparent) {
-        projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
-      } else {
-        projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
-      }
-    }
-    /**
-     * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
-     * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
-     * This also handles the {@link renderPassEntries} screen array entries order: We will first draw selective passes, then our main screen pass and finally global post processing passes.
-     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-to-2-textures-without-texture-copy-c4sx4s?file=%2Fsrc%2Findex.js%3A10%2C4 | minimal code example}
-     * @param shaderPass - {@link ShaderPass} to add
-     */
-    addShaderPass(shaderPass) {
-      const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
-        if (shaderPass.renderTexture && swapChainTexture) {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: swapChainTexture
-            },
-            {
-              texture: shaderPass.renderTexture.texture
-            },
-            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-          );
-        }
-        this.renderer.postProcessingPass.setLoadOp("clear");
-      };
-      const onAfterRenderPass = !shaderPass.outputTarget && shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
-        if (shaderPass.renderTexture && swapChainTexture) {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: swapChainTexture
-            },
-            {
-              texture: shaderPass.renderTexture.texture
-            },
-            [shaderPass.renderTexture.size.width, shaderPass.renderTexture.size.height]
-          );
-        }
-      } : null;
-      const shaderPassEntry = {
-        // use output target or postprocessing render pass
-        renderPass: shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass,
-        // render to output target renderTexture or directly to screen
-        renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
-        onBeforeRenderPass,
-        onAfterRenderPass,
-        element: shaderPass,
-        stack: null
-        // explicitly set to null
-      };
-      this.renderPassEntries.screen.push(shaderPassEntry);
-      this.renderPassEntries.screen.sort((a, b) => {
-        const isPostProA = a.element && !a.element.outputTarget;
-        const renderOrderA = a.element ? a.element.renderOrder : 0;
-        const indexA = a.element ? a.element.index : 0;
-        const isPostProB = b.element && !b.element.outputTarget;
-        const renderOrderB = b.element ? b.element.renderOrder : 0;
-        const indexB = b.element ? b.element.index : 0;
-        if (isPostProA && !isPostProB) {
-          return 1;
-        } else if (!isPostProA && isPostProB) {
-          return -1;
-        } else if (renderOrderA !== renderOrderB) {
-          return renderOrderA - renderOrderB;
-        } else {
-          return indexA - indexB;
-        }
-      });
-    }
-    /**
-     * Remove a {@link ShaderPass} from our scene {@link renderPassEntries} screen array
-     * @param shaderPass - {@link ShaderPass} to remove
-     */
-    removeShaderPass(shaderPass) {
-      this.renderPassEntries.screen = this.renderPassEntries.screen.filter(
-        (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
-      );
-    }
-    /**
-     * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
-     * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass
-     * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}
-     * @param pingPongPlane
-     */
-    addPingPongPlane(pingPongPlane) {
-      this.renderPassEntries.pingPong.push({
-        renderPass: pingPongPlane.outputTarget.renderPass,
-        renderTexture: pingPongPlane.outputTarget.renderTexture,
-        onBeforeRenderPass: null,
-        onAfterRenderPass: (commandEncoder, swapChainTexture) => {
-          commandEncoder.copyTextureToTexture(
-            {
-              texture: swapChainTexture
-            },
-            {
-              texture: pingPongPlane.renderTexture.texture
-            },
-            [pingPongPlane.renderTexture.size.width, pingPongPlane.renderTexture.size.height]
-          );
-        },
-        element: pingPongPlane,
-        stack: null
-        // explicitly set to null
-      });
-      this.renderPassEntries.pingPong.sort((a, b) => a.element.renderOrder - b.element.renderOrder);
-    }
-    /**
-     * Remove a {@link PingPongPlane} from our scene {@link renderPassEntries} pingPong array.
-     * @param pingPongPlane - {@link PingPongPlane} to remove
-     */
-    removePingPongPlane(pingPongPlane) {
-      this.renderPassEntries.pingPong = this.renderPassEntries.pingPong.filter(
-        (entry) => entry.element.uuid !== pingPongPlane.uuid
-      );
-    }
-    /**
-     * Get any rendered object or {@link RenderTarget} {@link RenderPassEntry}. Useful to override a {@link RenderPassEntry#onBeforeRenderPass | RenderPassEntry onBeforeRenderPass} or {@link RenderPassEntry#onAfterRenderPass | RenderPassEntry onAfterRenderPass} default behavior.
-     * @param object - The object from which we want to get the parentMesh {@link RenderPassEntry}
-     * @returns - the {@link RenderPassEntry} if found
-     */
-    getObjectRenderPassEntry(object) {
-      if (object instanceof RenderTarget) {
-        return this.renderPassEntries.renderTarget.find((entry) => entry.renderPass.uuid === object.renderPass.uuid);
-      } else if (object instanceof PingPongPlane) {
-        return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
-      } else if (object instanceof ShaderPass) {
-        return this.renderPassEntries.screen.find((entry) => entry.element?.uuid === object.uuid);
-      } else {
-        const entryType = object.outputTarget ? "renderTarget" : "screen";
-        return this.renderPassEntries[entryType].find((entry) => {
-          return [
-            ...entry.stack.unProjected.opaque,
-            ...entry.stack.unProjected.transparent,
-            ...entry.stack.projected.opaque,
-            ...entry.stack.projected.transparent
-          ].some((mesh) => mesh.uuid === object.uuid);
-        });
-      }
-    }
-    /**
-     * Here we render a {@link RenderPassEntry}:
-     * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
-     * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
-     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
-     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link CameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
-     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
-     * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
-     * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param renderPassEntry - {@link RenderPassEntry} to render
-     */
-    renderSinglePassEntry(commandEncoder, renderPassEntry) {
-      const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
-      renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
-      const pass = commandEncoder.beginRenderPass(renderPassEntry.renderPass.descriptor);
-      !this.renderer.production && pass.pushDebugGroup(
-        renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`
-      );
-      if (renderPassEntry.element) {
-        renderPassEntry.element.render(pass);
-      } else if (renderPassEntry.stack) {
-        renderPassEntry.stack.unProjected.opaque.forEach((mesh) => mesh.render(pass));
-        renderPassEntry.stack.unProjected.transparent.forEach((mesh) => mesh.render(pass));
-        if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-          if (this.renderer.cameraBindGroup) {
-            pass.setBindGroup(
-              this.renderer.cameraBindGroup.index,
-              this.renderer.cameraBindGroup.bindGroup
-            );
-          }
-          renderPassEntry.stack.projected.opaque.forEach((mesh) => mesh.render(pass));
-          renderPassEntry.stack.projected.transparent.forEach((mesh) => mesh.render(pass));
-        }
-      }
-      !this.renderer.production && pass.popDebugGroup();
-      pass.end();
-      renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
-      this.renderer.pipelineManager.resetCurrentPipeline();
-    }
-    /**
-     * Render our {@link Scene}
-     * - Render {@link computePassEntries} first
-     * - Then our {@link renderPassEntries}
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     */
-    render(commandEncoder) {
-      this.computePassEntries.forEach((computePass) => {
-        const pass = commandEncoder.beginComputePass();
-        computePass.render(pass);
-        pass.end();
-        computePass.copyBufferToResult(commandEncoder);
-        this.renderer.pipelineManager.resetCurrentPipeline();
-      });
-      for (const renderPassEntryType in this.renderPassEntries) {
-        let passDrawnCount = 0;
-        this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-          if (!this.getRenderPassEntryLength(renderPassEntry))
-            return;
-          renderPassEntry.renderPass.setLoadOp(
-            renderPassEntryType === "screen" && passDrawnCount !== 0 ? "load" : "clear"
-          );
-          passDrawnCount++;
-          this.renderSinglePassEntry(commandEncoder, renderPassEntry);
-        });
-      }
-    }
-  }
-
-  var __accessCheck = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateGet = (obj, member, getter) => {
-    __accessCheck(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet = (obj, member, value, setter) => {
-    __accessCheck(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
-    return value;
-  };
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet(obj, member, value, setter);
+      __privateSet$1(obj, member, value, setter);
     },
     get _() {
-      return __privateGet(obj, member, getter);
+      return __privateGet$2(obj, member, getter);
     }
   });
   var _taskCount;
@@ -9520,7 +8703,7 @@ struct VSOutput {
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd(this, _taskCount, 0);
+      __privateAdd$2(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -9535,7 +8718,7 @@ struct VSOutput {
         callback,
         order,
         once,
-        id: __privateGet(this, _taskCount)
+        id: __privateGet$2(this, _taskCount)
       };
       __privateWrapper(this, _taskCount)._++;
       this.queue.push(task);
@@ -10225,7 +9408,7 @@ struct VSOutput {
       !this.production && commandEncoder.pushDebugGroup("Render once command encoder");
       this.pipelineManager.resetCurrentPipeline();
       objects.forEach((object) => {
-        if (object instanceof ComputePass) {
+        if (object.type === "ComputePass") {
           this.renderSingleComputePass(commandEncoder, object);
         } else {
           this.renderSingleMesh(commandEncoder, object);
@@ -10797,6 +9980,835 @@ struct VSOutput {
       this.buffers.forEach((buffer) => buffer?.destroy());
       this.textures.forEach((texture) => texture.destroy());
       this.setDeviceObjects();
+    }
+  }
+
+  var __accessCheck$1 = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet$1 = (obj, member, getter) => {
+    __accessCheck$1(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd$1 = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet = (obj, member, value, setter) => {
+    __accessCheck$1(obj, member, "write to private field");
+    setter ? setter.call(obj, value) : member.set(obj, value);
+    return value;
+  };
+  var _autoRender;
+  class RenderTarget {
+    /**
+     * RenderTarget constructor
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
+     * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
+     */
+    constructor(renderer, parameters = {}) {
+      /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
+      __privateAdd$1(this, _autoRender, true);
+      renderer = renderer && renderer.renderer || renderer;
+      isRenderer(renderer, "RenderTarget");
+      this.type = "RenderTarget";
+      this.renderer = renderer;
+      this.uuid = generateUUID();
+      const { label, targetFormat, depthTexture, autoRender, ...renderPassParams } = parameters;
+      this.options = {
+        label,
+        ...renderPassParams,
+        ...depthTexture && { depthTexture },
+        targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
+        autoRender: autoRender === void 0 ? true : autoRender
+      };
+      if (autoRender !== void 0) {
+        __privateSet(this, _autoRender, autoRender);
+      }
+      this.renderPass = new RenderPass(this.renderer, {
+        label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
+        targetFormat: this.options.targetFormat,
+        depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture,
+        // reuse renderer depth texture for every pass
+        ...renderPassParams
+      });
+      if (renderPassParams.useColorAttachments !== false) {
+        this.renderTexture = new RenderTexture(this.renderer, {
+          label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
+          name: "renderTexture",
+          format: this.options.targetFormat,
+          ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
+        });
+      }
+      this.addToScene();
+    }
+    /**
+     * Add the {@link RenderTarget} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     */
+    addToScene() {
+      this.renderer.renderTargets.push(this);
+      if (__privateGet$1(this, _autoRender)) {
+        this.renderer.scene.addRenderTarget(this);
+      }
+    }
+    /**
+     * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     */
+    removeFromScene() {
+      if (__privateGet$1(this, _autoRender)) {
+        this.renderer.scene.removeRenderTarget(this);
+      }
+      this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
+    }
+    /**
+     * Resize our {@link renderPass}
+     */
+    resize() {
+      this.renderPass.options.depthTexture.texture = this.options.depthTexture ? this.options.depthTexture.texture : this.renderer.renderPass.depthTexture.texture;
+      this.renderPass?.resize();
+    }
+    /**
+     * Remove our {@link RenderTarget}. Alias of {@link RenderTarget#destroy}
+     */
+    remove() {
+      this.destroy();
+    }
+    /**
+     * Destroy our {@link RenderTarget}
+     */
+    destroy() {
+      this.renderer.meshes.forEach((mesh) => {
+        if (mesh.outputTarget && mesh.outputTarget.uuid === this.uuid) {
+          mesh.setOutputTarget(null);
+        }
+      });
+      this.renderer.shaderPasses.forEach((shaderPass) => {
+        if (shaderPass.outputTarget && shaderPass.outputTarget.uuid === this.uuid) {
+          shaderPass.outputTarget = null;
+          shaderPass.setOutputTarget(null);
+        }
+      });
+      this.removeFromScene();
+      this.renderPass?.destroy();
+      this.renderTexture?.destroy();
+    }
+  }
+  _autoRender = new WeakMap();
+
+  var default_pass_fsWGSl = (
+    /* wgsl */
+    `
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  return textureSample(renderTexture, defaultSampler, fsInput.uv);
+}`
+  );
+
+  class ShaderPass extends FullscreenPlane {
+    /**
+     * ShaderPass constructor
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
+     * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
+     */
+    constructor(renderer, parameters = {}) {
+      renderer = renderer && renderer.renderer || renderer;
+      isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
+      parameters.transparent = true;
+      parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
+      parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
+      if (!parameters.shaders) {
+        parameters.shaders = {};
+      }
+      if (!parameters.shaders.fragment) {
+        parameters.shaders.fragment = {
+          code: default_pass_fsWGSl,
+          entryPoint: "main"
+        };
+      }
+      parameters.depth = false;
+      super(renderer, parameters);
+      if (parameters.inputTarget) {
+        this.setInputTarget(parameters.inputTarget);
+      }
+      if (this.outputTarget) {
+        this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
+      }
+      this.type = "ShaderPass";
+      this.createRenderTexture({
+        label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
+        name: "renderTexture",
+        fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+        ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
+      });
+    }
+    /**
+     * Hook used to clean up parameters before sending them to the material.
+     * @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+     * @returns - cleaned parameters
+     */
+    cleanupRenderMaterialParameters(parameters) {
+      delete parameters.copyOutputToRenderTexture;
+      delete parameters.inputTarget;
+      super.cleanupRenderMaterialParameters(parameters);
+      return parameters;
+    }
+    /**
+     * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
+     * @readonly
+     */
+    get renderTexture() {
+      return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
+    }
+    /**
+     * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
+     *
+     * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+     * Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
+     * @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+     */
+    setInputTarget(inputTarget) {
+      if (inputTarget && inputTarget.type !== "RenderTarget") {
+        throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`);
+        return;
+      }
+      this.removeFromScene();
+      this.inputTarget = inputTarget;
+      this.addToScene();
+      if (this.renderTexture) {
+        if (inputTarget) {
+          this.renderTexture.copy(this.inputTarget.renderTexture);
+        } else {
+          this.renderTexture.options.fromTexture = null;
+          this.renderTexture.createTexture();
+        }
+      }
+    }
+    /**
+     * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     */
+    addToScene() {
+      this.renderer.shaderPasses.push(this);
+      this.setRenderingOptionsForRenderPass(
+        this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
+      );
+      if (this.autoRender) {
+        this.renderer.scene.addShaderPass(this);
+      }
+    }
+    /**
+     * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     */
+    removeFromScene() {
+      if (this.outputTarget) {
+        this.outputTarget.destroy();
+      }
+      if (this.autoRender) {
+        this.renderer.scene.removeShaderPass(this);
+      }
+      this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+    }
+  }
+
+  var __accessCheck = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet = (obj, member, getter) => {
+    __accessCheck(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var _DOMObjectWorldPosition, _DOMObjectWorldScale;
+  class DOMObject3D extends ProjectedObject3D {
+    /**
+     * DOMObject3D constructor
+     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
+     * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
+     */
+    constructor(renderer, element, parameters) {
+      super(renderer);
+      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
+      __privateAdd(this, _DOMObjectWorldPosition, new Vec3());
+      /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
+      __privateAdd(this, _DOMObjectWorldScale, new Vec3());
+      renderer = renderer && renderer.renderer || renderer;
+      isCurtainsRenderer(renderer, "DOM3DObject");
+      this.renderer = renderer;
+      this.size = {
+        world: {
+          width: 0,
+          height: 0,
+          top: 0,
+          left: 0
+        },
+        document: {
+          width: 0,
+          height: 0,
+          top: 0,
+          left: 0
+        }
+      };
+      this.watchScroll = parameters.watchScroll;
+      this.camera = this.renderer.camera;
+      this.setDOMElement(element);
+    }
+    /**
+     * Set the {@link domElement | DOM Element}
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     */
+    setDOMElement(element) {
+      this.domElement = new DOMElement({
+        element,
+        onSizeChanged: (boundingRect) => this.resize(boundingRect),
+        onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect)
+      });
+    }
+    /**
+     * Update size and position when the {@link domElement | DOM Element} position changed
+     * @param boundingRect - the new bounding rectangle
+     */
+    onPositionChanged(boundingRect) {
+      if (this.watchScroll) {
+        this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
+        this.updateSizeAndPosition();
+      }
+    }
+    /**
+     * Reset the {@link domElement | DOMElement}
+     * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     */
+    resetDOMElement(element) {
+      if (this.domElement) {
+        this.domElement.destroy();
+      }
+      this.setDOMElement(element);
+    }
+    /**
+     * Update the {@link DOMObject3D} sizes and position
+     */
+    updateSizeAndPosition() {
+      this.setWorldSizes();
+      this.applyPosition();
+      this.shouldUpdateModelMatrix();
+    }
+    /**
+     * Update the {@link DOMObject3D} sizes, position and projection
+     */
+    shouldUpdateMatrixStack() {
+      this.updateSizeAndPosition();
+      super.shouldUpdateMatrixStack();
+    }
+    /**
+     * Resize the {@link DOMObject3D}
+     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     */
+    resize(boundingRect) {
+      if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
+        return;
+      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
+      this.shouldUpdateMatrixStack();
+    }
+    /* BOUNDING BOXES GETTERS */
+    /**
+     * Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * @readonly
+     */
+    get boundingRect() {
+      return this.domElement.boundingRect;
+    }
+    /* TRANSFOMS */
+    /**
+     * Set our transforms properties and {@link Vec3#onChange | onChange vector} callbacks
+     */
+    setTransforms() {
+      super.setTransforms();
+      this.transforms.origin.model.set(0.5, 0.5, 0);
+      this.transforms.origin.world = new Vec3();
+      this.transforms.position.document = new Vec3();
+      this.documentPosition.onChange(() => this.applyPosition());
+      this.transformOrigin.onChange(() => this.setWorldTransformOrigin());
+    }
+    /**
+     * Get the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+     */
+    get documentPosition() {
+      return this.transforms.position.document;
+    }
+    /**
+     * Set the {@link DOMObject3DTransforms#position.document | additional translation relative to the document}
+     * @param value - additional translation relative to the document to apply
+     */
+    set documentPosition(value) {
+      this.transforms.position.document = value;
+      this.applyPosition();
+    }
+    /**
+     * Get the {@link domElement | DOM element} scale in world space
+     * @readonly
+     */
+    get DOMObjectWorldScale() {
+      return __privateGet(this, _DOMObjectWorldScale).clone();
+    }
+    /**
+     * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
+     * @readonly
+     */
+    get worldScale() {
+      return this.DOMObjectWorldScale.multiply(this.scale);
+    }
+    /**
+     * Get the {@link DOMObject3D} position in world space
+     * @readonly
+     */
+    get worldPosition() {
+      return __privateGet(this, _DOMObjectWorldPosition).clone();
+    }
+    /**
+     * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+     */
+    get transformOrigin() {
+      return this.transforms.origin.model;
+    }
+    /**
+     * Set the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
+     * @param value - new transform origin
+     */
+    set transformOrigin(value) {
+      this.transforms.origin.model = value;
+      this.setWorldTransformOrigin();
+    }
+    /**
+     * Get the {@link DOMObject3D} transform origin in world space
+     */
+    get worldTransformOrigin() {
+      return this.transforms.origin.world;
+    }
+    /**
+     * Set the {@link DOMObject3D} transform origin in world space
+     * @param value - new world space transform origin
+     */
+    set worldTransformOrigin(value) {
+      this.transforms.origin.world = value;
+    }
+    /**
+     * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
+     */
+    applyPosition() {
+      this.applyDocumentPosition();
+      super.applyPosition();
+    }
+    /**
+     * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
+     */
+    applyDocumentPosition() {
+      let worldPosition = new Vec3(0, 0, 0);
+      if (!this.documentPosition.equals(worldPosition)) {
+        worldPosition = this.documentToWorldSpace(this.documentPosition);
+      }
+      __privateGet(this, _DOMObjectWorldPosition).set(
+        this.position.x + this.size.world.left + worldPosition.x,
+        this.position.y + this.size.world.top + worldPosition.y,
+        this.position.z + this.documentPosition.z / this.camera.CSSPerspective
+      );
+    }
+    /**
+     * Apply the transform origin and set the {@link DOMObject3D} world transform origin
+     */
+    applyTransformOrigin() {
+      if (!this.size)
+        return;
+      this.setWorldTransformOrigin();
+      super.applyTransformOrigin();
+    }
+    /* MATRICES */
+    /**
+     * Update the {@link modelMatrix | model matrix} accounting the {@link DOMObject3D} world position and {@link DOMObject3D} world scale
+     */
+    updateModelMatrix() {
+      this.modelMatrix.composeFromOrigin(
+        __privateGet(this, _DOMObjectWorldPosition),
+        this.quaternion,
+        this.scale,
+        this.worldTransformOrigin
+      );
+      this.modelMatrix.scale(__privateGet(this, _DOMObjectWorldScale));
+      this.shouldUpdateWorldMatrix();
+    }
+    /**
+     * Convert a document position {@link Vec3 | vector} to a world position {@link Vec3 | vector}
+     * @param vector - document position {@link Vec3 | vector} converted to world space
+     */
+    documentToWorldSpace(vector = new Vec3()) {
+      return new Vec3(
+        vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.screenRatio.width,
+        -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.screenRatio.height,
+        vector.z
+      );
+    }
+    /**
+     * Set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+     */
+    setWorldSizes() {
+      const containerBoundingRect = this.renderer.boundingRect;
+      const planeCenter = {
+        x: this.size.document.width / 2 + this.size.document.left,
+        y: this.size.document.height / 2 + this.size.document.top
+      };
+      const containerCenter = {
+        x: containerBoundingRect.width / 2 + containerBoundingRect.left,
+        y: containerBoundingRect.height / 2 + containerBoundingRect.top
+      };
+      this.size.world = {
+        width: this.size.document.width / containerBoundingRect.width * this.camera.screenRatio.width / 2,
+        height: this.size.document.height / containerBoundingRect.height * this.camera.screenRatio.height / 2,
+        top: (containerCenter.y - planeCenter.y) / containerBoundingRect.height * this.camera.screenRatio.height,
+        left: (planeCenter.x - containerCenter.x) / containerBoundingRect.width * this.camera.screenRatio.width
+      };
+      __privateGet(this, _DOMObjectWorldScale).set(this.size.world.width, this.size.world.height, 1);
+      this.setWorldTransformOrigin();
+    }
+    /**
+     * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
+     */
+    setWorldTransformOrigin() {
+      this.transforms.origin.world = new Vec3(
+        (this.transformOrigin.x * 2 - 1) * // between -1 and 1
+        this.size.world.width,
+        -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
+        this.size.world.height,
+        this.transformOrigin.z
+      );
+      this.shouldUpdateModelMatrix();
+      this.shouldUpdateProjectionMatrixStack();
+    }
+    /**
+     * Update the {@link domElement | DOM Element} scroll position
+     * @param delta - last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}
+     */
+    updateScrollPosition(delta = { x: 0, y: 0 }) {
+      if (delta.x || delta.y) {
+        this.domElement.updateScrollPosition(delta);
+      }
+    }
+    /**
+     * Destroy our {@link DOMObject3D}
+     */
+    destroy() {
+      this.domElement?.destroy();
+    }
+  }
+  _DOMObjectWorldPosition = new WeakMap();
+  _DOMObjectWorldScale = new WeakMap();
+
+  const defaultDOMMeshParams = {
+    autoloadSources: true,
+    watchScroll: true
+  };
+  class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
+    /**
+     * DOMMesh constructor
+     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMMesh}
+     * @param parameters - {@link DOMMeshParams | parameters} used to create this {@link DOMMesh}
+     */
+    constructor(renderer, element, parameters) {
+      super(renderer, element, { ...defaultDOMMeshParams, ...parameters });
+      // callbacks / events
+      /** function assigned to the {@link onLoading} callback */
+      this._onLoadingCallback = (texture) => {
+      };
+      parameters = { ...defaultDOMMeshParams, ...parameters };
+      renderer = renderer && renderer.renderer || renderer;
+      isCurtainsRenderer(renderer, parameters.label ? parameters.label + " DOMMesh" : "DOMMesh");
+      this.type = "DOMMesh";
+      const { autoloadSources } = parameters;
+      this.autoloadSources = autoloadSources;
+      this.sourcesReady = false;
+      this.setInitSources();
+    }
+    /**
+     * Get/set whether our {@link material} and {@link geometry} are ready
+     * @readonly
+     */
+    get ready() {
+      return this._ready;
+    }
+    set ready(value) {
+      this._ready = value;
+      if (this.DOMMeshReady) {
+        this._onReadyCallback && this._onReadyCallback();
+      }
+    }
+    /**
+     * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded
+     * @readonly
+     */
+    get sourcesReady() {
+      return this._sourcesReady;
+    }
+    set sourcesReady(value) {
+      this._sourcesReady = value;
+      if (this.DOMMeshReady) {
+        this._onReadyCallback && this._onReadyCallback();
+      }
+    }
+    /**
+     * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its {@link sourcesReady | sources are ready} and its {@link material} and {@link geometry} are ready.
+     * @readonly
+     */
+    get DOMMeshReady() {
+      return this.ready && this.sourcesReady;
+    }
+    /**
+     * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     */
+    addToScene() {
+      super.addToScene();
+      this.renderer.domMeshes.push(this);
+    }
+    /**
+     * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     */
+    removeFromScene() {
+      super.removeFromScene();
+      this.renderer.domMeshes = this.renderer.domMeshes.filter(
+        (m) => m.uuid !== this.uuid
+      );
+    }
+    /**
+     * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
+     */
+    setInitSources() {
+      let loaderSize = 0;
+      let sourcesLoaded = 0;
+      if (this.autoloadSources) {
+        const images = this.domElement.element.querySelectorAll("img");
+        const videos = this.domElement.element.querySelectorAll("video");
+        const canvases = this.domElement.element.querySelectorAll("canvas");
+        loaderSize = images.length + videos.length + canvases.length;
+        const onSourceUploaded = (texture) => {
+          sourcesLoaded++;
+          this._onLoadingCallback && this._onLoadingCallback(texture);
+          if (sourcesLoaded === loaderSize) {
+            this.sourcesReady = true;
+          }
+        };
+        if (!loaderSize) {
+          this.sourcesReady = true;
+        }
+        if (images.length) {
+          images.forEach((image) => {
+            const texture = this.createTexture({
+              name: image.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            });
+            texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src);
+          });
+        }
+        if (videos.length) {
+          videos.forEach((video) => {
+            const texture = this.createTexture({
+              name: video.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            });
+            texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video);
+          });
+        }
+        if (canvases.length) {
+          canvases.forEach((canvas) => {
+            const texture = this.createTexture({
+              name: canvas.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            });
+            texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas);
+          });
+        }
+      } else {
+        this.sourcesReady = true;
+      }
+    }
+    /**
+     * Reset/change the {@link domElement | DOM Element}
+     * @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
+     */
+    resetDOMElement(element) {
+      if (!!element) {
+        super.resetDOMElement(element);
+      } else if (!element && !this.renderer.production) {
+        throwWarning(
+          `${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`
+        );
+      }
+    }
+    /**
+     * Get our {@link DOMMesh#domElement | DOM Element} {@link core/DOM/DOMElement.DOMElement#boundingRect | bounding rectangle} accounting for current {@link core/renderers/GPURenderer.GPURenderer#pixelRatio | renderer pixel ratio}
+     */
+    get pixelRatioBoundingRect() {
+      const devicePixelRatio = window.devicePixelRatio ?? 1;
+      const scaleBoundingRect = this.renderer.pixelRatio / devicePixelRatio;
+      return Object.keys(this.domElement.boundingRect).reduce(
+        (a, key) => ({ ...a, [key]: this.domElement.boundingRect[key] * scaleBoundingRect }),
+        {
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0
+        }
+      );
+    }
+    /* EVENTS */
+    /**
+     * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
+     * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
+     * @returns - our {@link DOMMesh}
+     */
+    onLoading(callback) {
+      if (callback) {
+        this._onLoadingCallback = callback;
+      }
+      return this;
+    }
+  }
+
+  class PingPongPlane extends FullscreenPlane {
+    /**
+     * PingPongPlane constructor
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
+     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
+     */
+    constructor(renderer, parameters = {}) {
+      renderer = renderer && renderer.renderer || renderer;
+      isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
+      parameters.outputTarget = new RenderTarget(renderer, {
+        label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
+        useDepth: false,
+        ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
+      });
+      parameters.transparent = false;
+      parameters.depth = false;
+      parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
+      super(renderer, parameters);
+      this.type = "PingPongPlane";
+      this.createRenderTexture({
+        label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
+        name: "renderTexture",
+        ...parameters.targetFormat && { format: parameters.targetFormat }
+      });
+    }
+    /**
+     * Get our main {@link RenderTexture}, the one that contains our ping pong content
+     * @readonly
+     */
+    get renderTexture() {
+      return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
+    }
+    /**
+     * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     */
+    addToScene() {
+      this.renderer.pingPongPlanes.push(this);
+      if (this.autoRender) {
+        this.renderer.scene.addPingPongPlane(this);
+      }
+    }
+    /**
+     * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     */
+    removeFromScene() {
+      if (this.outputTarget) {
+        this.outputTarget.destroy();
+      }
+      if (this.autoRender) {
+        this.renderer.scene.removePingPongPlane(this);
+      }
+      this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+    }
+  }
+
+  const defaultPlaneParams = {
+    label: "Plane",
+    // geometry
+    instancesCount: 1,
+    vertexBuffers: []
+  };
+  class Plane extends DOMMesh {
+    /**
+     * Plane constructor
+     * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link Plane}
+     * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link Plane}
+     * @param parameters - {@link PlaneParams | parameters} used to create this {@link Plane}
+     */
+    constructor(renderer, element, parameters = {}) {
+      renderer = renderer && renderer.renderer || renderer;
+      isCurtainsRenderer(renderer, parameters.label ? parameters.label + " Plane" : "Plane");
+      const params = { ...defaultPlaneParams, ...parameters };
+      let { geometry, widthSegments, heightSegments, ...DOMMeshParams2 } = params;
+      const { instancesCount, vertexBuffers, ...materialParams } = DOMMeshParams2;
+      if (!geometry || geometry.type !== "PlaneGeometry") {
+        widthSegments = widthSegments ?? 1;
+        heightSegments = heightSegments ?? 1;
+        const geometryID = widthSegments * heightSegments + widthSegments;
+        if (!vertexBuffers.length) {
+          geometry = cacheManager.getPlaneGeometryByID(geometryID);
+        }
+        if (!geometry) {
+          geometry = new PlaneGeometry({ widthSegments, heightSegments, instancesCount, vertexBuffers });
+          cacheManager.addPlaneGeometry(geometry);
+        } else {
+          geometry.instancesCount = instancesCount;
+        }
+      }
+      super(renderer, element, { geometry, ...materialParams });
+      this.type = "Plane";
+    }
+    /**
+     * Take the pointer {@link Vec2 | vector} position relative to the document and returns it relative to our {@link Plane}
+     * It ranges from -1 to 1 on both axis
+     * @param mouseCoords - pointer {@link Vec2 | vector} coordinates
+     * @returns - raycasted {@link Vec2 | vector} coordinates relative to the {@link Plane}
+     */
+    mouseToPlaneCoords(mouseCoords = new Vec2()) {
+      const worldMouse = {
+        x: 2 * (mouseCoords.x / this.renderer.displayBoundingRect.width) - 1,
+        y: 2 * (1 - mouseCoords.y / this.renderer.displayBoundingRect.height) - 1
+      };
+      const rayOrigin = this.camera.position.clone();
+      const rayDirection = new Vec3(worldMouse.x, worldMouse.y, -0.5);
+      rayDirection.unproject(this.camera);
+      rayDirection.sub(rayOrigin).normalize();
+      const planeNormals = new Vec3(0, 0, 1);
+      planeNormals.applyQuat(this.quaternion).normalize();
+      const result = new Vec3(0, 0, 0);
+      const denominator = planeNormals.dot(rayDirection);
+      if (Math.abs(denominator) >= 1e-4) {
+        const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix);
+        const planeOrigin = this.worldTransformOrigin.clone().add(this.worldPosition);
+        const rotatedOrigin = new Vec3(
+          this.worldPosition.x - planeOrigin.x,
+          this.worldPosition.y - planeOrigin.y,
+          this.worldPosition.z - planeOrigin.z
+        );
+        rotatedOrigin.applyQuat(this.quaternion);
+        planeOrigin.add(rotatedOrigin);
+        const distance = planeNormals.dot(planeOrigin.clone().sub(rayOrigin)) / denominator;
+        result.copy(rayOrigin.add(rayDirection.multiplyScalar(distance)));
+        result.applyMat4(inverseViewMatrix);
+      } else {
+        result.set(Infinity, Infinity, Infinity);
+      }
+      return new Vec2(result.x, result.y);
     }
   }
 
@@ -11584,4 +11596,3 @@ struct VSOutput {
   exports.logSceneCommands = logSceneCommands;
 
 }));
-//# sourceMappingURL=gpu-curtains.umd.js.map

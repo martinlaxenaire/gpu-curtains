@@ -610,4 +610,3 @@ function MeshBaseMixin(Base) {
 }
 
 export { MeshBaseMixin };
-//# sourceMappingURL=MeshBaseMixin.mjs.map

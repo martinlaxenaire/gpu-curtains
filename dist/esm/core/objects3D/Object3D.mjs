@@ -264,4 +264,3 @@ class Object3D {
 }
 
 export { Object3D };
-//# sourceMappingURL=Object3D.mjs.map

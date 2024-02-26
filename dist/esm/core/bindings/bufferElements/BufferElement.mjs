@@ -196,4 +196,3 @@ class BufferElement {
 }
 
 export { BufferElement, bytesPerRow, bytesPerSlot, slotsPerRow };
-//# sourceMappingURL=BufferElement.mjs.map

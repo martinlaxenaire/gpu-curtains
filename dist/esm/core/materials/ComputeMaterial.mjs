@@ -163,4 +163,3 @@ class ComputeMaterial extends Material {
 }
 
 export { ComputeMaterial };
-//# sourceMappingURL=ComputeMaterial.mjs.map

@@ -84,4 +84,3 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
 }
 
 export { BufferInterleavedArrayElement };
-//# sourceMappingURL=BufferInterleavedArrayElement.mjs.map
