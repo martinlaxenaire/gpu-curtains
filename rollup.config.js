@@ -11,7 +11,6 @@ export default [
         preserveModules: true,
         preserveModulesRoot: 'src',
         entryFileNames: '[name].mjs',
-        sourcemap: true,
       },
       {
         file: 'dist/gpu-curtains.umd.js',

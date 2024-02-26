@@ -1,1 +1,0 @@
-{"version":3,"file":"default_fs.wgsl.mjs","sources":["../../../../../src/core/shaders/chunks/default_fs.wgsl.js"],"sourcesContent":["export default /* wgsl */ `\n@fragment fn main() -> @location(0) vec4f {\n  return vec4(0.0, 0.0, 0.0, 1.0);\n}`\n"],"names":[],"mappings":"AAAA,qBAAA;AAAA;AAAA,EAA0B,CAAA;AAAA;AAAA;AAAA,CAAA,CAAA;AAAA;;;;"}
