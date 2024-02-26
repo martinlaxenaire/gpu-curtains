@@ -19,6 +19,13 @@ class FullscreenPlane extends MeshBaseMixin(class {
       geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
       cacheManager.addPlaneGeometry(geometry);
     }
+    if (!parameters.shaders || !parameters.shaders.vertex) {
+      ["uniforms", "storages"].forEach((bindingType) => {
+        Object.keys(parameters[bindingType] ?? {}).forEach(
+          (bindingKey) => parameters[bindingType][bindingKey].visibility = "fragment"
+        );
+      });
+    }
     super(renderer, null, { geometry, ...parameters });
     this.size = {
       document: {

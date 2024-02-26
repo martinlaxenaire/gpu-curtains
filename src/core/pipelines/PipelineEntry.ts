@@ -102,7 +102,7 @@ export class PipelineEntry {
    */
   createShaderModule({ code = '', type = 'vertex' }: { code: string; type: MaterialShadersType }): GPUShaderModule {
     const shaderModule = this.renderer.createShaderModule({
-      label: this.options.label + ': ' + type + 'Shader module',
+      label: this.options.label + ': ' + type + ' shader module',
       code,
     })
 

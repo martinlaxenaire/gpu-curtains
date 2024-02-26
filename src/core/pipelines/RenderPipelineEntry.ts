@@ -39,8 +39,9 @@ export class RenderPipelineEntry extends PipelineEntry {
    * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
    */
   constructor(parameters: RenderPipelineEntryParams) {
-    let { renderer } = parameters
-    const { label, ...renderingOptions } = parameters
+    // eslint-disable-next-line prefer-const
+    let { renderer, ...pipelineParams } = parameters
+    const { label, ...renderingOptions } = pipelineParams
 
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
@@ -76,7 +77,7 @@ export class RenderPipelineEntry extends PipelineEntry {
     this.options = {
       ...this.options,
       ...renderingOptions,
-    } as RenderPipelineEntryOptions
+    }
   }
 
   // TODO! need to chose whether we should silently add the camera bind group here
@@ -87,7 +88,7 @@ export class RenderPipelineEntry extends PipelineEntry {
    */
   setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]) {
     this.bindGroups =
-      'cameraBindGroup' in this.renderer && this.options.useProjection
+      'cameraBindGroup' in this.renderer && this.options.rendering.useProjection
         ? [this.renderer.cameraBindGroup, ...bindGroups]
         : bindGroups
   }
@@ -133,7 +134,7 @@ export class RenderPipelineEntry extends PipelineEntry {
       }
     }
 
-    if (this.options.useProjection) {
+    if (this.options.rendering.useProjection) {
       for (const chunk in ProjectedShaderChunks.vertex) {
         this.shaders.vertex.head = `${ProjectedShaderChunks.vertex[chunk]}\n${this.shaders.vertex.head}`
         this.shaders.full.head = `${ProjectedShaderChunks.vertex[chunk]}\n${this.shaders.full.head}`
@@ -294,8 +295,8 @@ export class RenderPipelineEntry extends PipelineEntry {
     // use a custom blending if set
     // or use this blend equation if mesh is transparent (see https://limnu.com/webgl-blending-youre-probably-wrong/)
     const blend =
-      this.options.blend ??
-      (this.options.transparent && {
+      this.options.rendering.blend ??
+      (this.options.rendering.transparent && {
         color: {
           srcFactor: 'src-alpha',
           dstFactor: 'one-minus-src-alpha',
@@ -333,30 +334,30 @@ export class RenderPipelineEntry extends PipelineEntry {
           entryPoint: (this.options.shaders.fragment as ShaderOptions).entryPoint,
           targets: [
             {
-              format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
+              format: this.options.rendering.targetFormat ?? this.renderer.options.preferredFormat,
               ...(blend && {
                 blend,
               }),
             },
-            ...(this.options.additionalTargets ?? []), // merge with additional targets if any
+            ...(this.options.rendering.additionalTargets ?? []), // merge with additional targets if any
           ],
         },
       }),
       primitive: {
-        topology: this.options.topology,
-        frontFace: this.options.verticesOrder,
-        cullMode: this.options.cullMode,
+        topology: this.options.rendering.topology,
+        frontFace: this.options.rendering.verticesOrder,
+        cullMode: this.options.rendering.cullMode,
       },
-      ...(this.options.depth && {
+      ...(this.options.rendering.depth && {
         depthStencil: {
-          depthWriteEnabled: this.options.depthWriteEnabled,
-          depthCompare: this.options.depthCompare,
-          format: this.options.depthFormat,
+          depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+          depthCompare: this.options.rendering.depthCompare,
+          format: this.options.rendering.depthFormat,
         },
       }),
-      ...(this.options.sampleCount > 1 && {
+      ...(this.options.rendering.sampleCount > 1 && {
         multisample: {
-          count: this.options.sampleCount,
+          count: this.options.rendering.sampleCount,
         },
       }),
     } as GPURenderPipelineDescriptor

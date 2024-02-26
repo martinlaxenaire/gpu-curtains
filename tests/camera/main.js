@@ -49,6 +49,7 @@ window.addEventListener('load', async () => {
   const floorScale = new Vec2(150)
 
   const floor = new Mesh(gpuCameraRenderer, {
+    label: 'Floor',
     geometry: new PlaneGeometry(),
     shaders: {
       fragment: {
@@ -75,7 +76,18 @@ window.addEventListener('load', async () => {
   floor.scale.y = floorScale.y
 
   const cube = new Mesh(gpuCameraRenderer, {
+    label: 'Cube',
     geometry: new BoxGeometry(),
+    uniforms: {
+      checkerboard: {
+        struct: {
+          scale: {
+            type: 'vec2f',
+            value: floorScale,
+          },
+        },
+      },
+    },
   })
 
   console.log(cube)
@@ -97,6 +109,7 @@ window.addEventListener('load', async () => {
   })
 
   const plane = new Mesh(gpuCameraRenderer, {
+    label: 'Plane',
     geometry: new PlaneGeometry(),
     cullMode: 'none',
   })

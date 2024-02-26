@@ -1,7 +1,8 @@
 /// <reference types="dist" />
 import { RenderPipelineEntry } from './RenderPipelineEntry';
 import { ComputePipelineEntry } from './ComputePipelineEntry';
-import { PipelineEntryParams, RenderPipelineEntryBaseParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
+import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
+import { ShaderOptions } from '../../types/Materials';
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry;
 /**
@@ -21,11 +22,18 @@ export declare class PipelineManager {
     pipelineEntries: AllowedPipelineEntries[];
     constructor();
     /**
-     * Checks if the provided {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
-     * @param parameters - {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters}
+     * Compare two {@link ShaderOptions | shader objects}
+     * @param shaderA - first {@link ShaderOptions | shader object} to compare
+     * @param shaderB - second {@link ShaderOptions | shader object} to compare
+     * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
+     */
+    compareShaders(shaderA: ShaderOptions, shaderB: ShaderOptions): boolean;
+    /**
+     * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
      * @returns - the found {@link RenderPipelineEntry}, or null if not found
      */
-    isSameRenderPipeline(parameters: RenderPipelineEntryBaseParams): RenderPipelineEntry | null;
+    isSameRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry | null;
     /**
      * Check if a {@link RenderPipelineEntry} has already been created with the given {@link RenderPipelineEntryParams | parameters}.
      * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.

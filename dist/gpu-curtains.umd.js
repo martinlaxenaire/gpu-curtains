@@ -5921,7 +5921,7 @@
         label: this.options.label + " render pipeline",
         shaders: this.options.shaders,
         useAsync: this.options.useAsyncPipeline,
-        ...this.options.rendering
+        rendering: this.options.rendering
       });
       this.attributes = null;
     }
@@ -5962,7 +5962,7 @@
       );
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
-        this.pipelineEntry.options = { ...this.pipelineEntry.options, ...this.options.rendering };
+        this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
         if (this.pipelineEntry.ready && newProperties.length) {
           throwWarning(
             `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties.map(
@@ -6689,6 +6689,13 @@ struct VertexOutput {
         geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
         cacheManager.addPlaneGeometry(geometry);
       }
+      if (!parameters.shaders || !parameters.shaders.vertex) {
+        ["uniforms", "storages"].forEach((bindingType) => {
+          Object.keys(parameters[bindingType] ?? {}).forEach(
+            (bindingKey) => parameters[bindingType][bindingKey].visibility = "fragment"
+          );
+        });
+      }
       super(renderer, null, { geometry, ...parameters });
       this.size = {
         document: {
@@ -7205,7 +7212,7 @@ struct VSOutput {
      */
     createShaderModule({ code = "", type = "vertex" }) {
       const shaderModule = this.renderer.createShaderModule({
-        label: this.options.label + ": " + type + "Shader module",
+        label: this.options.label + ": " + type + " shader module",
         code
       });
       if ("getCompilationInfo" in shaderModule && !this.renderer.production) {
@@ -7347,8 +7354,8 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
      */
     constructor(parameters) {
-      let { renderer } = parameters;
-      const { label, ...renderingOptions } = parameters;
+      let { renderer, ...pipelineParams } = parameters;
+      const { label, ...renderingOptions } = pipelineParams;
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
@@ -7384,7 +7391,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
      */
     setPipelineEntryBindGroups(bindGroups) {
-      this.bindGroups = "cameraBindGroup" in this.renderer && this.options.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
+      this.bindGroups = "cameraBindGroup" in this.renderer && this.options.rendering.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
     }
     /**
      * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
@@ -7422,7 +7429,7 @@ ${this.shaders.full.head}`;
           }
         }
       }
-      if (this.options.useProjection) {
+      if (this.options.rendering.useProjection) {
         for (const chunk in ProjectedShaderChunks.vertex) {
           this.shaders.vertex.head = `${ProjectedShaderChunks.vertex[chunk]}
 ${this.shaders.vertex.head}`;
@@ -7546,7 +7553,7 @@ ${this.shaders.full.head}`;
       if (!this.shadersModulesReady)
         return;
       let vertexLocationIndex = -1;
-      const blend = this.options.blend ?? (this.options.transparent && {
+      const blend = this.options.rendering.blend ?? (this.options.rendering.transparent && {
         color: {
           srcFactor: "src-alpha",
           dstFactor: "one-minus-src-alpha"
@@ -7585,31 +7592,31 @@ ${this.shaders.full.head}`;
             entryPoint: this.options.shaders.fragment.entryPoint,
             targets: [
               {
-                format: this.options.targetFormat ?? this.renderer.options.preferredFormat,
+                format: this.options.rendering.targetFormat ?? this.renderer.options.preferredFormat,
                 ...blend && {
                   blend
                 }
               },
-              ...this.options.additionalTargets ?? []
+              ...this.options.rendering.additionalTargets ?? []
               // merge with additional targets if any
             ]
           }
         },
         primitive: {
-          topology: this.options.topology,
-          frontFace: this.options.verticesOrder,
-          cullMode: this.options.cullMode
+          topology: this.options.rendering.topology,
+          frontFace: this.options.rendering.verticesOrder,
+          cullMode: this.options.rendering.cullMode
         },
-        ...this.options.depth && {
+        ...this.options.rendering.depth && {
           depthStencil: {
-            depthWriteEnabled: this.options.depthWriteEnabled,
-            depthCompare: this.options.depthCompare,
-            format: this.options.depthFormat
+            depthWriteEnabled: this.options.rendering.depthWriteEnabled,
+            depthCompare: this.options.rendering.depthCompare,
+            format: this.options.rendering.depthFormat
           }
         },
-        ...this.options.sampleCount > 1 && {
+        ...this.options.rendering.sampleCount > 1 && {
           multisample: {
-            count: this.options.sampleCount
+            count: this.options.rendering.sampleCount
           }
         }
       };
@@ -7813,26 +7820,29 @@ ${this.shaders.compute.head}`;
       this.pipelineEntries = [];
     }
     /**
-     * Checks if the provided {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
-     * @param parameters - {@link RenderPipelineEntryBaseParams | RenderPipelineEntry parameters}
+     * Compare two {@link ShaderOptions | shader objects}
+     * @param shaderA - first {@link ShaderOptions | shader object} to compare
+     * @param shaderB - second {@link ShaderOptions | shader object} to compare
+     * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
+     */
+    compareShaders(shaderA, shaderB) {
+      return shaderA.code?.localeCompare(shaderB.code) === 0 && shaderA.entryPoint === shaderB.entryPoint;
+    }
+    /**
+     * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
+     * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
      * @returns - the found {@link RenderPipelineEntry}, or null if not found
      */
     isSameRenderPipeline(parameters) {
-      const {
-        shaders,
-        cullMode,
-        depth,
-        depthWriteEnabled,
-        depthCompare,
-        transparent,
-        verticesOrder,
-        topology,
-        sampleCount
-      } = parameters;
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || shaders.fragment.code?.localeCompare(options.shaders.fragment.code) === 0 && shaders.fragment.entryPoint === options.shaders.fragment.entryPoint;
-        return shaders.vertex.code.localeCompare(options.shaders.vertex.code) === 0 && shaders.vertex.entryPoint === options.shaders.vertex.entryPoint && sameFragmentShader && cullMode === options.cullMode && depth === options.depth && depthWriteEnabled === options.depthWriteEnabled && depthCompare === options.depthCompare && transparent === options.transparent && sampleCount === options.sampleCount && verticesOrder === options.verticesOrder && topology === options.topology;
+        const { shaders, rendering } = parameters;
+        const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
+        const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
+        const differentParams = Object.keys(options.rendering).filter(
+          (key) => options.rendering[key] !== rendering[key]
+        );
+        return !differentParams.length && sameVertexShader && sameFragmentShader;
       });
     }
     /**
@@ -7860,7 +7870,7 @@ ${this.shaders.compute.head}`;
       const { shaders } = parameters;
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        return shaders.compute.code.localeCompare(options.shaders.compute.code) === 0 && shaders.compute.entryPoint === options.shaders.compute.entryPoint;
+        return this.compareShaders(shaders.compute, options.shaders.compute);
       });
     }
     /**

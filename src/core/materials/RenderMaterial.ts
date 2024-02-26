@@ -74,8 +74,8 @@ export class RenderMaterial extends Material {
       label: this.options.label + ' render pipeline',
       shaders: this.options.shaders,
       useAsync: this.options.useAsyncPipeline,
-      ...this.options.rendering,
-    } as RenderPipelineEntryParams)
+      rendering: this.options.rendering,
+    })
 
     this.attributes = null
   }
@@ -123,7 +123,7 @@ export class RenderMaterial extends Material {
     this.options.rendering = { ...this.options.rendering, ...renderingOptions }
 
     if (this.pipelineEntry) {
-      this.pipelineEntry.options = { ...this.pipelineEntry.options, ...this.options.rendering }
+      this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering }
 
       if (this.pipelineEntry.ready && newProperties.length) {
         throwWarning(
