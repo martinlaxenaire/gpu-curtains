@@ -309,7 +309,7 @@ window.addEventListener('load', async () => {
     fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
       // reconstruct world-space position from the screen coordinate.
       let posClip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
-      let posWorldW = params.cameraInverseViewProjectionMatrix * posClip;
+      let posWorldW = camera.inverseViewProjectionMatrix * posClip;
       let posWorld = posWorldW.xyz / posWorldW.www;
       return posWorld;
     }
@@ -343,23 +343,37 @@ window.addEventListener('load', async () => {
         vec2<i32>(floor(fsInput.position.xy)),
         0
       ).rgb;
-
       
       for (var i = 0u; i < arrayLength(&lights); i++) {
         let L = lights[i].position.xyz - position;
         let distance = length(L);
+        
         if (distance > lights[i].radius) {
           continue;
         }
-        let lambert = max(dot(normal, normalize(L)), 0.0);
+        
+        let lightDir: vec3f = normalize(L);
+        let lightStrength: f32 = pow(1.0 - distance / lights[i].radius, 2.0);
+        
+        let lambert = max(dot(normal, lightDir), 0.0);
         result += vec3<f32>(
-          lambert * pow(1.0 - distance / lights[i].radius, 2.0) * lights[i].color * albedo
+          lambert * lightStrength * lights[i].color
         );
+        
+        // specular
+        let viewDir: vec3f = normalize(camera.position - position);
+        let reflectDir: vec3f = reflect(-lightDir, normal);
+        let spec: f32 = pow(max(dot(viewDir, reflectDir), 0.0), phong.shininess);
+        let specular: vec3f = phong.specularStrength * spec * lights[i].color * lightStrength;
+        
+        result += specular;
       }
-      
           
       // some manual ambient
       result += vec3(0.2);
+      
+      // albedo
+      result *= albedo;
     
       return vec4(result, 1.0);
     }
@@ -374,11 +388,27 @@ window.addEventListener('load', async () => {
     },
     renderTextures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
     uniforms: {
-      params: {
+      camera: {
         struct: {
-          cameraInverseViewProjectionMatrix: {
+          inverseViewProjectionMatrix: {
             type: 'mat4x4f',
             value: new Mat4().multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).invert(),
+          },
+          position: {
+            type: 'vec3f',
+            value: camera.position,
+          },
+        },
+      },
+      phong: {
+        struct: {
+          specularStrength: {
+            type: 'f32',
+            value: 0.5,
+          },
+          shininess: {
+            type: 'f32',
+            value: 32,
           },
         },
       },
@@ -404,12 +434,12 @@ window.addEventListener('load', async () => {
   })
 
   deferredRenderingPass.onRender(() => {
-    deferredRenderingPass.uniforms.params.cameraInverseViewProjectionMatrix.value
+    deferredRenderingPass.uniforms.camera.inverseViewProjectionMatrix.value
       .multiplyMatrices(camera.projectionMatrix, camera.viewMatrix)
       .invert()
 
     // explicitly tell the uniform to update
-    deferredRenderingPass.uniforms.params.cameraInverseViewProjectionMatrix.shouldUpdate = true
+    deferredRenderingPass.uniforms.camera.inverseViewProjectionMatrix.shouldUpdate = true
   })
 
   // DEBUG VIEW
