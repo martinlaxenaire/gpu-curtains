@@ -143,9 +143,9 @@ window.addEventListener('load', async () => {
       );
       
       // remap depth into something a bit more visible
-      let depth = (1.0 - rawDepth) * 75.0 * params.systemSize;
+      let depth = (1.0 - rawDepth) * 10.0 * params.systemSize;
 
-      return mix( texture, vec4(vec3(0.0, depth, depth), texture.a), step(fsInput.uv.x, 0.5) );
+      return mix( texture, vec4(vec3(depth), texture.a), step(fsInput.uv.x, 0.5) );
     }
   `
 
