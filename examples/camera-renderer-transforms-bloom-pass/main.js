@@ -409,12 +409,12 @@ window.addEventListener('load', async () => {
           color: {
             operation: 'add',
             srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
+            dstFactor: 'one',
           },
           alpha: {
             operation: 'add',
             srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
+            dstFactor: 'one',
           },
         },
       },
