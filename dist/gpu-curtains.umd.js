@@ -5910,7 +5910,14 @@
       if (shaders.fragment && !shaders.fragment.entryPoint) {
         shaders.fragment.entryPoint = "main";
       }
-      if (!renderingOptions.targets || !renderingOptions.targets.length || !renderingOptions.targets[0].format) {
+      if (!renderingOptions.targets || !renderingOptions.targets.length) {
+        renderingOptions.targets = [
+          {
+            format: this.renderer.options.preferredFormat
+          }
+        ];
+      }
+      if (!renderingOptions.targets[0].format) {
         renderingOptions.targets[0].format = this.renderer.options.preferredFormat;
       }
       this.options = {
@@ -9024,12 +9031,10 @@ ${this.shaders.compute.head}`;
     setMainRenderPasses() {
       this.renderPass = new RenderPass(this, {
         label: "Main render pass",
-        //targetFormat: this.options.preferredFormat,
         ...this.options.renderPass
       });
       this.postProcessingPass = new RenderPass(this, {
         label: "Post processing render pass",
-        //targetFormat: this.options.preferredFormat,
         // no need to handle depth or perform MSAA on a fullscreen quad
         useDepth: false,
         sampleCount: 1

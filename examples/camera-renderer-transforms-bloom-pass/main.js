@@ -164,6 +164,7 @@ window.addEventListener('load', async () => {
   // and https://learnopengl.com/Advanced-Lighting/Bloom
 
   // we are going to need 5 separate passes for the bloom effect
+  // (in fact we could have combined steps 1. and 2. with a MRT...)
   // 1. render the scene in a first pass
   // 2. extract the brightness of the scene
   // 3. perform an horizontal blur on previous pass result (brigthness threshold)
@@ -207,18 +208,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
-    blend: {
-      color: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
+    targets: [
+      {
+        blend: {
+          color: {
+            operation: 'add',
+            srcFactor: 'one',
+            dstFactor: 'one',
+          },
+          alpha: {
+            operation: 'add',
+            srcFactor: 'zero',
+            dstFactor: 'zero',
+          },
+        },
       },
-      alpha: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
-      },
-    },
+    ],
   })
 
   // horizontal blur pass
@@ -243,7 +248,7 @@ window.addEventListener('load', async () => {
   `
 
   const blurSettings = {
-    spread: 3,
+    spread: 2,
     weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
   }
 
@@ -266,18 +271,6 @@ window.addEventListener('load', async () => {
             value: blurSettings.spread,
           },
         },
-      },
-    },
-    blend: {
-      color: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
-      },
-      alpha: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
       },
     },
   })
@@ -322,18 +315,6 @@ window.addEventListener('load', async () => {
             value: (blurSettings.spread * gpuCameraRenderer.boundingRect.width) / gpuCameraRenderer.boundingRect.height,
           },
         },
-      },
-    },
-    blend: {
-      color: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
-      },
-      alpha: {
-        operation: 'add',
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
       },
     },
   })
@@ -390,6 +371,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
+    targets: [
+      {
+        blend: {
+          color: {
+            operation: 'add',
+            srcFactor: 'one',
+            dstFactor: 'one-minus-src-alpha',
+          },
+          alpha: {
+            operation: 'add',
+            srcFactor: 'one',
+            dstFactor: 'one-minus-src-alpha',
+          },
+        },
+      },
+    ],
   })
 
   // pass the original scene pass result to our blend pass

@@ -27,7 +27,7 @@ export interface RenderPassParams {
     useColorAttachments?: boolean;
     /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
     shouldUpdateView?: boolean;
-    /** Define all the color attachments parameters to use here in case this {@link RenderPass} should output to multiple color attachments (Multiple Render Targets) */
+    /** Array of one or multiple (Multiple Render Targets) color attachments parameters. */
     colorAttachments?: ColorAttachmentParams[];
     /** Whether this {@link RenderPass} should handle a depth texture */
     useDepth?: boolean;
