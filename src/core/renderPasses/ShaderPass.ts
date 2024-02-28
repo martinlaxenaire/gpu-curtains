@@ -69,6 +69,7 @@ export class ShaderPass extends FullscreenPlane {
     isRenderer(renderer, parameters.label ? parameters.label + ' ShaderPass' : 'ShaderPass')
 
     // force transparency to allow for correct blending between successive passes
+    // TODO should we disable depth instead?
     parameters.transparent = true
     parameters.label = parameters.label ?? 'ShaderPass ' + renderer.shaderPasses?.length
 

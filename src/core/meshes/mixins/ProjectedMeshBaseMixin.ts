@@ -12,10 +12,8 @@ import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement'
 import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
-import { DOMObject3D } from '../../../curtains/objects3D/DOMObject3D'
 import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl'
 import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl'
-import { ShaderPassParams } from '../../renderPasses/ShaderPass'
 
 /**
  * Base parameters used to create a ProjectedMesh
@@ -144,9 +142,9 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
 }
 
 /**
- * Used to add the properties and methods defined in {@link ProjectedMeshBaseClass} to the {@link MeshBaseClass} and mix it with a given Base of type {@link ProjectedObject3D} or {@link DOMObject3D}.
+ * Used to add the properties and methods defined in {@link ProjectedMeshBaseClass} to the {@link MeshBaseClass} and mix it with a given Base of type {@link ProjectedObject3D} or {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D}.
  * @exports
- * @param Base - the class to mix onto, should be of {@link ProjectedObject3D} or {@link DOMObject3D} type
+ * @param Base - the class to mix onto, should be of {@link ProjectedObject3D} or {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} type
  * @returns - the mixed classes, creating a Projected Mesh.
  */
 function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D>>(

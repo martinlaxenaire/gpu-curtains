@@ -42,7 +42,7 @@ export interface MeshBaseParams extends MeshBaseRenderParams {
 /**
  *  Base options used to create this Mesh
  */
-export interface MeshBaseOptions {
+export interface MeshBaseOptions extends RenderMaterialParams {
   /** The label of this Mesh, sent to various GPU objects for debugging purpose */
   label?: MeshBaseParams['label']
   /** Shaders to use by this Mesh {@link RenderMaterial} */
@@ -766,11 +766,29 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           ...(renderPass.options.colorAttachments.length > 1 && {
             additionalTargets: renderPass.options.colorAttachments
               .filter((c, i) => i > 0)
-              .map((colorAttachment) => {
+              .map((colorAttachment, index) => {
                 return {
                   format: colorAttachment.targetFormat,
+                  ...(this.options.additionalTargets.length &&
+                    this.options.additionalTargets[index] &&
+                    this.options.additionalTargets[index].blend && {
+                      blend: this.options.additionalTargets[index].blend,
+                    }),
                 }
               }),
+          }),
+          // TODO
+          ...(renderPass.options.colorAttachments.length && {
+            targets: renderPass.options.colorAttachments.map((colorAttachment, index) => {
+              return {
+                format: colorAttachment.targetFormat,
+                ...(this.options.targets?.length &&
+                  this.options.targets[index] &&
+                  this.options.targets[index].blend && {
+                    blend: this.options.targets[index].blend,
+                  }),
+              }
+            }),
           }),
         }),
         // depth
@@ -779,6 +797,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           depthFormat: renderPass.options.depthFormat,
         }),
       }
+
+      console.log(this.options.label, renderingOptions)
 
       this.material?.setRenderingOptions(renderingOptions)
     }

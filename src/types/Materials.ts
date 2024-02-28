@@ -133,15 +133,18 @@ export interface RenderMaterialBaseRenderingOptions {
   /** Cull mode to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
   cullMode: GPUCullMode
   /** Custom blending to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. Can override default transparent blending if set */
-  blend?: GPUBlendState
+  //blend?: GPUBlendState
   /** Custom write mask value to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}. */
-  writeMask?: GPUColorWriteFlags
+  //writeMask?: GPUColorWriteFlags
   /** Optional texture format of the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} color target. Default to the renderer preferred format. */
-  targetFormat: GPUTextureFormat
+  //targetFormat: GPUTextureFormat
   /** The {@link core/renderPasses/RenderPass.RenderPassParams#sampleCount | sampleCount} of the {@link core/renderPasses/RenderPass.RenderPass | RenderPass} onto which we'll be drawing. Set internally. */
   sampleCount: GPUSize32
   /** Define the additional targets properties in case this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} should be drawn to multiple targets. */
   additionalTargets: GPUColorTargetState[]
+
+  // TODO
+  targets: GPUColorTargetState[]
 }
 
 /** Rendering options to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */

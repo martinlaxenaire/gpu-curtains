@@ -84,6 +84,11 @@ export class TestPingPong {
         },
       },
       targetFormat: 'rgba16float', // important, we'll be using floating point textures
+      targets: [
+        {
+          format: 'rgba16float', // important, we'll be using floating point textures
+        },
+      ],
       uniforms: {
         flowmap: {
           label: 'Flowmap',
