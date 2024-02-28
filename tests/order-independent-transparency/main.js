@@ -318,7 +318,7 @@ window.addEventListener('load', async () => {
       var averageColor = accumulation.rgb / max(accumulation.a, EPSILON);
   
       // alpha blending between opaque and transparent
-      return vec4(opaqueColor.rgb * revealage, opaqueColor.a) + vec4(averageColor, 1.0 - revealage);
+      return mix(vec4(opaqueColor.rgb, opaqueColor.a), vec4(averageColor, 1.0), 1.0 - revealage);
     }
   `
 
