@@ -406,7 +406,7 @@ window.addEventListener('load', async () => {
           },
           alpha: {
             srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
+            dstFactor: 'one',
           },
         },
       },
