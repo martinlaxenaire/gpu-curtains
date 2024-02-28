@@ -62,7 +62,7 @@ window.addEventListener('load', async () => {
 
   // render our scene manually
   const animate = () => {
-    cameraPivot.rotation.y += 0.005
+    cameraPivot.rotation.y += 0.00325
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
