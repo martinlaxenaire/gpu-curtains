@@ -28,6 +28,7 @@ export interface ProjectedMeshBaseParams {
 /** Parameters used to create a ProjectedMesh */
 export interface ProjectedMeshParameters extends MeshBaseParams, ProjectedMeshBaseParams {}
 
+/** Parameters used to create a Projected Render Material */
 export interface ProjectedRenderMaterialParams extends RenderMaterialParams, ProjectedMeshBaseParams {}
 
 /** @const - Default ProjectedMesh parameters to merge with user defined parameters */
@@ -43,7 +44,7 @@ const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
 }
 
 /** Base options used to create this ProjectedMesh */
-export interface ProjectedMeshBaseOptions extends MeshBaseOptions, Partial<ProjectedMeshBaseParams> {}
+export interface ProjectedMeshBaseOptions extends MeshBaseOptions, ProjectedMeshBaseParams {}
 
 /**
  * This class describes the properties and methods to set up a Projected Mesh (i.e. a basic {@link MeshBaseClass | Mesh} with {@link ProjectedObject3D} transformations matrices and a {@link core/camera/Camera.Camera | Camera} to use for projection), implemented in the {@link ProjectedMeshBaseMixin}:
@@ -59,6 +60,9 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   frustumCulled: boolean
   /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
   DOMFrustumMargins: RectCoords
+
+  /** Options used to create this {@link ProjectedMeshBaseClass} */
+  options: ProjectedMeshBaseOptions
 
   // callbacks
   /** function assigned to the {@link onReEnterView} callback */
