@@ -40,7 +40,7 @@ window.addEventListener('load', async () => {
           code: fragmentShader,
         },
       },
-      //transparent: true,
+      transparent: true,
     })
 
     mesh.position.x = i % 2 === 0 ? -1.5 : 1.5
