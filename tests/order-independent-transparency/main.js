@@ -120,7 +120,7 @@ window.addEventListener('load', async () => {
       },
       {
         loadOp: 'clear',
-        clearValue: [1, 0, 0, 0],
+        clearValue: [1, 0, 0, 1],
         targetFormat: 'r8unorm', // revealage
       },
     ],
@@ -176,37 +176,9 @@ window.addEventListener('load', async () => {
           code: OITtargetFs,
         },
       },
-      //targetFormat: 'rgba16float',
-      blend: {
-        // accum
-        color: {
-          srcFactor: 'one',
-          dstFactor: 'one',
-        },
-        alpha: {
-          srcFactor: 'one',
-          dstFactor: 'one',
-        },
-      },
-      additionalTargets: [
-        // reveal
-        {
-          //format: 'r8unorm', // this would be patched anyway if not set here
-          blend: {
-            color: {
-              srcFactor: 'zero',
-              dstFactor: 'one-minus-src',
-            },
-            alpha: {
-              srcFactor: 'one',
-              dstFactor: 'one',
-            },
-          },
-        },
-      ],
       targets: [
         {
-          //format: 'rgba16float',
+          //format: 'rgba16float', // this would be patched anyway if not set here
           blend: {
             // accum
             color: {

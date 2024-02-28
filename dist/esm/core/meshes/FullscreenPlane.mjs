@@ -26,6 +26,7 @@ class FullscreenPlane extends MeshBaseMixin(class {
         );
       });
     }
+    parameters.depthWriteEnabled = false;
     super(renderer, null, { geometry, ...parameters });
     this.size = {
       document: {

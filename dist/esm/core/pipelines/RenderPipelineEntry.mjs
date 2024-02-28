@@ -208,16 +208,26 @@ ${this.shaders.full.head}`;
     if (!this.shadersModulesReady)
       return;
     let vertexLocationIndex = -1;
-    const blend = this.options.rendering.blend ?? (this.options.rendering.transparent && {
-      color: {
-        srcFactor: "src-alpha",
-        dstFactor: "one-minus-src-alpha"
-      },
-      alpha: {
-        srcFactor: "one",
-        dstFactor: "one-minus-src-alpha"
+    if (this.options.rendering.targets.length) {
+      if (this.options.rendering.transparent) {
+        this.options.rendering.targets[0].blend = this.options.rendering.targets[0].blend ? this.options.rendering.targets[0].blend : {
+          color: {
+            srcFactor: "src-alpha",
+            dstFactor: "one-minus-src-alpha"
+          },
+          alpha: {
+            srcFactor: "one",
+            dstFactor: "one-minus-src-alpha"
+          }
+        };
       }
-    });
+    } else {
+      this.options.rendering.targets = [
+        {
+          format: this.renderer.options.preferredFormat
+        }
+      ];
+    }
     this.descriptor = {
       label: this.options.label,
       layout: this.layout,
@@ -245,16 +255,7 @@ ${this.shaders.full.head}`;
         fragment: {
           module: this.shaders.fragment.module,
           entryPoint: this.options.shaders.fragment.entryPoint,
-          targets: [
-            {
-              format: this.options.rendering.targetFormat ?? this.renderer.options.preferredFormat,
-              ...blend && {
-                blend
-              }
-            },
-            ...this.options.rendering.additionalTargets ?? []
-            // merge with additional targets if any
-          ]
+          targets: this.options.rendering.targets
         }
       },
       primitive: {

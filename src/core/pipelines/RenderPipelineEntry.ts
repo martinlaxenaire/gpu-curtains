@@ -290,23 +290,6 @@ export class RenderPipelineEntry extends PipelineEntry {
 
     let vertexLocationIndex = -1
 
-    // we will assume our renderer alphaMode is set to 'premultiplied'
-    // we either disable blending if mesh if opaque
-    // use a custom blending if set
-    // or use this blend equation if mesh is transparent (see https://limnu.com/webgl-blending-youre-probably-wrong/)
-    // const blend =
-    //   this.options.rendering.blend ??
-    //   (this.options.rendering.transparent && {
-    //     color: {
-    //       srcFactor: 'src-alpha',
-    //       dstFactor: 'one-minus-src-alpha',
-    //     },
-    //     alpha: {
-    //       srcFactor: 'one',
-    //       dstFactor: 'one-minus-src-alpha',
-    //     },
-    //   })
-
     if (this.options.rendering.targets.length) {
       // we will assume our renderer alphaMode is set to 'premultiplied'
       // we either disable blending if mesh if opaque
@@ -334,8 +317,6 @@ export class RenderPipelineEntry extends PipelineEntry {
       ]
     }
 
-    console.log(this.options.rendering.targets)
-
     this.descriptor = {
       label: this.options.label,
       layout: this.layout,
@@ -361,15 +342,6 @@ export class RenderPipelineEntry extends PipelineEntry {
         fragment: {
           module: this.shaders.fragment.module,
           entryPoint: (this.options.shaders.fragment as ShaderOptions).entryPoint,
-          // targets: [
-          //   {
-          //     format: this.options.rendering.targetFormat ?? this.renderer.options.preferredFormat,
-          //     ...(blend && {
-          //       blend,
-          //     }),
-          //   },
-          //   ...(this.options.rendering.additionalTargets ?? []), // merge with additional targets if any
-          // ],
           targets: this.options.rendering.targets,
         },
       }),

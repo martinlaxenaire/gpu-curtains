@@ -60,8 +60,17 @@ export class RenderMaterial extends Material {
       ;(shaders.fragment as ShaderOptions).entryPoint = 'main'
     }
 
-    // patch target format if not set
-    renderingOptions.targetFormat = renderingOptions.targetFormat ?? this.renderer.options.preferredFormat
+    // patch default target format if not set
+    if (!renderingOptions.targets || !renderingOptions.targets.length) {
+      renderingOptions.targets = [
+        {
+          format: this.renderer.options.preferredFormat,
+        },
+      ]
+    }
+    if (!renderingOptions.targets[0].format) {
+      renderingOptions.targets[0].format = this.renderer.options.preferredFormat
+    }
 
     this.options = {
       ...this.options,

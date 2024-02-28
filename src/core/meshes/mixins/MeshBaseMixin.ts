@@ -758,37 +758,21 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     setRenderingOptionsForRenderPass(renderPass: RenderPass) {
       // a Mesh render material rendering options MUST match the render pass descriptor used to draw it!
       const renderingOptions = {
+        // sample count
         sampleCount: renderPass.options.sampleCount,
         // color attachments
         ...(renderPass.options.colorAttachments.length && {
-          targetFormat: renderPass.options.colorAttachments[0].targetFormat,
-          // multiple render targets?
-          ...(renderPass.options.colorAttachments.length > 1 && {
-            additionalTargets: renderPass.options.colorAttachments
-              .filter((c, i) => i > 0)
-              .map((colorAttachment, index) => {
-                return {
-                  format: colorAttachment.targetFormat,
-                  ...(this.options.additionalTargets.length &&
-                    this.options.additionalTargets[index] &&
-                    this.options.additionalTargets[index].blend && {
-                      blend: this.options.additionalTargets[index].blend,
-                    }),
-                }
-              }),
-          }),
-          // TODO
-          ...(renderPass.options.colorAttachments.length && {
-            targets: renderPass.options.colorAttachments.map((colorAttachment, index) => {
-              return {
-                format: colorAttachment.targetFormat,
-                ...(this.options.targets?.length &&
-                  this.options.targets[index] &&
-                  this.options.targets[index].blend && {
-                    blend: this.options.targets[index].blend,
-                  }),
-              }
-            }),
+          targets: renderPass.options.colorAttachments.map((colorAttachment, index) => {
+            return {
+              // patch format...
+              format: colorAttachment.targetFormat,
+              // ...but keep original blend values if any
+              ...(this.options.targets?.length &&
+                this.options.targets[index] &&
+                this.options.targets[index].blend && {
+                  blend: this.options.targets[index].blend,
+                }),
+            }
           }),
         }),
         // depth
@@ -797,8 +781,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           depthFormat: renderPass.options.depthFormat,
         }),
       }
-
-      console.log(this.options.label, renderingOptions)
 
       this.material?.setRenderingOptions(renderingOptions)
     }

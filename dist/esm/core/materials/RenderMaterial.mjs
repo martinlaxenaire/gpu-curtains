@@ -22,7 +22,9 @@ class RenderMaterial extends Material {
     if (shaders.fragment && !shaders.fragment.entryPoint) {
       shaders.fragment.entryPoint = "main";
     }
-    renderingOptions.targetFormat = renderingOptions.targetFormat ?? this.renderer.options.preferredFormat;
+    if (!renderingOptions.targets || !renderingOptions.targets.length || !renderingOptions.targets[0].format) {
+      renderingOptions.targets[0].format = this.renderer.options.preferredFormat;
+    }
     this.options = {
       ...this.options,
       shaders,

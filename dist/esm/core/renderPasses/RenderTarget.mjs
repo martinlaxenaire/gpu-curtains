@@ -36,12 +36,12 @@ class RenderTarget {
     this.type = "RenderTarget";
     this.renderer = renderer;
     this.uuid = generateUUID();
-    const { label, targetFormat, depthTexture, autoRender, ...renderPassParams } = parameters;
+    const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
     this.options = {
       label,
       ...renderPassParams,
       ...depthTexture && { depthTexture },
-      targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
+      ...colorAttachments && { colorAttachments },
       autoRender: autoRender === void 0 ? true : autoRender
     };
     if (autoRender !== void 0) {
@@ -49,7 +49,7 @@ class RenderTarget {
     }
     this.renderPass = new RenderPass(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
-      targetFormat: this.options.targetFormat,
+      ...colorAttachments && { colorAttachments },
       depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture,
       // reuse renderer depth texture for every pass
       ...renderPassParams
@@ -58,7 +58,7 @@ class RenderTarget {
       this.renderTexture = new RenderTexture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
         name: "renderTexture",
-        format: this.options.targetFormat,
+        format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
         ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
       });
     }

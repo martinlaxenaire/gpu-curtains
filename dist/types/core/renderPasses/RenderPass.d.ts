@@ -27,14 +27,6 @@ export interface RenderPassParams {
     useColorAttachments?: boolean;
     /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
     shouldUpdateView?: boolean;
-    /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
-    loadOp?: GPULoadOp;
-    /** The {@link GPUStoreOp | store operation} to perform while drawing this {@link RenderPass} */
-    storeOp?: GPUStoreOp;
-    /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
-    clearValue?: GPUColor;
-    /** Optional format of the color attachment texture */
-    targetFormat: GPUTextureFormat;
     /** Define all the color attachments parameters to use here in case this {@link RenderPass} should output to multiple color attachments (Multiple Render Targets) */
     colorAttachments?: ColorAttachmentParams[];
     /** Whether this {@link RenderPass} should handle a depth texture */
@@ -73,7 +65,7 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, useColorAttachments, shouldUpdateView, loadOp, storeOp, clearValue, targetFormat, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, useColorAttachments, shouldUpdateView, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
     /**
      * Create and set our {@link depthTexture | depth texture}
      */
