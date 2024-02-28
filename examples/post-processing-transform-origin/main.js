@@ -1,6 +1,7 @@
 import { GPUCurtains, Plane, ShaderPass } from '../../dist/esm/index.mjs'
 
-window.addEventListener('load', async () => {
+// use 'DOMContentLoaded' so we don't wait for the images to be loaded
+window.addEventListener('DOMContentLoaded', async () => {
   // lerp
   const lerp = (start = 0, end = 1, amount = 0.1) => {
     return (1 - amount) * start + amount * end

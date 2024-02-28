@@ -78,9 +78,13 @@ class RenderMaterial extends Material {
    * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
    */
   setRenderingOptions(renderingOptions = {}) {
-    const newProperties = Object.keys(renderingOptions).filter(
-      (key) => renderingOptions[key] !== this.options.rendering[key]
-    );
+    const newProperties = Object.keys(renderingOptions).filter((key) => {
+      if (Array.isArray(renderingOptions[key])) {
+        return JSON.stringify(renderingOptions[key]) !== JSON.stringify(this.options.rendering[key]);
+      } else {
+        return renderingOptions[key] !== this.options.rendering[key];
+      }
+    });
     this.options.rendering = { ...this.options.rendering, ...renderingOptions };
     if (this.pipelineEntry) {
       this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };

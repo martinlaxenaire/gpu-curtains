@@ -5966,9 +5966,13 @@
      * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
      */
     setRenderingOptions(renderingOptions = {}) {
-      const newProperties = Object.keys(renderingOptions).filter(
-        (key) => renderingOptions[key] !== this.options.rendering[key]
-      );
+      const newProperties = Object.keys(renderingOptions).filter((key) => {
+        if (Array.isArray(renderingOptions[key])) {
+          return JSON.stringify(renderingOptions[key]) !== JSON.stringify(this.options.rendering[key]);
+        } else {
+          return renderingOptions[key] !== this.options.rendering[key];
+        }
+      });
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
         this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
@@ -10131,6 +10135,7 @@ struct VSOutput {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
       parameters.depth = false;
+      parameters.transparent = true;
       parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
       parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
       if (!parameters.shaders) {

@@ -70,6 +70,9 @@ export class ShaderPass extends FullscreenPlane {
 
     // disable depth for postprocessing passes
     parameters.depth = false
+    // force transparency to get the right alpha blending
+    parameters.transparent = true
+
     parameters.label = parameters.label ?? 'ShaderPass ' + renderer.shaderPasses?.length
 
     // set default sample count to post processing render pass

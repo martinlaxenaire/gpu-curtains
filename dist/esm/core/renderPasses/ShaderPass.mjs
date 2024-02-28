@@ -13,6 +13,7 @@ class ShaderPass extends FullscreenPlane {
     renderer = renderer && renderer.renderer || renderer;
     isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
     parameters.depth = false;
+    parameters.transparent = true;
     parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
     parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
     if (!parameters.shaders) {

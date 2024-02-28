@@ -273,6 +273,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
+    targets: [
+      {
+        blend: {
+          color: {
+            operation: 'add',
+            srcFactor: 'one',
+            dstFactor: 'zero',
+          },
+          alpha: {
+            operation: 'add',
+            srcFactor: 'one',
+            dstFactor: 'zero',
+          },
+        },
+      },
+    ],
   })
 
   // vertical blur pass
@@ -317,6 +333,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
+    targets: [
+      {
+        blend: {
+          color: {
+            operation: 'add',
+            srcFactor: 'one',
+            dstFactor: 'zero',
+          },
+          alpha: {
+            operation: 'add',
+            srcFactor: 'one',
+            dstFactor: 'zero',
+          },
+        },
+      },
+    ],
   })
 
   vBlurPass.onAfterResize(() => {

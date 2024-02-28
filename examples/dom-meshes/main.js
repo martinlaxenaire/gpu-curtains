@@ -1,6 +1,7 @@
 import { BoxGeometry, DOMMesh, GPUCurtains, Sampler, SphereGeometry } from '../../dist/esm/index.mjs'
 
-window.addEventListener('load', async () => {
+// use 'DOMContentLoaded' so we don't wait for the images to be loaded
+window.addEventListener('DOMContentLoaded', async () => {
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
