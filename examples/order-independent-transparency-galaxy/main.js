@@ -269,14 +269,6 @@ window.addEventListener('load', async () => {
             srcFactor: 'one',
             dstFactor: 'one',
           },
-          // color: {
-          //   srcFactor: 'one',
-          //   dstFactor: 'src-alpha',
-          // },
-          // alpha: {
-          //   srcFactor: 'one',
-          //   dstFactor: 'one-minus-src-alpha',
-          // },
         },
       },
       {
@@ -345,12 +337,42 @@ window.addEventListener('load', async () => {
     @fragment fn main(fsInput: VSOutput) -> OITTargetOutput {
       var output : OITTargetOutput;
       
+      // radial gradient from center
       let distanceFromCenter: f32 = distance(fsInput.uv, vec2(0.5)) * 2.0;
-      var gradient: f32 = clamp(1.0 - distanceFromCenter, 0.0, 1.0);
-      gradient = pow(gradient, shading.glowIntensity);
+      var radialGradient: f32 = clamp(1.0 - distanceFromCenter, 0.0, 1.0);
+      radialGradient = pow(radialGradient, shading.glowIntensity);
       
-      let lerpedColor: vec3f = lerpVec3(shading.color1, shading.color2, fsInput.colorLerp);
-      let innerGlowColor: vec3f = mix(lerpedColor, vec3(1.0), pow(gradient, 4.0));
+      
+      let remappedUv: vec2f = fsInput.uv * 2.0 - 1.0;
+      
+      // horizontal line
+      var horizontalGradient: f32 = smoothstep(0.9, 1.0, 1.0 - distance(remappedUv, vec2(remappedUv.x, 0.0)));
+      horizontalGradient *= 1.0 - distance(vec2(0.0), remappedUv);
+  
+      var verticalGradient: f32 = smoothstep(0.9, 1.0, 1.0 - distance(remappedUv, vec2(0.0, remappedUv.y)));
+      verticalGradient *= 1.0 - distance(vec2(0.0), remappedUv);
+      
+      let isShiningStar: bool = fsInput.colorLerp >= 0.4875 && fsInput.colorLerp <= 0.5125;
+      
+      var gradient: f32 = select(
+        radialGradient,
+        radialGradient + horizontalGradient + verticalGradient,
+        isShiningStar
+      );
+      
+      gradient = clamp(gradient, 0.0, 1.0);
+      
+      if(gradient < 0.05) {
+        discard;
+      }
+      
+      let lerpedColor: vec3f = select(
+        lerpVec3(shading.color1, shading.color2, fsInput.colorLerp),
+        vec3(1.0),
+        isShiningStar
+      );
+      
+      let innerGlowColor: vec3f = mix(lerpedColor, vec3(1.0), pow(radialGradient, 4.0));      
       
       let color: vec4f = vec4(innerGlowColor, gradient);
       
@@ -424,9 +446,8 @@ window.addEventListener('load', async () => {
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) alpha: f32,
-      @location(3) centerGlow: f32,
+      @location(1) alpha: f32,
+      @location(2) centerGlow: f32,
     };
   
     @vertex fn main(
@@ -439,16 +460,16 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(transformed.xyz);
       //vsOutput.position = getOutputPosition(attributes.position);
       
-      vsOutput.uv = attributes.uv;
-      vsOutput.normal = attributes.normal;
-      
-      var mvPosition = matrices.modelView * vec4( transformed.xyz, 1.0 );
+      var mvPosition = matrices.world * camera.view * vec4( transformed.xyz, 1.0 );
       var worldNormal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
+      
+      vsOutput.uv = attributes.uv;
   
       var dotProduct: f32 = dot(worldNormal, normalize(mvPosition).xyz);
-      vsOutput.alpha = smoothstep(0.25, 1.0, clamp(pow(dotProduct, shading.glowIntensity), 0.0, 1.0));
-      vsOutput.centerGlow = smoothstep(0.95, 1.0, dotProduct);
-
+      
+      let alpha = clamp(pow(dotProduct, shading.glowIntensity), 0.0, 1.0);
+      vsOutput.alpha = smoothstep(0.125, 1.0, alpha);
+      vsOutput.centerGlow = smoothstep(0.95, 1.0, alpha);
       
       return vsOutput;
     }
@@ -458,9 +479,8 @@ window.addEventListener('load', async () => {
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) alpha: f32,
-      @location(3) centerGlow: f32,
+      @location(1) alpha: f32,
+      @location(2) centerGlow: f32,
     };
     
     struct OITTargetOutput {
@@ -472,6 +492,10 @@ window.addEventListener('load', async () => {
       var output : OITTargetOutput;
       
       var color: vec4f = vec4(mix(shading.color, vec3(1.0), fsInput.centerGlow), fsInput.alpha * shading.alpha);
+      
+      if(color.a < 0.05) {
+        discard;
+      }
       
       // insert your favorite weighting function here. the color-based factor
       // avoids color pollution from the edges of wispy clouds. the z-based
@@ -495,6 +519,7 @@ window.addEventListener('load', async () => {
   `
 
   const sunColor = new Vec3(0.8, 0.6, 0.55)
+  const saturatedSunColor = sunColor.clone().multiplyScalar(1.5)
 
   const sunHalo = new Mesh(gpuCameraRenderer, {
     label: 'Sun halo',
@@ -529,7 +554,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  sunHalo.scale.set(innerRadius)
+  sunHalo.scale.set(innerRadius * 2)
 
   // now a few big transparent stars
   for (let i = 0; i < 25; i++) {
@@ -576,8 +601,141 @@ window.addEventListener('load', async () => {
 
     bigStar.position.copy(randomPosition)
 
-    bigStar.scale.set(innerRadius * 0.15 + Math.random() * innerRadius * 0.375)
+    bigStar.scale.set(innerRadius * 0.25 + Math.random() * innerRadius * 0.375)
   }
+
+  const spriteCloudsFs = /* wgsl */ `
+    struct VSOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+      @location(1) normal: vec3f,
+    };
+    
+    struct OITTargetOutput {
+      @location(0) accum : vec4<f32>,
+      @location(1) reveal : f32,
+    };
+    
+    // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39#perlin-noise
+    // MIT License. © Stefan Gustavson, Munrocket
+    //
+    // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
+    fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
+    
+    fn permute4(x: vec4f) -> vec4f { return ((x * 34. + 1.) * x) % vec4f(289.); }
+    fn fade2(t: vec2f) -> vec2f { return t * t * t * (t * (t * 6. - 15.) + 10.); }
+    
+    fn perlinNoise2(P: vec2f) -> f32 {
+      var Pi: vec4f = floor(P.xyxy) + vec4f(0., 0., 1., 1.);
+      let Pf = fract(P.xyxy) - vec4f(0., 0., 1., 1.);
+      Pi = Pi % vec4f(289.); // To avoid truncation effects in permutation
+      let ix = Pi.xzxz;
+      let iy = Pi.yyww;
+      let fx = Pf.xzxz;
+      let fy = Pf.yyww;
+      let i = permute4(permute4(ix) + iy);
+      var gx: vec4f = 2. * fract(i * 0.0243902439) - 1.; // 1/41 = 0.024...
+      let gy = abs(gx) - 0.5;
+      let tx = floor(gx + 0.5);
+      gx = gx - tx;
+      var g00: vec2f = vec2f(gx.x, gy.x);
+      var g10: vec2f = vec2f(gx.y, gy.y);
+      var g01: vec2f = vec2f(gx.z, gy.z);
+      var g11: vec2f = vec2f(gx.w, gy.w);
+      let norm = 1.79284291400159 - 0.85373472095314 *
+          vec4f(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
+      g00 = g00 * norm.x;
+      g01 = g01 * norm.y;
+      g10 = g10 * norm.z;
+      g11 = g11 * norm.w;
+      let n00 = dot(g00, vec2f(fx.x, fy.x));
+      let n10 = dot(g10, vec2f(fx.y, fy.y));
+      let n01 = dot(g01, vec2f(fx.z, fy.z));
+      let n11 = dot(g11, vec2f(fx.w, fy.w));
+      let fade_xy = fade2(Pf.xy);
+      let n_x = mix(vec2f(n00, n01), vec2f(n10, n11), vec2f(fade_xy.x));
+      let n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+      return 2.3 * n_xy;
+    }
+    
+    fn rotate(coords: vec2f, angle: f32) -> vec2f {
+      return vec2(
+        coords.x * cos(angle) + coords.y * sin(angle),
+        coords.x * sin(angle) - coords.y * cos(angle),
+      );
+    }
+    
+    @fragment fn main(fsInput: VSOutput) -> OITTargetOutput {
+      var output : OITTargetOutput;
+      
+      let distanceFromCenter: f32 = clamp(distance(fsInput.uv, vec2(0.5)) * 2.0, 0.0, 1.0);
+    
+      let centerHole: f32 = smoothstep( shading.centerHoleSize, shading.centerHoleSize * 2.0, distanceFromCenter );
+      let edgeFade: f32 = smoothstep( 0.0, shading.centerHoleSize, 1.0 - distanceFromCenter );
+      
+      var alpha: f32 = centerHole * edgeFade;
+      
+      let noise: f32 = perlinNoise2( rotate( fsInput.uv * vec2(4.0), distanceFromCenter * 3.141592 * 0.75) );
+      alpha *= smoothstep( 0.0, 0.875, noise * 0.85 + 0.15 );
+      alpha = pow( alpha, 0.75 );
+      
+      if(alpha < 0.05) {
+        discard;
+      }
+      
+      var color: vec4f = vec4(shading.color, alpha);
+      
+      // insert your favorite weighting function here. the color-based factor
+      // avoids color pollution from the edges of wispy clouds. the z-based
+      // factor gives precedence to nearer surfaces
+      /*let weight: f32 =
+        clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * 
+                         pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);*/
+                         
+      let weight: f32 = 
+        clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);
+      
+      // blend func: GL_ONE, GL_ONE
+      // switch to pre-multiplied alpha and weight
+      output.accum = vec4(color.rgb * color.a, color.a) * weight;
+      
+      // blend func: GL_ZERO, GL_ONE_MINUS_SRC_ALPHA
+      output.reveal = color.a;
+    
+      return output;
+    }
+  `
+
+  const scale = innerRadius + outerRadius * 1.75
+
+  // finally a spiraling galactic dust plane
+  const cloudGalaxyPlane = new Mesh(gpuCameraRenderer, {
+    label: 'Cloud plane ',
+    geometry: new PlaneGeometry(),
+    ...transparentMeshParams,
+    shaders: {
+      fragment: {
+        code: spriteCloudsFs,
+      },
+    },
+    uniforms: {
+      shading: {
+        struct: {
+          color: {
+            type: 'vec3f',
+            value: saturatedSunColor,
+          },
+          centerHoleSize: {
+            type: 'f32',
+            value: innerRadius / scale,
+          },
+        },
+      },
+    },
+  })
+
+  cloudGalaxyPlane.scale.set(scale, scale, 1)
+  cloudGalaxyPlane.rotation.x = -Math.PI / 2
 
   // ------------------------------------
   // OPAQUE PLANETS
@@ -609,7 +767,8 @@ window.addEventListener('load', async () => {
         struct: {
           color: {
             type: 'vec3f',
-            value: new Vec3(1),
+            value: saturatedSunColor,
+            //value: new Vec3(1),
           },
         },
       },
@@ -618,121 +777,123 @@ window.addEventListener('load', async () => {
 
   sun.scale.set(innerRadius * 0.2)
 
-  const planetVs = /* wgsl */ `
-   struct VertexOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) fragPosition: vec3f,
-   };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VertexOutput {
-      var vsOutput: VertexOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = attributes.uv;
-      // since the object scale has not changed this should work
-      vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
-      vsOutput.fragPosition = (matrices.world * vec4(attributes.position, 1.0)).xyz;
-      
-      return vsOutput;
-    }
-  `
+  // we could add a bunch of planets but I like it better without :)
 
-  const planetFs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) fragPosition: vec3f,
-    };
-  
-    fn applyLightning(position: vec3f, normal: vec3f) -> vec3f {
-      let L = shading.lightPosition - position;
-      let distance = length(L);
-      
-      if (distance > shading.radius) {
-        return vec3(0.0);
-      }
-      
-      let lightDir: vec3f = normalize(L);
-      let lightStrength: f32 = pow(1.0 - distance / shading.radius, 2.0);
-      
-      let lambert = max(dot(normal, lightDir), 0.0);
-            
-      return vec3(lambert * lightStrength * shading.lightColor);
-    }
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
-      var color: vec4f;
-        
-      let lambert: vec3f = applyLightning(fsInput.fragPosition, fsInput.normal);
-      color = vec4((lambert + shading.ambientLightStrength) * shading.color, 1.0);
-    
-      return color;
-    }
-  `
-
-  const lightPosition = new Vec3(0)
-  const ambientLightStrength = 0.3
-
-  for (let i = 0; i < 8; i++) {
-    const planet = new Mesh(gpuCameraRenderer, {
-      label: 'Opaque planet',
-      geometry: sphereGeometry,
-      outputTarget: OITOpaqueTarget,
-      frustumCulled: false,
-      shaders: {
-        vertex: {
-          code: planetVs,
-        },
-        fragment: {
-          code: planetFs,
-        },
-      },
-      uniforms: {
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              //value: i % 2 === 0 ? new Vec3(1, 0, 1) : new Vec3(0, 1, 1),
-              value: new Vec3(0.9),
-            },
-            lightPosition: {
-              type: 'vec3f',
-              value: lightPosition,
-            },
-            lightColor: {
-              type: 'vec3f',
-              value: sunColor,
-            },
-            radius: {
-              type: 'f32',
-              value: outerRadius * 3,
-            },
-            ambientLightStrength: {
-              type: 'f32',
-              value: ambientLightStrength,
-            },
-          },
-        },
-      },
-    })
-
-    randomPosition.set(Math.random() * 2 - 1, 0, Math.random() * 2 - 1)
-
-    const angle = Math.random() * 2 * Math.PI
-
-    randomPosition.normalize()
-    randomPosition.x = randomPosition.x * innerRadius + Math.cos(angle) * outerRadius * 1.15
-    randomPosition.z = randomPosition.z * innerRadius + Math.sin(angle) * outerRadius * 1.15
-
-    planet.position.copy(randomPosition)
-
-    planet.scale.set(1.5 + Math.random() * 1.5)
-  }
+  // const planetVs = /* wgsl */ `
+  //  struct VertexOutput {
+  //     @builtin(position) position: vec4f,
+  //     @location(0) uv: vec2f,
+  //     @location(1) normal: vec3f,
+  //     @location(2) fragPosition: vec3f,
+  //  };
+  //
+  //   @vertex fn main(
+  //     attributes: Attributes,
+  //   ) -> VertexOutput {
+  //     var vsOutput: VertexOutput;
+  //
+  //     vsOutput.position = getOutputPosition(attributes.position);
+  //     vsOutput.uv = attributes.uv;
+  //     // since the object scale has not changed this should work
+  //     vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
+  //     vsOutput.fragPosition = (matrices.world * vec4(attributes.position, 1.0)).xyz;
+  //
+  //     return vsOutput;
+  //   }
+  // `
+  //
+  // const planetFs = /* wgsl */ `
+  //   struct VSOutput {
+  //     @builtin(position) position: vec4f,
+  //     @location(0) uv: vec2f,
+  //     @location(1) normal: vec3f,
+  //     @location(2) fragPosition: vec3f,
+  //   };
+  //
+  //   fn applyLightning(position: vec3f, normal: vec3f) -> vec3f {
+  //     let L = shading.lightPosition - position;
+  //     let distance = length(L);
+  //
+  //     if (distance > shading.radius) {
+  //       return vec3(0.0);
+  //     }
+  //
+  //     let lightDir: vec3f = normalize(L);
+  //     let lightStrength: f32 = pow(1.0 - distance / shading.radius, 2.0);
+  //
+  //     let lambert = max(dot(normal, lightDir), 0.0);
+  //
+  //     return vec3(lambert * lightStrength * shading.lightColor);
+  //   }
+  //
+  //   @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  //     var color: vec4f;
+  //
+  //     let lambert: vec3f = applyLightning(fsInput.fragPosition, fsInput.normal);
+  //     color = vec4((lambert + shading.ambientLightStrength) * shading.color, 1.0);
+  //
+  //     return color;
+  //   }
+  // `
+  //
+  // const lightPosition = new Vec3(0)
+  // const ambientLightStrength = 0.5
+  //
+  // for (let i = 0; i < 8; i++) {
+  //   const planet = new Mesh(gpuCameraRenderer, {
+  //     label: 'Opaque planet',
+  //     geometry: sphereGeometry,
+  //     outputTarget: OITOpaqueTarget,
+  //     frustumCulled: false,
+  //     shaders: {
+  //       vertex: {
+  //         code: planetVs,
+  //       },
+  //       fragment: {
+  //         code: planetFs,
+  //       },
+  //     },
+  //     uniforms: {
+  //       shading: {
+  //         struct: {
+  //           color: {
+  //             type: 'vec3f',
+  //             //value: i % 2 === 0 ? new Vec3(1, 0, 1) : new Vec3(0, 1, 1),
+  //             value: new Vec3(0.9),
+  //           },
+  //           lightPosition: {
+  //             type: 'vec3f',
+  //             value: lightPosition,
+  //           },
+  //           lightColor: {
+  //             type: 'vec3f',
+  //             value: sunColor,
+  //           },
+  //           radius: {
+  //             type: 'f32',
+  //             value: outerRadius * 3,
+  //           },
+  //           ambientLightStrength: {
+  //             type: 'f32',
+  //             value: ambientLightStrength,
+  //           },
+  //         },
+  //       },
+  //     },
+  //   })
+  //
+  //   randomPosition.set(Math.random() * 2 - 1, 0, Math.random() * 2 - 1)
+  //
+  //   const angle = Math.random() * 2 * Math.PI
+  //
+  //   randomPosition.normalize()
+  //   randomPosition.x = randomPosition.x * innerRadius + Math.cos(angle) * outerRadius * 1.15
+  //   randomPosition.z = randomPosition.z * innerRadius + Math.sin(angle) * outerRadius * 1.15
+  //
+  //   planet.position.copy(randomPosition)
+  //
+  //   planet.scale.set(1.5 + Math.random() * 1.5)
+  // }
 
   // ------------------------------------
   // COMPOSITING PASS
