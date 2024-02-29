@@ -1,6 +1,7 @@
 import { Material } from './Material.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
+import { compareRenderingOptions } from './utils.mjs';
 
 class RenderMaterial extends Material {
   /**
@@ -15,27 +16,52 @@ class RenderMaterial extends Material {
     super(renderer, parameters);
     this.type = type;
     this.renderer = renderer;
-    const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, ...renderingOptions } = parameters;
+    const { shaders } = parameters;
     if (!shaders.vertex.entryPoint) {
       shaders.vertex.entryPoint = "main";
     }
     if (shaders.fragment && !shaders.fragment.entryPoint) {
       shaders.fragment.entryPoint = "main";
     }
-    if (!renderingOptions.targets || !renderingOptions.targets.length) {
-      renderingOptions.targets = [
+    const {
+      useProjection,
+      transparent,
+      depth,
+      depthWriteEnabled,
+      depthCompare,
+      depthFormat,
+      cullMode,
+      sampleCount,
+      verticesOrder,
+      topology
+    } = parameters;
+    let { targets } = parameters;
+    if (!targets || !targets.length) {
+      targets = [
         {
           format: this.renderer.options.preferredFormat
         }
       ];
     }
-    if (!renderingOptions.targets[0].format) {
-      renderingOptions.targets[0].format = this.renderer.options.preferredFormat;
+    if (!targets[0].format) {
+      targets[0].format = this.renderer.options.preferredFormat;
     }
     this.options = {
       ...this.options,
       shaders,
-      rendering: renderingOptions
+      rendering: {
+        useProjection,
+        transparent,
+        depth,
+        depthWriteEnabled,
+        depthCompare,
+        depthFormat,
+        cullMode,
+        sampleCount,
+        targets,
+        verticesOrder,
+        topology
+      }
     };
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
       renderer: this.renderer,
@@ -78,19 +104,14 @@ class RenderMaterial extends Material {
    * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
    */
   setRenderingOptions(renderingOptions = {}) {
-    const newProperties = Object.keys(renderingOptions).filter((key) => {
-      if (Array.isArray(renderingOptions[key])) {
-        return JSON.stringify(renderingOptions[key]) !== JSON.stringify(this.options.rendering[key]);
-      } else {
-        return renderingOptions[key] !== this.options.rendering[key];
-      }
-    });
+    const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering);
+    console.log(renderingOptions, newProperties);
     this.options.rendering = { ...this.options.rendering, ...renderingOptions };
     if (this.pipelineEntry) {
       this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
       if (this.pipelineEntry.ready && newProperties.length) {
         throwWarning(
-          `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties.map(
+          `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties.map(
             (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
           ).join(", ")} }`
         );

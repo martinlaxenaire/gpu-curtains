@@ -2,6 +2,7 @@ import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
 import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries'
 import { ShaderOptions } from '../../types/Materials'
+import { compareRenderingOptions } from '../materials/utils'
 
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
@@ -56,9 +57,7 @@ export class PipelineManager {
           (!shaders.fragment && !options.shaders.fragment) ||
           this.compareShaders(shaders.fragment as ShaderOptions, options.shaders.fragment as ShaderOptions)
 
-        const differentParams = Object.keys(options.rendering).filter(
-          (key) => options.rendering[key] !== rendering[key]
-        )
+        const differentParams = compareRenderingOptions(rendering, options.rendering)
 
         // TODO might break with unused bindings!
 

@@ -471,7 +471,7 @@ window.addEventListener('load', async () => {
     @fragment fn main(fsInput: VSOutput) -> OITTargetOutput {
       var output : OITTargetOutput;
       
-      var color: vec4f = vec4(mix(shading.color, vec3(1.0), fsInput.centerGlow), fsInput.alpha);
+      var color: vec4f = vec4(mix(shading.color, vec3(1.0), fsInput.centerGlow), fsInput.alpha * shading.alpha);
       
       // insert your favorite weighting function here. the color-based factor
       // avoids color pollution from the edges of wispy clouds. the z-based
@@ -520,6 +520,10 @@ window.addEventListener('load', async () => {
             type: 'f32',
             value: 2,
           },
+          alpha: {
+            type: 'f32',
+            value: 1,
+          },
         },
       },
     },
@@ -552,6 +556,10 @@ window.addEventListener('load', async () => {
             glowIntensity: {
               type: 'f32',
               value: 3.5 + Math.random() * 5,
+            },
+            alpha: {
+              type: 'f32',
+              value: Math.random() * 0.2 + 0.8,
             },
           },
         },

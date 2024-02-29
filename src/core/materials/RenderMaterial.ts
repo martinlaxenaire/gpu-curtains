@@ -13,6 +13,7 @@ import {
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { RenderPipelineEntryParams } from '../../types/PipelineEntries'
 import { throwWarning } from '../../utils/utils'
+import { compareRenderingOptions } from './utils'
 
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
@@ -49,8 +50,7 @@ export class RenderMaterial extends Material {
     this.type = type
     this.renderer = renderer
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, ...renderingOptions } = parameters
+    const { shaders } = parameters
 
     if (!shaders.vertex.entryPoint) {
       shaders.vertex.entryPoint = 'main'
@@ -60,22 +60,50 @@ export class RenderMaterial extends Material {
       ;(shaders.fragment as ShaderOptions).entryPoint = 'main'
     }
 
+    // rendering options
+    const {
+      useProjection,
+      transparent,
+      depth,
+      depthWriteEnabled,
+      depthCompare,
+      depthFormat,
+      cullMode,
+      sampleCount,
+      verticesOrder,
+      topology,
+    } = parameters
+
+    let { targets } = parameters
+
     // patch default target format if not set
-    if (!renderingOptions.targets || !renderingOptions.targets.length) {
-      renderingOptions.targets = [
+    if (!targets || !targets.length) {
+      targets = [
         {
           format: this.renderer.options.preferredFormat,
         },
       ]
     }
-    if (!renderingOptions.targets[0].format) {
-      renderingOptions.targets[0].format = this.renderer.options.preferredFormat
+    if (!targets[0].format) {
+      targets[0].format = this.renderer.options.preferredFormat
     }
 
     this.options = {
       ...this.options,
       shaders,
-      rendering: renderingOptions,
+      rendering: {
+        useProjection,
+        transparent,
+        depth,
+        depthWriteEnabled,
+        depthCompare,
+        depthFormat,
+        cullMode,
+        sampleCount,
+        targets,
+        verticesOrder,
+        topology,
+      },
     } as RenderMaterialOptions
 
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
@@ -125,14 +153,7 @@ export class RenderMaterial extends Material {
    * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
    */
   setRenderingOptions(renderingOptions: Partial<RenderMaterialRenderingOptions> = {}) {
-    const newProperties = Object.keys(renderingOptions).filter((key) => {
-      if (Array.isArray(renderingOptions[key])) {
-        // 'targets' property
-        return JSON.stringify(renderingOptions[key]) !== JSON.stringify(this.options.rendering[key])
-      } else {
-        return renderingOptions[key] !== this.options.rendering[key]
-      }
-    })
+    const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering)
 
     this.options.rendering = { ...this.options.rendering, ...renderingOptions }
 
@@ -143,12 +164,12 @@ export class RenderMaterial extends Material {
         throwWarning(
           `${
             this.options.label
-          }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties
+          }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties
             .map(
               (key) =>
                 `"${key}": ${
                   Array.isArray(renderingOptions[key])
-                    ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(', ')
+                    ? (renderingOptions[key] as []).map((optKey) => `${JSON.stringify(optKey)}`).join(', ')
                     : renderingOptions[key]
                 }`
             )
