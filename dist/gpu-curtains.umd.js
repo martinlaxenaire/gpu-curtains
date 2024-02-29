@@ -6002,7 +6002,6 @@
      */
     setRenderingOptions(renderingOptions = {}) {
       const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering);
-      console.log(renderingOptions, newProperties);
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
         this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
