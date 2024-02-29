@@ -46,7 +46,7 @@ export declare class Texture extends Object3D {
     externalTexture: null | GPUExternalTexture;
     /** The {@link Texture} {@link TextureSource | source} to use */
     source: TextureSource;
-    /** The {@link GPUTexture}, matching the {@link TextureSource | source} {@link RectSize | size} (with 1 for depth) */
+    /** The {@link GPUTexture}, matching the {@link TextureSource | source} {@link core/DOM/DOMElement.RectSize | size} (with 1 for depth) */
     size: TextureSize;
     /** Options used to create this {@link Texture} */
     options: TextureOptions;

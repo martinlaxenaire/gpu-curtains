@@ -39,6 +39,9 @@ window.addEventListener('load', async () => {
   // we need to wait for the device to be created
   await gpuDeviceManager.init()
 
+  // set the sample count here
+  const sampleCount = 1
+
   // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
@@ -47,6 +50,9 @@ window.addEventListener('load', async () => {
     camera: {
       near: 1,
       far: outerRadius * 5,
+    },
+    renderPass: {
+      sampleCount,
     },
   })
 
@@ -58,7 +64,7 @@ window.addEventListener('load', async () => {
   camera.position.z = outerRadius * 2.25
   camera.parent = cameraPivot
 
-  camera.lookAt(new Vec3())
+  camera.lookAt(new Vec3(0, -5, 0))
 
   // render our scene manually
   const animate = () => {
@@ -172,7 +178,7 @@ window.addEventListener('load', async () => {
 
   const particleBuffer = computeInitDataPass.material.getBindingByName('particles')
 
-  // this one will be used for bigger stars and planets
+  // this one will be used for bigger stars clusters and planets
   const randomPosition = new Vec3()
 
   // ------------------------------------
@@ -205,25 +211,9 @@ window.addEventListener('load', async () => {
   // OPAQUE & TRANSPARENT TARGETS
   // ------------------------------------
 
-  const sampleCount = 4
-
-  // depth texture if needed
-  const OITDepthTexture =
-    sampleCount === 1
-      ? new RenderTexture(gpuCameraRenderer, {
-          label: 'OIT depth texture',
-          name: 'oITDepthTexture',
-          usage: 'depth',
-          format: 'depth24plus',
-          sampleCount,
-        })
-      : null
-
   const OITOpaqueTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Opaque MRT',
     sampleCount,
-    //shouldUpdateView: false, // we don't want to render to the swap chain
-    ...(OITDepthTexture && { depthTexture: OITDepthTexture }),
   })
 
   const OITTransparentTarget = new RenderTarget(gpuCameraRenderer, {
@@ -242,8 +232,7 @@ window.addEventListener('load', async () => {
         targetFormat: 'r8unorm', // revealage
       },
     ],
-    ...(OITDepthTexture && { depthTexture: OITDepthTexture }),
-    depthLoadOp: 'load', // read from opaque depth!
+    depthLoadOp: 'load', // we need to read from opaque depth!
   })
 
   // ------------------------------------
@@ -256,11 +245,12 @@ window.addEventListener('load', async () => {
     depthWriteEnabled: false, // read from opaque depth but not write to depth
     outputTarget: OITTransparentTarget,
     frustumCulled: false,
+    // targets format are not specified
+    // because they're patched using the outputTarget colorAttachments
     targets: [
       {
-        //format: 'rgba16float', // this would be patched anyway if not set here
+        // accum
         blend: {
-          // accum
           color: {
             srcFactor: 'one',
             dstFactor: 'one',
@@ -272,7 +262,7 @@ window.addEventListener('load', async () => {
         },
       },
       {
-        //format: 'r8unorm', // this would be patched anyway if not set here
+        // reveal
         blend: {
           color: {
             srcFactor: 'zero',
@@ -399,13 +389,10 @@ window.addEventListener('load', async () => {
 
   const pinkStarColor = new Vec3(0.85, 0.4, 0.75)
   const blueStarColor = new Vec3(0.4, 0.6, 0.95)
-  // const pinkStarColor = new Vec3(1, 0, 1)
-  // const blueStarColor = new Vec3(0, 1, 1)
 
   const instancedSmallStars = new Mesh(gpuCameraRenderer, {
     label: 'Instanced small stars',
     geometry: smallStarsGeometry,
-    //cullMode: 'none',
     ...transparentMeshParams,
     shaders: {
       vertex: {
@@ -738,7 +725,7 @@ window.addEventListener('load', async () => {
   cloudGalaxyPlane.rotation.x = -Math.PI / 2
 
   // ------------------------------------
-  // OPAQUE PLANETS
+  // OPAQUE SUN & OPTIONAL PLANETS
   // ------------------------------------
 
   const sunFs = /* wgsl */ `
@@ -768,7 +755,6 @@ window.addEventListener('load', async () => {
           color: {
             type: 'vec3f',
             value: saturatedSunColor,
-            //value: new Vec3(1),
           },
         },
       },
@@ -904,7 +890,7 @@ window.addEventListener('load', async () => {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
     format: OITOpaqueTarget.renderPass.options.colorAttachments[0].targetFormat,
-    fromTexture: OITOpaqueTarget.renderPass.viewTextures[0],
+    fromTexture: sampleCount === 1 ? OITOpaqueTarget.renderTexture : OITOpaqueTarget.renderPass.viewTextures[0],
     sampleCount,
   })
 
@@ -955,15 +941,15 @@ window.addEventListener('load', async () => {
         0
       );   
       
-      // fragment revealage
-      let revealage = textureLoad(
+      // fragment reveal
+      let reveal = textureLoad(
         oITRevealTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
       ).r;
   
       // save the blending and color texture fetch cost if there is not a transparent fragment
-      if (isApproximatelyEqual(revealage, 1.0)) {
+      if (isApproximatelyEqual(reveal, 1.0)) {
         return opaqueColor;
       }
           
@@ -983,7 +969,7 @@ window.addEventListener('load', async () => {
       var averageColor = accumulation.rgb / max(accumulation.a, EPSILON);
   
       // alpha blending between opaque and transparent
-      return mix(vec4(opaqueColor.rgb, opaqueColor.a), vec4(averageColor, 1.0), 1.0 - revealage);
+      return mix(opaqueColor, vec4(averageColor, 1.0), 1.0 - reveal);
     }
   `
 
@@ -995,20 +981,5 @@ window.addEventListener('load', async () => {
         code: compositingPassFs,
       },
     },
-    // targets: [
-    //   {
-    //     // additive blending with premultiplied alpha and a transparent background
-    //     blend: {
-    //       color: {
-    //         srcFactor: 'one',
-    //         dstFactor: 'one',
-    //       },
-    //       alpha: {
-    //         srcFactor: 'one',
-    //         dstFactor: 'one',
-    //       },
-    //     },
-    //   },
-    // ],
   })
 })

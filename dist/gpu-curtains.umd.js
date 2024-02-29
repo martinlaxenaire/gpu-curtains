@@ -3106,7 +3106,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       super();
-      /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link RectSize | size} */
+      /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
       __privateAdd$8(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
       __privateAdd$8(this, _sourceRatio, new Vec3(1));
