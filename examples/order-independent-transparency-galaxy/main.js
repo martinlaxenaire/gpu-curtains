@@ -735,7 +735,7 @@ window.addEventListener('load', async () => {
   `
 
   // a small one with the sun color
-  const smallScale = halfGalaxySize * 0.5 + baseRadius
+  const smallScale = halfGalaxySize * 0.375 + baseRadius
 
   // finally a spiraling galactic dust plane
   const smallSwirlPlane = new Mesh(gpuCameraRenderer, {
@@ -821,7 +821,7 @@ window.addEventListener('load', async () => {
           },
           minIntensity: {
             type: 'f32',
-            value: Math.random() * 0.25 + 0.25,
+            value: Math.random() * 0.25 + 0.325,
           },
         },
       },

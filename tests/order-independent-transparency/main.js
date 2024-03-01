@@ -26,11 +26,16 @@ window.addEventListener('load', async () => {
   // we need to wait for the device to be created
   await gpuDeviceManager.init()
 
+  const sampleCount = 1
+
   // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    renderPass: {
+      sampleCount,
+    },
   })
 
   // get the camera
@@ -54,20 +59,6 @@ window.addEventListener('load', async () => {
 
   const planeGeometry = new PlaneGeometry()
 
-  const sampleCount = 4
-
-  // depth texture if needed
-  const OITDepthTexture =
-    sampleCount === 1
-      ? new RenderTexture(gpuCameraRenderer, {
-          label: 'OIT depth texture',
-          name: 'oITDepthTexture',
-          usage: 'depth',
-          format: 'depth24plus',
-          sampleCount,
-        })
-      : null
-
   const planesFs = /* wgsl */ `
    struct VSOutput {
       @builtin(position) position: vec4f,
@@ -82,8 +73,6 @@ window.addEventListener('load', async () => {
   const OITOpaqueTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Opaque MRT',
     sampleCount,
-    //shouldUpdateView: false, // we don't want to render to the swap chain
-    ...(OITDepthTexture && { depthTexture: OITDepthTexture }),
   })
 
   const opaquePlane = new Mesh(gpuCameraRenderer, {
@@ -124,7 +113,6 @@ window.addEventListener('load', async () => {
         targetFormat: 'r8unorm', // revealage
       },
     ],
-    ...(OITDepthTexture && { depthTexture: OITDepthTexture }),
     depthLoadOp: 'load', // read from opaque depth!
   })
 
@@ -239,7 +227,7 @@ window.addEventListener('load', async () => {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
     format: OITOpaqueTarget.renderPass.options.colorAttachments[0].targetFormat,
-    fromTexture: OITOpaqueTarget.renderPass.viewTextures[0],
+    fromTexture: sampleCount === 1 ? OITOpaqueTarget.renderTexture : OITOpaqueTarget.renderPass.viewTextures[0],
     sampleCount,
   })
 
