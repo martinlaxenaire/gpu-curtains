@@ -153,9 +153,14 @@ window.addEventListener('load', async () => {
       label: 'Cube ' + i,
       geometry: cubeGeometry,
       outputTarget: writeGBufferRenderTarget,
-      additionalTargets: [
+      // for the sake of clarity we are going to specify the targets formats
+      // but they would be patched anyway if not set here
+      targets: [
         {
-          format: 'rgba16float', // this would be patched anyway if not set here
+          format: 'bgra8unorm', // albedo
+        },
+        {
+          format: 'rgba16float', // normals
         },
       ],
       shaders: {
@@ -215,9 +220,14 @@ window.addEventListener('load', async () => {
     label: 'Floor',
     geometry: new PlaneGeometry(),
     outputTarget: writeGBufferRenderTarget,
-    additionalTargets: [
+    // for the sake of clarity we are going to specify the targets formats
+    // but they would be patched anyway if not set here
+    targets: [
       {
-        format: 'rgba16float',
+        format: 'bgra8unorm', // albedo
+      },
+      {
+        format: 'rgba16float', // normals
       },
     ],
     shaders: {

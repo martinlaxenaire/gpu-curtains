@@ -32,15 +32,8 @@ export interface RenderPassParams {
   useColorAttachments?: boolean
   /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
   shouldUpdateView?: boolean
-  /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
-  loadOp?: GPULoadOp
-  /** The {@link GPUStoreOp | store operation} to perform while drawing this {@link RenderPass} */
-  storeOp?: GPUStoreOp
-  /** The {@link GPUColor | color values} to clear to before drawing this {@link RenderPass} */
-  clearValue?: GPUColor
-  /** Optional format of the color attachment texture */
-  targetFormat: GPUTextureFormat
-  /** Define all the color attachments parameters to use here in case this {@link RenderPass} should output to multiple color attachments (Multiple Render Targets) */
+
+  /** Array of one or multiple (Multiple Render Targets) color attachments parameters. */
   colorAttachments?: ColorAttachmentParams[]
 
   /** Whether this {@link RenderPass} should handle a depth texture */
@@ -94,10 +87,6 @@ export class RenderPass {
       // color
       useColorAttachments = true,
       shouldUpdateView = true,
-      loadOp = 'clear' as GPULoadOp,
-      storeOp = 'store' as GPUStoreOp,
-      clearValue = [0, 0, 0, 0],
-      targetFormat,
       colorAttachments = [],
       // depth
       useDepth = true,
@@ -120,10 +109,10 @@ export class RenderPass {
 
     if (useColorAttachments) {
       const defaultColorAttachment = {
-        loadOp,
-        storeOp,
-        clearValue,
-        targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
+        loadOp: 'clear' as GPULoadOp,
+        storeOp: 'store' as GPUStoreOp,
+        clearValue: [0, 0, 0, 0] as GPUColor,
+        targetFormat: this.renderer.options.preferredFormat,
       }
 
       if (!colorAttachments.length) {
@@ -142,10 +131,6 @@ export class RenderPass {
       // color
       useColorAttachments,
       shouldUpdateView,
-      loadOp,
-      storeOp,
-      clearValue,
-      targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       colorAttachments,
       // depth
       useDepth,
@@ -156,7 +141,11 @@ export class RenderPass {
       depthFormat,
     }
 
-    this.setClearValue(clearValue)
+    // TODO really needed?
+    // this.options.colorAttachments.forEach((colorAttachment, index) => {
+    //   console.log('after patching', colorAttachment.clearValue)
+    //   this.setClearValue(colorAttachment.clearValue, index)
+    // })
 
     // if needed, create a depth texture before our descriptor
     if (this.options.useDepth) {
@@ -271,10 +260,15 @@ export class RenderPass {
    * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
    */
   setLoadOp(loadOp: GPULoadOp = 'clear', colorAttachmentIndex = 0) {
-    this.options.loadOp = loadOp
-    if (this.options.useColorAttachments && this.descriptor) {
-      if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
-        this.descriptor.colorAttachments[colorAttachmentIndex].loadOp = loadOp
+    if (this.options.useColorAttachments) {
+      if (this.options.colorAttachments[colorAttachmentIndex]) {
+        this.options.colorAttachments[colorAttachmentIndex].loadOp = loadOp
+      }
+
+      if (this.descriptor) {
+        if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+          this.descriptor.colorAttachments[colorAttachmentIndex].loadOp = loadOp
+        }
       }
     }
   }
@@ -297,17 +291,23 @@ export class RenderPass {
    * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
    */
   setClearValue(clearValue: GPUColor = [0, 0, 0, 0], colorAttachmentIndex = 0) {
-    if (this.renderer.alphaMode === 'premultiplied') {
-      const alpha = clearValue[3]
-      clearValue[0] = Math.min(clearValue[0], alpha)
-      clearValue[1] = Math.min(clearValue[1], alpha)
-      clearValue[2] = Math.min(clearValue[2], alpha)
-    } else {
-      this.options.clearValue = clearValue
-    }
+    if (this.options.useColorAttachments) {
+      if (this.renderer.alphaMode === 'premultiplied') {
+        const alpha = clearValue[3]
+        clearValue[0] = Math.min(clearValue[0], alpha)
+        clearValue[1] = Math.min(clearValue[1], alpha)
+        clearValue[2] = Math.min(clearValue[2], alpha)
+      }
 
-    if (this.descriptor && this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
-      this.descriptor.colorAttachments[colorAttachmentIndex].clearValue = clearValue
+      if (this.options.colorAttachments[colorAttachmentIndex]) {
+        this.options.colorAttachments[colorAttachmentIndex].clearValue = clearValue
+      }
+
+      if (this.descriptor) {
+        if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+          this.descriptor.colorAttachments[colorAttachmentIndex].clearValue = clearValue
+        }
+      }
     }
   }
 

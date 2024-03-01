@@ -2,7 +2,8 @@ import { GPUCurtains, PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from 
 
 // originally inspired by https://oframe.github.io/ogl/examples/mouse-flowmap.html
 
-window.addEventListener('load', async () => {
+// use 'DOMContentLoaded' so we don't wait for the image to be loaded
+window.addEventListener('DOMContentLoaded', async () => {
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
@@ -72,7 +73,11 @@ window.addEventListener('load', async () => {
         entryPoint: 'fs', // custom entry point
       },
     },
-    targetFormat: 'rgba16float', // important, we'll be using floating point textures
+    targets: [
+      {
+        format: 'rgba16float', // important, we'll be using floating point textures
+      },
+    ],
     uniforms: {
       flowmap: {
         label: 'Flowmap',

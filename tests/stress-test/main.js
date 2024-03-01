@@ -42,7 +42,13 @@ window.addEventListener('load', async () => {
   // not specifically designed to be responsive
   const aspectRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
 
-  for (let i = 0; i < 3000; i++) {
+  console.time('creation time')
+  let createdMeshes = 0
+  let nbMeshes = 3000
+
+  const meshes = []
+
+  const addMesh = (index) => {
     const mesh = new Mesh(gpuCurtains, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
       //frustumCulled: false, // you can also gain a few fps without checking for frustum
@@ -58,5 +64,42 @@ window.addEventListener('load', async () => {
       mesh.rotation.y += rotationSpeed
       mesh.rotation.z += rotationSpeed
     })
+
+    meshes.push(mesh)
   }
+
+  for (let i = 0; i < nbMeshes; i++) {
+    addMesh(i)
+
+    meshes[i].onReady(() => {
+      createdMeshes++
+      if (createdMeshes === nbMeshes) {
+        console.timeEnd('creation time')
+      }
+    })
+  }
+
+  // GUI
+  const gui = new lil.GUI({
+    title: 'Stress test',
+  })
+
+  gui
+    .add({ nbMeshes }, 'nbMeshes', 500, 5000, 1)
+    .name('Number of meshes')
+    .onFinishChange((value) => {
+      if (value < nbMeshes) {
+        for (let i = nbMeshes - 1; i >= value; i--) {
+          meshes[i].remove()
+        }
+
+        meshes.splice(value, nbMeshes - value)
+      } else {
+        for (let i = nbMeshes; i < value; i++) {
+          addMesh(i)
+        }
+      }
+
+      nbMeshes = value
+    })
 })

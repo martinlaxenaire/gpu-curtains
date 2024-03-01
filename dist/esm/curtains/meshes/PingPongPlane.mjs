@@ -11,10 +11,15 @@ class PingPongPlane extends FullscreenPlane {
   constructor(renderer, parameters = {}) {
     renderer = renderer && renderer.renderer || renderer;
     isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
+    const colorAttachments = parameters.targets && parameters.targets.length && parameters.targets.map((target) => {
+      return {
+        targetFormat: target.format
+      };
+    });
     parameters.outputTarget = new RenderTarget(renderer, {
       label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
       useDepth: false,
-      ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
+      ...colorAttachments && { colorAttachments }
     });
     parameters.transparent = false;
     parameters.depth = false;
@@ -24,7 +29,7 @@ class PingPongPlane extends FullscreenPlane {
     this.createRenderTexture({
       label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
       name: "renderTexture",
-      ...parameters.targetFormat && { format: parameters.targetFormat }
+      ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format }
     });
   }
   /**
