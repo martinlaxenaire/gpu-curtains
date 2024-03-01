@@ -7,6 +7,7 @@ import {
   Mesh,
   RenderTarget,
   ShaderPass,
+  Vec2,
   Vec3,
   RenderTexture,
   ComputePass,
@@ -24,12 +25,23 @@ import {
 // There are a few other tricks used in this example, including:
 // - instanced (initial position comes from a compute shader) billboard quads for the small stars
 // - "glowing" billboard spheres (see: https://stemkoski.github.io/Three.js/Shader-Glow.html)
+//
+// ref images:
+// https://i.natgeofe.com/n/e484088d-3334-4ab6-9b75-623f7b8505c9/1086_4x3.jpg
+// https://cdn.futura-sciences.com/cdn-cgi/image/width=1920,quality=60,format=auto/sources/images/glossaire/galaxie-andromede_03.jpg
 window.addEventListener('load', async () => {
-  // number of particles instances
-  const nbSmallStars = 20_000
+  // generate a random seed
+  const seed = Math.random()
 
-  const outerRadius = 40
-  const innerRadius = 20
+  // number of particles instances
+  const nbSmallStars = 40_000
+
+  // circle radius
+  const baseRadius = 40
+  // how much distance between a point on the circle and a possible star position
+  const halfGalaxySize = 20 + seed * 5
+  // size of the hole in the middle where we'll put our "sun" or main star
+  const centerHoleSize = baseRadius - halfGalaxySize
 
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
@@ -49,7 +61,7 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       near: 1,
-      far: outerRadius * 5,
+      far: baseRadius * 5,
     },
     renderPass: {
       sampleCount,
@@ -59,16 +71,41 @@ window.addEventListener('load', async () => {
   // get the camera
   const { camera } = gpuCameraRenderer
 
-  const cameraPivot = new Object3D()
-  camera.position.y = outerRadius
-  camera.position.z = outerRadius * 2.25
-  camera.parent = cameraPivot
+  const scenePivot = new Object3D()
 
-  camera.lookAt(new Vec3(0, -5, 0))
+  scenePivot.quaternion.setAxisOrder('ZXY')
+  scenePivot.rotation.z = (seed * Math.PI) / 12 + Math.PI / 24
+
+  const cameraPosition = new Vec3(0, baseRadius * 1.25, baseRadius * 2.5)
+  camera.position.copy(cameraPosition)
+
+  const lookAt = new Vec3(0)
+  camera.lookAt(lookAt)
+
+  // lerp camera Y position based on mouse/touch move
+  const lerpCameraPosition = camera.position.clone()
+
+  const onPointerMove = (e) => {
+    const { clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e
+    const { height } = gpuCameraRenderer.boundingRect
+
+    lerpCameraPosition.set(
+      cameraPosition.x,
+      cameraPosition.y - baseRadius * 0.875 * (0.5 + (clientY - height * 0.5) / height),
+      cameraPosition.z
+    )
+  }
+
+  window.addEventListener('mousemove', onPointerMove)
+  window.addEventListener('touchmove', onPointerMove)
 
   // render our scene manually
   const animate = () => {
-    cameraPivot.rotation.y += 0.00325
+    scenePivot.rotation.y -= 0.0025
+
+    camera.position.lerp(lerpCameraPosition, 0.05)
+    camera.lookAt(lookAt)
+
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
@@ -107,16 +144,17 @@ window.addEventListener('load', async () => {
         let normalizedPos = normalize(position);
         
         let angle: f32 = (rand11(params.seed * acos(fIndex * PI / nbParticles)) * 2.0) * PI;
+        //let angle: f32 = 0.0;
         
         let distantStarRatio: f32 = pow(rand11(params.seed * asin(fIndex * PI / nbParticles)), 4.0);
         
         let arcPosition = vec3(
-          params.outerRadius * cos(angle) * (1.0 + distantStarRatio),
+          params.baseRadius * cos(angle) * (1.0 + distantStarRatio),
           0.0,
-          params.outerRadius * sin(angle) * (1.0 + distantStarRatio)
-        );  
+          params.baseRadius * sin(angle) * (1.0 + distantStarRatio)
+        );
         
-        position = normalizedPos * vec3(params.innerRadius) + arcPosition;
+        position = normalizedPos * vec3(params.halfGalaxySize) + arcPosition;
         
         // write positions
         particles.position[index].x = position.x;
@@ -142,17 +180,17 @@ window.addEventListener('load', async () => {
     uniforms: {
       params: {
         struct: {
-          outerRadius: {
+          baseRadius: {
             type: 'f32',
-            value: outerRadius,
+            value: baseRadius,
           },
-          innerRadius: {
+          halfGalaxySize: {
             type: 'f32',
-            value: innerRadius,
+            value: halfGalaxySize,
           },
           seed: {
             type: 'f32',
-            value: Math.random(),
+            value: seed,
           },
         },
       },
@@ -186,6 +224,7 @@ window.addEventListener('load', async () => {
   // ------------------------------------
 
   const sphereGeometry = new SphereGeometry()
+  const planeGeometry = new PlaneGeometry()
 
   // pass the instanced vertex buffer attributes
   const smallStarsGeometry = new PlaneGeometry({
@@ -229,11 +268,17 @@ window.addEventListener('load', async () => {
       {
         loadOp: 'clear',
         clearValue: [1, 0, 0, 1],
-        targetFormat: 'r8unorm', // revealage
+        targetFormat: 'r8unorm', // reveal
       },
     ],
     depthLoadOp: 'load', // we need to read from opaque depth!
   })
+
+  // select your favorite weighting function here.
+  // the color-based factor avoids color pollution from the edges of wispy clouds.
+  // the z-based factor gives precedence to nearer surfaces
+  const accumWeight = `let weight: f32 = clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);`
+  //const accumWeight = `let weight: f32 = max(min(1.0, max(max(color.r, color.g), color.b) * color.a), color.a) * clamp(0.03 / (1e-5 + pow(fsInput.position.z / 200, 4.0)), 1e-2, 3e3);`
 
   // ------------------------------------
   // TRANSPARENT STARS
@@ -242,11 +287,11 @@ window.addEventListener('load', async () => {
   // small stars first using instances + billboarding
 
   const transparentMeshParams = {
-    depthWriteEnabled: false, // read from opaque depth but not write to depth
+    depthWriteEnabled: false, // we'll read from opaque depth but we won't write to it!
     outputTarget: OITTransparentTarget,
     frustumCulled: false,
     // targets format are not specified
-    // because they're patched using the outputTarget colorAttachments
+    // because they're internally patched using the outputTarget colorAttachments
     targets: [
       {
         // accum
@@ -291,7 +336,10 @@ window.addEventListener('load', async () => {
       var vsOutput : VSOutput;
       
       // billboard
-      var transformed: vec4f = vec4(attributes.position, 1.0) * camera.view + vec4(attributes.instancePosition.xyz, 1.0);      
+      var transformed: vec4f = 
+        vec4(attributes.position, 1.0) * matrices.modelView
+        + vec4(attributes.instancePosition.xyz, 1.0);
+      
       vsOutput.position = getOutputPosition(transformed.xyz);
       
       vsOutput.uv = attributes.uv;
@@ -366,15 +414,8 @@ window.addEventListener('load', async () => {
       
       let color: vec4f = vec4(innerGlowColor, gradient);
       
-      // insert your favorite weighting function here. the color-based factor
-      // avoids color pollution from the edges of wispy clouds. the z-based
-      // factor gives precedence to nearer surfaces
-      /*let weight: f32 =
-        clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * 
-                         pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);*/
-                         
-      let weight: f32 = 
-        clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);
+      // use our weight function
+      ${accumWeight}
       
       // blend func: GL_ONE, GL_ONE
       // switch to pre-multiplied alpha and weight
@@ -427,6 +468,8 @@ window.addEventListener('load', async () => {
     instanceVertexBuffer.buffer = particleBuffer?.buffer
   })
 
+  instancedSmallStars.parent = scenePivot
+
   // bigger stars with sphere geometries
 
   const sunHaloVs = /* wgsl */ `
@@ -442,21 +485,20 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {    
       var vsOutput : VSOutput;
       
-      // billboard
-      var transformed: vec4f = vec4(attributes.position, 1.0) * camera.view;      
-      vsOutput.position = getOutputPosition(transformed.xyz);
-      //vsOutput.position = getOutputPosition(attributes.position);
+      vsOutput.position = getOutputPosition(attributes.position);
       
-      var mvPosition = matrices.world * camera.view * vec4( transformed.xyz, 1.0 );
-      var worldNormal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
+      //var mvPosition = camera.view * vec4( transformed.xyz, 1.0 );
+      //var mvPosition = camera.view * matrices.model * vec4( attributes.position, 1.0 );
+      var mvPosition = matrices.modelView * vec4( attributes.position, 1.0 );
+      var mvNormal = (matrices.modelView * vec4(attributes.normal, 0.0)).xyz;
       
       vsOutput.uv = attributes.uv;
   
-      var dotProduct: f32 = dot(worldNormal, normalize(mvPosition).xyz);
+      var dotProduct: f32 = dot(normalize(mvNormal), normalize(mvPosition).xyz);
       
       let alpha = clamp(pow(dotProduct, shading.glowIntensity), 0.0, 1.0);
       vsOutput.alpha = smoothstep(0.125, 1.0, alpha);
-      vsOutput.centerGlow = smoothstep(0.95, 1.0, alpha);
+      vsOutput.centerGlow = smoothstep(0.925, 1.0, alpha);
       
       return vsOutput;
     }
@@ -484,15 +526,8 @@ window.addEventListener('load', async () => {
         discard;
       }
       
-      // insert your favorite weighting function here. the color-based factor
-      // avoids color pollution from the edges of wispy clouds. the z-based
-      // factor gives precedence to nearer surfaces
-      /*let weight: f32 =
-        clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * 
-                         pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);*/
-                         
-      let weight: f32 = 
-        clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);
+      // use our weight function
+      ${accumWeight}
       
       // blend func: GL_ONE, GL_ONE
       // switch to pre-multiplied alpha and weight
@@ -505,14 +540,16 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const sunColor = new Vec3(0.8, 0.6, 0.55)
+  const yellowSunColor = new Vec3(0.75, 0.65, 0.55)
+  const redSunColor = new Vec3(0.9, 0.5, 0.45)
+  const sunColor = yellowSunColor.lerp(redSunColor, seed)
   const saturatedSunColor = sunColor.clone().multiplyScalar(1.5)
 
   const sunHalo = new Mesh(gpuCameraRenderer, {
     label: 'Sun halo',
     geometry: sphereGeometry,
     ...transparentMeshParams,
-    cullMode: 'front',
+    cullMode: 'none',
     shaders: {
       vertex: {
         code: sunHaloVs,
@@ -541,7 +578,8 @@ window.addEventListener('load', async () => {
     },
   })
 
-  sunHalo.scale.set(innerRadius * 2)
+  sunHalo.scale.set(centerHoleSize * 1.25)
+  sunHalo.parent = scenePivot
 
   // now a few big transparent stars
   for (let i = 0; i < 25; i++) {
@@ -583,15 +621,19 @@ window.addEventListener('load', async () => {
     const angle = Math.random() * 2 * Math.PI
 
     randomPosition.normalize()
-    randomPosition.x = randomPosition.x * innerRadius + Math.cos(angle) * outerRadius * 1.15
-    randomPosition.z = randomPosition.z * innerRadius + Math.sin(angle) * outerRadius * 1.15
+    randomPosition.x = randomPosition.x * centerHoleSize + Math.cos(angle) * baseRadius * 1.15
+    randomPosition.z = randomPosition.z * centerHoleSize + Math.sin(angle) * baseRadius * 1.15
 
     bigStar.position.copy(randomPosition)
 
-    bigStar.scale.set(innerRadius * 0.25 + Math.random() * innerRadius * 0.375)
+    bigStar.scale.set(centerHoleSize * 0.25 + Math.random() * centerHoleSize * 0.375)
+
+    bigStar.parent = scenePivot
   }
 
-  const spriteCloudsFs = /* wgsl */ `
+  // now we'll add two colored dust swirls
+
+  const swirlCloudsFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
@@ -657,13 +699,19 @@ window.addEventListener('load', async () => {
       
       let distanceFromCenter: f32 = clamp(distance(fsInput.uv, vec2(0.5)) * 2.0, 0.0, 1.0);
     
-      let centerHole: f32 = smoothstep( shading.centerHoleSize, shading.centerHoleSize * 2.0, distanceFromCenter );
-      let edgeFade: f32 = smoothstep( 0.0, shading.centerHoleSize, 1.0 - distanceFromCenter );
+      let centerHole: f32 = smoothstep( shading.centerHoleSize * 0.625, shading.centerHoleSize * 1.25, distanceFromCenter );
+      let edgeFade: f32 = smoothstep( 0.0, shading.centerHoleSize * 0.5, 1.0 - distanceFromCenter );
       
       var alpha: f32 = centerHole * edgeFade;
       
-      let noise: f32 = perlinNoise2( rotate( fsInput.uv * vec2(4.0), distanceFromCenter * 3.141592 * 0.75) );
-      alpha *= smoothstep( 0.0, 0.875, noise * 0.85 + 0.15 );
+      let pNoise: f32 = perlinNoise2( 
+        rotate(
+          (fsInput.uv + noise.offset) * noise.scale,
+          distanceFromCenter * 3.141592 * 0.75
+        )
+      );
+      
+      alpha *= smoothstep( 0.0, 0.875, pNoise * (1.0 - noise.minIntensity) + noise.minIntensity );
       alpha = pow( alpha, 0.75 );
       
       if(alpha < 0.05) {
@@ -672,15 +720,8 @@ window.addEventListener('load', async () => {
       
       var color: vec4f = vec4(shading.color, alpha);
       
-      // insert your favorite weighting function here. the color-based factor
-      // avoids color pollution from the edges of wispy clouds. the z-based
-      // factor gives precedence to nearer surfaces
-      /*let weight: f32 =
-        clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * 
-                         pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);*/
-                         
-      let weight: f32 = 
-        clamp(pow(min(1.0, color.a * 10.0) + 0.01, 3.0) * 1e8 * pow(1.0 - fsInput.position.z * 0.9, 3.0), 1e-2, 3e3);
+      // use our weight function
+      ${accumWeight}
       
       // blend func: GL_ONE, GL_ONE
       // switch to pre-multiplied alpha and weight
@@ -693,16 +734,17 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const scale = innerRadius + outerRadius * 1.75
+  // a small one with the sun color
+  const smallScale = halfGalaxySize * 0.5 + baseRadius
 
   // finally a spiraling galactic dust plane
-  const cloudGalaxyPlane = new Mesh(gpuCameraRenderer, {
-    label: 'Cloud plane ',
-    geometry: new PlaneGeometry(),
+  const smallSwirlPlane = new Mesh(gpuCameraRenderer, {
+    label: 'Small swirl plane',
+    geometry: planeGeometry,
     ...transparentMeshParams,
     shaders: {
       fragment: {
-        code: spriteCloudsFs,
+        code: swirlCloudsFs,
       },
     },
     uniforms: {
@@ -714,15 +756,82 @@ window.addEventListener('load', async () => {
           },
           centerHoleSize: {
             type: 'f32',
-            value: innerRadius / scale,
+            value: centerHoleSize / smallScale,
+          },
+        },
+      },
+      noise: {
+        struct: {
+          offset: {
+            type: 'vec2f',
+            value: new Vec2(seed * 0.25 + 0.25),
+          },
+          scale: {
+            type: 'vec2f',
+            value: new Vec2(2),
+          },
+          minIntensity: {
+            type: 'f32',
+            value: Math.random() * 0.15 + 0.15,
           },
         },
       },
     },
   })
 
-  cloudGalaxyPlane.scale.set(scale, scale, 1)
-  cloudGalaxyPlane.rotation.x = -Math.PI / 2
+  smallSwirlPlane.scale.set(smallScale, smallScale, 1)
+  smallSwirlPlane.rotation.x = -Math.PI / 2
+
+  smallSwirlPlane.parent = scenePivot
+
+  // a bigger blue one
+  const bigScale = halfGalaxySize + baseRadius * 1.75
+
+  const bigSwirlPlane = new Mesh(gpuCameraRenderer, {
+    label: 'Big swirl plane',
+    geometry: planeGeometry,
+    ...transparentMeshParams,
+    shaders: {
+      fragment: {
+        code: swirlCloudsFs,
+      },
+    },
+    uniforms: {
+      shading: {
+        struct: {
+          color: {
+            type: 'vec3f',
+            value: blueStarColor,
+          },
+          centerHoleSize: {
+            type: 'f32',
+            value: smallScale / bigScale,
+          },
+        },
+      },
+      noise: {
+        struct: {
+          offset: {
+            type: 'vec2f',
+            value: new Vec2(seed * 0.5),
+          },
+          scale: {
+            type: 'vec2f',
+            value: new Vec2(3),
+          },
+          minIntensity: {
+            type: 'f32',
+            value: Math.random() * 0.25 + 0.25,
+          },
+        },
+      },
+    },
+  })
+
+  bigSwirlPlane.scale.set(bigScale, bigScale, 1)
+  bigSwirlPlane.rotation.x = -Math.PI / 2
+
+  bigSwirlPlane.parent = scenePivot
 
   // ------------------------------------
   // OPAQUE SUN & OPTIONAL PLANETS
@@ -744,6 +853,7 @@ window.addEventListener('load', async () => {
     label: 'Sun',
     geometry: sphereGeometry,
     outputTarget: OITOpaqueTarget,
+    frustumCulled: false,
     shaders: {
       fragment: {
         code: sunFs,
@@ -754,14 +864,16 @@ window.addEventListener('load', async () => {
         struct: {
           color: {
             type: 'vec3f',
-            value: saturatedSunColor,
+            value: new Vec3(0.95),
           },
         },
       },
     },
   })
 
-  sun.scale.set(innerRadius * 0.2)
+  sun.scale.set(centerHoleSize * 0.175)
+
+  sun.parent = scenePivot
 
   // we could add a bunch of planets but I like it better without :)
 
@@ -857,7 +969,7 @@ window.addEventListener('load', async () => {
   //           },
   //           radius: {
   //             type: 'f32',
-  //             value: outerRadius * 3,
+  //             value: baseRadius * 3,
   //           },
   //           ambientLightStrength: {
   //             type: 'f32',
@@ -873,12 +985,14 @@ window.addEventListener('load', async () => {
   //   const angle = Math.random() * 2 * Math.PI
   //
   //   randomPosition.normalize()
-  //   randomPosition.x = randomPosition.x * innerRadius + Math.cos(angle) * outerRadius * 1.15
-  //   randomPosition.z = randomPosition.z * innerRadius + Math.sin(angle) * outerRadius * 1.15
+  //   randomPosition.x = randomPosition.x * halfGalaxySize + Math.cos(angle) * baseRadius * 1.15
+  //   randomPosition.z = randomPosition.z * halfGalaxySize + Math.sin(angle) * baseRadius * 1.15
   //
   //   planet.position.copy(randomPosition)
   //
   //   planet.scale.set(1.5 + Math.random() * 1.5)
+  //
+  //   planet.parent = scenePivot
   // }
 
   // ------------------------------------
