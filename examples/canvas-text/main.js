@@ -137,7 +137,7 @@ window.addEventListener('load', async () => {
 
     // vertical alignment is a bit hacky
     context.textBaseline = 'middle'
-    context.fillText(htmlPlane.innerText, htmlPlaneWidth * 0.5, htmlPlaneHeight * 0.55)
+    context.fillText(htmlPlane.innerText, htmlPlaneWidth * 0.5, htmlPlaneHeight * 0.5)
   }
 
   writeCanvasText()

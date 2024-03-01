@@ -15,10 +15,6 @@ class RenderPass {
     // color
     useColorAttachments = true,
     shouldUpdateView = true,
-    loadOp = "clear",
-    storeOp = "store",
-    clearValue = [0, 0, 0, 0],
-    targetFormat,
     colorAttachments = [],
     // depth
     useDepth = true,
@@ -35,10 +31,10 @@ class RenderPass {
     this.renderer = renderer;
     if (useColorAttachments) {
       const defaultColorAttachment = {
-        loadOp,
-        storeOp,
-        clearValue,
-        targetFormat: targetFormat ?? this.renderer.options.preferredFormat
+        loadOp: "clear",
+        storeOp: "store",
+        clearValue: [0, 0, 0, 0],
+        targetFormat: this.renderer.options.preferredFormat
       };
       if (!colorAttachments.length) {
         colorAttachments = [defaultColorAttachment];
@@ -55,10 +51,6 @@ class RenderPass {
       // color
       useColorAttachments,
       shouldUpdateView,
-      loadOp,
-      storeOp,
-      clearValue,
-      targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
       colorAttachments,
       // depth
       useDepth,
@@ -68,7 +60,6 @@ class RenderPass {
       depthClearValue,
       depthFormat
     };
-    this.setClearValue(clearValue);
     if (this.options.useDepth) {
       this.createDepthTexture();
     }
@@ -169,10 +160,14 @@ class RenderPass {
    * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
    */
   setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
-    this.options.loadOp = loadOp;
-    if (this.options.useColorAttachments && this.descriptor) {
-      if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
-        this.descriptor.colorAttachments[colorAttachmentIndex].loadOp = loadOp;
+    if (this.options.useColorAttachments) {
+      if (this.options.colorAttachments[colorAttachmentIndex]) {
+        this.options.colorAttachments[colorAttachmentIndex].loadOp = loadOp;
+      }
+      if (this.descriptor) {
+        if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+          this.descriptor.colorAttachments[colorAttachmentIndex].loadOp = loadOp;
+        }
       }
     }
   }
@@ -193,16 +188,21 @@ class RenderPass {
    * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
    */
   setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
-    if (this.renderer.alphaMode === "premultiplied") {
-      const alpha = clearValue[3];
-      clearValue[0] = Math.min(clearValue[0], alpha);
-      clearValue[1] = Math.min(clearValue[1], alpha);
-      clearValue[2] = Math.min(clearValue[2], alpha);
-    } else {
-      this.options.clearValue = clearValue;
-    }
-    if (this.descriptor && this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
-      this.descriptor.colorAttachments[colorAttachmentIndex].clearValue = clearValue;
+    if (this.options.useColorAttachments) {
+      if (this.renderer.alphaMode === "premultiplied") {
+        const alpha = clearValue[3];
+        clearValue[0] = Math.min(clearValue[0], alpha);
+        clearValue[1] = Math.min(clearValue[1], alpha);
+        clearValue[2] = Math.min(clearValue[2], alpha);
+      }
+      if (this.options.colorAttachments[colorAttachmentIndex]) {
+        this.options.colorAttachments[colorAttachmentIndex].clearValue = clearValue;
+      }
+      if (this.descriptor) {
+        if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+          this.descriptor.colorAttachments[colorAttachmentIndex].clearValue = clearValue;
+        }
+      }
     }
   }
   /**

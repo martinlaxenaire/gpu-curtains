@@ -7,7 +7,6 @@ import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 import { Texture } from '../../core/textures/Texture'
 import { AllowedGeometries } from '../../types/Materials'
-import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture'
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement'
 
 /**

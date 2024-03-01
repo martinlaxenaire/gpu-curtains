@@ -9,7 +9,6 @@ import { BindGroupBindingElement } from '../../types/BindGroups'
 import { TextureOptions, TextureParams, TextureParent, TextureSize, TextureSource } from '../../types/Textures'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMProjectedMesh } from '../renderers/GPURenderer'
-import { RectSize } from '../DOM/DOMElement'
 
 /** @const - default {@link Texture} parameters */
 const defaultTextureParams: TextureParams = {
@@ -66,7 +65,7 @@ export class Texture extends Object3D {
 
   /** The {@link Texture} {@link TextureSource | source} to use */
   source: TextureSource
-  /** The {@link GPUTexture}, matching the {@link TextureSource | source} {@link RectSize | size} (with 1 for depth) */
+  /** The {@link GPUTexture}, matching the {@link TextureSource | source} {@link core/DOM/DOMElement.RectSize | size} (with 1 for depth) */
   size: TextureSize
 
   /** Options used to create this {@link Texture} */
@@ -90,7 +89,7 @@ export class Texture extends Object3D {
   /** {@link HTMLVideoElement.requestVideoFrameCallback | requestVideoFrameCallback} returned id if used */
   videoFrameCallbackId: null | number
 
-  /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link RectSize | size} */
+  /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
   #parentRatio: Vec3 = new Vec3(1)
   /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
   #sourceRatio: Vec3 = new Vec3(1)

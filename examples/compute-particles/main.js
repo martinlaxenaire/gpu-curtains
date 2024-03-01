@@ -396,17 +396,21 @@ window.addEventListener('load', async () => {
     },
     transparent: true,
     frustumCulled: false,
-    // additive blending with premultiplied alpha and a transparent background
-    blend: {
-      color: {
-        srcFactor: 'one',
-        dstFactor: 'one',
+    targets: [
+      {
+        // additive blending with premultiplied alpha and a transparent background
+        blend: {
+          color: {
+            srcFactor: 'one',
+            dstFactor: 'one',
+          },
+          alpha: {
+            srcFactor: 'one',
+            dstFactor: 'one',
+          },
+        },
       },
-      alpha: {
-        srcFactor: 'one',
-        dstFactor: 'one-minus-src-alpha',
-      },
-    },
+    ],
   })
 
   particles

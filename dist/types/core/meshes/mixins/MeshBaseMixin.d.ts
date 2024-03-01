@@ -33,7 +33,7 @@ export interface MeshBaseParams extends MeshBaseRenderParams {
 /**
  *  Base options used to create this Mesh
  */
-export interface MeshBaseOptions {
+export interface MeshBaseOptions extends RenderMaterialParams {
     /** The label of this Mesh, sent to various GPU objects for debugging purpose */
     label?: MeshBaseParams['label'];
     /** Shaders to use by this Mesh {@link RenderMaterial} */

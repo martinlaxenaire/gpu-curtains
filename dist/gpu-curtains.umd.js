@@ -3106,7 +3106,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       super();
-      /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link RectSize | size} */
+      /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
       __privateAdd$8(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
       __privateAdd$8(this, _sourceRatio, new Vec3(1));
@@ -5890,6 +5890,16 @@
     }
   }
 
+  const compareRenderingOptions = (newOptions = {}, baseOptions = {}) => {
+    return Object.keys(newOptions).filter((key) => {
+      if (Array.isArray(newOptions[key])) {
+        return JSON.stringify(newOptions[key]) !== JSON.stringify(baseOptions[key]);
+      } else {
+        return newOptions[key] !== baseOptions[key];
+      }
+    });
+  };
+
   class RenderMaterial extends Material {
     /**
      * RenderMaterial constructor
@@ -5903,18 +5913,52 @@
       super(renderer, parameters);
       this.type = type;
       this.renderer = renderer;
-      const { shaders, label, useAsyncPipeline, uniforms, storages, bindGroups, ...renderingOptions } = parameters;
+      const { shaders } = parameters;
       if (!shaders.vertex.entryPoint) {
         shaders.vertex.entryPoint = "main";
       }
       if (shaders.fragment && !shaders.fragment.entryPoint) {
         shaders.fragment.entryPoint = "main";
       }
-      renderingOptions.targetFormat = renderingOptions.targetFormat ?? this.renderer.options.preferredFormat;
+      const {
+        useProjection,
+        transparent,
+        depth,
+        depthWriteEnabled,
+        depthCompare,
+        depthFormat,
+        cullMode,
+        sampleCount,
+        verticesOrder,
+        topology
+      } = parameters;
+      let { targets } = parameters;
+      if (!targets || !targets.length) {
+        targets = [
+          {
+            format: this.renderer.options.preferredFormat
+          }
+        ];
+      }
+      if (!targets[0].format) {
+        targets[0].format = this.renderer.options.preferredFormat;
+      }
       this.options = {
         ...this.options,
         shaders,
-        rendering: renderingOptions
+        rendering: {
+          useProjection,
+          transparent,
+          depth,
+          depthWriteEnabled,
+          depthCompare,
+          depthFormat,
+          cullMode,
+          sampleCount,
+          targets,
+          verticesOrder,
+          topology
+        }
       };
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
         renderer: this.renderer,
@@ -5957,15 +6001,13 @@
      * @param renderingOptions - new {@link RenderMaterialRenderingOptions | rendering options} properties to be set
      */
     setRenderingOptions(renderingOptions = {}) {
-      const newProperties = Object.keys(renderingOptions).filter(
-        (key) => renderingOptions[key] !== this.options.rendering[key]
-      );
+      const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering);
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
         this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
         if (this.pipelineEntry.ready && newProperties.length) {
           throwWarning(
-            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options that caused this: { ${newProperties.map(
+            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties.map(
             (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
           ).join(", ")} }`
           );
@@ -6337,18 +6379,20 @@ struct VertexOutput {
        */
       setRenderingOptionsForRenderPass(renderPass) {
         const renderingOptions = {
+          // sample count
           sampleCount: renderPass.options.sampleCount,
           // color attachments
           ...renderPass.options.colorAttachments.length && {
-            targetFormat: renderPass.options.colorAttachments[0].targetFormat,
-            // multiple render targets?
-            ...renderPass.options.colorAttachments.length > 1 && {
-              additionalTargets: renderPass.options.colorAttachments.filter((c, i) => i > 0).map((colorAttachment) => {
-                return {
-                  format: colorAttachment.targetFormat
-                };
-              })
-            }
+            targets: renderPass.options.colorAttachments.map((colorAttachment, index) => {
+              return {
+                // patch format...
+                format: colorAttachment.targetFormat,
+                // ...but keep original blend values if any
+                ...this.options.targets?.length && this.options.targets[index] && this.options.targets[index].blend && {
+                  blend: this.options.targets[index].blend
+                }
+              };
+            })
           },
           // depth
           depth: renderPass.options.useDepth,
@@ -6696,6 +6740,7 @@ struct VertexOutput {
           );
         });
       }
+      parameters.depthWriteEnabled = false;
       super(renderer, null, { geometry, ...parameters });
       this.size = {
         document: {
@@ -7553,16 +7598,26 @@ ${this.shaders.full.head}`;
       if (!this.shadersModulesReady)
         return;
       let vertexLocationIndex = -1;
-      const blend = this.options.rendering.blend ?? (this.options.rendering.transparent && {
-        color: {
-          srcFactor: "src-alpha",
-          dstFactor: "one-minus-src-alpha"
-        },
-        alpha: {
-          srcFactor: "one",
-          dstFactor: "one-minus-src-alpha"
+      if (this.options.rendering.targets.length) {
+        if (this.options.rendering.transparent) {
+          this.options.rendering.targets[0].blend = this.options.rendering.targets[0].blend ? this.options.rendering.targets[0].blend : {
+            color: {
+              srcFactor: "src-alpha",
+              dstFactor: "one-minus-src-alpha"
+            },
+            alpha: {
+              srcFactor: "one",
+              dstFactor: "one-minus-src-alpha"
+            }
+          };
         }
-      });
+      } else {
+        this.options.rendering.targets = [
+          {
+            format: this.renderer.options.preferredFormat
+          }
+        ];
+      }
       this.descriptor = {
         label: this.options.label,
         layout: this.layout,
@@ -7590,16 +7645,7 @@ ${this.shaders.full.head}`;
           fragment: {
             module: this.shaders.fragment.module,
             entryPoint: this.options.shaders.fragment.entryPoint,
-            targets: [
-              {
-                format: this.options.rendering.targetFormat ?? this.renderer.options.preferredFormat,
-                ...blend && {
-                  blend
-                }
-              },
-              ...this.options.rendering.additionalTargets ?? []
-              // merge with additional targets if any
-            ]
+            targets: this.options.rendering.targets
           }
         },
         primitive: {
@@ -7839,9 +7885,7 @@ ${this.shaders.compute.head}`;
         const { shaders, rendering } = parameters;
         const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
         const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
-        const differentParams = Object.keys(options.rendering).filter(
-          (key) => options.rendering[key] !== rendering[key]
-        );
+        const differentParams = compareRenderingOptions(rendering, options.rendering);
         return !differentParams.length && sameVertexShader && sameFragmentShader;
       });
     }
@@ -8442,10 +8486,6 @@ ${this.shaders.compute.head}`;
       // color
       useColorAttachments = true,
       shouldUpdateView = true,
-      loadOp = "clear",
-      storeOp = "store",
-      clearValue = [0, 0, 0, 0],
-      targetFormat,
       colorAttachments = [],
       // depth
       useDepth = true,
@@ -8462,10 +8502,10 @@ ${this.shaders.compute.head}`;
       this.renderer = renderer;
       if (useColorAttachments) {
         const defaultColorAttachment = {
-          loadOp,
-          storeOp,
-          clearValue,
-          targetFormat: targetFormat ?? this.renderer.options.preferredFormat
+          loadOp: "clear",
+          storeOp: "store",
+          clearValue: [0, 0, 0, 0],
+          targetFormat: this.renderer.options.preferredFormat
         };
         if (!colorAttachments.length) {
           colorAttachments = [defaultColorAttachment];
@@ -8482,10 +8522,6 @@ ${this.shaders.compute.head}`;
         // color
         useColorAttachments,
         shouldUpdateView,
-        loadOp,
-        storeOp,
-        clearValue,
-        targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
         colorAttachments,
         // depth
         useDepth,
@@ -8495,7 +8531,6 @@ ${this.shaders.compute.head}`;
         depthClearValue,
         depthFormat
       };
-      this.setClearValue(clearValue);
       if (this.options.useDepth) {
         this.createDepthTexture();
       }
@@ -8596,10 +8631,14 @@ ${this.shaders.compute.head}`;
      * @param colorAttachmentIndex - index of the color attachment for which to use this load operation
      */
     setLoadOp(loadOp = "clear", colorAttachmentIndex = 0) {
-      this.options.loadOp = loadOp;
-      if (this.options.useColorAttachments && this.descriptor) {
-        if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
-          this.descriptor.colorAttachments[colorAttachmentIndex].loadOp = loadOp;
+      if (this.options.useColorAttachments) {
+        if (this.options.colorAttachments[colorAttachmentIndex]) {
+          this.options.colorAttachments[colorAttachmentIndex].loadOp = loadOp;
+        }
+        if (this.descriptor) {
+          if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+            this.descriptor.colorAttachments[colorAttachmentIndex].loadOp = loadOp;
+          }
         }
       }
     }
@@ -8620,16 +8659,21 @@ ${this.shaders.compute.head}`;
      * @param colorAttachmentIndex - index of the color attachment for which to use this clear value
      */
     setClearValue(clearValue = [0, 0, 0, 0], colorAttachmentIndex = 0) {
-      if (this.renderer.alphaMode === "premultiplied") {
-        const alpha = clearValue[3];
-        clearValue[0] = Math.min(clearValue[0], alpha);
-        clearValue[1] = Math.min(clearValue[1], alpha);
-        clearValue[2] = Math.min(clearValue[2], alpha);
-      } else {
-        this.options.clearValue = clearValue;
-      }
-      if (this.descriptor && this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
-        this.descriptor.colorAttachments[colorAttachmentIndex].clearValue = clearValue;
+      if (this.options.useColorAttachments) {
+        if (this.renderer.alphaMode === "premultiplied") {
+          const alpha = clearValue[3];
+          clearValue[0] = Math.min(clearValue[0], alpha);
+          clearValue[1] = Math.min(clearValue[1], alpha);
+          clearValue[2] = Math.min(clearValue[2], alpha);
+        }
+        if (this.options.colorAttachments[colorAttachmentIndex]) {
+          this.options.colorAttachments[colorAttachmentIndex].clearValue = clearValue;
+        }
+        if (this.descriptor) {
+          if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+            this.descriptor.colorAttachments[colorAttachmentIndex].clearValue = clearValue;
+          }
+        }
       }
     }
     /**
@@ -9018,12 +9062,10 @@ ${this.shaders.compute.head}`;
     setMainRenderPasses() {
       this.renderPass = new RenderPass(this, {
         label: "Main render pass",
-        targetFormat: this.options.preferredFormat,
         ...this.options.renderPass
       });
       this.postProcessingPass = new RenderPass(this, {
         label: "Post processing render pass",
-        targetFormat: this.options.preferredFormat,
         // no need to handle depth or perform MSAA on a fullscreen quad
         useDepth: false,
         sampleCount: 1
@@ -10016,12 +10058,12 @@ ${this.shaders.compute.head}`;
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, targetFormat, depthTexture, autoRender, ...renderPassParams } = parameters;
+      const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
       this.options = {
         label,
         ...renderPassParams,
         ...depthTexture && { depthTexture },
-        targetFormat: targetFormat ?? this.renderer.options.preferredFormat,
+        ...colorAttachments && { colorAttachments },
         autoRender: autoRender === void 0 ? true : autoRender
       };
       if (autoRender !== void 0) {
@@ -10029,7 +10071,7 @@ ${this.shaders.compute.head}`;
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
-        targetFormat: this.options.targetFormat,
+        ...colorAttachments && { colorAttachments },
         depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture,
         // reuse renderer depth texture for every pass
         ...renderPassParams
@@ -10038,7 +10080,7 @@ ${this.shaders.compute.head}`;
         this.renderTexture = new RenderTexture(this.renderer, {
           label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
           name: "renderTexture",
-          format: this.options.targetFormat,
+          format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
           ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
         });
       }
@@ -10119,6 +10161,7 @@ struct VSOutput {
     constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
+      parameters.depth = false;
       parameters.transparent = true;
       parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
       parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
@@ -10691,10 +10734,15 @@ struct VSOutput {
     constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
+      const colorAttachments = parameters.targets && parameters.targets.length && parameters.targets.map((target) => {
+        return {
+          targetFormat: target.format
+        };
+      });
       parameters.outputTarget = new RenderTarget(renderer, {
         label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
         useDepth: false,
-        ...parameters.targetFormat && { targetFormat: parameters.targetFormat }
+        ...colorAttachments && { colorAttachments }
       });
       parameters.transparent = false;
       parameters.depth = false;
@@ -10704,7 +10752,7 @@ struct VSOutput {
       this.createRenderTexture({
         label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
         name: "renderTexture",
-        ...parameters.targetFormat && { format: parameters.targetFormat }
+        ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format }
       });
     }
     /**

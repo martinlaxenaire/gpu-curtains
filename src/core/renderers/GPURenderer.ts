@@ -454,13 +454,11 @@ export class GPURenderer {
   setMainRenderPasses() {
     this.renderPass = new RenderPass(this, {
       label: 'Main render pass',
-      targetFormat: this.options.preferredFormat,
       ...this.options.renderPass,
     } as RenderPassParams)
 
     this.postProcessingPass = new RenderPass(this, {
       label: 'Post processing render pass',
-      targetFormat: this.options.preferredFormat,
       // no need to handle depth or perform MSAA on a fullscreen quad
       useDepth: false,
       sampleCount: 1,

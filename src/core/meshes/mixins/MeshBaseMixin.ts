@@ -42,7 +42,7 @@ export interface MeshBaseParams extends MeshBaseRenderParams {
 /**
  *  Base options used to create this Mesh
  */
-export interface MeshBaseOptions {
+export interface MeshBaseOptions extends RenderMaterialParams {
   /** The label of this Mesh, sent to various GPU objects for debugging purpose */
   label?: MeshBaseParams['label']
   /** Shaders to use by this Mesh {@link RenderMaterial} */
@@ -758,19 +758,21 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     setRenderingOptionsForRenderPass(renderPass: RenderPass) {
       // a Mesh render material rendering options MUST match the render pass descriptor used to draw it!
       const renderingOptions = {
+        // sample count
         sampleCount: renderPass.options.sampleCount,
         // color attachments
         ...(renderPass.options.colorAttachments.length && {
-          targetFormat: renderPass.options.colorAttachments[0].targetFormat,
-          // multiple render targets?
-          ...(renderPass.options.colorAttachments.length > 1 && {
-            additionalTargets: renderPass.options.colorAttachments
-              .filter((c, i) => i > 0)
-              .map((colorAttachment) => {
-                return {
-                  format: colorAttachment.targetFormat,
-                }
-              }),
+          targets: renderPass.options.colorAttachments.map((colorAttachment, index) => {
+            return {
+              // patch format...
+              format: colorAttachment.targetFormat,
+              // ...but keep original blend values if any
+              ...(this.options.targets?.length &&
+                this.options.targets[index] &&
+                this.options.targets[index].blend && {
+                  blend: this.options.targets[index].blend,
+                }),
+            }
           }),
         }),
         // depth

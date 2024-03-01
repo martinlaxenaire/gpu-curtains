@@ -173,15 +173,18 @@ window.addEventListener('load', async () => {
       label: 'Cube ' + i,
       geometry: cubeGeometry,
       outputTarget: writeGBufferRenderTarget,
-      // we could manually specify the additional targets
+      // we could manually specify the targets
       // but it will be patched internally anyway!
-      // additionalTargets: [
+      // targets: [
+      //   {
+      //     format: 'bgra8unorm', // albedo
+      //   },
       //   {
       //     format: 'rgba16float', // normals
       //   },
       //   // {
       //   //   format: 'rgba16float', // position
-      //   // },
+      //   // }
       // ],
       shaders: {
         vertex: {

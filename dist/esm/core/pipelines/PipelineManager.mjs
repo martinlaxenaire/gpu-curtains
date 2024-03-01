@@ -1,5 +1,6 @@
 import { RenderPipelineEntry } from './RenderPipelineEntry.mjs';
 import { ComputePipelineEntry } from './ComputePipelineEntry.mjs';
+import { compareRenderingOptions } from '../materials/utils.mjs';
 
 class PipelineManager {
   constructor() {
@@ -27,9 +28,7 @@ class PipelineManager {
       const { shaders, rendering } = parameters;
       const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
       const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
-      const differentParams = Object.keys(options.rendering).filter(
-        (key) => options.rendering[key] !== rendering[key]
-      );
+      const differentParams = compareRenderingOptions(rendering, options.rendering);
       return !differentParams.length && sameVertexShader && sameFragmentShader;
     });
   }
