@@ -6,6 +6,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding';
 import { Texture } from './Texture';
 import { TextureSize } from '../../types/Textures';
+import { MaterialShadersType } from '../../types/Materials';
 /**
  * Define the possible binding types of a {@link RenderTexture}
  */
@@ -32,6 +33,8 @@ export interface RenderTextureBaseParams {
     viewDimension?: GPUTextureViewDimension;
     /** Sample count of the {@link RenderTexture#texture | texture}, used for multisampling */
     sampleCount?: GPUSize32;
+    /** The {@link RenderTexture} shaders visibility sent to the {@link RenderTexture#textureBinding | texture binding} */
+    visibility?: MaterialShadersType;
 }
 /**
  * Parameters used to create a {@link RenderTexture}

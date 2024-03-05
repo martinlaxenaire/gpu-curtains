@@ -26,7 +26,11 @@ window.addEventListener('load', async () => {
   // we need to wait for the device to be created
   await gpuDeviceManager.init()
 
-  const sampleCount = 1
+  // get sample count from url search params or default to 1
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const urlSampleCount = searchParams.get('sampleCount') && parseInt(searchParams.get('sampleCount'))
+  const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
 
   // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
@@ -43,13 +47,14 @@ window.addEventListener('load', async () => {
 
   const cameraPivot = new Object3D()
   camera.position.z = 5
+  camera.position.x = 2
   camera.parent = cameraPivot
 
   camera.lookAt(new Vec3())
 
   // render our scene manually
   const animate = () => {
-    cameraPivot.rotation.y += 0.005
+    //cameraPivot.rotation.y += 0.005
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
@@ -75,6 +80,25 @@ window.addEventListener('load', async () => {
     sampleCount,
   })
 
+  const OITTransparentTarget = new RenderTarget(gpuCameraRenderer, {
+    label: 'Transparent MRT',
+    sampleCount,
+    shouldUpdateView: false, // we don't want to render to the swap chain
+    colorAttachments: [
+      {
+        loadOp: 'clear',
+        clearValue: [0, 0, 0, 0],
+        targetFormat: 'rgba16float', // accum
+      },
+      {
+        loadOp: 'clear',
+        clearValue: [1, 0, 0, 1],
+        targetFormat: 'r8unorm', // revealage
+      },
+    ],
+    depthLoadOp: 'load', // read from opaque depth!
+  })
+
   const opaquePlane = new Mesh(gpuCameraRenderer, {
     label: 'Opaque plane',
     geometry: planeGeometry,
@@ -95,25 +119,6 @@ window.addEventListener('load', async () => {
         },
       },
     },
-  })
-
-  const OITTransparentTarget = new RenderTarget(gpuCameraRenderer, {
-    label: 'Transparent MRT',
-    sampleCount,
-    shouldUpdateView: false, // we don't want to render to the swap chain
-    colorAttachments: [
-      {
-        loadOp: 'clear',
-        clearValue: [0, 0, 0, 0],
-        targetFormat: 'rgba16float', // accum
-      },
-      {
-        loadOp: 'clear',
-        clearValue: [1, 0, 0, 1],
-        targetFormat: 'r8unorm', // revealage
-      },
-    ],
-    depthLoadOp: 'load', // read from opaque depth!
   })
 
   const OITtargetFs = /* wgsl */ `
@@ -222,31 +227,36 @@ window.addEventListener('load', async () => {
     console.log(transparentPlane)
   }
 
+  //console.log(OITOpaqueTarget, OITOpaqueTarget.outputTextures, OITOpaqueTarget.renderPass.outputTextures)
+
   // opaque buffer
   const OITOpaqueTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
-    format: OITOpaqueTarget.renderPass.options.colorAttachments[0].targetFormat,
-    fromTexture: sampleCount === 1 ? OITOpaqueTarget.renderTexture : OITOpaqueTarget.renderPass.viewTextures[0],
-    sampleCount,
+    visibility: 'fragment',
+    //format: OITOpaqueTarget.outputTextures[0].format,
+    fromTexture: OITOpaqueTarget.outputTextures[0], // same as OITOpaqueTarget.renderTexture
+    //fromTexture: OITOpaqueTarget.renderTexture,
   })
 
   // create 2 textures based on our OIT MRT output
   const OITAccumTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT accum texture',
     name: 'oITAccumTexture',
-    format: OITTransparentTarget.renderPass.options.colorAttachments[0].targetFormat,
-    fromTexture: OITTransparentTarget.renderPass.viewTextures[0],
-    sampleCount,
+    visibility: 'fragment',
+    //format: OITTransparentTarget.outputTextures[0].format,
+    fromTexture: OITTransparentTarget.outputTextures[0],
   })
 
   const OITRevealTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT reveal texture',
     name: 'oITRevealTexture',
-    format: OITTransparentTarget.renderPass.options.colorAttachments[1].targetFormat,
-    fromTexture: OITTransparentTarget.renderPass.viewTextures[1],
-    sampleCount,
+    visibility: 'fragment',
+    //format: OITTransparentTarget.outputTextures[1].format,
+    fromTexture: OITTransparentTarget.outputTextures[1],
   })
+
+  console.log(OITRevealTexture)
 
   const compositingPassFs = /* wgsl */ `
     struct VSOutput {

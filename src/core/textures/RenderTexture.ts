@@ -2,7 +2,7 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { TextureBinding, TextureBindingParams } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
+import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { Texture } from './Texture'
 import { TextureSize } from '../../types/Textures'
@@ -37,6 +37,8 @@ export interface RenderTextureBaseParams {
   viewDimension?: GPUTextureViewDimension
   /** Sample count of the {@link RenderTexture#texture | texture}, used for multisampling */
   sampleCount?: GPUSize32
+  /** The {@link RenderTexture} shaders visibility sent to the {@link RenderTexture#textureBinding | texture binding} */
+  visibility?: BindingParams['visibility']
 }
 
 /**
@@ -223,6 +225,7 @@ export class RenderTexture {
         texture: this.texture,
         bindingType: this.options.usage,
         format: this.options.format,
+        visibility: this.options.visibility,
         viewDimension: this.options.viewDimension,
         multisampled: this.options.sampleCount > 1,
       } as TextureBindingParams),

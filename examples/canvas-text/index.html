@@ -57,7 +57,9 @@
       }
       gtag('js', new Date())
 
-      gtag('config', 'G-45554DLGL6')
+      gtag('config', 'G-45554DLGL6', {
+        ignore_referrer: window.location.hostname === 'localhost' || location.hostname === '127.0.0.1',
+      })
     </script>
   </body>
 </html>

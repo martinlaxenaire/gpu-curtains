@@ -203,7 +203,7 @@ window.addEventListener('load', async () => {
       // to smooth the result.
       var visibility = 0.0;
       
-      let size = f32(textureDimensions(shadowDepthTexture).x);
+      let size = f32(textureDimensions(shadowDepthTexture).y);
       
       let oneOverShadowDepthTextureSize = 1.0 / size;
       for (var y = -1; y <= 1; y++) {

@@ -121,6 +121,7 @@ class RenderTexture {
         texture: this.texture,
         bindingType: this.options.usage,
         format: this.options.format,
+        visibility: this.options.visibility,
         viewDimension: this.options.viewDimension,
         multisampled: this.options.sampleCount > 1
       })

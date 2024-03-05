@@ -58,6 +58,8 @@ export declare class RenderPass {
     depthTexture: RenderTexture | undefined;
     /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments view textures */
     viewTextures: RenderTexture[];
+    /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments resolve textures */
+    resolveTargets: Array<null | RenderTexture>;
     /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
     descriptor: GPURenderPassDescriptor;
     /**
@@ -74,6 +76,18 @@ export declare class RenderPass {
      * Create and set our {@link viewTextures | view textures}
      */
     createViewTextures(): void;
+    /**
+     * Create and set our {@link resolveTargets | resolve targets} in case the {@link viewTextures} are multisampled.
+     *
+     * Note that if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
+     */
+    createResolveTargets(): void;
+    /**
+     * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}).
+     *
+     * @readonly
+     */
+    get outputTextures(): RenderTexture[];
     /**
      * Set our render pass {@link descriptor}
      */

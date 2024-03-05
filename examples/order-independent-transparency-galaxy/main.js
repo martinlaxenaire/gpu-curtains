@@ -51,8 +51,12 @@ window.addEventListener('load', async () => {
   // we need to wait for the device to be created
   await gpuDeviceManager.init()
 
-  // set the sample count here
-  const sampleCount = 1
+  // get sample count from url search params or default to 1
+  // beware that MSAA + deferred rendering can be quite expensive!
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const urlSampleCount = searchParams.get('sampleCount') && parseInt(searchParams.get('sampleCount'))
+  const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
 
   // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
@@ -1003,26 +1007,26 @@ window.addEventListener('load', async () => {
   const OITOpaqueTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
-    format: OITOpaqueTarget.renderPass.options.colorAttachments[0].targetFormat,
-    fromTexture: sampleCount === 1 ? OITOpaqueTarget.renderTexture : OITOpaqueTarget.renderPass.viewTextures[0],
-    sampleCount,
+    visibility: 'fragment',
+    format: OITOpaqueTarget.outputTextures[0].format, // optional
+    fromTexture: OITOpaqueTarget.outputTextures[0],
   })
 
   // create 2 textures based on our OIT MRT output
   const OITAccumTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT accum texture',
     name: 'oITAccumTexture',
-    format: OITTransparentTarget.renderPass.options.colorAttachments[0].targetFormat,
-    fromTexture: OITTransparentTarget.renderPass.viewTextures[0],
-    sampleCount,
+    visibility: 'fragment',
+    format: OITTransparentTarget.outputTextures[0].format, // optional
+    fromTexture: OITTransparentTarget.outputTextures[0],
   })
 
   const OITRevealTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT reveal texture',
     name: 'oITRevealTexture',
-    format: OITTransparentTarget.renderPass.options.colorAttachments[1].targetFormat,
-    fromTexture: OITTransparentTarget.renderPass.viewTextures[1],
-    sampleCount,
+    visibility: 'fragment',
+    format: OITTransparentTarget.outputTextures[1].format, // optional
+    fromTexture: OITTransparentTarget.outputTextures[1],
   })
 
   const compositingPassFs = /* wgsl */ `

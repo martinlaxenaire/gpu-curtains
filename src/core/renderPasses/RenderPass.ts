@@ -30,6 +30,12 @@ export interface RenderPassParams {
 
   /** Whether this {@link RenderPass} should handle a view texture */
   useColorAttachments?: boolean
+
+  // TODO rename!
+  // 'useSwapChain'
+  // 'renderToScreen'
+  // 'renderToSwapChain'
+  // 'shouldUpdateSwapChain'
   /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
   shouldUpdateView?: boolean
 
@@ -69,6 +75,9 @@ export class RenderPass {
 
   /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments view textures */
   viewTextures: RenderTexture[]
+
+  /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments resolve textures */
+  resolveTargets: Array<null | RenderTexture>
 
   /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
   descriptor: GPURenderPassDescriptor
@@ -141,12 +150,6 @@ export class RenderPass {
       depthFormat,
     }
 
-    // TODO really needed?
-    // this.options.colorAttachments.forEach((colorAttachment, index) => {
-    //   console.log('after patching', colorAttachment.clearValue)
-    //   this.setClearValue(colorAttachment.clearValue, index)
-    // })
-
     // if needed, create a depth texture before our descriptor
     if (this.options.useDepth) {
       this.createDepthTexture()
@@ -154,8 +157,10 @@ export class RenderPass {
 
     // if needed, create a view texture before our descriptor
     this.viewTextures = []
+    this.resolveTargets = []
     if (this.options.useColorAttachments && (!this.options.shouldUpdateView || this.options.sampleCount > 1)) {
       this.createViewTextures()
+      this.createResolveTargets()
     }
 
     this.setRenderPassDescriptor()
@@ -199,6 +204,38 @@ export class RenderPass {
   }
 
   /**
+   * Create and set our {@link resolveTargets | resolve targets} in case the {@link viewTextures} are multisampled.
+   *
+   * Note that if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
+   */
+  createResolveTargets() {
+    if (this.options.sampleCount > 1) {
+      this.options.colorAttachments.forEach((colorAttachment, index) => {
+        this.resolveTargets.push(
+          this.options.shouldUpdateView && index === 0
+            ? null
+            : new RenderTexture(this.renderer, {
+                label: `${this.options.label} resolve target[${index}] texture`,
+                name: `resolveTarget${index}Texture`,
+                format: colorAttachment.targetFormat,
+                sampleCount: 1,
+                qualityRatio: this.options.qualityRatio,
+              })
+        )
+      })
+    }
+  }
+
+  /**
+   * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}).
+   *
+   * @readonly
+   */
+  get outputTextures(): RenderTexture[] {
+    return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures
+  }
+
+  /**
    * Set our render pass {@link descriptor}
    */
   setRenderPassDescriptor() {
@@ -209,6 +246,11 @@ export class RenderPass {
           // view
           view: this.viewTextures[index]?.texture.createView({
             label: this.viewTextures[index]?.texture.label + ' view',
+          }),
+          ...(this.resolveTargets.length && {
+            resolveTarget: this.resolveTargets[index]?.texture.createView({
+              label: this.resolveTargets[index]?.texture.label + ' view',
+            }),
           }),
           // clear values
           clearValue: colorAttachment.clearValue,
@@ -233,7 +275,7 @@ export class RenderPass {
           depthStoreOp: this.options.depthStoreOp,
         },
       }),
-    } as GPURenderPassDescriptor
+    }
   }
 
   /**
@@ -251,6 +293,14 @@ export class RenderPass {
       this.descriptor.colorAttachments[index].view = viewTexture.texture.createView({
         label: viewTexture.options.label + ' view',
       })
+    })
+
+    this.resolveTargets.forEach((resolveTarget, index) => {
+      if (resolveTarget) {
+        this.descriptor.colorAttachments[index].resolveTarget = resolveTarget.texture.createView({
+          label: resolveTarget.options.label + ' view',
+        })
+      }
     })
   }
 
@@ -347,6 +397,7 @@ export class RenderPass {
    */
   destroy() {
     this.viewTextures.forEach((viewTexture) => viewTexture.destroy())
+    this.resolveTargets.forEach((resolveTarget) => resolveTarget?.destroy())
 
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy()

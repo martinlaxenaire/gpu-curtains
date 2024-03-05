@@ -175,6 +175,7 @@ window.addEventListener('load', async () => {
   const blurredTexture = new RenderTexture(gpuCurtains, {
     label: 'Blur render texture',
     name: 'blurredTexture',
+    visibility: 'fragment',
     format,
   })
 
@@ -191,12 +192,14 @@ window.addEventListener('load', async () => {
   // const blurredTexture = shaderPass.createRenderTexture({
   //   label: 'Blur render texture',
   //   name: 'blurredTexture',
+  //   visibility: 'fragment',
   //   format,
   // })
 
   const inputTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute input texture',
     name: 'inputTexture',
+    visibility: 'compute',
     format,
     fromTexture: shaderPass.renderTexture,
   })
@@ -205,6 +208,7 @@ window.addEventListener('load', async () => {
     label: 'Compute temp texture',
     name: 'outputTexture',
     usage: 'storage',
+    visibility: 'compute',
     format,
   })
 
@@ -212,6 +216,7 @@ window.addEventListener('load', async () => {
     label: 'Compute output texture',
     name: 'outputTexture',
     usage: 'storage',
+    visibility: 'compute',
     format,
   })
 
