@@ -2,7 +2,7 @@
 import { Texture } from '../core/textures/Texture';
 import { RenderedMesh } from '../core/renderers/GPURenderer';
 import { RectSize } from '../core/DOM/DOMElement';
-import { MaterialShadersType } from './Materials';
+import { BindingParams } from '../core/bindings/Binding';
 /**
  * Parameters used to copy an external image to texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}
  */
@@ -22,7 +22,7 @@ export interface ExternalTextureParams {
     /** The {@link GPUTextureViewDimension | texture view dimension} to use. Default to `'2d'`. */
     viewDimension?: GPUTextureViewDimension;
     /** The texture shaders visibility sent to the {@link core/bindings/TextureBinding.TextureBinding | texture binding}. Default to `'fragment'`. */
-    visibility?: MaterialShadersType;
+    visibility?: BindingParams['visibility'];
     /** Whether to keep the {@link Texture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material | Material} tries to destroy it. Default to `true`. */
     cache?: boolean;
 }

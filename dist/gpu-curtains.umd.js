@@ -182,6 +182,7 @@
             return GPUShaderStage.FRAGMENT;
           case "compute":
             return GPUShaderStage.COMPUTE;
+          case "all":
           default:
             return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
         }
