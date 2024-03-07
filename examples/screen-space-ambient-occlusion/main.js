@@ -95,7 +95,7 @@ window.addEventListener('load', async () => {
   const writeGBufferRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Geometry buffer render target',
     sampleCount,
-    shouldUpdateView: false, // we don't want to render to the swap chain
+    renderToSwapChain: false, // we don't want to render to the swap chain
     depthTexture: gBufferDepthTexture,
     colorAttachments: [
       {

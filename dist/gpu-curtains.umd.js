@@ -288,7 +288,6 @@
           return {
             texture: {
               multisampled: binding.options.multisampled,
-              format: binding.options.format,
               viewDimension: binding.options.viewDimension,
               sampleType: "depth"
             }
@@ -2120,6 +2119,30 @@
           this.shouldResetBindGroupLayout = true;
         this.bindingType = bindingType;
         this.setWGSLFragment();
+      }
+    }
+    /**
+     * Set or update our texture {@link TextureBindingParams#format | format}. Note that if the texture is a `storage` {@link bindingType} and the `format` value is different from the previous one, the associated {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout} will be recreated.
+     * @param format - new texture {@link TextureBindingParams#format | format} value to use
+     */
+    setFormat(format) {
+      const isNewFormat = format !== this.options.format;
+      this.options.format = format;
+      if (isNewFormat && this.bindingType === "storage") {
+        this.setWGSLFragment();
+        this.shouldResetBindGroupLayout = true;
+      }
+    }
+    /**
+     * Set or update our texture {@link TextureBindingParams#multisampled | multisampled}. Note that if the texture is not a `storage` {@link bindingType} and the `multisampled` value is different from the previous one, the associated {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout} will be recreated.
+     * @param multisampled - new texture {@link TextureBindingParams#multisampled | multisampled} value to use
+     */
+    setMultisampled(multisampled) {
+      const isNewMultisampled = multisampled !== this.options.multisampled;
+      this.options.multisampled = multisampled;
+      if (isNewMultisampled && this.bindingType !== "storage") {
+        this.setWGSLFragment();
+        this.shouldResetBindGroupLayout = true;
       }
     }
     /**
@@ -4110,6 +4133,11 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       this.options = { ...defaultRenderTextureParams, ...parameters };
+      if (parameters.fromTexture) {
+        this.options.format = parameters.fromTexture.texture.format;
+        this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
+        this.options.viewDimension = parameters.fromTexture.options.viewDimension;
+      }
       if (!this.options.format) {
         this.options.format = this.renderer.options.preferredFormat;
       }
@@ -4147,7 +4175,12 @@
         height: texture.height,
         depth: texture.depthOrArrayLayers
       };
+      this.options.format = texture.format;
+      this.options.sampleCount = texture.sampleCount;
       this.texture = texture;
+      console.log(texture);
+      this.textureBinding.setFormat(this.options.format);
+      this.textureBinding.setMultisampled(this.options.sampleCount > 1);
       this.textureBinding.resource = this.texture;
     }
     /**
@@ -4155,7 +4188,6 @@
      */
     createTexture() {
       if (this.options.fromTexture) {
-        this.options.format = this.options.fromTexture.options.format;
         this.copyGPUTexture(this.options.fromTexture.texture);
         return;
       }
@@ -8489,7 +8521,7 @@ ${this.shaders.compute.head}`;
       qualityRatio = 1,
       // color
       useColorAttachments = true,
-      shouldUpdateView = true,
+      renderToSwapChain = true,
       colorAttachments = [],
       // depth
       useDepth = true,
@@ -8525,7 +8557,7 @@ ${this.shaders.compute.head}`;
         qualityRatio,
         // color
         useColorAttachments,
-        shouldUpdateView,
+        renderToSwapChain,
         colorAttachments,
         // depth
         useDepth,
@@ -8540,7 +8572,7 @@ ${this.shaders.compute.head}`;
       }
       this.viewTextures = [];
       this.resolveTargets = [];
-      if (this.options.useColorAttachments && (!this.options.shouldUpdateView || this.options.sampleCount > 1)) {
+      if (this.options.useColorAttachments && (!this.options.renderToSwapChain || this.options.sampleCount > 1)) {
         this.createViewTextures();
         this.createResolveTargets();
       }
@@ -8583,13 +8615,13 @@ ${this.shaders.compute.head}`;
     /**
      * Create and set our {@link resolveTargets | resolve targets} in case the {@link viewTextures} are multisampled.
      *
-     * Note that if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
+     * Note that if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
      */
     createResolveTargets() {
       if (this.options.sampleCount > 1) {
         this.options.colorAttachments.forEach((colorAttachment, index) => {
           this.resolveTargets.push(
-            this.options.shouldUpdateView && index === 0 ? null : new RenderTexture(this.renderer, {
+            this.options.renderToSwapChain && index === 0 ? null : new RenderTexture(this.renderer, {
               label: `${this.options.label} resolve target[${index}] texture`,
               name: `resolveTarget${index}Texture`,
               format: colorAttachment.targetFormat,
@@ -8601,7 +8633,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}).
+     * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
      *
      * @readonly
      */
@@ -8728,7 +8760,7 @@ ${this.shaders.compute.head}`;
      * @returns - the {@link GPUTexture | texture} to render to.
      */
     updateView(renderTexture = null) {
-      if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
+      if (!this.options.colorAttachments.length || !this.options.renderToSwapChain) {
         return renderTexture;
       }
       if (!renderTexture) {
@@ -10142,7 +10174,7 @@ ${this.shaders.compute.head}`;
      */
     get outputTextures() {
       return !this.renderPass.outputTextures.length ? !this.renderTexture ? [] : [this.renderTexture] : this.renderPass.outputTextures.map((texture, index) => {
-        return index === 0 && this.renderPass.options.shouldUpdateView ? this.renderTexture : texture;
+        return index === 0 && this.renderPass.options.renderToSwapChain ? this.renderTexture : texture;
       });
     }
     /**

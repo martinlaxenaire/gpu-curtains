@@ -68,6 +68,30 @@ class TextureBinding extends Binding {
     }
   }
   /**
+   * Set or update our texture {@link TextureBindingParams#format | format}. Note that if the texture is a `storage` {@link bindingType} and the `format` value is different from the previous one, the associated {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout} will be recreated.
+   * @param format - new texture {@link TextureBindingParams#format | format} value to use
+   */
+  setFormat(format) {
+    const isNewFormat = format !== this.options.format;
+    this.options.format = format;
+    if (isNewFormat && this.bindingType === "storage") {
+      this.setWGSLFragment();
+      this.shouldResetBindGroupLayout = true;
+    }
+  }
+  /**
+   * Set or update our texture {@link TextureBindingParams#multisampled | multisampled}. Note that if the texture is not a `storage` {@link bindingType} and the `multisampled` value is different from the previous one, the associated {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout} will be recreated.
+   * @param multisampled - new texture {@link TextureBindingParams#multisampled | multisampled} value to use
+   */
+  setMultisampled(multisampled) {
+    const isNewMultisampled = multisampled !== this.options.multisampled;
+    this.options.multisampled = multisampled;
+    if (isNewMultisampled && this.bindingType !== "storage") {
+      this.setWGSLFragment();
+      this.shouldResetBindGroupLayout = true;
+    }
+  }
+  /**
    * Set the correct WGSL code snippet.
    */
   setWGSLFragment() {

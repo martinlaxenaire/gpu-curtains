@@ -121,7 +121,7 @@ export class RenderTarget {
         ? []
         : [this.renderTexture]
       : this.renderPass.outputTextures.map((texture, index) => {
-          return index === 0 && this.renderPass.options.shouldUpdateView ? this.renderTexture : texture
+          return index === 0 && this.renderPass.options.renderToSwapChain ? this.renderTexture : texture
         })
   }
 

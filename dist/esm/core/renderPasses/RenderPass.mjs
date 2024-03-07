@@ -14,7 +14,7 @@ class RenderPass {
     qualityRatio = 1,
     // color
     useColorAttachments = true,
-    shouldUpdateView = true,
+    renderToSwapChain = true,
     colorAttachments = [],
     // depth
     useDepth = true,
@@ -50,7 +50,7 @@ class RenderPass {
       qualityRatio,
       // color
       useColorAttachments,
-      shouldUpdateView,
+      renderToSwapChain,
       colorAttachments,
       // depth
       useDepth,
@@ -65,7 +65,7 @@ class RenderPass {
     }
     this.viewTextures = [];
     this.resolveTargets = [];
-    if (this.options.useColorAttachments && (!this.options.shouldUpdateView || this.options.sampleCount > 1)) {
+    if (this.options.useColorAttachments && (!this.options.renderToSwapChain || this.options.sampleCount > 1)) {
       this.createViewTextures();
       this.createResolveTargets();
     }
@@ -108,13 +108,13 @@ class RenderPass {
   /**
    * Create and set our {@link resolveTargets | resolve targets} in case the {@link viewTextures} are multisampled.
    *
-   * Note that if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
+   * Note that if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
    */
   createResolveTargets() {
     if (this.options.sampleCount > 1) {
       this.options.colorAttachments.forEach((colorAttachment, index) => {
         this.resolveTargets.push(
-          this.options.shouldUpdateView && index === 0 ? null : new RenderTexture(this.renderer, {
+          this.options.renderToSwapChain && index === 0 ? null : new RenderTexture(this.renderer, {
             label: `${this.options.label} resolve target[${index}] texture`,
             name: `resolveTarget${index}Texture`,
             format: colorAttachment.targetFormat,
@@ -126,7 +126,7 @@ class RenderPass {
     }
   }
   /**
-   * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}).
+   * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
    *
    * @readonly
    */
@@ -253,7 +253,7 @@ class RenderPass {
    * @returns - the {@link GPUTexture | texture} to render to.
    */
   updateView(renderTexture = null) {
-    if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
+    if (!this.options.colorAttachments.length || !this.options.renderToSwapChain) {
       return renderTexture;
     }
     if (!renderTexture) {

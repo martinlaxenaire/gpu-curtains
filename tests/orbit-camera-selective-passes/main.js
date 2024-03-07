@@ -123,7 +123,7 @@ window.addEventListener('load', async () => {
   // two render targets with specific depth textures
   const blankRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Blank render target',
-    //shouldUpdateView: false,
+    //renderToSwapChain: false,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Cube depth texture',

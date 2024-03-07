@@ -262,7 +262,7 @@ window.addEventListener('load', async () => {
   const OITTransparentTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Transparent MRT',
     sampleCount,
-    shouldUpdateView: false, // we don't want to render to the swap chain
+    renderToSwapChain: false, // we don't want to render to the swap chain
     colorAttachments: [
       {
         loadOp: 'clear',

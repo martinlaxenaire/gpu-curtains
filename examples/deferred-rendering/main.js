@@ -76,7 +76,7 @@ window.addEventListener('load', async () => {
   const writeGBufferRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Write GBuffer render target',
     sampleCount,
-    shouldUpdateView: false, // we don't want to render to the swap chain
+    renderToSwapChain: false, // we don't want to render to the swap chain
     colorAttachments: [
       {
         loadOp: 'clear',
