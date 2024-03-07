@@ -25,8 +25,8 @@ export interface RenderPassParams {
     qualityRatio?: number;
     /** Whether this {@link RenderPass} should handle a view texture */
     useColorAttachments?: boolean;
-    /** Whether the main (first {@link colorAttachments}) view texture should be updated each frame */
-    shouldUpdateView?: boolean;
+    /** Whether the main (first {@link colorAttachments}) view texture should use the content of the swap chain and render to it each frame */
+    renderToSwapChain?: boolean;
     /** Array of one or multiple (Multiple Render Targets) color attachments parameters. */
     colorAttachments?: ColorAttachmentParams[];
     /** Whether this {@link RenderPass} should handle a depth texture */
@@ -67,7 +67,7 @@ export declare class RenderPass {
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderPass}
      * @param parameters - {@link RenderPassParams | parameters} used to create this {@link RenderPass}
      */
-    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, useColorAttachments, shouldUpdateView, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
+    constructor(renderer: Renderer | GPUCurtains, { label, sampleCount, qualityRatio, useColorAttachments, renderToSwapChain, colorAttachments, useDepth, depthTexture, depthLoadOp, depthStoreOp, depthClearValue, depthFormat, }?: RenderPassParams);
     /**
      * Create and set our {@link depthTexture | depth texture}
      */
@@ -79,11 +79,11 @@ export declare class RenderPass {
     /**
      * Create and set our {@link resolveTargets | resolve targets} in case the {@link viewTextures} are multisampled.
      *
-     * Note that if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
+     * Note that if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
      */
     createResolveTargets(): void;
     /**
-     * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#shouldUpdateView | render to the swap chain}).
+     * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
      *
      * @readonly
      */
