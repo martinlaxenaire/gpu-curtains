@@ -54,7 +54,7 @@ window.addEventListener('load', async () => {
 
   // render our scene manually
   const animate = () => {
-    //cameraPivot.rotation.y += 0.005
+    cameraPivot.rotation.y += 0.005
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
@@ -236,7 +236,6 @@ window.addEventListener('load', async () => {
     visibility: 'fragment',
     //format: OITOpaqueTarget.outputTextures[0].format,
     fromTexture: OITOpaqueTarget.outputTextures[0], // same as OITOpaqueTarget.renderTexture
-    //fromTexture: OITOpaqueTarget.renderTexture,
   })
 
   // create 2 textures based on our OIT MRT output

@@ -171,10 +171,10 @@ window.addEventListener('load', async () => {
     label: 'Depth texture',
     name: 'depthTexture',
     usage: 'depth',
-    format: 'depth24plus',
     fromTexture: gpuCameraRenderer.renderPass.depthTexture,
-    sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
+    //format: 'depth24plus',
+    //sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
   })
 
-  console.log(gpuCameraRenderer)
+  console.log(postProPass)
 })
