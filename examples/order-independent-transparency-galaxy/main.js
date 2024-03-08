@@ -51,12 +51,8 @@ window.addEventListener('load', async () => {
   // we need to wait for the device to be created
   await gpuDeviceManager.init()
 
-  // get sample count from url search params or default to 1
-  // beware that MSAA + deferred rendering can be quite expensive!
-  const url = new URL(window.location)
-  const searchParams = new URLSearchParams(url.search)
-  const urlSampleCount = searchParams.get('sampleCount') && parseInt(searchParams.get('sampleCount'))
-  const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
+  // there's no point in using MSAA with this example really
+  const sampleCount = 1
 
   // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
