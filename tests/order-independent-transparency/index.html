@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <!-- Metas -->
-    <title>gpu-curtains | Orbit camera + depth textures basic test</title>
-    <meta name="description" content="gpu-curtains orbit camera + depth textures basic test" />
+    <title>gpu-curtains | Weighted, blended order-independent transparency proof of concept</title>
+    <meta name="description" content="gpu-curtains weighted, blended order-independent transparency proof of concept" />
 
     <link href="../../examples/common-styles.css" rel="stylesheet" />
 
@@ -32,6 +32,10 @@
       gtag('js', new Date())
 
       gtag('config', 'G-45554DLGL6')
+
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window['ga-disable-G-45554DLGL6'] = true
+      }
     </script>
   </body>
 </html>

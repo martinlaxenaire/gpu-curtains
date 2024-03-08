@@ -180,7 +180,6 @@ export const getBindGroupLayoutTextureBindingType = (
         return {
           texture: {
             multisampled: binding.options.multisampled,
-            format: binding.options.format,
             viewDimension: binding.options.viewDimension,
             sampleType: 'depth',
           } as GPUTextureBindingLayout,

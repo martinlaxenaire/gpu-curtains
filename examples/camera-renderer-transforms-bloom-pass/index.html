@@ -6,11 +6,11 @@
 
     <!-- Metas -->
     <title>gpu-curtains | Camera rotation and bloom pass</title>
-    <meta name="description" content="Camera rotation and bloom pass example with gpu-curtains" />
+    <meta name="description" content="Camera rotation and bloom pass WebGPU example with gpu-curtains" />
 
     <meta property="og:title" content="gpu-curtains | Camera rotation and bloom pass" />
     <meta property="og:type" content="article" />
-    <meta property="og:description" content="Camera rotation and bloom pass example with gpu-curtains" />
+    <meta property="og:description" content="Camera rotation and bloom pass WebGPU example with gpu-curtains" />
     <meta
       property="og:image"
       content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
@@ -54,6 +54,10 @@
       gtag('js', new Date())
 
       gtag('config', 'G-45554DLGL6')
+
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window['ga-disable-G-45554DLGL6'] = true
+      }
     </script>
   </body>
 </html>

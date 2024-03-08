@@ -36,6 +36,9 @@ window.addEventListener('load', async () => {
     camera: {
       far: systemSize * 10,
     },
+    renderPass: {
+      sampleCount: 4,
+    },
   })
 
   // get the camera
@@ -120,7 +123,8 @@ window.addEventListener('load', async () => {
   // two render targets with specific depth textures
   const blankRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Blank render target',
-    //shouldUpdateView: false,
+    //renderToSwapChain: false,
+    sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Cube depth texture',
       name: 'cubeDepthTexture',
@@ -132,6 +136,7 @@ window.addEventListener('load', async () => {
 
   const selectiveBloomTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Selective bloom render target',
+    sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Sphere depth texture',
       name: 'sphereDepthTexture',
@@ -166,6 +171,8 @@ window.addEventListener('load', async () => {
     label: 'Init pass',
     inputTarget: selectiveBloomTarget,
   })
+
+  console.log(initBloomPass, selectiveBloomTarget)
 
   const brigthnessPassFs = /* wgsl */ `
     struct VSOutput {
@@ -232,7 +239,7 @@ window.addEventListener('load', async () => {
   })
 
   const blurSettings = {
-    spread: 5,
+    spread: 10,
     weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
   }
 

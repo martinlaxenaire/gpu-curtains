@@ -71,12 +71,19 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters
+    const { label, colorAttachments, depthTexture, sampleCount, autoRender, ...renderPassParams } = parameters
+
+    // use depth texture from params
+    // OR renderer render pass depth texture if sample counts match
+    const depthTextureToUse =
+      depthTexture || this.renderer.renderPass.options.sampleCount === (sampleCount ?? 4)
+        ? this.renderer.renderPass.depthTexture
+        : null
 
     this.options = {
       label,
       ...renderPassParams,
-      ...(depthTexture && { depthTexture }),
+      ...(depthTextureToUse && { depthTexture: depthTextureToUse }),
       ...(colorAttachments && { colorAttachments }),
       autoRender: autoRender === undefined ? true : autoRender,
     } as RenderTargetParams
@@ -88,7 +95,7 @@ export class RenderTarget {
     this.renderPass = new RenderPass(this.renderer, {
       label: this.options.label ? `${this.options.label} Render Pass` : 'Render Target Render Pass',
       ...(colorAttachments && { colorAttachments }),
-      depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture, // reuse renderer depth texture for every pass
+      depthTexture: this.options.depthTexture,
       ...renderPassParams,
     })
 
@@ -106,6 +113,23 @@ export class RenderTarget {
     }
 
     this.addToScene()
+  }
+
+  /**
+   * Get the textures outputted by the {@link renderPass} if any, which means its {@link RenderPass.viewTextures | viewTextures} if not multisampled, or the {@link RenderPass.resolveTargets | resolveTargets} else.
+   *
+   * Since some {@link RenderPass} might not have any view textures (or in case the first resolve target is `null`), the first element can be the {@link RenderTarget.renderTexture | RenderTarget renderTexture} itself.
+   *
+   * @readonly
+   */
+  get outputTextures(): RenderTexture[] {
+    return !this.renderPass.outputTextures.length
+      ? !this.renderTexture
+        ? []
+        : [this.renderTexture]
+      : this.renderPass.outputTextures.map((texture, index) => {
+          return index === 0 && this.renderPass.options.renderToSwapChain ? this.renderTexture : texture
+        })
   }
 
   /**
@@ -135,9 +159,9 @@ export class RenderTarget {
    */
   resize() {
     // reset the newly created depth texture
-    this.renderPass.options.depthTexture.texture = this.options.depthTexture
-      ? this.options.depthTexture.texture
-      : this.renderer.renderPass.depthTexture.texture
+    if (this.options.depthTexture) {
+      this.renderPass.options.depthTexture.texture = this.options.depthTexture.texture
+    }
 
     this.renderPass?.resize()
   }

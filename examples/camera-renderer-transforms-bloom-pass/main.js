@@ -425,6 +425,7 @@ window.addEventListener('load', async () => {
   blendPass.createRenderTexture({
     label: 'Scene texture',
     name: 'sceneTexture',
+    visibility: 'fragment',
     fromTexture: scenePass.renderTexture,
   })
 })

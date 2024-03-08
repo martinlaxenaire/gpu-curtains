@@ -55,6 +55,16 @@ export declare class TextureBinding extends Binding {
      */
     setBindingType(bindingType: BindingType): void;
     /**
+     * Set or update our texture {@link TextureBindingParams#format | format}. Note that if the texture is a `storage` {@link bindingType} and the `format` value is different from the previous one, the associated {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout} will be recreated.
+     * @param format - new texture {@link TextureBindingParams#format | format} value to use
+     */
+    setFormat(format: GPUTextureFormat): void;
+    /**
+     * Set or update our texture {@link TextureBindingParams#multisampled | multisampled}. Note that if the texture is not a `storage` {@link bindingType} and the `multisampled` value is different from the previous one, the associated {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout} will be recreated.
+     * @param multisampled - new texture {@link TextureBindingParams#multisampled | multisampled} value to use
+     */
+    setMultisampled(multisampled: boolean): void;
+    /**
      * Set the correct WGSL code snippet.
      */
     setWGSLFragment(): void;

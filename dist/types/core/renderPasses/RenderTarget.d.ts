@@ -55,6 +55,14 @@ export declare class RenderTarget {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: RenderTargetParams);
     /**
+     * Get the textures outputted by the {@link renderPass} if any, which means its {@link RenderPass.viewTextures | viewTextures} if not multisampled, or the {@link RenderPass.resolveTargets | resolveTargets} else.
+     *
+     * Since some {@link RenderPass} might not have any view textures (or in case the first resolve target is `null`), the first element can be the {@link RenderTarget.renderTexture | RenderTarget renderTexture} itself.
+     *
+     * @readonly
+     */
+    get outputTextures(): RenderTexture[];
+    /**
      * Add the {@link RenderTarget} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     addToScene(): void;
