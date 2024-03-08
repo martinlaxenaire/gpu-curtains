@@ -6,6 +6,8 @@ import { SamplerBinding } from './SamplerBinding';
 export type TextureBindingType = 'texture' | 'externalTexture' | 'storage' | 'depth';
 /** Defines all kind of binding types  */
 export type BindingType = 'uniform' | 'storage' | TextureBindingType | 'sampler';
+/** Defines all binding vibility types */
+export type BindingVisibility = MaterialShadersType | 'all';
 /** Defines buffer binding memory access types (read only or read/write) */
 export type BufferBindingMemoryAccessType = 'read' | 'read_write';
 /** Defines texture binding memory access types (read only, write only or read/write) */
@@ -25,7 +27,7 @@ export interface BindingParams {
     /** {@link BindingType | binding type} to use with this {@link Binding} */
     bindingType?: BindingType;
     /** {@link Binding} variables shaders visibility */
-    visibility?: MaterialShadersType | null;
+    visibility?: BindingVisibility;
 }
 /**
  * Used as a shell to build actual bindings upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.

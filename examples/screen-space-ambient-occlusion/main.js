@@ -77,8 +77,12 @@ window.addEventListener('load', async () => {
   // GEOMETRY BUFFER
   // ------------------------------------
 
-  // MSAA might be too intensive with deferred rendering
-  const sampleCount = 1
+  // get sample count from url search params or default to 1
+  // beware that MSAA + deferred rendering can be quite expensive!
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const urlSampleCount = searchParams.get('sampleCount') && parseInt(searchParams.get('sampleCount'))
+  const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
 
   const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
@@ -91,7 +95,7 @@ window.addEventListener('load', async () => {
   const writeGBufferRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Geometry buffer render target',
     sampleCount,
-    shouldUpdateView: false, // we don't want to render to the swap chain
+    renderToSwapChain: false, // we don't want to render to the swap chain
     depthTexture: gBufferDepthTexture,
     colorAttachments: [
       {
@@ -428,15 +432,13 @@ window.addEventListener('load', async () => {
   const gBufferAlbedoTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer albedo texture',
     name: 'gBufferAlbedoTexture',
-    fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[0],
-    sampleCount,
+    fromTexture: writeGBufferRenderTarget.outputTextures[0],
   })
 
   const gBufferNormalTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer normal texture',
     name: 'gBufferNormalTexture',
-    fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[1],
-    sampleCount,
+    fromTexture: writeGBufferRenderTarget.outputTextures[1],
   })
 
   // we could have used a position texture in the geometry buffer
@@ -445,8 +447,7 @@ window.addEventListener('load', async () => {
   // const gBufferPositionTexture = new RenderTexture(gpuCameraRenderer, {
   //   label: 'GBuffer position texture',
   //   name: 'gBufferPositionTexture',
-  //   fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[2],
-  //   sampleCount,
+  //   fromTexture: writeGBufferRenderTarget.outputTextures[2],
   // })
 
   const lerp = (a, b, alpha) => {

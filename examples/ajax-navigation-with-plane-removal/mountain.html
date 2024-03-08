@@ -6,11 +6,11 @@
 
     <!-- Metas -->
     <title>gpu-curtains | AJAX Navigation with plane removal example</title>
-    <meta name="description" content="AJAX Navigation with plane removal with gpu-curtains" />
+    <meta name="description" content="AJAX Navigation with WebGPU plane removal with gpu-curtains" />
 
     <meta property="og:title" content="gpu-curtains | AJAX Navigation with plane removal example" />
     <meta property="og:type" content="article" />
-    <meta property="og:description" content="AJAX Navigation with plane removal with gpu-curtains" />
+    <meta property="og:description" content="AJAX Navigation with WebGPU plane removal with gpu-curtains" />
     <meta
       property="og:image"
       content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
@@ -111,6 +111,10 @@
       gtag('js', new Date())
 
       gtag('config', 'G-45554DLGL6')
+
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window['ga-disable-G-45554DLGL6'] = true
+      }
     </script>
   </body>
 </html>

@@ -7,6 +7,8 @@ import { SamplerBinding } from './SamplerBinding'
 export type TextureBindingType = 'texture' | 'externalTexture' | 'storage' | 'depth'
 /** Defines all kind of binding types  */
 export type BindingType = 'uniform' | 'storage' | TextureBindingType | 'sampler'
+/** Defines all binding vibility types */
+export type BindingVisibility = MaterialShadersType | 'all'
 
 // see https://www.w3.org/TR/WGSL/#memory-access-mode
 /** Defines buffer binding memory access types (read only or read/write) */
@@ -30,7 +32,7 @@ export interface BindingParams {
   /** {@link BindingType | binding type} to use with this {@link Binding} */
   bindingType?: BindingType
   /** {@link Binding} variables shaders visibility */
-  visibility?: MaterialShadersType | null
+  visibility?: BindingVisibility
 }
 
 /**
@@ -77,6 +79,7 @@ export class Binding {
               return GPUShaderStage.FRAGMENT
             case 'compute':
               return GPUShaderStage.COMPUTE
+            case 'all':
             default:
               return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE
           }

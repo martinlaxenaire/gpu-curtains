@@ -7,13 +7,21 @@ import { Texture } from '../textures/Texture'
 import { AllowedBindGroups } from '../../types/BindGroups'
 
 /**
- * Parameters used to create a {@link GPUDeviceManager}
+ * Base parameters used to create a {@link GPUDeviceManager}
  */
-export interface GPUDeviceManagerParams {
-  /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
-  label?: string
+export interface GPUDeviceManagerBaseParams {
   /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
   production?: boolean
+  /** Additional options to use when requesting an {@link GPUAdapter | adapter} */
+  adapterOptions?: GPURequestAdapterOptions
+}
+
+/**
+ * Parameters used to create a {@link GPUDeviceManager}
+ */
+export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
+  /** The label of the {@link GPUDeviceManager}, used to create the {@link GPUDevice} for debugging purpose */
+  label?: string
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
   onError?: () => void
   /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost */
@@ -40,6 +48,8 @@ export class GPUDeviceManager {
   gpu: GPU | undefined
   /** The WebGPU {@link GPUAdapter | adapter} used */
   adapter: GPUAdapter | void
+  /** Additional options to use when requesting an {@link GPUAdapter | adapter} */
+  adapterOptions: GPURequestAdapterOptions
   /** The WebGPU {@link GPUAdapter | adapter} informations */
   adapterInfos: GPUAdapterInfo | undefined
   /** The WebGPU {@link GPUDevice | device} used */
@@ -75,6 +85,7 @@ export class GPUDeviceManager {
   constructor({
     label,
     production = false,
+    adapterOptions = {},
     onError = () => {
       /* allow empty callbacks */
     },
@@ -86,6 +97,8 @@ export class GPUDeviceManager {
     this.label = label ?? 'GPUDeviceManager instance'
     this.production = production
     this.ready = false
+
+    this.adapterOptions = adapterOptions
 
     this.onError = onError
     this.onDeviceLost = onDeviceLost
@@ -132,7 +145,7 @@ export class GPUDeviceManager {
     }
 
     try {
-      this.adapter = await this.gpu?.requestAdapter()
+      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions)
       ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
         this.adapterInfos = infos
       })

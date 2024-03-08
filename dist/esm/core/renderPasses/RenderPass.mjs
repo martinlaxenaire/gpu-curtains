@@ -14,7 +14,7 @@ class RenderPass {
     qualityRatio = 1,
     // color
     useColorAttachments = true,
-    shouldUpdateView = true,
+    renderToSwapChain = true,
     colorAttachments = [],
     // depth
     useDepth = true,
@@ -50,7 +50,7 @@ class RenderPass {
       qualityRatio,
       // color
       useColorAttachments,
-      shouldUpdateView,
+      renderToSwapChain,
       colorAttachments,
       // depth
       useDepth,
@@ -64,8 +64,10 @@ class RenderPass {
       this.createDepthTexture();
     }
     this.viewTextures = [];
-    if (this.options.useColorAttachments && (!this.options.shouldUpdateView || this.options.sampleCount > 1)) {
+    this.resolveTargets = [];
+    if (this.options.useColorAttachments && (!this.options.renderToSwapChain || this.options.sampleCount > 1)) {
       this.createViewTextures();
+      this.createResolveTargets();
     }
     this.setRenderPassDescriptor();
   }
@@ -104,6 +106,34 @@ class RenderPass {
     });
   }
   /**
+   * Create and set our {@link resolveTargets | resolve targets} in case the {@link viewTextures} are multisampled.
+   *
+   * Note that if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}, the first resolve target will be set to `null` as the current swap chain texture will be used anyway in the render loop (see {@link updateView}).
+   */
+  createResolveTargets() {
+    if (this.options.sampleCount > 1) {
+      this.options.colorAttachments.forEach((colorAttachment, index) => {
+        this.resolveTargets.push(
+          this.options.renderToSwapChain && index === 0 ? null : new RenderTexture(this.renderer, {
+            label: `${this.options.label} resolve target[${index}] texture`,
+            name: `resolveTarget${index}Texture`,
+            format: colorAttachment.targetFormat,
+            sampleCount: 1,
+            qualityRatio: this.options.qualityRatio
+          })
+        );
+      });
+    }
+  }
+  /**
+   * Get the textures outputted by this {@link RenderPass}, which means the {@link viewTextures} if not multisampled, or their {@link resolveTargets} else (beware that the first resolve target might be `null` if this {@link RenderPass} should {@link RenderPassParams#renderToSwapChain | render to the swap chain}).
+   *
+   * @readonly
+   */
+  get outputTextures() {
+    return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures;
+  }
+  /**
    * Set our render pass {@link descriptor}
    */
   setRenderPassDescriptor() {
@@ -115,6 +145,11 @@ class RenderPass {
           view: this.viewTextures[index]?.texture.createView({
             label: this.viewTextures[index]?.texture.label + " view"
           }),
+          ...this.resolveTargets.length && {
+            resolveTarget: this.resolveTargets[index]?.texture.createView({
+              label: this.resolveTargets[index]?.texture.label + " view"
+            })
+          },
           // clear values
           clearValue: colorAttachment.clearValue,
           // loadOp: 'clear' specifies to clear the texture to the clear value before drawing
@@ -152,6 +187,13 @@ class RenderPass {
       this.descriptor.colorAttachments[index].view = viewTexture.texture.createView({
         label: viewTexture.options.label + " view"
       });
+    });
+    this.resolveTargets.forEach((resolveTarget, index) => {
+      if (resolveTarget) {
+        this.descriptor.colorAttachments[index].resolveTarget = resolveTarget.texture.createView({
+          label: resolveTarget.options.label + " view"
+        });
+      }
     });
   }
   /**
@@ -211,7 +253,7 @@ class RenderPass {
    * @returns - the {@link GPUTexture | texture} to render to.
    */
   updateView(renderTexture = null) {
-    if (!this.options.colorAttachments.length || !this.options.shouldUpdateView) {
+    if (!this.options.colorAttachments.length || !this.options.renderToSwapChain) {
       return renderTexture;
     }
     if (!renderTexture) {
@@ -237,6 +279,7 @@ class RenderPass {
    */
   destroy() {
     this.viewTextures.forEach((viewTexture) => viewTexture.destroy());
+    this.resolveTargets.forEach((resolveTarget) => resolveTarget?.destroy());
     if (!this.options.depthTexture && this.depthTexture) {
       this.depthTexture.destroy();
     }

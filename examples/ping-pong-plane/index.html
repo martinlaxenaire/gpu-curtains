@@ -6,7 +6,17 @@
 
     <!-- Metas -->
     <title>gpu-curtains | PingPong Plane example</title>
-    <meta name="description" content="A plane using ping pong (textures swapping) with gpu-curtains" />
+    <meta name="description" content="A WebGPU plane using ping pong (textures swapping) with gpu-curtains" />
+
+    <meta property="og:title" content="gpu-curtains | PingPong Plane example" />
+    <meta property="og:type" content="article" />
+    <meta property="og:description" content="A WebGPU plane using ping pong (textures swapping) with gpu-curtains" />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
+    />
+    <meta property="og:url" content="https://martinlaxenaire.github.io/gpu-curtains/examples/ping-pong-plane/" />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <link href="../common-styles.css" rel="stylesheet" />
     <link href="styles.css" rel="stylesheet" />
@@ -53,6 +63,10 @@
       gtag('js', new Date())
 
       gtag('config', 'G-45554DLGL6')
+
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window['ga-disable-G-45554DLGL6'] = true
+      }
     </script>
   </body>
 </html>

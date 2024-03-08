@@ -57,8 +57,12 @@ window.addEventListener('load', async () => {
 
   animate()
 
-  // MSAA does not work with deferred rendering
-  const sampleCount = 1
+  // get sample count from url search params or default to 1
+  // beware that MSAA + deferred rendering can be quite expensive!
+  const url = new URL(window.location)
+  const searchParams = new URLSearchParams(url.search)
+  const urlSampleCount = searchParams.get('sampleCount') && parseInt(searchParams.get('sampleCount'))
+  const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
 
   // Geometry buffer
   const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
@@ -72,7 +76,7 @@ window.addEventListener('load', async () => {
   const writeGBufferRenderTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Write GBuffer render target',
     sampleCount,
-    shouldUpdateView: false, // we don't want to render to the swap chain
+    renderToSwapChain: false, // we don't want to render to the swap chain
     colorAttachments: [
       {
         loadOp: 'clear',
@@ -271,17 +275,15 @@ window.addEventListener('load', async () => {
   const gBufferAlbedoTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer albedo texture',
     name: 'gBufferAlbedoTexture',
-    format: writeGBufferRenderTarget.renderPass.options.colorAttachments[0].targetFormat,
-    fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[0],
-    sampleCount,
+    format: writeGBufferRenderTarget.outputTextures[0].format,
+    fromTexture: writeGBufferRenderTarget.outputTextures[0],
   })
 
   const gBufferNormalTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer normal texture',
     name: 'gBufferNormalTexture',
-    format: writeGBufferRenderTarget.renderPass.options.colorAttachments[1].targetFormat,
-    fromTexture: writeGBufferRenderTarget.renderPass.viewTextures[1],
-    sampleCount,
+    format: writeGBufferRenderTarget.outputTextures[1].format,
+    fromTexture: writeGBufferRenderTarget.outputTextures[1],
   })
 
   // we could eventually make the light move in a compute shader

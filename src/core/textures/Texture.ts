@@ -21,6 +21,7 @@ const defaultTextureParams: TextureParams = {
   useExternalTextures: true,
   fromTexture: null,
   viewDimension: '2d',
+  visibility: 'fragment',
   cache: true,
 }
 
@@ -187,6 +188,7 @@ export class Texture extends Object3D {
         texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
         viewDimension: this.options.viewDimension,
+        visibility: this.options.visibility,
       } as TextureBindingParams),
       this.textureMatrix,
     ]

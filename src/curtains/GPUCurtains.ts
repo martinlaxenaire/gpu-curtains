@@ -11,21 +11,19 @@ import { ComputePass } from '../core/computePasses/ComputePass'
 import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera'
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
-import { GPUDeviceManager } from '../core/renderers/GPUDeviceManager'
+import { GPUDeviceManager, GPUDeviceManagerBaseParams } from '../core/renderers/GPUDeviceManager'
 import { Renderer } from '../core/renderers/utils'
 
 /**
  * Options used to create a {@link GPUCurtains}
  */
-export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'> {
+export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'>, GPUDeviceManagerBaseParams {
   /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
   autoRender?: boolean
   /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
   autoResize?: boolean
   /** Whether {@link GPUCurtains} should listen to scroll event or not */
   watchScroll?: boolean
-  /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
-  production: GPUDeviceManager['production']
 }
 
 /**
@@ -96,6 +94,7 @@ export class GPUCurtains {
     preferredFormat,
     alphaMode = 'premultiplied',
     production = false,
+    adapterOptions = {},
     renderPass,
     camera,
     autoRender = true,
@@ -109,6 +108,7 @@ export class GPUCurtains {
       pixelRatio,
       camera,
       production,
+      adapterOptions,
       preferredFormat,
       alphaMode,
       renderPass,
@@ -219,6 +219,7 @@ export class GPUCurtains {
     this.deviceManager = new GPUDeviceManager({
       label: 'GPUCurtains default device',
       production: this.options.production,
+      adapterOptions: this.options.adapterOptions,
       onError: () =>
         setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback()

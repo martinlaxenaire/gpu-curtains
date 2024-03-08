@@ -10,6 +10,7 @@ class GPUDeviceManager {
   constructor({
     label,
     production = false,
+    adapterOptions = {},
     onError = () => {
     },
     onDeviceLost = (info) => {
@@ -19,6 +20,7 @@ class GPUDeviceManager {
     this.label = label ?? "GPUDeviceManager instance";
     this.production = production;
     this.ready = false;
+    this.adapterOptions = adapterOptions;
     this.onError = onError;
     this.onDeviceLost = onDeviceLost;
     this.gpu = navigator.gpu;
@@ -56,7 +58,7 @@ class GPUDeviceManager {
       throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
     }
     try {
-      this.adapter = await this.gpu?.requestAdapter();
+      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
       this.adapter?.requestAdapterInfo().then((infos) => {
         this.adapterInfos = infos;
       });

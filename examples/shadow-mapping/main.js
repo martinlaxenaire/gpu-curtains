@@ -119,12 +119,15 @@ window.addEventListener('load', async () => {
 
   //const shadowMapTextureFormat = 'depth32float'
   const shadowMapTextureFormat = 'depth24plus'
+  // mandatory so we could use textureSampleCompare()
+  const shadowDepthSampleCount = 1
 
   const shadowDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'Shadow depth texture',
     name: 'shadowDepthTexture',
     usage: 'depth',
     format: shadowMapTextureFormat,
+    sampleCount: shadowDepthSampleCount,
     fixedSize: {
       width: 1024,
       height: 1024,
@@ -135,7 +138,7 @@ window.addEventListener('load', async () => {
     label: 'Shadow map render target',
     useColorAttachments: false,
     depthTexture: shadowDepthTexture,
-    sampleCount: 1,
+    sampleCount: shadowDepthSampleCount,
   })
 
   const lessCompareSampler = new Sampler(gpuCameraRenderer, {
@@ -203,7 +206,7 @@ window.addEventListener('load', async () => {
       // to smooth the result.
       var visibility = 0.0;
       
-      let size = f32(textureDimensions(shadowDepthTexture).x);
+      let size = f32(textureDimensions(shadowDepthTexture).y);
       
       let oneOverShadowDepthTextureSize = 1.0 / size;
       for (var y = -1; y <= 1; y++) {
@@ -232,7 +235,7 @@ window.addEventListener('load', async () => {
   // for each mesh that need to be rendered on the depth map
   const createMeshDepthMaterial = (mesh) => {
     mesh.userData.depthMaterial = new RenderMaterial(gpuCameraRenderer, {
-      label: mesh.label + ' Depth render material',
+      label: mesh.options.label + ' Depth render material',
       ...mesh.material.options.rendering,
       shaders: {
         vertex: {
@@ -265,7 +268,7 @@ window.addEventListener('load', async () => {
     const isCube = i % 2 === 1
 
     const mesh = new Mesh(gpuCameraRenderer, {
-      label: 'Sphere',
+      label: 'Mesh ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
       renderTextures: [shadowDepthTexture],
       samplers: [lessCompareSampler],

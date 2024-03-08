@@ -60,6 +60,7 @@ window.addEventListener('load', async () => {
   const cubeMapTexture = new RenderTexture(gpuCameraRenderer, {
     name: 'cubeMapTexture',
     viewDimension: 'cube',
+    visibility: 'fragment',
     fixedSize: {
       width: imageBitmaps[0].width,
       height: imageBitmaps[0].height,
@@ -74,8 +75,6 @@ window.addEventListener('load', async () => {
       [imageBitmap.width, imageBitmap.height]
     )
   }
-
-  console.log(cubeMapTexture)
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()

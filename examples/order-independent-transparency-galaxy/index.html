@@ -8,7 +8,7 @@
     <title>gpu-curtains | A spinning galaxy using order-independent transparency (WBOIT) technique</title>
     <meta
       name="description"
-      content="A spinning galaxy using order-independent transparency (WBOIT) technique with gpu-curtains"
+      content="A WebGPU spinning galaxy using order-independent transparency (WBOIT) technique with gpu-curtains"
     />
 
     <meta
@@ -18,7 +18,7 @@
     <meta property="og:type" content="article" />
     <meta
       property="og:description"
-      content="A spinning galaxy using order-independent transparency (WBOIT) technique with gpu-curtains"
+      content="A WebGPU spinning galaxy using order-independent transparency (WBOIT) technique with gpu-curtains"
     />
     <meta
       property="og:image"
@@ -63,6 +63,10 @@
       gtag('js', new Date())
 
       gtag('config', 'G-45554DLGL6')
+
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window['ga-disable-G-45554DLGL6'] = true
+      }
     </script>
   </body>
 </html>

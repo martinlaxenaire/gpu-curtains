@@ -46,6 +46,11 @@ class RenderTexture {
     this.renderer = renderer;
     this.uuid = generateUUID();
     this.options = { ...defaultRenderTextureParams, ...parameters };
+    if (parameters.fromTexture) {
+      this.options.format = parameters.fromTexture.texture.format;
+      this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
+      this.options.viewDimension = parameters.fromTexture.options.viewDimension;
+    }
     if (!this.options.format) {
       this.options.format = this.renderer.options.preferredFormat;
     }
@@ -83,7 +88,11 @@ class RenderTexture {
       height: texture.height,
       depth: texture.depthOrArrayLayers
     };
+    this.options.format = texture.format;
+    this.options.sampleCount = texture.sampleCount;
     this.texture = texture;
+    this.textureBinding.setFormat(this.options.format);
+    this.textureBinding.setMultisampled(this.options.sampleCount > 1);
     this.textureBinding.resource = this.texture;
   }
   /**
@@ -91,7 +100,6 @@ class RenderTexture {
    */
   createTexture() {
     if (this.options.fromTexture) {
-      this.options.format = this.options.fromTexture.options.format;
       this.copyGPUTexture(this.options.fromTexture.texture);
       return;
     }
@@ -121,6 +129,7 @@ class RenderTexture {
         texture: this.texture,
         bindingType: this.options.usage,
         format: this.options.format,
+        visibility: this.options.visibility,
         viewDimension: this.options.viewDimension,
         multisampled: this.options.sampleCount > 1
       })
