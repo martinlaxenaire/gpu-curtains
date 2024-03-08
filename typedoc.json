@@ -5,6 +5,14 @@
   ],
   "exclude": ["src/index.ts"],
   "out": "docs",
+  "gaID": "G-45554DLGL6",
+  "hideGenerator": true,
+  "titleLink": "https://martinlaxenaire.github.io/gpu-curtains/",
+  "navigationLinks": {
+    "Repository": "https://github.com/martinlaxenaire/gpu-curtains",
+    "Docs": "https://martinlaxenaire.github.io/gpu-curtains/docs/",
+    "Examples": "https://martinlaxenaire.github.io/gpu-curtains/examples/"
+  },
   "sort": ["source-order"],
   "validation": {
     "notExported": true,

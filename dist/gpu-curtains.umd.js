@@ -4178,7 +4178,6 @@
       this.options.format = texture.format;
       this.options.sampleCount = texture.sampleCount;
       this.texture = texture;
-      console.log(texture);
       this.textureBinding.setFormat(this.options.format);
       this.textureBinding.setMultisampled(this.options.sampleCount > 1);
       this.textureBinding.resource = this.texture;
@@ -10137,11 +10136,12 @@ ${this.shaders.compute.head}`;
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
+      const { label, colorAttachments, depthTexture, sampleCount, autoRender, ...renderPassParams } = parameters;
+      const depthTextureToUse = depthTexture || this.renderer.renderPass.options.sampleCount === (sampleCount ?? 4) ? this.renderer.renderPass.depthTexture : null;
       this.options = {
         label,
         ...renderPassParams,
-        ...depthTexture && { depthTexture },
+        ...depthTextureToUse && { depthTexture: depthTextureToUse },
         ...colorAttachments && { colorAttachments },
         autoRender: autoRender === void 0 ? true : autoRender
       };
@@ -10151,8 +10151,7 @@ ${this.shaders.compute.head}`;
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
         ...colorAttachments && { colorAttachments },
-        depthTexture: this.options.depthTexture ?? this.renderer.renderPass.depthTexture,
-        // reuse renderer depth texture for every pass
+        depthTexture: this.options.depthTexture,
         ...renderPassParams
       });
       if (renderPassParams.useColorAttachments !== false) {
@@ -10199,7 +10198,9 @@ ${this.shaders.compute.head}`;
      * Resize our {@link renderPass}
      */
     resize() {
-      this.renderPass.options.depthTexture.texture = this.options.depthTexture ? this.options.depthTexture.texture : this.renderer.renderPass.depthTexture.texture;
+      if (this.options.depthTexture) {
+        this.renderPass.options.depthTexture.texture = this.options.depthTexture.texture;
+      }
       this.renderPass?.resize();
     }
     /**

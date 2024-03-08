@@ -289,12 +289,11 @@ export declare class MeshBaseClass {
     destroy(): void;
 }
 /**
- * To get started, we need a type which we'll use to extend
- * other classes from. The main responsibility is to declare
- * that the type being passed in is a class.
- * We use a generic version which can apply a constraint on
- * the class which this mixin is applied to
- * @typeParam T - the base constructor
+ * Constructor function, that creates a new instance of the given type.
+ * @constructor
+ * @template T - the base constructor
+ * @param args - The arguments passed to the constructor.
+ * @returns - An instance of the mixin.
  */
 export type MixinConstructor<T = {}> = new (...args: any[]) => T;
 /**

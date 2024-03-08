@@ -91,7 +91,6 @@ class RenderTexture {
     this.options.format = texture.format;
     this.options.sampleCount = texture.sampleCount;
     this.texture = texture;
-    console.log(texture);
     this.textureBinding.setFormat(this.options.format);
     this.textureBinding.setMultisampled(this.options.sampleCount > 1);
     this.textureBinding.resource = this.texture;
