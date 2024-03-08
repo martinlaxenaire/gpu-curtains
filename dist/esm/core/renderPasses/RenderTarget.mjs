@@ -36,8 +36,8 @@ class RenderTarget {
     this.type = "RenderTarget";
     this.renderer = renderer;
     this.uuid = generateUUID();
-    const { label, colorAttachments, depthTexture, sampleCount, autoRender, ...renderPassParams } = parameters;
-    const depthTextureToUse = depthTexture || this.renderer.renderPass.options.sampleCount === (sampleCount ?? 4) ? this.renderer.renderPass.depthTexture : null;
+    const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
+    const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) ? this.renderer.renderPass.depthTexture : null;
     this.options = {
       label,
       ...renderPassParams,

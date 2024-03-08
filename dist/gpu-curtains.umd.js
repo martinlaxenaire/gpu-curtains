@@ -9823,6 +9823,7 @@ ${this.shaders.compute.head}`;
     constructor({
       label,
       production = false,
+      adapterOptions = {},
       onError = () => {
       },
       onDeviceLost = (info) => {
@@ -9832,6 +9833,7 @@ ${this.shaders.compute.head}`;
       this.label = label ?? "GPUDeviceManager instance";
       this.production = production;
       this.ready = false;
+      this.adapterOptions = adapterOptions;
       this.onError = onError;
       this.onDeviceLost = onDeviceLost;
       this.gpu = navigator.gpu;
@@ -9869,7 +9871,7 @@ ${this.shaders.compute.head}`;
         throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
       }
       try {
-        this.adapter = await this.gpu?.requestAdapter();
+        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
         this.adapter?.requestAdapterInfo().then((infos) => {
           this.adapterInfos = infos;
         });
@@ -10136,8 +10138,8 @@ ${this.shaders.compute.head}`;
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      const { label, colorAttachments, depthTexture, sampleCount, autoRender, ...renderPassParams } = parameters;
-      const depthTextureToUse = depthTexture || this.renderer.renderPass.options.sampleCount === (sampleCount ?? 4) ? this.renderer.renderPass.depthTexture : null;
+      const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters;
+      const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) ? this.renderer.renderPass.depthTexture : null;
       this.options = {
         label,
         ...renderPassParams,

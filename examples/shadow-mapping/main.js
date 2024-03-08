@@ -232,7 +232,7 @@ window.addEventListener('load', async () => {
   // for each mesh that need to be rendered on the depth map
   const createMeshDepthMaterial = (mesh) => {
     mesh.userData.depthMaterial = new RenderMaterial(gpuCameraRenderer, {
-      label: mesh.label + ' Depth render material',
+      label: mesh.options.label + ' Depth render material',
       ...mesh.material.options.rendering,
       shaders: {
         vertex: {
@@ -265,7 +265,7 @@ window.addEventListener('load', async () => {
     const isCube = i % 2 === 1
 
     const mesh = new Mesh(gpuCameraRenderer, {
-      label: 'Sphere',
+      label: 'Mesh ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
       renderTextures: [shadowDepthTexture],
       samplers: [lessCompareSampler],

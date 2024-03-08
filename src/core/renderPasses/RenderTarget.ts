@@ -71,14 +71,15 @@ export class RenderTarget {
     this.renderer = renderer
     this.uuid = generateUUID()
 
-    const { label, colorAttachments, depthTexture, sampleCount, autoRender, ...renderPassParams } = parameters
+    const { label, colorAttachments, depthTexture, autoRender, ...renderPassParams } = parameters
 
     // use depth texture from params
     // OR renderer render pass depth texture if sample counts match
-    const depthTextureToUse =
-      depthTexture || this.renderer.renderPass.options.sampleCount === (sampleCount ?? 4)
-        ? this.renderer.renderPass.depthTexture
-        : null
+    const depthTextureToUse = !!depthTexture
+      ? depthTexture
+      : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4)
+      ? this.renderer.renderPass.depthTexture
+      : null
 
     this.options = {
       label,

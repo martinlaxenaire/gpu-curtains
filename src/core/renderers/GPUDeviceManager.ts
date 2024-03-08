@@ -14,6 +14,8 @@ export interface GPUDeviceManagerParams {
   label?: string
   /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
   production?: boolean
+  /** Additional options to use when requesting an {@link GPUAdapter | adapter} */
+  adapterOptions?: GPURequestAdapterOptions
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
   onError?: () => void
   /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost */
@@ -40,6 +42,8 @@ export class GPUDeviceManager {
   gpu: GPU | undefined
   /** The WebGPU {@link GPUAdapter | adapter} used */
   adapter: GPUAdapter | void
+  /** Additional options to use when requesting an {@link GPUAdapter | adapter} */
+  adapterOptions: GPURequestAdapterOptions
   /** The WebGPU {@link GPUAdapter | adapter} informations */
   adapterInfos: GPUAdapterInfo | undefined
   /** The WebGPU {@link GPUDevice | device} used */
@@ -75,6 +79,7 @@ export class GPUDeviceManager {
   constructor({
     label,
     production = false,
+    adapterOptions = {},
     onError = () => {
       /* allow empty callbacks */
     },
@@ -86,6 +91,8 @@ export class GPUDeviceManager {
     this.label = label ?? 'GPUDeviceManager instance'
     this.production = production
     this.ready = false
+
+    this.adapterOptions = adapterOptions
 
     this.onError = onError
     this.onDeviceLost = onDeviceLost
@@ -132,7 +139,7 @@ export class GPUDeviceManager {
     }
 
     try {
-      this.adapter = await this.gpu?.requestAdapter()
+      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions)
       ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
         this.adapterInfos = infos
       })
