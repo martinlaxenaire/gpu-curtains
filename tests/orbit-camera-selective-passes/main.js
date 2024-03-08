@@ -239,7 +239,7 @@ window.addEventListener('load', async () => {
   })
 
   const blurSettings = {
-    spread: 10,
+    spread: 5,
     weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
   }
 
@@ -517,7 +517,8 @@ window.addEventListener('load', async () => {
       
       var grayscale: f32 = color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
       
-      var dither: f32 = select(0.0, color.a, getValue( grayscale, fsInput.uv * params.resolution ));
+      // here fsInput.position.xy ranges from [0, 0] to [canvasWidth, canvasHeight]
+      var dither: f32 = select(0.0, color.a, getValue( grayscale, fsInput.position.xy ));
       
       return vec4(vec3(dither) * color.rgb, dither);
     }
@@ -534,10 +535,6 @@ window.addEventListener('load', async () => {
     uniforms: {
       params: {
         struct: {
-          resolution: {
-            type: 'vec2f',
-            value: new Vec2(gpuCameraRenderer.boundingRect.width, gpuCameraRenderer.boundingRect.height),
-          },
           pixelSize: {
             type: 'f32',
             value: 1.5,
@@ -545,13 +542,6 @@ window.addEventListener('load', async () => {
         },
       },
     },
-  })
-
-  ditherPass.onAfterResize(() => {
-    ditherPass.uniforms.params.resolution.value.set(
-      gpuCameraRenderer.boundingRect.width,
-      gpuCameraRenderer.boundingRect.height
-    )
   })
 
   const blendShader = /* wgsl */ `

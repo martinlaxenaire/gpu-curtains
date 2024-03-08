@@ -263,7 +263,8 @@ window.addEventListener('load', async () => {
       
       var grayscale: f32 = color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
       
-      var dither: f32 = select(0.0, 1.0, getValue( grayscale, fsInput.uv * params.resolution )) * color.a;
+      // here fsInput.position.xy ranges from [0, 0] to [canvasWidth, canvasHeight]
+      var dither: f32 = select(0.0, 1.0, getValue( grayscale, fsInput.position.xy )) * color.a;
       
       // mix dithering with original color
       return vec4(vec3(dither) * color.rgb, dither);
@@ -281,10 +282,6 @@ window.addEventListener('load', async () => {
     uniforms: {
       params: {
         struct: {
-          resolution: {
-            type: 'vec2f',
-            value: new Vec2(gpuCameraRenderer.boundingRect.width, gpuCameraRenderer.boundingRect.height),
-          },
           pixelSize: {
             type: 'f32',
             value: 2,
@@ -292,12 +289,5 @@ window.addEventListener('load', async () => {
         },
       },
     },
-  })
-
-  ditherPass.onAfterResize(() => {
-    ditherPass.uniforms.params.resolution.value.set(
-      gpuCameraRenderer.boundingRect.width,
-      gpuCameraRenderer.boundingRect.height
-    )
   })
 })
