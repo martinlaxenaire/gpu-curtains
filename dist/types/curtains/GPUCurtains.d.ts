@@ -11,20 +11,18 @@ import { ComputePass } from '../core/computePasses/ComputePass';
 import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera';
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement';
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer';
-import { GPUDeviceManager } from '../core/renderers/GPUDeviceManager';
+import { GPUDeviceManager, GPUDeviceManagerBaseParams } from '../core/renderers/GPUDeviceManager';
 import { Renderer } from '../core/renderers/utils';
 /**
  * Options used to create a {@link GPUCurtains}
  */
-export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'> {
+export interface GPUCurtainsOptions extends Omit<GPUCameraRendererParams, 'deviceManager'>, GPUDeviceManagerBaseParams {
     /** Whether {@link GPUCurtains} should create its own requestAnimationFrame loop to render or not */
     autoRender?: boolean;
     /** Whether {@link GPUCurtains} should handle all resizing by itself or not */
     autoResize?: boolean;
     /** Whether {@link GPUCurtains} should listen to scroll event or not */
     watchScroll?: boolean;
-    /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console */
-    production: GPUDeviceManager['production'];
 }
 /**
  * Parameters used to create a {@link GPUCurtains}
@@ -73,7 +71,7 @@ export declare class GPUCurtains {
      * GPUCurtains constructor
      * @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}
      */
-    constructor({ container, pixelRatio, preferredFormat, alphaMode, production, renderPass, camera, autoRender, autoResize, watchScroll, }?: GPUCurtainsParams);
+    constructor({ container, pixelRatio, preferredFormat, alphaMode, production, adapterOptions, renderPass, camera, autoRender, autoResize, watchScroll, }?: GPUCurtainsParams);
     /**
      * Set the {@link container}
      * @param container - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use

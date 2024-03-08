@@ -119,12 +119,15 @@ window.addEventListener('load', async () => {
 
   //const shadowMapTextureFormat = 'depth32float'
   const shadowMapTextureFormat = 'depth24plus'
+  // mandatory so we could use textureSampleCompare()
+  const shadowDepthSampleCount = 1
 
   const shadowDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'Shadow depth texture',
     name: 'shadowDepthTexture',
     usage: 'depth',
     format: shadowMapTextureFormat,
+    sampleCount: shadowDepthSampleCount,
     fixedSize: {
       width: 1024,
       height: 1024,
@@ -135,7 +138,7 @@ window.addEventListener('load', async () => {
     label: 'Shadow map render target',
     useColorAttachments: false,
     depthTexture: shadowDepthTexture,
-    sampleCount: 1,
+    sampleCount: shadowDepthSampleCount,
   })
 
   const lessCompareSampler = new Sampler(gpuCameraRenderer, {

@@ -11052,6 +11052,7 @@ struct VSOutput {
       preferredFormat,
       alphaMode = "premultiplied",
       production = false,
+      adapterOptions = {},
       renderPass,
       camera,
       autoRender = true,
@@ -11077,6 +11078,7 @@ struct VSOutput {
         pixelRatio,
         camera,
         production,
+        adapterOptions,
         preferredFormat,
         alphaMode,
         renderPass,
@@ -11172,6 +11174,7 @@ struct VSOutput {
       this.deviceManager = new GPUDeviceManager({
         label: "GPUCurtains default device",
         production: this.options.production,
+        adapterOptions: this.options.adapterOptions,
         onError: () => setTimeout(() => {
           this._onErrorCallback && this._onErrorCallback();
         }, 0),
