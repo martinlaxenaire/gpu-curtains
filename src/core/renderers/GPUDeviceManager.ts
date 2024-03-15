@@ -92,7 +92,7 @@ export class GPUDeviceManager {
     onDeviceLost = (info?: GPUDeviceLostInfo) => {
       /* allow empty callbacks */
     },
-  }: GPUDeviceManagerParams) {
+  }: GPUDeviceManagerParams = {}) {
     this.index = 0
     this.label = label ?? 'GPUDeviceManager instance'
     this.production = production
