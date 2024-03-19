@@ -51,7 +51,7 @@ window.addEventListener('load', async () => {
     instancesCount: nbMeshes - nbCubes,
   })
 
-  const instanceVs = /* wgsl */ `
+  const instancesVs = /* wgsl */ `
     // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
   
     // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
@@ -94,25 +94,28 @@ window.addEventListener('load', async () => {
       transformed = rotatedTransformed.xyz;
             
       // then instance translation
-      transformed.x += rand11(cos(instanceIndex * instancing.seed)) * instancing.systemSize * 2.0 * instancing.aspectRatio - instancing.systemSize * instancing.aspectRatio;
-      transformed.y += rand11(sin(instanceIndex * instancing.seed)) * instancing.systemSize * 2 - instancing.systemSize;
-      transformed.z += -1.0 * rand11(tan(instanceIndex * instancing.seed)) * instancing.systemSize * 2;
+      transformed.x +=
+        rand11(cos(instanceIndex * instancing.seed))
+        * instancing.systemSize * 2.0 * instancing.aspectRatio
+        - instancing.systemSize * instancing.aspectRatio;
+      
+      transformed.y +=
+        rand11(sin(instanceIndex * instancing.seed))
+        * instancing.systemSize * 2
+        - instancing.systemSize;
+      
+      transformed.z +=
+        -1.0 * rand11(tan(instanceIndex * instancing.seed))
+        * instancing.systemSize * 2;
       
       vsOutput.position = getOutputPosition(transformed);
       
+      // uv
       vsOutput.uv = attributes.uv;
       
-      // normals
-      var rotatedNormal: vec4f = vec4(attributes.normal, 1.0) * rotationMatrix(vec3(0.0, 1.0, 1.0), angle);
-      
-      // vsOutput.normal = getOutputPosition(rotatedNormal.xyz).xyz;
-      // vsOutput.normal = (vsOutput.position * rotatedNormal).xyz;
-      // vsOutput.normal = rotatedNormal.xyz;
-      
-      vsOutput.normal = (matrices.world * rotatedNormal).xyz;
-      
-      //vsOutput.angle = attributes.instancePosition.w / (3.141592 * 2.0);
-      
+      // normals      
+      vsOutput.normal = attributes.normal;
+            
       return vsOutput;
     }
   `
@@ -122,7 +125,7 @@ window.addEventListener('load', async () => {
     //frustumCulled: false,
     shaders: {
       vertex: {
-        code: instanceVs,
+        code: instancesVs,
       },
     },
     uniforms: {
@@ -162,7 +165,7 @@ window.addEventListener('load', async () => {
     //frustumCulled: false,
     shaders: {
       vertex: {
-        code: instanceVs,
+        code: instancesVs,
       },
     },
     uniforms: {
@@ -196,37 +199,6 @@ window.addEventListener('load', async () => {
   sphereInstances.onRender(() => {
     sphereInstances.uniforms.frames.elapsed.value++
   })
-
-  // const addMesh = (index) => {
-  //   const mesh = new Mesh(gpuCurtains, {
-  //     geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
-  //     //frustumCulled: false, // you can also gain a few fps without checking for frustum
-  //   })
-  //
-  //   mesh.position.x = Math.random() * systemSize * 2 * aspectRatio - systemSize * aspectRatio
-  //   mesh.position.y = Math.random() * systemSize * 2 - systemSize
-  //   mesh.position.z = -Math.random() * systemSize * 2
-  //
-  //   const rotationSpeed = Math.random() * 0.025
-  //
-  //   mesh.onRender(() => {
-  //     mesh.rotation.y += rotationSpeed
-  //     mesh.rotation.z += rotationSpeed
-  //   })
-  //
-  //   meshes.push(mesh)
-  // }
-  //
-  // for (let i = 0; i < nbMeshes; i++) {
-  //   addMesh(i)
-  //
-  //   meshes[i].onReady(() => {
-  //     createdMeshes++
-  //     if (createdMeshes === nbMeshes) {
-  //       console.timeEnd('creation time')
-  //     }
-  //   })
-  // }
 
   // GUI
   const gui = new lil.GUI({
