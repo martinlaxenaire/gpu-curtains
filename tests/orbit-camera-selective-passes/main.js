@@ -239,7 +239,7 @@ window.addEventListener('load', async () => {
   })
 
   const blurSettings = {
-    spread: 5,
+    spread: 5 * gpuCameraRenderer.pixelRatio,
     weight: new Float32Array([0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216]),
   }
 
@@ -537,7 +537,7 @@ window.addEventListener('load', async () => {
         struct: {
           pixelSize: {
             type: 'f32',
-            value: 1.5,
+            value: 1.5 * gpuCameraRenderer.pixelRatio,
           },
         },
       },

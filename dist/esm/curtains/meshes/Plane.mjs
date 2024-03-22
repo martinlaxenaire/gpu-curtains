@@ -49,8 +49,8 @@ class Plane extends DOMMesh {
    */
   mouseToPlaneCoords(mouseCoords = new Vec2()) {
     const worldMouse = {
-      x: 2 * (mouseCoords.x / this.renderer.displayBoundingRect.width) - 1,
-      y: 2 * (1 - mouseCoords.y / this.renderer.displayBoundingRect.height) - 1
+      x: 2 * (mouseCoords.x / this.renderer.boundingRect.width) - 1,
+      y: 2 * (1 - mouseCoords.y / this.renderer.boundingRect.height) - 1
     };
     const rayOrigin = this.camera.position.clone();
     const rayDirection = new Vec3(worldMouse.x, worldMouse.y, -0.5);

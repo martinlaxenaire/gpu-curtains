@@ -59,8 +59,8 @@ class RenderTexture {
       height: this.options.fixedSize.height * this.options.qualityRatio,
       depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
     } : {
-      width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
-      height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
+      width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
+      height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
       depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
     };
     if (this.options.fixedSize) {
@@ -151,8 +151,8 @@ class RenderTexture {
       return;
     if (!size) {
       size = {
-        width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
-        height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
+        width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
+        height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
         depth: 1
       };
     }

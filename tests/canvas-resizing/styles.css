@@ -1,0 +1,41 @@
+#page {
+  position: relative;
+  min-height: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-gap: 0.5rem;
+  background: var(--light-color);
+}
+
+.canvas {
+  width: 100%;
+  height: 50vh;
+  background: rgba(var(--dark-color-rgb), 0.5);
+  position: relative;
+}
+
+.canvas[data-fixed-size] {
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.canvas::before {
+  content: 'Pixel ratio: ' attr(data-pixel-ratio) ', auto resize: ' attr(data-auto-resize)
+    ', should use window resize: ' attr(data-should-resize);
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 0.75rem;
+  padding: 0.25em 0.5em;
+  background: var(--secondary-color);
+}
+
+.canvas[data-fixed-size]::before {
+  content: 'Pixel ratio: ' attr(data-pixel-ratio) ', auto resize: ' attr(data-auto-resize) ', should resize: '
+    attr(data-should-resize) ', fixed size: ' attr(data-fixed-size);
+}
+
+.canvas canvas {
+  background: var(--dark-color);
+}

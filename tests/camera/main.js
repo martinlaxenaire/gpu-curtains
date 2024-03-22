@@ -20,6 +20,7 @@ window.addEventListener('load', async () => {
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
+    //pixelRatio: window.devicePixelRatio,
   })
 
   // render it
