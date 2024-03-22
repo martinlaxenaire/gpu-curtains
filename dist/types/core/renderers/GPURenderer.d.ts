@@ -23,11 +23,13 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane';
 export interface GPURendererParams {
     /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
     deviceManager: GPUDeviceManager;
-    /** {@link HTMLElement} or selector used as a container for our {@link GPURenderer#canvas | canvas} */
+    /** Optional label of this {@link GPURenderer} */
+    label?: string;
+    /** {@link HTMLElement} or selector used as a container for our {@link GPURenderer#canvas | canvas}. Could also be directly a {@link HTMLCanvasElement | canvas element}. */
     container: string | HTMLElement;
     /** Pixel ratio to use for rendering */
     pixelRatio?: number;
-    /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not */
+    /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not. It is advised to set this parameter to `false` if the provided {@link container} is a {@link HTMLCanvasElement | canvas element}, and handle {@link GPURenderer#resize | resizing} by yourself. */
     autoResize?: boolean;
     /** Texture rendering {@link GPUTextureFormat | preferred format} */
     preferredFormat?: GPUTextureFormat;
@@ -98,7 +100,7 @@ export declare class GPURenderer {
     /** Width and height of the canvas */
     size: RectSize;
     /** {@link DOMElement} that will track our canvas container size */
-    domElement: DOMElement;
+    domElement: DOMElement | undefined;
     /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
     onBeforeCommandEncoderCreation: TasksQueueManager;
     /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created but before the {@link Scene} is rendered */
@@ -117,7 +119,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, autoResize, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
     /**
      * Set the renderer and canvas {@link size | size}
      * @param size - the optional new {@link canvas} size to set

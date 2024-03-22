@@ -11,6 +11,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   constructor({
     deviceManager,
+    label,
     container,
     pixelRatio = 1,
     autoResize = true,
@@ -21,6 +22,7 @@ class GPUCameraRenderer extends GPURenderer {
   }) {
     super({
       deviceManager,
+      label,
       container,
       pixelRatio,
       autoResize,

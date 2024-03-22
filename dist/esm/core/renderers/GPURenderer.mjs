@@ -11,6 +11,7 @@ class GPURenderer {
    */
   constructor({
     deviceManager,
+    label = "Main renderer",
     container,
     pixelRatio = 1,
     autoResize = true,
@@ -31,7 +32,7 @@ class GPURenderer {
     this.type = "GPURenderer";
     this.uuid = generateUUID();
     if (!deviceManager) {
-      throwError(`GPURenderer: no device manager provided: ${deviceManager}`);
+      throwError(`GPURenderer (${label}): no device manager provided: ${deviceManager}`);
     }
     this.deviceManager = deviceManager;
     this.deviceManager.addRenderer(this);
@@ -39,6 +40,7 @@ class GPURenderer {
     preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
     this.options = {
       deviceManager,
+      label,
       container,
       pixelRatio,
       autoResize,
@@ -48,22 +50,27 @@ class GPURenderer {
     };
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
     this.alphaMode = alphaMode;
+    const isOffscreenCanvas = container instanceof OffscreenCanvas;
+    const isContainerCanvas = isOffscreenCanvas || container instanceof HTMLCanvasElement;
+    this.canvas = isContainerCanvas ? container : document.createElement("canvas");
+    const { width, height } = this.canvas;
+    this.size = { width, height };
     this.setTasksQueues();
     this.setRendererObjects();
-    const isContainerCanvas = container instanceof HTMLCanvasElement;
-    this.canvas = isContainerCanvas ? container : document.createElement("canvas");
-    this.domElement = new DOMElement({
-      element: container,
-      priority: 5,
-      // renderer callback need to be called first
-      onSizeChanged: () => {
-        if (this.options.autoResize)
-          this.resize();
+    if (!isOffscreenCanvas) {
+      this.domElement = new DOMElement({
+        element: container,
+        priority: 5,
+        // renderer callback need to be called first
+        onSizeChanged: () => {
+          if (this.options.autoResize)
+            this.resize();
+        }
+      });
+      this.resize();
+      if (!isContainerCanvas) {
+        this.domElement.element.appendChild(this.canvas);
       }
-    });
-    this.resize();
-    if (!isContainerCanvas) {
-      this.domElement.element.appendChild(this.canvas);
     }
     if (this.deviceManager.device) {
       this.setContext();
@@ -82,8 +89,10 @@ class GPURenderer {
     this.clampToMaxDimension(renderingSize);
     this.canvas.width = Math.floor(renderingSize.width);
     this.canvas.height = Math.floor(renderingSize.height);
-    this.canvas.style.width = this.size.width + "px";
-    this.canvas.style.height = this.size.height + "px";
+    if (this.canvas.style) {
+      this.canvas.style.width = this.size.width + "px";
+      this.canvas.style.height = this.size.height + "px";
+    }
   }
   /**
    * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
@@ -98,8 +107,6 @@ class GPURenderer {
    * @param size - the optional new {@link canvas} size to set
    */
   resize(size = null) {
-    if (!this.domElement)
-      return;
     this.setSize(size);
     this.onResize();
     this._onAfterResizeCallback && this._onAfterResizeCallback();
@@ -136,9 +143,9 @@ class GPURenderer {
    * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
   get boundingRect() {
-    if (!!this.domElement.boundingRect) {
+    if (!!this.domElement && !!this.domElement.boundingRect) {
       return this.domElement.boundingRect;
-    } else {
+    } else if (!!this.domElement) {
       const boundingRect = this.domElement.element?.getBoundingClientRect();
       return {
         top: boundingRect.top,
@@ -149,6 +156,17 @@ class GPURenderer {
         height: boundingRect.height,
         x: boundingRect.x,
         y: boundingRect.y
+      };
+    } else {
+      return {
+        top: 0,
+        right: this.size.width,
+        bottom: this.size.height,
+        left: 0,
+        width: this.size.width,
+        height: this.size.height,
+        x: 0,
+        y: 0
       };
     }
   }
@@ -264,11 +282,11 @@ class GPURenderer {
    */
   setMainRenderPasses() {
     this.renderPass = new RenderPass(this, {
-      label: "Main render pass",
+      label: this.options.label + " render pass",
       ...this.options.renderPass
     });
     this.postProcessingPass = new RenderPass(this, {
-      label: "Post processing render pass",
+      label: this.options.label + " post processing render pass",
       // no need to handle depth or perform MSAA on a fullscreen quad
       useDepth: false,
       sampleCount: 1
@@ -322,28 +340,32 @@ class GPURenderer {
     commandEncoder
   }) {
     if (!srcBuffer) {
-      throwWarning(`${this.type}: cannot copy to buffer because the source buffer has not been provided`);
+      throwWarning(
+        `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
+      );
       return null;
     }
     if (!dstBuffer) {
       dstBuffer = this.createBuffer({
-        label: this.type + ": destination copy buffer from: " + srcBuffer.label,
+        label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.label}`,
         size: srcBuffer.size,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
       });
     }
     if (srcBuffer.mapState !== "unmapped") {
-      throwWarning(`${this.type}: Cannot copy from ${srcBuffer} because it is currently mapped`);
+      throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${srcBuffer} because it is currently mapped`);
       return;
     }
     if (dstBuffer.mapState !== "unmapped") {
-      throwWarning(`${this.type}: Cannot copy from ${dstBuffer} because it is currently mapped`);
+      throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${dstBuffer} because it is currently mapped`);
       return;
     }
     const hasCommandEncoder = !!commandEncoder;
     if (!hasCommandEncoder) {
-      commandEncoder = this.device?.createCommandEncoder({ label: "Copy buffer command encoder" });
-      !this.production && commandEncoder.pushDebugGroup("Copy buffer command encoder");
+      commandEncoder = this.device?.createCommandEncoder({
+        label: `${this.type} (${this.options.label}): Copy buffer command encoder`
+      });
+      !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
     }
     commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size);
     if (!hasCommandEncoder) {
@@ -671,8 +693,10 @@ class GPURenderer {
   forceClear(commandEncoder) {
     const hasCommandEncoder = !!commandEncoder;
     if (!hasCommandEncoder) {
-      commandEncoder = this.device?.createCommandEncoder({ label: "Force clear command encoder" });
-      !this.production && commandEncoder.pushDebugGroup("Force clear command encoder");
+      commandEncoder = this.device?.createCommandEncoder({
+        label: `${this.type} (${this.options.label}): Force clear command encoder`
+      });
+      !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
     }
     this.renderPass.updateView();
     const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);

@@ -51,6 +51,7 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   constructor({
     deviceManager,
+    label,
     container,
     pixelRatio = 1,
     autoResize = true,
@@ -61,6 +62,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }: GPUCameraRendererParams) {
     super({
       deviceManager,
+      label,
       container,
       pixelRatio,
       autoResize,

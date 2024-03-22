@@ -14,6 +14,7 @@ class GPUCurtains {
    */
   constructor({
     container,
+    label,
     pixelRatio = window.devicePixelRatio ?? 1,
     preferredFormat,
     alphaMode = "premultiplied",
@@ -41,6 +42,7 @@ class GPUCurtains {
     this.type = "CurtainsGPU";
     this.options = {
       container,
+      label,
       pixelRatio,
       camera,
       production,
@@ -92,6 +94,7 @@ class GPUCurtains {
     this.createCurtainsRenderer({
       deviceManager: this.deviceManager,
       // TODO ...this.options?
+      label: this.options.label,
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
       autoResize: this.options.autoResize,
