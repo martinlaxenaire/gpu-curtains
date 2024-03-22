@@ -13,6 +13,7 @@ class GPUCameraRenderer extends GPURenderer {
     deviceManager,
     container,
     pixelRatio = 1,
+    autoResize = true,
     preferredFormat,
     alphaMode = "premultiplied",
     renderPass,
@@ -22,6 +23,7 @@ class GPUCameraRenderer extends GPURenderer {
       deviceManager,
       container,
       pixelRatio,
+      autoResize,
       preferredFormat,
       alphaMode,
       renderPass
@@ -57,8 +59,8 @@ class GPUCameraRenderer extends GPURenderer {
    * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
    */
   setCamera(cameraParameters) {
-    const width = this.boundingRect ? this.boundingRect.width : 1;
-    const height = this.boundingRect ? this.boundingRect.height : 1;
+    const width = this.size ? this.size.width : 1;
+    const height = this.size ? this.size.height : 1;
     this.camera = new Camera({
       fov: cameraParameters.fov,
       near: cameraParameters.near,
@@ -157,8 +159,8 @@ class GPUCameraRenderer extends GPURenderer {
       fov,
       near,
       far,
-      width: this.boundingRect.width,
-      height: this.boundingRect.height,
+      width: this.size.width,
+      height: this.size.height,
       pixelRatio: this.pixelRatio
     });
   }

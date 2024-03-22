@@ -15,7 +15,7 @@ class GPUDeviceManager {
     },
     onDeviceLost = (info) => {
     }
-  }) {
+  } = {}) {
     this.index = 0;
     this.label = label ?? "GPUDeviceManager instance";
     this.production = production;

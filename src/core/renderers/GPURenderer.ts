@@ -1,8 +1,8 @@
 import { PipelineManager } from '../pipelines/PipelineManager'
-import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect, RectSize } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass'
-import { generateUUID, throwWarning } from '../../utils/utils'
+import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
@@ -30,6 +30,9 @@ export interface GPURendererParams {
   container: string | HTMLElement
   /** Pixel ratio to use for rendering */
   pixelRatio?: number
+
+  /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not */
+  autoResize?: boolean
   /** Texture rendering {@link GPUTextureFormat | preferred format} */
   preferredFormat?: GPUTextureFormat
   /** Set the {@link GPUCanvasContext | context} alpha mode */
@@ -106,6 +109,8 @@ export class GPURenderer {
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
+  /** Width and height of the canvas */
+  size: RectSize
 
   /** {@link DOMElement} that will track our canvas container size */
   domElement: DOMElement
@@ -141,12 +146,17 @@ export class GPURenderer {
     deviceManager,
     container,
     pixelRatio = 1,
+    autoResize = true,
     preferredFormat,
     alphaMode = 'premultiplied',
     renderPass,
   }: GPURendererParams) {
     this.type = 'GPURenderer'
     this.uuid = generateUUID()
+
+    if (!deviceManager) {
+      throwError(`GPURenderer: no device manager provided: ${deviceManager}`)
+    }
 
     this.deviceManager = deviceManager
     this.deviceManager.addRenderer(this)
@@ -159,6 +169,7 @@ export class GPURenderer {
       deviceManager,
       container,
       pixelRatio,
+      autoResize,
       preferredFormat,
       alphaMode,
       renderPass,
@@ -178,8 +189,13 @@ export class GPURenderer {
     this.domElement = new DOMElement({
       element: container,
       priority: 5, // renderer callback need to be called first
-      onSizeChanged: (boundingRect) => this.resize(boundingRect),
+      onSizeChanged: () => {
+        if (this.options.autoResize) this.resize()
+      },
     })
+
+    // now that we have a domElement, resize right away
+    this.resize()
 
     if (!isContainerCanvas) {
       // append the canvas
@@ -193,27 +209,47 @@ export class GPURenderer {
   }
 
   /**
-   * Set {@link canvas} size
-   * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+   * Set the renderer and canvas {@link size | size}
+   * @param size - the optional new {@link canvas} size to set
    */
-  setSize(boundingRect: DOMElementBoundingRect) {
-    this.canvas.style.width = Math.floor(boundingRect.width) + 'px'
-    this.canvas.style.height = Math.floor(boundingRect.height) + 'px'
+  setSize(size: Partial<RectSize> | null = null) {
+    size = { ...{ width: this.boundingRect.width, height: this.boundingRect.height }, ...size }
 
-    this.canvas.width = this.getScaledDisplayBoundingRect(boundingRect).width
-    this.canvas.height = this.getScaledDisplayBoundingRect(boundingRect).height
+    this.size = size as RectSize
+
+    const renderingSize = { ...(size as RectSize) }
+
+    renderingSize.width *= this.pixelRatio
+    renderingSize.height *= this.pixelRatio
+
+    this.clampToMaxDimension(renderingSize)
+
+    // canvas rendering size
+    this.canvas.width = Math.floor(renderingSize.width)
+    this.canvas.height = Math.floor(renderingSize.height)
+
+    // canvas display size
+    this.canvas.style.width = this.size.width + 'px'
+    this.canvas.style.height = this.size.height + 'px'
+  }
+
+  /**
+   * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
+   * @param pixelRatio - new pixel ratio to use
+   */
+  setPixelRatio(pixelRatio: number = 1) {
+    this.pixelRatio = pixelRatio
+    this.resize(this.size)
   }
 
   /**
    * Resize our {@link GPURenderer}
-   * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+   * @param size - the optional new {@link canvas} size to set
    */
-  resize(boundingRect: DOMElementBoundingRect | null = null) {
-    if (!this.domElement && !boundingRect) return
+  resize(size: RectSize | null = null) {
+    if (!this.domElement) return
 
-    if (!boundingRect) boundingRect = this.domElement.element.getBoundingClientRect()
-
-    this.setSize(boundingRect)
+    this.setSize(size)
 
     this.onResize()
 
@@ -282,50 +318,14 @@ export class GPURenderer {
   }
 
   /**
-   * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle} accounting for current {@link pixelRatio | pixel ratio}
+   * Clamp to max WebGPU texture dimensions
+   * @param dimension - width and height dimensions to clamp
    */
-  get displayBoundingRect(): DOMElementBoundingRect {
-    return this.getScaledDisplayBoundingRect(this.boundingRect)
-  }
-
-  /**
-   * Get the display bounding rectangle accounting for current {@link pixelRatio | pixel ratio} and max texture dimensions
-   * @param boundingRect - bounding rectangle to check against
-   */
-  getScaledDisplayBoundingRect(boundingRect: DOMElementBoundingRect): DOMElementBoundingRect {
-    const devicePixelRatio = window.devicePixelRatio ?? 1
-    const scaleBoundingRect = this.pixelRatio / devicePixelRatio
-
-    const displayBoundingRect = Object.keys(boundingRect).reduce(
-      (a, key) => ({ ...a, [key]: boundingRect[key] * scaleBoundingRect }),
-      {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-      }
-    )
-
-    // clamp width and height based on limits
+  clampToMaxDimension(dimension: RectSize | DOMElementBoundingRect) {
     if (this.device) {
-      displayBoundingRect.width = Math.min(this.device.limits.maxTextureDimension2D, displayBoundingRect.width)
-      displayBoundingRect.height = Math.min(this.device.limits.maxTextureDimension2D, displayBoundingRect.height)
-
-      displayBoundingRect.right = Math.min(
-        displayBoundingRect.width + displayBoundingRect.left,
-        displayBoundingRect.right
-      )
-      displayBoundingRect.bottom = Math.min(
-        displayBoundingRect.height + displayBoundingRect.top,
-        displayBoundingRect.bottom
-      )
+      dimension.width = Math.min(this.device.limits.maxTextureDimension2D, dimension.width)
+      dimension.height = Math.min(this.device.limits.maxTextureDimension2D, dimension.height)
     }
-
-    return displayBoundingRect
   }
 
   /* USEFUL DEVICE MANAGER OBJECTS */
@@ -343,7 +343,7 @@ export class GPURenderer {
    * @readonly
    */
   get ready(): boolean {
-    return this.deviceManager.ready && !!this.context && !!this.canvas.style.width
+    return this.deviceManager.ready && !!this.context && !!this.canvas.width && !!this.canvas.height
   }
 
   /**

@@ -165,6 +165,7 @@ export class GPUCurtains {
       // TODO ...this.options?
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
+      autoResize: this.options.autoResize,
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
       renderPass: this.options.renderPass,
@@ -178,6 +179,7 @@ export class GPUCurtains {
    */
   patchRendererOptions<T extends GPURendererParams | GPUCameraRendererParams>(parameters: T): T {
     if (parameters.pixelRatio === undefined) parameters.pixelRatio = this.options.pixelRatio
+    if (parameters.autoResize === undefined) parameters.autoResize = this.options.autoResize
 
     return parameters
   }

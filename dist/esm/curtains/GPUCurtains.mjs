@@ -94,6 +94,7 @@ class GPUCurtains {
       // TODO ...this.options?
       container: this.options.container,
       pixelRatio: this.options.pixelRatio,
+      autoResize: this.options.autoResize,
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
       renderPass: this.options.renderPass,
@@ -107,6 +108,8 @@ class GPUCurtains {
   patchRendererOptions(parameters) {
     if (parameters.pixelRatio === void 0)
       parameters.pixelRatio = this.options.pixelRatio;
+    if (parameters.autoResize === void 0)
+      parameters.autoResize = this.options.autoResize;
     return parameters;
   }
   /**

@@ -4146,8 +4146,8 @@
         height: this.options.fixedSize.height * this.options.qualityRatio,
         depth: this.options.fixedSize.depth ?? this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       } : {
-        width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
-        height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
+        width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
+        height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
@@ -4238,8 +4238,8 @@
         return;
       if (!size) {
         size = {
-          width: Math.floor(this.renderer.displayBoundingRect.width * this.options.qualityRatio),
-          height: Math.floor(this.renderer.displayBoundingRect.height * this.options.qualityRatio),
+          width: Math.floor(this.renderer.canvas.width * this.options.qualityRatio),
+          height: Math.floor(this.renderer.canvas.height * this.options.qualityRatio),
           depth: 1
         };
       }
@@ -8879,6 +8879,7 @@ ${this.shaders.compute.head}`;
       deviceManager,
       container,
       pixelRatio = 1,
+      autoResize = true,
       preferredFormat,
       alphaMode = "premultiplied",
       renderPass
@@ -8895,6 +8896,9 @@ ${this.shaders.compute.head}`;
       };
       this.type = "GPURenderer";
       this.uuid = generateUUID();
+      if (!deviceManager) {
+        throwError(`GPURenderer: no device manager provided: ${deviceManager}`);
+      }
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
       renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
@@ -8903,6 +8907,7 @@ ${this.shaders.compute.head}`;
         deviceManager,
         container,
         pixelRatio,
+        autoResize,
         preferredFormat,
         alphaMode,
         renderPass
@@ -8917,8 +8922,12 @@ ${this.shaders.compute.head}`;
         element: container,
         priority: 5,
         // renderer callback need to be called first
-        onSizeChanged: (boundingRect) => this.resize(boundingRect)
+        onSizeChanged: () => {
+          if (this.options.autoResize)
+            this.resize();
+        }
       });
+      this.resize();
       if (!isContainerCanvas) {
         this.domElement.element.appendChild(this.canvas);
       }
@@ -8927,25 +8936,37 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set {@link canvas} size
-     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * Set the renderer and canvas {@link size | size}
+     * @param size - the optional new {@link canvas} size to set
      */
-    setSize(boundingRect) {
-      this.canvas.style.width = Math.floor(boundingRect.width) + "px";
-      this.canvas.style.height = Math.floor(boundingRect.height) + "px";
-      this.canvas.width = this.getScaledDisplayBoundingRect(boundingRect).width;
-      this.canvas.height = this.getScaledDisplayBoundingRect(boundingRect).height;
+    setSize(size = null) {
+      size = { ...{ width: this.boundingRect.width, height: this.boundingRect.height }, ...size };
+      this.size = size;
+      const renderingSize = { ...size };
+      renderingSize.width *= this.pixelRatio;
+      renderingSize.height *= this.pixelRatio;
+      this.clampToMaxDimension(renderingSize);
+      this.canvas.width = Math.floor(renderingSize.width);
+      this.canvas.height = Math.floor(renderingSize.height);
+      this.canvas.style.width = this.size.width + "px";
+      this.canvas.style.height = this.size.height + "px";
+    }
+    /**
+     * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
+     * @param pixelRatio - new pixel ratio to use
+     */
+    setPixelRatio(pixelRatio = 1) {
+      this.pixelRatio = pixelRatio;
+      this.resize(this.size);
     }
     /**
      * Resize our {@link GPURenderer}
-     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * @param size - the optional new {@link canvas} size to set
      */
-    resize(boundingRect = null) {
-      if (!this.domElement && !boundingRect)
+    resize(size = null) {
+      if (!this.domElement)
         return;
-      if (!boundingRect)
-        boundingRect = this.domElement.element.getBoundingClientRect();
-      this.setSize(boundingRect);
+      this.setSize(size);
       this.onResize();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
@@ -8998,44 +9019,14 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle} accounting for current {@link pixelRatio | pixel ratio}
+     * Clamp to max WebGPU texture dimensions
+     * @param dimension - width and height dimensions to clamp
      */
-    get displayBoundingRect() {
-      return this.getScaledDisplayBoundingRect(this.boundingRect);
-    }
-    /**
-     * Get the display bounding rectangle accounting for current {@link pixelRatio | pixel ratio} and max texture dimensions
-     * @param boundingRect - bounding rectangle to check against
-     */
-    getScaledDisplayBoundingRect(boundingRect) {
-      const devicePixelRatio = window.devicePixelRatio ?? 1;
-      const scaleBoundingRect = this.pixelRatio / devicePixelRatio;
-      const displayBoundingRect = Object.keys(boundingRect).reduce(
-        (a, key) => ({ ...a, [key]: boundingRect[key] * scaleBoundingRect }),
-        {
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0,
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0
-        }
-      );
+    clampToMaxDimension(dimension) {
       if (this.device) {
-        displayBoundingRect.width = Math.min(this.device.limits.maxTextureDimension2D, displayBoundingRect.width);
-        displayBoundingRect.height = Math.min(this.device.limits.maxTextureDimension2D, displayBoundingRect.height);
-        displayBoundingRect.right = Math.min(
-          displayBoundingRect.width + displayBoundingRect.left,
-          displayBoundingRect.right
-        );
-        displayBoundingRect.bottom = Math.min(
-          displayBoundingRect.height + displayBoundingRect.top,
-          displayBoundingRect.bottom
-        );
+        dimension.width = Math.min(this.device.limits.maxTextureDimension2D, dimension.width);
+        dimension.height = Math.min(this.device.limits.maxTextureDimension2D, dimension.height);
       }
-      return displayBoundingRect;
     }
     /* USEFUL DEVICE MANAGER OBJECTS */
     /**
@@ -9050,7 +9041,7 @@ ${this.shaders.compute.head}`;
      * @readonly
      */
     get ready() {
-      return this.deviceManager.ready && !!this.context && !!this.canvas.style.width;
+      return this.deviceManager.ready && !!this.context && !!this.canvas.width && !!this.canvas.height;
     }
     /**
      * Get our {@link GPUDeviceManager#production | GPUDeviceManager production flag}
@@ -9610,6 +9601,7 @@ ${this.shaders.compute.head}`;
       deviceManager,
       container,
       pixelRatio = 1,
+      autoResize = true,
       preferredFormat,
       alphaMode = "premultiplied",
       renderPass,
@@ -9619,6 +9611,7 @@ ${this.shaders.compute.head}`;
         deviceManager,
         container,
         pixelRatio,
+        autoResize,
         preferredFormat,
         alphaMode,
         renderPass
@@ -9654,8 +9647,8 @@ ${this.shaders.compute.head}`;
      * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
      */
     setCamera(cameraParameters) {
-      const width = this.boundingRect ? this.boundingRect.width : 1;
-      const height = this.boundingRect ? this.boundingRect.height : 1;
+      const width = this.size ? this.size.width : 1;
+      const height = this.size ? this.size.height : 1;
       this.camera = new Camera({
         fov: cameraParameters.fov,
         near: cameraParameters.near,
@@ -9754,8 +9747,8 @@ ${this.shaders.compute.head}`;
         fov,
         near,
         far,
-        width: this.boundingRect.width,
-        height: this.boundingRect.height,
+        width: this.size.width,
+        height: this.size.height,
         pixelRatio: this.pixelRatio
       });
     }
@@ -9828,7 +9821,7 @@ ${this.shaders.compute.head}`;
       },
       onDeviceLost = (info) => {
       }
-    }) {
+    } = {}) {
       this.index = 0;
       this.label = label ?? "GPUDeviceManager instance";
       this.production = production;
@@ -10923,8 +10916,8 @@ struct VSOutput {
      */
     mouseToPlaneCoords(mouseCoords = new Vec2()) {
       const worldMouse = {
-        x: 2 * (mouseCoords.x / this.renderer.displayBoundingRect.width) - 1,
-        y: 2 * (1 - mouseCoords.y / this.renderer.displayBoundingRect.height) - 1
+        x: 2 * (mouseCoords.x / this.renderer.boundingRect.width) - 1,
+        y: 2 * (1 - mouseCoords.y / this.renderer.boundingRect.height) - 1
       };
       const rayOrigin = this.camera.position.clone();
       const rayDirection = new Vec3(worldMouse.x, worldMouse.y, -0.5);
@@ -10963,6 +10956,7 @@ struct VSOutput {
       deviceManager,
       container,
       pixelRatio = 1,
+      autoResize = true,
       preferredFormat,
       alphaMode = "premultiplied",
       renderPass,
@@ -10972,6 +10966,7 @@ struct VSOutput {
         deviceManager,
         container,
         pixelRatio,
+        autoResize,
         preferredFormat,
         alphaMode,
         renderPass,
@@ -11128,6 +11123,7 @@ struct VSOutput {
         // TODO ...this.options?
         container: this.options.container,
         pixelRatio: this.options.pixelRatio,
+        autoResize: this.options.autoResize,
         preferredFormat: this.options.preferredFormat,
         alphaMode: this.options.alphaMode,
         renderPass: this.options.renderPass,
@@ -11141,6 +11137,8 @@ struct VSOutput {
     patchRendererOptions(parameters) {
       if (parameters.pixelRatio === void 0)
         parameters.pixelRatio = this.options.pixelRatio;
+      if (parameters.autoResize === void 0)
+        parameters.autoResize = this.options.autoResize;
       return parameters;
     }
     /**

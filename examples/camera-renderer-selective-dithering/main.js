@@ -284,7 +284,7 @@ window.addEventListener('load', async () => {
         struct: {
           pixelSize: {
             type: 'f32',
-            value: 2,
+            value: 2 * gpuCameraRenderer.pixelRatio,
           },
         },
       },

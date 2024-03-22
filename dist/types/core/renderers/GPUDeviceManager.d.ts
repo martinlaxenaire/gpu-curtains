@@ -73,7 +73,7 @@ export declare class GPUDeviceManager {
      * GPUDeviceManager constructor
      * @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}
      */
-    constructor({ label, production, adapterOptions, onError, onDeviceLost, }: GPUDeviceManagerParams);
+    constructor({ label, production, adapterOptions, onError, onDeviceLost, }?: GPUDeviceManagerParams);
     /**
      * Set our {@link adapter} and {@link device} if possible
      */

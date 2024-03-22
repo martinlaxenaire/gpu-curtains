@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { PipelineManager } from '../pipelines/PipelineManager';
-import { DOMElement, DOMElementBoundingRect } from '../DOM/DOMElement';
+import { DOMElement, DOMElementBoundingRect, RectSize } from '../DOM/DOMElement';
 import { Scene } from '../scenes/Scene';
 import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass';
 import { ComputePass } from '../computePasses/ComputePass';
@@ -27,6 +27,8 @@ export interface GPURendererParams {
     container: string | HTMLElement;
     /** Pixel ratio to use for rendering */
     pixelRatio?: number;
+    /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not */
+    autoResize?: boolean;
     /** Texture rendering {@link GPUTextureFormat | preferred format} */
     preferredFormat?: GPUTextureFormat;
     /** Set the {@link GPUCanvasContext | context} alpha mode */
@@ -93,6 +95,8 @@ export declare class GPURenderer {
     renderTextures: RenderTexture[];
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
+    /** Width and height of the canvas */
+    size: RectSize;
     /** {@link DOMElement} that will track our canvas container size */
     domElement: DOMElement;
     /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
@@ -113,17 +117,22 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
+    constructor({ deviceManager, container, pixelRatio, autoResize, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
     /**
-     * Set {@link canvas} size
-     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * Set the renderer and canvas {@link size | size}
+     * @param size - the optional new {@link canvas} size to set
      */
-    setSize(boundingRect: DOMElementBoundingRect): void;
+    setSize(size?: Partial<RectSize> | null): void;
+    /**
+     * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
+     * @param pixelRatio - new pixel ratio to use
+     */
+    setPixelRatio(pixelRatio?: number): void;
     /**
      * Resize our {@link GPURenderer}
-     * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * @param size - the optional new {@link canvas} size to set
      */
-    resize(boundingRect?: DOMElementBoundingRect | null): void;
+    resize(size?: RectSize | null): void;
     /**
      * Resize all tracked objects
      */
@@ -133,14 +142,10 @@ export declare class GPURenderer {
      */
     get boundingRect(): DOMElementBoundingRect;
     /**
-     * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle} accounting for current {@link pixelRatio | pixel ratio}
+     * Clamp to max WebGPU texture dimensions
+     * @param dimension - width and height dimensions to clamp
      */
-    get displayBoundingRect(): DOMElementBoundingRect;
-    /**
-     * Get the display bounding rectangle accounting for current {@link pixelRatio | pixel ratio} and max texture dimensions
-     * @param boundingRect - bounding rectangle to check against
-     */
-    getScaledDisplayBoundingRect(boundingRect: DOMElementBoundingRect): DOMElementBoundingRect;
+    clampToMaxDimension(dimension: RectSize | DOMElementBoundingRect): void;
     /**
      * Get our {@link GPUDeviceManager#device | device}
      * @readonly
