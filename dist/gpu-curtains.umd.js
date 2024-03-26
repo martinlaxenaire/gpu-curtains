@@ -4186,6 +4186,8 @@
      * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
      */
     createTexture() {
+      if (!this.size.width || !this.size.height)
+        return;
       if (this.options.fromTexture) {
         this.copyGPUTexture(this.options.fromTexture.texture);
         return;
@@ -7994,16 +7996,18 @@ ${this.shaders.compute.head}`;
     constructor() {
       this.shouldWatch = true;
       this.entries = [];
-      this.resizeObserver = new ResizeObserver((observedEntries) => {
-        const allEntries = observedEntries.map((observedEntry) => {
-          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
-        }).flat().sort((a, b) => b.priority - a.priority);
-        allEntries?.forEach((entry) => {
-          if (entry && entry.callback) {
-            entry.callback();
-          }
+      if (typeof window === "object" && "ResizeObserver" in window) {
+        this.resizeObserver = new ResizeObserver((observedEntries) => {
+          const allEntries = observedEntries.map((observedEntry) => {
+            return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
+          }).flat().sort((a, b) => b.priority - a.priority);
+          allEntries?.forEach((entry) => {
+            if (entry && entry.callback) {
+              entry.callback();
+            }
+          });
         });
-      });
+      }
     }
     /**
      * Set {@link shouldWatch}
@@ -8019,7 +8023,7 @@ ${this.shaders.compute.head}`;
     observe({ element, priority, callback }) {
       if (!element || !this.shouldWatch)
         return;
-      this.resizeObserver.observe(element);
+      this.resizeObserver?.observe(element);
       const entry = {
         element,
         priority,
@@ -8032,14 +8036,14 @@ ${this.shaders.compute.head}`;
      * @param element - {@link HTMLElement} to unobserve
      */
     unobserve(element) {
-      this.resizeObserver.unobserve(element);
+      this.resizeObserver?.unobserve(element);
       this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
     }
     /**
      * Destroy our {@link ResizeManager}
      */
     destroy() {
-      this.resizeObserver.disconnect();
+      this.resizeObserver?.disconnect();
     }
   }
   const resizeManager = new ResizeManager();
@@ -8877,6 +8881,7 @@ ${this.shaders.compute.head}`;
      */
     constructor({
       deviceManager,
+      label = "Main renderer",
       container,
       pixelRatio = 1,
       autoResize = true,
@@ -8897,7 +8902,7 @@ ${this.shaders.compute.head}`;
       this.type = "GPURenderer";
       this.uuid = generateUUID();
       if (!deviceManager) {
-        throwError(`GPURenderer: no device manager provided: ${deviceManager}`);
+        throwError(`GPURenderer (${label}): no device manager provided: ${deviceManager}`);
       }
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
@@ -8905,6 +8910,7 @@ ${this.shaders.compute.head}`;
       preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
       this.options = {
         deviceManager,
+        label,
         container,
         pixelRatio,
         autoResize,
@@ -8914,42 +8920,65 @@ ${this.shaders.compute.head}`;
       };
       this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
       this.alphaMode = alphaMode;
+      const isOffscreenCanvas = container instanceof OffscreenCanvas;
+      const isContainerCanvas = isOffscreenCanvas || container instanceof HTMLCanvasElement;
+      this.canvas = isContainerCanvas ? container : document.createElement("canvas");
+      const { width, height } = this.canvas;
+      this.rectBBox = {
+        width,
+        height,
+        top: 0,
+        left: 0
+      };
       this.setTasksQueues();
       this.setRendererObjects();
-      const isContainerCanvas = container instanceof HTMLCanvasElement;
-      this.canvas = isContainerCanvas ? container : document.createElement("canvas");
-      this.domElement = new DOMElement({
-        element: container,
-        priority: 5,
-        // renderer callback need to be called first
-        onSizeChanged: () => {
-          if (this.options.autoResize)
-            this.resize();
+      if (!isOffscreenCanvas) {
+        this.domElement = new DOMElement({
+          element: container,
+          priority: 5,
+          // renderer callback need to be called first
+          onSizeChanged: () => {
+            if (this.options.autoResize)
+              this.resize();
+          }
+        });
+        this.resize();
+        if (!isContainerCanvas) {
+          this.domElement.element.appendChild(this.canvas);
         }
-      });
-      this.resize();
-      if (!isContainerCanvas) {
-        this.domElement.element.appendChild(this.canvas);
       }
       if (this.deviceManager.device) {
         this.setContext();
       }
     }
     /**
-     * Set the renderer and canvas {@link size | size}
-     * @param size - the optional new {@link canvas} size to set
+     * Set the renderer {@link RectBBox} and canvas sizes
+     * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
      */
-    setSize(size = null) {
-      size = { ...{ width: this.boundingRect.width, height: this.boundingRect.height }, ...size };
-      this.size = size;
-      const renderingSize = { ...size };
+    setSize(rectBBox = null) {
+      rectBBox = {
+        ...{
+          width: this.boundingRect.width,
+          height: this.boundingRect.height,
+          top: this.boundingRect.top,
+          left: this.boundingRect.left
+        },
+        ...rectBBox
+      };
+      this.rectBBox = rectBBox;
+      const renderingSize = {
+        width: this.rectBBox.width,
+        height: this.rectBBox.height
+      };
       renderingSize.width *= this.pixelRatio;
       renderingSize.height *= this.pixelRatio;
       this.clampToMaxDimension(renderingSize);
       this.canvas.width = Math.floor(renderingSize.width);
       this.canvas.height = Math.floor(renderingSize.height);
-      this.canvas.style.width = this.size.width + "px";
-      this.canvas.style.height = this.size.height + "px";
+      if (this.canvas.style) {
+        this.canvas.style.width = this.rectBBox.width + "px";
+        this.canvas.style.height = this.rectBBox.height + "px";
+      }
     }
     /**
      * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
@@ -8957,16 +8986,14 @@ ${this.shaders.compute.head}`;
      */
     setPixelRatio(pixelRatio = 1) {
       this.pixelRatio = pixelRatio;
-      this.resize(this.size);
+      this.resize(this.rectBBox);
     }
     /**
      * Resize our {@link GPURenderer}
-     * @param size - the optional new {@link canvas} size to set
+     * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
      */
-    resize(size = null) {
-      if (!this.domElement)
-        return;
-      this.setSize(size);
+    resize(rectBBox = null) {
+      this.setSize(rectBBox);
       this.onResize();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
@@ -8999,12 +9026,12 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}. If there's no {@link domElement | DOM Element} (like when using an offscreen canvas for example), the {@link rectBBox} values are used.
      */
     get boundingRect() {
-      if (!!this.domElement.boundingRect) {
+      if (!!this.domElement && !!this.domElement.boundingRect) {
         return this.domElement.boundingRect;
-      } else {
+      } else if (!!this.domElement) {
         const boundingRect = this.domElement.element?.getBoundingClientRect();
         return {
           top: boundingRect.top,
@@ -9015,6 +9042,17 @@ ${this.shaders.compute.head}`;
           height: boundingRect.height,
           x: boundingRect.x,
           y: boundingRect.y
+        };
+      } else {
+        return {
+          top: this.rectBBox.top,
+          right: this.rectBBox.left + this.rectBBox.width,
+          bottom: this.rectBBox.top + this.rectBBox.height,
+          left: this.rectBBox.left,
+          width: this.rectBBox.width,
+          height: this.rectBBox.height,
+          x: this.rectBBox.left,
+          y: this.rectBBox.top
         };
       }
     }
@@ -9130,11 +9168,11 @@ ${this.shaders.compute.head}`;
      */
     setMainRenderPasses() {
       this.renderPass = new RenderPass(this, {
-        label: "Main render pass",
+        label: this.options.label + " render pass",
         ...this.options.renderPass
       });
       this.postProcessingPass = new RenderPass(this, {
-        label: "Post processing render pass",
+        label: this.options.label + " post processing render pass",
         // no need to handle depth or perform MSAA on a fullscreen quad
         useDepth: false,
         sampleCount: 1
@@ -9188,28 +9226,32 @@ ${this.shaders.compute.head}`;
       commandEncoder
     }) {
       if (!srcBuffer) {
-        throwWarning(`${this.type}: cannot copy to buffer because the source buffer has not been provided`);
+        throwWarning(
+          `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
+        );
         return null;
       }
       if (!dstBuffer) {
         dstBuffer = this.createBuffer({
-          label: this.type + ": destination copy buffer from: " + srcBuffer.label,
+          label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.label}`,
           size: srcBuffer.size,
           usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
         });
       }
       if (srcBuffer.mapState !== "unmapped") {
-        throwWarning(`${this.type}: Cannot copy from ${srcBuffer} because it is currently mapped`);
+        throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${srcBuffer} because it is currently mapped`);
         return;
       }
       if (dstBuffer.mapState !== "unmapped") {
-        throwWarning(`${this.type}: Cannot copy from ${dstBuffer} because it is currently mapped`);
+        throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${dstBuffer} because it is currently mapped`);
         return;
       }
       const hasCommandEncoder = !!commandEncoder;
       if (!hasCommandEncoder) {
-        commandEncoder = this.device?.createCommandEncoder({ label: "Copy buffer command encoder" });
-        !this.production && commandEncoder.pushDebugGroup("Copy buffer command encoder");
+        commandEncoder = this.device?.createCommandEncoder({
+          label: `${this.type} (${this.options.label}): Copy buffer command encoder`
+        });
+        !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
       }
       commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size);
       if (!hasCommandEncoder) {
@@ -9537,8 +9579,10 @@ ${this.shaders.compute.head}`;
     forceClear(commandEncoder) {
       const hasCommandEncoder = !!commandEncoder;
       if (!hasCommandEncoder) {
-        commandEncoder = this.device?.createCommandEncoder({ label: "Force clear command encoder" });
-        !this.production && commandEncoder.pushDebugGroup("Force clear command encoder");
+        commandEncoder = this.device?.createCommandEncoder({
+          label: `${this.type} (${this.options.label}): Force clear command encoder`
+        });
+        !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
       }
       this.renderPass.updateView();
       const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
@@ -9599,6 +9643,7 @@ ${this.shaders.compute.head}`;
      */
     constructor({
       deviceManager,
+      label,
       container,
       pixelRatio = 1,
       autoResize = true,
@@ -9609,6 +9654,7 @@ ${this.shaders.compute.head}`;
     }) {
       super({
         deviceManager,
+        label,
         container,
         pixelRatio,
         autoResize,
@@ -9647,8 +9693,7 @@ ${this.shaders.compute.head}`;
      * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
      */
     setCamera(cameraParameters) {
-      const width = this.size ? this.size.width : 1;
-      const height = this.size ? this.size.height : 1;
+      const { width, height } = this.rectBBox;
       this.camera = new Camera({
         fov: cameraParameters.fov,
         near: cameraParameters.near,
@@ -9747,8 +9792,8 @@ ${this.shaders.compute.head}`;
         fov,
         near,
         far,
-        width: this.size.width,
-        height: this.size.height,
+        width: this.rectBBox.width,
+        height: this.rectBBox.height,
         pixelRatio: this.pixelRatio
       });
     }
@@ -10954,6 +10999,7 @@ struct VSOutput {
      */
     constructor({
       deviceManager,
+      label,
       container,
       pixelRatio = 1,
       autoResize = true,
@@ -10964,6 +11010,7 @@ struct VSOutput {
     }) {
       super({
         deviceManager,
+        label,
         container,
         pixelRatio,
         autoResize,
@@ -11043,6 +11090,7 @@ struct VSOutput {
      */
     constructor({
       container,
+      label,
       pixelRatio = window.devicePixelRatio ?? 1,
       preferredFormat,
       alphaMode = "premultiplied",
@@ -11070,6 +11118,7 @@ struct VSOutput {
       this.type = "CurtainsGPU";
       this.options = {
         container,
+        label,
         pixelRatio,
         camera,
         production,
@@ -11121,6 +11170,7 @@ struct VSOutput {
       this.createCurtainsRenderer({
         deviceManager: this.deviceManager,
         // TODO ...this.options?
+        label: this.options.label,
         container: this.options.container,
         pixelRatio: this.options.pixelRatio,
         autoResize: this.options.autoResize,

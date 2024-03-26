@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { PipelineManager } from '../pipelines/PipelineManager';
-import { DOMElement, DOMElementBoundingRect, RectSize } from '../DOM/DOMElement';
+import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement';
 import { Scene } from '../scenes/Scene';
 import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass';
 import { ComputePass } from '../computePasses/ComputePass';
@@ -23,11 +23,13 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane';
 export interface GPURendererParams {
     /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
     deviceManager: GPUDeviceManager;
-    /** {@link HTMLElement} or selector used as a container for our {@link GPURenderer#canvas | canvas} */
+    /** Optional label of this {@link GPURenderer} */
+    label?: string;
+    /** {@link HTMLElement} or selector used as a container for our {@link GPURenderer#canvas | canvas}. Could also be directly a {@link HTMLCanvasElement | canvas element}. */
     container: string | HTMLElement;
     /** Pixel ratio to use for rendering */
     pixelRatio?: number;
-    /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not */
+    /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not. It is advised to set this parameter to `false` if the provided {@link container} is a {@link HTMLCanvasElement | canvas element}, and handle {@link GPURenderer#resize | resizing} by yourself. */
     autoResize?: boolean;
     /** Texture rendering {@link GPUTextureFormat | preferred format} */
     preferredFormat?: GPUTextureFormat;
@@ -95,10 +97,10 @@ export declare class GPURenderer {
     renderTextures: RenderTexture[];
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
-    /** Width and height of the canvas */
-    size: RectSize;
+    /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
+    rectBBox: RectBBox;
     /** {@link DOMElement} that will track our canvas container size */
-    domElement: DOMElement;
+    domElement: DOMElement | undefined;
     /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
     onBeforeCommandEncoderCreation: TasksQueueManager;
     /** Allow to add callbacks to be executed at each render after the {@link GPUCommandEncoder} has been created but before the {@link Scene} is rendered */
@@ -117,12 +119,12 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}
      */
-    constructor({ deviceManager, container, pixelRatio, autoResize, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, preferredFormat, alphaMode, renderPass, }: GPURendererParams);
     /**
-     * Set the renderer and canvas {@link size | size}
-     * @param size - the optional new {@link canvas} size to set
+     * Set the renderer {@link RectBBox} and canvas sizes
+     * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
      */
-    setSize(size?: Partial<RectSize> | null): void;
+    setSize(rectBBox?: Partial<RectBBox> | null): void;
     /**
      * Set the renderer {@link pixelRatio | pixel ratio} and {@link resize} it
      * @param pixelRatio - new pixel ratio to use
@@ -130,15 +132,15 @@ export declare class GPURenderer {
     setPixelRatio(pixelRatio?: number): void;
     /**
      * Resize our {@link GPURenderer}
-     * @param size - the optional new {@link canvas} size to set
+     * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
      */
-    resize(size?: RectSize | null): void;
+    resize(rectBBox?: RectBBox | null): void;
     /**
      * Resize all tracked objects
      */
     onResize(): void;
     /**
-     * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+     * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}. If there's no {@link domElement | DOM Element} (like when using an offscreen canvas for example), the {@link rectBBox} values are used.
      */
     get boundingRect(): DOMElementBoundingRect;
     /**
