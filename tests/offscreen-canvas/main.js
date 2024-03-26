@@ -3,6 +3,7 @@ import { init, resize } from './init.js'
 // offscreen canvas rendering test
 // based on https://threejs.org/examples/webgl_worker_offscreencanvas.html
 window.addEventListener('load', async () => {
+  const isLocal = location.hostname === 'localhost'
   const canvases = document.querySelectorAll('.canvas')
 
   canvases.forEach((canvas) => {
@@ -13,6 +14,7 @@ window.addEventListener('load', async () => {
         canvas,
         label: 'Regular renderer',
         pixelRatio: 1,
+        isLocal,
       })
 
       window.addEventListener('resize', () => {
@@ -43,6 +45,7 @@ window.addEventListener('load', async () => {
           top: boundingRect.top,
           left: boundingRect.left,
           pixelRatio: 1,
+          isLocal,
         },
         [offscreen]
       )
