@@ -32,7 +32,10 @@ window.addEventListener('load', async () => {
       const boundingRect = canvas.getBoundingClientRect()
       const offscreen = canvas.transferControlToOffscreen()
 
-      let url = new URL('tests/offscreen-canvas/worker.js', window.location.origin)
+      let url = new URL(
+        isLocal ? 'tests/offscreen-canvas/worker.js' : 'gpu-curtains/tests/offscreen-canvas/worker.js',
+        window.location.origin
+      )
       const worker = new Worker(url.toString(), { type: 'module' })
 
       worker.postMessage(
