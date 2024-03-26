@@ -1,8 +1,11 @@
-import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Mesh } from '../../src/index.ts'
+//import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Mesh } from '../../src/index.ts'
 
 let renderer
 
-export const init = async ({ canvas, label, width, height, top = 0, left = 0, pixelRatio }) => {
+export const init = async ({ canvas, label, width, height, top = 0, left = 0, pixelRatio, isLocal = false }) => {
+  const path = isLocal ? '../../src/index.ts' : '../../dist/esm/index.mjs'
+  const { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Mesh } = await import(/* @vite-ignore */ path)
+
   const deviceManager = new GPUDeviceManager()
 
   await deviceManager.init()
@@ -40,5 +43,5 @@ export const init = async ({ canvas, label, width, height, top = 0, left = 0, pi
 }
 
 export const resize = ({ width, height, top = 0, left = 0 }) => {
-  renderer.resize({ width, height, top, left })
+  renderer?.resize({ width, height, top, left })
 }
