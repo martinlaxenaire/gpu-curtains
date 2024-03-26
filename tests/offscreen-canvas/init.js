@@ -1,5 +1,3 @@
-//import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Mesh } from '../../src/index.ts'
-
 let renderer
 
 export const init = async ({ canvas, label, width, height, top = 0, left = 0, pixelRatio, isLocal = false }) => {

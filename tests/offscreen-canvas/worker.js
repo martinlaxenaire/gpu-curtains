@@ -1,4 +1,4 @@
-import { init, resize } from './init'
+import { init, resize } from './init.js'
 
 self.onmessage = function (message) {
   const { data } = message
