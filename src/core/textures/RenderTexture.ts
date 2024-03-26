@@ -24,7 +24,7 @@ export interface RenderTextureBaseParams {
   /** Optional fixed size of the {@link RenderTexture#texture | texture}. If set, the {@link RenderTexture} will never be resized and always keep that size. */
   fixedSize?: TextureSize
 
-  /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#size | renderer size} or {@link fixedSize}. Used mainly to shrink render target definition. */
+  /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size or {@link fixedSize}. Used mainly to shrink render target definition. */
   qualityRatio?: number
 
   /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
@@ -96,7 +96,7 @@ export class RenderTexture {
   /** The {@link GPUTexture} used */
   texture: GPUTexture
 
-  /** Size of the {@link RenderTexture#texture | texture} source, usually our {@link Renderer#size | renderer size} */
+  /** Size of the {@link RenderTexture#texture | texture} source, usually our {@link Renderer#canvas | renderer canvas} size */
   size: TextureSize
 
   /** Options used to create this {@link RenderTexture} */

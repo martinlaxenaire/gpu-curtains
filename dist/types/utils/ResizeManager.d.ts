@@ -19,7 +19,7 @@ export declare class ResizeManager {
     /** Array of {@link ResizeManagerEntry | entries} */
     entries: ResizeManagerEntry[];
     /** {@link ResizeObserver} used */
-    resizeObserver: ResizeObserver;
+    resizeObserver: ResizeObserver | undefined;
     /**
      * ResizeManager constructor
      */

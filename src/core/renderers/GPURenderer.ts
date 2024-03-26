@@ -1,5 +1,5 @@
 import { PipelineManager } from '../pipelines/PipelineManager'
-import { DOMElement, DOMElementBoundingRect, RectSize } from '../DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass'
 import { generateUUID, throwError, throwWarning } from '../../utils/utils'
@@ -112,8 +112,8 @@ export class GPURenderer {
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
-  /** Width and height of the canvas */
-  size: RectSize
+  /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
+  rectBBox: RectBBox
 
   /** {@link DOMElement} that will track our canvas container size */
   domElement: DOMElement | undefined
@@ -190,7 +190,12 @@ export class GPURenderer {
 
     // set default size
     const { width, height } = this.canvas
-    this.size = { width, height }
+    this.rectBBox = {
+      width,
+      height,
+      top: 0,
+      left: 0,
+    }
 
     this.setTasksQueues()
     this.setRendererObjects()
@@ -221,15 +226,27 @@ export class GPURenderer {
   }
 
   /**
-   * Set the renderer and canvas {@link size | size}
-   * @param size - the optional new {@link canvas} size to set
+   * Set the renderer {@link RectBBox} and canvas sizes
+   * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
    */
-  setSize(size: Partial<RectSize> | null = null) {
-    size = { ...{ width: this.boundingRect.width, height: this.boundingRect.height }, ...size }
+  setSize(rectBBox: Partial<RectBBox> | null = null) {
+    // patch rect bbox with missing values from bounding rect if needed
+    rectBBox = {
+      ...{
+        width: this.boundingRect.width,
+        height: this.boundingRect.height,
+        top: this.boundingRect.top,
+        left: this.boundingRect.left,
+      },
+      ...rectBBox,
+    }
 
-    this.size = size as RectSize
+    this.rectBBox = rectBBox as RectBBox
 
-    const renderingSize = { ...(size as RectSize) }
+    const renderingSize = {
+      width: this.rectBBox.width,
+      height: this.rectBBox.height,
+    }
 
     renderingSize.width *= this.pixelRatio
     renderingSize.height *= this.pixelRatio
@@ -242,8 +259,8 @@ export class GPURenderer {
 
     // canvas display size
     if (this.canvas.style) {
-      this.canvas.style.width = this.size.width + 'px'
-      this.canvas.style.height = this.size.height + 'px'
+      this.canvas.style.width = this.rectBBox.width + 'px'
+      this.canvas.style.height = this.rectBBox.height + 'px'
     }
   }
 
@@ -253,15 +270,15 @@ export class GPURenderer {
    */
   setPixelRatio(pixelRatio: number = 1) {
     this.pixelRatio = pixelRatio
-    this.resize(this.size)
+    this.resize(this.rectBBox)
   }
 
   /**
    * Resize our {@link GPURenderer}
-   * @param size - the optional new {@link canvas} size to set
+   * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
    */
-  resize(size: RectSize | null = null) {
-    this.setSize(size)
+  resize(rectBBox: RectBBox | null = null) {
+    this.setSize(rectBBox)
 
     this.onResize()
 
@@ -309,7 +326,7 @@ export class GPURenderer {
   }
 
   /**
-   * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+   * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}. If there's no {@link domElement | DOM Element} (like when using an offscreen canvas for example), the {@link rectBBox} values are used.
    */
   get boundingRect(): DOMElementBoundingRect {
     if (!!this.domElement && !!this.domElement.boundingRect) {
@@ -328,14 +345,14 @@ export class GPURenderer {
       }
     } else {
       return {
-        top: 0,
-        right: this.size.width,
-        bottom: this.size.height,
-        left: 0,
-        width: this.size.width,
-        height: this.size.height,
-        x: 0,
-        y: 0,
+        top: this.rectBBox.top,
+        right: this.rectBBox.left + this.rectBBox.width,
+        bottom: this.rectBBox.top + this.rectBBox.height,
+        left: this.rectBBox.left,
+        width: this.rectBBox.width,
+        height: this.rectBBox.height,
+        x: this.rectBBox.left,
+        y: this.rectBBox.top,
       }
     }
   }

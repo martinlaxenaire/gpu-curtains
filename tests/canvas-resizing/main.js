@@ -1,4 +1,4 @@
-// Goal of this test is multiple renderers handling
+// Goal of this is to test the different resizing behaviours of the renderer in the wild
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { BoxGeometry, GPUDeviceManager, GPUCameraRenderer, Mesh } = await import(/* @vite-ignore */ path)

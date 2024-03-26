@@ -21,7 +21,7 @@ export class ResizeManager {
   /** Array of {@link ResizeManagerEntry | entries} */
   entries: ResizeManagerEntry[]
   /** {@link ResizeObserver} used */
-  resizeObserver: ResizeObserver
+  resizeObserver: ResizeObserver | undefined
 
   /**
    * ResizeManager constructor
@@ -32,6 +32,7 @@ export class ResizeManager {
 
     this.entries = []
 
+    // do not throw an error if we're using the lib inside a worker
     if (typeof window === 'object' && 'ResizeObserver' in window) {
       this.resizeObserver = new ResizeObserver((observedEntries) => {
         // get all entries corresponding to that element, and sort them by priority

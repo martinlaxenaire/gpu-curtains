@@ -2,7 +2,7 @@ import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Mesh } from '../../sr
 
 let renderer
 
-export const init = async ({ canvas, label, width, height, pixelRatio, isOffscreen = false }) => {
+export const init = async ({ canvas, label, width, height, top = 0, left = 0, pixelRatio }) => {
   const deviceManager = new GPUDeviceManager()
 
   await deviceManager.init()
@@ -24,10 +24,10 @@ export const init = async ({ canvas, label, width, height, pixelRatio, isOffscre
   })
 
   if (width && height) {
-    renderer.resize({ width, height })
+    renderer.resize({ width, height, top, left })
   }
 
-  console.log(isOffscreen, renderer)
+  console.log(renderer)
 
   const mesh = new Mesh(renderer, {
     geometry: new BoxGeometry(),
@@ -39,6 +39,6 @@ export const init = async ({ canvas, label, width, height, pixelRatio, isOffscre
   })
 }
 
-export const resize = ({ width, height }) => {
-  renderer.resize({ width, height })
+export const resize = ({ width, height, top = 0, left = 0 }) => {
+  renderer.resize({ width, height, top, left })
 }

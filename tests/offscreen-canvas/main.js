@@ -1,5 +1,6 @@
 import { init, resize } from './init.js'
 
+// offscreen canvas rendering test
 // based on https://threejs.org/examples/webgl_worker_offscreencanvas.html
 window.addEventListener('load', async () => {
   const canvases = document.querySelectorAll('.canvas')
@@ -18,7 +19,12 @@ window.addEventListener('load', async () => {
         const container = canvas.closest('.canvas-container')
         const boundingRect = container.getBoundingClientRect()
 
-        resize({ width: boundingRect.width, height: boundingRect.height })
+        resize({
+          width: boundingRect.width,
+          height: boundingRect.height,
+          top: boundingRect.top,
+          left: boundingRect.left,
+        })
       })
     } else {
       const boundingRect = canvas.getBoundingClientRect()
@@ -34,6 +40,8 @@ window.addEventListener('load', async () => {
           label: 'Offscreen renderer',
           width: boundingRect.width,
           height: boundingRect.height,
+          top: boundingRect.top,
+          left: boundingRect.left,
           pixelRatio: 1,
         },
         [offscreen]
@@ -47,6 +55,8 @@ window.addEventListener('load', async () => {
           type: 'resize',
           width: boundingRect.width,
           height: boundingRect.height,
+          top: boundingRect.top,
+          left: boundingRect.left,
         })
       })
     }

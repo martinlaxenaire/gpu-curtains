@@ -21,7 +21,7 @@ export interface RenderPassParams {
     label?: string;
     /** Whether the {@link RenderPass | view and depth textures} should use multisampling or not */
     sampleCount?: GPUSize32;
-    /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#size | renderer size}. Used mainly to shrink the rendered definition. */
+    /** Force all the {@link RenderPass} textures size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size. Used mainly to lower the rendered definition. */
     qualityRatio?: number;
     /** Whether this {@link RenderPass} should handle a view texture */
     useColorAttachments?: boolean;
