@@ -7,6 +7,7 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
    */
   constructor({
     deviceManager,
+    label,
     container,
     pixelRatio = 1,
     autoResize = true,
@@ -17,6 +18,7 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
   }) {
     super({
       deviceManager,
+      label,
       container,
       pixelRatio,
       autoResize,

@@ -5,16 +5,18 @@ class ResizeManager {
   constructor() {
     this.shouldWatch = true;
     this.entries = [];
-    this.resizeObserver = new ResizeObserver((observedEntries) => {
-      const allEntries = observedEntries.map((observedEntry) => {
-        return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
-      }).flat().sort((a, b) => b.priority - a.priority);
-      allEntries?.forEach((entry) => {
-        if (entry && entry.callback) {
-          entry.callback();
-        }
+    if (typeof window === "object" && "ResizeObserver" in window) {
+      this.resizeObserver = new ResizeObserver((observedEntries) => {
+        const allEntries = observedEntries.map((observedEntry) => {
+          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target));
+        }).flat().sort((a, b) => b.priority - a.priority);
+        allEntries?.forEach((entry) => {
+          if (entry && entry.callback) {
+            entry.callback();
+          }
+        });
       });
-    });
+    }
   }
   /**
    * Set {@link shouldWatch}
@@ -30,7 +32,7 @@ class ResizeManager {
   observe({ element, priority, callback }) {
     if (!element || !this.shouldWatch)
       return;
-    this.resizeObserver.observe(element);
+    this.resizeObserver?.observe(element);
     const entry = {
       element,
       priority,
@@ -43,14 +45,14 @@ class ResizeManager {
    * @param element - {@link HTMLElement} to unobserve
    */
   unobserve(element) {
-    this.resizeObserver.unobserve(element);
+    this.resizeObserver?.unobserve(element);
     this.entries = this.entries.filter((e) => !e.element.isSameNode(element));
   }
   /**
    * Destroy our {@link ResizeManager}
    */
   destroy() {
-    this.resizeObserver.disconnect();
+    this.resizeObserver?.disconnect();
   }
 }
 const resizeManager = new ResizeManager();

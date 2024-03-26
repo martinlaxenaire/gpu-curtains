@@ -21,7 +21,7 @@ export class ResizeManager {
   /** Array of {@link ResizeManagerEntry | entries} */
   entries: ResizeManagerEntry[]
   /** {@link ResizeObserver} used */
-  resizeObserver: ResizeObserver
+  resizeObserver: ResizeObserver | undefined
 
   /**
    * ResizeManager constructor
@@ -32,21 +32,24 @@ export class ResizeManager {
 
     this.entries = []
 
-    this.resizeObserver = new ResizeObserver((observedEntries) => {
-      // get all entries corresponding to that element, and sort them by priority
-      const allEntries = observedEntries
-        .map((observedEntry) => {
-          return this.entries.filter((e) => e.element.isSameNode(observedEntry.target))
-        })
-        .flat()
-        .sort((a, b) => b.priority - a.priority)
+    // do not throw an error if we're using the lib inside a worker
+    if (typeof window === 'object' && 'ResizeObserver' in window) {
+      this.resizeObserver = new ResizeObserver((observedEntries) => {
+        // get all entries corresponding to that element, and sort them by priority
+        const allEntries = observedEntries
+          .map((observedEntry) => {
+            return this.entries.filter((e) => e.element.isSameNode(observedEntry.target))
+          })
+          .flat()
+          .sort((a, b) => b.priority - a.priority)
 
-      allEntries?.forEach((entry) => {
-        if (entry && entry.callback) {
-          entry.callback()
-        }
+        allEntries?.forEach((entry) => {
+          if (entry && entry.callback) {
+            entry.callback()
+          }
+        })
       })
-    })
+    }
   }
 
   /**
@@ -64,7 +67,7 @@ export class ResizeManager {
   observe({ element, priority, callback }: ResizeManagerEntry) {
     if (!element || !this.shouldWatch) return
 
-    this.resizeObserver.observe(element)
+    this.resizeObserver?.observe(element)
 
     const entry = {
       element,
@@ -80,7 +83,7 @@ export class ResizeManager {
    * @param element - {@link HTMLElement} to unobserve
    */
   unobserve(element: DOMElement['element'] | Element) {
-    this.resizeObserver.unobserve(element)
+    this.resizeObserver?.unobserve(element)
     this.entries = this.entries.filter((e) => !e.element.isSameNode(element))
   }
 
@@ -88,7 +91,7 @@ export class ResizeManager {
    * Destroy our {@link ResizeManager}
    */
   destroy() {
-    this.resizeObserver.disconnect()
+    this.resizeObserver?.disconnect()
   }
 }
 

@@ -11,6 +11,7 @@ class GPUCameraRenderer extends GPURenderer {
    */
   constructor({
     deviceManager,
+    label,
     container,
     pixelRatio = 1,
     autoResize = true,
@@ -21,6 +22,7 @@ class GPUCameraRenderer extends GPURenderer {
   }) {
     super({
       deviceManager,
+      label,
       container,
       pixelRatio,
       autoResize,
@@ -59,8 +61,7 @@ class GPUCameraRenderer extends GPURenderer {
    * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
    */
   setCamera(cameraParameters) {
-    const width = this.size ? this.size.width : 1;
-    const height = this.size ? this.size.height : 1;
+    const { width, height } = this.rectBBox;
     this.camera = new Camera({
       fov: cameraParameters.fov,
       near: cameraParameters.near,
@@ -159,8 +160,8 @@ class GPUCameraRenderer extends GPURenderer {
       fov,
       near,
       far,
-      width: this.size.width,
-      height: this.size.height,
+      width: this.rectBBox.width,
+      height: this.rectBBox.height,
       pixelRatio: this.pixelRatio
     });
   }

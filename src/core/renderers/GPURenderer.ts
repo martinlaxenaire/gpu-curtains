@@ -1,5 +1,5 @@
 import { PipelineManager } from '../pipelines/PipelineManager'
-import { DOMElement, DOMElementBoundingRect, RectSize } from '../DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement'
 import { Scene } from '../scenes/Scene'
 import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass'
 import { generateUUID, throwError, throwWarning } from '../../utils/utils'
@@ -26,12 +26,15 @@ import { FullscreenPlane } from '../meshes/FullscreenPlane'
 export interface GPURendererParams {
   /** The {@link GPUDeviceManager} used to create this {@link GPURenderer} */
   deviceManager: GPUDeviceManager
-  /** {@link HTMLElement} or selector used as a container for our {@link GPURenderer#canvas | canvas} */
+
+  /** Optional label of this {@link GPURenderer} */
+  label?: string
+  /** {@link HTMLElement} or selector used as a container for our {@link GPURenderer#canvas | canvas}. Could also be directly a {@link HTMLCanvasElement | canvas element}. */
   container: string | HTMLElement
   /** Pixel ratio to use for rendering */
   pixelRatio?: number
 
-  /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not */
+  /** Whether to auto resize the renderer each time its {@link GPURenderer#domElement} size changes or not. It is advised to set this parameter to `false` if the provided {@link container} is a {@link HTMLCanvasElement | canvas element}, and handle {@link GPURenderer#resize | resizing} by yourself. */
   autoResize?: boolean
   /** Texture rendering {@link GPUTextureFormat | preferred format} */
   preferredFormat?: GPUTextureFormat
@@ -109,11 +112,11 @@ export class GPURenderer {
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
-  /** Width and height of the canvas */
-  size: RectSize
+  /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
+  rectBBox: RectBBox
 
   /** {@link DOMElement} that will track our canvas container size */
-  domElement: DOMElement
+  domElement: DOMElement | undefined
 
   /** Allow to add callbacks to be executed at each render before the {@link GPUCommandEncoder} is created */
   onBeforeCommandEncoderCreation: TasksQueueManager
@@ -144,6 +147,7 @@ export class GPURenderer {
    */
   constructor({
     deviceManager,
+    label = 'Main renderer',
     container,
     pixelRatio = 1,
     autoResize = true,
@@ -155,7 +159,7 @@ export class GPURenderer {
     this.uuid = generateUUID()
 
     if (!deviceManager) {
-      throwError(`GPURenderer: no device manager provided: ${deviceManager}`)
+      throwError(`GPURenderer (${label}): no device manager provided: ${deviceManager}`)
     }
 
     this.deviceManager = deviceManager
@@ -167,6 +171,7 @@ export class GPURenderer {
 
     this.options = {
       deviceManager,
+      label,
       container,
       pixelRatio,
       autoResize,
@@ -178,28 +183,40 @@ export class GPURenderer {
     this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1
     this.alphaMode = alphaMode
 
+    // create the canvas
+    const isOffscreenCanvas = container instanceof OffscreenCanvas
+    const isContainerCanvas = isOffscreenCanvas || container instanceof HTMLCanvasElement
+    this.canvas = isContainerCanvas ? (container as HTMLCanvasElement) : document.createElement('canvas')
+
+    // set default size
+    const { width, height } = this.canvas
+    this.rectBBox = {
+      width,
+      height,
+      top: 0,
+      left: 0,
+    }
+
     this.setTasksQueues()
     this.setRendererObjects()
 
-    // create the canvas
-    const isContainerCanvas = container instanceof HTMLCanvasElement
-    this.canvas = isContainerCanvas ? (container as HTMLCanvasElement) : document.createElement('canvas')
+    if (!isOffscreenCanvas) {
+      // needed to get container bounding box
+      this.domElement = new DOMElement({
+        element: container,
+        priority: 5, // renderer callback need to be called first
+        onSizeChanged: () => {
+          if (this.options.autoResize) this.resize()
+        },
+      })
 
-    // needed to get container bounding box
-    this.domElement = new DOMElement({
-      element: container,
-      priority: 5, // renderer callback need to be called first
-      onSizeChanged: () => {
-        if (this.options.autoResize) this.resize()
-      },
-    })
+      // now that we have a domElement, resize right away
+      this.resize()
 
-    // now that we have a domElement, resize right away
-    this.resize()
-
-    if (!isContainerCanvas) {
-      // append the canvas
-      this.domElement.element.appendChild(this.canvas)
+      if (!isContainerCanvas) {
+        // append the canvas
+        this.domElement.element.appendChild(this.canvas)
+      }
     }
 
     // device is already available? create the context!
@@ -209,15 +226,27 @@ export class GPURenderer {
   }
 
   /**
-   * Set the renderer and canvas {@link size | size}
-   * @param size - the optional new {@link canvas} size to set
+   * Set the renderer {@link RectBBox} and canvas sizes
+   * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
    */
-  setSize(size: Partial<RectSize> | null = null) {
-    size = { ...{ width: this.boundingRect.width, height: this.boundingRect.height }, ...size }
+  setSize(rectBBox: Partial<RectBBox> | null = null) {
+    // patch rect bbox with missing values from bounding rect if needed
+    rectBBox = {
+      ...{
+        width: this.boundingRect.width,
+        height: this.boundingRect.height,
+        top: this.boundingRect.top,
+        left: this.boundingRect.left,
+      },
+      ...rectBBox,
+    }
 
-    this.size = size as RectSize
+    this.rectBBox = rectBBox as RectBBox
 
-    const renderingSize = { ...(size as RectSize) }
+    const renderingSize = {
+      width: this.rectBBox.width,
+      height: this.rectBBox.height,
+    }
 
     renderingSize.width *= this.pixelRatio
     renderingSize.height *= this.pixelRatio
@@ -229,8 +258,10 @@ export class GPURenderer {
     this.canvas.height = Math.floor(renderingSize.height)
 
     // canvas display size
-    this.canvas.style.width = this.size.width + 'px'
-    this.canvas.style.height = this.size.height + 'px'
+    if (this.canvas.style) {
+      this.canvas.style.width = this.rectBBox.width + 'px'
+      this.canvas.style.height = this.rectBBox.height + 'px'
+    }
   }
 
   /**
@@ -239,17 +270,15 @@ export class GPURenderer {
    */
   setPixelRatio(pixelRatio: number = 1) {
     this.pixelRatio = pixelRatio
-    this.resize(this.size)
+    this.resize(this.rectBBox)
   }
 
   /**
    * Resize our {@link GPURenderer}
-   * @param size - the optional new {@link canvas} size to set
+   * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
    */
-  resize(size: RectSize | null = null) {
-    if (!this.domElement) return
-
-    this.setSize(size)
+  resize(rectBBox: RectBBox | null = null) {
+    this.setSize(rectBBox)
 
     this.onResize()
 
@@ -297,12 +326,12 @@ export class GPURenderer {
   }
 
   /**
-   * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
+   * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}. If there's no {@link domElement | DOM Element} (like when using an offscreen canvas for example), the {@link rectBBox} values are used.
    */
   get boundingRect(): DOMElementBoundingRect {
-    if (!!this.domElement.boundingRect) {
+    if (!!this.domElement && !!this.domElement.boundingRect) {
       return this.domElement.boundingRect
-    } else {
+    } else if (!!this.domElement) {
       const boundingRect = this.domElement.element?.getBoundingClientRect()
       return {
         top: boundingRect.top,
@@ -313,6 +342,17 @@ export class GPURenderer {
         height: boundingRect.height,
         x: boundingRect.x,
         y: boundingRect.y,
+      }
+    } else {
+      return {
+        top: this.rectBBox.top,
+        right: this.rectBBox.left + this.rectBBox.width,
+        bottom: this.rectBBox.top + this.rectBBox.height,
+        left: this.rectBBox.left,
+        width: this.rectBBox.width,
+        height: this.rectBBox.height,
+        x: this.rectBBox.left,
+        y: this.rectBBox.top,
       }
     }
   }
@@ -453,12 +493,12 @@ export class GPURenderer {
    */
   setMainRenderPasses() {
     this.renderPass = new RenderPass(this, {
-      label: 'Main render pass',
+      label: this.options.label + ' render pass',
       ...this.options.renderPass,
     } as RenderPassParams)
 
     this.postProcessingPass = new RenderPass(this, {
-      label: 'Post processing render pass',
+      label: this.options.label + ' post processing render pass',
       // no need to handle depth or perform MSAA on a fullscreen quad
       useDepth: false,
       sampleCount: 1,
@@ -522,24 +562,26 @@ export class GPURenderer {
     commandEncoder?: GPUCommandEncoder
   }): GPUBuffer | null {
     if (!srcBuffer) {
-      throwWarning(`${this.type}: cannot copy to buffer because the source buffer has not been provided`)
+      throwWarning(
+        `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
+      )
       return null
     }
 
     if (!dstBuffer) {
       dstBuffer = this.createBuffer({
-        label: this.type + ': destination copy buffer from: ' + srcBuffer.label,
+        label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.label}`,
         size: srcBuffer.size,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
       })
     }
 
     if (srcBuffer.mapState !== 'unmapped') {
-      throwWarning(`${this.type}: Cannot copy from ${srcBuffer} because it is currently mapped`)
+      throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${srcBuffer} because it is currently mapped`)
       return
     }
     if (dstBuffer.mapState !== 'unmapped') {
-      throwWarning(`${this.type}: Cannot copy from ${dstBuffer} because it is currently mapped`)
+      throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${dstBuffer} because it is currently mapped`)
       return
     }
 
@@ -547,8 +589,11 @@ export class GPURenderer {
     const hasCommandEncoder = !!commandEncoder
 
     if (!hasCommandEncoder) {
-      commandEncoder = this.device?.createCommandEncoder({ label: 'Copy buffer command encoder' })
-      !this.production && commandEncoder.pushDebugGroup('Copy buffer command encoder')
+      commandEncoder = this.device?.createCommandEncoder({
+        label: `${this.type} (${this.options.label}): Copy buffer command encoder`,
+      })
+      !this.production &&
+        commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`)
     }
 
     commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size)
@@ -937,8 +982,11 @@ export class GPURenderer {
     const hasCommandEncoder = !!commandEncoder
 
     if (!hasCommandEncoder) {
-      commandEncoder = this.device?.createCommandEncoder({ label: 'Force clear command encoder' })
-      !this.production && commandEncoder.pushDebugGroup('Force clear command encoder')
+      commandEncoder = this.device?.createCommandEncoder({
+        label: `${this.type} (${this.options.label}): Force clear command encoder`,
+      })
+      !this.production &&
+        commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`)
     }
 
     this.renderPass.updateView()

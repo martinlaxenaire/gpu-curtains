@@ -23,7 +23,6 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
  * await gpuCurtains.setDevice()
  *
  * // create a fullscreen plane
- * // will use the normals colors as default shading
  * const fullscreenPlane = new FullscreenPlane(gpuCurtains, {
  *   label: 'My fullscreen plane',
  *   shaders: {

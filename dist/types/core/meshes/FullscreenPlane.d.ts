@@ -23,7 +23,6 @@ declare const FullscreenPlane_base: import("./mixins/MeshBaseMixin").MixinConstr
  * await gpuCurtains.setDevice()
  *
  * // create a fullscreen plane
- * // will use the normals colors as default shading
  * const fullscreenPlane = new FullscreenPlane(gpuCurtains, {
  *   label: 'My fullscreen plane',
  *   shaders: {
