@@ -125,11 +125,11 @@ export class GPUDeviceManager {
 
     // set context
     if (this.device) {
-      this.renderers.forEach((renderer) => {
+      for (const renderer of this.renderers) {
         if (!renderer.context) {
           renderer.setContext()
         }
-      })
+      }
     }
   }
 
@@ -389,7 +389,9 @@ export class GPUDeviceManager {
   render() {
     if (!this.ready) return
 
-    this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder())
+    for (const renderer of this.renderers) {
+      renderer.onBeforeCommandEncoder()
+    }
 
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + ' command encoder' })
     !this.production && commandEncoder.pushDebugGroup(this.label + ' command encoder: main render loop')
@@ -409,14 +411,16 @@ export class GPUDeviceManager {
     // no need to use device.queue.onSubmittedWorkDone
     // as [Kai Ninomiya](https://github.com/kainino0x) stated:
     // "Anything you submit() after the copyExternalImageToTexture() is guaranteed to see the result of that call."
-    this.texturesQueue.forEach((texture) => {
+    for (const texture of this.texturesQueue) {
       texture.sourceUploaded = true
-    })
+    }
 
     // clear texture queue
     this.texturesQueue = []
 
-    this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder())
+    for (const renderer of this.renderers) {
+      renderer.onAfterCommandEncoder()
+    }
   }
 
   /**

@@ -131,11 +131,11 @@ export class GPUCameraRenderer extends GPURenderer {
   onCameraMatricesChanged() {
     this.updateCameraBindings()
 
-    this.meshes.forEach((mesh) => {
+    for (const mesh of this.meshes) {
       if ('modelViewMatrix' in mesh) {
         mesh.shouldUpdateMatrixStack()
       }
-    })
+    }
   }
 
   /**

@@ -335,9 +335,9 @@ export class Object3D {
     }
 
     // update the children world matrix as well
-    this.children.forEach((child) => {
+    for (const child of this.children) {
       child.shouldUpdateWorldMatrix()
-    })
+    }
   }
 
   /**

@@ -167,7 +167,7 @@ export class BufferBinding extends Binding {
    * @param bindings - bindings inputs
    */
   setBindings(bindings: Record<string, Input>) {
-    Object.keys(bindings).forEach((bindingKey) => {
+    for (const bindingKey of Object.keys(bindings)) {
       const binding = {} as BufferBindingInput
 
       for (const key in bindings[bindingKey]) {
@@ -197,7 +197,7 @@ export class BufferBinding extends Binding {
       }
 
       this.inputs[bindingKey] = binding
-    })
+    }
   }
 
   /**
@@ -212,26 +212,30 @@ export class BufferBinding extends Binding {
     // if length === 0, OK
     // if length === 1, put it at the end of our struct
     // if length > 1, create a buffer interleaved elements
-    const arrayBindings = Object.keys(this.inputs).filter(
-      (bindingKey) => this.inputs[bindingKey].type.indexOf('array') !== -1
+    const arrayBindings = Object.keys(this.inputs).filter((bindingKey) =>
+      this.inputs[bindingKey].type.includes('array')
     )
 
     // put the array struct at the end
-    let orderedBindings = Object.keys(this.inputs).sort((bindingKeyA, bindingKeyB) => {
-      // 0 if it's an array, -1 else
-      const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf('array'))
-      const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf('array'))
+    let orderedBindings = Object.keys(this.inputs)
 
-      return isBindingAArray - isBindingBArray
-    })
+    if (arrayBindings.length) {
+      orderedBindings.sort((bindingKeyA, bindingKeyB) => {
+        // 0 if it's an array, -1 else
+        const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf('array'))
+        const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf('array'))
 
-    if (arrayBindings.length > 1) {
-      // remove interleaved arrays from the ordered struct key array
-      orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey))
+        return isBindingAArray - isBindingBArray
+      })
+
+      if (arrayBindings.length > 1) {
+        // remove interleaved arrays from the ordered struct key array
+        orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey))
+      }
     }
 
     // handle buffer (non interleaved) elements
-    orderedBindings.forEach((bindingKey) => {
+    for (const bindingKey of orderedBindings) {
       const binding = this.inputs[bindingKey]
 
       const bufferElementOptions = {
@@ -241,7 +245,7 @@ export class BufferBinding extends Binding {
       }
 
       const isArray =
-        binding.type.indexOf('array') !== -1 && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value))
+        binding.type.includes('array') && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value))
 
       this.bufferElements.push(
         isArray
@@ -251,7 +255,7 @@ export class BufferBinding extends Binding {
             })
           : new BufferElement(bufferElementOptions)
       )
-    })
+    }
 
     // set their alignments
     this.bufferElements.forEach((bufferElement, index) => {
@@ -342,9 +346,9 @@ export class BufferBinding extends Binding {
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize)
     this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength)
 
-    this.bufferElements.forEach((bufferElement) => {
+    for (const bufferElement of this.bufferElements) {
       bufferElement.setView(this.arrayBuffer, this.arrayView)
-    })
+    }
 
     this.shouldUpdate = this.arrayBufferSize > 0
   }
@@ -434,7 +438,7 @@ export class BufferBinding extends Binding {
    * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
-    Object.keys(this.inputs).forEach((bindingKey) => {
+    for (const bindingKey of Object.keys(this.inputs)) {
       const binding = this.inputs[bindingKey]
       const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey)
 
@@ -446,7 +450,7 @@ export class BufferBinding extends Binding {
         this.shouldUpdate = true
         binding.shouldUpdate = false
       }
-    })
+    }
   }
 
   /**

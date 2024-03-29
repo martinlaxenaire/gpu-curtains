@@ -368,7 +368,9 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       super.applyScale()
 
       // resize textures on scale change!
-      this.textures.forEach((texture) => texture.resize())
+      for (const texture of this.textures) {
+        texture.resize()
+      }
     }
 
     /**

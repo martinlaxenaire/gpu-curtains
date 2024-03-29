@@ -69,14 +69,32 @@ window.addEventListener('load', async () => {
   }
 
   for (let i = 0; i < nbMeshes; i++) {
-    addMesh(i)
+    // let's try to avoid blocking the CPU on meshes creation
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        addMesh(i)
+        // set visibility to false to leverage CPU work for now
+        // we'll set it back to true when all the meshes will be ready
+        meshes[i].visible = false
 
-    meshes[i].onReady(() => {
-      createdMeshes++
-      if (createdMeshes === nbMeshes) {
-        console.timeEnd('creation time')
-      }
-    })
+        meshes[i].onReady(() => {
+          createdMeshes++
+          if (createdMeshes === nbMeshes) {
+            meshes.forEach((mesh) => (mesh.visible = true))
+            console.timeEnd('creation time')
+          }
+        })
+      })
+    } else {
+      addMesh(i)
+
+      meshes[i].onReady(() => {
+        createdMeshes++
+        if (createdMeshes === nbMeshes) {
+          console.timeEnd('creation time')
+        }
+      })
+    }
   }
 
   // GUI

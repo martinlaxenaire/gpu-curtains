@@ -219,13 +219,13 @@ export class RenderMaterial extends Material {
     }
 
     // then uniforms
-    this.inputsBindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.inputsBindGroups) {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
       }
-    })
+    }
   }
 }

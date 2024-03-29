@@ -78,9 +78,9 @@ export class PlaneGeometry extends IndexedGeometry {
     const verticesCount = (this.definition.width + 1) * (this.definition.height + 1)
     const attributes = this.getIndexedVerticesAndUVs(verticesCount)
 
-    Object.keys(attributes).forEach((attributeKey) => {
+    for (const attributeKey of Object.keys(attributes)) {
       this.setAttribute(attributes[attributeKey] as VertexBufferAttributeParams)
-    })
+    }
 
     this.setIndexArray()
   }

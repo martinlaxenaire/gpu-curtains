@@ -73,7 +73,7 @@ export class ComputePipelineEntry extends PipelineEntry {
     this.shaders.compute.code = ''
 
     const groupsBindings = []
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       let bindIndex = 0
       bindGroup.bindings.forEach((binding, bindingIndex) => {
         binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
@@ -91,9 +91,9 @@ export class ComputePipelineEntry extends PipelineEntry {
           bindIndex++
         })
       })
-    })
+    }
 
-    groupsBindings.forEach((groupBinding) => {
+    for (const groupBinding of groupsBindings) {
       // do not duplicate structs
       if (
         groupBinding.wgslStructFragment &&
@@ -108,7 +108,7 @@ export class ComputePipelineEntry extends PipelineEntry {
       }
 
       if (groupBinding.newLine) this.shaders.compute.head += `\n`
-    })
+    }
 
     this.shaders.compute.code = this.shaders.compute.head + this.options.shaders.compute.code
   }

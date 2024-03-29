@@ -471,8 +471,12 @@ export class Scene {
       renderPassEntry.element.render(pass)
     } else if (renderPassEntry.stack) {
       // draw unProjected regular meshes
-      renderPassEntry.stack.unProjected.opaque.forEach((mesh) => mesh.render(pass))
-      renderPassEntry.stack.unProjected.transparent.forEach((mesh) => mesh.render(pass))
+      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        mesh.render(pass)
+      }
+      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        mesh.render(pass)
+      }
 
       // then draw projected meshes
       if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
@@ -484,8 +488,12 @@ export class Scene {
           )
         }
 
-        renderPassEntry.stack.projected.opaque.forEach((mesh) => mesh.render(pass))
-        renderPassEntry.stack.projected.transparent.forEach((mesh) => mesh.render(pass))
+        for (const mesh of renderPassEntry.stack.projected.opaque) {
+          mesh.render(pass)
+        }
+        for (const mesh of renderPassEntry.stack.projected.transparent) {
+          mesh.render(pass)
+        }
       }
     }
 
@@ -504,7 +512,7 @@ export class Scene {
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {
-    this.computePassEntries.forEach((computePass) => {
+    for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass()
       computePass.render(pass)
       pass.end()
@@ -512,12 +520,12 @@ export class Scene {
       computePass.copyBufferToResult(commandEncoder)
 
       this.renderer.pipelineManager.resetCurrentPipeline()
-    })
+    }
 
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0
 
-      this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
+      for (const renderPassEntry of this.renderPassEntries[renderPassEntryType]) {
         // early bail if there's nothing to draw
         if (!this.getRenderPassEntryLength(renderPassEntry)) return
 
@@ -530,7 +538,7 @@ export class Scene {
         passDrawnCount++
 
         this.renderSinglePassEntry(commandEncoder, renderPassEntry)
-      })
+      }
     }
   }
 }

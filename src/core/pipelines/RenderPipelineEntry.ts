@@ -152,7 +152,7 @@ export class RenderPipelineEntry extends PipelineEntry {
     }
 
     const groupsBindings = []
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       let bindIndex = 0
       bindGroup.bindings.forEach((binding, bindingIndex) => {
         binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
@@ -170,9 +170,9 @@ export class RenderPipelineEntry extends PipelineEntry {
           bindIndex++
         })
       })
-    })
+    }
 
-    groupsBindings.forEach((groupBinding) => {
+    for (const groupBinding of groupsBindings) {
       if (
         groupBinding.visibility === GPUShaderStage.VERTEX ||
         groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)
@@ -223,7 +223,7 @@ export class RenderPipelineEntry extends PipelineEntry {
 
         if (groupBinding.newLine) this.shaders.full.head += `\n`
       }
-    })
+    }
 
     // add attributes to vertex shader only
     this.shaders.vertex.head = `${this.attributes.wgslStructFragment}\n${this.shaders.vertex.head}`
