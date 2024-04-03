@@ -520,7 +520,7 @@ export class GPURenderer {
    * @returns - newly created {@link GPUBuffer}
    */
   createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer {
-    const buffer = this.device?.createBuffer(bufferDescriptor)
+    const buffer = this.deviceManager.device?.createBuffer(bufferDescriptor)
     this.deviceManager.addBuffer(buffer)
     return buffer
   }
@@ -541,7 +541,7 @@ export class GPURenderer {
    * @param data - {@link BufferSource | data} to write
    */
   queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource) {
-    this.device?.queue.writeBuffer(buffer, bufferOffset, data)
+    this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data)
   }
 
   /**
@@ -589,7 +589,7 @@ export class GPURenderer {
     const hasCommandEncoder = !!commandEncoder
 
     if (!hasCommandEncoder) {
-      commandEncoder = this.device?.createCommandEncoder({
+      commandEncoder = this.deviceManager.device?.createCommandEncoder({
         label: `${this.type} (${this.options.label}): Copy buffer command encoder`,
       })
       !this.production &&
@@ -601,7 +601,7 @@ export class GPURenderer {
     if (!hasCommandEncoder) {
       !this.production && commandEncoder.popDebugGroup()
       const commandBuffer = commandEncoder.finish()
-      this.device?.queue.submit([commandBuffer])
+      this.deviceManager.device?.queue.submit([commandBuffer])
     }
 
     return dstBuffer
@@ -613,7 +613,7 @@ export class GPURenderer {
    * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
    * @readonly
    */
-  get bindGroups(): AllowedBindGroups[] {
+  get bindGroups(): Map<string, AllowedBindGroups> {
     return this.deviceManager.bindGroups
   }
 
@@ -639,7 +639,7 @@ export class GPURenderer {
    * @returns - newly created {@link GPUBindGroupLayout}
    */
   createBindGroupLayout(bindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
-    return this.device?.createBindGroupLayout(bindGroupLayoutDescriptor)
+    return this.deviceManager.device?.createBindGroupLayout(bindGroupLayoutDescriptor)
   }
 
   /**
@@ -648,7 +648,7 @@ export class GPURenderer {
    * @returns - newly created {@link GPUBindGroup}
    */
   createBindGroup(bindGroupDescriptor: GPUBindGroupDescriptor): GPUBindGroup {
-    return this.device?.createBindGroup(bindGroupDescriptor)
+    return this.deviceManager.device?.createBindGroup(bindGroupDescriptor)
   }
 
   /* SHADERS & PIPELINES */
@@ -757,7 +757,7 @@ export class GPURenderer {
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor: GPUTextureDescriptor): GPUTexture {
-    return this.device?.createTexture(textureDescriptor)
+    return this.deviceManager.device?.createTexture(textureDescriptor)
   }
 
   /**
@@ -778,8 +778,8 @@ export class GPURenderer {
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
     // see onVideoFrameCallback method in Texture class
     // const videoFrame = new VideoFrame(video)
-    // return this.device?.importExternalTexture({ source: videoFrame })
-    return this.device?.importExternalTexture({ source: video })
+    // return this.deviceManager.device?.importExternalTexture({ source: videoFrame })
+    return this.deviceManager.device?.importExternalTexture({ source: video })
   }
 
   /**
@@ -796,8 +796,9 @@ export class GPURenderer {
     if (existingSampler) {
       return existingSampler.sampler
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { type, ...samplerOptions } = sampler.options
-      const gpuSampler: GPUSampler = this.device?.createSampler({
+      const gpuSampler: GPUSampler = this.deviceManager.device?.createSampler({
         label: sampler.label,
         ...samplerOptions,
       })
@@ -855,7 +856,7 @@ export class GPURenderer {
 
   /**
    * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
-   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+   * Useful (but slow) to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - {@link AllowedBindGroups | bind group} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {

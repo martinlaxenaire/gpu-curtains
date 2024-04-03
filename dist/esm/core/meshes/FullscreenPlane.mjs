@@ -21,8 +21,8 @@ class FullscreenPlane extends MeshBaseMixin(class {
     }
     if (!parameters.shaders || !parameters.shaders.vertex) {
       ["uniforms", "storages"].forEach((bindingType) => {
-        Object.keys(parameters[bindingType] ?? {}).forEach(
-          (bindingKey) => parameters[bindingType][bindingKey].visibility = "fragment"
+        Object.values(parameters[bindingType] ?? {}).forEach(
+          (binding) => binding.visibility = "fragment"
         );
       });
     }

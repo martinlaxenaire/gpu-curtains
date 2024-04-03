@@ -71,13 +71,13 @@ class Material {
    * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
    */
   loseContext() {
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       texture.texture = null;
       texture.sourceUploaded = false;
-    });
-    this.renderTextures.forEach((texture) => {
+    }
+    for (const texture of this.renderTextures) {
       texture.texture = null;
-    });
+    }
     [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach(
       (bindGroup) => bindGroup.loseContext()
     );
@@ -87,22 +87,24 @@ class Material {
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
    */
   restoreContext() {
-    this.samplers.forEach((sampler) => {
+    for (const sampler of this.samplers) {
       sampler.createSampler();
       sampler.binding.resource = sampler.sampler;
-    });
-    this.textures.forEach((texture) => {
+    }
+    for (const texture of this.textures) {
       texture.createTexture();
       texture.resize();
-    });
-    this.renderTextures.forEach((texture) => {
+    }
+    for (const texture of this.renderTextures) {
       texture.resize(texture.size);
-    });
+    }
     [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.createBindGroup();
       }
-      bindGroup.bufferBindings.forEach((bufferBinding) => bufferBinding.shouldUpdate = true);
+      for (const bufferBinding of bindGroup.bufferBindings) {
+        bufferBinding.shouldUpdate = true;
+      }
     });
   }
   /**
@@ -182,7 +184,7 @@ class Material {
    * @param bindGroup - The {@link BindGroup} to process
    */
   processBindGroupBindings(bindGroup) {
-    bindGroup.bindings.forEach((inputBinding) => {
+    for (const inputBinding of bindGroup.bindings) {
       if (inputBinding.bindingType === "uniform")
         this.uniforms = {
           ...this.uniforms,
@@ -194,7 +196,7 @@ class Material {
           [inputBinding.name]: inputBinding.inputs
         };
       this.inputsBindings.push(inputBinding);
-    });
+    }
   }
   /**
    * Create the bind groups if they need to be created
@@ -204,28 +206,31 @@ class Material {
       this.texturesBindGroup.setIndex(this.bindGroups.length);
       this.texturesBindGroup.createBindGroup();
       this.bindGroups.push(this.texturesBindGroup);
+      this.texturesBindGroup.consumers.add(this.uuid);
     }
-    this.inputsBindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.inputsBindGroups) {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length);
         bindGroup.createBindGroup();
         this.bindGroups.push(bindGroup);
+        bindGroup.consumers.add(this.uuid);
       }
-    });
+    }
     this.options.bindGroups?.forEach((bindGroup) => {
       if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         bindGroup.setIndex(this.bindGroups.length);
         this.bindGroups.push(bindGroup);
+        bindGroup.consumers.add(this.uuid);
       }
       if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         this.texturesBindGroups.push(bindGroup);
-        bindGroup.textures.forEach((texture) => {
+        for (const texture of bindGroup.textures) {
           if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
             this.textures.push(texture);
           } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
             this.renderTextures.push(texture);
           }
-        });
+        }
       }
     });
   }
@@ -264,9 +269,8 @@ class Material {
    * @param bindGroup - bind group to eventually destroy
    */
   destroyBindGroup(bindGroup) {
-    const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup);
-    const shouldDestroy = !objectsUsingBindGroup || !objectsUsingBindGroup.find((object) => object.material.uuid !== this.uuid);
-    if (shouldDestroy) {
+    bindGroup.consumers.delete(this.uuid);
+    if (!bindGroup.consumers.size) {
       bindGroup.destroy();
     }
   }
@@ -290,13 +294,13 @@ class Material {
    * - Check if we need to flush the pipeline
    */
   updateBindGroups() {
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       bindGroup.update();
       if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups);
         bindGroup.needsPipelineFlush = false;
       }
-    });
+    }
   }
   /* INPUTS */
   /**
@@ -316,7 +320,7 @@ class Material {
     return this.inputsBindings.find((binding) => binding.name === bindingName && "buffer" in binding);
   }
   /**
-   * Force a given buffer binding update flag to update it at next render
+   * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
    * @param bufferBindingName - the buffer binding name
    * @param bindingName - the binding name
    */
@@ -475,9 +479,9 @@ class Material {
    */
   onBeforeRender() {
     this.compileMaterial();
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       texture.render();
-    });
+    }
     this.updateBindGroups();
   }
   /**
@@ -496,9 +500,9 @@ class Material {
     if (!this.ready)
       return;
     this.setPipeline(pass);
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-    });
+    }
   }
   /**
    * Destroy the Material

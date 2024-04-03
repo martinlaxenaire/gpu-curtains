@@ -125,24 +125,11 @@ class Scene {
    */
   addMesh(mesh) {
     const projectionStack = this.getMeshProjectionStack(mesh);
-    const similarMeshes = mesh.transparent ? [...projectionStack.transparent] : [...projectionStack.opaque];
-    let siblingMeshIndex = -1;
-    for (let i = similarMeshes.length - 1; i >= 0; i--) {
-      if (similarMeshes[i].material.pipelineEntry.index === mesh.material.pipelineEntry.index) {
-        siblingMeshIndex = i + 1;
-        break;
-      }
-    }
-    siblingMeshIndex = Math.max(0, siblingMeshIndex);
-    similarMeshes.splice(siblingMeshIndex, 0, mesh);
-    similarMeshes.sort((a, b) => a.index - b.index);
-    if ((mesh.type === "DOMMesh" || mesh.type === "Plane") && mesh.transparent) {
-      similarMeshes.sort(
-        (a, b) => b.documentPosition.z - a.documentPosition.z
-      );
-    }
-    similarMeshes.sort((a, b) => a.renderOrder - b.renderOrder);
-    mesh.transparent ? projectionStack.transparent = similarMeshes : projectionStack.opaque = similarMeshes;
+    const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque;
+    similarMeshes.push(mesh);
+    similarMeshes.sort((a, b) => {
+      return a.renderOrder - b.renderOrder || a.material.pipelineEntry.index - b.material.pipelineEntry.index || a.index - b.index;
+    });
   }
   /**
    * Remove a Mesh from our {@link Scene}
@@ -315,8 +302,12 @@ class Scene {
     if (renderPassEntry.element) {
       renderPassEntry.element.render(pass);
     } else if (renderPassEntry.stack) {
-      renderPassEntry.stack.unProjected.opaque.forEach((mesh) => mesh.render(pass));
-      renderPassEntry.stack.unProjected.transparent.forEach((mesh) => mesh.render(pass));
+      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        mesh.render(pass);
+      }
+      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        mesh.render(pass);
+      }
       if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
         if (this.renderer.cameraBindGroup) {
           pass.setBindGroup(
@@ -324,8 +315,12 @@ class Scene {
             this.renderer.cameraBindGroup.bindGroup
           );
         }
-        renderPassEntry.stack.projected.opaque.forEach((mesh) => mesh.render(pass));
-        renderPassEntry.stack.projected.transparent.forEach((mesh) => mesh.render(pass));
+        for (const mesh of renderPassEntry.stack.projected.opaque) {
+          mesh.render(pass);
+        }
+        for (const mesh of renderPassEntry.stack.projected.transparent) {
+          mesh.render(pass);
+        }
       }
     }
     !this.renderer.production && pass.popDebugGroup();
@@ -340,13 +335,13 @@ class Scene {
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
-    this.computePassEntries.forEach((computePass) => {
+    for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass();
       computePass.render(pass);
       pass.end();
       computePass.copyBufferToResult(commandEncoder);
       this.renderer.pipelineManager.resetCurrentPipeline();
-    });
+    }
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {

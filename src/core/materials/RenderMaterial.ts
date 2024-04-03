@@ -201,6 +201,7 @@ export class RenderMaterial extends Material {
     // camera first!
     // if ((this.renderer as CameraRenderer).cameraBindGroup && this.options.rendering.useProjection) {
     //   this.bindGroups.push((this.renderer as CameraRenderer).cameraBindGroup)
+    //   (this.renderer as CameraRenderer).cameraBindGroup.addConsumer(this.uuid)
     // }
     //
     // super.createBindGroups()
@@ -216,16 +217,18 @@ export class RenderMaterial extends Material {
       this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
+      this.texturesBindGroup.consumers.add(this.uuid)
     }
 
     // then uniforms
-    this.inputsBindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.inputsBindGroups) {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
+        bindGroup.consumers.add(this.uuid)
       }
-    })
+    }
   }
 }

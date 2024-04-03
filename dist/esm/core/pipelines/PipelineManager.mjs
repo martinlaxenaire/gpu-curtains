@@ -15,7 +15,7 @@ class PipelineManager {
    * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
    */
   compareShaders(shaderA, shaderB) {
-    return shaderA.code?.localeCompare(shaderB.code) === 0 && shaderA.entryPoint === shaderB.entryPoint;
+    return shaderA.code === shaderB.code && shaderA.entryPoint === shaderB.entryPoint;
   }
   /**
    * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.

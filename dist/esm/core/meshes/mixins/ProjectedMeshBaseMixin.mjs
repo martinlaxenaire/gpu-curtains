@@ -177,7 +177,9 @@ function ProjectedMeshBaseMixin(Base) {
      */
     applyScale() {
       super.applyScale();
-      this.textures.forEach((texture) => texture.resize());
+      for (const texture of this.textures) {
+        texture.resize();
+      }
     }
     /**
      * Get our {@link DOMFrustum} projected bounding rectangle

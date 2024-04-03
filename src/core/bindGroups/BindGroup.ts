@@ -91,6 +91,9 @@ export class BindGroup {
   /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
   needsPipelineFlush: boolean
 
+  /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
+  consumers: Set<string>
+
   /**
    * BindGroup constructor
    * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
@@ -131,6 +134,8 @@ export class BindGroup {
     // if we ever update our bind group layout
     // we will have to recreate the whole pipeline again
     this.needsPipelineFlush = false
+
+    this.consumers = new Set()
 
     this.renderer.addBindGroup(this)
   }
@@ -177,8 +182,8 @@ export class BindGroup {
           label: toKebabCase(binding.label || inputKey),
           name: inputKey,
           bindingType,
-          useStruct: true, // by default
           visibility: binding.access === 'read_write' ? 'compute' : binding.visibility,
+          useStruct: true, // by default
           access: binding.access ?? 'read', // read by default
           struct: binding.struct,
           ...(binding.shouldCopyResult !== undefined && { shouldCopyResult: binding.shouldCopyResult }),
@@ -243,12 +248,12 @@ export class BindGroup {
    */
   resetBindGroup() {
     this.entries.bindGroup = []
-    this.bindings.forEach((binding) => {
+    for (const binding of this.bindings) {
       this.entries.bindGroup.push({
         binding: this.entries.bindGroup.length,
         resource: binding.resource,
       })
-    })
+    }
 
     this.setBindGroup()
   }
@@ -258,13 +263,13 @@ export class BindGroup {
    */
   resetBindGroupLayout() {
     this.entries.bindGroupLayout = []
-    this.bindings.forEach((binding) => {
+    for (const binding of this.bindings) {
       this.entries.bindGroupLayout.push({
         binding: this.entries.bindGroupLayout.length,
         ...binding.resourceLayout,
         visibility: binding.visibility,
       })
-    })
+    }
 
     this.setBindGroupLayout()
   }
@@ -275,13 +280,13 @@ export class BindGroup {
   loseContext() {
     this.resetEntries()
 
-    this.bufferBindings.forEach((binding) => {
+    for (const binding of this.bufferBindings) {
       binding.buffer = null
 
       if ('resultBuffer' in binding) {
         binding.resultBuffer = null
       }
-    })
+    }
 
     this.bindGroup = null
     this.bindGroupLayout = null
@@ -328,7 +333,7 @@ export class BindGroup {
    * For buffer struct, create a GPUBuffer first if needed
    */
   fillEntries() {
-    this.bindings.forEach((binding) => {
+    for (const binding of this.bindings) {
       // if no visibility specified, just set it to the maximum default capabilities
       if (!binding.visibility) {
         binding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE
@@ -350,7 +355,7 @@ export class BindGroup {
         binding: this.entries.bindGroup.length,
         resource: binding.resource,
       })
-    })
+    }
   }
 
   /**
@@ -387,24 +392,26 @@ export class BindGroup {
    * Check whether we should update (write) our {@link GPUBuffer} or not.
    */
   updateBufferBindings() {
-    this.bufferBindings.forEach((binding, index) => {
-      // update binding elements
-      binding.update()
+    this.bindings.forEach((binding, index) => {
+      if ('buffer' in binding) {
+        // update binding elements
+        binding.update()
 
-      // now write to the GPUBuffer if needed
-      if (binding.shouldUpdate) {
-        // bufferOffset is always equals to 0 in our case
-        if (!binding.useStruct && binding.bufferElements.length > 1) {
-          // we're in a non struct buffer binding with multiple entries
-          // that should not happen but that way we're covered
-          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view)
-        } else {
-          this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer)
+        // now write to the GPUBuffer if needed
+        if (binding.shouldUpdate) {
+          // bufferOffset is always equals to 0 in our case
+          if (!binding.useStruct && binding.bufferElements.length > 1) {
+            // we're in a non struct buffer binding with multiple entries
+            // that should not happen but that way we're covered
+            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view)
+          } else {
+            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer)
+          }
         }
-      }
 
-      // reset update flag
-      binding.shouldUpdate = false
+        // reset update flag
+        binding.shouldUpdate = false
+      }
     })
   }
 
@@ -423,10 +430,10 @@ export class BindGroup {
     if (needBindGroupReset || needBindGroupLayoutReset) {
       this.renderer.onAfterCommandEncoderSubmission.add(
         () => {
-          this.bindings.forEach((binding) => {
+          for (const binding of this.bindings) {
             binding.shouldResetBindGroup = false
             binding.shouldResetBindGroupLayout = false
-          })
+          }
         },
         { once: true }
       )
@@ -470,7 +477,7 @@ export class BindGroup {
 
     const bindingsRef = bindings.length ? bindings : this.bindings
 
-    bindingsRef.forEach((binding, index) => {
+    for (const binding of bindingsRef) {
       bindGroupCopy.addBinding(binding)
 
       // if it's a buffer binding without a GPUBuffer, create it now
@@ -491,7 +498,7 @@ export class BindGroup {
         binding: bindGroupCopy.entries.bindGroup.length,
         resource: binding.resource,
       } as GPUBindGroupEntry)
-    })
+    }
 
     // if we should copy the given bind group layout
     if (keepLayout) {
@@ -511,7 +518,7 @@ export class BindGroup {
   destroy() {
     this.renderer.removeBindGroup(this)
 
-    this.bufferBindings.forEach((binding) => {
+    for (const binding of this.bufferBindings) {
       if ('buffer' in binding) {
         this.renderer.removeBuffer(binding.buffer)
         binding.buffer?.destroy()
@@ -523,7 +530,7 @@ export class BindGroup {
         binding.resultBuffer?.destroy()
         binding.resultBuffer = null
       }
-    })
+    }
 
     this.bindings = []
     this.bindGroupLayout = null

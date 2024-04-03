@@ -20,10 +20,14 @@ class TextureBindGroup extends BindGroup {
       samplers: []
     };
     if (textures.length) {
-      textures.forEach((texture) => this.addTexture(texture));
+      for (const texture of textures) {
+        this.addTexture(texture);
+      }
     }
     if (samplers.length) {
-      samplers.forEach((sampler) => this.addSampler(sampler));
+      for (const sampler of samplers) {
+        this.addSampler(sampler);
+      }
     }
     this.type = type;
   }
@@ -71,7 +75,7 @@ class TextureBindGroup extends BindGroup {
    * - Upload video texture if needed
    */
   updateTextures() {
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       if (texture instanceof Texture) {
         if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
           texture.copy(texture.options.fromTexture);
@@ -80,7 +84,7 @@ class TextureBindGroup extends BindGroup {
           texture.uploadVideoTexture();
         }
       }
-    });
+    }
   }
   /**
    * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed

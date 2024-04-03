@@ -40,11 +40,11 @@ class GPUDeviceManager {
   async init() {
     await this.setAdapterAndDevice();
     if (this.device) {
-      this.renderers.forEach((renderer) => {
+      for (const renderer of this.renderers) {
         if (!renderer.context) {
           renderer.setContext();
         }
-      });
+      }
     }
   }
   /**
@@ -130,7 +130,7 @@ class GPUDeviceManager {
    */
   setDeviceObjects() {
     this.renderers = [];
-    this.bindGroups = [];
+    this.bindGroups = /* @__PURE__ */ new Map();
     this.buffers = [];
     this.samplers = [];
     this.textures = [];
@@ -162,16 +162,14 @@ class GPUDeviceManager {
    * @param bindGroup - {@link AllowedBindGroups | bind group} to add
    */
   addBindGroup(bindGroup) {
-    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-      this.bindGroups.push(bindGroup);
-    }
+    this.bindGroups.set(bindGroup.uuid, bindGroup);
   }
   /**
    * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
    * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
    */
   removeBindGroup(bindGroup) {
-    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
+    this.bindGroups.delete(bindGroup.uuid);
   }
   /**
    * Add a {@link GPUBuffer} to our our {@link buffers} array
@@ -264,7 +262,9 @@ class GPUDeviceManager {
   render() {
     if (!this.ready)
       return;
-    this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder());
+    for (const renderer of this.renderers) {
+      renderer.onBeforeCommandEncoder();
+    }
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
     !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
     this.renderers.forEach((renderer) => renderer.render(commandEncoder));
@@ -272,11 +272,13 @@ class GPUDeviceManager {
     const commandBuffer = commandEncoder.finish();
     this.device?.queue.submit([commandBuffer]);
     this.textures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
-    this.texturesQueue.forEach((texture) => {
+    for (const texture of this.texturesQueue) {
       texture.sourceUploaded = true;
-    });
+    }
     this.texturesQueue = [];
-    this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder());
+    for (const renderer of this.renderers) {
+      renderer.onAfterCommandEncoder();
+    }
   }
   /**
    * Destroy the {@link GPUDeviceManager} and its {@link renderers}

@@ -1,5 +1,4 @@
 import { BufferElement, bytesPerSlot } from './BufferElement.mjs';
-import { throwWarning } from '../../../utils/utils.mjs';
 
 class BufferArrayElement extends BufferElement {
   /**
@@ -30,22 +29,18 @@ class BufferArrayElement extends BufferElement {
     this.alignment.end = this.getPositionAtOffset(this.endOffset + this.arrayStride * (this.numElements - 1));
   }
   /**
-   * Update the {@link view} based on the new value
-   * @param value - new value to use
+   * Set the strided {@link view} value from an array
+   * @param value - array to use
    */
-  update(value) {
-    if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-      let valueIndex = 0;
-      const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT;
-      const stride = Math.ceil(viewLength / this.numElements);
-      for (let i = 0; i < this.numElements; i++) {
-        for (let j = 0; j < this.bufferLayout.numElements; j++) {
-          this.view[j + i * stride] = value[valueIndex];
-          valueIndex++;
-        }
+  setValueFromArray(value) {
+    let valueIndex = 0;
+    const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT;
+    const stride = Math.ceil(viewLength / this.numElements);
+    for (let i = 0; i < this.numElements; i++) {
+      for (let j = 0; j < this.bufferLayout.numElements; j++) {
+        this.view[j + i * stride] = value[valueIndex];
+        valueIndex++;
       }
-    } else {
-      throwWarning(`BufferArrayElement: value passed to ${this.name} is not an array: ${value}`);
     }
   }
 }

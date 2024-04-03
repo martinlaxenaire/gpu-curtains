@@ -116,9 +116,9 @@ class ComputeMaterial extends Material {
     if (this._useCustomRenderCallback !== void 0) {
       this._useCustomRenderCallback(pass);
     } else {
-      this.bindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.bindGroups) {
         pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-      });
+      }
       pass.dispatchWorkgroups(this.dispatchSize[0], this.dispatchSize[1], this.dispatchSize[2]);
     }
   }
@@ -128,13 +128,13 @@ class ComputeMaterial extends Material {
    * @param commandEncoder - current command encoder
    */
   copyBufferToResult(commandEncoder) {
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       bindGroup.bufferBindings.forEach((binding) => {
         if (binding.shouldCopyResult && binding.resultBuffer.mapState === "unmapped") {
           commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size);
         }
       });
-    });
+    }
   }
   /**
    * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names

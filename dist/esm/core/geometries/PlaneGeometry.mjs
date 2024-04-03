@@ -24,9 +24,9 @@ class PlaneGeometry extends IndexedGeometry {
     };
     const verticesCount = (this.definition.width + 1) * (this.definition.height + 1);
     const attributes = this.getIndexedVerticesAndUVs(verticesCount);
-    Object.keys(attributes).forEach((attributeKey) => {
-      this.setAttribute(attributes[attributeKey]);
-    });
+    for (const attribute of Object.values(attributes)) {
+      this.setAttribute(attribute);
+    }
     this.setIndexArray();
   }
   /**

@@ -62,8 +62,8 @@ export class GPUDeviceManager {
 
   /** Array of {@link Renderer | renderers} using that {@link GPUDeviceManager} */
   renderers: Renderer[]
-  /** An array containing all our created {@link AllowedBindGroups} */
-  bindGroups: AllowedBindGroups[]
+  /** A Map containing all our created {@link AllowedBindGroups} */
+  bindGroups: Map<string, AllowedBindGroups>
   /** An array containing all our created {@link GPUBuffer} */
   buffers: GPUBuffer[]
   /** An array containing all our created {@link Sampler} */
@@ -125,11 +125,11 @@ export class GPUDeviceManager {
 
     // set context
     if (this.device) {
-      this.renderers.forEach((renderer) => {
+      for (const renderer of this.renderers) {
         if (!renderer.context) {
           renderer.setContext()
         }
-      })
+      }
     }
   }
 
@@ -237,7 +237,7 @@ export class GPUDeviceManager {
   setDeviceObjects() {
     // keep track of renderers, bind groups, buffers, samplers, textures
     this.renderers = []
-    this.bindGroups = []
+    this.bindGroups = new Map()
     this.buffers = []
     this.samplers = []
     this.textures = []
@@ -275,9 +275,7 @@ export class GPUDeviceManager {
    * @param bindGroup - {@link AllowedBindGroups | bind group} to add
    */
   addBindGroup(bindGroup: AllowedBindGroups) {
-    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-      this.bindGroups.push(bindGroup)
-    }
+    this.bindGroups.set(bindGroup.uuid, bindGroup)
   }
 
   /**
@@ -285,7 +283,7 @@ export class GPUDeviceManager {
    * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
    */
   removeBindGroup(bindGroup: AllowedBindGroups) {
-    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid)
+    this.bindGroups.delete(bindGroup.uuid)
   }
 
   /**
@@ -302,6 +300,7 @@ export class GPUDeviceManager {
    * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
    */
   removeBuffer(buffer: GPUBuffer, originalLabel?: string) {
+    // TODO we should probably create a Buffer class that handles uuid
     if (buffer) {
       this.buffers = this.buffers.filter((b) => {
         return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size)
@@ -389,7 +388,9 @@ export class GPUDeviceManager {
   render() {
     if (!this.ready) return
 
-    this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder())
+    for (const renderer of this.renderers) {
+      renderer.onBeforeCommandEncoder()
+    }
 
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + ' command encoder' })
     !this.production && commandEncoder.pushDebugGroup(this.label + ' command encoder: main render loop')
@@ -409,14 +410,16 @@ export class GPUDeviceManager {
     // no need to use device.queue.onSubmittedWorkDone
     // as [Kai Ninomiya](https://github.com/kainino0x) stated:
     // "Anything you submit() after the copyExternalImageToTexture() is guaranteed to see the result of that call."
-    this.texturesQueue.forEach((texture) => {
+    for (const texture of this.texturesQueue) {
       texture.sourceUploaded = true
-    })
+    }
 
     // clear texture queue
     this.texturesQueue = []
 
-    this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder())
+    for (const renderer of this.renderers) {
+      renderer.onAfterCommandEncoder()
+    }
   }
 
   /**

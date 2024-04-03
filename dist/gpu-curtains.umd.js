@@ -198,44 +198,44 @@
     }
   }
 
+  const bufferLayouts = {
+    i32: { numElements: 1, align: 4, size: 4, type: "i32", View: Int32Array },
+    u32: { numElements: 1, align: 4, size: 4, type: "u32", View: Uint32Array },
+    f32: { numElements: 1, align: 4, size: 4, type: "f32", View: Float32Array },
+    f16: { numElements: 1, align: 2, size: 2, type: "u16", View: Uint16Array },
+    vec2f: { numElements: 2, align: 8, size: 8, type: "f32", View: Float32Array },
+    vec2i: { numElements: 2, align: 8, size: 8, type: "i32", View: Int32Array },
+    vec2u: { numElements: 2, align: 8, size: 8, type: "u32", View: Uint32Array },
+    vec2h: { numElements: 2, align: 4, size: 4, type: "u16", View: Uint16Array },
+    vec3i: { numElements: 3, align: 16, size: 12, type: "i32", View: Int32Array },
+    vec3u: { numElements: 3, align: 16, size: 12, type: "u32", View: Uint32Array },
+    vec3f: { numElements: 3, align: 16, size: 12, type: "f32", View: Float32Array },
+    vec3h: { numElements: 3, align: 8, size: 6, type: "u16", View: Uint16Array },
+    vec4i: { numElements: 4, align: 16, size: 16, type: "i32", View: Int32Array },
+    vec4u: { numElements: 4, align: 16, size: 16, type: "u32", View: Uint32Array },
+    vec4f: { numElements: 4, align: 16, size: 16, type: "f32", View: Float32Array },
+    vec4h: { numElements: 4, align: 8, size: 8, type: "u16", View: Uint16Array },
+    // AlignOf(vecR)	SizeOf(array<vecR, C>)
+    mat2x2f: { numElements: 4, align: 8, size: 16, type: "f32", View: Float32Array },
+    mat2x2h: { numElements: 4, align: 4, size: 8, type: "u16", View: Uint16Array },
+    mat3x2f: { numElements: 6, align: 8, size: 24, type: "f32", View: Float32Array },
+    mat3x2h: { numElements: 6, align: 4, size: 12, type: "u16", View: Uint16Array },
+    mat4x2f: { numElements: 8, align: 8, size: 32, type: "f32", View: Float32Array },
+    mat4x2h: { numElements: 8, align: 4, size: 16, type: "u16", View: Uint16Array },
+    mat2x3f: { numElements: 8, align: 16, size: 32, pad: [3, 1], type: "f32", View: Float32Array },
+    mat2x3h: { numElements: 8, align: 8, size: 16, pad: [3, 1], type: "u16", View: Uint16Array },
+    mat3x3f: { numElements: 12, align: 16, size: 48, pad: [3, 1], type: "f32", View: Float32Array },
+    mat3x3h: { numElements: 12, align: 8, size: 24, pad: [3, 1], type: "u16", View: Uint16Array },
+    mat4x3f: { numElements: 16, align: 16, size: 64, pad: [3, 1], type: "f32", View: Float32Array },
+    mat4x3h: { numElements: 16, align: 8, size: 32, pad: [3, 1], type: "u16", View: Uint16Array },
+    mat2x4f: { numElements: 8, align: 16, size: 32, type: "f32", View: Float32Array },
+    mat2x4h: { numElements: 8, align: 8, size: 16, type: "u16", View: Uint16Array },
+    mat3x4f: { numElements: 12, align: 16, size: 48, pad: [3, 1], type: "f32", View: Float32Array },
+    mat3x4h: { numElements: 12, align: 8, size: 24, pad: [3, 1], type: "u16", View: Uint16Array },
+    mat4x4f: { numElements: 16, align: 16, size: 64, type: "f32", View: Float32Array },
+    mat4x4h: { numElements: 16, align: 8, size: 32, type: "u16", View: Uint16Array }
+  };
   const getBufferLayout = (bufferType) => {
-    const bufferLayouts = {
-      i32: { numElements: 1, align: 4, size: 4, type: "i32", View: Int32Array },
-      u32: { numElements: 1, align: 4, size: 4, type: "u32", View: Uint32Array },
-      f32: { numElements: 1, align: 4, size: 4, type: "f32", View: Float32Array },
-      f16: { numElements: 1, align: 2, size: 2, type: "u16", View: Uint16Array },
-      vec2f: { numElements: 2, align: 8, size: 8, type: "f32", View: Float32Array },
-      vec2i: { numElements: 2, align: 8, size: 8, type: "i32", View: Int32Array },
-      vec2u: { numElements: 2, align: 8, size: 8, type: "u32", View: Uint32Array },
-      vec2h: { numElements: 2, align: 4, size: 4, type: "u16", View: Uint16Array },
-      vec3i: { numElements: 3, align: 16, size: 12, type: "i32", View: Int32Array },
-      vec3u: { numElements: 3, align: 16, size: 12, type: "u32", View: Uint32Array },
-      vec3f: { numElements: 3, align: 16, size: 12, type: "f32", View: Float32Array },
-      vec3h: { numElements: 3, align: 8, size: 6, type: "u16", View: Uint16Array },
-      vec4i: { numElements: 4, align: 16, size: 16, type: "i32", View: Int32Array },
-      vec4u: { numElements: 4, align: 16, size: 16, type: "u32", View: Uint32Array },
-      vec4f: { numElements: 4, align: 16, size: 16, type: "f32", View: Float32Array },
-      vec4h: { numElements: 4, align: 8, size: 8, type: "u16", View: Uint16Array },
-      // AlignOf(vecR)	SizeOf(array<vecR, C>)
-      mat2x2f: { numElements: 4, align: 8, size: 16, type: "f32", View: Float32Array },
-      mat2x2h: { numElements: 4, align: 4, size: 8, type: "u16", View: Uint16Array },
-      mat3x2f: { numElements: 6, align: 8, size: 24, type: "f32", View: Float32Array },
-      mat3x2h: { numElements: 6, align: 4, size: 12, type: "u16", View: Uint16Array },
-      mat4x2f: { numElements: 8, align: 8, size: 32, type: "f32", View: Float32Array },
-      mat4x2h: { numElements: 8, align: 4, size: 16, type: "u16", View: Uint16Array },
-      mat2x3f: { numElements: 8, align: 16, size: 32, pad: [3, 1], type: "f32", View: Float32Array },
-      mat2x3h: { numElements: 8, align: 8, size: 16, pad: [3, 1], type: "u16", View: Uint16Array },
-      mat3x3f: { numElements: 12, align: 16, size: 48, pad: [3, 1], type: "f32", View: Float32Array },
-      mat3x3h: { numElements: 12, align: 8, size: 24, pad: [3, 1], type: "u16", View: Uint16Array },
-      mat4x3f: { numElements: 16, align: 16, size: 64, pad: [3, 1], type: "f32", View: Float32Array },
-      mat4x3h: { numElements: 16, align: 8, size: 32, pad: [3, 1], type: "u16", View: Uint16Array },
-      mat2x4f: { numElements: 8, align: 16, size: 32, type: "f32", View: Float32Array },
-      mat2x4h: { numElements: 8, align: 8, size: 16, type: "u16", View: Uint16Array },
-      mat3x4f: { numElements: 12, align: 16, size: 48, pad: [3, 1], type: "f32", View: Float32Array },
-      mat3x4h: { numElements: 12, align: 8, size: 24, pad: [3, 1], type: "u16", View: Uint16Array },
-      mat4x4f: { numElements: 16, align: 16, size: 64, type: "f32", View: Float32Array },
-      mat4x4h: { numElements: 16, align: 8, size: 32, type: "u16", View: Uint16Array }
-    };
     return bufferLayouts[bufferType];
   };
   const getBindingWGSLVarType = (binding) => {
@@ -1104,6 +1104,7 @@
           byte: 0
         }
       };
+      this.setValue = null;
     }
     /**
      * Get the total number of rows used by this {@link BufferElement}
@@ -1247,24 +1248,66 @@
       );
     }
     /**
+     * Set the {@link view} value from a float or an int
+     * @param value - float or int to use
+     */
+    setValueFromFloat(value) {
+      this.view[0] = value;
+    }
+    /**
+     * Set the {@link view} value from a {@link Vec2} or an array
+     * @param value - {@link Vec2} or array to use
+     */
+    setValueFromVec2(value) {
+      this.view[0] = value.x ?? value[0] ?? 0;
+      this.view[1] = value.y ?? value[1] ?? 0;
+    }
+    /**
+     * Set the {@link view} value from a {@link Vec3} or an array
+     * @param value - {@link Vec3} or array to use
+     */
+    setValueFromVec3(value) {
+      this.view[0] = value.x ?? value[0] ?? 0;
+      this.view[1] = value.y ?? value[1] ?? 0;
+      this.view[2] = value.z ?? value[2] ?? 0;
+    }
+    /**
+     * Set the {@link view} value from a {@link Mat4} or a {@link Quat}
+     * @param value - {@link Mat4} or {@link Quat} to use
+     */
+    setValueFromMat4OrQuat(value) {
+      this.view.set(value.elements);
+    }
+    /**
+     * Set the {@link view} value from an array
+     * @param value - array to use
+     */
+    setValueFromArray(value) {
+      this.view.set(value);
+    }
+    /**
      * Update the {@link view} based on the new value
      * @param value - new value to use
      */
     update(value) {
-      if (this.type === "f32" || this.type === "u32" || this.type === "i32") {
-        this.view[0] = value;
-      } else if (this.type === "vec2f") {
-        this.view[0] = value.x ?? value[0] ?? 0;
-        this.view[1] = value.y ?? value[1] ?? 0;
-      } else if (this.type === "vec3f") {
-        this.view[0] = value.x ?? value[0] ?? 0;
-        this.view[1] = value.y ?? value[1] ?? 0;
-        this.view[2] = value.z ?? value[2] ?? 0;
-      } else if (value.elements) {
-        this.view.set(value.elements);
-      } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-        this.view.set(value);
+      if (!this.setValue) {
+        this.setValue = ((value2) => {
+          if (this.type === "f32" || this.type === "u32" || this.type === "i32") {
+            return this.setValueFromFloat;
+          } else if (this.type === "vec2f") {
+            return this.setValueFromVec2;
+          } else if (this.type === "vec3f") {
+            return this.setValueFromVec3;
+          } else if (value2.elements) {
+            return this.setValueFromMat4OrQuat;
+          } else if (ArrayBuffer.isView(value2) || Array.isArray(value2)) {
+            return this.setValueFromArray;
+          } else {
+            throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value2}`);
+          }
+        })(value);
       }
+      this.setValue(value);
     }
     /**
      * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
@@ -1305,22 +1348,18 @@
       this.alignment.end = this.getPositionAtOffset(this.endOffset + this.arrayStride * (this.numElements - 1));
     }
     /**
-     * Update the {@link view} based on the new value
-     * @param value - new value to use
+     * Set the strided {@link view} value from an array
+     * @param value - array to use
      */
-    update(value) {
-      if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-        let valueIndex = 0;
-        const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT;
-        const stride = Math.ceil(viewLength / this.numElements);
-        for (let i = 0; i < this.numElements; i++) {
-          for (let j = 0; j < this.bufferLayout.numElements; j++) {
-            this.view[j + i * stride] = value[valueIndex];
-            valueIndex++;
-          }
+    setValueFromArray(value) {
+      let valueIndex = 0;
+      const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT;
+      const stride = Math.ceil(viewLength / this.numElements);
+      for (let i = 0; i < this.numElements; i++) {
+        for (let j = 0; j < this.bufferLayout.numElements; j++) {
+          this.view[j + i * stride] = value[valueIndex];
+          valueIndex++;
         }
-      } else {
-        throwWarning(`BufferArrayElement: value passed to ${this.name} is not an array: ${value}`);
       }
     }
   }
@@ -1463,14 +1502,14 @@
      * @param bindings - bindings inputs
      */
     setBindings(bindings) {
-      Object.keys(bindings).forEach((bindingKey) => {
+      for (const bindingKey of Object.keys(bindings)) {
         const binding = {};
         for (const key in bindings[bindingKey]) {
           if (key !== "value") {
             binding[key] = bindings[bindingKey][key];
           }
         }
-        binding.name = bindings[bindingKey].name ?? bindingKey;
+        binding.name = bindingKey;
         Object.defineProperty(binding, "value", {
           get() {
             return binding._value;
@@ -1485,39 +1524,42 @@
           binding.value.onChange(() => binding.shouldUpdate = true);
         }
         this.inputs[bindingKey] = binding;
-      });
+      }
     }
     /**
      * Set our buffer attributes:
      * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link arrayBuffer} typed array accordingly.
      */
     setBufferAttributes() {
-      const arrayBindings = Object.keys(this.inputs).filter(
-        (bindingKey) => this.inputs[bindingKey].type.indexOf("array") !== -1
-      );
-      let orderedBindings = Object.keys(this.inputs).sort((bindingKeyA, bindingKeyB) => {
-        const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf("array"));
-        const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf("array"));
-        return isBindingAArray - isBindingBArray;
+      let orderedBindings = Object.keys(this.inputs);
+      const arrayBindings = orderedBindings.filter((bindingKey) => {
+        return this.inputs[bindingKey].type.includes("array");
       });
-      if (arrayBindings.length > 1) {
-        orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey));
+      if (arrayBindings.length) {
+        orderedBindings.sort((bindingKeyA, bindingKeyB) => {
+          const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf("array"));
+          const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf("array"));
+          return isBindingAArray - isBindingBArray;
+        });
+        if (arrayBindings.length > 1) {
+          orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey));
+        }
       }
-      orderedBindings.forEach((bindingKey) => {
+      for (const bindingKey of orderedBindings) {
         const binding = this.inputs[bindingKey];
         const bufferElementOptions = {
           name: toCamelCase(binding.name ?? bindingKey),
           key: bindingKey,
           type: binding.type
         };
-        const isArray = binding.type.indexOf("array") !== -1 && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value));
+        const isArray = binding.type.includes("array") && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value));
         this.bufferElements.push(
           isArray ? new BufferArrayElement({
             ...bufferElementOptions,
             arrayLength: binding.value.length
           }) : new BufferElement(bufferElementOptions)
         );
-      });
+      }
       this.bufferElements.forEach((bufferElement, index) => {
         const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset + 1;
         bufferElement.setAlignment(startOffset);
@@ -1577,9 +1619,9 @@
       this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount : 0;
       this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
       this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength);
-      this.bufferElements.forEach((bufferElement) => {
+      for (const bufferElement of this.bufferElements) {
         bufferElement.setView(this.arrayBuffer, this.arrayView);
-      });
+      }
       this.shouldUpdate = this.arrayBufferSize > 0;
     }
     /**
@@ -1635,13 +1677,13 @@
       }
     }
     /**
-     * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
+     * Set a {@link BufferBinding#shouldUpdate | binding shouldUpdate} flag to `true` to update our {@link arrayBuffer} array during next render.
      * @param bindingName - the binding name/key to update
      */
     shouldUpdateBinding(bindingName = "") {
-      const bindingKey = Object.keys(this.inputs).find((bindingKey2) => this.inputs[bindingKey2].name === bindingName);
-      if (bindingKey)
-        this.inputs[bindingKey].shouldUpdate = true;
+      if (this.inputs[bindingName]) {
+        this.inputs[bindingName].shouldUpdate = true;
+      }
     }
     /**
      * Executed at the beginning of a Material render call.
@@ -1649,16 +1691,16 @@
      * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
      */
     update() {
-      Object.keys(this.inputs).forEach((bindingKey) => {
-        const binding = this.inputs[bindingKey];
-        const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey);
+      const inputs = Object.values(this.inputs);
+      for (const binding of inputs) {
+        const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name);
         if (binding.shouldUpdate && bufferElement) {
           binding.onBeforeUpdate && binding.onBeforeUpdate();
           bufferElement.update(binding.value);
           this.shouldUpdate = true;
           binding.shouldUpdate = false;
         }
-      });
+      }
     }
     /**
      * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the {@link BufferBinding#buffer | GPU buffer} data of this {@link BufferBinding}
@@ -1689,15 +1731,15 @@
       label = "Work",
       name = "work",
       bindingType,
-      useStruct = true,
-      struct = {},
       visibility,
+      useStruct = true,
       access = "read_write",
+      struct = {},
       shouldCopyResult = false
     }) {
       bindingType = "storage";
       visibility = "compute";
-      super({ label, name, bindingType, useStruct, struct, visibility, access });
+      super({ label, name, bindingType, visibility, useStruct, access, struct });
       this.options = {
         ...this.options,
         shouldCopyResult
@@ -1735,6 +1777,7 @@
       this.bindGroupLayout = null;
       this.bindGroup = null;
       this.needsPipelineFlush = false;
+      this.consumers = /* @__PURE__ */ new Set();
       this.renderer.addBindGroup(this);
     }
     /**
@@ -1772,9 +1815,9 @@
             label: toKebabCase(binding.label || inputKey),
             name: inputKey,
             bindingType,
+            visibility: binding.access === "read_write" ? "compute" : binding.visibility,
             useStruct: true,
             // by default
-            visibility: binding.access === "read_write" ? "compute" : binding.visibility,
             access: binding.access ?? "read",
             // read by default
             struct: binding.struct,
@@ -1830,12 +1873,12 @@
      */
     resetBindGroup() {
       this.entries.bindGroup = [];
-      this.bindings.forEach((binding) => {
+      for (const binding of this.bindings) {
         this.entries.bindGroup.push({
           binding: this.entries.bindGroup.length,
           resource: binding.resource
         });
-      });
+      }
       this.setBindGroup();
     }
     /**
@@ -1843,13 +1886,13 @@
      */
     resetBindGroupLayout() {
       this.entries.bindGroupLayout = [];
-      this.bindings.forEach((binding) => {
+      for (const binding of this.bindings) {
         this.entries.bindGroupLayout.push({
           binding: this.entries.bindGroupLayout.length,
           ...binding.resourceLayout,
           visibility: binding.visibility
         });
-      });
+      }
       this.setBindGroupLayout();
     }
     /**
@@ -1857,12 +1900,12 @@
      */
     loseContext() {
       this.resetEntries();
-      this.bufferBindings.forEach((binding) => {
+      for (const binding of this.bufferBindings) {
         binding.buffer = null;
         if ("resultBuffer" in binding) {
           binding.resultBuffer = null;
         }
-      });
+      }
       this.bindGroup = null;
       this.bindGroupLayout = null;
       this.needsPipelineFlush = true;
@@ -1898,7 +1941,7 @@
      * For buffer struct, create a GPUBuffer first if needed
      */
     fillEntries() {
-      this.bindings.forEach((binding) => {
+      for (const binding of this.bindings) {
         if (!binding.visibility) {
           binding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
         }
@@ -1914,7 +1957,7 @@
           binding: this.entries.bindGroup.length,
           resource: binding.resource
         });
-      });
+      }
     }
     /**
      * Get a bind group binding by name/key
@@ -1947,16 +1990,18 @@
      * Check whether we should update (write) our {@link GPUBuffer} or not.
      */
     updateBufferBindings() {
-      this.bufferBindings.forEach((binding, index) => {
-        binding.update();
-        if (binding.shouldUpdate) {
-          if (!binding.useStruct && binding.bufferElements.length > 1) {
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view);
-          } else {
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer);
+      this.bindings.forEach((binding, index) => {
+        if ("buffer" in binding) {
+          binding.update();
+          if (binding.shouldUpdate) {
+            if (!binding.useStruct && binding.bufferElements.length > 1) {
+              this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view);
+            } else {
+              this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer);
+            }
           }
+          binding.shouldUpdate = false;
         }
-        binding.shouldUpdate = false;
       });
     }
     /**
@@ -1970,10 +2015,10 @@
       if (needBindGroupReset || needBindGroupLayoutReset) {
         this.renderer.onAfterCommandEncoderSubmission.add(
           () => {
-            this.bindings.forEach((binding) => {
+            for (const binding of this.bindings) {
               binding.shouldResetBindGroup = false;
               binding.shouldResetBindGroupLayout = false;
-            });
+            }
           },
           { once: true }
         );
@@ -2006,7 +2051,7 @@
       bindGroupCopy.setIndex(this.index);
       bindGroupCopy.options = params;
       const bindingsRef = bindings.length ? bindings : this.bindings;
-      bindingsRef.forEach((binding, index) => {
+      for (const binding of bindingsRef) {
         bindGroupCopy.addBinding(binding);
         if ("buffer" in binding && !binding.buffer) {
           bindGroupCopy.createBindingBuffer(binding);
@@ -2022,7 +2067,7 @@
           binding: bindGroupCopy.entries.bindGroup.length,
           resource: binding.resource
         });
-      });
+      }
       if (keepLayout) {
         bindGroupCopy.entries.bindGroupLayout = [...this.entries.bindGroupLayout];
       }
@@ -2036,7 +2081,7 @@
      */
     destroy() {
       this.renderer.removeBindGroup(this);
-      this.bufferBindings.forEach((binding) => {
+      for (const binding of this.bufferBindings) {
         if ("buffer" in binding) {
           this.renderer.removeBuffer(binding.buffer);
           binding.buffer?.destroy();
@@ -2047,7 +2092,7 @@
           binding.resultBuffer?.destroy();
           binding.resultBuffer = null;
         }
-      });
+      }
       this.bindings = [];
       this.bindGroupLayout = null;
       this.bindGroup = null;
@@ -3066,9 +3111,9 @@
       } else {
         this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
       }
-      this.children.forEach((child) => {
+      for (const child of this.children) {
         child.shouldUpdateWorldMatrix();
-      });
+      }
     }
     /**
      * Callback to run if at least one matrix of the stack has been updated
@@ -3082,7 +3127,7 @@
       if (this.parent && this.parent.constructor.name === "Object3D") {
         this.parent.updateMatrixStack();
       }
-      const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate);
+      const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
       if (matrixShouldUpdate) {
         for (const matrixName in this.matrices) {
           if (this.matrices[matrixName].shouldUpdate) {
@@ -3171,8 +3216,7 @@
         name: this.options.name + "Matrix",
         useStruct: false,
         struct: {
-          matrix: {
-            name: this.options.name + "Matrix",
+          [this.options.name + "Matrix"]: {
             type: "mat4x4f",
             value: this.modelMatrix
           }
@@ -3194,10 +3238,10 @@
         new TextureBinding({
           label: this.options.label + ": texture",
           name: this.options.name,
-          texture: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
           bindingType: this.options.sourceType === "externalVideo" ? "externalTexture" : "texture",
-          viewDimension: this.options.viewDimension,
-          visibility: this.options.visibility
+          visibility: this.options.visibility,
+          texture: this.options.sourceType === "externalVideo" ? this.externalTexture : this.texture,
+          viewDimension: this.options.viewDimension
         }),
         this.textureMatrix
       ];
@@ -3611,10 +3655,14 @@
         samplers: []
       };
       if (textures.length) {
-        textures.forEach((texture) => this.addTexture(texture));
+        for (const texture of textures) {
+          this.addTexture(texture);
+        }
       }
       if (samplers.length) {
-        samplers.forEach((sampler) => this.addSampler(sampler));
+        for (const sampler of samplers) {
+          this.addSampler(sampler);
+        }
       }
       this.type = type;
     }
@@ -3662,7 +3710,7 @@
      * - Upload video texture if needed
      */
     updateTextures() {
-      this.textures.forEach((texture) => {
+      for (const texture of this.textures) {
         if (texture instanceof Texture) {
           if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
             texture.copy(texture.options.fromTexture);
@@ -3671,7 +3719,7 @@
             texture.uploadVideoTexture();
           }
         }
-      });
+      }
     }
     /**
      * Update the {@link TextureBindGroup}, which means update its {@link TextureBindGroup#textures | textures}, then update its {@link TextureBindGroup#bufferBindings | buffer bindings} and finally {@link TextureBindGroup#resetBindGroup | reset it} if needed
@@ -4041,7 +4089,7 @@
       mipmapFilter = "linear",
       maxAnisotropy = 1,
       type = "filtering",
-      compare
+      compare = null
     } = {}) {
       this.type = "Sampler";
       this.uuid = generateUUID();
@@ -4064,7 +4112,7 @@
         mipmapFilter,
         maxAnisotropy,
         type,
-        ...compare !== void 0 && { compare }
+        ...compare !== null && { compare }
       };
       this.createSampler();
       this.createBinding();
@@ -4215,10 +4263,10 @@
         new TextureBinding({
           label: this.options.label + ": " + this.options.name + " render texture",
           name: this.options.name,
-          texture: this.texture,
           bindingType: this.options.usage,
-          format: this.options.format,
           visibility: this.options.visibility,
+          texture: this.texture,
+          format: this.options.format,
           viewDimension: this.options.viewDimension,
           multisampled: this.options.sampleCount > 1
         })
@@ -4329,13 +4377,13 @@
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
      */
     loseContext() {
-      this.textures.forEach((texture) => {
+      for (const texture of this.textures) {
         texture.texture = null;
         texture.sourceUploaded = false;
-      });
-      this.renderTextures.forEach((texture) => {
+      }
+      for (const texture of this.renderTextures) {
         texture.texture = null;
-      });
+      }
       [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach(
         (bindGroup) => bindGroup.loseContext()
       );
@@ -4345,22 +4393,24 @@
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
      */
     restoreContext() {
-      this.samplers.forEach((sampler) => {
+      for (const sampler of this.samplers) {
         sampler.createSampler();
         sampler.binding.resource = sampler.sampler;
-      });
-      this.textures.forEach((texture) => {
+      }
+      for (const texture of this.textures) {
         texture.createTexture();
         texture.resize();
-      });
-      this.renderTextures.forEach((texture) => {
+      }
+      for (const texture of this.renderTextures) {
         texture.resize(texture.size);
-      });
+      }
       [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
         if (bindGroup.shouldCreateBindGroup) {
           bindGroup.createBindGroup();
         }
-        bindGroup.bufferBindings.forEach((bufferBinding) => bufferBinding.shouldUpdate = true);
+        for (const bufferBinding of bindGroup.bufferBindings) {
+          bufferBinding.shouldUpdate = true;
+        }
       });
     }
     /**
@@ -4440,7 +4490,7 @@
      * @param bindGroup - The {@link BindGroup} to process
      */
     processBindGroupBindings(bindGroup) {
-      bindGroup.bindings.forEach((inputBinding) => {
+      for (const inputBinding of bindGroup.bindings) {
         if (inputBinding.bindingType === "uniform")
           this.uniforms = {
             ...this.uniforms,
@@ -4452,7 +4502,7 @@
             [inputBinding.name]: inputBinding.inputs
           };
         this.inputsBindings.push(inputBinding);
-      });
+      }
     }
     /**
      * Create the bind groups if they need to be created
@@ -4462,28 +4512,31 @@
         this.texturesBindGroup.setIndex(this.bindGroups.length);
         this.texturesBindGroup.createBindGroup();
         this.bindGroups.push(this.texturesBindGroup);
+        this.texturesBindGroup.consumers.add(this.uuid);
       }
-      this.inputsBindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.inputsBindGroups) {
         if (bindGroup.shouldCreateBindGroup) {
           bindGroup.setIndex(this.bindGroups.length);
           bindGroup.createBindGroup();
           this.bindGroups.push(bindGroup);
+          bindGroup.consumers.add(this.uuid);
         }
-      });
+      }
       this.options.bindGroups?.forEach((bindGroup) => {
         if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
           bindGroup.setIndex(this.bindGroups.length);
           this.bindGroups.push(bindGroup);
+          bindGroup.consumers.add(this.uuid);
         }
         if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
           this.texturesBindGroups.push(bindGroup);
-          bindGroup.textures.forEach((texture) => {
+          for (const texture of bindGroup.textures) {
             if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
               this.textures.push(texture);
             } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
               this.renderTextures.push(texture);
             }
-          });
+          }
         }
       });
     }
@@ -4522,9 +4575,8 @@
      * @param bindGroup - bind group to eventually destroy
      */
     destroyBindGroup(bindGroup) {
-      const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup);
-      const shouldDestroy = !objectsUsingBindGroup || !objectsUsingBindGroup.find((object) => object.material.uuid !== this.uuid);
-      if (shouldDestroy) {
+      bindGroup.consumers.delete(this.uuid);
+      if (!bindGroup.consumers.size) {
         bindGroup.destroy();
       }
     }
@@ -4548,13 +4600,13 @@
      * - Check if we need to flush the pipeline
      */
     updateBindGroups() {
-      this.bindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.bindGroups) {
         bindGroup.update();
         if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
           this.pipelineEntry.flushPipelineEntry(this.bindGroups);
           bindGroup.needsPipelineFlush = false;
         }
-      });
+      }
     }
     /* INPUTS */
     /**
@@ -4574,7 +4626,7 @@
       return this.inputsBindings.find((binding) => binding.name === bindingName && "buffer" in binding);
     }
     /**
-     * Force a given buffer binding update flag to update it at next render
+     * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
      * @param bufferBindingName - the buffer binding name
      * @param bindingName - the binding name
      */
@@ -4733,9 +4785,9 @@
      */
     onBeforeRender() {
       this.compileMaterial();
-      this.textures.forEach((texture) => {
+      for (const texture of this.textures) {
         texture.render();
-      });
+      }
       this.updateBindGroups();
     }
     /**
@@ -4754,9 +4806,9 @@
       if (!this.ready)
         return;
       this.setPipeline(pass);
-      this.bindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.bindGroups) {
         pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-      });
+      }
     }
     /**
      * Destroy the Material
@@ -4882,9 +4934,9 @@
       if (this._useCustomRenderCallback !== void 0) {
         this._useCustomRenderCallback(pass);
       } else {
-        this.bindGroups.forEach((bindGroup) => {
+        for (const bindGroup of this.bindGroups) {
           pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-        });
+        }
         pass.dispatchWorkgroups(this.dispatchSize[0], this.dispatchSize[1], this.dispatchSize[2]);
       }
     }
@@ -4894,13 +4946,13 @@
      * @param commandEncoder - current command encoder
      */
     copyBufferToResult(commandEncoder) {
-      this.bindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.bindGroups) {
         bindGroup.bufferBindings.forEach((binding) => {
           if (binding.shouldCopyResult && binding.resultBuffer.mapState === "unmapped") {
             commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size);
           }
         });
-      });
+      }
     }
     /**
      * Get the {@link core/bindings/WritableBufferBinding.WritableBufferBinding#resultBuffer | result GPU buffer} content by {@link core/bindings/WritableBufferBinding.WritableBufferBinding | binding} and {@link core/bindings/bufferElements/BufferElement.BufferElement | buffer element} names
@@ -5525,13 +5577,13 @@
         vertexBuffers,
         topology
       };
-      vertexBuffers.forEach((vertexBuffer) => {
+      for (const vertexBuffer of vertexBuffers) {
         this.addVertexBuffer({
           stepMode: vertexBuffer.stepMode ?? "vertex",
           name: vertexBuffer.name,
           attributes: vertexBuffer.attributes
         });
-      });
+      }
     }
     /**
      * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
@@ -5741,10 +5793,10 @@
      * Destroy our geometry vertex buffers
      */
     destroy() {
-      this.vertexBuffers.forEach((vertexBuffer) => {
+      for (const vertexBuffer of this.vertexBuffers) {
         vertexBuffer.buffer?.destroy();
         vertexBuffer.buffer = null;
-      });
+      }
     }
   }
   _setWGSLFragment = new WeakSet();
@@ -5853,9 +5905,9 @@
       };
       const verticesCount = (this.definition.width + 1) * (this.definition.height + 1);
       const attributes = this.getIndexedVerticesAndUVs(verticesCount);
-      Object.keys(attributes).forEach((attributeKey) => {
-        this.setAttribute(attributes[attributeKey]);
-      });
+      for (const attribute of Object.values(attributes)) {
+        this.setAttribute(attribute);
+      }
       this.setIndexArray();
     }
     /**
@@ -6073,14 +6125,16 @@
         this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
         this.texturesBindGroup.createBindGroup();
         this.bindGroups.push(this.texturesBindGroup);
+        this.texturesBindGroup.consumers.add(this.uuid);
       }
-      this.inputsBindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.inputsBindGroups) {
         if (bindGroup.shouldCreateBindGroup) {
           bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
           bindGroup.createBindGroup();
           this.bindGroups.push(bindGroup);
+          bindGroup.consumers.add(this.uuid);
         }
-      });
+      }
     }
   }
 
@@ -6320,9 +6374,9 @@ struct VertexOutput {
        * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
        */
       loseContext() {
-        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+        for (const vertexBuffer of this.geometry.vertexBuffers) {
           vertexBuffer.buffer = null;
-        });
+        }
         if ("indexBuffer" in this.geometry) {
           this.geometry.indexBuffer.buffer = null;
         }
@@ -6380,7 +6434,7 @@ struct VertexOutput {
        */
       createGeometryBuffers() {
         if (!this.geometry.ready) {
-          this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+          for (const vertexBuffer of this.geometry.vertexBuffers) {
             if (!vertexBuffer.buffer) {
               vertexBuffer.buffer = this.renderer.createBuffer({
                 label: this.options.label + " geometry: " + vertexBuffer.name + " buffer",
@@ -6389,7 +6443,7 @@ struct VertexOutput {
               });
               this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
             }
-          });
+          }
           if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
             this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
               label: this.options.label + " geometry: index buffer",
@@ -6702,12 +6756,12 @@ struct VertexOutput {
           super.destroy();
         }
         this.material?.destroy();
-        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+        for (const vertexBuffer of this.geometry.vertexBuffers) {
           this.renderer.removeBuffer(
             vertexBuffer.buffer,
             this.options.label + " geometry: " + vertexBuffer.name + " buffer"
           );
-        });
+        }
         if ("indexBuffer" in this.geometry) {
           this.renderer.removeBuffer(this.geometry.indexBuffer.buffer);
         }
@@ -6772,8 +6826,8 @@ struct VertexOutput {
       }
       if (!parameters.shaders || !parameters.shaders.vertex) {
         ["uniforms", "storages"].forEach((bindingType) => {
-          Object.keys(parameters[bindingType] ?? {}).forEach(
-            (bindingKey) => parameters[bindingType][bindingKey].visibility = "fragment"
+          Object.values(parameters[bindingType] ?? {}).forEach(
+            (binding) => binding.visibility = "fragment"
           );
         });
       }
@@ -7148,7 +7202,9 @@ struct VSOutput {
        */
       applyScale() {
         super.applyScale();
-        this.textures.forEach((texture) => texture.resize());
+        for (const texture of this.textures) {
+          texture.resize();
+        }
       }
       /**
        * Get our {@link DOMFrustum} projected bounding rectangle
@@ -7530,7 +7586,7 @@ ${this.shaders.full.head}`;
         }
       }
       const groupsBindings = [];
-      this.bindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.bindGroups) {
         let bindIndex = 0;
         bindGroup.bindings.forEach((binding, bindingIndex) => {
           binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
@@ -7545,8 +7601,8 @@ ${this.shaders.full.head}`;
             bindIndex++;
           });
         });
-      });
-      groupsBindings.forEach((groupBinding) => {
+      }
+      for (const groupBinding of groupsBindings) {
         if (groupBinding.visibility === GPUShaderStage.VERTEX || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)) {
           if (groupBinding.wgslStructFragment && this.shaders.vertex.head.indexOf(groupBinding.wgslStructFragment) === -1) {
             this.shaders.vertex.head = `
@@ -7587,7 +7643,7 @@ ${this.shaders.full.head}`;
             this.shaders.full.head += `
 `;
         }
-      });
+      }
       this.shaders.vertex.head = `${this.attributes.wgslStructFragment}
 ${this.shaders.vertex.head}`;
       this.shaders.full.head = `${this.attributes.wgslStructFragment}
@@ -7790,7 +7846,7 @@ ${this.shaders.full.head}`;
       this.shaders.compute.head = "";
       this.shaders.compute.code = "";
       const groupsBindings = [];
-      this.bindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.bindGroups) {
         let bindIndex = 0;
         bindGroup.bindings.forEach((binding, bindingIndex) => {
           binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
@@ -7805,8 +7861,8 @@ ${this.shaders.full.head}`;
             bindIndex++;
           });
         });
-      });
-      groupsBindings.forEach((groupBinding) => {
+      }
+      for (const groupBinding of groupsBindings) {
         if (groupBinding.wgslStructFragment && this.shaders.compute.head.indexOf(groupBinding.wgslStructFragment) === -1) {
           this.shaders.compute.head = `
 ${groupBinding.wgslStructFragment}
@@ -7819,7 +7875,7 @@ ${this.shaders.compute.head}`;
         if (groupBinding.newLine)
           this.shaders.compute.head += `
 `;
-      });
+      }
       this.shaders.compute.code = this.shaders.compute.head + this.options.shaders.compute.code;
     }
     /* SETUP */
@@ -7909,7 +7965,7 @@ ${this.shaders.compute.head}`;
      * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
      */
     compareShaders(shaderA, shaderB) {
-      return shaderA.code?.localeCompare(shaderB.code) === 0 && shaderA.entryPoint === shaderB.entryPoint;
+      return shaderA.code === shaderB.code && shaderA.entryPoint === shaderB.entryPoint;
     }
     /**
      * Checks if the provided {@link RenderPipelineEntryParams | RenderPipelineEntry parameters} belongs to an already created {@link RenderPipelineEntry}.
@@ -8275,24 +8331,11 @@ ${this.shaders.compute.head}`;
      */
     addMesh(mesh) {
       const projectionStack = this.getMeshProjectionStack(mesh);
-      const similarMeshes = mesh.transparent ? [...projectionStack.transparent] : [...projectionStack.opaque];
-      let siblingMeshIndex = -1;
-      for (let i = similarMeshes.length - 1; i >= 0; i--) {
-        if (similarMeshes[i].material.pipelineEntry.index === mesh.material.pipelineEntry.index) {
-          siblingMeshIndex = i + 1;
-          break;
-        }
-      }
-      siblingMeshIndex = Math.max(0, siblingMeshIndex);
-      similarMeshes.splice(siblingMeshIndex, 0, mesh);
-      similarMeshes.sort((a, b) => a.index - b.index);
-      if ((mesh.type === "DOMMesh" || mesh.type === "Plane") && mesh.transparent) {
-        similarMeshes.sort(
-          (a, b) => b.documentPosition.z - a.documentPosition.z
-        );
-      }
-      similarMeshes.sort((a, b) => a.renderOrder - b.renderOrder);
-      mesh.transparent ? projectionStack.transparent = similarMeshes : projectionStack.opaque = similarMeshes;
+      const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque;
+      similarMeshes.push(mesh);
+      similarMeshes.sort((a, b) => {
+        return a.renderOrder - b.renderOrder || a.material.pipelineEntry.index - b.material.pipelineEntry.index || a.index - b.index;
+      });
     }
     /**
      * Remove a Mesh from our {@link Scene}
@@ -8465,8 +8508,12 @@ ${this.shaders.compute.head}`;
       if (renderPassEntry.element) {
         renderPassEntry.element.render(pass);
       } else if (renderPassEntry.stack) {
-        renderPassEntry.stack.unProjected.opaque.forEach((mesh) => mesh.render(pass));
-        renderPassEntry.stack.unProjected.transparent.forEach((mesh) => mesh.render(pass));
+        for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+          mesh.render(pass);
+        }
+        for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+          mesh.render(pass);
+        }
         if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
           if (this.renderer.cameraBindGroup) {
             pass.setBindGroup(
@@ -8474,8 +8521,12 @@ ${this.shaders.compute.head}`;
               this.renderer.cameraBindGroup.bindGroup
             );
           }
-          renderPassEntry.stack.projected.opaque.forEach((mesh) => mesh.render(pass));
-          renderPassEntry.stack.projected.transparent.forEach((mesh) => mesh.render(pass));
+          for (const mesh of renderPassEntry.stack.projected.opaque) {
+            mesh.render(pass);
+          }
+          for (const mesh of renderPassEntry.stack.projected.transparent) {
+            mesh.render(pass);
+          }
         }
       }
       !this.renderer.production && pass.popDebugGroup();
@@ -8490,13 +8541,13 @@ ${this.shaders.compute.head}`;
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
-      this.computePassEntries.forEach((computePass) => {
+      for (const computePass of this.computePassEntries) {
         const pass = commandEncoder.beginComputePass();
         computePass.render(pass);
         pass.end();
         computePass.copyBufferToResult(commandEncoder);
         this.renderer.pipelineManager.resetCurrentPipeline();
-      });
+      }
       for (const renderPassEntryType in this.renderPassEntries) {
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
@@ -8592,10 +8643,10 @@ ${this.shaders.compute.head}`;
         this.depthTexture = new RenderTexture(this.renderer, {
           label: this.options.label + " depth texture",
           name: "depthTexture",
-          usage: "depth",
           format: this.options.depthFormat,
           sampleCount: this.options.sampleCount,
-          qualityRatio: this.options.qualityRatio
+          qualityRatio: this.options.qualityRatio,
+          usage: "depth"
         });
       }
     }
@@ -8610,7 +8661,8 @@ ${this.shaders.compute.head}`;
             name: `colorAttachment${index}ViewTexture`,
             format: colorAttachment.targetFormat,
             sampleCount: this.options.sampleCount,
-            qualityRatio: this.options.qualityRatio
+            qualityRatio: this.options.qualityRatio,
+            usage: "texture"
           })
         );
       });
@@ -8629,7 +8681,8 @@ ${this.shaders.compute.head}`;
               name: `resolveTarget${index}Texture`,
               format: colorAttachment.targetFormat,
               sampleCount: 1,
-              qualityRatio: this.options.qualityRatio
+              qualityRatio: this.options.qualityRatio,
+              usage: "texture"
             })
           );
         });
@@ -9191,7 +9244,7 @@ ${this.shaders.compute.head}`;
      * @returns - newly created {@link GPUBuffer}
      */
     createBuffer(bufferDescriptor) {
-      const buffer = this.device?.createBuffer(bufferDescriptor);
+      const buffer = this.deviceManager.device?.createBuffer(bufferDescriptor);
       this.deviceManager.addBuffer(buffer);
       return buffer;
     }
@@ -9210,7 +9263,7 @@ ${this.shaders.compute.head}`;
      * @param data - {@link BufferSource | data} to write
      */
     queueWriteBuffer(buffer, bufferOffset, data) {
-      this.device?.queue.writeBuffer(buffer, bufferOffset, data);
+      this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
     }
     /**
      * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
@@ -9248,7 +9301,7 @@ ${this.shaders.compute.head}`;
       }
       const hasCommandEncoder = !!commandEncoder;
       if (!hasCommandEncoder) {
-        commandEncoder = this.device?.createCommandEncoder({
+        commandEncoder = this.deviceManager.device?.createCommandEncoder({
           label: `${this.type} (${this.options.label}): Copy buffer command encoder`
         });
         !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
@@ -9257,7 +9310,7 @@ ${this.shaders.compute.head}`;
       if (!hasCommandEncoder) {
         !this.production && commandEncoder.popDebugGroup();
         const commandBuffer = commandEncoder.finish();
-        this.device?.queue.submit([commandBuffer]);
+        this.deviceManager.device?.queue.submit([commandBuffer]);
       }
       return dstBuffer;
     }
@@ -9289,7 +9342,7 @@ ${this.shaders.compute.head}`;
      * @returns - newly created {@link GPUBindGroupLayout}
      */
     createBindGroupLayout(bindGroupLayoutDescriptor) {
-      return this.device?.createBindGroupLayout(bindGroupLayoutDescriptor);
+      return this.deviceManager.device?.createBindGroupLayout(bindGroupLayoutDescriptor);
     }
     /**
      * Create a {@link GPUBindGroup}
@@ -9297,7 +9350,7 @@ ${this.shaders.compute.head}`;
      * @returns - newly created {@link GPUBindGroup}
      */
     createBindGroup(bindGroupDescriptor) {
-      return this.device?.createBindGroup(bindGroupDescriptor);
+      return this.deviceManager.device?.createBindGroup(bindGroupDescriptor);
     }
     /* SHADERS & PIPELINES */
     /**
@@ -9392,7 +9445,7 @@ ${this.shaders.compute.head}`;
      * @returns - newly created {@link GPUTexture}
      */
     createTexture(textureDescriptor) {
-      return this.device?.createTexture(textureDescriptor);
+      return this.deviceManager.device?.createTexture(textureDescriptor);
     }
     /**
      * Upload a {@link Texture#texture | texture} to the GPU
@@ -9407,7 +9460,7 @@ ${this.shaders.compute.head}`;
      * @returns - {@link GPUExternalTexture}
      */
     importExternalTexture(video) {
-      return this.device?.importExternalTexture({ source: video });
+      return this.deviceManager.device?.importExternalTexture({ source: video });
     }
     /**
      * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
@@ -9423,7 +9476,7 @@ ${this.shaders.compute.head}`;
         return existingSampler.sampler;
       } else {
         const { type, ...samplerOptions } = sampler.options;
-        const gpuSampler = this.device?.createSampler({
+        const gpuSampler = this.deviceManager.device?.createSampler({
           label: sampler.label,
           ...samplerOptions
         });
@@ -9472,7 +9525,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
-     * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+     * Useful (but slow) to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - {@link AllowedBindGroups | bind group} to check
      */
     getObjectsByBindGroup(bindGroup) {
@@ -9711,11 +9764,11 @@ ${this.shaders.compute.head}`;
      */
     onCameraMatricesChanged() {
       this.updateCameraBindings();
-      this.meshes.forEach((mesh) => {
+      for (const mesh of this.meshes) {
         if ("modelViewMatrix" in mesh) {
           mesh.shouldUpdateMatrixStack();
         }
-      });
+      }
     }
     /**
      * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
@@ -9728,19 +9781,16 @@ ${this.shaders.compute.head}`;
         struct: {
           model: {
             // camera model matrix
-            name: "model",
             type: "mat4x4f",
             value: this.camera.modelMatrix
           },
           view: {
             // camera view matrix
-            name: "view",
             type: "mat4x4f",
             value: this.camera.viewMatrix
           },
           projection: {
             // camera projection matrix
-            name: "projection",
             type: "mat4x4f",
             value: this.camera.projectionMatrix
           }
@@ -9891,11 +9941,11 @@ ${this.shaders.compute.head}`;
     async init() {
       await this.setAdapterAndDevice();
       if (this.device) {
-        this.renderers.forEach((renderer) => {
+        for (const renderer of this.renderers) {
           if (!renderer.context) {
             renderer.setContext();
           }
-        });
+        }
       }
     }
     /**
@@ -9981,7 +10031,7 @@ ${this.shaders.compute.head}`;
      */
     setDeviceObjects() {
       this.renderers = [];
-      this.bindGroups = [];
+      this.bindGroups = /* @__PURE__ */ new Map();
       this.buffers = [];
       this.samplers = [];
       this.textures = [];
@@ -10013,16 +10063,14 @@ ${this.shaders.compute.head}`;
      * @param bindGroup - {@link AllowedBindGroups | bind group} to add
      */
     addBindGroup(bindGroup) {
-      if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-        this.bindGroups.push(bindGroup);
-      }
+      this.bindGroups.set(bindGroup.uuid, bindGroup);
     }
     /**
      * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
      * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
      */
     removeBindGroup(bindGroup) {
-      this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
+      this.bindGroups.delete(bindGroup.uuid);
     }
     /**
      * Add a {@link GPUBuffer} to our our {@link buffers} array
@@ -10115,7 +10163,9 @@ ${this.shaders.compute.head}`;
     render() {
       if (!this.ready)
         return;
-      this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder());
+      for (const renderer of this.renderers) {
+        renderer.onBeforeCommandEncoder();
+      }
       const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
       !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
       this.renderers.forEach((renderer) => renderer.render(commandEncoder));
@@ -10123,11 +10173,13 @@ ${this.shaders.compute.head}`;
       const commandBuffer = commandEncoder.finish();
       this.device?.queue.submit([commandBuffer]);
       this.textures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
-      this.texturesQueue.forEach((texture) => {
+      for (const texture of this.texturesQueue) {
         texture.sourceUploaded = true;
-      });
+      }
       this.texturesQueue = [];
-      this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder());
+      for (const renderer of this.renderers) {
+        renderer.onAfterCommandEncoder();
+      }
     }
     /**
      * Destroy the {@link GPUDeviceManager} and its {@link renderers}

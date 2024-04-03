@@ -151,14 +151,14 @@ export class Material {
    */
   loseContext() {
     // start with the textures
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       texture.texture = null
       texture.sourceUploaded = false
-    })
+    }
 
-    this.renderTextures.forEach((texture) => {
+    for (const texture of this.renderTextures) {
       texture.texture = null
-    })
+    }
 
     // then bind groups and struct
     ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) =>
@@ -174,21 +174,21 @@ export class Material {
    */
   restoreContext() {
     // start with the samplers and textures
-    this.samplers.forEach((sampler) => {
+    for (const sampler of this.samplers) {
       // the samplers have all been recreated by the renderer, just update the reference
       sampler.createSampler()
       sampler.binding.resource = sampler.sampler
-    })
+    }
 
     // recreate the textures and resize them
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       texture.createTexture()
       texture.resize()
-    })
+    }
 
-    this.renderTextures.forEach((texture) => {
+    for (const texture of this.renderTextures) {
       texture.resize(texture.size)
-    })
+    }
 
     // now the bind groups
     ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
@@ -197,7 +197,9 @@ export class Material {
       }
 
       // finally re-write all our buffers
-      bindGroup.bufferBindings.forEach((bufferBinding) => (bufferBinding.shouldUpdate = true))
+      for (const bufferBinding of bindGroup.bufferBindings) {
+        bufferBinding.shouldUpdate = true
+      }
     })
   }
 
@@ -289,7 +291,7 @@ export class Material {
    * @param bindGroup - The {@link BindGroup} to process
    */
   processBindGroupBindings(bindGroup: BindGroup) {
-    bindGroup.bindings.forEach((inputBinding) => {
+    for (const inputBinding of bindGroup.bindings) {
       if (inputBinding.bindingType === 'uniform')
         this.uniforms = {
           ...this.uniforms,
@@ -302,7 +304,7 @@ export class Material {
         }
 
       this.inputsBindings.push(inputBinding)
-    })
+    }
   }
 
   /**
@@ -315,17 +317,19 @@ export class Material {
       this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
+      this.texturesBindGroup.consumers.add(this.uuid)
     }
 
     // then uniforms/storages inputs
-    this.inputsBindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.inputsBindGroups) {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length)
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
+        bindGroup.consumers.add(this.uuid)
       }
-    })
+    }
 
     // finally, bindGroups inputs
     this.options.bindGroups?.forEach((bindGroup) => {
@@ -333,6 +337,7 @@ export class Material {
       if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         bindGroup.setIndex(this.bindGroups.length)
         this.bindGroups.push(bindGroup)
+        bindGroup.consumers.add(this.uuid)
       }
 
       // add it to our textures bind groups as well if needed
@@ -340,13 +345,13 @@ export class Material {
         this.texturesBindGroups.push(bindGroup)
 
         // also add the textures?
-        bindGroup.textures.forEach((texture) => {
+        for (const texture of bindGroup.textures) {
           if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
             this.textures.push(texture)
           } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
             this.renderTextures.push(texture)
           }
-        })
+        }
       }
     })
   }
@@ -393,13 +398,12 @@ export class Material {
    * @param bindGroup - bind group to eventually destroy
    */
   destroyBindGroup(bindGroup: AllowedBindGroups) {
-    // check if this bind group is used by another object before actually destroying it
-    const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup)
+    // remove this material as a consumer of the bind group
+    bindGroup.consumers.delete(this.uuid)
 
-    const shouldDestroy =
-      !objectsUsingBindGroup || !objectsUsingBindGroup.find((object) => object.material.uuid !== this.uuid)
-
-    if (shouldDestroy) {
+    // if the bind group does not have another consumer
+    // destroy it
+    if (!bindGroup.consumers.size) {
       bindGroup.destroy()
     }
   }
@@ -426,7 +430,7 @@ export class Material {
    */
   updateBindGroups() {
     // now update all bind groups in use and check if they need to flush the pipeline
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       bindGroup.update()
 
       // if a bind group needs to flush the pipeline
@@ -436,7 +440,7 @@ export class Material {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups)
         bindGroup.needsPipelineFlush = false
       }
-    })
+    }
   }
 
   /* INPUTS */
@@ -462,7 +466,7 @@ export class Material {
   }
 
   /**
-   * Force a given buffer binding update flag to update it at next render
+   * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
    * @param bufferBindingName - the buffer binding name
    * @param bindingName - the binding name
    */
@@ -666,9 +670,9 @@ export class Material {
     this.compileMaterial()
 
     // first what needs to be done for all textures
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       texture.render()
-    })
+    }
 
     // update bind groups
     this.updateBindGroups()
@@ -697,9 +701,9 @@ export class Material {
     this.setPipeline(pass)
 
     // set bind groups
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
-    })
+    }
   }
 
   /**

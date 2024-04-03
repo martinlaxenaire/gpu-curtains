@@ -172,9 +172,9 @@ export class ComputeMaterial extends Material {
       this._useCustomRenderCallback(pass)
     } else {
       // else just set our bind groups and dispatch
-      this.bindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.bindGroups) {
         pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
-      })
+      }
 
       pass.dispatchWorkgroups(this.dispatchSize[0], this.dispatchSize[1], this.dispatchSize[2])
     }
@@ -187,13 +187,13 @@ export class ComputeMaterial extends Material {
    * @param commandEncoder - current command encoder
    */
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       bindGroup.bufferBindings.forEach((binding: WritableBufferBinding) => {
         if (binding.shouldCopyResult && binding.resultBuffer.mapState === 'unmapped') {
           commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
         }
       })
-    })
+    }
   }
 
   /**

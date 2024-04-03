@@ -157,8 +157,7 @@ export class Texture extends Object3D {
       name: this.options.name + 'Matrix',
       useStruct: false,
       struct: {
-        matrix: {
-          name: this.options.name + 'Matrix',
+        [this.options.name + 'Matrix']: {
           type: 'mat4x4f',
           value: this.modelMatrix,
         },
@@ -185,11 +184,11 @@ export class Texture extends Object3D {
       new TextureBinding({
         label: this.options.label + ': texture',
         name: this.options.name,
-        texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
-        viewDimension: this.options.viewDimension,
         visibility: this.options.visibility,
-      } as TextureBindingParams),
+        texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
+        viewDimension: this.options.viewDimension,
+      }),
       this.textureMatrix,
     ]
   }

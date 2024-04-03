@@ -16,6 +16,8 @@ export interface BufferBindingInput extends InputBase {
     set value(value: InputValue);
     /** Whether the {@link InputValue | input value} has changed and we should update the {@link BufferBinding#arrayBuffer | buffer binding array} */
     shouldUpdate: boolean;
+    /** {@link BufferBindingInput} name */
+    name: string;
 }
 /**
  * Base parameters used to create a {@link BufferBinding}
@@ -118,7 +120,7 @@ export declare class BufferBinding extends Binding {
      */
     setWGSLFragment(): void;
     /**
-     * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
+     * Set a {@link BufferBinding#shouldUpdate | binding shouldUpdate} flag to `true` to update our {@link arrayBuffer} array during next render.
      * @param bindingName - the binding name/key to update
      */
     shouldUpdateBinding(bindingName?: string): void;

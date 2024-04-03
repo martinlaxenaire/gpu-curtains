@@ -321,7 +321,7 @@ class GPURenderer {
    * @returns - newly created {@link GPUBuffer}
    */
   createBuffer(bufferDescriptor) {
-    const buffer = this.device?.createBuffer(bufferDescriptor);
+    const buffer = this.deviceManager.device?.createBuffer(bufferDescriptor);
     this.deviceManager.addBuffer(buffer);
     return buffer;
   }
@@ -340,7 +340,7 @@ class GPURenderer {
    * @param data - {@link BufferSource | data} to write
    */
   queueWriteBuffer(buffer, bufferOffset, data) {
-    this.device?.queue.writeBuffer(buffer, bufferOffset, data);
+    this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
   }
   /**
    * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
@@ -378,7 +378,7 @@ class GPURenderer {
     }
     const hasCommandEncoder = !!commandEncoder;
     if (!hasCommandEncoder) {
-      commandEncoder = this.device?.createCommandEncoder({
+      commandEncoder = this.deviceManager.device?.createCommandEncoder({
         label: `${this.type} (${this.options.label}): Copy buffer command encoder`
       });
       !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
@@ -387,7 +387,7 @@ class GPURenderer {
     if (!hasCommandEncoder) {
       !this.production && commandEncoder.popDebugGroup();
       const commandBuffer = commandEncoder.finish();
-      this.device?.queue.submit([commandBuffer]);
+      this.deviceManager.device?.queue.submit([commandBuffer]);
     }
     return dstBuffer;
   }
@@ -419,7 +419,7 @@ class GPURenderer {
    * @returns - newly created {@link GPUBindGroupLayout}
    */
   createBindGroupLayout(bindGroupLayoutDescriptor) {
-    return this.device?.createBindGroupLayout(bindGroupLayoutDescriptor);
+    return this.deviceManager.device?.createBindGroupLayout(bindGroupLayoutDescriptor);
   }
   /**
    * Create a {@link GPUBindGroup}
@@ -427,7 +427,7 @@ class GPURenderer {
    * @returns - newly created {@link GPUBindGroup}
    */
   createBindGroup(bindGroupDescriptor) {
-    return this.device?.createBindGroup(bindGroupDescriptor);
+    return this.deviceManager.device?.createBindGroup(bindGroupDescriptor);
   }
   /* SHADERS & PIPELINES */
   /**
@@ -522,7 +522,7 @@ class GPURenderer {
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor) {
-    return this.device?.createTexture(textureDescriptor);
+    return this.deviceManager.device?.createTexture(textureDescriptor);
   }
   /**
    * Upload a {@link Texture#texture | texture} to the GPU
@@ -537,7 +537,7 @@ class GPURenderer {
    * @returns - {@link GPUExternalTexture}
    */
   importExternalTexture(video) {
-    return this.device?.importExternalTexture({ source: video });
+    return this.deviceManager.device?.importExternalTexture({ source: video });
   }
   /**
    * Check if a {@link Sampler} has already been created with the same {@link Sampler#options | parameters}.
@@ -553,7 +553,7 @@ class GPURenderer {
       return existingSampler.sampler;
     } else {
       const { type, ...samplerOptions } = sampler.options;
-      const gpuSampler = this.device?.createSampler({
+      const gpuSampler = this.deviceManager.device?.createSampler({
         label: sampler.label,
         ...samplerOptions
       });
@@ -602,7 +602,7 @@ class GPURenderer {
   }
   /**
    * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
-   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+   * Useful (but slow) to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - {@link AllowedBindGroups | bind group} to check
    */
   getObjectsByBindGroup(bindGroup) {

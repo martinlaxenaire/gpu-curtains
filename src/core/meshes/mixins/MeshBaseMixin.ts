@@ -642,9 +642,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     loseContext() {
       // first the geometry
-      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+      for (const vertexBuffer of this.geometry.vertexBuffers) {
         vertexBuffer.buffer = null
-      })
+      }
 
       if ('indexBuffer' in this.geometry) {
         this.geometry.indexBuffer.buffer = null
@@ -713,7 +713,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     createGeometryBuffers() {
       if (!this.geometry.ready) {
-        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+        for (const vertexBuffer of this.geometry.vertexBuffers) {
           if (!vertexBuffer.buffer) {
             vertexBuffer.buffer = this.renderer.createBuffer({
               label: this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer',
@@ -723,7 +723,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
             this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array)
           }
-        })
+        }
 
         // if it's an indexed geometry, create index GPUBuffer as well
         if ('indexBuffer' in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
@@ -1124,13 +1124,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.material?.destroy()
 
       // remove geometry buffers from device cache
-      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+      for (const vertexBuffer of this.geometry.vertexBuffers) {
         // use original vertex buffer label in case it has been swapped (usually by a compute pass)
         this.renderer.removeBuffer(
           vertexBuffer.buffer,
           this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer'
         )
-      })
+      }
 
       if ('indexBuffer' in this.geometry) {
         this.renderer.removeBuffer(this.geometry.indexBuffer.buffer)

@@ -225,36 +225,18 @@ export class Scene {
     const projectionStack = this.getMeshProjectionStack(mesh)
 
     // rebuild stack
-    const similarMeshes = mesh.transparent ? [...projectionStack.transparent] : [...projectionStack.opaque]
+    const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque
 
-    // find if there's already a plane with the same pipeline with a findLastIndex function
-    let siblingMeshIndex = -1
+    similarMeshes.push(mesh)
 
-    for (let i = similarMeshes.length - 1; i >= 0; i--) {
-      if (similarMeshes[i].material.pipelineEntry.index === mesh.material.pipelineEntry.index) {
-        siblingMeshIndex = i + 1
-        break
-      }
-    }
-
-    // if findIndex returned -1 (no matching pipeline)
-    siblingMeshIndex = Math.max(0, siblingMeshIndex)
-
-    // add it to our stack plane array
-    similarMeshes.splice(siblingMeshIndex, 0, mesh)
-    similarMeshes.sort((a, b) => a.index - b.index)
-
-    // sort by Z pos if transparent
-    if ((mesh.type === 'DOMMesh' || mesh.type === 'Plane') && mesh.transparent) {
-      similarMeshes.sort(
-        (a, b) => (b as DOMProjectedMesh).documentPosition.z - (a as DOMProjectedMesh).documentPosition.z
+    // sort by their render order, pipeline index or natural index
+    similarMeshes.sort((a, b) => {
+      return (
+        a.renderOrder - b.renderOrder ||
+        a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
+        a.index - b.index
       )
-    }
-
-    // then sort by their render order
-    similarMeshes.sort((a, b) => a.renderOrder - b.renderOrder)
-
-    mesh.transparent ? (projectionStack.transparent = similarMeshes) : (projectionStack.opaque = similarMeshes)
+    })
   }
 
   /**
@@ -471,8 +453,12 @@ export class Scene {
       renderPassEntry.element.render(pass)
     } else if (renderPassEntry.stack) {
       // draw unProjected regular meshes
-      renderPassEntry.stack.unProjected.opaque.forEach((mesh) => mesh.render(pass))
-      renderPassEntry.stack.unProjected.transparent.forEach((mesh) => mesh.render(pass))
+      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        mesh.render(pass)
+      }
+      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        mesh.render(pass)
+      }
 
       // then draw projected meshes
       if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
@@ -484,8 +470,12 @@ export class Scene {
           )
         }
 
-        renderPassEntry.stack.projected.opaque.forEach((mesh) => mesh.render(pass))
-        renderPassEntry.stack.projected.transparent.forEach((mesh) => mesh.render(pass))
+        for (const mesh of renderPassEntry.stack.projected.opaque) {
+          mesh.render(pass)
+        }
+        for (const mesh of renderPassEntry.stack.projected.transparent) {
+          mesh.render(pass)
+        }
       }
     }
 
@@ -504,7 +494,7 @@ export class Scene {
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {
-    this.computePassEntries.forEach((computePass) => {
+    for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass()
       computePass.render(pass)
       pass.end()
@@ -512,7 +502,7 @@ export class Scene {
       computePass.copyBufferToResult(commandEncoder)
 
       this.renderer.pipelineManager.resetCurrentPipeline()
-    })
+    }
 
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0

@@ -37,7 +37,10 @@ export class PipelineManager {
    * @returns - whether the two {@link ShaderOptions | shader objects} code and entryPoint match
    */
   compareShaders(shaderA: ShaderOptions, shaderB: ShaderOptions): boolean {
-    return shaderA.code?.localeCompare(shaderB.code) === 0 && shaderA.entryPoint === shaderB.entryPoint
+    // store shader code in a Set map?
+    // https://www.measurethat.net/Benchmarks/Show/30363/0/shaders-strings-comparisons
+    return shaderA.code === shaderB.code && shaderA.entryPoint === shaderB.entryPoint
+    //return shaderA.code?.localeCompare(shaderB.code) === 0 && shaderA.entryPoint === shaderB.entryPoint
   }
 
   /**

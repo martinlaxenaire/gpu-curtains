@@ -62,14 +62,14 @@ class BufferBinding extends Binding {
    * @param bindings - bindings inputs
    */
   setBindings(bindings) {
-    Object.keys(bindings).forEach((bindingKey) => {
+    for (const bindingKey of Object.keys(bindings)) {
       const binding = {};
       for (const key in bindings[bindingKey]) {
         if (key !== "value") {
           binding[key] = bindings[bindingKey][key];
         }
       }
-      binding.name = bindings[bindingKey].name ?? bindingKey;
+      binding.name = bindingKey;
       Object.defineProperty(binding, "value", {
         get() {
           return binding._value;
@@ -84,39 +84,42 @@ class BufferBinding extends Binding {
         binding.value.onChange(() => binding.shouldUpdate = true);
       }
       this.inputs[bindingKey] = binding;
-    });
+    }
   }
   /**
    * Set our buffer attributes:
    * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link arrayBuffer} typed array accordingly.
    */
   setBufferAttributes() {
-    const arrayBindings = Object.keys(this.inputs).filter(
-      (bindingKey) => this.inputs[bindingKey].type.indexOf("array") !== -1
-    );
-    let orderedBindings = Object.keys(this.inputs).sort((bindingKeyA, bindingKeyB) => {
-      const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf("array"));
-      const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf("array"));
-      return isBindingAArray - isBindingBArray;
+    let orderedBindings = Object.keys(this.inputs);
+    const arrayBindings = orderedBindings.filter((bindingKey) => {
+      return this.inputs[bindingKey].type.includes("array");
     });
-    if (arrayBindings.length > 1) {
-      orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey));
+    if (arrayBindings.length) {
+      orderedBindings.sort((bindingKeyA, bindingKeyB) => {
+        const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf("array"));
+        const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf("array"));
+        return isBindingAArray - isBindingBArray;
+      });
+      if (arrayBindings.length > 1) {
+        orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey));
+      }
     }
-    orderedBindings.forEach((bindingKey) => {
+    for (const bindingKey of orderedBindings) {
       const binding = this.inputs[bindingKey];
       const bufferElementOptions = {
         name: toCamelCase(binding.name ?? bindingKey),
         key: bindingKey,
         type: binding.type
       };
-      const isArray = binding.type.indexOf("array") !== -1 && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value));
+      const isArray = binding.type.includes("array") && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value));
       this.bufferElements.push(
         isArray ? new BufferArrayElement({
           ...bufferElementOptions,
           arrayLength: binding.value.length
         }) : new BufferElement(bufferElementOptions)
       );
-    });
+    }
     this.bufferElements.forEach((bufferElement, index) => {
       const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset + 1;
       bufferElement.setAlignment(startOffset);
@@ -176,9 +179,9 @@ class BufferBinding extends Binding {
     this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount : 0;
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
     this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength);
-    this.bufferElements.forEach((bufferElement) => {
+    for (const bufferElement of this.bufferElements) {
       bufferElement.setView(this.arrayBuffer, this.arrayView);
-    });
+    }
     this.shouldUpdate = this.arrayBufferSize > 0;
   }
   /**
@@ -234,13 +237,13 @@ class BufferBinding extends Binding {
     }
   }
   /**
-   * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
+   * Set a {@link BufferBinding#shouldUpdate | binding shouldUpdate} flag to `true` to update our {@link arrayBuffer} array during next render.
    * @param bindingName - the binding name/key to update
    */
   shouldUpdateBinding(bindingName = "") {
-    const bindingKey = Object.keys(this.inputs).find((bindingKey2) => this.inputs[bindingKey2].name === bindingName);
-    if (bindingKey)
-      this.inputs[bindingKey].shouldUpdate = true;
+    if (this.inputs[bindingName]) {
+      this.inputs[bindingName].shouldUpdate = true;
+    }
   }
   /**
    * Executed at the beginning of a Material render call.
@@ -248,16 +251,16 @@ class BufferBinding extends Binding {
    * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
-    Object.keys(this.inputs).forEach((bindingKey) => {
-      const binding = this.inputs[bindingKey];
-      const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey);
+    const inputs = Object.values(this.inputs);
+    for (const binding of inputs) {
+      const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name);
       if (binding.shouldUpdate && bufferElement) {
         binding.onBeforeUpdate && binding.onBeforeUpdate();
         bufferElement.update(binding.value);
         this.shouldUpdate = true;
         binding.shouldUpdate = false;
       }
-    });
+    }
   }
   /**
    * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the {@link BufferBinding#buffer | GPU buffer} data of this {@link BufferBinding}

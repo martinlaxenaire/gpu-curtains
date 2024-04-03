@@ -335,9 +335,9 @@ export class Object3D {
     }
 
     // update the children world matrix as well
-    this.children.forEach((child) => {
+    for (const child of this.children) {
       child.shouldUpdateWorldMatrix()
-    })
+    }
   }
 
   /**
@@ -358,7 +358,7 @@ export class Object3D {
     }
 
     // check if at least one matrix should update
-    const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate)
+    const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate)
 
     if (matrixShouldUpdate) {
       for (const matrixName in this.matrices) {

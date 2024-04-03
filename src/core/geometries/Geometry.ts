@@ -6,7 +6,7 @@ import {
   VertexBuffer,
   VertexBufferAttribute,
   VertexBufferAttributeParams,
-  VertexBufferParams
+  VertexBufferParams,
 } from '../../types/Geometries'
 
 /**
@@ -97,13 +97,13 @@ export class Geometry {
       topology,
     }
 
-    vertexBuffers.forEach((vertexBuffer) => {
+    for (const vertexBuffer of vertexBuffers) {
       this.addVertexBuffer({
         stepMode: vertexBuffer.stepMode ?? 'vertex',
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
       })
-    })
+    }
   }
 
   /**
@@ -369,9 +369,9 @@ export class Geometry {
    * Destroy our geometry vertex buffers
    */
   destroy() {
-    this.vertexBuffers.forEach((vertexBuffer) => {
+    for (const vertexBuffer of this.vertexBuffers) {
       vertexBuffer.buffer?.destroy()
       vertexBuffer.buffer = null
-    })
+    }
   }
 }
