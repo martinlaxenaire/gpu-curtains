@@ -33,8 +33,6 @@ export type InputValue =
 export interface InputBase {
   /** {@link InputBase} type - could be 'f32', 'vec2f', etc. */
   type: WGSLVariableType
-  /** {@link InputBase} name */
-  name?: string
   /** callback to run before updating the {@link BindGroupBufferBindingElement | binding} using this {@link InputBase} */
   onBeforeUpdate?: () => void
 }

@@ -29,16 +29,16 @@ export class WritableBufferBinding extends BufferBinding {
     label = 'Work',
     name = 'work',
     bindingType,
-    useStruct = true,
-    struct = {},
     visibility,
+    useStruct = true,
     access = 'read_write',
+    struct = {},
     shouldCopyResult = false,
   }: WritableBufferBindingParams) {
     bindingType = 'storage'
     visibility = 'compute'
 
-    super({ label, name, bindingType, useStruct, struct: struct, visibility, access })
+    super({ label, name, bindingType, visibility, useStruct, access, struct })
 
     this.options = {
       ...this.options,

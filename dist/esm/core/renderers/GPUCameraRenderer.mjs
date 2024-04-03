@@ -79,11 +79,11 @@ class GPUCameraRenderer extends GPURenderer {
    */
   onCameraMatricesChanged() {
     this.updateCameraBindings();
-    this.meshes.forEach((mesh) => {
+    for (const mesh of this.meshes) {
       if ("modelViewMatrix" in mesh) {
         mesh.shouldUpdateMatrixStack();
       }
-    });
+    }
   }
   /**
    * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
@@ -96,19 +96,16 @@ class GPUCameraRenderer extends GPURenderer {
       struct: {
         model: {
           // camera model matrix
-          name: "model",
           type: "mat4x4f",
           value: this.camera.modelMatrix
         },
         view: {
           // camera view matrix
-          name: "view",
           type: "mat4x4f",
           value: this.camera.viewMatrix
         },
         projection: {
           // camera projection matrix
-          name: "projection",
           type: "mat4x4f",
           value: this.camera.projectionMatrix
         }

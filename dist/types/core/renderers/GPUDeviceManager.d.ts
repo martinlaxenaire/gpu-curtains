@@ -55,8 +55,8 @@ export declare class GPUDeviceManager {
     pipelineManager: PipelineManager;
     /** Array of {@link Renderer | renderers} using that {@link GPUDeviceManager} */
     renderers: Renderer[];
-    /** An array containing all our created {@link AllowedBindGroups} */
-    bindGroups: AllowedBindGroups[];
+    /** A Map containing all our created {@link AllowedBindGroups} */
+    bindGroups: Map<string, AllowedBindGroups>;
     /** An array containing all our created {@link GPUBuffer} */
     buffers: GPUBuffer[];
     /** An array containing all our created {@link Sampler} */

@@ -236,13 +236,13 @@ export class RenderTexture {
       new TextureBinding({
         label: this.options.label + ': ' + this.options.name + ' render texture',
         name: this.options.name,
-        texture: this.texture,
         bindingType: this.options.usage,
-        format: this.options.format,
         visibility: this.options.visibility,
+        texture: this.texture,
+        format: this.options.format,
         viewDimension: this.options.viewDimension,
         multisampled: this.options.sampleCount > 1,
-      } as TextureBindingParams),
+      }),
     ]
   }
 

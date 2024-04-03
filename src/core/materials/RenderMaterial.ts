@@ -201,6 +201,7 @@ export class RenderMaterial extends Material {
     // camera first!
     // if ((this.renderer as CameraRenderer).cameraBindGroup && this.options.rendering.useProjection) {
     //   this.bindGroups.push((this.renderer as CameraRenderer).cameraBindGroup)
+    //   (this.renderer as CameraRenderer).cameraBindGroup.addConsumer(this.uuid)
     // }
     //
     // super.createBindGroups()
@@ -216,6 +217,7 @@ export class RenderMaterial extends Material {
       this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
+      this.texturesBindGroup.consumers.add(this.uuid)
     }
 
     // then uniforms
@@ -225,6 +227,7 @@ export class RenderMaterial extends Material {
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
+        bindGroup.consumers.add(this.uuid)
       }
     }
   }

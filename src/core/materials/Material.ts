@@ -317,6 +317,7 @@ export class Material {
       this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
+      this.texturesBindGroup.consumers.add(this.uuid)
     }
 
     // then uniforms/storages inputs
@@ -326,6 +327,7 @@ export class Material {
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
+        bindGroup.consumers.add(this.uuid)
       }
     }
 
@@ -335,6 +337,7 @@ export class Material {
       if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         bindGroup.setIndex(this.bindGroups.length)
         this.bindGroups.push(bindGroup)
+        bindGroup.consumers.add(this.uuid)
       }
 
       // add it to our textures bind groups as well if needed
@@ -395,13 +398,12 @@ export class Material {
    * @param bindGroup - bind group to eventually destroy
    */
   destroyBindGroup(bindGroup: AllowedBindGroups) {
-    // check if this bind group is used by another object before actually destroying it
-    const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup)
+    // remove this material as a consumer of the bind group
+    bindGroup.consumers.delete(this.uuid)
 
-    const shouldDestroy =
-      !objectsUsingBindGroup || !objectsUsingBindGroup.find((object) => object.material.uuid !== this.uuid)
-
-    if (shouldDestroy) {
+    // if the bind group does not have another consumer
+    // destroy it
+    if (!bindGroup.consumers.size) {
       bindGroup.destroy()
     }
   }
@@ -464,7 +466,7 @@ export class Material {
   }
 
   /**
-   * Force a given buffer binding update flag to update it at next render
+   * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
    * @param bufferBindingName - the buffer binding name
    * @param bindingName - the binding name
    */

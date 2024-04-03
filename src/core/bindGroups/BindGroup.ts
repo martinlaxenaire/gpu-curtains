@@ -91,6 +91,9 @@ export class BindGroup {
   /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
   needsPipelineFlush: boolean
 
+  /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
+  consumers: Set<string>
+
   /**
    * BindGroup constructor
    * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
@@ -131,6 +134,8 @@ export class BindGroup {
     // if we ever update our bind group layout
     // we will have to recreate the whole pipeline again
     this.needsPipelineFlush = false
+
+    this.consumers = new Set()
 
     this.renderer.addBindGroup(this)
   }
@@ -177,8 +182,8 @@ export class BindGroup {
           label: toKebabCase(binding.label || inputKey),
           name: inputKey,
           bindingType,
-          useStruct: true, // by default
           visibility: binding.access === 'read_write' ? 'compute' : binding.visibility,
+          useStruct: true, // by default
           access: binding.access ?? 'read', // read by default
           struct: binding.struct,
           ...(binding.shouldCopyResult !== undefined && { shouldCopyResult: binding.shouldCopyResult }),

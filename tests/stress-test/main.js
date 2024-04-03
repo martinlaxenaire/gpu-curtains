@@ -1,7 +1,9 @@
 // real basic stress test
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCurtains, Mesh, SphereGeometry } = await import(/* @vite-ignore */ path)
+  const { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, GPUCurtains, Mesh, SphereGeometry } = await import(
+    /* @vite-ignore */ path
+  )
 
   const stats = new Stats()
 
@@ -11,47 +13,56 @@ window.addEventListener('load', async () => {
 
   const systemSize = 50
 
-  // set our main GPUCurtains instance it will handle everything we need
-  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
-  const gpuCurtains = new GPUCurtains({
+  // create a device manager
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
+    // production: true, // you can always gain a couple fps by not tracking the errors
+  })
+
+  // wait for the device to be created
+  await gpuDeviceManager.init()
+
+  // create a camera renderer
+  const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager,
     container: '#canvas',
-    watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       near: systemSize,
       far: systemSize * 4,
     },
-    //production: true, // you can always gain a couple fps by not tracking the errors
   })
 
-  await gpuCurtains.setDevice()
+  // render it
+  const animate = () => {
+    requestAnimationFrame(animate)
 
-  gpuCurtains.renderer
-    .onBeforeRender(() => {
-      stats.begin()
-    })
-    .onAfterRender(() => {
-      stats.end()
-    })
+    stats.begin()
+    gpuDeviceManager.render()
+    stats.end()
+  }
+
+  animate()
 
   const cubeGeometry = new BoxGeometry()
   const sphereGeometry = new SphereGeometry()
 
-  gpuCurtains.camera.position.z = systemSize * 2
+  gpuCameraRenderer.camera.position.z = systemSize * 2
 
   // not specifically designed to be responsive
-  const aspectRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
+  const aspectRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
 
   console.time('creation time')
   let createdMeshes = 0
-  let nbMeshes = 3000
+  let nbMeshes = 3_000
+  //let nbMeshes = 100
 
   const meshes = []
 
   const addMesh = (index) => {
-    const mesh = new Mesh(gpuCurtains, {
+    const mesh = new Mesh(gpuCameraRenderer, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
-      //frustumCulled: false, // you can also gain a few fps without checking for frustum
+      // frustumCulled: false, // you can also gain a few fps without checking for frustum
     })
 
     mesh.position.x = Math.random() * systemSize * 2 * aspectRatio - systemSize * aspectRatio
@@ -66,35 +77,20 @@ window.addEventListener('load', async () => {
     })
 
     meshes.push(mesh)
+
+    if (index === 0) console.log(mesh.material)
   }
 
   for (let i = 0; i < nbMeshes; i++) {
-    // let's try to avoid blocking the CPU on meshes creation
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        addMesh(i)
-        // set visibility to false to leverage CPU work for now
-        // we'll set it back to true when all the meshes will be ready
-        meshes[i].visible = false
+    addMesh(i)
 
-        meshes[i].onReady(() => {
-          createdMeshes++
-          if (createdMeshes === nbMeshes) {
-            meshes.forEach((mesh) => (mesh.visible = true))
-            console.timeEnd('creation time')
-          }
-        })
-      })
-    } else {
-      addMesh(i)
-
-      meshes[i].onReady(() => {
-        createdMeshes++
-        if (createdMeshes === nbMeshes) {
-          console.timeEnd('creation time')
-        }
-      })
-    }
+    meshes[i].onReady(() => {
+      createdMeshes++
+      if (createdMeshes === nbMeshes) {
+        console.timeEnd('creation time')
+        console.log(gpuDeviceManager)
+      }
+    })
   }
 
   // GUI

@@ -82,10 +82,10 @@ class RenderPass {
       this.depthTexture = new RenderTexture(this.renderer, {
         label: this.options.label + " depth texture",
         name: "depthTexture",
-        usage: "depth",
         format: this.options.depthFormat,
         sampleCount: this.options.sampleCount,
-        qualityRatio: this.options.qualityRatio
+        qualityRatio: this.options.qualityRatio,
+        usage: "depth"
       });
     }
   }
@@ -100,7 +100,8 @@ class RenderPass {
           name: `colorAttachment${index}ViewTexture`,
           format: colorAttachment.targetFormat,
           sampleCount: this.options.sampleCount,
-          qualityRatio: this.options.qualityRatio
+          qualityRatio: this.options.qualityRatio,
+          usage: "texture"
         })
       );
     });
@@ -119,7 +120,8 @@ class RenderPass {
             name: `resolveTarget${index}Texture`,
             format: colorAttachment.targetFormat,
             sampleCount: 1,
-            qualityRatio: this.options.qualityRatio
+            qualityRatio: this.options.qualityRatio,
+            usage: "texture"
           })
         );
       });

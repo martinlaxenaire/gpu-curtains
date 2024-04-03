@@ -98,7 +98,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(gpuCurtains)
+  console.log(gpuCurtains, plane, postProPass)
 
   // lost context
 

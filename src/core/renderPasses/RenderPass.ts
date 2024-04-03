@@ -173,10 +173,10 @@ export class RenderPass {
       this.depthTexture = new RenderTexture(this.renderer, {
         label: this.options.label + ' depth texture',
         name: 'depthTexture',
-        usage: 'depth',
         format: this.options.depthFormat,
         sampleCount: this.options.sampleCount,
         qualityRatio: this.options.qualityRatio,
+        usage: 'depth',
       })
     }
   }
@@ -193,6 +193,7 @@ export class RenderPass {
           format: colorAttachment.targetFormat,
           sampleCount: this.options.sampleCount,
           qualityRatio: this.options.qualityRatio,
+          usage: 'texture',
         })
       )
     })
@@ -215,6 +216,7 @@ export class RenderPass {
                 format: colorAttachment.targetFormat,
                 sampleCount: 1,
                 qualityRatio: this.options.qualityRatio,
+                usage: 'texture',
               })
         )
       })

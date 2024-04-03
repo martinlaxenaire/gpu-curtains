@@ -33,8 +33,8 @@ export declare class BufferArrayElement extends BufferElement {
      */
     setAlignment(startOffset?: number): void;
     /**
-     * Update the {@link view} based on the new value
-     * @param value - new value to use
+     * Set the strided {@link view} value from an array
+     * @param value - array to use
      */
-    update(value: any): void;
+    setValueFromArray(value: number[]): void;
 }

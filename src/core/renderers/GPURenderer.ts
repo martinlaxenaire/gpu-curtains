@@ -613,7 +613,7 @@ export class GPURenderer {
    * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
    * @readonly
    */
-  get bindGroups(): AllowedBindGroups[] {
+  get bindGroups(): Map<string, AllowedBindGroups> {
     return this.deviceManager.bindGroups
   }
 
@@ -856,7 +856,7 @@ export class GPURenderer {
 
   /**
    * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
-   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+   * Useful (but slow) to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - {@link AllowedBindGroups | bind group} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {

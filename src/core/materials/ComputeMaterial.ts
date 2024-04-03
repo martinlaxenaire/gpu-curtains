@@ -188,11 +188,11 @@ export class ComputeMaterial extends Material {
    */
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     for (const bindGroup of this.bindGroups) {
-      for (const binding: WritableBufferBinding of bindGroup.bufferBindings) {
+      bindGroup.bufferBindings.forEach((binding: WritableBufferBinding) => {
         if (binding.shouldCopyResult && binding.resultBuffer.mapState === 'unmapped') {
           commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
         }
-      }
+      })
     }
   }
 

@@ -47,13 +47,13 @@ class Geometry {
       vertexBuffers,
       topology
     };
-    vertexBuffers.forEach((vertexBuffer) => {
+    for (const vertexBuffer of vertexBuffers) {
       this.addVertexBuffer({
         stepMode: vertexBuffer.stepMode ?? "vertex",
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes
       });
-    });
+    }
   }
   /**
    * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
@@ -263,10 +263,10 @@ class Geometry {
    * Destroy our geometry vertex buffers
    */
   destroy() {
-    this.vertexBuffers.forEach((vertexBuffer) => {
+    for (const vertexBuffer of this.vertexBuffers) {
       vertexBuffer.buffer?.destroy();
       vertexBuffer.buffer = null;
-    });
+    }
   }
 }
 _setWGSLFragment = new WeakSet();

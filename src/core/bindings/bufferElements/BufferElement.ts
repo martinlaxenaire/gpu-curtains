@@ -3,6 +3,7 @@ import { Vec2 } from '../../../math/Vec2'
 import { Vec3 } from '../../../math/Vec3'
 import { Quat } from '../../../math/Quat'
 import { Mat4 } from '../../../math/Mat4'
+import { throwWarning } from '../../../utils/utils'
 
 /** Number of slots per row */
 export const slotsPerRow = 4
@@ -79,6 +80,9 @@ export class BufferElement {
   /** Array containing the {@link BufferElement} values */
   view?: TypedArray
 
+  /** Function assigned to set the {@link view} values */
+  setValue: (value: number | number[] | Vec2 | Vec3 | Mat4 | Quat) => void | null
+
   /**
    * BufferElement constructor
    * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}
@@ -101,6 +105,8 @@ export class BufferElement {
         byte: 0,
       },
     }
+
+    this.setValue = null
   }
 
   /**
@@ -279,24 +285,72 @@ export class BufferElement {
   }
 
   /**
+   * Set the {@link view} value from a float or an int
+   * @param value - float or int to use
+   */
+  setValueFromFloat(value: number) {
+    this.view[0] = value as number
+  }
+
+  /**
+   * Set the {@link view} value from a {@link Vec2} or an array
+   * @param value - {@link Vec2} or array to use
+   */
+  setValueFromVec2(value: Vec2 | number[]) {
+    this.view[0] = (value as Vec2).x ?? value[0] ?? 0
+    this.view[1] = (value as Vec2).y ?? value[1] ?? 0
+  }
+
+  /**
+   * Set the {@link view} value from a {@link Vec3} or an array
+   * @param value - {@link Vec3} or array to use
+   */
+  setValueFromVec3(value: Vec3 | number[]) {
+    this.view[0] = (value as Vec3).x ?? value[0] ?? 0
+    this.view[1] = (value as Vec3).y ?? value[1] ?? 0
+    this.view[2] = (value as Vec3).z ?? value[2] ?? 0
+  }
+
+  /**
+   * Set the {@link view} value from a {@link Mat4} or a {@link Quat}
+   * @param value - {@link Mat4} or {@link Quat} to use
+   */
+  setValueFromMat4OrQuat(value: Mat4 | Quat) {
+    this.view.set(value.elements)
+  }
+
+  /**
+   * Set the {@link view} value from an array
+   * @param value - array to use
+   */
+  setValueFromArray(value: number[]) {
+    this.view.set(value as number[])
+  }
+
+  /**
    * Update the {@link view} based on the new value
    * @param value - new value to use
    */
   update(value) {
-    if (this.type === 'f32' || this.type === 'u32' || this.type === 'i32') {
-      this.view[0] = value as number
-    } else if (this.type === 'vec2f') {
-      this.view[0] = (value as Vec2).x ?? value[0] ?? 0
-      this.view[1] = (value as Vec2).y ?? value[1] ?? 0
-    } else if (this.type === 'vec3f') {
-      this.view[0] = (value as Vec3).x ?? value[0] ?? 0
-      this.view[1] = (value as Vec3).y ?? value[1] ?? 0
-      this.view[2] = (value as Vec3).z ?? value[2] ?? 0
-    } else if ((value as Quat | Mat4).elements) {
-      this.view.set((value as Quat | Mat4).elements)
-    } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-      this.view.set(value as number[])
+    if (!this.setValue) {
+      this.setValue = ((value) => {
+        if (this.type === 'f32' || this.type === 'u32' || this.type === 'i32') {
+          return this.setValueFromFloat
+        } else if (this.type === 'vec2f') {
+          return this.setValueFromVec2
+        } else if (this.type === 'vec3f') {
+          return this.setValueFromVec3
+        } else if ((value as Quat | Mat4).elements) {
+          return this.setValueFromMat4OrQuat
+        } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
+          return this.setValueFromArray
+        } else {
+          throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`)
+        }
+      })(value)
     }
+
+    this.setValue(value)
   }
 
   /**

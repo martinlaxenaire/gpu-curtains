@@ -40,7 +40,7 @@ class ComputePipelineEntry extends PipelineEntry {
     this.shaders.compute.head = "";
     this.shaders.compute.code = "";
     const groupsBindings = [];
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       let bindIndex = 0;
       bindGroup.bindings.forEach((binding, bindingIndex) => {
         binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
@@ -55,8 +55,8 @@ class ComputePipelineEntry extends PipelineEntry {
           bindIndex++;
         });
       });
-    });
-    groupsBindings.forEach((groupBinding) => {
+    }
+    for (const groupBinding of groupsBindings) {
       if (groupBinding.wgslStructFragment && this.shaders.compute.head.indexOf(groupBinding.wgslStructFragment) === -1) {
         this.shaders.compute.head = `
 ${groupBinding.wgslStructFragment}
@@ -69,7 +69,7 @@ ${this.shaders.compute.head}`;
       if (groupBinding.newLine)
         this.shaders.compute.head += `
 `;
-    });
+    }
     this.shaders.compute.code = this.shaders.compute.head + this.options.shaders.compute.code;
   }
   /* SETUP */

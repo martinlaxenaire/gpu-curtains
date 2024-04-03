@@ -215,9 +215,9 @@ function MeshBaseMixin(Base) {
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext() {
-      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+      for (const vertexBuffer of this.geometry.vertexBuffers) {
         vertexBuffer.buffer = null;
-      });
+      }
       if ("indexBuffer" in this.geometry) {
         this.geometry.indexBuffer.buffer = null;
       }
@@ -275,7 +275,7 @@ function MeshBaseMixin(Base) {
      */
     createGeometryBuffers() {
       if (!this.geometry.ready) {
-        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+        for (const vertexBuffer of this.geometry.vertexBuffers) {
           if (!vertexBuffer.buffer) {
             vertexBuffer.buffer = this.renderer.createBuffer({
               label: this.options.label + " geometry: " + vertexBuffer.name + " buffer",
@@ -284,7 +284,7 @@ function MeshBaseMixin(Base) {
             });
             this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
           }
-        });
+        }
         if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
           this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
             label: this.options.label + " geometry: index buffer",
@@ -597,12 +597,12 @@ function MeshBaseMixin(Base) {
         super.destroy();
       }
       this.material?.destroy();
-      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
+      for (const vertexBuffer of this.geometry.vertexBuffers) {
         this.renderer.removeBuffer(
           vertexBuffer.buffer,
           this.options.label + " geometry: " + vertexBuffer.name + " buffer"
         );
-      });
+      }
       if ("indexBuffer" in this.geometry) {
         this.renderer.removeBuffer(this.geometry.indexBuffer.buffer);
       }

@@ -62,8 +62,8 @@ export class GPUDeviceManager {
 
   /** Array of {@link Renderer | renderers} using that {@link GPUDeviceManager} */
   renderers: Renderer[]
-  /** An array containing all our created {@link AllowedBindGroups} */
-  bindGroups: AllowedBindGroups[]
+  /** A Map containing all our created {@link AllowedBindGroups} */
+  bindGroups: Map<string, AllowedBindGroups>
   /** An array containing all our created {@link GPUBuffer} */
   buffers: GPUBuffer[]
   /** An array containing all our created {@link Sampler} */
@@ -237,7 +237,7 @@ export class GPUDeviceManager {
   setDeviceObjects() {
     // keep track of renderers, bind groups, buffers, samplers, textures
     this.renderers = []
-    this.bindGroups = []
+    this.bindGroups = new Map()
     this.buffers = []
     this.samplers = []
     this.textures = []
@@ -275,9 +275,7 @@ export class GPUDeviceManager {
    * @param bindGroup - {@link AllowedBindGroups | bind group} to add
    */
   addBindGroup(bindGroup: AllowedBindGroups) {
-    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-      this.bindGroups.push(bindGroup)
-    }
+    this.bindGroups.set(bindGroup.uuid, bindGroup)
   }
 
   /**
@@ -285,7 +283,7 @@ export class GPUDeviceManager {
    * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
    */
   removeBindGroup(bindGroup: AllowedBindGroups) {
-    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid)
+    this.bindGroups.delete(bindGroup.uuid)
   }
 
   /**
@@ -302,6 +300,7 @@ export class GPUDeviceManager {
    * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
    */
   removeBuffer(buffer: GPUBuffer, originalLabel?: string) {
+    // TODO we should probably create a Buffer class that handles uuid
     if (buffer) {
       this.buffers = this.buffers.filter((b) => {
         return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size)

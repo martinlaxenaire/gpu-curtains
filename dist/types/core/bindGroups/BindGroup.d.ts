@@ -76,6 +76,8 @@ export declare class BindGroup {
     bindGroup: null | GPUBindGroup;
     /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
     needsPipelineFlush: boolean;
+    /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
+    consumers: Set<string>;
     /**
      * BindGroup constructor
      * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object

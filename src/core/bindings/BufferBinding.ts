@@ -23,6 +23,9 @@ export interface BufferBindingInput extends InputBase {
 
   /** Whether the {@link InputValue | input value} has changed and we should update the {@link BufferBinding#arrayBuffer | buffer binding array} */
   shouldUpdate: boolean
+
+  /** {@link BufferBindingInput} name */
+  name: string
 }
 
 /**
@@ -176,8 +179,8 @@ export class BufferBinding extends Binding {
         }
       }
 
-      // force the binding to have a name
-      binding.name = bindings[bindingKey].name ?? bindingKey
+      // binding name is the key
+      binding.name = bindingKey
 
       // define a "value" getter/setter so we can now when to update the buffer binding
       Object.defineProperty(binding, 'value', {
@@ -212,13 +215,13 @@ export class BufferBinding extends Binding {
     // if length === 0, OK
     // if length === 1, put it at the end of our struct
     // if length > 1, create a buffer interleaved elements
-    const arrayBindings = Object.keys(this.inputs).filter((bindingKey) =>
-      this.inputs[bindingKey].type.includes('array')
-    )
-
-    // put the array struct at the end
     let orderedBindings = Object.keys(this.inputs)
 
+    const arrayBindings = orderedBindings.filter((bindingKey) => {
+      return this.inputs[bindingKey].type.includes('array')
+    })
+
+    // put the array struct at the end
     if (arrayBindings.length) {
       orderedBindings.sort((bindingKeyA, bindingKeyB) => {
         // 0 if it's an array, -1 else
@@ -423,13 +426,13 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
+   * Set a {@link BufferBinding#shouldUpdate | binding shouldUpdate} flag to `true` to update our {@link arrayBuffer} array during next render.
    * @param bindingName - the binding name/key to update
    */
   shouldUpdateBinding(bindingName = '') {
-    const bindingKey = Object.keys(this.inputs).find((bindingKey) => this.inputs[bindingKey].name === bindingName)
-
-    if (bindingKey) this.inputs[bindingKey].shouldUpdate = true
+    if (this.inputs[bindingName]) {
+      this.inputs[bindingName].shouldUpdate = true
+    }
   }
 
   /**
@@ -438,9 +441,9 @@ export class BufferBinding extends Binding {
    * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
-    for (const bindingKey of Object.keys(this.inputs)) {
-      const binding = this.inputs[bindingKey]
-      const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey)
+    const inputs = Object.values(this.inputs)
+    for (const binding of inputs) {
+      const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name)
 
       if (binding.shouldUpdate && bufferElement) {
         binding.onBeforeUpdate && binding.onBeforeUpdate()

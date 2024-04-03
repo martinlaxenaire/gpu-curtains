@@ -234,9 +234,9 @@ class Object3D {
     } else {
       this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
     }
-    this.children.forEach((child) => {
+    for (const child of this.children) {
       child.shouldUpdateWorldMatrix();
-    });
+    }
   }
   /**
    * Callback to run if at least one matrix of the stack has been updated
@@ -250,7 +250,7 @@ class Object3D {
     if (this.parent && this.parent.constructor.name === "Object3D") {
       this.parent.updateMatrixStack();
     }
-    const matrixShouldUpdate = !!Object.keys(this.matrices).find((matrixName) => this.matrices[matrixName].shouldUpdate);
+    const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
     if (matrixShouldUpdate) {
       for (const matrixName in this.matrices) {
         if (this.matrices[matrixName].shouldUpdate) {

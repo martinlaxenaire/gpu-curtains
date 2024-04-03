@@ -169,7 +169,7 @@ export declare class Material {
      */
     getBufferBindingByName(bindingName?: Binding['name']): BindGroupBufferBindingElement | undefined;
     /**
-     * Force a given buffer binding update flag to update it at next render
+     * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
      * @param bufferBindingName - the buffer binding name
      * @param bindingName - the binding name
      */
