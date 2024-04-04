@@ -116,6 +116,7 @@ function MeshBaseMixin(Base) {
         ...meshParameters
       };
       this.geometry = geometry;
+      this.geometry.consumers.add(this.uuid);
       if (autoRender !== void 0) {
         __privateSet(this, _autoRender, autoRender);
       }
@@ -123,7 +124,6 @@ function MeshBaseMixin(Base) {
       this.renderOrder = renderOrder;
       this.ready = false;
       this.userData = {};
-      this.computeGeometry();
       this.setMaterial({
         ...this.cleanupRenderMaterialParameters({ ...this.options }),
         verticesOrder: geometry.verticesOrder,
@@ -215,18 +215,14 @@ function MeshBaseMixin(Base) {
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext() {
-      for (const vertexBuffer of this.geometry.vertexBuffers) {
-        vertexBuffer.buffer = null;
-      }
-      if ("indexBuffer" in this.geometry) {
-        this.geometry.indexBuffer.buffer = null;
-      }
+      this.geometry.loseContext();
       this.material.loseContext();
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext() {
+      this.geometry.restoreContext(this.renderer);
       this.material.restoreContext();
     }
     /* SHADERS */
@@ -263,44 +259,16 @@ function MeshBaseMixin(Base) {
     }
     /* GEOMETRY */
     /**
-     * Compute the Mesh geometry if needed
-     */
-    computeGeometry() {
-      if (this.geometry.shouldCompute) {
-        this.geometry.computeGeometry();
-      }
-    }
-    /**
-     * Create the Mesh Geometry vertex and index buffers if needed
-     */
-    createGeometryBuffers() {
-      if (!this.geometry.ready) {
-        for (const vertexBuffer of this.geometry.vertexBuffers) {
-          if (!vertexBuffer.buffer) {
-            vertexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + " geometry: " + vertexBuffer.name + " buffer",
-              size: vertexBuffer.array.byteLength,
-              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
-            });
-            this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
-          }
-        }
-        if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
-          this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + " geometry: index buffer",
-            size: this.geometry.indexBuffer.array.byteLength,
-            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
-          });
-          this.renderer.queueWriteBuffer(this.geometry.indexBuffer.buffer, 0, this.geometry.indexBuffer.array);
-        }
-      }
-    }
-    /**
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry() {
       if (this.geometry && this.renderer.ready) {
-        this.createGeometryBuffers();
+        if (!this.geometry.ready) {
+          this.geometry.createGeometry({
+            renderer: this.renderer,
+            label: this.options.label + " geometry"
+          });
+        }
         this.setMaterialGeometryAttributes();
       }
     }
@@ -540,7 +508,7 @@ function MeshBaseMixin(Base) {
      * @param pass - current render pass encoder
      */
     onRenderPass(pass) {
-      if (!this.material.ready)
+      if (!this.ready)
         return;
       this._onRenderCallback && this._onRenderCallback();
       this.material.render(pass);
@@ -597,16 +565,10 @@ function MeshBaseMixin(Base) {
         super.destroy();
       }
       this.material?.destroy();
-      for (const vertexBuffer of this.geometry.vertexBuffers) {
-        this.renderer.removeBuffer(
-          vertexBuffer.buffer,
-          this.options.label + " geometry: " + vertexBuffer.name + " buffer"
-        );
+      this.geometry.consumers.delete(this.uuid);
+      if (!this.geometry.consumers.size) {
+        this.geometry?.destroy(this.renderer);
       }
-      if ("indexBuffer" in this.geometry) {
-        this.renderer.removeBuffer(this.geometry.indexBuffer.buffer);
-      }
-      this.geometry?.destroy();
     }
   }, _autoRender = new WeakMap(), _a;
 }

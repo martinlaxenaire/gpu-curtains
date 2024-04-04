@@ -1,6 +1,7 @@
 /// <reference types="dist" />
 import { Box3 } from '../../math/Box3';
 import { GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams } from '../../types/Geometries';
+import { Renderer } from '../renderers/utils';
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
  * Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.
@@ -50,25 +51,33 @@ export declare class Geometry {
     options: GeometryOptions;
     /** The type of the geometry */
     type: string;
+    /** The universal unique id of the geometry */
+    uuid: string;
     /** The bounding box of the geometry, i.e. two {@link math/Vec3.Vec3 | Vec3} defining the min and max positions to wrap this geometry in a cube */
     boundingBox: Box3;
     /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
     wgslStructFragment: string;
+    /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
+    consumers: Set<string>;
     /**
      * Geometry constructor
      * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
      */
-    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, }?: GeometryParams);
-    /**
-     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
-     * @readonly
-     */
-    get shouldCompute(): boolean;
+    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation, }?: GeometryParams);
     /**
      * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
      * @readonly
      */
     get ready(): boolean;
+    /**
+     * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
+     */
+    loseContext(): void;
+    /**
+     * Restore the {@link Geometry} buffers on context restoration
+     * @param renderer - The {@link Renderer} used to recreate the buffers
+     */
+    restoreContext(renderer: Renderer): void;
     /**
      * Add a vertex buffer to our Geometry, set its attributes and return it
      * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
@@ -97,6 +106,26 @@ export declare class Geometry {
      * Also compute the Geometry bounding box.
      */
     computeGeometry(): void;
+    /**
+     * Create the {@link createBuffers | geometry buffers} and {@link computeGeometry | compute the geometry}. The order in which those operations take place depends on mappedAtCreation parameter.
+     * @param parameters - parameters used to create the geometry.
+     * @param parameters.renderer - {@link Renderer} used to create the buffers.
+     * @param parameters.label - label to use for the buffers.
+     */
+    createGeometry({ renderer, label }: {
+        renderer: Renderer;
+        label?: string;
+    }): void;
+    /**
+     * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
+     * @param parameters - parameters used to create the vertex buffers.
+     * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
+     * @param parameters.label - label to use for the vertex buffers.
+     */
+    createBuffers({ renderer, label }: {
+        renderer: Renderer;
+        label?: string;
+    }): void;
     /** RENDER **/
     /**
      * Set our render pass geometry vertex buffers
@@ -114,7 +143,8 @@ export declare class Geometry {
      */
     render(pass: GPURenderPassEncoder): void;
     /**
-     * Destroy our geometry vertex buffers
+     * Destroy our geometry vertex buffers.
+     * @param renderer - current {@link Renderer}, in case we want to remove the {@link VertexBuffer#buffer | buffers} from the cache.
      */
-    destroy(): void;
+    destroy(renderer?: null | Renderer): void;
 }

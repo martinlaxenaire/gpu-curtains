@@ -217,16 +217,6 @@ export declare class MeshBaseClass {
   setShaders(): void
 
   /**
-   * Compute the Mesh geometry if needed
-   */
-  computeGeometry(): void
-
-  /**
-   * Create the Mesh Geometry vertex and index buffers if needed
-   */
-  createGeometryBuffers(): void
-
-  /**
    * Set our Mesh geometry: create buffers and add attributes to material
    */
   setGeometry(): void
@@ -509,6 +499,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       }
 
       this.geometry = geometry
+      this.geometry.consumers.add(this.uuid)
 
       if (autoRender !== undefined) {
         this.#autoRender = autoRender
@@ -519,8 +510,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.ready = false
 
       this.userData = {}
-
-      this.computeGeometry()
 
       this.setMaterial({
         ...this.cleanupRenderMaterialParameters({ ...this.options }),
@@ -642,13 +631,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      */
     loseContext() {
       // first the geometry
-      for (const vertexBuffer of this.geometry.vertexBuffers) {
-        vertexBuffer.buffer = null
-      }
-
-      if ('indexBuffer' in this.geometry) {
-        this.geometry.indexBuffer.buffer = null
-      }
+      this.geometry.loseContext()
 
       // then the material
       this.material.loseContext()
@@ -658,6 +641,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext() {
+      this.geometry.restoreContext(this.renderer)
       this.material.restoreContext()
     }
 
@@ -700,50 +684,17 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* GEOMETRY */
 
     /**
-     * Compute the Mesh geometry if needed
-     */
-    computeGeometry() {
-      if (this.geometry.shouldCompute) {
-        this.geometry.computeGeometry()
-      }
-    }
-
-    /**
-     * Create the Mesh Geometry vertex and index buffers if needed
-     */
-    createGeometryBuffers() {
-      if (!this.geometry.ready) {
-        for (const vertexBuffer of this.geometry.vertexBuffers) {
-          if (!vertexBuffer.buffer) {
-            vertexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer',
-              size: vertexBuffer.array.byteLength,
-              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-            })
-
-            this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array)
-          }
-        }
-
-        // if it's an indexed geometry, create index GPUBuffer as well
-        if ('indexBuffer' in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
-          this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + ' geometry: index buffer',
-            size: this.geometry.indexBuffer.array.byteLength,
-            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-          })
-
-          this.renderer.queueWriteBuffer(this.geometry.indexBuffer.buffer, 0, this.geometry.indexBuffer.array)
-        }
-      }
-    }
-
-    /**
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry() {
       if (this.geometry && this.renderer.ready) {
-        this.createGeometryBuffers()
+        if (!this.geometry.ready) {
+          this.geometry.createGeometry({
+            renderer: this.renderer,
+            label: this.options.label + ' geometry',
+          })
+        }
+
         this.setMaterialGeometryAttributes()
       }
     }
@@ -1043,7 +994,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param pass - current render pass encoder
      */
     onRenderPass(pass: GPURenderPassEncoder) {
-      if (!this.material.ready) return
+      if (!this.ready) return
 
       this._onRenderCallback && this._onRenderCallback()
 
@@ -1123,20 +1074,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.material?.destroy()
 
-      // remove geometry buffers from device cache
-      for (const vertexBuffer of this.geometry.vertexBuffers) {
-        // use original vertex buffer label in case it has been swapped (usually by a compute pass)
-        this.renderer.removeBuffer(
-          vertexBuffer.buffer,
-          this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer'
-        )
+      // destroy geometry and remove buffers from device cache
+      this.geometry.consumers.delete(this.uuid)
+      if (!this.geometry.consumers.size) {
+        this.geometry?.destroy(this.renderer)
       }
-
-      if ('indexBuffer' in this.geometry) {
-        this.renderer.removeBuffer(this.geometry.indexBuffer.buffer)
-      }
-
-      this.geometry?.destroy()
     }
   }
 }

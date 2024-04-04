@@ -1,4 +1,5 @@
 import { WGSLVariableType } from '../core/bindings/utils'
+import { Buffer } from '../core/buffers/Buffer'
 
 /**
  * Parameters used to create a {@link VertexBufferAttribute}
@@ -55,9 +56,9 @@ export interface VertexBuffer {
   /** Array of {@link VertexBufferAttribute} used by this {@link VertexBuffer} */
   attributes: VertexBufferAttribute[]
   /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
-  array?: Float32Array
+  array: null | Float32Array
   /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
-  buffer?: GPUBuffer
+  buffer: Buffer
 }
 
 /**
@@ -84,6 +85,8 @@ export interface GeometryOptions {
   topology: GPUPrimitiveTopology
   /** Array of {@link VertexBufferParams} used to create {@link VertexBuffer} on geometry creation */
   vertexBuffers: VertexBufferParams[]
+  /** Whether to map the {@link VertexBuffer#buffer | vertex buffers} at creation. */
+  mapVertexBuffersAtCreation: boolean
 }
 
 /** Parameters used to create a geometry */

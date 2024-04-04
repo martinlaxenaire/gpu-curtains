@@ -1,4 +1,5 @@
 import { Geometry } from './Geometry.mjs';
+import { Buffer } from '../buffers/Buffer.mjs';
 
 class IndexedGeometry extends Geometry {
   /**
@@ -9,9 +10,10 @@ class IndexedGeometry extends Geometry {
     verticesOrder = "ccw",
     topology = "triangle-list",
     instancesCount = 1,
-    vertexBuffers = []
+    vertexBuffers = [],
+    mapVertexBuffersAtCreation = true
   } = {}) {
-    super({ verticesOrder, topology, instancesCount, vertexBuffers });
+    super({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation });
     this.type = "IndexedGeometry";
   }
   /**
@@ -19,7 +21,27 @@ class IndexedGeometry extends Geometry {
    * @readonly
    */
   get ready() {
-    return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer) && this.indexBuffer && !!this.indexBuffer.buffer;
+    return super.ready && this.indexBuffer && !!this.indexBuffer.buffer.GPUBuffer;
+  }
+  /**
+   * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
+   */
+  loseContext() {
+    super.loseContext();
+    if (this.indexBuffer) {
+      this.indexBuffer.buffer.destroy();
+    }
+  }
+  /**
+   * Restore the {@link IndexedGeometry} buffers on context restoration
+   * @param renderer - The {@link Renderer} used to recreate the buffers
+   */
+  restoreContext(renderer) {
+    super.restoreContext(renderer);
+    if (!this.indexBuffer.buffer.GPUBuffer) {
+      this.indexBuffer.buffer.createBuffer(renderer);
+      renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
+    }
   }
   /**
    * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
@@ -37,8 +59,24 @@ class IndexedGeometry extends Geometry {
       array,
       bufferFormat,
       bufferLength: array.length,
-      buffer: null
+      buffer: new Buffer()
     };
+  }
+  /**
+   * Create the {@link Geometry} {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer}.
+   * @param parameters - parameters used to create the vertex buffers.
+   * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
+   * @param parameters.label - label to use for the vertex buffers.
+   */
+  createBuffers({ renderer, label = this.type }) {
+    super.createBuffers({ renderer, label });
+    this.indexBuffer.buffer.createBuffer(renderer, {
+      label: label + ": index buffer",
+      size: this.indexBuffer.array.byteLength,
+      usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+    });
+    renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
+    this.indexBuffer.buffer.consumers.add(this.uuid);
   }
   /** RENDER **/
   /**
@@ -48,7 +86,7 @@ class IndexedGeometry extends Geometry {
    */
   setGeometryBuffers(pass) {
     super.setGeometryBuffers(pass);
-    pass.setIndexBuffer(this.indexBuffer.buffer, this.indexBuffer.bufferFormat);
+    pass.setIndexBuffer(this.indexBuffer.buffer.GPUBuffer, this.indexBuffer.bufferFormat);
   }
   /**
    * Override the parentMesh draw method to draw indexed geometry
@@ -58,12 +96,17 @@ class IndexedGeometry extends Geometry {
     pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount);
   }
   /**
-   * Destroy our indexed geometry vertex buffers and index buffer
+   * Destroy our indexed geometry vertex buffers and index buffer.
+   * @param renderer - current {@link Renderer}, in case we want to remove the {@link IndexBuffer#buffer | buffer} from the cache.
    */
-  destroy() {
-    super.destroy();
-    this.indexBuffer?.buffer?.destroy();
-    this.indexBuffer.buffer = null;
+  destroy(renderer = null) {
+    super.destroy(renderer);
+    if (this.indexBuffer) {
+      this.indexBuffer.buffer.consumers.delete(this.uuid);
+      this.indexBuffer.buffer.destroy();
+      if (renderer)
+        renderer.removeBuffer(this.indexBuffer.buffer);
+    }
   }
 }
 

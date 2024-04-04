@@ -6,6 +6,7 @@ import { Vec3 } from '../../math/Vec3.mjs';
 import { BufferElement } from './bufferElements/BufferElement.mjs';
 import { BufferArrayElement } from './bufferElements/BufferArrayElement.mjs';
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement.mjs';
+import { Buffer } from '../buffers/Buffer.mjs';
 
 class BufferBinding extends Binding {
   /**
@@ -34,7 +35,7 @@ class BufferBinding extends Binding {
     this.useStruct = useStruct;
     this.bufferElements = [];
     this.inputs = {};
-    this.buffer = null;
+    this.buffer = new Buffer();
     this.setBindings(struct);
     this.setBufferAttributes();
     this.setWGSLFragment();
@@ -55,7 +56,7 @@ class BufferBinding extends Binding {
    * @readonly
    */
   get resource() {
-    return { buffer: this.buffer };
+    return { buffer: this.buffer.GPUBuffer };
   }
   /**
    * Format bindings struct and set our {@link inputs}
@@ -179,6 +180,7 @@ class BufferBinding extends Binding {
     this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount : 0;
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
     this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength);
+    this.buffer.size = this.arrayBuffer.byteLength;
     for (const bufferElement of this.bufferElements) {
       bufferElement.setView(this.arrayBuffer, this.arrayView);
     }

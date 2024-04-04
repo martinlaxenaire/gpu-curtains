@@ -1,5 +1,5 @@
-/// <reference types="dist" />
 import { BufferBinding, BufferBindingParams } from './BufferBinding';
+import { Buffer } from '../buffers/Buffer';
 /**
  * Parameters used to create a {@link WritableBufferBinding}
  */
@@ -16,7 +16,7 @@ export declare class WritableBufferBinding extends BufferBinding {
     /** Flag indicating whether whe should automatically copy the {@link buffer | GPU buffer} content into our {@link resultBuffer | result GPU buffer} */
     shouldCopyResult: boolean;
     /** The result GPUBuffer */
-    resultBuffer: GPUBuffer | null;
+    resultBuffer: Buffer;
     /** Options used to create this {@link WritableBufferBinding} */
     options: WritableBufferBindingParams;
     /**

@@ -17,6 +17,7 @@ import { AllowedBindGroups } from '../../types/BindGroups';
 import { RenderTexture } from '../textures/RenderTexture';
 import { GPUDeviceManager } from './GPUDeviceManager';
 import { FullscreenPlane } from '../meshes/FullscreenPlane';
+import { Buffer } from '../buffers/Buffer';
 /**
  * Parameters used to create a {@link GPURenderer}
  */
@@ -172,7 +173,7 @@ export declare class GPURenderer {
      * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}
      * @readonly
      */
-    get buffers(): GPUBuffer[];
+    get buffers(): Map<string, Buffer>;
     /**
      * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
      * @readonly
@@ -212,16 +213,15 @@ export declare class GPURenderer {
     setScene(): void;
     /**
      * Create a {@link GPUBuffer}
-     * @param bufferDescriptor - {@link GPUBufferDescriptor | GPU buffer descriptor}
+     * @param buffer - {@link Buffer} to use for buffer creation
      * @returns - newly created {@link GPUBuffer}
      */
-    createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer;
+    createBuffer(buffer: Buffer): GPUBuffer;
     /**
-     * Remove a {@link GPUBuffer} from our {@link GPUDeviceManager#buffers | GPU buffers array}
-     * @param buffer - {@link GPUBuffer} to remove
-     * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+     * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}
+     * @param buffer - {@link Buffer} to remove
      */
-    removeBuffer(buffer: GPUBuffer, originalLabel?: string): void;
+    removeBuffer(buffer: Buffer): void;
     /**
      * Write to a {@link GPUBuffer}
      * @param buffer - {@link GPUBuffer} to write to
@@ -230,18 +230,18 @@ export declare class GPURenderer {
      */
     queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource): void;
     /**
-     * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+     * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}
      * @param parameters - parameters used to realize the copy
-     * @param parameters.srcBuffer - source {@link GPUBuffer}
-     * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+     * @param parameters.srcBuffer - source {@link Buffer}
+     * @param [parameters.dstBuffer] - destination {@link Buffer}. Will create a new one if none provided.
      * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-     * @returns - destination {@link GPUBuffer} after copy
+     * @returns - destination {@link Buffer} after copy
      */
     copyBufferToBuffer({ srcBuffer, dstBuffer, commandEncoder, }: {
-        srcBuffer: GPUBuffer;
-        dstBuffer?: GPUBuffer;
+        srcBuffer: Buffer;
+        dstBuffer?: Buffer;
         commandEncoder?: GPUCommandEncoder;
-    }): GPUBuffer | null;
+    }): Buffer | null;
     /**
      * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
      * @readonly

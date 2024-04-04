@@ -310,6 +310,8 @@ export class TestComputePasses {
     this.sphereMesh
       .onReady(() => {
         //console.log(cubeMesh.material.getAddedShaderCode('vertex'))
+        const instanceVertexBuffer = this.sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
+        instanceVertexBuffer.buffer.copy(particlesBufferBindingA.buffer, true)
       })
       .onRender(() => {
         const instanceVertexBuffer = this.sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
@@ -318,7 +320,8 @@ export class TestComputePasses {
         // always send to the instance positions buffer the one onto which we've just written
         const particleBuffer = pingPong % 2 === 0 ? particlesBufferBindingB : particlesBufferBindingA
 
-        instanceVertexBuffer.buffer = particleBuffer?.buffer
+        //instanceVertexBuffer.buffer = particleBuffer?.buffer
+        instanceVertexBuffer.buffer.copy(particleBuffer.buffer)
       })
 
     console.log('TEST COMPUTE init', this.gpuCurtains.renderer)

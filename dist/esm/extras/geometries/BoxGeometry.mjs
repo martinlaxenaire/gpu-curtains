@@ -3,14 +3,15 @@ import { Vec3 } from '../../math/Vec3.mjs';
 
 class BoxGeometry extends IndexedGeometry {
   constructor({
-    widthSegments = 1,
-    heightSegments = 1,
-    depthSegments = 1,
     instancesCount = 1,
     vertexBuffers = [],
-    topology
+    topology,
+    mapVertexBuffersAtCreation = true,
+    widthSegments = 1,
+    heightSegments = 1,
+    depthSegments = 1
   } = {}) {
-    super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers });
+    super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation });
     this.type = "BoxGeometry";
     widthSegments = Math.floor(widthSegments);
     heightSegments = Math.floor(heightSegments);

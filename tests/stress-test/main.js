@@ -78,7 +78,7 @@ window.addEventListener('load', async () => {
 
     meshes.push(mesh)
 
-    if (index === 0) console.log(mesh.material)
+    if (index === 0) console.log(mesh)
   }
 
   for (let i = 0; i < nbMeshes; i++) {

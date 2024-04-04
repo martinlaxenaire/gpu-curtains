@@ -1447,6 +1447,81 @@
     }
   }
 
+  class Buffer {
+    /**
+     * Buffer constructor
+     * @param parameters - {@link GPUBufferDescriptor | parameters} used to create our Buffer
+     */
+    constructor({
+      label = "Buffer",
+      size = 0,
+      usage = GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+      mappedAtCreation = false
+    } = {}) {
+      this.type = "Buffer";
+      this.reset();
+      this.uuid = generateUUID();
+      this.consumers = /* @__PURE__ */ new Set();
+      this.options = {
+        label,
+        size,
+        usage,
+        mappedAtCreation
+      };
+    }
+    /** Reset the {@link GPUBuffer} value to `null`. */
+    reset() {
+      this.GPUBuffer = null;
+    }
+    /** Allow to dynamically set the size of the {@link GPUBuffer}. */
+    set size(value) {
+      this.options.size = value;
+    }
+    /**
+     * Create a {@link GPUBuffer} based on the descriptor stored in the {@link options | Buffer options}.
+     * @param renderer - {@link core/renderers/GPURenderer.GPURenderer | renderer} used to create the {@link GPUBuffer}.
+     * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
+     */
+    createBuffer(renderer, options = {}) {
+      this.options = { ...this.options, ...options };
+      this.GPUBuffer = renderer.createBuffer(this);
+    }
+    /**
+     * Copy an {@link Buffer#GPUBuffer | Buffer GPUBuffer} and its {@link options} into this {@link Buffer}.
+     * @param buffer - {@link Buffer} to use for the copy.
+     * @param destroyPreviousBuffer - whether to destroy the previous {@link Buffer} before the copy.
+     */
+    copy(buffer, destroyPreviousBuffer = false) {
+      if (destroyPreviousBuffer) {
+        this.destroy();
+      }
+      this.options = buffer.options;
+      this.GPUBuffer = buffer.GPUBuffer;
+      this.consumers = /* @__PURE__ */ new Set([...this.consumers, ...buffer.consumers]);
+    }
+    /**
+     * Map the {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}.
+     * @async
+     * @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
+     */
+    async mapBufferAsync() {
+      if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped")
+        return new Float32Array(0);
+      await this.GPUBuffer.mapAsync(GPUMapMode.READ);
+      const result = new Float32Array(this.GPUBuffer.getMappedRange().slice(0));
+      this.GPUBuffer.unmap();
+      return result;
+    }
+    /**
+     * Destroy the {@link GPUBuffer} and {@link reset} its value.
+     */
+    destroy() {
+      this.GPUBuffer?.destroy();
+      this.reset();
+      this.consumers.clear();
+    }
+  }
+
   class BufferBinding extends Binding {
     /**
      * BufferBinding constructor
@@ -1474,7 +1549,7 @@
       this.useStruct = useStruct;
       this.bufferElements = [];
       this.inputs = {};
-      this.buffer = null;
+      this.buffer = new Buffer();
       this.setBindings(struct);
       this.setBufferAttributes();
       this.setWGSLFragment();
@@ -1495,7 +1570,7 @@
      * @readonly
      */
     get resource() {
-      return { buffer: this.buffer };
+      return { buffer: this.buffer.GPUBuffer };
     }
     /**
      * Format bindings struct and set our {@link inputs}
@@ -1619,6 +1694,7 @@
       this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount : 0;
       this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
       this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength);
+      this.buffer.size = this.arrayBuffer.byteLength;
       for (const bufferElement of this.bufferElements) {
         bufferElement.setView(this.arrayBuffer, this.arrayView);
       }
@@ -1745,7 +1821,7 @@
         shouldCopyResult
       };
       this.shouldCopyResult = shouldCopyResult;
-      this.resultBuffer = null;
+      this.resultBuffer = new Buffer();
     }
   }
 
@@ -1901,9 +1977,9 @@
     loseContext() {
       this.resetEntries();
       for (const binding of this.bufferBindings) {
-        binding.buffer = null;
+        binding.buffer.reset();
         if ("resultBuffer" in binding) {
-          binding.resultBuffer = null;
+          binding.resultBuffer.reset();
         }
       }
       this.bindGroup = null;
@@ -1923,13 +1999,12 @@
      * @param binding - the binding element
      */
     createBindingBuffer(binding) {
-      binding.buffer = this.renderer.createBuffer({
+      binding.buffer.createBuffer(this.renderer, {
         label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
-        size: binding.arrayBuffer.byteLength,
         usage: binding.bindingType === "uniform" ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
       });
       if ("resultBuffer" in binding) {
-        binding.resultBuffer = this.renderer.createBuffer({
+        binding.resultBuffer.createBuffer(this.renderer, {
           label: this.options.label + ": Result buffer from: " + binding.label,
           size: binding.arrayBuffer.byteLength,
           usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
@@ -1945,8 +2020,14 @@
         if (!binding.visibility) {
           binding.visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
         }
-        if ("buffer" in binding && !binding.buffer) {
-          this.createBindingBuffer(binding);
+        if ("buffer" in binding) {
+          if (!binding.buffer.GPUBuffer) {
+            this.createBindingBuffer(binding);
+          }
+          binding.buffer.consumers.add(this.uuid);
+        }
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer.consumers.add(this.uuid);
         }
         this.entries.bindGroupLayout.push({
           binding: this.entries.bindGroupLayout.length,
@@ -1995,9 +2076,9 @@
           binding.update();
           if (binding.shouldUpdate) {
             if (!binding.useStruct && binding.bufferElements.length > 1) {
-              this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view);
+              this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.bufferElements[index].view);
             } else {
-              this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer);
+              this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer);
             }
           }
           binding.shouldUpdate = false;
@@ -2053,8 +2134,14 @@
       const bindingsRef = bindings.length ? bindings : this.bindings;
       for (const binding of bindingsRef) {
         bindGroupCopy.addBinding(binding);
-        if ("buffer" in binding && !binding.buffer) {
-          bindGroupCopy.createBindingBuffer(binding);
+        if ("buffer" in binding) {
+          if (!binding.buffer.GPUBuffer) {
+            this.createBindingBuffer(binding);
+          }
+          binding.buffer.consumers.add(bindGroupCopy.uuid);
+        }
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer.consumers.add(bindGroupCopy.uuid);
         }
         if (!keepLayout) {
           bindGroupCopy.entries.bindGroupLayout.push({
@@ -2084,13 +2171,17 @@
       for (const binding of this.bufferBindings) {
         if ("buffer" in binding) {
           this.renderer.removeBuffer(binding.buffer);
-          binding.buffer?.destroy();
-          binding.buffer = null;
+          binding.buffer.consumers.delete(this.uuid);
+          if (!binding.buffer.consumers.size) {
+            binding.buffer.destroy();
+          }
         }
         if ("resultBuffer" in binding) {
           this.renderer.removeBuffer(binding.resultBuffer);
-          binding.resultBuffer?.destroy();
-          binding.resultBuffer = null;
+          binding.resultBuffer.consumers.delete(this.uuid);
+          if (!binding.resultBuffer.consumers.size) {
+            binding.resultBuffer.destroy();
+          }
         }
       }
       this.bindings = [];
@@ -4686,6 +4777,7 @@
         return;
       const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
       const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
+      console.log("destroy texture", objectsUsingTexture, shouldDestroy, texture.options.label);
       if (shouldDestroy) {
         texture.destroy();
       }
@@ -4725,20 +4817,17 @@
     }
     /* BUFFER RESULTS */
     /**
-     * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
-     * @param buffer - {@link GPUBuffer} to map
+     * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
+     * @param buffer - {@link Buffer} to use for mapping
      * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
      */
     async getBufferResult(buffer) {
-      await buffer.mapAsync(GPUMapMode.READ);
-      const result = new Float32Array(buffer.getMappedRange().slice(0));
-      buffer.unmap();
-      return result;
+      return await buffer.mapBufferAsync();
     }
     /**
-     * Map the content of a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+     * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
      * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
      */
@@ -4754,9 +4843,9 @@
       }
     }
     /**
-     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
      * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
      * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
      * @returns - {@link Float32Array} holding {@link GPUBuffer} data
      */
@@ -4948,8 +5037,12 @@
     copyBufferToResult(commandEncoder) {
       for (const bindGroup of this.bindGroups) {
         bindGroup.bufferBindings.forEach((binding) => {
-          if (binding.shouldCopyResult && binding.resultBuffer.mapState === "unmapped") {
-            commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size);
+          if (binding.shouldCopyResult) {
+            this.renderer.copyBufferToBuffer({
+              srcBuffer: binding.buffer,
+              dstBuffer: binding.resultBuffer,
+              commandEncoder
+            });
           }
         });
       }
@@ -4967,9 +5060,9 @@
       bufferElementName = ""
     }) {
       const binding = this.getBufferBindingByName(bindingName);
-      if (binding && "resultBuffer" in binding && binding.resultBuffer.mapState === "unmapped") {
+      if (binding && "resultBuffer" in binding) {
         const result = await this.getBufferResult(binding.resultBuffer);
-        if (bufferElementName) {
+        if (bufferElementName && result.length) {
           return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName });
         } else {
           return result;
@@ -5554,7 +5647,8 @@
       verticesOrder = "ccw",
       topology = "triangle-list",
       instancesCount = 1,
-      vertexBuffers = []
+      vertexBuffers = [],
+      mapVertexBuffersAtCreation = true
     } = {}) {
       /**
        * Set the WGSL code snippet that will be appended to the vertex shader.
@@ -5567,15 +5661,18 @@
       this.instancesCount = instancesCount;
       this.boundingBox = new Box3();
       this.type = "Geometry";
+      this.uuid = generateUUID();
       this.vertexBuffers = [];
+      this.consumers = /* @__PURE__ */ new Set();
       this.addVertexBuffer({
         name: "attributes"
       });
       this.options = {
         verticesOrder,
+        topology,
         instancesCount,
         vertexBuffers,
-        topology
+        mapVertexBuffersAtCreation
       };
       for (const vertexBuffer of vertexBuffers) {
         this.addVertexBuffer({
@@ -5586,18 +5683,41 @@
       }
     }
     /**
-     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
-     * @readonly
-     */
-    get shouldCompute() {
-      return this.vertexBuffers.length && !this.vertexBuffers[0].array;
-    }
-    /**
      * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
      * @readonly
      */
     get ready() {
-      return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer);
+      for (const vertexBuffer of this.vertexBuffers) {
+        if (!vertexBuffer.array || !vertexBuffer.buffer.GPUBuffer) {
+          return false;
+        }
+      }
+      return true;
+    }
+    /**
+     * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
+     */
+    loseContext() {
+      for (const vertexBuffer of this.vertexBuffers) {
+        vertexBuffer.buffer.destroy();
+      }
+    }
+    /**
+     * Restore the {@link Geometry} buffers on context restoration
+     * @param renderer - The {@link Renderer} used to recreate the buffers
+     */
+    restoreContext(renderer) {
+      if (!this.ready) {
+        for (const vertexBuffer of this.vertexBuffers) {
+          if (!vertexBuffer.buffer.GPUBuffer) {
+            vertexBuffer.buffer.createBuffer(renderer);
+            if (!this.options.mapVertexBuffersAtCreation)
+              renderer.queueWriteBuffer(vertexBuffer.buffer.GPUBuffer, 0, vertexBuffer.array);
+          }
+        }
+        if (this.options.mapVertexBuffersAtCreation)
+          this.computeGeometry();
+      }
     }
     /**
      * Add a vertex buffer to our Geometry, set its attributes and return it
@@ -5611,7 +5731,8 @@
         arrayStride: 0,
         bufferLength: 0,
         attributes: [],
-        buffer: null
+        buffer: new Buffer(),
+        array: null
       };
       attributes?.forEach((attribute) => {
         this.setAttribute({
@@ -5705,7 +5826,7 @@
      * Also compute the Geometry bounding box.
      */
     computeGeometry() {
-      if (!this.shouldCompute)
+      if (this.ready)
         return;
       this.vertexBuffers.forEach((vertexBuffer, index) => {
         if (index === 0) {
@@ -5727,7 +5848,8 @@
             hasPositionAttribute.size = 3;
           }
         }
-        vertexBuffer.array = new Float32Array(vertexBuffer.bufferLength);
+        const isBufferMapped = vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.GPUBuffer.mapState === "mapped";
+        vertexBuffer.array = isBufferMapped ? new Float32Array(vertexBuffer.buffer.GPUBuffer.getMappedRange()) : new Float32Array(vertexBuffer.bufferLength);
         let currentIndex = 0;
         let attributeIndex = 0;
         for (let i = 0; i < vertexBuffer.bufferLength; i += vertexBuffer.arrayStride) {
@@ -5759,8 +5881,47 @@
           }
           attributeIndex++;
         }
+        if (isBufferMapped) {
+          vertexBuffer.buffer.GPUBuffer.unmap();
+        }
       });
       __privateMethod(this, _setWGSLFragment, setWGSLFragment_fn).call(this);
+    }
+    /**
+     * Create the {@link createBuffers | geometry buffers} and {@link computeGeometry | compute the geometry}. The order in which those operations take place depends on mappedAtCreation parameter.
+     * @param parameters - parameters used to create the geometry.
+     * @param parameters.renderer - {@link Renderer} used to create the buffers.
+     * @param parameters.label - label to use for the buffers.
+     */
+    createGeometry({ renderer, label = this.type }) {
+      if (this.options.mapVertexBuffersAtCreation) {
+        this.createBuffers({ renderer, label });
+        this.computeGeometry();
+      } else {
+        this.computeGeometry();
+        this.createBuffers({ renderer, label });
+      }
+    }
+    /**
+     * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
+     * @param parameters - parameters used to create the vertex buffers.
+     * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
+     * @param parameters.label - label to use for the vertex buffers.
+     */
+    createBuffers({ renderer, label = this.type }) {
+      for (const vertexBuffer of this.vertexBuffers) {
+        if (!vertexBuffer.buffer.GPUBuffer) {
+          vertexBuffer.buffer.createBuffer(renderer, {
+            label: label + ": " + vertexBuffer.name + " buffer",
+            size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
+            usage: this.options.mapVertexBuffersAtCreation ? GPUBufferUsage.VERTEX : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            mappedAtCreation: this.options.mapVertexBuffersAtCreation
+          });
+          if (!this.options.mapVertexBuffersAtCreation)
+            renderer.queueWriteBuffer(vertexBuffer.buffer.GPUBuffer, 0, vertexBuffer.array);
+          vertexBuffer.buffer.consumers.add(this.uuid);
+        }
+      }
     }
     /** RENDER **/
     /**
@@ -5769,7 +5930,7 @@
      */
     setGeometryBuffers(pass) {
       this.vertexBuffers.forEach((vertexBuffer, index) => {
-        pass.setVertexBuffer(index, vertexBuffer.buffer);
+        pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer);
       });
     }
     /**
@@ -5790,12 +5951,18 @@
       this.drawGeometry(pass);
     }
     /**
-     * Destroy our geometry vertex buffers
+     * Destroy our geometry vertex buffers.
+     * @param renderer - current {@link Renderer}, in case we want to remove the {@link VertexBuffer#buffer | buffers} from the cache.
      */
-    destroy() {
+    destroy(renderer = null) {
       for (const vertexBuffer of this.vertexBuffers) {
-        vertexBuffer.buffer?.destroy();
-        vertexBuffer.buffer = null;
+        vertexBuffer.buffer.consumers.delete(this.uuid);
+        if (!vertexBuffer.buffer.consumers.size) {
+          vertexBuffer.buffer.destroy();
+        }
+        vertexBuffer.array = null;
+        if (renderer)
+          renderer.removeBuffer(vertexBuffer.buffer);
       }
     }
   }
@@ -5823,9 +5990,10 @@
       verticesOrder = "ccw",
       topology = "triangle-list",
       instancesCount = 1,
-      vertexBuffers = []
+      vertexBuffers = [],
+      mapVertexBuffersAtCreation = true
     } = {}) {
-      super({ verticesOrder, topology, instancesCount, vertexBuffers });
+      super({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation });
       this.type = "IndexedGeometry";
     }
     /**
@@ -5833,7 +6001,27 @@
      * @readonly
      */
     get ready() {
-      return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer) && this.indexBuffer && !!this.indexBuffer.buffer;
+      return super.ready && this.indexBuffer && !!this.indexBuffer.buffer.GPUBuffer;
+    }
+    /**
+     * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
+     */
+    loseContext() {
+      super.loseContext();
+      if (this.indexBuffer) {
+        this.indexBuffer.buffer.destroy();
+      }
+    }
+    /**
+     * Restore the {@link IndexedGeometry} buffers on context restoration
+     * @param renderer - The {@link Renderer} used to recreate the buffers
+     */
+    restoreContext(renderer) {
+      super.restoreContext(renderer);
+      if (!this.indexBuffer.buffer.GPUBuffer) {
+        this.indexBuffer.buffer.createBuffer(renderer);
+        renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
+      }
     }
     /**
      * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
@@ -5851,8 +6039,24 @@
         array,
         bufferFormat,
         bufferLength: array.length,
-        buffer: null
+        buffer: new Buffer()
       };
+    }
+    /**
+     * Create the {@link Geometry} {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer}.
+     * @param parameters - parameters used to create the vertex buffers.
+     * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
+     * @param parameters.label - label to use for the vertex buffers.
+     */
+    createBuffers({ renderer, label = this.type }) {
+      super.createBuffers({ renderer, label });
+      this.indexBuffer.buffer.createBuffer(renderer, {
+        label: label + ": index buffer",
+        size: this.indexBuffer.array.byteLength,
+        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+      });
+      renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
+      this.indexBuffer.buffer.consumers.add(this.uuid);
     }
     /** RENDER **/
     /**
@@ -5862,7 +6066,7 @@
      */
     setGeometryBuffers(pass) {
       super.setGeometryBuffers(pass);
-      pass.setIndexBuffer(this.indexBuffer.buffer, this.indexBuffer.bufferFormat);
+      pass.setIndexBuffer(this.indexBuffer.buffer.GPUBuffer, this.indexBuffer.bufferFormat);
     }
     /**
      * Override the parentMesh draw method to draw indexed geometry
@@ -5872,12 +6076,17 @@
       pass.drawIndexed(this.indexBuffer.bufferLength, this.instancesCount);
     }
     /**
-     * Destroy our indexed geometry vertex buffers and index buffer
+     * Destroy our indexed geometry vertex buffers and index buffer.
+     * @param renderer - current {@link Renderer}, in case we want to remove the {@link IndexBuffer#buffer | buffer} from the cache.
      */
-    destroy() {
-      super.destroy();
-      this.indexBuffer?.buffer?.destroy();
-      this.indexBuffer.buffer = null;
+    destroy(renderer = null) {
+      super.destroy(renderer);
+      if (this.indexBuffer) {
+        this.indexBuffer.buffer.consumers.delete(this.uuid);
+        this.indexBuffer.buffer.destroy();
+        if (renderer)
+          renderer.removeBuffer(this.indexBuffer.buffer);
+      }
     }
   }
 
@@ -6275,6 +6484,7 @@ struct VertexOutput {
           ...meshParameters
         };
         this.geometry = geometry;
+        this.geometry.consumers.add(this.uuid);
         if (autoRender !== void 0) {
           __privateSet$2(this, _autoRender, autoRender);
         }
@@ -6282,7 +6492,6 @@ struct VertexOutput {
         this.renderOrder = renderOrder;
         this.ready = false;
         this.userData = {};
-        this.computeGeometry();
         this.setMaterial({
           ...this.cleanupRenderMaterialParameters({ ...this.options }),
           verticesOrder: geometry.verticesOrder,
@@ -6374,18 +6583,14 @@ struct VertexOutput {
        * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
        */
       loseContext() {
-        for (const vertexBuffer of this.geometry.vertexBuffers) {
-          vertexBuffer.buffer = null;
-        }
-        if ("indexBuffer" in this.geometry) {
-          this.geometry.indexBuffer.buffer = null;
-        }
+        this.geometry.loseContext();
         this.material.loseContext();
       }
       /**
        * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
        */
       restoreContext() {
+        this.geometry.restoreContext(this.renderer);
         this.material.restoreContext();
       }
       /* SHADERS */
@@ -6422,44 +6627,16 @@ struct VertexOutput {
       }
       /* GEOMETRY */
       /**
-       * Compute the Mesh geometry if needed
-       */
-      computeGeometry() {
-        if (this.geometry.shouldCompute) {
-          this.geometry.computeGeometry();
-        }
-      }
-      /**
-       * Create the Mesh Geometry vertex and index buffers if needed
-       */
-      createGeometryBuffers() {
-        if (!this.geometry.ready) {
-          for (const vertexBuffer of this.geometry.vertexBuffers) {
-            if (!vertexBuffer.buffer) {
-              vertexBuffer.buffer = this.renderer.createBuffer({
-                label: this.options.label + " geometry: " + vertexBuffer.name + " buffer",
-                size: vertexBuffer.array.byteLength,
-                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
-              });
-              this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
-            }
-          }
-          if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
-            this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + " geometry: index buffer",
-              size: this.geometry.indexBuffer.array.byteLength,
-              usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
-            });
-            this.renderer.queueWriteBuffer(this.geometry.indexBuffer.buffer, 0, this.geometry.indexBuffer.array);
-          }
-        }
-      }
-      /**
        * Set our Mesh geometry: create buffers and add attributes to material
        */
       setGeometry() {
         if (this.geometry && this.renderer.ready) {
-          this.createGeometryBuffers();
+          if (!this.geometry.ready) {
+            this.geometry.createGeometry({
+              renderer: this.renderer,
+              label: this.options.label + " geometry"
+            });
+          }
           this.setMaterialGeometryAttributes();
         }
       }
@@ -6699,7 +6876,7 @@ struct VertexOutput {
        * @param pass - current render pass encoder
        */
       onRenderPass(pass) {
-        if (!this.material.ready)
+        if (!this.ready)
           return;
         this._onRenderCallback && this._onRenderCallback();
         this.material.render(pass);
@@ -6756,16 +6933,10 @@ struct VertexOutput {
           super.destroy();
         }
         this.material?.destroy();
-        for (const vertexBuffer of this.geometry.vertexBuffers) {
-          this.renderer.removeBuffer(
-            vertexBuffer.buffer,
-            this.options.label + " geometry: " + vertexBuffer.name + " buffer"
-          );
+        this.geometry.consumers.delete(this.uuid);
+        if (!this.geometry.consumers.size) {
+          this.geometry?.destroy(this.renderer);
         }
-        if ("indexBuffer" in this.geometry) {
-          this.renderer.removeBuffer(this.geometry.indexBuffer.buffer);
-        }
-        this.geometry?.destroy();
       }
     }, _autoRender = new WeakMap(), _a;
   }
@@ -7160,23 +7331,19 @@ struct VSOutput {
           label: "Matrices",
           struct: {
             model: {
-              name: "model",
               type: "mat4x4f",
               value: this.modelMatrix
             },
             world: {
-              name: "world",
               type: "mat4x4f",
               value: this.worldMatrix
             },
             modelView: {
               // model view matrix (world matrix multiplied by camera view matrix)
-              name: "modelView",
               type: "mat4x4f",
               value: this.modelViewMatrix
             },
             modelViewProjection: {
-              name: "modelViewProjection",
               type: "mat4x4f",
               value: this.modelViewProjectionMatrix
             }
@@ -7267,7 +7434,7 @@ struct VSOutput {
        * @param pass - current render pass
        */
       onRenderPass(pass) {
-        if (!this.material.ready)
+        if (!this.ready)
           return;
         this._onRenderCallback && this._onRenderCallback();
         if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled) {
@@ -9240,21 +9407,20 @@ ${this.shaders.compute.head}`;
     /* BUFFERS & BINDINGS */
     /**
      * Create a {@link GPUBuffer}
-     * @param bufferDescriptor - {@link GPUBufferDescriptor | GPU buffer descriptor}
+     * @param buffer - {@link Buffer} to use for buffer creation
      * @returns - newly created {@link GPUBuffer}
      */
-    createBuffer(bufferDescriptor) {
-      const buffer = this.deviceManager.device?.createBuffer(bufferDescriptor);
+    createBuffer(buffer) {
+      const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
       this.deviceManager.addBuffer(buffer);
-      return buffer;
+      return GPUBuffer;
     }
     /**
-     * Remove a {@link GPUBuffer} from our {@link GPUDeviceManager#buffers | GPU buffers array}
-     * @param buffer - {@link GPUBuffer} to remove
-     * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+     * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}
+     * @param buffer - {@link Buffer} to remove
      */
-    removeBuffer(buffer, originalLabel) {
-      this.deviceManager.removeBuffer(buffer, originalLabel);
+    removeBuffer(buffer) {
+      this.deviceManager.removeBuffer(buffer);
     }
     /**
      * Write to a {@link GPUBuffer}
@@ -9266,37 +9432,44 @@ ${this.shaders.compute.head}`;
       this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
     }
     /**
-     * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+     * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}
      * @param parameters - parameters used to realize the copy
-     * @param parameters.srcBuffer - source {@link GPUBuffer}
-     * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+     * @param parameters.srcBuffer - source {@link Buffer}
+     * @param [parameters.dstBuffer] - destination {@link Buffer}. Will create a new one if none provided.
      * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-     * @returns - destination {@link GPUBuffer} after copy
+     * @returns - destination {@link Buffer} after copy
      */
     copyBufferToBuffer({
       srcBuffer,
       dstBuffer,
       commandEncoder
     }) {
-      if (!srcBuffer) {
+      if (!srcBuffer || !srcBuffer.GPUBuffer) {
         throwWarning(
           `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
         );
         return null;
       }
       if (!dstBuffer) {
-        dstBuffer = this.createBuffer({
-          label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.label}`,
-          size: srcBuffer.size,
+        dstBuffer = new Buffer();
+      }
+      if (!dstBuffer.GPUBuffer) {
+        dstBuffer.createBuffer(this, {
+          label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.options.label}`,
+          size: srcBuffer.GPUBuffer.size,
           usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
         });
       }
-      if (srcBuffer.mapState !== "unmapped") {
-        throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${srcBuffer} because it is currently mapped`);
+      if (srcBuffer.GPUBuffer.mapState !== "unmapped") {
+        throwWarning(
+          `${this.type} (${this.options.label}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
+        );
         return;
       }
-      if (dstBuffer.mapState !== "unmapped") {
-        throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${dstBuffer} because it is currently mapped`);
+      if (dstBuffer.GPUBuffer.mapState !== "unmapped") {
+        throwWarning(
+          `${this.type} (${this.options.label}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
+        );
         return;
       }
       const hasCommandEncoder = !!commandEncoder;
@@ -9306,7 +9479,7 @@ ${this.shaders.compute.head}`;
         });
         !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
       }
-      commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size);
+      commandEncoder.copyBufferToBuffer(srcBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer.size);
       if (!hasCommandEncoder) {
         !this.production && commandEncoder.popDebugGroup();
         const commandBuffer = commandEncoder.finish();
@@ -10007,7 +10180,7 @@ ${this.shaders.compute.head}`;
       this.ready = false;
       this.samplers.forEach((sampler) => sampler.sampler = null);
       this.renderers.forEach((renderer) => renderer.loseContext());
-      this.buffers = [];
+      this.buffers.clear();
     }
     /**
      * Called when the {@link device} should be restored.
@@ -10032,7 +10205,7 @@ ${this.shaders.compute.head}`;
     setDeviceObjects() {
       this.renderers = [];
       this.bindGroups = /* @__PURE__ */ new Map();
-      this.buffers = [];
+      this.buffers = /* @__PURE__ */ new Map();
       this.samplers = [];
       this.textures = [];
       this.texturesQueue = [];
@@ -10074,22 +10247,17 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Add a {@link GPUBuffer} to our our {@link buffers} array
-     * @param buffer - {@link GPUBuffer} to add
+     * @param buffer - {@link Buffer} to add
      */
     addBuffer(buffer) {
-      this.buffers.push(buffer);
+      this.buffers.set(buffer.uuid, buffer);
     }
     /**
-     * Remove a {@link GPUBuffer} from our {@link buffers} array
-     * @param buffer - {@link GPUBuffer} to remove
-     * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+     * Remove a {@link Buffer} from our {@link buffers} Map
+     * @param buffer - {@link Buffer} to remove
      */
-    removeBuffer(buffer, originalLabel) {
-      if (buffer) {
-        this.buffers = this.buffers.filter((b) => {
-          return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size);
-        });
-      }
+    removeBuffer(buffer) {
+      this.buffers.delete(buffer?.uuid);
     }
     /**
      * Add a {@link Sampler} to our {@link samplers} array
@@ -11522,14 +11690,15 @@ struct VSOutput {
 
   class BoxGeometry extends IndexedGeometry {
     constructor({
-      widthSegments = 1,
-      heightSegments = 1,
-      depthSegments = 1,
       instancesCount = 1,
       vertexBuffers = [],
-      topology
+      topology,
+      mapVertexBuffersAtCreation = true,
+      widthSegments = 1,
+      heightSegments = 1,
+      depthSegments = 1
     } = {}) {
-      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers });
+      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation });
       this.type = "BoxGeometry";
       widthSegments = Math.floor(widthSegments);
       heightSegments = Math.floor(heightSegments);
@@ -11614,17 +11783,18 @@ struct VSOutput {
 
   class SphereGeometry extends IndexedGeometry {
     constructor({
+      topology,
+      instancesCount = 1,
+      vertexBuffers = [],
+      mapVertexBuffersAtCreation = true,
       widthSegments = 32,
       heightSegments = 16,
       phiStart = 0,
       phiLength = Math.PI * 2,
       thetaStart = 0,
-      thetaLength = Math.PI,
-      instancesCount = 1,
-      vertexBuffers = [],
-      topology
+      thetaLength = Math.PI
     } = {}) {
-      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers });
+      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation });
       this.type = "SphereGeometry";
       widthSegments = Math.max(3, Math.floor(widthSegments));
       heightSegments = Math.max(2, Math.floor(heightSegments));

@@ -4,6 +4,7 @@ import { Input, InputBase, InputValue } from '../../types/BindGroups';
 import { BufferElement } from './bufferElements/BufferElement';
 import { BufferArrayElement } from './bufferElements/BufferArrayElement';
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement';
+import { Buffer } from '../buffers/Buffer';
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
  */
@@ -76,8 +77,8 @@ export declare class BufferBinding extends Binding {
     arrayBuffer: ArrayBuffer;
     /** Data view of our {@link arrayBuffer | array buffer} */
     arrayView: DataView;
-    /** The GPUBuffer */
-    buffer: GPUBuffer | null;
+    /** The {@link Buffer} holding the {@link GPUBuffer}  */
+    buffer: Buffer;
     /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
     wgslStructFragment: string;
     /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link BufferBinding} */

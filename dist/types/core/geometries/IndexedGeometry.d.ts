@@ -1,6 +1,8 @@
 /// <reference types="dist" />
 import { Geometry } from './Geometry';
 import { GeometryParams } from '../../types/Geometries';
+import { Buffer } from '../buffers/Buffer';
+import { Renderer } from '../renderers/utils';
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
  */
@@ -21,7 +23,7 @@ export interface IndexBuffer {
     /** index buffer length */
     bufferLength: number;
     /** index buffer {@link GPUBuffer} */
-    buffer?: GPUBuffer;
+    buffer: Buffer;
 }
 /**
  * Used to create an {@link IndexedGeometry} which holds an index array to use as an index buffer.
@@ -67,12 +69,21 @@ export declare class IndexedGeometry extends Geometry {
      * IndexedGeometry constructor
      * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
      */
-    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, }?: GeometryParams);
+    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation, }?: GeometryParams);
     /**
      * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
      * @readonly
      */
     get ready(): boolean;
+    /**
+     * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
+     */
+    loseContext(): void;
+    /**
+     * Restore the {@link IndexedGeometry} buffers on context restoration
+     * @param renderer - The {@link Renderer} used to recreate the buffers
+     */
+    restoreContext(renderer: Renderer): void;
     /**
      * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
      * @readonly
@@ -83,6 +94,16 @@ export declare class IndexedGeometry extends Geometry {
      * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
      */
     setIndexBuffer({ bufferFormat, array }: IndexedGeometryIndexBufferOptions): void;
+    /**
+     * Create the {@link Geometry} {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer}.
+     * @param parameters - parameters used to create the vertex buffers.
+     * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
+     * @param parameters.label - label to use for the vertex buffers.
+     */
+    createBuffers({ renderer, label }: {
+        renderer: Renderer;
+        label?: string;
+    }): void;
     /** RENDER **/
     /**
      * First, set our render pass geometry vertex buffers
@@ -96,7 +117,8 @@ export declare class IndexedGeometry extends Geometry {
      */
     drawGeometry(pass: GPURenderPassEncoder): void;
     /**
-     * Destroy our indexed geometry vertex buffers and index buffer
+     * Destroy our indexed geometry vertex buffers and index buffer.
+     * @param renderer - current {@link Renderer}, in case we want to remove the {@link IndexBuffer#buffer | buffer} from the cache.
      */
-    destroy(): void;
+    destroy(renderer?: null | Renderer): void;
 }

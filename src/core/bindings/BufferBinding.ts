@@ -7,6 +7,7 @@ import { Input, InputBase, InputValue } from '../../types/BindGroups'
 import { BufferElement } from './bufferElements/BufferElement'
 import { BufferArrayElement } from './bufferElements/BufferArrayElement'
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement'
+import { Buffer } from '../buffers/Buffer'
 
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
@@ -91,8 +92,8 @@ export class BufferBinding extends Binding {
   /** Data view of our {@link arrayBuffer | array buffer} */
   arrayView: DataView
 
-  /** The GPUBuffer */
-  buffer: GPUBuffer | null
+  /** The {@link Buffer} holding the {@link GPUBuffer}  */
+  buffer: Buffer
 
   /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
   wgslStructFragment: string
@@ -132,7 +133,7 @@ export class BufferBinding extends Binding {
 
     this.bufferElements = []
     this.inputs = {}
-    this.buffer = null
+    this.buffer = new Buffer()
 
     this.setBindings(struct)
     this.setBufferAttributes()
@@ -162,7 +163,7 @@ export class BufferBinding extends Binding {
     /** {@link GPUBindGroup | bind group} resource */
     buffer: GPUBuffer | null
   } {
-    return { buffer: this.buffer }
+    return { buffer: this.buffer.GPUBuffer }
   }
 
   /**
@@ -348,6 +349,8 @@ export class BufferBinding extends Binding {
 
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize)
     this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength)
+
+    this.buffer.size = this.arrayBuffer.byteLength
 
     for (const bufferElement of this.bufferElements) {
       bufferElement.setView(this.arrayBuffer, this.arrayView)

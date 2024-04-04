@@ -1,4 +1,5 @@
 import { BufferBinding } from './BufferBinding.mjs';
+import { Buffer } from '../buffers/Buffer.mjs';
 
 class WritableBufferBinding extends BufferBinding {
   /**
@@ -23,7 +24,7 @@ class WritableBufferBinding extends BufferBinding {
       shouldCopyResult
     };
     this.shouldCopyResult = shouldCopyResult;
-    this.resultBuffer = null;
+    this.resultBuffer = new Buffer();
   }
 }
 

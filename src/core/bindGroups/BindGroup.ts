@@ -281,10 +281,10 @@ export class BindGroup {
     this.resetEntries()
 
     for (const binding of this.bufferBindings) {
-      binding.buffer = null
+      binding.buffer.reset()
 
       if ('resultBuffer' in binding) {
-        binding.resultBuffer = null
+        binding.resultBuffer.reset()
       }
     }
 
@@ -310,9 +310,8 @@ export class BindGroup {
     // TODO user defined usage?
     // [Kangz](https://github.com/Kangz) said:
     // "In general though COPY_SRC/DST is free (at least in Dawn / Chrome because we add it all the time for our own purpose)."
-    binding.buffer = this.renderer.createBuffer({
+    binding.buffer.createBuffer(this.renderer, {
       label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
-      size: binding.arrayBuffer.byteLength,
       usage:
         binding.bindingType === 'uniform'
           ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
@@ -320,7 +319,7 @@ export class BindGroup {
     })
 
     if ('resultBuffer' in binding) {
-      binding.resultBuffer = this.renderer.createBuffer({
+      binding.resultBuffer.createBuffer(this.renderer, {
         label: this.options.label + ': Result buffer from: ' + binding.label,
         size: binding.arrayBuffer.byteLength,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
@@ -340,8 +339,16 @@ export class BindGroup {
       }
 
       // if it's a buffer binding, create the GPUBuffer
-      if ('buffer' in binding && !binding.buffer) {
-        this.createBindingBuffer(binding)
+      if ('buffer' in binding) {
+        if (!binding.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding)
+        }
+
+        binding.buffer.consumers.add(this.uuid)
+      }
+
+      if ('resultBuffer' in binding) {
+        binding.resultBuffer.consumers.add(this.uuid)
       }
 
       // now that everything is ready, fill our entries
@@ -403,9 +410,9 @@ export class BindGroup {
           if (!binding.useStruct && binding.bufferElements.length > 1) {
             // we're in a non struct buffer binding with multiple entries
             // that should not happen but that way we're covered
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view)
+            this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.bufferElements[index].view)
           } else {
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer)
+            this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer)
           }
         }
 
@@ -481,8 +488,16 @@ export class BindGroup {
       bindGroupCopy.addBinding(binding)
 
       // if it's a buffer binding without a GPUBuffer, create it now
-      if ('buffer' in binding && !binding.buffer) {
-        bindGroupCopy.createBindingBuffer(binding)
+      if ('buffer' in binding) {
+        if (!binding.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding)
+        }
+
+        binding.buffer.consumers.add(bindGroupCopy.uuid)
+      }
+
+      if ('resultBuffer' in binding) {
+        binding.resultBuffer.consumers.add(bindGroupCopy.uuid)
       }
 
       // if we should create a new bind group layout, fill it
@@ -521,14 +536,20 @@ export class BindGroup {
     for (const binding of this.bufferBindings) {
       if ('buffer' in binding) {
         this.renderer.removeBuffer(binding.buffer)
-        binding.buffer?.destroy()
-        binding.buffer = null
+
+        binding.buffer.consumers.delete(this.uuid)
+        if (!binding.buffer.consumers.size) {
+          binding.buffer.destroy()
+        }
       }
 
       if ('resultBuffer' in binding) {
         this.renderer.removeBuffer(binding.resultBuffer)
-        binding.resultBuffer?.destroy()
-        binding.resultBuffer = null
+
+        binding.resultBuffer.consumers.delete(this.uuid)
+        if (!binding.resultBuffer.consumers.size) {
+          binding.resultBuffer.destroy()
+        }
       }
     }
 

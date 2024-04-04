@@ -5,6 +5,7 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { SceneObject } from './GPURenderer'
 import { Texture } from '../textures/Texture'
 import { AllowedBindGroups } from '../../types/BindGroups'
+import { Buffer } from '../buffers/Buffer'
 
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
@@ -65,7 +66,7 @@ export class GPUDeviceManager {
   /** A Map containing all our created {@link AllowedBindGroups} */
   bindGroups: Map<string, AllowedBindGroups>
   /** An array containing all our created {@link GPUBuffer} */
-  buffers: GPUBuffer[]
+  buffers: Map<string, Buffer>
   /** An array containing all our created {@link Sampler} */
   samplers: Sampler[]
   /** An array containing all our created {@link Texture} */
@@ -206,7 +207,7 @@ export class GPUDeviceManager {
     this.renderers.forEach((renderer) => renderer.loseContext())
 
     // reset the buffers array, it would eventually be repopulated while restoring the device
-    this.buffers = []
+    this.buffers.clear()
   }
 
   /**
@@ -238,7 +239,7 @@ export class GPUDeviceManager {
     // keep track of renderers, bind groups, buffers, samplers, textures
     this.renderers = []
     this.bindGroups = new Map()
-    this.buffers = []
+    this.buffers = new Map()
     this.samplers = []
     this.textures = []
 
@@ -288,24 +289,18 @@ export class GPUDeviceManager {
 
   /**
    * Add a {@link GPUBuffer} to our our {@link buffers} array
-   * @param buffer - {@link GPUBuffer} to add
+   * @param buffer - {@link Buffer} to add
    */
-  addBuffer(buffer: GPUBuffer) {
-    this.buffers.push(buffer)
+  addBuffer(buffer: Buffer) {
+    this.buffers.set(buffer.uuid, buffer)
   }
 
   /**
-   * Remove a {@link GPUBuffer} from our {@link buffers} array
-   * @param buffer - {@link GPUBuffer} to remove
-   * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+   * Remove a {@link Buffer} from our {@link buffers} Map
+   * @param buffer - {@link Buffer} to remove
    */
-  removeBuffer(buffer: GPUBuffer, originalLabel?: string) {
-    // TODO we should probably create a Buffer class that handles uuid
-    if (buffer) {
-      this.buffers = this.buffers.filter((b) => {
-        return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size)
-      })
-    }
+  removeBuffer(buffer: Buffer) {
+    this.buffers.delete(buffer?.uuid)
   }
 
   /**

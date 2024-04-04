@@ -3,6 +3,7 @@ import { Scene } from '../scenes/Scene.mjs';
 import { RenderPass } from '../renderPasses/RenderPass.mjs';
 import { generateUUID, throwError, throwWarning } from '../../utils/utils.mjs';
 import { TasksQueueManager } from '../../utils/TasksQueueManager.mjs';
+import { Buffer } from '../buffers/Buffer.mjs';
 
 class GPURenderer {
   /**
@@ -317,21 +318,20 @@ class GPURenderer {
   /* BUFFERS & BINDINGS */
   /**
    * Create a {@link GPUBuffer}
-   * @param bufferDescriptor - {@link GPUBufferDescriptor | GPU buffer descriptor}
+   * @param buffer - {@link Buffer} to use for buffer creation
    * @returns - newly created {@link GPUBuffer}
    */
-  createBuffer(bufferDescriptor) {
-    const buffer = this.deviceManager.device?.createBuffer(bufferDescriptor);
+  createBuffer(buffer) {
+    const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
     this.deviceManager.addBuffer(buffer);
-    return buffer;
+    return GPUBuffer;
   }
   /**
-   * Remove a {@link GPUBuffer} from our {@link GPUDeviceManager#buffers | GPU buffers array}
-   * @param buffer - {@link GPUBuffer} to remove
-   * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+   * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}
+   * @param buffer - {@link Buffer} to remove
    */
-  removeBuffer(buffer, originalLabel) {
-    this.deviceManager.removeBuffer(buffer, originalLabel);
+  removeBuffer(buffer) {
+    this.deviceManager.removeBuffer(buffer);
   }
   /**
    * Write to a {@link GPUBuffer}
@@ -343,37 +343,44 @@ class GPURenderer {
     this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data);
   }
   /**
-   * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+   * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}
    * @param parameters - parameters used to realize the copy
-   * @param parameters.srcBuffer - source {@link GPUBuffer}
-   * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+   * @param parameters.srcBuffer - source {@link Buffer}
+   * @param [parameters.dstBuffer] - destination {@link Buffer}. Will create a new one if none provided.
    * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-   * @returns - destination {@link GPUBuffer} after copy
+   * @returns - destination {@link Buffer} after copy
    */
   copyBufferToBuffer({
     srcBuffer,
     dstBuffer,
     commandEncoder
   }) {
-    if (!srcBuffer) {
+    if (!srcBuffer || !srcBuffer.GPUBuffer) {
       throwWarning(
         `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
       );
       return null;
     }
     if (!dstBuffer) {
-      dstBuffer = this.createBuffer({
-        label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.label}`,
-        size: srcBuffer.size,
+      dstBuffer = new Buffer();
+    }
+    if (!dstBuffer.GPUBuffer) {
+      dstBuffer.createBuffer(this, {
+        label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.options.label}`,
+        size: srcBuffer.GPUBuffer.size,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
       });
     }
-    if (srcBuffer.mapState !== "unmapped") {
-      throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${srcBuffer} because it is currently mapped`);
+    if (srcBuffer.GPUBuffer.mapState !== "unmapped") {
+      throwWarning(
+        `${this.type} (${this.options.label}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
+      );
       return;
     }
-    if (dstBuffer.mapState !== "unmapped") {
-      throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${dstBuffer} because it is currently mapped`);
+    if (dstBuffer.GPUBuffer.mapState !== "unmapped") {
+      throwWarning(
+        `${this.type} (${this.options.label}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
+      );
       return;
     }
     const hasCommandEncoder = !!commandEncoder;
@@ -383,7 +390,7 @@ class GPURenderer {
       });
       !this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
     }
-    commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size);
+    commandEncoder.copyBufferToBuffer(srcBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer.size);
     if (!hasCommandEncoder) {
       !this.production && commandEncoder.popDebugGroup();
       const commandBuffer = commandEncoder.finish();

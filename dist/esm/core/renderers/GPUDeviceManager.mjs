@@ -106,7 +106,7 @@ class GPUDeviceManager {
     this.ready = false;
     this.samplers.forEach((sampler) => sampler.sampler = null);
     this.renderers.forEach((renderer) => renderer.loseContext());
-    this.buffers = [];
+    this.buffers.clear();
   }
   /**
    * Called when the {@link device} should be restored.
@@ -131,7 +131,7 @@ class GPUDeviceManager {
   setDeviceObjects() {
     this.renderers = [];
     this.bindGroups = /* @__PURE__ */ new Map();
-    this.buffers = [];
+    this.buffers = /* @__PURE__ */ new Map();
     this.samplers = [];
     this.textures = [];
     this.texturesQueue = [];
@@ -173,22 +173,17 @@ class GPUDeviceManager {
   }
   /**
    * Add a {@link GPUBuffer} to our our {@link buffers} array
-   * @param buffer - {@link GPUBuffer} to add
+   * @param buffer - {@link Buffer} to add
    */
   addBuffer(buffer) {
-    this.buffers.push(buffer);
+    this.buffers.set(buffer.uuid, buffer);
   }
   /**
-   * Remove a {@link GPUBuffer} from our {@link buffers} array
-   * @param buffer - {@link GPUBuffer} to remove
-   * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+   * Remove a {@link Buffer} from our {@link buffers} Map
+   * @param buffer - {@link Buffer} to remove
    */
-  removeBuffer(buffer, originalLabel) {
-    if (buffer) {
-      this.buffers = this.buffers.filter((b) => {
-        return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size);
-      });
-    }
+  removeBuffer(buffer) {
+    this.buffers.delete(buffer?.uuid);
   }
   /**
    * Add a {@link Sampler} to our {@link samplers} array

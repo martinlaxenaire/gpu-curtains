@@ -1,5 +1,5 @@
 import { Box3 } from '../../math/Box3'
-import { throwError, throwWarning } from '../../utils/utils'
+import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 import {
   GeometryOptions,
   GeometryParams,
@@ -8,6 +8,8 @@ import {
   VertexBufferAttributeParams,
   VertexBufferParams,
 } from '../../types/Geometries'
+import { Buffer } from '../buffers/Buffer'
+import { Renderer } from '../renderers/utils'
 
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
@@ -57,12 +59,17 @@ export class Geometry {
   options: GeometryOptions
   /** The type of the geometry */
   type: string
+  /** The universal unique id of the geometry */
+  uuid: string
 
   /** The bounding box of the geometry, i.e. two {@link math/Vec3.Vec3 | Vec3} defining the min and max positions to wrap this geometry in a cube */
   boundingBox: Box3
 
   /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
   wgslStructFragment: string
+
+  /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
+  consumers: Set<string>
 
   /**
    * Geometry constructor
@@ -73,6 +80,7 @@ export class Geometry {
     topology = 'triangle-list',
     instancesCount = 1,
     vertexBuffers = [],
+    mapVertexBuffersAtCreation = true,
   }: GeometryParams = {}) {
     this.verticesCount = 0
     this.verticesOrder = verticesOrder
@@ -82,8 +90,11 @@ export class Geometry {
     this.boundingBox = new Box3()
 
     this.type = 'Geometry'
+    this.uuid = generateUUID()
 
     this.vertexBuffers = []
+
+    this.consumers = new Set()
 
     // should contain our vertex position / uv data at least
     this.addVertexBuffer({
@@ -92,9 +103,10 @@ export class Geometry {
 
     this.options = {
       verticesOrder,
+      topology,
       instancesCount,
       vertexBuffers,
-      topology,
+      mapVertexBuffersAtCreation,
     }
 
     for (const vertexBuffer of vertexBuffers) {
@@ -107,19 +119,47 @@ export class Geometry {
   }
 
   /**
-   * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
-   * @readonly
-   */
-  get shouldCompute(): boolean {
-    return this.vertexBuffers.length && !this.vertexBuffers[0].array
-  }
-
-  /**
    * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
    * @readonly
    */
   get ready(): boolean {
-    return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer)
+    for (const vertexBuffer of this.vertexBuffers) {
+      if (!vertexBuffer.array || !vertexBuffer.buffer.GPUBuffer) {
+        return false
+        break
+      }
+    }
+
+    return true
+  }
+
+  /**
+   * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
+   */
+  loseContext() {
+    for (const vertexBuffer of this.vertexBuffers) {
+      vertexBuffer.buffer.destroy()
+    }
+  }
+
+  /**
+   * Restore the {@link Geometry} buffers on context restoration
+   * @param renderer - The {@link Renderer} used to recreate the buffers
+   */
+  restoreContext(renderer: Renderer) {
+    // do not try to recreate buffers of a geometry that has already been restored
+    if (!this.ready) {
+      for (const vertexBuffer of this.vertexBuffers) {
+        if (!vertexBuffer.buffer.GPUBuffer) {
+          vertexBuffer.buffer.createBuffer(renderer)
+
+          if (!this.options.mapVertexBuffersAtCreation)
+            renderer.queueWriteBuffer(vertexBuffer.buffer.GPUBuffer, 0, vertexBuffer.array)
+        }
+      }
+
+      if (this.options.mapVertexBuffersAtCreation) this.computeGeometry()
+    }
   }
 
   /**
@@ -134,7 +174,8 @@ export class Geometry {
       arrayStride: 0,
       bufferLength: 0,
       attributes: [],
-      buffer: null,
+      buffer: new Buffer(),
+      array: null,
     }
 
     // set attributes right away if possible
@@ -252,7 +293,7 @@ export class Geometry {
    * Also compute the Geometry bounding box.
    */
   computeGeometry() {
-    if (!this.shouldCompute) return
+    if (this.ready) return
 
     this.vertexBuffers.forEach((vertexBuffer, index) => {
       if (index === 0) {
@@ -278,7 +319,11 @@ export class Geometry {
         }
       }
 
-      vertexBuffer.array = new Float32Array(vertexBuffer.bufferLength)
+      const isBufferMapped = vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.GPUBuffer.mapState === 'mapped'
+
+      vertexBuffer.array = isBufferMapped
+        ? new Float32Array(vertexBuffer.buffer.GPUBuffer.getMappedRange())
+        : new Float32Array(vertexBuffer.bufferLength)
 
       let currentIndex = 0
       let attributeIndex = 0
@@ -313,6 +358,10 @@ export class Geometry {
 
         attributeIndex++
       }
+
+      if (isBufferMapped) {
+        vertexBuffer.buffer.GPUBuffer.unmap()
+      }
     })
 
     this.#setWGSLFragment()
@@ -334,6 +383,48 @@ export class Geometry {
       .join(',')}\n};`
   }
 
+  /**
+   * Create the {@link createBuffers | geometry buffers} and {@link computeGeometry | compute the geometry}. The order in which those operations take place depends on mappedAtCreation parameter.
+   * @param parameters - parameters used to create the geometry.
+   * @param parameters.renderer - {@link Renderer} used to create the buffers.
+   * @param parameters.label - label to use for the buffers.
+   */
+  createGeometry({ renderer, label = this.type }: { renderer: Renderer; label?: string }) {
+    if (this.options.mapVertexBuffersAtCreation) {
+      this.createBuffers({ renderer, label })
+      this.computeGeometry()
+    } else {
+      this.computeGeometry()
+      this.createBuffers({ renderer, label })
+    }
+  }
+
+  /**
+   * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
+   * @param parameters - parameters used to create the vertex buffers.
+   * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
+   * @param parameters.label - label to use for the vertex buffers.
+   */
+  createBuffers({ renderer, label = this.type }: { renderer: Renderer; label?: string }) {
+    for (const vertexBuffer of this.vertexBuffers) {
+      if (!vertexBuffer.buffer.GPUBuffer) {
+        vertexBuffer.buffer.createBuffer(renderer, {
+          label: label + ': ' + vertexBuffer.name + ' buffer',
+          size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
+          usage: this.options.mapVertexBuffersAtCreation
+            ? GPUBufferUsage.VERTEX
+            : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          mappedAtCreation: this.options.mapVertexBuffersAtCreation,
+        })
+
+        if (!this.options.mapVertexBuffersAtCreation)
+          renderer.queueWriteBuffer(vertexBuffer.buffer.GPUBuffer, 0, vertexBuffer.array)
+
+        vertexBuffer.buffer.consumers.add(this.uuid)
+      }
+    }
+  }
+
   /** RENDER **/
 
   /**
@@ -342,7 +433,7 @@ export class Geometry {
    */
   setGeometryBuffers(pass: GPURenderPassEncoder) {
     this.vertexBuffers.forEach((vertexBuffer, index) => {
-      pass.setVertexBuffer(index, vertexBuffer.buffer)
+      pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer)
     })
   }
 
@@ -366,12 +457,19 @@ export class Geometry {
   }
 
   /**
-   * Destroy our geometry vertex buffers
+   * Destroy our geometry vertex buffers.
+   * @param renderer - current {@link Renderer}, in case we want to remove the {@link VertexBuffer#buffer | buffers} from the cache.
    */
-  destroy() {
+  destroy(renderer: null | Renderer = null) {
     for (const vertexBuffer of this.vertexBuffers) {
-      vertexBuffer.buffer?.destroy()
-      vertexBuffer.buffer = null
+      vertexBuffer.buffer.consumers.delete(this.uuid)
+      if (!vertexBuffer.buffer.consumers.size) {
+        vertexBuffer.buffer.destroy()
+      }
+
+      vertexBuffer.array = null
+
+      if (renderer) renderer.removeBuffer(vertexBuffer.buffer)
     }
   }
 }

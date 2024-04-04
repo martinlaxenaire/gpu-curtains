@@ -1,5 +1,7 @@
 import { Geometry } from './Geometry'
 import { GeometryParams } from '../../types/Geometries'
+import { Buffer } from '../buffers/Buffer'
+import { Renderer } from '../renderers/utils'
 
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
@@ -22,7 +24,7 @@ export interface IndexBuffer {
   /** index buffer length */
   bufferLength: number
   /** index buffer {@link GPUBuffer} */
-  buffer?: GPUBuffer
+  buffer: Buffer
 }
 
 /**
@@ -75,8 +77,9 @@ export class IndexedGeometry extends Geometry {
     topology = 'triangle-list',
     instancesCount = 1,
     vertexBuffers = [],
+    mapVertexBuffersAtCreation = true,
   }: GeometryParams = {}) {
-    super({ verticesOrder, topology, instancesCount, vertexBuffers })
+    super({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation })
 
     this.type = 'IndexedGeometry'
   }
@@ -86,12 +89,31 @@ export class IndexedGeometry extends Geometry {
    * @readonly
    */
   get ready(): boolean {
-    return (
-      !this.shouldCompute &&
-      !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer) &&
-      this.indexBuffer &&
-      !!this.indexBuffer.buffer
-    )
+    return super.ready && this.indexBuffer && !!this.indexBuffer.buffer.GPUBuffer
+  }
+
+  /**
+   * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
+   */
+  loseContext() {
+    super.loseContext()
+
+    if (this.indexBuffer) {
+      this.indexBuffer.buffer.destroy()
+    }
+  }
+
+  /**
+   * Restore the {@link IndexedGeometry} buffers on context restoration
+   * @param renderer - The {@link Renderer} used to recreate the buffers
+   */
+  restoreContext(renderer: Renderer) {
+    super.restoreContext(renderer)
+
+    if (!this.indexBuffer.buffer.GPUBuffer) {
+      this.indexBuffer.buffer.createBuffer(renderer)
+      renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array)
+    }
   }
 
   /**
@@ -111,8 +133,28 @@ export class IndexedGeometry extends Geometry {
       array,
       bufferFormat,
       bufferLength: array.length,
-      buffer: null,
+      buffer: new Buffer(),
     }
+  }
+
+  /**
+   * Create the {@link Geometry} {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer}.
+   * @param parameters - parameters used to create the vertex buffers.
+   * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
+   * @param parameters.label - label to use for the vertex buffers.
+   */
+  createBuffers({ renderer, label = this.type }: { renderer: Renderer; label?: string }) {
+    super.createBuffers({ renderer, label })
+
+    this.indexBuffer.buffer.createBuffer(renderer, {
+      label: label + ': index buffer',
+      size: this.indexBuffer.array.byteLength,
+      usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    })
+
+    renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array)
+
+    this.indexBuffer.buffer.consumers.add(this.uuid)
   }
 
   /** RENDER **/
@@ -125,7 +167,7 @@ export class IndexedGeometry extends Geometry {
   setGeometryBuffers(pass: GPURenderPassEncoder) {
     super.setGeometryBuffers(pass)
 
-    pass.setIndexBuffer(this.indexBuffer.buffer, this.indexBuffer.bufferFormat)
+    pass.setIndexBuffer(this.indexBuffer.buffer.GPUBuffer, this.indexBuffer.bufferFormat)
   }
 
   /**
@@ -137,12 +179,16 @@ export class IndexedGeometry extends Geometry {
   }
 
   /**
-   * Destroy our indexed geometry vertex buffers and index buffer
+   * Destroy our indexed geometry vertex buffers and index buffer.
+   * @param renderer - current {@link Renderer}, in case we want to remove the {@link IndexBuffer#buffer | buffer} from the cache.
    */
-  destroy() {
-    super.destroy()
+  destroy(renderer: null | Renderer = null) {
+    super.destroy(renderer)
 
-    this.indexBuffer?.buffer?.destroy()
-    this.indexBuffer.buffer = null
+    if (this.indexBuffer) {
+      this.indexBuffer.buffer.consumers.delete(this.uuid)
+      this.indexBuffer.buffer.destroy()
+      if (renderer) renderer.removeBuffer(this.indexBuffer.buffer)
+    }
   }
 }
