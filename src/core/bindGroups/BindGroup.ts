@@ -137,6 +137,17 @@ export class BindGroup {
 
     this.consumers = new Set()
 
+    // add the bind group to the buffers consumers
+    for (const binding of this.bufferBindings) {
+      if ('buffer' in binding) {
+        binding.buffer.consumers.add(this.uuid)
+      }
+
+      if ('resultBuffer' in binding) {
+        binding.resultBuffer.consumers.add(this.uuid)
+      }
+    }
+
     this.renderer.addBindGroup(this)
   }
 
@@ -343,12 +354,6 @@ export class BindGroup {
         if (!binding.buffer.GPUBuffer) {
           this.createBindingBuffer(binding)
         }
-
-        binding.buffer.consumers.add(this.uuid)
-      }
-
-      if ('resultBuffer' in binding) {
-        binding.resultBuffer.consumers.add(this.uuid)
       }
 
       // now that everything is ready, fill our entries
@@ -494,10 +499,10 @@ export class BindGroup {
         }
 
         binding.buffer.consumers.add(bindGroupCopy.uuid)
-      }
 
-      if ('resultBuffer' in binding) {
-        binding.resultBuffer.consumers.add(bindGroupCopy.uuid)
+        if ('resultBuffer' in binding) {
+          binding.resultBuffer.consumers.add(bindGroupCopy.uuid)
+        }
       }
 
       // if we should create a new bind group layout, fill it

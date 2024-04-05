@@ -64,7 +64,15 @@ export class Buffer {
    */
   createBuffer(renderer, options = {}) {
     this.options = { ...this.options, ...options }
-    this.GPUBuffer = renderer.createBuffer(this)
+    this.setBuffer(renderer.createBuffer(this))
+  }
+
+  /**
+   * Set the {@link GPUBuffer}. This allows to use a {@link Buffer} with a {@link GPUBuffer} created separately.
+   * @param GPUBuffer - GPU buffer to use.
+   */
+  setBuffer(GPUBuffer: GPUBuffer) {
+    this.GPUBuffer = GPUBuffer
   }
 
   /**

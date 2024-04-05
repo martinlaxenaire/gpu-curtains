@@ -316,6 +316,7 @@ window.addEventListener('load', async () => {
       {
         stepMode: 'instance',
         name: 'instanceAttributes',
+        buffer: particlesBufferBindingA.buffer, // pass the particles buffer right away
         attributes: [
           {
             name: 'instancePosition',
@@ -359,7 +360,7 @@ window.addEventListener('load', async () => {
     // always send to the instance positions buffer the one onto which we've just written
     const particleBuffer = pingPong % 2 === 0 ? particlesBufferBindingB : particlesBufferBindingA
 
-    instanceVertexBuffer.buffer = particleBuffer?.buffer
+    instanceVertexBuffer.buffer.copy(particleBuffer.buffer)
   })
 
   // mouse interaction

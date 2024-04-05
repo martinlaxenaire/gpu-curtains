@@ -32,6 +32,14 @@ class BindGroup {
     this.bindGroup = null;
     this.needsPipelineFlush = false;
     this.consumers = /* @__PURE__ */ new Set();
+    for (const binding of this.bufferBindings) {
+      if ("buffer" in binding) {
+        binding.buffer.consumers.add(this.uuid);
+      }
+      if ("resultBuffer" in binding) {
+        binding.resultBuffer.consumers.add(this.uuid);
+      }
+    }
     this.renderer.addBindGroup(this);
   }
   /**
@@ -202,10 +210,6 @@ class BindGroup {
         if (!binding.buffer.GPUBuffer) {
           this.createBindingBuffer(binding);
         }
-        binding.buffer.consumers.add(this.uuid);
-      }
-      if ("resultBuffer" in binding) {
-        binding.resultBuffer.consumers.add(this.uuid);
       }
       this.entries.bindGroupLayout.push({
         binding: this.entries.bindGroupLayout.length,
@@ -317,9 +321,9 @@ class BindGroup {
           this.createBindingBuffer(binding);
         }
         binding.buffer.consumers.add(bindGroupCopy.uuid);
-      }
-      if ("resultBuffer" in binding) {
-        binding.resultBuffer.consumers.add(bindGroupCopy.uuid);
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer.consumers.add(bindGroupCopy.uuid);
+        }
       }
       if (!keepLayout) {
         bindGroupCopy.entries.bindGroupLayout.push({

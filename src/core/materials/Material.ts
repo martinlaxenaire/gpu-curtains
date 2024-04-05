@@ -271,11 +271,13 @@ export class Material {
 
       this.processBindGroupBindings(inputsBindGroup)
       this.inputsBindGroups.push(inputsBindGroup)
+      inputsBindGroup.consumers.add(this.uuid)
     }
 
     this.options.bindGroups?.forEach((bindGroup) => {
       this.processBindGroupBindings(bindGroup)
       this.inputsBindGroups.push(bindGroup)
+      bindGroup.consumers.add(this.uuid)
     })
   }
 
@@ -318,7 +320,6 @@ export class Material {
       this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
-      this.texturesBindGroup.consumers.add(this.uuid)
     }
 
     // then uniforms/storages inputs
@@ -328,7 +329,6 @@ export class Material {
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
-        bindGroup.consumers.add(this.uuid)
       }
     }
 
@@ -338,7 +338,6 @@ export class Material {
       if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         bindGroup.setIndex(this.bindGroups.length)
         this.bindGroups.push(bindGroup)
-        bindGroup.consumers.add(this.uuid)
       }
 
       // add it to our textures bind groups as well if needed
@@ -500,6 +499,8 @@ export class Material {
       })
     )
 
+    this.texturesBindGroup.consumers.add(this.uuid)
+
     this.options.textures?.forEach((texture) => {
       this.addTexture(texture)
     })
@@ -544,8 +545,6 @@ export class Material {
 
     const shouldDestroy =
       !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid)
-
-    console.log('destroy texture', objectsUsingTexture, shouldDestroy, texture.options.label)
 
     if (shouldDestroy) {
       texture.destroy()

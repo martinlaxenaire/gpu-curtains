@@ -114,6 +114,7 @@ export class Geometry {
         stepMode: vertexBuffer.stepMode ?? 'vertex',
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
+        ...(vertexBuffer.buffer && { buffer: vertexBuffer.buffer }),
       })
     }
   }
@@ -150,7 +151,7 @@ export class Geometry {
     // do not try to recreate buffers of a geometry that has already been restored
     if (!this.ready) {
       for (const vertexBuffer of this.vertexBuffers) {
-        if (!vertexBuffer.buffer.GPUBuffer) {
+        if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 1) {
           vertexBuffer.buffer.createBuffer(renderer)
 
           if (!this.options.mapVertexBuffersAtCreation)
@@ -167,14 +168,21 @@ export class Geometry {
    * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
    * @returns - newly created {@link VertexBuffer | vertex buffer}
    */
-  addVertexBuffer({ stepMode = 'vertex', name, attributes = [] }: VertexBufferParams = {}): VertexBuffer {
+  addVertexBuffer({
+    stepMode = 'vertex',
+    name,
+    attributes = [],
+    buffer = null,
+  }: VertexBufferParams = {}): VertexBuffer {
+    buffer = buffer || new Buffer()
+
     const vertexBuffer = {
       name: name ?? 'attributes' + this.vertexBuffers.length,
       stepMode,
       arrayStride: 0,
       bufferLength: 0,
       attributes: [],
-      buffer: new Buffer(),
+      buffer,
       array: null,
     }
 
@@ -407,7 +415,7 @@ export class Geometry {
    */
   createBuffers({ renderer, label = this.type }: { renderer: Renderer; label?: string }) {
     for (const vertexBuffer of this.vertexBuffers) {
-      if (!vertexBuffer.buffer.GPUBuffer) {
+      if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
         vertexBuffer.buffer.createBuffer(renderer, {
           label: label + ': ' + vertexBuffer.name + ' buffer',
           size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
@@ -419,9 +427,9 @@ export class Geometry {
 
         if (!this.options.mapVertexBuffersAtCreation)
           renderer.queueWriteBuffer(vertexBuffer.buffer.GPUBuffer, 0, vertexBuffer.array)
-
-        vertexBuffer.buffer.consumers.add(this.uuid)
       }
+
+      vertexBuffer.buffer.consumers.add(this.uuid)
     }
   }
 

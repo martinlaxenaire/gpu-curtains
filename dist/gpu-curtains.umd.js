@@ -1484,7 +1484,14 @@
      */
     createBuffer(renderer, options = {}) {
       this.options = { ...this.options, ...options };
-      this.GPUBuffer = renderer.createBuffer(this);
+      this.setBuffer(renderer.createBuffer(this));
+    }
+    /**
+     * Set the {@link GPUBuffer}. This allows to use a {@link Buffer} with a {@link GPUBuffer} created separately.
+     * @param GPUBuffer - GPU buffer to use.
+     */
+    setBuffer(GPUBuffer) {
+      this.GPUBuffer = GPUBuffer;
     }
     /**
      * Copy an {@link Buffer#GPUBuffer | Buffer GPUBuffer} and its {@link options} into this {@link Buffer}.
@@ -1854,6 +1861,14 @@
       this.bindGroup = null;
       this.needsPipelineFlush = false;
       this.consumers = /* @__PURE__ */ new Set();
+      for (const binding of this.bufferBindings) {
+        if ("buffer" in binding) {
+          binding.buffer.consumers.add(this.uuid);
+        }
+        if ("resultBuffer" in binding) {
+          binding.resultBuffer.consumers.add(this.uuid);
+        }
+      }
       this.renderer.addBindGroup(this);
     }
     /**
@@ -2024,10 +2039,6 @@
           if (!binding.buffer.GPUBuffer) {
             this.createBindingBuffer(binding);
           }
-          binding.buffer.consumers.add(this.uuid);
-        }
-        if ("resultBuffer" in binding) {
-          binding.resultBuffer.consumers.add(this.uuid);
         }
         this.entries.bindGroupLayout.push({
           binding: this.entries.bindGroupLayout.length,
@@ -2139,9 +2150,9 @@
             this.createBindingBuffer(binding);
           }
           binding.buffer.consumers.add(bindGroupCopy.uuid);
-        }
-        if ("resultBuffer" in binding) {
-          binding.resultBuffer.consumers.add(bindGroupCopy.uuid);
+          if ("resultBuffer" in binding) {
+            binding.resultBuffer.consumers.add(bindGroupCopy.uuid);
+          }
         }
         if (!keepLayout) {
           bindGroupCopy.entries.bindGroupLayout.push({
@@ -4563,10 +4574,12 @@
         });
         this.processBindGroupBindings(inputsBindGroup);
         this.inputsBindGroups.push(inputsBindGroup);
+        inputsBindGroup.consumers.add(this.uuid);
       }
       this.options.bindGroups?.forEach((bindGroup) => {
         this.processBindGroupBindings(bindGroup);
         this.inputsBindGroups.push(bindGroup);
+        bindGroup.consumers.add(this.uuid);
       });
     }
     /**
@@ -4603,21 +4616,18 @@
         this.texturesBindGroup.setIndex(this.bindGroups.length);
         this.texturesBindGroup.createBindGroup();
         this.bindGroups.push(this.texturesBindGroup);
-        this.texturesBindGroup.consumers.add(this.uuid);
       }
       for (const bindGroup of this.inputsBindGroups) {
         if (bindGroup.shouldCreateBindGroup) {
           bindGroup.setIndex(this.bindGroups.length);
           bindGroup.createBindGroup();
           this.bindGroups.push(bindGroup);
-          bindGroup.consumers.add(this.uuid);
         }
       }
       this.options.bindGroups?.forEach((bindGroup) => {
         if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
           bindGroup.setIndex(this.bindGroups.length);
           this.bindGroups.push(bindGroup);
-          bindGroup.consumers.add(this.uuid);
         }
         if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
           this.texturesBindGroups.push(bindGroup);
@@ -4747,6 +4757,7 @@
           label: this.options.label + ": Textures bind group"
         })
       );
+      this.texturesBindGroup.consumers.add(this.uuid);
       this.options.textures?.forEach((texture) => {
         this.addTexture(texture);
       });
@@ -4777,7 +4788,6 @@
         return;
       const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
       const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
-      console.log("destroy texture", objectsUsingTexture, shouldDestroy, texture.options.label);
       if (shouldDestroy) {
         texture.destroy();
       }
@@ -5678,7 +5688,8 @@
         this.addVertexBuffer({
           stepMode: vertexBuffer.stepMode ?? "vertex",
           name: vertexBuffer.name,
-          attributes: vertexBuffer.attributes
+          attributes: vertexBuffer.attributes,
+          ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer }
         });
       }
     }
@@ -5709,7 +5720,7 @@
     restoreContext(renderer) {
       if (!this.ready) {
         for (const vertexBuffer of this.vertexBuffers) {
-          if (!vertexBuffer.buffer.GPUBuffer) {
+          if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 1) {
             vertexBuffer.buffer.createBuffer(renderer);
             if (!this.options.mapVertexBuffersAtCreation)
               renderer.queueWriteBuffer(vertexBuffer.buffer.GPUBuffer, 0, vertexBuffer.array);
@@ -5724,14 +5735,20 @@
      * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
      * @returns - newly created {@link VertexBuffer | vertex buffer}
      */
-    addVertexBuffer({ stepMode = "vertex", name, attributes = [] } = {}) {
+    addVertexBuffer({
+      stepMode = "vertex",
+      name,
+      attributes = [],
+      buffer = null
+    } = {}) {
+      buffer = buffer || new Buffer();
       const vertexBuffer = {
         name: name ?? "attributes" + this.vertexBuffers.length,
         stepMode,
         arrayStride: 0,
         bufferLength: 0,
         attributes: [],
-        buffer: new Buffer(),
+        buffer,
         array: null
       };
       attributes?.forEach((attribute) => {
@@ -5910,7 +5927,7 @@
      */
     createBuffers({ renderer, label = this.type }) {
       for (const vertexBuffer of this.vertexBuffers) {
-        if (!vertexBuffer.buffer.GPUBuffer) {
+        if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
           vertexBuffer.buffer.createBuffer(renderer, {
             label: label + ": " + vertexBuffer.name + " buffer",
             size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
@@ -5919,8 +5936,8 @@
           });
           if (!this.options.mapVertexBuffersAtCreation)
             renderer.queueWriteBuffer(vertexBuffer.buffer.GPUBuffer, 0, vertexBuffer.array);
-          vertexBuffer.buffer.consumers.add(this.uuid);
         }
+        vertexBuffer.buffer.consumers.add(this.uuid);
       }
     }
     /** RENDER **/
@@ -6334,14 +6351,12 @@
         this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
         this.texturesBindGroup.createBindGroup();
         this.bindGroups.push(this.texturesBindGroup);
-        this.texturesBindGroup.consumers.add(this.uuid);
       }
       for (const bindGroup of this.inputsBindGroups) {
         if (bindGroup.shouldCreateBindGroup) {
           bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
           bindGroup.createBindGroup();
           this.bindGroups.push(bindGroup);
-          bindGroup.consumers.add(this.uuid);
         }
       }
     }

@@ -71,6 +71,8 @@ export interface VertexBufferParams {
   name?: string
   /** Array of {@link VertexBufferAttribute} to be used by this {@link VertexBuffer} */
   attributes?: VertexBufferAttributeParams[]
+  /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
+  buffer?: Buffer
 }
 
 /**

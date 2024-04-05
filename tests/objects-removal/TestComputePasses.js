@@ -271,6 +271,7 @@ export class TestComputePasses {
         {
           stepMode: 'instance',
           name: 'instanceAttributes',
+          buffer: particlesBufferBindingA.buffer,
           attributes: [
             {
               name: 'instancePosition',
@@ -291,6 +292,8 @@ export class TestComputePasses {
       ],
     })
 
+    console.log(this.sphereGeometry, particlesBufferBindingA)
+
     this.sphereMesh = new Mesh(this.gpuCurtains, {
       label: 'Sphere mesh',
       geometry: this.sphereGeometry,
@@ -310,8 +313,8 @@ export class TestComputePasses {
     this.sphereMesh
       .onReady(() => {
         //console.log(cubeMesh.material.getAddedShaderCode('vertex'))
-        const instanceVertexBuffer = this.sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
-        instanceVertexBuffer.buffer.copy(particlesBufferBindingA.buffer, true)
+        // const instanceVertexBuffer = this.sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
+        // instanceVertexBuffer.buffer.copy(particlesBufferBindingA.buffer, true)
       })
       .onRender(() => {
         const instanceVertexBuffer = this.sphereMesh.geometry.getVertexBufferByName('instanceAttributes')
