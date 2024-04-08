@@ -123,8 +123,10 @@ export class BufferBinding extends Binding {
       ...this.options,
       useStruct,
       access,
-      struct: struct,
+      struct,
     }
+
+    this.cacheKey += `${useStruct},${access},`
 
     this.arrayBufferSize = 0
 
@@ -135,9 +137,12 @@ export class BufferBinding extends Binding {
     this.inputs = {}
     this.buffer = new Buffer()
 
-    this.setBindings(struct)
-    this.setBufferAttributes()
-    this.setWGSLFragment()
+    if (Object.keys(struct).length) {
+      this.setBindings(struct)
+      this.setBufferAttributes()
+
+      this.setWGSLFragment()
+    }
   }
 
   /**
@@ -164,6 +169,55 @@ export class BufferBinding extends Binding {
     buffer: GPUBuffer | null
   } {
     return { buffer: this.buffer.GPUBuffer }
+  }
+
+  clone(params) {
+    const { struct, ...defaultParams } = params
+
+    const bufferBindingCopy = new (this.constructor as typeof BufferBinding)(defaultParams)
+    bufferBindingCopy.setBindings(struct)
+    bufferBindingCopy.options.struct = struct
+
+    bufferBindingCopy.arrayBufferSize = this.arrayBufferSize
+
+    bufferBindingCopy.arrayBuffer = new ArrayBuffer(bufferBindingCopy.arrayBufferSize)
+    bufferBindingCopy.arrayView = new DataView(
+      bufferBindingCopy.arrayBuffer,
+      0,
+      bufferBindingCopy.arrayBuffer.byteLength
+    )
+
+    bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength
+
+    for (const bufferElement: BufferArrayElement of this.bufferElements) {
+      const newBufferElement = new (bufferElement.constructor as typeof BufferArrayElement)({
+        name: bufferElement.name,
+        key: bufferElement.key,
+        type: bufferElement.type,
+        ...(bufferElement.arrayLength && {
+          arrayLength: bufferElement.arrayLength,
+        }),
+      })
+
+      newBufferElement.alignment = bufferElement.alignment
+      if (bufferElement.arrayStride) {
+        newBufferElement.arrayStride = bufferElement.arrayStride
+      }
+
+      newBufferElement.setView(bufferBindingCopy.arrayBuffer, bufferBindingCopy.arrayView)
+      bufferBindingCopy.bufferElements.push(newBufferElement)
+    }
+
+    if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
+      bufferBindingCopy.wgslStructFragment = this.wgslStructFragment
+      bufferBindingCopy.wgslGroupFragment = this.wgslGroupFragment
+    } else {
+      bufferBindingCopy.setWGSLFragment()
+    }
+
+    bufferBindingCopy.shouldUpdate = bufferBindingCopy.arrayBufferSize > 0
+
+    return bufferBindingCopy
   }
 
   /**
@@ -201,6 +255,8 @@ export class BufferBinding extends Binding {
       }
 
       this.inputs[bindingKey] = binding
+
+      this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`
     }
   }
 
@@ -275,7 +331,7 @@ export class BufferBinding extends Binding {
         const binding = this.inputs[bindingKey]
         const bufferLayout = getBufferLayout(binding.type.replace('array', '').replace('<', '').replace('>', ''))
 
-        return (binding.value as number[] | TypedArray).length / bufferLayout.numElements
+        return Math.ceil((binding.value as number[] | TypedArray).length / bufferLayout.numElements)
       })
 
       // are they all of the same size?
@@ -363,6 +419,8 @@ export class BufferBinding extends Binding {
    * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
    */
   setWGSLFragment() {
+    if (!this.bufferElements.length) return
+
     const kebabCaseLabel = toKebabCase(this.label)
 
     if (this.useStruct) {

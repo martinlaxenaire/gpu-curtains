@@ -185,7 +185,7 @@ export class BindGroup {
     bindingType: BindingType = 'uniform',
     inputs: ReadOnlyInputBindings = {}
   ): BindGroupBindingElement[] {
-    return [
+    const bindings = [
       ...Object.keys(inputs).map((inputKey) => {
         const binding = inputs[inputKey] as WritableBufferBindingParams
 
@@ -198,6 +198,26 @@ export class BindGroup {
           access: binding.access ?? 'read', // read by default
           struct: binding.struct,
           ...(binding.shouldCopyResult !== undefined && { shouldCopyResult: binding.shouldCopyResult }),
+        }
+
+        if (binding.useStruct !== false) {
+          let key = `${bindingType},${
+            binding.visibility === undefined ? 'all' : binding.access === 'read_write' ? 'compute' : binding.visibility
+          },true,${binding.access ?? 'read'},`
+
+          Object.keys(binding.struct).forEach((bindingKey) => {
+            key += `${bindingKey},${binding.struct[bindingKey].type},`
+          })
+
+          if (binding.shouldCopyResult !== undefined) {
+            key += `${binding.shouldCopyResult},`
+          }
+
+          const cachedBinding = this.renderer.deviceManager.bufferBindings.get(key)
+
+          if (cachedBinding) {
+            return cachedBinding.clone(bindingParams)
+          }
         }
 
         const BufferBindingConstructor = bindingParams.access === 'read_write' ? WritableBufferBinding : BufferBinding
@@ -214,6 +234,12 @@ export class BindGroup {
             })
       }),
     ].flat()
+
+    bindings.forEach((binding) => {
+      this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
+    })
+
+    return bindings
   }
 
   /**
@@ -383,6 +409,20 @@ export class BindGroup {
    * Create a GPUBindGroupLayout and set our {@link bindGroupLayout}
    */
   setBindGroupLayout() {
+    // this.bindGroupLayoutCacheKey = JSON.stringify(this.entries.bindGroupLayout)
+    //
+    // const bindGroupLayout = this.renderer.deviceManager.bindGroupLayouts.get(this.bindGroupLayoutCacheKey)
+    //
+    // if (bindGroupLayout) {
+    //   this.bindGroupLayout = bindGroupLayout
+    // } else {
+    //   this.bindGroupLayout = this.renderer.createBindGroupLayout({
+    //     label: this.options.label + ' layout',
+    //     entries: this.entries.bindGroupLayout,
+    //   })
+    //
+    //   this.renderer.deviceManager.bindGroupLayouts.set(this.bindGroupLayoutCacheKey, this.bindGroupLayout)
+    // }
     this.bindGroupLayout = this.renderer.createBindGroupLayout({
       label: this.options.label + ' layout',
       entries: this.entries.bindGroupLayout,

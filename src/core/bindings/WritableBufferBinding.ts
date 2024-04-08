@@ -47,6 +47,7 @@ export class WritableBufferBinding extends BufferBinding {
     }
 
     this.shouldCopyResult = shouldCopyResult
+    this.cacheKey += `${shouldCopyResult},`
 
     // can be used as our buffer copy destination
     this.resultBuffer = new Buffer()

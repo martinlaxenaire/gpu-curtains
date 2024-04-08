@@ -4,7 +4,19 @@
 }
 
 .binding {
-  padding: 2rem;
+  padding: 4rem 2rem;
+  position: relative;
+}
+
+.binding:not(:last-of-type)::after {
+  content: '';
+  position: absolute;
+  right: 25%;
+  bottom: 0;
+  left: 25%;
+  height: 1px;
+  background: var(--light-color);
+  opacity: 0.3;
 }
 
 .binding-declaration {
@@ -29,7 +41,7 @@
 }
 
 .wgsl-declaration-var {
-  margin-top: 1rem;
+  margin-top: 1em;
 }
 
 .byte-diagram {
@@ -49,7 +61,7 @@
 
 .binding-element-type {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.85em;
   padding: 0.325em 0.5em;
   border-bottom: 2px solid var(--byte-table-border-color);
 }
@@ -154,9 +166,11 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    font-size: 0.75rem;
   }
 
   .wgsl-declaration {
     margin: 0 0 auto 0;
+    font-size: 0.75rem;
   }
 }

@@ -66,6 +66,8 @@ export class TextureBinding extends Binding {
       multisampled,
     }
 
+    this.cacheKey += `${format},${access},${viewDimension},${multisampled}`
+
     this.resource = texture // should be a texture or an external texture
 
     this.setWGSLFragment()

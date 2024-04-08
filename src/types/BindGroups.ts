@@ -9,6 +9,7 @@ import { Vec3 } from '../math/Vec3'
 import { Mat4 } from '../math/Mat4'
 import { Quat } from '../math/Quat'
 import { WGSLVariableType } from '../core/bindings/utils'
+import { BufferElementAlignment } from '../core/bindings/bufferElements/BufferElement'
 
 // INPUTS
 

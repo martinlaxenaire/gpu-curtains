@@ -43,6 +43,8 @@ export class SamplerBinding extends Binding {
 
     super({ label, name, bindingType, visibility })
 
+    this.cacheKey += `${type},`
+
     this.options = {
       ...this.options,
       sampler,
