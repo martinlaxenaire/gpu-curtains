@@ -125,7 +125,11 @@ export class Geometry {
    */
   get ready(): boolean {
     for (const vertexBuffer of this.vertexBuffers) {
-      if (!vertexBuffer.array || !vertexBuffer.buffer.GPUBuffer) {
+      if (
+        !vertexBuffer.array ||
+        !vertexBuffer.buffer.GPUBuffer ||
+        vertexBuffer.buffer.GPUBuffer.mapState === 'mapped'
+      ) {
         return false
         break
       }
