@@ -2,20 +2,6 @@ import { Box3 } from '../../math/Box3.mjs';
 import { generateUUID, throwWarning, throwError } from '../../utils/utils.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _setWGSLFragment, setWGSLFragment_fn;
 class Geometry {
   /**
    * Geometry constructor
@@ -28,15 +14,11 @@ class Geometry {
     vertexBuffers = [],
     mapVertexBuffersAtCreation = true
   } = {}) {
-    /**
-     * Set the WGSL code snippet that will be appended to the vertex shader.
-     * @private
-     */
-    __privateAdd(this, _setWGSLFragment);
     this.verticesCount = 0;
     this.verticesOrder = verticesOrder;
     this.topology = topology;
     this.instancesCount = instancesCount;
+    this.ready = false;
     this.boundingBox = new Box3();
     this.type = "Geometry";
     this.uuid = generateUUID();
@@ -65,18 +47,25 @@ class Geometry {
    * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
    * @readonly
    */
-  get ready() {
-    for (const vertexBuffer of this.vertexBuffers) {
-      if (!vertexBuffer.array || !vertexBuffer.buffer.GPUBuffer || vertexBuffer.buffer.GPUBuffer.mapState === "mapped") {
-        return false;
-      }
-    }
-    return true;
-  }
+  // get ready(): boolean {
+  //   for (const vertexBuffer of this.vertexBuffers) {
+  //     if (
+  //       !vertexBuffer.array ||
+  //       !vertexBuffer.buffer.GPUBuffer ||
+  //       vertexBuffer.buffer.GPUBuffer.mapState === 'mapped'
+  //     ) {
+  //       return false
+  //       break
+  //     }
+  //   }
+  //
+  //   return true
+  // }
   /**
    * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
    */
   loseContext() {
+    this.ready = false;
     for (const vertexBuffer of this.vertexBuffers) {
       vertexBuffer.buffer.destroy();
     }
@@ -96,6 +85,7 @@ class Geometry {
       }
       if (this.options.mapVertexBuffersAtCreation)
         this.computeGeometry();
+      this.ready = true;
     }
   }
   /**
@@ -270,7 +260,26 @@ class Geometry {
         vertexBuffer.buffer.GPUBuffer.unmap();
       }
     });
-    __privateMethod(this, _setWGSLFragment, setWGSLFragment_fn).call(this);
+    if (!this.wgslStructFragment) {
+      this.setWGSLFragment();
+    }
+  }
+  /**
+   * Set the WGSL code snippet that will be appended to the vertex shader.
+   * @private
+   */
+  setWGSLFragment() {
+    let locationIndex = -1;
+    this.wgslStructFragment = `struct Attributes {
+	@builtin(vertex_index) vertexIndex : u32,
+	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
+      return vertexBuffer.attributes.map((attribute) => {
+        locationIndex++;
+        return `
+	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
+      });
+    }).join(",")}
+};`;
   }
   /**
    * Create the {@link createBuffers | geometry buffers} and {@link computeGeometry | compute the geometry}. The order in which those operations take place depends on mappedAtCreation parameter.
@@ -286,6 +295,7 @@ class Geometry {
       this.computeGeometry();
       this.createBuffers({ renderer, label });
     }
+    this.ready = true;
   }
   /**
    * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
@@ -351,19 +361,5 @@ class Geometry {
     }
   }
 }
-_setWGSLFragment = new WeakSet();
-setWGSLFragment_fn = function() {
-  let locationIndex = -1;
-  this.wgslStructFragment = `struct Attributes {
-	@builtin(vertex_index) vertexIndex : u32,
-	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
-    return vertexBuffer.attributes.map((attribute) => {
-      locationIndex++;
-      return `
-	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
-    });
-  }).join(",")}
-};`;
-};
 
 export { Geometry };

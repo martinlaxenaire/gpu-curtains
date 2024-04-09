@@ -146,7 +146,7 @@ function MeshBaseMixin(Base) {
       return this._ready;
     }
     set ready(value) {
-      if (value) {
+      if (value && !this._ready) {
         this._onReadyCallback && this._onReadyCallback();
       }
       this._ready = value;
@@ -263,7 +263,7 @@ function MeshBaseMixin(Base) {
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry() {
-      if (this.geometry && this.renderer.ready) {
+      if (this.geometry) {
         if (!this.geometry.ready) {
           this.geometry.createGeometry({
             renderer: this.renderer,
@@ -497,9 +497,7 @@ function MeshBaseMixin(Base) {
     onBeforeRenderPass() {
       if (!this.renderer.ready)
         return;
-      if (this.material && this.material.ready && this.geometry && this.geometry.ready && !this.ready) {
-        this.ready = true;
-      }
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
       this.setGeometry();
       this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       this.material.onBeforeRender();

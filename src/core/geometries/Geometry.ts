@@ -71,6 +71,9 @@ export class Geometry {
   /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
   consumers: Set<string>
 
+  /** Whether this geometry is ready to be drawn, i.e. it has been computed and all its vertex buffers have been created */
+  ready: boolean
+
   /**
    * Geometry constructor
    * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
@@ -86,6 +89,8 @@ export class Geometry {
     this.verticesOrder = verticesOrder
     this.topology = topology
     this.instancesCount = instancesCount
+
+    this.ready = false
 
     this.boundingBox = new Box3()
 
@@ -120,28 +125,11 @@ export class Geometry {
   }
 
   /**
-   * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
-   * @readonly
-   */
-  get ready(): boolean {
-    for (const vertexBuffer of this.vertexBuffers) {
-      if (
-        !vertexBuffer.array ||
-        !vertexBuffer.buffer.GPUBuffer ||
-        vertexBuffer.buffer.GPUBuffer.mapState === 'mapped'
-      ) {
-        return false
-        break
-      }
-    }
-
-    return true
-  }
-
-  /**
    * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
    */
   loseContext() {
+    this.ready = false
+
     for (const vertexBuffer of this.vertexBuffers) {
       vertexBuffer.buffer.destroy()
     }
@@ -164,6 +152,8 @@ export class Geometry {
       }
 
       if (this.options.mapVertexBuffersAtCreation) this.computeGeometry()
+
+      this.ready = true
     }
   }
 
@@ -376,7 +366,9 @@ export class Geometry {
       }
     })
 
-    this.#setWGSLFragment()
+    if (!this.wgslStructFragment) {
+      this.#setWGSLFragment()
+    }
   }
 
   /**
@@ -409,6 +401,8 @@ export class Geometry {
       this.computeGeometry()
       this.createBuffers({ renderer, label })
     }
+
+    this.ready = true
   }
 
   /**

@@ -20,9 +20,9 @@ class IndexedGeometry extends Geometry {
    * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
    * @readonly
    */
-  get ready() {
-    return super.ready && this.indexBuffer && !!this.indexBuffer.buffer.GPUBuffer;
-  }
+  // get ready(): boolean {
+  //   return super.ready && this.indexBuffer && !!this.indexBuffer.buffer.GPUBuffer
+  // }
   /**
    * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
    */
@@ -37,11 +37,11 @@ class IndexedGeometry extends Geometry {
    * @param renderer - The {@link Renderer} used to recreate the buffers
    */
   restoreContext(renderer) {
-    super.restoreContext(renderer);
     if (!this.indexBuffer.buffer.GPUBuffer) {
       this.indexBuffer.buffer.createBuffer(renderer);
       renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
     }
+    super.restoreContext(renderer);
   }
   /**
    * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
@@ -69,7 +69,6 @@ class IndexedGeometry extends Geometry {
    * @param parameters.label - label to use for the vertex buffers.
    */
   createBuffers({ renderer, label = this.type }) {
-    super.createBuffers({ renderer, label });
     this.indexBuffer.buffer.createBuffer(renderer, {
       label: label + ": index buffer",
       size: this.indexBuffer.array.byteLength,
@@ -77,6 +76,7 @@ class IndexedGeometry extends Geometry {
     });
     renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
     this.indexBuffer.buffer.consumers.add(this.uuid);
+    super.createBuffers({ renderer, label });
   }
   /** RENDER **/
   /**

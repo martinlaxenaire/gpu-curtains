@@ -36,7 +36,6 @@ import { Renderer } from '../renderers/utils';
  * ```
  */
 export declare class Geometry {
-    #private;
     /** Number of vertices defined by this geometry */
     verticesCount: number;
     /** Vertices order to be drawn by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} */
@@ -59,6 +58,7 @@ export declare class Geometry {
     wgslStructFragment: string;
     /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
     consumers: Set<string>;
+    ready: boolean;
     /**
      * Geometry constructor
      * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
@@ -68,7 +68,6 @@ export declare class Geometry {
      * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
      * @readonly
      */
-    get ready(): boolean;
     /**
      * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
      */
@@ -106,6 +105,11 @@ export declare class Geometry {
      * Also compute the Geometry bounding box.
      */
     computeGeometry(): void;
+    /**
+     * Set the WGSL code snippet that will be appended to the vertex shader.
+     * @private
+     */
+    setWGSLFragment(): void;
     /**
      * Create the {@link createBuffers | geometry buffers} and {@link computeGeometry | compute the geometry}. The order in which those operations take place depends on mappedAtCreation parameter.
      * @param parameters - parameters used to create the geometry.

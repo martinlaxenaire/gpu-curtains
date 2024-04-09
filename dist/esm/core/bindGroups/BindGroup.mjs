@@ -55,6 +55,11 @@ class BindGroup {
    * @param bindings - {@link bindings} to add
    */
   addBindings(bindings = []) {
+    bindings.forEach((binding) => {
+      if ("buffer" in binding) {
+        this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+      }
+    });
     this.bindings = [...this.bindings, ...bindings];
   }
   /**

@@ -537,7 +537,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     set ready(value: boolean) {
-      if (value) {
+      if (value && !this._ready) {
         this._onReadyCallback && this._onReadyCallback()
       }
       this._ready = value
@@ -690,7 +690,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry() {
-      if (this.geometry && this.renderer.ready) {
+      if (this.geometry) {
         if (!this.geometry.ready) {
           this.geometry.createGeometry({
             renderer: this.renderer,
@@ -981,9 +981,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
 
-      if (this.material && this.material.ready && this.geometry && this.geometry.ready && !this.ready) {
-        this.ready = true
-      }
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready
 
       this.setGeometry()
 

@@ -1984,6 +1984,11 @@
      * @param bindings - {@link bindings} to add
      */
     addBindings(bindings = []) {
+      bindings.forEach((binding) => {
+        if ("buffer" in binding) {
+          this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+        }
+      });
       this.bindings = [...this.bindings, ...bindings];
     }
     /**
@@ -3377,15 +3382,15 @@
     }
   }
 
-  var __accessCheck$8 = (obj, member, msg) => {
+  var __accessCheck$7 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$7 = (obj, member, getter) => {
-    __accessCheck$8(obj, member, "read from private field");
+    __accessCheck$7(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$8 = (obj, member, value) => {
+  var __privateAdd$7 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -3414,13 +3419,13 @@
     constructor(renderer, parameters = defaultTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
-      __privateAdd$8(this, _parentRatio, new Vec3(1));
+      __privateAdd$7(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
-      __privateAdd$8(this, _sourceRatio, new Vec3(1));
+      __privateAdd$7(this, _sourceRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
-      __privateAdd$8(this, _coverScale, new Vec3(1));
+      __privateAdd$7(this, _coverScale, new Vec3(1));
       /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
-      __privateAdd$8(this, _rotationMatrix, new Mat4());
+      __privateAdd$7(this, _rotationMatrix, new Mat4());
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = () => {
@@ -4044,21 +4049,21 @@
     }
   }
 
-  var __accessCheck$7 = (obj, member, msg) => {
+  var __accessCheck$6 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$6 = (obj, member, getter) => {
-    __accessCheck$7(obj, member, "read from private field");
+    __accessCheck$6(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$7 = (obj, member, value) => {
+  var __privateAdd$6 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$5 = (obj, member, value, setter) => {
-    __accessCheck$7(obj, member, "write to private field");
+    __accessCheck$6(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -4080,13 +4085,13 @@
     } = {}) {
       super();
       /** Private {@link Camera} field of view */
-      __privateAdd$7(this, _fov, void 0);
+      __privateAdd$6(this, _fov, void 0);
       /** Private {@link Camera} near plane */
-      __privateAdd$7(this, _near, void 0);
+      __privateAdd$6(this, _near, void 0);
       /** Private {@link Camera} far plane */
-      __privateAdd$7(this, _far, void 0);
+      __privateAdd$6(this, _far, void 0);
       /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
-      __privateAdd$7(this, _pixelRatio, void 0);
+      __privateAdd$6(this, _pixelRatio, void 0);
       this.position.set(0, 0, 10);
       this.onMatricesChanged = onMatricesChanged;
       this.size = {
@@ -4383,21 +4388,21 @@
     }
   }
 
-  var __accessCheck$6 = (obj, member, msg) => {
+  var __accessCheck$5 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$5 = (obj, member, getter) => {
-    __accessCheck$6(obj, member, "read from private field");
+    __accessCheck$5(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$6 = (obj, member, value) => {
+  var __privateAdd$5 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$4 = (obj, member, value, setter) => {
-    __accessCheck$6(obj, member, "write to private field");
+    __accessCheck$5(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -4420,7 +4425,7 @@
      */
     constructor(renderer, parameters = defaultRenderTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$6(this, _autoResize, true);
+      __privateAdd$5(this, _autoResize, true);
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " RenderTexture" : "RenderTexture");
       this.type = "RenderTexture";
@@ -5227,21 +5232,21 @@
     }
   }
 
-  var __accessCheck$5 = (obj, member, msg) => {
+  var __accessCheck$4 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$4 = (obj, member, getter) => {
-    __accessCheck$5(obj, member, "read from private field");
+    __accessCheck$4(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$5 = (obj, member, value) => {
+  var __privateAdd$4 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$3 = (obj, member, value, setter) => {
-    __accessCheck$5(obj, member, "write to private field");
+    __accessCheck$4(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -5258,7 +5263,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
        * @private
        */
-      __privateAdd$5(this, _autoRender$1, true);
+      __privateAdd$4(this, _autoRender$1, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback */
       this._onReadyCallback = () => {
@@ -5778,20 +5783,6 @@
     }
   }
 
-  var __accessCheck$4 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateAdd$4 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateMethod = (obj, member, method) => {
-    __accessCheck$4(obj, member, "access private method");
-    return method;
-  };
-  var _setWGSLFragment, setWGSLFragment_fn;
   class Geometry {
     /**
      * Geometry constructor
@@ -5804,15 +5795,11 @@
       vertexBuffers = [],
       mapVertexBuffersAtCreation = true
     } = {}) {
-      /**
-       * Set the WGSL code snippet that will be appended to the vertex shader.
-       * @private
-       */
-      __privateAdd$4(this, _setWGSLFragment);
       this.verticesCount = 0;
       this.verticesOrder = verticesOrder;
       this.topology = topology;
       this.instancesCount = instancesCount;
+      this.ready = false;
       this.boundingBox = new Box3();
       this.type = "Geometry";
       this.uuid = generateUUID();
@@ -5841,18 +5828,25 @@
      * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
      * @readonly
      */
-    get ready() {
-      for (const vertexBuffer of this.vertexBuffers) {
-        if (!vertexBuffer.array || !vertexBuffer.buffer.GPUBuffer || vertexBuffer.buffer.GPUBuffer.mapState === "mapped") {
-          return false;
-        }
-      }
-      return true;
-    }
+    // get ready(): boolean {
+    //   for (const vertexBuffer of this.vertexBuffers) {
+    //     if (
+    //       !vertexBuffer.array ||
+    //       !vertexBuffer.buffer.GPUBuffer ||
+    //       vertexBuffer.buffer.GPUBuffer.mapState === 'mapped'
+    //     ) {
+    //       return false
+    //       break
+    //     }
+    //   }
+    //
+    //   return true
+    // }
     /**
      * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
      */
     loseContext() {
+      this.ready = false;
       for (const vertexBuffer of this.vertexBuffers) {
         vertexBuffer.buffer.destroy();
       }
@@ -5872,6 +5866,7 @@
         }
         if (this.options.mapVertexBuffersAtCreation)
           this.computeGeometry();
+        this.ready = true;
       }
     }
     /**
@@ -6046,7 +6041,26 @@
           vertexBuffer.buffer.GPUBuffer.unmap();
         }
       });
-      __privateMethod(this, _setWGSLFragment, setWGSLFragment_fn).call(this);
+      if (!this.wgslStructFragment) {
+        this.setWGSLFragment();
+      }
+    }
+    /**
+     * Set the WGSL code snippet that will be appended to the vertex shader.
+     * @private
+     */
+    setWGSLFragment() {
+      let locationIndex = -1;
+      this.wgslStructFragment = `struct Attributes {
+	@builtin(vertex_index) vertexIndex : u32,
+	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
+      return vertexBuffer.attributes.map((attribute) => {
+        locationIndex++;
+        return `
+	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
+      });
+    }).join(",")}
+};`;
     }
     /**
      * Create the {@link createBuffers | geometry buffers} and {@link computeGeometry | compute the geometry}. The order in which those operations take place depends on mappedAtCreation parameter.
@@ -6062,6 +6076,7 @@
         this.computeGeometry();
         this.createBuffers({ renderer, label });
       }
+      this.ready = true;
     }
     /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
@@ -6127,20 +6142,6 @@
       }
     }
   }
-  _setWGSLFragment = new WeakSet();
-  setWGSLFragment_fn = function() {
-    let locationIndex = -1;
-    this.wgslStructFragment = `struct Attributes {
-	@builtin(vertex_index) vertexIndex : u32,
-	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
-    return vertexBuffer.attributes.map((attribute) => {
-      locationIndex++;
-      return `
-	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
-    });
-  }).join(",")}
-};`;
-  };
 
   class IndexedGeometry extends Geometry {
     /**
@@ -6161,9 +6162,9 @@
      * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
      * @readonly
      */
-    get ready() {
-      return super.ready && this.indexBuffer && !!this.indexBuffer.buffer.GPUBuffer;
-    }
+    // get ready(): boolean {
+    //   return super.ready && this.indexBuffer && !!this.indexBuffer.buffer.GPUBuffer
+    // }
     /**
      * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
      */
@@ -6178,11 +6179,11 @@
      * @param renderer - The {@link Renderer} used to recreate the buffers
      */
     restoreContext(renderer) {
-      super.restoreContext(renderer);
       if (!this.indexBuffer.buffer.GPUBuffer) {
         this.indexBuffer.buffer.createBuffer(renderer);
         renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
       }
+      super.restoreContext(renderer);
     }
     /**
      * If we have less than 65.536 vertices, we should use a Uin16Array to hold our index buffer values
@@ -6210,7 +6211,6 @@
      * @param parameters.label - label to use for the vertex buffers.
      */
     createBuffers({ renderer, label = this.type }) {
-      super.createBuffers({ renderer, label });
       this.indexBuffer.buffer.createBuffer(renderer, {
         label: label + ": index buffer",
         size: this.indexBuffer.array.byteLength,
@@ -6218,6 +6218,7 @@
       });
       renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
       this.indexBuffer.buffer.consumers.add(this.uuid);
+      super.createBuffers({ renderer, label });
     }
     /** RENDER **/
     /**
@@ -6673,7 +6674,7 @@ struct VertexOutput {
         return this._ready;
       }
       set ready(value) {
-        if (value) {
+        if (value && !this._ready) {
           this._onReadyCallback && this._onReadyCallback();
         }
         this._ready = value;
@@ -6790,7 +6791,7 @@ struct VertexOutput {
        * Set our Mesh geometry: create buffers and add attributes to material
        */
       setGeometry() {
-        if (this.geometry && this.renderer.ready) {
+        if (this.geometry) {
           if (!this.geometry.ready) {
             this.geometry.createGeometry({
               renderer: this.renderer,
@@ -7024,9 +7025,7 @@ struct VertexOutput {
       onBeforeRenderPass() {
         if (!this.renderer.ready)
           return;
-        if (this.material && this.material.ready && this.geometry && this.geometry.ready && !this.ready) {
-          this.ready = true;
-        }
+        this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
         this.setGeometry();
         this._onBeforeRenderCallback && this._onBeforeRenderCallback();
         this.material.onBeforeRender();
@@ -7492,21 +7491,17 @@ struct VSOutput {
           struct: {
             model: {
               type: "mat4x4f",
-              value: this.modelMatrix
-            },
-            world: {
-              type: "mat4x4f",
               value: this.worldMatrix
             },
             modelView: {
               // model view matrix (world matrix multiplied by camera view matrix)
               type: "mat4x4f",
               value: this.modelViewMatrix
-            },
-            modelViewProjection: {
-              type: "mat4x4f",
-              value: this.modelViewProjectionMatrix
             }
+            // modelViewProjection: {
+            //   type: 'mat4x4f',
+            //   value: this.modelViewProjectionMatrix,
+            // },
           }
         };
         if (!meshParameters.uniforms)
@@ -7758,7 +7753,7 @@ ${formattedMessage}`);
     /* wgsl */
     `
 fn getOutputPosition(position: vec3f) -> vec4f {
-  return matrices.modelViewProjection * vec4f(position, 1.0);
+  return camera.projection * matrices.modelView * vec4f(position, 1.0);
 }`
   );
 
@@ -10112,11 +10107,6 @@ ${this.shaders.compute.head}`;
         name: "camera",
         visibility: "vertex",
         struct: {
-          model: {
-            // camera model matrix
-            type: "mat4x4f",
-            value: this.camera.modelMatrix
-          },
           view: {
             // camera view matrix
             type: "mat4x4f",

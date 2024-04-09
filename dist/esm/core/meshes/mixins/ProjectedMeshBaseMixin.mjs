@@ -136,21 +136,17 @@ function ProjectedMeshBaseMixin(Base) {
         struct: {
           model: {
             type: "mat4x4f",
-            value: this.modelMatrix
-          },
-          world: {
-            type: "mat4x4f",
             value: this.worldMatrix
           },
           modelView: {
             // model view matrix (world matrix multiplied by camera view matrix)
             type: "mat4x4f",
             value: this.modelViewMatrix
-          },
-          modelViewProjection: {
-            type: "mat4x4f",
-            value: this.modelViewProjectionMatrix
           }
+          // modelViewProjection: {
+          //   type: 'mat4x4f',
+          //   value: this.modelViewProjectionMatrix,
+          // },
         }
       };
       if (!meshParameters.uniforms)

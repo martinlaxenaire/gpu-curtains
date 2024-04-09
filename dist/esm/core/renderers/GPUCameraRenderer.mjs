@@ -94,11 +94,6 @@ class GPUCameraRenderer extends GPURenderer {
       name: "camera",
       visibility: "vertex",
       struct: {
-        model: {
-          // camera model matrix
-          type: "mat4x4f",
-          value: this.camera.modelMatrix
-        },
         view: {
           // camera view matrix
           type: "mat4x4f",

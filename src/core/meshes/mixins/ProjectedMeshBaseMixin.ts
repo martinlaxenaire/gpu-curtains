@@ -316,10 +316,6 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         struct: {
           model: {
             type: 'mat4x4f',
-            value: this.modelMatrix,
-          },
-          world: {
-            type: 'mat4x4f',
             value: this.worldMatrix,
           },
           modelView: {
@@ -327,10 +323,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
             type: 'mat4x4f',
             value: this.modelViewMatrix,
           },
-          modelViewProjection: {
-            type: 'mat4x4f',
-            value: this.modelViewProjectionMatrix,
-          },
+          // modelViewProjection: {
+          //   type: 'mat4x4f',
+          //   value: this.modelViewProjectionMatrix,
+          // },
         },
       }
 

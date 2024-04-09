@@ -74,7 +74,6 @@ export declare class IndexedGeometry extends Geometry {
      * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
      * @readonly
      */
-    get ready(): boolean;
     /**
      * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
      */
