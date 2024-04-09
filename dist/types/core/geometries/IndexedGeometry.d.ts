@@ -1,7 +1,6 @@
 /// <reference types="dist" />
 import { Geometry } from './Geometry';
-import { GeometryParams } from '../../types/Geometries';
-import { Buffer } from '../buffers/Buffer';
+import { GeometryBuffer, GeometryParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
@@ -15,15 +14,13 @@ export interface IndexedGeometryIndexBufferOptions {
 /**
  * Defines an {@link IndexedGeometry#indexBuffer | index buffer}
  */
-export interface IndexBuffer {
+export interface IndexBuffer extends GeometryBuffer {
     /** index buffer format */
     bufferFormat: GPUIndexFormat;
     /** index buffer array */
     array: Uint16Array | Uint32Array;
     /** index buffer length */
     bufferLength: number;
-    /** index buffer {@link GPUBuffer} */
-    buffer: Buffer;
 }
 /**
  * Used to create an {@link IndexedGeometry} which holds an index array to use as an index buffer.
@@ -69,11 +66,7 @@ export declare class IndexedGeometry extends Geometry {
      * IndexedGeometry constructor
      * @param parameters - {@link GeometryParams | parameters} used to create our IndexedGeometry
      */
-    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation, }?: GeometryParams);
-    /**
-     * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
-     * @readonly
-     */
+    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, mapBuffersAtCreation, }?: GeometryParams);
     /**
      * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
      */

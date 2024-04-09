@@ -26,5 +26,5 @@ export interface SphereGeometryParams extends GeometryBaseParams {
  * ```
  */
 export declare class SphereGeometry extends IndexedGeometry {
-    constructor({ topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength, }?: SphereGeometryParams);
+    constructor({ topology, instancesCount, vertexBuffers, mapBuffersAtCreation, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength, }?: SphereGeometryParams);
 }

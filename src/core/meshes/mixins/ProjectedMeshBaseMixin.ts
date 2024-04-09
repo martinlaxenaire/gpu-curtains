@@ -311,6 +311,8 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      */
     setMaterial(meshParameters: RenderMaterialParams) {
       // add matrices uniforms
+      // https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram
+      // https://doc.babylonjs.com/features/featuresDeepDive/materials/shaders/introToShaders#built-in-variables
       const matricesUniforms = {
         label: 'Matrices',
         struct: {

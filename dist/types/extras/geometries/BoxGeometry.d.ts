@@ -20,5 +20,5 @@ export interface BoxGeometryParams extends GeometryBaseParams {
  * ```
  */
 export declare class BoxGeometry extends IndexedGeometry {
-    constructor({ instancesCount, vertexBuffers, topology, mapVertexBuffersAtCreation, widthSegments, heightSegments, depthSegments, }?: BoxGeometryParams);
+    constructor({ instancesCount, vertexBuffers, topology, mapBuffersAtCreation, widthSegments, heightSegments, depthSegments, }?: BoxGeometryParams);
 }

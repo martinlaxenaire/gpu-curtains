@@ -40,9 +40,18 @@ export interface VertexBufferAttribute extends VertexBufferAttributeParams {
     verticesStride: number;
 }
 /**
+ * Describe the base of a geometry buffer, which is made of a {@link core/buffers/Buffer.Buffer | Buffer} and a typed array.
+ */
+export interface GeometryBuffer {
+    /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
+    array: Float32Array | Uint16Array | Uint32Array;
+    /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
+    buffer: Buffer;
+}
+/**
  * A {@link VertexBuffer} is an object regrouping one or multiple {@link VertexBufferAttribute} into a single array and its associated {@link GPUBuffer}
  */
-export interface VertexBuffer {
+export interface VertexBuffer extends GeometryBuffer {
     /** The name of the {@link VertexBuffer} */
     name: string;
     /** Whether this {@link VertexBuffer} holds data relative to vertices or instances */
@@ -55,8 +64,6 @@ export interface VertexBuffer {
     attributes: VertexBufferAttribute[];
     /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
     array: null | Float32Array;
-    /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
-    buffer: Buffer;
 }
 /**
  * Parameters used to create a {@link VertexBuffer}
@@ -84,7 +91,7 @@ export interface GeometryOptions {
     /** Array of {@link VertexBufferParams} used to create {@link VertexBuffer} on geometry creation */
     vertexBuffers: VertexBufferParams[];
     /** Whether to map the {@link VertexBuffer#buffer | vertex buffers} at creation. */
-    mapVertexBuffersAtCreation: boolean;
+    mapBuffersAtCreation: boolean;
 }
 /** Parameters used to create a geometry */
 export type GeometryParams = Partial<GeometryOptions>;

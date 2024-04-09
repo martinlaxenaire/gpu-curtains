@@ -1,7 +1,8 @@
 import { Geometry } from './Geometry'
-import { GeometryParams } from '../../types/Geometries'
+import { GeometryBuffer, GeometryParams } from '../../types/Geometries'
 import { Buffer } from '../buffers/Buffer'
 import { Renderer } from '../renderers/utils'
+import { TypedArray } from '../bindings/utils'
 
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
@@ -16,15 +17,13 @@ export interface IndexedGeometryIndexBufferOptions {
 /**
  * Defines an {@link IndexedGeometry#indexBuffer | index buffer}
  */
-export interface IndexBuffer {
+export interface IndexBuffer extends GeometryBuffer {
   /** index buffer format */
   bufferFormat: GPUIndexFormat
   /** index buffer array */
   array: Uint16Array | Uint32Array
   /** index buffer length */
   bufferLength: number
-  /** index buffer {@link GPUBuffer} */
-  buffer: Buffer
 }
 
 /**
@@ -77,9 +76,9 @@ export class IndexedGeometry extends Geometry {
     topology = 'triangle-list',
     instancesCount = 1,
     vertexBuffers = [],
-    mapVertexBuffersAtCreation = true,
+    mapBuffersAtCreation = true,
   }: GeometryParams = {}) {
-    super({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation })
+    super({ verticesOrder, topology, instancesCount, vertexBuffers, mapBuffersAtCreation })
 
     this.type = 'IndexedGeometry'
   }
@@ -100,9 +99,14 @@ export class IndexedGeometry extends Geometry {
    * @param renderer - The {@link Renderer} used to recreate the buffers
    */
   restoreContext(renderer: Renderer) {
+    if (this.ready) return
+
     if (!this.indexBuffer.buffer.GPUBuffer) {
       this.indexBuffer.buffer.createBuffer(renderer)
-      renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array)
+
+      this.uploadBuffer(renderer, this.indexBuffer)
+
+      this.indexBuffer.buffer.consumers.add(this.uuid)
     }
 
     super.restoreContext(renderer)
@@ -139,10 +143,11 @@ export class IndexedGeometry extends Geometry {
     this.indexBuffer.buffer.createBuffer(renderer, {
       label: label + ': index buffer',
       size: this.indexBuffer.array.byteLength,
-      usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+      usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.INDEX : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+      mappedAtCreation: this.options.mapBuffersAtCreation,
     })
 
-    renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array)
+    this.uploadBuffer(renderer, this.indexBuffer)
 
     this.indexBuffer.buffer.consumers.add(this.uuid)
 

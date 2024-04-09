@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { Box3 } from '../../math/Box3';
-import { GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams } from '../../types/Geometries';
+import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams } from '../../types/Geometries';
 import { Renderer } from '../renderers/utils';
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
@@ -36,6 +36,7 @@ import { Renderer } from '../renderers/utils';
  * ```
  */
 export declare class Geometry {
+    #private;
     /** Number of vertices defined by this geometry */
     verticesCount: number;
     /** Vertices order to be drawn by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} */
@@ -58,16 +59,13 @@ export declare class Geometry {
     wgslStructFragment: string;
     /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
     consumers: Set<string>;
+    /** Whether this geometry is ready to be drawn, i.e. it has been computed and all its vertex buffers have been created */
     ready: boolean;
     /**
      * Geometry constructor
      * @param parameters - {@link GeometryParams | parameters} used to create our Geometry
      */
-    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation, }?: GeometryParams);
-    /**
-     * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
-     * @readonly
-     */
+    constructor({ verticesOrder, topology, instancesCount, vertexBuffers, mapBuffersAtCreation, }?: GeometryParams);
     /**
      * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
      */
@@ -95,6 +93,11 @@ export declare class Geometry {
      */
     setAttribute({ vertexBuffer, name, type, bufferFormat, size, array, verticesStride, }: VertexBufferAttributeParams): void;
     /**
+     * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+     * @readonly
+     */
+    get shouldCompute(): boolean;
+    /**
      * Get an attribute by name
      * @param name - name of the attribute to find
      * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
@@ -106,21 +109,6 @@ export declare class Geometry {
      */
     computeGeometry(): void;
     /**
-     * Set the WGSL code snippet that will be appended to the vertex shader.
-     * @private
-     */
-    setWGSLFragment(): void;
-    /**
-     * Create the {@link createBuffers | geometry buffers} and {@link computeGeometry | compute the geometry}. The order in which those operations take place depends on mappedAtCreation parameter.
-     * @param parameters - parameters used to create the geometry.
-     * @param parameters.renderer - {@link Renderer} used to create the buffers.
-     * @param parameters.label - label to use for the buffers.
-     */
-    createGeometry({ renderer, label }: {
-        renderer: Renderer;
-        label?: string;
-    }): void;
-    /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
      * @param parameters - parameters used to create the vertex buffers.
      * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
@@ -130,6 +118,12 @@ export declare class Geometry {
         renderer: Renderer;
         label?: string;
     }): void;
+    /**
+     * Upload a {@link GeometryBuffer} to the GPU.
+     * @param renderer - {@link Renderer} used to upload the buffer.
+     * @param buffer - {@link GeometryBuffer} holding a {@link Buffer} and a typed array to upload.
+     */
+    uploadBuffer(renderer: Renderer, buffer: GeometryBuffer): void;
     /** RENDER **/
     /**
      * Set our render pass geometry vertex buffers

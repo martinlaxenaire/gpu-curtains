@@ -201,7 +201,6 @@ export class BufferBinding extends Binding {
 
     bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength
 
-    //for (const bufferElement of this.bufferElements) {
     this.bufferElements.forEach((bufferElement: BufferArrayElement) => {
       const newBufferElement = new (bufferElement.constructor as typeof BufferArrayElement)({
         name: bufferElement.name,

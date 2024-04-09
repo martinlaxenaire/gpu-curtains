@@ -102,9 +102,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       .onRender(() => {
         cubeMesh.rotation.x += 0.01
       })
-      .onAfterResize(() => {
-        updateCubeScaleAndPosition()
-      })
+      .onAfterResize(updateCubeScaleAndPosition)
 
     // do it right away
     updateCubeScaleAndPosition()
@@ -130,8 +128,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         placeholderColor: Math.random() > 0.5 ? [255, 0, 255, 1] : [0, 255, 255, 1],
       },
     })
-
-    console.log(sphereMesh)
 
     const updateSphereScale = () => {
       // scale our sphere along the Z axis based on its height (Y axis)

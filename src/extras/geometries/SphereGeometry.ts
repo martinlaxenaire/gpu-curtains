@@ -34,7 +34,7 @@ export class SphereGeometry extends IndexedGeometry {
       topology,
       instancesCount = 1,
       vertexBuffers = [],
-      mapVertexBuffersAtCreation = true,
+      mapBuffersAtCreation = true,
       widthSegments = 32,
       heightSegments = 16,
       phiStart = 0,
@@ -43,7 +43,7 @@ export class SphereGeometry extends IndexedGeometry {
       thetaLength = Math.PI,
     } = {} as SphereGeometryParams
   ) {
-    super({ verticesOrder: 'ccw', topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation })
+    super({ verticesOrder: 'ccw', topology, instancesCount, vertexBuffers, mapBuffersAtCreation })
 
     this.type = 'SphereGeometry'
 

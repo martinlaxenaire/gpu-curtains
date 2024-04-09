@@ -511,6 +511,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.userData = {}
 
+      this.computeGeometry()
+
       this.setMaterial({
         ...this.cleanupRenderMaterialParameters({ ...this.options }),
         verticesOrder: geometry.verticesOrder,
@@ -654,10 +656,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      let { shaders } = this.options
-
-      if (!shaders) {
-        shaders = {
+      if (!this.options.shaders) {
+        this.options.shaders = {
           vertex: {
             code: default_vsWgsl,
             entryPoint: 'main',
@@ -668,6 +668,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           },
         }
       } else {
+        const { shaders } = this.options
+
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
             code: default_vsWgsl,
@@ -687,12 +689,21 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* GEOMETRY */
 
     /**
+     * Compute the Mesh geometry if needed
+     */
+    computeGeometry() {
+      if (this.geometry.shouldCompute) {
+        this.geometry.computeGeometry()
+      }
+    }
+
+    /**
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry() {
       if (this.geometry) {
         if (!this.geometry.ready) {
-          this.geometry.createGeometry({
+          this.geometry.createBuffers({
             renderer: this.renderer,
             label: this.options.label + ' geometry',
           })

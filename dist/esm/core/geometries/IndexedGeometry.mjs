@@ -11,18 +11,11 @@ class IndexedGeometry extends Geometry {
     topology = "triangle-list",
     instancesCount = 1,
     vertexBuffers = [],
-    mapVertexBuffersAtCreation = true
+    mapBuffersAtCreation = true
   } = {}) {
-    super({ verticesOrder, topology, instancesCount, vertexBuffers, mapVertexBuffersAtCreation });
+    super({ verticesOrder, topology, instancesCount, vertexBuffers, mapBuffersAtCreation });
     this.type = "IndexedGeometry";
   }
-  /**
-   * Get whether this geometry is ready to draw, i.e. it has been computed, all its vertex buffers have been created and its index buffer has been created as well
-   * @readonly
-   */
-  // get ready(): boolean {
-  //   return super.ready && this.indexBuffer && !!this.indexBuffer.buffer.GPUBuffer
-  // }
   /**
    * Reset all the {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer} when the device is lost
    */
@@ -37,9 +30,12 @@ class IndexedGeometry extends Geometry {
    * @param renderer - The {@link Renderer} used to recreate the buffers
    */
   restoreContext(renderer) {
+    if (this.ready)
+      return;
     if (!this.indexBuffer.buffer.GPUBuffer) {
       this.indexBuffer.buffer.createBuffer(renderer);
-      renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
+      this.uploadBuffer(renderer, this.indexBuffer);
+      this.indexBuffer.buffer.consumers.add(this.uuid);
     }
     super.restoreContext(renderer);
   }
@@ -72,9 +68,10 @@ class IndexedGeometry extends Geometry {
     this.indexBuffer.buffer.createBuffer(renderer, {
       label: label + ": index buffer",
       size: this.indexBuffer.array.byteLength,
-      usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+      usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.INDEX : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+      mappedAtCreation: this.options.mapBuffersAtCreation
     });
-    renderer.queueWriteBuffer(this.indexBuffer.buffer.GPUBuffer, 0, this.indexBuffer.array);
+    this.uploadBuffer(renderer, this.indexBuffer);
     this.indexBuffer.buffer.consumers.add(this.uuid);
     super.createBuffers({ renderer, label });
   }
