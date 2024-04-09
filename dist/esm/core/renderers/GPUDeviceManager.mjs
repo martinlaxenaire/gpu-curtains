@@ -104,8 +104,10 @@ class GPUDeviceManager {
    */
   loseDevice() {
     this.ready = false;
+    this.pipelineManager.resetCurrentPipeline();
     this.samplers.forEach((sampler) => sampler.sampler = null);
     this.renderers.forEach((renderer) => renderer.loseContext());
+    this.bindGroupLayouts.clear();
     this.buffers.clear();
   }
   /**
@@ -132,6 +134,8 @@ class GPUDeviceManager {
     this.renderers = [];
     this.bindGroups = /* @__PURE__ */ new Map();
     this.buffers = /* @__PURE__ */ new Map();
+    this.bindGroupLayouts = /* @__PURE__ */ new Map();
+    this.bufferBindings = /* @__PURE__ */ new Map();
     this.samplers = [];
     this.textures = [];
     this.texturesQueue = [];

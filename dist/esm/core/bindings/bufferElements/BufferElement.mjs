@@ -132,6 +132,9 @@ class BufferElement {
     if (size <= bytesPerRow && nextPositionAvailable.byte + size > bytesPerRow) {
       nextPositionAvailable.row += 1;
       nextPositionAvailable.byte = 0;
+    } else if (size > bytesPerRow && nextPositionAvailable.byte > bytesPerRow) {
+      nextPositionAvailable.row += 1;
+      nextPositionAvailable.byte = 0;
     }
     alignment.end = {
       row: nextPositionAvailable.row + Math.ceil(size / bytesPerRow) - 1,
@@ -206,6 +209,17 @@ class BufferElement {
     this.view.set(value);
   }
   /**
+   * Set the {@link view} value from an array with pad applied
+   * @param value - array to use
+   */
+  setValueFromArrayWithPad(value) {
+    for (let i = 0, offset = 0; i < this.view.length; i += this.bufferLayout.pad[0] + this.bufferLayout.pad[1], offset++) {
+      for (let j = 0; j < this.bufferLayout.pad[0]; j++) {
+        this.view[i + j] = value[i + j - offset];
+      }
+    }
+  }
+  /**
    * Update the {@link view} based on the new value
    * @param value - new value to use
    */
@@ -221,7 +235,11 @@ class BufferElement {
         } else if (value2.elements) {
           return this.setValueFromMat4OrQuat;
         } else if (ArrayBuffer.isView(value2) || Array.isArray(value2)) {
-          return this.setValueFromArray;
+          if (!this.bufferLayout.pad) {
+            return this.setValueFromArray;
+          } else {
+            return this.setValueFromArrayWithPad;
+          }
         } else {
           throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value2}`);
         }

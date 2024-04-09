@@ -1,5 +1,10 @@
 import { Binding, BindingMemoryAccessType, BindingParams, BindingType } from './Binding'
-import { getBindGroupLayoutTextureBindingType, getTextureBindingWGSLVarType } from './utils'
+import {
+  getBindGroupLayoutBindingType,
+  getBindGroupLayoutTextureBindingCacheKey,
+  getBindGroupLayoutTextureBindingType,
+  getTextureBindingWGSLVarType,
+} from './utils'
 
 /** Defines a {@link TextureBinding} {@link TextureBinding#resource | resource} */
 export type TextureBindingResource = GPUTexture | GPUExternalTexture | null
@@ -83,6 +88,14 @@ export class TextureBinding extends Binding {
     | GPUStorageTextureBindingLayout
     | null {
     return getBindGroupLayoutTextureBindingType(this)
+  }
+
+  /**
+   * Get the resource cache key
+   * @readonly
+   */
+  get resourceLayoutCacheKey(): string {
+    return getBindGroupLayoutTextureBindingCacheKey(this)
   }
 
   /**

@@ -170,7 +170,7 @@
      * Binding constructor
      * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
      */
-    constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility }) {
+    constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility = "all" }) {
       this.label = label;
       this.name = toCamelCase(name);
       this.bindingType = bindingType;
@@ -195,6 +195,7 @@
       };
       this.shouldResetBindGroup = false;
       this.shouldResetBindGroupLayout = false;
+      this.cacheKey = `${bindingType},${visibility},`;
     }
   }
 
@@ -294,6 +295,22 @@
           };
         default:
           return null;
+      }
+    })();
+  };
+  const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
+    return (() => {
+      switch (binding.bindingType) {
+        case "externalTexture":
+          return `externalTexture,${binding.visibility},`;
+        case "storage":
+          return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+        case "texture":
+          return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
+        case "depth":
+          return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+        default:
+          return `${binding.visibility},`;
       }
     })();
   };
@@ -1212,6 +1229,9 @@
       if (size <= bytesPerRow && nextPositionAvailable.byte + size > bytesPerRow) {
         nextPositionAvailable.row += 1;
         nextPositionAvailable.byte = 0;
+      } else if (size > bytesPerRow && nextPositionAvailable.byte > bytesPerRow) {
+        nextPositionAvailable.row += 1;
+        nextPositionAvailable.byte = 0;
       }
       alignment.end = {
         row: nextPositionAvailable.row + Math.ceil(size / bytesPerRow) - 1,
@@ -1286,6 +1306,17 @@
       this.view.set(value);
     }
     /**
+     * Set the {@link view} value from an array with pad applied
+     * @param value - array to use
+     */
+    setValueFromArrayWithPad(value) {
+      for (let i = 0, offset = 0; i < this.view.length; i += this.bufferLayout.pad[0] + this.bufferLayout.pad[1], offset++) {
+        for (let j = 0; j < this.bufferLayout.pad[0]; j++) {
+          this.view[i + j] = value[i + j - offset];
+        }
+      }
+    }
+    /**
      * Update the {@link view} based on the new value
      * @param value - new value to use
      */
@@ -1301,7 +1332,11 @@
           } else if (value2.elements) {
             return this.setValueFromMat4OrQuat;
           } else if (ArrayBuffer.isView(value2) || Array.isArray(value2)) {
-            return this.setValueFromArray;
+            if (!this.bufferLayout.pad) {
+              return this.setValueFromArray;
+            } else {
+              return this.setValueFromArrayWithPad;
+            }
           } else {
             throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value2}`);
           }
@@ -1327,7 +1362,16 @@
     constructor({ name, key, type = "f32", arrayLength = 1 }) {
       super({ name, key, type });
       this.arrayLength = arrayLength;
-      this.numElements = this.arrayLength / this.bufferLayout.numElements;
+      this.numElements = Math.ceil(this.arrayLength / this.bufferLayout.numElements);
+    }
+    /**
+     * Get the total number of bytes used by this {@link BufferArrayElement} based on {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment} start and end offsets
+     * @readonly
+     */
+    get byteCount() {
+      const byteCount = super.byteCount;
+      const endPad = byteCount % bytesPerRow;
+      return byteCount + (endPad === 0 ? 0 : bytesPerRow - endPad);
     }
     /**
      * Get the array stride between two elements of the array, in indices
@@ -1373,7 +1417,7 @@
       super({ name, key, type, arrayLength });
       this.arrayStride = 1;
       this.arrayLength = arrayLength;
-      this.numElements = this.arrayLength / this.bufferLayout.numElements;
+      this.numElements = Math.ceil(this.arrayLength / this.bufferLayout.numElements);
     }
     /**
      * Get the total number of slots used by this {@link BufferInterleavedArrayElement} based on buffer layout size and total number of elements
@@ -1551,15 +1595,18 @@
         access,
         struct
       };
+      this.cacheKey += `${useStruct},${access},`;
       this.arrayBufferSize = 0;
       this.shouldUpdate = false;
       this.useStruct = useStruct;
       this.bufferElements = [];
       this.inputs = {};
       this.buffer = new Buffer();
-      this.setBindings(struct);
-      this.setBufferAttributes();
-      this.setWGSLFragment();
+      if (Object.keys(struct).length) {
+        this.setBindings(struct);
+        this.setBufferAttributes();
+        this.setWGSLFragment();
+      }
     }
     /**
      * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
@@ -1573,11 +1620,60 @@
       };
     }
     /**
+     * Get the resource cache key
+     * @readonly
+     */
+    get resourceLayoutCacheKey() {
+      return `buffer,${getBindGroupLayoutBindingType(this)},${this.visibility},`;
+    }
+    /**
      * Get {@link GPUBindGroupEntry#resource | bind group resource}
      * @readonly
      */
     get resource() {
       return { buffer: this.buffer.GPUBuffer };
+    }
+    /**
+     * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
+     * @param params - params to use for cloning
+     */
+    clone(params) {
+      const { struct, ...defaultParams } = params;
+      const bufferBindingCopy = new this.constructor(defaultParams);
+      bufferBindingCopy.setBindings(struct);
+      bufferBindingCopy.options.struct = struct;
+      bufferBindingCopy.arrayBufferSize = this.arrayBufferSize;
+      bufferBindingCopy.arrayBuffer = new ArrayBuffer(bufferBindingCopy.arrayBufferSize);
+      bufferBindingCopy.arrayView = new DataView(
+        bufferBindingCopy.arrayBuffer,
+        0,
+        bufferBindingCopy.arrayBuffer.byteLength
+      );
+      bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength;
+      this.bufferElements.forEach((bufferElement) => {
+        const newBufferElement = new bufferElement.constructor({
+          name: bufferElement.name,
+          key: bufferElement.key,
+          type: bufferElement.type,
+          ...bufferElement.arrayLength && {
+            arrayLength: bufferElement.arrayLength
+          }
+        });
+        newBufferElement.alignment = bufferElement.alignment;
+        if (bufferElement.arrayStride) {
+          newBufferElement.arrayStride = bufferElement.arrayStride;
+        }
+        newBufferElement.setView(bufferBindingCopy.arrayBuffer, bufferBindingCopy.arrayView);
+        bufferBindingCopy.bufferElements.push(newBufferElement);
+      });
+      if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
+        bufferBindingCopy.wgslStructFragment = this.wgslStructFragment;
+        bufferBindingCopy.wgslGroupFragment = this.wgslGroupFragment;
+      } else {
+        bufferBindingCopy.setWGSLFragment();
+      }
+      bufferBindingCopy.shouldUpdate = bufferBindingCopy.arrayBufferSize > 0;
+      return bufferBindingCopy;
     }
     /**
      * Format bindings struct and set our {@link inputs}
@@ -1606,6 +1702,7 @@
           binding.value.onChange(() => binding.shouldUpdate = true);
         }
         this.inputs[bindingKey] = binding;
+        this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`;
       }
     }
     /**
@@ -1650,7 +1747,7 @@
         const arraySizes = arrayBindings.map((bindingKey) => {
           const binding = this.inputs[bindingKey];
           const bufferLayout = getBufferLayout(binding.type.replace("array", "").replace("<", "").replace(">", ""));
-          return binding.value.length / bufferLayout.numElements;
+          return Math.ceil(binding.value.length / bufferLayout.numElements);
         });
         const equalSize = arraySizes.every((size, i, array) => size === array[0]);
         if (equalSize) {
@@ -1711,6 +1808,8 @@
      * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
      */
     setWGSLFragment() {
+      if (!this.bufferElements.length)
+        return;
       const kebabCaseLabel = toKebabCase(this.label);
       if (this.useStruct) {
         const bufferElements = this.bufferElements.filter(
@@ -1828,6 +1927,7 @@
         shouldCopyResult
       };
       this.shouldCopyResult = shouldCopyResult;
+      this.cacheKey += `${shouldCopyResult},`;
       this.resultBuffer = new Buffer();
     }
   }
@@ -1856,6 +1956,7 @@
       bindings.length && this.addBindings(bindings);
       if (this.options.uniforms || this.options.storages)
         this.setInputBindings();
+      this.layoutCacheKey = "";
       this.resetEntries();
       this.bindGroupLayout = null;
       this.bindGroup = null;
@@ -1899,7 +2000,7 @@
      * @returns - a {@link bindings} array
      */
     createInputBindings(bindingType = "uniform", inputs = {}) {
-      return [
+      const bindings = [
         ...Object.keys(inputs).map((inputKey) => {
           const binding = inputs[inputKey];
           const bindingParams = {
@@ -1914,6 +2015,19 @@
             struct: binding.struct,
             ...binding.shouldCopyResult !== void 0 && { shouldCopyResult: binding.shouldCopyResult }
           };
+          if (binding.useStruct !== false) {
+            let key = `${bindingType},${binding.visibility === void 0 ? "all" : binding.access === "read_write" ? "compute" : binding.visibility},true,${binding.access ?? "read"},`;
+            Object.keys(binding.struct).forEach((bindingKey) => {
+              key += `${bindingKey},${binding.struct[bindingKey].type},`;
+            });
+            if (binding.shouldCopyResult !== void 0) {
+              key += `${binding.shouldCopyResult},`;
+            }
+            const cachedBinding = this.renderer.deviceManager.bufferBindings.get(key);
+            if (cachedBinding) {
+              return cachedBinding.clone(bindingParams);
+            }
+          }
           const BufferBindingConstructor = bindingParams.access === "read_write" ? WritableBufferBinding : BufferBinding;
           return binding.useStruct !== false ? new BufferBindingConstructor(bindingParams) : Object.keys(binding.struct).map((bindingKey) => {
             bindingParams.label = toKebabCase(binding.label ? binding.label + bindingKey : inputKey + bindingKey);
@@ -1924,6 +2038,10 @@
           });
         })
       ].flat();
+      bindings.forEach((binding) => {
+        this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+      });
+      return bindings;
     }
     /**
      * Create and adds {@link bindings} based on inputs provided upon creation
@@ -1965,26 +2083,42 @@
     resetBindGroup() {
       this.entries.bindGroup = [];
       for (const binding of this.bindings) {
-        this.entries.bindGroup.push({
-          binding: this.entries.bindGroup.length,
-          resource: binding.resource
-        });
+        this.addBindGroupEntry(binding);
       }
       this.setBindGroup();
+    }
+    /**
+     * Add a {@link BindGroup#entries.bindGroup | bindGroup entry}
+     * @param binding - {@link BindGroupBindingElement | binding} to add
+     */
+    addBindGroupEntry(binding) {
+      this.entries.bindGroup.push({
+        binding: this.entries.bindGroup.length,
+        resource: binding.resource
+      });
     }
     /**
      * Reset the {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entries}, recreates them and then recreate the {@link BindGroup#bindGroupLayout | GPU bind group layout}
      */
     resetBindGroupLayout() {
       this.entries.bindGroupLayout = [];
+      this.layoutCacheKey = "";
       for (const binding of this.bindings) {
-        this.entries.bindGroupLayout.push({
-          binding: this.entries.bindGroupLayout.length,
-          ...binding.resourceLayout,
-          visibility: binding.visibility
-        });
+        this.addBindGroupLayoutEntry(binding);
       }
       this.setBindGroupLayout();
+    }
+    /**
+     * Add a {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entry}
+     * @param binding - {@link BindGroupBindingElement | binding} to add
+     */
+    addBindGroupLayoutEntry(binding) {
+      this.entries.bindGroupLayout.push({
+        binding: this.entries.bindGroupLayout.length,
+        ...binding.resourceLayout,
+        visibility: binding.visibility
+      });
+      this.layoutCacheKey += binding.resourceLayoutCacheKey;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
@@ -2040,15 +2174,8 @@
             this.createBindingBuffer(binding);
           }
         }
-        this.entries.bindGroupLayout.push({
-          binding: this.entries.bindGroupLayout.length,
-          ...binding.resourceLayout,
-          visibility: binding.visibility
-        });
-        this.entries.bindGroup.push({
-          binding: this.entries.bindGroup.length,
-          resource: binding.resource
-        });
+        this.addBindGroupLayoutEntry(binding);
+        this.addBindGroupEntry(binding);
       }
     }
     /**
@@ -2063,10 +2190,16 @@
      * Create a GPUBindGroupLayout and set our {@link bindGroupLayout}
      */
     setBindGroupLayout() {
-      this.bindGroupLayout = this.renderer.createBindGroupLayout({
-        label: this.options.label + " layout",
-        entries: this.entries.bindGroupLayout
-      });
+      const bindGroupLayout = this.renderer.deviceManager.bindGroupLayouts.get(this.layoutCacheKey);
+      if (bindGroupLayout) {
+        this.bindGroupLayout = bindGroupLayout;
+      } else {
+        this.bindGroupLayout = this.renderer.createBindGroupLayout({
+          label: this.options.label + " layout",
+          entries: this.entries.bindGroupLayout
+        });
+        this.renderer.deviceManager.bindGroupLayouts.set(this.layoutCacheKey, this.bindGroupLayout);
+      }
     }
     /**
      * Create a GPUBindGroup and set our {@link bindGroup}
@@ -2155,19 +2288,13 @@
           }
         }
         if (!keepLayout) {
-          bindGroupCopy.entries.bindGroupLayout.push({
-            binding: bindGroupCopy.entries.bindGroupLayout.length,
-            ...binding.resourceLayout,
-            visibility: binding.visibility
-          });
+          bindGroupCopy.addBindGroupLayoutEntry(binding);
         }
-        bindGroupCopy.entries.bindGroup.push({
-          binding: bindGroupCopy.entries.bindGroup.length,
-          resource: binding.resource
-        });
+        bindGroupCopy.addBindGroupEntry(binding);
       }
       if (keepLayout) {
         bindGroupCopy.entries.bindGroupLayout = [...this.entries.bindGroupLayout];
+        bindGroupCopy.layoutCacheKey = this.layoutCacheKey;
       }
       bindGroupCopy.setBindGroupLayout();
       bindGroupCopy.setBindGroup();
@@ -2231,6 +2358,7 @@
         viewDimension,
         multisampled
       };
+      this.cacheKey += `${format},${access},${viewDimension},${multisampled}`;
       this.resource = texture;
       this.setWGSLFragment();
     }
@@ -2240,6 +2368,13 @@
      */
     get resourceLayout() {
       return getBindGroupLayoutTextureBindingType(this);
+    }
+    /**
+     * Get the resource cache key
+     * @readonly
+     */
+    get resourceLayoutCacheKey() {
+      return getBindGroupLayoutTextureBindingCacheKey(this);
     }
     /**
      * Get the {@link GPUBindGroupEntry#resource | bind group resource}
@@ -3324,6 +3459,7 @@
           }
         }
       });
+      this.renderer.deviceManager.bufferBindings.set(this.textureMatrix.cacheKey, this.textureMatrix);
       this.setBindings();
       this._parentMesh = null;
       this.sourceLoaded = false;
@@ -3855,6 +3991,7 @@
     }) {
       bindingType = bindingType ?? "sampler";
       super({ label, name, bindingType, visibility });
+      this.cacheKey += `${type},`;
       this.options = {
         ...this.options,
         sampler,
@@ -3874,6 +4011,13 @@
           // TODO set shouldResetBindGroupLayout to true if it changes afterwards
         }
       };
+    }
+    /**
+     * Get the resource cache key
+     * @readonly
+     */
+    get resourceLayoutCacheKey() {
+      return `sampler,${this.options.type},${this.visibility},`;
     }
     /**
      * Get the {@link GPUBindGroupEntry#resource | bind group resource}
@@ -5699,7 +5843,7 @@
      */
     get ready() {
       for (const vertexBuffer of this.vertexBuffers) {
-        if (!vertexBuffer.array || !vertexBuffer.buffer.GPUBuffer) {
+        if (!vertexBuffer.array || !vertexBuffer.buffer.GPUBuffer || vertexBuffer.buffer.GPUBuffer.mapState === "mapped") {
           return false;
         }
       }
@@ -6598,6 +6742,7 @@ struct VertexOutput {
        * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
        */
       loseContext() {
+        this.ready = false;
         this.geometry.loseContext();
         this.material.loseContext();
       }
@@ -9988,6 +10133,7 @@ ${this.shaders.compute.head}`;
         label: "Camera Uniform bind group",
         bindings: [this.cameraBufferBinding]
       });
+      this.cameraBindGroup.consumers.add(this.uuid);
     }
     /**
      * Create the {@link cameraBindGroup | camera bind group} buffers
@@ -10193,8 +10339,10 @@ ${this.shaders.compute.head}`;
      */
     loseDevice() {
       this.ready = false;
+      this.pipelineManager.resetCurrentPipeline();
       this.samplers.forEach((sampler) => sampler.sampler = null);
       this.renderers.forEach((renderer) => renderer.loseContext());
+      this.bindGroupLayouts.clear();
       this.buffers.clear();
     }
     /**
@@ -10221,6 +10369,8 @@ ${this.shaders.compute.head}`;
       this.renderers = [];
       this.bindGroups = /* @__PURE__ */ new Map();
       this.buffers = /* @__PURE__ */ new Map();
+      this.bindGroupLayouts = /* @__PURE__ */ new Map();
+      this.bufferBindings = /* @__PURE__ */ new Map();
       this.samplers = [];
       this.textures = [];
       this.texturesQueue = [];

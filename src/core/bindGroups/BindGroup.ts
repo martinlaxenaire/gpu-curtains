@@ -88,6 +88,9 @@ export class BindGroup {
   /** Our {@link BindGroup} {@link GPUBindGroup} */
   bindGroup: null | GPUBindGroup
 
+  /** A cache key allowing to get / set {@link GPUBindGroupLayout} from the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#bindGroupLayouts | device manager map cache}. */
+  layoutCacheKey: string
+
   /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
   needsPipelineFlush: boolean
 
@@ -126,6 +129,7 @@ export class BindGroup {
     bindings.length && this.addBindings(bindings)
     if (this.options.uniforms || this.options.storages) this.setInputBindings()
 
+    this.layoutCacheKey = ''
     this.resetEntries()
 
     this.bindGroupLayout = null
@@ -164,6 +168,12 @@ export class BindGroup {
    * @param bindings - {@link bindings} to add
    */
   addBindings(bindings: BindGroupBindingElement[] = []) {
+    bindings.forEach((binding) => {
+      if ('buffer' in binding) {
+        this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
+      }
+    })
+
     this.bindings = [...this.bindings, ...bindings]
   }
 
@@ -286,13 +296,21 @@ export class BindGroup {
   resetBindGroup() {
     this.entries.bindGroup = []
     for (const binding of this.bindings) {
-      this.entries.bindGroup.push({
-        binding: this.entries.bindGroup.length,
-        resource: binding.resource,
-      })
+      this.addBindGroupEntry(binding)
     }
 
     this.setBindGroup()
+  }
+
+  /**
+   * Add a {@link BindGroup#entries.bindGroup | bindGroup entry}
+   * @param binding - {@link BindGroupBindingElement | binding} to add
+   */
+  addBindGroupEntry(binding: BindGroupBindingElement) {
+    this.entries.bindGroup.push({
+      binding: this.entries.bindGroup.length,
+      resource: binding.resource,
+    })
   }
 
   /**
@@ -300,15 +318,27 @@ export class BindGroup {
    */
   resetBindGroupLayout() {
     this.entries.bindGroupLayout = []
+    this.layoutCacheKey = ''
+
     for (const binding of this.bindings) {
-      this.entries.bindGroupLayout.push({
-        binding: this.entries.bindGroupLayout.length,
-        ...binding.resourceLayout,
-        visibility: binding.visibility,
-      })
+      this.addBindGroupLayoutEntry(binding)
     }
 
     this.setBindGroupLayout()
+  }
+
+  /**
+   * Add a {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entry}
+   * @param binding - {@link BindGroupBindingElement | binding} to add
+   */
+  addBindGroupLayoutEntry(binding: BindGroupBindingElement) {
+    this.entries.bindGroupLayout.push({
+      binding: this.entries.bindGroupLayout.length,
+      ...binding.resourceLayout,
+      visibility: binding.visibility,
+    })
+
+    this.layoutCacheKey += binding.resourceLayoutCacheKey
   }
 
   /**
@@ -383,16 +413,8 @@ export class BindGroup {
       }
 
       // now that everything is ready, fill our entries
-      this.entries.bindGroupLayout.push({
-        binding: this.entries.bindGroupLayout.length,
-        ...binding.resourceLayout,
-        visibility: binding.visibility,
-      })
-
-      this.entries.bindGroup.push({
-        binding: this.entries.bindGroup.length,
-        resource: binding.resource,
-      })
+      this.addBindGroupLayoutEntry(binding)
+      this.addBindGroupEntry(binding)
     }
   }
 
@@ -409,24 +431,18 @@ export class BindGroup {
    * Create a GPUBindGroupLayout and set our {@link bindGroupLayout}
    */
   setBindGroupLayout() {
-    // this.bindGroupLayoutCacheKey = JSON.stringify(this.entries.bindGroupLayout)
-    //
-    // const bindGroupLayout = this.renderer.deviceManager.bindGroupLayouts.get(this.bindGroupLayoutCacheKey)
-    //
-    // if (bindGroupLayout) {
-    //   this.bindGroupLayout = bindGroupLayout
-    // } else {
-    //   this.bindGroupLayout = this.renderer.createBindGroupLayout({
-    //     label: this.options.label + ' layout',
-    //     entries: this.entries.bindGroupLayout,
-    //   })
-    //
-    //   this.renderer.deviceManager.bindGroupLayouts.set(this.bindGroupLayoutCacheKey, this.bindGroupLayout)
-    // }
-    this.bindGroupLayout = this.renderer.createBindGroupLayout({
-      label: this.options.label + ' layout',
-      entries: this.entries.bindGroupLayout,
-    })
+    const bindGroupLayout = this.renderer.deviceManager.bindGroupLayouts.get(this.layoutCacheKey)
+
+    if (bindGroupLayout) {
+      this.bindGroupLayout = bindGroupLayout
+    } else {
+      this.bindGroupLayout = this.renderer.createBindGroupLayout({
+        label: this.options.label + ' layout',
+        entries: this.entries.bindGroupLayout,
+      })
+
+      this.renderer.deviceManager.bindGroupLayouts.set(this.layoutCacheKey, this.bindGroupLayout)
+    }
   }
 
   /**
@@ -547,22 +563,16 @@ export class BindGroup {
 
       // if we should create a new bind group layout, fill it
       if (!keepLayout) {
-        bindGroupCopy.entries.bindGroupLayout.push({
-          binding: bindGroupCopy.entries.bindGroupLayout.length,
-          ...binding.resourceLayout,
-          visibility: binding.visibility,
-        })
+        bindGroupCopy.addBindGroupLayoutEntry(binding)
       }
 
-      bindGroupCopy.entries.bindGroup.push({
-        binding: bindGroupCopy.entries.bindGroup.length,
-        resource: binding.resource,
-      } as GPUBindGroupEntry)
+      bindGroupCopy.addBindGroupEntry(binding)
     }
 
     // if we should copy the given bind group layout
     if (keepLayout) {
       bindGroupCopy.entries.bindGroupLayout = [...this.entries.bindGroupLayout]
+      bindGroupCopy.layoutCacheKey = this.layoutCacheKey
     }
 
     bindGroupCopy.setBindGroupLayout()

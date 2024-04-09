@@ -6,6 +6,7 @@ import { SceneObject } from './GPURenderer';
 import { Texture } from '../textures/Texture';
 import { AllowedBindGroups } from '../../types/BindGroups';
 import { Buffer } from '../buffers/Buffer';
+import { BufferBinding } from '../bindings/BufferBinding';
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
  */
@@ -60,6 +61,10 @@ export declare class GPUDeviceManager {
     bindGroups: Map<string, AllowedBindGroups>;
     /** An array containing all our created {@link GPUBuffer} */
     buffers: Map<string, Buffer>;
+    /** A Map containing all our created {@link GPUBindGroupLayout} indexed by cache keys */
+    bindGroupLayouts: Map<string, GPUBindGroupLayout>;
+    /** A Map containing all our created {@link BufferBinding} indexed by cache keys */
+    bufferBindings: Map<string, BufferBinding>;
     /** An array containing all our created {@link Sampler} */
     samplers: Sampler[];
     /** An array containing all our created {@link Texture} */

@@ -6,6 +6,7 @@ import { SceneObject } from './GPURenderer'
 import { Texture } from '../textures/Texture'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { Buffer } from '../buffers/Buffer'
+import { BufferBinding } from '../bindings/BufferBinding'
 
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
@@ -67,6 +68,12 @@ export class GPUDeviceManager {
   bindGroups: Map<string, AllowedBindGroups>
   /** An array containing all our created {@link GPUBuffer} */
   buffers: Map<string, Buffer>
+
+  /** A Map containing all our created {@link GPUBindGroupLayout} indexed by cache keys */
+  bindGroupLayouts: Map<string, GPUBindGroupLayout>
+  /** A Map containing all our created {@link BufferBinding} indexed by cache keys */
+  bufferBindings: Map<string, BufferBinding>
+
   /** An array containing all our created {@link Sampler} */
   samplers: Sampler[]
   /** An array containing all our created {@link Texture} */
@@ -201,10 +208,14 @@ export class GPUDeviceManager {
   loseDevice() {
     this.ready = false
 
+    this.pipelineManager.resetCurrentPipeline()
+
     // first clean all samplers
     this.samplers.forEach((sampler) => (sampler.sampler = null))
 
     this.renderers.forEach((renderer) => renderer.loseContext())
+
+    this.bindGroupLayouts.clear()
 
     // reset the buffers array, it would eventually be repopulated while restoring the device
     this.buffers.clear()
@@ -240,6 +251,9 @@ export class GPUDeviceManager {
     this.renderers = []
     this.bindGroups = new Map()
     this.buffers = new Map()
+    // TODO
+    this.bindGroupLayouts = new Map()
+    this.bufferBindings = new Map()
     this.samplers = []
     this.textures = []
 

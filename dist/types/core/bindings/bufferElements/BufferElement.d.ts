@@ -184,6 +184,11 @@ export declare class BufferElement {
      */
     setValueFromArray(value: number[]): void;
     /**
+     * Set the {@link view} value from an array with pad applied
+     * @param value - array to use
+     */
+    setValueFromArrayWithPad(value: number[]): void;
+    /**
      * Update the {@link view} based on the new value
      * @param value - new value to use
      */

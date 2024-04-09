@@ -24,6 +24,7 @@ class WritableBufferBinding extends BufferBinding {
       shouldCopyResult
     };
     this.shouldCopyResult = shouldCopyResult;
+    this.cacheKey += `${shouldCopyResult},`;
     this.resultBuffer = new Buffer();
   }
 }

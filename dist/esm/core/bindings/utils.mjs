@@ -97,5 +97,21 @@ const getBindGroupLayoutTextureBindingType = (binding) => {
     }
   })();
 };
+const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
+  return (() => {
+    switch (binding.bindingType) {
+      case "externalTexture":
+        return `externalTexture,${binding.visibility},`;
+      case "storage":
+        return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+      case "texture":
+        return `texture,${binding.options.multisampled},${binding.options.viewDimension},${binding.options.multisampled ? "unfilterable-float" : "float"},${binding.visibility},`;
+      case "depth":
+        return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`;
+      default:
+        return `${binding.visibility},`;
+    }
+  })();
+};
 
-export { getBindGroupLayoutBindingType, getBindGroupLayoutTextureBindingType, getBindingWGSLVarType, getBufferLayout, getTextureBindingWGSLVarType };
+export { getBindGroupLayoutBindingType, getBindGroupLayoutTextureBindingCacheKey, getBindGroupLayoutTextureBindingType, getBindingWGSLVarType, getBufferLayout, getTextureBindingWGSLVarType };

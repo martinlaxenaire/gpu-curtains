@@ -99,6 +99,11 @@ export declare class BufferBinding extends Binding {
         buffer: GPUBufferBindingLayout;
     };
     /**
+     * Get the resource cache key
+     * @readonly
+     */
+    get resourceLayoutCacheKey(): string;
+    /**
      * Get {@link GPUBindGroupEntry#resource | bind group resource}
      * @readonly
      */
@@ -106,6 +111,11 @@ export declare class BufferBinding extends Binding {
         /** {@link GPUBindGroup | bind group} resource */
         buffer: GPUBuffer | null;
     };
+    /**
+     * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
+     * @param params - params to use for cloning
+     */
+    clone(params: BufferBindingParams): BufferBinding;
     /**
      * Format bindings struct and set our {@link inputs}
      * @param bindings - bindings inputs

@@ -115,6 +115,7 @@ class GPUCameraRenderer extends GPURenderer {
       label: "Camera Uniform bind group",
       bindings: [this.cameraBufferBinding]
     });
+    this.cameraBindGroup.consumers.add(this.uuid);
   }
   /**
    * Create the {@link cameraBindGroup | camera bind group} buffers

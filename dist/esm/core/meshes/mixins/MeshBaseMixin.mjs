@@ -215,6 +215,7 @@ function MeshBaseMixin(Base) {
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext() {
+      this.ready = false;
       this.geometry.loseContext();
       this.material.loseContext();
     }

@@ -164,6 +164,8 @@ export class Texture extends Object3D {
       },
     })
 
+    this.renderer.deviceManager.bufferBindings.set(this.textureMatrix.cacheKey, this.textureMatrix)
+
     this.setBindings()
 
     this._parentMesh = null

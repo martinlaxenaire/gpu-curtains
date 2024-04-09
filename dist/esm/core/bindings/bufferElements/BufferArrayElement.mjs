@@ -1,4 +1,4 @@
-import { BufferElement, bytesPerSlot } from './BufferElement.mjs';
+import { BufferElement, bytesPerRow, bytesPerSlot } from './BufferElement.mjs';
 
 class BufferArrayElement extends BufferElement {
   /**
@@ -8,7 +8,16 @@ class BufferArrayElement extends BufferElement {
   constructor({ name, key, type = "f32", arrayLength = 1 }) {
     super({ name, key, type });
     this.arrayLength = arrayLength;
-    this.numElements = this.arrayLength / this.bufferLayout.numElements;
+    this.numElements = Math.ceil(this.arrayLength / this.bufferLayout.numElements);
+  }
+  /**
+   * Get the total number of bytes used by this {@link BufferArrayElement} based on {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment} start and end offsets
+   * @readonly
+   */
+  get byteCount() {
+    const byteCount = super.byteCount;
+    const endPad = byteCount % bytesPerRow;
+    return byteCount + (endPad === 0 ? 0 : bytesPerRow - endPad);
   }
   /**
    * Get the array stride between two elements of the array, in indices

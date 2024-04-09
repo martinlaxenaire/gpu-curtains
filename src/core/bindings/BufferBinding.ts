@@ -161,6 +161,14 @@ export class BufferBinding extends Binding {
   }
 
   /**
+   * Get the resource cache key
+   * @readonly
+   */
+  get resourceLayoutCacheKey(): string {
+    return `buffer,${getBindGroupLayoutBindingType(this)},${this.visibility},`
+  }
+
+  /**
    * Get {@link GPUBindGroupEntry#resource | bind group resource}
    * @readonly
    */
@@ -171,7 +179,11 @@ export class BufferBinding extends Binding {
     return { buffer: this.buffer.GPUBuffer }
   }
 
-  clone(params) {
+  /**
+   * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
+   * @param params - params to use for cloning
+   */
+  clone(params: BufferBindingParams) {
     const { struct, ...defaultParams } = params
 
     const bufferBindingCopy = new (this.constructor as typeof BufferBinding)(defaultParams)
@@ -189,7 +201,8 @@ export class BufferBinding extends Binding {
 
     bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength
 
-    for (const bufferElement: BufferArrayElement of this.bufferElements) {
+    //for (const bufferElement of this.bufferElements) {
+    this.bufferElements.forEach((bufferElement: BufferArrayElement) => {
       const newBufferElement = new (bufferElement.constructor as typeof BufferArrayElement)({
         name: bufferElement.name,
         key: bufferElement.key,
@@ -206,7 +219,7 @@ export class BufferBinding extends Binding {
 
       newBufferElement.setView(bufferBindingCopy.arrayBuffer, bufferBindingCopy.arrayView)
       bufferBindingCopy.bufferElements.push(newBufferElement)
-    }
+    })
 
     if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
       bufferBindingCopy.wgslStructFragment = this.wgslStructFragment

@@ -630,6 +630,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext() {
+      // we're obviously not ready anymore
+      this.ready = false
+
       // first the geometry
       this.geometry.loseContext()
 

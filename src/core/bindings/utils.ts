@@ -189,3 +189,27 @@ export const getBindGroupLayoutTextureBindingType = (
     }
   })()
 }
+
+/**
+ * Get the correct {@link TextureBinding | texture binding} cache key.
+ * @param binding - {@link TextureBinding | texture binding} to use
+ * @returns - binding cache key
+ */
+export const getBindGroupLayoutTextureBindingCacheKey = (binding: TextureBinding): string => {
+  return (() => {
+    switch (binding.bindingType) {
+      case 'externalTexture':
+        return `externalTexture,${binding.visibility},`
+      case 'storage':
+        return `storageTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`
+      case 'texture':
+        return `texture,${binding.options.multisampled},${binding.options.viewDimension},${
+          binding.options.multisampled ? 'unfilterable-float' : 'float'
+        },${binding.visibility},`
+      case 'depth':
+        return `depthTexture,${binding.options.format},${binding.options.viewDimension},${binding.visibility},`
+      default:
+        return `${binding.visibility},`
+    }
+  })()
+}

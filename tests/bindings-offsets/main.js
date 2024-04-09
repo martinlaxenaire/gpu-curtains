@@ -345,9 +345,11 @@ window.addEventListener('load', async () => {
           } color-${index % 8}'>`
 
           const arrayIndex = bindingElement.numElements ? `[${i}]` : ''
-          //const arrayIndex = bindingElement.numElements ? `[${0}]` : ''
 
-          innerHTML += `<div class='binding-element-type'>${bindingElement.name}${arrayIndex}: ${bindingElement.type}</div>`
+          innerHTML += `<div class='binding-element-type'>${bindingElement.name}${arrayIndex}: ${bindingElement.type
+            .replace('array', '')
+            .replace('<', '')
+            .replace('>', '')}</div>`
 
           innerHTML += `<div class='binding-element-slots'>`
           for (let k = 0; k < size / numElements; k++) {
@@ -432,7 +434,7 @@ window.addEventListener('load', async () => {
           } color-${interleavedEntry.index % 8}'>`
 
           innerHTML += `<div class='binding-element-type'>${interleavedEntry.name}[${
-            interleavedEntry.loopIndex * interleavedEntry.numElements + j
+            interleavedEntry.loopIndex + Math.floor(j / interleavedEntry.numElements)
           }]: ${interleavedEntry.type}</div>`
 
           innerHTML += `<div class='binding-element-slots'>`
