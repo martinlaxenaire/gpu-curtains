@@ -59,7 +59,7 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
       // since the object scale has not changed this should work
-      vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize((matrices.model * vec4(attributes.normal, 0.0)).xyz);
       
       return vsOutput;
     }

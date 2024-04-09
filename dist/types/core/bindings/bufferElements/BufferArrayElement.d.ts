@@ -22,11 +22,6 @@ export declare class BufferArrayElement extends BufferElement {
      */
     constructor({ name, key, type, arrayLength }: BufferArrayElementParams);
     /**
-     * Get the total number of bytes used by this {@link BufferArrayElement} based on {@link core/bindings/bufferElements/BufferElement.BufferElementAlignment | alignment} start and end offsets
-     * @readonly
-     */
-    get byteCount(): number;
-    /**
      * Get the array stride between two elements of the array, in indices
      * @readonly
      */

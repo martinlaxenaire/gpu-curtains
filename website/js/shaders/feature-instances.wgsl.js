@@ -46,7 +46,7 @@ export const featureInstancesVs = /* wgsl */ `
     // vsOutput.normal = (vsOutput.position * rotatedNormal).xyz;
     // vsOutput.normal = rotatedNormal.xyz;
     
-    vsOutput.normal = (matrices.world * rotatedNormal).xyz;
+    vsOutput.normal = (matrices.model * rotatedNormal).xyz;
     
     vsOutput.angle = attributes.instancePosition.w / (3.141592 * 2.0);
     

@@ -4,7 +4,7 @@
 }
 
 .binding {
-  padding: 4rem 1rem;
+  padding: 4rem 2rem;
   position: relative;
 }
 
@@ -63,6 +63,7 @@
   width: 900px;
   color: var(--dark-color);
   margin-bottom: auto;
+  min-width: 50%;
 }
 
 .binding-element {
@@ -172,11 +173,19 @@
 }
 
 @media screen and (max-width: 1680px) {
+  .binding {
+    padding: 4rem 1rem;
+  }
+
   .binding-declaration {
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
     font-size: 0.75rem;
+  }
+
+  .byte-diagram {
+    min-width: 0;
   }
 
   .wgsl-declaration {
