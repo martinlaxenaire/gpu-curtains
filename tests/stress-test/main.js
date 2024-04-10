@@ -13,6 +13,8 @@ window.addEventListener('load', async () => {
 
   const systemSize = 50
 
+  const meshes = []
+
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
@@ -38,6 +40,11 @@ window.addEventListener('load', async () => {
     requestAnimationFrame(animate)
 
     stats.begin()
+
+    // for (const mesh of meshes) {
+    //   mesh.updateMatrixStack()
+    // }
+
     gpuDeviceManager.render()
     stats.end()
   }
@@ -56,8 +63,6 @@ window.addEventListener('load', async () => {
   let createdMeshes = 0
   let nbMeshes = 3_000
   //let nbMeshes = 100
-
-  const meshes = []
 
   const addMesh = (index) => {
     const mesh = new Mesh(gpuCameraRenderer, {

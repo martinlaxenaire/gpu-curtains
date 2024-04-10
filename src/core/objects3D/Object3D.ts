@@ -337,6 +337,7 @@ export class Object3D {
     // update the children world matrix as well
     for (const child of this.children) {
       child.shouldUpdateWorldMatrix()
+      //child.updateMatrixStack()
     }
   }
 
@@ -353,9 +354,9 @@ export class Object3D {
   updateMatrixStack() {
     // if it has a parent and it is an Object3D
     // it means nothing updates it in the render loop, so do it from here
-    if (this.parent && this.parent.constructor.name === 'Object3D') {
-      this.parent.updateMatrixStack()
-    }
+    // if (this.parent && this.parent.constructor.name === 'Object3D') {
+    //   this.parent.updateMatrixStack()
+    // }
 
     // check if at least one matrix should update
     const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate)
@@ -370,6 +371,10 @@ export class Object3D {
 
       // callback to run if at least one matrix of the stack has been updated
       this.onAfterMatrixStackUpdate()
+    }
+
+    for (const child of this.children) {
+      child.updateMatrixStack()
     }
   }
 }

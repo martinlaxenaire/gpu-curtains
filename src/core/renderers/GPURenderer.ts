@@ -20,6 +20,7 @@ import { RenderTexture } from '../textures/RenderTexture'
 import { GPUDeviceManager } from './GPUDeviceManager'
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { Buffer } from '../buffers/Buffer'
+import { SceneGraph } from '../scenes/SceneGraph'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -511,6 +512,7 @@ export class GPURenderer {
    */
   setScene() {
     this.scene = new Scene({ renderer: this })
+    this.sceneGraph = new SceneGraph({ renderer: this })
   }
 
   /* BUFFERS & BINDINGS */
@@ -1037,6 +1039,7 @@ export class GPURenderer {
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
     this.onBeforeRenderScene.execute(commandEncoder)
 
+    this.sceneGraph.updateMatrixStack()
     this.scene?.render(commandEncoder)
 
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)

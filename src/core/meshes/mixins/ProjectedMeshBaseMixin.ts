@@ -412,21 +412,27 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     /* RENDER */
 
     /**
-     * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
-     * First, we update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
+     * Update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
      * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
-     * Finally we call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
      */
-    onBeforeRenderPass() {
-      this.updateMatrixStack()
+    updateMatrixStack() {
+      super.updateMatrixStack()
 
       if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
         this.domFrustum.computeProjectedToDocumentCoords()
         this.domFrustum.shouldUpdate = false
       }
-
-      super.onBeforeRenderPass()
     }
+
+    /**
+     * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
+     * {@link updateMatrixStack | Update matrices} and call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
+     */
+    // onBeforeRenderPass() {
+    //   this.updateMatrixStack()
+    //
+    //   super.onBeforeRenderPass()
+    // }
 
     /**
      * Only render the Mesh if it is in view frustum.

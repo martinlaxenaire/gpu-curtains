@@ -237,6 +237,10 @@ export class Scene {
         a.index - b.index
       )
     })
+
+    if (!mesh.parent) {
+      mesh.parent = this.renderer.sceneGraph
+    }
   }
 
   /**
@@ -251,6 +255,8 @@ export class Scene {
     } else {
       projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid)
     }
+
+    mesh.parent = null
   }
 
   /**
