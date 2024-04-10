@@ -130,8 +130,12 @@ class ComputeMaterial extends Material {
   copyBufferToResult(commandEncoder) {
     for (const bindGroup of this.bindGroups) {
       bindGroup.bufferBindings.forEach((binding) => {
-        if (binding.shouldCopyResult && binding.resultBuffer.mapState === "unmapped") {
-          commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size);
+        if (binding.shouldCopyResult) {
+          this.renderer.copyBufferToBuffer({
+            srcBuffer: binding.buffer,
+            dstBuffer: binding.resultBuffer,
+            commandEncoder
+          });
         }
       });
     }
@@ -149,9 +153,9 @@ class ComputeMaterial extends Material {
     bufferElementName = ""
   }) {
     const binding = this.getBufferBindingByName(bindingName);
-    if (binding && "resultBuffer" in binding && binding.resultBuffer.mapState === "unmapped") {
+    if (binding && "resultBuffer" in binding) {
       const result = await this.getBufferResult(binding.resultBuffer);
-      if (bufferElementName) {
+      if (bufferElementName && result.length) {
         return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName });
       } else {
         return result;

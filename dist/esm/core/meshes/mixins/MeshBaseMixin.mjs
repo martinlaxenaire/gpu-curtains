@@ -116,6 +116,7 @@ function MeshBaseMixin(Base) {
         ...meshParameters
       };
       this.geometry = geometry;
+      this.geometry.consumers.add(this.uuid);
       if (autoRender !== void 0) {
         __privateSet(this, _autoRender, autoRender);
       }
@@ -146,7 +147,7 @@ function MeshBaseMixin(Base) {
       return this._ready;
     }
     set ready(value) {
-      if (value) {
+      if (value && !this._ready) {
         this._onReadyCallback && this._onReadyCallback();
       }
       this._ready = value;
@@ -215,18 +216,15 @@ function MeshBaseMixin(Base) {
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext() {
-      for (const vertexBuffer of this.geometry.vertexBuffers) {
-        vertexBuffer.buffer = null;
-      }
-      if ("indexBuffer" in this.geometry) {
-        this.geometry.indexBuffer.buffer = null;
-      }
+      this.ready = false;
+      this.geometry.loseContext();
       this.material.loseContext();
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext() {
+      this.geometry.restoreContext(this.renderer);
       this.material.restoreContext();
     }
     /* SHADERS */
@@ -234,9 +232,8 @@ function MeshBaseMixin(Base) {
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      let { shaders } = this.options;
-      if (!shaders) {
-        shaders = {
+      if (!this.options.shaders) {
+        this.options.shaders = {
           vertex: {
             code: default_vsWgsl,
             entryPoint: "main"
@@ -247,6 +244,7 @@ function MeshBaseMixin(Base) {
           }
         };
       } else {
+        const { shaders } = this.options;
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
             code: default_vsWgsl,
@@ -271,36 +269,16 @@ function MeshBaseMixin(Base) {
       }
     }
     /**
-     * Create the Mesh Geometry vertex and index buffers if needed
-     */
-    createGeometryBuffers() {
-      if (!this.geometry.ready) {
-        for (const vertexBuffer of this.geometry.vertexBuffers) {
-          if (!vertexBuffer.buffer) {
-            vertexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + " geometry: " + vertexBuffer.name + " buffer",
-              size: vertexBuffer.array.byteLength,
-              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
-            });
-            this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
-          }
-        }
-        if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
-          this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + " geometry: index buffer",
-            size: this.geometry.indexBuffer.array.byteLength,
-            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
-          });
-          this.renderer.queueWriteBuffer(this.geometry.indexBuffer.buffer, 0, this.geometry.indexBuffer.array);
-        }
-      }
-    }
-    /**
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry() {
-      if (this.geometry && this.renderer.ready) {
-        this.createGeometryBuffers();
+      if (this.geometry) {
+        if (!this.geometry.ready) {
+          this.geometry.createBuffers({
+            renderer: this.renderer,
+            label: this.options.label + " geometry"
+          });
+        }
         this.setMaterialGeometryAttributes();
       }
     }
@@ -528,9 +506,7 @@ function MeshBaseMixin(Base) {
     onBeforeRenderPass() {
       if (!this.renderer.ready)
         return;
-      if (this.material && this.material.ready && this.geometry && this.geometry.ready && !this.ready) {
-        this.ready = true;
-      }
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
       this.setGeometry();
       this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       this.material.onBeforeRender();
@@ -540,7 +516,7 @@ function MeshBaseMixin(Base) {
      * @param pass - current render pass encoder
      */
     onRenderPass(pass) {
-      if (!this.material.ready)
+      if (!this.ready)
         return;
       this._onRenderCallback && this._onRenderCallback();
       this.material.render(pass);
@@ -597,16 +573,10 @@ function MeshBaseMixin(Base) {
         super.destroy();
       }
       this.material?.destroy();
-      for (const vertexBuffer of this.geometry.vertexBuffers) {
-        this.renderer.removeBuffer(
-          vertexBuffer.buffer,
-          this.options.label + " geometry: " + vertexBuffer.name + " buffer"
-        );
+      this.geometry.consumers.delete(this.uuid);
+      if (!this.geometry.consumers.size) {
+        this.geometry?.destroy(this.renderer);
       }
-      if ("indexBuffer" in this.geometry) {
-        this.renderer.removeBuffer(this.geometry.indexBuffer.buffer);
-      }
-      this.geometry?.destroy();
     }
   }, _autoRender = new WeakMap(), _a;
 }

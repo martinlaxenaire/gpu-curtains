@@ -156,7 +156,7 @@ window.addEventListener('load', async () => {
     @vertex fn main(
       attributes: Attributes,
     ) -> @builtin(position) vec4<f32> {
-      return lightning.lightViewProjectionMatrix * matrices.world * vec4(attributes.position, 1.0);
+      return lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
     }
   `
 
@@ -178,7 +178,7 @@ window.addEventListener('load', async () => {
       vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
       
       // XY is in (-1, 1) space, Z is in (0, 1) space
-      let posFromLight = lightning.lightViewProjectionMatrix * matrices.world * vec4(attributes.position, 1.0);
+      let posFromLight = lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
     
       // Convert XY to (0, 1)
       // Y is flipped because texture coords are Y-down.
@@ -246,8 +246,6 @@ window.addEventListener('load', async () => {
       sampleCount: depthTarget.renderPass.options.sampleCount,
       bindings: [lightBufferBinding, mesh.material.getBufferBindingByName('matrices')],
     })
-
-    mesh.userData.depthMaterial.setAttributesFromGeometry(mesh.geometry)
 
     // keep track of original material as well
     mesh.userData.originalMaterial = mesh.material
@@ -414,7 +412,7 @@ window.addEventListener('load', async () => {
 
     // render meshes with their depth material
     depthMeshes.forEach((mesh) => {
-      mesh.render(depthPass)
+      if (mesh.ready) mesh.render(depthPass)
     })
 
     depthPass.end()
@@ -439,7 +437,7 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
 
-      // just use the model matrix here, do not take the projection into account
+      // just use the world matrix here, do not take the projection into account
       vsOutput.position = matrices.model * vec4(attributes.position, 1.0);
       vsOutput.uv = attributes.uv;
       

@@ -7,6 +7,7 @@ import { Input, InputBase, InputValue } from '../../types/BindGroups'
 import { BufferElement } from './bufferElements/BufferElement'
 import { BufferArrayElement } from './bufferElements/BufferArrayElement'
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement'
+import { Buffer } from '../buffers/Buffer'
 
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
@@ -91,8 +92,8 @@ export class BufferBinding extends Binding {
   /** Data view of our {@link arrayBuffer | array buffer} */
   arrayView: DataView
 
-  /** The GPUBuffer */
-  buffer: GPUBuffer | null
+  /** The {@link Buffer} holding the {@link GPUBuffer}  */
+  buffer: Buffer
 
   /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
   wgslStructFragment: string
@@ -122,8 +123,10 @@ export class BufferBinding extends Binding {
       ...this.options,
       useStruct,
       access,
-      struct: struct,
+      struct,
     }
+
+    this.cacheKey += `${useStruct},${access},`
 
     this.arrayBufferSize = 0
 
@@ -132,11 +135,14 @@ export class BufferBinding extends Binding {
 
     this.bufferElements = []
     this.inputs = {}
-    this.buffer = null
+    this.buffer = new Buffer()
 
-    this.setBindings(struct)
-    this.setBufferAttributes()
-    this.setWGSLFragment()
+    if (Object.keys(struct).length) {
+      this.setBindings(struct)
+      this.setBufferAttributes()
+
+      this.setWGSLFragment()
+    }
   }
 
   /**
@@ -155,6 +161,14 @@ export class BufferBinding extends Binding {
   }
 
   /**
+   * Get the resource cache key
+   * @readonly
+   */
+  get resourceLayoutCacheKey(): string {
+    return `buffer,${getBindGroupLayoutBindingType(this)},${this.visibility},`
+  }
+
+  /**
    * Get {@link GPUBindGroupEntry#resource | bind group resource}
    * @readonly
    */
@@ -162,7 +176,60 @@ export class BufferBinding extends Binding {
     /** {@link GPUBindGroup | bind group} resource */
     buffer: GPUBuffer | null
   } {
-    return { buffer: this.buffer }
+    return { buffer: this.buffer.GPUBuffer }
+  }
+
+  /**
+   * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
+   * @param params - params to use for cloning
+   */
+  clone(params: BufferBindingParams) {
+    const { struct, ...defaultParams } = params
+
+    const bufferBindingCopy = new (this.constructor as typeof BufferBinding)(defaultParams)
+    bufferBindingCopy.setBindings(struct)
+    bufferBindingCopy.options.struct = struct
+
+    bufferBindingCopy.arrayBufferSize = this.arrayBufferSize
+
+    bufferBindingCopy.arrayBuffer = new ArrayBuffer(bufferBindingCopy.arrayBufferSize)
+    bufferBindingCopy.arrayView = new DataView(
+      bufferBindingCopy.arrayBuffer,
+      0,
+      bufferBindingCopy.arrayBuffer.byteLength
+    )
+
+    bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength
+
+    this.bufferElements.forEach((bufferElement: BufferArrayElement) => {
+      const newBufferElement = new (bufferElement.constructor as typeof BufferArrayElement)({
+        name: bufferElement.name,
+        key: bufferElement.key,
+        type: bufferElement.type,
+        ...(bufferElement.arrayLength && {
+          arrayLength: bufferElement.arrayLength,
+        }),
+      })
+
+      newBufferElement.alignment = bufferElement.alignment
+      if (bufferElement.arrayStride) {
+        newBufferElement.arrayStride = bufferElement.arrayStride
+      }
+
+      newBufferElement.setView(bufferBindingCopy.arrayBuffer, bufferBindingCopy.arrayView)
+      bufferBindingCopy.bufferElements.push(newBufferElement)
+    })
+
+    if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
+      bufferBindingCopy.wgslStructFragment = this.wgslStructFragment
+      bufferBindingCopy.wgslGroupFragment = this.wgslGroupFragment
+    } else {
+      bufferBindingCopy.setWGSLFragment()
+    }
+
+    bufferBindingCopy.shouldUpdate = bufferBindingCopy.arrayBufferSize > 0
+
+    return bufferBindingCopy
   }
 
   /**
@@ -200,6 +267,8 @@ export class BufferBinding extends Binding {
       }
 
       this.inputs[bindingKey] = binding
+
+      this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`
     }
   }
 
@@ -274,7 +343,7 @@ export class BufferBinding extends Binding {
         const binding = this.inputs[bindingKey]
         const bufferLayout = getBufferLayout(binding.type.replace('array', '').replace('<', '').replace('>', ''))
 
-        return (binding.value as number[] | TypedArray).length / bufferLayout.numElements
+        return Math.ceil((binding.value as number[] | TypedArray).length / bufferLayout.numElements)
       })
 
       // are they all of the same size?
@@ -349,6 +418,8 @@ export class BufferBinding extends Binding {
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize)
     this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength)
 
+    this.buffer.size = this.arrayBuffer.byteLength
+
     for (const bufferElement of this.bufferElements) {
       bufferElement.setView(this.arrayBuffer, this.arrayView)
     }
@@ -360,6 +431,8 @@ export class BufferBinding extends Binding {
    * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
    */
   setWGSLFragment() {
+    if (!this.bufferElements.length) return
+
     const kebabCaseLabel = toKebabCase(this.label)
 
     if (this.useStruct) {

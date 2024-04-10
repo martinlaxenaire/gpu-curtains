@@ -1,4 +1,5 @@
 import { Binding, BindingParams } from './Binding'
+import { getBindGroupLayoutBindingType } from './utils'
 
 /** Defines a {@link SamplerBinding} {@link SamplerBinding#resource | resource} */
 export type SamplerBindingResource = GPUSampler | null
@@ -43,6 +44,8 @@ export class SamplerBinding extends Binding {
 
     super({ label, name, bindingType, visibility })
 
+    this.cacheKey += `${type},`
+
     this.options = {
       ...this.options,
       sampler,
@@ -67,6 +70,14 @@ export class SamplerBinding extends Binding {
         type: this.options.type, // TODO set shouldResetBindGroupLayout to true if it changes afterwards
       },
     }
+  }
+
+  /**
+   * Get the resource cache key
+   * @readonly
+   */
+  get resourceLayoutCacheKey(): string {
+    return `sampler,${this.options.type},${this.visibility},`
   }
 
   /**

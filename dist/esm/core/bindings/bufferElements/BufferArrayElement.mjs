@@ -8,7 +8,7 @@ class BufferArrayElement extends BufferElement {
   constructor({ name, key, type = "f32", arrayLength = 1 }) {
     super({ name, key, type });
     this.arrayLength = arrayLength;
-    this.numElements = this.arrayLength / this.bufferLayout.numElements;
+    this.numElements = Math.ceil(this.arrayLength / this.bufferLayout.numElements);
   }
   /**
    * Get the array stride between two elements of the array, in indices

@@ -114,7 +114,7 @@ window.addEventListener('load', async () => {
     } else {
       gpuCurtains.restoreContext()
       loseCtxButton.textContent = 'Lose context'
-      console.log('restored', postProPass.material)
+      console.log('restored', postProPass.material, mesh.material)
     }
 
     isContextActive = !isContextActive

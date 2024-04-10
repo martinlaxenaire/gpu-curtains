@@ -1,5 +1,5 @@
 import { Binding } from './Binding.mjs';
-import { getBindGroupLayoutTextureBindingType, getTextureBindingWGSLVarType } from './utils.mjs';
+import { getBindGroupLayoutTextureBindingType, getBindGroupLayoutTextureBindingCacheKey, getTextureBindingWGSLVarType } from './utils.mjs';
 
 class TextureBinding extends Binding {
   /**
@@ -30,6 +30,7 @@ class TextureBinding extends Binding {
       viewDimension,
       multisampled
     };
+    this.cacheKey += `${format},${access},${viewDimension},${multisampled}`;
     this.resource = texture;
     this.setWGSLFragment();
   }
@@ -39,6 +40,13 @@ class TextureBinding extends Binding {
    */
   get resourceLayout() {
     return getBindGroupLayoutTextureBindingType(this);
+  }
+  /**
+   * Get the resource cache key
+   * @readonly
+   */
+  get resourceLayoutCacheKey() {
+    return getBindGroupLayoutTextureBindingCacheKey(this);
   }
   /**
    * Get the {@link GPUBindGroupEntry#resource | bind group resource}

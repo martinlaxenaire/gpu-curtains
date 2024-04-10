@@ -165,14 +165,6 @@ export declare class MeshBaseClass {
      */
     setShaders(): void;
     /**
-     * Compute the Mesh geometry if needed
-     */
-    computeGeometry(): void;
-    /**
-     * Create the Mesh Geometry vertex and index buffers if needed
-     */
-    createGeometryBuffers(): void;
-    /**
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry(): void;

@@ -54,3 +54,9 @@ export declare const getBindGroupLayoutBindingType: (binding: BufferBinding) => 
  * @returns - {@link GPUBindGroupLayout} resource type
  */
 export declare const getBindGroupLayoutTextureBindingType: (binding: TextureBinding) => GPUTextureBindingLayout | GPUExternalTextureBindingLayout | GPUStorageTextureBindingLayout | null;
+/**
+ * Get the correct {@link TextureBinding | texture binding} cache key.
+ * @param binding - {@link TextureBinding | texture binding} to use
+ * @returns - binding cache key
+ */
+export declare const getBindGroupLayoutTextureBindingCacheKey: (binding: TextureBinding) => string;

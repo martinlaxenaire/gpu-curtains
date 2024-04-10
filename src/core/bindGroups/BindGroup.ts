@@ -88,6 +88,9 @@ export class BindGroup {
   /** Our {@link BindGroup} {@link GPUBindGroup} */
   bindGroup: null | GPUBindGroup
 
+  /** A cache key allowing to get / set {@link GPUBindGroupLayout} from the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#bindGroupLayouts | device manager map cache}. */
+  layoutCacheKey: string
+
   /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
   needsPipelineFlush: boolean
 
@@ -126,6 +129,7 @@ export class BindGroup {
     bindings.length && this.addBindings(bindings)
     if (this.options.uniforms || this.options.storages) this.setInputBindings()
 
+    this.layoutCacheKey = ''
     this.resetEntries()
 
     this.bindGroupLayout = null
@@ -136,6 +140,17 @@ export class BindGroup {
     this.needsPipelineFlush = false
 
     this.consumers = new Set()
+
+    // add the bind group to the buffers consumers
+    for (const binding of this.bufferBindings) {
+      if ('buffer' in binding) {
+        binding.buffer.consumers.add(this.uuid)
+      }
+
+      if ('resultBuffer' in binding) {
+        binding.resultBuffer.consumers.add(this.uuid)
+      }
+    }
 
     this.renderer.addBindGroup(this)
   }
@@ -153,6 +168,12 @@ export class BindGroup {
    * @param bindings - {@link bindings} to add
    */
   addBindings(bindings: BindGroupBindingElement[] = []) {
+    bindings.forEach((binding) => {
+      if ('buffer' in binding) {
+        this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
+      }
+    })
+
     this.bindings = [...this.bindings, ...bindings]
   }
 
@@ -174,7 +195,7 @@ export class BindGroup {
     bindingType: BindingType = 'uniform',
     inputs: ReadOnlyInputBindings = {}
   ): BindGroupBindingElement[] {
-    return [
+    const bindings = [
       ...Object.keys(inputs).map((inputKey) => {
         const binding = inputs[inputKey] as WritableBufferBindingParams
 
@@ -187,6 +208,26 @@ export class BindGroup {
           access: binding.access ?? 'read', // read by default
           struct: binding.struct,
           ...(binding.shouldCopyResult !== undefined && { shouldCopyResult: binding.shouldCopyResult }),
+        }
+
+        if (binding.useStruct !== false) {
+          let key = `${bindingType},${
+            binding.visibility === undefined ? 'all' : binding.access === 'read_write' ? 'compute' : binding.visibility
+          },true,${binding.access ?? 'read'},`
+
+          Object.keys(binding.struct).forEach((bindingKey) => {
+            key += `${bindingKey},${binding.struct[bindingKey].type},`
+          })
+
+          if (binding.shouldCopyResult !== undefined) {
+            key += `${binding.shouldCopyResult},`
+          }
+
+          const cachedBinding = this.renderer.deviceManager.bufferBindings.get(key)
+
+          if (cachedBinding) {
+            return cachedBinding.clone(bindingParams)
+          }
         }
 
         const BufferBindingConstructor = bindingParams.access === 'read_write' ? WritableBufferBinding : BufferBinding
@@ -203,6 +244,12 @@ export class BindGroup {
             })
       }),
     ].flat()
+
+    bindings.forEach((binding) => {
+      this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
+    })
+
+    return bindings
   }
 
   /**
@@ -249,13 +296,21 @@ export class BindGroup {
   resetBindGroup() {
     this.entries.bindGroup = []
     for (const binding of this.bindings) {
-      this.entries.bindGroup.push({
-        binding: this.entries.bindGroup.length,
-        resource: binding.resource,
-      })
+      this.addBindGroupEntry(binding)
     }
 
     this.setBindGroup()
+  }
+
+  /**
+   * Add a {@link BindGroup#entries.bindGroup | bindGroup entry}
+   * @param binding - {@link BindGroupBindingElement | binding} to add
+   */
+  addBindGroupEntry(binding: BindGroupBindingElement) {
+    this.entries.bindGroup.push({
+      binding: this.entries.bindGroup.length,
+      resource: binding.resource,
+    })
   }
 
   /**
@@ -263,15 +318,27 @@ export class BindGroup {
    */
   resetBindGroupLayout() {
     this.entries.bindGroupLayout = []
+    this.layoutCacheKey = ''
+
     for (const binding of this.bindings) {
-      this.entries.bindGroupLayout.push({
-        binding: this.entries.bindGroupLayout.length,
-        ...binding.resourceLayout,
-        visibility: binding.visibility,
-      })
+      this.addBindGroupLayoutEntry(binding)
     }
 
     this.setBindGroupLayout()
+  }
+
+  /**
+   * Add a {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entry}
+   * @param binding - {@link BindGroupBindingElement | binding} to add
+   */
+  addBindGroupLayoutEntry(binding: BindGroupBindingElement) {
+    this.entries.bindGroupLayout.push({
+      binding: this.entries.bindGroupLayout.length,
+      ...binding.resourceLayout,
+      visibility: binding.visibility,
+    })
+
+    this.layoutCacheKey += binding.resourceLayoutCacheKey
   }
 
   /**
@@ -281,10 +348,10 @@ export class BindGroup {
     this.resetEntries()
 
     for (const binding of this.bufferBindings) {
-      binding.buffer = null
+      binding.buffer.reset()
 
       if ('resultBuffer' in binding) {
-        binding.resultBuffer = null
+        binding.resultBuffer.reset()
       }
     }
 
@@ -310,9 +377,8 @@ export class BindGroup {
     // TODO user defined usage?
     // [Kangz](https://github.com/Kangz) said:
     // "In general though COPY_SRC/DST is free (at least in Dawn / Chrome because we add it all the time for our own purpose)."
-    binding.buffer = this.renderer.createBuffer({
+    binding.buffer.createBuffer(this.renderer, {
       label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
-      size: binding.arrayBuffer.byteLength,
       usage:
         binding.bindingType === 'uniform'
           ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
@@ -320,7 +386,7 @@ export class BindGroup {
     })
 
     if ('resultBuffer' in binding) {
-      binding.resultBuffer = this.renderer.createBuffer({
+      binding.resultBuffer.createBuffer(this.renderer, {
         label: this.options.label + ': Result buffer from: ' + binding.label,
         size: binding.arrayBuffer.byteLength,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
@@ -340,21 +406,15 @@ export class BindGroup {
       }
 
       // if it's a buffer binding, create the GPUBuffer
-      if ('buffer' in binding && !binding.buffer) {
-        this.createBindingBuffer(binding)
+      if ('buffer' in binding) {
+        if (!binding.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding)
+        }
       }
 
       // now that everything is ready, fill our entries
-      this.entries.bindGroupLayout.push({
-        binding: this.entries.bindGroupLayout.length,
-        ...binding.resourceLayout,
-        visibility: binding.visibility,
-      })
-
-      this.entries.bindGroup.push({
-        binding: this.entries.bindGroup.length,
-        resource: binding.resource,
-      })
+      this.addBindGroupLayoutEntry(binding)
+      this.addBindGroupEntry(binding)
     }
   }
 
@@ -371,10 +431,18 @@ export class BindGroup {
    * Create a GPUBindGroupLayout and set our {@link bindGroupLayout}
    */
   setBindGroupLayout() {
-    this.bindGroupLayout = this.renderer.createBindGroupLayout({
-      label: this.options.label + ' layout',
-      entries: this.entries.bindGroupLayout,
-    })
+    const bindGroupLayout = this.renderer.deviceManager.bindGroupLayouts.get(this.layoutCacheKey)
+
+    if (bindGroupLayout) {
+      this.bindGroupLayout = bindGroupLayout
+    } else {
+      this.bindGroupLayout = this.renderer.createBindGroupLayout({
+        label: this.options.label + ' layout',
+        entries: this.entries.bindGroupLayout,
+      })
+
+      this.renderer.deviceManager.bindGroupLayouts.set(this.layoutCacheKey, this.bindGroupLayout)
+    }
   }
 
   /**
@@ -403,9 +471,9 @@ export class BindGroup {
           if (!binding.useStruct && binding.bufferElements.length > 1) {
             // we're in a non struct buffer binding with multiple entries
             // that should not happen but that way we're covered
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.bufferElements[index].view)
+            this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.bufferElements[index].view)
           } else {
-            this.renderer.queueWriteBuffer(binding.buffer, 0, binding.arrayBuffer)
+            this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer)
           }
         }
 
@@ -481,28 +549,30 @@ export class BindGroup {
       bindGroupCopy.addBinding(binding)
 
       // if it's a buffer binding without a GPUBuffer, create it now
-      if ('buffer' in binding && !binding.buffer) {
-        bindGroupCopy.createBindingBuffer(binding)
+      if ('buffer' in binding) {
+        if (!binding.buffer.GPUBuffer) {
+          this.createBindingBuffer(binding)
+        }
+
+        binding.buffer.consumers.add(bindGroupCopy.uuid)
+
+        if ('resultBuffer' in binding) {
+          binding.resultBuffer.consumers.add(bindGroupCopy.uuid)
+        }
       }
 
       // if we should create a new bind group layout, fill it
       if (!keepLayout) {
-        bindGroupCopy.entries.bindGroupLayout.push({
-          binding: bindGroupCopy.entries.bindGroupLayout.length,
-          ...binding.resourceLayout,
-          visibility: binding.visibility,
-        })
+        bindGroupCopy.addBindGroupLayoutEntry(binding)
       }
 
-      bindGroupCopy.entries.bindGroup.push({
-        binding: bindGroupCopy.entries.bindGroup.length,
-        resource: binding.resource,
-      } as GPUBindGroupEntry)
+      bindGroupCopy.addBindGroupEntry(binding)
     }
 
     // if we should copy the given bind group layout
     if (keepLayout) {
       bindGroupCopy.entries.bindGroupLayout = [...this.entries.bindGroupLayout]
+      bindGroupCopy.layoutCacheKey = this.layoutCacheKey
     }
 
     bindGroupCopy.setBindGroupLayout()
@@ -521,14 +591,20 @@ export class BindGroup {
     for (const binding of this.bufferBindings) {
       if ('buffer' in binding) {
         this.renderer.removeBuffer(binding.buffer)
-        binding.buffer?.destroy()
-        binding.buffer = null
+
+        binding.buffer.consumers.delete(this.uuid)
+        if (!binding.buffer.consumers.size) {
+          binding.buffer.destroy()
+        }
       }
 
       if ('resultBuffer' in binding) {
         this.renderer.removeBuffer(binding.resultBuffer)
-        binding.resultBuffer?.destroy()
-        binding.resultBuffer = null
+
+        binding.resultBuffer.consumers.delete(this.uuid)
+        if (!binding.resultBuffer.consumers.size) {
+          binding.resultBuffer.destroy()
+        }
       }
     }
 

@@ -12,7 +12,7 @@ class PlaneGeometry extends IndexedGeometry {
     vertexBuffers = [],
     topology
   } = {}) {
-    super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers });
+    super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
     this.type = "PlaneGeometry";
     widthSegments = Math.floor(widthSegments);
     heightSegments = Math.floor(heightSegments);

@@ -1,0 +1,28 @@
+#page {
+  display: flex;
+  align-items: center;
+}
+
+#switch-plane {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+#planes {
+  display: grid;
+  grid-template-columns: repeat(2, [col-start] 1fr);
+  column-gap: 25vw;
+  row-gap: 25vh;
+  width: 100%;
+  align-items: center;
+}
+
+#first-plane {
+  aspect-ratio: 0.5;
+  margin: 0 15%;
+}
+
+#second-plane {
+  aspect-ratio: 1.5;
+}

@@ -59,7 +59,7 @@ export class PlaneGeometry extends IndexedGeometry {
     topology,
   }: PlaneGeometryParams = {}) {
     // plane geometries vertices are defined in the clockwise order
-    super({ verticesOrder: 'cw', topology, instancesCount, vertexBuffers })
+    super({ verticesOrder: 'cw', topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true })
 
     this.type = 'PlaneGeometry'
 

@@ -189,8 +189,12 @@ export class ComputeMaterial extends Material {
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
     for (const bindGroup of this.bindGroups) {
       bindGroup.bufferBindings.forEach((binding: WritableBufferBinding) => {
-        if (binding.shouldCopyResult && binding.resultBuffer.mapState === 'unmapped') {
-          commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
+        if (binding.shouldCopyResult) {
+          this.renderer.copyBufferToBuffer({
+            srcBuffer: binding.buffer,
+            dstBuffer: binding.resultBuffer,
+            commandEncoder,
+          })
         }
       })
     }
@@ -213,10 +217,10 @@ export class ComputeMaterial extends Material {
   }): Promise<Float32Array> {
     const binding = this.getBufferBindingByName(bindingName)
 
-    if (binding && 'resultBuffer' in binding && binding.resultBuffer.mapState === 'unmapped') {
+    if (binding && 'resultBuffer' in binding) {
       const result = await this.getBufferResult(binding.resultBuffer)
 
-      if (bufferElementName) {
+      if (bufferElementName && result.length) {
         return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName })
       } else {
         return result

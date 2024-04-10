@@ -1,5 +1,6 @@
 /// <reference types="dist" />
 import { WGSLVariableType } from '../core/bindings/utils';
+import { Buffer } from '../core/buffers/Buffer';
 /**
  * Parameters used to create a {@link VertexBufferAttribute}
  */
@@ -39,9 +40,18 @@ export interface VertexBufferAttribute extends VertexBufferAttributeParams {
     verticesStride: number;
 }
 /**
+ * Describe the base of a geometry buffer, which is made of a {@link core/buffers/Buffer.Buffer | Buffer} and a typed array.
+ */
+export interface GeometryBuffer {
+    /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
+    array: Float32Array | Uint16Array | Uint32Array;
+    /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
+    buffer: Buffer;
+}
+/**
  * A {@link VertexBuffer} is an object regrouping one or multiple {@link VertexBufferAttribute} into a single array and its associated {@link GPUBuffer}
  */
-export interface VertexBuffer {
+export interface VertexBuffer extends GeometryBuffer {
     /** The name of the {@link VertexBuffer} */
     name: string;
     /** Whether this {@link VertexBuffer} holds data relative to vertices or instances */
@@ -53,9 +63,7 @@ export interface VertexBuffer {
     /** Array of {@link VertexBufferAttribute} used by this {@link VertexBuffer} */
     attributes: VertexBufferAttribute[];
     /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
-    array?: Float32Array;
-    /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
-    buffer?: GPUBuffer;
+    array: null | Float32Array;
 }
 /**
  * Parameters used to create a {@link VertexBuffer}
@@ -67,6 +75,8 @@ export interface VertexBufferParams {
     name?: string;
     /** Array of {@link VertexBufferAttribute} to be used by this {@link VertexBuffer} */
     attributes?: VertexBufferAttributeParams[];
+    /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
+    buffer?: Buffer;
 }
 /**
  * Options used to create a geometry
@@ -80,6 +90,8 @@ export interface GeometryOptions {
     topology: GPUPrimitiveTopology;
     /** Array of {@link VertexBufferParams} used to create {@link VertexBuffer} on geometry creation */
     vertexBuffers: VertexBufferParams[];
+    /** Whether to map the {@link VertexBuffer#buffer | vertex buffers} at creation. */
+    mapBuffersAtCreation: boolean;
 }
 /** Parameters used to create a geometry */
 export type GeometryParams = Partial<GeometryOptions>;

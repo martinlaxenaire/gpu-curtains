@@ -1,5 +1,4 @@
-import { BufferElement, BufferElementParams, bytesPerSlot } from './BufferElement'
-import { throwWarning } from '../../../utils/utils'
+import { BufferElement, BufferElementParams, bytesPerRow, bytesPerSlot } from './BufferElement'
 
 /**
  * Parameters used to create a {@link BufferArrayElement}
@@ -28,7 +27,7 @@ export class BufferArrayElement extends BufferElement {
     super({ name, key, type })
 
     this.arrayLength = arrayLength
-    this.numElements = this.arrayLength / this.bufferLayout.numElements
+    this.numElements = Math.ceil(this.arrayLength / this.bufferLayout.numElements)
   }
 
   /**

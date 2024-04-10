@@ -1,4 +1,5 @@
 import { BufferBinding, BufferBindingParams } from './BufferBinding'
+import { Buffer } from '../buffers/Buffer'
 
 /**
  * Parameters used to create a {@link WritableBufferBinding}
@@ -17,7 +18,7 @@ export class WritableBufferBinding extends BufferBinding {
   /** Flag indicating whether whe should automatically copy the {@link buffer | GPU buffer} content into our {@link resultBuffer | result GPU buffer} */
   shouldCopyResult: boolean
   /** The result GPUBuffer */
-  resultBuffer: GPUBuffer | null
+  resultBuffer: Buffer
   /** Options used to create this {@link WritableBufferBinding} */
   options: WritableBufferBindingParams
 
@@ -46,8 +47,9 @@ export class WritableBufferBinding extends BufferBinding {
     }
 
     this.shouldCopyResult = shouldCopyResult
+    this.cacheKey += `${shouldCopyResult},`
 
     // can be used as our buffer copy destination
-    this.resultBuffer = null
+    this.resultBuffer = new Buffer()
   }
 }

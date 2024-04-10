@@ -236,10 +236,16 @@ export class BufferElement {
       nextPositionAvailable.byte += nextPositionAvailable.byte % align
     }
 
-    // in the case of a binding that could fit on one row
-    // but we don't have space on the current row for this binding element
-    // go to next row
     if (size <= bytesPerRow && nextPositionAvailable.byte + size > bytesPerRow) {
+      // in the case of a binding that could fit on one row
+      // but we don't have space on the current row for this binding element
+      // go to next row
+      nextPositionAvailable.row += 1
+      nextPositionAvailable.byte = 0
+    } else if (size > bytesPerRow && nextPositionAvailable.byte > bytesPerRow) {
+      // there's also the case where the binding size is too big
+      // and we have already padded it above
+      // just go to next row as well
       nextPositionAvailable.row += 1
       nextPositionAvailable.byte = 0
     }
@@ -328,6 +334,22 @@ export class BufferElement {
   }
 
   /**
+   * Set the {@link view} value from an array with pad applied
+   * @param value - array to use
+   */
+  setValueFromArrayWithPad(value: number[]) {
+    for (
+      let i = 0, offset = 0;
+      i < this.view.length;
+      i += this.bufferLayout.pad[0] + this.bufferLayout.pad[1], offset++
+    ) {
+      for (let j = 0; j < this.bufferLayout.pad[0]; j++) {
+        this.view[i + j] = value[i + j - offset]
+      }
+    }
+  }
+
+  /**
    * Update the {@link view} based on the new value
    * @param value - new value to use
    */
@@ -343,7 +365,11 @@ export class BufferElement {
         } else if ((value as Quat | Mat4).elements) {
           return this.setValueFromMat4OrQuat
         } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-          return this.setValueFromArray
+          if (!this.bufferLayout.pad) {
+            return this.setValueFromArray
+          } else {
+            return this.setValueFromArrayWithPad
+          }
         } else {
           throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`)
         }

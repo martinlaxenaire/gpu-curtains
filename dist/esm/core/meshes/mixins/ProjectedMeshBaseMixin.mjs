@@ -135,26 +135,18 @@ function ProjectedMeshBaseMixin(Base) {
         label: "Matrices",
         struct: {
           model: {
-            name: "model",
-            type: "mat4x4f",
-            value: this.modelMatrix
-          },
-          world: {
-            name: "world",
             type: "mat4x4f",
             value: this.worldMatrix
           },
           modelView: {
             // model view matrix (world matrix multiplied by camera view matrix)
-            name: "modelView",
             type: "mat4x4f",
             value: this.modelViewMatrix
-          },
-          modelViewProjection: {
-            name: "modelViewProjection",
-            type: "mat4x4f",
-            value: this.modelViewProjectionMatrix
           }
+          // modelViewProjection: {
+          //   type: 'mat4x4f',
+          //   value: this.modelViewProjectionMatrix,
+          // },
         }
       };
       if (!meshParameters.uniforms)
@@ -242,7 +234,7 @@ function ProjectedMeshBaseMixin(Base) {
      * @param pass - current render pass
      */
     onRenderPass(pass) {
-      if (!this.material.ready)
+      if (!this.ready)
         return;
       this._onRenderCallback && this._onRenderCallback();
       if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled) {

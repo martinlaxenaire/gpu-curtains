@@ -217,7 +217,6 @@ export class RenderMaterial extends Material {
       this.texturesBindGroup.createBindGroup()
 
       this.bindGroups.push(this.texturesBindGroup)
-      this.texturesBindGroup.consumers.add(this.uuid)
     }
 
     // then uniforms
@@ -227,7 +226,6 @@ export class RenderMaterial extends Material {
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
-        bindGroup.consumers.add(this.uuid)
       }
     }
   }

@@ -84,11 +84,6 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   setShaders(): void
 
   /**
-   * Override {@link MeshBaseClass} method to add the domFrustum
-   */
-  computeGeometry(): void
-
-  /**
    * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
    * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
    */
@@ -316,30 +311,24 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      */
     setMaterial(meshParameters: RenderMaterialParams) {
       // add matrices uniforms
+      // https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram
+      // https://doc.babylonjs.com/features/featuresDeepDive/materials/shaders/introToShaders#built-in-variables
       const matricesUniforms = {
         label: 'Matrices',
         struct: {
           model: {
-            name: 'model',
-            type: 'mat4x4f',
-            value: this.modelMatrix,
-          },
-          world: {
-            name: 'world',
             type: 'mat4x4f',
             value: this.worldMatrix,
           },
           modelView: {
             // model view matrix (world matrix multiplied by camera view matrix)
-            name: 'modelView',
             type: 'mat4x4f',
             value: this.modelViewMatrix,
           },
-          modelViewProjection: {
-            name: 'modelViewProjection',
-            type: 'mat4x4f',
-            value: this.modelViewProjectionMatrix,
-          },
+          // modelViewProjection: {
+          //   type: 'mat4x4f',
+          //   value: this.modelViewProjectionMatrix,
+          // },
         },
       }
 
@@ -445,7 +434,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      * @param pass - current render pass
      */
     onRenderPass(pass: GPURenderPassEncoder) {
-      if (!this.material.ready) return
+      if (!this.ready) return
 
       this._onRenderCallback && this._onRenderCallback()
 

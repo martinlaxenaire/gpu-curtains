@@ -142,16 +142,12 @@ export class GPUCameraRenderer extends GPURenderer {
    * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
    */
   setCameraBindGroupAndBinding() {
+    // TODO camera position?
     this.cameraBufferBinding = new BufferBinding({
       label: 'Camera',
       name: 'camera',
       visibility: 'vertex',
       struct: {
-        model: {
-          // camera model matrix
-          type: 'mat4x4f',
-          value: this.camera.modelMatrix,
-        },
         view: {
           // camera view matrix
           type: 'mat4x4f',
@@ -170,6 +166,8 @@ export class GPUCameraRenderer extends GPURenderer {
       label: 'Camera Uniform bind group',
       bindings: [this.cameraBufferBinding],
     })
+
+    this.cameraBindGroup.consumers.add(this.uuid)
   }
 
   /**

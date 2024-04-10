@@ -55,10 +55,6 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      */
     setShaders(): void;
     /**
-     * Override {@link MeshBaseClass} method to add the domFrustum
-     */
-    computeGeometry(): void;
-    /**
      * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */

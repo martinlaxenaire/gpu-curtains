@@ -166,10 +166,12 @@ class Material {
       });
       this.processBindGroupBindings(inputsBindGroup);
       this.inputsBindGroups.push(inputsBindGroup);
+      inputsBindGroup.consumers.add(this.uuid);
     }
     this.options.bindGroups?.forEach((bindGroup) => {
       this.processBindGroupBindings(bindGroup);
       this.inputsBindGroups.push(bindGroup);
+      bindGroup.consumers.add(this.uuid);
     });
   }
   /**
@@ -206,21 +208,18 @@ class Material {
       this.texturesBindGroup.setIndex(this.bindGroups.length);
       this.texturesBindGroup.createBindGroup();
       this.bindGroups.push(this.texturesBindGroup);
-      this.texturesBindGroup.consumers.add(this.uuid);
     }
     for (const bindGroup of this.inputsBindGroups) {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length);
         bindGroup.createBindGroup();
         this.bindGroups.push(bindGroup);
-        bindGroup.consumers.add(this.uuid);
       }
     }
     this.options.bindGroups?.forEach((bindGroup) => {
       if (!bindGroup.shouldCreateBindGroup && !this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         bindGroup.setIndex(this.bindGroups.length);
         this.bindGroups.push(bindGroup);
-        bindGroup.consumers.add(this.uuid);
       }
       if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         this.texturesBindGroups.push(bindGroup);
@@ -350,6 +349,7 @@ class Material {
         label: this.options.label + ": Textures bind group"
       })
     );
+    this.texturesBindGroup.consumers.add(this.uuid);
     this.options.textures?.forEach((texture) => {
       this.addTexture(texture);
     });
@@ -419,20 +419,17 @@ class Material {
   }
   /* BUFFER RESULTS */
   /**
-   * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
-   * @param buffer - {@link GPUBuffer} to map
+   * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * @param buffer - {@link Buffer} to use for mapping
    * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
    */
   async getBufferResult(buffer) {
-    await buffer.mapAsync(GPUMapMode.READ);
-    const result = new Float32Array(buffer.getMappedRange().slice(0));
-    buffer.unmap();
-    return result;
+    return await buffer.mapBufferAsync();
   }
   /**
-   * Map the content of a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-   * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+   * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
    * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
    */
@@ -448,9 +445,9 @@ class Material {
     }
   }
   /**
-   * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
    * @param parameters - parameters used to get the result
-   * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+   * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
    * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
    * @returns - {@link Float32Array} holding {@link GPUBuffer} data
    */
