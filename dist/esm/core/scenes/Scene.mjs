@@ -1,11 +1,13 @@
 import { isRenderer } from '../renderers/utils.mjs';
+import { Object3D } from '../objects3D/Object3D.mjs';
 
-class Scene {
+class Scene extends Object3D {
   /**
    * Scene constructor
    * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
    */
   constructor({ renderer }) {
+    super();
     renderer = renderer && renderer.renderer || renderer;
     isRenderer(renderer, "Scene");
     this.renderer = renderer;
@@ -16,28 +18,31 @@ class Scene {
       /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
       renderTarget: [],
       /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
-      screen: [
-        // add our basic scene entry
-        {
-          renderPass: this.renderer.renderPass,
-          renderTexture: null,
-          onBeforeRenderPass: null,
-          onAfterRenderPass: null,
-          element: null,
-          // explicitly set to null
-          stack: {
-            unProjected: {
-              opaque: [],
-              transparent: []
-            },
-            projected: {
-              opaque: [],
-              transparent: []
-            }
-          }
-        }
-      ]
+      screen: []
     };
+  }
+  /**
+   * Set the main {@link Renderer} render pass entry.
+   */
+  setMainRenderPassEntry() {
+    this.renderPassEntries.screen.push({
+      renderPass: this.renderer.renderPass,
+      renderTexture: null,
+      onBeforeRenderPass: null,
+      onAfterRenderPass: null,
+      element: null,
+      // explicitly set to null
+      stack: {
+        unProjected: {
+          opaque: [],
+          transparent: []
+        },
+        projected: {
+          opaque: [],
+          transparent: []
+        }
+      }
+    });
   }
   /**
    * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
@@ -120,7 +125,7 @@ class Scene {
   }
   /**
    * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-   * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
+   * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
    * @param mesh - Mesh to add
    */
   addMesh(mesh) {
@@ -130,6 +135,9 @@ class Scene {
     similarMeshes.sort((a, b) => {
       return a.renderOrder - b.renderOrder || a.material.pipelineEntry.index - b.material.pipelineEntry.index || a.index - b.index;
     });
+    if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
+      mesh.parent = this;
+    }
   }
   /**
    * Remove a Mesh from our {@link Scene}
@@ -141,6 +149,9 @@ class Scene {
       projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
     } else {
       projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+    }
+    if ("parent" in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
+      mesh.parent = null;
     }
   }
   /**
@@ -305,7 +316,7 @@ class Scene {
       for (const mesh of renderPassEntry.stack.unProjected.opaque) {
         mesh.render(pass);
       }
-      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+      for (const mesh of renderPassEntry.stack.unProjected.transparent) {
         mesh.render(pass);
       }
       if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
@@ -342,6 +353,7 @@ class Scene {
       computePass.copyBufferToResult(commandEncoder);
       this.renderer.pipelineManager.resetCurrentPipeline();
     }
+    this.updateMatrixStack();
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {

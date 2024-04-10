@@ -66,9 +66,9 @@ function ProjectedMeshBaseMixin(Base) {
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      let { shaders } = this.options;
+      const { shaders } = this.options;
       if (!shaders) {
-        shaders = {
+        this.options.shaders = {
           vertex: {
             code: default_projected_vsWgsl,
             entryPoint: "main"
@@ -215,29 +215,24 @@ function ProjectedMeshBaseMixin(Base) {
     }
     /* RENDER */
     /**
-     * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
-     * First, we update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
+     * Update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
      * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
-     * Finally we call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
+     * This is called before rendering any objects by the {@link core/scenes/Scene.Scene | Scene}.
      */
-    onBeforeRenderPass() {
-      this.updateMatrixStack();
+    updateMatrixStack() {
+      this.ready && this._onRenderCallback && this._onRenderCallback();
+      super.updateMatrixStack();
       if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
         this.domFrustum.computeProjectedToDocumentCoords();
         this.domFrustum.shouldUpdate = false;
       }
-      super.onBeforeRenderPass();
     }
     /**
      * Only render the Mesh if it is in view frustum.
-     * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
      * @param pass - current render pass
      */
     onRenderPass(pass) {
-      if (!this.ready)
-        return;
-      this._onRenderCallback && this._onRenderCallback();
-      if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled) {
+      if (this.ready && (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled)) {
         this.material.render(pass);
         this.geometry.render(pass);
       }

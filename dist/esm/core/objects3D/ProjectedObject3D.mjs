@@ -50,14 +50,14 @@ class ProjectedObject3D extends Object3D {
       ...this.matrices,
       modelView: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => {
           this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
         }
       },
       modelViewProjection: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => {
           this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
         }

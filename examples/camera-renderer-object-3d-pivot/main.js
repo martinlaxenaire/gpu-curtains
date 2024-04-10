@@ -99,6 +99,8 @@ window.addEventListener('load', async () => {
   const nbElements = 10
   for (let i = 0; i < nbElements; i++) {
     const pivot = new Object3D()
+    // add the scene as the pivot parent
+    pivot.parent = gpuCameraRenderer.scene
 
     // shrink everything
     pivot.scale.set(0.2)

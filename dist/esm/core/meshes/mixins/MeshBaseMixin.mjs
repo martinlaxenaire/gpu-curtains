@@ -30,7 +30,6 @@ const defaultMeshBaseParams = {
   // geometry
   geometry: new Geometry(),
   // material
-  shaders: {},
   autoRender: true,
   useProjection: false,
   useAsyncPipeline: true,
@@ -109,9 +108,9 @@ function MeshBaseMixin(Base) {
         ...this.options ?? {},
         // merge possible lower options?
         label: label ?? "Mesh " + this.renderer.meshes.length,
-        shaders,
-        texturesOptions,
+        ...shaders !== void 0 ? { shaders } : {},
         ...outputTarget !== void 0 && { outputTarget },
+        texturesOptions,
         ...autoRender !== void 0 && { autoRender },
         ...meshParameters
       };
@@ -232,7 +231,8 @@ function MeshBaseMixin(Base) {
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      if (!this.options.shaders) {
+      const { shaders } = this.options;
+      if (!shaders) {
         this.options.shaders = {
           vertex: {
             code: default_vsWgsl,
@@ -244,7 +244,6 @@ function MeshBaseMixin(Base) {
           }
         };
       } else {
-        const { shaders } = this.options;
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
             code: default_vsWgsl,
@@ -330,6 +329,7 @@ function MeshBaseMixin(Base) {
     setMaterial(meshParameters) {
       this.transparent = meshParameters.transparent;
       this.setShaders();
+      meshParameters.shaders = this.options.shaders;
       this.material = new RenderMaterial(this.renderer, meshParameters);
       this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
     }

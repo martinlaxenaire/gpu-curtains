@@ -73,6 +73,7 @@ class GPUCameraRenderer extends GPURenderer {
         this.onCameraMatricesChanged();
       }
     });
+    this.camera.parent = this.scene;
   }
   /**
    * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
@@ -178,7 +179,6 @@ class GPUCameraRenderer extends GPURenderer {
    * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
    */
   updateCamera() {
-    this.camera?.updateMatrixStack();
     this.setCameraBindGroup();
     this.cameraBindGroup?.update();
   }

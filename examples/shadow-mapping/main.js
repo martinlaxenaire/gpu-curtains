@@ -46,7 +46,7 @@ window.addEventListener('load', async () => {
   })
 
   // get the camera
-  const { camera } = gpuCameraRenderer
+  const { scene, camera } = gpuCameraRenderer
   camera.position.z = systemSize * 4.5
 
   // lerp camera look at based on mouse/touch move
@@ -64,6 +64,7 @@ window.addEventListener('load', async () => {
   window.addEventListener('touchmove', onPointerMove)
 
   const meshesPivot = new Object3D()
+  meshesPivot.parent = scene
   meshesPivot.position.z = systemSize * 0.5
 
   // render our scene manually
@@ -327,6 +328,8 @@ window.addEventListener('load', async () => {
   const planeGeometry = new PlaneGeometry()
 
   const boxPivot = new Object3D()
+  boxPivot.parent = scene
+
   const aspectRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
   boxPivot.scale.set(systemSize * 2 * aspectRatio, systemSize * 2, systemSize * 2)
 

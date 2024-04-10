@@ -51,12 +51,15 @@ window.addEventListener('load', async () => {
   })
 
   // get the camera
-  const { camera } = gpuCameraRenderer
+  const { scene, camera } = gpuCameraRenderer
 
   // create a camera pivot
   // so we can make the camera orbit while preserving a custom lookAt
   const cameraPivot = new Object3D()
+  cameraPivot.parent = scene
+
   const objectsPivot = new Object3D()
+  objectsPivot.parent = scene
 
   camera.parent = cameraPivot
   camera.position.z = systemSize.z * 2.5

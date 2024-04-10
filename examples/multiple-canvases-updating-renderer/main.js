@@ -51,6 +51,8 @@ window.addEventListener('load', async () => {
   for (let i = 0; i < 15; i++) {
     // create a different pivot for each satellite
     const pivot = new Object3D()
+    // set back renderer scene as default parent
+    pivot.parent = gpuBackCameraRenderer.scene
 
     // set the quaternion axis order
     pivot.quaternion.setAxisOrder('ZYX')
@@ -96,10 +98,16 @@ window.addEventListener('load', async () => {
       // switching renderers at runtime based on depth position!
       if (lastWorldPosition.z <= 0 && currentWorldPosition.z > 0) {
         cubeMesh.setRenderer(gpuFrontCameraRenderer)
+        // theoritically we should update the pivot parent as well
+        // but since the scenes matrix are the same, not point in doing that
+        // pivot.parent = gpuFrontCameraRenderer.scene
       }
 
       if (lastWorldPosition.z >= 0 && currentWorldPosition.z < 0) {
         cubeMesh.setRenderer(gpuBackCameraRenderer)
+        // theoritically we should update the pivot parent as well
+        // but since the scenes matrix are the same, not point in doing that
+        // pivot.parent = gpuBackCameraRenderer.scene
       }
 
       // update last world position for next render depth comparison

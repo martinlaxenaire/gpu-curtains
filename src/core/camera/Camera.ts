@@ -122,14 +122,14 @@ export class Camera extends Object3D {
       ...this.matrices,
       view: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => {
           this.viewMatrix.copy(this.worldMatrix).invert()
         },
       },
       projection: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => this.updateProjectionMatrix(),
       },
     }

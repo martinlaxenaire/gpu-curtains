@@ -41,10 +41,6 @@ window.addEventListener('load', async () => {
 
     stats.begin()
 
-    // for (const mesh of meshes) {
-    //   mesh.updateMatrixStack()
-    // }
-
     gpuDeviceManager.render()
     stats.end()
   }
@@ -62,12 +58,11 @@ window.addEventListener('load', async () => {
   console.time('creation time')
   let createdMeshes = 0
   let nbMeshes = 3_000
-  //let nbMeshes = 100
 
   const addMesh = (index) => {
     const mesh = new Mesh(gpuCameraRenderer, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
-      // frustumCulled: false, // you can also gain a few fps without checking for frustum
+      frustumCulled: false, // you can also gain a few fps without checking for frustum
     })
 
     mesh.position.x = Math.random() * systemSize * 2 * aspectRatio - systemSize * aspectRatio

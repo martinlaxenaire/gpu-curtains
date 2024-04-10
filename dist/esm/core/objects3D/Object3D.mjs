@@ -8,7 +8,7 @@ class Object3D {
    * Object3D constructor
    */
   constructor() {
-    this.parent = null;
+    this._parent = null;
     this.children = [];
     Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
     this.setMatrices();
@@ -28,6 +28,9 @@ class Object3D {
   set parent(value) {
     if (this.parent) {
       this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+    }
+    if (value) {
+      this.shouldUpdateWorldMatrix();
     }
     this._parent = value;
     this._parent?.children.push(this);
@@ -153,12 +156,12 @@ class Object3D {
     this.matrices = {
       model: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => this.updateModelMatrix()
       },
       world: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => this.updateWorldMatrix()
       }
     };
@@ -247,9 +250,6 @@ class Object3D {
    * Check at each render whether we should update our matrices, and update them if needed
    */
   updateMatrixStack() {
-    if (this.parent && this.parent.constructor.name === "Object3D") {
-      this.parent.updateMatrixStack();
-    }
     const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
     if (matrixShouldUpdate) {
       for (const matrixName in this.matrices) {
@@ -259,6 +259,9 @@ class Object3D {
         }
       }
       this.onAfterMatrixStackUpdate();
+    }
+    for (const child of this.children) {
+      child.updateMatrixStack();
     }
   }
 }

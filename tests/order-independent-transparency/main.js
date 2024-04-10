@@ -43,9 +43,11 @@ window.addEventListener('load', async () => {
   })
 
   // get the camera
-  const { camera } = gpuCameraRenderer
+  const { scene, camera } = gpuCameraRenderer
 
   const cameraPivot = new Object3D()
+  cameraPivot.parent = scene
+
   camera.position.z = 5
   camera.position.x = 2
   camera.parent = cameraPivot

@@ -100,12 +100,12 @@ window.addEventListener('load', async () => {
   `
 
   const fullscreenPlane = new FullscreenPlane(gpuCurtains, {
+    label: 'Full screen plane',
     shaders: {
       fragment: {
         code: shader,
       },
     },
-    transparent: true,
     uniforms: {
       frames: {
         struct: {

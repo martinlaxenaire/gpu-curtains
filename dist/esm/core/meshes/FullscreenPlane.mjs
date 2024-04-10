@@ -27,6 +27,9 @@ class FullscreenPlane extends MeshBaseMixin(class {
       });
     }
     parameters.depthWriteEnabled = false;
+    if (!parameters.label) {
+      parameters.label = "FullscreenQuadMesh";
+    }
     super(renderer, null, { geometry, ...parameters });
     this.size = {
       document: {

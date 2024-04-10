@@ -238,6 +238,8 @@
 
         // now the satellites
         const nbSatellites = 25
+        console.log(gpuCurtains, sphereMesh)
+
         for (let i = 0; i < nbSatellites; i++) {
           const satelliteMesh = new DOMMesh(gpuCurtains, '#sphere', {
             label: 'Cube ' + i,
@@ -247,6 +249,8 @@
 
           // create a different pivot for each satellite
           const pivot = new Object3D()
+          // add the scene as the pivot parent
+          pivot.parent = gpuCurtains.renderer.scene
 
           // random rotation speed
           const pivotRotationSpeed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)

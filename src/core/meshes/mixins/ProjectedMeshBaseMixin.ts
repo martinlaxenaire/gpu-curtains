@@ -234,10 +234,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      let { shaders } = this.options
+      const { shaders } = this.options
 
       if (!shaders) {
-        shaders = {
+        this.options.shaders = {
           vertex: {
             code: default_projected_vsWgsl,
             entryPoint: 'main',
@@ -414,8 +414,13 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     /**
      * Update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
      * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
+     * This is called before rendering any objects by the {@link core/scenes/Scene.Scene | Scene}.
      */
     updateMatrixStack() {
+      // since we're going to update the matrix stack
+      // let's call onRender callback here to get fresh values if needed
+      this.ready && this._onRenderCallback && this._onRenderCallback()
+
       super.updateMatrixStack()
 
       if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
@@ -425,26 +430,11 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     }
 
     /**
-     * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
-     * {@link updateMatrixStack | Update matrices} and call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
-     */
-    // onBeforeRenderPass() {
-    //   this.updateMatrixStack()
-    //
-    //   super.onBeforeRenderPass()
-    // }
-
-    /**
      * Only render the Mesh if it is in view frustum.
-     * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
      * @param pass - current render pass
      */
     onRenderPass(pass: GPURenderPassEncoder) {
-      if (!this.ready) return
-
-      this._onRenderCallback && this._onRenderCallback()
-
-      if ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulled) {
+      if (this.ready && ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulled)) {
         // render ou material
         this.material.render(pass)
         // then render our geometry

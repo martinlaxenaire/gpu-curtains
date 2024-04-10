@@ -74,6 +74,9 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
 
     // we don't want to write to the depth buffer for fullscreen quads
     parameters.depthWriteEnabled = false
+    if (!parameters.label) {
+      parameters.label = 'FullscreenQuadMesh'
+    }
 
     // @ts-ignore
     super(renderer, null, { geometry, ...parameters })

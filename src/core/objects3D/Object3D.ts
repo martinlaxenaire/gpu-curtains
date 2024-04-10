@@ -69,7 +69,7 @@ export class Object3D {
    * Object3D constructor
    */
   constructor() {
-    this.parent = null
+    this._parent = null
     this.children = []
 
     Object.defineProperty(this as Object3D, 'object3DIndex', { value: objectIndex++ })
@@ -93,8 +93,14 @@ export class Object3D {
    */
   set parent(value: Object3D | null) {
     if (this.parent) {
+      // if we already have a parent, remove it first
       this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex)
     }
+
+    if (value) {
+      this.shouldUpdateWorldMatrix()
+    }
+
     this._parent = value
     this._parent?.children.push(this)
   }
@@ -240,12 +246,12 @@ export class Object3D {
     this.matrices = {
       model: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => this.updateModelMatrix(),
       },
       world: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => this.updateWorldMatrix(),
       },
     }
@@ -337,7 +343,6 @@ export class Object3D {
     // update the children world matrix as well
     for (const child of this.children) {
       child.shouldUpdateWorldMatrix()
-      //child.updateMatrixStack()
     }
   }
 
@@ -352,12 +357,6 @@ export class Object3D {
    * Check at each render whether we should update our matrices, and update them if needed
    */
   updateMatrixStack() {
-    // if it has a parent and it is an Object3D
-    // it means nothing updates it in the render loop, so do it from here
-    // if (this.parent && this.parent.constructor.name === 'Object3D') {
-    //   this.parent.updateMatrixStack()
-    // }
-
     // check if at least one matrix should update
     const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate)
 

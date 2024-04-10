@@ -3118,7 +3118,7 @@
      * Object3D constructor
      */
     constructor() {
-      this.parent = null;
+      this._parent = null;
       this.children = [];
       Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
       this.setMatrices();
@@ -3138,6 +3138,9 @@
     set parent(value) {
       if (this.parent) {
         this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+      }
+      if (value) {
+        this.shouldUpdateWorldMatrix();
       }
       this._parent = value;
       this._parent?.children.push(this);
@@ -3263,12 +3266,12 @@
       this.matrices = {
         model: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => this.updateModelMatrix()
         },
         world: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => this.updateWorldMatrix()
         }
       };
@@ -3357,9 +3360,6 @@
      * Check at each render whether we should update our matrices, and update them if needed
      */
     updateMatrixStack() {
-      if (this.parent && this.parent.constructor.name === "Object3D") {
-        this.parent.updateMatrixStack();
-      }
       const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
       if (matrixShouldUpdate) {
         for (const matrixName in this.matrices) {
@@ -3369,6 +3369,9 @@
           }
         }
         this.onAfterMatrixStackUpdate();
+      }
+      for (const child of this.children) {
+        child.updateMatrixStack();
       }
     }
   }
@@ -4100,14 +4103,14 @@
         ...this.matrices,
         view: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => {
             this.viewMatrix.copy(this.worldMatrix).invert();
           }
         },
         projection: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => this.updateProjectionMatrix()
         }
       };
@@ -6545,7 +6548,6 @@ struct VertexOutput {
     // geometry
     geometry: new Geometry(),
     // material
-    shaders: {},
     autoRender: true,
     useProjection: false,
     useAsyncPipeline: true,
@@ -6624,9 +6626,9 @@ struct VertexOutput {
           ...this.options ?? {},
           // merge possible lower options?
           label: label ?? "Mesh " + this.renderer.meshes.length,
-          shaders,
-          texturesOptions,
+          ...shaders !== void 0 ? { shaders } : {},
           ...outputTarget !== void 0 && { outputTarget },
+          texturesOptions,
           ...autoRender !== void 0 && { autoRender },
           ...meshParameters
         };
@@ -6747,7 +6749,8 @@ struct VertexOutput {
        * Set default shaders if one or both of them are missing
        */
       setShaders() {
-        if (!this.options.shaders) {
+        const { shaders } = this.options;
+        if (!shaders) {
           this.options.shaders = {
             vertex: {
               code: default_vsWgsl,
@@ -6759,7 +6762,6 @@ struct VertexOutput {
             }
           };
         } else {
-          const { shaders } = this.options;
           if (!shaders.vertex || !shaders.vertex.code) {
             shaders.vertex = {
               code: default_vsWgsl,
@@ -6845,6 +6847,7 @@ struct VertexOutput {
       setMaterial(meshParameters) {
         this.transparent = meshParameters.transparent;
         this.setShaders();
+        meshParameters.shaders = this.options.shaders;
         this.material = new RenderMaterial(this.renderer, meshParameters);
         this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
       }
@@ -7158,6 +7161,9 @@ struct VertexOutput {
         });
       }
       parameters.depthWriteEnabled = false;
+      if (!parameters.label) {
+        parameters.label = "FullscreenQuadMesh";
+      }
       super(renderer, null, { geometry, ...parameters });
       this.size = {
         document: {
@@ -7239,14 +7245,14 @@ struct VertexOutput {
         ...this.matrices,
         modelView: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => {
             this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
           }
         },
         modelViewProjection: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => {
             this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
           }
@@ -7417,9 +7423,9 @@ struct VSOutput {
        * Set default shaders if one or both of them are missing
        */
       setShaders() {
-        let { shaders } = this.options;
+        const { shaders } = this.options;
         if (!shaders) {
-          shaders = {
+          this.options.shaders = {
             vertex: {
               code: default_projected_vsWgsl,
               entryPoint: "main"
@@ -7566,29 +7572,24 @@ struct VSOutput {
       }
       /* RENDER */
       /**
-       * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
-       * First, we update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
+       * Update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
        * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
-       * Finally we call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
+       * This is called before rendering any objects by the {@link core/scenes/Scene.Scene | Scene}.
        */
-      onBeforeRenderPass() {
-        this.updateMatrixStack();
+      updateMatrixStack() {
+        this.ready && this._onRenderCallback && this._onRenderCallback();
+        super.updateMatrixStack();
         if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
           this.domFrustum.computeProjectedToDocumentCoords();
           this.domFrustum.shouldUpdate = false;
         }
-        super.onBeforeRenderPass();
       }
       /**
        * Only render the Mesh if it is in view frustum.
-       * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
        * @param pass - current render pass
        */
       onRenderPass(pass) {
-        if (!this.ready)
-          return;
-        this._onRenderCallback && this._onRenderCallback();
-        if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled) {
+        if (this.ready && (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled)) {
           this.material.render(pass);
           this.geometry.render(pass);
         }
@@ -8524,12 +8525,13 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  class Scene {
+  class Scene extends Object3D {
     /**
      * Scene constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
      */
     constructor({ renderer }) {
+      super();
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "Scene");
       this.renderer = renderer;
@@ -8540,28 +8542,31 @@ ${this.shaders.compute.head}`;
         /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
         renderTarget: [],
         /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
-        screen: [
-          // add our basic scene entry
-          {
-            renderPass: this.renderer.renderPass,
-            renderTexture: null,
-            onBeforeRenderPass: null,
-            onAfterRenderPass: null,
-            element: null,
-            // explicitly set to null
-            stack: {
-              unProjected: {
-                opaque: [],
-                transparent: []
-              },
-              projected: {
-                opaque: [],
-                transparent: []
-              }
-            }
-          }
-        ]
+        screen: []
       };
+    }
+    /**
+     * Set the main {@link Renderer} render pass entry.
+     */
+    setMainRenderPassEntry() {
+      this.renderPassEntries.screen.push({
+        renderPass: this.renderer.renderPass,
+        renderTexture: null,
+        onBeforeRenderPass: null,
+        onAfterRenderPass: null,
+        element: null,
+        // explicitly set to null
+        stack: {
+          unProjected: {
+            opaque: [],
+            transparent: []
+          },
+          projected: {
+            opaque: [],
+            transparent: []
+          }
+        }
+      });
     }
     /**
      * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
@@ -8644,7 +8649,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
+     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
      * @param mesh - Mesh to add
      */
     addMesh(mesh) {
@@ -8654,6 +8659,9 @@ ${this.shaders.compute.head}`;
       similarMeshes.sort((a, b) => {
         return a.renderOrder - b.renderOrder || a.material.pipelineEntry.index - b.material.pipelineEntry.index || a.index - b.index;
       });
+      if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
+        mesh.parent = this;
+      }
     }
     /**
      * Remove a Mesh from our {@link Scene}
@@ -8665,6 +8673,9 @@ ${this.shaders.compute.head}`;
         projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
       } else {
         projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+      }
+      if ("parent" in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
+        mesh.parent = null;
       }
     }
     /**
@@ -8829,7 +8840,7 @@ ${this.shaders.compute.head}`;
         for (const mesh of renderPassEntry.stack.unProjected.opaque) {
           mesh.render(pass);
         }
-        for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        for (const mesh of renderPassEntry.stack.unProjected.transparent) {
           mesh.render(pass);
         }
         if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
@@ -8866,6 +8877,7 @@ ${this.shaders.compute.head}`;
         computePass.copyBufferToResult(commandEncoder);
         this.renderer.pipelineManager.resetCurrentPipeline();
       }
+      this.updateMatrixStack();
       for (const renderPassEntryType in this.renderPassEntries) {
         let passDrawnCount = 0;
         this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
@@ -9301,6 +9313,7 @@ ${this.shaders.compute.head}`;
         top: 0,
         left: 0
       };
+      this.setScene();
       this.setTasksQueues();
       this.setRendererObjects();
       if (!isOffscreenCanvas) {
@@ -9508,7 +9521,6 @@ ${this.shaders.compute.head}`;
       if (this.device) {
         this.configureContext();
         this.setMainRenderPasses();
-        this.setScene();
       }
     }
     /**
@@ -9542,6 +9554,7 @@ ${this.shaders.compute.head}`;
         label: this.options.label + " render pass",
         ...this.options.renderPass
       });
+      this.scene.setMainRenderPassEntry();
       this.postProcessingPass = new RenderPass(this, {
         label: this.options.label + " post processing render pass",
         // no need to handle depth or perform MSAA on a fullscreen quad
@@ -10082,6 +10095,7 @@ ${this.shaders.compute.head}`;
           this.onCameraMatricesChanged();
         }
       });
+      this.camera.parent = this.scene;
     }
     /**
      * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
@@ -10187,7 +10201,6 @@ ${this.shaders.compute.head}`;
      * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
      */
     updateCamera() {
-      this.camera?.updateMatrixStack();
       this.setCameraBindGroup();
       this.cameraBindGroup?.update();
     }
@@ -11653,7 +11666,7 @@ struct VSOutput {
       return this.renderers?.map((renderer) => renderer.shaderPasses).flat();
     }
     /**
-     * Get all the created {@link ProjectedMesh | projected meshes}
+     * Get all the created {@link SceneStackedMesh | meshes}
      * @readonly
      */
     get meshes() {
@@ -12115,6 +12128,7 @@ struct VSOutput {
   exports.Binding = Binding;
   exports.Box3 = Box3;
   exports.BoxGeometry = BoxGeometry;
+  exports.Buffer = Buffer;
   exports.BufferBinding = BufferBinding;
   exports.Camera = Camera;
   exports.ComputeMaterial = ComputeMaterial;

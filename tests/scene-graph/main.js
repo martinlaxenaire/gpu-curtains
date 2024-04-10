@@ -1,6 +1,5 @@
 // Check if the scene graph (i.e. parent / children object 3D relationship) works
 // test model / world matrices
-
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const { Object3D, BoxGeometry, SphereGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh } = await import(
@@ -21,27 +20,41 @@ window.addEventListener('load', async () => {
     container: document.querySelector('#canvas'),
   })
 
-  // render it
+  gpuCameraRenderer.camera.position.z = 20
+
+  // create pivots
+  const leftPivot = new Object3D()
+  leftPivot.parent = gpuCameraRenderer.scene
+
+  leftPivot.position.x = -7.5
+  //leftPivot.scale.set(0.5)
+
+  const rightPivot = new Object3D()
+  rightPivot.parent = gpuCameraRenderer.scene
+
+  rightPivot.position.x = 7.5
+  rightPivot.scale.set(0.75)
+
+  // render
   const animate = () => {
+    leftPivot.rotation.z += 0.02
+
+    //rightPivot.rotation.z += 0.02
+
     gpuDeviceManager.render()
     requestAnimationFrame(animate)
   }
 
   animate()
 
-  const centerPivot = new Object3D()
-
+  // left scene
   const centerSphere = new Mesh(gpuCameraRenderer, {
     geometry: new SphereGeometry(),
   })
 
   centerSphere.scale.set(0.25)
 
-  centerSphere.parent = centerPivot
-
-  centerSphere.onRender(() => {
-    centerPivot.rotation.z += 0.02
-  })
+  centerSphere.parent = leftPivot
 
   const orbitCube = new Mesh(gpuCameraRenderer, {
     geometry: new BoxGeometry(),
@@ -75,4 +88,36 @@ window.addEventListener('load', async () => {
   orbitCube2.scale.set(1.25)
   orbitCube2.position.x = 5
   orbitCube2.parent = orbitSphere
+
+  // right scene
+  for (let i = 0; i < 5; i++) {
+    const meshPivot = new Object3D()
+    meshPivot.parent = rightPivot
+    //meshPivot.parent = gpuCameraRenderer.scene
+
+    // set the quaternion axis order
+    meshPivot.quaternion.setAxisOrder('ZYX')
+
+    //meshPivot.rotation.z = (Math.PI * 2 * i) / 5
+    // random init rotation values
+    meshPivot.rotation.y = Math.random() * Math.PI * 2
+    meshPivot.rotation.z = Math.random() * Math.PI * 2
+
+    const rightOrbitCube = new Mesh(gpuCameraRenderer, {
+      geometry: new BoxGeometry(),
+    })
+
+    rightOrbitCube.parent = meshPivot
+
+    rightOrbitCube.position.x = 7.5
+
+    rightOrbitCube.onRender(() => {
+      rightOrbitCube.rotation.x += 0.01
+      rightOrbitCube.rotation.z += 0.01
+
+      meshPivot.rotation.y += 0.01
+    })
+  }
+
+  console.log(gpuCameraRenderer)
 })

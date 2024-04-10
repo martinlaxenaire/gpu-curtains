@@ -50,8 +50,10 @@ export interface GPURendererParams {
 export type DOMProjectedMesh = DOMMesh | Plane;
 /** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
 export type ProjectedMesh = Mesh | DOMProjectedMesh;
-/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing */
-export type RenderedMesh = ProjectedMesh | PingPongPlane | ShaderPass | FullscreenPlane;
+/** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
+export type SceneStackedMesh = ProjectedMesh | FullscreenPlane;
+/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+export type RenderedMesh = SceneStackedMesh | PingPongPlane | ShaderPass;
 /** Any Mesh or Compute pass */
 export type SceneObject = RenderedMesh | ComputePass;
 /**
@@ -92,8 +94,8 @@ export declare class GPURenderer {
     shaderPasses: ShaderPass[];
     /** An array containing all our created {@link RenderTarget} */
     renderTargets: RenderTarget[];
-    /** An array containing all our created {@link ProjectedMesh | projected meshes} */
-    meshes: ProjectedMesh[];
+    /** An array containing all our created {@link SceneStackedMesh | meshes} */
+    meshes: SceneStackedMesh[];
     /** An array containing all our created {@link RenderTexture} */
     renderTextures: RenderTexture[];
     /** Pixel ratio to use for rendering */

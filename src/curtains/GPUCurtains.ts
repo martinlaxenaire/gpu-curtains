@@ -4,7 +4,7 @@ import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 import { PingPongPlane } from './meshes/PingPongPlane'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
-import { GPURenderer, GPURendererParams, ProjectedMesh } from '../core/renderers/GPURenderer'
+import { GPURenderer, GPURendererParams, ProjectedMesh, SceneStackedMesh } from '../core/renderers/GPURenderer'
 import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
@@ -297,10 +297,10 @@ export class GPUCurtains {
   }
 
   /**
-   * Get all the created {@link ProjectedMesh | projected meshes}
+   * Get all the created {@link SceneStackedMesh | meshes}
    * @readonly
    */
-  get meshes(): ProjectedMesh[] {
+  get meshes(): SceneStackedMesh[] {
     return this.renderers?.map((renderer) => renderer.meshes).flat()
   }
 

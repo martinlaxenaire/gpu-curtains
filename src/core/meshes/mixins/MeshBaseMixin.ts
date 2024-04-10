@@ -7,7 +7,7 @@ import { RenderTexture, RenderTextureParams } from '../../textures/RenderTexture
 import { ExternalTextureParams, TextureParams, TextureParent } from '../../../types/Textures'
 import { RenderTarget } from '../../renderPasses/RenderTarget'
 import { GPUCurtains } from '../../../curtains/GPUCurtains'
-import { ProjectedMesh } from '../../renderers/GPURenderer'
+import { ProjectedMesh, SceneStackedMesh } from '../../renderers/GPURenderer'
 import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
@@ -62,7 +62,6 @@ const defaultMeshBaseParams: MeshBaseParams = {
   // geometry
   geometry: new Geometry(),
   // material
-  shaders: {},
   autoRender: true,
   useProjection: false,
   useAsyncPipeline: true,
@@ -491,9 +490,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
         label: label ?? 'Mesh ' + this.renderer.meshes.length,
-        shaders,
-        texturesOptions,
+        ...(shaders !== undefined ? { shaders } : {}),
         ...(outputTarget !== undefined && { outputTarget }),
+        texturesOptions,
         ...(autoRender !== undefined && { autoRender }),
         ...meshParameters,
       }
@@ -551,12 +550,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
      */
     addToScene() {
-      this.renderer.meshes.push(this as unknown as ProjectedMesh)
+      this.renderer.meshes.push(this as unknown as SceneStackedMesh)
 
       this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass)
 
       if (this.#autoRender) {
-        this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
+        this.renderer.scene.addMesh(this as unknown as SceneStackedMesh)
       }
     }
 
@@ -656,7 +655,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      if (!this.options.shaders) {
+      const { shaders } = this.options
+
+      if (!shaders) {
         this.options.shaders = {
           vertex: {
             code: default_vsWgsl,
@@ -668,8 +669,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
           },
         }
       } else {
-        const { shaders } = this.options
-
         if (!shaders.vertex || !shaders.vertex.code) {
           shaders.vertex = {
             code: default_vsWgsl,
@@ -771,6 +770,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.transparent = meshParameters.transparent
 
       this.setShaders()
+      meshParameters.shaders = this.options.shaders
 
       this.material = new RenderMaterial(this.renderer, meshParameters)
       // add eventual textures passed as parameters
