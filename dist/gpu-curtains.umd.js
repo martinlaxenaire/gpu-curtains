@@ -11125,10 +11125,10 @@ struct VSOutput {
       return this._ready;
     }
     set ready(value) {
-      this._ready = value;
-      if (this.DOMMeshReady) {
+      if (value && !this._ready && this.sourcesReady) {
         this._onReadyCallback && this._onReadyCallback();
       }
+      this._ready = value;
     }
     /**
      * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded
@@ -11138,17 +11138,10 @@ struct VSOutput {
       return this._sourcesReady;
     }
     set sourcesReady(value) {
-      this._sourcesReady = value;
-      if (this.DOMMeshReady) {
+      if (value && !this._sourcesReady && this.ready) {
         this._onReadyCallback && this._onReadyCallback();
       }
-    }
-    /**
-     * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its {@link sourcesReady | sources are ready} and its {@link material} and {@link geometry} are ready.
-     * @readonly
-     */
-    get DOMMeshReady() {
-      return this.ready && this.sourcesReady;
+      this._sourcesReady = value;
     }
     /**
      * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}

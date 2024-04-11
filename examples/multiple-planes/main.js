@@ -128,6 +128,7 @@ window.addEventListener('load', async () => {
   }
 
   let planesLoaded = 0
+  let loadComplete = false
 
   const updateLoader = () => {
     document.querySelector('#loader').textContent = `${(planesLoaded * 100) / planeElements.length}%`
@@ -139,12 +140,16 @@ window.addEventListener('load', async () => {
     // check if our plane is defined and use it
     plane
       .onReady(() => {
-        planesLoaded++
-        updateLoader()
+        if (!loadComplete) {
+          planesLoaded++
 
-        // once everything is ready, display everything
-        if (planesLoaded === planes.length) {
-          document.body.classList.add('planes-loaded')
+          updateLoader()
+
+          // once everything is ready, display everything
+          if (planesLoaded === planes.length) {
+            loadComplete = true
+            document.body.classList.add('planes-loaded')
+          }
         }
       })
       .onRender(() => {
@@ -154,7 +159,8 @@ window.addEventListener('load', async () => {
   }
 
   // add our planes and handle them
-  planeElements.forEach((planeEl) => {
+  planeElements.forEach((planeEl, index) => {
+    params.label = 'Plane ' + index
     const plane = new Plane(gpuCurtains, planeEl, params)
     planes.push(plane)
 
@@ -169,6 +175,7 @@ window.addEventListener('load', async () => {
     planeElements = document.querySelectorAll('.plane')
 
     for (let i = planes.length; i < planeElements.length; i++) {
+      params.label = 'Plane ' + i
       const plane = new Plane(gpuCurtains, planeElements[i], params)
       planes.push(plane)
 
