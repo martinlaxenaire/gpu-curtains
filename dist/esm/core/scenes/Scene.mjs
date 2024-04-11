@@ -340,12 +340,28 @@ class Scene extends Object3D {
     this.renderer.pipelineManager.resetCurrentPipeline();
   }
   /**
+   * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance.
+   */
+  onBeforeRender() {
+    for (let i = 0, l = this.renderer.meshes.length; i < l; i++) {
+      this.renderer.meshes[i].onBeforeRenderScene();
+    }
+    this.updateMatrixStack();
+    for (const mesh of this.renderer.meshes) {
+      if ("checkFrustumCulling" in mesh && mesh.visible) {
+        mesh.checkFrustumCulling();
+      }
+    }
+  }
+  /**
    * Render our {@link Scene}
-   * - Render {@link computePassEntries} first
-   * - Then our {@link renderPassEntries}
+   * - Execute {@link onBeforeRender} first
+   * - Then render {@link computePassEntries}
+   * - And finally render our {@link renderPassEntries}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
+    this.onBeforeRender();
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass();
       computePass.render(pass);
@@ -353,7 +369,6 @@ class Scene extends Object3D {
       computePass.copyBufferToResult(commandEncoder);
       this.renderer.pipelineManager.resetCurrentPipeline();
     }
-    this.updateMatrixStack();
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0;
       this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {

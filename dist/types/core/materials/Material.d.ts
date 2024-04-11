@@ -58,8 +58,8 @@ export declare class Material {
     uniforms: Record<string, Record<string, BufferBindingInput>>;
     /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
     storages: Record<string, Record<string, BufferBindingInput>>;
-    /** Array of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
-    inputsBindings: BindGroupBindingElement[];
+    /** Map of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
+    inputsBindings: Map<string, BindGroupBindingElement>;
     /** Array of {@link Texture} handled by this {@link Material} */
     textures: Texture[];
     /** Array of {@link RenderTexture} handled by this {@link Material} */

@@ -201,7 +201,7 @@ window.addEventListener('load', async () => {
 
     let time = i * -30
 
-    cube.onRender(() => {
+    cube.onBeforeRender(() => {
       time++
 
       // move pivot along x axis

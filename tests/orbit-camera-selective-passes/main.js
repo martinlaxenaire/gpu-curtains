@@ -160,7 +160,7 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = Math.random() * 0.025
 
-    mesh.onRender(() => {
+    mesh.onBeforeRender(() => {
       mesh.rotation.y += rotationSpeed
       mesh.rotation.z += rotationSpeed
     })

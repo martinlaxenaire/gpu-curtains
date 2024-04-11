@@ -56,7 +56,7 @@ export class IntroDOMMeshes {
       cubeMesh.userData.shown = false
 
       cubeMesh
-        .onRender(() => {
+        .onBeforeRender(() => {
           cubeMesh.rotation.x += 0.015
         })
         .onAfterResize(updateCubeScaleAndPosition)
@@ -140,7 +140,7 @@ export class IntroDOMMeshes {
 
       sphereMesh.userData.scaleTween.progress(1 - (sphereIndex * Math.PI) / 24)
 
-      sphereMesh.onRender(() => {
+      sphereMesh.onBeforeRender(() => {
         sphereMesh.rotation.y += 0.01
       })
     })

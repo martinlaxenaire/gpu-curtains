@@ -131,32 +131,37 @@ export declare class MeshBaseClass {
   _onAfterRenderCallback: () => void
   /** function assigned to the {@link onAfterResize} callback */
   _onAfterResizeCallback: () => void
+
   /**
-   * Assign a callback function to _onReadyCallback
+   * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
    * @param callback - callback to run when {@link MeshBaseClass} is ready
    * @returns - our Mesh
    */
   onReady: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
+
   /**
-   * Assign a callback function to _onBeforeRenderCallback
-   * @param callback - callback to run just before {@link MeshBaseClass} will be rendered
+   * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+   * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
    * @returns - our Mesh
    */
   onBeforeRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
+
   /**
-   * Assign a callback function to _onRenderCallback
-   * @param callback - callback to run when {@link MeshBaseClass} is rendered
+   * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+   * @param callback - callback to run just before rendering the {@link MeshBaseClass}.
    * @returns - our Mesh
    */
   onRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
+
   /**
-   * Assign a callback function to _onAfterRenderCallback
+   * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
    * @param callback - callback to run just after {@link MeshBaseClass} has been rendered
    * @returns - our Mesh
    */
   onAfterRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
+
   /**
-   * Assign a callback function to _onBeforeRenderCallback
+   * Callback to execute just after a Mesh has been resized.
    * @param callback - callback to run just after {@link MeshBaseClass} has been resized
    * @returns - our Mesh
    */
@@ -314,9 +319,14 @@ export declare class MeshBaseClass {
   resize(boundingRect?: DOMElementBoundingRect): void
 
   /**
+   * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+   */
+  onBeforeRenderScene(): void
+
+  /**
    * Called before rendering the Mesh
    * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-   * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
+   * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
    */
   onBeforeRenderPass(): void
 
@@ -918,7 +928,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* EVENTS */
 
     /**
-     * Assign a callback function to _onReadyCallback
+     * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
      * @param callback - callback to run when {@link MeshBase} is ready
      * @returns - our Mesh
      */
@@ -931,8 +941,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onBeforeRenderCallback
-     * @param callback - callback to run just before {@link MeshBase} will be rendered
+     * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+     * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
      * @returns - our Mesh
      */
     onBeforeRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
@@ -944,8 +954,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onRenderCallback
-     * @param callback - callback to run when {@link MeshBase} is rendered
+     * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+     * @param callback - callback to run just before rendering the {@link MeshBase}
      * @returns - our Mesh
      */
     onRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
@@ -957,7 +967,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onAfterRenderCallback
+     * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
      * @param callback - callback to run just after {@link MeshBase} has been rendered
      * @returns - our Mesh
      */
@@ -970,7 +980,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onAfterResizeCallback
+     * Callback to execute just after a Mesh has been resized.
      * @param callback - callback to run just after {@link MeshBase} has been resized
      * @returns - our Mesh
      */
@@ -985,9 +995,18 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* RENDER */
 
     /**
+     * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+     */
+    onBeforeRenderScene() {
+      if (!this.renderer.ready || !this.ready || !this.visible) return
+
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+    }
+
+    /**
      * Called before rendering the Mesh
      * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
+     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
@@ -995,8 +1014,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready
 
       this.setGeometry()
-
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback()
 
       this.material.onBeforeRender()
     }

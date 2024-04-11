@@ -99,7 +99,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     cubeMesh
-      .onRender(() => {
+      .onBeforeRender(() => {
         cubeMesh.rotation.x += 0.01
       })
       .onAfterResize(updateCubeScaleAndPosition)
@@ -135,7 +135,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     sphereMesh
-      .onRender(() => {
+      .onBeforeRender(() => {
         sphereMesh.rotation.y += 0.01
       })
       .onAfterResize(updateSphereScale)

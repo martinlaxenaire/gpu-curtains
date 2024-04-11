@@ -65,7 +65,7 @@ window.addEventListener('load', async () => {
 
   orbitCube.parent = centerSphere
 
-  orbitCube.onRender(() => {
+  orbitCube.onBeforeRender(() => {
     orbitCube.rotation.y += 0.02
   })
 
@@ -77,7 +77,7 @@ window.addEventListener('load', async () => {
   orbitSphere.position.x = 5
   orbitSphere.parent = orbitCube
 
-  orbitSphere.onRender(() => {
+  orbitSphere.onBeforeRender(() => {
     orbitSphere.rotation.x += 0.02
   })
 
@@ -111,7 +111,7 @@ window.addEventListener('load', async () => {
 
     rightOrbitCube.position.x = 7.5
 
-    rightOrbitCube.onRender(() => {
+    rightOrbitCube.onBeforeRender(() => {
       rightOrbitCube.rotation.x += 0.01
       rightOrbitCube.rotation.z += 0.01
 

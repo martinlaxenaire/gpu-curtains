@@ -212,7 +212,7 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
 
-    cubeMesh.onRender(() => {
+    cubeMesh.onBeforeRender(() => {
       cubeMesh.rotation.y += rotationSpeed
       cubeMesh.rotation.z += rotationSpeed
 

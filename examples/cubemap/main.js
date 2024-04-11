@@ -170,7 +170,7 @@ window.addEventListener('load', async () => {
     mouse.last.copy(mouse.current)
   })
 
-  cubeMap.onRender(() => {
+  cubeMap.onBeforeRender(() => {
     cubeMap.rotation.lerp(targetRotation, 0.15)
   })
 })

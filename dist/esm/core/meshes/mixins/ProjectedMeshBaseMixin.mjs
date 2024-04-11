@@ -112,7 +112,6 @@ function ProjectedMeshBaseMixin(Base) {
       });
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
       this.frustumCulled = this.options.frustumCulled;
-      this.domFrustum.shouldUpdate = this.frustumCulled;
     }
     /* MATERIAL */
     /**
@@ -180,16 +179,6 @@ function ProjectedMeshBaseMixin(Base) {
     get projectedBoundingRect() {
       return this.domFrustum?.projectedBoundingRect;
     }
-    /**
-     * At least one of the matrix has been updated, update according uniforms and frustum
-     */
-    onAfterMatrixStackUpdate() {
-      if (this.material) {
-        this.material.shouldUpdateInputsBindings("matrices");
-      }
-      if (this.domFrustum)
-        this.domFrustum.shouldUpdate = true;
-    }
     /* EVENTS */
     /**
      * Assign a callback function to _onReEnterViewCallback
@@ -215,24 +204,33 @@ function ProjectedMeshBaseMixin(Base) {
     }
     /* RENDER */
     /**
-     * Update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
-     * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
-     * This is called before rendering any objects by the {@link core/scenes/Scene.Scene | Scene}.
+     * Check if the Mesh lies inside the {@link camera} view frustum or not.
      */
-    updateMatrixStack() {
-      this.ready && this._onRenderCallback && this._onRenderCallback();
-      super.updateMatrixStack();
-      if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
-        this.domFrustum.computeProjectedToDocumentCoords();
-        this.domFrustum.shouldUpdate = false;
+    checkFrustumCulling() {
+      if (this.matricesNeedUpdate) {
+        if (this.domFrustum && this.frustumCulled) {
+          this.domFrustum.computeProjectedToDocumentCoords();
+        }
       }
     }
     /**
-     * Only render the Mesh if it is in view frustum.
+     * Tell our matrices bindings to update if needed and call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super.
+     */
+    onBeforeRenderPass() {
+      if (this.material && this.matricesNeedUpdate) {
+        this.material.shouldUpdateInputsBindings("matrices");
+      }
+      super.onBeforeRenderPass();
+    }
+    /**
+     * Render our Mesh if the {@link RenderMaterial} is ready and if it is not frustum culled.
      * @param pass - current render pass
      */
     onRenderPass(pass) {
-      if (this.ready && (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled)) {
+      if (!this.ready)
+        return;
+      this._onRenderCallback && this._onRenderCallback();
+      if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled) {
         this.material.render(pass);
         this.geometry.render(pass);
       }

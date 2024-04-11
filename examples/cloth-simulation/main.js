@@ -639,14 +639,6 @@ window.addEventListener('load', async () => {
 
   const plane = new Plane(gpuCurtains, '#cloth', params)
 
-  // plane.onRender(() => {
-  //   // update cloth vertex buffer with resulting buffer from compute passes
-  //   const vertexBuffer = plane.geometry.getVertexBufferByName('clothAttributes')
-  //   const clothBuffer = computeNormalPass.material.getBindingByName('clothVertex')
-  //
-  //   vertexBuffer.buffer = clothBuffer?.buffer
-  // })
-
   const pointer = new Vec2(Infinity)
   const velocity = new Vec2(0)
   const minVelocity = new Vec2(-100)

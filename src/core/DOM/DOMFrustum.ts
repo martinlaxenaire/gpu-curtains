@@ -54,8 +54,6 @@ export class DOMFrustum {
 
   /** Flag to indicate whether the given {@link projectedBoundingRect} is intersecting our view frustum */
   isIntersecting: boolean
-  /** Flag to indicate whether we should update our {@link projectedBoundingRect} */
-  shouldUpdate: boolean
 
   /**
    * DOMFrustum constructor
@@ -102,7 +100,6 @@ export class DOMFrustum {
     this.onLeaveView = onLeaveView
 
     this.isIntersecting = false
-    this.shouldUpdate = false
   }
 
   /**

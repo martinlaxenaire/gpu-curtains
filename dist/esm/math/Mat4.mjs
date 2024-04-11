@@ -658,8 +658,8 @@ class Mat4 {
     const y = 2 * near / (top - bottom);
     const a = (right + left) / (right - left);
     const b = (top + bottom) / (top - bottom);
-    const c = -(far + near) / (far - near);
-    const d = -2 * far * near / (far - near);
+    const c = -far / (far - near);
+    const d = -far * near / (far - near);
     this.set(
       x,
       0,

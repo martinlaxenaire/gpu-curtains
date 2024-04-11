@@ -186,6 +186,17 @@ export class Camera extends Object3D {
   }
 
   /**
+   * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
+   */
+  updateMatrixStack() {
+    super.updateMatrixStack()
+
+    if (this.matricesNeedUpdate) {
+      this.onMatricesChanged()
+    }
+  }
+
+  /**
    * Get the {@link Camera} {@link fov | field of view}
    */
   get fov(): number {
@@ -301,14 +312,6 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
-   */
-  onAfterMatrixStackUpdate() {
-    // callback because matrices changed
-    this.onMatricesChanged()
-  }
-
-  /**
    * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.<br>
    * Used to translate planes along the Z axis using pixel units as CSS would do.<br>
    * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
@@ -350,12 +353,11 @@ export class Camera extends Object3D {
   /**
    * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
    * @param target - {@link Vec3 | target} to look at
+   * @param position - {@link Vec3 | postion} from which to look at
    */
-  lookAt(target: Vec3 = new Vec3()) {
+  lookAt(target: Vec3 = new Vec3(), position = this.position) {
     // since we know it's a camera, inverse position and target
-    const rotationMatrix = new Mat4().lookAt(this.position, target)
-    this.quaternion.setFromRotationMatrix(rotationMatrix)
-    this.shouldUpdateModelMatrix()
+    super.lookAt(position, target)
   }
 
   /**

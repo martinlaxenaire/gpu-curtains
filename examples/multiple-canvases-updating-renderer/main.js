@@ -85,7 +85,10 @@ window.addEventListener('load', async () => {
     cubeMesh.worldMatrix.getTranslation(currentWorldPosition)
     const lastWorldPosition = currentWorldPosition.clone()
 
-    cubeMesh.onRender(() => {
+    cubeMesh.onAfterRender(() => {
+      // we're using onAfterRender here on purpose:
+      // to avoid flickering when updating a mesh renderer
+
       // update current world position
       cubeMesh.worldMatrix.getTranslation(currentWorldPosition)
 
@@ -98,15 +101,15 @@ window.addEventListener('load', async () => {
       // switching renderers at runtime based on depth position!
       if (lastWorldPosition.z <= 0 && currentWorldPosition.z > 0) {
         cubeMesh.setRenderer(gpuFrontCameraRenderer)
-        // theoritically we should update the pivot parent as well
-        // but since the scenes matrix are the same, not point in doing that
+        // theoritically we should update the mesh pivot parent as well
+        // but since the scenes matrix are the same, no point in doing that
         // pivot.parent = gpuFrontCameraRenderer.scene
       }
 
       if (lastWorldPosition.z >= 0 && currentWorldPosition.z < 0) {
         cubeMesh.setRenderer(gpuBackCameraRenderer)
-        // theoritically we should update the pivot parent as well
-        // but since the scenes matrix are the same, not point in doing that
+        // theoritically we should update the mesh pivot parent as well
+        // but since the scenes matrix are the same, no point in doing that
         // pivot.parent = gpuBackCameraRenderer.scene
       }
 

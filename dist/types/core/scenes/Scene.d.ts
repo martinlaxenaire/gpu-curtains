@@ -170,9 +170,14 @@ export declare class Scene extends Object3D {
      */
     renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry): void;
     /**
+     * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance.
+     */
+    onBeforeRender(): void;
+    /**
      * Render our {@link Scene}
-     * - Render {@link computePassEntries} first
-     * - Then our {@link renderPassEntries}
+     * - Execute {@link onBeforeRender} first
+     * - Then render {@link computePassEntries}
+     * - And finally render our {@link renderPassEntries}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder: GPUCommandEncoder): void;

@@ -12,6 +12,8 @@ window.addEventListener('load', async () => {
 
   await gpuCurtains.setDevice()
 
+  console.log(gpuCurtains)
+
   const meshShader = /* wgsl */ `  
     struct VSOutput {
       @builtin(position) position: vec4f,
@@ -84,7 +86,6 @@ window.addEventListener('load', async () => {
   setMouseAspect()
 
   window.addEventListener('pointermove', (e) => {
-    //plane.uniforms.mouse
     mousePosition.copy(plane.mouseToPlaneCoords(new Vec2(e.clientX, e.clientY)))
   })
 

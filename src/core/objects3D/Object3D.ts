@@ -3,6 +3,7 @@ import { Quat } from '../../math/Quat'
 import { Mat4 } from '../../math/Mat4'
 
 let objectIndex = 0
+const tempMatrix = new Mat4()
 
 /** Defines all kind of possible {@link Object3D} matrix types */
 export type Object3DMatricesType = 'model' | 'world'
@@ -65,12 +66,17 @@ export class Object3D {
   /** Index (order of creation) of this {@link Object3D}. Used in the {@link parent} / {@link children} relation. */
   object3DIndex: number
 
+  /** Whether at least one of this {@link Object3D} matrix needs an update. */
+  matricesNeedUpdate: boolean
+
   /**
    * Object3D constructor
    */
   constructor() {
     this._parent = null
     this.children = []
+
+    this.matricesNeedUpdate = false
 
     Object.defineProperty(this as Object3D, 'object3DIndex', { value: objectIndex++ })
 
@@ -307,9 +313,10 @@ export class Object3D {
   /**
    * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
    * @param target - {@link Vec3 | target} to look at
+   * @param position - {@link Vec3 | postion} from which to look at
    */
-  lookAt(target: Vec3 = new Vec3()) {
-    const rotationMatrix = new Mat4().lookAt(target, this.position)
+  lookAt(target: Vec3 = new Vec3(), position = this.position) {
+    const rotationMatrix = tempMatrix.lookAt(target, position)
     this.quaternion.setFromRotationMatrix(rotationMatrix)
     this.shouldUpdateModelMatrix()
   }
@@ -341,39 +348,35 @@ export class Object3D {
     }
 
     // update the children world matrix as well
-    for (const child of this.children) {
-      child.shouldUpdateWorldMatrix()
+    for (let i = 0, l = this.children.length; i < l; i++) {
+      this.children[i].shouldUpdateWorldMatrix()
     }
   }
 
   /**
-   * Callback to run if at least one matrix of the stack has been updated
+   * Check whether at least one of the matrix should be updated
    */
-  onAfterMatrixStackUpdate() {
-    /* will be used by the classes extending Object3D */
+  shouldUpdateMatrices() {
+    this.matricesNeedUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate)
   }
 
   /**
    * Check at each render whether we should update our matrices, and update them if needed
    */
   updateMatrixStack() {
-    // check if at least one matrix should update
-    const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate)
+    this.shouldUpdateMatrices()
 
-    if (matrixShouldUpdate) {
+    if (this.matricesNeedUpdate) {
       for (const matrixName in this.matrices) {
         if (this.matrices[matrixName].shouldUpdate) {
           this.matrices[matrixName].onUpdate()
           this.matrices[matrixName].shouldUpdate = false
         }
       }
-
-      // callback to run if at least one matrix of the stack has been updated
-      this.onAfterMatrixStackUpdate()
     }
 
-    for (const child of this.children) {
-      child.updateMatrixStack()
+    for (let i = 0, l = this.children.length; i < l; i++) {
+      this.children[i].updateMatrixStack()
     }
   }
 }

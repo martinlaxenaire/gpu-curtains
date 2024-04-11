@@ -141,7 +141,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     plane.rotation.z = (index / planeEls.length) * Math.PI * 2
 
     plane
-      .onRender(() => {
+      .onBeforeRender(() => {
         // update rotation based on rotation effect
         plane.rotation.z += rotationEffect / 100
       })

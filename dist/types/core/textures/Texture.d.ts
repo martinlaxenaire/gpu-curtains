@@ -121,7 +121,7 @@ export declare class Texture extends Object3D {
     /**
      * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
      */
-    onAfterMatrixStackUpdate(): void;
+    updateMatrixStack(): void;
     /**
      * Resize our {@link Texture}
      */

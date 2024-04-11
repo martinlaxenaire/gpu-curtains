@@ -504,12 +504,36 @@ export class Scene extends Object3D {
   }
 
   /**
+   * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance.
+   */
+  onBeforeRender() {
+    // execute meshes onBeforeRender callback if needed
+    for (let i = 0, l = this.renderer.meshes.length; i < l; i++) {
+      this.renderer.meshes[i].onBeforeRenderScene()
+    }
+
+    // update matrices
+    this.updateMatrixStack()
+
+    // TODO store projected meshes only?
+    // frustum culling check if needed
+    for (const mesh of this.renderer.meshes) {
+      if ('checkFrustumCulling' in mesh && mesh.visible) {
+        mesh.checkFrustumCulling()
+      }
+    }
+  }
+
+  /**
    * Render our {@link Scene}
-   * - Render {@link computePassEntries} first
-   * - Then our {@link renderPassEntries}
+   * - Execute {@link onBeforeRender} first
+   * - Then render {@link computePassEntries}
+   * - And finally render our {@link renderPassEntries}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {
+    this.onBeforeRender()
+
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass()
       computePass.render(pass)
@@ -519,9 +543,6 @@ export class Scene extends Object3D {
 
       this.renderer.pipelineManager.resetCurrentPipeline()
     }
-
-    // update matrices
-    this.updateMatrixStack()
 
     for (const renderPassEntryType in this.renderPassEntries) {
       let passDrawnCount = 0

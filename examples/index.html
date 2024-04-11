@@ -233,12 +233,11 @@
           sphereMesh.scale.z = sphereMesh.worldScale.y
         }
 
-        sphereMesh.onAfterResize(updateSphereScale).onRender(() => (sphereMesh.rotation.y += 0.01))
+        sphereMesh.onAfterResize(updateSphereScale).onBeforeRender(() => (sphereMesh.rotation.y += 0.01))
         updateSphereScale()
 
         // now the satellites
         const nbSatellites = 25
-        console.log(gpuCurtains, sphereMesh)
 
         for (let i = 0; i < nbSatellites; i++) {
           const satelliteMesh = new DOMMesh(gpuCurtains, '#sphere', {
@@ -293,7 +292,7 @@
             satelliteMesh.lookAt(pivot.position)
           }
 
-          satelliteMesh.onAfterResize(updateSatelliteScale).onRender(() => {
+          satelliteMesh.onAfterResize(updateSatelliteScale).onBeforeRender(() => {
             // rotate the pivot
             pivot.rotation.y += pivotRotationSpeed
           })

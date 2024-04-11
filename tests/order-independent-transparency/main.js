@@ -52,7 +52,7 @@ window.addEventListener('load', async () => {
   camera.position.x = 2
   camera.parent = cameraPivot
 
-  camera.lookAt(new Vec3())
+  camera.lookAt()
 
   // render our scene manually
   const animate = () => {
@@ -221,7 +221,7 @@ window.addEventListener('load', async () => {
 
     transparentPlane.userData.time = 0
 
-    transparentPlane.onRender(() => {
+    transparentPlane.onBeforeRender(() => {
       transparentPlane.position.z = Math.cos(transparentPlane.userData.time * 0.01) * (i + 1)
       transparentPlane.userData.time++
     })

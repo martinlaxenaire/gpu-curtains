@@ -62,7 +62,7 @@ window.addEventListener('load', async () => {
   const addMesh = (index) => {
     const mesh = new Mesh(gpuCameraRenderer, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
-      frustumCulled: false, // you can also gain a few fps without checking for frustum
+      // frustumCulled: false, // you can also gain a few fps without checking for frustum
     })
 
     mesh.position.x = Math.random() * systemSize * 2 * aspectRatio - systemSize * aspectRatio
@@ -71,7 +71,7 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = Math.random() * 0.025
 
-    mesh.onRender(() => {
+    mesh.onBeforeRender(() => {
       mesh.rotation.y += rotationSpeed
       mesh.rotation.z += rotationSpeed
     })
