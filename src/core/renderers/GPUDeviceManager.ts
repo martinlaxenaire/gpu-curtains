@@ -154,13 +154,14 @@ export class GPUDeviceManager {
 
     try {
       this.adapter = await this.gpu?.requestAdapter(this.adapterOptions)
-      ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
-        this.adapterInfos = infos
-      })
     } catch (error) {
       this.onError()
       throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
     }
+
+    ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
+      this.adapterInfos = infos
+    })
   }
 
   /**

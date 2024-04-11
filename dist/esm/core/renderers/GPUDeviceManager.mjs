@@ -59,13 +59,13 @@ class GPUDeviceManager {
     }
     try {
       this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
-      this.adapter?.requestAdapterInfo().then((infos) => {
-        this.adapterInfos = infos;
-      });
     } catch (error) {
       this.onError();
       throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
     }
+    this.adapter?.requestAdapterInfo().then((infos) => {
+      this.adapterInfos = infos;
+    });
   }
   /**
    * Set our {@link device}
