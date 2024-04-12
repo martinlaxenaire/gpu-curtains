@@ -74,11 +74,6 @@ export declare class DOMMesh extends DOMMesh_base {
     get sourcesReady(): boolean;
     set sourcesReady(value: boolean);
     /**
-     * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its {@link sourcesReady | sources are ready} and its {@link material} and {@link geometry} are ready.
-     * @readonly
-     */
-    get DOMMeshReady(): boolean;
-    /**
      * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     addToScene(): void;

@@ -123,6 +123,8 @@ export class GPUCameraRenderer extends GPURenderer {
         this.onCameraMatricesChanged()
       },
     })
+
+    this.camera.parent = this.scene
   }
 
   /**
@@ -181,12 +183,15 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its struct
+   * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
    */
   updateCameraBindings() {
     this.cameraBufferBinding?.shouldUpdateBinding('model')
     this.cameraBufferBinding?.shouldUpdateBinding('view')
     this.cameraBufferBinding?.shouldUpdateBinding('projection')
+
+    // update buffers immediately
+    this.cameraBindGroup?.update()
   }
 
   /**
@@ -234,19 +239,9 @@ export class GPUCameraRenderer extends GPURenderer {
   onResize() {
     super.onResize()
     this.setPerspective()
-    this.updateCameraBindings()
   }
 
   /* RENDER */
-
-  /**
-   * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
-   */
-  updateCamera() {
-    this.camera?.updateMatrixStack()
-    this.setCameraBindGroup()
-    this.cameraBindGroup?.update()
-  }
 
   /**
    * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
@@ -266,13 +261,13 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * {@link updateCamera | Update the camera} and then call our {@link GPURenderer#render | GPURenderer render method}
+   * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {
     if (!this.ready) return
 
-    this.updateCamera()
+    this.setCameraBindGroup()
     super.render(commandEncoder)
   }
 

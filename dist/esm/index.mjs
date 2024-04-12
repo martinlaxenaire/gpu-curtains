@@ -5,6 +5,7 @@ export { BufferBinding } from './core/bindings/BufferBinding.mjs';
 export { SamplerBinding } from './core/bindings/SamplerBinding.mjs';
 export { TextureBinding } from './core/bindings/TextureBinding.mjs';
 export { WritableBufferBinding } from './core/bindings/WritableBufferBinding.mjs';
+export { Buffer } from './core/buffers/Buffer.mjs';
 export { Camera } from './core/camera/Camera.mjs';
 export { ComputePass } from './core/computePasses/ComputePass.mjs';
 export { DOMFrustum } from './core/DOM/DOMFrustum.mjs';

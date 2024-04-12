@@ -46,7 +46,7 @@ window.addEventListener('load', async () => {
   })
 
   // get the camera
-  const { camera } = gpuCameraRenderer
+  const { scene, camera } = gpuCameraRenderer
   camera.position.z = systemSize * 4.5
 
   // lerp camera look at based on mouse/touch move
@@ -64,6 +64,7 @@ window.addEventListener('load', async () => {
   window.addEventListener('touchmove', onPointerMove)
 
   const meshesPivot = new Object3D()
+  meshesPivot.parent = scene
   meshesPivot.position.z = systemSize * 0.5
 
   // render our scene manually
@@ -121,6 +122,7 @@ window.addEventListener('load', async () => {
   const shadowMapTextureFormat = 'depth24plus'
   // mandatory so we could use textureSampleCompare()
   const shadowDepthSampleCount = 1
+  const shadowMapSize = 1024
 
   const shadowDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'Shadow depth texture',
@@ -129,8 +131,8 @@ window.addEventListener('load', async () => {
     format: shadowMapTextureFormat,
     sampleCount: shadowDepthSampleCount,
     fixedSize: {
-      width: 1024,
-      height: 1024,
+      width: shadowMapSize,
+      height: shadowMapSize,
     },
   })
 
@@ -244,6 +246,7 @@ window.addEventListener('load', async () => {
         fragment: false,
       },
       sampleCount: depthTarget.renderPass.options.sampleCount,
+      depthFormat: shadowMapTextureFormat,
       bindings: [lightBufferBinding, mesh.material.getBufferBindingByName('matrices')],
     })
 
@@ -305,17 +308,20 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
 
-    mesh.onRender(() => {
-      // onRender is called when rendering the depth pass and the shading pass
-      // be sure we're actually rendering the shading pass
-      if (mesh.uniforms.normals) {
-        mesh.uniforms.normals.inverseTransposeMatrix.value.copy(mesh.worldMatrix).invert().transpose()
-        mesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
-
+    mesh
+      .onBeforeRender(() => {
+        // onBeforeRender is just called once before updating the Scene matrix stack
         mesh.rotation.y += rotationSpeed
         mesh.rotation.z += rotationSpeed
-      }
-    })
+      })
+      .onRender(() => {
+        // onRender is called when rendering the depth pass and the shading pass
+        // be sure we're actually rendering the shading pass
+        if (mesh.uniforms.normals) {
+          mesh.uniforms.normals.inverseTransposeMatrix.value.copy(mesh.worldMatrix).invert().transpose()
+          mesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
+        }
+      })
 
     createMeshDepthMaterial(mesh)
 
@@ -327,6 +333,8 @@ window.addEventListener('load', async () => {
   const planeGeometry = new PlaneGeometry()
 
   const boxPivot = new Object3D()
+  boxPivot.parent = scene
+
   const aspectRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
   boxPivot.scale.set(systemSize * 2 * aspectRatio, systemSize * 2, systemSize * 2)
 

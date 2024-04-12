@@ -109,11 +109,11 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   set ready(value: boolean) {
-    this._ready = value
-
-    if (this.DOMMeshReady) {
+    if (value && !this._ready && this.sourcesReady) {
       this._onReadyCallback && this._onReadyCallback()
     }
+
+    this._ready = value
   }
 
   /**
@@ -125,19 +125,11 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   set sourcesReady(value: boolean) {
-    this._sourcesReady = value
-
-    if (this.DOMMeshReady) {
+    if (value && !this._sourcesReady && this.ready) {
       this._onReadyCallback && this._onReadyCallback()
     }
-  }
 
-  /**
-   * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its {@link sourcesReady | sources are ready} and its {@link material} and {@link geometry} are ready.
-   * @readonly
-   */
-  get DOMMeshReady(): boolean {
-    return this.ready && this.sourcesReady
+    this._sourcesReady = value
   }
 
   /**

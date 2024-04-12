@@ -73,6 +73,7 @@ class GPUCameraRenderer extends GPURenderer {
         this.onCameraMatricesChanged();
       }
     });
+    this.camera.parent = this.scene;
   }
   /**
    * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
@@ -122,12 +123,13 @@ class GPUCameraRenderer extends GPURenderer {
     }
   }
   /**
-   * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its struct
+   * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
    */
   updateCameraBindings() {
     this.cameraBufferBinding?.shouldUpdateBinding("model");
     this.cameraBufferBinding?.shouldUpdateBinding("view");
     this.cameraBufferBinding?.shouldUpdateBinding("projection");
+    this.cameraBindGroup?.update();
   }
   /**
    * Get all objects ({@link RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraBindGroup | camera bind group}.
@@ -171,17 +173,8 @@ class GPUCameraRenderer extends GPURenderer {
   onResize() {
     super.onResize();
     this.setPerspective();
-    this.updateCameraBindings();
   }
   /* RENDER */
-  /**
-   * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
-   */
-  updateCamera() {
-    this.camera?.updateMatrixStack();
-    this.setCameraBindGroup();
-    this.cameraBindGroup?.update();
-  }
   /**
    * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
    * @param commandEncoder - current {@link GPUCommandEncoder}
@@ -196,13 +189,13 @@ class GPUCameraRenderer extends GPURenderer {
     pass.end();
   }
   /**
-   * {@link updateCamera | Update the camera} and then call our {@link GPURenderer#render | GPURenderer render method}
+   * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
     if (!this.ready)
       return;
-    this.updateCamera();
+    this.setCameraBindGroup();
     super.render(commandEncoder);
   }
   /**

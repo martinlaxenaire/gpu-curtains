@@ -156,7 +156,7 @@ class Material {
     this.uniforms = {};
     this.storages = {};
     this.inputsBindGroups = [];
-    this.inputsBindings = [];
+    this.inputsBindings = /* @__PURE__ */ new Map();
     if (this.options.uniforms || this.options.storages || this.options.bindings) {
       const inputsBindGroup = new BindGroup(this.renderer, {
         label: this.options.label + ": Bindings bind group",
@@ -197,7 +197,7 @@ class Material {
           ...this.storages,
           [inputBinding.name]: inputBinding.inputs
         };
-      this.inputsBindings.push(inputBinding);
+      this.inputsBindings.set(inputBinding.name, inputBinding);
     }
   }
   /**
@@ -308,7 +308,7 @@ class Material {
    * @returns - the found binding, or null if not found
    */
   getBindingByName(bindingName = "") {
-    return this.inputsBindings.find((binding) => binding.name === bindingName);
+    return this.inputsBindings.get(bindingName);
   }
   /**
    * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}
@@ -316,7 +316,8 @@ class Material {
    * @returns - the found binding, or null if not found
    */
   getBufferBindingByName(bindingName = "") {
-    return this.inputsBindings.find((binding) => binding.name === bindingName && "buffer" in binding);
+    const bufferBinding = this.getBindingByName(bindingName);
+    return bufferBinding && "buffer" in bufferBinding ? bufferBinding : void 0;
   }
   /**
    * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render

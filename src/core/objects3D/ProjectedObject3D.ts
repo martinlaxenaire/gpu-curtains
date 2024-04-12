@@ -75,7 +75,7 @@ export class ProjectedObject3D extends Object3D {
       ...this.matrices,
       modelView: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => {
           // our model view matrix is our model matrix multiplied with our camera view matrix
           this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix)
@@ -83,7 +83,7 @@ export class ProjectedObject3D extends Object3D {
       },
       modelViewProjection: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => {
           // our modelViewProjection matrix, useful for bounding box calculations and frustum culling
           // this is the result of our projection matrix multiplied by our modelView matrix

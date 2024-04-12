@@ -13,6 +13,8 @@ window.addEventListener('load', async () => {
 
   const systemSize = 50
 
+  const meshes = []
+
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
@@ -38,6 +40,7 @@ window.addEventListener('load', async () => {
     requestAnimationFrame(animate)
 
     stats.begin()
+
     gpuDeviceManager.render()
     stats.end()
   }
@@ -55,9 +58,6 @@ window.addEventListener('load', async () => {
   console.time('creation time')
   let createdMeshes = 0
   let nbMeshes = 3_000
-  //let nbMeshes = 100
-
-  const meshes = []
 
   const addMesh = (index) => {
     const mesh = new Mesh(gpuCameraRenderer, {
@@ -71,7 +71,7 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = Math.random() * 0.025
 
-    mesh.onRender(() => {
+    mesh.onBeforeRender(() => {
       mesh.rotation.y += rotationSpeed
       mesh.rotation.z += rotationSpeed
     })
@@ -99,7 +99,7 @@ window.addEventListener('load', async () => {
   })
 
   gui
-    .add({ nbMeshes }, 'nbMeshes', 500, 5000, 1)
+    .add({ nbMeshes }, 'nbMeshes', 500, 10_000, 1)
     .name('Number of meshes')
     .onFinishChange((value) => {
       if (value < nbMeshes) {
@@ -115,5 +115,14 @@ window.addEventListener('load', async () => {
       }
 
       nbMeshes = value
+    })
+
+  gui
+    .add({ frustumCulled: true }, 'frustumCulled')
+    .name('Frustum culling')
+    .onChange((value) => {
+      for (let i = 0, l = meshes.length; i < l; i++) {
+        meshes[i].frustumCulled = value
+      }
     })
 })

@@ -93,6 +93,10 @@ export declare class Camera extends Object3D {
      */
     updateWorldMatrix(): void;
     /**
+     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
+     */
+    updateMatrixStack(): void;
+    /**
      * Get the {@link Camera} {@link fov | field of view}
      */
     get fov(): number;
@@ -139,10 +143,6 @@ export declare class Camera extends Object3D {
      */
     setPerspective({ fov, near, far, width, height, pixelRatio, }?: CameraPerspectiveOptions): void;
     /**
-     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
-     */
-    onAfterMatrixStackUpdate(): void;
-    /**
      * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.<br>
      * Used to translate planes along the Z axis using pixel units as CSS would do.<br>
      * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
@@ -157,8 +157,9 @@ export declare class Camera extends Object3D {
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
      * @param target - {@link Vec3 | target} to look at
+     * @param position - {@link Vec3 | postion} from which to look at
      */
-    lookAt(target?: Vec3): void;
+    lookAt(target?: Vec3, position?: Vec3): void;
     /**
      * Updates the {@link Camera} {@link projectionMatrix}
      */

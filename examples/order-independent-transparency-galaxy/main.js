@@ -72,6 +72,8 @@ window.addEventListener('load', async () => {
   const { camera } = gpuCameraRenderer
 
   const scenePivot = new Object3D()
+  // add the scene as the pivot parent
+  scenePivot.parent = gpuCameraRenderer.scene
 
   scenePivot.quaternion.setAxisOrder('ZXY')
   scenePivot.rotation.z = (seed * Math.PI) / 12 + Math.PI / 24

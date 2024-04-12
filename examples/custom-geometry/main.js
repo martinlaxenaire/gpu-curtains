@@ -205,7 +205,7 @@ window.addEventListener('load', async () => {
   // move camera back
   gpuCurtains.camera.position.z = 100
 
-  mesh.onRender(() => {
+  mesh.onBeforeRender(() => {
     mesh.uniforms.frames.elapsed.value++
     const time = mesh.uniforms.frames.elapsed.value * 0.025
 

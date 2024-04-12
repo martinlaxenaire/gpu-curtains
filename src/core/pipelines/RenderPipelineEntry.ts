@@ -17,12 +17,119 @@ import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
  *
  * ## Shaders patching
  *
- * The {@link RenderPipelineEntry} uses each of its {@link RenderPipelineEntry#bindGroups | bind groups} {@link core/bindings/Binding.Binding | Binding} to patch the given compute shader before creating the {@link GPUShaderModule}.<br>
+ * The {@link RenderPipelineEntry} uses each of its {@link RenderPipelineEntry#bindGroups | bind groups} {@link core/bindings/Binding.Binding | Binding} to patch the given vertex and fragment shaders before creating the {@link GPUShaderModule}.<br>
  * It will prepend every {@link core/bindings/Binding.Binding | Binding} WGSL code snippets (or fragments) with the correct bind group and bindings indices.
  *
  * ## Pipeline compilation
  *
  * The {@link RenderPipelineEntry} will then create a {@link GPURenderPipeline} (asynchronously by default).
+ *
+ * ## Default attributes and uniforms
+ *
+ * ### Attributes
+ *
+ * Attributes are only added to the vertex shaders. They are generated based on the {@link core/geometries/Geometry.Geometry | Geometry} used and may vary in case you're using a geometry with custom attributes. Here are the default ones:
+ *
+ * ```wgsl
+ * struct Attributes {
+ *  @builtin(vertex_index) vertexIndex : u32,
+ *  @builtin(instance_index) instanceIndex : u32,
+ *  @location(0) position: vec3f,
+ *  @location(1) uv: vec2f,
+ *  @location(2) normal: vec3f
+ * };
+ *
+ * // you can safely access them in your vertex shader
+ * // using attributes.position or attributes.uv for example
+ * ```
+ *
+ * ### Uniforms
+ *
+ * If the Mesh is one of {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}, some additional uniforms are added to the shaders.
+ *
+ * #### Vertex shaders
+ *
+ * ```wgsl
+ * struct Matrices {
+ * 	model: mat4x4f,
+ * 	modelView: mat4x4f
+ * };
+ *
+ * struct Camera {
+ * 	view: mat4x4f,
+ * 	projection: mat4x4f
+ * };
+ *
+ * @group(0) @binding(0) var<uniform> camera: Camera;
+ *
+ * // note that matrices uniform @group index might change depending on use cases
+ * @group(1) @binding(0) var<uniform> matrices: Matrices;
+ *
+ * // you can safely access these uniforms in your vertex shader
+ * // using matrices.modelView or camera.projection for example
+ * ```
+ *
+ * #### Fragment shaders
+ *
+ * ```wgsl
+ * struct Matrices {
+ * 	model: mat4x4f,
+ * 	modelView: mat4x4f
+ * };
+ *
+ * // note that matrices uniform @group index might change depending on use cases
+ * @group(1) @binding(0) var<uniform> matrices: Matrices;
+ *
+ * // you can safely access these uniforms in your fragment shader
+ * // using matrices.model or matrices.modelView for example
+ * ```
+ *
+ * ### Helpers
+ *
+ * Finally, some helpers functions are added to the shaders as well.
+ *
+ * #### Vertex and fragment shaders
+ *
+ * To help you compute scaled UV based on a texture matrix, this function is always added to both vertex and fragment shaders:
+ *
+ * ```wgsl
+ * fn getUVCover(uv: vec2f, textureMatrix: mat4x4f) -> vec2f {
+ *   return (textureMatrix * vec4f(uv, 0.0, 1.0)).xy;
+ * }
+ * ```
+ *
+ * #### Vertex shaders
+ *
+ * If the Mesh is one of {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}, a function is added to the vertex shader to help you compute the vertices positions.
+ *
+ * ```wgsl
+ * fn getOutputPosition(position: vec3f) -> vec4f {
+ *   return camera.projection * matrices.modelView * vec4f(position, 1.0);
+ * }
+ * ```
+ *
+ * Note that it is not mandatory to use it. If you want to do these computations yourself, you are free to do it the way you like most. You could for example use this formula instead:
+ *
+ * ```wgsl
+ * var transformed: vec3f = camera.projection * camera.view * matrices.model * vec4f(position, 1.0);
+ * ```
+ *
+ * #### Fragment shaders
+ *
+ * Last but not least, those couple functions are added to the fragment shaders to help you convert vertex positions to UV coordinates:
+ *
+ * ```wgsl
+ * fn getVertex2DToUVCoords(vertex: vec2f) -> vec2f {
+ *   return vec2(
+ *     vertex.x * 0.5 + 0.5,
+ *     0.5 - vertex.y * 0.5
+ *   );
+ * }
+ *
+ * fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
+ *   return getVertex2DToUVCoords( vec2(vertex.x, vertex.y) );
+ * }
+ * ```
  */
 export class RenderPipelineEntry extends PipelineEntry {
   /** Shaders to use with this {@link RenderPipelineEntry} */

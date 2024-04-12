@@ -66,9 +66,9 @@ function ProjectedMeshBaseMixin(Base) {
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      let { shaders } = this.options;
+      const { shaders } = this.options;
       if (!shaders) {
-        shaders = {
+        this.options.shaders = {
           vertex: {
             code: default_projected_vsWgsl,
             entryPoint: "main"
@@ -112,7 +112,6 @@ function ProjectedMeshBaseMixin(Base) {
       });
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
       this.frustumCulled = this.options.frustumCulled;
-      this.domFrustum.shouldUpdate = this.frustumCulled;
     }
     /* MATERIAL */
     /**
@@ -151,7 +150,7 @@ function ProjectedMeshBaseMixin(Base) {
       };
       if (!meshParameters.uniforms)
         meshParameters.uniforms = {};
-      meshParameters.uniforms.matrices = matricesUniforms;
+      meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
       super.setMaterial(meshParameters);
     }
     /* SIZE & TRANSFORMS */
@@ -180,16 +179,6 @@ function ProjectedMeshBaseMixin(Base) {
     get projectedBoundingRect() {
       return this.domFrustum?.projectedBoundingRect;
     }
-    /**
-     * At least one of the matrix has been updated, update according uniforms and frustum
-     */
-    onAfterMatrixStackUpdate() {
-      if (this.material) {
-        this.material.shouldUpdateInputsBindings("matrices");
-      }
-      if (this.domFrustum)
-        this.domFrustum.shouldUpdate = true;
-    }
     /* EVENTS */
     /**
      * Assign a callback function to _onReEnterViewCallback
@@ -215,22 +204,26 @@ function ProjectedMeshBaseMixin(Base) {
     }
     /* RENDER */
     /**
-     * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
-     * First, we update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
-     * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
-     * Finally we call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
+     * Check if the Mesh lies inside the {@link camera} view frustum or not.
+     */
+    checkFrustumCulling() {
+      if (this.matricesNeedUpdate) {
+        if (this.domFrustum && this.frustumCulled) {
+          this.domFrustum.computeProjectedToDocumentCoords();
+        }
+      }
+    }
+    /**
+     * Tell our matrices bindings to update if needed and call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super.
      */
     onBeforeRenderPass() {
-      this.updateMatrixStack();
-      if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
-        this.domFrustum.computeProjectedToDocumentCoords();
-        this.domFrustum.shouldUpdate = false;
+      if (this.material && this.matricesNeedUpdate) {
+        this.material.shouldUpdateInputsBindings("matrices");
       }
       super.onBeforeRenderPass();
     }
     /**
-     * Only render the Mesh if it is in view frustum.
-     * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
+     * Render our Mesh if the {@link RenderMaterial} is ready and if it is not frustum culled.
      * @param pass - current render pass
      */
     onRenderPass(pass) {

@@ -63,8 +63,8 @@ export class Material {
   /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingInput>>
 
-  /** Array of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
-  inputsBindings: BindGroupBindingElement[]
+  /** Map of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
+  inputsBindings: Map<string, BindGroupBindingElement>
 
   /** Array of {@link Texture} handled by this {@link Material} */
   textures: Texture[]
@@ -259,7 +259,7 @@ export class Material {
     this.storages = {}
 
     this.inputsBindGroups = []
-    this.inputsBindings = []
+    this.inputsBindings = new Map()
 
     if (this.options.uniforms || this.options.storages || this.options.bindings) {
       const inputsBindGroup = new BindGroup(this.renderer, {
@@ -306,7 +306,7 @@ export class Material {
           [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
         }
 
-      this.inputsBindings.push(inputBinding)
+      this.inputsBindings.set(inputBinding.name, inputBinding)
     }
   }
 
@@ -451,7 +451,7 @@ export class Material {
    * @returns - the found binding, or null if not found
    */
   getBindingByName(bindingName: Binding['name'] = ''): BindGroupBindingElement | undefined {
-    return this.inputsBindings.find((binding) => binding.name === bindingName)
+    return this.inputsBindings.get(bindingName)
   }
 
   /**
@@ -460,9 +460,8 @@ export class Material {
    * @returns - the found binding, or null if not found
    */
   getBufferBindingByName(bindingName: Binding['name'] = ''): BindGroupBufferBindingElement | undefined {
-    return this.inputsBindings.find((binding) => binding.name === bindingName && 'buffer' in binding) as
-      | BindGroupBufferBindingElement
-      | undefined
+    const bufferBinding = this.getBindingByName(bindingName)
+    return bufferBinding && 'buffer' in bufferBinding ? bufferBinding : undefined
   }
 
   /**

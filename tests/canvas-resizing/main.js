@@ -46,7 +46,7 @@ window.addEventListener('load', async () => {
       geometry,
     })
 
-    mesh.onRender(() => {
+    mesh.onBeforeRender(() => {
       mesh.rotation.y += 0.01
       mesh.rotation.z += 0.01
     })

@@ -7,6 +7,9 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     autoRender: false, // do not create a request animation frame loop
+    renderPass: {
+      depth: false, // we don't need depth here
+    },
   }).onError(() => {
     document.body.classList.add('no-curtains')
   })
@@ -154,8 +157,7 @@ window.addEventListener('load', async () => {
       label: 'Canvas text plane ' + element.innerText,
       transparent: true,
       instancesCount: 150,
-      visible: false,
-      depthWriteEnabled: false, // do not write to depth so kinetic planes can be stacked
+      depthWriteEnabled: false, // do not test depth so kinetic planes can be stacked
       shaders: {
         vertex: {
           code: planeVs,

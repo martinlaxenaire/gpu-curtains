@@ -100,14 +100,16 @@ window.addEventListener('load', async () => {
   cubeBBox.style.borderColor = 'red'
   document.body.appendChild(cubeBBox)
 
-  cube.onRender(() => {
-    cube.rotation.x += 0.02
-
-    cubeBBox.style.top = cube.projectedBoundingRect.top + 'px'
-    cubeBBox.style.left = cube.projectedBoundingRect.left + 'px'
-    cubeBBox.style.width = cube.projectedBoundingRect.width + 'px'
-    cubeBBox.style.height = cube.projectedBoundingRect.height + 'px'
-  })
+  cube
+    .onBeforeRender(() => {
+      cube.rotation.x += 0.02
+    })
+    .onRender(() => {
+      cubeBBox.style.top = cube.projectedBoundingRect.top + 'px'
+      cubeBBox.style.left = cube.projectedBoundingRect.left + 'px'
+      cubeBBox.style.width = cube.projectedBoundingRect.width + 'px'
+      cubeBBox.style.height = cube.projectedBoundingRect.height + 'px'
+    })
 
   const plane = new Mesh(gpuCameraRenderer, {
     label: 'Plane',
@@ -122,14 +124,16 @@ window.addEventListener('load', async () => {
   planeBBox.style.borderColor = 'yellow'
   document.body.appendChild(planeBBox)
 
-  plane.onRender(() => {
-    plane.rotation.y += 0.02
-
-    planeBBox.style.top = plane.projectedBoundingRect.top + 'px'
-    planeBBox.style.left = plane.projectedBoundingRect.left + 'px'
-    planeBBox.style.width = plane.projectedBoundingRect.width + 'px'
-    planeBBox.style.height = plane.projectedBoundingRect.height + 'px'
-  })
+  plane
+    .onBeforeRender(() => {
+      plane.rotation.y += 0.02
+    })
+    .onRender(() => {
+      planeBBox.style.top = plane.projectedBoundingRect.top + 'px'
+      planeBBox.style.left = plane.projectedBoundingRect.left + 'px'
+      planeBBox.style.width = plane.projectedBoundingRect.width + 'px'
+      planeBBox.style.height = plane.projectedBoundingRect.height + 'px'
+    })
 
   // GUI
   const gui = new lil.GUI({

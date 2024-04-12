@@ -76,7 +76,7 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setCameraBindGroup(): void;
     /**
-     * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its struct
+     * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
      */
     updateCameraBindings(): void;
     /**
@@ -100,17 +100,13 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     onResize(): void;
     /**
-     * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
-     */
-    updateCamera(): void;
-    /**
      * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
      * @param commandEncoder - current {@link GPUCommandEncoder}
      * @param mesh - {@link RenderedMesh | mesh} to render
      */
     renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh): void;
     /**
-     * {@link updateCamera | Update the camera} and then call our {@link GPURenderer#render | GPURenderer render method}
+     * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder: GPUCommandEncoder): void;

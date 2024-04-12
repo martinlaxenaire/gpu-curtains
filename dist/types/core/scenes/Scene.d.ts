@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
-import { ProjectedMesh, RenderedMesh } from '../renderers/GPURenderer';
+import { SceneStackedMesh, RenderedMesh } from '../renderers/GPURenderer';
 import { ShaderPass } from '../renderPasses/ShaderPass';
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane';
 import { ComputePass } from '../computePasses/ComputePass';
@@ -8,14 +8,15 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { RenderTarget } from '../renderPasses/RenderTarget';
 import { RenderPass } from '../renderPasses/RenderPass';
 import { RenderTexture } from '../textures/RenderTexture';
+import { Object3D } from '../objects3D/Object3D';
 /**
  * Meshes rendering order is dependant of their transparency setting
  */
 export interface ProjectionStack {
     /** opaque Meshes will be drawn first */
-    opaque: ProjectedMesh[];
+    opaque: SceneStackedMesh[];
     /** transparent Meshes will be drawn last */
-    transparent: ProjectedMesh[];
+    transparent: SceneStackedMesh[];
 }
 /** Meshes will be stacked in 2 different objects whether they are projected (use a {@link core/camera/Camera.Camera | Camera}) or not */
 export type ProjectionType = 'unProjected' | 'projected';
@@ -58,7 +59,7 @@ export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
  *   - Finally, the transparent projected Meshes (i.e. transparent {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}), sorted by their Z position and then their {@link core/meshes/Mesh.Mesh#renderOrder | renderOrder}
  * - Finally all Meshes that need to be rendered directly to the {@link renderPassEntries} screen (the {@link Renderer} current texture), in the same order than above.
  */
-export declare class Scene {
+export declare class Scene extends Object3D {
     /** {@link Renderer} used by this {@link Scene} */
     renderer: Renderer;
     /** Array of {@link ComputePass} to render, ordered by {@link ComputePass#renderOrder | renderOrder} */
@@ -77,6 +78,10 @@ export declare class Scene {
     constructor({ renderer }: {
         renderer: Renderer | GPUCurtains;
     });
+    /**
+     * Set the main {@link Renderer} render pass entry.
+     */
+    setMainRenderPassEntry(): void;
     /**
      * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
      * @param renderPassEntry - The {@link RenderPassEntry | render pass entry} to test
@@ -108,18 +113,18 @@ export declare class Scene {
      * @param mesh - Mesh to check
      * @returns - the corresponding render pass entry {@link Stack}
      */
-    getMeshProjectionStack(mesh: ProjectedMesh): ProjectionStack;
+    getMeshProjectionStack(mesh: SceneStackedMesh): ProjectionStack;
     /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
+     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
      * @param mesh - Mesh to add
      */
-    addMesh(mesh: ProjectedMesh): void;
+    addMesh(mesh: SceneStackedMesh): void;
     /**
      * Remove a Mesh from our {@link Scene}
      * @param mesh - Mesh to remove
      */
-    removeMesh(mesh: ProjectedMesh): void;
+    removeMesh(mesh: SceneStackedMesh): void;
     /**
      * Add a {@link ShaderPass} to our scene {@link renderPassEntries} screen array.
      * Before rendering the {@link ShaderPass}, we will copy the correct input texture into its {@link ShaderPass#renderTexture | renderTexture}
@@ -165,9 +170,14 @@ export declare class Scene {
      */
     renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry): void;
     /**
+     * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance.
+     */
+    onBeforeRender(): void;
+    /**
      * Render our {@link Scene}
-     * - Render {@link computePassEntries} first
-     * - Then our {@link renderPassEntries}
+     * - Execute {@link onBeforeRender} first
+     * - Then render {@link computePassEntries}
+     * - And finally render our {@link renderPassEntries}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder: GPUCommandEncoder): void;

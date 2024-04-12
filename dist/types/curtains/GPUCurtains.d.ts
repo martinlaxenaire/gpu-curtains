@@ -4,7 +4,7 @@ import { ScrollManager } from '../utils/ScrollManager';
 import { Vec3 } from '../math/Vec3';
 import { PingPongPlane } from './meshes/PingPongPlane';
 import { ShaderPass } from '../core/renderPasses/ShaderPass';
-import { GPURenderer, GPURendererParams, ProjectedMesh } from '../core/renderers/GPURenderer';
+import { GPURenderer, GPURendererParams, SceneStackedMesh } from '../core/renderers/GPURenderer';
 import { DOMMesh } from './meshes/DOMMesh';
 import { Plane } from './meshes/Plane';
 import { ComputePass } from '../core/computePasses/ComputePass';
@@ -139,10 +139,10 @@ export declare class GPUCurtains {
      */
     get shaderPasses(): ShaderPass[];
     /**
-     * Get all the created {@link ProjectedMesh | projected meshes}
+     * Get all the created {@link SceneStackedMesh | meshes}
      * @readonly
      */
-    get meshes(): ProjectedMesh[];
+    get meshes(): SceneStackedMesh[];
     /**
      * Get all the created {@link DOMMesh | DOM Meshes} (including {@link Plane | planes})
      * @readonly

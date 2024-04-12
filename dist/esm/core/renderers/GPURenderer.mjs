@@ -61,6 +61,7 @@ class GPURenderer {
       top: 0,
       left: 0
     };
+    this.setScene();
     this.setTasksQueues();
     this.setRendererObjects();
     if (!isOffscreenCanvas) {
@@ -268,7 +269,6 @@ class GPURenderer {
     if (this.device) {
       this.configureContext();
       this.setMainRenderPasses();
-      this.setScene();
     }
   }
   /**
@@ -302,6 +302,7 @@ class GPURenderer {
       label: this.options.label + " render pass",
       ...this.options.renderPass
     });
+    this.scene.setMainRenderPassEntry();
     this.postProcessingPass = new RenderPass(this, {
       label: this.options.label + " post processing render pass",
       // no need to handle depth or perform MSAA on a fullscreen quad

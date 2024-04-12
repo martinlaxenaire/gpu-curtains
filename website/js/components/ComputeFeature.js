@@ -123,7 +123,7 @@ export class ComputeFeature {
       },
     })
 
-    this.particles.onRender(() => {
+    this.particles.onBeforeRender(() => {
       this.particles.rotation.y += 0.0075
       this.particles.uniforms.frames.elapsed.value++
     })

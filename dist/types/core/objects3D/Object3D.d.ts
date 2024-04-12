@@ -55,6 +55,8 @@ export declare class Object3D {
     children: Object3D[];
     /** Index (order of creation) of this {@link Object3D}. Used in the {@link parent} / {@link children} relation. */
     object3DIndex: number;
+    /** Whether at least one of this {@link Object3D} matrix needs an update. */
+    matricesNeedUpdate: boolean;
     /**
      * Object3D constructor
      */
@@ -166,8 +168,9 @@ export declare class Object3D {
     /**
      * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
      * @param target - {@link Vec3 | target} to look at
+     * @param position - {@link Vec3 | postion} from which to look at
      */
-    lookAt(target?: Vec3): void;
+    lookAt(target?: Vec3, position?: Vec3): void;
     /**
      * Update our {@link modelMatrix | model matrix}
      */
@@ -177,9 +180,9 @@ export declare class Object3D {
      */
     updateWorldMatrix(): void;
     /**
-     * Callback to run if at least one matrix of the stack has been updated
+     * Check whether at least one of the matrix should be updated
      */
-    onAfterMatrixStackUpdate(): void;
+    shouldUpdateMatrices(): void;
     /**
      * Check at each render whether we should update our matrices, and update them if needed
      */

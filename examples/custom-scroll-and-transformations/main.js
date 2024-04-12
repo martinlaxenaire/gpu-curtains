@@ -126,7 +126,7 @@ window.addEventListener('load', async () => {
         texture.scale.x = 1.5
         texture.scale.y = 1.5
       })
-      .onRender(() => {
+      .onBeforeRender(() => {
         const planeCenter = new Vec2(
           plane.boundingRect.left + plane.boundingRect.width * 0.5,
           plane.boundingRect.top + plane.boundingRect.height * 0.5

@@ -206,7 +206,7 @@ class GPUCurtains {
     return this.renderers?.map((renderer) => renderer.shaderPasses).flat();
   }
   /**
-   * Get all the created {@link ProjectedMesh | projected meshes}
+   * Get all the created {@link SceneStackedMesh | meshes}
    * @readonly
    */
   get meshes() {

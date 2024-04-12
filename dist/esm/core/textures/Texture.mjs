@@ -201,8 +201,11 @@ class Texture extends Object3D {
   /**
    * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
    */
-  onAfterMatrixStackUpdate() {
-    this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
+  updateMatrixStack() {
+    super.updateMatrixStack();
+    if (this.matricesNeedUpdate) {
+      this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
+    }
   }
   /**
    * Resize our {@link Texture}

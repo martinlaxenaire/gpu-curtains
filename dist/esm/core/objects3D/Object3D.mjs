@@ -3,13 +3,15 @@ import { Quat } from '../../math/Quat.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
 
 let objectIndex = 0;
+const tempMatrix = new Mat4();
 class Object3D {
   /**
    * Object3D constructor
    */
   constructor() {
-    this.parent = null;
+    this._parent = null;
     this.children = [];
+    this.matricesNeedUpdate = false;
     Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
     this.setMatrices();
     this.setTransforms();
@@ -28,6 +30,9 @@ class Object3D {
   set parent(value) {
     if (this.parent) {
       this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+    }
+    if (value) {
+      this.shouldUpdateWorldMatrix();
     }
     this._parent = value;
     this._parent?.children.push(this);
@@ -153,12 +158,12 @@ class Object3D {
     this.matrices = {
       model: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => this.updateModelMatrix()
       },
       world: {
         matrix: new Mat4(),
-        shouldUpdate: false,
+        shouldUpdate: true,
         onUpdate: () => this.updateWorldMatrix()
       }
     };
@@ -207,9 +212,10 @@ class Object3D {
   /**
    * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
    * @param target - {@link Vec3 | target} to look at
+   * @param position - {@link Vec3 | postion} from which to look at
    */
-  lookAt(target = new Vec3()) {
-    const rotationMatrix = new Mat4().lookAt(target, this.position);
+  lookAt(target = new Vec3(), position = this.position) {
+    const rotationMatrix = tempMatrix.lookAt(target, position);
     this.quaternion.setFromRotationMatrix(rotationMatrix);
     this.shouldUpdateModelMatrix();
   }
@@ -234,31 +240,31 @@ class Object3D {
     } else {
       this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
     }
-    for (const child of this.children) {
-      child.shouldUpdateWorldMatrix();
+    for (let i = 0, l = this.children.length; i < l; i++) {
+      this.children[i].shouldUpdateWorldMatrix();
     }
   }
   /**
-   * Callback to run if at least one matrix of the stack has been updated
+   * Check whether at least one of the matrix should be updated
    */
-  onAfterMatrixStackUpdate() {
+  shouldUpdateMatrices() {
+    this.matricesNeedUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
   }
   /**
    * Check at each render whether we should update our matrices, and update them if needed
    */
   updateMatrixStack() {
-    if (this.parent && this.parent.constructor.name === "Object3D") {
-      this.parent.updateMatrixStack();
-    }
-    const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
-    if (matrixShouldUpdate) {
+    this.shouldUpdateMatrices();
+    if (this.matricesNeedUpdate) {
       for (const matrixName in this.matrices) {
         if (this.matrices[matrixName].shouldUpdate) {
           this.matrices[matrixName].onUpdate();
           this.matrices[matrixName].shouldUpdate = false;
         }
       }
-      this.onAfterMatrixStackUpdate();
+    }
+    for (let i = 0, l = this.children.length; i < l; i++) {
+      this.children[i].updateMatrixStack();
     }
   }
 }

@@ -3088,8 +3088,8 @@
       const y = 2 * near / (top - bottom);
       const a = (right + left) / (right - left);
       const b = (top + bottom) / (top - bottom);
-      const c = -(far + near) / (far - near);
-      const d = -2 * far * near / (far - near);
+      const c = -far / (far - near);
+      const d = -far * near / (far - near);
       this.set(
         x,
         0,
@@ -3113,13 +3113,15 @@
   }
 
   let objectIndex = 0;
+  const tempMatrix = new Mat4();
   class Object3D {
     /**
      * Object3D constructor
      */
     constructor() {
-      this.parent = null;
+      this._parent = null;
       this.children = [];
+      this.matricesNeedUpdate = false;
       Object.defineProperty(this, "object3DIndex", { value: objectIndex++ });
       this.setMatrices();
       this.setTransforms();
@@ -3138,6 +3140,9 @@
     set parent(value) {
       if (this.parent) {
         this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+      }
+      if (value) {
+        this.shouldUpdateWorldMatrix();
       }
       this._parent = value;
       this._parent?.children.push(this);
@@ -3263,12 +3268,12 @@
       this.matrices = {
         model: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => this.updateModelMatrix()
         },
         world: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => this.updateWorldMatrix()
         }
       };
@@ -3317,9 +3322,10 @@
     /**
      * Rotate this {@link Object3D} so it looks at the {@link Vec3 | target}
      * @param target - {@link Vec3 | target} to look at
+     * @param position - {@link Vec3 | postion} from which to look at
      */
-    lookAt(target = new Vec3()) {
-      const rotationMatrix = new Mat4().lookAt(target, this.position);
+    lookAt(target = new Vec3(), position = this.position) {
+      const rotationMatrix = tempMatrix.lookAt(target, position);
       this.quaternion.setFromRotationMatrix(rotationMatrix);
       this.shouldUpdateModelMatrix();
     }
@@ -3344,31 +3350,31 @@
       } else {
         this.worldMatrix.multiplyMatrices(this.parent.worldMatrix, this.modelMatrix);
       }
-      for (const child of this.children) {
-        child.shouldUpdateWorldMatrix();
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        this.children[i].shouldUpdateWorldMatrix();
       }
     }
     /**
-     * Callback to run if at least one matrix of the stack has been updated
+     * Check whether at least one of the matrix should be updated
      */
-    onAfterMatrixStackUpdate() {
+    shouldUpdateMatrices() {
+      this.matricesNeedUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
     }
     /**
      * Check at each render whether we should update our matrices, and update them if needed
      */
     updateMatrixStack() {
-      if (this.parent && this.parent.constructor.name === "Object3D") {
-        this.parent.updateMatrixStack();
-      }
-      const matrixShouldUpdate = !!Object.values(this.matrices).find((matrix) => matrix.shouldUpdate);
-      if (matrixShouldUpdate) {
+      this.shouldUpdateMatrices();
+      if (this.matricesNeedUpdate) {
         for (const matrixName in this.matrices) {
           if (this.matrices[matrixName].shouldUpdate) {
             this.matrices[matrixName].onUpdate();
             this.matrices[matrixName].shouldUpdate = false;
           }
         }
-        this.onAfterMatrixStackUpdate();
+      }
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        this.children[i].updateMatrixStack();
       }
     }
   }
@@ -3568,8 +3574,11 @@
     /**
      * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
      */
-    onAfterMatrixStackUpdate() {
-      this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
+    updateMatrixStack() {
+      super.updateMatrixStack();
+      if (this.matricesNeedUpdate) {
+        this.textureMatrix.shouldUpdateBinding(this.options.name + "Matrix");
+      }
     }
     /**
      * Resize our {@link Texture}
@@ -4100,14 +4109,14 @@
         ...this.matrices,
         view: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => {
             this.viewMatrix.copy(this.worldMatrix).invert();
           }
         },
         projection: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => this.updateProjectionMatrix()
         }
       };
@@ -4154,6 +4163,15 @@
     updateWorldMatrix() {
       super.updateWorldMatrix();
       this.matrices.view.shouldUpdate = true;
+    }
+    /**
+     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
+     */
+    updateMatrixStack() {
+      super.updateMatrixStack();
+      if (this.matricesNeedUpdate) {
+        this.onMatricesChanged();
+      }
     }
     /**
      * Get the {@link Camera} {@link fov | field of view}
@@ -4254,12 +4272,6 @@
       this.far = far;
     }
     /**
-     * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
-     */
-    onAfterMatrixStackUpdate() {
-      this.onMatricesChanged();
-    }
-    /**
      * Sets a {@link CSSPerspective} property based on {@link size}, {@link pixelRatio} and {@link fov}.<br>
      * Used to translate planes along the Z axis using pixel units as CSS would do.<br>
      * {@link https://stackoverflow.com/questions/22421439/convert-field-of-view-value-to-css3d-perspective-value | See reference}
@@ -4292,11 +4304,10 @@
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
      * @param target - {@link Vec3 | target} to look at
+     * @param position - {@link Vec3 | postion} from which to look at
      */
-    lookAt(target = new Vec3()) {
-      const rotationMatrix = new Mat4().lookAt(this.position, target);
-      this.quaternion.setFromRotationMatrix(rotationMatrix);
-      this.shouldUpdateModelMatrix();
+    lookAt(target = new Vec3(), position = this.position) {
+      super.lookAt(position, target);
     }
     /**
      * Updates the {@link Camera} {@link projectionMatrix}
@@ -4704,7 +4715,7 @@
       this.uniforms = {};
       this.storages = {};
       this.inputsBindGroups = [];
-      this.inputsBindings = [];
+      this.inputsBindings = /* @__PURE__ */ new Map();
       if (this.options.uniforms || this.options.storages || this.options.bindings) {
         const inputsBindGroup = new BindGroup(this.renderer, {
           label: this.options.label + ": Bindings bind group",
@@ -4745,7 +4756,7 @@
             ...this.storages,
             [inputBinding.name]: inputBinding.inputs
           };
-        this.inputsBindings.push(inputBinding);
+        this.inputsBindings.set(inputBinding.name, inputBinding);
       }
     }
     /**
@@ -4856,7 +4867,7 @@
      * @returns - the found binding, or null if not found
      */
     getBindingByName(bindingName = "") {
-      return this.inputsBindings.find((binding) => binding.name === bindingName);
+      return this.inputsBindings.get(bindingName);
     }
     /**
      * Look for a {@link BindGroupBufferBindingElement | buffer binding} by name in all {@link inputsBindings | input bindings}
@@ -4864,7 +4875,8 @@
      * @returns - the found binding, or null if not found
      */
     getBufferBindingByName(bindingName = "") {
-      return this.inputsBindings.find((binding) => binding.name === bindingName && "buffer" in binding);
+      const bufferBinding = this.getBindingByName(bindingName);
+      return bufferBinding && "buffer" in bufferBinding ? bufferBinding : void 0;
     }
     /**
      * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
@@ -5713,7 +5725,6 @@
       this.onReEnterView = onReEnterView;
       this.onLeaveView = onLeaveView;
       this.isIntersecting = false;
-      this.shouldUpdate = false;
     }
     /**
      * Set our {@link containerBoundingRect} (called on resize)
@@ -6545,7 +6556,6 @@ struct VertexOutput {
     // geometry
     geometry: new Geometry(),
     // material
-    shaders: {},
     autoRender: true,
     useProjection: false,
     useAsyncPipeline: true,
@@ -6624,9 +6634,9 @@ struct VertexOutput {
           ...this.options ?? {},
           // merge possible lower options?
           label: label ?? "Mesh " + this.renderer.meshes.length,
-          shaders,
-          texturesOptions,
+          ...shaders !== void 0 ? { shaders } : {},
           ...outputTarget !== void 0 && { outputTarget },
+          texturesOptions,
           ...autoRender !== void 0 && { autoRender },
           ...meshParameters
         };
@@ -6747,7 +6757,8 @@ struct VertexOutput {
        * Set default shaders if one or both of them are missing
        */
       setShaders() {
-        if (!this.options.shaders) {
+        const { shaders } = this.options;
+        if (!shaders) {
           this.options.shaders = {
             vertex: {
               code: default_vsWgsl,
@@ -6759,7 +6770,6 @@ struct VertexOutput {
             }
           };
         } else {
-          const { shaders } = this.options;
           if (!shaders.vertex || !shaders.vertex.code) {
             shaders.vertex = {
               code: default_vsWgsl,
@@ -6845,6 +6855,7 @@ struct VertexOutput {
       setMaterial(meshParameters) {
         this.transparent = meshParameters.transparent;
         this.setShaders();
+        meshParameters.shaders = this.options.shaders;
         this.material = new RenderMaterial(this.renderer, meshParameters);
         this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
       }
@@ -6958,7 +6969,7 @@ struct VertexOutput {
       }
       /* EVENTS */
       /**
-       * Assign a callback function to _onReadyCallback
+       * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
        * @param callback - callback to run when {@link MeshBase} is ready
        * @returns - our Mesh
        */
@@ -6969,8 +6980,8 @@ struct VertexOutput {
         return this;
       }
       /**
-       * Assign a callback function to _onBeforeRenderCallback
-       * @param callback - callback to run just before {@link MeshBase} will be rendered
+       * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+       * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
        * @returns - our Mesh
        */
       onBeforeRender(callback) {
@@ -6980,8 +6991,8 @@ struct VertexOutput {
         return this;
       }
       /**
-       * Assign a callback function to _onRenderCallback
-       * @param callback - callback to run when {@link MeshBase} is rendered
+       * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+       * @param callback - callback to run just before rendering the {@link MeshBase}
        * @returns - our Mesh
        */
       onRender(callback) {
@@ -6991,7 +7002,7 @@ struct VertexOutput {
         return this;
       }
       /**
-       * Assign a callback function to _onAfterRenderCallback
+       * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
        * @param callback - callback to run just after {@link MeshBase} has been rendered
        * @returns - our Mesh
        */
@@ -7002,7 +7013,7 @@ struct VertexOutput {
         return this;
       }
       /**
-       * Assign a callback function to _onAfterResizeCallback
+       * Callback to execute just after a Mesh has been resized.
        * @param callback - callback to run just after {@link MeshBase} has been resized
        * @returns - our Mesh
        */
@@ -7014,16 +7025,23 @@ struct VertexOutput {
       }
       /* RENDER */
       /**
+       * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+       */
+      onBeforeRenderScene() {
+        if (!this.renderer.ready || !this.ready || !this.visible)
+          return;
+        this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+      }
+      /**
        * Called before rendering the Mesh
        * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-       * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
+       * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
        */
       onBeforeRenderPass() {
         if (!this.renderer.ready)
           return;
         this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
         this.setGeometry();
-        this._onBeforeRenderCallback && this._onBeforeRenderCallback();
         this.material.onBeforeRender();
       }
       /**
@@ -7158,6 +7176,9 @@ struct VertexOutput {
         });
       }
       parameters.depthWriteEnabled = false;
+      if (!parameters.label) {
+        parameters.label = "FullscreenQuadMesh";
+      }
       super(renderer, null, { geometry, ...parameters });
       this.size = {
         document: {
@@ -7239,14 +7260,14 @@ struct VertexOutput {
         ...this.matrices,
         modelView: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => {
             this.modelViewMatrix.multiplyMatrices(this.viewMatrix, this.worldMatrix);
           }
         },
         modelViewProjection: {
           matrix: new Mat4(),
-          shouldUpdate: false,
+          shouldUpdate: true,
           onUpdate: () => {
             this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
           }
@@ -7417,9 +7438,9 @@ struct VSOutput {
        * Set default shaders if one or both of them are missing
        */
       setShaders() {
-        let { shaders } = this.options;
+        const { shaders } = this.options;
         if (!shaders) {
-          shaders = {
+          this.options.shaders = {
             vertex: {
               code: default_projected_vsWgsl,
               entryPoint: "main"
@@ -7463,7 +7484,6 @@ struct VSOutput {
         });
         this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
         this.frustumCulled = this.options.frustumCulled;
-        this.domFrustum.shouldUpdate = this.frustumCulled;
       }
       /* MATERIAL */
       /**
@@ -7502,7 +7522,7 @@ struct VSOutput {
         };
         if (!meshParameters.uniforms)
           meshParameters.uniforms = {};
-        meshParameters.uniforms.matrices = matricesUniforms;
+        meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
         super.setMaterial(meshParameters);
       }
       /* SIZE & TRANSFORMS */
@@ -7531,16 +7551,6 @@ struct VSOutput {
       get projectedBoundingRect() {
         return this.domFrustum?.projectedBoundingRect;
       }
-      /**
-       * At least one of the matrix has been updated, update according uniforms and frustum
-       */
-      onAfterMatrixStackUpdate() {
-        if (this.material) {
-          this.material.shouldUpdateInputsBindings("matrices");
-        }
-        if (this.domFrustum)
-          this.domFrustum.shouldUpdate = true;
-      }
       /* EVENTS */
       /**
        * Assign a callback function to _onReEnterViewCallback
@@ -7566,22 +7576,26 @@ struct VSOutput {
       }
       /* RENDER */
       /**
-       * Called before rendering the Mesh to update matrices and {@link DOMFrustum}.
-       * First, we update our matrices to have fresh results. It eventually calls onAfterMatrixStackUpdate() if at least one matrix has been updated.
-       * Then we check if we need to update the {@link DOMFrustum} projected bounding rectangle.
-       * Finally we call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super
+       * Check if the Mesh lies inside the {@link camera} view frustum or not.
+       */
+      checkFrustumCulling() {
+        if (this.matricesNeedUpdate) {
+          if (this.domFrustum && this.frustumCulled) {
+            this.domFrustum.computeProjectedToDocumentCoords();
+          }
+        }
+      }
+      /**
+       * Tell our matrices bindings to update if needed and call {@link MeshBaseClass#onBeforeRenderPass | Mesh base onBeforeRenderPass} super.
        */
       onBeforeRenderPass() {
-        this.updateMatrixStack();
-        if (this.domFrustum && this.domFrustum.shouldUpdate && this.frustumCulled) {
-          this.domFrustum.computeProjectedToDocumentCoords();
-          this.domFrustum.shouldUpdate = false;
+        if (this.material && this.matricesNeedUpdate) {
+          this.material.shouldUpdateInputsBindings("matrices");
         }
         super.onBeforeRenderPass();
       }
       /**
-       * Only render the Mesh if it is in view frustum.
-       * Since render() is actually called before onRenderPass(), we are sure to have fresh frustum bounding rectangle values here.
+       * Render our Mesh if the {@link RenderMaterial} is ready and if it is not frustum culled.
        * @param pass - current render pass
        */
       onRenderPass(pass) {
@@ -7772,10 +7786,7 @@ fn getVertex2DToUVCoords(vertex: vec2f) -> vec2f {
 }
 
 fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
-  return vec2(
-    vertex.x * 0.5 + 0.5,
-    0.5 - vertex.y * 0.5
-  );
+  return getVertex2DToUVCoords( vec2(vertex.x, vertex.y) );
 }
 `
   );
@@ -8524,12 +8535,13 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  class Scene {
+  class Scene extends Object3D {
     /**
      * Scene constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}
      */
     constructor({ renderer }) {
+      super();
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "Scene");
       this.renderer = renderer;
@@ -8540,28 +8552,31 @@ ${this.shaders.compute.head}`;
         /** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget}. Each {@link RenderTarget} will be added as a distinct {@link RenderPassEntry} here */
         renderTarget: [],
         /** Array of {@link RenderPassEntry} that will render directly to the screen. Our first entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. Following entries will be created for every global {@link ShaderPass} */
-        screen: [
-          // add our basic scene entry
-          {
-            renderPass: this.renderer.renderPass,
-            renderTexture: null,
-            onBeforeRenderPass: null,
-            onAfterRenderPass: null,
-            element: null,
-            // explicitly set to null
-            stack: {
-              unProjected: {
-                opaque: [],
-                transparent: []
-              },
-              projected: {
-                opaque: [],
-                transparent: []
-              }
-            }
-          }
-        ]
+        screen: []
       };
+    }
+    /**
+     * Set the main {@link Renderer} render pass entry.
+     */
+    setMainRenderPassEntry() {
+      this.renderPassEntries.screen.push({
+        renderPass: this.renderer.renderPass,
+        renderTexture: null,
+        onBeforeRenderPass: null,
+        onAfterRenderPass: null,
+        element: null,
+        // explicitly set to null
+        stack: {
+          unProjected: {
+            opaque: [],
+            transparent: []
+          },
+          projected: {
+            opaque: [],
+            transparent: []
+          }
+        }
+      });
     }
     /**
      * Get the number of meshes a {@link RenderPassEntry | render pass entry} should draw.
@@ -8644,7 +8659,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Add a Mesh to the correct {@link renderPassEntries | render pass entry} {@link Stack} array.
-     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, position along the Z axis in case they are transparent and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
+     * Meshes are then ordered by their {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#index | indexes (order of creation]}, {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#index | pipeline entry indexes} and then {@link core/meshes/mixins/MeshBaseMixin.MeshBaseClass#renderOrder | renderOrder}
      * @param mesh - Mesh to add
      */
     addMesh(mesh) {
@@ -8654,6 +8669,9 @@ ${this.shaders.compute.head}`;
       similarMeshes.sort((a, b) => {
         return a.renderOrder - b.renderOrder || a.material.pipelineEntry.index - b.material.pipelineEntry.index || a.index - b.index;
       });
+      if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
+        mesh.parent = this;
+      }
     }
     /**
      * Remove a Mesh from our {@link Scene}
@@ -8665,6 +8683,9 @@ ${this.shaders.compute.head}`;
         projectionStack.transparent = projectionStack.transparent.filter((m) => m.uuid !== mesh.uuid);
       } else {
         projectionStack.opaque = projectionStack.opaque.filter((m) => m.uuid !== mesh.uuid);
+      }
+      if ("parent" in mesh && mesh.parent && mesh.parent.object3DIndex === this.object3DIndex) {
+        mesh.parent = null;
       }
     }
     /**
@@ -8829,7 +8850,7 @@ ${this.shaders.compute.head}`;
         for (const mesh of renderPassEntry.stack.unProjected.opaque) {
           mesh.render(pass);
         }
-        for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        for (const mesh of renderPassEntry.stack.unProjected.transparent) {
           mesh.render(pass);
         }
         if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
@@ -8853,12 +8874,28 @@ ${this.shaders.compute.head}`;
       this.renderer.pipelineManager.resetCurrentPipeline();
     }
     /**
+     * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance.
+     */
+    onBeforeRender() {
+      for (let i = 0, l = this.renderer.meshes.length; i < l; i++) {
+        this.renderer.meshes[i].onBeforeRenderScene();
+      }
+      this.updateMatrixStack();
+      for (const mesh of this.renderer.meshes) {
+        if ("checkFrustumCulling" in mesh && mesh.visible) {
+          mesh.checkFrustumCulling();
+        }
+      }
+    }
+    /**
      * Render our {@link Scene}
-     * - Render {@link computePassEntries} first
-     * - Then our {@link renderPassEntries}
+     * - Execute {@link onBeforeRender} first
+     * - Then render {@link computePassEntries}
+     * - And finally render our {@link renderPassEntries}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
+      this.onBeforeRender();
       for (const computePass of this.computePassEntries) {
         const pass = commandEncoder.beginComputePass();
         computePass.render(pass);
@@ -9301,6 +9338,7 @@ ${this.shaders.compute.head}`;
         top: 0,
         left: 0
       };
+      this.setScene();
       this.setTasksQueues();
       this.setRendererObjects();
       if (!isOffscreenCanvas) {
@@ -9508,7 +9546,6 @@ ${this.shaders.compute.head}`;
       if (this.device) {
         this.configureContext();
         this.setMainRenderPasses();
-        this.setScene();
       }
     }
     /**
@@ -9542,6 +9579,7 @@ ${this.shaders.compute.head}`;
         label: this.options.label + " render pass",
         ...this.options.renderPass
       });
+      this.scene.setMainRenderPassEntry();
       this.postProcessingPass = new RenderPass(this, {
         label: this.options.label + " post processing render pass",
         // no need to handle depth or perform MSAA on a fullscreen quad
@@ -10082,6 +10120,7 @@ ${this.shaders.compute.head}`;
           this.onCameraMatricesChanged();
         }
       });
+      this.camera.parent = this.scene;
     }
     /**
      * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
@@ -10131,12 +10170,13 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its struct
+     * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
      */
     updateCameraBindings() {
       this.cameraBufferBinding?.shouldUpdateBinding("model");
       this.cameraBufferBinding?.shouldUpdateBinding("view");
       this.cameraBufferBinding?.shouldUpdateBinding("projection");
+      this.cameraBindGroup?.update();
     }
     /**
      * Get all objects ({@link RenderedMesh | rendered meshes} or {@link core/computePasses/ComputePass.ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}, including {@link cameraBindGroup | camera bind group}.
@@ -10180,17 +10220,8 @@ ${this.shaders.compute.head}`;
     onResize() {
       super.onResize();
       this.setPerspective();
-      this.updateCameraBindings();
     }
     /* RENDER */
-    /**
-     * Update the camera model matrix, check if the {@link cameraBindGroup | camera bind group} should be created, create it if needed and then update it
-     */
-    updateCamera() {
-      this.camera?.updateMatrixStack();
-      this.setCameraBindGroup();
-      this.cameraBindGroup?.update();
-    }
     /**
      * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
      * @param commandEncoder - current {@link GPUCommandEncoder}
@@ -10205,13 +10236,13 @@ ${this.shaders.compute.head}`;
       pass.end();
     }
     /**
-     * {@link updateCamera | Update the camera} and then call our {@link GPURenderer#render | GPURenderer render method}
+     * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
       if (!this.ready)
         return;
-      this.updateCamera();
+      this.setCameraBindGroup();
       super.render(commandEncoder);
     }
     /**
@@ -10276,17 +10307,16 @@ ${this.shaders.compute.head}`;
     async setAdapter() {
       if (!this.gpu) {
         this.onError();
-        throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
+        throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
       }
-      try {
-        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
-        this.adapter?.requestAdapterInfo().then((infos) => {
-          this.adapterInfos = infos;
-        });
-      } catch (error) {
+      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+      if (!this.adapter) {
         this.onError();
         throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
       }
+      this.adapter?.requestAdapterInfo().then((infos) => {
+        this.adapterInfos = infos;
+      });
     }
     /**
      * Set our {@link device}
@@ -11091,10 +11121,10 @@ struct VSOutput {
       return this._ready;
     }
     set ready(value) {
-      this._ready = value;
-      if (this.DOMMeshReady) {
+      if (value && !this._ready && this.sourcesReady) {
         this._onReadyCallback && this._onReadyCallback();
       }
+      this._ready = value;
     }
     /**
      * Get/set whether all the initial {@link DOMMesh} sources have been successfully loaded
@@ -11104,17 +11134,10 @@ struct VSOutput {
       return this._sourcesReady;
     }
     set sourcesReady(value) {
-      this._sourcesReady = value;
-      if (this.DOMMeshReady) {
+      if (value && !this._sourcesReady && this.ready) {
         this._onReadyCallback && this._onReadyCallback();
       }
-    }
-    /**
-     * Get whether our {@link DOMMesh} is ready. A {@link DOMMesh} is ready when its {@link sourcesReady | sources are ready} and its {@link material} and {@link geometry} are ready.
-     * @readonly
-     */
-    get DOMMeshReady() {
-      return this.ready && this.sourcesReady;
+      this._sourcesReady = value;
     }
     /**
      * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
@@ -11653,7 +11676,7 @@ struct VSOutput {
       return this.renderers?.map((renderer) => renderer.shaderPasses).flat();
     }
     /**
-     * Get all the created {@link ProjectedMesh | projected meshes}
+     * Get all the created {@link SceneStackedMesh | meshes}
      * @readonly
      */
     get meshes() {
@@ -12115,6 +12138,7 @@ struct VSOutput {
   exports.Binding = Binding;
   exports.Box3 = Box3;
   exports.BoxGeometry = BoxGeometry;
+  exports.Buffer = Buffer;
   exports.BufferBinding = BufferBinding;
   exports.Camera = Camera;
   exports.ComputeMaterial = ComputeMaterial;

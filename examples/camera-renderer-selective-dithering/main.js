@@ -50,6 +50,8 @@ window.addEventListener('load', async () => {
 
   // instead of rotating the camera, we're going to use an Object3D as pivot
   const pivot = new Object3D()
+  // add the scene as the pivot parent
+  pivot.parent = gpuCameraRenderer.scene
 
   // render our scene manually
   const animate = () => {
@@ -179,7 +181,7 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = Math.random() * 0.025
 
-    mesh.onRender(() => {
+    mesh.onBeforeRender(() => {
       mesh.rotation.y += rotationSpeed
       mesh.rotation.z += rotationSpeed
     })
