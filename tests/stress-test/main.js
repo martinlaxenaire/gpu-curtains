@@ -99,7 +99,7 @@ window.addEventListener('load', async () => {
   })
 
   gui
-    .add({ nbMeshes }, 'nbMeshes', 500, 5000, 1)
+    .add({ nbMeshes }, 'nbMeshes', 500, 10_000, 1)
     .name('Number of meshes')
     .onFinishChange((value) => {
       if (value < nbMeshes) {
@@ -115,5 +115,14 @@ window.addEventListener('load', async () => {
       }
 
       nbMeshes = value
+    })
+
+  gui
+    .add({ frustumCulled: true }, 'frustumCulled')
+    .name('Frustum culling')
+    .onChange((value) => {
+      for (let i = 0, l = meshes.length; i < l; i++) {
+        meshes[i].frustumCulled = value
+      }
     })
 })

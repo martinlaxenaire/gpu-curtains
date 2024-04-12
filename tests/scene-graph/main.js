@@ -35,11 +35,15 @@ window.addEventListener('load', async () => {
   rightPivot.position.x = 7.5
   rightPivot.scale.set(0.75)
 
+  let time = 0
+
   // render
   const animate = () => {
     leftPivot.rotation.z += 0.02
 
-    //rightPivot.rotation.z += 0.02
+    time += 0.025
+    rightPivot.rotation.y += 0.01
+    rightPivot.position.y = Math.cos(time) * 3
 
     gpuDeviceManager.render()
     requestAnimationFrame(animate)

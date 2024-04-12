@@ -150,7 +150,7 @@ function ProjectedMeshBaseMixin(Base) {
       };
       if (!meshParameters.uniforms)
         meshParameters.uniforms = {};
-      meshParameters.uniforms.matrices = matricesUniforms;
+      meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
       super.setMaterial(meshParameters);
     }
     /* SIZE & TRANSFORMS */

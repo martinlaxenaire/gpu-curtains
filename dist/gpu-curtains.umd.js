@@ -7522,7 +7522,7 @@ struct VSOutput {
         };
         if (!meshParameters.uniforms)
           meshParameters.uniforms = {};
-        meshParameters.uniforms.matrices = matricesUniforms;
+        meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
         super.setMaterial(meshParameters);
       }
       /* SIZE & TRANSFORMS */
@@ -7786,10 +7786,7 @@ fn getVertex2DToUVCoords(vertex: vec2f) -> vec2f {
 }
 
 fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
-  return vec2(
-    vertex.x * 0.5 + 0.5,
-    0.5 - vertex.y * 0.5
-  );
+  return getVertex2DToUVCoords( vec2(vertex.x, vertex.y) );
 }
 `
   );
