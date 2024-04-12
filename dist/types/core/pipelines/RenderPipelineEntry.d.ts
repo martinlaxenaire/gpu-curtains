@@ -8,7 +8,7 @@ import { RenderMaterialAttributes } from '../../types/Materials';
  *
  * ## Shaders patching
  *
- * The {@link RenderPipelineEntry} uses each of its {@link RenderPipelineEntry#bindGroups | bind groups} {@link core/bindings/Binding.Binding | Binding} to patch the given compute shader before creating the {@link GPUShaderModule}.<br>
+ * The {@link RenderPipelineEntry} uses each of its {@link RenderPipelineEntry#bindGroups | bind groups} {@link core/bindings/Binding.Binding | Binding} to patch the given vertex and fragment shaders before creating the {@link GPUShaderModule}.<br>
  * It will prepend every {@link core/bindings/Binding.Binding | Binding} WGSL code snippets (or fragments) with the correct bind group and bindings indices.
  *
  * ## Pipeline compilation
