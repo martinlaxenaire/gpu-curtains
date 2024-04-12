@@ -172,9 +172,9 @@ export class ComputeMaterial extends Material {
       this._useCustomRenderCallback(pass)
     } else {
       // else just set our bind groups and dispatch
-      this.bindGroups.forEach((bindGroup) => {
+      for (const bindGroup of this.bindGroups) {
         pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
-      })
+      }
 
       pass.dispatchWorkgroups(this.dispatchSize[0], this.dispatchSize[1], this.dispatchSize[2])
     }
@@ -187,13 +187,17 @@ export class ComputeMaterial extends Material {
    * @param commandEncoder - current command encoder
    */
   copyBufferToResult(commandEncoder: GPUCommandEncoder) {
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       bindGroup.bufferBindings.forEach((binding: WritableBufferBinding) => {
-        if (binding.shouldCopyResult && binding.resultBuffer.mapState === 'unmapped') {
-          commandEncoder.copyBufferToBuffer(binding.buffer, 0, binding.resultBuffer, 0, binding.resultBuffer.size)
+        if (binding.shouldCopyResult) {
+          this.renderer.copyBufferToBuffer({
+            srcBuffer: binding.buffer,
+            dstBuffer: binding.resultBuffer,
+            commandEncoder,
+          })
         }
       })
-    })
+    }
   }
 
   /**
@@ -213,10 +217,10 @@ export class ComputeMaterial extends Material {
   }): Promise<Float32Array> {
     const binding = this.getBufferBindingByName(bindingName)
 
-    if (binding && 'resultBuffer' in binding && binding.resultBuffer.mapState === 'unmapped') {
+    if (binding && 'resultBuffer' in binding) {
       const result = await this.getBufferResult(binding.resultBuffer)
 
-      if (bufferElementName) {
+      if (bufferElementName && result.length) {
         return binding.extractBufferElementDataFromBufferResult({ result, bufferElementName })
       } else {
         return result

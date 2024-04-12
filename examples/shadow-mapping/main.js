@@ -46,7 +46,7 @@ window.addEventListener('load', async () => {
   })
 
   // get the camera
-  const { camera } = gpuCameraRenderer
+  const { scene, camera } = gpuCameraRenderer
   camera.position.z = systemSize * 4.5
 
   // lerp camera look at based on mouse/touch move
@@ -64,6 +64,7 @@ window.addEventListener('load', async () => {
   window.addEventListener('touchmove', onPointerMove)
 
   const meshesPivot = new Object3D()
+  meshesPivot.parent = scene
   meshesPivot.position.z = systemSize * 0.5
 
   // render our scene manually
@@ -121,6 +122,7 @@ window.addEventListener('load', async () => {
   const shadowMapTextureFormat = 'depth24plus'
   // mandatory so we could use textureSampleCompare()
   const shadowDepthSampleCount = 1
+  const shadowMapSize = 1024
 
   const shadowDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'Shadow depth texture',
@@ -129,8 +131,8 @@ window.addEventListener('load', async () => {
     format: shadowMapTextureFormat,
     sampleCount: shadowDepthSampleCount,
     fixedSize: {
-      width: 1024,
-      height: 1024,
+      width: shadowMapSize,
+      height: shadowMapSize,
     },
   })
 
@@ -156,7 +158,7 @@ window.addEventListener('load', async () => {
     @vertex fn main(
       attributes: Attributes,
     ) -> @builtin(position) vec4<f32> {
-      return lightning.lightViewProjectionMatrix * matrices.world * vec4(attributes.position, 1.0);
+      return lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
     }
   `
 
@@ -178,7 +180,7 @@ window.addEventListener('load', async () => {
       vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
       
       // XY is in (-1, 1) space, Z is in (0, 1) space
-      let posFromLight = lightning.lightViewProjectionMatrix * matrices.world * vec4(attributes.position, 1.0);
+      let posFromLight = lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
     
       // Convert XY to (0, 1)
       // Y is flipped because texture coords are Y-down.
@@ -244,10 +246,9 @@ window.addEventListener('load', async () => {
         fragment: false,
       },
       sampleCount: depthTarget.renderPass.options.sampleCount,
+      depthFormat: shadowMapTextureFormat,
       bindings: [lightBufferBinding, mesh.material.getBufferBindingByName('matrices')],
     })
-
-    mesh.userData.depthMaterial.setAttributesFromGeometry(mesh.geometry)
 
     // keep track of original material as well
     mesh.userData.originalMaterial = mesh.material
@@ -307,17 +308,20 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
 
-    mesh.onRender(() => {
-      // onRender is called when rendering the depth pass and the shading pass
-      // be sure we're actually rendering the shading pass
-      if (mesh.uniforms.normals) {
-        mesh.uniforms.normals.inverseTransposeMatrix.value.copy(mesh.worldMatrix).invert().transpose()
-        mesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
-
+    mesh
+      .onBeforeRender(() => {
+        // onBeforeRender is just called once before updating the Scene matrix stack
         mesh.rotation.y += rotationSpeed
         mesh.rotation.z += rotationSpeed
-      }
-    })
+      })
+      .onRender(() => {
+        // onRender is called when rendering the depth pass and the shading pass
+        // be sure we're actually rendering the shading pass
+        if (mesh.uniforms.normals) {
+          mesh.uniforms.normals.inverseTransposeMatrix.value.copy(mesh.worldMatrix).invert().transpose()
+          mesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
+        }
+      })
 
     createMeshDepthMaterial(mesh)
 
@@ -329,6 +333,8 @@ window.addEventListener('load', async () => {
   const planeGeometry = new PlaneGeometry()
 
   const boxPivot = new Object3D()
+  boxPivot.parent = scene
+
   const aspectRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
   boxPivot.scale.set(systemSize * 2 * aspectRatio, systemSize * 2, systemSize * 2)
 
@@ -414,7 +420,7 @@ window.addEventListener('load', async () => {
 
     // render meshes with their depth material
     depthMeshes.forEach((mesh) => {
-      mesh.render(depthPass)
+      if (mesh.ready) mesh.render(depthPass)
     })
 
     depthPass.end()
@@ -439,7 +445,7 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
 
-      // just use the model matrix here, do not take the projection into account
+      // just use the world matrix here, do not take the projection into account
       vsOutput.position = matrices.model * vec4(attributes.position, 1.0);
       vsOutput.uv = attributes.uv;
       

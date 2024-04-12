@@ -85,6 +85,7 @@ export class ComputeFeature {
         {
           stepMode: 'instance',
           name: 'instanceAttributes',
+          buffer: particleBuffer?.buffer,
           attributes: [
             {
               name: 'instancePosition',
@@ -122,15 +123,10 @@ export class ComputeFeature {
       },
     })
 
-    this.particles
-      .onReady(() => {
-        const instanceVertexBuffer = this.particles.geometry.getVertexBufferByName('instanceAttributes')
-        instanceVertexBuffer.buffer = particleBuffer?.buffer
-      })
-      .onRender(() => {
-        this.particles.rotation.y += 0.0075
-        this.particles.uniforms.frames.elapsed.value++
-      })
+    this.particles.onBeforeRender(() => {
+      this.particles.rotation.y += 0.0075
+      this.particles.uniforms.frames.elapsed.value++
+    })
 
     const shaderPassFs = /* wgsl */ `
       struct VSOutput {

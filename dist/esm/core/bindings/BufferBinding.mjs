@@ -6,6 +6,7 @@ import { Vec3 } from '../../math/Vec3.mjs';
 import { BufferElement } from './bufferElements/BufferElement.mjs';
 import { BufferArrayElement } from './bufferElements/BufferArrayElement.mjs';
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement.mjs';
+import { Buffer } from '../buffers/Buffer.mjs';
 
 class BufferBinding extends Binding {
   /**
@@ -29,15 +30,18 @@ class BufferBinding extends Binding {
       access,
       struct
     };
+    this.cacheKey += `${useStruct},${access},`;
     this.arrayBufferSize = 0;
     this.shouldUpdate = false;
     this.useStruct = useStruct;
     this.bufferElements = [];
     this.inputs = {};
-    this.buffer = null;
-    this.setBindings(struct);
-    this.setBufferAttributes();
-    this.setWGSLFragment();
+    this.buffer = new Buffer();
+    if (Object.keys(struct).length) {
+      this.setBindings(struct);
+      this.setBufferAttributes();
+      this.setWGSLFragment();
+    }
   }
   /**
    * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
@@ -51,25 +55,74 @@ class BufferBinding extends Binding {
     };
   }
   /**
+   * Get the resource cache key
+   * @readonly
+   */
+  get resourceLayoutCacheKey() {
+    return `buffer,${getBindGroupLayoutBindingType(this)},${this.visibility},`;
+  }
+  /**
    * Get {@link GPUBindGroupEntry#resource | bind group resource}
    * @readonly
    */
   get resource() {
-    return { buffer: this.buffer };
+    return { buffer: this.buffer.GPUBuffer };
+  }
+  /**
+   * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
+   * @param params - params to use for cloning
+   */
+  clone(params) {
+    const { struct, ...defaultParams } = params;
+    const bufferBindingCopy = new this.constructor(defaultParams);
+    bufferBindingCopy.setBindings(struct);
+    bufferBindingCopy.options.struct = struct;
+    bufferBindingCopy.arrayBufferSize = this.arrayBufferSize;
+    bufferBindingCopy.arrayBuffer = new ArrayBuffer(bufferBindingCopy.arrayBufferSize);
+    bufferBindingCopy.arrayView = new DataView(
+      bufferBindingCopy.arrayBuffer,
+      0,
+      bufferBindingCopy.arrayBuffer.byteLength
+    );
+    bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength;
+    this.bufferElements.forEach((bufferElement) => {
+      const newBufferElement = new bufferElement.constructor({
+        name: bufferElement.name,
+        key: bufferElement.key,
+        type: bufferElement.type,
+        ...bufferElement.arrayLength && {
+          arrayLength: bufferElement.arrayLength
+        }
+      });
+      newBufferElement.alignment = bufferElement.alignment;
+      if (bufferElement.arrayStride) {
+        newBufferElement.arrayStride = bufferElement.arrayStride;
+      }
+      newBufferElement.setView(bufferBindingCopy.arrayBuffer, bufferBindingCopy.arrayView);
+      bufferBindingCopy.bufferElements.push(newBufferElement);
+    });
+    if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
+      bufferBindingCopy.wgslStructFragment = this.wgslStructFragment;
+      bufferBindingCopy.wgslGroupFragment = this.wgslGroupFragment;
+    } else {
+      bufferBindingCopy.setWGSLFragment();
+    }
+    bufferBindingCopy.shouldUpdate = bufferBindingCopy.arrayBufferSize > 0;
+    return bufferBindingCopy;
   }
   /**
    * Format bindings struct and set our {@link inputs}
    * @param bindings - bindings inputs
    */
   setBindings(bindings) {
-    Object.keys(bindings).forEach((bindingKey) => {
+    for (const bindingKey of Object.keys(bindings)) {
       const binding = {};
       for (const key in bindings[bindingKey]) {
         if (key !== "value") {
           binding[key] = bindings[bindingKey][key];
         }
       }
-      binding.name = bindings[bindingKey].name ?? bindingKey;
+      binding.name = bindingKey;
       Object.defineProperty(binding, "value", {
         get() {
           return binding._value;
@@ -84,39 +137,43 @@ class BufferBinding extends Binding {
         binding.value.onChange(() => binding.shouldUpdate = true);
       }
       this.inputs[bindingKey] = binding;
-    });
+      this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`;
+    }
   }
   /**
    * Set our buffer attributes:
    * Takes all the {@link inputs} and adds them to the {@link bufferElements} array with the correct start and end offsets (padded), then fill our {@link arrayBuffer} typed array accordingly.
    */
   setBufferAttributes() {
-    const arrayBindings = Object.keys(this.inputs).filter(
-      (bindingKey) => this.inputs[bindingKey].type.indexOf("array") !== -1
-    );
-    let orderedBindings = Object.keys(this.inputs).sort((bindingKeyA, bindingKeyB) => {
-      const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf("array"));
-      const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf("array"));
-      return isBindingAArray - isBindingBArray;
+    let orderedBindings = Object.keys(this.inputs);
+    const arrayBindings = orderedBindings.filter((bindingKey) => {
+      return this.inputs[bindingKey].type.includes("array");
     });
-    if (arrayBindings.length > 1) {
-      orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey));
+    if (arrayBindings.length) {
+      orderedBindings.sort((bindingKeyA, bindingKeyB) => {
+        const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf("array"));
+        const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf("array"));
+        return isBindingAArray - isBindingBArray;
+      });
+      if (arrayBindings.length > 1) {
+        orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey));
+      }
     }
-    orderedBindings.forEach((bindingKey) => {
+    for (const bindingKey of orderedBindings) {
       const binding = this.inputs[bindingKey];
       const bufferElementOptions = {
         name: toCamelCase(binding.name ?? bindingKey),
         key: bindingKey,
         type: binding.type
       };
-      const isArray = binding.type.indexOf("array") !== -1 && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value));
+      const isArray = binding.type.includes("array") && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value));
       this.bufferElements.push(
         isArray ? new BufferArrayElement({
           ...bufferElementOptions,
           arrayLength: binding.value.length
         }) : new BufferElement(bufferElementOptions)
       );
-    });
+    }
     this.bufferElements.forEach((bufferElement, index) => {
       const startOffset = index === 0 ? 0 : this.bufferElements[index - 1].endOffset + 1;
       bufferElement.setAlignment(startOffset);
@@ -125,7 +182,7 @@ class BufferBinding extends Binding {
       const arraySizes = arrayBindings.map((bindingKey) => {
         const binding = this.inputs[bindingKey];
         const bufferLayout = getBufferLayout(binding.type.replace("array", "").replace("<", "").replace(">", ""));
-        return binding.value.length / bufferLayout.numElements;
+        return Math.ceil(binding.value.length / bufferLayout.numElements);
       });
       const equalSize = arraySizes.every((size, i, array) => size === array[0]);
       if (equalSize) {
@@ -176,15 +233,18 @@ class BufferBinding extends Binding {
     this.arrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount : 0;
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
     this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength);
-    this.bufferElements.forEach((bufferElement) => {
+    this.buffer.size = this.arrayBuffer.byteLength;
+    for (const bufferElement of this.bufferElements) {
       bufferElement.setView(this.arrayBuffer, this.arrayView);
-    });
+    }
     this.shouldUpdate = this.arrayBufferSize > 0;
   }
   /**
    * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
    */
   setWGSLFragment() {
+    if (!this.bufferElements.length)
+      return;
     const kebabCaseLabel = toKebabCase(this.label);
     if (this.useStruct) {
       const bufferElements = this.bufferElements.filter(
@@ -234,13 +294,13 @@ class BufferBinding extends Binding {
     }
   }
   /**
-   * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
+   * Set a {@link BufferBinding#shouldUpdate | binding shouldUpdate} flag to `true` to update our {@link arrayBuffer} array during next render.
    * @param bindingName - the binding name/key to update
    */
   shouldUpdateBinding(bindingName = "") {
-    const bindingKey = Object.keys(this.inputs).find((bindingKey2) => this.inputs[bindingKey2].name === bindingName);
-    if (bindingKey)
-      this.inputs[bindingKey].shouldUpdate = true;
+    if (this.inputs[bindingName]) {
+      this.inputs[bindingName].shouldUpdate = true;
+    }
   }
   /**
    * Executed at the beginning of a Material render call.
@@ -248,16 +308,16 @@ class BufferBinding extends Binding {
    * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
-    Object.keys(this.inputs).forEach((bindingKey) => {
-      const binding = this.inputs[bindingKey];
-      const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey);
+    const inputs = Object.values(this.inputs);
+    for (const binding of inputs) {
+      const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name);
       if (binding.shouldUpdate && bufferElement) {
         binding.onBeforeUpdate && binding.onBeforeUpdate();
         bufferElement.update(binding.value);
         this.shouldUpdate = true;
         binding.shouldUpdate = false;
       }
-    });
+    }
   }
   /**
    * Extract the data corresponding to a specific {@link BufferElement} from a {@link Float32Array} holding the {@link BufferBinding#buffer | GPU buffer} data of this {@link BufferBinding}

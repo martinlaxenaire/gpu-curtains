@@ -5,6 +5,7 @@ import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
 import { Vec2 } from '../../math/Vec2'
 import { cacheManager } from '../../utils/CacheManager'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { BufferBindingParams } from '../bindings/BufferBinding'
 
 /**
  * Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
@@ -65,14 +66,17 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
     // no vertex shader? patch uniforms/storages visibility
     if (!parameters.shaders || !parameters.shaders.vertex) {
       ;['uniforms', 'storages'].forEach((bindingType) => {
-        Object.keys(parameters[bindingType] ?? {}).forEach(
-          (bindingKey) => (parameters[bindingType][bindingKey].visibility = 'fragment')
+        Object.values(parameters[bindingType] ?? {}).forEach(
+          (binding: BufferBindingParams) => (binding.visibility = 'fragment')
         )
       })
     }
 
     // we don't want to write to the depth buffer for fullscreen quads
     parameters.depthWriteEnabled = false
+    if (!parameters.label) {
+      parameters.label = 'FullscreenQuadMesh'
+    }
 
     // @ts-ignore
     super(renderer, null, { geometry, ...parameters })

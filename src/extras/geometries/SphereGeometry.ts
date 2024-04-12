@@ -31,18 +31,19 @@ export interface SphereGeometryParams extends GeometryBaseParams {
 export class SphereGeometry extends IndexedGeometry {
   constructor(
     {
+      topology,
+      instancesCount = 1,
+      vertexBuffers = [],
+      mapBuffersAtCreation = true,
       widthSegments = 32,
       heightSegments = 16,
       phiStart = 0,
       phiLength = Math.PI * 2,
       thetaStart = 0,
       thetaLength = Math.PI,
-      instancesCount = 1,
-      vertexBuffers = [],
-      topology,
     } = {} as SphereGeometryParams
   ) {
-    super({ verticesOrder: 'ccw', topology, instancesCount, vertexBuffers })
+    super({ verticesOrder: 'ccw', topology, instancesCount, vertexBuffers, mapBuffersAtCreation })
 
     this.type = 'SphereGeometry'
 

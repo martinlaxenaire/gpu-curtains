@@ -157,13 +157,14 @@ export class Texture extends Object3D {
       name: this.options.name + 'Matrix',
       useStruct: false,
       struct: {
-        matrix: {
-          name: this.options.name + 'Matrix',
+        [this.options.name + 'Matrix']: {
           type: 'mat4x4f',
           value: this.modelMatrix,
         },
       },
     })
+
+    this.renderer.deviceManager.bufferBindings.set(this.textureMatrix.cacheKey, this.textureMatrix)
 
     this.setBindings()
 
@@ -185,11 +186,11 @@ export class Texture extends Object3D {
       new TextureBinding({
         label: this.options.label + ': texture',
         name: this.options.name,
-        texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
         bindingType: this.options.sourceType === 'externalVideo' ? 'externalTexture' : 'texture',
-        viewDimension: this.options.viewDimension,
         visibility: this.options.visibility,
-      } as TextureBindingParams),
+        texture: this.options.sourceType === 'externalVideo' ? this.externalTexture : this.texture,
+        viewDimension: this.options.viewDimension,
+      }),
       this.textureMatrix,
     ]
   }
@@ -336,8 +337,12 @@ export class Texture extends Object3D {
   /**
    * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
    */
-  onAfterMatrixStackUpdate() {
-    this.textureMatrix.shouldUpdateBinding(this.options.name + 'Matrix')
+  updateMatrixStack() {
+    super.updateMatrixStack()
+
+    if (this.matricesNeedUpdate) {
+      this.textureMatrix.shouldUpdateBinding(this.options.name + 'Matrix')
+    }
   }
 
   /**

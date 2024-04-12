@@ -12,6 +12,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { RenderTexture } from '../textures/RenderTexture';
 import { Binding } from '../bindings/Binding';
 import { BufferElement } from '../bindings/bufferElements/BufferElement';
+import { Buffer } from '../buffers/Buffer';
 /**
  * Used as a base to create a {@link Material}.<br>
  * The purpose of {@link Material} is to create and update the {@link BindGroup | bind groups} and their bindings (GPU buffers, textures and samplers), create a {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} and use them to {@link Material#render | render}.
@@ -57,8 +58,8 @@ export declare class Material {
     uniforms: Record<string, Record<string, BufferBindingInput>>;
     /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
     storages: Record<string, Record<string, BufferBindingInput>>;
-    /** Array of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
-    inputsBindings: BindGroupBindingElement[];
+    /** Map of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
+    inputsBindings: Map<string, BindGroupBindingElement>;
     /** Array of {@link Texture} handled by this {@link Material} */
     textures: Texture[];
     /** Array of {@link RenderTexture} handled by this {@link Material} */
@@ -169,7 +170,7 @@ export declare class Material {
      */
     getBufferBindingByName(bindingName?: Binding['name']): BindGroupBufferBindingElement | undefined;
     /**
-     * Force a given buffer binding update flag to update it at next render
+     * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
      * @param bufferBindingName - the buffer binding name
      * @param bindingName - the binding name
      */
@@ -202,23 +203,23 @@ export declare class Material {
      */
     addSampler(sampler: Sampler): void;
     /**
-     * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
-     * @param buffer - {@link GPUBuffer} to map
+     * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
+     * @param buffer - {@link Buffer} to use for mapping
      * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
      */
-    getBufferResult(buffer: GPUBuffer): Promise<Float32Array>;
+    getBufferResult(buffer: Buffer): Promise<Float32Array>;
     /**
-     * Map the content of a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+     * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+     * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
      * @async
      * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
      */
     getBufferBindingResultByBindingName(bindingName?: Binding['name']): Promise<Float32Array>;
     /**
-     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+     * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
      * @param parameters - parameters used to get the result
-     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+     * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
      * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
      * @returns - {@link Float32Array} holding {@link GPUBuffer} data
      */

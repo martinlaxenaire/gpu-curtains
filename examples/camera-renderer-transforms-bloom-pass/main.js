@@ -72,7 +72,7 @@ window.addEventListener('load', async () => {
     
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
-      vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize((matrices.model * vec4(attributes.normal, 0.0)).xyz);
       //vsOutput.normal = attributes.normal;
       
       return vsOutput;
@@ -154,7 +154,7 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = Math.random() * 0.025
 
-    mesh.onRender(() => {
+    mesh.onBeforeRender(() => {
       mesh.rotation.y += rotationSpeed
       mesh.rotation.z += rotationSpeed
     })

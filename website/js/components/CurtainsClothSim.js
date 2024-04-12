@@ -77,40 +77,6 @@ export class CurtainsClothSim {
       this.normalPositionArray[i + 2] = 1
     }
 
-    this.clothGeometry.addVertexBuffer({
-      name: 'clothAttributes',
-      attributes: [
-        {
-          name: 'clothPosition',
-          type: 'vec4f',
-          bufferFormat: 'float32x4',
-          size: 4,
-          array: this.vertexPositionArray,
-        },
-        {
-          name: 'clothNormal',
-          type: 'vec4f',
-          bufferFormat: 'float32x4',
-          size: 4,
-          array: this.normalPositionArray,
-        },
-        {
-          name: 'clothForce',
-          type: 'vec4f',
-          bufferFormat: 'float32x4',
-          size: 4,
-          array: this.vertexForceArray,
-        },
-        {
-          name: 'clothVelocity',
-          type: 'vec4f',
-          bufferFormat: 'float32x4',
-          size: 4,
-          array: this.vertexVelocityArray,
-        },
-      ],
-    })
-
     this.computeBindGroup = new BindGroup(this.gpuCurtains.renderer, {
       label: 'Cloth simulation compute bind group',
       uniforms: {
@@ -269,6 +235,42 @@ export class CurtainsClothSim {
       normalPass.end()
     })
 
+    this.clothGeometry.addVertexBuffer({
+      name: 'clothAttributes',
+      // add the compute bind group vertex buffer right away
+      buffer: this.computeBindGroup.getBindingByName('clothVertex')?.buffer,
+      attributes: [
+        {
+          name: 'clothPosition',
+          type: 'vec4f',
+          bufferFormat: 'float32x4',
+          size: 4,
+          array: this.vertexPositionArray,
+        },
+        {
+          name: 'clothNormal',
+          type: 'vec4f',
+          bufferFormat: 'float32x4',
+          size: 4,
+          array: this.normalPositionArray,
+        },
+        {
+          name: 'clothForce',
+          type: 'vec4f',
+          bufferFormat: 'float32x4',
+          size: 4,
+          array: this.vertexForceArray,
+        },
+        {
+          name: 'clothVelocity',
+          type: 'vec4f',
+          bufferFormat: 'float32x4',
+          size: 4,
+          array: this.vertexVelocityArray,
+        },
+      ],
+    })
+
     const params = {
       geometry: this.clothGeometry,
       domFrustumMargins: {
@@ -350,13 +352,6 @@ export class CurtainsClothSim {
     this.plane.domElement.element.classList.add('canvas-texture-ready')
 
     this.plane
-      .onRender(() => {
-        // update cloth vertex buffer with resulting buffer from compute passes
-        const vertexBuffer = this.plane.geometry.getVertexBufferByName('clothAttributes')
-        const clothBuffer = this.computeNormalPass.material.getBindingByName('clothVertex')
-
-        vertexBuffer.buffer = clothBuffer?.buffer
-      })
       .onAfterResize(() => {
         writeCanvasText()
         canvasTexture.resize()

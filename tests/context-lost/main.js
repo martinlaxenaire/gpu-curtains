@@ -28,7 +28,7 @@ window.addEventListener('load', async () => {
 
   //mesh.position.z = -0.5
 
-  mesh.onRender(() => {
+  mesh.onBeforeRender(() => {
     mesh.rotation.y += 0.01
   })
 
@@ -98,7 +98,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(gpuCurtains)
+  console.log(gpuCurtains, plane, postProPass)
 
   // lost context
 
@@ -114,7 +114,7 @@ window.addEventListener('load', async () => {
     } else {
       gpuCurtains.restoreContext()
       loseCtxButton.textContent = 'Lose context'
-      console.log('restored', postProPass.material)
+      console.log('restored', postProPass.material, mesh.material)
     }
 
     isContextActive = !isContextActive

@@ -140,13 +140,13 @@ class RenderMaterial extends Material {
       this.texturesBindGroup.createBindGroup();
       this.bindGroups.push(this.texturesBindGroup);
     }
-    this.inputsBindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.inputsBindGroups) {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
         bindGroup.createBindGroup();
         this.bindGroups.push(bindGroup);
       }
-    });
+    }
   }
 }
 

@@ -4,7 +4,23 @@
 }
 
 .binding {
-  padding: 2rem;
+  padding: 4rem 2rem;
+  position: relative;
+}
+
+.binding h2 {
+  margin-bottom: 1em;
+}
+
+.binding:not(:last-of-type)::after {
+  content: '';
+  position: absolute;
+  right: 25%;
+  bottom: 0;
+  left: 25%;
+  height: 1px;
+  background: var(--light-color);
+  opacity: 0.3;
 }
 
 .binding-declaration {
@@ -14,8 +30,8 @@
 
 .wgsl-declaration {
   order: 2;
-  margin-left: 4rem;
-  padding: 1rem 2rem;
+  margin-left: 4em;
+  padding: 1em 2em;
   font-size: 0.95rem;
   background: var(--byte-table-border-color);
   float: left;
@@ -23,13 +39,19 @@
 
 .wgsl-declaration pre {
   margin: 0;
-  tab-size: 4;
-  -moz-tab-size: 4;
-  -o-tab-size: 4;
+  tab-size: 2;
+  -moz-tab-size: 2;
+  -o-tab-size: 2;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .wgsl-declaration-var {
-  margin-top: 1rem;
+  margin-top: 1em;
+}
+
+.wgsl-declaration-var pre {
 }
 
 .byte-diagram {
@@ -41,6 +63,7 @@
   width: 900px;
   color: var(--dark-color);
   margin-bottom: auto;
+  min-width: 50%;
 }
 
 .binding-element {
@@ -49,7 +72,7 @@
 
 .binding-element-type {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.85em;
   padding: 0.325em 0.5em;
   border-bottom: 2px solid var(--byte-table-border-color);
 }
@@ -149,14 +172,36 @@
   grid-column-start: 13;
 }
 
-@media (min-width: 1280px) {
+@media screen and (max-width: 1680px) {
+  .binding {
+    padding: 4rem 1rem;
+  }
+
   .binding-declaration {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: space-between;
+    font-size: 0.75rem;
+  }
+
+  .byte-diagram {
+    min-width: 0;
   }
 
   .wgsl-declaration {
     margin: 0 0 auto 0;
+    font-size: 0.75rem;
+    max-width: 33%;
+    min-width: 25%;
+  }
+}
+
+@media screen and (max-width: 980px) {
+  .binding-declaration {
+    flex-wrap: wrap;
+  }
+
+  .wgsl-declaration {
+    max-width: none;
   }
 }

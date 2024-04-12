@@ -4,6 +4,7 @@ import { Input, InputBase, InputValue } from '../../types/BindGroups';
 import { BufferElement } from './bufferElements/BufferElement';
 import { BufferArrayElement } from './bufferElements/BufferArrayElement';
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement';
+import { Buffer } from '../buffers/Buffer';
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
  */
@@ -16,6 +17,8 @@ export interface BufferBindingInput extends InputBase {
     set value(value: InputValue);
     /** Whether the {@link InputValue | input value} has changed and we should update the {@link BufferBinding#arrayBuffer | buffer binding array} */
     shouldUpdate: boolean;
+    /** {@link BufferBindingInput} name */
+    name: string;
 }
 /**
  * Base parameters used to create a {@link BufferBinding}
@@ -74,8 +77,8 @@ export declare class BufferBinding extends Binding {
     arrayBuffer: ArrayBuffer;
     /** Data view of our {@link arrayBuffer | array buffer} */
     arrayView: DataView;
-    /** The GPUBuffer */
-    buffer: GPUBuffer | null;
+    /** The {@link Buffer} holding the {@link GPUBuffer}  */
+    buffer: Buffer;
     /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
     wgslStructFragment: string;
     /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link BufferBinding} */
@@ -96,6 +99,11 @@ export declare class BufferBinding extends Binding {
         buffer: GPUBufferBindingLayout;
     };
     /**
+     * Get the resource cache key
+     * @readonly
+     */
+    get resourceLayoutCacheKey(): string;
+    /**
      * Get {@link GPUBindGroupEntry#resource | bind group resource}
      * @readonly
      */
@@ -103,6 +111,11 @@ export declare class BufferBinding extends Binding {
         /** {@link GPUBindGroup | bind group} resource */
         buffer: GPUBuffer | null;
     };
+    /**
+     * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
+     * @param params - params to use for cloning
+     */
+    clone(params: BufferBindingParams): BufferBinding;
     /**
      * Format bindings struct and set our {@link inputs}
      * @param bindings - bindings inputs
@@ -118,7 +131,7 @@ export declare class BufferBinding extends Binding {
      */
     setWGSLFragment(): void;
     /**
-     * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
+     * Set a {@link BufferBinding#shouldUpdate | binding shouldUpdate} flag to `true` to update our {@link arrayBuffer} array during next render.
      * @param bindingName - the binding name/key to update
      */
     shouldUpdateBinding(bindingName?: string): void;

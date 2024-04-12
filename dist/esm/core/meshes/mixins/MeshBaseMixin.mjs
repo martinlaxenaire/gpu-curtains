@@ -30,7 +30,6 @@ const defaultMeshBaseParams = {
   // geometry
   geometry: new Geometry(),
   // material
-  shaders: {},
   autoRender: true,
   useProjection: false,
   useAsyncPipeline: true,
@@ -109,13 +108,14 @@ function MeshBaseMixin(Base) {
         ...this.options ?? {},
         // merge possible lower options?
         label: label ?? "Mesh " + this.renderer.meshes.length,
-        shaders,
-        texturesOptions,
+        ...shaders !== void 0 ? { shaders } : {},
         ...outputTarget !== void 0 && { outputTarget },
+        texturesOptions,
         ...autoRender !== void 0 && { autoRender },
         ...meshParameters
       };
       this.geometry = geometry;
+      this.geometry.consumers.add(this.uuid);
       if (autoRender !== void 0) {
         __privateSet(this, _autoRender, autoRender);
       }
@@ -146,7 +146,7 @@ function MeshBaseMixin(Base) {
       return this._ready;
     }
     set ready(value) {
-      if (value) {
+      if (value && !this._ready) {
         this._onReadyCallback && this._onReadyCallback();
       }
       this._ready = value;
@@ -215,18 +215,15 @@ function MeshBaseMixin(Base) {
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext() {
-      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
-        vertexBuffer.buffer = null;
-      });
-      if ("indexBuffer" in this.geometry) {
-        this.geometry.indexBuffer.buffer = null;
-      }
+      this.ready = false;
+      this.geometry.loseContext();
       this.material.loseContext();
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext() {
+      this.geometry.restoreContext(this.renderer);
       this.material.restoreContext();
     }
     /* SHADERS */
@@ -234,9 +231,9 @@ function MeshBaseMixin(Base) {
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      let { shaders } = this.options;
+      const { shaders } = this.options;
       if (!shaders) {
-        shaders = {
+        this.options.shaders = {
           vertex: {
             code: default_vsWgsl,
             entryPoint: "main"
@@ -271,36 +268,16 @@ function MeshBaseMixin(Base) {
       }
     }
     /**
-     * Create the Mesh Geometry vertex and index buffers if needed
-     */
-    createGeometryBuffers() {
-      if (!this.geometry.ready) {
-        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
-          if (!vertexBuffer.buffer) {
-            vertexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + " geometry: " + vertexBuffer.name + " buffer",
-              size: vertexBuffer.array.byteLength,
-              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
-            });
-            this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array);
-          }
-        });
-        if ("indexBuffer" in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
-          this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + " geometry: index buffer",
-            size: this.geometry.indexBuffer.array.byteLength,
-            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
-          });
-          this.renderer.queueWriteBuffer(this.geometry.indexBuffer.buffer, 0, this.geometry.indexBuffer.array);
-        }
-      }
-    }
-    /**
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry() {
-      if (this.geometry && this.renderer.ready) {
-        this.createGeometryBuffers();
+      if (this.geometry) {
+        if (!this.geometry.ready) {
+          this.geometry.createBuffers({
+            renderer: this.renderer,
+            label: this.options.label + " geometry"
+          });
+        }
         this.setMaterialGeometryAttributes();
       }
     }
@@ -352,6 +329,7 @@ function MeshBaseMixin(Base) {
     setMaterial(meshParameters) {
       this.transparent = meshParameters.transparent;
       this.setShaders();
+      meshParameters.shaders = this.options.shaders;
       this.material = new RenderMaterial(this.renderer, meshParameters);
       this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
     }
@@ -465,7 +443,7 @@ function MeshBaseMixin(Base) {
     }
     /* EVENTS */
     /**
-     * Assign a callback function to _onReadyCallback
+     * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
      * @param callback - callback to run when {@link MeshBase} is ready
      * @returns - our Mesh
      */
@@ -476,8 +454,8 @@ function MeshBaseMixin(Base) {
       return this;
     }
     /**
-     * Assign a callback function to _onBeforeRenderCallback
-     * @param callback - callback to run just before {@link MeshBase} will be rendered
+     * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+     * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
      * @returns - our Mesh
      */
     onBeforeRender(callback) {
@@ -487,8 +465,8 @@ function MeshBaseMixin(Base) {
       return this;
     }
     /**
-     * Assign a callback function to _onRenderCallback
-     * @param callback - callback to run when {@link MeshBase} is rendered
+     * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+     * @param callback - callback to run just before rendering the {@link MeshBase}
      * @returns - our Mesh
      */
     onRender(callback) {
@@ -498,7 +476,7 @@ function MeshBaseMixin(Base) {
       return this;
     }
     /**
-     * Assign a callback function to _onAfterRenderCallback
+     * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
      * @param callback - callback to run just after {@link MeshBase} has been rendered
      * @returns - our Mesh
      */
@@ -509,7 +487,7 @@ function MeshBaseMixin(Base) {
       return this;
     }
     /**
-     * Assign a callback function to _onAfterResizeCallback
+     * Callback to execute just after a Mesh has been resized.
      * @param callback - callback to run just after {@link MeshBase} has been resized
      * @returns - our Mesh
      */
@@ -521,18 +499,23 @@ function MeshBaseMixin(Base) {
     }
     /* RENDER */
     /**
+     * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+     */
+    onBeforeRenderScene() {
+      if (!this.renderer.ready || !this.ready || !this.visible)
+        return;
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+    }
+    /**
      * Called before rendering the Mesh
      * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
+     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready)
         return;
-      if (this.material && this.material.ready && this.geometry && this.geometry.ready && !this.ready) {
-        this.ready = true;
-      }
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
       this.setGeometry();
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback();
       this.material.onBeforeRender();
     }
     /**
@@ -540,7 +523,7 @@ function MeshBaseMixin(Base) {
      * @param pass - current render pass encoder
      */
     onRenderPass(pass) {
-      if (!this.material.ready)
+      if (!this.ready)
         return;
       this._onRenderCallback && this._onRenderCallback();
       this.material.render(pass);
@@ -597,16 +580,10 @@ function MeshBaseMixin(Base) {
         super.destroy();
       }
       this.material?.destroy();
-      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
-        this.renderer.removeBuffer(
-          vertexBuffer.buffer,
-          this.options.label + " geometry: " + vertexBuffer.name + " buffer"
-        );
-      });
-      if ("indexBuffer" in this.geometry) {
-        this.renderer.removeBuffer(this.geometry.indexBuffer.buffer);
+      this.geometry.consumers.delete(this.uuid);
+      if (!this.geometry.consumers.size) {
+        this.geometry?.destroy(this.renderer);
       }
-      this.geometry?.destroy();
     }
   }, _autoRender = new WeakMap(), _a;
 }

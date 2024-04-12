@@ -38,6 +38,11 @@ export declare class SamplerBinding extends Binding {
         sampler: GPUSamplerBindingLayout;
     };
     /**
+     * Get the resource cache key
+     * @readonly
+     */
+    get resourceLayoutCacheKey(): string;
+    /**
      * Get the {@link GPUBindGroupEntry#resource | bind group resource}
      */
     get resource(): SamplerBindingResource;

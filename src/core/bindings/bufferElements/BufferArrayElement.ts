@@ -1,5 +1,4 @@
-import { BufferElement, BufferElementParams, bytesPerSlot } from './BufferElement'
-import { throwWarning } from '../../../utils/utils'
+import { BufferElement, BufferElementParams, bytesPerRow, bytesPerSlot } from './BufferElement'
 
 /**
  * Parameters used to create a {@link BufferArrayElement}
@@ -28,7 +27,7 @@ export class BufferArrayElement extends BufferElement {
     super({ name, key, type })
 
     this.arrayLength = arrayLength
-    this.numElements = this.arrayLength / this.bufferLayout.numElements
+    this.numElements = Math.ceil(this.arrayLength / this.bufferLayout.numElements)
   }
 
   /**
@@ -55,26 +54,22 @@ export class BufferArrayElement extends BufferElement {
   }
 
   /**
-   * Update the {@link view} based on the new value
-   * @param value - new value to use
+   * Set the strided {@link view} value from an array
+   * @param value - array to use
    */
-  update(value) {
-    if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-      let valueIndex = 0
+  setValueFromArray(value: number[]) {
+    let valueIndex = 0
 
-      const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT
-      // arrayStride is our view length divided by the number of elements in our array
-      const stride = Math.ceil(viewLength / this.numElements)
+    const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT
+    // arrayStride is our view length divided by the number of elements in our array
+    const stride = Math.ceil(viewLength / this.numElements)
 
-      for (let i = 0; i < this.numElements; i++) {
-        for (let j = 0; j < this.bufferLayout.numElements; j++) {
-          this.view[j + i * stride] = value[valueIndex]
+    for (let i = 0; i < this.numElements; i++) {
+      for (let j = 0; j < this.bufferLayout.numElements; j++) {
+        this.view[j + i * stride] = value[valueIndex]
 
-          valueIndex++
-        }
+        valueIndex++
       }
-    } else {
-      throwWarning(`BufferArrayElement: value passed to ${this.name} is not an array: ${value}`)
     }
   }
 }

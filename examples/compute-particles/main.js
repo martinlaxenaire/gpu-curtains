@@ -362,6 +362,7 @@ window.addEventListener('load', async () => {
       {
         stepMode: 'instance',
         name: 'instanceAttributes',
+        buffer: computePass.material.getBindingByName('particles')?.buffer, // pass the compute buffer right away
         attributes: [
           {
             name: 'instancePosition',
@@ -412,18 +413,4 @@ window.addEventListener('load', async () => {
       },
     ],
   })
-
-  particles
-    .onReady(() => {
-      const instanceVertexBuffer = particles.geometry.getVertexBufferByName('instanceAttributes')
-      const particleBuffer = computePass.material.getBindingByName('particles')
-
-      instanceVertexBuffer.buffer = particleBuffer?.buffer
-    })
-    .onRender(() => {
-      // const instanceVertexBuffer = particles.geometry.getVertexBufferByName('instanceAttributes')
-      // const particleBuffer = computePass.material.getBindingByName('particles')
-      //
-      // instanceVertexBuffer.buffer = particleBuffer?.buffer
-    })
 })

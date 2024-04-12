@@ -25,15 +25,16 @@ export interface BoxGeometryParams extends GeometryBaseParams {
 export class BoxGeometry extends IndexedGeometry {
   constructor(
     {
-      widthSegments = 1,
-      heightSegments = 1,
-      depthSegments = 1,
       instancesCount = 1,
       vertexBuffers = [],
       topology,
+      mapBuffersAtCreation = true,
+      widthSegments = 1,
+      heightSegments = 1,
+      depthSegments = 1,
     } = {} as BoxGeometryParams
   ) {
-    super({ verticesOrder: 'ccw', topology, instancesCount, vertexBuffers })
+    super({ verticesOrder: 'ccw', topology, instancesCount, vertexBuffers, mapBuffersAtCreation })
 
     this.type = 'BoxGeometry'
 

@@ -90,12 +90,16 @@ export class TextureBindGroup extends BindGroup {
 
     // add initial textures if any
     if (textures.length) {
-      textures.forEach((texture) => this.addTexture(texture))
+      for (const texture of textures) {
+        this.addTexture(texture)
+      }
     }
 
     // add initial samplers if any
     if (samplers.length) {
-      samplers.forEach((sampler) => this.addSampler(sampler))
+      for (const sampler of samplers) {
+        this.addSampler(sampler)
+      }
     }
 
     this.type = type
@@ -155,7 +159,7 @@ export class TextureBindGroup extends BindGroup {
    * - Upload video texture if needed
    */
   updateTextures() {
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       // copy textures that need it on first init, but only when original texture is ready
       if (texture instanceof Texture) {
         if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
@@ -166,7 +170,7 @@ export class TextureBindGroup extends BindGroup {
           texture.uploadVideoTexture()
         }
       }
-    })
+    }
   }
 
   /**

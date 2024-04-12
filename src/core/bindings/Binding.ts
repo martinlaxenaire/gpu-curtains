@@ -61,11 +61,14 @@ export class Binding {
   /** Flag indicating whether we should recreate the parentMesh {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout}, usually when a resource layout has changed */
   shouldResetBindGroupLayout: boolean
 
+  /** A cache key allowing to get / set bindings from the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#bufferBindings | device manager map cache}. Used for {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} only at the moment. */
+  cacheKey: string
+
   /**
    * Binding constructor
    * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
    */
-  constructor({ label = 'Uniform', name = 'uniform', bindingType = 'uniform', visibility }: BindingParams) {
+  constructor({ label = 'Uniform', name = 'uniform', bindingType = 'uniform', visibility = 'all' }: BindingParams) {
     this.label = label
     this.name = toCamelCase(name)
     this.bindingType = bindingType
@@ -95,5 +98,7 @@ export class Binding {
 
     this.shouldResetBindGroup = false
     this.shouldResetBindGroupLayout = false
+
+    this.cacheKey = `${bindingType},${visibility},`
   }
 }

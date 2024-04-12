@@ -1,4 +1,5 @@
 import { BufferBinding } from './BufferBinding.mjs';
+import { Buffer } from '../buffers/Buffer.mjs';
 
 class WritableBufferBinding extends BufferBinding {
   /**
@@ -9,21 +10,22 @@ class WritableBufferBinding extends BufferBinding {
     label = "Work",
     name = "work",
     bindingType,
-    useStruct = true,
-    struct = {},
     visibility,
+    useStruct = true,
     access = "read_write",
+    struct = {},
     shouldCopyResult = false
   }) {
     bindingType = "storage";
     visibility = "compute";
-    super({ label, name, bindingType, useStruct, struct, visibility, access });
+    super({ label, name, bindingType, visibility, useStruct, access, struct });
     this.options = {
       ...this.options,
       shouldCopyResult
     };
     this.shouldCopyResult = shouldCopyResult;
-    this.resultBuffer = null;
+    this.cacheKey += `${shouldCopyResult},`;
+    this.resultBuffer = new Buffer();
   }
 }
 

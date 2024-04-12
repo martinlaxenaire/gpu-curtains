@@ -12,6 +12,7 @@ import { RenderTexture } from '../textures/RenderTexture'
 import { Binding } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { BufferElement } from '../bindings/bufferElements/BufferElement'
+import { Buffer } from '../buffers/Buffer'
 
 /**
  * Used as a base to create a {@link Material}.<br>
@@ -62,8 +63,8 @@ export class Material {
   /** Object containing all read only or read/write storages inputs handled by this {@link Material} */
   storages: Record<string, Record<string, BufferBindingInput>>
 
-  /** Array of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
-  inputsBindings: BindGroupBindingElement[]
+  /** Map of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
+  inputsBindings: Map<string, BindGroupBindingElement>
 
   /** Array of {@link Texture} handled by this {@link Material} */
   textures: Texture[]
@@ -151,14 +152,14 @@ export class Material {
    */
   loseContext() {
     // start with the textures
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       texture.texture = null
       texture.sourceUploaded = false
-    })
+    }
 
-    this.renderTextures.forEach((texture) => {
+    for (const texture of this.renderTextures) {
       texture.texture = null
-    })
+    }
 
     // then bind groups and struct
     ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) =>
@@ -174,21 +175,21 @@ export class Material {
    */
   restoreContext() {
     // start with the samplers and textures
-    this.samplers.forEach((sampler) => {
+    for (const sampler of this.samplers) {
       // the samplers have all been recreated by the renderer, just update the reference
       sampler.createSampler()
       sampler.binding.resource = sampler.sampler
-    })
+    }
 
     // recreate the textures and resize them
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       texture.createTexture()
       texture.resize()
-    })
+    }
 
-    this.renderTextures.forEach((texture) => {
+    for (const texture of this.renderTextures) {
       texture.resize(texture.size)
-    })
+    }
 
     // now the bind groups
     ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
@@ -197,7 +198,9 @@ export class Material {
       }
 
       // finally re-write all our buffers
-      bindGroup.bufferBindings.forEach((bufferBinding) => (bufferBinding.shouldUpdate = true))
+      for (const bufferBinding of bindGroup.bufferBindings) {
+        bufferBinding.shouldUpdate = true
+      }
     })
   }
 
@@ -256,7 +259,7 @@ export class Material {
     this.storages = {}
 
     this.inputsBindGroups = []
-    this.inputsBindings = []
+    this.inputsBindings = new Map()
 
     if (this.options.uniforms || this.options.storages || this.options.bindings) {
       const inputsBindGroup = new BindGroup(this.renderer, {
@@ -268,11 +271,13 @@ export class Material {
 
       this.processBindGroupBindings(inputsBindGroup)
       this.inputsBindGroups.push(inputsBindGroup)
+      inputsBindGroup.consumers.add(this.uuid)
     }
 
     this.options.bindGroups?.forEach((bindGroup) => {
       this.processBindGroupBindings(bindGroup)
       this.inputsBindGroups.push(bindGroup)
+      bindGroup.consumers.add(this.uuid)
     })
   }
 
@@ -289,7 +294,7 @@ export class Material {
    * @param bindGroup - The {@link BindGroup} to process
    */
   processBindGroupBindings(bindGroup: BindGroup) {
-    bindGroup.bindings.forEach((inputBinding) => {
+    for (const inputBinding of bindGroup.bindings) {
       if (inputBinding.bindingType === 'uniform')
         this.uniforms = {
           ...this.uniforms,
@@ -301,8 +306,8 @@ export class Material {
           [inputBinding.name]: (inputBinding as BindGroupBufferBindingElement).inputs,
         }
 
-      this.inputsBindings.push(inputBinding)
-    })
+      this.inputsBindings.set(inputBinding.name, inputBinding)
+    }
   }
 
   /**
@@ -318,14 +323,14 @@ export class Material {
     }
 
     // then uniforms/storages inputs
-    this.inputsBindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.inputsBindGroups) {
       if (bindGroup.shouldCreateBindGroup) {
         bindGroup.setIndex(this.bindGroups.length)
         bindGroup.createBindGroup()
 
         this.bindGroups.push(bindGroup)
       }
-    })
+    }
 
     // finally, bindGroups inputs
     this.options.bindGroups?.forEach((bindGroup) => {
@@ -340,13 +345,13 @@ export class Material {
         this.texturesBindGroups.push(bindGroup)
 
         // also add the textures?
-        bindGroup.textures.forEach((texture) => {
+        for (const texture of bindGroup.textures) {
           if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
             this.textures.push(texture)
           } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
             this.renderTextures.push(texture)
           }
-        })
+        }
       }
     })
   }
@@ -393,13 +398,12 @@ export class Material {
    * @param bindGroup - bind group to eventually destroy
    */
   destroyBindGroup(bindGroup: AllowedBindGroups) {
-    // check if this bind group is used by another object before actually destroying it
-    const objectsUsingBindGroup = this.renderer.getObjectsByBindGroup(bindGroup)
+    // remove this material as a consumer of the bind group
+    bindGroup.consumers.delete(this.uuid)
 
-    const shouldDestroy =
-      !objectsUsingBindGroup || !objectsUsingBindGroup.find((object) => object.material.uuid !== this.uuid)
-
-    if (shouldDestroy) {
+    // if the bind group does not have another consumer
+    // destroy it
+    if (!bindGroup.consumers.size) {
       bindGroup.destroy()
     }
   }
@@ -426,7 +430,7 @@ export class Material {
    */
   updateBindGroups() {
     // now update all bind groups in use and check if they need to flush the pipeline
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       bindGroup.update()
 
       // if a bind group needs to flush the pipeline
@@ -436,7 +440,7 @@ export class Material {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups)
         bindGroup.needsPipelineFlush = false
       }
-    })
+    }
   }
 
   /* INPUTS */
@@ -447,7 +451,7 @@ export class Material {
    * @returns - the found binding, or null if not found
    */
   getBindingByName(bindingName: Binding['name'] = ''): BindGroupBindingElement | undefined {
-    return this.inputsBindings.find((binding) => binding.name === bindingName)
+    return this.inputsBindings.get(bindingName)
   }
 
   /**
@@ -456,13 +460,12 @@ export class Material {
    * @returns - the found binding, or null if not found
    */
   getBufferBindingByName(bindingName: Binding['name'] = ''): BindGroupBufferBindingElement | undefined {
-    return this.inputsBindings.find((binding) => binding.name === bindingName && 'buffer' in binding) as
-      | BindGroupBufferBindingElement
-      | undefined
+    const bufferBinding = this.getBindingByName(bindingName)
+    return bufferBinding && 'buffer' in bufferBinding ? bufferBinding : undefined
   }
 
   /**
-   * Force a given buffer binding update flag to update it at next render
+   * Force setting a given {@link BufferBindingInput | buffer binding} shouldUpdate flag to `true` to update it at next render
    * @param bufferBindingName - the buffer binding name
    * @param bindingName - the binding name
    */
@@ -494,6 +497,8 @@ export class Material {
         label: this.options.label + ': Textures bind group',
       })
     )
+
+    this.texturesBindGroup.consumers.add(this.uuid)
 
     this.options.textures?.forEach((texture) => {
       this.addTexture(texture)
@@ -594,22 +599,18 @@ export class Material {
   /* BUFFER RESULTS */
 
   /**
-   * Map a {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}
-   * @param buffer - {@link GPUBuffer} to map
+   * Map a {@link Buffer#GPUBuffer | Buffer's GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * @param buffer - {@link Buffer} to use for mapping
    * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
    */
-  async getBufferResult(buffer: GPUBuffer): Promise<Float32Array> {
-    await buffer.mapAsync(GPUMapMode.READ)
-    const result = new Float32Array(buffer.getMappedRange().slice(0))
-    buffer.unmap()
-
-    return result
+  async getBufferResult(buffer: Buffer): Promise<Float32Array> {
+    return await buffer.mapBufferAsync()
   }
 
   /**
-   * Map the content of a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
-   * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+   * Map the content of a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * @param bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
    * @async
    * @returns - {@link Float32Array} holding the {@link GPUBuffer} data
    */
@@ -619,6 +620,7 @@ export class Material {
       const dstBuffer = this.renderer.copyBufferToBuffer({
         srcBuffer: binding.buffer,
       })
+
       return await this.getBufferResult(dstBuffer)
     } else {
       return new Float32Array(0)
@@ -626,9 +628,9 @@ export class Material {
   }
 
   /**
-   * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding#buffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
+   * Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}
    * @param parameters - parameters used to get the result
-   * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link BufferBinding#buffer | GPU buffer}
+   * @param parameters.bindingName - The name of the {@link inputsBindings | input bindings} from which to map the {@link Buffer#GPUBuffer | GPU buffer}
    * @param parameters.bufferElementName - The name of the {@link BufferElement | buffer element} from which to extract the data afterwards
    * @returns - {@link Float32Array} holding {@link GPUBuffer} data
    */
@@ -666,9 +668,9 @@ export class Material {
     this.compileMaterial()
 
     // first what needs to be done for all textures
-    this.textures.forEach((texture) => {
+    for (const texture of this.textures) {
       texture.render()
-    })
+    }
 
     // update bind groups
     this.updateBindGroups()
@@ -697,9 +699,9 @@ export class Material {
     this.setPipeline(pass)
 
     // set bind groups
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
-    })
+    }
   }
 
   /**

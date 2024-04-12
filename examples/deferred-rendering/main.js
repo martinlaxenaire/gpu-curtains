@@ -38,6 +38,8 @@ window.addEventListener('load', async () => {
   // create a camera pivot
   // so we can make the camera orbit while preserving a custom lookAt
   const cameraPivot = new Object3D()
+  // add the scene as the pivot parent
+  cameraPivot.parent = gpuCameraRenderer.scene
 
   camera.parent = cameraPivot
   camera.position.y = systemSize.y * 2
@@ -210,7 +212,7 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
 
-    cubeMesh.onRender(() => {
+    cubeMesh.onBeforeRender(() => {
       cubeMesh.rotation.y += rotationSpeed
       cubeMesh.rotation.z += rotationSpeed
 

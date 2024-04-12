@@ -1,13 +1,17 @@
 import { Box3 } from '../../math/Box3'
-import { throwError, throwWarning } from '../../utils/utils'
+import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 import {
+  GeometryBuffer,
   GeometryOptions,
   GeometryParams,
   VertexBuffer,
   VertexBufferAttribute,
   VertexBufferAttributeParams,
-  VertexBufferParams
+  VertexBufferParams,
 } from '../../types/Geometries'
+import { Buffer } from '../buffers/Buffer'
+import { Renderer } from '../renderers/utils'
+import { TypedArrayConstructor } from '../bindings/utils'
 
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
@@ -57,12 +61,20 @@ export class Geometry {
   options: GeometryOptions
   /** The type of the geometry */
   type: string
+  /** The universal unique id of the geometry */
+  uuid: string
 
   /** The bounding box of the geometry, i.e. two {@link math/Vec3.Vec3 | Vec3} defining the min and max positions to wrap this geometry in a cube */
   boundingBox: Box3
 
   /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
   wgslStructFragment: string
+
+  /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
+  consumers: Set<string>
+
+  /** Whether this geometry is ready to be drawn, i.e. it has been computed and all its vertex buffers have been created */
+  ready: boolean
 
   /**
    * Geometry constructor
@@ -73,17 +85,23 @@ export class Geometry {
     topology = 'triangle-list',
     instancesCount = 1,
     vertexBuffers = [],
+    mapBuffersAtCreation = true,
   }: GeometryParams = {}) {
     this.verticesCount = 0
     this.verticesOrder = verticesOrder
     this.topology = topology
     this.instancesCount = instancesCount
 
+    this.ready = false
+
     this.boundingBox = new Box3()
 
     this.type = 'Geometry'
+    this.uuid = generateUUID()
 
     this.vertexBuffers = []
+
+    this.consumers = new Set()
 
     // should contain our vertex position / uv data at least
     this.addVertexBuffer({
@@ -92,34 +110,53 @@ export class Geometry {
 
     this.options = {
       verticesOrder,
+      topology,
       instancesCount,
       vertexBuffers,
-      topology,
+      mapBuffersAtCreation,
     }
 
-    vertexBuffers.forEach((vertexBuffer) => {
+    for (const vertexBuffer of vertexBuffers) {
       this.addVertexBuffer({
         stepMode: vertexBuffer.stepMode ?? 'vertex',
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
+        ...(vertexBuffer.buffer && { buffer: vertexBuffer.buffer }),
       })
-    })
+    }
   }
 
   /**
-   * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
-   * @readonly
+   * Reset all the {@link vertexBuffers | vertex buffers} when the device is lost
    */
-  get shouldCompute(): boolean {
-    return this.vertexBuffers.length && !this.vertexBuffers[0].array
+  loseContext() {
+    this.ready = false
+
+    for (const vertexBuffer of this.vertexBuffers) {
+      vertexBuffer.buffer.destroy()
+    }
   }
 
   /**
-   * Get whether this geometry is ready to draw, i.e. it has been computed and all its vertex buffers have been created
-   * @readonly
+   * Restore the {@link Geometry} buffers on context restoration
+   * @param renderer - The {@link Renderer} used to recreate the buffers
    */
-  get ready(): boolean {
-    return !this.shouldCompute && !this.vertexBuffers.find((vertexBuffer) => !vertexBuffer.buffer)
+  restoreContext(renderer: Renderer) {
+    // do not try to recreate buffers of a geometry that has already been restored
+    if (this.ready) return
+
+    for (const vertexBuffer of this.vertexBuffers) {
+      // do not try to restore a buffer created elsewhere initially (a compute pass for example)
+      if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
+        vertexBuffer.buffer.createBuffer(renderer)
+
+        this.uploadBuffer(renderer, vertexBuffer)
+      }
+
+      vertexBuffer.buffer.consumers.add(this.uuid)
+    }
+
+    this.ready = true
   }
 
   /**
@@ -127,14 +164,22 @@ export class Geometry {
    * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
    * @returns - newly created {@link VertexBuffer | vertex buffer}
    */
-  addVertexBuffer({ stepMode = 'vertex', name, attributes = [] }: VertexBufferParams = {}): VertexBuffer {
+  addVertexBuffer({
+    stepMode = 'vertex',
+    name,
+    attributes = [],
+    buffer = null,
+  }: VertexBufferParams = {}): VertexBuffer {
+    buffer = buffer || new Buffer()
+
     const vertexBuffer = {
       name: name ?? 'attributes' + this.vertexBuffers.length,
       stepMode,
       arrayStride: 0,
       bufferLength: 0,
       attributes: [],
-      buffer: null,
+      buffer,
+      array: null,
     }
 
     // set attributes right away if possible
@@ -234,6 +279,14 @@ export class Geometry {
   }
 
   /**
+   * Get whether this Geometry is ready to compute, i.e. if its first vertex buffer array has not been created yet
+   * @readonly
+   */
+  get shouldCompute(): boolean {
+    return this.vertexBuffers.length && !this.vertexBuffers[0].array
+  }
+
+  /**
    * Get an attribute by name
    * @param name - name of the attribute to find
    * @returns - found {@link VertexBufferAttribute | attribute} or null if not found
@@ -252,7 +305,7 @@ export class Geometry {
    * Also compute the Geometry bounding box.
    */
   computeGeometry() {
-    if (!this.shouldCompute) return
+    if (this.ready) return
 
     this.vertexBuffers.forEach((vertexBuffer, index) => {
       if (index === 0) {
@@ -315,7 +368,9 @@ export class Geometry {
       }
     })
 
-    this.#setWGSLFragment()
+    if (!this.wgslStructFragment) {
+      this.#setWGSLFragment()
+    }
   }
 
   /**
@@ -334,6 +389,50 @@ export class Geometry {
       .join(',')}\n};`
   }
 
+  /**
+   * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
+   * @param parameters - parameters used to create the vertex buffers.
+   * @param parameters.renderer - {@link Renderer} used to create the vertex buffers.
+   * @param parameters.label - label to use for the vertex buffers.
+   */
+  createBuffers({ renderer, label = this.type }: { renderer: Renderer; label?: string }) {
+    if (this.ready) return
+
+    for (const vertexBuffer of this.vertexBuffers) {
+      if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
+        vertexBuffer.buffer.createBuffer(renderer, {
+          label: label + ': ' + vertexBuffer.name + ' buffer',
+          size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
+          usage: this.options.mapBuffersAtCreation
+            ? GPUBufferUsage.VERTEX
+            : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          mappedAtCreation: this.options.mapBuffersAtCreation,
+        })
+
+        this.uploadBuffer(renderer, vertexBuffer)
+      }
+
+      vertexBuffer.buffer.consumers.add(this.uuid)
+    }
+
+    this.ready = true
+  }
+
+  /**
+   * Upload a {@link GeometryBuffer} to the GPU.
+   * @param renderer - {@link Renderer} used to upload the buffer.
+   * @param buffer - {@link GeometryBuffer} holding a {@link Buffer} and a typed array to upload.
+   */
+  uploadBuffer(renderer: Renderer, buffer: GeometryBuffer) {
+    if (this.options.mapBuffersAtCreation) {
+      new (buffer.array.constructor as typeof Float32Array)(buffer.buffer.GPUBuffer.getMappedRange()).set(buffer.array)
+
+      buffer.buffer.GPUBuffer.unmap()
+    } else {
+      renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array)
+    }
+  }
+
   /** RENDER **/
 
   /**
@@ -342,7 +441,7 @@ export class Geometry {
    */
   setGeometryBuffers(pass: GPURenderPassEncoder) {
     this.vertexBuffers.forEach((vertexBuffer, index) => {
-      pass.setVertexBuffer(index, vertexBuffer.buffer)
+      pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer)
     })
   }
 
@@ -366,12 +465,21 @@ export class Geometry {
   }
 
   /**
-   * Destroy our geometry vertex buffers
+   * Destroy our geometry vertex buffers.
+   * @param renderer - current {@link Renderer}, in case we want to remove the {@link VertexBuffer#buffer | buffers} from the cache.
    */
-  destroy() {
-    this.vertexBuffers.forEach((vertexBuffer) => {
-      vertexBuffer.buffer?.destroy()
-      vertexBuffer.buffer = null
-    })
+  destroy(renderer: null | Renderer = null) {
+    this.ready = false
+
+    for (const vertexBuffer of this.vertexBuffers) {
+      vertexBuffer.buffer.consumers.delete(this.uuid)
+      if (!vertexBuffer.buffer.consumers.size) {
+        vertexBuffer.buffer.destroy()
+      }
+
+      vertexBuffer.array = null
+
+      if (renderer) renderer.removeBuffer(vertexBuffer.buffer)
+    }
   }
 }

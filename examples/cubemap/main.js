@@ -164,13 +164,13 @@ window.addEventListener('load', async () => {
 
     mouse.delta.set(mouse.current.x - mouse.last.x, mouse.current.y - mouse.last.y)
 
-    targetRotation.y += mouse.delta.x * 0.005
-    targetRotation.x = Math.min(Math.max(targetRotation.x + mouse.delta.y * 0.005, -Math.PI / 2), Math.PI / 2)
+    targetRotation.y -= mouse.delta.x * 0.005
+    targetRotation.x = Math.min(Math.max(targetRotation.x - mouse.delta.y * 0.005, -Math.PI / 2), Math.PI / 2)
 
     mouse.last.copy(mouse.current)
   })
 
-  cubeMap.onRender(() => {
+  cubeMap.onBeforeRender(() => {
     cubeMap.rotation.lerp(targetRotation, 0.15)
   })
 })

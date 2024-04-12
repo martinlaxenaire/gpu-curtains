@@ -12,6 +12,10 @@ import { GPUCurtains } from '../../curtains/GPUCurtains'
  * You need to pass at least a valid {@link core/geometries/Geometry.Geometry | Geometry} as parameter.<br>
  * If no shaders are provided, it will use the normals colors as default shading.
  *
+ * ## Shaders bindings and default attributes and uniforms
+ *
+ * The shaders are automatically patched with the input {@link core/bindGroups/BindGroup.BindGroup | bind groups} and {@link core/bindings/BufferBinding.BufferBinding | bindings} defined in your parameters object, as well as some default attributes and uniforms (see {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}).
+ *
  * @example
  * ```javascript
  * // set our main GPUCurtains instance

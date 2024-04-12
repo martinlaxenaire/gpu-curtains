@@ -1,4 +1,8 @@
 import { BufferLayout, TypedArray, WGSLVariableType } from '../utils';
+import { Vec2 } from '../../../math/Vec2';
+import { Vec3 } from '../../../math/Vec3';
+import { Quat } from '../../../math/Quat';
+import { Mat4 } from '../../../math/Mat4';
 /** Number of slots per row */
 export declare const slotsPerRow = 4;
 /** Number of bytes per slot */
@@ -66,6 +70,8 @@ export declare class BufferElement {
     alignment: BufferElementAlignment;
     /** Array containing the {@link BufferElement} values */
     view?: TypedArray;
+    /** Function assigned to set the {@link view} values */
+    setValue: (value: number | number[] | Vec2 | Vec3 | Mat4 | Quat) => void | null;
     /**
      * BufferElement constructor
      * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}
@@ -152,6 +158,36 @@ export declare class BufferElement {
      * @param arrayView - the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view}
      */
     setView(arrayBuffer: ArrayBuffer, arrayView: DataView): void;
+    /**
+     * Set the {@link view} value from a float or an int
+     * @param value - float or int to use
+     */
+    setValueFromFloat(value: number): void;
+    /**
+     * Set the {@link view} value from a {@link Vec2} or an array
+     * @param value - {@link Vec2} or array to use
+     */
+    setValueFromVec2(value: Vec2 | number[]): void;
+    /**
+     * Set the {@link view} value from a {@link Vec3} or an array
+     * @param value - {@link Vec3} or array to use
+     */
+    setValueFromVec3(value: Vec3 | number[]): void;
+    /**
+     * Set the {@link view} value from a {@link Mat4} or a {@link Quat}
+     * @param value - {@link Mat4} or {@link Quat} to use
+     */
+    setValueFromMat4OrQuat(value: Mat4 | Quat): void;
+    /**
+     * Set the {@link view} value from an array
+     * @param value - array to use
+     */
+    setValueFromArray(value: number[]): void;
+    /**
+     * Set the {@link view} value from an array with pad applied
+     * @param value - array to use
+     */
+    setValueFromArrayWithPad(value: number[]): void;
     /**
      * Update the {@link view} based on the new value
      * @param value - new value to use

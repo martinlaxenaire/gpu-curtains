@@ -12,7 +12,7 @@ class PlaneGeometry extends IndexedGeometry {
     vertexBuffers = [],
     topology
   } = {}) {
-    super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers });
+    super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
     this.type = "PlaneGeometry";
     widthSegments = Math.floor(widthSegments);
     heightSegments = Math.floor(heightSegments);
@@ -24,9 +24,9 @@ class PlaneGeometry extends IndexedGeometry {
     };
     const verticesCount = (this.definition.width + 1) * (this.definition.height + 1);
     const attributes = this.getIndexedVerticesAndUVs(verticesCount);
-    Object.keys(attributes).forEach((attributeKey) => {
-      this.setAttribute(attributes[attributeKey]);
-    });
+    for (const attribute of Object.values(attributes)) {
+      this.setAttribute(attribute);
+    }
     this.setIndexArray();
   }
   /**

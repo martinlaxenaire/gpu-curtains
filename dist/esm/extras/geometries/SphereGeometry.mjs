@@ -3,17 +3,18 @@ import { Vec3 } from '../../math/Vec3.mjs';
 
 class SphereGeometry extends IndexedGeometry {
   constructor({
+    topology,
+    instancesCount = 1,
+    vertexBuffers = [],
+    mapBuffersAtCreation = true,
     widthSegments = 32,
     heightSegments = 16,
     phiStart = 0,
     phiLength = Math.PI * 2,
     thetaStart = 0,
-    thetaLength = Math.PI,
-    instancesCount = 1,
-    vertexBuffers = [],
-    topology
+    thetaLength = Math.PI
   } = {}) {
-    super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers });
+    super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation });
     this.type = "SphereGeometry";
     widthSegments = Math.max(3, Math.floor(widthSegments));
     heightSegments = Math.max(2, Math.floor(heightSegments));

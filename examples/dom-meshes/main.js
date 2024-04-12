@@ -99,12 +99,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     cubeMesh
-      .onRender(() => {
+      .onBeforeRender(() => {
         cubeMesh.rotation.x += 0.01
       })
-      .onAfterResize(() => {
-        updateCubeScaleAndPosition()
-      })
+      .onAfterResize(updateCubeScaleAndPosition)
 
     // do it right away
     updateCubeScaleAndPosition()
@@ -131,15 +129,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       },
     })
 
-    console.log(sphereMesh)
-
     const updateSphereScale = () => {
       // scale our sphere along the Z axis based on its height (Y axis)
       sphereMesh.scale.z = sphereMesh.worldScale.y
     }
 
     sphereMesh
-      .onRender(() => {
+      .onBeforeRender(() => {
         sphereMesh.rotation.y += 0.01
       })
       .onAfterResize(updateSphereScale)

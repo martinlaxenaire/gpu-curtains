@@ -17,6 +17,7 @@ import { AllowedBindGroups } from '../../types/BindGroups';
 import { RenderTexture } from '../textures/RenderTexture';
 import { GPUDeviceManager } from './GPUDeviceManager';
 import { FullscreenPlane } from '../meshes/FullscreenPlane';
+import { Buffer } from '../buffers/Buffer';
 /**
  * Parameters used to create a {@link GPURenderer}
  */
@@ -49,8 +50,10 @@ export interface GPURendererParams {
 export type DOMProjectedMesh = DOMMesh | Plane;
 /** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
 export type ProjectedMesh = Mesh | DOMProjectedMesh;
-/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing */
-export type RenderedMesh = ProjectedMesh | PingPongPlane | ShaderPass | FullscreenPlane;
+/** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
+export type SceneStackedMesh = ProjectedMesh | FullscreenPlane;
+/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+export type RenderedMesh = SceneStackedMesh | PingPongPlane | ShaderPass;
 /** Any Mesh or Compute pass */
 export type SceneObject = RenderedMesh | ComputePass;
 /**
@@ -91,8 +94,8 @@ export declare class GPURenderer {
     shaderPasses: ShaderPass[];
     /** An array containing all our created {@link RenderTarget} */
     renderTargets: RenderTarget[];
-    /** An array containing all our created {@link ProjectedMesh | projected meshes} */
-    meshes: ProjectedMesh[];
+    /** An array containing all our created {@link SceneStackedMesh | meshes} */
+    meshes: SceneStackedMesh[];
     /** An array containing all our created {@link RenderTexture} */
     renderTextures: RenderTexture[];
     /** Pixel ratio to use for rendering */
@@ -172,7 +175,7 @@ export declare class GPURenderer {
      * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}
      * @readonly
      */
-    get buffers(): GPUBuffer[];
+    get buffers(): Map<string, Buffer>;
     /**
      * Get the {@link GPUDeviceManager#pipelineManager | pipeline manager}
      * @readonly
@@ -212,16 +215,15 @@ export declare class GPURenderer {
     setScene(): void;
     /**
      * Create a {@link GPUBuffer}
-     * @param bufferDescriptor - {@link GPUBufferDescriptor | GPU buffer descriptor}
+     * @param buffer - {@link Buffer} to use for buffer creation
      * @returns - newly created {@link GPUBuffer}
      */
-    createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer;
+    createBuffer(buffer: Buffer): GPUBuffer;
     /**
-     * Remove a {@link GPUBuffer} from our {@link GPUDeviceManager#buffers | GPU buffers array}
-     * @param buffer - {@link GPUBuffer} to remove
-     * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+     * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}
+     * @param buffer - {@link Buffer} to remove
      */
-    removeBuffer(buffer: GPUBuffer, originalLabel?: string): void;
+    removeBuffer(buffer: Buffer): void;
     /**
      * Write to a {@link GPUBuffer}
      * @param buffer - {@link GPUBuffer} to write to
@@ -230,23 +232,23 @@ export declare class GPURenderer {
      */
     queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource): void;
     /**
-     * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+     * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}
      * @param parameters - parameters used to realize the copy
-     * @param parameters.srcBuffer - source {@link GPUBuffer}
-     * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+     * @param parameters.srcBuffer - source {@link Buffer}
+     * @param [parameters.dstBuffer] - destination {@link Buffer}. Will create a new one if none provided.
      * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-     * @returns - destination {@link GPUBuffer} after copy
+     * @returns - destination {@link Buffer} after copy
      */
     copyBufferToBuffer({ srcBuffer, dstBuffer, commandEncoder, }: {
-        srcBuffer: GPUBuffer;
-        dstBuffer?: GPUBuffer;
+        srcBuffer: Buffer;
+        dstBuffer?: Buffer;
         commandEncoder?: GPUCommandEncoder;
-    }): GPUBuffer | null;
+    }): Buffer | null;
     /**
      * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
      * @readonly
      */
-    get bindGroups(): AllowedBindGroups[];
+    get bindGroups(): Map<string, AllowedBindGroups>;
     /**
      * Add a {@link AllowedBindGroups | bind group} to our {@link GPUDeviceManager#bindGroups | bind groups array}
      * @param bindGroup - {@link AllowedBindGroups | bind group} to add
@@ -380,7 +382,7 @@ export declare class GPURenderer {
     get renderedObjects(): SceneObject[];
     /**
      * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
-     * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+     * Useful (but slow) to know if a resource is used by multiple objects and if it is safe to destroy it or not.
      * @param bindGroup - {@link AllowedBindGroups | bind group} to check
      */
     getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];

@@ -41,6 +41,11 @@ export declare class TextureBinding extends Binding {
      */
     get resourceLayout(): GPUTextureBindingLayout | GPUExternalTextureBindingLayout | GPUStorageTextureBindingLayout | null;
     /**
+     * Get the resource cache key
+     * @readonly
+     */
+    get resourceLayoutCacheKey(): string;
+    /**
      * Get the {@link GPUBindGroupEntry#resource | bind group resource}
      */
     get resource(): GPUExternalTexture | GPUTextureView | null;

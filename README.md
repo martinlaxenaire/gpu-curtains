@@ -155,9 +155,11 @@ window.addEventListener('load', async () => {
   const mesh = new Mesh(gpuCurtains, {
     geometry: new BoxGeometry(),
   })
-
-  // make it rotate
-  mesh.onRender(() => {
+  
+  // this callback is executed
+  // before the scene actually updates the matrix stack
+  mesh.onBeforeRender(() => {
+    // make it rotate
     mesh.rotation.x += 0.01
     mesh.rotation.y += 0.02
   })

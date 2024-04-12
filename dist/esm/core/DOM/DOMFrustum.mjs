@@ -48,7 +48,6 @@ class DOMFrustum {
     this.onReEnterView = onReEnterView;
     this.onLeaveView = onLeaveView;
     this.isIntersecting = false;
-    this.shouldUpdate = false;
   }
   /**
    * Set our {@link containerBoundingRect} (called on resize)

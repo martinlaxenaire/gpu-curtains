@@ -9,7 +9,7 @@ class BufferInterleavedArrayElement extends BufferArrayElement {
     super({ name, key, type, arrayLength });
     this.arrayStride = 1;
     this.arrayLength = arrayLength;
-    this.numElements = this.arrayLength / this.bufferLayout.numElements;
+    this.numElements = Math.ceil(this.arrayLength / this.bufferLayout.numElements);
   }
   /**
    * Get the total number of slots used by this {@link BufferInterleavedArrayElement} based on buffer layout size and total number of elements

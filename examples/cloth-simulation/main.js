@@ -369,40 +369,6 @@ window.addEventListener('load', async () => {
     normalPositionArray[i + 2] = 1
   }
 
-  clothGeometry.addVertexBuffer({
-    name: 'clothAttributes',
-    attributes: [
-      {
-        name: 'clothPosition',
-        type: 'vec4f',
-        bufferFormat: 'float32x4',
-        size: 4,
-        array: vertexPositionArray,
-      },
-      {
-        name: 'clothNormal',
-        type: 'vec4f',
-        bufferFormat: 'float32x4',
-        size: 4,
-        array: normalPositionArray,
-      },
-      {
-        name: 'clothForce',
-        type: 'vec4f',
-        bufferFormat: 'float32x4',
-        size: 4,
-        array: vertexForceArray,
-      },
-      {
-        name: 'clothVelocity',
-        type: 'vec4f',
-        bufferFormat: 'float32x4',
-        size: 4,
-        array: vertexVelocityArray,
-      },
-    ],
-  })
-
   const computeBindGroup = new BindGroup(gpuCurtains.renderer, {
     label: 'Cloth simulation compute bind group',
     uniforms: {
@@ -620,6 +586,42 @@ window.addEventListener('load', async () => {
       }
     `
 
+  clothGeometry.addVertexBuffer({
+    name: 'clothAttributes',
+    // add the compute bind group vertex buffer right away
+    buffer: computeBindGroup.getBindingByName('clothVertex')?.buffer,
+    attributes: [
+      {
+        name: 'clothPosition',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+        array: vertexPositionArray,
+      },
+      {
+        name: 'clothNormal',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+        array: normalPositionArray,
+      },
+      {
+        name: 'clothForce',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+        array: vertexForceArray,
+      },
+      {
+        name: 'clothVelocity',
+        type: 'vec4f',
+        bufferFormat: 'float32x4',
+        size: 4,
+        array: vertexVelocityArray,
+      },
+    ],
+  })
+
   const params = {
     geometry: clothGeometry,
     shaders: {
@@ -636,14 +638,6 @@ window.addEventListener('load', async () => {
   }
 
   const plane = new Plane(gpuCurtains, '#cloth', params)
-
-  plane.onRender(() => {
-    // update cloth vertex buffer with resulting buffer from compute passes
-    const vertexBuffer = plane.geometry.getVertexBufferByName('clothAttributes')
-    const clothBuffer = computeNormalPass.material.getBindingByName('clothVertex')
-
-    vertexBuffer.buffer = clothBuffer?.buffer
-  })
 
   const pointer = new Vec2(Infinity)
   const velocity = new Vec2(0)

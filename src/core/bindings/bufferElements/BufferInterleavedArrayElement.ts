@@ -1,4 +1,5 @@
 import { BufferArrayElement, BufferArrayElementParams } from './BufferArrayElement'
+import { bytesPerRow } from './BufferElement'
 
 /**
  * Used to compute alignment when dealing with arrays of Struct
@@ -17,7 +18,7 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
     this.arrayStride = 1
 
     this.arrayLength = arrayLength
-    this.numElements = this.arrayLength / this.bufferLayout.numElements
+    this.numElements = Math.ceil(this.arrayLength / this.bufferLayout.numElements)
   }
 
   /**

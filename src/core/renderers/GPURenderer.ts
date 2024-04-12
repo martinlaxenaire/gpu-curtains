@@ -19,6 +19,7 @@ import { AllowedBindGroups } from '../../types/BindGroups'
 import { RenderTexture } from '../textures/RenderTexture'
 import { GPUDeviceManager } from './GPUDeviceManager'
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
+import { Buffer } from '../buffers/Buffer'
 
 /**
  * Parameters used to create a {@link GPURenderer}
@@ -56,8 +57,10 @@ export interface GPURendererParams {
 export type DOMProjectedMesh = DOMMesh | Plane
 /** Any Mesh that is projected (i.e use a {@link core/camera/Camera.Camera | Camera} to compute a model view projection matrix) */
 export type ProjectedMesh = Mesh | DOMProjectedMesh
-/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing */
-export type RenderedMesh = ProjectedMesh | PingPongPlane | ShaderPass | FullscreenPlane
+/** Any Mesh that can be drawn (including fullscreen quad meshes) and that will be put in the {@link Scene} meshes stacks */
+export type SceneStackedMesh = ProjectedMesh | FullscreenPlane
+/** Any Mesh that can be drawn, including fullscreen quad meshes used for post processing and {@link PingPongPlane} */
+export type RenderedMesh = SceneStackedMesh | PingPongPlane | ShaderPass
 /** Any Mesh or Compute pass */
 export type SceneObject = RenderedMesh | ComputePass
 
@@ -105,8 +108,8 @@ export class GPURenderer {
   shaderPasses: ShaderPass[]
   /** An array containing all our created {@link RenderTarget} */
   renderTargets: RenderTarget[]
-  /** An array containing all our created {@link ProjectedMesh | projected meshes} */
-  meshes: ProjectedMesh[]
+  /** An array containing all our created {@link SceneStackedMesh | meshes} */
+  meshes: SceneStackedMesh[]
   /** An array containing all our created {@link RenderTexture} */
   renderTextures: RenderTexture[]
 
@@ -197,6 +200,7 @@ export class GPURenderer {
       left: 0,
     }
 
+    this.setScene()
     this.setTasksQueues()
     this.setRendererObjects()
 
@@ -406,7 +410,7 @@ export class GPURenderer {
    * Get all the created {@link GPUDeviceManager#buffers | GPU buffers}
    * @readonly
    */
-  get buffers(): GPUBuffer[] {
+  get buffers(): Map<string, Buffer> {
     return this.deviceManager.buffers
   }
 
@@ -450,7 +454,6 @@ export class GPURenderer {
       this.configureContext()
 
       this.setMainRenderPasses()
-      this.setScene()
     }
   }
 
@@ -497,6 +500,9 @@ export class GPURenderer {
       ...this.options.renderPass,
     } as RenderPassParams)
 
+    // add to the scene stack
+    this.scene.setMainRenderPassEntry()
+
     this.postProcessingPass = new RenderPass(this, {
       label: this.options.label + ' post processing render pass',
       // no need to handle depth or perform MSAA on a fullscreen quad
@@ -516,22 +522,21 @@ export class GPURenderer {
 
   /**
    * Create a {@link GPUBuffer}
-   * @param bufferDescriptor - {@link GPUBufferDescriptor | GPU buffer descriptor}
+   * @param buffer - {@link Buffer} to use for buffer creation
    * @returns - newly created {@link GPUBuffer}
    */
-  createBuffer(bufferDescriptor: GPUBufferDescriptor): GPUBuffer {
-    const buffer = this.device?.createBuffer(bufferDescriptor)
+  createBuffer(buffer: Buffer): GPUBuffer {
+    const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options)
     this.deviceManager.addBuffer(buffer)
-    return buffer
+    return GPUBuffer
   }
 
   /**
-   * Remove a {@link GPUBuffer} from our {@link GPUDeviceManager#buffers | GPU buffers array}
-   * @param buffer - {@link GPUBuffer} to remove
-   * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+   * Remove a {@link Buffer} from our {@link GPUDeviceManager#buffers | buffers Map}
+   * @param buffer - {@link Buffer} to remove
    */
-  removeBuffer(buffer: GPUBuffer, originalLabel?: string) {
-    this.deviceManager.removeBuffer(buffer, originalLabel)
+  removeBuffer(buffer: Buffer) {
+    this.deviceManager.removeBuffer(buffer)
   }
 
   /**
@@ -541,27 +546,27 @@ export class GPURenderer {
    * @param data - {@link BufferSource | data} to write
    */
   queueWriteBuffer(buffer: GPUBuffer, bufferOffset: GPUSize64, data: BufferSource) {
-    this.device?.queue.writeBuffer(buffer, bufferOffset, data)
+    this.deviceManager.device?.queue.writeBuffer(buffer, bufferOffset, data)
   }
 
   /**
-   * Copy a source {@link GPUBuffer} into a destination {@link GPUBuffer}
+   * Copy a source {@link Buffer#GPUBuffer | Buffer GPUBuffer} into a destination {@link Buffer#GPUBuffer | Buffer GPUBuffer}
    * @param parameters - parameters used to realize the copy
-   * @param parameters.srcBuffer - source {@link GPUBuffer}
-   * @param [parameters.dstBuffer] - destination {@link GPUBuffer}. Will create a new one if none provided.
+   * @param parameters.srcBuffer - source {@link Buffer}
+   * @param [parameters.dstBuffer] - destination {@link Buffer}. Will create a new one if none provided.
    * @param [parameters.commandEncoder] - {@link GPUCommandEncoder} to use for the copy. Will create a new one and submit the command buffer if none provided.
-   * @returns - destination {@link GPUBuffer} after copy
+   * @returns - destination {@link Buffer} after copy
    */
   copyBufferToBuffer({
     srcBuffer,
     dstBuffer,
     commandEncoder,
   }: {
-    srcBuffer: GPUBuffer
-    dstBuffer?: GPUBuffer
+    srcBuffer: Buffer
+    dstBuffer?: Buffer
     commandEncoder?: GPUCommandEncoder
-  }): GPUBuffer | null {
-    if (!srcBuffer) {
+  }): Buffer | null {
+    if (!srcBuffer || !srcBuffer.GPUBuffer) {
       throwWarning(
         `${this.type} (${this.options.label}): cannot copy to buffer because the source buffer has not been provided`
       )
@@ -569,19 +574,27 @@ export class GPURenderer {
     }
 
     if (!dstBuffer) {
-      dstBuffer = this.createBuffer({
-        label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.label}`,
-        size: srcBuffer.size,
+      dstBuffer = new Buffer()
+    }
+
+    if (!dstBuffer.GPUBuffer) {
+      dstBuffer.createBuffer(this, {
+        label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.options.label}`,
+        size: srcBuffer.GPUBuffer.size,
         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
       })
     }
 
-    if (srcBuffer.mapState !== 'unmapped') {
-      throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${srcBuffer} because it is currently mapped`)
+    if (srcBuffer.GPUBuffer.mapState !== 'unmapped') {
+      throwWarning(
+        `${this.type} (${this.options.label}): Cannot copy from ${srcBuffer.GPUBuffer} because it is currently mapped`
+      )
       return
     }
-    if (dstBuffer.mapState !== 'unmapped') {
-      throwWarning(`${this.type} (${this.options.label}): Cannot copy from ${dstBuffer} because it is currently mapped`)
+    if (dstBuffer.GPUBuffer.mapState !== 'unmapped') {
+      throwWarning(
+        `${this.type} (${this.options.label}): Cannot copy from ${dstBuffer.GPUBuffer} because it is currently mapped`
+      )
       return
     }
 
@@ -589,19 +602,19 @@ export class GPURenderer {
     const hasCommandEncoder = !!commandEncoder
 
     if (!hasCommandEncoder) {
-      commandEncoder = this.device?.createCommandEncoder({
+      commandEncoder = this.deviceManager.device?.createCommandEncoder({
         label: `${this.type} (${this.options.label}): Copy buffer command encoder`,
       })
       !this.production &&
         commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`)
     }
 
-    commandEncoder.copyBufferToBuffer(srcBuffer, 0, dstBuffer, 0, dstBuffer.size)
+    commandEncoder.copyBufferToBuffer(srcBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer.size)
 
     if (!hasCommandEncoder) {
       !this.production && commandEncoder.popDebugGroup()
       const commandBuffer = commandEncoder.finish()
-      this.device?.queue.submit([commandBuffer])
+      this.deviceManager.device?.queue.submit([commandBuffer])
     }
 
     return dstBuffer
@@ -613,7 +626,7 @@ export class GPURenderer {
    * Get all created {@link AllowedBindGroups | bind group} tracked by our {@link GPUDeviceManager}
    * @readonly
    */
-  get bindGroups(): AllowedBindGroups[] {
+  get bindGroups(): Map<string, AllowedBindGroups> {
     return this.deviceManager.bindGroups
   }
 
@@ -639,7 +652,7 @@ export class GPURenderer {
    * @returns - newly created {@link GPUBindGroupLayout}
    */
   createBindGroupLayout(bindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor): GPUBindGroupLayout {
-    return this.device?.createBindGroupLayout(bindGroupLayoutDescriptor)
+    return this.deviceManager.device?.createBindGroupLayout(bindGroupLayoutDescriptor)
   }
 
   /**
@@ -648,7 +661,7 @@ export class GPURenderer {
    * @returns - newly created {@link GPUBindGroup}
    */
   createBindGroup(bindGroupDescriptor: GPUBindGroupDescriptor): GPUBindGroup {
-    return this.device?.createBindGroup(bindGroupDescriptor)
+    return this.deviceManager.device?.createBindGroup(bindGroupDescriptor)
   }
 
   /* SHADERS & PIPELINES */
@@ -757,7 +770,7 @@ export class GPURenderer {
    * @returns - newly created {@link GPUTexture}
    */
   createTexture(textureDescriptor: GPUTextureDescriptor): GPUTexture {
-    return this.device?.createTexture(textureDescriptor)
+    return this.deviceManager.device?.createTexture(textureDescriptor)
   }
 
   /**
@@ -778,8 +791,8 @@ export class GPURenderer {
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
     // see onVideoFrameCallback method in Texture class
     // const videoFrame = new VideoFrame(video)
-    // return this.device?.importExternalTexture({ source: videoFrame })
-    return this.device?.importExternalTexture({ source: video })
+    // return this.deviceManager.device?.importExternalTexture({ source: videoFrame })
+    return this.deviceManager.device?.importExternalTexture({ source: video })
   }
 
   /**
@@ -796,8 +809,9 @@ export class GPURenderer {
     if (existingSampler) {
       return existingSampler.sampler
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { type, ...samplerOptions } = sampler.options
-      const gpuSampler: GPUSampler = this.device?.createSampler({
+      const gpuSampler: GPUSampler = this.deviceManager.device?.createSampler({
         label: sampler.label,
         ...samplerOptions,
       })
@@ -855,7 +869,7 @@ export class GPURenderer {
 
   /**
    * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
-   * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
+   * Useful (but slow) to know if a resource is used by multiple objects and if it is safe to destroy it or not.
    * @param bindGroup - {@link AllowedBindGroups | bind group} to check
    */
   getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[] {

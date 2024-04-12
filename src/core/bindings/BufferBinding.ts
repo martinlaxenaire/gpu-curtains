@@ -7,6 +7,7 @@ import { Input, InputBase, InputValue } from '../../types/BindGroups'
 import { BufferElement } from './bufferElements/BufferElement'
 import { BufferArrayElement } from './bufferElements/BufferArrayElement'
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement'
+import { Buffer } from '../buffers/Buffer'
 
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
@@ -23,6 +24,9 @@ export interface BufferBindingInput extends InputBase {
 
   /** Whether the {@link InputValue | input value} has changed and we should update the {@link BufferBinding#arrayBuffer | buffer binding array} */
   shouldUpdate: boolean
+
+  /** {@link BufferBindingInput} name */
+  name: string
 }
 
 /**
@@ -88,8 +92,8 @@ export class BufferBinding extends Binding {
   /** Data view of our {@link arrayBuffer | array buffer} */
   arrayView: DataView
 
-  /** The GPUBuffer */
-  buffer: GPUBuffer | null
+  /** The {@link Buffer} holding the {@link GPUBuffer}  */
+  buffer: Buffer
 
   /** A string to append to our shaders code describing the WGSL structure representing this {@link BufferBinding} */
   wgslStructFragment: string
@@ -119,8 +123,10 @@ export class BufferBinding extends Binding {
       ...this.options,
       useStruct,
       access,
-      struct: struct,
+      struct,
     }
+
+    this.cacheKey += `${useStruct},${access},`
 
     this.arrayBufferSize = 0
 
@@ -129,11 +135,14 @@ export class BufferBinding extends Binding {
 
     this.bufferElements = []
     this.inputs = {}
-    this.buffer = null
+    this.buffer = new Buffer()
 
-    this.setBindings(struct)
-    this.setBufferAttributes()
-    this.setWGSLFragment()
+    if (Object.keys(struct).length) {
+      this.setBindings(struct)
+      this.setBufferAttributes()
+
+      this.setWGSLFragment()
+    }
   }
 
   /**
@@ -152,6 +161,14 @@ export class BufferBinding extends Binding {
   }
 
   /**
+   * Get the resource cache key
+   * @readonly
+   */
+  get resourceLayoutCacheKey(): string {
+    return `buffer,${getBindGroupLayoutBindingType(this)},${this.visibility},`
+  }
+
+  /**
    * Get {@link GPUBindGroupEntry#resource | bind group resource}
    * @readonly
    */
@@ -159,7 +176,60 @@ export class BufferBinding extends Binding {
     /** {@link GPUBindGroup | bind group} resource */
     buffer: GPUBuffer | null
   } {
-    return { buffer: this.buffer }
+    return { buffer: this.buffer.GPUBuffer }
+  }
+
+  /**
+   * Clone this {@link BufferBinding} into a new one. Allows to skip buffer layout alignment computations.
+   * @param params - params to use for cloning
+   */
+  clone(params: BufferBindingParams) {
+    const { struct, ...defaultParams } = params
+
+    const bufferBindingCopy = new (this.constructor as typeof BufferBinding)(defaultParams)
+    bufferBindingCopy.setBindings(struct)
+    bufferBindingCopy.options.struct = struct
+
+    bufferBindingCopy.arrayBufferSize = this.arrayBufferSize
+
+    bufferBindingCopy.arrayBuffer = new ArrayBuffer(bufferBindingCopy.arrayBufferSize)
+    bufferBindingCopy.arrayView = new DataView(
+      bufferBindingCopy.arrayBuffer,
+      0,
+      bufferBindingCopy.arrayBuffer.byteLength
+    )
+
+    bufferBindingCopy.buffer.size = bufferBindingCopy.arrayBuffer.byteLength
+
+    this.bufferElements.forEach((bufferElement: BufferArrayElement) => {
+      const newBufferElement = new (bufferElement.constructor as typeof BufferArrayElement)({
+        name: bufferElement.name,
+        key: bufferElement.key,
+        type: bufferElement.type,
+        ...(bufferElement.arrayLength && {
+          arrayLength: bufferElement.arrayLength,
+        }),
+      })
+
+      newBufferElement.alignment = bufferElement.alignment
+      if (bufferElement.arrayStride) {
+        newBufferElement.arrayStride = bufferElement.arrayStride
+      }
+
+      newBufferElement.setView(bufferBindingCopy.arrayBuffer, bufferBindingCopy.arrayView)
+      bufferBindingCopy.bufferElements.push(newBufferElement)
+    })
+
+    if (this.name === bufferBindingCopy.name && this.label === bufferBindingCopy.label) {
+      bufferBindingCopy.wgslStructFragment = this.wgslStructFragment
+      bufferBindingCopy.wgslGroupFragment = this.wgslGroupFragment
+    } else {
+      bufferBindingCopy.setWGSLFragment()
+    }
+
+    bufferBindingCopy.shouldUpdate = bufferBindingCopy.arrayBufferSize > 0
+
+    return bufferBindingCopy
   }
 
   /**
@@ -167,7 +237,7 @@ export class BufferBinding extends Binding {
    * @param bindings - bindings inputs
    */
   setBindings(bindings: Record<string, Input>) {
-    Object.keys(bindings).forEach((bindingKey) => {
+    for (const bindingKey of Object.keys(bindings)) {
       const binding = {} as BufferBindingInput
 
       for (const key in bindings[bindingKey]) {
@@ -176,8 +246,8 @@ export class BufferBinding extends Binding {
         }
       }
 
-      // force the binding to have a name
-      binding.name = bindings[bindingKey].name ?? bindingKey
+      // binding name is the key
+      binding.name = bindingKey
 
       // define a "value" getter/setter so we can now when to update the buffer binding
       Object.defineProperty(binding, 'value', {
@@ -197,7 +267,9 @@ export class BufferBinding extends Binding {
       }
 
       this.inputs[bindingKey] = binding
-    })
+
+      this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`
+    }
   }
 
   /**
@@ -212,26 +284,30 @@ export class BufferBinding extends Binding {
     // if length === 0, OK
     // if length === 1, put it at the end of our struct
     // if length > 1, create a buffer interleaved elements
-    const arrayBindings = Object.keys(this.inputs).filter(
-      (bindingKey) => this.inputs[bindingKey].type.indexOf('array') !== -1
-    )
+    let orderedBindings = Object.keys(this.inputs)
 
-    // put the array struct at the end
-    let orderedBindings = Object.keys(this.inputs).sort((bindingKeyA, bindingKeyB) => {
-      // 0 if it's an array, -1 else
-      const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf('array'))
-      const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf('array'))
-
-      return isBindingAArray - isBindingBArray
+    const arrayBindings = orderedBindings.filter((bindingKey) => {
+      return this.inputs[bindingKey].type.includes('array')
     })
 
-    if (arrayBindings.length > 1) {
-      // remove interleaved arrays from the ordered struct key array
-      orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey))
+    // put the array struct at the end
+    if (arrayBindings.length) {
+      orderedBindings.sort((bindingKeyA, bindingKeyB) => {
+        // 0 if it's an array, -1 else
+        const isBindingAArray = Math.min(0, this.inputs[bindingKeyA].type.indexOf('array'))
+        const isBindingBArray = Math.min(0, this.inputs[bindingKeyB].type.indexOf('array'))
+
+        return isBindingAArray - isBindingBArray
+      })
+
+      if (arrayBindings.length > 1) {
+        // remove interleaved arrays from the ordered struct key array
+        orderedBindings = orderedBindings.filter((bindingKey) => !arrayBindings.includes(bindingKey))
+      }
     }
 
     // handle buffer (non interleaved) elements
-    orderedBindings.forEach((bindingKey) => {
+    for (const bindingKey of orderedBindings) {
       const binding = this.inputs[bindingKey]
 
       const bufferElementOptions = {
@@ -241,7 +317,7 @@ export class BufferBinding extends Binding {
       }
 
       const isArray =
-        binding.type.indexOf('array') !== -1 && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value))
+        binding.type.includes('array') && (Array.isArray(binding.value) || ArrayBuffer.isView(binding.value))
 
       this.bufferElements.push(
         isArray
@@ -251,7 +327,7 @@ export class BufferBinding extends Binding {
             })
           : new BufferElement(bufferElementOptions)
       )
-    })
+    }
 
     // set their alignments
     this.bufferElements.forEach((bufferElement, index) => {
@@ -267,7 +343,7 @@ export class BufferBinding extends Binding {
         const binding = this.inputs[bindingKey]
         const bufferLayout = getBufferLayout(binding.type.replace('array', '').replace('<', '').replace('>', ''))
 
-        return (binding.value as number[] | TypedArray).length / bufferLayout.numElements
+        return Math.ceil((binding.value as number[] | TypedArray).length / bufferLayout.numElements)
       })
 
       // are they all of the same size?
@@ -342,9 +418,11 @@ export class BufferBinding extends Binding {
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize)
     this.arrayView = new DataView(this.arrayBuffer, 0, this.arrayBuffer.byteLength)
 
-    this.bufferElements.forEach((bufferElement) => {
+    this.buffer.size = this.arrayBuffer.byteLength
+
+    for (const bufferElement of this.bufferElements) {
       bufferElement.setView(this.arrayBuffer, this.arrayView)
-    })
+    }
 
     this.shouldUpdate = this.arrayBufferSize > 0
   }
@@ -353,6 +431,8 @@ export class BufferBinding extends Binding {
    * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
    */
   setWGSLFragment() {
+    if (!this.bufferElements.length) return
+
     const kebabCaseLabel = toKebabCase(this.label)
 
     if (this.useStruct) {
@@ -419,13 +499,13 @@ export class BufferBinding extends Binding {
   }
 
   /**
-   * Set a binding shouldUpdate flag to true to update our {@link arrayBuffer} array during next render.
+   * Set a {@link BufferBinding#shouldUpdate | binding shouldUpdate} flag to `true` to update our {@link arrayBuffer} array during next render.
    * @param bindingName - the binding name/key to update
    */
   shouldUpdateBinding(bindingName = '') {
-    const bindingKey = Object.keys(this.inputs).find((bindingKey) => this.inputs[bindingKey].name === bindingName)
-
-    if (bindingKey) this.inputs[bindingKey].shouldUpdate = true
+    if (this.inputs[bindingName]) {
+      this.inputs[bindingName].shouldUpdate = true
+    }
   }
 
   /**
@@ -434,9 +514,9 @@ export class BufferBinding extends Binding {
    * Also sets the {@link shouldUpdate} property to true so the {@link core/bindGroups/BindGroup.BindGroup | BindGroup} knows it will need to update the {@link GPUBuffer}.
    */
   update() {
-    Object.keys(this.inputs).forEach((bindingKey) => {
-      const binding = this.inputs[bindingKey]
-      const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === bindingKey)
+    const inputs = Object.values(this.inputs)
+    for (const binding of inputs) {
+      const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name)
 
       if (binding.shouldUpdate && bufferElement) {
         binding.onBeforeUpdate && binding.onBeforeUpdate()
@@ -446,7 +526,7 @@ export class BufferBinding extends Binding {
         this.shouldUpdate = true
         binding.shouldUpdate = false
       }
-    })
+    }
   }
 
   /**

@@ -233,11 +233,12 @@
           sphereMesh.scale.z = sphereMesh.worldScale.y
         }
 
-        sphereMesh.onAfterResize(updateSphereScale).onRender(() => (sphereMesh.rotation.y += 0.01))
+        sphereMesh.onAfterResize(updateSphereScale).onBeforeRender(() => (sphereMesh.rotation.y += 0.01))
         updateSphereScale()
 
         // now the satellites
         const nbSatellites = 25
+
         for (let i = 0; i < nbSatellites; i++) {
           const satelliteMesh = new DOMMesh(gpuCurtains, '#sphere', {
             label: 'Cube ' + i,
@@ -247,6 +248,8 @@
 
           // create a different pivot for each satellite
           const pivot = new Object3D()
+          // add the scene as the pivot parent
+          pivot.parent = gpuCurtains.renderer.scene
 
           // random rotation speed
           const pivotRotationSpeed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
@@ -289,7 +292,7 @@
             satelliteMesh.lookAt(pivot.position)
           }
 
-          satelliteMesh.onAfterResize(updateSatelliteScale).onRender(() => {
+          satelliteMesh.onAfterResize(updateSatelliteScale).onBeforeRender(() => {
             // rotate the pivot
             pivot.rotation.y += pivotRotationSpeed
           })

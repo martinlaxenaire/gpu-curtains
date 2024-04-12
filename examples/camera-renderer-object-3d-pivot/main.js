@@ -59,7 +59,7 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
       // since the object scale has not changed this should work
-      vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize((matrices.model * vec4(attributes.normal, 0.0)).xyz);
       
       return vsOutput;
     }
@@ -98,10 +98,17 @@ window.addEventListener('load', async () => {
 
   const nbElements = 10
   for (let i = 0; i < nbElements; i++) {
+    let time = i * -30
+
     const pivot = new Object3D()
+    // add the scene as the pivot parent
+    pivot.parent = gpuCameraRenderer.scene
 
     // shrink everything
     pivot.scale.set(0.2)
+
+    // move pivot along x axis
+    pivot.position.x = Math.cos(time * 0.01) * 4
 
     const pivotRotationSpeed = (Math.random() * 0.015 + 0.01) * Math.sign(Math.random() - 0.5)
 
@@ -197,9 +204,7 @@ window.addEventListener('load', async () => {
     // look at pivot center
     cube.lookAt(pivot.position)
 
-    let time = i * -30
-
-    cube.onRender(() => {
+    cube.onBeforeRender(() => {
       time++
 
       // move pivot along x axis

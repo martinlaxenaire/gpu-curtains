@@ -34,7 +34,7 @@ export const init = async ({ canvas, label, width, height, top = 0, left = 0, pi
     geometry: new BoxGeometry(),
   })
 
-  mesh.onRender(() => {
+  mesh.onBeforeRender(() => {
     mesh.rotation.y += 0.01
     mesh.rotation.z += 0.01
   })

@@ -74,8 +74,12 @@ export declare class BindGroup {
     bindGroupLayout: null | GPUBindGroupLayout;
     /** Our {@link BindGroup} {@link GPUBindGroup} */
     bindGroup: null | GPUBindGroup;
+    /** A cache key allowing to get / set {@link GPUBindGroupLayout} from the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#bindGroupLayouts | device manager map cache}. */
+    layoutCacheKey: string;
     /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
     needsPipelineFlush: boolean;
+    /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */
+    consumers: Set<string>;
     /**
      * BindGroup constructor
      * @param renderer - a {@link Renderer} class object or a {@link GPUCurtains} class object
@@ -127,9 +131,19 @@ export declare class BindGroup {
      */
     resetBindGroup(): void;
     /**
+     * Add a {@link BindGroup#entries.bindGroup | bindGroup entry}
+     * @param binding - {@link BindGroupBindingElement | binding} to add
+     */
+    addBindGroupEntry(binding: BindGroupBindingElement): void;
+    /**
      * Reset the {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entries}, recreates them and then recreate the {@link BindGroup#bindGroupLayout | GPU bind group layout}
      */
     resetBindGroupLayout(): void;
+    /**
+     * Add a {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entry}
+     * @param binding - {@link BindGroupBindingElement | binding} to add
+     */
+    addBindGroupLayoutEntry(binding: BindGroupBindingElement): void;
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
      */

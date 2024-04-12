@@ -18,21 +18,6 @@ window.addEventListener('load', async () => {
 
   // ref: https://webgpufundamentals.org/webgpu/lessons/resources/wgsl-offset-computer.html#x=5d00000100f901000000000000003d8888623728a306fc320e1a9ba57547078694a9be9f86fca01fc2b96183b8019b42979f89b724d75b16a7d0ba5f05e1688c08377f9adcadac8b118c715ae49684657cbf39131e36661070f3c12b655a42f158e5add7714dbd4729a3973fef2edfb03e8759dabdeb5279ff2f0b45d47fb70575af8b3a734abecbf3ecdca99f3367a2d772ceb3b4659a28504ff11321f7227e9e5358ffdbc75a65573125707e74c84e6410a1b32e84d64e7b89923cf185c66e31f16e5489b838fb930f42f15dbbeeca544be7372401b7e7efb8288be7dc18cc48ba6edd18f2e1cc64d805f7862962ad3cd91a5a7b13ca157c51e17f8dcfe8c87398a0eabf62e1f623c49ec6ec8e7e598dc6b6d5a3ffbe2396d3
 
-  // NOT WORKING!
-  const specialMatrix = new BufferBinding({
-    label: 'Special matrix',
-    name: 'specialMatrix',
-    bindingType: 'uniform',
-    struct: {
-      matrix: {
-        type: 'mat3x4f',
-        value: new Float32Array(3 * 4),
-      },
-    },
-  })
-
-  debugBindings.push(specialMatrix)
-
   const binding1 = new BufferBinding({
     label: 'Test1',
     name: 'test1',
@@ -128,6 +113,11 @@ window.addEventListener('load', async () => {
 
   debugBindings.push(otherBinding)
 
+  const arrayTestValue = new Float32Array(3 * 4)
+  for (let i = 0; i < arrayTestValue.length; i++) {
+    arrayTestValue[i] = 99
+  }
+
   const arrayTest = new BufferBinding({
     label: 'Array test',
     name: 'arrayTest',
@@ -135,7 +125,7 @@ window.addEventListener('load', async () => {
     struct: {
       arrayTest: {
         type: 'array<vec3f>',
-        value: new Float32Array(3 * 4),
+        value: arrayTestValue,
       },
       floatValue: {
         type: 'f32',
@@ -143,6 +133,8 @@ window.addEventListener('load', async () => {
       },
     },
   })
+
+  arrayTest.update()
 
   debugBindings.push(arrayTest)
 
@@ -204,6 +196,88 @@ window.addEventListener('load', async () => {
 
   debugBindings.push(binding4)
 
+  // PADDED BINDINGS
+
+  // simple mat3x3f
+  const normalMatrixBinding = new BufferBinding({
+    label: 'Normal matrix',
+    name: 'normalMatrix',
+    bindingType: 'uniform',
+    struct: {
+      matrix: {
+        type: 'mat3x3f',
+        value: new Float32Array(3 * 3),
+      },
+    },
+  })
+
+  const normalMatrix = new Float32Array(3 * 3)
+  for (let i = 0; i < normalMatrix.length; i++) {
+    normalMatrix[i] = i
+  }
+
+  //console.log('normal matrix', normalMatrix)
+
+  debugBindings.push(normalMatrixBinding)
+  normalMatrixBinding.bufferElements[0].update(normalMatrix)
+
+  // mat3x3f array
+  const normalMatrixArrayBinding = new BufferBinding({
+    label: 'Normal matrix array',
+    name: 'normalMatrixArray',
+    bindingType: 'uniform',
+    struct: {
+      matrix: {
+        type: 'array<mat3x3f>',
+        value: new Float32Array(3 * 3 * 3),
+      },
+    },
+  })
+
+  const normalMatrixArray = new Float32Array(3 * 3 * 3)
+  for (let i = 0; i < normalMatrixArray.length; i++) {
+    normalMatrixArray[i] = i
+  }
+
+  debugBindings.push(normalMatrixArrayBinding)
+  normalMatrixArrayBinding.bufferElements[0].update(normalMatrixArray)
+
+  //console.log('normal matrix array', normalMatrixArray, normalMatrixArrayBinding)
+
+  // mat3x3f interleaved array
+  const normalsInterleavedArray = new Float32Array(3 * 3)
+  for (let i = 0; i < normalsInterleavedArray.length; i++) {
+    normalsInterleavedArray[i] = 99
+  }
+
+  const normalMatrixInterleavedArray = new Float32Array(3 * 3 * 3)
+  for (let i = 0; i < normalMatrixInterleavedArray.length; i++) {
+    normalMatrixInterleavedArray[i] = i
+  }
+
+  const normalMatrixInterleavedArrayBinding = new BufferBinding({
+    label: 'Normal matrix interleaved array',
+    name: 'normalMatrixInterleavedArray',
+    bindingType: 'uniform',
+    struct: {
+      normal: {
+        type: 'array<vec3f>',
+        value: normalsInterleavedArray,
+      },
+      matrix: {
+        type: 'array<mat3x3f>',
+        value: normalMatrixInterleavedArray,
+      },
+    },
+  })
+
+  debugBindings.push(normalMatrixInterleavedArrayBinding)
+  normalMatrixInterleavedArrayBinding.update()
+
+  // ----------
+  // NOW OUTPUT THE BINDINGS
+  // ----------
+
   const buildBindingDebugTable = (binding) => {
     let innerHTML = `<div class='binding'>`
     innerHTML += `<h2>${binding.label}</h2>`
@@ -243,15 +317,39 @@ window.addEventListener('load', async () => {
           }
         }
 
+        // internal pad
+        let pad = 0
+
         for (let j = 0; j < numElements; j++) {
+          if (bindingElement.bufferLayout.pad && pad >= bindingElement.bufferLayout.pad[0]) {
+            innerHTML += `<div class='binding-element pad-type col-span-4 color-pad'>`
+            innerHTML += `<div class='binding-element-type'>pad</div>`
+
+            innerHTML += `<div class='binding-element-slots'>`
+            for (let k = 0; k < 4; k++) {
+              innerHTML += `<div class='binding-element-slot-item'></div>`
+            }
+
+            innerHTML += `</div>`
+
+            innerHTML += `</div>`
+
+            pad = 0
+            continue
+          }
+
+          pad++
+
           innerHTML += `<div class='binding-element ${bindingElement.bufferLayout.type}-type col-span-${
             size < 4 ? size : 4
           } color-${index % 8}'>`
 
           const arrayIndex = bindingElement.numElements ? `[${i}]` : ''
-          //const arrayIndex = bindingElement.numElements ? `[${0}]` : ''
 
-          innerHTML += `<div class='binding-element-type'>${bindingElement.name}${arrayIndex}: ${bindingElement.type}</div>`
+          innerHTML += `<div class='binding-element-type'>${bindingElement.name}${arrayIndex}: ${bindingElement.type
+            .replace('array', '')
+            .replace('<', '')
+            .replace('>', '')}</div>`
 
           innerHTML += `<div class='binding-element-slots'>`
           for (let k = 0; k < size / numElements; k++) {
@@ -277,6 +375,7 @@ window.addEventListener('load', async () => {
             type: interleavedBufferElement.bufferLayout.type,
             size: interleavedBufferElement.bufferLayout.size,
             numElements: interleavedBufferElement.bufferLayout.numElements,
+            pad: interleavedBufferElement.bufferLayout.pad,
             startOffset: interleavedBufferElement.startOffset,
             arrayStride: interleavedBufferElement.arrayStride,
             //entries: [interleavedBufferElement.interleavedAlignment.entries[i]],
@@ -286,7 +385,7 @@ window.addEventListener('load', async () => {
         })
       }
 
-      console.log(interleavedEntries)
+      //console.log(interleavedEntries)
 
       interleavedEntries.forEach((interleavedEntry) => {
         const newStartOffset = interleavedEntry.startOffset + interleavedEntry.loopIndex * interleavedEntry.arrayStride
@@ -308,13 +407,34 @@ window.addEventListener('load', async () => {
           }
         }
 
+        let pad = 0
+
         for (let j = 0; j < interleavedEntry.numElements; j++) {
+          if (interleavedEntry.pad && pad >= interleavedEntry.pad[0]) {
+            innerHTML += `<div class='binding-element pad-type col-span-4 color-pad'>`
+            innerHTML += `<div class='binding-element-type'>pad</div>`
+
+            innerHTML += `<div class='binding-element-slots'>`
+            for (let k = 0; k < 4; k++) {
+              innerHTML += `<div class='binding-element-slot-item'></div>`
+            }
+
+            innerHTML += `</div>`
+
+            innerHTML += `</div>`
+
+            pad = 0
+            continue
+          }
+
+          pad++
+
           innerHTML += `<div class='binding-element ${interleavedEntry.type}-type col-span-${
             interleavedEntry.size < 4 ? interleavedEntry.size : 4
           } color-${interleavedEntry.index % 8}'>`
 
           innerHTML += `<div class='binding-element-type'>${interleavedEntry.name}[${
-            interleavedEntry.loopIndex * interleavedEntry.numElements + j
+            interleavedEntry.loopIndex + Math.floor(j / interleavedEntry.numElements)
           }]: ${interleavedEntry.type}</div>`
 
           innerHTML += `<div class='binding-element-slots'>`
@@ -331,7 +451,7 @@ window.addEventListener('load', async () => {
     }
 
     const endPad = binding.arrayBufferSize - (previousEndOffset + 1)
-    console.log(binding.name, endPad, binding.arrayBufferSize, previousEndOffset)
+    //console.log(binding.name, endPad, binding.arrayBufferSize, previousEndOffset)
 
     // TODO what if end pad start with a size 2? i.e. endPad % 4 !== 0
     for (let i = 0; i < endPad; i += 4) {

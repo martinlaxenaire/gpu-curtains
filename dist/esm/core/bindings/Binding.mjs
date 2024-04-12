@@ -5,7 +5,7 @@ class Binding {
    * Binding constructor
    * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
    */
-  constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility }) {
+  constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility = "all" }) {
     this.label = label;
     this.name = toCamelCase(name);
     this.bindingType = bindingType;
@@ -30,6 +30,7 @@ class Binding {
     };
     this.shouldResetBindGroup = false;
     this.shouldResetBindGroupLayout = false;
+    this.cacheKey = `${bindingType},${visibility},`;
   }
 }
 

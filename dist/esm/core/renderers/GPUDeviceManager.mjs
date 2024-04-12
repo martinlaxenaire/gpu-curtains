@@ -40,11 +40,11 @@ class GPUDeviceManager {
   async init() {
     await this.setAdapterAndDevice();
     if (this.device) {
-      this.renderers.forEach((renderer) => {
+      for (const renderer of this.renderers) {
         if (!renderer.context) {
           renderer.setContext();
         }
-      });
+      }
     }
   }
   /**
@@ -55,17 +55,16 @@ class GPUDeviceManager {
   async setAdapter() {
     if (!this.gpu) {
       this.onError();
-      throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
+      throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
     }
-    try {
-      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
-      this.adapter?.requestAdapterInfo().then((infos) => {
-        this.adapterInfos = infos;
-      });
-    } catch (error) {
+    this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+    if (!this.adapter) {
       this.onError();
       throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
     }
+    this.adapter?.requestAdapterInfo().then((infos) => {
+      this.adapterInfos = infos;
+    });
   }
   /**
    * Set our {@link device}
@@ -104,9 +103,11 @@ class GPUDeviceManager {
    */
   loseDevice() {
     this.ready = false;
+    this.pipelineManager.resetCurrentPipeline();
     this.samplers.forEach((sampler) => sampler.sampler = null);
     this.renderers.forEach((renderer) => renderer.loseContext());
-    this.buffers = [];
+    this.bindGroupLayouts.clear();
+    this.buffers.clear();
   }
   /**
    * Called when the {@link device} should be restored.
@@ -130,8 +131,10 @@ class GPUDeviceManager {
    */
   setDeviceObjects() {
     this.renderers = [];
-    this.bindGroups = [];
-    this.buffers = [];
+    this.bindGroups = /* @__PURE__ */ new Map();
+    this.buffers = /* @__PURE__ */ new Map();
+    this.bindGroupLayouts = /* @__PURE__ */ new Map();
+    this.bufferBindings = /* @__PURE__ */ new Map();
     this.samplers = [];
     this.textures = [];
     this.texturesQueue = [];
@@ -162,35 +165,28 @@ class GPUDeviceManager {
    * @param bindGroup - {@link AllowedBindGroups | bind group} to add
    */
   addBindGroup(bindGroup) {
-    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-      this.bindGroups.push(bindGroup);
-    }
+    this.bindGroups.set(bindGroup.uuid, bindGroup);
   }
   /**
    * Remove a {@link AllowedBindGroups | bind group} from our {@link bindGroups | bind groups array}
    * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
    */
   removeBindGroup(bindGroup) {
-    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid);
+    this.bindGroups.delete(bindGroup.uuid);
   }
   /**
    * Add a {@link GPUBuffer} to our our {@link buffers} array
-   * @param buffer - {@link GPUBuffer} to add
+   * @param buffer - {@link Buffer} to add
    */
   addBuffer(buffer) {
-    this.buffers.push(buffer);
+    this.buffers.set(buffer.uuid, buffer);
   }
   /**
-   * Remove a {@link GPUBuffer} from our {@link buffers} array
-   * @param buffer - {@link GPUBuffer} to remove
-   * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+   * Remove a {@link Buffer} from our {@link buffers} Map
+   * @param buffer - {@link Buffer} to remove
    */
-  removeBuffer(buffer, originalLabel) {
-    if (buffer) {
-      this.buffers = this.buffers.filter((b) => {
-        return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size);
-      });
-    }
+  removeBuffer(buffer) {
+    this.buffers.delete(buffer?.uuid);
   }
   /**
    * Add a {@link Sampler} to our {@link samplers} array
@@ -264,7 +260,9 @@ class GPUDeviceManager {
   render() {
     if (!this.ready)
       return;
-    this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder());
+    for (const renderer of this.renderers) {
+      renderer.onBeforeCommandEncoder();
+    }
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
     !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
     this.renderers.forEach((renderer) => renderer.render(commandEncoder));
@@ -272,11 +270,13 @@ class GPUDeviceManager {
     const commandBuffer = commandEncoder.finish();
     this.device?.queue.submit([commandBuffer]);
     this.textures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
-    this.texturesQueue.forEach((texture) => {
+    for (const texture of this.texturesQueue) {
       texture.sourceUploaded = true;
-    });
+    }
     this.texturesQueue = [];
-    this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder());
+    for (const renderer of this.renderers) {
+      renderer.onAfterCommandEncoder();
+    }
   }
   /**
    * Destroy the {@link GPUDeviceManager} and its {@link renderers}

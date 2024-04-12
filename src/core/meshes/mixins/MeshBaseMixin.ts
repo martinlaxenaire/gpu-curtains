@@ -7,7 +7,7 @@ import { RenderTexture, RenderTextureParams } from '../../textures/RenderTexture
 import { ExternalTextureParams, TextureParams, TextureParent } from '../../../types/Textures'
 import { RenderTarget } from '../../renderPasses/RenderTarget'
 import { GPUCurtains } from '../../../curtains/GPUCurtains'
-import { ProjectedMesh } from '../../renderers/GPURenderer'
+import { ProjectedMesh, SceneStackedMesh } from '../../renderers/GPURenderer'
 import { Material } from '../../materials/Material'
 import { DOMElementBoundingRect } from '../../DOM/DOMElement'
 import { AllowedGeometries, RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
@@ -62,7 +62,6 @@ const defaultMeshBaseParams: MeshBaseParams = {
   // geometry
   geometry: new Geometry(),
   // material
-  shaders: {},
   autoRender: true,
   useProjection: false,
   useAsyncPipeline: true,
@@ -132,32 +131,37 @@ export declare class MeshBaseClass {
   _onAfterRenderCallback: () => void
   /** function assigned to the {@link onAfterResize} callback */
   _onAfterResizeCallback: () => void
+
   /**
-   * Assign a callback function to _onReadyCallback
+   * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
    * @param callback - callback to run when {@link MeshBaseClass} is ready
    * @returns - our Mesh
    */
   onReady: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
+
   /**
-   * Assign a callback function to _onBeforeRenderCallback
-   * @param callback - callback to run just before {@link MeshBaseClass} will be rendered
+   * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+   * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
    * @returns - our Mesh
    */
   onBeforeRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
+
   /**
-   * Assign a callback function to _onRenderCallback
-   * @param callback - callback to run when {@link MeshBaseClass} is rendered
+   * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+   * @param callback - callback to run just before rendering the {@link MeshBaseClass}.
    * @returns - our Mesh
    */
   onRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
+
   /**
-   * Assign a callback function to _onAfterRenderCallback
+   * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
    * @param callback - callback to run just after {@link MeshBaseClass} has been rendered
    * @returns - our Mesh
    */
   onAfterRender: (callback: () => void) => MeshBaseClass | ProjectedMeshBaseClass
+
   /**
-   * Assign a callback function to _onBeforeRenderCallback
+   * Callback to execute just after a Mesh has been resized.
    * @param callback - callback to run just after {@link MeshBaseClass} has been resized
    * @returns - our Mesh
    */
@@ -215,16 +219,6 @@ export declare class MeshBaseClass {
    * Set default shaders if one or both of them are missing
    */
   setShaders(): void
-
-  /**
-   * Compute the Mesh geometry if needed
-   */
-  computeGeometry(): void
-
-  /**
-   * Create the Mesh Geometry vertex and index buffers if needed
-   */
-  createGeometryBuffers(): void
 
   /**
    * Set our Mesh geometry: create buffers and add attributes to material
@@ -325,9 +319,14 @@ export declare class MeshBaseClass {
   resize(boundingRect?: DOMElementBoundingRect): void
 
   /**
+   * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+   */
+  onBeforeRenderScene(): void
+
+  /**
    * Called before rendering the Mesh
    * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-   * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
+   * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
    */
   onBeforeRenderPass(): void
 
@@ -501,14 +500,15 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
         label: label ?? 'Mesh ' + this.renderer.meshes.length,
-        shaders,
-        texturesOptions,
+        ...(shaders !== undefined ? { shaders } : {}),
         ...(outputTarget !== undefined && { outputTarget }),
+        texturesOptions,
         ...(autoRender !== undefined && { autoRender }),
         ...meshParameters,
       }
 
       this.geometry = geometry
+      this.geometry.consumers.add(this.uuid)
 
       if (autoRender !== undefined) {
         this.#autoRender = autoRender
@@ -548,7 +548,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     set ready(value: boolean) {
-      if (value) {
+      if (value && !this._ready) {
         this._onReadyCallback && this._onReadyCallback()
       }
       this._ready = value
@@ -560,12 +560,12 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
      */
     addToScene() {
-      this.renderer.meshes.push(this as unknown as ProjectedMesh)
+      this.renderer.meshes.push(this as unknown as SceneStackedMesh)
 
       this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass)
 
       if (this.#autoRender) {
-        this.renderer.scene.addMesh(this as unknown as ProjectedMesh)
+        this.renderer.scene.addMesh(this as unknown as SceneStackedMesh)
       }
     }
 
@@ -641,14 +641,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
      */
     loseContext() {
-      // first the geometry
-      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
-        vertexBuffer.buffer = null
-      })
+      // we're obviously not ready anymore
+      this.ready = false
 
-      if ('indexBuffer' in this.geometry) {
-        this.geometry.indexBuffer.buffer = null
-      }
+      // first the geometry
+      this.geometry.loseContext()
 
       // then the material
       this.material.loseContext()
@@ -658,6 +655,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
      */
     restoreContext() {
+      this.geometry.restoreContext(this.renderer)
       this.material.restoreContext()
     }
 
@@ -667,10 +665,10 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Set default shaders if one or both of them are missing
      */
     setShaders() {
-      let { shaders } = this.options
+      const { shaders } = this.options
 
       if (!shaders) {
-        shaders = {
+        this.options.shaders = {
           vertex: {
             code: default_vsWgsl,
             entryPoint: 'main',
@@ -709,41 +707,17 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Create the Mesh Geometry vertex and index buffers if needed
-     */
-    createGeometryBuffers() {
-      if (!this.geometry.ready) {
-        this.geometry.vertexBuffers.forEach((vertexBuffer) => {
-          if (!vertexBuffer.buffer) {
-            vertexBuffer.buffer = this.renderer.createBuffer({
-              label: this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer',
-              size: vertexBuffer.array.byteLength,
-              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-            })
-
-            this.renderer.queueWriteBuffer(vertexBuffer.buffer, 0, vertexBuffer.array)
-          }
-        })
-
-        // if it's an indexed geometry, create index GPUBuffer as well
-        if ('indexBuffer' in this.geometry && this.geometry.indexBuffer && !this.geometry.indexBuffer.buffer) {
-          this.geometry.indexBuffer.buffer = this.renderer.createBuffer({
-            label: this.options.label + ' geometry: index buffer',
-            size: this.geometry.indexBuffer.array.byteLength,
-            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-          })
-
-          this.renderer.queueWriteBuffer(this.geometry.indexBuffer.buffer, 0, this.geometry.indexBuffer.array)
-        }
-      }
-    }
-
-    /**
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry() {
-      if (this.geometry && this.renderer.ready) {
-        this.createGeometryBuffers()
+      if (this.geometry) {
+        if (!this.geometry.ready) {
+          this.geometry.createBuffers({
+            renderer: this.renderer,
+            label: this.options.label + ' geometry',
+          })
+        }
+
         this.setMaterialGeometryAttributes()
       }
     }
@@ -806,6 +780,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.transparent = meshParameters.transparent
 
       this.setShaders()
+      meshParameters.shaders = this.options.shaders
 
       this.material = new RenderMaterial(this.renderer, meshParameters)
       // add eventual textures passed as parameters
@@ -953,7 +928,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* EVENTS */
 
     /**
-     * Assign a callback function to _onReadyCallback
+     * Callback to execute when a Mesh is ready - i.e. its {@link material} and {@link geometry} are ready.
      * @param callback - callback to run when {@link MeshBase} is ready
      * @returns - our Mesh
      */
@@ -966,8 +941,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onBeforeRenderCallback
-     * @param callback - callback to run just before {@link MeshBase} will be rendered
+     * Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+     * @param callback - callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
      * @returns - our Mesh
      */
     onBeforeRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
@@ -979,8 +954,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onRenderCallback
-     * @param callback - callback to run when {@link MeshBase} is rendered
+     * Callback to execute right before actually rendering the Mesh. Useful to update uniforms for example. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
+     * @param callback - callback to run just before rendering the {@link MeshBase}
      * @returns - our Mesh
      */
     onRender(callback: () => void): MeshBase | ProjectedMeshBaseClass {
@@ -992,7 +967,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onAfterRenderCallback
+     * Callback to execute just after a Mesh has been rendered. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
      * @param callback - callback to run just after {@link MeshBase} has been rendered
      * @returns - our Mesh
      */
@@ -1005,7 +980,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Assign a callback function to _onAfterResizeCallback
+     * Callback to execute just after a Mesh has been resized.
      * @param callback - callback to run just after {@link MeshBase} has been resized
      * @returns - our Mesh
      */
@@ -1020,20 +995,25 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* RENDER */
 
     /**
+     * Execute {@link onBeforeRender} callback if needed. Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
+     */
+    onBeforeRenderScene() {
+      if (!this.renderer.ready || !this.ready || !this.visible) return
+
+      this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+    }
+
+    /**
      * Called before rendering the Mesh
      * Set the geometry if needed (create buffers and add attributes to the {@link RenderMaterial})
-     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its struct
+     * Then executes {@link RenderMaterial#onBeforeRender}: create its bind groups and pipeline if needed and eventually update its bindings
      */
     onBeforeRenderPass() {
       if (!this.renderer.ready) return
 
-      if (this.material && this.material.ready && this.geometry && this.geometry.ready && !this.ready) {
-        this.ready = true
-      }
+      this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready
 
       this.setGeometry()
-
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback()
 
       this.material.onBeforeRender()
     }
@@ -1043,7 +1023,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * @param pass - current render pass encoder
      */
     onRenderPass(pass: GPURenderPassEncoder) {
-      if (!this.material.ready) return
+      if (!this.ready) return
 
       this._onRenderCallback && this._onRenderCallback()
 
@@ -1123,20 +1103,11 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.material?.destroy()
 
-      // remove geometry buffers from device cache
-      this.geometry.vertexBuffers.forEach((vertexBuffer) => {
-        // use original vertex buffer label in case it has been swapped (usually by a compute pass)
-        this.renderer.removeBuffer(
-          vertexBuffer.buffer,
-          this.options.label + ' geometry: ' + vertexBuffer.name + ' buffer'
-        )
-      })
-
-      if ('indexBuffer' in this.geometry) {
-        this.renderer.removeBuffer(this.geometry.indexBuffer.buffer)
+      // destroy geometry and remove buffers from device cache
+      this.geometry.consumers.delete(this.uuid)
+      if (!this.geometry.consumers.size) {
+        this.geometry?.destroy(this.renderer)
       }
-
-      this.geometry?.destroy()
     }
   }
 }

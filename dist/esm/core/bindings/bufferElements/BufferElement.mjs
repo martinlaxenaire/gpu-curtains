@@ -1,4 +1,5 @@
 import { getBufferLayout } from '../utils.mjs';
+import { throwWarning } from '../../../utils/utils.mjs';
 
 const slotsPerRow = 4;
 const bytesPerSlot = 4;
@@ -23,6 +24,7 @@ class BufferElement {
         byte: 0
       }
     };
+    this.setValue = null;
   }
   /**
    * Get the total number of rows used by this {@link BufferElement}
@@ -130,6 +132,9 @@ class BufferElement {
     if (size <= bytesPerRow && nextPositionAvailable.byte + size > bytesPerRow) {
       nextPositionAvailable.row += 1;
       nextPositionAvailable.byte = 0;
+    } else if (size > bytesPerRow && nextPositionAvailable.byte > bytesPerRow) {
+      nextPositionAvailable.row += 1;
+      nextPositionAvailable.byte = 0;
     }
     alignment.end = {
       row: nextPositionAvailable.row + Math.ceil(size / bytesPerRow) - 1,
@@ -166,24 +171,81 @@ class BufferElement {
     );
   }
   /**
+   * Set the {@link view} value from a float or an int
+   * @param value - float or int to use
+   */
+  setValueFromFloat(value) {
+    this.view[0] = value;
+  }
+  /**
+   * Set the {@link view} value from a {@link Vec2} or an array
+   * @param value - {@link Vec2} or array to use
+   */
+  setValueFromVec2(value) {
+    this.view[0] = value.x ?? value[0] ?? 0;
+    this.view[1] = value.y ?? value[1] ?? 0;
+  }
+  /**
+   * Set the {@link view} value from a {@link Vec3} or an array
+   * @param value - {@link Vec3} or array to use
+   */
+  setValueFromVec3(value) {
+    this.view[0] = value.x ?? value[0] ?? 0;
+    this.view[1] = value.y ?? value[1] ?? 0;
+    this.view[2] = value.z ?? value[2] ?? 0;
+  }
+  /**
+   * Set the {@link view} value from a {@link Mat4} or a {@link Quat}
+   * @param value - {@link Mat4} or {@link Quat} to use
+   */
+  setValueFromMat4OrQuat(value) {
+    this.view.set(value.elements);
+  }
+  /**
+   * Set the {@link view} value from an array
+   * @param value - array to use
+   */
+  setValueFromArray(value) {
+    this.view.set(value);
+  }
+  /**
+   * Set the {@link view} value from an array with pad applied
+   * @param value - array to use
+   */
+  setValueFromArrayWithPad(value) {
+    for (let i = 0, offset = 0; i < this.view.length; i += this.bufferLayout.pad[0] + this.bufferLayout.pad[1], offset++) {
+      for (let j = 0; j < this.bufferLayout.pad[0]; j++) {
+        this.view[i + j] = value[i + j - offset];
+      }
+    }
+  }
+  /**
    * Update the {@link view} based on the new value
    * @param value - new value to use
    */
   update(value) {
-    if (this.type === "f32" || this.type === "u32" || this.type === "i32") {
-      this.view[0] = value;
-    } else if (this.type === "vec2f") {
-      this.view[0] = value.x ?? value[0] ?? 0;
-      this.view[1] = value.y ?? value[1] ?? 0;
-    } else if (this.type === "vec3f") {
-      this.view[0] = value.x ?? value[0] ?? 0;
-      this.view[1] = value.y ?? value[1] ?? 0;
-      this.view[2] = value.z ?? value[2] ?? 0;
-    } else if (value.elements) {
-      this.view.set(value.elements);
-    } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
-      this.view.set(value);
+    if (!this.setValue) {
+      this.setValue = ((value2) => {
+        if (this.type === "f32" || this.type === "u32" || this.type === "i32") {
+          return this.setValueFromFloat;
+        } else if (this.type === "vec2f") {
+          return this.setValueFromVec2;
+        } else if (this.type === "vec3f") {
+          return this.setValueFromVec3;
+        } else if (value2.elements) {
+          return this.setValueFromMat4OrQuat;
+        } else if (ArrayBuffer.isView(value2) || Array.isArray(value2)) {
+          if (!this.bufferLayout.pad) {
+            return this.setValueFromArray;
+          } else {
+            return this.setValueFromArrayWithPad;
+          }
+        } else {
+          throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value2}`);
+        }
+      })(value);
     }
+    this.setValue(value);
   }
   /**
    * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}

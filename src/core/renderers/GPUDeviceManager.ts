@@ -5,6 +5,8 @@ import { PipelineManager } from '../pipelines/PipelineManager'
 import { SceneObject } from './GPURenderer'
 import { Texture } from '../textures/Texture'
 import { AllowedBindGroups } from '../../types/BindGroups'
+import { Buffer } from '../buffers/Buffer'
+import { BufferBinding } from '../bindings/BufferBinding'
 
 /**
  * Base parameters used to create a {@link GPUDeviceManager}
@@ -62,10 +64,16 @@ export class GPUDeviceManager {
 
   /** Array of {@link Renderer | renderers} using that {@link GPUDeviceManager} */
   renderers: Renderer[]
-  /** An array containing all our created {@link AllowedBindGroups} */
-  bindGroups: AllowedBindGroups[]
+  /** A Map containing all our created {@link AllowedBindGroups} */
+  bindGroups: Map<string, AllowedBindGroups>
   /** An array containing all our created {@link GPUBuffer} */
-  buffers: GPUBuffer[]
+  buffers: Map<string, Buffer>
+
+  /** A Map containing all our created {@link GPUBindGroupLayout} indexed by cache keys */
+  bindGroupLayouts: Map<string, GPUBindGroupLayout>
+  /** A Map containing all our created {@link BufferBinding} indexed by cache keys */
+  bufferBindings: Map<string, BufferBinding>
+
   /** An array containing all our created {@link Sampler} */
   samplers: Sampler[]
   /** An array containing all our created {@link Texture} */
@@ -125,11 +133,11 @@ export class GPUDeviceManager {
 
     // set context
     if (this.device) {
-      this.renderers.forEach((renderer) => {
+      for (const renderer of this.renderers) {
         if (!renderer.context) {
           renderer.setContext()
         }
-      })
+      }
     }
   }
 
@@ -141,18 +149,19 @@ export class GPUDeviceManager {
   async setAdapter() {
     if (!this.gpu) {
       this.onError()
-      throwError("GPURenderer: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
+      throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
     }
 
-    try {
-      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions)
-      ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
-        this.adapterInfos = infos
-      })
-    } catch (error) {
+    this.adapter = await this.gpu?.requestAdapter(this.adapterOptions)
+
+    if (!this.adapter) {
       this.onError()
       throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
     }
+
+    ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
+      this.adapterInfos = infos
+    })
   }
 
   /**
@@ -200,13 +209,17 @@ export class GPUDeviceManager {
   loseDevice() {
     this.ready = false
 
+    this.pipelineManager.resetCurrentPipeline()
+
     // first clean all samplers
     this.samplers.forEach((sampler) => (sampler.sampler = null))
 
     this.renderers.forEach((renderer) => renderer.loseContext())
 
+    this.bindGroupLayouts.clear()
+
     // reset the buffers array, it would eventually be repopulated while restoring the device
-    this.buffers = []
+    this.buffers.clear()
   }
 
   /**
@@ -237,8 +250,11 @@ export class GPUDeviceManager {
   setDeviceObjects() {
     // keep track of renderers, bind groups, buffers, samplers, textures
     this.renderers = []
-    this.bindGroups = []
-    this.buffers = []
+    this.bindGroups = new Map()
+    this.buffers = new Map()
+    // TODO
+    this.bindGroupLayouts = new Map()
+    this.bufferBindings = new Map()
     this.samplers = []
     this.textures = []
 
@@ -275,9 +291,7 @@ export class GPUDeviceManager {
    * @param bindGroup - {@link AllowedBindGroups | bind group} to add
    */
   addBindGroup(bindGroup: AllowedBindGroups) {
-    if (!this.bindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
-      this.bindGroups.push(bindGroup)
-    }
+    this.bindGroups.set(bindGroup.uuid, bindGroup)
   }
 
   /**
@@ -285,28 +299,23 @@ export class GPUDeviceManager {
    * @param bindGroup - {@link AllowedBindGroups | bind group} to remove
    */
   removeBindGroup(bindGroup: AllowedBindGroups) {
-    this.bindGroups = this.bindGroups.filter((bG) => bG.uuid !== bindGroup.uuid)
+    this.bindGroups.delete(bindGroup.uuid)
   }
 
   /**
    * Add a {@link GPUBuffer} to our our {@link buffers} array
-   * @param buffer - {@link GPUBuffer} to add
+   * @param buffer - {@link Buffer} to add
    */
-  addBuffer(buffer: GPUBuffer) {
-    this.buffers.push(buffer)
+  addBuffer(buffer: Buffer) {
+    this.buffers.set(buffer.uuid, buffer)
   }
 
   /**
-   * Remove a {@link GPUBuffer} from our {@link buffers} array
-   * @param buffer - {@link GPUBuffer} to remove
-   * @param [originalLabel] - original {@link GPUBuffer} label in case the buffer has been swapped and its label has changed
+   * Remove a {@link Buffer} from our {@link buffers} Map
+   * @param buffer - {@link Buffer} to remove
    */
-  removeBuffer(buffer: GPUBuffer, originalLabel?: string) {
-    if (buffer) {
-      this.buffers = this.buffers.filter((b) => {
-        return !(b.label === (originalLabel ?? buffer.label) && b.size === buffer.size)
-      })
-    }
+  removeBuffer(buffer: Buffer) {
+    this.buffers.delete(buffer?.uuid)
   }
 
   /**
@@ -389,7 +398,9 @@ export class GPUDeviceManager {
   render() {
     if (!this.ready) return
 
-    this.renderers.forEach((renderer) => renderer.onBeforeCommandEncoder())
+    for (const renderer of this.renderers) {
+      renderer.onBeforeCommandEncoder()
+    }
 
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + ' command encoder' })
     !this.production && commandEncoder.pushDebugGroup(this.label + ' command encoder: main render loop')
@@ -409,14 +420,16 @@ export class GPUDeviceManager {
     // no need to use device.queue.onSubmittedWorkDone
     // as [Kai Ninomiya](https://github.com/kainino0x) stated:
     // "Anything you submit() after the copyExternalImageToTexture() is guaranteed to see the result of that call."
-    this.texturesQueue.forEach((texture) => {
+    for (const texture of this.texturesQueue) {
       texture.sourceUploaded = true
-    })
+    }
 
     // clear texture queue
     this.texturesQueue = []
 
-    this.renderers.forEach((renderer) => renderer.onAfterCommandEncoder())
+    for (const renderer of this.renderers) {
+      renderer.onAfterCommandEncoder()
+    }
   }
 
   /**

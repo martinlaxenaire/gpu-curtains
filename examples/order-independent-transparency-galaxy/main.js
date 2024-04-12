@@ -72,6 +72,8 @@ window.addEventListener('load', async () => {
   const { camera } = gpuCameraRenderer
 
   const scenePivot = new Object3D()
+  // add the scene as the pivot parent
+  scenePivot.parent = gpuCameraRenderer.scene
 
   scenePivot.quaternion.setAxisOrder('ZXY')
   scenePivot.rotation.z = (seed * Math.PI) / 12 + Math.PI / 24
@@ -893,8 +895,8 @@ window.addEventListener('load', async () => {
   //     vsOutput.position = getOutputPosition(attributes.position);
   //     vsOutput.uv = attributes.uv;
   //     // since the object scale has not changed this should work
-  //     vsOutput.normal = normalize((matrices.world * vec4(attributes.normal, 0.0)).xyz);
-  //     vsOutput.fragPosition = (matrices.world * vec4(attributes.position, 1.0)).xyz;
+  //     vsOutput.normal = normalize((matrices.model * vec4(attributes.normal, 0.0)).xyz);
+  //     vsOutput.fragPosition = (matrices.model * vec4(attributes.position, 1.0)).xyz;
   //
   //     return vsOutput;
   //   }

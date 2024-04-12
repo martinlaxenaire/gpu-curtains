@@ -327,6 +327,9 @@ export class TestRenderTargets {
     this.grayscalePass.remove()
     this.rgbShiftPass.remove()
 
+    this.grayscaleTarget.remove()
+    this.rgbShiftTarget.remove()
+
     this.finalShaderPass.remove()
     this.additionalPostProPass.remove()
 

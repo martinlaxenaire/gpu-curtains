@@ -18,7 +18,7 @@ class Sampler {
     mipmapFilter = "linear",
     maxAnisotropy = 1,
     type = "filtering",
-    compare
+    compare = null
   } = {}) {
     this.type = "Sampler";
     this.uuid = generateUUID();
@@ -41,7 +41,7 @@ class Sampler {
       mipmapFilter,
       maxAnisotropy,
       type,
-      ...compare !== void 0 && { compare }
+      ...compare !== null && { compare }
     };
     this.createSampler();
     this.createBinding();

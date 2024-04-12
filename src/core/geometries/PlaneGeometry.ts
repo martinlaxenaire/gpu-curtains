@@ -59,7 +59,7 @@ export class PlaneGeometry extends IndexedGeometry {
     topology,
   }: PlaneGeometryParams = {}) {
     // plane geometries vertices are defined in the clockwise order
-    super({ verticesOrder: 'cw', topology, instancesCount, vertexBuffers })
+    super({ verticesOrder: 'cw', topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true })
 
     this.type = 'PlaneGeometry'
 
@@ -78,9 +78,9 @@ export class PlaneGeometry extends IndexedGeometry {
     const verticesCount = (this.definition.width + 1) * (this.definition.height + 1)
     const attributes = this.getIndexedVerticesAndUVs(verticesCount)
 
-    Object.keys(attributes).forEach((attributeKey) => {
-      this.setAttribute(attributes[attributeKey] as VertexBufferAttributeParams)
-    })
+    for (const attribute of Object.values(attributes)) {
+      this.setAttribute(attribute as VertexBufferAttributeParams)
+    }
 
     this.setIndexArray()
   }

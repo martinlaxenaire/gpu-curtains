@@ -103,7 +103,7 @@ ${this.shaders.full.head}`;
       }
     }
     const groupsBindings = [];
-    this.bindGroups.forEach((bindGroup) => {
+    for (const bindGroup of this.bindGroups) {
       let bindIndex = 0;
       bindGroup.bindings.forEach((binding, bindingIndex) => {
         binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
@@ -118,8 +118,8 @@ ${this.shaders.full.head}`;
           bindIndex++;
         });
       });
-    });
-    groupsBindings.forEach((groupBinding) => {
+    }
+    for (const groupBinding of groupsBindings) {
       if (groupBinding.visibility === GPUShaderStage.VERTEX || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)) {
         if (groupBinding.wgslStructFragment && this.shaders.vertex.head.indexOf(groupBinding.wgslStructFragment) === -1) {
           this.shaders.vertex.head = `
@@ -160,7 +160,7 @@ ${this.shaders.full.head}`;
           this.shaders.full.head += `
 `;
       }
-    });
+    }
     this.shaders.vertex.head = `${this.attributes.wgslStructFragment}
 ${this.shaders.vertex.head}`;
     this.shaders.full.head = `${this.attributes.wgslStructFragment}

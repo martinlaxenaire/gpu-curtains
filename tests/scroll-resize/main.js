@@ -100,7 +100,7 @@ window.addEventListener('load', async () => {
     }
 
     cubeMesh
-      .onRender(() => {
+      .onBeforeRender(() => {
         //cubeMesh.rotation.x += 0.01
       })
       .onAfterResize(() => {

@@ -5,6 +5,7 @@ export { BufferBinding } from './core/bindings/BufferBinding';
 export { SamplerBinding } from './core/bindings/SamplerBinding';
 export { TextureBinding } from './core/bindings/TextureBinding';
 export { WritableBufferBinding } from './core/bindings/WritableBufferBinding';
+export { Buffer } from './core/buffers/Buffer';
 export { Camera } from './core/camera/Camera';
 export { ComputePass } from './core/computePasses/ComputePass';
 export { DOMFrustum } from './core/DOM/DOMFrustum';
