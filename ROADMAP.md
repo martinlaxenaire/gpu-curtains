@@ -4,15 +4,14 @@
 
 - GPUDeviceManager (can handle multiple renderers / canvases)
 - Renderers (GPURenderer, GPUCameraRenderer, GPUCurtainsRenderer)
-- Scene graph with Object3D, ProjectedObject3D, DOMObject3D
+- Scene class with scene graph for Object3D, ProjectedObject3D, DOMObject3D
 - Camera
 - Geometries
 - Materials (Material, RenderMaterial, ComputeMaterial)
-- Bindings & BindGroups
+- Buffer & Bindings & BindGroups
 - Render + Compute Pipelines (async by default)
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
 - Compute passes
-- Scene class
 - Texture & RenderTexture (with storage & depth) classes
 - Sampler class
 - RenderTarget (render to textures)
