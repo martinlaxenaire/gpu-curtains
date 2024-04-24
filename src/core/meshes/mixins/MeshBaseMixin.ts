@@ -1,4 +1,4 @@
-import { generateUUID, throwWarning } from '../../../utils/utils'
+import { generateUUID, throwError, throwWarning } from '../../../utils/utils'
 import { isRenderer, Renderer } from '../../renderers/utils'
 import { RenderMaterial } from '../../materials/RenderMaterial'
 import { Texture } from '../../textures/Texture'
@@ -36,7 +36,7 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
  */
 export interface MeshBaseParams extends MeshBaseRenderParams {
   /** Geometry to use */
-  geometry: AllowedGeometries
+  geometry?: AllowedGeometries
 }
 
 /**
@@ -60,7 +60,7 @@ export interface MeshBaseOptions extends RenderMaterialParams {
 /** @const - Default Mesh parameters to merge with user defined parameters */
 const defaultMeshBaseParams: MeshBaseParams = {
   // geometry
-  geometry: new Geometry(),
+  //geometry: new Geometry(),
   // material
   autoRender: true,
   useProjection: false,
@@ -110,7 +110,7 @@ export declare class MeshBaseClass {
   /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
   renderOrder: number
   /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
-  transparent: boolean
+  _transparent: boolean
 
   /** Flag indicating whether to draw this {@link MeshBaseClass} or not */
   visible: boolean
@@ -191,12 +191,12 @@ export declare class MeshBaseClass {
   /**
    * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
-  addToScene(): void
+  addToScene(addToRenderer: boolean): void
 
   /**
    * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
    */
-  removeFromScene(): void
+  removeFromScene(removeFromRenderer: boolean): void
 
   /**
    * Set a new {@link Renderer} for this Mesh
@@ -221,6 +221,17 @@ export declare class MeshBaseClass {
   setShaders(): void
 
   /**
+   * Set or update the Mesh {@link Geometry}
+   * @param geometry - new {@link Geometry} to use
+   */
+  useGeometry(geometry: Geometry): void
+
+  /**
+   * Compute the Mesh geometry if needed
+   */
+  computeGeometry(): void
+
+  /**
    * Set our Mesh geometry: create buffers and add attributes to material
    */
   setGeometry(): void
@@ -239,6 +250,12 @@ export declare class MeshBaseClass {
   cleanupRenderMaterialParameters(parameters: MeshBaseRenderParams): MeshBaseRenderParams
 
   /**
+   * Set or update the Mesh {@link RenderMaterial}
+   * @param material - new {@link RenderMaterial} to use
+   */
+  useMaterial(material: RenderMaterial): void
+
+  /**
    * Set a Mesh transparent property, then set its material
    * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
    */
@@ -248,6 +265,17 @@ export declare class MeshBaseClass {
    * Set Mesh material attributes
    */
   setMaterialGeometryAttributes(): void
+
+  /**
+   * Get the transparent property value
+   */
+  get transparent(): boolean | undefined
+
+  /**
+   * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
+   * @param value
+   */
+  set transparent(value: boolean)
 
   /**
    * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
@@ -406,7 +434,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /** Controls the order in which this {@link MeshBase} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number
     /** Whether this {@link MeshBase} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
-    transparent: boolean
+    _transparent: boolean
 
     /** Flag indicating whether to draw this {@link MeshBase} or not */
     visible: boolean
@@ -507,9 +535,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ...meshParameters,
       }
 
-      this.geometry = geometry
-      this.geometry.consumers.add(this.uuid)
-
       if (autoRender !== undefined) {
         this.#autoRender = autoRender
       }
@@ -520,15 +545,16 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.userData = {}
 
-      this.computeGeometry()
+      if (geometry) {
+        this.useGeometry(geometry)
+      }
 
       this.setMaterial({
         ...this.cleanupRenderMaterialParameters({ ...this.options }),
-        verticesOrder: geometry.verticesOrder,
-        topology: geometry.topology,
+        ...(geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }),
       } as RenderMaterialParams)
 
-      this.addToScene()
+      this.addToScene(true)
     }
 
     /**
@@ -557,10 +583,13 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* SCENE */
 
     /**
-     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+     * Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+     * @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
      */
-    addToScene() {
-      this.renderer.meshes.push(this as unknown as SceneStackedMesh)
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.meshes.push(this as unknown as SceneStackedMesh)
+      }
 
       this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass)
 
@@ -570,14 +599,17 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (this.#autoRender) {
         this.renderer.scene.removeMesh(this as unknown as ProjectedMesh)
       }
 
-      this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
+      if (removeFromRenderer) {
+        this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid)
+      }
     }
 
     /**
@@ -603,9 +635,9 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       }
 
       const oldRenderer = this.renderer
-      this.removeFromScene()
+      this.removeFromScene(true)
       this.renderer = renderer
-      this.addToScene()
+      this.addToScene(true)
 
       // if old renderer does not contain any meshes any more
       // clear it
@@ -698,6 +730,41 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* GEOMETRY */
 
     /**
+     * Set or update the Mesh {@link Geometry}
+     * @param geometry - new {@link Geometry} to use
+     */
+    useGeometry(geometry: Geometry) {
+      if (this.geometry) {
+        // compute right away to compare geometries
+        if (geometry.shouldCompute) {
+          geometry.computeGeometry()
+        }
+
+        if (this.geometry.wgslStructFragment !== geometry.wgslStructFragment) {
+          throwError(
+            `${this.options.label} (${this.type}): could not swap geometries because the current and given geometries do not have the same vertexBuffers layout.`
+          )
+        }
+
+        this.geometry.consumers.delete(this.uuid)
+      }
+
+      this.geometry = geometry
+      this.geometry.consumers.add(this.uuid)
+
+      this.computeGeometry()
+
+      if (this.material) {
+        const renderingOptions = {
+          ...this.material.options.rendering,
+          ...{ verticesOrder: geometry.verticesOrder, topology: geometry.topology },
+        }
+
+        this.material.setRenderingOptions(renderingOptions)
+      }
+    }
+
+    /**
      * Compute the Mesh geometry if needed
      */
     computeGeometry() {
@@ -731,6 +798,8 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     setRenderingOptionsForRenderPass(renderPass: RenderPass) {
       // a Mesh render material rendering options MUST match the render pass descriptor used to draw it!
       const renderingOptions = {
+        // transparency (blend)
+        transparent: this.transparent,
         // sample count
         sampleCount: renderPass.options.sampleCount,
         // color attachments
@@ -773,20 +842,31 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Set a Mesh transparent property, then set its material
-     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+     * Set or update the Mesh {@link RenderMaterial}
+     * @param material - new {@link RenderMaterial} to use
      */
-    setMaterial(meshParameters: RenderMaterialParams) {
-      this.transparent = meshParameters.transparent
+    useMaterial(material: RenderMaterial) {
+      this.material = material
 
-      this.setShaders()
-      meshParameters.shaders = this.options.shaders
+      // update transparent property
+      this.transparent = this.material.options.rendering.transparent
 
-      this.material = new RenderMaterial(this.renderer, meshParameters)
       // add eventual textures passed as parameters
       this.material.options.textures
         ?.filter((texture) => texture instanceof Texture)
         .forEach((texture) => this.onTextureAdded(texture))
+    }
+
+    /**
+     * Patch the shaders if needed, then set the Mesh material
+     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+     */
+    setMaterial(meshParameters: RenderMaterialParams) {
+      this.setShaders()
+      meshParameters.shaders = this.options.shaders
+      meshParameters.label = meshParameters.label + ' Material'
+
+      this.useMaterial(new RenderMaterial(this.renderer, meshParameters))
     }
 
     /**
@@ -795,6 +875,31 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     setMaterialGeometryAttributes() {
       if (this.material && !this.material.attributes) {
         this.material.setAttributesFromGeometry(this.geometry)
+      }
+    }
+
+    /**
+     * Get the transparent property value
+     */
+    get transparent(): boolean | undefined {
+      return this._transparent
+    }
+
+    /**
+     * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
+     * @param value
+     */
+    set transparent(value: boolean) {
+      const switchTransparency = this.transparent !== undefined && value !== this.transparent
+
+      if (switchTransparency) {
+        this.removeFromScene()
+      }
+
+      this._transparent = value
+
+      if (switchTransparency) {
+        this.addToScene()
       }
     }
 
@@ -1076,7 +1181,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
      * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
      */
     remove() {
-      this.removeFromScene()
+      this.removeFromScene(true)
       this.destroy()
 
       // if the renderer does not contain any meshes any more

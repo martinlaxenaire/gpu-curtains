@@ -171,10 +171,13 @@ export class ShaderPass extends FullscreenPlane {
   }
 
   /**
-   * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
+   * @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
    */
-  addToScene() {
-    this.renderer.shaderPasses.push(this)
+  addToScene(addToRenderer = false) {
+    if (addToRenderer) {
+      this.renderer.shaderPasses.push(this)
+    }
 
     this.setRenderingOptionsForRenderPass(
       this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
@@ -186,9 +189,10 @@ export class ShaderPass extends FullscreenPlane {
   }
 
   /**
-   * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+   * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
    */
-  removeFromScene() {
+  removeFromScene(removeFromRenderer = false) {
     if (this.outputTarget) {
       this.outputTarget.destroy()
     }
@@ -197,6 +201,8 @@ export class ShaderPass extends FullscreenPlane {
       this.renderer.scene.removeShaderPass(this)
     }
 
-    this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid)
+    if (removeFromRenderer) {
+      this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid)
+    }
   }
 }

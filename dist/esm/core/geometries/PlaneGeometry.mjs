@@ -12,7 +12,7 @@ class PlaneGeometry extends IndexedGeometry {
     vertexBuffers = [],
     topology
   } = {}) {
-    super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
+    super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
     this.type = "PlaneGeometry";
     widthSegments = Math.floor(widthSegments);
     heightSegments = Math.floor(heightSegments);
@@ -84,9 +84,9 @@ class PlaneGeometry extends IndexedGeometry {
     let uvOffset = 0;
     for (let y = 0; y <= this.definition.height; y++) {
       for (let x = 0; x <= this.definition.width; x++) {
-        uv.array[uvOffset++] = x / this.definition.width;
+        uv.array[uvOffset++] = 1 - x / this.definition.width;
         uv.array[uvOffset++] = 1 - y / this.definition.height;
-        position.array[positionOffset++] = x * 2 / this.definition.width - 1;
+        position.array[positionOffset++] = 1 - x * 2 / this.definition.width;
         position.array[positionOffset++] = y * 2 / this.definition.height - 1;
         position.array[positionOffset++] = 0;
         normal.array[normalOffset++] = 0;

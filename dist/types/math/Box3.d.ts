@@ -22,6 +22,10 @@ export declare class Box3 {
      */
     set(min?: Vec3, max?: Vec3): Box3;
     /**
+     * Check whether the {@link Box3} min and max values have actually been set
+     */
+    isEmpty(): boolean;
+    /**
      * Clone this {@link Box3}
      * @returns - cloned {@link Box3}
      */

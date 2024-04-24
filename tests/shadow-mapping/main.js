@@ -344,7 +344,7 @@ window.addEventListener('load', async () => {
   gpuCameraRenderer.onBeforeRenderScene.add((commandEncoder) => {
     // assign depth material to meshes
     depthMeshes.forEach((mesh) => {
-      mesh.material = mesh.userData.depthMaterial
+      mesh.useMaterial(mesh.userData.depthMaterial)
     })
 
     // reset renderer current pipeline
@@ -365,7 +365,7 @@ window.addEventListener('load', async () => {
     // reset depth meshes material to use the original
     // so the scene renders them normally
     depthMeshes.forEach((mesh) => {
-      mesh.material = mesh.userData.originalMaterial
+      mesh.useMaterial(mesh.userData.originalMaterial)
     })
   })
 

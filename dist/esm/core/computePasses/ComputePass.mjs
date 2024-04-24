@@ -91,7 +91,7 @@ class ComputePass {
     }
     this.userData = {};
     this.ready = false;
-    this.setComputeMaterial({
+    this.setMaterial({
       label: this.options.label,
       shaders: this.options.shaders,
       uniforms,
@@ -140,8 +140,15 @@ class ComputePass {
    * Create the compute pass material
    * @param computeParameters - {@link ComputeMaterial} parameters
    */
-  setComputeMaterial(computeParameters) {
-    this.material = new ComputeMaterial(this.renderer, computeParameters);
+  setMaterial(computeParameters) {
+    this.useMaterial(new ComputeMaterial(this.renderer, computeParameters));
+  }
+  /**
+   * Set or update the {@link ComputePass} {@link ComputeMaterial}
+   * @param material - new {@link ComputeMaterial} to use
+   */
+  useMaterial(material) {
+    this.material = material;
   }
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.

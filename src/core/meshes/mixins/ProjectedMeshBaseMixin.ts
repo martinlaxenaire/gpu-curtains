@@ -209,7 +209,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this.renderer = renderer
 
-      const { geometry, frustumCulled, DOMFrustumMargins } = parameters
+      const { frustumCulled, DOMFrustumMargins } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
@@ -218,12 +218,6 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       }
 
       this.setDOMFrustum()
-
-      // explicitly needed for DOM Frustum
-      this.geometry = geometry
-
-      // tell the model and projection matrices to update right away
-      this.shouldUpdateMatrixStack()
     }
 
     /* SHADERS */
@@ -265,11 +259,27 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     /* GEOMETRY */
 
     /**
+     * Set or update the Projected Mesh {@link Geometry}
+     * @param geometry - new {@link Geometry} to use
+     */
+    useGeometry(geometry) {
+      super.useGeometry(geometry)
+
+      // update DOM Frustum bounding box
+      if (this.domFrustum) {
+        this.domFrustum.boundingBox = this.geometry.boundingBox
+      }
+
+      // tell the model and projection matrices to update right away
+      this.shouldUpdateMatrixStack()
+    }
+
+    /**
      * Set the Mesh frustum culling
      */
     setDOMFrustum() {
       this.domFrustum = new DOMFrustum({
-        boundingBox: this.geometry.boundingBox,
+        boundingBox: this.geometry?.boundingBox,
         modelViewProjectionMatrix: this.modelViewProjectionMatrix,
         containerBoundingRect: this.renderer.boundingRect,
         DOMFrustumMargins: this.options.DOMFrustumMargins,

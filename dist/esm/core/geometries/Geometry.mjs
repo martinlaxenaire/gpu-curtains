@@ -43,9 +43,6 @@ class Geometry {
     this.uuid = generateUUID();
     this.vertexBuffers = [];
     this.consumers = /* @__PURE__ */ new Set();
-    this.addVertexBuffer({
-      name: "attributes"
-    });
     this.options = {
       verticesOrder,
       topology,
@@ -53,6 +50,11 @@ class Geometry {
       vertexBuffers,
       mapBuffersAtCreation
     };
+    if (!vertexBuffers.length || !vertexBuffers.find((vertexBuffer) => vertexBuffer.name === "attributes")) {
+      this.addVertexBuffer({
+        name: "attributes"
+      });
+    }
     for (const vertexBuffer of vertexBuffers) {
       this.addVertexBuffer({
         stepMode: vertexBuffer.stepMode ?? "vertex",

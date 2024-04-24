@@ -103,17 +103,20 @@ export class Geometry {
 
     this.consumers = new Set()
 
-    // should contain our vertex position / uv data at least
-    this.addVertexBuffer({
-      name: 'attributes',
-    })
-
     this.options = {
       verticesOrder,
       topology,
       instancesCount,
       vertexBuffers,
       mapBuffersAtCreation,
+    }
+
+    // create a default 'attributes' vertex buffer if it has not been passed as parameter
+    // should contain our vertex position / uv data at least
+    if (!vertexBuffers.length || !vertexBuffers.find((vertexBuffer) => vertexBuffer.name === 'attributes')) {
+      this.addVertexBuffer({
+        name: 'attributes',
+      })
     }
 
     for (const vertexBuffer of vertexBuffers) {

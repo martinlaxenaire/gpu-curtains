@@ -12,6 +12,9 @@ import {
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { throwWarning } from '../../utils/utils'
 import { compareRenderingOptions } from './utils'
+import default_projected_vsWgsl from '../shaders/chunks/default_projected_vs.wgsl'
+import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
+import default_fsWgsl from '../shaders/chunks/default_fs.wgsl'
 
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
@@ -43,20 +46,34 @@ export class RenderMaterial extends Material {
 
     isRenderer(renderer, type)
 
+    if (!parameters.shaders) {
+      parameters.shaders = {}
+    }
+
+    if (!parameters.shaders?.vertex) {
+      parameters.shaders.vertex = {
+        code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+        entryPoint: 'main',
+      }
+    }
+
+    if (!parameters.shaders.vertex.entryPoint) {
+      parameters.shaders.vertex.entryPoint = 'main'
+    }
+
+    if (parameters.shaders.fragment === undefined) {
+      ;(parameters.shaders.fragment as ShaderOptions) = {
+        entryPoint: 'main',
+        code: default_fsWgsl,
+      }
+    }
+
     super(renderer, parameters)
 
     this.type = type
     this.renderer = renderer
 
     const { shaders } = parameters
-
-    if (!shaders.vertex.entryPoint) {
-      shaders.vertex.entryPoint = 'main'
-    }
-
-    if (shaders.fragment && !(shaders.fragment as ShaderOptions).entryPoint) {
-      ;(shaders.fragment as ShaderOptions).entryPoint = 'main'
-    }
 
     // rendering options
     const {
@@ -158,11 +175,11 @@ export class RenderMaterial extends Material {
     if (this.pipelineEntry) {
       this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering }
 
-      if (this.pipelineEntry.ready && newProperties.length) {
+      if (this.pipelineEntry.ready && newProperties.length && !this.renderer.production) {
         throwWarning(
           `${
             this.options.label
-          }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties
+          }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided.\nRendering options responsible: { ${newProperties
             .map(
               (key) =>
                 `"${key}": ${
