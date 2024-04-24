@@ -58,7 +58,6 @@ function ProjectedMeshBaseMixin(Base) {
         DOMFrustumMargins
       };
       this.setDOMFrustum();
-      this.shouldUpdateMatrixStack();
     }
     /* SHADERS */
     /**

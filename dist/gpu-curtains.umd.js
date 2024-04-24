@@ -7522,7 +7522,6 @@ struct VSOutput {
           DOMFrustumMargins
         };
         this.setDOMFrustum();
-        this.shouldUpdateMatrixStack();
       }
       /* SHADERS */
       /**

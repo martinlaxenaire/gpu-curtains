@@ -218,9 +218,6 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       }
 
       this.setDOMFrustum()
-
-      // tell the model and projection matrices to update right away
-      this.shouldUpdateMatrixStack()
     }
 
     /* SHADERS */
@@ -273,6 +270,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         this.domFrustum.boundingBox = this.geometry.boundingBox
       }
 
+      // tell the model and projection matrices to update right away
       this.shouldUpdateMatrixStack()
     }
 

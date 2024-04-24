@@ -44,7 +44,7 @@ window.addEventListener('load', async () => {
   const mesh = new Mesh(gpuCameraRenderer, {
     label: 'Dynamic mesh',
     geometry: new BoxGeometry(),
-    cullMode: 'none', // so we can always see the plane geometry
+    cullMode: 'none', // only here so we can always see the plane geometry
   })
 
   mesh.scale.set(1.5)
