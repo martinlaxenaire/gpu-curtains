@@ -5322,7 +5322,7 @@
       }
       this.userData = {};
       this.ready = false;
-      this.setComputeMaterial({
+      this.setMaterial({
         label: this.options.label,
         shaders: this.options.shaders,
         uniforms,
@@ -5371,8 +5371,15 @@
      * Create the compute pass material
      * @param computeParameters - {@link ComputeMaterial} parameters
      */
-    setComputeMaterial(computeParameters) {
-      this.material = new ComputeMaterial(this.renderer, computeParameters);
+    setMaterial(computeParameters) {
+      this.useMaterial(new ComputeMaterial(this.renderer, computeParameters));
+    }
+    /**
+     * Set or update the {@link ComputePass} {@link ComputeMaterial}
+     * @param material - new {@link ComputeMaterial} to use
+     */
+    useMaterial(material) {
+      this.material = material;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -5626,6 +5633,12 @@
       return this;
     }
     /**
+     * Check whether the {@link Box3} min and max values have actually been set
+     */
+    isEmpty() {
+      return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
+    }
+    /**
      * Clone this {@link Box3}
      * @returns - cloned {@link Box3}
      */
@@ -5653,6 +5666,8 @@
      * @returns - this {@link Box3} after {@link Mat4 | matrix} application
      */
     applyMat4(matrix = new Mat4()) {
+      if (this.isEmpty())
+        return this;
       const corners = [];
       if (this.min.z === this.max.z) {
         corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);
@@ -5826,9 +5841,6 @@
       this.uuid = generateUUID();
       this.vertexBuffers = [];
       this.consumers = /* @__PURE__ */ new Set();
-      this.addVertexBuffer({
-        name: "attributes"
-      });
       this.options = {
         verticesOrder,
         topology,
@@ -5836,6 +5848,11 @@
         vertexBuffers,
         mapBuffersAtCreation
       };
+      if (!vertexBuffers.length || !vertexBuffers.find((vertexBuffer) => vertexBuffer.name === "attributes")) {
+        this.addVertexBuffer({
+          name: "attributes"
+        });
+      }
       for (const vertexBuffer of vertexBuffers) {
         this.addVertexBuffer({
           stepMode: vertexBuffer.stepMode ?? "vertex",
@@ -6262,7 +6279,7 @@
       vertexBuffers = [],
       topology
     } = {}) {
-      super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
+      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
       this.type = "PlaneGeometry";
       widthSegments = Math.floor(widthSegments);
       heightSegments = Math.floor(heightSegments);
@@ -6334,9 +6351,9 @@
       let uvOffset = 0;
       for (let y = 0; y <= this.definition.height; y++) {
         for (let x = 0; x <= this.definition.width; x++) {
-          uv.array[uvOffset++] = x / this.definition.width;
+          uv.array[uvOffset++] = 1 - x / this.definition.width;
           uv.array[uvOffset++] = 1 - y / this.definition.height;
-          position.array[positionOffset++] = x * 2 / this.definition.width - 1;
+          position.array[positionOffset++] = 1 - x * 2 / this.definition.width;
           position.array[positionOffset++] = y * 2 / this.definition.height - 1;
           position.array[positionOffset++] = 0;
           normal.array[normalOffset++] = 0;
@@ -6358,6 +6375,56 @@
     });
   };
 
+  var default_projected_vsWgsl = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+  @location(1) normal: vec3f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = getOutputPosition(attributes.position);
+  vsOutput.uv = attributes.uv;
+  vsOutput.normal = attributes.normal;
+  
+  return vsOutput;
+}`
+  );
+
+  var default_vsWgsl = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = vec4f(attributes.position, 1.0);
+  vsOutput.uv = attributes.uv;
+  
+  return vsOutput;
+}`
+  );
+
+  var default_fsWgsl = (
+    /* wgsl */
+    `
+@fragment fn main() -> @location(0) vec4f {
+  return vec4(0.0, 0.0, 0.0, 1.0);
+}`
+  );
+
   class RenderMaterial extends Material {
     /**
      * RenderMaterial constructor
@@ -6368,16 +6435,28 @@
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderMaterial";
       isRenderer(renderer, type);
+      if (!parameters.shaders) {
+        parameters.shaders = {};
+      }
+      if (!parameters.shaders?.vertex) {
+        parameters.shaders.vertex = {
+          code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+          entryPoint: "main"
+        };
+      }
+      if (!parameters.shaders.vertex.entryPoint) {
+        parameters.shaders.vertex.entryPoint = "main";
+      }
+      if (parameters.shaders.fragment === void 0) {
+        parameters.shaders.fragment = {
+          entryPoint: "main",
+          code: default_fsWgsl
+        };
+      }
       super(renderer, parameters);
       this.type = type;
       this.renderer = renderer;
       const { shaders } = parameters;
-      if (!shaders.vertex.entryPoint) {
-        shaders.vertex.entryPoint = "main";
-      }
-      if (shaders.fragment && !shaders.fragment.entryPoint) {
-        shaders.fragment.entryPoint = "main";
-      }
       const {
         useProjection,
         transparent,
@@ -6463,9 +6542,10 @@
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
         this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
-        if (this.pipelineEntry.ready && newProperties.length) {
+        if (this.pipelineEntry.ready && newProperties.length && !this.renderer.production) {
           throwWarning(
-            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties.map(
+            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided.
+Rendering options responsible: { ${newProperties.map(
             (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
           ).join(", ")} }`
           );
@@ -6505,34 +6585,6 @@
     }
   }
 
-  var default_vsWgsl = (
-    /* wgsl */
-    `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
-
-  vsOutput.position = vec4f(attributes.position, 1.0);
-  vsOutput.uv = attributes.uv;
-  
-  return vsOutput;
-}`
-  );
-
-  var default_fsWgsl = (
-    /* wgsl */
-    `
-@fragment fn main() -> @location(0) vec4f {
-  return vec4(0.0, 0.0, 0.0, 1.0);
-}`
-  );
-
   var __accessCheck$3 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -6554,7 +6606,7 @@ struct VertexOutput {
   let meshIndex = 0;
   const defaultMeshBaseParams = {
     // geometry
-    geometry: new Geometry(),
+    //geometry: new Geometry(),
     // material
     autoRender: true,
     useProjection: false,
@@ -6640,8 +6692,6 @@ struct VertexOutput {
           ...autoRender !== void 0 && { autoRender },
           ...meshParameters
         };
-        this.geometry = geometry;
-        this.geometry.consumers.add(this.uuid);
         if (autoRender !== void 0) {
           __privateSet$2(this, _autoRender, autoRender);
         }
@@ -6649,13 +6699,14 @@ struct VertexOutput {
         this.renderOrder = renderOrder;
         this.ready = false;
         this.userData = {};
-        this.computeGeometry();
+        if (geometry) {
+          this.useGeometry(geometry);
+        }
         this.setMaterial({
           ...this.cleanupRenderMaterialParameters({ ...this.options }),
-          verticesOrder: geometry.verticesOrder,
-          topology: geometry.topology
+          ...geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }
         });
-        this.addToScene();
+        this.addToScene(true);
       }
       /**
        * Get private #autoRender value
@@ -6679,23 +6730,29 @@ struct VertexOutput {
       }
       /* SCENE */
       /**
-       * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+       * Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+       * @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
        */
-      addToScene() {
-        this.renderer.meshes.push(this);
+      addToScene(addToRenderer = false) {
+        if (addToRenderer) {
+          this.renderer.meshes.push(this);
+        }
         this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
         if (__privateGet$3(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
         }
       }
       /**
-       * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+       * Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+       * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
        */
-      removeFromScene() {
+      removeFromScene(removeFromRenderer = false) {
         if (__privateGet$3(this, _autoRender)) {
           this.renderer.scene.removeMesh(this);
         }
-        this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+        if (removeFromRenderer) {
+          this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+        }
       }
       /**
        * Set a new {@link Renderer} for this Mesh
@@ -6710,9 +6767,9 @@ struct VertexOutput {
           return;
         }
         const oldRenderer = this.renderer;
-        this.removeFromScene();
+        this.removeFromScene(true);
         this.renderer = renderer;
-        this.addToScene();
+        this.addToScene(true);
         if (!oldRenderer.meshes.length) {
           oldRenderer.onBeforeRenderScene.add(
             (commandEncoder) => {
@@ -6786,6 +6843,33 @@ struct VertexOutput {
       }
       /* GEOMETRY */
       /**
+       * Set or update the Mesh {@link Geometry}
+       * @param geometry - new {@link Geometry} to use
+       */
+      useGeometry(geometry) {
+        if (this.geometry) {
+          if (geometry.shouldCompute) {
+            geometry.computeGeometry();
+          }
+          if (this.geometry.wgslStructFragment !== geometry.wgslStructFragment) {
+            throwError(
+              `${this.options.label} (${this.type}): could not swap geometries because the current and given geometries do not have the same vertexBuffers layout.`
+            );
+          }
+          this.geometry.consumers.delete(this.uuid);
+        }
+        this.geometry = geometry;
+        this.geometry.consumers.add(this.uuid);
+        this.computeGeometry();
+        if (this.material) {
+          const renderingOptions = {
+            ...this.material.options.rendering,
+            ...{ verticesOrder: geometry.verticesOrder, topology: geometry.topology }
+          };
+          this.material.setRenderingOptions(renderingOptions);
+        }
+      }
+      /**
        * Compute the Mesh geometry if needed
        */
       computeGeometry() {
@@ -6814,6 +6898,8 @@ struct VertexOutput {
        */
       setRenderingOptionsForRenderPass(renderPass) {
         const renderingOptions = {
+          // transparency (blend)
+          transparent: this.transparent,
           // sample count
           sampleCount: renderPass.options.sampleCount,
           // color attachments
@@ -6849,15 +6935,23 @@ struct VertexOutput {
         return parameters;
       }
       /**
-       * Set a Mesh transparent property, then set its material
+       * Set or update the Mesh {@link RenderMaterial}
+       * @param material - new {@link RenderMaterial} to use
+       */
+      useMaterial(material) {
+        this.material = material;
+        this.transparent = this.material.options.rendering.transparent;
+        this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+      }
+      /**
+       * Patch the shaders if needed, then set the Mesh material
        * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
        */
       setMaterial(meshParameters) {
-        this.transparent = meshParameters.transparent;
         this.setShaders();
         meshParameters.shaders = this.options.shaders;
-        this.material = new RenderMaterial(this.renderer, meshParameters);
-        this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+        meshParameters.label = meshParameters.label + " Material";
+        this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
       }
       /**
        * Set Mesh material attributes
@@ -6865,6 +6959,26 @@ struct VertexOutput {
       setMaterialGeometryAttributes() {
         if (this.material && !this.material.attributes) {
           this.material.setAttributesFromGeometry(this.geometry);
+        }
+      }
+      /**
+       * Get the transparent property value
+       */
+      get transparent() {
+        return this._transparent;
+      }
+      /**
+       * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
+       * @param value
+       */
+      set transparent(value) {
+        const switchTransparency = this.transparent !== void 0 && value !== this.transparent;
+        if (switchTransparency) {
+          this.removeFromScene();
+        }
+        this._transparent = value;
+        if (switchTransparency) {
+          this.addToScene();
         }
       }
       /* TEXTURES */
@@ -7087,7 +7201,7 @@ struct VertexOutput {
        * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
        */
       remove() {
-        this.removeFromScene();
+        this.removeFromScene(true);
         this.destroy();
         if (!this.renderer.meshes.length) {
           this.renderer.onBeforeRenderScene.add(
@@ -7339,28 +7453,6 @@ struct VertexOutput {
     }
   }
 
-  var default_projected_vsWgsl = (
-    /* wgsl */
-    `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-  @location(1) normal: vec3f,
-};
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
-
-  vsOutput.position = getOutputPosition(attributes.position);
-  vsOutput.uv = attributes.uv;
-  vsOutput.normal = attributes.normal;
-  
-  return vsOutput;
-}`
-  );
-
   var default_normal_fsWgsl = (
     /* wgsl */
     `
@@ -7422,7 +7514,7 @@ struct VSOutput {
         renderer = renderer && renderer.renderer || renderer;
         isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
-        const { geometry, frustumCulled, DOMFrustumMargins } = parameters;
+        const { frustumCulled, DOMFrustumMargins } = parameters;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
@@ -7430,8 +7522,6 @@ struct VSOutput {
           DOMFrustumMargins
         };
         this.setDOMFrustum();
-        this.geometry = geometry;
-        this.shouldUpdateMatrixStack();
       }
       /* SHADERS */
       /**
@@ -7467,11 +7557,22 @@ struct VSOutput {
       }
       /* GEOMETRY */
       /**
+       * Set or update the Projected Mesh {@link Geometry}
+       * @param geometry - new {@link Geometry} to use
+       */
+      useGeometry(geometry) {
+        super.useGeometry(geometry);
+        if (this.domFrustum) {
+          this.domFrustum.boundingBox = this.geometry.boundingBox;
+        }
+        this.shouldUpdateMatrixStack();
+      }
+      /**
        * Set the Mesh frustum culling
        */
       setDOMFrustum() {
         this.domFrustum = new DOMFrustum({
-          boundingBox: this.geometry.boundingBox,
+          boundingBox: this.geometry?.boundingBox,
           modelViewProjectionMatrix: this.modelViewProjectionMatrix,
           containerBoundingRect: this.renderer.boundingRect,
           DOMFrustumMargins: this.options.DOMFrustumMargins,
@@ -7616,7 +7717,7 @@ struct VSOutput {
      * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
      * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
      */
-    constructor(renderer, parameters) {
+    constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
       super(renderer, null, parameters);
@@ -10766,10 +10867,13 @@ struct VSOutput {
       }
     }
     /**
-     * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
+     * @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
-    addToScene() {
-      this.renderer.shaderPasses.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.shaderPasses.push(this);
+      }
       this.setRenderingOptionsForRenderPass(
         this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
       );
@@ -10778,16 +10882,19 @@ struct VSOutput {
       }
     }
     /**
-     * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (this.outputTarget) {
         this.outputTarget.destroy();
       }
       if (this.autoRender) {
         this.renderer.scene.removeShaderPass(this);
       }
-      this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+      }
     }
   }
 
@@ -11140,20 +11247,26 @@ struct VSOutput {
       this._sourcesReady = value;
     }
     /**
-     * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    addToScene() {
-      super.addToScene();
-      this.renderer.domMeshes.push(this);
+    addToScene(addToRenderer = false) {
+      super.addToScene(addToRenderer);
+      if (addToRenderer) {
+        this.renderer.domMeshes.push(this);
+      }
     }
     /**
-     * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    removeFromScene() {
-      super.removeFromScene();
-      this.renderer.domMeshes = this.renderer.domMeshes.filter(
-        (m) => m.uuid !== this.uuid
-      );
+    removeFromScene(removeFromRenderer = false) {
+      super.removeFromScene(removeFromRenderer);
+      if (removeFromRenderer) {
+        this.renderer.domMeshes = this.renderer.domMeshes.filter(
+          (m) => m.uuid !== this.uuid
+        );
+      }
     }
     /**
      * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
@@ -11289,25 +11402,31 @@ struct VSOutput {
       return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
     }
     /**
-     * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
      */
-    addToScene() {
-      this.renderer.pingPongPlanes.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.pingPongPlanes.push(this);
+      }
       if (this.autoRender) {
         this.renderer.scene.addPingPongPlane(this);
       }
     }
     /**
-     * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (this.outputTarget) {
         this.outputTarget.destroy();
       }
       if (this.autoRender) {
         this.renderer.scene.removePingPongPlane(this);
       }
-      this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+      }
     }
   }
 

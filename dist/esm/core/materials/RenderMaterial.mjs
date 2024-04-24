@@ -2,6 +2,9 @@ import { Material } from './Material.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { compareRenderingOptions } from './utils.mjs';
+import default_projected_vsWgsl from '../shaders/chunks/default_projected_vs.wgsl.mjs';
+import default_vsWgsl from '../shaders/chunks/default_vs.wgsl.mjs';
+import default_fsWgsl from '../shaders/chunks/default_fs.wgsl.mjs';
 
 class RenderMaterial extends Material {
   /**
@@ -13,16 +16,28 @@ class RenderMaterial extends Material {
     renderer = renderer && renderer.renderer || renderer;
     const type = "RenderMaterial";
     isRenderer(renderer, type);
+    if (!parameters.shaders) {
+      parameters.shaders = {};
+    }
+    if (!parameters.shaders?.vertex) {
+      parameters.shaders.vertex = {
+        code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+        entryPoint: "main"
+      };
+    }
+    if (!parameters.shaders.vertex.entryPoint) {
+      parameters.shaders.vertex.entryPoint = "main";
+    }
+    if (parameters.shaders.fragment === void 0) {
+      parameters.shaders.fragment = {
+        entryPoint: "main",
+        code: default_fsWgsl
+      };
+    }
     super(renderer, parameters);
     this.type = type;
     this.renderer = renderer;
     const { shaders } = parameters;
-    if (!shaders.vertex.entryPoint) {
-      shaders.vertex.entryPoint = "main";
-    }
-    if (shaders.fragment && !shaders.fragment.entryPoint) {
-      shaders.fragment.entryPoint = "main";
-    }
     const {
       useProjection,
       transparent,
@@ -108,9 +123,10 @@ class RenderMaterial extends Material {
     this.options.rendering = { ...this.options.rendering, ...renderingOptions };
     if (this.pipelineEntry) {
       this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
-      if (this.pipelineEntry.ready && newProperties.length) {
+      if (this.pipelineEntry.ready && newProperties.length && !this.renderer.production) {
         throwWarning(
-          `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties.map(
+          `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided.
+Rendering options responsible: { ${newProperties.map(
             (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
           ).join(", ")} }`
         );

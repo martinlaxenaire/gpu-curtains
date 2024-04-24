@@ -44,11 +44,13 @@ export declare class PingPongPlane extends FullscreenPlane {
      */
     get renderTexture(): RenderTexture | undefined;
     /**
-     * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
      */
-    addToScene(): void;
+    addToScene(addToRenderer?: boolean): void;
     /**
-     * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
      */
-    removeFromScene(): void;
+    removeFromScene(removeFromRenderer?: boolean): void;
 }

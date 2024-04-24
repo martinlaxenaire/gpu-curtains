@@ -74,13 +74,15 @@ export declare class DOMMesh extends DOMMesh_base {
     get sourcesReady(): boolean;
     set sourcesReady(value: boolean);
     /**
-     * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    addToScene(): void;
+    addToScene(addToRenderer?: boolean): void;
     /**
-     * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    removeFromScene(): void;
+    removeFromScene(removeFromRenderer?: boolean): void;
     /**
      * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
      */

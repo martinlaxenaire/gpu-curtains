@@ -75,11 +75,13 @@ export declare class ShaderPass extends FullscreenPlane {
      */
     setInputTarget(inputTarget: RenderTarget | null): void;
     /**
-     * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
+     * @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
-    addToScene(): void;
+    addToScene(addToRenderer?: boolean): void;
     /**
-     * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
-    removeFromScene(): void;
+    removeFromScene(removeFromRenderer?: boolean): void;
 }

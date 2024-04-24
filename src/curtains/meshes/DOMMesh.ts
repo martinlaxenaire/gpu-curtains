@@ -133,21 +133,29 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   /**
-   * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+   * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
    */
-  addToScene() {
-    super.addToScene()
-    ;(this.renderer as GPUCurtainsRenderer).domMeshes.push(this)
+  addToScene(addToRenderer = false) {
+    super.addToScene(addToRenderer)
+
+    if (addToRenderer) {
+      ;(this.renderer as GPUCurtainsRenderer).domMeshes.push(this)
+    }
   }
 
   /**
-   * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+   * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
    */
-  removeFromScene() {
-    super.removeFromScene()
-    ;(this.renderer as GPUCurtainsRenderer).domMeshes = (this.renderer as GPUCurtainsRenderer).domMeshes.filter(
-      (m) => m.uuid !== this.uuid
-    )
+  removeFromScene(removeFromRenderer = false) {
+    super.removeFromScene(removeFromRenderer)
+
+    if (removeFromRenderer) {
+      ;(this.renderer as GPUCurtainsRenderer).domMeshes = (this.renderer as GPUCurtainsRenderer).domMeshes.filter(
+        (m) => m.uuid !== this.uuid
+      )
+    }
   }
 
   /**

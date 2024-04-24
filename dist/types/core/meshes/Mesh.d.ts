@@ -40,6 +40,6 @@ export declare class Mesh extends Mesh_base {
      * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
      * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, parameters: MeshBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, parameters?: MeshBaseParams);
 }
 export {};
