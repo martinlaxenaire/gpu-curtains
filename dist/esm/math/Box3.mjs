@@ -23,6 +23,12 @@ class Box3 {
     return this;
   }
   /**
+   * Check whether the {@link Box3} min and max values have actually been set
+   */
+  isEmpty() {
+    return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
+  }
+  /**
    * Clone this {@link Box3}
    * @returns - cloned {@link Box3}
    */
@@ -50,6 +56,8 @@ class Box3 {
    * @returns - this {@link Box3} after {@link Mat4 | matrix} application
    */
   applyMat4(matrix = new Mat4()) {
+    if (this.isEmpty())
+      return this;
     const corners = [];
     if (this.min.z === this.max.z) {
       corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);

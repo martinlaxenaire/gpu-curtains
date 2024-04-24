@@ -5322,7 +5322,7 @@
       }
       this.userData = {};
       this.ready = false;
-      this.setComputeMaterial({
+      this.setMaterial({
         label: this.options.label,
         shaders: this.options.shaders,
         uniforms,
@@ -5371,8 +5371,15 @@
      * Create the compute pass material
      * @param computeParameters - {@link ComputeMaterial} parameters
      */
-    setComputeMaterial(computeParameters) {
-      this.material = new ComputeMaterial(this.renderer, computeParameters);
+    setMaterial(computeParameters) {
+      this.useMaterial(new ComputeMaterial(this.renderer, computeParameters));
+    }
+    /**
+     * Set or update the {@link ComputePass} {@link ComputeMaterial}
+     * @param material - new {@link ComputeMaterial} to use
+     */
+    useMaterial(material) {
+      this.material = material;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -5626,6 +5633,12 @@
       return this;
     }
     /**
+     * Check whether the {@link Box3} min and max values have actually been set
+     */
+    isEmpty() {
+      return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
+    }
+    /**
      * Clone this {@link Box3}
      * @returns - cloned {@link Box3}
      */
@@ -5653,6 +5666,8 @@
      * @returns - this {@link Box3} after {@link Mat4 | matrix} application
      */
     applyMat4(matrix = new Mat4()) {
+      if (this.isEmpty())
+        return this;
       const corners = [];
       if (this.min.z === this.max.z) {
         corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);
@@ -5826,9 +5841,6 @@
       this.uuid = generateUUID();
       this.vertexBuffers = [];
       this.consumers = /* @__PURE__ */ new Set();
-      this.addVertexBuffer({
-        name: "attributes"
-      });
       this.options = {
         verticesOrder,
         topology,
@@ -5836,6 +5848,11 @@
         vertexBuffers,
         mapBuffersAtCreation
       };
+      if (!vertexBuffers.length || !vertexBuffers.find((vertexBuffer) => vertexBuffer.name === "attributes")) {
+        this.addVertexBuffer({
+          name: "attributes"
+        });
+      }
       for (const vertexBuffer of vertexBuffers) {
         this.addVertexBuffer({
           stepMode: vertexBuffer.stepMode ?? "vertex",
@@ -6262,7 +6279,7 @@
       vertexBuffers = [],
       topology
     } = {}) {
-      super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
+      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
       this.type = "PlaneGeometry";
       widthSegments = Math.floor(widthSegments);
       heightSegments = Math.floor(heightSegments);
@@ -6334,9 +6351,9 @@
       let uvOffset = 0;
       for (let y = 0; y <= this.definition.height; y++) {
         for (let x = 0; x <= this.definition.width; x++) {
-          uv.array[uvOffset++] = x / this.definition.width;
+          uv.array[uvOffset++] = 1 - x / this.definition.width;
           uv.array[uvOffset++] = 1 - y / this.definition.height;
-          position.array[positionOffset++] = x * 2 / this.definition.width - 1;
+          position.array[positionOffset++] = 1 - x * 2 / this.definition.width;
           position.array[positionOffset++] = y * 2 / this.definition.height - 1;
           position.array[positionOffset++] = 0;
           normal.array[normalOffset++] = 0;
@@ -6358,6 +6375,56 @@
     });
   };
 
+  var default_projected_vsWgsl = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+  @location(1) normal: vec3f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = getOutputPosition(attributes.position);
+  vsOutput.uv = attributes.uv;
+  vsOutput.normal = attributes.normal;
+  
+  return vsOutput;
+}`
+  );
+
+  var default_vsWgsl = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = vec4f(attributes.position, 1.0);
+  vsOutput.uv = attributes.uv;
+  
+  return vsOutput;
+}`
+  );
+
+  var default_fsWgsl = (
+    /* wgsl */
+    `
+@fragment fn main() -> @location(0) vec4f {
+  return vec4(0.0, 0.0, 0.0, 1.0);
+}`
+  );
+
   class RenderMaterial extends Material {
     /**
      * RenderMaterial constructor
@@ -6368,16 +6435,28 @@
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderMaterial";
       isRenderer(renderer, type);
+      if (!parameters.shaders) {
+        parameters.shaders = {};
+      }
+      if (!parameters.shaders?.vertex) {
+        parameters.shaders.vertex = {
+          code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+          entryPoint: "main"
+        };
+      }
+      if (!parameters.shaders.vertex.entryPoint) {
+        parameters.shaders.vertex.entryPoint = "main";
+      }
+      if (parameters.shaders.fragment === void 0) {
+        parameters.shaders.fragment = {
+          entryPoint: "main",
+          code: default_fsWgsl
+        };
+      }
       super(renderer, parameters);
       this.type = type;
       this.renderer = renderer;
       const { shaders } = parameters;
-      if (!shaders.vertex.entryPoint) {
-        shaders.vertex.entryPoint = "main";
-      }
-      if (shaders.fragment && !shaders.fragment.entryPoint) {
-        shaders.fragment.entryPoint = "main";
-      }
       const {
         useProjection,
         transparent,
@@ -6505,34 +6584,6 @@
     }
   }
 
-  var default_vsWgsl = (
-    /* wgsl */
-    `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
-
-  vsOutput.position = vec4f(attributes.position, 1.0);
-  vsOutput.uv = attributes.uv;
-  
-  return vsOutput;
-}`
-  );
-
-  var default_fsWgsl = (
-    /* wgsl */
-    `
-@fragment fn main() -> @location(0) vec4f {
-  return vec4(0.0, 0.0, 0.0, 1.0);
-}`
-  );
-
   var __accessCheck$3 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -6554,7 +6605,7 @@ struct VertexOutput {
   let meshIndex = 0;
   const defaultMeshBaseParams = {
     // geometry
-    geometry: new Geometry(),
+    //geometry: new Geometry(),
     // material
     autoRender: true,
     useProjection: false,
@@ -6640,8 +6691,6 @@ struct VertexOutput {
           ...autoRender !== void 0 && { autoRender },
           ...meshParameters
         };
-        this.geometry = geometry;
-        this.geometry.consumers.add(this.uuid);
         if (autoRender !== void 0) {
           __privateSet$2(this, _autoRender, autoRender);
         }
@@ -6649,11 +6698,12 @@ struct VertexOutput {
         this.renderOrder = renderOrder;
         this.ready = false;
         this.userData = {};
-        this.computeGeometry();
+        if (geometry) {
+          this.useGeometry(geometry);
+        }
         this.setMaterial({
           ...this.cleanupRenderMaterialParameters({ ...this.options }),
-          verticesOrder: geometry.verticesOrder,
-          topology: geometry.topology
+          ...geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }
         });
         this.addToScene();
       }
@@ -6786,6 +6836,33 @@ struct VertexOutput {
       }
       /* GEOMETRY */
       /**
+       * Set or update the Mesh {@link Geometry}
+       * @param geometry - new {@link Geometry} to use
+       */
+      useGeometry(geometry) {
+        if (this.geometry) {
+          if (geometry.shouldCompute) {
+            geometry.computeGeometry();
+          }
+          if (this.geometry.wgslStructFragment !== geometry.wgslStructFragment) {
+            throwError(
+              `${this.options.label} (${this.type}): could not swap geometries because the current and given geometries do not have the same vertexBuffers layout.`
+            );
+          }
+          this.geometry.consumers.delete(this.uuid);
+        }
+        this.geometry = geometry;
+        this.geometry.consumers.add(this.uuid);
+        this.computeGeometry();
+        if (this.material) {
+          const renderingOptions = {
+            ...this.material.options.rendering,
+            ...{ verticesOrder: geometry.verticesOrder, topology: geometry.topology }
+          };
+          this.material.setRenderingOptions(renderingOptions);
+        }
+      }
+      /**
        * Compute the Mesh geometry if needed
        */
       computeGeometry() {
@@ -6849,15 +6926,22 @@ struct VertexOutput {
         return parameters;
       }
       /**
-       * Set a Mesh transparent property, then set its material
+       * Set or update the Mesh {@link RenderMaterial}
+       * @param material - new {@link RenderMaterial} to use
+       */
+      useMaterial(material) {
+        this.material = material;
+        this.transparent = this.material.options.rendering.transparent;
+        this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+      }
+      /**
+       * Patch the shaders if needed, then set the Mesh material
        * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
        */
       setMaterial(meshParameters) {
-        this.transparent = meshParameters.transparent;
         this.setShaders();
         meshParameters.shaders = this.options.shaders;
-        this.material = new RenderMaterial(this.renderer, meshParameters);
-        this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+        this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
       }
       /**
        * Set Mesh material attributes
@@ -7339,28 +7423,6 @@ struct VertexOutput {
     }
   }
 
-  var default_projected_vsWgsl = (
-    /* wgsl */
-    `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-  @location(1) normal: vec3f,
-};
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
-
-  vsOutput.position = getOutputPosition(attributes.position);
-  vsOutput.uv = attributes.uv;
-  vsOutput.normal = attributes.normal;
-  
-  return vsOutput;
-}`
-  );
-
   var default_normal_fsWgsl = (
     /* wgsl */
     `
@@ -7422,7 +7484,7 @@ struct VSOutput {
         renderer = renderer && renderer.renderer || renderer;
         isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
-        const { geometry, frustumCulled, DOMFrustumMargins } = parameters;
+        const { frustumCulled, DOMFrustumMargins } = parameters;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
@@ -7430,7 +7492,6 @@ struct VSOutput {
           DOMFrustumMargins
         };
         this.setDOMFrustum();
-        this.geometry = geometry;
         this.shouldUpdateMatrixStack();
       }
       /* SHADERS */
@@ -7467,11 +7528,22 @@ struct VSOutput {
       }
       /* GEOMETRY */
       /**
+       * Set or update the Projected Mesh {@link Geometry}
+       * @param geometry - new {@link Geometry} to use
+       */
+      useGeometry(geometry) {
+        super.useGeometry(geometry);
+        if (this.domFrustum) {
+          this.domFrustum.boundingBox = this.geometry.boundingBox;
+        }
+        this.shouldUpdateMatrixStack();
+      }
+      /**
        * Set the Mesh frustum culling
        */
       setDOMFrustum() {
         this.domFrustum = new DOMFrustum({
-          boundingBox: this.geometry.boundingBox,
+          boundingBox: this.geometry?.boundingBox,
           modelViewProjectionMatrix: this.modelViewProjectionMatrix,
           containerBoundingRect: this.renderer.boundingRect,
           DOMFrustumMargins: this.options.DOMFrustumMargins,
@@ -7616,7 +7688,7 @@ struct VSOutput {
      * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
      * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
      */
-    constructor(renderer, parameters) {
+    constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
       super(renderer, null, parameters);

@@ -125,7 +125,12 @@ export declare class ComputePass {
      * Create the compute pass material
      * @param computeParameters - {@link ComputeMaterial} parameters
      */
-    setComputeMaterial(computeParameters: ComputeMaterialParams): void;
+    setMaterial(computeParameters: ComputeMaterialParams): void;
+    /**
+     * Set or update the {@link ComputePass} {@link ComputeMaterial}
+     * @param material - new {@link ComputeMaterial} to use
+     */
+    useMaterial(material: ComputeMaterial): void;
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render

@@ -221,6 +221,17 @@ export declare class MeshBaseClass {
   setShaders(): void
 
   /**
+   * Set or update the Mesh {@link Geometry}
+   * @param geometry - new {@link Geometry} to use
+   */
+  useGeometry(geometry: Geometry): void
+
+  /**
+   * Compute the Mesh geometry if needed
+   */
+  computeGeometry(): void
+
+  /**
    * Set our Mesh geometry: create buffers and add attributes to material
    */
   setGeometry(): void
@@ -237,6 +248,12 @@ export declare class MeshBaseClass {
    * @returns - cleaned parameters
    */
   cleanupRenderMaterialParameters(parameters: MeshBaseRenderParams): MeshBaseRenderParams
+
+  /**
+   * Set or update the Mesh {@link RenderMaterial}
+   * @param material - new {@link RenderMaterial} to use
+   */
+  useMaterial(material: RenderMaterial): void
 
   /**
    * Set a Mesh transparent property, then set its material
@@ -520,11 +537,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       if (geometry) {
         this.useGeometry(geometry)
       }
-
-      // this.geometry = geometry
-      // this.geometry.consumers.add(this.uuid)
-
-      //this.computeGeometry()
 
       this.setMaterial({
         ...this.cleanupRenderMaterialParameters({ ...this.options }),

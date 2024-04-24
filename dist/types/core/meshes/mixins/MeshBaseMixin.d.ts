@@ -2,6 +2,7 @@
 import { Renderer } from '../../renderers/utils';
 import { RenderMaterial } from '../../materials/RenderMaterial';
 import { Texture } from '../../textures/Texture';
+import { Geometry } from '../../geometries/Geometry';
 import { RenderTexture, RenderTextureParams } from '../../textures/RenderTexture';
 import { ExternalTextureParams, TextureParams } from '../../../types/Textures';
 import { RenderTarget } from '../../renderPasses/RenderTarget';
@@ -28,7 +29,7 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
  */
 export interface MeshBaseParams extends MeshBaseRenderParams {
     /** Geometry to use */
-    geometry: AllowedGeometries;
+    geometry?: AllowedGeometries;
 }
 /**
  *  Base options used to create this Mesh
@@ -165,6 +166,15 @@ export declare class MeshBaseClass {
      */
     setShaders(): void;
     /**
+     * Set or update the Mesh {@link Geometry}
+     * @param geometry - new {@link Geometry} to use
+     */
+    useGeometry(geometry: Geometry): void;
+    /**
+     * Compute the Mesh geometry if needed
+     */
+    computeGeometry(): void;
+    /**
      * Set our Mesh geometry: create buffers and add attributes to material
      */
     setGeometry(): void;
@@ -179,6 +189,11 @@ export declare class MeshBaseClass {
      * @returns - cleaned parameters
      */
     cleanupRenderMaterialParameters(parameters: MeshBaseRenderParams): MeshBaseRenderParams;
+    /**
+     * Set or update the Mesh {@link RenderMaterial}
+     * @param material - new {@link RenderMaterial} to use
+     */
+    useMaterial(material: RenderMaterial): void;
     /**
      * Set a Mesh transparent property, then set its material
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}

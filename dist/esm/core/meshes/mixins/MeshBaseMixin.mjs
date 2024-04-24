@@ -1,8 +1,7 @@
-import { generateUUID, throwWarning } from '../../../utils/utils.mjs';
+import { generateUUID, throwWarning, throwError } from '../../../utils/utils.mjs';
 import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
 import { Texture } from '../../textures/Texture.mjs';
-import { Geometry } from '../../geometries/Geometry.mjs';
 import { RenderTexture } from '../../textures/RenderTexture.mjs';
 import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl.mjs';
 import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl.mjs';
@@ -28,7 +27,7 @@ var __privateSet = (obj, member, value, setter) => {
 let meshIndex = 0;
 const defaultMeshBaseParams = {
   // geometry
-  geometry: new Geometry(),
+  //geometry: new Geometry(),
   // material
   autoRender: true,
   useProjection: false,
@@ -114,8 +113,6 @@ function MeshBaseMixin(Base) {
         ...autoRender !== void 0 && { autoRender },
         ...meshParameters
       };
-      this.geometry = geometry;
-      this.geometry.consumers.add(this.uuid);
       if (autoRender !== void 0) {
         __privateSet(this, _autoRender, autoRender);
       }
@@ -123,11 +120,12 @@ function MeshBaseMixin(Base) {
       this.renderOrder = renderOrder;
       this.ready = false;
       this.userData = {};
-      this.computeGeometry();
+      if (geometry) {
+        this.useGeometry(geometry);
+      }
       this.setMaterial({
         ...this.cleanupRenderMaterialParameters({ ...this.options }),
-        verticesOrder: geometry.verticesOrder,
-        topology: geometry.topology
+        ...geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }
       });
       this.addToScene();
     }
@@ -260,6 +258,33 @@ function MeshBaseMixin(Base) {
     }
     /* GEOMETRY */
     /**
+     * Set or update the Mesh {@link Geometry}
+     * @param geometry - new {@link Geometry} to use
+     */
+    useGeometry(geometry) {
+      if (this.geometry) {
+        if (geometry.shouldCompute) {
+          geometry.computeGeometry();
+        }
+        if (this.geometry.wgslStructFragment !== geometry.wgslStructFragment) {
+          throwError(
+            `${this.options.label} (${this.type}): could not swap geometries because the current and given geometries do not have the same vertexBuffers layout.`
+          );
+        }
+        this.geometry.consumers.delete(this.uuid);
+      }
+      this.geometry = geometry;
+      this.geometry.consumers.add(this.uuid);
+      this.computeGeometry();
+      if (this.material) {
+        const renderingOptions = {
+          ...this.material.options.rendering,
+          ...{ verticesOrder: geometry.verticesOrder, topology: geometry.topology }
+        };
+        this.material.setRenderingOptions(renderingOptions);
+      }
+    }
+    /**
      * Compute the Mesh geometry if needed
      */
     computeGeometry() {
@@ -323,15 +348,22 @@ function MeshBaseMixin(Base) {
       return parameters;
     }
     /**
-     * Set a Mesh transparent property, then set its material
+     * Set or update the Mesh {@link RenderMaterial}
+     * @param material - new {@link RenderMaterial} to use
+     */
+    useMaterial(material) {
+      this.material = material;
+      this.transparent = this.material.options.rendering.transparent;
+      this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+    }
+    /**
+     * Patch the shaders if needed, then set the Mesh material
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */
     setMaterial(meshParameters) {
-      this.transparent = meshParameters.transparent;
       this.setShaders();
       meshParameters.shaders = this.options.shaders;
-      this.material = new RenderMaterial(this.renderer, meshParameters);
-      this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+      this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
     }
     /**
      * Set Mesh material attributes
