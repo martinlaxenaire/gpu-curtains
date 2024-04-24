@@ -1,4 +1,4 @@
-import { generateUUID, throwWarning } from '../../../utils/utils'
+import { generateUUID, throwError, throwWarning } from '../../../utils/utils'
 import { isRenderer, Renderer } from '../../renderers/utils'
 import { RenderMaterial } from '../../materials/RenderMaterial'
 import { Texture } from '../../textures/Texture'
@@ -36,7 +36,7 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
  */
 export interface MeshBaseParams extends MeshBaseRenderParams {
   /** Geometry to use */
-  geometry: AllowedGeometries
+  geometry?: AllowedGeometries
 }
 
 /**
@@ -60,7 +60,7 @@ export interface MeshBaseOptions extends RenderMaterialParams {
 /** @const - Default Mesh parameters to merge with user defined parameters */
 const defaultMeshBaseParams: MeshBaseParams = {
   // geometry
-  geometry: new Geometry(),
+  //geometry: new Geometry(),
   // material
   autoRender: true,
   useProjection: false,
@@ -507,9 +507,6 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
         ...meshParameters,
       }
 
-      this.geometry = geometry
-      this.geometry.consumers.add(this.uuid)
-
       if (autoRender !== undefined) {
         this.#autoRender = autoRender
       }
@@ -520,12 +517,18 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
 
       this.userData = {}
 
-      this.computeGeometry()
+      if (geometry) {
+        this.useGeometry(geometry)
+      }
+
+      // this.geometry = geometry
+      // this.geometry.consumers.add(this.uuid)
+
+      //this.computeGeometry()
 
       this.setMaterial({
         ...this.cleanupRenderMaterialParameters({ ...this.options }),
-        verticesOrder: geometry.verticesOrder,
-        topology: geometry.topology,
+        ...(geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }),
       } as RenderMaterialParams)
 
       this.addToScene()
@@ -698,6 +701,41 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     /* GEOMETRY */
 
     /**
+     * Set or update the Mesh {@link Geometry}
+     * @param geometry - new {@link Geometry} to use
+     */
+    useGeometry(geometry: Geometry) {
+      if (this.geometry) {
+        // compute right away to compare geometries
+        if (geometry.shouldCompute) {
+          geometry.computeGeometry()
+        }
+
+        if (this.geometry.wgslStructFragment !== geometry.wgslStructFragment) {
+          throwError(
+            `${this.options.label} (${this.type}): could not swap geometries because the current and given geometries do not have the same vertexBuffers layout.`
+          )
+        }
+
+        this.geometry.consumers.delete(this.uuid)
+      }
+
+      this.geometry = geometry
+      this.geometry.consumers.add(this.uuid)
+
+      this.computeGeometry()
+
+      if (this.material) {
+        const renderingOptions = {
+          ...this.material.options.rendering,
+          ...{ verticesOrder: geometry.verticesOrder, topology: geometry.topology },
+        }
+
+        this.material.setRenderingOptions(renderingOptions)
+      }
+    }
+
+    /**
      * Compute the Mesh geometry if needed
      */
     computeGeometry() {
@@ -773,20 +811,30 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     }
 
     /**
-     * Set a Mesh transparent property, then set its material
-     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+     * Set or update the Mesh {@link RenderMaterial}
+     * @param material - new {@link RenderMaterial} to use
      */
-    setMaterial(meshParameters: RenderMaterialParams) {
-      this.transparent = meshParameters.transparent
+    useMaterial(material: RenderMaterial) {
+      this.material = material
 
-      this.setShaders()
-      meshParameters.shaders = this.options.shaders
+      // update transparent property
+      this.transparent = this.material.options.rendering.transparent
 
-      this.material = new RenderMaterial(this.renderer, meshParameters)
       // add eventual textures passed as parameters
       this.material.options.textures
         ?.filter((texture) => texture instanceof Texture)
         .forEach((texture) => this.onTextureAdded(texture))
+    }
+
+    /**
+     * Patch the shaders if needed, then set the Mesh material
+     * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+     */
+    setMaterial(meshParameters: RenderMaterialParams) {
+      this.setShaders()
+      meshParameters.shaders = this.options.shaders
+
+      this.useMaterial(new RenderMaterial(this.renderer, meshParameters))
     }
 
     /**

@@ -183,7 +183,7 @@ export class ComputePass {
 
     this.ready = false
 
-    this.setComputeMaterial({
+    this.setMaterial({
       label: this.options.label,
       shaders: this.options.shaders,
       uniforms,
@@ -240,8 +240,16 @@ export class ComputePass {
    * Create the compute pass material
    * @param computeParameters - {@link ComputeMaterial} parameters
    */
-  setComputeMaterial(computeParameters: ComputeMaterialParams) {
-    this.material = new ComputeMaterial(this.renderer, computeParameters)
+  setMaterial(computeParameters: ComputeMaterialParams) {
+    this.useMaterial(new ComputeMaterial(this.renderer, computeParameters))
+  }
+
+  /**
+   * Set or update the {@link ComputePass} {@link ComputeMaterial}
+   * @param material - new {@link ComputeMaterial} to use
+   */
+  useMaterial(material: ComputeMaterial) {
+    this.material = material
   }
 
   /**

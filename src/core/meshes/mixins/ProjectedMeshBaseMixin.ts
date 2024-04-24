@@ -217,10 +217,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         DOMFrustumMargins,
       }
 
-      this.setDOMFrustum()
+      //this.setDOMFrustum()
 
       // explicitly needed for DOM Frustum
-      this.geometry = geometry
+      //this.geometry = geometry
 
       // tell the model and projection matrices to update right away
       this.shouldUpdateMatrixStack()
@@ -263,6 +263,12 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     }
 
     /* GEOMETRY */
+
+    useGeometry(geometry) {
+      super.useGeometry(geometry)
+      this.setDOMFrustum()
+      this.shouldUpdateMatrixStack()
+    }
 
     /**
      * Set the Mesh frustum culling
