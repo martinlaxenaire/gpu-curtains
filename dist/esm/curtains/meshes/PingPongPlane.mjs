@@ -40,25 +40,31 @@ class PingPongPlane extends FullscreenPlane {
     return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
   }
   /**
-   * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+   * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
    */
-  addToScene() {
-    this.renderer.pingPongPlanes.push(this);
+  addToScene(addToRenderer = false) {
+    if (addToRenderer) {
+      this.renderer.pingPongPlanes.push(this);
+    }
     if (this.autoRender) {
       this.renderer.scene.addPingPongPlane(this);
     }
   }
   /**
-   * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+   * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
    */
-  removeFromScene() {
+  removeFromScene(removeFromRenderer = false) {
     if (this.outputTarget) {
       this.outputTarget.destroy();
     }
     if (this.autoRender) {
       this.renderer.scene.removePingPongPlane(this);
     }
-    this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+    if (removeFromRenderer) {
+      this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+    }
   }
 }
 

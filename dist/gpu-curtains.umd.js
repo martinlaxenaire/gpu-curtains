@@ -6542,9 +6542,10 @@ struct VertexOutput {
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
         this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
-        if (this.pipelineEntry.ready && newProperties.length) {
+        if (this.pipelineEntry.ready && newProperties.length && !this.renderer.production) {
           throwWarning(
-            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties.map(
+            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided.
+Rendering options responsible: { ${newProperties.map(
             (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
           ).join(", ")} }`
           );
@@ -6705,7 +6706,7 @@ struct VertexOutput {
           ...this.cleanupRenderMaterialParameters({ ...this.options }),
           ...geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }
         });
-        this.addToScene();
+        this.addToScene(true);
       }
       /**
        * Get private #autoRender value
@@ -6729,23 +6730,29 @@ struct VertexOutput {
       }
       /* SCENE */
       /**
-       * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+       * Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+       * @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
        */
-      addToScene() {
-        this.renderer.meshes.push(this);
+      addToScene(addToRenderer = false) {
+        if (addToRenderer) {
+          this.renderer.meshes.push(this);
+        }
         this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
         if (__privateGet$3(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
         }
       }
       /**
-       * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+       * Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+       * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
        */
-      removeFromScene() {
+      removeFromScene(removeFromRenderer = false) {
         if (__privateGet$3(this, _autoRender)) {
           this.renderer.scene.removeMesh(this);
         }
-        this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+        if (removeFromRenderer) {
+          this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+        }
       }
       /**
        * Set a new {@link Renderer} for this Mesh
@@ -6760,9 +6767,9 @@ struct VertexOutput {
           return;
         }
         const oldRenderer = this.renderer;
-        this.removeFromScene();
+        this.removeFromScene(true);
         this.renderer = renderer;
-        this.addToScene();
+        this.addToScene(true);
         if (!oldRenderer.meshes.length) {
           oldRenderer.onBeforeRenderScene.add(
             (commandEncoder) => {
@@ -6891,6 +6898,8 @@ struct VertexOutput {
        */
       setRenderingOptionsForRenderPass(renderPass) {
         const renderingOptions = {
+          // transparency (blend)
+          transparent: this.transparent,
           // sample count
           sampleCount: renderPass.options.sampleCount,
           // color attachments
@@ -6941,6 +6950,7 @@ struct VertexOutput {
       setMaterial(meshParameters) {
         this.setShaders();
         meshParameters.shaders = this.options.shaders;
+        meshParameters.label = meshParameters.label + " Material";
         this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
       }
       /**
@@ -6949,6 +6959,26 @@ struct VertexOutput {
       setMaterialGeometryAttributes() {
         if (this.material && !this.material.attributes) {
           this.material.setAttributesFromGeometry(this.geometry);
+        }
+      }
+      /**
+       * Get the transparent property value
+       */
+      get transparent() {
+        return this._transparent;
+      }
+      /**
+       * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
+       * @param value
+       */
+      set transparent(value) {
+        const switchTransparency = this.transparent !== void 0 && value !== this.transparent;
+        if (switchTransparency) {
+          this.removeFromScene();
+        }
+        this._transparent = value;
+        if (switchTransparency) {
+          this.addToScene();
         }
       }
       /* TEXTURES */
@@ -7171,7 +7201,7 @@ struct VertexOutput {
        * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
        */
       remove() {
-        this.removeFromScene();
+        this.removeFromScene(true);
         this.destroy();
         if (!this.renderer.meshes.length) {
           this.renderer.onBeforeRenderScene.add(
@@ -10838,10 +10868,13 @@ struct VSOutput {
       }
     }
     /**
-     * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
+     * @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
-    addToScene() {
-      this.renderer.shaderPasses.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.shaderPasses.push(this);
+      }
       this.setRenderingOptionsForRenderPass(
         this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
       );
@@ -10850,16 +10883,19 @@ struct VSOutput {
       }
     }
     /**
-     * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (this.outputTarget) {
         this.outputTarget.destroy();
       }
       if (this.autoRender) {
         this.renderer.scene.removeShaderPass(this);
       }
-      this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+      }
     }
   }
 
@@ -11212,20 +11248,26 @@ struct VSOutput {
       this._sourcesReady = value;
     }
     /**
-     * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    addToScene() {
-      super.addToScene();
-      this.renderer.domMeshes.push(this);
+    addToScene(addToRenderer = false) {
+      super.addToScene(addToRenderer);
+      if (addToRenderer) {
+        this.renderer.domMeshes.push(this);
+      }
     }
     /**
-     * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    removeFromScene() {
-      super.removeFromScene();
-      this.renderer.domMeshes = this.renderer.domMeshes.filter(
-        (m) => m.uuid !== this.uuid
-      );
+    removeFromScene(removeFromRenderer = false) {
+      super.removeFromScene(removeFromRenderer);
+      if (removeFromRenderer) {
+        this.renderer.domMeshes = this.renderer.domMeshes.filter(
+          (m) => m.uuid !== this.uuid
+        );
+      }
     }
     /**
      * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
@@ -11361,25 +11403,31 @@ struct VSOutput {
       return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
     }
     /**
-     * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
      */
-    addToScene() {
-      this.renderer.pingPongPlanes.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.pingPongPlanes.push(this);
+      }
       if (this.autoRender) {
         this.renderer.scene.addPingPongPlane(this);
       }
     }
     /**
-     * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (this.outputTarget) {
         this.outputTarget.destroy();
       }
       if (this.autoRender) {
         this.renderer.scene.removePingPongPlane(this);
       }
-      this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+      }
     }
   }
 

@@ -175,11 +175,11 @@ export class RenderMaterial extends Material {
     if (this.pipelineEntry) {
       this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering }
 
-      if (this.pipelineEntry.ready && newProperties.length) {
+      if (this.pipelineEntry.ready && newProperties.length && !this.renderer.production) {
         throwWarning(
           `${
             this.options.label
-          }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties
+          }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided.\nRendering options responsible: { ${newProperties
             .map(
               (key) =>
                 `"${key}": ${

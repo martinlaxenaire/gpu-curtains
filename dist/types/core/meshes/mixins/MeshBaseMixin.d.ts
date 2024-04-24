@@ -74,7 +74,7 @@ export declare class MeshBaseClass {
     /** Controls the order in which this {@link MeshBaseClass} should be rendered by our {@link core/scenes/Scene.Scene | Scene} */
     renderOrder: number;
     /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
-    transparent: boolean;
+    _transparent: boolean;
     /** Flag indicating whether to draw this {@link MeshBaseClass} or not */
     visible: boolean;
     /** Flag indicating whether this {@link MeshBaseClass} is ready to be drawn */
@@ -142,11 +142,11 @@ export declare class MeshBaseClass {
     /**
      * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
-    addToScene(): void;
+    addToScene(addToRenderer: boolean): void;
     /**
      * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
-    removeFromScene(): void;
+    removeFromScene(removeFromRenderer: boolean): void;
     /**
      * Set a new {@link Renderer} for this Mesh
      * @param renderer - new {@link Renderer} to set
@@ -203,6 +203,15 @@ export declare class MeshBaseClass {
      * Set Mesh material attributes
      */
     setMaterialGeometryAttributes(): void;
+    /**
+     * Get the transparent property value
+     */
+    get transparent(): boolean | undefined;
+    /**
+     * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
+     * @param value
+     */
+    set transparent(value: boolean);
     /**
      * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
      * @readonly

@@ -127,7 +127,7 @@ function MeshBaseMixin(Base) {
         ...this.cleanupRenderMaterialParameters({ ...this.options }),
         ...geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }
       });
-      this.addToScene();
+      this.addToScene(true);
     }
     /**
      * Get private #autoRender value
@@ -151,23 +151,29 @@ function MeshBaseMixin(Base) {
     }
     /* SCENE */
     /**
-     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+     * Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+     * @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
      */
-    addToScene() {
-      this.renderer.meshes.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.meshes.push(this);
+      }
       this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
       if (__privateGet(this, _autoRender)) {
         this.renderer.scene.addMesh(this);
       }
     }
     /**
-     * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (__privateGet(this, _autoRender)) {
         this.renderer.scene.removeMesh(this);
       }
-      this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+      }
     }
     /**
      * Set a new {@link Renderer} for this Mesh
@@ -182,9 +188,9 @@ function MeshBaseMixin(Base) {
         return;
       }
       const oldRenderer = this.renderer;
-      this.removeFromScene();
+      this.removeFromScene(true);
       this.renderer = renderer;
-      this.addToScene();
+      this.addToScene(true);
       if (!oldRenderer.meshes.length) {
         oldRenderer.onBeforeRenderScene.add(
           (commandEncoder) => {
@@ -313,6 +319,8 @@ function MeshBaseMixin(Base) {
      */
     setRenderingOptionsForRenderPass(renderPass) {
       const renderingOptions = {
+        // transparency (blend)
+        transparent: this.transparent,
         // sample count
         sampleCount: renderPass.options.sampleCount,
         // color attachments
@@ -363,6 +371,7 @@ function MeshBaseMixin(Base) {
     setMaterial(meshParameters) {
       this.setShaders();
       meshParameters.shaders = this.options.shaders;
+      meshParameters.label = meshParameters.label + " Material";
       this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
     }
     /**
@@ -371,6 +380,26 @@ function MeshBaseMixin(Base) {
     setMaterialGeometryAttributes() {
       if (this.material && !this.material.attributes) {
         this.material.setAttributesFromGeometry(this.geometry);
+      }
+    }
+    /**
+     * Get the transparent property value
+     */
+    get transparent() {
+      return this._transparent;
+    }
+    /**
+     * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
+     * @param value
+     */
+    set transparent(value) {
+      const switchTransparency = this.transparent !== void 0 && value !== this.transparent;
+      if (switchTransparency) {
+        this.removeFromScene();
+      }
+      this._transparent = value;
+      if (switchTransparency) {
+        this.addToScene();
       }
     }
     /* TEXTURES */
@@ -593,7 +622,7 @@ function MeshBaseMixin(Base) {
      * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
      */
     remove() {
-      this.removeFromScene();
+      this.removeFromScene(true);
       this.destroy();
       if (!this.renderer.meshes.length) {
         this.renderer.onBeforeRenderScene.add(
