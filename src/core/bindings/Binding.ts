@@ -2,13 +2,16 @@ import { toCamelCase } from '../../utils/utils'
 import { MaterialShadersType } from '../../types/Materials'
 import { TextureBinding } from './TextureBinding'
 import { SamplerBinding } from './SamplerBinding'
+import { getBindingVisibility } from './utils'
 
+/** Defines all kind of buffer binding types */
+export type BufferBindingType = 'uniform' | 'storage'
 /** Defines all kind of texture binding types */
 export type TextureBindingType = 'texture' | 'externalTexture' | 'storage' | 'depth'
+/** Defines all kind of sampler binding types */
+export type SamplerBindingType = 'sampler'
 /** Defines all kind of binding types  */
-export type BindingType = 'uniform' | 'storage' | TextureBindingType | 'sampler'
-/** Defines all binding vibility types */
-export type BindingVisibility = MaterialShadersType | 'all'
+export type BindingType = BufferBindingType | TextureBindingType | SamplerBindingType
 
 // see https://www.w3.org/TR/WGSL/#memory-access-mode
 /** Defines buffer binding memory access types (read only or read/write) */
@@ -31,8 +34,8 @@ export interface BindingParams {
   name?: string
   /** {@link BindingType | binding type} to use with this {@link Binding} */
   bindingType?: BindingType
-  /** {@link Binding} variables shaders visibility */
-  visibility?: BindingVisibility
+  /** {@link Binding} variables shaders visibility as an array of {@link MaterialShadersType | shaders types names} */
+  visibility?: MaterialShadersType[]
 }
 
 /**
@@ -68,26 +71,17 @@ export class Binding {
    * Binding constructor
    * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
    */
-  constructor({ label = 'Uniform', name = 'uniform', bindingType = 'uniform', visibility = 'all' }: BindingParams) {
+  constructor({
+    label = 'Uniform',
+    name = 'uniform',
+    bindingType = 'uniform',
+    visibility = ['vertex', 'fragment', 'compute'],
+  }: BindingParams) {
     this.label = label
     this.name = toCamelCase(name)
     this.bindingType = bindingType
 
-    this.visibility = visibility
-      ? (() => {
-          switch (visibility) {
-            case 'vertex':
-              return GPUShaderStage.VERTEX
-            case 'fragment':
-              return GPUShaderStage.FRAGMENT
-            case 'compute':
-              return GPUShaderStage.COMPUTE
-            case 'all':
-            default:
-              return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE
-          }
-        })()
-      : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE
+    this.visibility = getBindingVisibility(visibility)
 
     this.options = {
       label,

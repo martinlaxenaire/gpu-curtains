@@ -85,7 +85,8 @@ class RenderPass {
         format: this.options.depthFormat,
         sampleCount: this.options.sampleCount,
         qualityRatio: this.options.qualityRatio,
-        usage: "depth"
+        type: "depth",
+        usage: ["renderAttachment", "textureBinding"]
       });
     }
   }
@@ -101,7 +102,8 @@ class RenderPass {
           format: colorAttachment.targetFormat,
           sampleCount: this.options.sampleCount,
           qualityRatio: this.options.qualityRatio,
-          usage: "texture"
+          type: "texture",
+          usage: ["copySrc", "copyDst", "renderAttachment", "textureBinding"]
         })
       );
     });
@@ -121,7 +123,7 @@ class RenderPass {
             format: colorAttachment.targetFormat,
             sampleCount: 1,
             qualityRatio: this.options.qualityRatio,
-            usage: "texture"
+            type: "texture"
           })
         );
       });

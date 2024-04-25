@@ -33,13 +33,14 @@ export class WritableBufferBinding extends BufferBinding {
     visibility,
     useStruct = true,
     access = 'read_write',
+    usage = [],
     struct = {},
     shouldCopyResult = false,
   }: WritableBufferBindingParams) {
     bindingType = 'storage'
-    visibility = 'compute'
+    visibility = ['compute']
 
-    super({ label, name, bindingType, visibility, useStruct, access, struct })
+    super({ label, name, bindingType, visibility, useStruct, access, usage, struct })
 
     this.options = {
       ...this.options,

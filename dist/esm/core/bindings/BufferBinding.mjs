@@ -20,6 +20,7 @@ class BufferBinding extends Binding {
     visibility,
     useStruct = true,
     access = "read",
+    usage = [],
     struct = {}
   }) {
     bindingType = bindingType ?? "uniform";
@@ -28,6 +29,7 @@ class BufferBinding extends Binding {
       ...this.options,
       useStruct,
       access,
+      usage,
       struct
     };
     this.cacheKey += `${useStruct},${access},`;

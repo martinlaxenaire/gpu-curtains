@@ -74,6 +74,7 @@ export class PingPongPlane extends FullscreenPlane {
       label: parameters.label ? `${parameters.label} render texture` : 'PingPongPlane render texture',
       name: 'renderTexture',
       ...(parameters.targets && parameters.targets.length && { format: parameters.targets[0].format }),
+      usage: ['copyDst', 'textureBinding'],
     } as RenderTextureParams)
   }
 

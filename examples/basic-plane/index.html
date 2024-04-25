@@ -158,16 +158,19 @@
           },
           // uniforms
           uniforms: {
-            // this will add the following WGSL code snippet to your shaders:
+            // this will add the following WGSL code snippet to your vertex shader:
             //
+            // ```
             // struct Frames {
             //   elapsed: f32
             // };
             //
-            // @group(2) @binding(0) var<uniform> frames: Frames;
+            // @group(2) @binding(1) var<uniform> frames: Frames;
+            // ```
             //
-            // explains why you can access your uniform value by using frames.elapsed in WGSL
+            // explains why you can access your uniform value by using frames.elapsed in your WGSL shader code
             frames: {
+              visibility: ['vertex'],
               struct: {
                 elapsed: {
                   type: 'f32', // this means our uniform is a float

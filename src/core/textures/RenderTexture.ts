@@ -1,11 +1,12 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { TextureBinding, TextureBindingParams } from '../bindings/TextureBinding'
+import { TextureBinding } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { Texture } from './Texture'
 import { TextureSize } from '../../types/Textures'
+import { getRenderTextureUsage, TextureUsageKeys } from './utils'
 
 /**
  * Define the possible binding types of a {@link RenderTexture}
@@ -28,7 +29,7 @@ export interface RenderTextureBaseParams {
   qualityRatio?: number
 
   /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
-  usage?: RenderTextureBindingType
+  type?: RenderTextureBindingType
   /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
   format?: GPUTextureFormat
   /** Optional texture binding memory access type, mainly used for storage textures */
@@ -39,6 +40,8 @@ export interface RenderTextureBaseParams {
   sampleCount?: GPUSize32
   /** The {@link RenderTexture} shaders visibility sent to the {@link RenderTexture#textureBinding | texture binding} */
   visibility?: BindingParams['visibility']
+  /** Allowed usages for the {@link RenderTexture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names} */
+  usage?: TextureUsageKeys[]
 }
 
 /**
@@ -53,7 +56,7 @@ export interface RenderTextureParams extends RenderTextureBaseParams {
 const defaultRenderTextureParams: RenderTextureParams = {
   label: 'RenderTexture',
   name: 'renderTexture',
-  usage: 'texture',
+  type: 'texture',
   access: 'write',
   fromTexture: null,
   viewDimension: '2d',
@@ -213,15 +216,7 @@ export class RenderTexture {
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
-      usage:
-        // TODO let user chose?
-        // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-        this.options.usage !== 'storage'
-          ? GPUTextureUsage.TEXTURE_BINDING |
-            GPUTextureUsage.COPY_SRC |
-            GPUTextureUsage.COPY_DST |
-            GPUTextureUsage.RENDER_ATTACHMENT
-          : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+      usage: getRenderTextureUsage(this.options.usage, this.options.type),
     } as GPUTextureDescriptor)
 
     // update texture binding
@@ -236,7 +231,7 @@ export class RenderTexture {
       new TextureBinding({
         label: this.options.label + ': ' + this.options.name + ' render texture',
         name: this.options.name,
-        bindingType: this.options.usage,
+        bindingType: this.options.type,
         visibility: this.options.visibility,
         texture: this.texture,
         format: this.options.format,

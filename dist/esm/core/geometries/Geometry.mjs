@@ -282,7 +282,7 @@ class Geometry {
         vertexBuffer.buffer.createBuffer(renderer, {
           label: label + ": " + vertexBuffer.name + " buffer",
           size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
-          usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.VERTEX : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          usage: this.options.mapBuffersAtCreation ? ["vertex"] : ["copyDst", "vertex"],
           mappedAtCreation: this.options.mapBuffersAtCreation
         });
         this.uploadBuffer(renderer, vertexBuffer);

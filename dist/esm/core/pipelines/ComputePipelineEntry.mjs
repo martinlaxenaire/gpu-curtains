@@ -46,7 +46,6 @@ class ComputePipelineEntry extends PipelineEntry {
         binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
           groupsBindings.push({
             groupIndex: bindGroup.index,
-            visibility: binding.visibility,
             bindIndex,
             wgslStructFragment: binding.wgslStructFragment,
             wgslGroupFragment: groupFragment,

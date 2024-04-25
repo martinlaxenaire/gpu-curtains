@@ -85,7 +85,7 @@ window.addEventListener('load', async () => {
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
     container: '#canvas',
-    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    pixelRatio: 1, // limit pixel ratio for performance, especially since everything's gonna be blurred anyway
     renderPass: {
       sampleCount: 1, // no need for MSAA here!
     },
@@ -175,7 +175,7 @@ window.addEventListener('load', async () => {
   const blurredTexture = new RenderTexture(gpuCurtains, {
     label: 'Blur render texture',
     name: 'blurredTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     format,
   })
 
@@ -192,14 +192,14 @@ window.addEventListener('load', async () => {
   // const blurredTexture = shaderPass.createRenderTexture({
   //   label: 'Blur render texture',
   //   name: 'blurredTexture',
-  //   visibility: 'fragment',
+  //   visibility: ['fragment'],
   //   format,
   // })
 
   const inputTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute input texture',
     name: 'inputTexture',
-    visibility: 'compute',
+    visibility: ['compute'],
     format,
     fromTexture: shaderPass.renderTexture,
   })
@@ -207,16 +207,16 @@ window.addEventListener('load', async () => {
   const tempTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute temp texture',
     name: 'outputTexture',
-    usage: 'storage',
-    visibility: 'compute',
+    type: 'storage',
+    visibility: ['compute'],
     format,
   })
 
   const outputTexture = new RenderTexture(gpuCurtains, {
     label: 'Compute output texture',
     name: 'outputTexture',
-    usage: 'storage',
-    visibility: 'compute',
+    type: 'storage',
+    visibility: ['compute'],
     format,
   })
 
@@ -228,7 +228,7 @@ window.addEventListener('load', async () => {
     label: 'Direction',
     name: 'direction',
     bindingType: 'uniform',
-    visibility: 'compute',
+    visibility: ['compute'],
     struct: {
       flip: {
         type: 'u32',
@@ -241,7 +241,7 @@ window.addEventListener('load', async () => {
     label: 'Direction',
     name: 'direction',
     bindingType: 'uniform',
-    visibility: 'compute',
+    visibility: ['compute'],
     struct: {
       flip: {
         type: 'u32',

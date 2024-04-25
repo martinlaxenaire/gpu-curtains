@@ -3,7 +3,7 @@ import { Renderer } from '../renderers/utils';
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, ReadOnlyInputBindings } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { TextureBindGroupParams } from './TextureBindGroup';
-import { BindingType } from '../bindings/Binding';
+import { BufferBindingType } from '../bindings/Binding';
 /**
  * Used to handle all inputs data sent to the GPU.<br>
  * In WebGPU, data (buffers, textures or samplers, called bindings) are organised by bind groups, containing those bindings.
@@ -37,13 +37,14 @@ import { BindingType } from '../bindings/Binding';
  *   label: 'My bind group',
  *   uniforms: {
  *     params: {
+ *       visibility: ['fragment'],
  *       struct: {
  *         opacity: {
- *           type: 'f32',
+ *           value: 'f32',
  *           value: 1,
  *         },
  *         mousePosition: {
- *           type: 'vec2f',
+ *           value: 'vec2f',
  *           value: new Vec2(),
  *         },
  *       },
@@ -107,7 +108,7 @@ export declare class BindGroup {
      * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding
      * @returns - a {@link bindings} array
      */
-    createInputBindings(bindingType?: BindingType, inputs?: ReadOnlyInputBindings): BindGroupBindingElement[];
+    createInputBindings(bindingType?: BufferBindingType, inputs?: ReadOnlyInputBindings): BindGroupBindingElement[];
     /**
      * Create and adds {@link bindings} based on inputs provided upon creation
      */

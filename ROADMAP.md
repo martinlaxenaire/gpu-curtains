@@ -30,7 +30,6 @@
 ## TODO / possible improvements
 
 - Improve typedoc documentation?
-- Use constants for WebGPU buffers and textures flags/usages? Add to options/parameters?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
 - Mesh raycasting?

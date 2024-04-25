@@ -38,6 +38,7 @@ class ShaderPass extends FullscreenPlane {
       label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
       name: "renderTexture",
       fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+      usage: ["copySrc", "copyDst", "textureBinding"],
       ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
     });
   }

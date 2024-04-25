@@ -265,7 +265,7 @@ export class RenderPipelineEntry extends PipelineEntry {
         binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
           groupsBindings.push({
             groupIndex: bindGroup.index,
-            visibility: binding.visibility,
+            visibility: binding.options.visibility,
             bindIndex,
             wgslStructFragment: (binding as BindGroupBufferBindingElement).wgslStructFragment,
             wgslGroupFragment: groupFragment,
@@ -280,10 +280,7 @@ export class RenderPipelineEntry extends PipelineEntry {
     }
 
     for (const groupBinding of groupsBindings) {
-      if (
-        groupBinding.visibility === GPUShaderStage.VERTEX ||
-        groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)
-      ) {
+      if (groupBinding.visibility.includes('vertex')) {
         // do not duplicate structs
         if (
           groupBinding.wgslStructFragment &&
@@ -300,11 +297,7 @@ export class RenderPipelineEntry extends PipelineEntry {
         }
       }
 
-      if (
-        this.options.shaders.fragment &&
-        (groupBinding.visibility === GPUShaderStage.FRAGMENT ||
-          groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE))
-      ) {
+      if (this.options.shaders.fragment && groupBinding.visibility.includes('fragment')) {
         // do not duplicate structs
         if (
           groupBinding.wgslStructFragment &&

@@ -170,7 +170,7 @@ window.addEventListener('load', async () => {
   const depthTexture = postProPass.createRenderTexture({
     label: 'Depth texture',
     name: 'depthTexture',
-    usage: 'depth',
+    type: 'depth',
     fromTexture: gpuCameraRenderer.renderPass.depthTexture,
     //format: 'depth24plus',
     //sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,

@@ -83,11 +83,12 @@ class BindGroup {
           label: toKebabCase(binding.label || inputKey),
           name: inputKey,
           bindingType,
-          visibility: binding.access === "read_write" ? "compute" : binding.visibility,
+          visibility: binding.access === "read_write" ? ["compute"] : binding.visibility,
           useStruct: true,
           // by default
           access: binding.access ?? "read",
           // read by default
+          ...binding.usage && { usage: binding.usage },
           struct: binding.struct,
           ...binding.shouldCopyResult !== void 0 && { shouldCopyResult: binding.shouldCopyResult }
         };
@@ -226,13 +227,14 @@ class BindGroup {
   createBindingBuffer(binding) {
     binding.buffer.createBuffer(this.renderer, {
       label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
-      usage: binding.bindingType === "uniform" ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
+      usage: [...["copySrc", "copyDst", binding.bindingType], ...binding.options.usage]
     });
     if ("resultBuffer" in binding) {
       binding.resultBuffer.createBuffer(this.renderer, {
         label: this.options.label + ": Result buffer from: " + binding.label,
         size: binding.arrayBuffer.byteLength,
-        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+        //usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+        usage: ["copyDst", "mapRead"]
       });
     }
   }

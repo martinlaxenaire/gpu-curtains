@@ -143,7 +143,7 @@ export class IndexedGeometry extends Geometry {
     this.indexBuffer.buffer.createBuffer(renderer, {
       label: label + ': index buffer',
       size: this.indexBuffer.array.byteLength,
-      usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.INDEX : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+      usage: this.options.mapBuffersAtCreation ? ['index'] : ['copyDst', 'index'],
       mappedAtCreation: this.options.mapBuffersAtCreation,
     })
 

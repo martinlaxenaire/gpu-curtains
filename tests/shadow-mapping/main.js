@@ -100,7 +100,7 @@ window.addEventListener('load', async () => {
   const shadowDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'Shadow depth texture',
     name: 'shadowDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: shadowMapTextureFormat,
     sampleCount: shadowDepthSampleCount,
     fixedSize: {
@@ -445,7 +445,7 @@ window.addEventListener('load', async () => {
   const depthTexture = debugPlane.createRenderTexture({
     label: 'Debug depth texture',
     name: 'depthTexture',
-    usage: 'depth',
+    type: 'depth',
     fromTexture: shadowDepthTexture,
   })
 

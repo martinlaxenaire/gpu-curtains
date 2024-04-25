@@ -235,7 +235,7 @@ window.addEventListener('load', async () => {
   const OITOpaqueTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     //format: OITOpaqueTarget.outputTextures[0].format,
     fromTexture: OITOpaqueTarget.outputTextures[0], // same as OITOpaqueTarget.renderTexture
   })
@@ -244,7 +244,7 @@ window.addEventListener('load', async () => {
   const OITAccumTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT accum texture',
     name: 'oITAccumTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     //format: OITTransparentTarget.outputTextures[0].format,
     fromTexture: OITTransparentTarget.outputTextures[0],
   })
@@ -252,7 +252,7 @@ window.addEventListener('load', async () => {
   const OITRevealTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'OIT reveal texture',
     name: 'oITRevealTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     //format: OITTransparentTarget.outputTextures[1].format,
     fromTexture: OITTransparentTarget.outputTextures[1],
   })

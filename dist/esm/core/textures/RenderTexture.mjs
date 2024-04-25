@@ -1,6 +1,7 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { TextureBinding } from '../bindings/TextureBinding.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
+import { getRenderTextureUsage } from './utils.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -24,7 +25,7 @@ var _autoResize;
 const defaultRenderTextureParams = {
   label: "RenderTexture",
   name: "renderTexture",
-  usage: "texture",
+  type: "texture",
   access: "write",
   fromTexture: null,
   viewDimension: "2d",
@@ -112,11 +113,7 @@ class RenderTexture {
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
-      usage: (
-        // TODO let user chose?
-        // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-        this.options.usage !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
-      )
+      usage: getRenderTextureUsage(this.options.usage, this.options.type)
     });
     this.textureBinding.resource = this.texture;
   }
@@ -128,7 +125,7 @@ class RenderTexture {
       new TextureBinding({
         label: this.options.label + ": " + this.options.name + " render texture",
         name: this.options.name,
-        bindingType: this.options.usage,
+        bindingType: this.options.type,
         visibility: this.options.visibility,
         texture: this.texture,
         format: this.options.format,

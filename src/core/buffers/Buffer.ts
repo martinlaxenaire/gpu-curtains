@@ -1,4 +1,13 @@
 import { generateUUID } from '../../utils/utils'
+import { BufferUsageKeys, getBufferUsages } from './utils'
+
+/**
+ * Parameters used to create a {@link Buffer}.
+ */
+export interface BufferParams extends Partial<Omit<GPUBufferDescriptor, 'usage'>> {
+  /** Allowed usages for the {@link Buffer#GPUBuffer | GPU buffer} as an array of {@link BufferUsageKeys | buffer usages names} */
+  usage?: BufferUsageKeys[]
+}
 
 /**
  * Used as a wrapper around {@link GPUBuffer}.
@@ -27,9 +36,10 @@ export class Buffer {
     {
       label = 'Buffer',
       size = 0,
-      usage = GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+      //usage = GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+      usage = ['copySrc', 'copyDst'],
       mappedAtCreation = false,
-    }: GPUBufferDescriptor = {} as GPUBufferDescriptor
+    }: BufferParams = {} as BufferParams
   ) {
     this.type = 'Buffer'
 
@@ -42,7 +52,7 @@ export class Buffer {
     this.options = {
       label,
       size,
-      usage,
+      usage: getBufferUsages(usage),
       mappedAtCreation,
     }
   }
@@ -62,8 +72,15 @@ export class Buffer {
    * @param renderer - {@link core/renderers/GPURenderer.GPURenderer | renderer} used to create the {@link GPUBuffer}.
    * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
    */
-  createBuffer(renderer, options = {}) {
-    this.options = { ...this.options, ...options }
+  createBuffer(renderer, options: BufferParams = {}) {
+    const { usage, ...staticOptions } = options
+
+    this.options = {
+      ...this.options,
+      ...staticOptions,
+      ...(usage !== undefined && { usage: getBufferUsages(usage) }),
+    }
+
     this.setBuffer(renderer.createBuffer(this))
   }
 

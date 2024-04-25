@@ -581,7 +581,8 @@ export class GPURenderer {
       dstBuffer.createBuffer(this, {
         label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.options.label}`,
         size: srcBuffer.GPUBuffer.size,
-        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+        //usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+        usage: ['copyDst', 'mapRead'],
       })
     }
 
