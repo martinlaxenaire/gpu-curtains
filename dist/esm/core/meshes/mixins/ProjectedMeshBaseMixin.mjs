@@ -141,6 +141,7 @@ function ProjectedMeshBaseMixin(Base) {
     setMaterial(meshParameters) {
       const matricesUniforms = {
         label: "Matrices",
+        visibility: ["vertex"],
         struct: {
           model: {
             type: "mat4x4f",

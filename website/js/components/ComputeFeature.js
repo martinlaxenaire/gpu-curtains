@@ -54,6 +54,7 @@ export class ComputeFeature {
       storages: {
         particles: {
           access: 'read_write',
+          usage: ['vertex'], // we're going to use this buffer as a vertex buffer along default usages
           struct: {
             position: {
               type: 'array<vec4f>',

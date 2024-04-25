@@ -1,6 +1,13 @@
 /// <reference types="dist" />
 import { BufferBinding } from './BufferBinding';
 import { TextureBinding } from './TextureBinding';
+import { MaterialShadersType } from '../../types/Materials';
+/**
+ * Get the corresponding {@link GPUShaderStageFlags | shaders visibility bitwise flags} based on an array of {@link MaterialShadersType | shaders types names}.
+ * @param visibilities - array of {@link MaterialShadersType | shaders types names}.
+ * @returns - corresponding {@link GPUShaderStageFlags | shaders visibility bitwise flags}.
+ */
+export declare const getBindingVisibility: (visibilities?: MaterialShadersType[]) => GPUShaderStageFlags;
 /** Defines a typed array */
 export type TypedArray = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
 /** Defines a typed array constructor */

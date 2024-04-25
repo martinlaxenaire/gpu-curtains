@@ -165,40 +165,16 @@
     };
   })();
 
-  class Binding {
-    /**
-     * Binding constructor
-     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
-     */
-    constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility = "all" }) {
-      this.label = label;
-      this.name = toCamelCase(name);
-      this.bindingType = bindingType;
-      this.visibility = visibility ? (() => {
-        switch (visibility) {
-          case "vertex":
-            return GPUShaderStage.VERTEX;
-          case "fragment":
-            return GPUShaderStage.FRAGMENT;
-          case "compute":
-            return GPUShaderStage.COMPUTE;
-          case "all":
-          default:
-            return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
-        }
-      })() : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
-      this.options = {
-        label,
-        name,
-        bindingType,
-        visibility
-      };
-      this.shouldResetBindGroup = false;
-      this.shouldResetBindGroupLayout = false;
-      this.cacheKey = `${bindingType},${visibility},`;
-    }
-  }
-
+  const bindingVisibilities = /* @__PURE__ */ new Map([
+    ["vertex", GPUShaderStage.VERTEX],
+    ["fragment", GPUShaderStage.FRAGMENT],
+    ["compute", GPUShaderStage.COMPUTE]
+  ]);
+  const getBindingVisibility = (visibilities = []) => {
+    return visibilities.reduce((acc, v) => {
+      return acc | bindingVisibilities.get(v);
+    }, 0);
+  };
   const bufferLayouts = {
     i32: { numElements: 1, align: 4, size: 4, type: "i32", View: Int32Array },
     u32: { numElements: 1, align: 4, size: 4, type: "u32", View: Uint32Array },
@@ -314,6 +290,33 @@
       }
     })();
   };
+
+  class Binding {
+    /**
+     * Binding constructor
+     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
+     */
+    constructor({
+      label = "Uniform",
+      name = "uniform",
+      bindingType = "uniform",
+      visibility = ["vertex", "fragment", "compute"]
+    }) {
+      this.label = label;
+      this.name = toCamelCase(name);
+      this.bindingType = bindingType;
+      this.visibility = getBindingVisibility(visibility);
+      this.options = {
+        label,
+        name,
+        bindingType,
+        visibility
+      };
+      this.shouldResetBindGroup = false;
+      this.shouldResetBindGroupLayout = false;
+      this.cacheKey = `${bindingType},${visibility},`;
+    }
+  }
 
   class Vec2 {
     /**
@@ -1482,6 +1485,24 @@
     }
   }
 
+  const bufferUsages = /* @__PURE__ */ new Map([
+    ["copySrc", GPUBufferUsage.COPY_SRC],
+    ["copyDst", GPUBufferUsage.COPY_DST],
+    ["index", GPUBufferUsage.INDEX],
+    ["indirect", GPUBufferUsage.INDIRECT],
+    ["mapRead", GPUBufferUsage.MAP_READ],
+    ["mapWrite", GPUBufferUsage.MAP_WRITE],
+    ["queryResolve", GPUBufferUsage.QUERY_RESOLVE],
+    ["storage", GPUBufferUsage.STORAGE],
+    ["uniform", GPUBufferUsage.UNIFORM],
+    ["vertex", GPUBufferUsage.VERTEX]
+  ]);
+  const getBufferUsages = (usages = []) => {
+    return usages.reduce((acc, v) => {
+      return acc | bufferUsages.get(v);
+    }, 0);
+  };
+
   class Buffer {
     /**
      * Buffer constructor
@@ -1490,7 +1511,8 @@
     constructor({
       label = "Buffer",
       size = 0,
-      usage = GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+      //usage = GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+      usage = ["copySrc", "copyDst"],
       mappedAtCreation = false
     } = {}) {
       this.type = "Buffer";
@@ -1500,7 +1522,7 @@
       this.options = {
         label,
         size,
-        usage,
+        usage: getBufferUsages(usage),
         mappedAtCreation
       };
     }
@@ -1518,7 +1540,12 @@
      * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
      */
     createBuffer(renderer, options = {}) {
-      this.options = { ...this.options, ...options };
+      const { usage, ...staticOptions } = options;
+      this.options = {
+        ...this.options,
+        ...staticOptions,
+        ...usage !== void 0 && { usage: getBufferUsages(usage) }
+      };
       this.setBuffer(renderer.createBuffer(this));
     }
     /**
@@ -1576,6 +1603,7 @@
       visibility,
       useStruct = true,
       access = "read",
+      usage = [],
       struct = {}
     }) {
       bindingType = bindingType ?? "uniform";
@@ -1584,6 +1612,7 @@
         ...this.options,
         useStruct,
         access,
+        usage,
         struct
       };
       this.cacheKey += `${useStruct},${access},`;
@@ -1907,12 +1936,13 @@
       visibility,
       useStruct = true,
       access = "read_write",
+      usage = [],
       struct = {},
       shouldCopyResult = false
     }) {
       bindingType = "storage";
-      visibility = "compute";
-      super({ label, name, bindingType, visibility, useStruct, access, struct });
+      visibility = ["compute"];
+      super({ label, name, bindingType, visibility, useStruct, access, usage, struct });
       this.options = {
         ...this.options,
         shouldCopyResult
@@ -2003,11 +2033,12 @@
             label: toKebabCase(binding.label || inputKey),
             name: inputKey,
             bindingType,
-            visibility: binding.access === "read_write" ? "compute" : binding.visibility,
+            visibility: binding.access === "read_write" ? ["compute"] : binding.visibility,
             useStruct: true,
             // by default
             access: binding.access ?? "read",
             // read by default
+            ...binding.usage && { usage: binding.usage },
             struct: binding.struct,
             ...binding.shouldCopyResult !== void 0 && { shouldCopyResult: binding.shouldCopyResult }
           };
@@ -2146,13 +2177,14 @@
     createBindingBuffer(binding) {
       binding.buffer.createBuffer(this.renderer, {
         label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
-        usage: binding.bindingType === "uniform" ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
+        usage: [...["copySrc", "copyDst", binding.bindingType], ...binding.options.usage]
       });
       if ("resultBuffer" in binding) {
         binding.resultBuffer.createBuffer(this.renderer, {
           label: this.options.label + ": Result buffer from: " + binding.label,
           size: binding.arrayBuffer.byteLength,
-          usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+          //usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+          usage: ["copyDst", "mapRead"]
         });
       }
     }
@@ -2343,7 +2375,7 @@
     }) {
       bindingType = bindingType ?? "texture";
       if (bindingType === "storage") {
-        visibility = "compute";
+        visibility = ["compute"];
       }
       super({ label, name, bindingType, visibility });
       this.options = {
@@ -3404,7 +3436,7 @@
     useExternalTextures: true,
     fromTexture: null,
     viewDimension: "2d",
-    visibility: "fragment",
+    visibility: ["fragment"],
     cache: true
   };
   class Texture extends Object3D {
@@ -4390,6 +4422,25 @@
     }
   }
 
+  const textureUsages = /* @__PURE__ */ new Map([
+    ["copySrc", GPUTextureUsage.COPY_SRC],
+    ["copyDst", GPUTextureUsage.COPY_DST],
+    ["renderAttachment", GPUTextureUsage.RENDER_ATTACHMENT],
+    ["storageBinding", GPUTextureUsage.STORAGE_BINDING],
+    ["textureBinding", GPUTextureUsage.TEXTURE_BINDING]
+  ]);
+  const getTextureUsages = (usages = []) => {
+    return usages.reduce((acc, v) => {
+      return acc | textureUsages.get(v);
+    }, 0);
+  };
+  const getRenderTextureUsage = (usages = [], textureType) => {
+    if (usages.length) {
+      return getTextureUsages(usages);
+    }
+    return textureType !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
+  };
+
   var __accessCheck$6 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -4412,7 +4463,7 @@
   const defaultRenderTextureParams = {
     label: "RenderTexture",
     name: "renderTexture",
-    usage: "texture",
+    type: "texture",
     access: "write",
     fromTexture: null,
     viewDimension: "2d",
@@ -4500,11 +4551,7 @@
         size: [this.size.width, this.size.height, this.size.depth ?? 1],
         dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
-        usage: (
-          // TODO let user chose?
-          // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-          this.options.usage !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
-        )
+        usage: getRenderTextureUsage(this.options.usage, this.options.type)
       });
       this.textureBinding.resource = this.texture;
     }
@@ -4516,7 +4563,7 @@
         new TextureBinding({
           label: this.options.label + ": " + this.options.name + " render texture",
           name: this.options.name,
-          bindingType: this.options.usage,
+          bindingType: this.options.type,
           visibility: this.options.visibility,
           texture: this.texture,
           format: this.options.format,
@@ -6080,7 +6127,7 @@
           vertexBuffer.buffer.createBuffer(renderer, {
             label: label + ": " + vertexBuffer.name + " buffer",
             size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
-            usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.VERTEX : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            usage: this.options.mapBuffersAtCreation ? ["vertex"] : ["copyDst", "vertex"],
             mappedAtCreation: this.options.mapBuffersAtCreation
           });
           this.uploadBuffer(renderer, vertexBuffer);
@@ -6228,7 +6275,7 @@
       this.indexBuffer.buffer.createBuffer(renderer, {
         label: label + ": index buffer",
         size: this.indexBuffer.array.byteLength,
-        usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.INDEX : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+        usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
         mappedAtCreation: this.options.mapBuffersAtCreation
       });
       this.uploadBuffer(renderer, this.indexBuffer);
@@ -6950,7 +6997,7 @@ Rendering options responsible: { ${newProperties.map(
       setMaterial(meshParameters) {
         this.setShaders();
         meshParameters.shaders = this.options.shaders;
-        meshParameters.label = meshParameters.label + " Material";
+        meshParameters.label = meshParameters.label + " material";
         this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
       }
       /**
@@ -7285,7 +7332,7 @@ Rendering options responsible: { ${newProperties.map(
       if (!parameters.shaders || !parameters.shaders.vertex) {
         ["uniforms", "storages"].forEach((bindingType) => {
           Object.values(parameters[bindingType] ?? {}).forEach(
-            (binding) => binding.visibility = "fragment"
+            (binding) => binding.visibility = ["fragment"]
           );
         });
       }
@@ -7605,6 +7652,7 @@ struct VSOutput {
       setMaterial(meshParameters) {
         const matricesUniforms = {
           label: "Matrices",
+          visibility: ["vertex"],
           struct: {
             model: {
               type: "mat4x4f",
@@ -8022,7 +8070,7 @@ ${this.shaders.full.head}`;
           binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
             groupsBindings.push({
               groupIndex: bindGroup.index,
-              visibility: binding.visibility,
+              visibility: binding.options.visibility,
               bindIndex,
               wgslStructFragment: binding.wgslStructFragment,
               wgslGroupFragment: groupFragment,
@@ -8033,7 +8081,7 @@ ${this.shaders.full.head}`;
         });
       }
       for (const groupBinding of groupsBindings) {
-        if (groupBinding.visibility === GPUShaderStage.VERTEX || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)) {
+        if (groupBinding.visibility.includes("vertex")) {
           if (groupBinding.wgslStructFragment && this.shaders.vertex.head.indexOf(groupBinding.wgslStructFragment) === -1) {
             this.shaders.vertex.head = `
 ${groupBinding.wgslStructFragment}
@@ -8047,7 +8095,7 @@ ${this.shaders.vertex.head}`;
 `;
           }
         }
-        if (this.options.shaders.fragment && (groupBinding.visibility === GPUShaderStage.FRAGMENT || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE))) {
+        if (this.options.shaders.fragment && groupBinding.visibility.includes("fragment")) {
           if (groupBinding.wgslStructFragment && this.shaders.fragment.head.indexOf(groupBinding.wgslStructFragment) === -1) {
             this.shaders.fragment.head = `
 ${groupBinding.wgslStructFragment}
@@ -8282,7 +8330,6 @@ ${this.shaders.full.head}`;
           binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
             groupsBindings.push({
               groupIndex: bindGroup.index,
-              visibility: binding.visibility,
               bindIndex,
               wgslStructFragment: binding.wgslStructFragment,
               wgslGroupFragment: groupFragment,
@@ -9102,7 +9149,8 @@ ${this.shaders.compute.head}`;
           format: this.options.depthFormat,
           sampleCount: this.options.sampleCount,
           qualityRatio: this.options.qualityRatio,
-          usage: "depth"
+          type: "depth",
+          usage: ["renderAttachment", "textureBinding"]
         });
       }
     }
@@ -9118,7 +9166,8 @@ ${this.shaders.compute.head}`;
             format: colorAttachment.targetFormat,
             sampleCount: this.options.sampleCount,
             qualityRatio: this.options.qualityRatio,
-            usage: "texture"
+            type: "texture",
+            usage: ["copySrc", "copyDst", "renderAttachment", "textureBinding"]
           })
         );
       });
@@ -9138,7 +9187,7 @@ ${this.shaders.compute.head}`;
               format: colorAttachment.targetFormat,
               sampleCount: 1,
               qualityRatio: this.options.qualityRatio,
-              usage: "texture"
+              type: "texture"
             })
           );
         });
@@ -9747,7 +9796,8 @@ ${this.shaders.compute.head}`;
         dstBuffer.createBuffer(this, {
           label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.options.label}`,
           size: srcBuffer.GPUBuffer.size,
-          usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+          //usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+          usage: ["copyDst", "mapRead"]
         });
       }
       if (srcBuffer.GPUBuffer.mapState !== "unmapped") {
@@ -10241,7 +10291,7 @@ ${this.shaders.compute.head}`;
       this.cameraBufferBinding = new BufferBinding({
         label: "Camera",
         name: "camera",
-        visibility: "vertex",
+        visibility: ["vertex"],
         struct: {
           view: {
             // camera view matrix
@@ -10701,7 +10751,8 @@ ${this.shaders.compute.head}`;
           label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
           name: "renderTexture",
           format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
-          ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
+          ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
+          usage: ["copySrc", "renderAttachment", "textureBinding"]
         });
       }
       this.addToScene();
@@ -10821,6 +10872,7 @@ struct VSOutput {
         label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
         name: "renderTexture",
         fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+        usage: ["copySrc", "copyDst", "textureBinding"],
         ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
       });
     }
@@ -11391,7 +11443,8 @@ struct VSOutput {
       this.createRenderTexture({
         label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
         name: "renderTexture",
-        ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format }
+        ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format },
+        usage: ["copyDst", "textureBinding"]
       });
     }
     /**

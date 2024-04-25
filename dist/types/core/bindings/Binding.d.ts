@@ -2,12 +2,14 @@
 import { MaterialShadersType } from '../../types/Materials';
 import { TextureBinding } from './TextureBinding';
 import { SamplerBinding } from './SamplerBinding';
+/** Defines all kind of buffer binding types */
+export type BufferBindingType = 'uniform' | 'storage';
 /** Defines all kind of texture binding types */
 export type TextureBindingType = 'texture' | 'externalTexture' | 'storage' | 'depth';
+/** Defines all kind of sampler binding types */
+export type SamplerBindingType = 'sampler';
 /** Defines all kind of binding types  */
-export type BindingType = 'uniform' | 'storage' | TextureBindingType | 'sampler';
-/** Defines all binding vibility types */
-export type BindingVisibility = MaterialShadersType | 'all';
+export type BindingType = BufferBindingType | TextureBindingType | SamplerBindingType;
 /** Defines buffer binding memory access types (read only or read/write) */
 export type BufferBindingMemoryAccessType = 'read' | 'read_write';
 /** Defines texture binding memory access types (read only, write only or read/write) */
@@ -26,8 +28,8 @@ export interface BindingParams {
     name?: string;
     /** {@link BindingType | binding type} to use with this {@link Binding} */
     bindingType?: BindingType;
-    /** {@link Binding} variables shaders visibility */
-    visibility?: BindingVisibility;
+    /** {@link Binding} variables shaders visibility as an array of {@link MaterialShadersType | shaders types names} */
+    visibility?: MaterialShadersType[];
 }
 /**
  * Used as a shell to build actual bindings upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
@@ -59,5 +61,5 @@ export declare class Binding {
      * Binding constructor
      * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
      */
-    constructor({ label, name, bindingType, visibility }: BindingParams);
+    constructor({ label, name, bindingType, visibility, }: BindingParams);
 }

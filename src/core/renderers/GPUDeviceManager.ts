@@ -252,7 +252,6 @@ export class GPUDeviceManager {
     this.renderers = []
     this.bindGroups = new Map()
     this.buffers = new Map()
-    // TODO
     this.bindGroupLayouts = new Map()
     this.bufferBindings = new Map()
     this.samplers = []

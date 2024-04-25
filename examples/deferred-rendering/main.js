@@ -70,7 +70,7 @@ window.addEventListener('load', async () => {
   const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
     name: 'gBufferDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: 'depth24plus',
     sampleCount,
   })

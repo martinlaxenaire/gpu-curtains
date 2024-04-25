@@ -110,6 +110,7 @@ export class RenderTarget {
             ? colorAttachments[0].targetFormat
             : this.renderer.options.preferredFormat,
         ...(this.options.qualityRatio !== undefined && { qualityRatio: this.options.qualityRatio }),
+        usage: ['copySrc', 'renderAttachment', 'textureBinding'],
       })
     }
 

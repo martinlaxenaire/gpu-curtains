@@ -93,7 +93,7 @@ class GPUCameraRenderer extends GPURenderer {
     this.cameraBufferBinding = new BufferBinding({
       label: "Camera",
       name: "camera",
-      visibility: "vertex",
+      visibility: ["vertex"],
       struct: {
         view: {
           // camera view matrix

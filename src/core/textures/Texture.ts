@@ -1,6 +1,6 @@
 import { Vec3 } from '../../math/Vec3'
 import { isRenderer, Renderer } from '../renderers/utils'
-import { TextureBinding, TextureBindingParams } from '../bindings/TextureBinding'
+import { TextureBinding } from '../bindings/TextureBinding'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
@@ -21,7 +21,7 @@ const defaultTextureParams: TextureParams = {
   useExternalTextures: true,
   fromTexture: null,
   viewDimension: '2d',
-  visibility: 'fragment',
+  visibility: ['fragment'],
   cache: true,
 }
 

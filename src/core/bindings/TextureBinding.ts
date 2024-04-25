@@ -1,6 +1,5 @@
-import { Binding, BindingMemoryAccessType, BindingParams, BindingType } from './Binding'
+import { Binding, BindingMemoryAccessType, BindingParams, TextureBindingType } from './Binding'
 import {
-  getBindGroupLayoutBindingType,
   getBindGroupLayoutTextureBindingCacheKey,
   getBindGroupLayoutTextureBindingType,
   getTextureBindingWGSLVarType,
@@ -13,6 +12,8 @@ export type TextureBindingResource = GPUTexture | GPUExternalTexture | null
  * An object defining all possible {@link TextureBinding} class instancing parameters
  */
 export interface TextureBindingParams extends BindingParams {
+  /** The binding type of the {@link TextureBinding} */
+  bindingType?: TextureBindingType
   /** {@link TextureBinding} {@link TextureBinding#resource | resource} */
   texture: TextureBindingResource
   /** The {@link GPUTexture | texture} format to use */
@@ -32,6 +33,8 @@ export interface TextureBindingParams extends BindingParams {
  * Also create the appropriate WGSL code snippet to add to the shaders.
  */
 export class TextureBinding extends Binding {
+  /** The binding type of the {@link TextureBinding} */
+  bindingType: TextureBindingType
   /** Our {@link TextureBinding} resource, i.e. a {@link GPUTexture} or {@link GPUExternalTexture} */
   texture: TextureBindingResource
   /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link TextureBinding} */
@@ -57,7 +60,7 @@ export class TextureBinding extends Binding {
     bindingType = bindingType ?? 'texture'
 
     if (bindingType === 'storage') {
-      visibility = 'compute'
+      visibility = ['compute']
     }
 
     super({ label, name, bindingType, visibility })
@@ -123,7 +126,7 @@ export class TextureBinding extends Binding {
    * Set or update our {@link Binding#bindingType | bindingType} and our WGSL code snippet
    * @param bindingType - the new {@link Binding#bindingType | binding type}
    */
-  setBindingType(bindingType: BindingType) {
+  setBindingType(bindingType: TextureBindingType) {
     if (bindingType !== this.bindingType) {
       // binding type has changed!
       if (bindingType) this.shouldResetBindGroupLayout = true

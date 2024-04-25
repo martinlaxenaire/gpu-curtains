@@ -128,7 +128,7 @@ window.addEventListener('load', async () => {
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Cube depth texture',
       name: 'cubeDepthTexture',
-      usage: 'depth',
+      type: 'depth',
       format: 'depth24plus',
       sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
     }),
@@ -140,7 +140,7 @@ window.addEventListener('load', async () => {
     depthTexture: new RenderTexture(gpuCameraRenderer, {
       label: 'Sphere depth texture',
       name: 'sphereDepthTexture',
-      usage: 'depthTexture',
+      type: 'depth',
       format: 'depth24plus',
       sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
     }),
@@ -610,7 +610,7 @@ window.addEventListener('load', async () => {
 
   const cubeDepthTexture = blendPass.createRenderTexture({
     name: 'cubeDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: 'depth24plus',
     fromTexture: blankRenderTarget.options.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
@@ -625,7 +625,7 @@ window.addEventListener('load', async () => {
 
   const sphereDepthTexture = blendPass.createRenderTexture({
     name: 'sphereDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: 'depth24plus',
     fromTexture: selectiveBloomTarget.options.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,

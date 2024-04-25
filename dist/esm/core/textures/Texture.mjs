@@ -31,7 +31,7 @@ const defaultTextureParams = {
   useExternalTextures: true,
   fromTexture: null,
   viewDimension: "2d",
-  visibility: "fragment",
+  visibility: ["fragment"],
   cache: true
 };
 class Texture extends Object3D {

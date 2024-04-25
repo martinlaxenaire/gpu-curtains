@@ -864,7 +864,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     setMaterial(meshParameters: RenderMaterialParams) {
       this.setShaders()
       meshParameters.shaders = this.options.shaders
-      meshParameters.label = meshParameters.label + ' Material'
+      meshParameters.label = meshParameters.label + ' material'
 
       this.useMaterial(new RenderMaterial(this.renderer, meshParameters))
     }

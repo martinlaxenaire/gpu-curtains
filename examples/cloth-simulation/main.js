@@ -203,7 +203,7 @@ const computeClothSim = /* wgsl */ `
       return;
     }
 
-    let prod = cross(p2.xyz - p1, p3.xyz - p1);
+    let prod = cross(p3.xyz - p1, p2.xyz - p1);
 
     if (length(prod) < EPSIL) {
       return;
@@ -432,6 +432,7 @@ window.addEventListener('load', async () => {
     storages: {
       clothVertex: {
         access: 'read_write', // we want a readable AND writable buffer!
+        usage: ['vertex'], // we're going to use this buffer as a vertex buffer along default usages
         struct: {
           position: {
             type: 'array<vec4f>',

@@ -166,7 +166,7 @@ const computeParticles = /* wgsl */ `
   }
   
   // update particle positions
-  @compute @workgroup_size(64) fn updatePos(
+  @compute @workgroup_size(128) fn updatePos(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;
@@ -226,8 +226,6 @@ window.addEventListener('load', async () => {
   // we are going to run a compute shader once instead!
 
   // first we're creating a bind group that is going to be used by both compute passes
-  // to avoid super long alignment/offset buffer computations on the GPU for the positions and life buffers
-  // we're explicitly setting the computeAlignment to false
   const particlesBindGroup = new BindGroup(gpuCurtains.renderer, {
     label: 'Particles bind group',
     uniforms: {
@@ -255,6 +253,7 @@ window.addEventListener('load', async () => {
     storages: {
       particles: {
         access: 'read_write',
+        usage: ['vertex'], // we're going to use this buffer as a vertex buffer along default usages
         struct: {
           position: {
             type: 'array<vec4f>',
@@ -307,7 +306,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'updatePos',
       },
     },
-    dispatchSize: Math.ceil(nbParticles / 64),
+    dispatchSize: Math.ceil(nbParticles / 128),
     bindGroups: [particlesBindGroup],
   })
 

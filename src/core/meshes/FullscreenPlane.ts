@@ -67,7 +67,7 @@ export class FullscreenPlane extends MeshBaseMixin(class {}) {
     if (!parameters.shaders || !parameters.shaders.vertex) {
       ;['uniforms', 'storages'].forEach((bindingType) => {
         Object.values(parameters[bindingType] ?? {}).forEach(
-          (binding: BufferBindingParams) => (binding.visibility = 'fragment')
+          (binding: BufferBindingParams) => (binding.visibility = ['fragment'])
         )
       })
     }

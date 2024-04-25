@@ -14,6 +14,7 @@ import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
 import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl'
 import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl'
+import { BufferBindingParams } from '../../bindings/BufferBinding'
 
 /**
  * Base parameters used to create a ProjectedMesh
@@ -320,8 +321,9 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       // add matrices uniforms
       // https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram
       // https://doc.babylonjs.com/features/featuresDeepDive/materials/shaders/introToShaders#built-in-variables
-      const matricesUniforms = {
+      const matricesUniforms: BufferBindingParams = {
         label: 'Matrices',
+        visibility: ['vertex'],
         struct: {
           model: {
             type: 'mat4x4f',

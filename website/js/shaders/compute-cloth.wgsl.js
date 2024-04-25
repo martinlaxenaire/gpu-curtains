@@ -199,7 +199,7 @@ export const computeClothSim = /* wgsl */ `
       return;
     }
 
-    let prod = cross(p2.xyz - p1, p3.xyz - p1);
+    let prod = cross(p3.xyz - p1, p2.xyz - p1);
 
     if (length(prod) < EPSIL) {
       return;

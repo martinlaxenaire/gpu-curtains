@@ -60,7 +60,7 @@ window.addEventListener('load', async () => {
   const cubeMapTexture = new RenderTexture(gpuCameraRenderer, {
     name: 'cubeMapTexture',
     viewDimension: 'cube',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     fixedSize: {
       width: imageBitmaps[0].width,
       height: imageBitmaps[0].height,

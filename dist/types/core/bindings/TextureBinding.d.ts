@@ -1,11 +1,13 @@
 /// <reference types="dist" />
-import { Binding, BindingMemoryAccessType, BindingParams, BindingType } from './Binding';
+import { Binding, BindingMemoryAccessType, BindingParams, TextureBindingType } from './Binding';
 /** Defines a {@link TextureBinding} {@link TextureBinding#resource | resource} */
 export type TextureBindingResource = GPUTexture | GPUExternalTexture | null;
 /**
  * An object defining all possible {@link TextureBinding} class instancing parameters
  */
 export interface TextureBindingParams extends BindingParams {
+    /** The binding type of the {@link TextureBinding} */
+    bindingType?: TextureBindingType;
     /** {@link TextureBinding} {@link TextureBinding#resource | resource} */
     texture: TextureBindingResource;
     /** The {@link GPUTexture | texture} format to use */
@@ -24,6 +26,8 @@ export interface TextureBindingParams extends BindingParams {
  * Also create the appropriate WGSL code snippet to add to the shaders.
  */
 export declare class TextureBinding extends Binding {
+    /** The binding type of the {@link TextureBinding} */
+    bindingType: TextureBindingType;
     /** Our {@link TextureBinding} resource, i.e. a {@link GPUTexture} or {@link GPUExternalTexture} */
     texture: TextureBindingResource;
     /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link TextureBinding} */
@@ -58,7 +62,7 @@ export declare class TextureBinding extends Binding {
      * Set or update our {@link Binding#bindingType | bindingType} and our WGSL code snippet
      * @param bindingType - the new {@link Binding#bindingType | binding type}
      */
-    setBindingType(bindingType: BindingType): void;
+    setBindingType(bindingType: TextureBindingType): void;
     /**
      * Set or update our texture {@link TextureBindingParams#format | format}. Note that if the texture is a `storage` {@link bindingType} and the `format` value is different from the previous one, the associated {@link core/bindGroups/BindGroup.BindGroup#bindGroupLayout | GPU bind group layout} will be recreated.
      * @param format - new texture {@link TextureBindingParams#format | format} value to use

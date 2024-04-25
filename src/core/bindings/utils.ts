@@ -1,5 +1,26 @@
 import { BufferBinding } from './BufferBinding'
 import { TextureBinding } from './TextureBinding'
+import { MaterialShadersType } from '../../types/Materials'
+
+/**
+ * Map {@link MaterialShadersType | shaders types names} with actual {@link GPUShaderStageFlags | shaders visibility bitwise flags}.
+ */
+const bindingVisibilities: Map<MaterialShadersType, GPUShaderStageFlags> = new Map([
+  ['vertex', GPUShaderStage.VERTEX],
+  ['fragment', GPUShaderStage.FRAGMENT],
+  ['compute', GPUShaderStage.COMPUTE],
+])
+
+/**
+ * Get the corresponding {@link GPUShaderStageFlags | shaders visibility bitwise flags} based on an array of {@link MaterialShadersType | shaders types names}.
+ * @param visibilities - array of {@link MaterialShadersType | shaders types names}.
+ * @returns - corresponding {@link GPUShaderStageFlags | shaders visibility bitwise flags}.
+ */
+export const getBindingVisibility = (visibilities: MaterialShadersType[] = []): GPUShaderStageFlags => {
+  return visibilities.reduce((acc, v) => {
+    return acc | bindingVisibilities.get(v)
+  }, 0)
+}
 
 /** Defines a typed array */
 export type TypedArray =

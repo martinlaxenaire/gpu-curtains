@@ -90,7 +90,7 @@ window.addEventListener('load', async () => {
   const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
     name: 'gBufferDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: 'depth24plus',
     sampleCount,
   })
@@ -362,7 +362,7 @@ window.addEventListener('load', async () => {
   const noiseComputeTexture = new RenderTexture(gpuCameraRenderer, {
     label: 'Noise compute texture',
     name: 'noiseComputeTexture',
-    usage: 'storage',
+    type: 'storage',
     //format: 'rgba16float',
     format: 'rgba8unorm',
     fixedSize: {

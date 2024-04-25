@@ -6,6 +6,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding';
 import { Texture } from './Texture';
 import { TextureSize } from '../../types/Textures';
+import { TextureUsageKeys } from './utils';
 /**
  * Define the possible binding types of a {@link RenderTexture}
  */
@@ -23,7 +24,7 @@ export interface RenderTextureBaseParams {
     /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size or {@link fixedSize}. Used mainly to shrink render target definition. */
     qualityRatio?: number;
     /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
-    usage?: RenderTextureBindingType;
+    type?: RenderTextureBindingType;
     /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
     format?: GPUTextureFormat;
     /** Optional texture binding memory access type, mainly used for storage textures */
@@ -34,6 +35,8 @@ export interface RenderTextureBaseParams {
     sampleCount?: GPUSize32;
     /** The {@link RenderTexture} shaders visibility sent to the {@link RenderTexture#textureBinding | texture binding} */
     visibility?: BindingParams['visibility'];
+    /** Allowed usages for the {@link RenderTexture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names} */
+    usage?: TextureUsageKeys[];
 }
 /**
  * Parameters used to create a {@link RenderTexture}
