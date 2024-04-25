@@ -11,7 +11,7 @@ import { ComputePass } from '../core/computePasses/ComputePass';
 import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera';
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement';
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer';
-import { GPUDeviceManager, GPUDeviceManagerBaseParams } from '../core/renderers/GPUDeviceManager';
+import { GPUDeviceManager, GPUDeviceManagerBaseParams, GPUDeviceManagerSetupParams } from '../core/renderers/GPUDeviceManager';
 import { Renderer } from '../core/renderers/utils';
 /**
  * Options used to create a {@link GPUCurtains}
@@ -116,9 +116,11 @@ export declare class GPUCurtains {
      */
     get renderer(): GPUCurtainsRenderer;
     /**
-     * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts
+     * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
+     * @async
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    setDevice(): Promise<void>;
+    setDevice({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
      * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
      * @async

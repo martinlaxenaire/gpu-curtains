@@ -87,7 +87,7 @@ export declare class Material {
      */
     loseContext(): void;
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
      */
     restoreContext(): void;
     /**

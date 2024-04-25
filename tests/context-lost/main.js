@@ -17,7 +17,14 @@ window.addEventListener('load', async () => {
       console.log(info, gpuCurtains.renderer)
     })
 
-  await gpuCurtains.setDevice()
+  //
+  const adapter = await navigator.gpu.requestAdapter()
+  const device = await adapter.requestDevice()
+
+  await gpuCurtains.setDevice({ adapter, device })
+  //
+
+  //await gpuCurtains.setDevice()
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()

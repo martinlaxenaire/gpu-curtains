@@ -168,10 +168,12 @@ class GPUCurtains {
     return this.renderers[0];
   }
   /**
-   * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts
+   * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
+   * @async
+   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
-  async setDevice() {
-    await this.deviceManager.init();
+  async setDevice({ adapter = null, device = null } = {}) {
+    await this.deviceManager.init({ adapter, device });
   }
   /**
    * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}

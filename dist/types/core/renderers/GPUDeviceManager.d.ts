@@ -27,6 +27,13 @@ export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
     /** Callback to run whenever the {@link GPUDeviceManager#device | device} is lost */
     onDeviceLost?: (info?: GPUDeviceLostInfo) => void;
 }
+/** Optional parameters used to set up/init a {@link GPUAdapter} and {@link GPUDevice} */
+export interface GPUDeviceManagerSetupParams {
+    /** {@link GPUAdapter} to use if set */
+    adapter?: GPUAdapter | null;
+    /** {@link GPUDevice} to use if set */
+    device?: GPUDevice | null;
+}
 /**
  * Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
  *
@@ -81,24 +88,28 @@ export declare class GPUDeviceManager {
      */
     constructor({ label, production, adapterOptions, onError, onDeviceLost, }?: GPUDeviceManagerParams);
     /**
-     * Set our {@link adapter} and {@link device} if possible
+     * Set our {@link adapter} and {@link device} if possible.
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    setAdapterAndDevice(): Promise<void>;
+    setAdapterAndDevice({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
      * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    init(): Promise<void>;
+    init({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
      * Set our {@link adapter} if possible.
      * The adapter represents a specific GPU. Some devices have multiple GPUs.
      * @async
+     * @param adapter - {@link GPUAdapter} to use if set.
      */
-    setAdapter(): Promise<void>;
+    setAdapter(adapter?: GPUAdapter | null): Promise<void>;
     /**
-     * Set our {@link device}
+     * Set our {@link device}.
      * @async
+     * @param device - {@link GPUDevice} to use if set.
      */
-    setDevice(): Promise<void>;
+    setDevice(device?: GPUDevice | null): Promise<void>;
     /**
      * Set our {@link pipelineManager | pipeline manager}
      */
@@ -110,9 +121,11 @@ export declare class GPUDeviceManager {
     loseDevice(): void;
     /**
      * Called when the {@link device} should be restored.
-     * Restore all our renderers
+     * Restore all our renderers.
+     * @async
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    restoreDevice(): Promise<void>;
+    restoreDevice({ adapter, device }?: GPUDeviceManagerSetupParams): Promise<void>;
     /**
      * Set all objects arrays that we'll keep track of
      */

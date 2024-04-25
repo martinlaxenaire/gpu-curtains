@@ -150,6 +150,10 @@ export declare class BindGroup {
      */
     loseContext(): void;
     /**
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to update our bindings.
+     */
+    restoreContext(): void;
+    /**
      * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings(): BindGroupBufferBindingElement[];

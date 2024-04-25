@@ -171,7 +171,7 @@ export class Material {
   }
 
   /**
-   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
    */
   restoreContext() {
     // start with the samplers and textures
@@ -193,14 +193,7 @@ export class Material {
 
     // now the bind groups
     ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
-      if (bindGroup.shouldCreateBindGroup) {
-        bindGroup.createBindGroup()
-      }
-
-      // finally re-write all our buffers
-      for (const bufferBinding of bindGroup.bufferBindings) {
-        bufferBinding.shouldUpdate = true
-      }
+      bindGroup.restoreContext()
     })
   }
 

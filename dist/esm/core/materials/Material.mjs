@@ -84,7 +84,7 @@ class Material {
     this.pipelineEntry.pipeline = null;
   }
   /**
-   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
    */
   restoreContext() {
     for (const sampler of this.samplers) {
@@ -99,12 +99,7 @@ class Material {
       texture.resize(texture.size);
     }
     [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
-      if (bindGroup.shouldCreateBindGroup) {
-        bindGroup.createBindGroup();
-      }
-      for (const bufferBinding of bindGroup.bufferBindings) {
-        bufferBinding.shouldUpdate = true;
-      }
+      bindGroup.restoreContext();
     });
   }
   /**

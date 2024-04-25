@@ -173,6 +173,7 @@ export class BindGroup {
     bindings.forEach((binding) => {
       if ('buffer' in binding) {
         this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
+        binding.buffer.consumers.add(this.uuid)
       }
     })
 
@@ -364,6 +365,20 @@ export class BindGroup {
   }
 
   /**
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to update our bindings.
+   */
+  restoreContext() {
+    if (this.shouldCreateBindGroup) {
+      this.createBindGroup()
+    }
+
+    // finally re-write all our buffers
+    for (const bufferBinding of this.bufferBindings) {
+      bufferBinding.shouldUpdate = true
+    }
+  }
+
+  /**
    * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
    */
   get bufferBindings(): BindGroupBufferBindingElement[] {
@@ -388,7 +403,6 @@ export class BindGroup {
       binding.resultBuffer.createBuffer(this.renderer, {
         label: this.options.label + ': Result buffer from: ' + binding.label,
         size: binding.arrayBuffer.byteLength,
-        //usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
         usage: ['copyDst', 'mapRead'],
       })
     }

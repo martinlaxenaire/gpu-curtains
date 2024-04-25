@@ -96,13 +96,14 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} should be restored.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
    * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
    * @async
    */
-  async restoreContext(): Promise<void> {
-    this.cameraBufferBinding.shouldUpdate = true
-    return super.restoreContext()
+  restoreContext() {
+    super.restoreContext()
+    this.cameraBindGroup?.restoreContext()
+    this.updateCameraBindings()
   }
 
   /**

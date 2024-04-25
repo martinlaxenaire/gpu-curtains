@@ -30,6 +30,14 @@ export interface GPUDeviceManagerParams extends GPUDeviceManagerBaseParams {
   onDeviceLost?: (info?: GPUDeviceLostInfo) => void
 }
 
+/** Optional parameters used to set up/init a {@link GPUAdapter} and {@link GPUDevice} */
+export interface GPUDeviceManagerSetupParams {
+  /** {@link GPUAdapter} to use if set */
+  adapter?: GPUAdapter | null
+  /** {@link GPUDevice} to use if set */
+  device?: GPUDevice | null
+}
+
 /**
  * Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
  *
@@ -118,18 +126,20 @@ export class GPUDeviceManager {
   }
 
   /**
-   * Set our {@link adapter} and {@link device} if possible
+   * Set our {@link adapter} and {@link device} if possible.
+   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
-  async setAdapterAndDevice() {
-    await this.setAdapter()
-    await this.setDevice()
+  async setAdapterAndDevice({ adapter = null, device = null }: GPUDeviceManagerSetupParams = {}) {
+    await this.setAdapter(adapter)
+    await this.setDevice(device)
   }
 
   /**
    * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
+   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
-  async init() {
-    await this.setAdapterAndDevice()
+  async init({ adapter = null, device = null }: GPUDeviceManagerSetupParams = {}) {
+    await this.setAdapterAndDevice({ adapter, device })
 
     // set context
     if (this.device) {
@@ -145,18 +155,23 @@ export class GPUDeviceManager {
    * Set our {@link adapter} if possible.
    * The adapter represents a specific GPU. Some devices have multiple GPUs.
    * @async
+   * @param adapter - {@link GPUAdapter} to use if set.
    */
-  async setAdapter() {
+  async setAdapter(adapter: GPUAdapter | null = null) {
     if (!this.gpu) {
       this.onError()
       throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.")
     }
 
-    this.adapter = await this.gpu?.requestAdapter(this.adapterOptions)
+    if (adapter) {
+      this.adapter = adapter
+    } else {
+      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions)
 
-    if (!this.adapter) {
-      this.onError()
-      throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
+      if (!this.adapter) {
+        this.onError()
+        throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.")
+      }
     }
 
     ;(this.adapter as GPUAdapter)?.requestAdapterInfo().then((infos) => {
@@ -165,22 +180,29 @@ export class GPUDeviceManager {
   }
 
   /**
-   * Set our {@link device}
+   * Set our {@link device}.
    * @async
+   * @param device - {@link GPUDevice} to use if set.
    */
-  async setDevice() {
-    try {
-      this.device = await (this.adapter as GPUAdapter)?.requestDevice({
-        label: this.label + ' ' + this.index,
-      })
+  async setDevice(device: GPUDevice | null = null) {
+    if (device) {
+      this.device = device
+      this.ready = true
+      this.index++
+    } else {
+      try {
+        this.device = await (this.adapter as GPUAdapter)?.requestDevice({
+          label: this.label + ' ' + this.index,
+        })
 
-      if (this.device) {
-        this.ready = true
-        this.index++
+        if (this.device) {
+          this.ready = true
+          this.index++
+        }
+      } catch (error) {
+        this.onError()
+        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
       }
-    } catch (error) {
-      this.onError()
-      throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`)
     }
 
     this.device?.lost.then((info) => {
@@ -224,14 +246,17 @@ export class GPUDeviceManager {
 
   /**
    * Called when the {@link device} should be restored.
-   * Restore all our renderers
+   * Restore all our renderers.
+   * @async
+   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
-  async restoreDevice() {
-    await this.setAdapterAndDevice()
+  async restoreDevice({ adapter = null, device = null }: GPUDeviceManagerSetupParams = {}) {
+    await this.setAdapterAndDevice({ adapter, device })
 
     if (this.device) {
       // now recreate all the samplers
       this.samplers.forEach((sampler) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { type, ...samplerOptions } = sampler.options
         sampler.sampler = this.device.createSampler({
           label: sampler.label,

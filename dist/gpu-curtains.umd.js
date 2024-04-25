@@ -2008,6 +2008,7 @@
       bindings.forEach((binding) => {
         if ("buffer" in binding) {
           this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+          binding.buffer.consumers.add(this.uuid);
         }
       });
       this.bindings = [...this.bindings, ...bindings];
@@ -2163,6 +2164,17 @@
       this.needsPipelineFlush = true;
     }
     /**
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to update our bindings.
+     */
+    restoreContext() {
+      if (this.shouldCreateBindGroup) {
+        this.createBindGroup();
+      }
+      for (const bufferBinding of this.bufferBindings) {
+        bufferBinding.shouldUpdate = true;
+      }
+    }
+    /**
      * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings() {
@@ -2183,7 +2195,6 @@
         binding.resultBuffer.createBuffer(this.renderer, {
           label: this.options.label + ": Result buffer from: " + binding.label,
           size: binding.arrayBuffer.byteLength,
-          //usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
           usage: ["copyDst", "mapRead"]
         });
       }
@@ -4690,7 +4701,7 @@
       this.pipelineEntry.pipeline = null;
     }
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
      */
     restoreContext() {
       for (const sampler of this.samplers) {
@@ -4705,12 +4716,7 @@
         texture.resize(texture.size);
       }
       [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
-        if (bindGroup.shouldCreateBindGroup) {
-          bindGroup.createBindGroup();
-        }
-        for (const bufferBinding of bindGroup.bufferBindings) {
-          bufferBinding.shouldUpdate = true;
-        }
+        bindGroup.restoreContext();
       });
     }
     /**
@@ -10246,13 +10252,14 @@ ${this.shaders.compute.head}`;
       this.cameraBindGroup.loseContext();
     }
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} should be restored.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
      * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
      * @async
      */
-    async restoreContext() {
-      this.cameraBufferBinding.shouldUpdate = true;
-      return super.restoreContext();
+    restoreContext() {
+      super.restoreContext();
+      this.cameraBindGroup?.restoreContext();
+      this.updateCameraBindings();
     }
     /**
      * Set the {@link camera}
@@ -10431,17 +10438,19 @@ ${this.shaders.compute.head}`;
       this.setDeviceObjects();
     }
     /**
-     * Set our {@link adapter} and {@link device} if possible
+     * Set our {@link adapter} and {@link device} if possible.
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    async setAdapterAndDevice() {
-      await this.setAdapter();
-      await this.setDevice();
+    async setAdapterAndDevice({ adapter = null, device = null } = {}) {
+      await this.setAdapter(adapter);
+      await this.setDevice(device);
     }
     /**
      * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    async init() {
-      await this.setAdapterAndDevice();
+    async init({ adapter = null, device = null } = {}) {
+      await this.setAdapterAndDevice({ adapter, device });
       if (this.device) {
         for (const renderer of this.renderers) {
           if (!renderer.context) {
@@ -10454,37 +10463,49 @@ ${this.shaders.compute.head}`;
      * Set our {@link adapter} if possible.
      * The adapter represents a specific GPU. Some devices have multiple GPUs.
      * @async
+     * @param adapter - {@link GPUAdapter} to use if set.
      */
-    async setAdapter() {
+    async setAdapter(adapter = null) {
       if (!this.gpu) {
         this.onError();
         throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
       }
-      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
-      if (!this.adapter) {
-        this.onError();
-        throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+      if (adapter) {
+        this.adapter = adapter;
+      } else {
+        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+        if (!this.adapter) {
+          this.onError();
+          throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+        }
       }
       this.adapter?.requestAdapterInfo().then((infos) => {
         this.adapterInfos = infos;
       });
     }
     /**
-     * Set our {@link device}
+     * Set our {@link device}.
      * @async
+     * @param device - {@link GPUDevice} to use if set.
      */
-    async setDevice() {
-      try {
-        this.device = await this.adapter?.requestDevice({
-          label: this.label + " " + this.index
-        });
-        if (this.device) {
-          this.ready = true;
-          this.index++;
+    async setDevice(device = null) {
+      if (device) {
+        this.device = device;
+        this.ready = true;
+        this.index++;
+      } else {
+        try {
+          this.device = await this.adapter?.requestDevice({
+            label: this.label + " " + this.index
+          });
+          if (this.device) {
+            this.ready = true;
+            this.index++;
+          }
+        } catch (error) {
+          this.onError();
+          throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
         }
-      } catch (error) {
-        this.onError();
-        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
       }
       this.device?.lost.then((info) => {
         throwWarning(`${this.label}: WebGPU device was lost: ${info.message}`);
@@ -10514,10 +10535,12 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Called when the {@link device} should be restored.
-     * Restore all our renderers
+     * Restore all our renderers.
+     * @async
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    async restoreDevice() {
-      await this.setAdapterAndDevice();
+    async restoreDevice({ adapter = null, device = null } = {}) {
+      await this.setAdapterAndDevice({ adapter, device });
       if (this.device) {
         this.samplers.forEach((sampler) => {
           const { type, ...samplerOptions } = sampler.options;
@@ -11810,10 +11833,12 @@ struct VSOutput {
       return this.renderers[0];
     }
     /**
-     * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts
+     * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
+     * @async
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    async setDevice() {
-      await this.deviceManager.init();
+    async setDevice({ adapter = null, device = null } = {}) {
+      await this.deviceManager.init({ adapter, device });
     }
     /**
      * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
