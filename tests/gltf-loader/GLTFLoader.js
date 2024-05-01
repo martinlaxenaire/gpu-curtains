@@ -505,9 +505,9 @@ export class GLTFLoader {
       }
     }
 
-    this.createScenes()
+    const { scenes, boundingBox } = this.createScenes()
 
-    return { gltf: this.gltf, scenes: this.scenes, bBox: this.boundingBox }
+    return { gltf: this.gltf, scenes, boundingBox }
   }
 
   createNode(parent, node, primitiveInstances) {
@@ -571,10 +571,8 @@ export class GLTFLoader {
   }
 
   createScenes() {
-    this.scenes = []
-
-    // TODO
-    this.boundingBox = new Box3()
+    const scenes = []
+    const boundingBox = new Box3()
 
     const primitiveInstances = new Map()
 
@@ -588,7 +586,7 @@ export class GLTFLoader {
 
       sceneDescriptor.node.parent = this.renderer.scene
 
-      this.scenes.push(sceneDescriptor)
+      scenes.push(sceneDescriptor)
 
       scene.nodes.forEach((nodeIndex) => {
         const node = this.gltf.nodes[nodeIndex]
@@ -597,7 +595,7 @@ export class GLTFLoader {
     })
 
     // now that we created all our nodes, update all the matrices
-    this.scenes.forEach((scene) => {
+    scenes.forEach((scene) => {
       scene.node.shouldUpdateModelMatrix()
       scene.node.updateMatrixStack()
     })
@@ -607,11 +605,13 @@ export class GLTFLoader {
 
       const instancesCount = instances.length
 
-      //console.log(instances, meshDescriptor)
+      meshDescriptor.nodes = nodes
 
       // ------------------------------------
       // GEOMETRY
       // ------------------------------------
+
+      const geometryBBox = new Box3()
 
       // TODO we should pass an already created array (or buffer?) to the geometry main vertex buffer if possible
       // and avoid to compute the geometry (which wouldn't be needed if it has already been packed in the glTF)
@@ -633,7 +633,6 @@ export class GLTFLoader {
       // let minByteOffset = Infinity
 
       // prepare default attributes
-      // TODO sort: position -> uv -> normal?
       for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
         const accessor = this.gltf.accessors[accessorIndex]
 
@@ -648,8 +647,8 @@ export class GLTFLoader {
         // custom bbox
         // glTF specs says: "vertex position attribute accessors MUST have accessor.min and accessor.max defined"
         if (name === 'position') {
-          this.boundingBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]))
-          this.boundingBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]))
+          geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]))
+          geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]))
         }
 
         const attributeParams = GLTFLoader.getVertexAttributeParamsFromType(accessor.type)
@@ -845,6 +844,17 @@ export class GLTFLoader {
           },
         }
       }
+
+      // computed transformed bbox
+      for (let i = 0; i < nodes.length; i++) {
+        const tempBbox = geometryBBox.clone()
+        const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix)
+
+        boundingBox.min.min(transformedBbox.min)
+        boundingBox.max.max(transformedBbox.max)
+      }
     }
+
+    return { scenes, boundingBox }
   }
 }

@@ -60,14 +60,10 @@ window.addEventListener('load', async () => {
   let currentScenes = []
 
   const loadGLTF = async (url) => {
-    const { gltf, scenes, bBox } = await gltfLoader.loadFromUrl(url)
-    console.log({ gltf, scenes, bBox })
-
-    console.log('from loader', bBox.getSize())
+    const { gltf, scenes, boundingBox } = await gltfLoader.loadFromUrl(url)
+    console.log({ gltf, scenes, boundingBox })
 
     currentScenes = scenes
-
-    const boundingBox = new Box3()
 
     const createMesh = (parent, meshDescriptor) => {
       if (meshDescriptor.parameters.geometry) {
@@ -75,6 +71,7 @@ window.addEventListener('load', async () => {
           attributes: meshDescriptor.attributes,
           textures: meshDescriptor.textures,
           parameters: meshDescriptor.parameters,
+          nodes: meshDescriptor.nodes,
         })
 
         meshDescriptor.parameters.uniforms = {
@@ -220,13 +217,8 @@ window.addEventListener('load', async () => {
 
         mesh.parent = parent.node
 
-        boundingBox.min.min(mesh.geometry.boundingBox.min.clone().multiply(parent.node.scale))
-        boundingBox.max.max(mesh.geometry.boundingBox.max.clone().multiply(parent.node.scale))
-
         meshDescriptor.mesh = mesh
       }
-
-      //console.log(mesh)
     }
 
     scenes.forEach((scene) => {
@@ -253,13 +245,11 @@ window.addEventListener('load', async () => {
     console.log(gpuCameraRenderer)
 
     const scenesCenter = boundingBox.getCenter()
-    const scenesSize = boundingBox.getSize()
+    //const scenesSize = boundingBox.getSize()
     const radius = boundingBox.getRadius()
 
-    console.log(scenesSize)
-
     camera.position.y = scenesCenter.y
-    camera.position.z = radius * 3
+    camera.position.z = radius * 2.5
     //camera.lookAt(scenesCenter)
   }
 
@@ -279,7 +269,7 @@ window.addEventListener('load', async () => {
         return { ...acc, [models[v].name]: v }
       }, {})
     )
-    .onChange((value) => {
+    .onChange(async (value) => {
       if (models[value].name !== currentModel.name) {
         currentScenes.forEach((scene) => {
           // TODO real traverse
@@ -311,7 +301,9 @@ window.addEventListener('load', async () => {
         currentScenes = []
 
         currentModel = models[value]
-        loadGLTF(currentModel.url)
+        await loadGLTF(currentModel.url)
+        // reset cam rotation
+        cameraPivot.rotation.y = 0
       }
     })
     .name('Models')
@@ -323,9 +315,6 @@ window.addEventListener('load', async () => {
     gpuDeviceManager.render()
     requestAnimationFrame(animate)
 
-    // currentScenes.forEach((scene) => {
-    //   scene.node.rotation.y += 0.01
-    // })
     cameraPivot.rotation.y += 0.01
   }
 
