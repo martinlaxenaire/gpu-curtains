@@ -26,9 +26,11 @@
 ## Work in progress
 
 - Examples & tests
+- glTF loading
 
 ## TODO / possible improvements
 
+- Refactor pipeline cache system
 - Improve typedoc documentation?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?

@@ -187,7 +187,6 @@ export class GPUCameraRenderer extends GPURenderer {
    * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
    */
   updateCameraBindings() {
-    this.cameraBufferBinding?.shouldUpdateBinding('model')
     this.cameraBufferBinding?.shouldUpdateBinding('view')
     this.cameraBufferBinding?.shouldUpdateBinding('projection')
 

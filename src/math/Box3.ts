@@ -68,6 +68,13 @@ export class Box3 {
   }
 
   /**
+   * Get the {@link Box3} radius
+   */
+  getRadius(): number {
+    return this.max.distance(this.min) * 0.5
+  }
+
+  /**
    * Apply a {@link Mat4 | matrix} to a {@link Box3}
    * Useful to apply a transformation {@link Mat4 | matrix} to a {@link Box3}
    * @param matrix - {@link Mat4 | matrix} to use

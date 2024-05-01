@@ -70,6 +70,9 @@ export class Geometry {
   /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
   wgslStructFragment: string
 
+  // TODO
+  cacheKey: string
+
   /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
   consumers: Set<string>
 
@@ -113,7 +116,8 @@ export class Geometry {
 
     // create a default 'attributes' vertex buffer if it has not been passed as parameter
     // should contain our vertex position / uv data at least
-    if (!vertexBuffers.length || !vertexBuffers.find((vertexBuffer) => vertexBuffer.name === 'attributes')) {
+    const attributesBuffer = vertexBuffers.find((vertexBuffer) => vertexBuffer.name === 'attributes')
+    if (!vertexBuffers.length || !attributesBuffer) {
       this.addVertexBuffer({
         name: 'attributes',
       })
@@ -124,8 +128,15 @@ export class Geometry {
         stepMode: vertexBuffer.stepMode ?? 'vertex',
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
+        ...(vertexBuffer.array && { array: vertexBuffer.array }), // TODO
         ...(vertexBuffer.buffer && { buffer: vertexBuffer.buffer }),
       })
+    }
+
+    // TODO or use a param instead?
+    // remember if attributesBuffer already has an array, the geometry won't be computed
+    if (attributesBuffer) {
+      this.setWGSLFragment()
     }
   }
 
@@ -172,6 +183,7 @@ export class Geometry {
     name,
     attributes = [],
     buffer = null,
+    array = null, // TODO
   }: VertexBufferParams = {}): VertexBuffer {
     buffer = buffer || new Buffer()
 
@@ -182,7 +194,7 @@ export class Geometry {
       bufferLength: 0,
       attributes: [],
       buffer,
-      array: null,
+      array, // TODO
     }
 
     // set attributes right away if possible
@@ -258,6 +270,10 @@ export class Geometry {
       )
     }
 
+    // TODO we could force the use of a bufferOffset to 0
+    // and use an offset inside the setVertexBuffer call instead
+    // it might be needed in some edge cases with glTF geometries
+    // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
     const attribute = {
       name,
       type,
@@ -372,15 +388,14 @@ export class Geometry {
     })
 
     if (!this.wgslStructFragment) {
-      this.#setWGSLFragment()
+      this.setWGSLFragment()
     }
   }
 
   /**
    * Set the WGSL code snippet that will be appended to the vertex shader.
-   * @private
    */
-  #setWGSLFragment() {
+  setWGSLFragment() {
     let locationIndex = -1
     this.wgslStructFragment = `struct Attributes {\n\t@builtin(vertex_index) vertexIndex : u32,\n\t@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers
       .map((vertexBuffer) => {
@@ -390,6 +405,20 @@ export class Geometry {
         })
       })
       .join(',')}\n};`
+
+    // TODO use for pipeline caching
+    this.cacheKey =
+      this.vertexBuffers
+        .map((vertexBuffer) => {
+          return (
+            vertexBuffer.name +
+            ',' +
+            vertexBuffer.attributes.map((attribute) => {
+              return `${attribute.name},${attribute.size}`
+            })
+          )
+        })
+        .join(',') + ','
   }
 
   /**
@@ -405,7 +434,7 @@ export class Geometry {
       if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
         vertexBuffer.buffer.createBuffer(renderer, {
           label: label + ': ' + vertexBuffer.name + ' buffer',
-          size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
+          size: vertexBuffer.array.length * (vertexBuffer.array.constructor as TypedArrayConstructor).BYTES_PER_ELEMENT,
           usage: this.options.mapBuffersAtCreation ? ['vertex'] : ['copyDst', 'vertex'],
           mappedAtCreation: this.options.mapBuffersAtCreation,
         })
@@ -426,7 +455,9 @@ export class Geometry {
    */
   uploadBuffer(renderer: Renderer, buffer: GeometryBuffer) {
     if (this.options.mapBuffersAtCreation) {
-      new (buffer.array.constructor as typeof Float32Array)(buffer.buffer.GPUBuffer.getMappedRange()).set(buffer.array)
+      new (buffer.array.constructor as TypedArrayConstructor)(buffer.buffer.GPUBuffer.getMappedRange()).set(
+        buffer.array
+      )
 
       buffer.buffer.GPUBuffer.unmap()
     } else {

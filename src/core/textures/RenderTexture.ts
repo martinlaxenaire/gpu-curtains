@@ -223,6 +223,13 @@ export class RenderTexture {
     this.textureBinding.resource = this.texture
   }
 
+  uploadSource({ source, width = 1, height = 1, origin = [0, 0, 0] }) {
+    this.renderer.device.queue.copyExternalImageToTexture({ source: source }, { texture: this.texture, origin }, [
+      width,
+      height,
+    ])
+  }
+
   /**
    * Set our {@link RenderTexture#bindings | bindings}
    */

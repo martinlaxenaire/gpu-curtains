@@ -2,7 +2,6 @@ import { Geometry } from './Geometry'
 import { GeometryBuffer, GeometryParams } from '../../types/Geometries'
 import { Buffer } from '../buffers/Buffer'
 import { Renderer } from '../renderers/utils'
-import { TypedArray } from '../bindings/utils'
 
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
