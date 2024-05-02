@@ -29,20 +29,20 @@ window.addEventListener('load', async () => {
   const orbitControls = new OrbitControls(gpuCameraRenderer)
 
   const models = {
-    camera: {
-      name: 'AntiqueCamera',
-      url: 'assets/AntiqueCamera/glTF/AntiqueCamera.gltf',
-    },
     damagedHelmet: {
-      name: 'DamagedHelmet',
+      name: 'Damaged Helmet',
       url: 'assets/DamagedHelmet/glTF/DamagedHelmet.gltf',
+    },
+    antiqueCamera: {
+      name: 'Antique Camera',
+      url: 'assets/AntiqueCamera/glTF/AntiqueCamera.gltf',
     },
     buggy: {
       name: 'Buggy',
       url: 'assets/Buggy/glTF/Buggy.gltf',
     },
     flightHelmet: {
-      name: 'FlightHelmet',
+      name: 'Flight Helmet',
       url: 'assets/FlightHelmet/glTF/FlightHelmet.gltf',
     },
   }
