@@ -1,6 +1,6 @@
 import { GPUCurtains, Plane } from '../../dist/esm/index.mjs'
 
-window.addEventListener('load', async () => {
+window.addEventListener('DOMContentLoaded', async () => {
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
