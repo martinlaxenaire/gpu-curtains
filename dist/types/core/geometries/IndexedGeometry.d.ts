@@ -5,7 +5,7 @@ import { Renderer } from '../renderers/utils';
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
  */
-export interface IndexedGeometryIndexBufferOptions {
+export interface IndexedGeometryIndexBufferOptions extends Partial<GeometryBuffer> {
     /** index buffer format */
     bufferFormat?: GPUIndexFormat;
     /** index buffer array */
@@ -85,7 +85,7 @@ export declare class IndexedGeometry extends Geometry {
      * Set our {@link indexBuffer}
      * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
      */
-    setIndexBuffer({ bufferFormat, array }: IndexedGeometryIndexBufferOptions): void;
+    setIndexBuffer({ bufferFormat, array, buffer, bufferOffset, bufferSize, }: IndexedGeometryIndexBufferOptions): void;
     /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers} and {@link indexBuffer | index buffer}.
      * @param parameters - parameters used to create the vertex buffers.

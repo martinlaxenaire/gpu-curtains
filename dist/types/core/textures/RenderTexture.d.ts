@@ -106,6 +106,22 @@ export declare class RenderTexture {
      */
     createTexture(): void;
     /**
+     * Upload a source to the GPU and use it for our {@link texture}.
+     * @param parameters - parameters used to upload the source.
+     * @param parameters.source - source to use for our {@link texture}.
+     * @param parameters.width - source width.
+     * @param parameters.height - source height.
+     * @param parameters.depth - source depth.
+     * @param parameters.origin - {@link GPUOrigin3D | origin} of the source copy.
+     */
+    uploadSource({ source, width, height, depth, origin, }: {
+        source: GPUImageCopyExternalImageSource;
+        width?: number;
+        height?: number;
+        depth?: number;
+        origin?: GPUOrigin3D;
+    }): void;
+    /**
      * Set our {@link RenderTexture#bindings | bindings}
      */
     setBindings(): void;

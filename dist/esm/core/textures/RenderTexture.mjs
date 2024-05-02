@@ -118,6 +118,28 @@ class RenderTexture {
     this.textureBinding.resource = this.texture;
   }
   /**
+   * Upload a source to the GPU and use it for our {@link texture}.
+   * @param parameters - parameters used to upload the source.
+   * @param parameters.source - source to use for our {@link texture}.
+   * @param parameters.width - source width.
+   * @param parameters.height - source height.
+   * @param parameters.depth - source depth.
+   * @param parameters.origin - {@link GPUOrigin3D | origin} of the source copy.
+   */
+  uploadSource({
+    source,
+    width = this.size.width,
+    height = this.size.height,
+    depth = this.size.depth,
+    origin = [0, 0, 0]
+  }) {
+    this.renderer.device.queue.copyExternalImageToTexture({ source }, { texture: this.texture, origin }, [
+      width,
+      height,
+      depth
+    ]);
+  }
+  /**
    * Set our {@link RenderTexture#bindings | bindings}
    */
   setBindings() {

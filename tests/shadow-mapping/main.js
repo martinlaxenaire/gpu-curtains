@@ -6,6 +6,7 @@ window.addEventListener('load', async () => {
     PlaneGeometry,
     GPUCameraRenderer,
     GPUDeviceManager,
+    OrbitControls,
     RenderMaterial,
     Mesh,
     SphereGeometry,
@@ -36,19 +37,25 @@ window.addEventListener('load', async () => {
   // get the camera
   const { scene, camera } = gpuCameraRenderer
 
-  const cameraPivot = new Object3D()
-  cameraPivot.parent = scene
+  // const cameraPivot = new Object3D()
+  // cameraPivot.parent = scene
 
   camera.position.y = 10
   camera.position.z = 20
 
   camera.lookAt()
 
-  camera.parent = cameraPivot
+  //camera.parent = cameraPivot
+
+  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  orbitControls.maxOrbit.x = Math.PI * 0.15
+  orbitControls.zoomStep = 0.022
+  orbitControls.minZoom = -5
+  orbitControls.maxZoom = 15
 
   // render our scene manually
   const animate = () => {
-    cameraPivot.rotation.y += 0.005
+    //cameraPivot.rotation.y += 0.005
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
@@ -294,7 +301,8 @@ window.addEventListener('load', async () => {
     geometry: planeGeometry,
     renderTextures: [shadowDepthTexture],
     samplers: [lessCompareSampler],
-    frustumCulled: false, // always draw the walls
+    frustumCulled: false, // always draw
+    cullMode: 'none',
     shaders: {
       vertex: {
         code: meshVs,

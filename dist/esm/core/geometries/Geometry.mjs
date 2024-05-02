@@ -2,20 +2,6 @@ import { Box3 } from '../../math/Box3.mjs';
 import { generateUUID, throwWarning, throwError } from '../../utils/utils.mjs';
 import { Buffer } from '../buffers/Buffer.mjs';
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
-var _setWGSLFragment, setWGSLFragment_fn;
 class Geometry {
   /**
    * Geometry constructor
@@ -28,11 +14,6 @@ class Geometry {
     vertexBuffers = [],
     mapBuffersAtCreation = true
   } = {}) {
-    /**
-     * Set the WGSL code snippet that will be appended to the vertex shader.
-     * @private
-     */
-    __privateAdd(this, _setWGSLFragment);
     this.verticesCount = 0;
     this.verticesOrder = verticesOrder;
     this.topology = topology;
@@ -50,7 +31,8 @@ class Geometry {
       vertexBuffers,
       mapBuffersAtCreation
     };
-    if (!vertexBuffers.length || !vertexBuffers.find((vertexBuffer) => vertexBuffer.name === "attributes")) {
+    const attributesBuffer = vertexBuffers.find((vertexBuffer) => vertexBuffer.name === "attributes");
+    if (!vertexBuffers.length || !attributesBuffer) {
       this.addVertexBuffer({
         name: "attributes"
       });
@@ -60,8 +42,15 @@ class Geometry {
         stepMode: vertexBuffer.stepMode ?? "vertex",
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
-        ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer }
+        ...vertexBuffer.array && { array: vertexBuffer.array },
+        // TODO
+        ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
+        ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
+        ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
       });
+    }
+    if (attributesBuffer) {
+      this.setWGSLFragment();
     }
   }
   /**
@@ -98,7 +87,10 @@ class Geometry {
     stepMode = "vertex",
     name,
     attributes = [],
-    buffer = null
+    buffer = null,
+    array = null,
+    bufferOffset = 0,
+    bufferSize = null
   } = {}) {
     buffer = buffer || new Buffer();
     const vertexBuffer = {
@@ -108,7 +100,9 @@ class Geometry {
       bufferLength: 0,
       attributes: [],
       buffer,
-      array: null
+      array,
+      bufferOffset,
+      bufferSize
     };
     attributes?.forEach((attribute) => {
       this.setAttribute({
@@ -265,8 +259,29 @@ class Geometry {
       }
     });
     if (!this.wgslStructFragment) {
-      __privateMethod(this, _setWGSLFragment, setWGSLFragment_fn).call(this);
+      this.setWGSLFragment();
     }
+  }
+  /**
+   * Set the WGSL code snippet that will be appended to the vertex shader.
+   */
+  setWGSLFragment() {
+    let locationIndex = -1;
+    this.wgslStructFragment = `struct Attributes {
+	@builtin(vertex_index) vertexIndex : u32,
+	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
+      return vertexBuffer.attributes.map((attribute) => {
+        locationIndex++;
+        return `
+	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
+      });
+    }).join(",")}
+};`;
+    this.layoutCacheKey = this.vertexBuffers.map((vertexBuffer) => {
+      return vertexBuffer.name + "," + vertexBuffer.attributes.map((attribute) => {
+        return `${attribute.name},${attribute.size}`;
+      });
+    }).join(",") + ",";
   }
   /**
    * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
@@ -278,10 +293,13 @@ class Geometry {
     if (this.ready)
       return;
     for (const vertexBuffer of this.vertexBuffers) {
+      if (!vertexBuffer.bufferSize) {
+        vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
+      }
       if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
         vertexBuffer.buffer.createBuffer(renderer, {
           label: label + ": " + vertexBuffer.name + " buffer",
-          size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
+          size: vertexBuffer.bufferSize,
           usage: this.options.mapBuffersAtCreation ? ["vertex"] : ["copyDst", "vertex"],
           mappedAtCreation: this.options.mapBuffersAtCreation
         });
@@ -298,7 +316,9 @@ class Geometry {
    */
   uploadBuffer(renderer, buffer) {
     if (this.options.mapBuffersAtCreation) {
-      new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(buffer.array);
+      new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(
+        buffer.array
+      );
       buffer.buffer.GPUBuffer.unmap();
     } else {
       renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array);
@@ -311,7 +331,7 @@ class Geometry {
    */
   setGeometryBuffers(pass) {
     this.vertexBuffers.forEach((vertexBuffer, index) => {
-      pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer);
+      pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer, vertexBuffer.bufferOffset, vertexBuffer.bufferSize);
     });
   }
   /**
@@ -348,19 +368,5 @@ class Geometry {
     }
   }
 }
-_setWGSLFragment = new WeakSet();
-setWGSLFragment_fn = function() {
-  let locationIndex = -1;
-  this.wgslStructFragment = `struct Attributes {
-	@builtin(vertex_index) vertexIndex : u32,
-	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
-    return vertexBuffer.attributes.map((attribute) => {
-      locationIndex++;
-      return `
-	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
-    });
-  }).join(",")}
-};`;
-};
 
 export { Geometry };

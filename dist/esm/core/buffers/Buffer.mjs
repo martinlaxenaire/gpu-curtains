@@ -9,7 +9,6 @@ class Buffer {
   constructor({
     label = "Buffer",
     size = 0,
-    //usage = GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     usage = ["copySrc", "copyDst"],
     mappedAtCreation = false
   } = {}) {

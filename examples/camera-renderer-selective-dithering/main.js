@@ -1,13 +1,13 @@
 import {
-  BoxGeometry,
   GPUCameraRenderer,
   GPUDeviceManager,
+  BoxGeometry,
+  OrbitControls,
   Object3D,
   Mesh,
   RenderTarget,
   ShaderPass,
   SphereGeometry,
-  Vec2,
   Vec3,
 } from '../../dist/esm/index.mjs'
 
@@ -38,7 +38,7 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       near: 0.1,
-      far: systemSize * 6,
+      far: systemSize * 10,
     },
   })
 
@@ -48,14 +48,15 @@ window.addEventListener('load', async () => {
   // set the camera initial position and transform origin, so we can rotate around our scene center
   camera.position.z = systemSize * 3.25
 
-  // instead of rotating the camera, we're going to use an Object3D as pivot
-  const pivot = new Object3D()
-  // add the scene as the pivot parent
-  pivot.parent = gpuCameraRenderer.scene
+  // orbit controls
+  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  orbitControls.zoomStep = 0.015
+  orbitControls.minZoom = systemSize * -1.5
+  orbitControls.maxZoom = systemSize * 3
 
   // render our scene manually
   const animate = () => {
-    pivot.rotation.y -= 0.01
+    //pivot.rotation.y -= 0.01
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
@@ -171,9 +172,6 @@ window.addEventListener('load', async () => {
         },
       },
     })
-
-    // add the pivot as parent
-    mesh.parent = pivot
 
     mesh.position.x = Math.random() * systemSize * 2 - systemSize
     mesh.position.y = Math.random() * systemSize * 2 - systemSize

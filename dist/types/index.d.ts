@@ -45,6 +45,7 @@ export { Mat4 } from './math/Mat4';
 export { Quat } from './math/Quat';
 export { Vec2 } from './math/Vec2';
 export { Vec3 } from './math/Vec3';
+export { OrbitControls } from './extras/controls/OrbitControls';
 export { BoxGeometry } from './extras/geometries/BoxGeometry';
 export { SphereGeometry } from './extras/geometries/SphereGeometry';
 export * from './utils/debug';

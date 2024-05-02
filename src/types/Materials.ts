@@ -109,6 +109,8 @@ export interface RenderMaterialAttributes {
   wgslStructFragment?: Geometry['wgslStructFragment']
   /** Array of {@link types/Geometries.VertexBuffer | vertex buffers} to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
   vertexBuffers?: Geometry['vertexBuffers']
+  /** A string representing the {@link core/geometries/Geometry.Geometry#vertexBuffers | Geometry vertex buffers} layout, used for {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipelines} caching */
+  layoutCacheKey?: Geometry['layoutCacheKey']
 }
 
 /** Defines all basic allowed geometries */

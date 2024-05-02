@@ -37,17 +37,27 @@ class Box3 {
   }
   /**
    * Get the {@link Box3} center
+   * @readonly
    * @returns - {@link Vec3 | center vector} of the {@link Box3}
    */
-  getCenter() {
+  get center() {
     return this.max.clone().add(this.min).multiplyScalar(0.5);
   }
   /**
    * Get the {@link Box3} size
+   * @readonly
    * @returns - {@link Vec3 | size vector} of the {@link Box3}
    */
-  getSize() {
+  get size() {
     return this.max.clone().sub(this.min);
+  }
+  /**
+   * Get the {@link Box3} radius
+   * @readonly
+   * @returns - radius of the {@link Box3}
+   */
+  get radius() {
+    return this.max.distance(this.min) * 0.5;
   }
   /**
    * Apply a {@link Mat4 | matrix} to a {@link Box3}

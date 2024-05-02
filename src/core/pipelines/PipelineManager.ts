@@ -75,6 +75,10 @@ export class PipelineManager {
    * @returns - {@link RenderPipelineEntry}, either from cache or newly created
    */
   createRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry {
+    // TODO maybe we can always create a RenderPipelineEntry
+    // but get the actual GPUPipeline (RenderPipelineEntry.pipeline) object from cache upon creation
+    // (when we have all informations: shaders, attributes, bind groups, etc.)
+    // see https://toji.dev/webgpu-gltf-case-study/#part-3-pipeline-caching
     const existingPipelineEntry = this.isSameRenderPipeline(parameters)
 
     if (existingPipelineEntry) {

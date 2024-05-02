@@ -73,7 +73,7 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.type = 'GPUCameraRenderer'
 
-    camera = { ...{ fov: 50, near: 0.1, far: 150 }, ...camera }
+    camera = { ...{ fov: 50, near: 0.1, far: 1000 }, ...camera }
 
     this.options = {
       ...this.options,
@@ -187,7 +187,6 @@ export class GPUCameraRenderer extends GPURenderer {
    * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
    */
   updateCameraBindings() {
-    this.cameraBufferBinding?.shouldUpdateBinding('model')
     this.cameraBufferBinding?.shouldUpdateBinding('view')
     this.cameraBufferBinding?.shouldUpdateBinding('projection')
 
