@@ -49,6 +49,10 @@ export interface GeometryBuffer {
   array: TypedArray
   /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
   buffer: Buffer
+  /** Number representing the offset at which the data begins in the {@link GPUBuffer}. */
+  bufferOffset: number
+  /** Size in bytes of the data contained in the {@link GPUBuffer}. */
+  bufferSize: number | null
 }
 
 /**
@@ -72,17 +76,13 @@ export interface VertexBuffer extends GeometryBuffer {
 /**
  * Parameters used to create a {@link VertexBuffer}
  */
-export interface VertexBufferParams {
+export interface VertexBufferParams extends Partial<GeometryBuffer> {
   /** Whether this {@link VertexBuffer} should hold data relative to vertices or instances */
   stepMode?: GPUVertexStepMode
   /** The name of the {@link VertexBuffer} */
   name?: string
   /** Array of {@link VertexBufferAttribute} to be used by this {@link VertexBuffer} */
   attributes?: VertexBufferAttributeParams[]
-  /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
-  buffer?: Buffer
-  /** Optional array to use for the {@link VertexBuffer} to avoid computing the geometry. */
-  array?: TypedArray
 }
 
 /**

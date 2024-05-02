@@ -5934,7 +5934,9 @@
           attributes: vertexBuffer.attributes,
           ...vertexBuffer.array && { array: vertexBuffer.array },
           // TODO
-          ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer }
+          ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
+          ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
+          ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
         });
       }
       if (attributesBuffer) {
@@ -5976,7 +5978,9 @@
       name,
       attributes = [],
       buffer = null,
-      array = null
+      array = null,
+      bufferOffset = 0,
+      bufferSize = null
     } = {}) {
       buffer = buffer || new Buffer();
       const vertexBuffer = {
@@ -5986,7 +5990,9 @@
         bufferLength: 0,
         attributes: [],
         buffer,
-        array
+        array,
+        bufferOffset,
+        bufferSize
       };
       attributes?.forEach((attribute) => {
         this.setAttribute({
@@ -6177,10 +6183,13 @@
       if (this.ready)
         return;
       for (const vertexBuffer of this.vertexBuffers) {
+        if (!vertexBuffer.bufferSize) {
+          vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
+        }
         if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
           vertexBuffer.buffer.createBuffer(renderer, {
             label: label + ": " + vertexBuffer.name + " buffer",
-            size: vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT,
+            size: vertexBuffer.bufferSize,
             usage: this.options.mapBuffersAtCreation ? ["vertex"] : ["copyDst", "vertex"],
             mappedAtCreation: this.options.mapBuffersAtCreation
           });
@@ -6212,7 +6221,7 @@
      */
     setGeometryBuffers(pass) {
       this.vertexBuffers.forEach((vertexBuffer, index) => {
-        pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer);
+        pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer, vertexBuffer.bufferOffset, vertexBuffer.bufferSize);
       });
     }
     /**
@@ -6299,12 +6308,20 @@
      * Set our {@link indexBuffer}
      * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
      */
-    setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0) }) {
+    setIndexBuffer({
+      bufferFormat = "uint32",
+      array = new Uint32Array(0),
+      buffer = new Buffer(),
+      bufferOffset = 0,
+      bufferSize = null
+    }) {
       this.indexBuffer = {
         array,
         bufferFormat,
         bufferLength: array.length,
-        buffer: new Buffer()
+        buffer,
+        bufferOffset,
+        bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
       };
     }
     /**
@@ -6332,7 +6349,12 @@
      */
     setGeometryBuffers(pass) {
       super.setGeometryBuffers(pass);
-      pass.setIndexBuffer(this.indexBuffer.buffer.GPUBuffer, this.indexBuffer.bufferFormat);
+      pass.setIndexBuffer(
+        this.indexBuffer.buffer.GPUBuffer,
+        this.indexBuffer.bufferFormat,
+        this.indexBuffer.bufferOffset,
+        this.indexBuffer.bufferSize
+      );
     }
     /**
      * Override the parentMesh draw method to draw indexed geometry

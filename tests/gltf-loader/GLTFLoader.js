@@ -611,8 +611,8 @@ export class GLTFLoader {
 
       const geometryBBox = new Box3()
 
-      // TODO we should pass an already created array (or buffer?) to the geometry main vertex buffer if possible
-      // and avoid to compute the geometry (which wouldn't be needed if it has already been packed in the glTF)
+      // TODO we should pass an already created buffer to the geometry main vertex and index buffers if possible
+      // and use bufferOffset and bufferSize parameters
       // for example if the accessors byteOffset is < than the bufferViews byteStride, the array is already interleaved!
       // see https://toji.dev/webgpu-gltf-case-study/#reduced-binding-for-interleaved-buffers
       // or if the accessors byteOffset is large enough,

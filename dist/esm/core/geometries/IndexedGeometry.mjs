@@ -50,12 +50,20 @@ class IndexedGeometry extends Geometry {
    * Set our {@link indexBuffer}
    * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
    */
-  setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0) }) {
+  setIndexBuffer({
+    bufferFormat = "uint32",
+    array = new Uint32Array(0),
+    buffer = new Buffer(),
+    bufferOffset = 0,
+    bufferSize = null
+  }) {
     this.indexBuffer = {
       array,
       bufferFormat,
       bufferLength: array.length,
-      buffer: new Buffer()
+      buffer,
+      bufferOffset,
+      bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
     };
   }
   /**
@@ -83,7 +91,12 @@ class IndexedGeometry extends Geometry {
    */
   setGeometryBuffers(pass) {
     super.setGeometryBuffers(pass);
-    pass.setIndexBuffer(this.indexBuffer.buffer.GPUBuffer, this.indexBuffer.bufferFormat);
+    pass.setIndexBuffer(
+      this.indexBuffer.buffer.GPUBuffer,
+      this.indexBuffer.bufferFormat,
+      this.indexBuffer.bufferOffset,
+      this.indexBuffer.bufferSize
+    );
   }
   /**
    * Override the parentMesh draw method to draw indexed geometry

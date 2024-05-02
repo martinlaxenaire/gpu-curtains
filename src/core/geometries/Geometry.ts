@@ -130,6 +130,8 @@ export class Geometry {
         attributes: vertexBuffer.attributes,
         ...(vertexBuffer.array && { array: vertexBuffer.array }), // TODO
         ...(vertexBuffer.buffer && { buffer: vertexBuffer.buffer }),
+        ...(vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset }),
+        ...(vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }),
       })
     }
 
@@ -184,6 +186,8 @@ export class Geometry {
     attributes = [],
     buffer = null,
     array = null,
+    bufferOffset = 0,
+    bufferSize = null,
   }: VertexBufferParams = {}): VertexBuffer {
     buffer = buffer || new Buffer()
 
@@ -195,6 +199,8 @@ export class Geometry {
       attributes: [],
       buffer,
       array,
+      bufferOffset,
+      bufferSize,
     }
 
     // set attributes right away if possible
@@ -431,10 +437,15 @@ export class Geometry {
     if (this.ready) return
 
     for (const vertexBuffer of this.vertexBuffers) {
+      if (!vertexBuffer.bufferSize) {
+        vertexBuffer.bufferSize =
+          vertexBuffer.array.length * (vertexBuffer.array.constructor as TypedArrayConstructor).BYTES_PER_ELEMENT
+      }
+
       if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
         vertexBuffer.buffer.createBuffer(renderer, {
           label: label + ': ' + vertexBuffer.name + ' buffer',
-          size: vertexBuffer.array.length * (vertexBuffer.array.constructor as TypedArrayConstructor).BYTES_PER_ELEMENT,
+          size: vertexBuffer.bufferSize,
           usage: this.options.mapBuffersAtCreation ? ['vertex'] : ['copyDst', 'vertex'],
           mappedAtCreation: this.options.mapBuffersAtCreation,
         })
@@ -473,7 +484,7 @@ export class Geometry {
    */
   setGeometryBuffers(pass: GPURenderPassEncoder) {
     this.vertexBuffers.forEach((vertexBuffer, index) => {
-      pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer)
+      pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer, vertexBuffer.bufferOffset, vertexBuffer.bufferSize)
     })
   }
 
