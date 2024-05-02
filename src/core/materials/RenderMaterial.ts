@@ -206,6 +206,7 @@ export class RenderMaterial extends Material {
     this.attributes = {
       wgslStructFragment: geometry.wgslStructFragment,
       vertexBuffers: geometry.vertexBuffers,
+      layoutCacheKey: geometry.layoutCacheKey,
     }
   }
 

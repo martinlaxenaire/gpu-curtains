@@ -163,6 +163,12 @@ export declare class Vec3 {
      */
     length(): number;
     /**
+     * Get the euclidian distance between this {@link Vec3} and another {@link Vec3}
+     * @param vector - {@link Vec3} to use for distance calculation
+     * @returns - euclidian distance
+     */
+    distance(vector?: Vec3): number;
+    /**
      * Normalize this {@link Vec3}
      * @returns - normalized {@link Vec3}
      */

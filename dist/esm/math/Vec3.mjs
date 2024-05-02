@@ -248,6 +248,14 @@ class Vec3 {
     return Math.sqrt(this.lengthSq());
   }
   /**
+   * Get the euclidian distance between this {@link Vec3} and another {@link Vec3}
+   * @param vector - {@link Vec3} to use for distance calculation
+   * @returns - euclidian distance
+   */
+  distance(vector = new Vec3()) {
+    return Math.hypot(vector.x - this.x, vector.y - this.y, vector.z - this.z);
+  }
+  /**
    * Normalize this {@link Vec3}
    * @returns - normalized {@link Vec3}
    */

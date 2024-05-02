@@ -53,24 +53,28 @@ export class Box3 {
 
   /**
    * Get the {@link Box3} center
+   * @readonly
    * @returns - {@link Vec3 | center vector} of the {@link Box3}
    */
-  getCenter(): Vec3 {
+  get center(): Vec3 {
     return this.max.clone().add(this.min).multiplyScalar(0.5)
   }
 
   /**
    * Get the {@link Box3} size
+   * @readonly
    * @returns - {@link Vec3 | size vector} of the {@link Box3}
    */
-  getSize(): Vec3 {
+  get size(): Vec3 {
     return this.max.clone().sub(this.min)
   }
 
   /**
    * Get the {@link Box3} radius
+   * @readonly
+   * @returns - radius of the {@link Box3}
    */
-  getRadius(): number {
+  get radius(): number {
     return this.max.distance(this.min) * 0.5
   }
 

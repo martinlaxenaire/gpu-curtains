@@ -32,14 +32,22 @@ export declare class Box3 {
     clone(): Box3;
     /**
      * Get the {@link Box3} center
+     * @readonly
      * @returns - {@link Vec3 | center vector} of the {@link Box3}
      */
-    getCenter(): Vec3;
+    get center(): Vec3;
     /**
      * Get the {@link Box3} size
+     * @readonly
      * @returns - {@link Vec3 | size vector} of the {@link Box3}
      */
-    getSize(): Vec3;
+    get size(): Vec3;
+    /**
+     * Get the {@link Box3} radius
+     * @readonly
+     * @returns - radius of the {@link Box3}
+     */
+    get radius(): number;
     /**
      * Apply a {@link Mat4 | matrix} to a {@link Box3}
      * Useful to apply a transformation {@link Mat4 | matrix} to a {@link Box3}

@@ -6,7 +6,7 @@ import { GLTFLoader } from './GLTFLoader.js'
 
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUDeviceManager, GPUCameraRenderer, Object3D, Box3, Mesh, Vec3, BoxGeometry } = await import(
+  const { GPUDeviceManager, GPUCameraRenderer, OrbitControls, Object3D, Box3, Mesh, Vec3, BoxGeometry } = await import(
     /* @vite-ignore */ path
   )
 
@@ -22,16 +22,11 @@ window.addEventListener('load', async () => {
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
-    //pixelRatio: window.devicePixelRatio,
-    camera: {
-      far: 2000,
-    },
+    pixelRatio: Math.min(1, window.devicePixelRatio),
   })
 
-  const cameraPivot = new Object3D()
-  const { scene, camera } = gpuCameraRenderer
-  cameraPivot.parent = scene
-  camera.parent = cameraPivot
+  const { camera } = gpuCameraRenderer
+  const orbitControls = new OrbitControls(gpuCameraRenderer)
 
   const models = {
     camera: {
@@ -120,23 +115,26 @@ window.addEventListener('load', async () => {
         }
 
         const vs = /* wgsl */ `
-        struct VertexOutput {
-          @builtin(position) position: vec4f,
-          ${structAttributes}
-        };
-        
-        @vertex fn main(
-          attributes: Attributes,
-        ) -> VertexOutput {
-          var vsOutput: VertexOutput;
-        
-          ${outputPosition}
-          ${outputAttributes}
+          struct VertexOutput {
+            @builtin(position) position: vec4f,
+            ${structAttributes}
+          };
           
-          return vsOutput;
-        }
-      `
+          @vertex fn main(
+            attributes: Attributes,
+          ) -> VertexOutput {
+            var vsOutput: VertexOutput;
+          
+            ${outputPosition}
+            ${outputAttributes}
+            
+            return vsOutput;
+          }
+        `
 
+        // not a PBR material for now, as it does not use roughness/metalness
+        // we might want to implement it later
+        // see https://github.com/oframe/ogl/blob/master/examples/load-gltf.html#L133
         const initColor = /* wgsl */ 'var color: vec4f = vec4();'
         const returnColor = /* wgsl */ 'return color;'
 
@@ -244,13 +242,15 @@ window.addEventListener('load', async () => {
 
     console.log(gpuCameraRenderer)
 
-    const scenesCenter = boundingBox.getCenter()
-    //const scenesSize = boundingBox.getSize()
-    const radius = boundingBox.getRadius()
+    const { center, radius } = boundingBox
 
-    camera.position.y = scenesCenter.y
-    camera.position.z = radius * 2.5
-    //camera.lookAt(scenesCenter)
+    camera.position.y = center.y
+    camera.position.z = radius * 2
+
+    // reset orbit controls
+    orbitControls.reset()
+    orbitControls.zoomStep = radius * 0.005
+    orbitControls.maxDistance = radius * 4
   }
 
   // GUI
@@ -302,8 +302,6 @@ window.addEventListener('load', async () => {
 
         currentModel = models[value]
         await loadGLTF(currentModel.url)
-        // reset cam rotation
-        cameraPivot.rotation.y = 0
       }
     })
     .name('Models')
@@ -314,8 +312,6 @@ window.addEventListener('load', async () => {
   const animate = () => {
     gpuDeviceManager.render()
     requestAnimationFrame(animate)
-
-    cameraPivot.rotation.y += 0.01
   }
 
   animate()

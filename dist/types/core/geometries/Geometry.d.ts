@@ -36,7 +36,6 @@ import { Renderer } from '../renderers/utils';
  * ```
  */
 export declare class Geometry {
-    #private;
     /** Number of vertices defined by this geometry */
     verticesCount: number;
     /** Vertices order to be drawn by the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | render pipeline} */
@@ -57,6 +56,8 @@ export declare class Geometry {
     boundingBox: Box3;
     /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
     wgslStructFragment: string;
+    /** A string representing the {@link vertexBuffers} layout, used for pipelines caching */
+    layoutCacheKey: string;
     /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
     consumers: Set<string>;
     /** Whether this geometry is ready to be drawn, i.e. it has been computed and all its vertex buffers have been created */
@@ -80,7 +81,7 @@ export declare class Geometry {
      * @param parameters - vertex buffer {@link VertexBufferParams | parameters}
      * @returns - newly created {@link VertexBuffer | vertex buffer}
      */
-    addVertexBuffer({ stepMode, name, attributes, buffer, }?: VertexBufferParams): VertexBuffer;
+    addVertexBuffer({ stepMode, name, attributes, buffer, array, }?: VertexBufferParams): VertexBuffer;
     /**
      * Get a vertex buffer by name
      * @param name - our vertex buffer name
@@ -108,6 +109,10 @@ export declare class Geometry {
      * Also compute the Geometry bounding box.
      */
     computeGeometry(): void;
+    /**
+     * Set the WGSL code snippet that will be appended to the vertex shader.
+     */
+    setWGSLFragment(): void;
     /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
      * @param parameters - parameters used to create the vertex buffers.

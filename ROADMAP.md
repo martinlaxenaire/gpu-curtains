@@ -27,10 +27,13 @@
 
 - Examples & tests
 - glTF loading
+- OrbitControls
 
 ## TODO / possible improvements
 
+- Add Mat3 class + normalMatrix to ProjectedObject3D?
 - Refactor pipeline cache system
+- Rename Texture -> DOMTexture and RenderTexture -> Texture classes?
 - Improve typedoc documentation?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?

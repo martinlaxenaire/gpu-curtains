@@ -1,5 +1,5 @@
 /// <reference types="dist" />
-import { WGSLVariableType } from '../core/bindings/utils';
+import { TypedArray, WGSLVariableType } from '../core/bindings/utils';
 import { Buffer } from '../core/buffers/Buffer';
 /**
  * Parameters used to create a {@link VertexBufferAttribute}
@@ -44,7 +44,7 @@ export interface VertexBufferAttribute extends VertexBufferAttributeParams {
  */
 export interface GeometryBuffer {
     /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
-    array: Float32Array | Uint16Array | Uint32Array;
+    array: TypedArray;
     /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
     buffer: Buffer;
 }
@@ -63,7 +63,7 @@ export interface VertexBuffer extends GeometryBuffer {
     /** Array of {@link VertexBufferAttribute} used by this {@link VertexBuffer} */
     attributes: VertexBufferAttribute[];
     /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
-    array: null | Float32Array;
+    array: null | TypedArray;
 }
 /**
  * Parameters used to create a {@link VertexBuffer}
@@ -77,6 +77,8 @@ export interface VertexBufferParams {
     attributes?: VertexBufferAttributeParams[];
     /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
     buffer?: Buffer;
+    /** Optional array to use for the {@link VertexBuffer} to avoid computing the geometry. */
+    array?: TypedArray;
 }
 /**
  * Options used to create a geometry

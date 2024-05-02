@@ -81,7 +81,7 @@ export interface VertexBufferParams {
   attributes?: VertexBufferAttributeParams[]
   /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
   buffer?: Buffer
-  // TODO
+  /** Optional array to use for the {@link VertexBuffer} to avoid computing the geometry. */
   array?: TypedArray
 }
 

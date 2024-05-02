@@ -69,11 +69,13 @@ window.addEventListener('load', async () => {
 
   for (let i = 0; i < imageBitmaps.length; i++) {
     const imageBitmap = imageBitmaps[i]
-    gpuCameraRenderer.device.queue.copyExternalImageToTexture(
-      { source: imageBitmap },
-      { texture: cubeMapTexture.texture, origin: [0, 0, i] },
-      [imageBitmap.width, imageBitmap.height]
-    )
+    cubeMapTexture.uploadSource({
+      source: imageBitmap,
+      width: imageBitmap.width,
+      height: imageBitmap.height,
+      depth: 1, // explicitly set the depth to 1
+      origin: [0, 0, i],
+    })
   }
 
   // now add objects to our scene

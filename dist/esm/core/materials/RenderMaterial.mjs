@@ -142,7 +142,8 @@ Rendering options responsible: { ${newProperties.map(
   setAttributesFromGeometry(geometry) {
     this.attributes = {
       wgslStructFragment: geometry.wgslStructFragment,
-      vertexBuffers: geometry.vertexBuffers
+      vertexBuffers: geometry.vertexBuffers,
+      layoutCacheKey: geometry.layoutCacheKey
     };
   }
   /* BIND GROUPS */

@@ -70,8 +70,8 @@ export class Geometry {
   /** A string to append to our shaders code describing the WGSL structure representing this geometry attributes */
   wgslStructFragment: string
 
-  // TODO
-  cacheKey: string
+  /** A string representing the {@link vertexBuffers} layout, used for pipelines caching */
+  layoutCacheKey: string
 
   /** A Set to store this {@link Geometry} consumers (Mesh uuid) */
   consumers: Set<string>
@@ -183,7 +183,7 @@ export class Geometry {
     name,
     attributes = [],
     buffer = null,
-    array = null, // TODO
+    array = null,
   }: VertexBufferParams = {}): VertexBuffer {
     buffer = buffer || new Buffer()
 
@@ -194,7 +194,7 @@ export class Geometry {
       bufferLength: 0,
       attributes: [],
       buffer,
-      array, // TODO
+      array,
     }
 
     // set attributes right away if possible
@@ -407,7 +407,7 @@ export class Geometry {
       .join(',')}\n};`
 
     // TODO use for pipeline caching
-    this.cacheKey =
+    this.layoutCacheKey =
       this.vertexBuffers
         .map((vertexBuffer) => {
           return (

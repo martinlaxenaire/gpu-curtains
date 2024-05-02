@@ -251,8 +251,6 @@ export class GLTFLoader {
 
     texture.uploadSource({
       source: image,
-      width: image.width,
-      height: image.height,
       origin: [0, 0, 0], // not mandatory
     })
 

@@ -45,6 +45,7 @@ export { Mat4 } from './math/Mat4.mjs';
 export { Quat } from './math/Quat.mjs';
 export { Vec2 } from './math/Vec2.mjs';
 export { Vec3 } from './math/Vec3.mjs';
+export { OrbitControls } from './extras/controls/OrbitControls.mjs';
 export { BoxGeometry } from './extras/geometries/BoxGeometry.mjs';
 export { SphereGeometry } from './extras/geometries/SphereGeometry.mjs';
 export { logSceneCommands } from './utils/debug.mjs';

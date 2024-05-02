@@ -73,7 +73,7 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.type = 'GPUCameraRenderer'
 
-    camera = { ...{ fov: 50, near: 0.1, far: 150 }, ...camera }
+    camera = { ...{ fov: 50, near: 0.1, far: 1000 }, ...camera }
 
     this.options = {
       ...this.options,
