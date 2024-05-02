@@ -78,7 +78,7 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     }
   }
   /**
-   * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
+   * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}
    */
   setInitSources() {
     let loaderSize = 0;
@@ -101,7 +101,7 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       if (images.length) {
         images.forEach((image) => {
           const texture = this.createTexture({
-            name: image.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            name: image.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src);
         });
@@ -109,7 +109,7 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       if (videos.length) {
         videos.forEach((video) => {
           const texture = this.createTexture({
-            name: video.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            name: video.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video);
         });
@@ -117,7 +117,7 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       if (canvases.length) {
         canvases.forEach((canvas) => {
           const texture = this.createTexture({
-            name: canvas.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            name: canvas.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas);
         });
@@ -161,8 +161,8 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
   /* EVENTS */
   /**
-   * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
-   * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
+   * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
+   * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
    * @returns - our {@link DOMMesh}
    */
   onLoading(callback) {

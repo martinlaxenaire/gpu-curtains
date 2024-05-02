@@ -4,7 +4,7 @@ import { TextureBinding } from '../bindings/TextureBinding';
 import { BindGroupBindingElement } from '../../types/BindGroups';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding';
-import { Texture } from './Texture';
+import { DOMTexture } from './DOMTexture';
 import { TextureSize } from '../../types/Textures';
 import { TextureUsageKeys } from './utils';
 /**
@@ -42,8 +42,8 @@ export interface RenderTextureBaseParams {
  * Parameters used to create a {@link RenderTexture}
  */
 export interface RenderTextureParams extends RenderTextureBaseParams {
-    /** Optional texture to use as a copy source input. Could be a {@link RenderTexture} or {@link Texture} */
-    fromTexture?: RenderTexture | Texture | null;
+    /** Optional texture to use as a copy source input. Could be a {@link RenderTexture} or {@link DOMTexture} */
+    fromTexture?: RenderTexture | DOMTexture | null;
 }
 /**
  * Used to create {@link GPUTexture | texture} that can be used as copy source/destination for {@link core/renderPasses/RenderPass.RenderPass | RenderPass} and {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget}.<br >
@@ -95,7 +95,7 @@ export declare class RenderTexture {
      * Copy another {@link RenderTexture} into this {@link RenderTexture}
      * @param texture - {@link RenderTexture} to copy
      */
-    copy(texture: RenderTexture | Texture): void;
+    copy(texture: RenderTexture | DOMTexture): void;
     /**
      * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
      * @param texture - {@link GPUTexture} to copy

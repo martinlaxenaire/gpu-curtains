@@ -8,7 +8,7 @@ import { ComputePass } from '../computePasses/ComputePass'
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { RenderTarget } from '../renderPasses/RenderTarget'
-import { Texture } from '../textures/Texture'
+import { DOMTexture } from '../textures/DOMTexture'
 import { Sampler } from '../samplers/Sampler'
 
 import { DOMMesh } from '../../curtains/meshes/DOMMesh'
@@ -726,27 +726,27 @@ export class GPURenderer {
   /* TEXTURES */
 
   /**
-   * Get all created {@link Texture} tracked by our {@link GPUDeviceManager}
+   * Get all created {@link DOMTexture} tracked by our {@link GPUDeviceManager}
    * @readonly
    */
-  get textures(): Texture[] {
-    return this.deviceManager.textures
+  get domTextures(): DOMTexture[] {
+    return this.deviceManager.domTextures
   }
 
   /**
-   * Add a {@link Texture} to our {@link GPUDeviceManager#textures | textures array}
-   * @param texture - {@link Texture} to add
+   * Add a {@link DOMTexture} to our {@link GPUDeviceManager#domTextures | textures array}
+   * @param texture - {@link DOMTexture} to add
    */
-  addTexture(texture: Texture) {
-    this.deviceManager.addTexture(texture)
+  addDOMTexture(texture: DOMTexture) {
+    this.deviceManager.addDOMTexture(texture)
   }
 
   /**
-   * Remove a {@link Texture} from our {@link GPUDeviceManager#textures | textures array}
-   * @param texture - {@link Texture} to remove
+   * Remove a {@link DOMTexture} from our {@link GPUDeviceManager#domTextures | textures array}
+   * @param texture - {@link DOMTexture} to remove
    */
-  removeTexture(texture: Texture) {
-    this.deviceManager.removeTexture(texture)
+  removeDOMTexture(texture: DOMTexture) {
+    this.deviceManager.removeDOMTexture(texture)
   }
 
   /**
@@ -775,10 +775,10 @@ export class GPURenderer {
   }
 
   /**
-   * Upload a {@link Texture#texture | texture} to the GPU
-   * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+   * Upload a {@linkDOMTexture#texture | texture} to the GPU
+   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
    */
-  uploadTexture(texture: Texture) {
+  uploadTexture(texture: DOMTexture) {
     this.deviceManager.uploadTexture(texture)
   }
 
@@ -790,7 +790,7 @@ export class GPURenderer {
   importExternalTexture(video: HTMLVideoElement): GPUExternalTexture {
     // TODO WebCodecs may be the way to go when time comes!
     // https://developer.chrome.com/blog/new-in-webgpu-113/#use-webcodecs-videoframe-source-in-importexternaltexture
-    // see onVideoFrameCallback method in Texture class
+    // see onVideoFrameCallback method in DOMTexture class
     // const videoFrame = new VideoFrame(video)
     // return this.deviceManager.device?.importExternalTexture({ source: videoFrame })
     return this.deviceManager.device?.importExternalTexture({ source: video })
@@ -884,13 +884,13 @@ export class GPURenderer {
   }
 
   /**
-   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link Texture} or {@link RenderTexture}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link RenderTexture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param texture - {@link Texture} or {@link RenderTexture} to check
+   * @param texture - {@link DOMTexture} or {@link RenderTexture} to check
    */
-  getObjectsByTexture(texture: Texture | RenderTexture): undefined | SceneObject[] {
+  getObjectsByTexture(texture: DOMTexture | RenderTexture): undefined | SceneObject[] {
     return this.deviceRenderedObjects.filter((object) => {
-      return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid)
+      return [...object.material.domTextures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid)
     })
   }
 

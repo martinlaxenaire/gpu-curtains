@@ -6,12 +6,12 @@ import { Object3D } from '../objects3D/Object3D'
 import { Mat4 } from '../../math/Mat4'
 import { generateUUID, throwWarning } from '../../utils/utils'
 import { BindGroupBindingElement } from '../../types/BindGroups'
-import { TextureOptions, TextureParams, TextureParent, TextureSize, TextureSource } from '../../types/Textures'
+import { DOMTextureOptions, DOMTextureParams, DOMTextureParent, TextureSize, TextureSource } from '../../types/Textures'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMProjectedMesh } from '../renderers/GPURenderer'
 
-/** @const - default {@link Texture} parameters */
-const defaultTextureParams: TextureParams = {
+/** @const - default {@link DOMTexture} parameters */
+const defaultDOMTextureParams: DOMTextureParams = {
   name: 'texture',
   generateMips: false,
   flipY: false,
@@ -42,7 +42,7 @@ const defaultTextureParams: TextureParams = {
  * await gpuCurtains.setDevice()
  *
  * // create a render texture
- * const imageTexture = new Texture(gpuCurtains, {
+ * const imageTexture = new DOMTexture(gpuCurtains, {
  *   label: 'My image texture',
  *   name: 'imageTexture',
  * })
@@ -51,12 +51,12 @@ const defaultTextureParams: TextureParams = {
  * await imageTexture.loadImage(document.querySelector('img'))
  * ```
  */
-export class Texture extends Object3D {
-  /** The type of the {@link Texture} */
+export class DOMTexture extends Object3D {
+  /** The type of the {@link DOMTexture} */
   type: string
-  /** The universal unique id of this {@link Texture} */
+  /** The universal unique id of this {@link DOMTexture} */
   readonly uuid: string
-  /** {@link Renderer} used by this {@link Texture} */
+  /** {@link Renderer} used by this {@link DOMTexture} */
   renderer: Renderer
 
   /** The {@link GPUTexture} used if any */
@@ -64,21 +64,21 @@ export class Texture extends Object3D {
   /** The {@link GPUExternalTexture} used if any */
   externalTexture: null | GPUExternalTexture
 
-  /** The {@link Texture} {@link TextureSource | source} to use */
+  /** The {@link DOMTexture} {@link TextureSource | source} to use */
   source: TextureSource
   /** The {@link GPUTexture}, matching the {@link TextureSource | source} {@link core/DOM/DOMElement.RectSize | size} (with 1 for depth) */
   size: TextureSize
 
-  /** Options used to create this {@link Texture} */
-  options: TextureOptions
+  /** Options used to create this {@link DOMTexture} */
+  options: DOMTextureOptions
 
   /** A {@link BufferBinding | buffer binding} that will hold the texture model matrix */
   textureMatrix: BufferBinding
-  /** The bindings used by this {@link Texture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
+  /** The bindings used by this {@link DOMTexture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
   bindings: BindGroupBindingElement[]
 
-  /** {@link Texture} parentMesh if any */
-  private _parentMesh: TextureParent
+  /** {@link DOMTexture} parentMesh if any */
+  private _parentMesh: DOMTextureParent
 
   /** Whether the source has been loaded */
   private _sourceLoaded: boolean
@@ -110,11 +110,11 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Texture constructor
-   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+   * DOMTexture constructor
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+   * @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
    */
-  constructor(renderer: Renderer | GPUCurtains, parameters = defaultTextureParams) {
+  constructor(renderer: Renderer | GPUCurtains, parameters = defaultDOMTextureParams) {
     super()
 
     this.type = 'Texture'
@@ -129,7 +129,7 @@ export class Texture extends Object3D {
     this.uuid = generateUUID()
 
     const defaultOptions = {
-      ...defaultTextureParams,
+      ...defaultDOMTextureParams,
       source: parameters.fromTexture ? parameters.fromTexture.options.source : null,
       sourceType: parameters.fromTexture ? parameters.fromTexture.options.sourceType : null,
     }
@@ -174,7 +174,7 @@ export class Texture extends Object3D {
     this.sourceUploaded = false
     this.shouldUpdate = false
 
-    this.renderer.addTexture(this)
+    this.renderer.addDOMTexture(this)
     this.createTexture()
   }
 
@@ -206,7 +206,7 @@ export class Texture extends Object3D {
   /**
    * Get our texture {@link parentMesh}
    */
-  get parentMesh(): TextureParent {
+  get parentMesh(): DOMTextureParent {
     return this._parentMesh
   }
 
@@ -214,7 +214,7 @@ export class Texture extends Object3D {
    * Set our texture {@link parentMesh}
    * @param value - texture {@link parentMesh} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
    */
-  set parentMesh(value: TextureParent) {
+  set parentMesh(value: DOMTextureParent) {
     this._parentMesh = value
     this.resize()
   }
@@ -346,7 +346,7 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Resize our {@link Texture}
+   * Resize our {@link DOMTexture}
    */
   resize() {
     // this should only happen with canvas textures
@@ -394,10 +394,10 @@ export class Texture extends Object3D {
   }
 
   /**
-   * Copy a {@link Texture}
-   * @param texture - {@link Texture} to copy
+   * Copy a {@link DOMTexture}
+   * @param texture - {@link DOMTexture} to copy
    */
-  copy(texture: Texture) {
+  copy(texture: DOMTexture) {
     if (this.options.sourceType === 'externalVideo' && texture.options.sourceType !== 'externalVideo') {
       throwWarning(`${this.options.label}: cannot copy a GPUTexture to a GPUExternalTexture`)
       return
@@ -516,7 +516,7 @@ export class Texture extends Object3D {
     this.options.source = url
     this.options.sourceType = 'image'
 
-    const cachedTexture = this.renderer.textures.find((t) => t.options.source === url)
+    const cachedTexture = this.renderer.domTextures.find((t) => t.options.source === url)
     if (cachedTexture && cachedTexture.texture && cachedTexture.sourceUploaded) {
       this.copy(cachedTexture)
       return
@@ -656,9 +656,9 @@ export class Texture extends Object3D {
   /**
    * Callback to run when the {@link source} has been loaded
    * @param callback - callback to run when the {@link source} has been loaded
-   * @returns - our {@link Texture}
+   * @returns - our {@link DOMTexture}
    */
-  onSourceLoaded(callback: () => void): Texture {
+  onSourceLoaded(callback: () => void): DOMTexture {
     if (callback) {
       this._onSourceLoadedCallback = callback
     }
@@ -669,9 +669,9 @@ export class Texture extends Object3D {
   /**
    * Callback to run when the {@link source} has been uploaded
    * @param callback - callback to run when the {@link source} been uploaded
-   * @returns - our {@link Texture}
+   * @returns - our {@link DOMTexture}
    */
-  onSourceUploaded(callback: () => void): Texture {
+  onSourceUploaded(callback: () => void): DOMTexture {
     if (callback) {
       this._onSourceUploadedCallback = callback
     }
@@ -682,7 +682,7 @@ export class Texture extends Object3D {
   /* RENDER */
 
   /**
-   * Render a {@link Texture}:
+   * Render a {@link DOMTexture}:
    * - Update its {@link modelMatrix} and {@link bindings} if needed
    * - Upload the texture if it needs to be done
    */
@@ -719,7 +719,7 @@ export class Texture extends Object3D {
   /* DESTROY */
 
   /**
-   * Destroy the {@link Texture}
+   * Destroy the {@link DOMTexture}
    */
   destroy() {
     if (this.videoFrameCallbackId) {
@@ -736,7 +736,7 @@ export class Texture extends Object3D {
       )
     }
 
-    this.renderer.removeTexture(this)
+    this.renderer.removeDOMTexture(this)
 
     this.texture?.destroy()
     this.texture = null

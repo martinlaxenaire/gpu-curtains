@@ -13,7 +13,7 @@ window.addEventListener('load', async () => {
     GPUDeviceManager,
     Mesh,
     Sampler,
-    Texture,
+    DOMTexture,
     RenderMaterial,
     Vec2,
   } = await import(/* @vite-ignore */ path)
@@ -228,7 +228,7 @@ window.addEventListener('load', async () => {
     maxAnisotropy: 16,
   })
 
-  const texture = new Texture(gpuCameraRenderer, {
+  const texture = new DOMTexture(gpuCameraRenderer, {
     label: 'Image texture',
     name: 'imageTexture',
     generateMips: true,
@@ -281,7 +281,7 @@ window.addEventListener('load', async () => {
           code: texturedFs,
         },
       },
-      textures: [texture],
+      domTextures: [texture],
       samplers: [anisotropicSampler],
     }),
   }

@@ -20,7 +20,7 @@ var __privateAdd = (obj, member, value) => {
   member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 };
 var _parentRatio, _sourceRatio, _coverScale, _rotationMatrix;
-const defaultTextureParams = {
+const defaultDOMTextureParams = {
   name: "texture",
   generateMips: false,
   flipY: false,
@@ -34,13 +34,13 @@ const defaultTextureParams = {
   visibility: ["fragment"],
   cache: true
 };
-class Texture extends Object3D {
+class DOMTexture extends Object3D {
   /**
-   * Texture constructor
-   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+   * DOMTexture constructor
+   * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+   * @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
    */
-  constructor(renderer, parameters = defaultTextureParams) {
+  constructor(renderer, parameters = defaultDOMTextureParams) {
     super();
     /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
     __privateAdd(this, _parentRatio, new Vec3(1));
@@ -63,7 +63,7 @@ class Texture extends Object3D {
     this.renderer = renderer;
     this.uuid = generateUUID();
     const defaultOptions = {
-      ...defaultTextureParams,
+      ...defaultDOMTextureParams,
       source: parameters.fromTexture ? parameters.fromTexture.options.source : null,
       sourceType: parameters.fromTexture ? parameters.fromTexture.options.sourceType : null
     };
@@ -94,7 +94,7 @@ class Texture extends Object3D {
     this.sourceLoaded = false;
     this.sourceUploaded = false;
     this.shouldUpdate = false;
-    this.renderer.addTexture(this);
+    this.renderer.addDOMTexture(this);
     this.createTexture();
   }
   /**
@@ -208,7 +208,7 @@ class Texture extends Object3D {
     }
   }
   /**
-   * Resize our {@link Texture}
+   * Resize our {@link DOMTexture}
    */
   resize() {
     if (this.source && this.source instanceof HTMLCanvasElement && (this.source.width !== this.size.width || this.source.height !== this.size.height)) {
@@ -244,8 +244,8 @@ class Texture extends Object3D {
     this.sourceUploaded = true;
   }
   /**
-   * Copy a {@link Texture}
-   * @param texture - {@link Texture} to copy
+   * Copy a {@link DOMTexture}
+   * @param texture - {@link DOMTexture} to copy
    */
   copy(texture) {
     if (this.options.sourceType === "externalVideo" && texture.options.sourceType !== "externalVideo") {
@@ -332,7 +332,7 @@ class Texture extends Object3D {
     const url = typeof source === "string" ? source : source.getAttribute("src");
     this.options.source = url;
     this.options.sourceType = "image";
-    const cachedTexture = this.renderer.textures.find((t) => t.options.source === url);
+    const cachedTexture = this.renderer.domTextures.find((t) => t.options.source === url);
     if (cachedTexture && cachedTexture.texture && cachedTexture.sourceUploaded) {
       this.copy(cachedTexture);
       return;
@@ -442,7 +442,7 @@ class Texture extends Object3D {
   /**
    * Callback to run when the {@link source} has been loaded
    * @param callback - callback to run when the {@link source} has been loaded
-   * @returns - our {@link Texture}
+   * @returns - our {@link DOMTexture}
    */
   onSourceLoaded(callback) {
     if (callback) {
@@ -453,7 +453,7 @@ class Texture extends Object3D {
   /**
    * Callback to run when the {@link source} has been uploaded
    * @param callback - callback to run when the {@link source} been uploaded
-   * @returns - our {@link Texture}
+   * @returns - our {@link DOMTexture}
    */
   onSourceUploaded(callback) {
     if (callback) {
@@ -463,7 +463,7 @@ class Texture extends Object3D {
   }
   /* RENDER */
   /**
-   * Render a {@link Texture}:
+   * Render a {@link DOMTexture}:
    * - Update its {@link modelMatrix} and {@link bindings} if needed
    * - Upload the texture if it needs to be done
    */
@@ -482,7 +482,7 @@ class Texture extends Object3D {
   }
   /* DESTROY */
   /**
-   * Destroy the {@link Texture}
+   * Destroy the {@link DOMTexture}
    */
   destroy() {
     if (this.videoFrameCallbackId) {
@@ -497,7 +497,7 @@ class Texture extends Object3D {
         }
       );
     }
-    this.renderer.removeTexture(this);
+    this.renderer.removeDOMTexture(this);
     this.texture?.destroy();
     this.texture = null;
   }
@@ -507,4 +507,4 @@ _sourceRatio = new WeakMap();
 _coverScale = new WeakMap();
 _rotationMatrix = new WeakMap();
 
-export { Texture };
+export { DOMTexture };

@@ -3,7 +3,7 @@ import { generateMips, Renderer } from './utils'
 import { Sampler } from '../samplers/Sampler'
 import { PipelineManager } from '../pipelines/PipelineManager'
 import { SceneObject } from './GPURenderer'
-import { Texture } from '../textures/Texture'
+import { DOMTexture } from '../textures/DOMTexture'
 import { AllowedBindGroups } from '../../types/BindGroups'
 import { Buffer } from '../buffers/Buffer'
 import { BufferBinding } from '../bindings/BufferBinding'
@@ -41,7 +41,7 @@ export interface GPUDeviceManagerSetupParams {
 /**
  * Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
  *
- * It will create all the GPU objects that need a {@link GPUDevice | device} to do so, as well as a {@link PipelineManager}. It will also keep a track of all the {@link Renderer}, {@link AllowedBindGroups | bind groups}, {@link Sampler}, {@link Texture} and {@link GPUBuffer | GPU buffers} created.
+ * It will create all the GPU objects that need a {@link GPUDevice | device} to do so, as well as a {@link PipelineManager}. It will also keep a track of all the {@link Renderer}, {@link AllowedBindGroups | bind groups}, {@link Sampler}, {@link DOMTexture} and {@link GPUBuffer | GPU buffers} created.
  *
  * The {@link GPUDeviceManager} is also responsible for creating the {@link GPUCommandBuffer}, rendering all the {@link Renderer} and then submitting the {@link GPUCommandBuffer} at each {@link GPUDeviceManager#render | render} calls.
  */
@@ -84,10 +84,10 @@ export class GPUDeviceManager {
 
   /** An array containing all our created {@link Sampler} */
   samplers: Sampler[]
-  /** An array containing all our created {@link Texture} */
-  textures: Texture[]
-  /** An array to keep track of the newly uploaded {@link Texture | textures} and set their {@link Texture#sourceUploaded | sourceUploaded} property */
-  texturesQueue: Texture[]
+  /** An array containing all our created {@link DOMTexture} */
+  domTextures: DOMTexture[]
+  /** An array to keep track of the newly uploaded {@link DOMTexture} and set their {@link DOMTexture#sourceUploaded | sourceUploaded} property */
+  texturesQueue: DOMTexture[]
 
   /** Callback to run if there's any error while trying to set up the {@link GPUAdapter | adapter} or {@link GPUDevice | device} */
   onError: () => void
@@ -280,7 +280,7 @@ export class GPUDeviceManager {
     this.bindGroupLayouts = new Map()
     this.bufferBindings = new Map()
     this.samplers = []
-    this.textures = []
+    this.domTextures = []
 
     // keep track of all textures that are being uploaded
     this.texturesQueue = []
@@ -359,18 +359,18 @@ export class GPUDeviceManager {
   }
 
   /**
-   * Add a {@link Texture} to our {@link textures} array
-   * @param texture - {@link Texture} to add
+   * Add a {@link DOMTexture} to our {@link domTextures} array
+   * @param texture - {@link DOMTexture} to add
    */
-  addTexture(texture: Texture) {
-    this.textures.push(texture)
+  addDOMTexture(texture: DOMTexture) {
+    this.domTextures.push(texture)
   }
 
   /**
-   * Upload a {@link Texture#texture | texture} to the GPU
-   * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+   * Upload a {@link DOMTexture#texture | texture} to the GPU
+   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
    */
-  uploadTexture(texture: Texture) {
+  uploadTexture(texture: DOMTexture) {
     if (texture.source) {
       try {
         this.device?.queue.copyExternalImageToTexture(
@@ -402,11 +402,11 @@ export class GPUDeviceManager {
   }
 
   /**
-   * Remove a {@link Texture} from our {@link textures} array
-   * @param texture - {@link Texture} to remove
+   * Remove a {@link DOMTexture} from our {@link domTextures} array
+   * @param texture - {@link DOMTexture} to remove
    */
-  removeTexture(texture: Texture) {
-    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid)
+  removeDOMTexture(texture: DOMTexture) {
+    this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid)
   }
 
   /**
@@ -415,7 +415,7 @@ export class GPUDeviceManager {
    * - create a {@link GPUCommandEncoder}
    * - render all our {@link renderers}
    * - submit our {@link GPUCommandBuffer}
-   * - upload {@link Texture#texture | textures} that do not have a parentMesh
+   * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh
    * - empty our {@link texturesQueue} array
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
    */
@@ -437,7 +437,7 @@ export class GPUDeviceManager {
 
     // handle textures
     // first check if media textures without parentMesh need to be uploaded
-    this.textures
+    this.domTextures
       .filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded)
       .forEach((texture) => this.uploadTexture(texture))
 
@@ -469,7 +469,7 @@ export class GPUDeviceManager {
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy())
     this.buffers.forEach((buffer) => buffer?.destroy())
 
-    this.textures.forEach((texture) => texture.destroy())
+    this.domTextures.forEach((texture) => texture.destroy())
 
     this.setDeviceObjects()
   }

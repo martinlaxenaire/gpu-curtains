@@ -57,12 +57,12 @@ window.addEventListener('load', async () => {
       },
     })
 
-    plane.textures[0].scale.set(1.5, 1.5, 1)
+    plane.domTextures[0].scale.set(1.5, 1.5, 1)
 
     if (index % 2 === 1) {
       plane.onBeforeRender(() => {
         plane.rotation.z += 0.01
-        plane.textures[0].rotation.z -= 0.01
+        plane.domTextures[0].rotation.z -= 0.01
       })
     }
   })

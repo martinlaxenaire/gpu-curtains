@@ -4,7 +4,7 @@ import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
-import { Texture } from './Texture'
+import { DOMTexture } from './DOMTexture'
 import { TextureSize } from '../../types/Textures'
 import { getRenderTextureUsage, TextureUsageKeys } from './utils'
 
@@ -48,8 +48,8 @@ export interface RenderTextureBaseParams {
  * Parameters used to create a {@link RenderTexture}
  */
 export interface RenderTextureParams extends RenderTextureBaseParams {
-  /** Optional texture to use as a copy source input. Could be a {@link RenderTexture} or {@link Texture} */
-  fromTexture?: RenderTexture | Texture | null
+  /** Optional texture to use as a copy source input. Could be a {@link RenderTexture} or {@link DOMTexture} */
+  fromTexture?: RenderTexture | DOMTexture | null
 }
 
 /** @const - default {@link RenderTexture} parameters */
@@ -169,7 +169,7 @@ export class RenderTexture {
    * Copy another {@link RenderTexture} into this {@link RenderTexture}
    * @param texture - {@link RenderTexture} to copy
    */
-  copy(texture: RenderTexture | Texture) {
+  copy(texture: RenderTexture | DOMTexture) {
     this.options.fromTexture = texture
     this.createTexture()
   }

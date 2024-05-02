@@ -152,7 +152,7 @@ class GPUDeviceManager {
     this.bindGroupLayouts = /* @__PURE__ */ new Map();
     this.bufferBindings = /* @__PURE__ */ new Map();
     this.samplers = [];
-    this.textures = [];
+    this.domTextures = [];
     this.texturesQueue = [];
   }
   /**
@@ -219,15 +219,15 @@ class GPUDeviceManager {
     this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
   }
   /**
-   * Add a {@link Texture} to our {@link textures} array
-   * @param texture - {@link Texture} to add
+   * Add a {@link DOMTexture} to our {@link domTextures} array
+   * @param texture - {@link DOMTexture} to add
    */
-  addTexture(texture) {
-    this.textures.push(texture);
+  addDOMTexture(texture) {
+    this.domTextures.push(texture);
   }
   /**
-   * Upload a {@link Texture#texture | texture} to the GPU
-   * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+   * Upload a {@link DOMTexture#texture | texture} to the GPU
+   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
    */
   uploadTexture(texture) {
     if (texture.source) {
@@ -257,11 +257,11 @@ class GPUDeviceManager {
     }
   }
   /**
-   * Remove a {@link Texture} from our {@link textures} array
-   * @param texture - {@link Texture} to remove
+   * Remove a {@link DOMTexture} from our {@link domTextures} array
+   * @param texture - {@link DOMTexture} to remove
    */
-  removeTexture(texture) {
-    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
+  removeDOMTexture(texture) {
+    this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
   }
   /**
    * Render everything:
@@ -269,7 +269,7 @@ class GPUDeviceManager {
    * - create a {@link GPUCommandEncoder}
    * - render all our {@link renderers}
    * - submit our {@link GPUCommandBuffer}
-   * - upload {@link Texture#texture | textures} that do not have a parentMesh
+   * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh
    * - empty our {@link texturesQueue} array
    * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
    */
@@ -285,7 +285,7 @@ class GPUDeviceManager {
     !this.production && commandEncoder.popDebugGroup();
     const commandBuffer = commandEncoder.finish();
     this.device?.queue.submit([commandBuffer]);
-    this.textures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
+    this.domTextures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
     for (const texture of this.texturesQueue) {
       texture.sourceUploaded = true;
     }
@@ -303,7 +303,7 @@ class GPUDeviceManager {
     this.renderers.forEach((renderer) => renderer.destroy());
     this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
     this.buffers.forEach((buffer) => buffer?.destroy());
-    this.textures.forEach((texture) => texture.destroy());
+    this.domTextures.forEach((texture) => texture.destroy());
     this.setDeviceObjects();
   }
 }

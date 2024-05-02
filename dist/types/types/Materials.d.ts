@@ -1,7 +1,7 @@
 /// <reference types="dist" />
 import { AllowedBindGroups, BindGroupInputs } from './BindGroups';
 import { BindGroup } from '../core/bindGroups/BindGroup';
-import { Texture } from '../core/textures/Texture';
+import { DOMTexture } from '../core/textures/DOMTexture';
 import { RenderTexture } from '../core/textures/RenderTexture';
 import { Sampler } from '../core/samplers/Sampler';
 import { Geometry } from '../core/geometries/Geometry';
@@ -55,9 +55,9 @@ export interface MaterialInputBindingsParams extends BindGroupInputs {
     bindGroups?: BindGroup[];
     /** Array of already created {@link core/samplers/Sampler.Sampler | samplers} to be used by this {@link core/materials/Material.Material | Material} */
     samplers?: Sampler[];
-    /** Array of already created {@link core/textures/Texture.Texture | textures} to be used by this {@link core/materials/Material.Material | Material} */
-    textures?: Texture[];
-    /** Array of already created {@link core/textures/RenderTexture.RenderTexture | render textures} to be used by this {@link core/materials/Material.Material | Material} */
+    /** Array of already created {@link DOMTexture} to be used by this {@link core/materials/Material.Material | Material} */
+    domTextures?: DOMTexture[];
+    /** Array of already created {@link RenderTexture} to be used by this {@link core/materials/Material.Material | Material} */
     renderTextures?: RenderTexture[];
 }
 /** Parameters used to create a {@link core/materials/Material.Material | Material} */
@@ -152,4 +152,4 @@ export interface RenderMaterialOptions extends MaterialOptions {
     rendering?: RenderMaterialRenderingOptions;
 }
 /** Defines all kind of textures a {@link core/materials/Material.Material | Material} can use */
-export type MaterialTexture = Texture | RenderTexture;
+export type MaterialTexture = DOMTexture | RenderTexture;

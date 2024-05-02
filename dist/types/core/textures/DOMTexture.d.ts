@@ -4,7 +4,7 @@ import { TextureBinding } from '../bindings/TextureBinding';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { Object3D } from '../objects3D/Object3D';
 import { BindGroupBindingElement } from '../../types/BindGroups';
-import { TextureOptions, TextureParams, TextureParent, TextureSize, TextureSource } from '../../types/Textures';
+import { DOMTextureOptions, DOMTextureParams, DOMTextureParent, TextureSize, TextureSource } from '../../types/Textures';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
  * Used to create {@link GPUTexture} or {@link GPUExternalTexture} from different kinds of {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
@@ -23,7 +23,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
  * await gpuCurtains.setDevice()
  *
  * // create a render texture
- * const imageTexture = new Texture(gpuCurtains, {
+ * const imageTexture = new DOMTexture(gpuCurtains, {
  *   label: 'My image texture',
  *   name: 'imageTexture',
  * })
@@ -32,29 +32,29 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
  * await imageTexture.loadImage(document.querySelector('img'))
  * ```
  */
-export declare class Texture extends Object3D {
+export declare class DOMTexture extends Object3D {
     #private;
-    /** The type of the {@link Texture} */
+    /** The type of the {@link DOMTexture} */
     type: string;
-    /** The universal unique id of this {@link Texture} */
+    /** The universal unique id of this {@link DOMTexture} */
     readonly uuid: string;
-    /** {@link Renderer} used by this {@link Texture} */
+    /** {@link Renderer} used by this {@link DOMTexture} */
     renderer: Renderer;
     /** The {@link GPUTexture} used if any */
     texture: null | GPUTexture;
     /** The {@link GPUExternalTexture} used if any */
     externalTexture: null | GPUExternalTexture;
-    /** The {@link Texture} {@link TextureSource | source} to use */
+    /** The {@link DOMTexture} {@link TextureSource | source} to use */
     source: TextureSource;
     /** The {@link GPUTexture}, matching the {@link TextureSource | source} {@link core/DOM/DOMElement.RectSize | size} (with 1 for depth) */
     size: TextureSize;
-    /** Options used to create this {@link Texture} */
-    options: TextureOptions;
+    /** Options used to create this {@link DOMTexture} */
+    options: DOMTextureOptions;
     /** A {@link BufferBinding | buffer binding} that will hold the texture model matrix */
     textureMatrix: BufferBinding;
-    /** The bindings used by this {@link Texture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
+    /** The bindings used by this {@link DOMTexture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
     bindings: BindGroupBindingElement[];
-    /** {@link Texture} parentMesh if any */
+    /** {@link DOMTexture} parentMesh if any */
     private _parentMesh;
     /** Whether the source has been loaded */
     private _sourceLoaded;
@@ -69,11 +69,11 @@ export declare class Texture extends Object3D {
     /** function assigned to the {@link onSourceUploaded} callback */
     _onSourceUploadedCallback: () => void;
     /**
-     * Texture constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-     * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+     * DOMTexture constructor
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+     * @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
      */
-    constructor(renderer: Renderer | GPUCurtains, parameters?: TextureParams);
+    constructor(renderer: Renderer | GPUCurtains, parameters?: DOMTextureParams);
     /**
      * Set our {@link bindings}
      */
@@ -86,12 +86,12 @@ export declare class Texture extends Object3D {
     /**
      * Get our texture {@link parentMesh}
      */
-    get parentMesh(): TextureParent;
+    get parentMesh(): DOMTextureParent;
     /**
      * Set our texture {@link parentMesh}
      * @param value - texture {@link parentMesh} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
      */
-    set parentMesh(value: TextureParent);
+    set parentMesh(value: DOMTextureParent);
     /**
      * Get whether our {@link source} has been loaded
      */
@@ -123,7 +123,7 @@ export declare class Texture extends Object3D {
      */
     updateMatrixStack(): void;
     /**
-     * Resize our {@link Texture}
+     * Resize our {@link DOMTexture}
      */
     resize(): void;
     /**
@@ -141,10 +141,10 @@ export declare class Texture extends Object3D {
      */
     uploadVideoTexture(): void;
     /**
-     * Copy a {@link Texture}
-     * @param texture - {@link Texture} to copy
+     * Copy a {@link DOMTexture}
+     * @param texture - {@link DOMTexture} to copy
      */
-    copy(texture: Texture): void;
+    copy(texture: DOMTexture): void;
     /**
      * Set the {@link texture | GPU texture}
      */
@@ -195,23 +195,23 @@ export declare class Texture extends Object3D {
     /**
      * Callback to run when the {@link source} has been loaded
      * @param callback - callback to run when the {@link source} has been loaded
-     * @returns - our {@link Texture}
+     * @returns - our {@link DOMTexture}
      */
-    onSourceLoaded(callback: () => void): Texture;
+    onSourceLoaded(callback: () => void): DOMTexture;
     /**
      * Callback to run when the {@link source} has been uploaded
      * @param callback - callback to run when the {@link source} been uploaded
-     * @returns - our {@link Texture}
+     * @returns - our {@link DOMTexture}
      */
-    onSourceUploaded(callback: () => void): Texture;
+    onSourceUploaded(callback: () => void): DOMTexture;
     /**
-     * Render a {@link Texture}:
+     * Render a {@link DOMTexture}:
      * - Update its {@link modelMatrix} and {@link bindings} if needed
      * - Upload the texture if it needs to be done
      */
     render(): void;
     /**
-     * Destroy the {@link Texture}
+     * Destroy the {@link DOMTexture}
      */
     destroy(): void;
 }

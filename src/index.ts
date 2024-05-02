@@ -33,7 +33,7 @@ export { ShaderPass } from './core/renderPasses/ShaderPass'
 export { Sampler } from './core/samplers/Sampler'
 export { Scene } from './core/scenes/Scene'
 export { RenderTexture } from './core/textures/RenderTexture'
-export { Texture } from './core/textures/Texture'
+export { DOMTexture } from './core/textures/DOMTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
 // curtains

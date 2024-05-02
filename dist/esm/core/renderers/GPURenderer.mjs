@@ -491,25 +491,25 @@ class GPURenderer {
   }
   /* TEXTURES */
   /**
-   * Get all created {@link Texture} tracked by our {@link GPUDeviceManager}
+   * Get all created {@link DOMTexture} tracked by our {@link GPUDeviceManager}
    * @readonly
    */
-  get textures() {
-    return this.deviceManager.textures;
+  get domTextures() {
+    return this.deviceManager.domTextures;
   }
   /**
-   * Add a {@link Texture} to our {@link GPUDeviceManager#textures | textures array}
-   * @param texture - {@link Texture} to add
+   * Add a {@link DOMTexture} to our {@link GPUDeviceManager#domTextures | textures array}
+   * @param texture - {@link DOMTexture} to add
    */
-  addTexture(texture) {
-    this.deviceManager.addTexture(texture);
+  addDOMTexture(texture) {
+    this.deviceManager.addDOMTexture(texture);
   }
   /**
-   * Remove a {@link Texture} from our {@link GPUDeviceManager#textures | textures array}
-   * @param texture - {@link Texture} to remove
+   * Remove a {@link DOMTexture} from our {@link GPUDeviceManager#domTextures | textures array}
+   * @param texture - {@link DOMTexture} to remove
    */
-  removeTexture(texture) {
-    this.deviceManager.removeTexture(texture);
+  removeDOMTexture(texture) {
+    this.deviceManager.removeDOMTexture(texture);
   }
   /**
    * Add a {@link RenderTexture} to our {@link renderTextures} array
@@ -534,8 +534,8 @@ class GPURenderer {
     return this.deviceManager.device?.createTexture(textureDescriptor);
   }
   /**
-   * Upload a {@link Texture#texture | texture} to the GPU
-   * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+   * Upload a {@linkDOMTexture#texture | texture} to the GPU
+   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
    */
   uploadTexture(texture) {
     this.deviceManager.uploadTexture(texture);
@@ -624,13 +624,13 @@ class GPURenderer {
     });
   }
   /**
-   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link Texture} or {@link RenderTexture}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link RenderTexture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param texture - {@link Texture} or {@link RenderTexture} to check
+   * @param texture - {@link DOMTexture} or {@link RenderTexture} to check
    */
   getObjectsByTexture(texture) {
     return this.deviceRenderedObjects.filter((object) => {
-      return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid);
+      return [...object.material.domTextures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid);
     });
   }
   /* EVENTS */

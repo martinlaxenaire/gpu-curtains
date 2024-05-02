@@ -1,7 +1,7 @@
 import { generateUUID, throwWarning, throwError } from '../../../utils/utils.mjs';
 import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
-import { Texture } from '../../textures/Texture.mjs';
+import { DOMTexture } from '../../textures/DOMTexture.mjs';
 import { RenderTexture } from '../../textures/RenderTexture.mjs';
 import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl.mjs';
 import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl.mjs';
@@ -362,7 +362,7 @@ function MeshBaseMixin(Base) {
     useMaterial(material) {
       this.material = material;
       this.transparent = this.material.options.rendering.transparent;
-      this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+      this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onTextureAdded(texture));
     }
     /**
      * Patch the shaders if needed, then set the Mesh material
@@ -404,11 +404,11 @@ function MeshBaseMixin(Base) {
     }
     /* TEXTURES */
     /**
-     * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
+     * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
      * @readonly
      */
-    get textures() {
-      return this.material?.textures || [];
+    get domTextures() {
+      return this.material?.domTextures || [];
     }
     /**
      * Get our {@link RenderMaterial#renderTextures | RenderMaterial render textures array}
@@ -418,32 +418,32 @@ function MeshBaseMixin(Base) {
       return this.material?.renderTextures || [];
     }
     /**
-     * Create a new {@link Texture}
-     * @param options - {@link TextureParams | Texture parameters}
-     * @returns - newly created {@link Texture}
+     * Create a new {@link DOMTexture}
+     * @param options - {@link DOMTextureParams | DOMTexture parameters}
+     * @returns - newly created {@link DOMTexture}
      */
     createTexture(options) {
       if (!options.name) {
-        options.name = "texture" + this.textures.length;
+        options.name = "texture" + this.domTextures.length;
       }
       if (!options.label) {
         options.label = this.options.label + " " + options.name;
       }
-      const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+      const texture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
       this.addTexture(texture);
       return texture;
     }
     /**
-     * Add a {@link Texture}
-     * @param texture - {@link Texture} to add
+     * Add a {@link DOMTexture}
+     * @param texture - {@link DOMTexture} to add
      */
     addTexture(texture) {
       this.material.addTexture(texture);
       this.onTextureAdded(texture);
     }
     /**
-     * Callback run when a new {@link Texture} has been added
-     * @param texture - newly created Texture
+     * Callback run when a new {@link DOMTexture} has been added
+     * @param texture - newly created DOMTexture
      */
     onTextureAdded(texture) {
       texture.parentMesh = this;
@@ -497,7 +497,7 @@ function MeshBaseMixin(Base) {
           renderTexture.copy(renderTexture.options.fromTexture);
         }
       });
-      this.textures?.forEach((texture) => {
+      this.domTextures?.forEach((texture) => {
         texture.resize();
       });
       this._onAfterResizeCallback && this._onAfterResizeCallback();

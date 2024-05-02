@@ -1,7 +1,15 @@
-import { Texture } from '../core/textures/Texture'
+import { DOMTexture } from '../core/textures/DOMTexture'
 import { RenderedMesh } from '../core/renderers/GPURenderer'
 import { RectSize } from '../core/DOM/DOMElement'
 import { BindingParams } from '../core/bindings/Binding'
+
+/**
+ * Defines the {@link GPUTexture} size. Depth default to 1 and could also be used for array layers.
+ */
+export interface TextureSize extends RectSize {
+  /** Depth or array layers of the {@link GPUTexture} */
+  depth?: number
+}
 
 /**
  * Parameters used to copy an external image to texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}
@@ -23,53 +31,44 @@ export interface ExternalTextureParams {
   viewDimension?: GPUTextureViewDimension
   /** The texture shaders visibility sent to the {@link core/bindings/TextureBinding.TextureBinding | texture binding}. Default to `'fragment'`. */
   visibility?: BindingParams['visibility']
-  /** Whether to keep the {@link Texture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material | Material} tries to destroy it. Default to `true`. */
+  /** Whether to keep the {@link DOMTexture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material | Material} tries to destroy it. Default to `true`. */
   cache?: boolean
 }
 
 /**
- * Base parameters used to create a {@link Texture}
+ * Base parameters used to create a {@link DOMTexture}
  */
-export interface TextureBaseParams extends ExternalTextureParams {
-  /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose */
+export interface DOMTextureBaseParams extends ExternalTextureParams {
+  /** The label of the {@link DOMTexture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link Texture} to use in the {@link core/bindings/Binding.Binding | binding} */
+  /** Name of the {@link DOMTexture} to use in the {@link core/bindings/Binding.Binding | binding} */
   name?: string
 }
 
 /**
- * Parameters used to create a {@link Texture}
+ * Parameters used to create a {@link DOMTexture}
  */
-export interface TextureParams extends TextureBaseParams {
-  /** Optional {@link Texture} to use as a copy source input */
-  fromTexture?: Texture | null
+export interface DOMTextureParams extends DOMTextureBaseParams {
+  /** Optional {@link DOMTexture} to use as a copy source input */
+  fromTexture?: DOMTexture | null
 }
 
-/** Allowed {@link Texture} source to use */
-//export type TextureSource = GPUImageCopyExternalImageSource | HTMLImageElement | RenderPass | null
-export type TextureSource = GPUImageCopyExternalImageSource | HTMLImageElement | null
-/** Allowed {@link Texture} source type to use */
+/** Allowed {@link DOMTexture} source to use */
+export type TextureSource = GPUImageCopyExternalImageSource | null
+/** Allowed {@link DOMTexture} source type to use */
 export type TextureSourceType = 'image' | 'canvas' | 'video' | 'externalVideo' | null
 
 /**
- * Options used to create this {@link Texture}
+ * Options used to create this {@link DOMTexture}
  */
-export interface TextureOptions extends TextureParams {
-  /** {@link Texture} source */
+export interface DOMTextureOptions extends DOMTextureParams {
+  /** {@link DOMTexture} source */
   source: TextureSource | string // for image url
-  /** {@link Texture} source type */
+  /** {@link DOMTexture} source type */
   sourceType: TextureSourceType
 }
 
 /**
- * Defines the {@link GPUTexture} size. Depth default to 1 and could also be used for array layers.
+ * Allowed {@link DOMTexture} parentMesh (can be any type of Mesh)
  */
-export interface TextureSize extends RectSize {
-  /** Depth or array layers of the {@link GPUTexture} */
-  depth?: number
-}
-
-/**
- * Allowed {@link Texture} parentMesh (can be any type of Mesh)
- */
-export type TextureParent = null | RenderedMesh
+export type DOMTextureParent = null | RenderedMesh

@@ -2,7 +2,7 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 import { ComputeMaterial } from '../materials/ComputeMaterial.mjs';
 import { RenderTexture } from '../textures/RenderTexture.mjs';
-import { Texture } from '../textures/Texture.mjs';
+import { DOMTexture } from '../textures/DOMTexture.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -68,7 +68,7 @@ class ComputePass {
       storages,
       bindGroups,
       samplers,
-      textures,
+      domTextures,
       renderTextures,
       autoRender,
       useAsyncPipeline,
@@ -98,7 +98,7 @@ class ComputePass {
       storages,
       bindGroups,
       samplers,
-      textures,
+      domTextures,
       renderTextures,
       useAsyncPipeline,
       dispatchSize
@@ -165,11 +165,11 @@ class ComputePass {
   }
   /* TEXTURES */
   /**
-   * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
+   * Get our {@link ComputeMaterial#domTextures | ComputeMaterial domTextures array}
    * @readonly
    */
-  get textures() {
-    return this.material?.textures || [];
+  get domTextures() {
+    return this.material?.domTextures || [];
   }
   /**
    * Get our {@link ComputeMaterial#renderTextures | ComputeMaterial render textures array}
@@ -179,24 +179,24 @@ class ComputePass {
     return this.material?.renderTextures || [];
   }
   /**
-   * Create a new {@link Texture}
-   * @param options - {@link TextureParams | Texture parameters}
-   * @returns - newly created {@link Texture}
+   * Create a new {@link DOMTexture}
+   * @param options - {@link DOMTextureParams | DOMTexture parameters}
+   * @returns - newly created {@link DOMTexture}
    */
   createTexture(options) {
     if (!options.name) {
-      options.name = "texture" + this.textures.length;
+      options.name = "texture" + this.domTextures.length;
     }
     if (!options.label) {
       options.label = this.options.label + " " + options.name;
     }
-    const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+    const texture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
     this.addTexture(texture);
     return texture;
   }
   /**
-   * Add a {@link Texture}
-   * @param texture - {@link Texture} to add
+   * Add a {@link DOMTexture}
+   * @param texture - {@link DOMTexture} to add
    */
   addTexture(texture) {
     this.material.addTexture(texture);

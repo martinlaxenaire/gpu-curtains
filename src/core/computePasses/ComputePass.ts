@@ -4,8 +4,8 @@ import { ComputeMaterial } from '../materials/ComputeMaterial'
 import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
-import { Texture } from '../textures/Texture'
-import { ExternalTextureParams, TextureParams } from '../../types/Textures'
+import { DOMTexture } from '../textures/DOMTexture'
+import { ExternalTextureParams, DOMTextureParams } from '../../types/Textures'
 
 /** Defines {@link ComputePass} options */
 export interface ComputePassOptions {
@@ -19,7 +19,7 @@ export interface ComputePassOptions {
   shaders: MaterialShaders
   /** whether the {@link core/pipelines/ComputePipelineEntry.ComputePipelineEntry#pipeline | compute pipeline} should be compiled asynchronously */
   useAsyncPipeline?: boolean
-  /** Parameters used by this {@link ComputePass} to create a {@link Texture} */
+  /** Parameters used by this {@link ComputePass} to create a {@link DOMTexture} */
   texturesOptions?: ExternalTextureParams
   /** Default {@link ComputeMaterial} work group dispatch size to use with this {@link ComputePass} */
   dispatchSize?: number | number[]
@@ -155,7 +155,7 @@ export class ComputePass {
       storages,
       bindGroups,
       samplers,
-      textures,
+      domTextures,
       renderTextures,
       autoRender,
       useAsyncPipeline,
@@ -190,7 +190,7 @@ export class ComputePass {
       storages,
       bindGroups,
       samplers,
-      textures,
+      domTextures,
       renderTextures,
       useAsyncPipeline,
       dispatchSize,
@@ -270,11 +270,11 @@ export class ComputePass {
   /* TEXTURES */
 
   /**
-   * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
+   * Get our {@link ComputeMaterial#domTextures | ComputeMaterial domTextures array}
    * @readonly
    */
-  get textures(): Texture[] {
-    return this.material?.textures || []
+  get domTextures(): DOMTexture[] {
+    return this.material?.domTextures || []
   }
 
   /**
@@ -286,20 +286,20 @@ export class ComputePass {
   }
 
   /**
-   * Create a new {@link Texture}
-   * @param options - {@link TextureParams | Texture parameters}
-   * @returns - newly created {@link Texture}
+   * Create a new {@link DOMTexture}
+   * @param options - {@link DOMTextureParams | DOMTexture parameters}
+   * @returns - newly created {@link DOMTexture}
    */
-  createTexture(options: TextureParams): Texture {
+  createTexture(options: DOMTextureParams): DOMTexture {
     if (!options.name) {
-      options.name = 'texture' + this.textures.length
+      options.name = 'texture' + this.domTextures.length
     }
 
     if (!options.label) {
       options.label = this.options.label + ' ' + options.name
     }
 
-    const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions })
+    const texture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions })
 
     this.addTexture(texture)
 
@@ -307,10 +307,10 @@ export class ComputePass {
   }
 
   /**
-   * Add a {@link Texture}
-   * @param texture - {@link Texture} to add
+   * Add a {@link DOMTexture}
+   * @param texture - {@link DOMTexture} to add
    */
-  addTexture(texture: Texture) {
+  addTexture(texture: DOMTexture) {
     this.material.addTexture(texture)
   }
 
