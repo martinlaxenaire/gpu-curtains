@@ -22,12 +22,12 @@
 - Basic CacheManager
 - Scroll + resize, frustum culling check
 - GPUCurtains
+- OrbitControls
 
 ## Work in progress
 
 - Examples & tests
 - glTF loading
-- OrbitControls
 
 ## TODO / possible improvements
 
