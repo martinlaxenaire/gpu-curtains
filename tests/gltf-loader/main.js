@@ -54,6 +54,24 @@ window.addEventListener('load', async () => {
 
   let currentScenes = []
 
+  const traverseScenes = (scenes, callback) => {
+    const traverseChild = (child) => {
+      child.meshes.forEach((meshDescriptor) => {
+        callback({ child, meshDescriptor })
+      })
+
+      child.children.forEach((c) => {
+        traverseChild(c)
+      })
+    }
+
+    scenes.forEach((scene) => {
+      scene.children.forEach((child) => {
+        traverseChild(child)
+      })
+    })
+  }
+
   const loadGLTF = async (url) => {
     const { gltf, scenes, boundingBox } = await gltfLoader.loadFromUrl(url)
     console.log({ gltf, scenes, boundingBox })
@@ -69,6 +87,7 @@ window.addEventListener('load', async () => {
           nodes: meshDescriptor.nodes,
         })
 
+        // merge uniforms
         meshDescriptor.parameters.uniforms = {
           ...meshDescriptor.parameters.uniforms,
           ...{
@@ -219,25 +238,8 @@ window.addEventListener('load', async () => {
       }
     }
 
-    scenes.forEach((scene) => {
-      // TODO real traverse
-      scene.children.forEach((child) => {
-        child.meshes.forEach((meshDescriptor) => {
-          createMesh(child, meshDescriptor)
-        })
-
-        child.children.forEach((c) => {
-          c.meshes.forEach((meshDescriptor) => {
-            createMesh(c, meshDescriptor)
-          })
-
-          c.children.forEach((subChild) => {
-            subChild.meshes.forEach((meshDescriptor) => {
-              createMesh(subChild, meshDescriptor)
-            })
-          })
-        })
-      })
+    traverseScenes(scenes, ({ child, meshDescriptor }) => {
+      createMesh(child, meshDescriptor)
     })
 
     console.log(gpuCameraRenderer)
@@ -249,8 +251,9 @@ window.addEventListener('load', async () => {
 
     // reset orbit controls
     orbitControls.reset()
-    orbitControls.zoomStep = radius * 0.005
-    orbitControls.maxDistance = radius * 4
+    orbitControls.zoomStep = radius * 0.0025
+    orbitControls.minZoom = radius * -0.5
+    orbitControls.maxZoom = radius * 2
   }
 
   // GUI
@@ -271,31 +274,10 @@ window.addEventListener('load', async () => {
     )
     .onChange(async (value) => {
       if (models[value].name !== currentModel.name) {
-        currentScenes.forEach((scene) => {
-          // TODO real traverse
-          scene.children.forEach((child) => {
-            child.meshes.forEach((meshDescriptor) => {
-              if (meshDescriptor.mesh) {
-                meshDescriptor.mesh.remove()
-              }
-            })
-
-            child.children.forEach((c) => {
-              c.meshes.forEach((meshDescriptor) => {
-                if (meshDescriptor.mesh) {
-                  meshDescriptor.mesh.remove()
-                }
-              })
-
-              c.children.forEach((subChild) => {
-                subChild.meshes.forEach((meshDescriptor) => {
-                  if (meshDescriptor.mesh) {
-                    meshDescriptor.mesh.remove()
-                  }
-                })
-              })
-            })
-          })
+        traverseScenes(currentScenes, ({ meshDescriptor }) => {
+          if (meshDescriptor.mesh) {
+            meshDescriptor.mesh.remove()
+          }
         })
 
         currentScenes = []

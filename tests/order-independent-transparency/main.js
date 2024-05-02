@@ -6,6 +6,7 @@ window.addEventListener('load', async () => {
   const {
     GPUCameraRenderer,
     GPUDeviceManager,
+    OrbitControls,
     Object3D,
     PlaneGeometry,
     Mesh,
@@ -43,20 +44,18 @@ window.addEventListener('load', async () => {
   })
 
   // get the camera
-  const { scene, camera } = gpuCameraRenderer
-
-  const cameraPivot = new Object3D()
-  cameraPivot.parent = scene
+  const { camera } = gpuCameraRenderer
 
   camera.position.z = 5
   camera.position.x = 2
-  camera.parent = cameraPivot
-
   camera.lookAt()
+
+  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  orbitControls.minZoom = -1
+  orbitControls.maxZoom = 2
 
   // render our scene manually
   const animate = () => {
-    cameraPivot.rotation.y += 0.005
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
