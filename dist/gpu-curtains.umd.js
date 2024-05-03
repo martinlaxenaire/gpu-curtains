@@ -3471,7 +3471,7 @@
     generateMips: false,
     flipY: false,
     format: "rgba8unorm",
-    premultipliedAlpha: true,
+    premultipliedAlpha: false,
     placeholderColor: [0, 0, 0, 255],
     // default to black
     useExternalTextures: true,

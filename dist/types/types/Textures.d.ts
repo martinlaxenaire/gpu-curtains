@@ -25,8 +25,6 @@ export interface ExternalTextureParamsBase {
  * Parameters used to copy an external image to a texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}
  */
 export interface ExternalTextureParams extends ExternalTextureParamsBase {
-    /** Whether this texture should be premultiplied or not. Default to `true`. */
-    premultipliedAlpha?: boolean;
     /** The {@link GPUTextureFormat | texture format} to use. Default to `'rgba8unorm'`. */
     format?: GPUTextureFormat;
     /** Solid color used by temporary texture to display while loading the source. Default to `[0, 0, 0, 255]` (solid black). */
