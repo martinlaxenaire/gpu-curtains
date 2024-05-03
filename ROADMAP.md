@@ -12,7 +12,7 @@
 - Render + Compute Pipelines (async by default)
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
 - Compute passes
-- Texture & Texture (with storage & depth) classes
+- Texture (including storage & depth) & DOMTexture classes
 - Sampler class
 - RenderTarget (render to textures)
 - RenderPass (render pass descriptors) with MRT support
@@ -28,7 +28,6 @@
 
 - Examples & tests
 - glTF loading
-- Rename Texture -> DOMTexture and Texture -> Texture classes
 
 ## TODO / possible improvements
 

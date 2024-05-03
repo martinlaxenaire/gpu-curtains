@@ -670,7 +670,7 @@ export class GLTFLoader {
       meshDescriptor.parameters.cullMode = material.doubleSided ? 'none' : 'back'
 
       // transparency
-      if (material.alphaMode === 'BLEND') {
+      if (material.alphaMode === 'BLEND' || (material.extensions && material.extensions.KHR_materials_transmission)) {
         meshDescriptor.parameters.transparent = true
         meshDescriptor.parameters.targets = [
           {

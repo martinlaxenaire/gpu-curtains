@@ -19,10 +19,12 @@ window.addEventListener('load', async () => {
   // wait for the device to be created
   await gpuDeviceManager.init()
 
+  const container = document.querySelector('#canvas')
+
   // create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
-    container: document.querySelector('#canvas'),
+    container,
     pixelRatio: Math.min(1, window.devicePixelRatio),
     camera: {
       near: 0.01,
@@ -64,7 +66,9 @@ window.addEventListener('load', async () => {
   let currentScenes = []
 
   const loadGLTF = async (url) => {
+    container.classList.add('loading')
     const { gltf, scenes, boundingBox } = await gltfLoader.loadFromUrl(url)
+    container.classList.remove('loading')
     console.log({ gltf, scenes, boundingBox })
 
     currentScenes = scenes
@@ -156,7 +160,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  const currentModelKey = 'sponza'
+  const currentModelKey = 'damagedHelmet'
   let currentModel = models[currentModelKey]
 
   gui

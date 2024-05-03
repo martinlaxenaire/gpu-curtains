@@ -52,9 +52,6 @@ export class OrbitControls extends Object3D {
   /** Zoom step (speed) value to use. */
   zoomStep = 0.005
 
-  /** {@link OrbitControls} target. */
-  //target = new Vec3()
-
   /**
    * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
    * @private
@@ -232,12 +229,8 @@ export class OrbitControls extends Object3D {
    * Override {@link Object3D#updateModelMatrix | updateModelMatrix} method to compose the {@link modelMatrix}.
    */
   updateModelMatrix() {
-    // compose our model transformation matrix from translations and rotation in the right order
-    this.modelMatrix
-      .identity()
-      //.translate(this.target)
-      .rotateFromQuaternion(this.quaternion)
-      .translate(this.position)
+    // compose our model transformation matrix from rotation and translation in the right order
+    this.modelMatrix.identity().rotateFromQuaternion(this.quaternion).translate(this.position)
 
     // tell our world matrix to update
     this.shouldUpdateWorldMatrix()

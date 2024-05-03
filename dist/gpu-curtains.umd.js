@@ -12167,8 +12167,6 @@ struct VSOutput {
       this.maxZoom = 20;
       /** Zoom step (speed) value to use. */
       this.zoomStep = 5e-3;
-      /** {@link OrbitControls} target. */
-      this.target = new Vec3();
       /**
        * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
        * @private
@@ -12315,7 +12313,7 @@ struct VSOutput {
      * Override {@link Object3D#updateModelMatrix | updateModelMatrix} method to compose the {@link modelMatrix}.
      */
     updateModelMatrix() {
-      this.modelMatrix.identity().translate(this.target).rotateFromQuaternion(this.quaternion).translate(this.position);
+      this.modelMatrix.identity().rotateFromQuaternion(this.quaternion).translate(this.position);
       this.shouldUpdateWorldMatrix();
     }
     /**

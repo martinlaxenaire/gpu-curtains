@@ -1,6 +1,5 @@
 import { Object3D } from '../../core/objects3D/Object3D.mjs';
 import { Vec2 } from '../../math/Vec2.mjs';
-import { Vec3 } from '../../math/Vec3.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -57,8 +56,6 @@ class OrbitControls extends Object3D {
     this.maxZoom = 20;
     /** Zoom step (speed) value to use. */
     this.zoomStep = 5e-3;
-    /** {@link OrbitControls} target. */
-    this.target = new Vec3();
     /**
      * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
      * @private
@@ -205,7 +202,7 @@ class OrbitControls extends Object3D {
    * Override {@link Object3D#updateModelMatrix | updateModelMatrix} method to compose the {@link modelMatrix}.
    */
   updateModelMatrix() {
-    this.modelMatrix.identity().translate(this.target).rotateFromQuaternion(this.quaternion).translate(this.position);
+    this.modelMatrix.identity().rotateFromQuaternion(this.quaternion).translate(this.position);
     this.shouldUpdateWorldMatrix();
   }
   /**

@@ -1,3 +1,4 @@
+// helper to traverse scenes and fire a callback when a mesh is found
 export const traverseScenes = (scenes, callback) => {
   const traverseChild = (child) => {
     child.meshes.forEach((meshDescriptor) => {
@@ -16,6 +17,7 @@ export const traverseScenes = (scenes, callback) => {
   })
 }
 
+// helper to build vertex and fragment shaders based on our meshDescriptor object
 export const buildShaders = (meshDescriptor) => {
   const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== 'position')
 
