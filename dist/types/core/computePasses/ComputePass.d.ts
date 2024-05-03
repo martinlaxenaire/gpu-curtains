@@ -3,9 +3,9 @@ import { Renderer } from '../renderers/utils';
 import { ComputeMaterial } from '../materials/ComputeMaterial';
 import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture';
-import { Texture } from '../textures/Texture';
-import { ExternalTextureParams, TextureParams } from '../../types/Textures';
+import { Texture, TextureParams } from '../textures/Texture';
+import { DOMTexture } from '../textures/DOMTexture';
+import { ExternalTextureParams, DOMTextureParams } from '../../types/Textures';
 /** Defines {@link ComputePass} options */
 export interface ComputePassOptions {
     /** The label of the {@link ComputePass} */
@@ -18,7 +18,7 @@ export interface ComputePassOptions {
     shaders: MaterialShaders;
     /** whether the {@link core/pipelines/ComputePipelineEntry.ComputePipelineEntry#pipeline | compute pipeline} should be compiled asynchronously */
     useAsyncPipeline?: boolean;
-    /** Parameters used by this {@link ComputePass} to create a {@link Texture} */
+    /** Parameters used by this {@link ComputePass} to create a {@link DOMTexture} */
     texturesOptions?: ExternalTextureParams;
     /** Default {@link ComputeMaterial} work group dispatch size to use with this {@link ComputePass} */
     dispatchSize?: number | number[];
@@ -141,37 +141,32 @@ export declare class ComputePass {
      */
     restoreContext(): void;
     /**
+     * Get our {@link ComputeMaterial#domTextures | ComputeMaterial domTextures array}
+     * @readonly
+     */
+    get domTextures(): DOMTexture[];
+    /**
      * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
      * @readonly
      */
     get textures(): Texture[];
     /**
-     * Get our {@link ComputeMaterial#renderTextures | ComputeMaterial render textures array}
-     * @readonly
+     * Create a new {@link DOMTexture}
+     * @param options - {@link DOMTextureParams | DOMTexture parameters}
+     * @returns - newly created {@link DOMTexture}
      */
-    get renderTextures(): RenderTexture[];
+    createDOMTexture(options: DOMTextureParams): DOMTexture;
     /**
      * Create a new {@link Texture}
-     * @param options - {@link TextureParams | Texture parameters}
+     * @param  options - {@link TextureParams | Texture parameters}
      * @returns - newly created {@link Texture}
      */
     createTexture(options: TextureParams): Texture;
     /**
-     * Add a {@link Texture}
+     * Add a {@link Texture} or {@link DOMTexture}
      * @param texture - {@link Texture} to add
      */
-    addTexture(texture: Texture): void;
-    /**
-     * Create a new {@link RenderTexture}
-     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-     * @returns - newly created {@link RenderTexture}
-     */
-    createRenderTexture(options: RenderTextureParams): RenderTexture;
-    /**
-     * Add a {@link RenderTexture}
-     * @param renderTexture - {@link RenderTexture} to add
-     */
-    addRenderTexture(renderTexture: RenderTexture): void;
+    addTexture(texture: Texture | DOMTexture): void;
     /**
      * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}
      * @readonly

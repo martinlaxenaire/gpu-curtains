@@ -1,7 +1,7 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { RenderTexture } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
 
 /** Define the parameters of a color attachment */
 export interface ColorAttachmentParams {
@@ -40,7 +40,7 @@ export interface RenderPassParams {
   /** Whether this {@link RenderPass} should handle a depth texture */
   useDepth?: boolean
   /** Whether this {@link RenderPass} should use an already created depth texture */
-  depthTexture?: RenderTexture
+  depthTexture?: Texture
   /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
   depthLoadOp?: GPULoadOp
   /** The {@link GPUStoreOp | depth store operation} to perform while drawing this {@link RenderPass} */
@@ -65,14 +65,14 @@ export class RenderPass {
   /** Options used to create this {@link RenderPass} */
   options: RenderPassParams
 
-  /** Depth {@link RenderTexture} to use with this {@link RenderPass} if it should handle depth */
-  depthTexture: RenderTexture | undefined
+  /** Depth {@link Texture} to use with this {@link RenderPass} if it should handle depth */
+  depthTexture: Texture | undefined
 
-  /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments view textures */
-  viewTextures: RenderTexture[]
+  /** Array of {@link Texture} used for this {@link RenderPass} color attachments view textures */
+  viewTextures: Texture[]
 
-  /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments resolve textures */
-  resolveTargets: Array<null | RenderTexture>
+  /** Array of {@link Texture} used for this {@link RenderPass} color attachments resolve textures */
+  resolveTargets: Array<null | Texture>
 
   /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
   descriptor: GPURenderPassDescriptor
@@ -170,7 +170,7 @@ export class RenderPass {
       // adjust depth format as well
       this.options.depthFormat = this.options.depthTexture.options.format
     } else {
-      this.depthTexture = new RenderTexture(this.renderer, {
+      this.depthTexture = new Texture(this.renderer, {
         label: this.options.label + ' depth texture',
         name: 'depthTexture',
         format: this.options.depthFormat,
@@ -188,7 +188,7 @@ export class RenderPass {
   createViewTextures() {
     this.options.colorAttachments.forEach((colorAttachment, index) => {
       this.viewTextures.push(
-        new RenderTexture(this.renderer, {
+        new Texture(this.renderer, {
           label: `${this.options.label} colorAttachment[${index}] view texture`,
           name: `colorAttachment${index}ViewTexture`,
           format: colorAttachment.targetFormat,
@@ -212,7 +212,7 @@ export class RenderPass {
         this.resolveTargets.push(
           this.options.renderToSwapChain && index === 0
             ? null
-            : new RenderTexture(this.renderer, {
+            : new Texture(this.renderer, {
                 label: `${this.options.label} resolve target[${index}] texture`,
                 name: `resolveTarget${index}Texture`,
                 format: colorAttachment.targetFormat,
@@ -230,7 +230,7 @@ export class RenderPass {
    *
    * @readonly
    */
-  get outputTextures(): RenderTexture[] {
+  get outputTextures(): Texture[] {
     return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures
   }
 
@@ -278,7 +278,7 @@ export class RenderPass {
   }
 
   /**
-   * Resize our {@link RenderPass}: reset its {@link RenderTexture}
+   * Resize our {@link RenderPass}: reset its {@link Texture}
    */
   resize() {
     // reassign textures

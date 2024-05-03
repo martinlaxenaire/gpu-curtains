@@ -133,8 +133,8 @@ class GPURenderer {
    * Resize all tracked objects
    */
   onResize() {
-    this.renderTextures.forEach((renderTexture) => {
-      renderTexture.resize();
+    this.textures.forEach((texture) => {
+      texture.resize();
     });
     this.renderPass?.resize();
     this.postProcessingPass?.resize();
@@ -280,13 +280,13 @@ class GPURenderer {
   }
   /**
    * Called when the {@link GPUDeviceManager#device | device} should be restored.
-   * Configure the context again, resize the {@link RenderTarget | render targets} and {@link RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context.
+   * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
    * @async
    */
   restoreContext() {
     this.configureContext();
-    this.renderTextures.forEach((renderTexture) => {
-      renderTexture.createTexture();
+    this.textures.forEach((texture) => {
+      texture.createTexture();
     });
     this.renderPass?.resize();
     this.postProcessingPass?.resize();
@@ -491,39 +491,39 @@ class GPURenderer {
   }
   /* TEXTURES */
   /**
-   * Get all created {@link Texture} tracked by our {@link GPUDeviceManager}
+   * Get all created {@link DOMTexture} tracked by our {@link GPUDeviceManager}
    * @readonly
    */
-  get textures() {
-    return this.deviceManager.textures;
+  get domTextures() {
+    return this.deviceManager.domTextures;
   }
   /**
-   * Add a {@link Texture} to our {@link GPUDeviceManager#textures | textures array}
+   * Add a {@link DOMTexture} to our {@link GPUDeviceManager#domTextures | textures array}
+   * @param texture - {@link DOMTexture} to add
+   */
+  addDOMTexture(texture) {
+    this.deviceManager.addDOMTexture(texture);
+  }
+  /**
+   * Remove a {@link DOMTexture} from our {@link GPUDeviceManager#domTextures | textures array}
+   * @param texture - {@link DOMTexture} to remove
+   */
+  removeDOMTexture(texture) {
+    this.deviceManager.removeDOMTexture(texture);
+  }
+  /**
+   * Add a {@link Texture} to our {@link textures} array
    * @param texture - {@link Texture} to add
    */
   addTexture(texture) {
-    this.deviceManager.addTexture(texture);
+    this.textures.push(texture);
   }
   /**
-   * Remove a {@link Texture} from our {@link GPUDeviceManager#textures | textures array}
+   * Remove a {@link Texture} from our {@link textures} array
    * @param texture - {@link Texture} to remove
    */
   removeTexture(texture) {
-    this.deviceManager.removeTexture(texture);
-  }
-  /**
-   * Add a {@link RenderTexture} to our {@link renderTextures} array
-   * @param texture - {@link RenderTexture} to add
-   */
-  addRenderTexture(texture) {
-    this.renderTextures.push(texture);
-  }
-  /**
-   * Remove a {@link RenderTexture} from our {@link renderTextures} array
-   * @param texture - {@link RenderTexture} to remove
-   */
-  removeRenderTexture(texture) {
-    this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid);
+    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
   }
   /**
    * Create a {@link GPUTexture}
@@ -534,8 +534,8 @@ class GPURenderer {
     return this.deviceManager.device?.createTexture(textureDescriptor);
   }
   /**
-   * Upload a {@link Texture#texture | texture} to the GPU
-   * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+   * Upload a {@linkDOMTexture#texture | texture} to the GPU
+   * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
    */
   uploadTexture(texture) {
     this.deviceManager.uploadTexture(texture);
@@ -600,7 +600,7 @@ class GPURenderer {
     this.shaderPasses = [];
     this.renderTargets = [];
     this.meshes = [];
-    this.renderTextures = [];
+    this.textures = [];
   }
   /**
    * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -624,13 +624,13 @@ class GPURenderer {
     });
   }
   /**
-   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link Texture} or {@link RenderTexture}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link Texture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param texture - {@link Texture} or {@link RenderTexture} to check
+   * @param texture - {@link DOMTexture} or {@link Texture} to check
    */
   getObjectsByTexture(texture) {
     return this.deviceRenderedObjects.filter((object) => {
-      return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid);
+      return [...object.material.domTextures, ...object.material.textures].some((t) => t.uuid === texture.uuid);
     });
   }
   /* EVENTS */
@@ -770,7 +770,7 @@ class GPURenderer {
     this.postProcessingPass?.destroy();
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
-    this.renderTextures.forEach((texture) => texture.destroy());
+    this.textures.forEach((texture) => texture.destroy());
     this.context?.unconfigure();
   }
 }

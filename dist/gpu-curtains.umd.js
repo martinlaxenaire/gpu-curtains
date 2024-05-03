@@ -3429,6 +3429,29 @@
     }
   }
 
+  const textureUsages = /* @__PURE__ */ new Map([
+    ["copySrc", GPUTextureUsage.COPY_SRC],
+    ["copyDst", GPUTextureUsage.COPY_DST],
+    ["renderAttachment", GPUTextureUsage.RENDER_ATTACHMENT],
+    ["storageBinding", GPUTextureUsage.STORAGE_BINDING],
+    ["textureBinding", GPUTextureUsage.TEXTURE_BINDING]
+  ]);
+  const getTextureUsages = (usages = []) => {
+    return usages.reduce((acc, v) => {
+      return acc | textureUsages.get(v);
+    }, 0);
+  };
+  const getDefaultTextureUsage = (usages = [], textureType) => {
+    if (usages.length) {
+      return getTextureUsages(usages);
+    }
+    return textureType !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
+  };
+  const getNumMipLevels = (...sizes) => {
+    const maxSize = Math.max(...sizes);
+    return 1 + Math.log2(maxSize) | 0;
+  };
+
   var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -3443,12 +3466,12 @@
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var _parentRatio, _sourceRatio, _coverScale, _rotationMatrix;
-  const defaultTextureParams = {
+  const defaultDOMTextureParams = {
     name: "texture",
     generateMips: false,
     flipY: false,
     format: "rgba8unorm",
-    premultipliedAlpha: true,
+    premultipliedAlpha: false,
     placeholderColor: [0, 0, 0, 255],
     // default to black
     useExternalTextures: true,
@@ -3457,13 +3480,13 @@
     visibility: ["fragment"],
     cache: true
   };
-  class Texture extends Object3D {
+  class DOMTexture extends Object3D {
     /**
-     * Texture constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-     * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+     * DOMTexture constructor
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+     * @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
      */
-    constructor(renderer, parameters = defaultTextureParams) {
+    constructor(renderer, parameters = defaultDOMTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
       __privateAdd$8(this, _parentRatio, new Vec3(1));
@@ -3486,7 +3509,7 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       const defaultOptions = {
-        ...defaultTextureParams,
+        ...defaultDOMTextureParams,
         source: parameters.fromTexture ? parameters.fromTexture.options.source : null,
         sourceType: parameters.fromTexture ? parameters.fromTexture.options.sourceType : null
       };
@@ -3517,7 +3540,7 @@
       this.sourceLoaded = false;
       this.sourceUploaded = false;
       this.shouldUpdate = false;
-      this.renderer.addTexture(this);
+      this.renderer.addDOMTexture(this);
       this.createTexture();
     }
     /**
@@ -3631,7 +3654,7 @@
       }
     }
     /**
-     * Resize our {@link Texture}
+     * Resize our {@link DOMTexture}
      */
     resize() {
       if (this.source && this.source instanceof HTMLCanvasElement && (this.source.width !== this.size.width || this.source.height !== this.size.height)) {
@@ -3639,15 +3662,6 @@
         this.createTexture();
       }
       this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Get the number of mip levels create based on {@link size}
-     * @param sizes - Array containing our texture width, height and depth
-     * @returns - number of mip levels
-     */
-    getNumMipLevels(...sizes) {
-      const maxSize = Math.max(...sizes);
-      return 1 + Math.log2(maxSize) | 0;
     }
     /**
      * Tell the {@link Renderer} to upload or texture
@@ -3667,8 +3681,8 @@
       this.sourceUploaded = true;
     }
     /**
-     * Copy a {@link Texture}
-     * @param texture - {@link Texture} to copy
+     * Copy a {@link DOMTexture}
+     * @param texture - {@link DOMTexture} to copy
      */
     copy(texture) {
       if (this.options.sourceType === "externalVideo" && texture.options.sourceType !== "externalVideo") {
@@ -3716,7 +3730,7 @@
         usage: !!this.source ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
       };
       if (this.options.sourceType !== "externalVideo") {
-        options.mipLevelCount = this.options.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1;
+        options.mipLevelCount = this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height) : 1;
         this.texture?.destroy();
         this.texture = this.renderer.createTexture(options);
         this.textureBinding.resource = this.texture;
@@ -3755,7 +3769,7 @@
       const url = typeof source === "string" ? source : source.getAttribute("src");
       this.options.source = url;
       this.options.sourceType = "image";
-      const cachedTexture = this.renderer.textures.find((t) => t.options.source === url);
+      const cachedTexture = this.renderer.domTextures.find((t) => t.options.source === url);
       if (cachedTexture && cachedTexture.texture && cachedTexture.sourceUploaded) {
         this.copy(cachedTexture);
         return;
@@ -3865,7 +3879,7 @@
     /**
      * Callback to run when the {@link source} has been loaded
      * @param callback - callback to run when the {@link source} has been loaded
-     * @returns - our {@link Texture}
+     * @returns - our {@link DOMTexture}
      */
     onSourceLoaded(callback) {
       if (callback) {
@@ -3876,7 +3890,7 @@
     /**
      * Callback to run when the {@link source} has been uploaded
      * @param callback - callback to run when the {@link source} been uploaded
-     * @returns - our {@link Texture}
+     * @returns - our {@link DOMTexture}
      */
     onSourceUploaded(callback) {
       if (callback) {
@@ -3886,7 +3900,7 @@
     }
     /* RENDER */
     /**
-     * Render a {@link Texture}:
+     * Render a {@link DOMTexture}:
      * - Update its {@link modelMatrix} and {@link bindings} if needed
      * - Upload the texture if it needs to be done
      */
@@ -3905,7 +3919,7 @@
     }
     /* DESTROY */
     /**
-     * Destroy the {@link Texture}
+     * Destroy the {@link DOMTexture}
      */
     destroy() {
       if (this.videoFrameCallbackId) {
@@ -3920,7 +3934,7 @@
           }
         );
       }
-      this.renderer.removeTexture(this);
+      this.renderer.removeDOMTexture(this);
       this.texture?.destroy();
       this.texture = null;
     }
@@ -4004,7 +4018,7 @@
      */
     updateTextures() {
       for (const texture of this.textures) {
-        if (texture instanceof Texture) {
+        if (texture instanceof DOMTexture) {
           if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
             texture.copy(texture.options.fromTexture);
           }
@@ -4440,25 +4454,6 @@
     }
   }
 
-  const textureUsages = /* @__PURE__ */ new Map([
-    ["copySrc", GPUTextureUsage.COPY_SRC],
-    ["copyDst", GPUTextureUsage.COPY_DST],
-    ["renderAttachment", GPUTextureUsage.RENDER_ATTACHMENT],
-    ["storageBinding", GPUTextureUsage.STORAGE_BINDING],
-    ["textureBinding", GPUTextureUsage.TEXTURE_BINDING]
-  ]);
-  const getTextureUsages = (usages = []) => {
-    return usages.reduce((acc, v) => {
-      return acc | textureUsages.get(v);
-    }, 0);
-  };
-  const getRenderTextureUsage = (usages = [], textureType) => {
-    if (usages.length) {
-      return getTextureUsages(usages);
-    }
-    return textureType !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-  };
-
   var __accessCheck$6 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -4478,31 +4473,36 @@
     return value;
   };
   var _autoResize;
-  const defaultRenderTextureParams = {
-    label: "RenderTexture",
+  const defaultTextureParams = {
+    label: "Texture",
     name: "renderTexture",
+    // default to 'renderTexture' for render target usage
     type: "texture",
     access: "write",
     fromTexture: null,
     viewDimension: "2d",
     sampleCount: 1,
-    qualityRatio: 1
+    qualityRatio: 1,
+    // copy external texture options
+    generateMips: false,
+    flipY: false,
+    premultipliedAlpha: false
   };
-  class RenderTexture {
+  class Texture {
     /**
-     * RenderTexture constructor
-     * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
-     * @param parameters - {@link RenderTextureParams | parameters} used to create this {@link RenderTexture}
+     * Texture constructor
+     * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+     * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
      */
-    constructor(renderer, parameters = defaultRenderTextureParams) {
+    constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
       __privateAdd$6(this, _autoResize, true);
       renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " RenderTexture" : "RenderTexture");
-      this.type = "RenderTexture";
+      isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
+      this.type = "Texture";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      this.options = { ...defaultRenderTextureParams, ...parameters };
+      this.options = { ...defaultTextureParams, ...parameters };
       if (parameters.fromTexture) {
         this.options.format = parameters.fromTexture.texture.format;
         this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
@@ -4524,19 +4524,19 @@
         __privateSet$5(this, _autoResize, false);
       }
       this.setBindings();
-      this.renderer.addRenderTexture(this);
+      this.renderer.addTexture(this);
       this.createTexture();
     }
     /**
-     * Copy another {@link RenderTexture} into this {@link RenderTexture}
-     * @param texture - {@link RenderTexture} to copy
+     * Copy another {@link Texture} into this {@link Texture}
+     * @param texture - {@link Texture} to copy
      */
     copy(texture) {
       this.options.fromTexture = texture;
       this.createTexture();
     }
     /**
-     * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
+     * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
      * @param texture - {@link GPUTexture} to copy
      */
     copyGPUTexture(texture) {
@@ -4569,7 +4569,8 @@
         size: [this.size.width, this.size.height, this.size.depth ?? 1],
         dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
-        usage: getRenderTextureUsage(this.options.usage, this.options.type)
+        mipLevelCount: this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
+        usage: getDefaultTextureUsage(this.options.usage, this.options.type)
       });
       this.textureBinding.resource = this.texture;
     }
@@ -4589,19 +4590,22 @@
       depth = this.size.depth,
       origin = [0, 0, 0]
     }) {
-      this.renderer.device.queue.copyExternalImageToTexture({ source }, { texture: this.texture, origin }, [
-        width,
-        height,
-        depth
-      ]);
+      this.renderer.device.queue.copyExternalImageToTexture(
+        { source, flipY: this.options.flipY },
+        { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+        [width, height, depth]
+      );
+      if (this.texture.mipLevelCount > 1) {
+        generateMips(this.renderer.device, this.texture);
+      }
     }
     /**
-     * Set our {@link RenderTexture#bindings | bindings}
+     * Set our {@link Texture#bindings | bindings}
      */
     setBindings() {
       this.bindings = [
         new TextureBinding({
-          label: this.options.label + ": " + this.options.name + " render texture",
+          label: this.options.label + ": " + this.options.name + " texture",
           name: this.options.name,
           bindingType: this.options.type,
           visibility: this.options.visibility,
@@ -4620,7 +4624,7 @@
       return this.bindings[0];
     }
     /**
-     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
+     * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
      * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size = null) {
@@ -4640,10 +4644,10 @@
       this.createTexture();
     }
     /**
-     * Destroy our {@link RenderTexture}
+     * Destroy our {@link Texture}
      */
     destroy() {
-      this.renderer.removeRenderTexture(this);
+      this.renderer.removeTexture(this);
       if (!this.options.fromTexture) {
         this.texture?.destroy();
       }
@@ -4674,7 +4678,7 @@
         bindGroups,
         samplers,
         textures,
-        renderTextures
+        domTextures
       } = parameters;
       this.options = {
         shaders,
@@ -4686,7 +4690,7 @@
         ...bindGroups !== void 0 && { bindGroups },
         ...samplers !== void 0 && { samplers },
         ...textures !== void 0 && { textures },
-        ...renderTextures !== void 0 && { renderTextures }
+        ...domTextures !== void 0 && { domTextures }
       };
       this.bindGroups = [];
       this.texturesBindGroups = [];
@@ -4717,11 +4721,11 @@
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
      */
     loseContext() {
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.texture = null;
         texture.sourceUploaded = false;
       }
-      for (const texture of this.renderTextures) {
+      for (const texture of this.textures) {
         texture.texture = null;
       }
       [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach(
@@ -4737,11 +4741,11 @@
         sampler.createSampler();
         sampler.binding.resource = sampler.sampler;
       }
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.createTexture();
         texture.resize();
       }
-      for (const texture of this.renderTextures) {
+      for (const texture of this.textures) {
         texture.resize(texture.size);
       }
       [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
@@ -4865,10 +4869,10 @@
         if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
           this.texturesBindGroups.push(bindGroup);
           for (const texture of bindGroup.textures) {
-            if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+            if (texture instanceof DOMTexture && !this.domTextures.find((t) => t.uuid === texture.uuid)) {
+              this.domTextures.push(texture);
+            } else if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
               this.textures.push(texture);
-            } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
-              this.renderTextures.push(texture);
             }
           }
         }
@@ -4984,18 +4988,18 @@
      * Prepare our textures array and set the {@link TextureBindGroup}
      */
     setTextures() {
+      this.domTextures = [];
       this.textures = [];
-      this.renderTextures = [];
       this.texturesBindGroups.push(
         new TextureBindGroup(this.renderer, {
           label: this.options.label + ": Textures bind group"
         })
       );
       this.texturesBindGroup.consumers.add(this.uuid);
-      this.options.textures?.forEach((texture) => {
+      this.options.domTextures?.forEach((texture) => {
         this.addTexture(texture);
       });
-      this.options.renderTextures?.forEach((texture) => {
+      this.options.textures?.forEach((texture) => {
         this.addTexture(texture);
       });
     }
@@ -5004,18 +5008,18 @@
      * @param texture - texture to add
      */
     addTexture(texture) {
-      if (texture instanceof Texture) {
+      if (texture instanceof DOMTexture) {
+        this.domTextures.push(texture);
+      } else if (texture instanceof Texture) {
         this.textures.push(texture);
-      } else if (texture instanceof RenderTexture) {
-        this.renderTextures.push(texture);
       }
       if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
         this.texturesBindGroup.addTexture(texture);
       }
     }
     /**
-     * Destroy a {@link Texture} or {@link RenderTexture}, only if it is not used by another object or cached.
-     * @param texture - {@link Texture} or {@link RenderTexture} to eventually destroy
+     * Destroy a {@link DOMTexture} or {@link Texture}, only if it is not used by another object or cached.
+     * @param texture - {@link DOMTexture} or {@link Texture} to eventually destroy
      */
     destroyTexture(texture) {
       if (texture.options.cache)
@@ -5030,10 +5034,10 @@
      * Destroy all the Material textures
      */
     destroyTextures() {
+      this.domTextures?.forEach((texture) => this.destroyTexture(texture));
       this.textures?.forEach((texture) => this.destroyTexture(texture));
-      this.renderTextures?.forEach((texture) => this.destroyTexture(texture));
+      this.domTextures = [];
       this.textures = [];
-      this.renderTextures = [];
     }
     /**
      * Prepare our samplers array and always add a default sampler if not already passed as parameter
@@ -5113,12 +5117,12 @@
     /**
      * Called before rendering the Material.
      * First, check if we need to create our bind groups or pipeline
-     * Then render the {@link textures}
+     * Then render the {@link domTextures}
      * Finally updates all the {@link bindGroups | bind groups}
      */
     onBeforeRender() {
       this.compileMaterial();
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.render();
       }
       this.updateBindGroups();
@@ -5381,8 +5385,8 @@
         storages,
         bindGroups,
         samplers,
+        domTextures,
         textures,
-        renderTextures,
         autoRender,
         useAsyncPipeline,
         texturesOptions,
@@ -5412,7 +5416,7 @@
         bindGroups,
         samplers,
         textures,
-        renderTextures,
+        domTextures,
         useAsyncPipeline,
         dispatchSize
       });
@@ -5478,6 +5482,13 @@
     }
     /* TEXTURES */
     /**
+     * Get our {@link ComputeMaterial#domTextures | ComputeMaterial domTextures array}
+     * @readonly
+     */
+    get domTextures() {
+      return this.material?.domTextures || [];
+    }
+    /**
      * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
      * @readonly
      */
@@ -5485,54 +5496,40 @@
       return this.material?.textures || [];
     }
     /**
-     * Get our {@link ComputeMaterial#renderTextures | ComputeMaterial render textures array}
-     * @readonly
+     * Create a new {@link DOMTexture}
+     * @param options - {@link DOMTextureParams | DOMTexture parameters}
+     * @returns - newly created {@link DOMTexture}
      */
-    get renderTextures() {
-      return this.material?.renderTextures || [];
-    }
-    /**
-     * Create a new {@link Texture}
-     * @param options - {@link TextureParams | Texture parameters}
-     * @returns - newly created {@link Texture}
-     */
-    createTexture(options) {
+    createDOMTexture(options) {
       if (!options.name) {
-        options.name = "texture" + this.textures.length;
+        options.name = "texture" + (this.textures.length + this.domTextures.length);
       }
       if (!options.label) {
         options.label = this.options.label + " " + options.name;
       }
-      const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+      const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
+      this.addTexture(domTexture);
+      return domTexture;
+    }
+    /**
+     * Create a new {@link Texture}
+     * @param  options - {@link TextureParams | Texture parameters}
+     * @returns - newly created {@link Texture}
+     */
+    createTexture(options) {
+      if (!options.name) {
+        options.name = "texture" + (this.textures.length + this.domTextures.length);
+      }
+      const texture = new Texture(this.renderer, options);
       this.addTexture(texture);
       return texture;
     }
     /**
-     * Add a {@link Texture}
+     * Add a {@link Texture} or {@link DOMTexture}
      * @param texture - {@link Texture} to add
      */
     addTexture(texture) {
       this.material.addTexture(texture);
-    }
-    /**
-     * Create a new {@link RenderTexture}
-     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-     * @returns - newly created {@link RenderTexture}
-     */
-    createRenderTexture(options) {
-      if (!options.name) {
-        options.name = "renderTexture" + this.renderTextures.length;
-      }
-      const renderTexture = new RenderTexture(this.renderer, options);
-      this.addRenderTexture(renderTexture);
-      return renderTexture;
-    }
-    /**
-     * Add a {@link RenderTexture}
-     * @param renderTexture - {@link RenderTexture} to add
-     */
-    addRenderTexture(renderTexture) {
-      this.material.addTexture(renderTexture);
     }
     /**
      * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}
@@ -6717,8 +6714,6 @@ Rendering options responsible: { ${newProperties.map(
   };
   let meshIndex = 0;
   const defaultMeshBaseParams = {
-    // geometry
-    //geometry: new Geometry(),
     // material
     autoRender: true,
     useProjection: false,
@@ -7053,7 +7048,7 @@ Rendering options responsible: { ${newProperties.map(
       useMaterial(material) {
         this.material = material;
         this.transparent = this.material.options.rendering.transparent;
-        this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+        this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
       }
       /**
        * Patch the shaders if needed, then set the Mesh material
@@ -7095,6 +7090,13 @@ Rendering options responsible: { ${newProperties.map(
       }
       /* TEXTURES */
       /**
+       * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
+       * @readonly
+       */
+      get domTextures() {
+        return this.material?.domTextures || [];
+      }
+      /**
        * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
        * @readonly
        */
@@ -7102,25 +7104,46 @@ Rendering options responsible: { ${newProperties.map(
         return this.material?.textures || [];
       }
       /**
-       * Get our {@link RenderMaterial#renderTextures | RenderMaterial render textures array}
-       * @readonly
+       * Create a new {@link DOMTexture}
+       * @param options - {@link DOMTextureParams | DOMTexture parameters}
+       * @returns - newly created {@link DOMTexture}
        */
-      get renderTextures() {
-        return this.material?.renderTextures || [];
-      }
-      /**
-       * Create a new {@link Texture}
-       * @param options - {@link TextureParams | Texture parameters}
-       * @returns - newly created {@link Texture}
-       */
-      createTexture(options) {
+      createDOMTexture(options) {
         if (!options.name) {
-          options.name = "texture" + this.textures.length;
+          options.name = "texture" + (this.textures.length + this.domTextures.length);
         }
         if (!options.label) {
           options.label = this.options.label + " " + options.name;
         }
-        const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+        const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
+        this.addDOMTexture(domTexture);
+        return domTexture;
+      }
+      /**
+       * Add a {@link DOMTexture}
+       * @param domTexture - {@link DOMTexture} to add
+       */
+      addDOMTexture(domTexture) {
+        this.material.addTexture(domTexture);
+        this.onDOMTextureAdded(domTexture);
+      }
+      /**
+       * Callback run when a new {@link DOMTexture} has been added
+       * @param domTexture - newly created DOMTexture
+       */
+      onDOMTextureAdded(domTexture) {
+        domTexture.parentMesh = this;
+      }
+      /**
+       * Create a new {@link Texture}
+       * @param  options - {@link TextureParams | Texture parameters}
+       * @returns - newly created {@link Texture}
+       */
+      createTexture(options) {
+        if (!options.name) {
+          options.name = "texture" + (this.textures.length + this.domTextures.length);
+        }
+        const texture = new Texture(this.renderer, options);
         this.addTexture(texture);
         return texture;
       }
@@ -7130,34 +7153,6 @@ Rendering options responsible: { ${newProperties.map(
        */
       addTexture(texture) {
         this.material.addTexture(texture);
-        this.onTextureAdded(texture);
-      }
-      /**
-       * Callback run when a new {@link Texture} has been added
-       * @param texture - newly created Texture
-       */
-      onTextureAdded(texture) {
-        texture.parentMesh = this;
-      }
-      /**
-       * Create a new {@link RenderTexture}
-       * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-       * @returns - newly created {@link RenderTexture}
-       */
-      createRenderTexture(options) {
-        if (!options.name) {
-          options.name = "renderTexture" + this.renderTextures.length;
-        }
-        const renderTexture = new RenderTexture(this.renderer, options);
-        this.addRenderTexture(renderTexture);
-        return renderTexture;
-      }
-      /**
-       * Add a {@link RenderTexture}
-       * @param renderTexture - {@link RenderTexture} to add
-       */
-      addRenderTexture(renderTexture) {
-        this.material.addTexture(renderTexture);
       }
       /* BINDINGS */
       /**
@@ -7183,12 +7178,12 @@ Rendering options responsible: { ${newProperties.map(
         if (super.resize) {
           super.resize(boundingRect);
         }
-        this.renderTextures?.forEach((renderTexture) => {
-          if (renderTexture.options.fromTexture) {
-            renderTexture.copy(renderTexture.options.fromTexture);
+        this.textures?.forEach((texture) => {
+          if (texture.options.fromTexture) {
+            texture.copy(texture.options.fromTexture);
           }
         });
-        this.textures?.forEach((texture) => {
+        this.domTextures?.forEach((texture) => {
           texture.resize();
         });
         this._onAfterResizeCallback && this._onAfterResizeCallback();
@@ -7754,7 +7749,7 @@ struct VSOutput {
        */
       applyScale() {
         super.applyScale();
-        for (const texture of this.textures) {
+        for (const texture of this.domTextures) {
           texture.resize();
         }
       }
@@ -8825,7 +8820,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
-     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
+     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
      * @param renderTarget - {@link RenderTarget} to add
      */
     addRenderTarget(renderTarget) {
@@ -9208,7 +9203,7 @@ ${this.shaders.compute.head}`;
         this.depthTexture = this.options.depthTexture;
         this.options.depthFormat = this.options.depthTexture.options.format;
       } else {
-        this.depthTexture = new RenderTexture(this.renderer, {
+        this.depthTexture = new Texture(this.renderer, {
           label: this.options.label + " depth texture",
           name: "depthTexture",
           format: this.options.depthFormat,
@@ -9225,7 +9220,7 @@ ${this.shaders.compute.head}`;
     createViewTextures() {
       this.options.colorAttachments.forEach((colorAttachment, index) => {
         this.viewTextures.push(
-          new RenderTexture(this.renderer, {
+          new Texture(this.renderer, {
             label: `${this.options.label} colorAttachment[${index}] view texture`,
             name: `colorAttachment${index}ViewTexture`,
             format: colorAttachment.targetFormat,
@@ -9246,7 +9241,7 @@ ${this.shaders.compute.head}`;
       if (this.options.sampleCount > 1) {
         this.options.colorAttachments.forEach((colorAttachment, index) => {
           this.resolveTargets.push(
-            this.options.renderToSwapChain && index === 0 ? null : new RenderTexture(this.renderer, {
+            this.options.renderToSwapChain && index === 0 ? null : new Texture(this.renderer, {
               label: `${this.options.label} resolve target[${index}] texture`,
               name: `resolveTarget${index}Texture`,
               format: colorAttachment.targetFormat,
@@ -9308,7 +9303,7 @@ ${this.shaders.compute.head}`;
       };
     }
     /**
-     * Resize our {@link RenderPass}: reset its {@link RenderTexture}
+     * Resize our {@link RenderPass}: reset its {@link Texture}
      */
     resize() {
       if (this.options.useDepth) {
@@ -9625,8 +9620,8 @@ ${this.shaders.compute.head}`;
      * Resize all tracked objects
      */
     onResize() {
-      this.renderTextures.forEach((renderTexture) => {
-        renderTexture.resize();
+      this.textures.forEach((texture) => {
+        texture.resize();
       });
       this.renderPass?.resize();
       this.postProcessingPass?.resize();
@@ -9772,13 +9767,13 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Called when the {@link GPUDeviceManager#device | device} should be restored.
-     * Configure the context again, resize the {@link RenderTarget | render targets} and {@link RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context.
+     * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
      * @async
      */
     restoreContext() {
       this.configureContext();
-      this.renderTextures.forEach((renderTexture) => {
-        renderTexture.createTexture();
+      this.textures.forEach((texture) => {
+        texture.createTexture();
       });
       this.renderPass?.resize();
       this.postProcessingPass?.resize();
@@ -9983,39 +9978,39 @@ ${this.shaders.compute.head}`;
     }
     /* TEXTURES */
     /**
-     * Get all created {@link Texture} tracked by our {@link GPUDeviceManager}
+     * Get all created {@link DOMTexture} tracked by our {@link GPUDeviceManager}
      * @readonly
      */
-    get textures() {
-      return this.deviceManager.textures;
+    get domTextures() {
+      return this.deviceManager.domTextures;
     }
     /**
-     * Add a {@link Texture} to our {@link GPUDeviceManager#textures | textures array}
+     * Add a {@link DOMTexture} to our {@link GPUDeviceManager#domTextures | textures array}
+     * @param texture - {@link DOMTexture} to add
+     */
+    addDOMTexture(texture) {
+      this.deviceManager.addDOMTexture(texture);
+    }
+    /**
+     * Remove a {@link DOMTexture} from our {@link GPUDeviceManager#domTextures | textures array}
+     * @param texture - {@link DOMTexture} to remove
+     */
+    removeDOMTexture(texture) {
+      this.deviceManager.removeDOMTexture(texture);
+    }
+    /**
+     * Add a {@link Texture} to our {@link textures} array
      * @param texture - {@link Texture} to add
      */
     addTexture(texture) {
-      this.deviceManager.addTexture(texture);
+      this.textures.push(texture);
     }
     /**
-     * Remove a {@link Texture} from our {@link GPUDeviceManager#textures | textures array}
+     * Remove a {@link Texture} from our {@link textures} array
      * @param texture - {@link Texture} to remove
      */
     removeTexture(texture) {
-      this.deviceManager.removeTexture(texture);
-    }
-    /**
-     * Add a {@link RenderTexture} to our {@link renderTextures} array
-     * @param texture - {@link RenderTexture} to add
-     */
-    addRenderTexture(texture) {
-      this.renderTextures.push(texture);
-    }
-    /**
-     * Remove a {@link RenderTexture} from our {@link renderTextures} array
-     * @param texture - {@link RenderTexture} to remove
-     */
-    removeRenderTexture(texture) {
-      this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid);
+      this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
      * Create a {@link GPUTexture}
@@ -10026,8 +10021,8 @@ ${this.shaders.compute.head}`;
       return this.deviceManager.device?.createTexture(textureDescriptor);
     }
     /**
-     * Upload a {@link Texture#texture | texture} to the GPU
-     * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+     * Upload a {@linkDOMTexture#texture | texture} to the GPU
+     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
      */
     uploadTexture(texture) {
       this.deviceManager.uploadTexture(texture);
@@ -10092,7 +10087,7 @@ ${this.shaders.compute.head}`;
       this.shaderPasses = [];
       this.renderTargets = [];
       this.meshes = [];
-      this.renderTextures = [];
+      this.textures = [];
     }
     /**
      * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -10116,13 +10111,13 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link Texture} or {@link RenderTexture}.
+     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link Texture}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-     * @param texture - {@link Texture} or {@link RenderTexture} to check
+     * @param texture - {@link DOMTexture} or {@link Texture} to check
      */
     getObjectsByTexture(texture) {
       return this.deviceRenderedObjects.filter((object) => {
-        return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid);
+        return [...object.material.domTextures, ...object.material.textures].some((t) => t.uuid === texture.uuid);
       });
     }
     /* EVENTS */
@@ -10262,7 +10257,7 @@ ${this.shaders.compute.head}`;
       this.postProcessingPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
       this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
-      this.renderTextures.forEach((texture) => texture.destroy());
+      this.textures.forEach((texture) => texture.destroy());
       this.context?.unconfigure();
     }
   }
@@ -10312,7 +10307,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
-     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
+     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
      * @async
      */
     restoreContext() {
@@ -10620,7 +10615,7 @@ ${this.shaders.compute.head}`;
       this.bindGroupLayouts = /* @__PURE__ */ new Map();
       this.bufferBindings = /* @__PURE__ */ new Map();
       this.samplers = [];
-      this.textures = [];
+      this.domTextures = [];
       this.texturesQueue = [];
     }
     /**
@@ -10687,15 +10682,15 @@ ${this.shaders.compute.head}`;
       this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
     }
     /**
-     * Add a {@link Texture} to our {@link textures} array
-     * @param texture - {@link Texture} to add
+     * Add a {@link DOMTexture} to our {@link domTextures} array
+     * @param texture - {@link DOMTexture} to add
      */
-    addTexture(texture) {
-      this.textures.push(texture);
+    addDOMTexture(texture) {
+      this.domTextures.push(texture);
     }
     /**
-     * Upload a {@link Texture#texture | texture} to the GPU
-     * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+     * Upload a {@link DOMTexture#texture | texture} to the GPU
+     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
      */
     uploadTexture(texture) {
       if (texture.source) {
@@ -10725,11 +10720,11 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove a {@link Texture} from our {@link textures} array
-     * @param texture - {@link Texture} to remove
+     * Remove a {@link DOMTexture} from our {@link domTextures} array
+     * @param texture - {@link DOMTexture} to remove
      */
-    removeTexture(texture) {
-      this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
+    removeDOMTexture(texture) {
+      this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
      * Render everything:
@@ -10737,7 +10732,7 @@ ${this.shaders.compute.head}`;
      * - create a {@link GPUCommandEncoder}
      * - render all our {@link renderers}
      * - submit our {@link GPUCommandBuffer}
-     * - upload {@link Texture#texture | textures} that do not have a parentMesh
+     * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh
      * - empty our {@link texturesQueue} array
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
      */
@@ -10753,7 +10748,7 @@ ${this.shaders.compute.head}`;
       !this.production && commandEncoder.popDebugGroup();
       const commandBuffer = commandEncoder.finish();
       this.device?.queue.submit([commandBuffer]);
-      this.textures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
+      this.domTextures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
       for (const texture of this.texturesQueue) {
         texture.sourceUploaded = true;
       }
@@ -10771,7 +10766,7 @@ ${this.shaders.compute.head}`;
       this.renderers.forEach((renderer) => renderer.destroy());
       this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
       this.buffers.forEach((buffer) => buffer?.destroy());
-      this.textures.forEach((texture) => texture.destroy());
+      this.domTextures.forEach((texture) => texture.destroy());
       this.setDeviceObjects();
     }
   }
@@ -10828,7 +10823,7 @@ ${this.shaders.compute.head}`;
         ...renderPassParams
       });
       if (renderPassParams.useColorAttachments !== false) {
-        this.renderTexture = new RenderTexture(this.renderer, {
+        this.renderTexture = new Texture(this.renderer, {
           label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
           name: "renderTexture",
           format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
@@ -10949,7 +10944,7 @@ struct VSOutput {
         this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
       }
       this.type = "ShaderPass";
-      this.createRenderTexture({
+      this.createTexture({
         label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
         name: "renderTexture",
         fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
@@ -10969,11 +10964,11 @@ struct VSOutput {
       return parameters;
     }
     /**
-     * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
+     * Get our main {@link Texture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
      * @readonly
      */
     get renderTexture() {
-      return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
+      return this.textures.find((texture) => texture.options.name === "renderTexture");
     }
     /**
      * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
@@ -11402,7 +11397,7 @@ struct VSOutput {
       }
     }
     /**
-     * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
+     * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}
      */
     setInitSources() {
       let loaderSize = 0;
@@ -11424,24 +11419,24 @@ struct VSOutput {
         }
         if (images.length) {
           images.forEach((image) => {
-            const texture = this.createTexture({
-              name: image.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            const texture = this.createDOMTexture({
+              name: image.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
             });
             texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src);
           });
         }
         if (videos.length) {
           videos.forEach((video) => {
-            const texture = this.createTexture({
-              name: video.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            const texture = this.createDOMTexture({
+              name: video.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
             });
             texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video);
           });
         }
         if (canvases.length) {
           canvases.forEach((canvas) => {
-            const texture = this.createTexture({
-              name: canvas.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            const texture = this.createDOMTexture({
+              name: canvas.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
             });
             texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas);
           });
@@ -11485,8 +11480,8 @@ struct VSOutput {
     }
     /* EVENTS */
     /**
-     * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
-     * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
+     * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
+     * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
      * @returns - our {@link DOMMesh}
      */
     onLoading(callback) {
@@ -11521,7 +11516,7 @@ struct VSOutput {
       parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
       super(renderer, parameters);
       this.type = "PingPongPlane";
-      this.createRenderTexture({
+      this.createTexture({
         label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
         name: "renderTexture",
         ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format },
@@ -11529,11 +11524,11 @@ struct VSOutput {
       });
     }
     /**
-     * Get our main {@link RenderTexture}, the one that contains our ping pong content
+     * Get our main {@link Texture}, the one that contains our ping pong content
      * @readonly
      */
     get renderTexture() {
-      return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
+      return this.textures.find((texture) => texture.options.name === "renderTexture");
     }
     /**
      * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
@@ -12172,8 +12167,6 @@ struct VSOutput {
       this.maxZoom = 20;
       /** Zoom step (speed) value to use. */
       this.zoomStep = 5e-3;
-      /** {@link OrbitControls} target. */
-      this.target = new Vec3();
       /**
        * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
        * @private
@@ -12320,7 +12313,7 @@ struct VSOutput {
      * Override {@link Object3D#updateModelMatrix | updateModelMatrix} method to compose the {@link modelMatrix}.
      */
     updateModelMatrix() {
-      this.modelMatrix.identity().translate(this.target).rotateFromQuaternion(this.quaternion).translate(this.position);
+      this.modelMatrix.identity().rotateFromQuaternion(this.quaternion).translate(this.position);
       this.shouldUpdateWorldMatrix();
     }
     /**
@@ -12622,6 +12615,7 @@ struct VSOutput {
   exports.DOMFrustum = DOMFrustum;
   exports.DOMMesh = DOMMesh;
   exports.DOMObject3D = DOMObject3D;
+  exports.DOMTexture = DOMTexture;
   exports.FullscreenPlane = FullscreenPlane;
   exports.GPUCameraRenderer = GPUCameraRenderer;
   exports.GPUCurtains = GPUCurtains;
@@ -12646,7 +12640,6 @@ struct VSOutput {
   exports.RenderPass = RenderPass;
   exports.RenderPipelineEntry = RenderPipelineEntry;
   exports.RenderTarget = RenderTarget;
-  exports.RenderTexture = RenderTexture;
   exports.Sampler = Sampler;
   exports.SamplerBinding = SamplerBinding;
   exports.Scene = Scene;

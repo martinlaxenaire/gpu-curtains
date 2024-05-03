@@ -78,7 +78,7 @@ class Scene extends Object3D {
   }
   /**
    * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
-   * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
+   * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
    * @param renderTarget - {@link RenderTarget} to add
    */
   addRenderTarget(renderTarget) {

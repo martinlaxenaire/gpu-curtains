@@ -1,4 +1,4 @@
-import { GPUCurtains, PingPongPlane, Plane, RenderTexture, Sampler, Vec2 } from '../../dist/esm/index.mjs'
+import { GPUCurtains, PingPongPlane, Plane, Texture, Sampler, Vec2 } from '../../dist/esm/index.mjs'
 
 // originally inspired by https://oframe.github.io/ogl/examples/mouse-flowmap.html
 
@@ -218,20 +218,20 @@ window.addEventListener('DOMContentLoaded', async () => {
       //placeholderColor: [238, 101, 87, 255],
       placeholderColor: [0, 255, 255, 255],
     },
-    renderTextures: [
-      // ping pong planes use a RenderTexture internally
+    textures: [
+      // ping pong planes use a Texture internally
       // so we need to create one to use it in our plane
-      new RenderTexture(gpuCurtains, {
-        label: 'Flow map render texture',
+      new Texture(gpuCurtains, {
+        label: 'Flow map texture',
         name: 'flowMapTexture',
         fromTexture: flowMap.renderTexture,
       }),
     ],
   })
 
-  // we could have added the render texture that way as well
-  // const flowMapTexture = displacedPlane.createRenderTexture({
-  //   label: 'Flow map render texture',
+  // we could have added the texture that way as well
+  // const flowMapTexture = displacedPlane.createTexture({
+  //   label: 'Flow map texture',
   //   name: 'flowMapTexture',
   //   fromTexture: flowMap.renderTexture,
   // })

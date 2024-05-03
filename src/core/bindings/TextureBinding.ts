@@ -1,4 +1,4 @@
-import { Binding, BindingMemoryAccessType, BindingParams, TextureBindingType } from './Binding'
+import { Binding, BindingMemoryAccessType, BindingParams, DOMTextureBindingType } from './Binding'
 import {
   getBindGroupLayoutTextureBindingCacheKey,
   getBindGroupLayoutTextureBindingType,
@@ -13,7 +13,7 @@ export type TextureBindingResource = GPUTexture | GPUExternalTexture | null
  */
 export interface TextureBindingParams extends BindingParams {
   /** The binding type of the {@link TextureBinding} */
-  bindingType?: TextureBindingType
+  bindingType?: DOMTextureBindingType
   /** {@link TextureBinding} {@link TextureBinding#resource | resource} */
   texture: TextureBindingResource
   /** The {@link GPUTexture | texture} format to use */
@@ -34,7 +34,7 @@ export interface TextureBindingParams extends BindingParams {
  */
 export class TextureBinding extends Binding {
   /** The binding type of the {@link TextureBinding} */
-  bindingType: TextureBindingType
+  bindingType: DOMTextureBindingType
   /** Our {@link TextureBinding} resource, i.e. a {@link GPUTexture} or {@link GPUExternalTexture} */
   texture: TextureBindingResource
   /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link TextureBinding} */
@@ -126,7 +126,7 @@ export class TextureBinding extends Binding {
    * Set or update our {@link Binding#bindingType | bindingType} and our WGSL code snippet
    * @param bindingType - the new {@link Binding#bindingType | binding type}
    */
-  setBindingType(bindingType: TextureBindingType) {
+  setBindingType(bindingType: DOMTextureBindingType) {
     if (bindingType !== this.bindingType) {
       // binding type has changed!
       if (bindingType) this.shouldResetBindGroupLayout = true

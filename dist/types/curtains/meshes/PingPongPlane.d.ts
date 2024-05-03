@@ -2,7 +2,7 @@ import { Renderer } from '../../core/renderers/utils';
 import { RenderTarget } from '../../core/renderPasses/RenderTarget';
 import { FullscreenPlane } from '../../core/meshes/FullscreenPlane';
 import { GPUCurtains } from '../GPUCurtains';
-import { RenderTexture } from '../../core/textures/RenderTexture';
+import { Texture } from '../../core/textures/Texture';
 import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin';
 /**
  * Used to create a special type of {@link FullscreenPlane} that allows to use the previous frame fragment shader output as an input texture.
@@ -39,10 +39,10 @@ export declare class PingPongPlane extends FullscreenPlane {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: MeshBaseRenderParams);
     /**
-     * Get our main {@link RenderTexture}, the one that contains our ping pong content
+     * Get our main {@link Texture}, the one that contains our ping pong content
      * @readonly
      */
-    get renderTexture(): RenderTexture | undefined;
+    get renderTexture(): Texture | undefined;
     /**
      * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
      * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}

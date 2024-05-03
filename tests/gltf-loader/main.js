@@ -3,6 +3,7 @@
 // - test camera position, rotation, lookAt, fov
 // - test frustum culling
 import { GLTFLoader } from './GLTFLoader.js'
+import { buildShaders, traverseScenes } from './utils.js'
 
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
@@ -18,11 +19,17 @@ window.addEventListener('load', async () => {
   // wait for the device to be created
   await gpuDeviceManager.init()
 
+  const container = document.querySelector('#canvas')
+
   // create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
-    container: document.querySelector('#canvas'),
+    container,
     pixelRatio: Math.min(1, window.devicePixelRatio),
+    camera: {
+      near: 0.01,
+      far: 2000,
+    },
   })
 
   const { camera } = gpuCameraRenderer
@@ -31,19 +38,23 @@ window.addEventListener('load', async () => {
   const models = {
     damagedHelmet: {
       name: 'Damaged Helmet',
-      url: 'assets/DamagedHelmet/glTF/DamagedHelmet.gltf',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF/DamagedHelmet.gltf',
     },
     antiqueCamera: {
       name: 'Antique Camera',
-      url: 'assets/AntiqueCamera/glTF/AntiqueCamera.gltf',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AntiqueCamera/glTF/AntiqueCamera.gltf',
     },
     buggy: {
       name: 'Buggy',
-      url: 'assets/Buggy/glTF/Buggy.gltf',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Buggy/glTF/Buggy.gltf',
     },
     flightHelmet: {
       name: 'Flight Helmet',
-      url: 'assets/FlightHelmet/glTF/FlightHelmet.gltf',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf',
+    },
+    sponza: {
+      name: 'Sponza',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Sponza/glTF/Sponza.gltf',
     },
   }
 
@@ -54,26 +65,10 @@ window.addEventListener('load', async () => {
 
   let currentScenes = []
 
-  const traverseScenes = (scenes, callback) => {
-    const traverseChild = (child) => {
-      child.meshes.forEach((meshDescriptor) => {
-        callback({ child, meshDescriptor })
-      })
-
-      child.children.forEach((c) => {
-        traverseChild(c)
-      })
-    }
-
-    scenes.forEach((scene) => {
-      scene.children.forEach((child) => {
-        traverseChild(child)
-      })
-    })
-  }
-
   const loadGLTF = async (url) => {
+    container.classList.add('loading')
     const { gltf, scenes, boundingBox } = await gltfLoader.loadFromUrl(url)
+    container.classList.remove('loading')
     console.log({ gltf, scenes, boundingBox })
 
     currentScenes = scenes
@@ -111,117 +106,11 @@ window.addEventListener('load', async () => {
         }
 
         // now generate the shaders
-        const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== 'position')
-
-        const structAttributes = facultativeAttributes
-          .map((attribute, index) => {
-            return `@location(${index}) ${attribute.name}: ${attribute.type},`
-          })
-          .join('\n')
-
-        const outputAttributes = facultativeAttributes
-          .map((attribute) => {
-            return `vsOutput.${attribute.name} = attributes.${attribute.name};`
-          })
-          .join('\n')
-
-        let outputPosition = 'vsOutput.position = getOutputPosition(attributes.position);'
-
-        if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-          outputPosition = `
-          var transformed: vec4f = instances.instanceMatrix[attributes.instanceIndex] * vec4f(attributes.position, 1.0);
-          vsOutput.position = camera.projection * camera.view * transformed;`
-        }
-
-        const vs = /* wgsl */ `
-          struct VertexOutput {
-            @builtin(position) position: vec4f,
-            ${structAttributes}
-          };
-          
-          @vertex fn main(
-            attributes: Attributes,
-          ) -> VertexOutput {
-            var vsOutput: VertexOutput;
-          
-            ${outputPosition}
-            ${outputAttributes}
-            
-            return vsOutput;
-          }
-        `
-
-        // not a PBR material for now, as it does not use roughness/metalness
-        // we might want to implement it later
-        // see https://github.com/oframe/ogl/blob/master/examples/load-gltf.html#L133
-        const initColor = /* wgsl */ 'var color: vec4f = vec4();'
-        const returnColor = /* wgsl */ 'return color;'
-
-        // start with the base color
-        let baseColor = /* wgsl */ 'var baseColor: vec4f = material.baseColorFactor;'
-
-        const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === 'baseColorTexture')
-
-        if (baseColorTexture) {
-          baseColor = /* wgsl */ `
-            var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.uv) * material.baseColorFactor;
-            
-            if (baseColor.a < material.alphaCutoff) {
-              discard;
-            }
-          `
-        }
-
-        // add lightning
-        const surfaceColor = /* wgsl */ `
-          // An extremely simple directional lighting model, just to give our model some shape.
-          let N = normalize(fsInput.normal);
-          let L = normalize(light.position);
-          let NDotL = max(dot(N, L), 0.0);
-          color = vec4((baseColor.rgb * light.ambient) + (baseColor.rgb * NDotL * light.color), baseColor.a);
-        `
-
-        // emissive and occlusion
-        const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === 'emissiveTexture')
-        const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === 'occlusionTexture')
-
-        let emissiveOcclusion = ''
-
-        if (emissiveTexture) {
-          emissiveOcclusion = /* wgsl */ `
-            let gamma = 2.2; // Gamma value typically used for encoding
-            var emissive: vec4f = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.uv);
-            emissive = vec4(material.emissiveFactor * pow(emissive.rgb, vec3(1.0 / gamma)), emissive.a);
-          `
-          if (occlusionTexture) {
-            emissiveOcclusion += /* wgsl */ `
-              var occlusion: vec4f = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.uv);
-              emissive *= occlusion.r;
-            `
-          }
-
-          emissiveOcclusion += /* wgsl */ `
-              color += emissive;
-            `
-        }
-
-        const fs = /* wgsl */ `
-          struct VSOutput {
-            @builtin(position) position: vec4f,
-            ${structAttributes}
-          };
-        
-          @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
-            ${initColor}
-            ${baseColor}
-            ${surfaceColor}
-            ${emissiveOcclusion}
-            ${returnColor}
-          }
-        `
+        const { vs, fs } = buildShaders(meshDescriptor)
 
         const mesh = new Mesh(gpuCameraRenderer, {
           ...meshDescriptor.parameters,
+          frustumCulled: false,
           shaders: {
             vertex: {
               code: vs,
@@ -246,13 +135,23 @@ window.addEventListener('load', async () => {
 
     const { center, radius } = boundingBox
 
-    camera.position.y = center.y
-    camera.position.z = radius * 2
-
     // reset orbit controls
     orbitControls.reset()
-    orbitControls.zoomStep = radius * 0.0025
-    orbitControls.minZoom = radius * -0.5
+
+    if (url.includes('Sponza')) {
+      camera.position.y = center.y * 0.25
+      camera.position.z = radius * 0.225
+
+      orbitControls.zoomStep = radius * 0.001
+      orbitControls.minZoom = radius * -0.225
+    } else {
+      camera.position.y = center.y
+      camera.position.z = radius * 2
+
+      orbitControls.zoomStep = radius * 0.0025
+      orbitControls.minZoom = radius * -0.5
+    }
+
     orbitControls.maxZoom = radius * 2
   }
 

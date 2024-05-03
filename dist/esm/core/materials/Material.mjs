@@ -2,8 +2,8 @@ import { isRenderer } from '../renderers/utils.mjs';
 import { BindGroup } from '../bindGroups/BindGroup.mjs';
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
+import { DOMTexture } from '../textures/DOMTexture.mjs';
 import { Texture } from '../textures/Texture.mjs';
-import { RenderTexture } from '../textures/RenderTexture.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 
 class Material {
@@ -28,7 +28,7 @@ class Material {
       bindGroups,
       samplers,
       textures,
-      renderTextures
+      domTextures
     } = parameters;
     this.options = {
       shaders,
@@ -40,7 +40,7 @@ class Material {
       ...bindGroups !== void 0 && { bindGroups },
       ...samplers !== void 0 && { samplers },
       ...textures !== void 0 && { textures },
-      ...renderTextures !== void 0 && { renderTextures }
+      ...domTextures !== void 0 && { domTextures }
     };
     this.bindGroups = [];
     this.texturesBindGroups = [];
@@ -71,11 +71,11 @@ class Material {
    * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
    */
   loseContext() {
-    for (const texture of this.textures) {
+    for (const texture of this.domTextures) {
       texture.texture = null;
       texture.sourceUploaded = false;
     }
-    for (const texture of this.renderTextures) {
+    for (const texture of this.textures) {
       texture.texture = null;
     }
     [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach(
@@ -91,11 +91,11 @@ class Material {
       sampler.createSampler();
       sampler.binding.resource = sampler.sampler;
     }
-    for (const texture of this.textures) {
+    for (const texture of this.domTextures) {
       texture.createTexture();
       texture.resize();
     }
-    for (const texture of this.renderTextures) {
+    for (const texture of this.textures) {
       texture.resize(texture.size);
     }
     [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
@@ -219,10 +219,10 @@ class Material {
       if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
         this.texturesBindGroups.push(bindGroup);
         for (const texture of bindGroup.textures) {
-          if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+          if (texture instanceof DOMTexture && !this.domTextures.find((t) => t.uuid === texture.uuid)) {
+            this.domTextures.push(texture);
+          } else if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
             this.textures.push(texture);
-          } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
-            this.renderTextures.push(texture);
           }
         }
       }
@@ -338,18 +338,18 @@ class Material {
    * Prepare our textures array and set the {@link TextureBindGroup}
    */
   setTextures() {
+    this.domTextures = [];
     this.textures = [];
-    this.renderTextures = [];
     this.texturesBindGroups.push(
       new TextureBindGroup(this.renderer, {
         label: this.options.label + ": Textures bind group"
       })
     );
     this.texturesBindGroup.consumers.add(this.uuid);
-    this.options.textures?.forEach((texture) => {
+    this.options.domTextures?.forEach((texture) => {
       this.addTexture(texture);
     });
-    this.options.renderTextures?.forEach((texture) => {
+    this.options.textures?.forEach((texture) => {
       this.addTexture(texture);
     });
   }
@@ -358,18 +358,18 @@ class Material {
    * @param texture - texture to add
    */
   addTexture(texture) {
-    if (texture instanceof Texture) {
+    if (texture instanceof DOMTexture) {
+      this.domTextures.push(texture);
+    } else if (texture instanceof Texture) {
       this.textures.push(texture);
-    } else if (texture instanceof RenderTexture) {
-      this.renderTextures.push(texture);
     }
     if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
       this.texturesBindGroup.addTexture(texture);
     }
   }
   /**
-   * Destroy a {@link Texture} or {@link RenderTexture}, only if it is not used by another object or cached.
-   * @param texture - {@link Texture} or {@link RenderTexture} to eventually destroy
+   * Destroy a {@link DOMTexture} or {@link Texture}, only if it is not used by another object or cached.
+   * @param texture - {@link DOMTexture} or {@link Texture} to eventually destroy
    */
   destroyTexture(texture) {
     if (texture.options.cache)
@@ -384,10 +384,10 @@ class Material {
    * Destroy all the Material textures
    */
   destroyTextures() {
+    this.domTextures?.forEach((texture) => this.destroyTexture(texture));
     this.textures?.forEach((texture) => this.destroyTexture(texture));
-    this.renderTextures?.forEach((texture) => this.destroyTexture(texture));
+    this.domTextures = [];
     this.textures = [];
-    this.renderTextures = [];
   }
   /**
    * Prepare our samplers array and always add a default sampler if not already passed as parameter
@@ -467,12 +467,12 @@ class Material {
   /**
    * Called before rendering the Material.
    * First, check if we need to create our bind groups or pipeline
-   * Then render the {@link textures}
+   * Then render the {@link domTextures}
    * Finally updates all the {@link bindGroups | bind groups}
    */
   onBeforeRender() {
     this.compileMaterial();
-    for (const texture of this.textures) {
+    for (const texture of this.domTextures) {
       texture.render();
     }
     this.updateBindGroups();

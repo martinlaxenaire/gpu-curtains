@@ -3,7 +3,7 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { RenderTarget } from './RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin'
-import { RenderTexture } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
 import default_pass_fsWGSl from '../shaders/chunks/default_pass_fs.wgsl'
 import { throwWarning } from '../../utils/utils'
 
@@ -24,7 +24,7 @@ export interface ShaderPassOptions extends MeshBaseOptions {
 }
 
 /**
- * Used to apply postprocessing, i.e. draw meshes to a {@link RenderTexture} and then draw a {@link FullscreenPlane} using that texture as an input.
+ * Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
  *
  * A ShaderPass could either post process the whole scene or just a bunch of meshes using a specific {@link RenderTarget}.
  *
@@ -109,7 +109,7 @@ export class ShaderPass extends FullscreenPlane {
 
     this.type = 'ShaderPass'
 
-    this.createRenderTexture({
+    this.createTexture({
       label: parameters.label ? `${parameters.label} render texture` : 'Shader pass render texture',
       name: 'renderTexture',
       fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
@@ -135,11 +135,11 @@ export class ShaderPass extends FullscreenPlane {
   }
 
   /**
-   * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
+   * Get our main {@link Texture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
    * @readonly
    */
-  get renderTexture(): RenderTexture | undefined {
-    return this.renderTextures.find((texture) => texture.options.name === 'renderTexture')
+  get renderTexture(): Texture | undefined {
+    return this.textures.find((texture) => texture.options.name === 'renderTexture')
   }
 
   /**

@@ -178,7 +178,7 @@ function ProjectedMeshBaseMixin(Base) {
      */
     applyScale() {
       super.applyScale();
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.resize();
       }
     }

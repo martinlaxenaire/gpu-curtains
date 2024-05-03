@@ -1,6 +1,6 @@
 import { BindGroup } from './BindGroup.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
-import { Texture } from '../textures/Texture.mjs';
+import { DOMTexture } from '../textures/DOMTexture.mjs';
 
 class TextureBindGroup extends BindGroup {
   /**
@@ -76,7 +76,7 @@ class TextureBindGroup extends BindGroup {
    */
   updateTextures() {
     for (const texture of this.textures) {
-      if (texture instanceof Texture) {
+      if (texture instanceof DOMTexture) {
         if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
           texture.copy(texture.options.fromTexture);
         }

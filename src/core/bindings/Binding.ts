@@ -7,11 +7,13 @@ import { getBindingVisibility } from './utils'
 /** Defines all kind of buffer binding types */
 export type BufferBindingType = 'uniform' | 'storage'
 /** Defines all kind of texture binding types */
-export type TextureBindingType = 'texture' | 'externalTexture' | 'storage' | 'depth'
+export type TextureBindingType = 'texture' | 'storage' | 'depth'
+/** Defines all kind of DOM texture binding types */
+export type DOMTextureBindingType = 'externalTexture' | TextureBindingType
 /** Defines all kind of sampler binding types */
 export type SamplerBindingType = 'sampler'
 /** Defines all kind of binding types  */
-export type BindingType = BufferBindingType | TextureBindingType | SamplerBindingType
+export type BindingType = BufferBindingType | DOMTextureBindingType | SamplerBindingType
 
 // see https://www.w3.org/TR/WGSL/#memory-access-mode
 /** Defines buffer binding memory access types (read only or read/write) */

@@ -142,7 +142,7 @@ window.addEventListener('load', async () => {
         const halfScreenEffect = Math.pow(Math.max(0, distanceFromCenter.y), 2)
         const scrollEffect = halfScreenEffect * Math.sign(distanceFromCenter.x)
         plane.rotation.z = -scrollEffect
-        plane.textures[0].rotation.z = scrollEffect
+        plane.domTextures[0].rotation.z = scrollEffect
 
         plane.rotation.y = -scrollEffect * 0.5
 

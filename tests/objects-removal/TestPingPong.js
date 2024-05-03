@@ -232,7 +232,7 @@ export class TestPingPong {
         placeholderColor: [0, 255, 255, 255],
       },
       renderTextures: [
-        // ping pong planes use a RenderTexture internally
+        // ping pong planes use a Texture internally
         // so we need to create one to use it in our plane
         new RenderTexture(this.gpuCurtains, {
           label: 'Flow map render texture',

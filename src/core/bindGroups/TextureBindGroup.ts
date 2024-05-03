@@ -1,7 +1,7 @@
 import { BindGroup } from './BindGroup'
 import { isRenderer, Renderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Texture } from '../textures/Texture'
+import { DOMTexture } from '../textures/DOMTexture'
 import { Sampler } from '../samplers/Sampler'
 import { BindGroupParams } from '../../types/BindGroups'
 import { MaterialTexture } from '../../types/Materials'
@@ -32,16 +32,16 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * // note this is asynchronous
  * await gpuCurtains.setDevice()
  *
- * // create a render texture
- * const renderTexture = new RenderTexture(gpuCurtains, {
+ * // create a texture
+ * const texture = new Texture(gpuCurtains, {
  *   label: 'Input texture',
  *   name: 'inputTexture',
  * })
  *
- * // create a texture bind group using that render texture
+ * // create a texture bind group using that texture
  * const textureBindGroup = new TextureBindGroup(gpuCurtains, {
  *   label: 'My texture bind group',
- *   textures: [renderTexture],
+ *   textures: [texture],
  *   uniforms: {
  *     params: {
  *       struct: {
@@ -148,7 +148,7 @@ export class TextureBindGroup extends BindGroup {
     return (
       !this.bindGroup &&
       !!this.bindings.length &&
-      !this.textures.find((texture) => !(texture.texture || (texture as Texture).externalTexture)) &&
+      !this.textures.find((texture) => !(texture.texture || (texture as DOMTexture).externalTexture)) &&
       !this.samplers.find((sampler) => !sampler.sampler)
     )
   }
@@ -161,7 +161,7 @@ export class TextureBindGroup extends BindGroup {
   updateTextures() {
     for (const texture of this.textures) {
       // copy textures that need it on first init, but only when original texture is ready
-      if (texture instanceof Texture) {
+      if (texture instanceof DOMTexture) {
         if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
           texture.copy(texture.options.fromTexture)
         }

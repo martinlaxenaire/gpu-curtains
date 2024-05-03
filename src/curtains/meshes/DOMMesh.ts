@@ -5,7 +5,7 @@ import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
 import { throwWarning } from '../../utils/utils'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
-import { Texture } from '../../core/textures/Texture'
+import { DOMTexture } from '../../core/textures/DOMTexture'
 import { AllowedGeometries } from '../../types/Materials'
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement'
 
@@ -13,7 +13,7 @@ import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElem
  * Base parameters to create a {@link DOMMesh}
  */
 export interface DOMMeshBaseParams extends MeshBaseRenderParams {
-  /** Whether to automatically create a {@link Texture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
+  /** Whether to automatically create a {@link DOMTexture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
   autoloadSources?: boolean
   /** Whether to automatically update the {@link DOMMesh} position on scroll */
   watchScroll?: boolean
@@ -59,14 +59,14 @@ const defaultDOMMeshParams = {
 export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   /** {@link GPUCurtainsRenderer} used to create this {@link DOMObject3D} */
   renderer: GPUCurtainsRenderer
-  /** Whether to automatically create a {@link Texture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
+  /** Whether to automatically create a {@link DOMTexture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
   autoloadSources: boolean
   /** Whether all the sources have been successfully loaded */
   _sourcesReady: boolean
 
   // callbacks / events
   /** function assigned to the {@link onLoading} callback */
-  _onLoadingCallback = (texture: Texture): void => {
+  _onLoadingCallback = (texture: DOMTexture): void => {
     /* allow empty callback */
   }
 
@@ -159,7 +159,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
 
   /**
-   * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
+   * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}
    */
   setInitSources() {
     let loaderSize = 0
@@ -189,8 +189,8 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       // load images
       if (images.length) {
         images.forEach((image) => {
-          const texture = this.createTexture({
-            name: image.getAttribute('data-texture-name') ?? 'texture' + this.textures.length,
+          const texture = this.createDOMTexture({
+            name: image.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src)
@@ -200,8 +200,8 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       // load videos
       if (videos.length) {
         videos.forEach((video) => {
-          const texture = this.createTexture({
-            name: video.getAttribute('data-texture-name') ?? 'texture' + this.textures.length,
+          const texture = this.createDOMTexture({
+            name: video.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video)
@@ -211,8 +211,8 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       // load canvases
       if (canvases.length) {
         canvases.forEach((canvas) => {
-          const texture = this.createTexture({
-            name: canvas.getAttribute('data-texture-name') ?? 'texture' + this.textures.length,
+          const texture = this.createDOMTexture({
+            name: canvas.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas)
@@ -262,11 +262,11 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   /* EVENTS */
 
   /**
-   * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
-   * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
+   * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
+   * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
    * @returns - our {@link DOMMesh}
    */
-  onLoading(callback: (texture: Texture) => void): DOMMesh {
+  onLoading(callback: (texture: DOMTexture) => void): DOMMesh {
     if (callback) {
       this._onLoadingCallback = callback
     }

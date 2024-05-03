@@ -1,10 +1,10 @@
 /// <reference types="dist" />
 import { Renderer } from '../../renderers/utils';
 import { RenderMaterial } from '../../materials/RenderMaterial';
-import { Texture } from '../../textures/Texture';
+import { DOMTexture } from '../../textures/DOMTexture';
 import { Geometry } from '../../geometries/Geometry';
-import { RenderTexture, RenderTextureParams } from '../../textures/RenderTexture';
-import { ExternalTextureParams, TextureParams } from '../../../types/Textures';
+import { Texture, TextureParams } from '../../textures/Texture';
+import { ExternalTextureParams, DOMTextureParams } from '../../../types/Textures';
 import { RenderTarget } from '../../renderPasses/RenderTarget';
 import { GPUCurtains } from '../../../curtains/GPUCurtains';
 import { Material } from '../../materials/Material';
@@ -21,7 +21,7 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
     renderOrder?: number;
     /** Optional {@link RenderTarget} to render this Mesh to instead of the canvas context. */
     outputTarget?: RenderTarget;
-    /** Parameters used by this Mesh to create a {@link Texture} */
+    /** Parameters used by this Mesh to create a {@link DOMTexture} */
     texturesOptions?: ExternalTextureParams;
 }
 /**
@@ -39,7 +39,7 @@ export interface MeshBaseOptions extends RenderMaterialParams {
     label?: MeshBaseParams['label'];
     /** Shaders to use by this Mesh {@link RenderMaterial} */
     shaders?: MeshBaseParams['shaders'];
-    /** Parameters used by this Mesh to create a {@link Texture} */
+    /** Parameters used by this Mesh to create a {@link DOMTexture} */
     texturesOptions?: ExternalTextureParams;
     /** {@link RenderTarget} to render this Mesh to instead of the canvas context, if any. */
     outputTarget?: RenderTarget | null;
@@ -51,7 +51,7 @@ export interface MeshBaseOptions extends RenderMaterialParams {
 /**
  * This class describes the properties and methods to set up a basic Mesh, implemented in the {@link MeshBaseMixin}:
  * - Set and render the {@link Geometry} and {@link RenderMaterial}
- * - Add helpers to create {@link Texture} and {@link RenderTexture}
+ * - Add helpers to create {@link DOMTexture} and {@link Texture}
  * - Handle resizing, device lost/restoration and destroying the resources
  */
 export declare class MeshBaseClass {
@@ -213,18 +213,34 @@ export declare class MeshBaseClass {
      */
     set transparent(value: boolean);
     /**
+     * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
+     * @readonly
+     */
+    get domTextures(): DOMTexture[];
+    /**
      * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
      * @readonly
      */
     get textures(): Texture[];
     /**
-     * Get our {@link RenderMaterial#renderTextures | RenderMaterial render textures array}
-     * @readonly
+     * Create a new {@link DOMTexture}
+     * @param options - {@link DOMTextureParams | DOMTexture parameters}
+     * @returns - newly created DOMTexture
      */
-    get renderTextures(): RenderTexture[];
+    createDOMTexture(options: DOMTextureParams): DOMTexture;
+    /**
+     * Add a {@link DOMTexture}
+     * @param domTexture - {@link DOMTexture} to add
+     */
+    addDOMTexture(domTexture: DOMTexture): any;
+    /**
+     * Callback run when a new {@link DOMTexture} has been created
+     * @param domTexture - newly created DOMTexture
+     */
+    onDOMTextureAdded(domTexture: DOMTexture): void;
     /**
      * Create a new {@link Texture}
-     * @param options - {@link TextureParams | Texture parameters}
+     * @param  options - {@link TextureParams | Texture parameters}
      * @returns - newly created Texture
      */
     createTexture(options: TextureParams): Texture;
@@ -233,22 +249,6 @@ export declare class MeshBaseClass {
      * @param texture - {@link Texture} to add
      */
     addTexture(texture: Texture): any;
-    /**
-     * Callback run when a new {@link Texture} has been created
-     * @param texture - newly created Texture
-     */
-    onTextureAdded(texture: Texture): void;
-    /**
-     * Create a new {@link RenderTexture}
-     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-     * @returns - newly created RenderTexture
-     */
-    createRenderTexture(options: RenderTextureParams): RenderTexture;
-    /**
-     * Add a {@link RenderTexture}
-     * @param renderTexture - {@link RenderTexture} to add
-     */
-    addRenderTexture(renderTexture: RenderTexture): any;
     /**
      * Assign or remove a {@link RenderTarget} to this Mesh
      * Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
@@ -317,7 +317,7 @@ export declare class MeshBaseClass {
  */
 export type MixinConstructor<T = {}> = new (...args: any[]) => T;
 /**
- * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link Texture} and {@link RenderTexture}) with a given Base of type {@link core/objects3D/Object3D.Object3D | Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
+ * Used to mix the basic Mesh properties and methods defined in {@link MeshBaseClass} (basically, set a {@link Geometry} and a {@link RenderMaterial} and render them, add helpers to create {@link DOMTexture} and {@link Texture}) with a given Base of type {@link core/objects3D/Object3D.Object3D | Object3D}, {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} or an empty class.
  * @exports MeshBaseMixin
  * @param Base - the class to mix onto
  * @returns - the mixed classes, creating a basic Mesh.

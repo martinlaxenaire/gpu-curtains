@@ -2,7 +2,6 @@ import { CameraRenderer } from '../../core/renderers/utils';
 import { Camera } from '../../core/camera/Camera';
 import { Object3D } from '../../core/objects3D/Object3D';
 import { Vec2 } from '../../math/Vec2';
-import { Vec3 } from '../../math/Vec3';
 /**
  * Helper to create orbit camera controls (sometimes called arcball camera).
  *
@@ -35,8 +34,6 @@ export declare class OrbitControls extends Object3D {
     maxZoom: number;
     /** Zoom step (speed) value to use. */
     zoomStep: number;
-    /** {@link OrbitControls} target. */
-    target: Vec3;
     /**
      * OrbitControls constructor
      * @param renderer - {@link CameraRenderer} used to get the {@link core/scenes/Scene.Scene | Scene} object to use as {@link Object3D#parent | parent}, and eventually the {@link CameraRenderer#camera | Camera} as well.

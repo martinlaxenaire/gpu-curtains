@@ -1,15 +1,52 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
 import { TextureBinding } from '../bindings/TextureBinding';
-import { BufferBinding } from '../bindings/BufferBinding';
-import { Object3D } from '../objects3D/Object3D';
 import { BindGroupBindingElement } from '../../types/BindGroups';
-import { TextureOptions, TextureParams, TextureParent, TextureSize, TextureSource } from '../../types/Textures';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding';
+import { DOMTexture } from './DOMTexture';
+import { ExternalTextureParamsBase, TextureSize } from '../../types/Textures';
+import { TextureUsageKeys } from './utils';
 /**
- * Used to create {@link GPUTexture} or {@link GPUExternalTexture} from different kinds of {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
+ * Base parameters used to create a {@link Texture}
+ */
+export interface TextureBaseParams extends ExternalTextureParamsBase {
+    /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose */
+    label?: string;
+    /** Name of the {@link Texture} to use in the {@link TextureBinding | texture binding} */
+    name?: string;
+    /** Optional fixed size of the {@link Texture#texture | texture}. If set, the {@link Texture} will never be resized and always keep that size. */
+    fixedSize?: TextureSize;
+    /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size or {@link fixedSize}. Used mainly to shrink render target texture definition. */
+    qualityRatio?: number;
+    /** Whether to use this {@link Texture} as a regular, storage or depth texture */
+    type?: TextureBindingType;
+    /** Optional format of the {@link Texture#texture | texture}, mainly used for storage textures */
+    format?: GPUTextureFormat;
+    /** Optional texture binding memory access type, mainly used for storage textures */
+    access?: BindingMemoryAccessType;
+    /** Optional {@link Texture#texture | texture} view dimension to use */
+    viewDimension?: GPUTextureViewDimension;
+    /** Sample count of the {@link Texture#texture | texture}, used for multisampling */
+    sampleCount?: GPUSize32;
+    /** The {@link Texture} shaders visibility sent to the {@link Texture#textureBinding | texture binding} */
+    visibility?: BindingParams['visibility'];
+    /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names} */
+    usage?: TextureUsageKeys[];
+}
+/**
+ * Parameters used to create a {@link Texture}
+ */
+export interface TextureParams extends TextureBaseParams {
+    /** Optional texture to use as a copy source input. Could be a {@link Texture} or {@link DOMTexture} */
+    fromTexture?: Texture | DOMTexture | null;
+}
+/**
+ * This is the main class used to create and handle {@link GPUTexture | textures} that can be used with {@link core/computePasses/ComputePass.ComputePass | ComputePass} and/or {@link core/meshes/Mesh.Mesh | Mesh}. Also used as copy source/destination for {@link core/renderPasses/RenderPass.RenderPass | RenderPass} and {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget}.
  *
- * Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}.
+ * Basically useful for any kind of textures: for external sources (however in some cases, {@link core/textures/DOMTexture.DOMTexture | DOMTexture} might be preferred), depth, storages or to copy anything outputted to the screen at one point or another.
+ *
+ * Will create a {@link GPUTexture} and its associated {@link TextureBinding}.
  *
  * @example
  * ```javascript
@@ -22,196 +59,81 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
  * // note this is asynchronous
  * await gpuCurtains.setDevice()
  *
- * // create a render texture
- * const imageTexture = new Texture(gpuCurtains, {
- *   label: 'My image texture',
- *   name: 'imageTexture',
+ * // create a texture
+ * const texture = new Texture(gpuCurtains, {
+ *   label: 'My texture',
+ *   name: 'myTexture',
  * })
- *
- * // load an image
- * await imageTexture.loadImage(document.querySelector('img'))
  * ```
  */
-export declare class Texture extends Object3D {
+export declare class Texture {
     #private;
+    /** {@link Renderer | renderer} used by this {@link Texture} */
+    renderer: Renderer;
     /** The type of the {@link Texture} */
     type: string;
     /** The universal unique id of this {@link Texture} */
     readonly uuid: string;
-    /** {@link Renderer} used by this {@link Texture} */
-    renderer: Renderer;
-    /** The {@link GPUTexture} used if any */
-    texture: null | GPUTexture;
-    /** The {@link GPUExternalTexture} used if any */
-    externalTexture: null | GPUExternalTexture;
-    /** The {@link Texture} {@link TextureSource | source} to use */
-    source: TextureSource;
-    /** The {@link GPUTexture}, matching the {@link TextureSource | source} {@link core/DOM/DOMElement.RectSize | size} (with 1 for depth) */
+    /** The {@link GPUTexture} used */
+    texture: GPUTexture;
+    /** Size of the {@link Texture#texture | texture} source, usually our {@link Renderer#canvas | renderer canvas} size */
     size: TextureSize;
     /** Options used to create this {@link Texture} */
-    options: TextureOptions;
-    /** A {@link BufferBinding | buffer binding} that will hold the texture model matrix */
-    textureMatrix: BufferBinding;
-    /** The bindings used by this {@link Texture}, i.e. its {@link textureMatrix} and its {@link TextureBinding | GPU texture binding} */
+    options: TextureParams;
+    /** Array of {@link core/bindings/Binding.Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding} */
     bindings: BindGroupBindingElement[];
-    /** {@link Texture} parentMesh if any */
-    private _parentMesh;
-    /** Whether the source has been loaded */
-    private _sourceLoaded;
-    /** Whether the source has been uploaded to the GPU, handled by the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#texturesQueue | GPUDeviceManager texturesQueue array} */
-    private _sourceUploaded;
-    /** Whether the texture should be uploaded to the GPU */
-    shouldUpdate: boolean;
-    /** {@link HTMLVideoElement.requestVideoFrameCallback | requestVideoFrameCallback} returned id if used */
-    videoFrameCallbackId: null | number;
-    /** function assigned to the {@link onSourceLoaded} callback */
-    _onSourceLoadedCallback: () => void;
-    /** function assigned to the {@link onSourceUploaded} callback */
-    _onSourceUploadedCallback: () => void;
     /**
      * Texture constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+     * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
      * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
      */
     constructor(renderer: Renderer | GPUCurtains, parameters?: TextureParams);
     /**
-     * Set our {@link bindings}
+     * Copy another {@link Texture} into this {@link Texture}
+     * @param texture - {@link Texture} to copy
+     */
+    copy(texture: Texture | DOMTexture): void;
+    /**
+     * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
+     * @param texture - {@link GPUTexture} to copy
+     */
+    copyGPUTexture(texture: GPUTexture): void;
+    /**
+     * Create the {@link GPUTexture | texture} (or copy it from source) and update the {@link TextureBinding#resource | binding resource}
+     */
+    createTexture(): void;
+    /**
+     * Upload a source to the GPU and use it for our {@link texture}.
+     * @param parameters - parameters used to upload the source.
+     * @param parameters.source - source to use for our {@link texture}.
+     * @param parameters.width - source width.
+     * @param parameters.height - source height.
+     * @param parameters.depth - source depth.
+     * @param parameters.origin - {@link GPUOrigin3D | origin} of the source copy.
+     */
+    uploadSource({ source, width, height, depth, origin, }: {
+        source: GPUImageCopyExternalImageSource;
+        width?: number;
+        height?: number;
+        depth?: number;
+        origin?: GPUOrigin3D;
+    }): void;
+    /**
+     * Set our {@link Texture#bindings | bindings}
      */
     setBindings(): void;
     /**
-     * Get our {@link TextureBinding | GPU texture binding}
+     * Get our {@link TextureBinding | texture binding}
      * @readonly
      */
     get textureBinding(): TextureBinding;
     /**
-     * Get our texture {@link parentMesh}
+     * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
+     * @param size - the optional new {@link TextureSize | size} to set
      */
-    get parentMesh(): TextureParent;
+    resize(size?: TextureSize | null): void;
     /**
-     * Set our texture {@link parentMesh}
-     * @param value - texture {@link parentMesh} to set (i.e. any kind of {@link core/renderers/GPURenderer.RenderedMesh | Mesh}
-     */
-    set parentMesh(value: TextureParent);
-    /**
-     * Get whether our {@link source} has been loaded
-     */
-    get sourceLoaded(): boolean;
-    /**
-     * Set whether our {@link source} has been loaded
-     * @param value - boolean flag indicating if the {@link source} has been loaded
-     */
-    set sourceLoaded(value: boolean);
-    /**
-     * Get whether our {@link source} has been uploaded
-     */
-    get sourceUploaded(): boolean;
-    /**
-     * Set whether our {@link source} has been uploaded
-     * @param value - boolean flag indicating if the {@link source} has been uploaded
-     */
-    set sourceUploaded(value: boolean);
-    /**
-     * Set our texture {@link transforms} object
-     */
-    setTransforms(): void;
-    /**
-     * Update the {@link modelMatrix}
-     */
-    updateModelMatrix(): void;
-    /**
-     * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
-     */
-    updateMatrixStack(): void;
-    /**
-     * Resize our {@link Texture}
-     */
-    resize(): void;
-    /**
-     * Get the number of mip levels create based on {@link size}
-     * @param sizes - Array containing our texture width, height and depth
-     * @returns - number of mip levels
-     */
-    getNumMipLevels(...sizes: number[]): number;
-    /**
-     * Tell the {@link Renderer} to upload or texture
-     */
-    uploadTexture(): void;
-    /**
-     * Import a {@link GPUExternalTexture} from the {@link Renderer}, update the  {@link textureBinding} and its {@link core/bindGroups/TextureBindGroup.TextureBindGroup | bind group}
-     */
-    uploadVideoTexture(): void;
-    /**
-     * Copy a {@link Texture}
-     * @param texture - {@link Texture} to copy
-     */
-    copy(texture: Texture): void;
-    /**
-     * Set the {@link texture | GPU texture}
-     */
-    createTexture(): void;
-    /**
-     * Set the {@link size} based on the {@link source}
-     */
-    setSourceSize(): void;
-    /**
-     * Load an {@link HTMLImageElement} from a URL and create an {@link ImageBitmap} to use as a {@link source}
-     * @async
-     * @param url - URL of the image to load
-     * @returns - the newly created {@link ImageBitmap}
-     */
-    loadImageBitmap(url: string): Promise<ImageBitmap>;
-    /**
-     * Load and create an {@link ImageBitmap} from a URL or {@link HTMLImageElement}, use it as a {@link source} and create the {@link GPUTexture}
-     * @async
-     * @param source - the image URL or {@link HTMLImageElement} to load
-     * @returns - the newly created {@link ImageBitmap}
-     */
-    loadImage(source: string | HTMLImageElement): Promise<void>;
-    /**
-     * Set our {@link shouldUpdate} flag to true at each new video frame
-     */
-    onVideoFrameCallback(): void;
-    /**
-     * Callback to run when a {@link HTMLVideoElement} has loaded (when it has enough data to play).
-     * Set the {@link HTMLVideoElement} as a {@link source} and create the {@link GPUTexture} or {@link GPUExternalTexture}
-     * @param video - the newly loaded {@link HTMLVideoElement}
-     */
-    onVideoLoaded(video: HTMLVideoElement): void;
-    /**
-     * Get whether the {@link source} is a video
-     * @readonly
-     */
-    get isVideoSource(): boolean;
-    /**
-     * Load a video from a URL or {@link HTMLVideoElement} and register {@link onVideoLoaded} callback
-     * @param source - the video URL or {@link HTMLVideoElement} to load
-     */
-    loadVideo(source: string | HTMLVideoElement): void;
-    /**
-     * Load a {@link HTMLCanvasElement}, use it as a {@link source} and create the {@link GPUTexture}
-     * @param source - the {@link HTMLCanvasElement} to use
-     */
-    loadCanvas(source: HTMLCanvasElement): void;
-    /**
-     * Callback to run when the {@link source} has been loaded
-     * @param callback - callback to run when the {@link source} has been loaded
-     * @returns - our {@link Texture}
-     */
-    onSourceLoaded(callback: () => void): Texture;
-    /**
-     * Callback to run when the {@link source} has been uploaded
-     * @param callback - callback to run when the {@link source} been uploaded
-     * @returns - our {@link Texture}
-     */
-    onSourceUploaded(callback: () => void): Texture;
-    /**
-     * Render a {@link Texture}:
-     * - Update its {@link modelMatrix} and {@link bindings} if needed
-     * - Upload the texture if it needs to be done
-     */
-    render(): void;
-    /**
-     * Destroy the {@link Texture}
+     * Destroy our {@link Texture}
      */
     destroy(): void;
 }
