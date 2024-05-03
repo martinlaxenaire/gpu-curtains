@@ -26,7 +26,7 @@ class PingPongPlane extends FullscreenPlane {
     parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
     super(renderer, parameters);
     this.type = "PingPongPlane";
-    this.createRenderTexture({
+    this.createTexture({
       label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
       name: "renderTexture",
       ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format },
@@ -34,11 +34,11 @@ class PingPongPlane extends FullscreenPlane {
     });
   }
   /**
-   * Get our main {@link RenderTexture}, the one that contains our ping pong content
+   * Get our main {@link Texture}, the one that contains our ping pong content
    * @readonly
    */
   get renderTexture() {
-    return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
+    return this.textures.find((texture) => texture.options.name === "renderTexture");
   }
   /**
    * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.

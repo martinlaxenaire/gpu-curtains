@@ -1,12 +1,4 @@
-import {
-  GPUDeviceManager,
-  GPUCameraRenderer,
-  BoxGeometry,
-  RenderTexture,
-  Mesh,
-  Vec2,
-  Vec3,
-} from '../../dist/esm/index.mjs'
+import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Texture, Mesh, Vec2, Vec3 } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   // create a device manager
@@ -57,7 +49,7 @@ window.addEventListener('load', async () => {
 
   const imageBitmaps = await Promise.all(promises)
 
-  const cubeMapTexture = new RenderTexture(gpuCameraRenderer, {
+  const cubeMapTexture = new Texture(gpuCameraRenderer, {
     name: 'cubeMapTexture',
     viewDimension: 'cube',
     visibility: ['fragment'],
@@ -113,7 +105,7 @@ window.addEventListener('load', async () => {
 
   const cubeMap = new Mesh(gpuCameraRenderer, {
     geometry: cubeGeometry,
-    renderTextures: [cubeMapTexture],
+    textures: [cubeMapTexture],
     cullMode: 'none',
     shaders: {
       vertex: {

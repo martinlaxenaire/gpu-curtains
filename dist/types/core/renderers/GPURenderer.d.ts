@@ -14,7 +14,7 @@ import { Plane } from '../../curtains/meshes/Plane';
 import { Mesh } from '../meshes/Mesh';
 import { TasksQueueManager } from '../../utils/TasksQueueManager';
 import { AllowedBindGroups } from '../../types/BindGroups';
-import { RenderTexture } from '../textures/RenderTexture';
+import { Texture } from '../textures/Texture';
 import { GPUDeviceManager } from './GPUDeviceManager';
 import { FullscreenPlane } from '../meshes/FullscreenPlane';
 import { Buffer } from '../buffers/Buffer';
@@ -96,8 +96,8 @@ export declare class GPURenderer {
     renderTargets: RenderTarget[];
     /** An array containing all our created {@link SceneStackedMesh | meshes} */
     meshes: SceneStackedMesh[];
-    /** An array containing all our created {@link RenderTexture} */
-    renderTextures: RenderTexture[];
+    /** An array containing all our created {@link Texture} */
+    textures: Texture[];
     /** Pixel ratio to use for rendering */
     pixelRatio: number;
     /** An object defining the width, height, top and left position of the canvas. Mainly used internally. If you need to get the renderer dimensions, use {@link boundingRect} instead. */
@@ -201,7 +201,7 @@ export declare class GPURenderer {
     loseContext(): void;
     /**
      * Called when the {@link GPUDeviceManager#device | device} should be restored.
-     * Configure the context again, resize the {@link RenderTarget | render targets} and {@link RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context.
+     * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
      * @async
      */
     restoreContext(): void;
@@ -325,15 +325,15 @@ export declare class GPURenderer {
      */
     removeDOMTexture(texture: DOMTexture): void;
     /**
-     * Add a {@link RenderTexture} to our {@link renderTextures} array
-     * @param texture - {@link RenderTexture} to add
+     * Add a {@link Texture} to our {@link textures} array
+     * @param texture - {@link Texture} to add
      */
-    addRenderTexture(texture: RenderTexture): void;
+    addTexture(texture: Texture): void;
     /**
-     * Remove a {@link RenderTexture} from our {@link renderTextures} array
-     * @param texture - {@link RenderTexture} to remove
+     * Remove a {@link Texture} from our {@link textures} array
+     * @param texture - {@link Texture} to remove
      */
-    removeRenderTexture(texture: RenderTexture): void;
+    removeTexture(texture: Texture): void;
     /**
      * Create a {@link GPUTexture}
      * @param textureDescriptor - {@link GPUTextureDescriptor | GPU texture descriptor}
@@ -387,11 +387,11 @@ export declare class GPURenderer {
      */
     getObjectsByBindGroup(bindGroup: AllowedBindGroups): undefined | SceneObject[];
     /**
-     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link RenderTexture}.
+     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link Texture}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-     * @param texture - {@link DOMTexture} or {@link RenderTexture} to check
+     * @param texture - {@link DOMTexture} or {@link Texture} to check
      */
-    getObjectsByTexture(texture: DOMTexture | RenderTexture): undefined | SceneObject[];
+    getObjectsByTexture(texture: DOMTexture | Texture): undefined | SceneObject[];
     /**
      * Assign a callback function to _onBeforeRenderCallback
      * @param callback - callback to run just before the {@link render} method will be executed

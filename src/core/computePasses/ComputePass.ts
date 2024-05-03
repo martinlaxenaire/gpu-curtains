@@ -3,7 +3,7 @@ import { generateUUID } from '../../utils/utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
 import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { RenderTexture, RenderTextureParams } from '../textures/RenderTexture'
+import { Texture, TextureParams } from '../textures/Texture'
 import { DOMTexture } from '../textures/DOMTexture'
 import { ExternalTextureParams, DOMTextureParams } from '../../types/Textures'
 
@@ -156,7 +156,7 @@ export class ComputePass {
       bindGroups,
       samplers,
       domTextures,
-      renderTextures,
+      textures,
       autoRender,
       useAsyncPipeline,
       texturesOptions,
@@ -190,8 +190,8 @@ export class ComputePass {
       storages,
       bindGroups,
       samplers,
+      textures,
       domTextures,
-      renderTextures,
       useAsyncPipeline,
       dispatchSize,
     })
@@ -278,11 +278,11 @@ export class ComputePass {
   }
 
   /**
-   * Get our {@link ComputeMaterial#renderTextures | ComputeMaterial render textures array}
+   * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
    * @readonly
    */
-  get renderTextures(): RenderTexture[] {
-    return this.material?.renderTextures || []
+  get textures(): Texture[] {
+    return this.material?.textures || []
   }
 
   /**
@@ -290,16 +290,33 @@ export class ComputePass {
    * @param options - {@link DOMTextureParams | DOMTexture parameters}
    * @returns - newly created {@link DOMTexture}
    */
-  createTexture(options: DOMTextureParams): DOMTexture {
+  createDOMTexture(options: DOMTextureParams): DOMTexture {
     if (!options.name) {
-      options.name = 'texture' + this.domTextures.length
+      options.name = 'texture' + (this.textures.length + this.domTextures.length)
     }
 
     if (!options.label) {
       options.label = this.options.label + ' ' + options.name
     }
 
-    const texture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions })
+    const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions })
+
+    this.addTexture(domTexture)
+
+    return domTexture
+  }
+
+  /**
+   * Create a new {@link Texture}
+   * @param  options - {@link TextureParams | Texture parameters}
+   * @returns - newly created {@link Texture}
+   */
+  createTexture(options: TextureParams): Texture {
+    if (!options.name) {
+      options.name = 'texture' + (this.textures.length + this.domTextures.length)
+    }
+
+    const texture = new Texture(this.renderer, options)
 
     this.addTexture(texture)
 
@@ -307,36 +324,11 @@ export class ComputePass {
   }
 
   /**
-   * Add a {@link DOMTexture}
-   * @param texture - {@link DOMTexture} to add
+   * Add a {@link Texture} or {@link DOMTexture}
+   * @param texture - {@link Texture} to add
    */
-  addTexture(texture: DOMTexture) {
+  addTexture(texture: Texture | DOMTexture) {
     this.material.addTexture(texture)
-  }
-
-  /**
-   * Create a new {@link RenderTexture}
-   * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-   * @returns - newly created {@link RenderTexture}
-   */
-  createRenderTexture(options: RenderTextureParams): RenderTexture {
-    if (!options.name) {
-      options.name = 'renderTexture' + this.renderTextures.length
-    }
-
-    const renderTexture = new RenderTexture(this.renderer, options)
-
-    this.addRenderTexture(renderTexture)
-
-    return renderTexture
-  }
-
-  /**
-   * Add a {@link RenderTexture}
-   * @param renderTexture - {@link RenderTexture} to add
-   */
-  addRenderTexture(renderTexture: RenderTexture) {
-    this.material.addTexture(renderTexture)
   }
 
   /**

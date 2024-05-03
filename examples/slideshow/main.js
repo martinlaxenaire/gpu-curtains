@@ -137,18 +137,18 @@ window.addEventListener('load', async () => {
   // and we could easily add more images in the slideshow...
 
   // first we set our very first image as the active texture
-  const activeTex = plane.createTexture({
+  const activeTex = plane.createDOMTexture({
     label: 'Active texture',
     name: 'activeTexture',
-    fromTexture: plane.textures[slideshowState.activeTextureIndex],
+    fromTexture: plane.domTextures[slideshowState.activeTextureIndex],
   })
 
   // next we set the second image as next texture but this is not mandatory
   // as we will reset the next texture on slide change
-  const nextTex = plane.createTexture({
+  const nextTex = plane.createDOMTexture({
     label: 'Next texture',
     name: 'nextTexture',
-    fromTexture: plane.textures[slideshowState.nextTextureIndex],
+    fromTexture: plane.domTextures[slideshowState.nextTextureIndex],
   })
 
   plane
@@ -170,7 +170,7 @@ window.addEventListener('load', async () => {
           }
 
           // apply it to our next texture
-          nextTex.copy(plane.textures[slideshowState.nextTextureIndex])
+          nextTex.copy(plane.domTextures[slideshowState.nextTextureIndex])
 
           if (nextTex.isVideoSource) {
             nextTex.source.play()
@@ -186,7 +186,7 @@ window.addEventListener('load', async () => {
             }
 
             // our next texture becomes our active texture
-            activeTex.copy(plane.textures[slideshowState.activeTextureIndex])
+            activeTex.copy(plane.domTextures[slideshowState.activeTextureIndex])
 
             // reset timer
             slideshowState.transitionTimer = 0

@@ -5,6 +5,7 @@ import { BufferBinding } from '../bindings/BufferBinding.mjs';
 import { Object3D } from '../objects3D/Object3D.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
 import { generateUUID, throwWarning } from '../../utils/utils.mjs';
+import { getNumMipLevels } from './utils.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -218,15 +219,6 @@ class DOMTexture extends Object3D {
     this.shouldUpdateModelMatrix();
   }
   /**
-   * Get the number of mip levels create based on {@link size}
-   * @param sizes - Array containing our texture width, height and depth
-   * @returns - number of mip levels
-   */
-  getNumMipLevels(...sizes) {
-    const maxSize = Math.max(...sizes);
-    return 1 + Math.log2(maxSize) | 0;
-  }
-  /**
    * Tell the {@link Renderer} to upload or texture
    */
   uploadTexture() {
@@ -293,7 +285,7 @@ class DOMTexture extends Object3D {
       usage: !!this.source ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
     };
     if (this.options.sourceType !== "externalVideo") {
-      options.mipLevelCount = this.options.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1;
+      options.mipLevelCount = this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height) : 1;
       this.texture?.destroy();
       this.texture = this.renderer.createTexture(options);
       this.textureBinding.resource = this.texture;

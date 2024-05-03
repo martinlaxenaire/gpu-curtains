@@ -1,6 +1,6 @@
 import { Renderer } from '../renderers/utils';
 import { RenderPass, RenderPassParams } from './RenderPass';
-import { RenderTexture } from '../textures/RenderTexture';
+import { Texture } from '../textures/Texture';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
  * Parameters used to create a {@link RenderTarget}
@@ -16,7 +16,7 @@ export interface RenderTargetParams extends RenderPassParams {
  *
  * Can also be assigned as ShaderPass {@link core/renderPasses/ShaderPass.ShaderPass#inputTarget | input} or {@link core/renderPasses/ShaderPass.ShaderPass#outputTarget | output} targets.
  *
- * If the {@link RenderPass} created handle color attachments, then a {@link RenderTarget#renderTexture | RenderTexture} will be created to update and/or resolve the content of the current view. This {@link RenderTarget#renderTexture | RenderTexture} could therefore usually be used to access the current content of this {@link RenderTarget}.
+ * If the {@link RenderPass} created handle color attachments, then a {@link RenderTarget#renderTexture | Texture} will be created to update and/or resolve the content of the current view. This {@link RenderTarget#renderTexture | Texture} could therefore usually be used to access the current content of this {@link RenderTarget}.
  *
  * @example
  * ```javascript
@@ -46,8 +46,8 @@ export declare class RenderTarget {
     options: RenderTargetParams;
     /** {@link RenderPass} used by this {@link RenderTarget} */
     renderPass: RenderPass;
-    /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture} */
-    renderTexture?: RenderTexture;
+    /** {@link Texture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture} */
+    renderTexture?: Texture;
     /**
      * RenderTarget constructor
      * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTarget}
@@ -61,7 +61,7 @@ export declare class RenderTarget {
      *
      * @readonly
      */
-    get outputTextures(): RenderTexture[];
+    get outputTextures(): Texture[];
     /**
      * Add the {@link RenderTarget} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */

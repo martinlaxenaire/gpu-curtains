@@ -9,6 +9,7 @@ import { BindGroupBindingElement } from '../../types/BindGroups'
 import { DOMTextureOptions, DOMTextureParams, DOMTextureParent, TextureSize, TextureSource } from '../../types/Textures'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { DOMProjectedMesh } from '../renderers/GPURenderer'
+import { getNumMipLevels } from './utils'
 
 /** @const - default {@link DOMTexture} parameters */
 const defaultDOMTextureParams: DOMTextureParams = {
@@ -26,7 +27,7 @@ const defaultDOMTextureParams: DOMTextureParams = {
 }
 
 /**
- * Used to create {@link GPUTexture} or {@link GPUExternalTexture} from different kinds of {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
+ * Used to create {@link GPUTexture} or {@link GPUExternalTexture}, specially made to handle different kinds of DOM elements {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
  *
  * Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}.
  *
@@ -41,7 +42,7 @@ const defaultDOMTextureParams: DOMTextureParams = {
  * // note this is asynchronous
  * await gpuCurtains.setDevice()
  *
- * // create a render texture
+ * // create a DOM texture
  * const imageTexture = new DOMTexture(gpuCurtains, {
  *   label: 'My image texture',
  *   name: 'imageTexture',
@@ -365,16 +366,6 @@ export class DOMTexture extends Object3D {
   }
 
   /**
-   * Get the number of mip levels create based on {@link size}
-   * @param sizes - Array containing our texture width, height and depth
-   * @returns - number of mip levels
-   */
-  getNumMipLevels(...sizes: number[]): number {
-    const maxSize = Math.max(...sizes)
-    return (1 + Math.log2(maxSize)) | 0
-  }
-
-  /**
    * Tell the {@link Renderer} to upload or texture
    */
   uploadTexture() {
@@ -460,7 +451,7 @@ export class DOMTexture extends Object3D {
     } as GPUTextureDescriptor
 
     if (this.options.sourceType !== 'externalVideo') {
-      options.mipLevelCount = this.options.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1
+      options.mipLevelCount = this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height) : 1
 
       this.texture?.destroy()
 

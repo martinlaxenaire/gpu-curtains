@@ -1,4 +1,4 @@
-import { Sampler, RenderTexture, Object3D, Box3, Vec3, Geometry, IndexedGeometry } from '../../src/index.ts'
+import { Sampler, Texture, Object3D, Box3, Vec3, Geometry, IndexedGeometry } from '../../src/index.ts'
 
 // largely based on
 // https://toji.dev/webgpu-gltf-case-study/
@@ -240,9 +240,9 @@ export class GLTFLoader {
   }
 
   createTexture(image, name) {
-    // TODO mipmaps
-    const texture = new RenderTexture(this.renderer, {
-      name, // TODO,
+    const texture = new Texture(this.renderer, {
+      name,
+      generateMips: true,
       fixedSize: {
         width: image.width,
         height: image.height,
@@ -736,7 +736,7 @@ export class GLTFLoader {
       const materialTextures = this.gltf.materialsTextures[primitive.material]
 
       meshDescriptor.parameters.samplers = []
-      meshDescriptor.parameters.renderTextures = []
+      meshDescriptor.parameters.textures = []
 
       materialTextures.textures.forEach((t) => {
         meshDescriptor.textures.push({
@@ -750,7 +750,7 @@ export class GLTFLoader {
           meshDescriptor.parameters.samplers.push(t.sampler)
         }
 
-        meshDescriptor.parameters.renderTextures.push(t.texture)
+        meshDescriptor.parameters.textures.push(t.texture)
       })
 
       const material = this.gltf.materials[primitive.material]

@@ -1,67 +1,66 @@
-import { isRenderer, Renderer } from '../renderers/utils'
+import { generateMips, isRenderer, Renderer } from '../renderers/utils'
 import { TextureBinding } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { DOMTexture } from './DOMTexture'
-import { TextureSize } from '../../types/Textures'
-import { getRenderTextureUsage, TextureUsageKeys } from './utils'
+import { ExternalTextureParamsBase, TextureSize } from '../../types/Textures'
+import { getDefaultTextureUsage, getNumMipLevels, TextureUsageKeys } from './utils'
 
 /**
- * Define the possible binding types of a {@link RenderTexture}
+ * Base parameters used to create a {@link Texture}
  */
-export type RenderTextureBindingType = Exclude<TextureBindingType, 'externalTexture'>
-
-/**
- * Base parameters used to create a {@link RenderTexture}
- */
-export interface RenderTextureBaseParams {
-  /** The label of the {@link RenderTexture}, used to create various GPU objects for debugging purpose */
+export interface TextureBaseParams extends ExternalTextureParamsBase {
+  /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose */
   label?: string
-  /** Name of the {@link RenderTexture} to use in the {@link TextureBinding | texture binding} */
+  /** Name of the {@link Texture} to use in the {@link TextureBinding | texture binding} */
   name?: string
 
-  /** Optional fixed size of the {@link RenderTexture#texture | texture}. If set, the {@link RenderTexture} will never be resized and always keep that size. */
+  /** Optional fixed size of the {@link Texture#texture | texture}. If set, the {@link Texture} will never be resized and always keep that size. */
   fixedSize?: TextureSize
 
-  /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size or {@link fixedSize}. Used mainly to shrink render target definition. */
+  /** Force the texture size to be set to the given ratio of the {@link core/renderers/GPURenderer.GPURenderer#canvas | renderer canvas} size or {@link fixedSize}. Used mainly to shrink render target texture definition. */
   qualityRatio?: number
 
-  /** Whether to use this {@link RenderTexture} as a regular, storage or depth texture */
-  type?: RenderTextureBindingType
-  /** Optional format of the {@link RenderTexture#texture | texture}, mainly used for storage textures */
+  /** Whether to use this {@link Texture} as a regular, storage or depth texture */
+  type?: TextureBindingType
+  /** Optional format of the {@link Texture#texture | texture}, mainly used for storage textures */
   format?: GPUTextureFormat
   /** Optional texture binding memory access type, mainly used for storage textures */
   access?: BindingMemoryAccessType
-  /** Optional {@link RenderTexture#texture | texture} view dimension to use */
+  /** Optional {@link Texture#texture | texture} view dimension to use */
   viewDimension?: GPUTextureViewDimension
-  /** Sample count of the {@link RenderTexture#texture | texture}, used for multisampling */
+  /** Sample count of the {@link Texture#texture | texture}, used for multisampling */
   sampleCount?: GPUSize32
-  /** The {@link RenderTexture} shaders visibility sent to the {@link RenderTexture#textureBinding | texture binding} */
+  /** The {@link Texture} shaders visibility sent to the {@link Texture#textureBinding | texture binding} */
   visibility?: BindingParams['visibility']
-  /** Allowed usages for the {@link RenderTexture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names} */
+  /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names} */
   usage?: TextureUsageKeys[]
 }
 
 /**
- * Parameters used to create a {@link RenderTexture}
+ * Parameters used to create a {@link Texture}
  */
-export interface RenderTextureParams extends RenderTextureBaseParams {
-  /** Optional texture to use as a copy source input. Could be a {@link RenderTexture} or {@link DOMTexture} */
-  fromTexture?: RenderTexture | DOMTexture | null
+export interface TextureParams extends TextureBaseParams {
+  /** Optional texture to use as a copy source input. Could be a {@link Texture} or {@link DOMTexture} */
+  fromTexture?: Texture | DOMTexture | null
 }
 
-/** @const - default {@link RenderTexture} parameters */
-const defaultRenderTextureParams: RenderTextureParams = {
-  label: 'RenderTexture',
-  name: 'renderTexture',
+/** @const - default {@link Texture} parameters */
+const defaultTextureParams: TextureParams = {
+  label: 'Texture',
+  name: 'renderTexture', // default to 'renderTexture' for render target usage
   type: 'texture',
   access: 'write',
   fromTexture: null,
   viewDimension: '2d',
   sampleCount: 1,
   qualityRatio: 1,
+  // copy external texture options
+  generateMips: false,
+  flipY: false,
+  premultipliedAlpha: false,
 }
 
 /**
@@ -81,29 +80,29 @@ const defaultRenderTextureParams: RenderTextureParams = {
  * // note this is asynchronous
  * await gpuCurtains.setDevice()
  *
- * // create a render texture
- * const renderTexture = new RenderTexture(gpuCurtains, {
- *   label: 'My render texture',
- *   name: 'renderTexture',
+ * // create a texture
+ * const texture = new Texture(gpuCurtains, {
+ *   label: 'My texture',
+ *   name: 'myTexture',
  * })
  * ```
  */
-export class RenderTexture {
-  /** {@link Renderer | renderer} used by this {@link RenderTexture} */
+export class Texture {
+  /** {@link Renderer | renderer} used by this {@link Texture} */
   renderer: Renderer
-  /** The type of the {@link RenderTexture} */
+  /** The type of the {@link Texture} */
   type: string
-  /** The universal unique id of this {@link RenderTexture} */
+  /** The universal unique id of this {@link Texture} */
   readonly uuid: string
 
   /** The {@link GPUTexture} used */
   texture: GPUTexture
 
-  /** Size of the {@link RenderTexture#texture | texture} source, usually our {@link Renderer#canvas | renderer canvas} size */
+  /** Size of the {@link Texture#texture | texture} source, usually our {@link Renderer#canvas | renderer canvas} size */
   size: TextureSize
 
-  /** Options used to create this {@link RenderTexture} */
-  options: RenderTextureParams
+  /** Options used to create this {@link Texture} */
+  options: TextureParams
 
   /** Array of {@link core/bindings/Binding.Binding | bindings} that will actually only hold one {@link TextureBinding | texture binding} */
   bindings: BindGroupBindingElement[]
@@ -112,23 +111,23 @@ export class RenderTexture {
   #autoResize = true
 
   /**
-   * RenderTexture constructor
-   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
-   * @param parameters - {@link RenderTextureParams | parameters} used to create this {@link RenderTexture}
+   * Texture constructor
+   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
    */
-  constructor(renderer: Renderer | GPUCurtains, parameters = defaultRenderTextureParams) {
+  constructor(renderer: Renderer | GPUCurtains, parameters = defaultTextureParams) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
 
-    isRenderer(renderer, parameters.label ? parameters.label + ' RenderTexture' : 'RenderTexture')
+    isRenderer(renderer, parameters.label ? parameters.label + ' Texture' : 'Texture')
 
-    this.type = 'RenderTexture'
+    this.type = 'Texture'
 
     this.renderer = renderer
 
     this.uuid = generateUUID()
 
-    this.options = { ...defaultRenderTextureParams, ...parameters }
+    this.options = { ...defaultTextureParams, ...parameters }
 
     if (parameters.fromTexture) {
       this.options.format = parameters.fromTexture.texture.format
@@ -161,21 +160,21 @@ export class RenderTexture {
     this.setBindings()
 
     // texture
-    this.renderer.addRenderTexture(this)
+    this.renderer.addTexture(this)
     this.createTexture()
   }
 
   /**
-   * Copy another {@link RenderTexture} into this {@link RenderTexture}
-   * @param texture - {@link RenderTexture} to copy
+   * Copy another {@link Texture} into this {@link Texture}
+   * @param texture - {@link Texture} to copy
    */
-  copy(texture: RenderTexture | DOMTexture) {
+  copy(texture: Texture | DOMTexture) {
     this.options.fromTexture = texture
     this.createTexture()
   }
 
   /**
-   * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
+   * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
    * @param texture - {@link GPUTexture} to copy
    */
   copyGPUTexture(texture: GPUTexture) {
@@ -216,7 +215,10 @@ export class RenderTexture {
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
-      usage: getRenderTextureUsage(this.options.usage, this.options.type),
+      mipLevelCount: this.options.generateMips
+        ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1)
+        : 1,
+      usage: getDefaultTextureUsage(this.options.usage, this.options.type),
     } as GPUTextureDescriptor)
 
     // update texture binding
@@ -245,20 +247,24 @@ export class RenderTexture {
     depth?: number
     origin?: GPUOrigin3D
   }) {
-    this.renderer.device.queue.copyExternalImageToTexture({ source: source }, { texture: this.texture, origin }, [
-      width,
-      height,
-      depth,
-    ])
+    this.renderer.device.queue.copyExternalImageToTexture(
+      { source: source, flipY: this.options.flipY },
+      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+      [width, height, depth]
+    )
+
+    if (this.texture.mipLevelCount > 1) {
+      generateMips(this.renderer.device, this.texture)
+    }
   }
 
   /**
-   * Set our {@link RenderTexture#bindings | bindings}
+   * Set our {@link Texture#bindings | bindings}
    */
   setBindings() {
     this.bindings = [
       new TextureBinding({
-        label: this.options.label + ': ' + this.options.name + ' render texture',
+        label: this.options.label + ': ' + this.options.name + ' texture',
         name: this.options.name,
         bindingType: this.options.type,
         visibility: this.options.visibility,
@@ -279,7 +285,7 @@ export class RenderTexture {
   }
 
   /**
-   * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
+   * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
    * @param size - the optional new {@link TextureSize | size} to set
    */
   resize(size: TextureSize | null = null) {
@@ -303,10 +309,10 @@ export class RenderTexture {
   }
 
   /**
-   * Destroy our {@link RenderTexture}
+   * Destroy our {@link Texture}
    */
   destroy() {
-    this.renderer.removeRenderTexture(this)
+    this.renderer.removeTexture(this)
 
     // destroy the GPU texture only if it's not a copy of another texture
     if (!this.options.fromTexture) {

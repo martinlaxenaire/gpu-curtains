@@ -12,17 +12,25 @@ export interface TextureSize extends RectSize {
 }
 
 /**
- * Parameters used to copy an external image to texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}
+ * Base parameters used to copy an external image to a texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}
  */
-export interface ExternalTextureParams {
+export interface ExternalTextureParamsBase {
   /** Whether to generate mips. Default to `false`. */
   generateMips?: boolean
   /** Whether to flip the source along the Y axis. Default to `false`. */
   flipY?: boolean
-  /** The {@link GPUTextureFormat | texture format} to use. Default to `'rgba8unorm'`. */
-  format?: GPUTextureFormat
+  /** Whether this texture should be premultiplied or not. Default to `false`. */
+  premultipliedAlpha?: boolean
+}
+
+/**
+ * Parameters used to copy an external image to a texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}
+ */
+export interface ExternalTextureParams extends ExternalTextureParamsBase {
   /** Whether this texture should be premultiplied or not. Default to `true`. */
   premultipliedAlpha?: boolean
+  /** The {@link GPUTextureFormat | texture format} to use. Default to `'rgba8unorm'`. */
+  format?: GPUTextureFormat
   /** Solid color used by temporary texture to display while loading the source. Default to `[0, 0, 0, 255]` (solid black). */
   placeholderColor?: [number, number, number, number]
   /** Whether video textures should use {@link GPUExternalTexture} or not. Default to `true`. */

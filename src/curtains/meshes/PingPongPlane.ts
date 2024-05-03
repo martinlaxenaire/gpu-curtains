@@ -2,7 +2,7 @@ import { isRenderer, Renderer } from '../../core/renderers/utils'
 import { RenderTarget } from '../../core/renderPasses/RenderTarget'
 import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
 import { GPUCurtains } from '../GPUCurtains'
-import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture'
+import { Texture, TextureParams } from '../../core/textures/Texture'
 import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
 
 /**
@@ -70,20 +70,20 @@ export class PingPongPlane extends FullscreenPlane {
 
     this.type = 'PingPongPlane'
 
-    this.createRenderTexture({
+    this.createTexture({
       label: parameters.label ? `${parameters.label} render texture` : 'PingPongPlane render texture',
       name: 'renderTexture',
       ...(parameters.targets && parameters.targets.length && { format: parameters.targets[0].format }),
       usage: ['copyDst', 'textureBinding'],
-    } as RenderTextureParams)
+    } as TextureParams)
   }
 
   /**
-   * Get our main {@link RenderTexture}, the one that contains our ping pong content
+   * Get our main {@link Texture}, the one that contains our ping pong content
    * @readonly
    */
-  get renderTexture(): RenderTexture | undefined {
-    return this.renderTextures.find((texture) => texture.options.name === 'renderTexture')
+  get renderTexture(): Texture | undefined {
+    return this.textures.find((texture) => texture.options.name === 'renderTexture')
   }
 
   /**

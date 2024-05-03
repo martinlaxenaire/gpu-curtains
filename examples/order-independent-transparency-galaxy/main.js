@@ -9,7 +9,7 @@ import {
   ShaderPass,
   Vec2,
   Vec3,
-  RenderTexture,
+  Texture,
   ComputePass,
 } from '../../dist/esm/index.mjs'
 
@@ -1003,7 +1003,7 @@ window.addEventListener('load', async () => {
   // ------------------------------------
 
   // opaque buffer
-  const OITOpaqueTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITOpaqueTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
     visibility: ['fragment'],
@@ -1012,7 +1012,7 @@ window.addEventListener('load', async () => {
   })
 
   // create 2 textures based on our OIT MRT output
-  const OITAccumTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITAccumTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT accum texture',
     name: 'oITAccumTexture',
     visibility: ['fragment'],
@@ -1020,7 +1020,7 @@ window.addEventListener('load', async () => {
     fromTexture: OITTransparentTarget.outputTextures[0],
   })
 
-  const OITRevealTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITRevealTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT reveal texture',
     name: 'oITRevealTexture',
     visibility: ['fragment'],
@@ -1092,7 +1092,7 @@ window.addEventListener('load', async () => {
 
   const compositingPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Compositing pass',
-    renderTextures: [OITOpaqueTexture, OITAccumTexture, OITRevealTexture],
+    textures: [OITOpaqueTexture, OITAccumTexture, OITRevealTexture],
     shaders: {
       fragment: {
         code: compositingPassFs,

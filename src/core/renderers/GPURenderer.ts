@@ -16,7 +16,7 @@ import { Plane } from '../../curtains/meshes/Plane'
 import { Mesh } from '../meshes/Mesh'
 import { TasksQueueManager } from '../../utils/TasksQueueManager'
 import { AllowedBindGroups } from '../../types/BindGroups'
-import { RenderTexture } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
 import { GPUDeviceManager } from './GPUDeviceManager'
 import { FullscreenPlane } from '../meshes/FullscreenPlane'
 import { Buffer } from '../buffers/Buffer'
@@ -110,8 +110,8 @@ export class GPURenderer {
   renderTargets: RenderTarget[]
   /** An array containing all our created {@link SceneStackedMesh | meshes} */
   meshes: SceneStackedMesh[]
-  /** An array containing all our created {@link RenderTexture} */
-  renderTextures: RenderTexture[]
+  /** An array containing all our created {@link Texture} */
+  textures: Texture[]
 
   /** Pixel ratio to use for rendering */
   pixelRatio: number
@@ -293,9 +293,9 @@ export class GPURenderer {
    * Resize all tracked objects
    */
   onResize() {
-    // resize render textures first
-    this.renderTextures.forEach((renderTexture) => {
-      renderTexture.resize()
+    // resize textures first
+    this.textures.forEach((texture) => {
+      texture.resize()
     })
 
     // resize render & shader passes
@@ -308,7 +308,7 @@ export class GPURenderer {
     this.computePasses.forEach((computePass) => computePass.resize())
 
     // now resize meshes that are bound to the renderer size
-    // especially useful to resize render textures
+    // especially useful to resize textures
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
     this.meshes.forEach((mesh) => {
@@ -468,15 +468,15 @@ export class GPURenderer {
 
   /**
    * Called when the {@link GPUDeviceManager#device | device} should be restored.
-   * Configure the context again, resize the {@link RenderTarget | render targets} and {@link RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context.
+   * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
    * @async
    */
   restoreContext() {
     this.configureContext()
 
-    // recreate all render textures first
-    this.renderTextures.forEach((renderTexture) => {
-      renderTexture.createTexture()
+    // recreate all textures first
+    this.textures.forEach((texture) => {
+      texture.createTexture()
     })
 
     // resize render passes/recreate their textures
@@ -750,19 +750,19 @@ export class GPURenderer {
   }
 
   /**
-   * Add a {@link RenderTexture} to our {@link renderTextures} array
-   * @param texture - {@link RenderTexture} to add
+   * Add a {@link Texture} to our {@link textures} array
+   * @param texture - {@link Texture} to add
    */
-  addRenderTexture(texture: RenderTexture) {
-    this.renderTextures.push(texture)
+  addTexture(texture: Texture) {
+    this.textures.push(texture)
   }
 
   /**
-   * Remove a {@link RenderTexture} from our {@link renderTextures} array
-   * @param texture - {@link RenderTexture} to remove
+   * Remove a {@link Texture} from our {@link textures} array
+   * @param texture - {@link Texture} to remove
    */
-  removeRenderTexture(texture: RenderTexture) {
-    this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid)
+  removeTexture(texture: Texture) {
+    this.textures = this.textures.filter((t) => t.uuid !== texture.uuid)
   }
 
   /**
@@ -857,7 +857,7 @@ export class GPURenderer {
     this.shaderPasses = []
     this.renderTargets = []
     this.meshes = []
-    this.renderTextures = []
+    this.textures = []
   }
 
   /**
@@ -884,13 +884,13 @@ export class GPURenderer {
   }
 
   /**
-   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link RenderTexture}.
+   * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link Texture}.
    * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-   * @param texture - {@link DOMTexture} or {@link RenderTexture} to check
+   * @param texture - {@link DOMTexture} or {@link Texture} to check
    */
-  getObjectsByTexture(texture: DOMTexture | RenderTexture): undefined | SceneObject[] {
+  getObjectsByTexture(texture: DOMTexture | Texture): undefined | SceneObject[] {
     return this.deviceRenderedObjects.filter((object) => {
-      return [...object.material.domTextures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid)
+      return [...object.material.domTextures, ...object.material.textures].some((t) => t.uuid === texture.uuid)
     })
   }
 
@@ -1062,7 +1062,7 @@ export class GPURenderer {
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())
 
-    this.renderTextures.forEach((texture) => texture.destroy())
+    this.textures.forEach((texture) => texture.destroy())
 
     this.context?.unconfigure()
   }

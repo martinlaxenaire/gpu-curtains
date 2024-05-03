@@ -7,7 +7,7 @@ import { BindGroupBindingElement } from '../../types/BindGroups';
 import { DOMTextureOptions, DOMTextureParams, DOMTextureParent, TextureSize, TextureSource } from '../../types/Textures';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 /**
- * Used to create {@link GPUTexture} or {@link GPUExternalTexture} from different kinds of {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
+ * Used to create {@link GPUTexture} or {@link GPUExternalTexture}, specially made to handle different kinds of DOM elements {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
  *
  * Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}.
  *
@@ -22,7 +22,7 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
  * // note this is asynchronous
  * await gpuCurtains.setDevice()
  *
- * // create a render texture
+ * // create a DOM texture
  * const imageTexture = new DOMTexture(gpuCurtains, {
  *   label: 'My image texture',
  *   name: 'imageTexture',
@@ -126,12 +126,6 @@ export declare class DOMTexture extends Object3D {
      * Resize our {@link DOMTexture}
      */
     resize(): void;
-    /**
-     * Get the number of mip levels create based on {@link size}
-     * @param sizes - Array containing our texture width, height and depth
-     * @returns - number of mip levels
-     */
-    getNumMipLevels(...sizes: number[]): number;
     /**
      * Tell the {@link Renderer} to upload or texture
      */

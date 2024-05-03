@@ -3,7 +3,7 @@ import { Renderer } from '../renderers/utils';
 import { RenderTarget } from './RenderTarget';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin';
-import { RenderTexture } from '../textures/RenderTexture';
+import { Texture } from '../textures/Texture';
 /**
  * Parameters used to create a {@link ShaderPass}
  */
@@ -18,7 +18,7 @@ export interface ShaderPassOptions extends MeshBaseOptions {
     copyOutputToRenderTexture?: boolean;
 }
 /**
- * Used to apply postprocessing, i.e. draw meshes to a {@link RenderTexture} and then draw a {@link FullscreenPlane} using that texture as an input.
+ * Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
  *
  * A ShaderPass could either post process the whole scene or just a bunch of meshes using a specific {@link RenderTarget}.
  *
@@ -62,10 +62,10 @@ export declare class ShaderPass extends FullscreenPlane {
      */
     cleanupRenderMaterialParameters(parameters: ShaderPassParams): MeshBaseRenderParams;
     /**
-     * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
+     * Get our main {@link Texture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
      * @readonly
      */
-    get renderTexture(): RenderTexture | undefined;
+    get renderTexture(): Texture | undefined;
     /**
      * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
      *

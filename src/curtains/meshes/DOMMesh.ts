@@ -189,7 +189,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       // load images
       if (images.length) {
         images.forEach((image) => {
-          const texture = this.createTexture({
+          const texture = this.createDOMTexture({
             name: image.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 
@@ -200,7 +200,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       // load videos
       if (videos.length) {
         videos.forEach((video) => {
-          const texture = this.createTexture({
+          const texture = this.createDOMTexture({
             name: video.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 
@@ -211,7 +211,7 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       // load canvases
       if (canvases.length) {
         canvases.forEach((canvas) => {
-          const texture = this.createTexture({
+          const texture = this.createDOMTexture({
             name: canvas.getAttribute('data-texture-name') ?? 'texture' + this.domTextures.length,
           })
 

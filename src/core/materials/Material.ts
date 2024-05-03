@@ -8,7 +8,7 @@ import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingEleme
 import { DOMTexture } from '../textures/DOMTexture'
 import { FullShadersType, MaterialOptions, MaterialParams, ShaderOptions } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { RenderTexture } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
 import { Binding } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { BufferElement } from '../bindings/bufferElements/BufferElement'
@@ -68,8 +68,8 @@ export class Material {
 
   /** Array of {@link DOMTexture} handled by this {@link Material} */
   domTextures: DOMTexture[]
-  /** Array of {@link RenderTexture} handled by this {@link Material} */
-  renderTextures: RenderTexture[]
+  /** Array of {@link Texture} handled by this {@link Material} */
+  textures: Texture[]
   /** Array of {@link Sampler} handled by this {@link Material} */
   samplers: Sampler[]
 
@@ -99,8 +99,8 @@ export class Material {
       bindings,
       bindGroups,
       samplers,
+      textures,
       domTextures,
-      renderTextures,
     } = parameters
 
     this.options = {
@@ -112,8 +112,8 @@ export class Material {
       ...(bindings !== undefined && { bindings }),
       ...(bindGroups !== undefined && { bindGroups }),
       ...(samplers !== undefined && { samplers }),
+      ...(textures !== undefined && { textures }),
       ...(domTextures !== undefined && { domTextures }),
-      ...(renderTextures !== undefined && { renderTextures }),
     }
 
     this.bindGroups = []
@@ -157,7 +157,7 @@ export class Material {
       texture.sourceUploaded = false
     }
 
-    for (const texture of this.renderTextures) {
+    for (const texture of this.textures) {
       texture.texture = null
     }
 
@@ -187,7 +187,7 @@ export class Material {
       texture.resize()
     }
 
-    for (const texture of this.renderTextures) {
+    for (const texture of this.textures) {
       texture.resize(texture.size)
     }
 
@@ -341,8 +341,8 @@ export class Material {
         for (const texture of bindGroup.textures) {
           if (texture instanceof DOMTexture && !this.domTextures.find((t) => t.uuid === texture.uuid)) {
             this.domTextures.push(texture)
-          } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
-            this.renderTextures.push(texture)
+          } else if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+            this.textures.push(texture)
           }
         }
       }
@@ -484,7 +484,7 @@ export class Material {
    */
   setTextures() {
     this.domTextures = []
-    this.renderTextures = []
+    this.textures = []
     this.texturesBindGroups.push(
       new TextureBindGroup(this.renderer, {
         label: this.options.label + ': Textures bind group',
@@ -497,7 +497,7 @@ export class Material {
       this.addTexture(texture)
     })
 
-    this.options.renderTextures?.forEach((texture) => {
+    this.options.textures?.forEach((texture) => {
       this.addTexture(texture)
     })
   }
@@ -506,11 +506,11 @@ export class Material {
    * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
    * @param texture - texture to add
    */
-  addTexture(texture: DOMTexture | RenderTexture) {
+  addTexture(texture: DOMTexture | Texture) {
     if (texture instanceof DOMTexture) {
       this.domTextures.push(texture)
-    } else if (texture instanceof RenderTexture) {
-      this.renderTextures.push(texture)
+    } else if (texture instanceof Texture) {
+      this.textures.push(texture)
     }
 
     // is it used in our shaders?
@@ -525,10 +525,10 @@ export class Material {
   }
 
   /**
-   * Destroy a {@link DOMTexture} or {@link RenderTexture}, only if it is not used by another object or cached.
-   * @param texture - {@link DOMTexture} or {@link RenderTexture} to eventually destroy
+   * Destroy a {@link DOMTexture} or {@link Texture}, only if it is not used by another object or cached.
+   * @param texture - {@link DOMTexture} or {@link Texture} to eventually destroy
    */
-  destroyTexture(texture: DOMTexture | RenderTexture) {
+  destroyTexture(texture: DOMTexture | Texture) {
     // do not destroy a texture that must stay in cache
     if ((texture as DOMTexture).options.cache) return
 
@@ -548,9 +548,9 @@ export class Material {
    */
   destroyTextures() {
     this.domTextures?.forEach((texture) => this.destroyTexture(texture))
-    this.renderTextures?.forEach((texture) => this.destroyTexture(texture))
+    this.textures?.forEach((texture) => this.destroyTexture(texture))
     this.domTextures = []
-    this.renderTextures = []
+    this.textures = []
   }
 
   /**

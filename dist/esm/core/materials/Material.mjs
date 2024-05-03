@@ -3,7 +3,7 @@ import { BindGroup } from '../bindGroups/BindGroup.mjs';
 import { TextureBindGroup } from '../bindGroups/TextureBindGroup.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
 import { DOMTexture } from '../textures/DOMTexture.mjs';
-import { RenderTexture } from '../textures/RenderTexture.mjs';
+import { Texture } from '../textures/Texture.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 
 class Material {
@@ -27,8 +27,8 @@ class Material {
       bindings,
       bindGroups,
       samplers,
-      domTextures,
-      renderTextures
+      textures,
+      domTextures
     } = parameters;
     this.options = {
       shaders,
@@ -39,8 +39,8 @@ class Material {
       ...bindings !== void 0 && { bindings },
       ...bindGroups !== void 0 && { bindGroups },
       ...samplers !== void 0 && { samplers },
-      ...domTextures !== void 0 && { domTextures },
-      ...renderTextures !== void 0 && { renderTextures }
+      ...textures !== void 0 && { textures },
+      ...domTextures !== void 0 && { domTextures }
     };
     this.bindGroups = [];
     this.texturesBindGroups = [];
@@ -75,7 +75,7 @@ class Material {
       texture.texture = null;
       texture.sourceUploaded = false;
     }
-    for (const texture of this.renderTextures) {
+    for (const texture of this.textures) {
       texture.texture = null;
     }
     [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach(
@@ -95,7 +95,7 @@ class Material {
       texture.createTexture();
       texture.resize();
     }
-    for (const texture of this.renderTextures) {
+    for (const texture of this.textures) {
       texture.resize(texture.size);
     }
     [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
@@ -221,8 +221,8 @@ class Material {
         for (const texture of bindGroup.textures) {
           if (texture instanceof DOMTexture && !this.domTextures.find((t) => t.uuid === texture.uuid)) {
             this.domTextures.push(texture);
-          } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
-            this.renderTextures.push(texture);
+          } else if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+            this.textures.push(texture);
           }
         }
       }
@@ -339,7 +339,7 @@ class Material {
    */
   setTextures() {
     this.domTextures = [];
-    this.renderTextures = [];
+    this.textures = [];
     this.texturesBindGroups.push(
       new TextureBindGroup(this.renderer, {
         label: this.options.label + ": Textures bind group"
@@ -349,7 +349,7 @@ class Material {
     this.options.domTextures?.forEach((texture) => {
       this.addTexture(texture);
     });
-    this.options.renderTextures?.forEach((texture) => {
+    this.options.textures?.forEach((texture) => {
       this.addTexture(texture);
     });
   }
@@ -360,16 +360,16 @@ class Material {
   addTexture(texture) {
     if (texture instanceof DOMTexture) {
       this.domTextures.push(texture);
-    } else if (texture instanceof RenderTexture) {
-      this.renderTextures.push(texture);
+    } else if (texture instanceof Texture) {
+      this.textures.push(texture);
     }
     if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
       this.texturesBindGroup.addTexture(texture);
     }
   }
   /**
-   * Destroy a {@link DOMTexture} or {@link RenderTexture}, only if it is not used by another object or cached.
-   * @param texture - {@link DOMTexture} or {@link RenderTexture} to eventually destroy
+   * Destroy a {@link DOMTexture} or {@link Texture}, only if it is not used by another object or cached.
+   * @param texture - {@link DOMTexture} or {@link Texture} to eventually destroy
    */
   destroyTexture(texture) {
     if (texture.options.cache)
@@ -385,9 +385,9 @@ class Material {
    */
   destroyTextures() {
     this.domTextures?.forEach((texture) => this.destroyTexture(texture));
-    this.renderTextures?.forEach((texture) => this.destroyTexture(texture));
+    this.textures?.forEach((texture) => this.destroyTexture(texture));
     this.domTextures = [];
-    this.renderTextures = [];
+    this.textures = [];
   }
   /**
    * Prepare our samplers array and always add a default sampler if not already passed as parameter

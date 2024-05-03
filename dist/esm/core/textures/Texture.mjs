@@ -1,7 +1,7 @@
-import { isRenderer } from '../renderers/utils.mjs';
+import { isRenderer, generateMips } from '../renderers/utils.mjs';
 import { TextureBinding } from '../bindings/TextureBinding.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
-import { getRenderTextureUsage } from './utils.mjs';
+import { getNumMipLevels, getDefaultTextureUsage } from './utils.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -22,31 +22,36 @@ var __privateSet = (obj, member, value, setter) => {
   return value;
 };
 var _autoResize;
-const defaultRenderTextureParams = {
-  label: "RenderTexture",
+const defaultTextureParams = {
+  label: "Texture",
   name: "renderTexture",
+  // default to 'renderTexture' for render target usage
   type: "texture",
   access: "write",
   fromTexture: null,
   viewDimension: "2d",
   sampleCount: 1,
-  qualityRatio: 1
+  qualityRatio: 1,
+  // copy external texture options
+  generateMips: false,
+  flipY: false,
+  premultipliedAlpha: false
 };
-class RenderTexture {
+class Texture {
   /**
-   * RenderTexture constructor
-   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
-   * @param parameters - {@link RenderTextureParams | parameters} used to create this {@link RenderTexture}
+   * Texture constructor
+   * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+   * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
    */
-  constructor(renderer, parameters = defaultRenderTextureParams) {
+  constructor(renderer, parameters = defaultTextureParams) {
     /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
     __privateAdd(this, _autoResize, true);
     renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, parameters.label ? parameters.label + " RenderTexture" : "RenderTexture");
-    this.type = "RenderTexture";
+    isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
+    this.type = "Texture";
     this.renderer = renderer;
     this.uuid = generateUUID();
-    this.options = { ...defaultRenderTextureParams, ...parameters };
+    this.options = { ...defaultTextureParams, ...parameters };
     if (parameters.fromTexture) {
       this.options.format = parameters.fromTexture.texture.format;
       this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
@@ -68,19 +73,19 @@ class RenderTexture {
       __privateSet(this, _autoResize, false);
     }
     this.setBindings();
-    this.renderer.addRenderTexture(this);
+    this.renderer.addTexture(this);
     this.createTexture();
   }
   /**
-   * Copy another {@link RenderTexture} into this {@link RenderTexture}
-   * @param texture - {@link RenderTexture} to copy
+   * Copy another {@link Texture} into this {@link Texture}
+   * @param texture - {@link Texture} to copy
    */
   copy(texture) {
     this.options.fromTexture = texture;
     this.createTexture();
   }
   /**
-   * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
+   * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
    * @param texture - {@link GPUTexture} to copy
    */
   copyGPUTexture(texture) {
@@ -113,7 +118,8 @@ class RenderTexture {
       size: [this.size.width, this.size.height, this.size.depth ?? 1],
       dimensions: this.options.viewDimension,
       sampleCount: this.options.sampleCount,
-      usage: getRenderTextureUsage(this.options.usage, this.options.type)
+      mipLevelCount: this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
+      usage: getDefaultTextureUsage(this.options.usage, this.options.type)
     });
     this.textureBinding.resource = this.texture;
   }
@@ -133,19 +139,22 @@ class RenderTexture {
     depth = this.size.depth,
     origin = [0, 0, 0]
   }) {
-    this.renderer.device.queue.copyExternalImageToTexture({ source }, { texture: this.texture, origin }, [
-      width,
-      height,
-      depth
-    ]);
+    this.renderer.device.queue.copyExternalImageToTexture(
+      { source, flipY: this.options.flipY },
+      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+      [width, height, depth]
+    );
+    if (this.texture.mipLevelCount > 1) {
+      generateMips(this.renderer.device, this.texture);
+    }
   }
   /**
-   * Set our {@link RenderTexture#bindings | bindings}
+   * Set our {@link Texture#bindings | bindings}
    */
   setBindings() {
     this.bindings = [
       new TextureBinding({
-        label: this.options.label + ": " + this.options.name + " render texture",
+        label: this.options.label + ": " + this.options.name + " texture",
         name: this.options.name,
         bindingType: this.options.type,
         visibility: this.options.visibility,
@@ -164,7 +173,7 @@ class RenderTexture {
     return this.bindings[0];
   }
   /**
-   * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
+   * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
    * @param size - the optional new {@link TextureSize | size} to set
    */
   resize(size = null) {
@@ -184,10 +193,10 @@ class RenderTexture {
     this.createTexture();
   }
   /**
-   * Destroy our {@link RenderTexture}
+   * Destroy our {@link Texture}
    */
   destroy() {
-    this.renderer.removeRenderTexture(this);
+    this.renderer.removeTexture(this);
     if (!this.options.fromTexture) {
       this.texture?.destroy();
     }
@@ -196,4 +205,4 @@ class RenderTexture {
 }
 _autoResize = new WeakMap();
 
-export { RenderTexture };
+export { Texture };

@@ -10,7 +10,7 @@ import { BufferBindingParams } from '../bindings/BufferBinding'
 /**
  * Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
  *
- * It consists of a {@link PlaneGeometry} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} and a few utilities method to help create {@link core/textures/DOMTexture.DOMTexture | DOMTexture} and {@link core/textures/RenderTexture.RenderTexture | RenderTexture}.
+ * It consists of a {@link PlaneGeometry} and {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} and a few utilities method to help create {@link core/textures/DOMTexture.DOMTexture | DOMTexture} and {@link core/textures/Texture.Texture | Texture}.
  *
  * @example
  * ```javascript

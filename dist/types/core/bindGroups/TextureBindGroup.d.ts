@@ -29,16 +29,16 @@ export interface TextureBindGroupParams extends BindGroupParams {
  * // note this is asynchronous
  * await gpuCurtains.setDevice()
  *
- * // create a render texture
- * const renderTexture = new RenderTexture(gpuCurtains, {
+ * // create a texture
+ * const texture = new Texture(gpuCurtains, {
  *   label: 'Input texture',
  *   name: 'inputTexture',
  * })
  *
- * // create a texture bind group using that render texture
+ * // create a texture bind group using that texture
  * const textureBindGroup = new TextureBindGroup(gpuCurtains, {
  *   label: 'My texture bind group',
- *   textures: [renderTexture],
+ *   textures: [texture],
  *   uniforms: {
  *     params: {
  *       struct: {

@@ -6,7 +6,7 @@ import { ComputePass } from '../computePasses/ComputePass'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { RenderPass } from '../renderPasses/RenderPass'
-import { RenderTexture } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
 import { Object3D } from '../objects3D/Object3D'
 
 /**
@@ -33,8 +33,8 @@ export type Stack = Record<ProjectionType, ProjectionStack>
 export interface RenderPassEntry {
   /** {@link RenderPass} target used onto which render */
   renderPass: RenderPass
-  /** {@link RenderTexture} to render to if any (if not specified then this {@link RenderPassEntry} Meshes will be rendered directly to screen) */
-  renderTexture: RenderTexture | null
+  /** {@link Texture} to render to if any (if not specified then this {@link RenderPassEntry} Meshes will be rendered directly to screen) */
+  renderTexture: Texture | null
   /** Optional function to execute just before rendering the Meshes, useful for eventual texture copy */
   onBeforeRenderPass: ((commandEncoder?: GPUCommandEncoder, swapChainTexture?: GPUTexture) => void) | null
   /** Optional function to execute just after rendering the Meshes, useful for eventual texture copy */
@@ -171,7 +171,7 @@ export class Scene extends Object3D {
 
   /**
    * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
-   * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
+   * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
    * @param renderTarget - {@link RenderTarget} to add
    */
   addRenderTarget(renderTarget: RenderTarget) {

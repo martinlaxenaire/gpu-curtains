@@ -1,5 +1,5 @@
 import { getPageContent, onLinkNavigate } from './view-transitions-api-utils.js'
-import { GPUCurtains, Plane, Texture } from '../../dist/esm/index.mjs'
+import { GPUCurtains, Plane, DOMTexture } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   const transitionDuration = 0.5 // in seconds
@@ -41,7 +41,7 @@ window.addEventListener('load', async () => {
 
   await Promise.all(
     images.map(async (image) => {
-      const texture = new Texture(gpuCurtains, {
+      const texture = new DOMTexture(gpuCurtains, {
         name: 'planeTexture',
       })
 
@@ -146,7 +146,7 @@ window.addEventListener('load', async () => {
             },
           },
         },
-        textures: (() => {
+        domTextures: (() => {
           // set the right texture
           const planeImage = planeEl.querySelector('img')
           const planeTexture = textures.find((texture) => texture.options && texture.options.source === planeImage.src)
@@ -155,7 +155,7 @@ window.addEventListener('load', async () => {
           if (planeTexture) {
             return [planeTexture]
           } else {
-            const texture = new Texture(gpuCurtains, {
+            const texture = new DOMTexture(gpuCurtains, {
               name: 'planeTexture',
             })
 

@@ -9,7 +9,7 @@ import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingEleme
 import { DOMTexture } from '../textures/DOMTexture';
 import { FullShadersType, MaterialOptions, MaterialParams } from '../../types/Materials';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { RenderTexture } from '../textures/RenderTexture';
+import { Texture } from '../textures/Texture';
 import { Binding } from '../bindings/Binding';
 import { BufferElement } from '../bindings/bufferElements/BufferElement';
 import { Buffer } from '../buffers/Buffer';
@@ -62,8 +62,8 @@ export declare class Material {
     inputsBindings: Map<string, BindGroupBindingElement>;
     /** Array of {@link DOMTexture} handled by this {@link Material} */
     domTextures: DOMTexture[];
-    /** Array of {@link RenderTexture} handled by this {@link Material} */
-    renderTextures: RenderTexture[];
+    /** Array of {@link Texture} handled by this {@link Material} */
+    textures: Texture[];
     /** Array of {@link Sampler} handled by this {@link Material} */
     samplers: Sampler[];
     /**
@@ -183,12 +183,12 @@ export declare class Material {
      * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
      * @param texture - texture to add
      */
-    addTexture(texture: DOMTexture | RenderTexture): void;
+    addTexture(texture: DOMTexture | Texture): void;
     /**
-     * Destroy a {@link DOMTexture} or {@link RenderTexture}, only if it is not used by another object or cached.
-     * @param texture - {@link DOMTexture} or {@link RenderTexture} to eventually destroy
+     * Destroy a {@link DOMTexture} or {@link Texture}, only if it is not used by another object or cached.
+     * @param texture - {@link DOMTexture} or {@link Texture} to eventually destroy
      */
-    destroyTexture(texture: DOMTexture | RenderTexture): void;
+    destroyTexture(texture: DOMTexture | Texture): void;
     /**
      * Destroy all the Material textures
      */

@@ -5,7 +5,7 @@ import {
   RenderMaterial,
   Mesh,
   SphereGeometry,
-  RenderTexture,
+  Texture,
   Vec3,
   RenderTarget,
   Sampler,
@@ -124,7 +124,7 @@ window.addEventListener('load', async () => {
   const shadowDepthSampleCount = 1
   const shadowMapSize = 1024
 
-  const shadowDepthTexture = new RenderTexture(gpuCameraRenderer, {
+  const shadowDepthTexture = new Texture(gpuCameraRenderer, {
     label: 'Shadow depth texture',
     name: 'shadowDepthTexture',
     type: 'depth',
@@ -271,7 +271,7 @@ window.addEventListener('load', async () => {
     const mesh = new Mesh(gpuCameraRenderer, {
       label: 'Mesh ' + i,
       geometry: isCube ? cubeGeometry : sphereGeometry,
-      renderTextures: [shadowDepthTexture],
+      textures: [shadowDepthTexture],
       samplers: [lessCompareSampler],
       shaders: {
         vertex: {
@@ -347,7 +347,7 @@ window.addEventListener('load', async () => {
     const wall = new Mesh(gpuCameraRenderer, {
       label,
       geometry: planeGeometry,
-      renderTextures: [shadowDepthTexture],
+      textures: [shadowDepthTexture],
       samplers: [lessCompareSampler],
       frustumCulled: false, // always draw the walls
       shaders: {
@@ -505,7 +505,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const depthTexture = debugPlane.createRenderTexture({
+  const depthTexture = debugPlane.createTexture({
     label: 'Debug depth texture',
     name: 'depthTexture',
     type: 'depth',

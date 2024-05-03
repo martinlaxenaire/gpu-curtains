@@ -100,7 +100,7 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       }
       if (images.length) {
         images.forEach((image) => {
-          const texture = this.createTexture({
+          const texture = this.createDOMTexture({
             name: image.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src);
@@ -108,7 +108,7 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       }
       if (videos.length) {
         videos.forEach((video) => {
-          const texture = this.createTexture({
+          const texture = this.createDOMTexture({
             name: video.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video);
@@ -116,7 +116,7 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       }
       if (canvases.length) {
         canvases.forEach((canvas) => {
-          const texture = this.createTexture({
+          const texture = this.createDOMTexture({
             name: canvas.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas);

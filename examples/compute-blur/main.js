@@ -3,7 +3,7 @@ import {
   ComputePass,
   GPUCurtains,
   Plane,
-  RenderTexture,
+  Texture,
   ShaderPass,
   TextureBindGroup,
 } from '../../dist/esm/index.mjs'
@@ -172,8 +172,8 @@ window.addEventListener('load', async () => {
     }
   `
 
-  const blurredTexture = new RenderTexture(gpuCurtains, {
-    label: 'Blur render texture',
+  const blurredTexture = new Texture(gpuCurtains, {
+    label: 'Blur texture',
     name: 'blurredTexture',
     visibility: ['fragment'],
     format,
@@ -189,14 +189,14 @@ window.addEventListener('load', async () => {
   })
 
   // this is another way to do it
-  // const blurredTexture = shaderPass.createRenderTexture({
-  //   label: 'Blur render texture',
+  // const blurredTexture = shaderPass.createTexture({
+  //   label: 'Blur texture',
   //   name: 'blurredTexture',
   //   visibility: ['fragment'],
   //   format,
   // })
 
-  const inputTexture = new RenderTexture(gpuCurtains, {
+  const inputTexture = new Texture(gpuCurtains, {
     label: 'Compute input texture',
     name: 'inputTexture',
     visibility: ['compute'],
@@ -204,7 +204,7 @@ window.addEventListener('load', async () => {
     fromTexture: shaderPass.renderTexture,
   })
 
-  const tempTexture = new RenderTexture(gpuCurtains, {
+  const tempTexture = new Texture(gpuCurtains, {
     label: 'Compute temp texture',
     name: 'outputTexture',
     type: 'storage',
@@ -212,7 +212,7 @@ window.addEventListener('load', async () => {
     format,
   })
 
-  const outputTexture = new RenderTexture(gpuCurtains, {
+  const outputTexture = new Texture(gpuCurtains, {
     label: 'Compute output texture',
     name: 'outputTexture',
     type: 'storage',
