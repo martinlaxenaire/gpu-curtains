@@ -25,13 +25,13 @@ export const buildShaders = (meshDescriptor) => {
     .map((attribute, index) => {
       return `@location(${index}) ${attribute.name}: ${attribute.type},`
     })
-    .join('\n')
+    .join('\n\t')
 
   const outputAttributes = facultativeAttributes
     .map((attribute) => {
       return `vsOutput.${attribute.name} = attributes.${attribute.name};`
     })
-    .join('\n')
+    .join('\n\t')
 
   let outputPosition = 'vsOutput.position = getOutputPosition(attributes.position);'
 
@@ -66,7 +66,13 @@ export const buildShaders = (meshDescriptor) => {
   const returnColor = /* wgsl */ 'return color;'
 
   // start with the base color
-  let baseColor = /* wgsl */ 'var baseColor: vec4f = material.baseColorFactor;'
+  // use vertex color 0 if defined
+  const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === 'color0')
+  let baseColor = /* wgsl */ !!vertexColor
+    ? vertexColor.type === 'vec3f'
+      ? 'var baseColor: vec4f = vec4(fsInput.color0, 1.0) * material.baseColorFactor;'
+      : 'var baseColor: vec4f = fsInput.color0 * material.baseColorFactor;'
+    : 'var baseColor: vec4f = material.baseColorFactor;'
 
   const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === 'baseColorTexture')
 

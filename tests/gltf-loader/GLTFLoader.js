@@ -261,10 +261,12 @@ export class GLTFLoader {
     this.gltf = await this.loadFromJsonBase(json, baseUrl, binaryChunk)
 
     this.gltf.materialsTextures = []
-    for (let i = 0; i < this.gltf.materials.length; i++) {
-      this.gltf.materialsTextures[i] = {
-        material: i,
-        textures: [],
+    if (this.gltf.materials) {
+      for (let i = 0; i < this.gltf.materials.length; i++) {
+        this.gltf.materialsTextures[i] = {
+          material: i,
+          textures: [],
+        }
       }
     }
 
@@ -307,18 +309,49 @@ export class GLTFLoader {
       this.gltf.gpuSamplers.push(new Sampler(this.renderer, { name: 'gtlfSampler0' }))
     }
 
-    for (const [materialIndex, material] of Object.entries(this.gltf.materials)) {
-      const materialTextures = this.gltf.materialsTextures[materialIndex]
+    if (this.gltf.materials) {
+      for (const [materialIndex, material] of Object.entries(this.gltf.materials)) {
+        const materialTextures = this.gltf.materialsTextures[materialIndex]
 
-      if (material.pbrMetallicRoughness) {
-        if (
-          material.pbrMetallicRoughness.baseColorTexture &&
-          material.pbrMetallicRoughness.baseColorTexture.index !== undefined
-        ) {
-          const index = parseInt(material.pbrMetallicRoughness.baseColorTexture.index)
+        if (material.pbrMetallicRoughness) {
+          if (
+            material.pbrMetallicRoughness.baseColorTexture &&
+            material.pbrMetallicRoughness.baseColorTexture.index !== undefined
+          ) {
+            const index = parseInt(material.pbrMetallicRoughness.baseColorTexture.index)
+            const image = this.gltf.images[this.gltf.textures[index].source]
+
+            const texture = this.createTexture(material, image, 'baseColorTexture')
+            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
+
+            materialTextures.textures.push({
+              texture,
+              sampler: this.gltf.gpuSamplers[samplerIndex ?? 0],
+            })
+          }
+
+          if (
+            material.pbrMetallicRoughness.metallicRoughnessTexture &&
+            material.pbrMetallicRoughness.metallicRoughnessTexture.index !== undefined
+          ) {
+            const index = parseInt(material.pbrMetallicRoughness.metallicRoughnessTexture.index)
+            const image = this.gltf.images[this.gltf.textures[index].source]
+
+            const texture = this.createTexture(material, image, 'metallicRoughnessTexture')
+            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
+
+            materialTextures.textures.push({
+              texture,
+              sampler: this.gltf.gpuSamplers[samplerIndex ?? 0],
+            })
+          }
+        }
+
+        if (material.normalTexture && material.normalTexture.index !== undefined) {
+          const index = parseInt(material.normalTexture.index)
           const image = this.gltf.images[this.gltf.textures[index].source]
 
-          const texture = this.createTexture(material, image, 'baseColorTexture')
+          const texture = this.createTexture(material, image, 'normalTexture')
           const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
           materialTextures.textures.push({
@@ -327,14 +360,11 @@ export class GLTFLoader {
           })
         }
 
-        if (
-          material.pbrMetallicRoughness.metallicRoughnessTexture &&
-          material.pbrMetallicRoughness.metallicRoughnessTexture.index !== undefined
-        ) {
-          const index = parseInt(material.pbrMetallicRoughness.metallicRoughnessTexture.index)
+        if (material.occlusionTexture && material.occlusionTexture.index !== undefined) {
+          const index = parseInt(material.occlusionTexture.index)
           const image = this.gltf.images[this.gltf.textures[index].source]
 
-          const texture = this.createTexture(material, image, 'metallicRoughnessTexture')
+          const texture = this.createTexture(material, image, 'occlusionTexture')
           const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
           materialTextures.textures.push({
@@ -342,45 +372,19 @@ export class GLTFLoader {
             sampler: this.gltf.gpuSamplers[samplerIndex ?? 0],
           })
         }
-      }
 
-      if (material.normalTexture && material.normalTexture.index !== undefined) {
-        const index = parseInt(material.normalTexture.index)
-        const image = this.gltf.images[this.gltf.textures[index].source]
+        if (material.emissiveTexture && material.emissiveTexture.index !== undefined) {
+          const index = parseInt(material.emissiveTexture.index)
+          const image = this.gltf.images[this.gltf.textures[index].source]
 
-        const texture = this.createTexture(material, image, 'normalTexture')
-        const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
+          const texture = this.createTexture(material, image, 'emissiveTexture')
+          const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
-        materialTextures.textures.push({
-          texture,
-          sampler: this.gltf.gpuSamplers[samplerIndex ?? 0],
-        })
-      }
-
-      if (material.occlusionTexture && material.occlusionTexture.index !== undefined) {
-        const index = parseInt(material.occlusionTexture.index)
-        const image = this.gltf.images[this.gltf.textures[index].source]
-
-        const texture = this.createTexture(material, image, 'occlusionTexture')
-        const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
-
-        materialTextures.textures.push({
-          texture,
-          sampler: this.gltf.gpuSamplers[samplerIndex ?? 0],
-        })
-      }
-
-      if (material.emissiveTexture && material.emissiveTexture.index !== undefined) {
-        const index = parseInt(material.emissiveTexture.index)
-        const image = this.gltf.images[this.gltf.textures[index].source]
-
-        const texture = this.createTexture(material, image, 'emissiveTexture')
-        const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
-
-        materialTextures.textures.push({
-          texture,
-          sampler: this.gltf.gpuSamplers[samplerIndex ?? 0],
-        })
+          materialTextures.textures.push({
+            texture,
+            sampler: this.gltf.gpuSamplers[samplerIndex ?? 0],
+          })
+        }
       }
     }
 
@@ -427,7 +431,7 @@ export class GLTFLoader {
           attributes: [],
           textures: [],
           parameters: {
-            label: mesh.name + index,
+            label: mesh.name ? mesh.name + ' ' + index : 'glTF mesh ' + index,
           },
         }
 
@@ -513,7 +517,8 @@ export class GLTFLoader {
         const constructor = GLTFLoader.getTypedArrayConstructorFromComponentType(accessor.componentType)
 
         const bufferView = this.gltf.bufferViews[accessor.bufferView]
-        const name = attribName === 'TEXCOORD_0' ? 'uv' : attribName.toLowerCase()
+        const name =
+          attribName === 'TEXCOORD_0' ? 'uv' : attribName.replace('_', '').replace('TEXCOORD', 'uv').toLowerCase()
 
         const byteStride = bufferView.byteStride || 0
         const accessorByteOffset = accessor.byteOffset || 0
@@ -673,7 +678,7 @@ export class GLTFLoader {
       meshDescriptor.parameters.samplers = []
       meshDescriptor.parameters.textures = []
 
-      materialTextures.textures.forEach((t) => {
+      materialTextures?.textures.forEach((t) => {
         meshDescriptor.textures.push({
           texture: t.texture.options.name,
           sampler: t.sampler.name,
@@ -688,7 +693,7 @@ export class GLTFLoader {
         meshDescriptor.parameters.textures.push(t.texture)
       })
 
-      const material = this.gltf.materials[primitive.material]
+      const material = (this.gltf.materials && this.gltf.materials[primitive.material]) || {}
 
       meshDescriptor.parameters.cullMode = material.doubleSided ? 'none' : 'back'
 

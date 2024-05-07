@@ -57,7 +57,6 @@ window.addEventListener('load', async () => {
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Sponza/glTF/Sponza.gltf',
     },
     optimizedSponza: {
-      // TODO green curtains are not showing??
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
