@@ -76,14 +76,6 @@ window.addEventListener('load', async () => {
   floor.scale.x = floorScale.x
   floor.scale.y = floorScale.y
 
-  // try to change rendering options on the fly to test pipeline recreation/cache
-  setTimeout(() => {
-    floor.transparent = true
-    setTimeout(() => {
-      floor.transparent = false
-    }, 2000)
-  }, 2000)
-
   const cube = new Mesh(gpuCameraRenderer, {
     label: 'Cube',
     geometry: new BoxGeometry(),
@@ -206,5 +198,21 @@ window.addEventListener('load', async () => {
     .name('Plane')
     .onChange((value) => {
       planeBBox.style.display = value ? 'block' : 'none'
+    })
+
+  // try to change rendering options on the fly to test pipeline recreation/cache
+  const materialUpdateFolder = gui.addFolder('Update cube material properties')
+
+  materialUpdateFolder.add({ transparent: false }, 'transparent').onChange((value) => {
+    cube.transparent = value
+    console.log(gpuCameraRenderer.pipelineManager)
+  })
+
+  materialUpdateFolder
+    .add({ cullMode: cube.material.options.rendering.cullMode }, 'cullMode', ['none', 'back', 'front'])
+    .name('Cull mode')
+    .onChange((value) => {
+      cube.material.setRenderingOptions({ cullMode: value })
+      console.log(gpuCameraRenderer.pipelineManager)
     })
 })

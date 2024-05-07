@@ -34,6 +34,7 @@
 
 - Add Mat3 class + normalMatrix to ProjectedObject3D?
 - Mesh raycasting
+- Lights management?
 - Improve typedoc documentation?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
