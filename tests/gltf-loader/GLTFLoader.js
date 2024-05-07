@@ -1,4 +1,4 @@
-import { Sampler, Texture, Object3D, Box3, Vec3, Geometry, IndexedGeometry } from '../../src/index.ts'
+import { Sampler, Texture, Object3D, Box3, Vec3, Geometry, IndexedGeometry } from '../../dist/esm/index.mjs'
 
 // largely based on
 // https://toji.dev/webgpu-gltf-case-study/
