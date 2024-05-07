@@ -80,14 +80,7 @@ window.addEventListener('load', async () => {
     label: 'Cube',
     geometry: new BoxGeometry(),
     uniforms: {
-      checkerboard: {
-        struct: {
-          scale: {
-            type: 'vec2f',
-            value: floorScale,
-          },
-        },
-      },
+      checkerboard: {}, // not valid uniform test
     },
   })
 
@@ -205,5 +198,21 @@ window.addEventListener('load', async () => {
     .name('Plane')
     .onChange((value) => {
       planeBBox.style.display = value ? 'block' : 'none'
+    })
+
+  // try to change rendering options on the fly to test pipeline recreation/cache
+  const materialUpdateFolder = gui.addFolder('Update cube material properties')
+
+  materialUpdateFolder.add({ transparent: false }, 'transparent').onChange((value) => {
+    cube.transparent = value
+    console.log(gpuCameraRenderer.pipelineManager)
+  })
+
+  materialUpdateFolder
+    .add({ cullMode: cube.material.options.rendering.cullMode }, 'cullMode', ['none', 'back', 'front'])
+    .name('Cull mode')
+    .onChange((value) => {
+      cube.material.setRenderingOptions({ cullMode: value })
+      console.log(gpuCameraRenderer.pipelineManager)
     })
 })

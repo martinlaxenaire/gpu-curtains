@@ -125,7 +125,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const depthTexture = postProPass.createRenderTexture({
+  const depthTexture = postProPass.createTexture({
     label: 'Depth texture',
     name: 'depthTexture',
     type: 'depth',

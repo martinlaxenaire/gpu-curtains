@@ -415,8 +415,6 @@ window.addEventListener('load', async () => {
 
     // begin depth pass
     const depthPass = commandEncoder.beginRenderPass(depthTarget.renderPass.descriptor)
-    // set camera bind group
-    depthPass.setBindGroup(gpuCameraRenderer.cameraBindGroup.index, gpuCameraRenderer.cameraBindGroup.bindGroup)
 
     // render meshes with their depth material
     depthMeshes.forEach((mesh) => {
@@ -430,6 +428,9 @@ window.addEventListener('load', async () => {
     depthMeshes.forEach((mesh) => {
       mesh.useMaterial(mesh.userData.originalMaterial)
     })
+
+    // reset renderer current pipeline again
+    gpuCameraRenderer.pipelineManager.resetCurrentPipeline()
   })
 
   // DEBUG DEPTH

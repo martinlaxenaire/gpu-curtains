@@ -78,20 +78,19 @@ class RenderMaterial extends Material {
         topology
       }
     };
+    this.attributes = null;
+    this.pipelineEntry = null;
+  }
+  /**
+   * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
+   */
+  setPipelineEntry() {
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
       renderer: this.renderer,
       label: this.options.label + " render pipeline",
       shaders: this.options.shaders,
       useAsync: this.options.useAsyncPipeline,
-      rendering: this.options.rendering
-    });
-    this.attributes = null;
-  }
-  /**
-   * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry}
-   */
-  setPipelineEntryProperties() {
-    this.pipelineEntry.setPipelineEntryProperties({
+      rendering: this.options.rendering,
       attributes: this.attributes,
       bindGroups: this.bindGroups
     });
@@ -109,8 +108,10 @@ class RenderMaterial extends Material {
    */
   async compileMaterial() {
     super.compileMaterial();
-    if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
-      this.setPipelineEntryProperties();
+    if (this.attributes && !this.pipelineEntry) {
+      this.setPipelineEntry();
+    }
+    if (this.pipelineEntry && this.pipelineEntry.canCompile) {
       await this.compilePipelineEntry();
     }
   }
@@ -120,17 +121,46 @@ class RenderMaterial extends Material {
    */
   setRenderingOptions(renderingOptions = {}) {
     const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering);
+    const oldRenderingOptions = { ...this.options.rendering };
     this.options.rendering = { ...this.options.rendering, ...renderingOptions };
     if (this.pipelineEntry) {
-      this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
-      if (this.pipelineEntry.ready && newProperties.length && !this.renderer.production) {
-        throwWarning(
-          `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided.
-Rendering options responsible: { ${newProperties.map(
-            (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
-          ).join(", ")} }`
-        );
-        this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+      if (this.pipelineEntry.ready && newProperties.length) {
+        if (!this.renderer.production) {
+          const oldProps = newProperties.map((key) => {
+            return {
+              [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key]
+            };
+          });
+          const newProps = newProperties.map((key) => {
+            return {
+              [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key]
+            };
+          });
+          throwWarning(
+            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.
+
+Old rendering options: ${JSON.stringify(
+              oldProps.reduce((acc, v) => {
+                return { ...acc, ...v };
+              }, {}),
+              null,
+              4
+            )}
+
+--------
+
+New rendering options: ${JSON.stringify(
+              newProps.reduce((acc, v) => {
+                return { ...acc, ...v };
+              }, {}),
+              null,
+              4
+            )}`
+          );
+        }
+        this.setPipelineEntry();
+      } else {
+        this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
       }
     }
   }
@@ -151,19 +181,11 @@ Rendering options responsible: { ${newProperties.map(
    * Create the bind groups if they need to be created, but first add Camera bind group if needed
    */
   createBindGroups() {
-    const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0;
-    if (this.texturesBindGroup.shouldCreateBindGroup) {
-      this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
-      this.texturesBindGroup.createBindGroup();
-      this.bindGroups.push(this.texturesBindGroup);
+    if ("cameraBindGroup" in this.renderer && this.options.rendering.useProjection) {
+      this.bindGroups.push(this.renderer.cameraBindGroup);
+      this.renderer.cameraBindGroup.consumers.add(this.uuid);
     }
-    for (const bindGroup of this.inputsBindGroups) {
-      if (bindGroup.shouldCreateBindGroup) {
-        bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
-        bindGroup.createBindGroup();
-        this.bindGroups.push(bindGroup);
-      }
-    }
+    super.createBindGroups();
   }
 }
 

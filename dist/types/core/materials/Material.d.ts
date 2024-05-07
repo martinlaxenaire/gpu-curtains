@@ -240,6 +240,11 @@ export declare class Material {
      */
     setPipeline(pass: GPURenderPassEncoder | GPUComputePassEncoder): void;
     /**
+     * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
+     * @param pass - current pass encoder
+     */
+    setActiveBindGroups(pass: GPURenderPassEncoder | GPUComputePassEncoder): void;
+    /**
      * Render the material if it is ready:
      * Set the current pipeline and set the bind groups
      * @param pass - current pass encoder

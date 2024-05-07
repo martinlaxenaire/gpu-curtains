@@ -678,6 +678,14 @@ export class Material {
   }
 
   /**
+   * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
+   * @param pass - current pass encoder
+   */
+  setActiveBindGroups(pass: GPURenderPassEncoder | GPUComputePassEncoder) {
+    this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups)
+  }
+
+  /**
    * Render the material if it is ready:
    * Set the current pipeline and set the bind groups
    * @param pass - current pass encoder
@@ -691,10 +699,8 @@ export class Material {
     // set current pipeline
     this.setPipeline(pass)
 
-    // set bind groups
-    for (const bindGroup of this.bindGroups) {
-      pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
-    }
+    // only set the bind groups that need to be set
+    this.setActiveBindGroups(pass)
   }
 
   /**

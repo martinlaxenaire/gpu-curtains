@@ -10,7 +10,7 @@ class RenderPipelineEntry extends PipelineEntry {
    */
   constructor(parameters) {
     let { renderer, ...pipelineParams } = parameters;
-    const { label, ...renderingOptions } = pipelineParams;
+    const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams;
     renderer = renderer && renderer.renderer || renderer;
     const type = "RenderPipelineEntry";
     isRenderer(renderer, label ? label + " " + type : type);
@@ -36,17 +36,12 @@ class RenderPipelineEntry extends PipelineEntry {
     this.descriptor = null;
     this.options = {
       ...this.options,
+      attributes,
+      bindGroups,
+      cacheKey,
       ...renderingOptions
     };
-  }
-  // TODO! need to chose whether we should silently add the camera bind group here
-  // or explicitly in the RenderMaterial class createBindGroups() method
-  /**
-   * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} if needed and set them
-   * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
-   */
-  setPipelineEntryBindGroups(bindGroups) {
-    this.bindGroups = "cameraBindGroup" in this.renderer && this.options.rendering.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
+    this.setPipelineEntryProperties({ attributes, bindGroups });
   }
   /**
    * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})

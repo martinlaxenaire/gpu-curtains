@@ -10,6 +10,7 @@
 - Materials (Material, RenderMaterial, ComputeMaterial)
 - Buffer & Bindings & BindGroups
 - Render + Compute Pipelines (async by default)
+- PipelineManager to cache RenderPipeline + set only needed BindGroup
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
 - Compute passes
 - Texture (including storage & depth) & DOMTexture classes
@@ -32,9 +33,9 @@
 ## TODO / possible improvements
 
 - Add Mat3 class + normalMatrix to ProjectedObject3D?
-- Refactor pipeline cache system
+- Mesh raycasting
+- Lights management?
 - Improve typedoc documentation?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
-- Mesh raycasting?
 - More examples & tests?

@@ -79,17 +79,21 @@ export interface RenderPipelineRenderingParams {
     rendering: RenderMaterialRenderingOptions;
 }
 /**
- * Base parameters used to create a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
+ * Parameters used by the {core/pipelines/PipelineManager.PipelineManager | PipelineManager} to create a cache key and check whether a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} could be fetched from cache or should be created.
  */
-export interface RenderPipelineEntryBaseParams extends PipelineEntryBaseParams, RenderPipelineRenderingParams {
+export interface PipelineManagerRenderPipelineEntryParams extends PipelineEntryParams, RenderPipelineRenderingParams, RenderPipelineEntryPropertiesParams {
 }
 /**
  * Parameters used to create a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
  */
-export interface RenderPipelineEntryParams extends PipelineEntryParams, RenderPipelineRenderingParams {
+export interface RenderPipelineEntryParams extends PipelineManagerRenderPipelineEntryParams {
+    /** Cache key defining the geometry and bind groups buffer layouts, used to eventually get a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} from cache. */
+    cacheKey: string;
 }
 /**
  * Options used to create this {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry}
  */
-export interface RenderPipelineEntryOptions extends PipelineEntryOptions, RenderPipelineRenderingParams {
+export interface RenderPipelineEntryOptions extends PipelineEntryOptions, RenderPipelineRenderingParams, RenderPipelineEntryPropertiesParams {
+    /** Cache key defining the geometry and bind groups buffer layouts, used to eventually get a {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} from cache. */
+    cacheKey: string;
 }

@@ -1,8 +1,9 @@
 /// <reference types="dist" />
 import { RenderPipelineEntry } from './RenderPipelineEntry';
 import { ComputePipelineEntry } from './ComputePipelineEntry';
-import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
+import { PipelineEntryParams, PipelineManagerRenderPipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
 import { ShaderOptions } from '../../types/Materials';
+import { BindGroup } from '../bindGroups/BindGroup';
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry;
 /**
@@ -20,6 +21,8 @@ export declare class PipelineManager {
     currentPipelineIndex: number | null;
     /** Array of already created {@link ComputePipelineEntry} and {@link RenderPipelineEntry} */
     pipelineEntries: AllowedPipelineEntries[];
+    /** Array of current pass (used by {@link GPURenderPassEncoder} at the moment, but can be extended to {@link GPUComputePassEncoder} as well) already set {@link core/bindGroups/BindGroup.BindGroup | bind groups}. */
+    activeBindGroups: BindGroup[];
     constructor();
     /**
      * Compare two {@link ShaderOptions | shader objects}
@@ -40,13 +43,7 @@ export declare class PipelineManager {
      * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
      * @returns - {@link RenderPipelineEntry}, either from cache or newly created
      */
-    createRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry;
-    /**
-     * Checks if the provided {@link PipelineEntryParams | parameters} belongs to an already created {@link ComputePipelineEntry}.
-     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
-     * @returns - the found {@link ComputePipelineEntry}, or null if not found
-     */
-    isSameComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry;
+    createRenderPipeline(parameters: PipelineManagerRenderPipelineEntryParams): RenderPipelineEntry;
     /**
      * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
      * Use it if found, else create a new one and add it to the {@link pipelineEntries} array.
@@ -61,7 +58,13 @@ export declare class PipelineManager {
      */
     setCurrentPipeline(pass: GPURenderPassEncoder | GPUComputePassEncoder, pipelineEntry: AllowedPipelineEntries): void;
     /**
-     * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
+     * Track the active/already set {@link core/bindGroups/BindGroup.BindGroup | bind groups} to avoid `setBindGroup()` redundant calls.
+     * @param pass - current pass encoder.
+     * @param bindGroups - array {@link core/bindGroups/BindGroup.BindGroup | bind groups} passed by the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
+     */
+    setActiveBindGroups(pass: GPURenderPassEncoder | GPUComputePassEncoder, bindGroups: BindGroup[]): void;
+    /**
+     * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} and {@link activeBindGroups} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
      */
     resetCurrentPipeline(): void;
 }

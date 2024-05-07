@@ -85,6 +85,8 @@ export class ComputeMaterial extends Material {
 
     this.dispatchSize = dispatchSize
 
+    // eager pipeline entry creation for compute materials
+    // since we do not use cache!
     this.pipelineEntry = this.renderer.pipelineManager.createComputePipeline({
       renderer: this.renderer,
       label: this.options.label + ' compute pipeline',
@@ -175,6 +177,7 @@ export class ComputeMaterial extends Material {
       for (const bindGroup of this.bindGroups) {
         pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
       }
+      //this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups)
 
       pass.dispatchWorkgroups(this.dispatchSize[0], this.dispatchSize[1], this.dispatchSize[2])
     }

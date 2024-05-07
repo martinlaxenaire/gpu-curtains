@@ -7,9 +7,7 @@ import { buildShaders, traverseScenes } from './utils.js'
 
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUDeviceManager, GPUCameraRenderer, OrbitControls, Object3D, Box3, Mesh, Vec3, BoxGeometry } = await import(
-    /* @vite-ignore */ path
-  )
+  const { GPUDeviceManager, GPUCameraRenderer, OrbitControls, Mesh, Vec3 } = await import(/* @vite-ignore */ path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -56,6 +54,14 @@ window.addEventListener('load', async () => {
       name: 'Sponza',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Sponza/glTF/Sponza.gltf',
     },
+    optimizedSponza: {
+      name: 'Sponza (optimized / interleaved)',
+      url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
+    },
+    // boxVertexColors: {
+    //   name: 'Box with vertex colors',
+    //   url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxVertexColors/glTF/BoxVertexColors.gltf',
+    // },
   }
 
   // gltf
@@ -121,6 +127,22 @@ window.addEventListener('load', async () => {
           },
         })
 
+        if (meshDescriptor.nodes.length > 1) {
+          // if we're dealing with instances
+          // we must patch the mesh updateWorldMatrix method
+          // in order to update the instanceMatrix binding each time the mesh world matrix change
+          const originalWorldUpdateMatrix = mesh.updateWorldMatrix.bind(mesh)
+          mesh.updateWorldMatrix = () => {
+            originalWorldUpdateMatrix()
+
+            meshDescriptor.nodes.forEach((node, i) => {
+              mesh.storages.instances.instanceMatrix.value.set(node.worldMatrix.elements, i * 16)
+            })
+
+            mesh.storages.instances.instanceMatrix.shouldUpdate = true
+          }
+        }
+
         mesh.parent = parent.node
 
         meshDescriptor.mesh = mesh
@@ -141,12 +163,14 @@ window.addEventListener('load', async () => {
     if (url.includes('Sponza')) {
       camera.position.y = center.y * 0.25
       camera.position.z = radius * 0.225
+      camera.fov = 75
 
-      orbitControls.zoomStep = radius * 0.001
+      orbitControls.zoomStep = radius * 0.00025
       orbitControls.minZoom = radius * -0.225
     } else {
       camera.position.y = center.y
       camera.position.z = radius * 2
+      camera.fov = 50
 
       orbitControls.zoomStep = radius * 0.0025
       orbitControls.minZoom = radius * -0.5
@@ -193,6 +217,10 @@ window.addEventListener('load', async () => {
   const animate = () => {
     gpuDeviceManager.render()
     requestAnimationFrame(animate)
+
+    // currentScenes.forEach((scene) => {
+    //   scene.node.rotation.y += 0.01
+    // })
   }
 
   animate()

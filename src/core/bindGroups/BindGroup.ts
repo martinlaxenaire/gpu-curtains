@@ -198,9 +198,12 @@ export class BindGroup {
     bindingType: BufferBindingType = 'uniform',
     inputs: ReadOnlyInputBindings = {}
   ): BindGroupBindingElement[] {
-    const bindings = [
+    let bindings = [
       ...Object.keys(inputs).map((inputKey) => {
         const binding = inputs[inputKey] as WritableBufferBindingParams
+
+        // bail if no struct
+        if (!binding.struct) return
 
         const bindingParams: WritableBufferBindingParams = {
           label: toKebabCase(binding.label || inputKey),
@@ -248,6 +251,9 @@ export class BindGroup {
             })
       }),
     ].flat()
+
+    // filter to leave only valid bindings
+    bindings = bindings.filter(Boolean)
 
     bindings.forEach((binding) => {
       this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)

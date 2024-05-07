@@ -1,5 +1,5 @@
 /// <reference types="dist" />
-import { GPURenderer, GPURendererParams, RenderedMesh, SceneObject } from './GPURenderer';
+import { GPURenderer, GPURendererParams, SceneObject } from './GPURenderer';
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { BindGroup } from '../bindGroups/BindGroup';
@@ -99,12 +99,6 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
      */
     onResize(): void;
-    /**
-     * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - {@link RenderedMesh | mesh} to render
-     */
-    renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh): void;
     /**
      * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}

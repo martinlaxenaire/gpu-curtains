@@ -244,23 +244,6 @@ export class GPUCameraRenderer extends GPURenderer {
   /* RENDER */
 
   /**
-   * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
-   * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - {@link RenderedMesh | mesh} to render
-   */
-  renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh) {
-    const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor)
-
-    // bind camera if needed
-    if (mesh.material.options.rendering.useProjection) {
-      pass.setBindGroup(this.cameraBindGroup.index, this.cameraBindGroup.bindGroup)
-    }
-
-    mesh.render(pass)
-    pass.end()
-  }
-
-  /**
    * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */

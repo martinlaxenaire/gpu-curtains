@@ -73,13 +73,15 @@ class IndexedGeometry extends Geometry {
    * @param parameters.label - label to use for the vertex buffers.
    */
   createBuffers({ renderer, label = this.type }) {
-    this.indexBuffer.buffer.createBuffer(renderer, {
-      label: label + ": index buffer",
-      size: this.indexBuffer.array.byteLength,
-      usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
-      mappedAtCreation: this.options.mapBuffersAtCreation
-    });
-    this.uploadBuffer(renderer, this.indexBuffer);
+    if (!this.indexBuffer.buffer.GPUBuffer) {
+      this.indexBuffer.buffer.createBuffer(renderer, {
+        label: label + ": index buffer",
+        size: this.indexBuffer.array.byteLength,
+        usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
+        mappedAtCreation: this.options.mapBuffersAtCreation
+      });
+      this.uploadBuffer(renderer, this.indexBuffer);
+    }
     this.indexBuffer.buffer.consumers.add(this.uuid);
     super.createBuffers({ renderer, label });
   }
