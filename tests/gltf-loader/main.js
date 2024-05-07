@@ -7,9 +7,7 @@ import { buildShaders, traverseScenes } from './utils.js'
 
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUDeviceManager, GPUCameraRenderer, OrbitControls, Object3D, Box3, Mesh, Vec3, BoxGeometry } = await import(
-    /* @vite-ignore */ path
-  )
+  const { GPUDeviceManager, GPUCameraRenderer, OrbitControls, Mesh, Vec3 } = await import(/* @vite-ignore */ path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -60,6 +58,10 @@ window.addEventListener('load', async () => {
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
+    // boxVertexColors: {
+    //   name: 'Box with vertex colors',
+    //   url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxVertexColors/glTF/BoxVertexColors.gltf',
+    // },
   }
 
   // gltf

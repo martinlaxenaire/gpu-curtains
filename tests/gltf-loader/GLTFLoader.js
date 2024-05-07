@@ -238,24 +238,6 @@ export class GLTFLoader {
     return json
   }
 
-  createTexture(material, image, name) {
-    const texture = new Texture(this.renderer, {
-      label: material.name ? material.name + ': ' + name : name,
-      name,
-      generateMips: true, // generate mips by default
-      fixedSize: {
-        width: image.width,
-        height: image.height,
-      },
-    })
-
-    texture.uploadSource({
-      source: image,
-    })
-
-    return texture
-  }
-
   async loadFromJson(json, baseUrl, binaryChunk) {
     // Load the glTF file
     this.gltf = await this.loadFromJsonBase(json, baseUrl, binaryChunk)
@@ -393,6 +375,24 @@ export class GLTFLoader {
     return { gltf: this.gltf, scenes, boundingBox }
   }
 
+  createTexture(material, image, name) {
+    const texture = new Texture(this.renderer, {
+      label: material.name ? material.name + ': ' + name : name,
+      name,
+      generateMips: true, // generate mips by default
+      fixedSize: {
+        width: image.width,
+        height: image.height,
+      },
+    })
+
+    texture.uploadSource({
+      source: image,
+    })
+
+    return texture
+  }
+
   createNode(parent, node, primitiveInstances) {
     const child = {
       name: node.name,
@@ -464,7 +464,7 @@ export class GLTFLoader {
         name: scene.name,
         children: [],
         node: new Object3D(),
-        boundingBox: new Box3(), // TODO
+        //boundingBox: new Box3(), // TODO
       }
 
       sceneDescriptor.node.parent = this.renderer.scene
