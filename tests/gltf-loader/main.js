@@ -183,8 +183,7 @@ window.addEventListener('load', async () => {
     title: 'GLTF loader',
   })
 
-  //const currentModelKey = 'damagedHelmet'
-  const currentModelKey = 'optimizedSponza'
+  const currentModelKey = 'damagedHelmet'
   let currentModel = models[currentModelKey]
 
   gui
