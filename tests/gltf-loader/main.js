@@ -165,7 +165,7 @@ window.addEventListener('load', async () => {
       camera.position.z = radius * 0.225
       camera.fov = 75
 
-      orbitControls.zoomStep = radius * 0.001
+      orbitControls.zoomStep = radius * 0.00025
       orbitControls.minZoom = radius * -0.225
     } else {
       camera.position.y = center.y
