@@ -560,6 +560,7 @@ export class GLTFLoader {
         if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
           // we're not that lucky since we have interleaved values coming from different positions of our main buffer
           // we'll have to rebuild an interleaved array ourselves
+          let totalStride = 0
           const mainBufferStrides = {}
           const arrayLength = Object.values(primitive.attributes).reduce((acc, accessorIndex) => {
             const accessor = this.gltf.accessors[accessorIndex]
@@ -575,15 +576,12 @@ export class GLTFLoader {
               accessor.byteOffset + attrSize * Float32Array.BYTES_PER_ELEMENT
             )
 
+            totalStride += attrSize * Float32Array.BYTES_PER_ELEMENT
+
             return acc + accessor.count * attrSize
           }, 0)
 
           interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4)
-
-          const lastAccessor = this.gltf.accessors[accessorsBufferViews[accessorsBufferViews.length - 1]]
-          const lastAttributeSize = GLTFLoader.getVertexAttributeParamsFromType(lastAccessor.type).size
-
-          const totalStride = maxByteOffset + lastAttributeSize * Float32Array.BYTES_PER_ELEMENT
 
           Object.values(primitive.attributes).forEach((accessorIndex) => {
             const accessor = this.gltf.accessors[accessorIndex]
