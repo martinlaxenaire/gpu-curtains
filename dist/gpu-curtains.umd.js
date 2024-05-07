@@ -5135,6 +5135,13 @@
       this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
     }
     /**
+     * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
+     * @param pass - current pass encoder
+     */
+    setActiveBindGroups(pass) {
+      this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups);
+    }
+    /**
      * Render the material if it is ready:
      * Set the current pipeline and set the bind groups
      * @param pass - current pass encoder
@@ -5143,9 +5150,7 @@
       if (!this.ready)
         return;
       this.setPipeline(pass);
-      for (const bindGroup of this.bindGroups) {
-        pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-      }
+      this.setActiveBindGroups(pass);
     }
     /**
      * Destroy the Material
@@ -6328,13 +6333,15 @@
      * @param parameters.label - label to use for the vertex buffers.
      */
     createBuffers({ renderer, label = this.type }) {
-      this.indexBuffer.buffer.createBuffer(renderer, {
-        label: label + ": index buffer",
-        size: this.indexBuffer.array.byteLength,
-        usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
-        mappedAtCreation: this.options.mapBuffersAtCreation
-      });
-      this.uploadBuffer(renderer, this.indexBuffer);
+      if (!this.indexBuffer.buffer.GPUBuffer) {
+        this.indexBuffer.buffer.createBuffer(renderer, {
+          label: label + ": index buffer",
+          size: this.indexBuffer.array.byteLength,
+          usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
+          mappedAtCreation: this.options.mapBuffersAtCreation
+        });
+        this.uploadBuffer(renderer, this.indexBuffer);
+      }
       this.indexBuffer.buffer.consumers.add(this.uuid);
       super.createBuffers({ renderer, label });
     }
@@ -6605,20 +6612,19 @@ struct VertexOutput {
           topology
         }
       };
+      this.attributes = null;
+      this.pipelineEntry = null;
+    }
+    /**
+     * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
+     */
+    setPipelineEntry() {
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
         renderer: this.renderer,
         label: this.options.label + " render pipeline",
         shaders: this.options.shaders,
         useAsync: this.options.useAsyncPipeline,
-        rendering: this.options.rendering
-      });
-      this.attributes = null;
-    }
-    /**
-     * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry}
-     */
-    setPipelineEntryProperties() {
-      this.pipelineEntry.setPipelineEntryProperties({
+        rendering: this.options.rendering,
         attributes: this.attributes,
         bindGroups: this.bindGroups
       });
@@ -6636,8 +6642,10 @@ struct VertexOutput {
      */
     async compileMaterial() {
       super.compileMaterial();
-      if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
-        this.setPipelineEntryProperties();
+      if (this.attributes && !this.pipelineEntry) {
+        this.setPipelineEntry();
+      }
+      if (this.pipelineEntry && this.pipelineEntry.canCompile) {
         await this.compilePipelineEntry();
       }
     }
@@ -6647,17 +6655,46 @@ struct VertexOutput {
      */
     setRenderingOptions(renderingOptions = {}) {
       const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering);
+      const oldRenderingOptions = { ...this.options.rendering };
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
-        this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
-        if (this.pipelineEntry.ready && newProperties.length && !this.renderer.production) {
-          throwWarning(
-            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided.
-Rendering options responsible: { ${newProperties.map(
-            (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
-          ).join(", ")} }`
-          );
-          this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+        if (this.pipelineEntry.ready && newProperties.length) {
+          if (!this.renderer.production) {
+            const oldProps = newProperties.map((key) => {
+              return {
+                [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key]
+              };
+            });
+            const newProps = newProperties.map((key) => {
+              return {
+                [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key]
+              };
+            });
+            throwWarning(
+              `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.
+
+Old rendering options: ${JSON.stringify(
+              oldProps.reduce((acc, v) => {
+                return { ...acc, ...v };
+              }, {}),
+              null,
+              4
+            )}
+
+--------
+
+New rendering options: ${JSON.stringify(
+              newProps.reduce((acc, v) => {
+                return { ...acc, ...v };
+              }, {}),
+              null,
+              4
+            )}`
+            );
+          }
+          this.setPipelineEntry();
+        } else {
+          this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
         }
       }
     }
@@ -6678,19 +6715,11 @@ Rendering options responsible: { ${newProperties.map(
      * Create the bind groups if they need to be created, but first add Camera bind group if needed
      */
     createBindGroups() {
-      const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0;
-      if (this.texturesBindGroup.shouldCreateBindGroup) {
-        this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
-        this.texturesBindGroup.createBindGroup();
-        this.bindGroups.push(this.texturesBindGroup);
+      if ("cameraBindGroup" in this.renderer && this.options.rendering.useProjection) {
+        this.bindGroups.push(this.renderer.cameraBindGroup);
+        this.renderer.cameraBindGroup.consumers.add(this.uuid);
       }
-      for (const bindGroup of this.inputsBindGroups) {
-        if (bindGroup.shouldCreateBindGroup) {
-          bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
-          bindGroup.createBindGroup();
-          this.bindGroups.push(bindGroup);
-        }
-      }
+      super.createBindGroups();
     }
   }
 
@@ -6958,10 +6987,22 @@ Rendering options responsible: { ${newProperties.map(
           if (geometry.shouldCompute) {
             geometry.computeGeometry();
           }
-          if (this.geometry.wgslStructFragment !== geometry.wgslStructFragment) {
-            throwError(
-              `${this.options.label} (${this.type}): could not swap geometries because the current and given geometries do not have the same vertexBuffers layout.`
+          if (this.geometry.layoutCacheKey !== geometry.layoutCacheKey) {
+            throwWarning(
+              `${this.options.label} (${this.type}): the current and new geometries do not have the same vertexBuffers layout, causing a probable pipeline recompilation. This should be avoided.
+
+Current geometry layout:
+
+${this.geometry.wgslStructFragment}
+
+--------
+
+New geometry layout:
+
+${geometry.wgslStructFragment}`
             );
+            this.material.setAttributesFromGeometry(geometry);
+            this.material.setPipelineEntry();
           }
           this.geometry.consumers.delete(this.uuid);
         }
@@ -8031,7 +8072,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      */
     constructor(parameters) {
       let { renderer, ...pipelineParams } = parameters;
-      const { label, ...renderingOptions } = pipelineParams;
+      const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams;
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
@@ -8057,17 +8098,12 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
       this.descriptor = null;
       this.options = {
         ...this.options,
+        attributes,
+        bindGroups,
+        cacheKey,
         ...renderingOptions
       };
-    }
-    // TODO! need to chose whether we should silently add the camera bind group here
-    // or explicitly in the RenderMaterial class createBindGroups() method
-    /**
-     * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} if needed and set them
-     * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
-     */
-    setPipelineEntryBindGroups(bindGroups) {
-      this.bindGroups = "cameraBindGroup" in this.renderer && this.options.rendering.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
+      this.setPipelineEntryProperties({ attributes, bindGroups });
     }
     /**
      * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
@@ -8494,6 +8530,7 @@ ${this.shaders.compute.head}`;
       this.type = "PipelineManager";
       this.currentPipelineIndex = null;
       this.pipelineEntries = [];
+      this.activeBindGroups = [];
     }
     /**
      * Compare two {@link ShaderOptions | shader objects}
@@ -8512,11 +8549,12 @@ ${this.shaders.compute.head}`;
     isSameRenderPipeline(parameters) {
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        const { shaders, rendering } = parameters;
+        const { shaders, rendering, cacheKey } = parameters;
+        const sameCacheKey = cacheKey === options.cacheKey;
         const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
         const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
         const differentParams = compareRenderingOptions(rendering, options.rendering);
-        return !differentParams.length && sameVertexShader && sameFragmentShader;
+        return sameCacheKey && !differentParams.length && sameVertexShader && sameFragmentShader;
       });
     }
     /**
@@ -8526,26 +8564,22 @@ ${this.shaders.compute.head}`;
      * @returns - {@link RenderPipelineEntry}, either from cache or newly created
      */
     createRenderPipeline(parameters) {
-      const existingPipelineEntry = this.isSameRenderPipeline(parameters);
+      const { attributes, bindGroups } = parameters;
+      let cacheKey = attributes.layoutCacheKey;
+      bindGroups.forEach((bindGroup) => {
+        bindGroup.bindings.forEach((binding) => {
+          cacheKey += binding.name + ",";
+        });
+        cacheKey += bindGroup.layoutCacheKey;
+      });
+      const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey });
       if (existingPipelineEntry) {
         return existingPipelineEntry;
       } else {
-        const pipelineEntry = new RenderPipelineEntry(parameters);
+        const pipelineEntry = new RenderPipelineEntry({ ...parameters, cacheKey });
         this.pipelineEntries.push(pipelineEntry);
         return pipelineEntry;
       }
-    }
-    /**
-     * Checks if the provided {@link PipelineEntryParams | parameters} belongs to an already created {@link ComputePipelineEntry}.
-     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
-     * @returns - the found {@link ComputePipelineEntry}, or null if not found
-     */
-    isSameComputePipeline(parameters) {
-      const { shaders } = parameters;
-      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
-        const { options } = pipelineEntry;
-        return this.compareShaders(shaders.compute, options.shaders.compute);
-      });
     }
     /**
      * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
@@ -8554,14 +8588,9 @@ ${this.shaders.compute.head}`;
      * @returns - newly created {@link ComputePipelineEntry}
      */
     createComputePipeline(parameters) {
-      const existingPipelineEntry = this.isSameComputePipeline(parameters);
-      if (existingPipelineEntry) {
-        return existingPipelineEntry;
-      } else {
-        const pipelineEntry = new ComputePipelineEntry(parameters);
-        this.pipelineEntries.push(pipelineEntry);
-        return pipelineEntry;
-      }
+      const pipelineEntry = new ComputePipelineEntry(parameters);
+      this.pipelineEntries.push(pipelineEntry);
+      return pipelineEntry;
     }
     /**
      * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it
@@ -8575,10 +8604,24 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
+     * Track the active/already set {@link core/bindGroups/BindGroup.BindGroup | bind groups} to avoid `setBindGroup()` redundant calls.
+     * @param pass - current pass encoder.
+     * @param bindGroups - array {@link core/bindGroups/BindGroup.BindGroup | bind groups} passed by the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
+     */
+    setActiveBindGroups(pass, bindGroups) {
+      bindGroups.forEach((bindGroup, index) => {
+        if (!this.activeBindGroups[index] || this.activeBindGroups[index].uuid !== bindGroup.uuid || this.activeBindGroups[index].index !== bindGroup.index) {
+          this.activeBindGroups[index] = bindGroup;
+          pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
+        }
+      });
+    }
+    /**
+     * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} and {@link activeBindGroups} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
      */
     resetCurrentPipeline() {
       this.currentPipelineIndex = null;
+      this.activeBindGroups = [];
     }
   }
 
@@ -8875,7 +8918,8 @@ ${this.shaders.compute.head}`;
       const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque;
       similarMeshes.push(mesh);
       similarMeshes.sort((a, b) => {
-        return a.renderOrder - b.renderOrder || a.material.pipelineEntry.index - b.material.pipelineEntry.index || a.index - b.index;
+        return a.renderOrder - b.renderOrder || //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
+        a.index - b.index;
       });
       if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
         mesh.parent = this;
@@ -9062,12 +9106,6 @@ ${this.shaders.compute.head}`;
           mesh.render(pass);
         }
         if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-          if (this.renderer.cameraBindGroup) {
-            pass.setBindGroup(
-              this.renderer.cameraBindGroup.index,
-              this.renderer.cameraBindGroup.bindGroup
-            );
-          }
           for (const mesh of renderPassEntry.stack.projected.opaque) {
             mesh.render(pass);
           }
@@ -10433,19 +10471,6 @@ ${this.shaders.compute.head}`;
       this.setPerspective();
     }
     /* RENDER */
-    /**
-     * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - {@link RenderedMesh | mesh} to render
-     */
-    renderSingleMesh(commandEncoder, mesh) {
-      const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
-      if (mesh.material.options.rendering.useProjection) {
-        pass.setBindGroup(this.cameraBindGroup.index, this.cameraBindGroup.bindGroup);
-      }
-      mesh.render(pass);
-      pass.end();
-    }
     /**
      * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}

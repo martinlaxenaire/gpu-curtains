@@ -238,8 +238,9 @@ export class GLTFLoader {
     return json
   }
 
-  createTexture(image, name) {
+  createTexture(material, image, name) {
     const texture = new Texture(this.renderer, {
+      label: material.name ? material.name + ': ' + name : name,
       name,
       generateMips: true, // generate mips by default
       fixedSize: {
@@ -258,38 +259,6 @@ export class GLTFLoader {
   async loadFromJson(json, baseUrl, binaryChunk) {
     // Load the glTF file
     this.gltf = await this.loadFromJsonBase(json, baseUrl, binaryChunk)
-
-    // Identify all the vertex and index buffers by iterating through all the primitives accessors
-    // and marking the buffer views as vertex or index usage.
-    // (There's technically a target attribute on the buffer view that's supposed to tell us what
-    // it's used for, but that appears to be rarely populated.)
-    // const bufferViewUsages = []
-    // const markAccessorUsage = (accessorIndex, usage) => {
-    //   const accessor = this.gltf.accessors[accessorIndex]
-    //   bufferViewUsages[accessor.bufferView] |= usage
-    // }
-    //
-    // for (const mesh of this.gltf.meshes) {
-    //   for (const primitive of mesh.primitives) {
-    //     if ('indices' in primitive) {
-    //       markAccessorUsage(primitive.indices, GPUBufferUsage.INDEX)
-    //       //console.log('>>> INDEX', primitive)
-    //     }
-    //     for (const attribute of Object.values(primitive.attributes)) {
-    //       markAccessorUsage(attribute, GPUBufferUsage.VERTEX)
-    //       //console.log('>>> ATTRIBUTE', attribute)
-    //     }
-    //   }
-    // }
-    //
-    // //console.log('BUFFER VIEW USAGES', bufferViewUsages)
-    //
-    // // Create WebGPU objects for all necessary buffers, images, and samplers
-    // this.gltf.gpuBuffers = []
-    // for (const [index, bufferView] of Object.entries(this.gltf.bufferViews)) {
-    //   // gltf.gpuBuffers[index] = createGpuBufferFromBufferView(device, bufferView, gltf.buffers[bufferView.buffer], bufferViewUsages[index]);
-    //   //console.log('>>> BUFFER', index, bufferView, this.gltf.buffers[bufferView.buffer])
-    // }
 
     this.gltf.materialsTextures = []
     for (let i = 0; i < this.gltf.materials.length; i++) {
@@ -349,7 +318,7 @@ export class GLTFLoader {
           const index = parseInt(material.pbrMetallicRoughness.baseColorTexture.index)
           const image = this.gltf.images[this.gltf.textures[index].source]
 
-          const texture = this.createTexture(image, 'baseColorTexture')
+          const texture = this.createTexture(material, image, 'baseColorTexture')
           const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
           materialTextures.textures.push({
@@ -365,7 +334,7 @@ export class GLTFLoader {
           const index = parseInt(material.pbrMetallicRoughness.metallicRoughnessTexture.index)
           const image = this.gltf.images[this.gltf.textures[index].source]
 
-          const texture = this.createTexture(image, 'metallicRoughnessTexture')
+          const texture = this.createTexture(material, image, 'metallicRoughnessTexture')
           const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
           materialTextures.textures.push({
@@ -379,7 +348,7 @@ export class GLTFLoader {
         const index = parseInt(material.normalTexture.index)
         const image = this.gltf.images[this.gltf.textures[index].source]
 
-        const texture = this.createTexture(image, 'normalTexture')
+        const texture = this.createTexture(material, image, 'normalTexture')
         const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
         materialTextures.textures.push({
@@ -392,7 +361,7 @@ export class GLTFLoader {
         const index = parseInt(material.occlusionTexture.index)
         const image = this.gltf.images[this.gltf.textures[index].source]
 
-        const texture = this.createTexture(image, 'occlusionTexture')
+        const texture = this.createTexture(material, image, 'occlusionTexture')
         const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
         materialTextures.textures.push({
@@ -405,7 +374,7 @@ export class GLTFLoader {
         const index = parseInt(material.emissiveTexture.index)
         const image = this.gltf.images[this.gltf.textures[index].source]
 
-        const texture = this.createTexture(image, 'emissiveTexture')
+        const texture = this.createTexture(material, image, 'emissiveTexture')
         const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler
 
         materialTextures.textures.push({
@@ -523,24 +492,19 @@ export class GLTFLoader {
 
       const geometryBBox = new Box3()
 
-      // TODO we should pass an already created buffer to the geometry main vertex and index buffers if possible
+      // TODO should we pass an already created buffer to the geometry main vertex and index buffers if possible?
       // and use bufferOffset and bufferSize parameters
-      // for example if the accessors byteOffset is < than the bufferViews byteStride, the array is already interleaved!
-      // see https://toji.dev/webgpu-gltf-case-study/#reduced-binding-for-interleaved-buffers
-      // or if the accessors byteOffset is large enough,
+      // if the accessors byteOffset is large enough,
       // it means we have an array that is not interleaved (with each vertexBuffer attributes bufferOffset = 0)
       // but we can deal with the actual offset in the geometry setVertexBuffer call!
       // see https://toji.dev/webgpu-gltf-case-study/#handling-large-attribute-offsets
 
       const defaultAttributes = []
-      // let defaultAttributesArrayLength = 0
-      // let defaultAttributesArrayStride = 0
-      // const strides = []
-      // const bbox = new Box3()
 
       // check whether the buffer view is already interleaved
-      // let isInterleaved = false
-      // let minByteOffset = Infinity
+      let interleavedArray = null
+      let interleavedBufferView = null
+      let maxByteOffset = 0
 
       // prepare default attributes
       for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
@@ -551,8 +515,14 @@ export class GLTFLoader {
         const bufferView = this.gltf.bufferViews[accessor.bufferView]
         const name = attribName === 'TEXCOORD_0' ? 'uv' : attribName.toLowerCase()
 
-        // console.log(bufferView.byteStride || 0, accessor.byteOffset)
-        // minByteOffset = Math.min(accessor.byteOffset, minByteOffset)
+        const byteStride = bufferView.byteStride || 0
+        const accessorByteOffset = accessor.byteOffset || 0
+        if (byteStride && accessorByteOffset && accessorByteOffset < byteStride) {
+          maxByteOffset = Math.max(accessorByteOffset, maxByteOffset)
+          interleavedBufferView = bufferView
+        } else {
+          maxByteOffset = 0
+        }
 
         // custom bbox
         // glTF specs says: "vertex position attribute accessors MUST have accessor.min and accessor.max defined"
@@ -562,11 +532,6 @@ export class GLTFLoader {
         }
 
         const attributeParams = GLTFLoader.getVertexAttributeParamsFromType(accessor.type)
-        // strides.push(defaultAttributesArrayStride)
-        // defaultAttributesArrayStride += attributeParams.size
-        //
-        // const arrayLength = accessor.count * attributeParams.size
-        // defaultAttributesArrayLength += arrayLength
 
         const attribute = {
           name,
@@ -585,26 +550,29 @@ export class GLTFLoader {
         })
       }
 
-      // const array = new Float32Array(Math.ceil(defaultAttributesArrayLength / 4) * 4)
-      //
-      // // now compute the default geometry attributes interleaved array
-      // defaultAttributes.forEach((attribute, index) => {
-      //   for (let i = 0, j = 0; i < attribute.array.length; i += attribute.size, j++) {
-      //     array.set(attribute.array.subarray(i, i + attribute.size), defaultAttributesArrayStride * j + strides[index])
-      //   }
-      // })
+      if (maxByteOffset > 0) {
+        // we're lucky to have an interleaved array!
+        // we won't have to compute our geometry!
+        interleavedArray = new Float32Array(
+          this.gltf.buffers[interleavedBufferView.buffer],
+          interleavedBufferView.byteOffset,
+          (Math.ceil(interleavedBufferView.byteLength / 4) * 4) / Float32Array.BYTES_PER_ELEMENT
+        )
+      } else {
+        // not interleaved?
+        // let's try to reorder the attributes so we might benefit from pipeline cache
+        const attribOrder = ['position', 'uv', 'normal']
 
-      const attribOrder = ['position', 'uv', 'normal']
+        defaultAttributes.sort((a, b) => {
+          let aIndex = attribOrder.findIndex((attrName) => attrName === a.name)
+          aIndex = aIndex === -1 ? Infinity : aIndex
 
-      defaultAttributes.sort((a, b) => {
-        let aIndex = attribOrder.findIndex((attrName) => attrName === a.name)
-        aIndex = aIndex === -1 ? Infinity : aIndex
+          let bIndex = attribOrder.findIndex((attrName) => attrName === b.name)
+          bIndex = bIndex === -1 ? Infinity : bIndex
 
-        let bIndex = attribOrder.findIndex((attrName) => attrName === b.name)
-        bIndex = bIndex === -1 ? Infinity : bIndex
-
-        return aIndex - bIndex
-      })
+          return aIndex - bIndex
+        })
+      }
 
       const geometryAttributes = {
         instancesCount,
@@ -614,7 +582,7 @@ export class GLTFLoader {
             name: 'attributes',
             stepMode: 'vertex', // explicitly set the stepMode even if not mandatory
             attributes: defaultAttributes,
-            //array,
+            ...(interleavedArray && { array: interleavedArray }), // interleaved array!
           },
         ],
       }
@@ -623,7 +591,6 @@ export class GLTFLoader {
       const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry
 
       meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes)
-      //meshDescriptor.parameters.geometry.boundingBox = bbox
 
       if (isIndexedGeometry) {
         const accessor = this.gltf.accessors[primitive.indices]
@@ -689,8 +656,9 @@ export class GLTFLoader {
         ]
       }
 
-      if (material.alphaCutoff !== undefined) {
-        console.log(material, meshDescriptor)
+      // debug sponza optimized green curtains not showing?!
+      if (meshDescriptor.parameters.label && meshDescriptor.parameters.label.includes('Curtains')) {
+        console.log(meshDescriptor)
       }
 
       // uniforms

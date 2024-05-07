@@ -13,7 +13,7 @@ window.addEventListener('load', async () => {
     RenderTarget,
     ShaderPass,
     Vec3,
-    RenderTexture,
+    Texture,
   } = await import(/* @vite-ignore */ path)
 
   // here is an example of how we can use a simple GPUCameraRenderer instead of GPUCurtains
@@ -231,7 +231,7 @@ window.addEventListener('load', async () => {
   //console.log(OITOpaqueTarget, OITOpaqueTarget.outputTextures, OITOpaqueTarget.renderPass.outputTextures)
 
   // opaque buffer
-  const OITOpaqueTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITOpaqueTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
     visibility: ['fragment'],
@@ -240,7 +240,7 @@ window.addEventListener('load', async () => {
   })
 
   // create 2 textures based on our OIT MRT output
-  const OITAccumTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITAccumTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT accum texture',
     name: 'oITAccumTexture',
     visibility: ['fragment'],
@@ -248,7 +248,7 @@ window.addEventListener('load', async () => {
     fromTexture: OITTransparentTarget.outputTextures[0],
   })
 
-  const OITRevealTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITRevealTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT reveal texture',
     name: 'oITRevealTexture',
     visibility: ['fragment'],
@@ -322,7 +322,7 @@ window.addEventListener('load', async () => {
 
   const compositingPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Compositing pass',
-    renderTextures: [OITOpaqueTexture, OITAccumTexture, OITRevealTexture],
+    textures: [OITOpaqueTexture, OITAccumTexture, OITRevealTexture],
     shaders: {
       fragment: {
         code: compositingPassFs,

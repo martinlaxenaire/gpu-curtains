@@ -485,6 +485,13 @@ class Material {
     this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
   }
   /**
+   * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
+   * @param pass - current pass encoder
+   */
+  setActiveBindGroups(pass) {
+    this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups);
+  }
+  /**
    * Render the material if it is ready:
    * Set the current pipeline and set the bind groups
    * @param pass - current pass encoder
@@ -493,9 +500,7 @@ class Material {
     if (!this.ready)
       return;
     this.setPipeline(pass);
-    for (const bindGroup of this.bindGroups) {
-      pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-    }
+    this.setActiveBindGroups(pass);
   }
   /**
    * Destroy the Material

@@ -8,7 +8,7 @@ window.addEventListener('load', async () => {
     BoxGeometry,
     Mesh,
     RenderTarget,
-    RenderTexture,
+    Texture,
     ShaderPass,
     SphereGeometry,
     Vec2,
@@ -75,7 +75,7 @@ window.addEventListener('load', async () => {
     label: 'Blank render target',
     //renderToSwapChain: false,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
-    depthTexture: new RenderTexture(gpuCameraRenderer, {
+    depthTexture: new Texture(gpuCameraRenderer, {
       label: 'Cube depth texture',
       name: 'cubeDepthTexture',
       type: 'depth',
@@ -87,7 +87,7 @@ window.addEventListener('load', async () => {
   const selectiveBloomTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Selective bloom render target',
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
-    depthTexture: new RenderTexture(gpuCameraRenderer, {
+    depthTexture: new Texture(gpuCameraRenderer, {
       label: 'Sphere depth texture',
       name: 'sphereDepthTexture',
       type: 'depth',
@@ -387,7 +387,7 @@ window.addEventListener('load', async () => {
   })
 
   // pass the original scene pass result to our blend pass
-  blendBloomPass.createRenderTexture({
+  blendBloomPass.createTexture({
     label: 'Scene texture',
     name: 'sceneTexture',
     fromTexture: initBloomPass.renderTexture,
@@ -553,12 +553,12 @@ window.addEventListener('load', async () => {
     ],
   })
 
-  const cubeRenderTexture = blendPass.createRenderTexture({
+  const cubeRenderTexture = blendPass.createTexture({
     name: 'cubeRenderTexture',
     fromTexture: blankRenderTarget.renderTexture,
   })
 
-  const cubeDepthTexture = blendPass.createRenderTexture({
+  const cubeDepthTexture = blendPass.createTexture({
     name: 'cubeDepthTexture',
     type: 'depth',
     format: 'depth24plus',
@@ -566,14 +566,14 @@ window.addEventListener('load', async () => {
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
   })
 
-  const bloomSphereTexture = blendPass.createRenderTexture({
+  const bloomSphereTexture = blendPass.createTexture({
     name: 'bloomSphereRenderTexture',
     fromTexture: blendBloomPass.renderTexture,
   })
 
   console.log(blendBloomPass)
 
-  const sphereDepthTexture = blendPass.createRenderTexture({
+  const sphereDepthTexture = blendPass.createTexture({
     name: 'sphereDepthTexture',
     type: 'depth',
     format: 'depth24plus',

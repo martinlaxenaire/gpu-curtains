@@ -10,7 +10,7 @@ window.addEventListener('load', async () => {
     RenderMaterial,
     Mesh,
     SphereGeometry,
-    RenderTexture,
+    Texture,
     Vec3,
     RenderTarget,
     Sampler,
@@ -104,7 +104,7 @@ window.addEventListener('load', async () => {
   const shadowDepthSampleCount = 1
   const shadowMapSize = 1024
 
-  const shadowDepthTexture = new RenderTexture(gpuCameraRenderer, {
+  const shadowDepthTexture = new Texture(gpuCameraRenderer, {
     label: 'Shadow depth texture',
     name: 'shadowDepthTexture',
     type: 'depth',
@@ -243,7 +243,7 @@ window.addEventListener('load', async () => {
   const sphere = new Mesh(gpuCameraRenderer, {
     label: 'Sphere',
     geometry: sphereGeometry,
-    renderTextures: [shadowDepthTexture],
+    textures: [shadowDepthTexture],
     samplers: [lessCompareSampler],
     shaders: {
       vertex: {
@@ -299,7 +299,7 @@ window.addEventListener('load', async () => {
   const floor = new Mesh(gpuCameraRenderer, {
     label: 'Floor',
     geometry: planeGeometry,
-    renderTextures: [shadowDepthTexture],
+    textures: [shadowDepthTexture],
     samplers: [lessCompareSampler],
     frustumCulled: false, // always draw
     cullMode: 'none',
@@ -360,8 +360,6 @@ window.addEventListener('load', async () => {
 
     // begin depth pass
     const depthPass = commandEncoder.beginRenderPass(depthTarget.renderPass.descriptor)
-    // set camera bind group
-    depthPass.setBindGroup(gpuCameraRenderer.cameraBindGroup.index, gpuCameraRenderer.cameraBindGroup.bindGroup)
 
     // render meshes with their depth material
     depthMeshes.forEach((mesh) => {
@@ -375,6 +373,9 @@ window.addEventListener('load', async () => {
     depthMeshes.forEach((mesh) => {
       mesh.useMaterial(mesh.userData.originalMaterial)
     })
+
+    // reset renderer current pipeline again
+    gpuCameraRenderer.pipelineManager.resetCurrentPipeline()
   })
 
   // DEBUG DEPTH
@@ -450,7 +451,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const depthTexture = debugPlane.createRenderTexture({
+  const depthTexture = debugPlane.createTexture({
     label: 'Debug depth texture',
     name: 'depthTexture',
     type: 'depth',

@@ -241,7 +241,7 @@ export class Scene extends Object3D {
     similarMeshes.sort((a, b) => {
       return (
         a.renderOrder - b.renderOrder ||
-        a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
+        //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
         a.index - b.index
       )
     })
@@ -478,14 +478,6 @@ export class Scene extends Object3D {
 
       // then draw projected meshes
       if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-        if ((this.renderer as CameraRenderer).cameraBindGroup) {
-          // set camera bind group once
-          pass.setBindGroup(
-            (this.renderer as CameraRenderer).cameraBindGroup.index,
-            (this.renderer as CameraRenderer).cameraBindGroup.bindGroup
-          )
-        }
-
         for (const mesh of renderPassEntry.stack.projected.opaque) {
           mesh.render(pass)
         }

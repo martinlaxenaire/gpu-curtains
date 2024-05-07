@@ -76,6 +76,14 @@ window.addEventListener('load', async () => {
   floor.scale.x = floorScale.x
   floor.scale.y = floorScale.y
 
+  // try to change rendering options on the fly to test pipeline recreation/cache
+  setTimeout(() => {
+    floor.transparent = true
+    setTimeout(() => {
+      floor.transparent = false
+    }, 2000)
+  }, 2000)
+
   const cube = new Mesh(gpuCameraRenderer, {
     label: 'Cube',
     geometry: new BoxGeometry(),

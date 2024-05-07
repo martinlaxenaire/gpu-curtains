@@ -1,4 +1,4 @@
-import { generateUUID, throwWarning, throwError } from '../../../utils/utils.mjs';
+import { generateUUID, throwWarning } from '../../../utils/utils.mjs';
 import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
 import { DOMTexture } from '../../textures/DOMTexture.mjs';
@@ -270,10 +270,22 @@ function MeshBaseMixin(Base) {
         if (geometry.shouldCompute) {
           geometry.computeGeometry();
         }
-        if (this.geometry.wgslStructFragment !== geometry.wgslStructFragment) {
-          throwError(
-            `${this.options.label} (${this.type}): could not swap geometries because the current and given geometries do not have the same vertexBuffers layout.`
+        if (this.geometry.layoutCacheKey !== geometry.layoutCacheKey) {
+          throwWarning(
+            `${this.options.label} (${this.type}): the current and new geometries do not have the same vertexBuffers layout, causing a probable pipeline recompilation. This should be avoided.
+
+Current geometry layout:
+
+${this.geometry.wgslStructFragment}
+
+--------
+
+New geometry layout:
+
+${geometry.wgslStructFragment}`
           );
+          this.material.setAttributesFromGeometry(geometry);
+          this.material.setPipelineEntry();
         }
         this.geometry.consumers.delete(this.uuid);
       }

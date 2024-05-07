@@ -133,7 +133,8 @@ class Scene extends Object3D {
     const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque;
     similarMeshes.push(mesh);
     similarMeshes.sort((a, b) => {
-      return a.renderOrder - b.renderOrder || a.material.pipelineEntry.index - b.material.pipelineEntry.index || a.index - b.index;
+      return a.renderOrder - b.renderOrder || //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
+      a.index - b.index;
     });
     if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
       mesh.parent = this;
@@ -320,12 +321,6 @@ class Scene extends Object3D {
         mesh.render(pass);
       }
       if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-        if (this.renderer.cameraBindGroup) {
-          pass.setBindGroup(
-            this.renderer.cameraBindGroup.index,
-            this.renderer.cameraBindGroup.bindGroup
-          );
-        }
         for (const mesh of renderPassEntry.stack.projected.opaque) {
           mesh.render(pass);
         }
