@@ -2034,9 +2034,11 @@
      * @returns - a {@link bindings} array
      */
     createInputBindings(bindingType = "uniform", inputs = {}) {
-      const bindings = [
+      let bindings = [
         ...Object.keys(inputs).map((inputKey) => {
           const binding = inputs[inputKey];
+          if (!binding.struct)
+            return;
           const bindingParams = {
             label: toKebabCase(binding.label || inputKey),
             name: inputKey,
@@ -2073,6 +2075,7 @@
           });
         })
       ].flat();
+      bindings = bindings.filter(Boolean);
       bindings.forEach((binding) => {
         this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
       });

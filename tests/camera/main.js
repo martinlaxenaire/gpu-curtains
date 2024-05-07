@@ -88,14 +88,7 @@ window.addEventListener('load', async () => {
     label: 'Cube',
     geometry: new BoxGeometry(),
     uniforms: {
-      checkerboard: {
-        struct: {
-          scale: {
-            type: 'vec2f',
-            value: floorScale,
-          },
-        },
-      },
+      checkerboard: {}, // not valid uniform test
     },
   })
 
