@@ -2,12 +2,12 @@ import { Geometry } from './Geometry'
 import { GeometryBuffer, GeometryParams } from '../../types/Geometries'
 import { Buffer } from '../buffers/Buffer'
 import { Renderer } from '../renderers/utils'
-import { TypedArray } from '../bindings/utils'
+import { TypedArrayConstructor } from '../bindings/utils'
 
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
  */
-export interface IndexedGeometryIndexBufferOptions {
+export interface IndexedGeometryIndexBufferOptions extends Partial<GeometryBuffer> {
   /** index buffer format */
   bufferFormat?: GPUIndexFormat
   /** index buffer array */
@@ -124,12 +124,23 @@ export class IndexedGeometry extends Geometry {
    * Set our {@link indexBuffer}
    * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
    */
-  setIndexBuffer({ bufferFormat = 'uint32', array = new Uint32Array(0) }: IndexedGeometryIndexBufferOptions) {
+  setIndexBuffer({
+    bufferFormat = 'uint32',
+    array = new Uint32Array(0),
+    buffer = new Buffer(),
+    bufferOffset = 0,
+    bufferSize = null,
+  }: IndexedGeometryIndexBufferOptions) {
     this.indexBuffer = {
       array,
       bufferFormat,
       bufferLength: array.length,
-      buffer: new Buffer(),
+      buffer,
+      bufferOffset,
+      bufferSize:
+        bufferSize !== null
+          ? bufferSize
+          : array.length * (array.constructor as TypedArrayConstructor).BYTES_PER_ELEMENT,
     }
   }
 
@@ -140,14 +151,17 @@ export class IndexedGeometry extends Geometry {
    * @param parameters.label - label to use for the vertex buffers.
    */
   createBuffers({ renderer, label = this.type }: { renderer: Renderer; label?: string }) {
-    this.indexBuffer.buffer.createBuffer(renderer, {
-      label: label + ': index buffer',
-      size: this.indexBuffer.array.byteLength,
-      usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.INDEX : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-      mappedAtCreation: this.options.mapBuffersAtCreation,
-    })
+    if(!this.indexBuffer.buffer.GPUBuffer) {
+      this.indexBuffer.buffer.createBuffer(renderer, {
+        label: label + ': index buffer',
+        size: this.indexBuffer.array.byteLength,
+        usage: this.options.mapBuffersAtCreation ? ['index'] : ['copyDst', 'index'],
+        mappedAtCreation: this.options.mapBuffersAtCreation,
+      })
 
-    this.uploadBuffer(renderer, this.indexBuffer)
+      this.uploadBuffer(renderer, this.indexBuffer)
+    }
+
 
     this.indexBuffer.buffer.consumers.add(this.uuid)
 
@@ -164,7 +178,12 @@ export class IndexedGeometry extends Geometry {
   setGeometryBuffers(pass: GPURenderPassEncoder) {
     super.setGeometryBuffers(pass)
 
-    pass.setIndexBuffer(this.indexBuffer.buffer.GPUBuffer, this.indexBuffer.bufferFormat)
+    pass.setIndexBuffer(
+      this.indexBuffer.buffer.GPUBuffer,
+      this.indexBuffer.bufferFormat,
+      this.indexBuffer.bufferOffset,
+      this.indexBuffer.bufferSize
+    )
   }
 
   /**

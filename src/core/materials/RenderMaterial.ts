@@ -12,6 +12,9 @@ import {
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { throwWarning } from '../../utils/utils'
 import { compareRenderingOptions } from './utils'
+import default_projected_vsWgsl from '../shaders/chunks/default_projected_vs.wgsl'
+import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
+import default_fsWgsl from '../shaders/chunks/default_fs.wgsl'
 
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
@@ -24,7 +27,7 @@ import { compareRenderingOptions } from './utils'
  */
 export class RenderMaterial extends Material {
   /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial} */
-  pipelineEntry: RenderPipelineEntry
+  pipelineEntry: RenderPipelineEntry | null
   /** Mandatory {@link RenderMaterialAttributes | geometry attributes} to pass to the {@link RenderPipelineEntry | render pipeline entry} */
   attributes: RenderMaterialAttributes | null
   /** Options used to create this {@link RenderMaterial} */
@@ -43,20 +46,34 @@ export class RenderMaterial extends Material {
 
     isRenderer(renderer, type)
 
+    if (!parameters.shaders) {
+      parameters.shaders = {}
+    }
+
+    if (!parameters.shaders?.vertex) {
+      parameters.shaders.vertex = {
+        code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+        entryPoint: 'main',
+      }
+    }
+
+    if (!parameters.shaders.vertex.entryPoint) {
+      parameters.shaders.vertex.entryPoint = 'main'
+    }
+
+    if (parameters.shaders.fragment === undefined) {
+      ;(parameters.shaders.fragment as ShaderOptions) = {
+        entryPoint: 'main',
+        code: default_fsWgsl,
+      }
+    }
+
     super(renderer, parameters)
 
     this.type = type
     this.renderer = renderer
 
     const { shaders } = parameters
-
-    if (!shaders.vertex.entryPoint) {
-      shaders.vertex.entryPoint = 'main'
-    }
-
-    if (shaders.fragment && !(shaders.fragment as ShaderOptions).entryPoint) {
-      ;(shaders.fragment as ShaderOptions).entryPoint = 'main'
-    }
 
     // rendering options
     const {
@@ -104,22 +121,21 @@ export class RenderMaterial extends Material {
       },
     } as RenderMaterialOptions
 
+    this.attributes = null
+    // will be set at render if needed
+    this.pipelineEntry = null
+  }
+
+  /**
+   * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
+   */
+  setPipelineEntry() {
     this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
       renderer: this.renderer,
       label: this.options.label + ' render pipeline',
       shaders: this.options.shaders,
       useAsync: this.options.useAsyncPipeline,
       rendering: this.options.rendering,
-    })
-
-    this.attributes = null
-  }
-
-  /**
-   * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry}
-   */
-  setPipelineEntryProperties() {
-    this.pipelineEntry.setPipelineEntryProperties({
       attributes: this.attributes,
       bindGroups: this.bindGroups,
     })
@@ -140,8 +156,11 @@ export class RenderMaterial extends Material {
   async compileMaterial() {
     super.compileMaterial()
 
-    if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
-      this.setPipelineEntryProperties()
+    if (this.attributes && !this.pipelineEntry) {
+      this.setPipelineEntry()
+    }
+
+    if (this.pipelineEntry && this.pipelineEntry.canCompile) {
       await this.compilePipelineEntry()
     }
   }
@@ -153,28 +172,54 @@ export class RenderMaterial extends Material {
   setRenderingOptions(renderingOptions: Partial<RenderMaterialRenderingOptions> = {}) {
     const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering)
 
+    const oldRenderingOptions = { ...this.options.rendering }
+
+    // apply new options
     this.options.rendering = { ...this.options.rendering, ...renderingOptions }
 
     if (this.pipelineEntry) {
-      this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering }
-
       if (this.pipelineEntry.ready && newProperties.length) {
-        throwWarning(
-          `${
-            this.options.label
-          }: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties
-            .map(
-              (key) =>
-                `"${key}": ${
-                  Array.isArray(renderingOptions[key])
-                    ? (renderingOptions[key] as []).map((optKey) => `${JSON.stringify(optKey)}`).join(', ')
-                    : renderingOptions[key]
-                }`
-            )
-            .join(', ')} }`
-        )
+        if (!this.renderer.production) {
+          const oldProps = newProperties.map((key) => {
+            return {
+              [key]: Array.isArray(oldRenderingOptions[key])
+                ? (oldRenderingOptions[key] as []).map((optKey) => optKey)
+                : oldRenderingOptions[key],
+            }
+          })
 
-        this.pipelineEntry.flushPipelineEntry(this.bindGroups)
+          const newProps = newProperties.map((key) => {
+            return {
+              [key]: Array.isArray(renderingOptions[key])
+                ? (renderingOptions[key] as []).map((optKey) => optKey)
+                : renderingOptions[key],
+            }
+          })
+
+          throwWarning(
+            `${
+              this.options.label
+            }: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(
+              oldProps.reduce((acc, v) => {
+                return { ...acc, ...v }
+              }, {}),
+              null,
+              4
+            )}\n\n--------\n\nNew rendering options: ${JSON.stringify(
+              newProps.reduce((acc, v) => {
+                return { ...acc, ...v }
+              }, {}),
+              null,
+              4
+            )}`
+          )
+        }
+
+        // recreate the pipeline entry totally
+        // if we're lucky we might get one from the cache
+        this.setPipelineEntry()
+      } else {
+        this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering }
       }
     }
   }
@@ -189,6 +234,7 @@ export class RenderMaterial extends Material {
     this.attributes = {
       wgslStructFragment: geometry.wgslStructFragment,
       vertexBuffers: geometry.vertexBuffers,
+      layoutCacheKey: geometry.layoutCacheKey,
     }
   }
 
@@ -199,34 +245,11 @@ export class RenderMaterial extends Material {
    */
   createBindGroups() {
     // camera first!
-    // if ((this.renderer as CameraRenderer).cameraBindGroup && this.options.rendering.useProjection) {
-    //   this.bindGroups.push((this.renderer as CameraRenderer).cameraBindGroup)
-    //   (this.renderer as CameraRenderer).cameraBindGroup.addConsumer(this.uuid)
-    // }
-    //
-    // super.createBindGroups()
-
-    // TODO! need to chose whether we should add the camera bind group here
-    // in such case we need to find a way not to bind it inside the render call
-    // because it is already bound by the scene class at each render to avoid extra WebGPU commands
-    const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0
-
-    // textures first
-    if (this.texturesBindGroup.shouldCreateBindGroup) {
-      this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex) // bindGroup 0 is our renderer camera
-      this.texturesBindGroup.createBindGroup()
-
-      this.bindGroups.push(this.texturesBindGroup)
+    if ('cameraBindGroup' in this.renderer && this.options.rendering.useProjection) {
+      this.bindGroups.push(this.renderer.cameraBindGroup)
+      this.renderer.cameraBindGroup.consumers.add(this.uuid)
     }
 
-    // then uniforms
-    for (const bindGroup of this.inputsBindGroups) {
-      if (bindGroup.shouldCreateBindGroup) {
-        bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex)
-        bindGroup.createBindGroup()
-
-        this.bindGroups.push(bindGroup)
-      }
-    }
+    super.createBindGroups()
   }
 }

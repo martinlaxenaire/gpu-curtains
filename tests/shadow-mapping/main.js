@@ -6,10 +6,11 @@ window.addEventListener('load', async () => {
     PlaneGeometry,
     GPUCameraRenderer,
     GPUDeviceManager,
+    OrbitControls,
     RenderMaterial,
     Mesh,
     SphereGeometry,
-    RenderTexture,
+    Texture,
     Vec3,
     RenderTarget,
     Sampler,
@@ -36,19 +37,25 @@ window.addEventListener('load', async () => {
   // get the camera
   const { scene, camera } = gpuCameraRenderer
 
-  const cameraPivot = new Object3D()
-  cameraPivot.parent = scene
+  // const cameraPivot = new Object3D()
+  // cameraPivot.parent = scene
 
   camera.position.y = 10
   camera.position.z = 20
 
   camera.lookAt()
 
-  camera.parent = cameraPivot
+  //camera.parent = cameraPivot
+
+  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  orbitControls.maxOrbit.x = Math.PI * 0.15
+  orbitControls.zoomStep = 0.022
+  orbitControls.minZoom = -5
+  orbitControls.maxZoom = 15
 
   // render our scene manually
   const animate = () => {
-    cameraPivot.rotation.y += 0.005
+    //cameraPivot.rotation.y += 0.005
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
@@ -97,10 +104,10 @@ window.addEventListener('load', async () => {
   const shadowDepthSampleCount = 1
   const shadowMapSize = 1024
 
-  const shadowDepthTexture = new RenderTexture(gpuCameraRenderer, {
+  const shadowDepthTexture = new Texture(gpuCameraRenderer, {
     label: 'Shadow depth texture',
     name: 'shadowDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: shadowMapTextureFormat,
     sampleCount: shadowDepthSampleCount,
     fixedSize: {
@@ -236,7 +243,7 @@ window.addEventListener('load', async () => {
   const sphere = new Mesh(gpuCameraRenderer, {
     label: 'Sphere',
     geometry: sphereGeometry,
-    renderTextures: [shadowDepthTexture],
+    textures: [shadowDepthTexture],
     samplers: [lessCompareSampler],
     shaders: {
       vertex: {
@@ -292,9 +299,10 @@ window.addEventListener('load', async () => {
   const floor = new Mesh(gpuCameraRenderer, {
     label: 'Floor',
     geometry: planeGeometry,
-    renderTextures: [shadowDepthTexture],
+    textures: [shadowDepthTexture],
     samplers: [lessCompareSampler],
-    frustumCulled: false, // always draw the walls
+    frustumCulled: false, // always draw
+    cullMode: 'none',
     shaders: {
       vertex: {
         code: meshVs,
@@ -344,7 +352,7 @@ window.addEventListener('load', async () => {
   gpuCameraRenderer.onBeforeRenderScene.add((commandEncoder) => {
     // assign depth material to meshes
     depthMeshes.forEach((mesh) => {
-      mesh.material = mesh.userData.depthMaterial
+      mesh.useMaterial(mesh.userData.depthMaterial)
     })
 
     // reset renderer current pipeline
@@ -352,8 +360,6 @@ window.addEventListener('load', async () => {
 
     // begin depth pass
     const depthPass = commandEncoder.beginRenderPass(depthTarget.renderPass.descriptor)
-    // set camera bind group
-    depthPass.setBindGroup(gpuCameraRenderer.cameraBindGroup.index, gpuCameraRenderer.cameraBindGroup.bindGroup)
 
     // render meshes with their depth material
     depthMeshes.forEach((mesh) => {
@@ -365,8 +371,11 @@ window.addEventListener('load', async () => {
     // reset depth meshes material to use the original
     // so the scene renders them normally
     depthMeshes.forEach((mesh) => {
-      mesh.material = mesh.userData.originalMaterial
+      mesh.useMaterial(mesh.userData.originalMaterial)
     })
+
+    // reset renderer current pipeline again
+    gpuCameraRenderer.pipelineManager.resetCurrentPipeline()
   })
 
   // DEBUG DEPTH
@@ -442,10 +451,10 @@ window.addEventListener('load', async () => {
     },
   })
 
-  const depthTexture = debugPlane.createRenderTexture({
+  const depthTexture = debugPlane.createTexture({
     label: 'Debug depth texture',
     name: 'depthTexture',
-    usage: 'depth',
+    type: 'depth',
     fromTexture: shadowDepthTexture,
   })
 

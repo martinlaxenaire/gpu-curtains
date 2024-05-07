@@ -5,10 +5,10 @@ import { Sampler } from '../samplers/Sampler'
 import { AllowedPipelineEntries } from '../pipelines/PipelineManager'
 import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding'
 import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups'
-import { Texture } from '../textures/Texture'
+import { DOMTexture } from '../textures/DOMTexture'
 import { FullShadersType, MaterialOptions, MaterialParams, ShaderOptions } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { RenderTexture } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
 import { Binding } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { BufferElement } from '../bindings/bufferElements/BufferElement'
@@ -66,10 +66,10 @@ export class Material {
   /** Map of {@link Binding | bindings} created using the {@link types/BindGroups.BindGroupInputs#uniforms | uniforms} and {@link types/BindGroups.BindGroupInputs#storages | storages} parameters when instancing this {@link Material} */
   inputsBindings: Map<string, BindGroupBindingElement>
 
+  /** Array of {@link DOMTexture} handled by this {@link Material} */
+  domTextures: DOMTexture[]
   /** Array of {@link Texture} handled by this {@link Material} */
   textures: Texture[]
-  /** Array of {@link RenderTexture} handled by this {@link Material} */
-  renderTextures: RenderTexture[]
   /** Array of {@link Sampler} handled by this {@link Material} */
   samplers: Sampler[]
 
@@ -100,7 +100,7 @@ export class Material {
       bindGroups,
       samplers,
       textures,
-      renderTextures,
+      domTextures,
     } = parameters
 
     this.options = {
@@ -113,7 +113,7 @@ export class Material {
       ...(bindGroups !== undefined && { bindGroups }),
       ...(samplers !== undefined && { samplers }),
       ...(textures !== undefined && { textures }),
-      ...(renderTextures !== undefined && { renderTextures }),
+      ...(domTextures !== undefined && { domTextures }),
     }
 
     this.bindGroups = []
@@ -152,12 +152,12 @@ export class Material {
    */
   loseContext() {
     // start with the textures
-    for (const texture of this.textures) {
+    for (const texture of this.domTextures) {
       texture.texture = null
       texture.sourceUploaded = false
     }
 
-    for (const texture of this.renderTextures) {
+    for (const texture of this.textures) {
       texture.texture = null
     }
 
@@ -171,7 +171,7 @@ export class Material {
   }
 
   /**
-   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
    */
   restoreContext() {
     // start with the samplers and textures
@@ -182,25 +182,18 @@ export class Material {
     }
 
     // recreate the textures and resize them
-    for (const texture of this.textures) {
+    for (const texture of this.domTextures) {
       texture.createTexture()
       texture.resize()
     }
 
-    for (const texture of this.renderTextures) {
+    for (const texture of this.textures) {
       texture.resize(texture.size)
     }
 
     // now the bind groups
     ;[...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
-      if (bindGroup.shouldCreateBindGroup) {
-        bindGroup.createBindGroup()
-      }
-
-      // finally re-write all our buffers
-      for (const bufferBinding of bindGroup.bufferBindings) {
-        bufferBinding.shouldUpdate = true
-      }
+      bindGroup.restoreContext()
     })
   }
 
@@ -346,10 +339,10 @@ export class Material {
 
         // also add the textures?
         for (const texture of bindGroup.textures) {
-          if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+          if (texture instanceof DOMTexture && !this.domTextures.find((t) => t.uuid === texture.uuid)) {
+            this.domTextures.push(texture)
+          } else if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
             this.textures.push(texture)
-          } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
-            this.renderTextures.push(texture)
           }
         }
       }
@@ -490,8 +483,8 @@ export class Material {
    * Prepare our textures array and set the {@link TextureBindGroup}
    */
   setTextures() {
+    this.domTextures = []
     this.textures = []
-    this.renderTextures = []
     this.texturesBindGroups.push(
       new TextureBindGroup(this.renderer, {
         label: this.options.label + ': Textures bind group',
@@ -500,11 +493,11 @@ export class Material {
 
     this.texturesBindGroup.consumers.add(this.uuid)
 
-    this.options.textures?.forEach((texture) => {
+    this.options.domTextures?.forEach((texture) => {
       this.addTexture(texture)
     })
 
-    this.options.renderTextures?.forEach((texture) => {
+    this.options.textures?.forEach((texture) => {
       this.addTexture(texture)
     })
   }
@@ -513,11 +506,11 @@ export class Material {
    * Add a texture to our array, and add it to the textures bind group only if used in the shaders (avoid binding useless data)
    * @param texture - texture to add
    */
-  addTexture(texture: Texture | RenderTexture) {
-    if (texture instanceof Texture) {
+  addTexture(texture: DOMTexture | Texture) {
+    if (texture instanceof DOMTexture) {
+      this.domTextures.push(texture)
+    } else if (texture instanceof Texture) {
       this.textures.push(texture)
-    } else if (texture instanceof RenderTexture) {
-      this.renderTextures.push(texture)
     }
 
     // is it used in our shaders?
@@ -532,12 +525,12 @@ export class Material {
   }
 
   /**
-   * Destroy a {@link Texture} or {@link RenderTexture}, only if it is not used by another object or cached.
-   * @param texture - {@link Texture} or {@link RenderTexture} to eventually destroy
+   * Destroy a {@link DOMTexture} or {@link Texture}, only if it is not used by another object or cached.
+   * @param texture - {@link DOMTexture} or {@link Texture} to eventually destroy
    */
-  destroyTexture(texture: Texture | RenderTexture) {
+  destroyTexture(texture: DOMTexture | Texture) {
     // do not destroy a texture that must stay in cache
-    if ((texture as Texture).options.cache) return
+    if ((texture as DOMTexture).options.cache) return
 
     // check if this texture is used by another object before actually destroying it
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture)
@@ -554,10 +547,10 @@ export class Material {
    * Destroy all the Material textures
    */
   destroyTextures() {
+    this.domTextures?.forEach((texture) => this.destroyTexture(texture))
     this.textures?.forEach((texture) => this.destroyTexture(texture))
-    this.renderTextures?.forEach((texture) => this.destroyTexture(texture))
+    this.domTextures = []
     this.textures = []
-    this.renderTextures = []
   }
 
   /**
@@ -660,7 +653,7 @@ export class Material {
   /**
    * Called before rendering the Material.
    * First, check if we need to create our bind groups or pipeline
-   * Then render the {@link textures}
+   * Then render the {@link domTextures}
    * Finally updates all the {@link bindGroups | bind groups}
    */
   onBeforeRender() {
@@ -668,7 +661,7 @@ export class Material {
     this.compileMaterial()
 
     // first what needs to be done for all textures
-    for (const texture of this.textures) {
+    for (const texture of this.domTextures) {
       texture.render()
     }
 
@@ -685,6 +678,14 @@ export class Material {
   }
 
   /**
+   * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
+   * @param pass - current pass encoder
+   */
+  setActiveBindGroups(pass: GPURenderPassEncoder | GPUComputePassEncoder) {
+    this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups)
+  }
+
+  /**
    * Render the material if it is ready:
    * Set the current pipeline and set the bind groups
    * @param pass - current pass encoder
@@ -698,10 +699,8 @@ export class Material {
     // set current pipeline
     this.setPipeline(pass)
 
-    // set bind groups
-    for (const bindGroup of this.bindGroups) {
-      pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
-    }
+    // only set the bind groups that need to be set
+    this.setActiveBindGroups(pass)
   }
 
   /**

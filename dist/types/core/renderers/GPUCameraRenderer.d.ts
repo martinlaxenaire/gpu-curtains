@@ -1,5 +1,5 @@
 /// <reference types="dist" />
-import { GPURenderer, GPURendererParams, RenderedMesh, SceneObject } from './GPURenderer';
+import { GPURenderer, GPURendererParams, SceneObject } from './GPURenderer';
 import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera';
 import { BufferBinding } from '../bindings/BufferBinding';
 import { BindGroup } from '../bindGroups/BindGroup';
@@ -53,11 +53,11 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     loseContext(): void;
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} should be restored.
-     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
+     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
      * @async
      */
-    restoreContext(): Promise<void>;
+    restoreContext(): void;
     /**
      * Set the {@link camera}
      * @param cameraParameters - {@link CameraBasePerspectiveOptions | parameters} used to create the {@link camera}
@@ -99,12 +99,6 @@ export declare class GPUCameraRenderer extends GPURenderer {
      * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
      */
     onResize(): void;
-    /**
-     * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - {@link RenderedMesh | mesh} to render
-     */
-    renderSingleMesh(commandEncoder: GPUCommandEncoder, mesh: RenderedMesh): void;
     /**
      * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}

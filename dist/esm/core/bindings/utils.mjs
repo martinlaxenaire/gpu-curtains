@@ -1,3 +1,13 @@
+const bindingVisibilities = /* @__PURE__ */ new Map([
+  ["vertex", GPUShaderStage.VERTEX],
+  ["fragment", GPUShaderStage.FRAGMENT],
+  ["compute", GPUShaderStage.COMPUTE]
+]);
+const getBindingVisibility = (visibilities = []) => {
+  return visibilities.reduce((acc, v) => {
+    return acc | bindingVisibilities.get(v);
+  }, 0);
+};
 const bufferLayouts = {
   i32: { numElements: 1, align: 4, size: 4, type: "i32", View: Int32Array },
   u32: { numElements: 1, align: 4, size: 4, type: "u32", View: Uint32Array },
@@ -114,4 +124,4 @@ const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
   })();
 };
 
-export { getBindGroupLayoutBindingType, getBindGroupLayoutTextureBindingCacheKey, getBindGroupLayoutTextureBindingType, getBindingWGSLVarType, getBufferLayout, getTextureBindingWGSLVarType };
+export { getBindGroupLayoutBindingType, getBindGroupLayoutTextureBindingCacheKey, getBindGroupLayoutTextureBindingType, getBindingVisibility, getBindingWGSLVarType, getBufferLayout, getTextureBindingWGSLVarType };

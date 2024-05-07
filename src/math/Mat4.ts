@@ -887,9 +887,6 @@ export class Mat4 {
    * @returns - the camera perspective {@link Mat4} matrix.
    */
   makePerspective({ fov, aspect, near, far }: { fov: number; aspect: number; near: number; far: number }): Mat4 {
-    // TODO handle z from 0 to 1 like https://github.com/greggman/wgpu-matrix/blob/main/src/mat4-impl.ts#L756 does?
-    // It would be aligned with the WebGPU specs but it breaks the Camera screenRatio and DOMObject3D position calcs
-
     const top = near * Math.tan((Math.PI / 180) * 0.5 * fov)
     const height = 2 * top
     const width = aspect * height

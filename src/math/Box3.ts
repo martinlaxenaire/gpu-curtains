@@ -37,6 +37,13 @@ export class Box3 {
   }
 
   /**
+   * Check whether the {@link Box3} min and max values have actually been set
+   */
+  isEmpty() {
+    return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z
+  }
+
+  /**
    * Clone this {@link Box3}
    * @returns - cloned {@link Box3}
    */
@@ -46,18 +53,29 @@ export class Box3 {
 
   /**
    * Get the {@link Box3} center
+   * @readonly
    * @returns - {@link Vec3 | center vector} of the {@link Box3}
    */
-  getCenter(): Vec3 {
+  get center(): Vec3 {
     return this.max.clone().add(this.min).multiplyScalar(0.5)
   }
 
   /**
    * Get the {@link Box3} size
+   * @readonly
    * @returns - {@link Vec3 | size vector} of the {@link Box3}
    */
-  getSize(): Vec3 {
+  get size(): Vec3 {
     return this.max.clone().sub(this.min)
+  }
+
+  /**
+   * Get the {@link Box3} radius
+   * @readonly
+   * @returns - radius of the {@link Box3}
+   */
+  get radius(): number {
+    return this.max.distance(this.min) * 0.5
   }
 
   /**
@@ -67,6 +85,8 @@ export class Box3 {
    * @returns - this {@link Box3} after {@link Mat4 | matrix} application
    */
   applyMat4(matrix: Mat4 = new Mat4()): Box3 {
+    if (this.isEmpty()) return this
+
     const corners: Vec3[] = []
 
     // remember we're essentially dealing with plane geometries

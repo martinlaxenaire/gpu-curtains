@@ -56,23 +56,29 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     this._sourcesReady = value;
   }
   /**
-   * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+   * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
    */
-  addToScene() {
-    super.addToScene();
-    this.renderer.domMeshes.push(this);
+  addToScene(addToRenderer = false) {
+    super.addToScene(addToRenderer);
+    if (addToRenderer) {
+      this.renderer.domMeshes.push(this);
+    }
   }
   /**
-   * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+   * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
    */
-  removeFromScene() {
-    super.removeFromScene();
-    this.renderer.domMeshes = this.renderer.domMeshes.filter(
-      (m) => m.uuid !== this.uuid
-    );
+  removeFromScene(removeFromRenderer = false) {
+    super.removeFromScene(removeFromRenderer);
+    if (removeFromRenderer) {
+      this.renderer.domMeshes = this.renderer.domMeshes.filter(
+        (m) => m.uuid !== this.uuid
+      );
+    }
   }
   /**
-   * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
+   * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}
    */
   setInitSources() {
     let loaderSize = 0;
@@ -94,24 +100,24 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       }
       if (images.length) {
         images.forEach((image) => {
-          const texture = this.createTexture({
-            name: image.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+          const texture = this.createDOMTexture({
+            name: image.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src);
         });
       }
       if (videos.length) {
         videos.forEach((video) => {
-          const texture = this.createTexture({
-            name: video.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+          const texture = this.createDOMTexture({
+            name: video.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video);
         });
       }
       if (canvases.length) {
         canvases.forEach((canvas) => {
-          const texture = this.createTexture({
-            name: canvas.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+          const texture = this.createDOMTexture({
+            name: canvas.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
           });
           texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas);
         });
@@ -155,8 +161,8 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
   }
   /* EVENTS */
   /**
-   * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
-   * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
+   * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
+   * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
    * @returns - our {@link DOMMesh}
    */
   onLoading(callback) {

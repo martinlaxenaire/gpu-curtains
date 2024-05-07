@@ -1,0 +1,56 @@
+// texture bitwise flags
+import { TextureBindingType } from '../bindings/Binding'
+
+/**  Defines all kinds of allowed texture usages as camel case strings. */
+export type TextureUsageKeys = 'copySrc' | 'copyDst' | 'renderAttachment' | 'storageBinding' | 'textureBinding'
+
+/**
+ * Map {@link TextureUsageKeys | texture usage names} with actual {@link GPUTextureUsageFlags | texture usage bitwise flags}.
+ */
+const textureUsages: Map<TextureUsageKeys, GPUTextureUsageFlags> = new Map([
+  ['copySrc', GPUTextureUsage.COPY_SRC],
+  ['copyDst', GPUTextureUsage.COPY_DST],
+  ['renderAttachment', GPUTextureUsage.RENDER_ATTACHMENT],
+  ['storageBinding', GPUTextureUsage.STORAGE_BINDING],
+  ['textureBinding', GPUTextureUsage.TEXTURE_BINDING],
+])
+
+/**
+ * Get the corresponding {@link GPUTextureUsageFlags | texture usage bitwise flags} based on an array of {@link TextureUsageKeys | texture usage names}.
+ * @param usages - array of {@link TextureUsageKeys | texture usage names}.
+ * @returns - corresponding {@link GPUTextureUsageFlags | texture usage bitwise flags}.
+ */
+export const getTextureUsages = (usages: TextureUsageKeys[] = []): GPUTextureUsageFlags => {
+  return usages.reduce((acc, v) => {
+    return acc | textureUsages.get(v)
+  }, 0)
+}
+
+/**
+ * Get the corresponding {@link GPUTextureUsageFlags | texture usage bitwise flags} based on an array of {@link TextureUsageKeys | texture usage names} if specified. If not, will try to fall back to a usage based on the {@link TextureBindingType | texture type}.
+ * @param usages - array of {@link TextureUsageKeys | texture usage names}.
+ * @param textureType - the {@link TextureBindingType | texture type}.
+ * @returns - corresponding {@link GPUTextureUsageFlags | texture usage bitwise flags}.
+ */
+export const getDefaultTextureUsage = (usages: TextureUsageKeys[] = [], textureType: TextureBindingType) => {
+  if (usages.length) {
+    return getTextureUsages(usages)
+  }
+
+  return textureType !== 'storage'
+    ? GPUTextureUsage.TEXTURE_BINDING |
+        GPUTextureUsage.COPY_SRC |
+        GPUTextureUsage.COPY_DST |
+        GPUTextureUsage.RENDER_ATTACHMENT
+    : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+}
+
+/**
+ * Get the number of mip levels create based on {@link types/Textures.TextureSize | size}
+ * @param sizes - Array containing our texture width, height and depth
+ * @returns - number of mip levels
+ */
+export const getNumMipLevels = (...sizes: number[]): number => {
+  const maxSize = Math.max(...sizes)
+  return (1 + Math.log2(maxSize)) | 0
+}

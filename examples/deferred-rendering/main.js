@@ -9,7 +9,7 @@ import {
   Vec2,
   Vec3,
   RenderTarget,
-  RenderTexture,
+  Texture,
   Object3D,
 } from '../../dist/esm/index.mjs'
 
@@ -67,10 +67,10 @@ window.addEventListener('load', async () => {
   const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
 
   // Geometry buffer
-  const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
+  const gBufferDepthTexture = new Texture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
     name: 'gBufferDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: 'depth24plus',
     sampleCount,
   })
@@ -274,14 +274,14 @@ window.addEventListener('load', async () => {
   })
 
   // create 2 textures based on our GBuffer MRT output
-  const gBufferAlbedoTexture = new RenderTexture(gpuCameraRenderer, {
+  const gBufferAlbedoTexture = new Texture(gpuCameraRenderer, {
     label: 'GBuffer albedo texture',
     name: 'gBufferAlbedoTexture',
     format: writeGBufferRenderTarget.outputTextures[0].format,
     fromTexture: writeGBufferRenderTarget.outputTextures[0],
   })
 
-  const gBufferNormalTexture = new RenderTexture(gpuCameraRenderer, {
+  const gBufferNormalTexture = new Texture(gpuCameraRenderer, {
     label: 'GBuffer normal texture',
     name: 'gBufferNormalTexture',
     format: writeGBufferRenderTarget.outputTextures[1].format,
@@ -400,7 +400,7 @@ window.addEventListener('load', async () => {
         code: deferredPassFs,
       },
     },
-    renderTextures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
+    textures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
     uniforms: {
       camera: {
         struct: {
@@ -503,7 +503,7 @@ window.addEventListener('load', async () => {
         code: debugPassFs,
       },
     },
-    renderTextures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
+    textures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
     visible: false,
   })
 

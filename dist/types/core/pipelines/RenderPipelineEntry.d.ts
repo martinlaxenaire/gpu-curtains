@@ -1,7 +1,6 @@
 /// <reference types="dist" />
 import { PipelineEntry } from './PipelineEntry';
 import { PipelineEntryShaders, RenderPipelineEntryOptions, RenderPipelineEntryParams, RenderPipelineEntryPropertiesParams } from '../../types/PipelineEntries';
-import { AllowedBindGroups } from '../../types/BindGroups';
 import { RenderMaterialAttributes } from '../../types/Materials';
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
@@ -136,11 +135,6 @@ export declare class RenderPipelineEntry extends PipelineEntry {
      * @param parameters - {@link RenderPipelineEntryParams | parameters} used to create this {@link RenderPipelineEntry}
      */
     constructor(parameters: RenderPipelineEntryParams);
-    /**
-     * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} if needed and set them
-     * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
-     */
-    setPipelineEntryBindGroups(bindGroups: AllowedBindGroups[]): void;
     /**
      * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
      * @param parameters - the {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} and {@link core/materials/RenderMaterial.RenderMaterial#attributes | attributes} to use

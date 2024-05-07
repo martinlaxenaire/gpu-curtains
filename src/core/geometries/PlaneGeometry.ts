@@ -18,13 +18,13 @@ export interface PlaneGeometryParams extends GeometryBaseParams {
  * This is how it will look for a 3x2 quad. Indexing will take care of drawing the right vertices in the right order.
  *
  * <pre>
- *  0---1---2---3
+ *  3---2---1---0
  *  |  /|  /|  /|
  *  |/  |/  |/  |
- *  4---5---6---7
+ *  7---6---5---4
  *  |  /|  /|  /|
  *  |/  |/  |/  |
- *  8---9---10--11
+ *  11--10--9---8
  * </pre>
  *
  * @example
@@ -58,8 +58,7 @@ export class PlaneGeometry extends IndexedGeometry {
     vertexBuffers = [],
     topology,
   }: PlaneGeometryParams = {}) {
-    // plane geometries vertices are defined in the clockwise order
-    super({ verticesOrder: 'cw', topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true })
+    super({ verticesOrder: 'ccw', topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true })
 
     this.type = 'PlaneGeometry'
 
@@ -152,22 +151,23 @@ export class PlaneGeometry extends IndexedGeometry {
 
     // this is how it will look for a 3x2 quad
     // indexing will take care of drawing the right vertices at the right time
-    // 0---1---2---3
+    // remember we're using counter clockwise ordering
+    // 3---2---1---0
     // | //| //| //|
     // |// |// |// |
-    // 4---5---6---7
+    // 7---6---5---4
     // | //| //| //|
     // |// |// |// |
-    // 8---9---10--11
+    // 11--10--9---8
 
     for (let y = 0; y <= this.definition.height; y++) {
       for (let x = 0; x <= this.definition.width; x++) {
         // uv
-        uv.array[uvOffset++] = x / this.definition.width
+        uv.array[uvOffset++] = 1 - x / this.definition.width
         uv.array[uvOffset++] = 1 - y / this.definition.height
 
         // vertex position
-        position.array[positionOffset++] = (x * 2) / this.definition.width - 1
+        position.array[positionOffset++] = 1 - (x * 2) / this.definition.width
         position.array[positionOffset++] = (y * 2) / this.definition.height - 1
         position.array[positionOffset++] = 0
 

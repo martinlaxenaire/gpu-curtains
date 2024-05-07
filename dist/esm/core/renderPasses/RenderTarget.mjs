@@ -1,6 +1,6 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { RenderPass } from './RenderPass.mjs';
-import { RenderTexture } from '../textures/RenderTexture.mjs';
+import { Texture } from '../textures/Texture.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
 
 var __accessCheck = (obj, member, msg) => {
@@ -55,11 +55,12 @@ class RenderTarget {
       ...renderPassParams
     });
     if (renderPassParams.useColorAttachments !== false) {
-      this.renderTexture = new RenderTexture(this.renderer, {
+      this.renderTexture = new Texture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
         name: "renderTexture",
         format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
-        ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
+        ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
+        usage: ["copySrc", "renderAttachment", "textureBinding"]
       });
     }
     this.addToScene();

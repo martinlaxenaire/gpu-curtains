@@ -31,7 +31,7 @@ class GPUCameraRenderer extends GPURenderer {
       renderPass
     });
     this.type = "GPUCameraRenderer";
-    camera = { ...{ fov: 50, near: 0.1, far: 150 }, ...camera };
+    camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
     this.options = {
       ...this.options,
       camera
@@ -48,13 +48,14 @@ class GPUCameraRenderer extends GPURenderer {
     this.cameraBindGroup.loseContext();
   }
   /**
-   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} should be restored.
-   * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
+   * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
    * @async
    */
-  async restoreContext() {
-    this.cameraBufferBinding.shouldUpdate = true;
-    return super.restoreContext();
+  restoreContext() {
+    super.restoreContext();
+    this.cameraBindGroup?.restoreContext();
+    this.updateCameraBindings();
   }
   /**
    * Set the {@link camera}
@@ -93,7 +94,7 @@ class GPUCameraRenderer extends GPURenderer {
     this.cameraBufferBinding = new BufferBinding({
       label: "Camera",
       name: "camera",
-      visibility: "vertex",
+      visibility: ["vertex"],
       struct: {
         view: {
           // camera view matrix
@@ -126,7 +127,6 @@ class GPUCameraRenderer extends GPURenderer {
    * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
    */
   updateCameraBindings() {
-    this.cameraBufferBinding?.shouldUpdateBinding("model");
     this.cameraBufferBinding?.shouldUpdateBinding("view");
     this.cameraBufferBinding?.shouldUpdateBinding("projection");
     this.cameraBindGroup?.update();
@@ -175,19 +175,6 @@ class GPUCameraRenderer extends GPURenderer {
     this.setPerspective();
   }
   /* RENDER */
-  /**
-   * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
-   * @param commandEncoder - current {@link GPUCommandEncoder}
-   * @param mesh - {@link RenderedMesh | mesh} to render
-   */
-  renderSingleMesh(commandEncoder, mesh) {
-    const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
-    if (mesh.material.options.rendering.useProjection) {
-      pass.setBindGroup(this.cameraBindGroup.index, this.cameraBindGroup.bindGroup);
-    }
-    mesh.render(pass);
-    pass.end();
-  }
   /**
    * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
    * @param commandEncoder - current {@link GPUCommandEncoder}

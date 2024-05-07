@@ -1,4 +1,12 @@
 /// <reference types="dist" />
+import { BufferUsageKeys } from './utils';
+/**
+ * Parameters used to create a {@link Buffer}.
+ */
+export interface BufferParams extends Partial<Omit<GPUBufferDescriptor, 'usage'>> {
+    /** Allowed usages for the {@link Buffer#GPUBuffer | GPU buffer} as an array of {@link BufferUsageKeys | buffer usages names} */
+    usage?: BufferUsageKeys[];
+}
 /**
  * Used as a wrapper around {@link GPUBuffer}.
  *
@@ -19,7 +27,7 @@ export declare class Buffer {
      * Buffer constructor
      * @param parameters - {@link GPUBufferDescriptor | parameters} used to create our Buffer
      */
-    constructor({ label, size, usage, mappedAtCreation, }?: GPUBufferDescriptor);
+    constructor({ label, size, usage, mappedAtCreation, }?: BufferParams);
     /** Reset the {@link GPUBuffer} value to `null`. */
     reset(): void;
     /** Allow to dynamically set the size of the {@link GPUBuffer}. */
@@ -29,7 +37,7 @@ export declare class Buffer {
      * @param renderer - {@link core/renderers/GPURenderer.GPURenderer | renderer} used to create the {@link GPUBuffer}.
      * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
      */
-    createBuffer(renderer: any, options?: {}): void;
+    createBuffer(renderer: any, options?: BufferParams): void;
     /**
      * Set the {@link GPUBuffer}. This allows to use a {@link Buffer} with a {@link GPUBuffer} created separately.
      * @param GPUBuffer - GPU buffer to use.

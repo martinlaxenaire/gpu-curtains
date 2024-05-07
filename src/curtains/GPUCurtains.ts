@@ -4,14 +4,18 @@ import { resizeManager } from '../utils/ResizeManager'
 import { Vec3 } from '../math/Vec3'
 import { PingPongPlane } from './meshes/PingPongPlane'
 import { ShaderPass } from '../core/renderPasses/ShaderPass'
-import { GPURenderer, GPURendererParams, ProjectedMesh, SceneStackedMesh } from '../core/renderers/GPURenderer'
+import { GPURenderer, GPURendererParams, SceneStackedMesh } from '../core/renderers/GPURenderer'
 import { DOMMesh } from './meshes/DOMMesh'
 import { Plane } from './meshes/Plane'
 import { ComputePass } from '../core/computePasses/ComputePass'
 import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera'
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
-import { GPUDeviceManager, GPUDeviceManagerBaseParams } from '../core/renderers/GPUDeviceManager'
+import {
+  GPUDeviceManager,
+  GPUDeviceManagerBaseParams,
+  GPUDeviceManagerSetupParams,
+} from '../core/renderers/GPUDeviceManager'
 import { Renderer } from '../core/renderers/utils'
 
 /**
@@ -250,10 +254,12 @@ export class GPUCurtains {
   }
 
   /**
-   * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts
+   * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
+   * @async
+   * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
    */
-  async setDevice() {
-    await this.deviceManager.init()
+  async setDevice({ adapter = null, device = null }: GPUDeviceManagerSetupParams = {}) {
+    await this.deviceManager.init({ adapter, device })
   }
 
   /**

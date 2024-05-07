@@ -12,7 +12,8 @@ import {
 } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { TextureBindGroupParams } from './TextureBindGroup'
-import { BindingType } from '../bindings/Binding'
+import { BufferBindingType } from '../bindings/Binding'
+import { BufferUsageKeys } from '../buffers/utils'
 
 /**
  * Used to handle all inputs data sent to the GPU.<br>
@@ -47,13 +48,14 @@ import { BindingType } from '../bindings/Binding'
  *   label: 'My bind group',
  *   uniforms: {
  *     params: {
+ *       visibility: ['fragment'],
  *       struct: {
  *         opacity: {
- *           type: 'f32',
+ *           value: 'f32',
  *           value: 1,
  *         },
  *         mousePosition: {
- *           type: 'vec2f',
+ *           value: 'vec2f',
  *           value: new Vec2(),
  *         },
  *       },
@@ -171,6 +173,7 @@ export class BindGroup {
     bindings.forEach((binding) => {
       if ('buffer' in binding) {
         this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
+        binding.buffer.consumers.add(this.uuid)
       }
     })
 
@@ -192,20 +195,24 @@ export class BindGroup {
    * @returns - a {@link bindings} array
    */
   createInputBindings(
-    bindingType: BindingType = 'uniform',
+    bindingType: BufferBindingType = 'uniform',
     inputs: ReadOnlyInputBindings = {}
   ): BindGroupBindingElement[] {
-    const bindings = [
+    let bindings = [
       ...Object.keys(inputs).map((inputKey) => {
         const binding = inputs[inputKey] as WritableBufferBindingParams
+
+        // bail if no struct
+        if (!binding.struct) return
 
         const bindingParams: WritableBufferBindingParams = {
           label: toKebabCase(binding.label || inputKey),
           name: inputKey,
           bindingType,
-          visibility: binding.access === 'read_write' ? 'compute' : binding.visibility,
+          visibility: binding.access === 'read_write' ? ['compute'] : binding.visibility,
           useStruct: true, // by default
           access: binding.access ?? 'read', // read by default
+          ...(binding.usage && { usage: binding.usage }),
           struct: binding.struct,
           ...(binding.shouldCopyResult !== undefined && { shouldCopyResult: binding.shouldCopyResult }),
         }
@@ -244,6 +251,9 @@ export class BindGroup {
             })
       }),
     ].flat()
+
+    // filter to leave only valid bindings
+    bindings = bindings.filter(Boolean)
 
     bindings.forEach((binding) => {
       this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding)
@@ -361,6 +371,20 @@ export class BindGroup {
   }
 
   /**
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to update our bindings.
+   */
+  restoreContext() {
+    if (this.shouldCreateBindGroup) {
+      this.createBindGroup()
+    }
+
+    // finally re-write all our buffers
+    for (const bufferBinding of this.bufferBindings) {
+      bufferBinding.shouldUpdate = true
+    }
+  }
+
+  /**
    * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
    */
   get bufferBindings(): BindGroupBufferBindingElement[] {
@@ -374,22 +398,18 @@ export class BindGroup {
    * @param binding - the binding element
    */
   createBindingBuffer(binding: BindGroupBufferBindingElement) {
-    // TODO user defined usage?
     // [Kangz](https://github.com/Kangz) said:
     // "In general though COPY_SRC/DST is free (at least in Dawn / Chrome because we add it all the time for our own purpose)."
     binding.buffer.createBuffer(this.renderer, {
       label: this.options.label + ': ' + binding.bindingType + ' buffer from: ' + binding.label,
-      usage:
-        binding.bindingType === 'uniform'
-          ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
-          : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX,
+      usage: [...(['copySrc', 'copyDst', binding.bindingType] as BufferUsageKeys[]), ...binding.options.usage],
     })
 
     if ('resultBuffer' in binding) {
       binding.resultBuffer.createBuffer(this.renderer, {
         label: this.options.label + ': Result buffer from: ' + binding.label,
         size: binding.arrayBuffer.byteLength,
-        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+        usage: ['copyDst', 'mapRead'],
       })
     }
   }

@@ -1,11 +1,13 @@
 /// <reference types="dist" />
-import { Binding, BindingParams } from './Binding';
+import { Binding, BindingParams, SamplerBindingType } from './Binding';
 /** Defines a {@link SamplerBinding} {@link SamplerBinding#resource | resource} */
 export type SamplerBindingResource = GPUSampler | null;
 /**
  * An object defining all possible {@link SamplerBinding} class instancing parameters
  */
 export interface SamplerBindingParams extends BindingParams {
+    /** The binding type of the {@link SamplerBinding} */
+    bindingType?: SamplerBindingType;
     /** {@link SamplerBinding} {@link GPUBindGroup | GPU bind group} resource */
     sampler: SamplerBindingResource;
     /** The bind group layout binding {@link GPUSamplerBindingLayout#type | type} of this {@link GPUSampler | GPU sampler} */
@@ -18,6 +20,8 @@ export interface SamplerBindingParams extends BindingParams {
  * Also create the appropriate WGSL code snippet to add to the shaders.
  */
 export declare class SamplerBinding extends Binding {
+    /** The binding type of the {@link SamplerBinding} */
+    bindingType: SamplerBindingType;
     /** Our {@link SamplerBinding} resource, i.e. a {@link GPUSampler} */
     sampler: SamplerBindingResource;
     /** An array of strings to append to our shaders code declaring all the WGSL variables representing this {@link SamplerBinding} */

@@ -114,7 +114,7 @@ export class TestComputePasses {
     // first our uniform buffer
     const uniformsBufferBinding = new BufferBinding({
       bindingType: 'uniform',
-      visibility: 'compute',
+      visibility: ['compute'],
       name: 'params',
       label: 'SimParams',
       struct: {
@@ -159,7 +159,8 @@ export class TestComputePasses {
       name: 'particlesA',
       bindingType: 'storage',
       access: 'read', // we want a read only buffer
-      visibility: 'compute',
+      usage: ['vertex'], // we're going to use this buffer as a vertex buffer along default usages
+      visibility: ['compute'],
       struct: {
         position: {
           type: 'array<vec2f>',
@@ -178,7 +179,8 @@ export class TestComputePasses {
       name: 'particlesB',
       bindingType: 'storage',
       access: 'read_write', // we want a readable AND writable buffer!
-      visibility: 'compute',
+      usage: ['vertex'], // we're going to use this buffer as a vertex buffer along default usages
+      visibility: ['compute'],
       struct: {
         position: {
           type: 'array<vec2f>',

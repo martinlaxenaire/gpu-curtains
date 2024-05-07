@@ -157,7 +157,7 @@ window.addEventListener('load', async () => {
   scaleFolder.add(plane.scale, 'y', 0.1, 2, 0.1).name('Y')
   scaleFolder.add(plane.scale, 'z', 0.1, 2, 0.1).name('Z')
 
-  const texture = plane.textures[0]
+  const texture = plane.domTextures[0]
 
   const textureFolder = gui.addFolder('Texture')
 

@@ -32,8 +32,8 @@ export { RenderTarget } from './core/renderPasses/RenderTarget'
 export { ShaderPass } from './core/renderPasses/ShaderPass'
 export { Sampler } from './core/samplers/Sampler'
 export { Scene } from './core/scenes/Scene'
-export { RenderTexture } from './core/textures/RenderTexture'
 export { Texture } from './core/textures/Texture'
+export { DOMTexture } from './core/textures/DOMTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
 // curtains
@@ -52,6 +52,7 @@ export { Vec2 } from './math/Vec2'
 export { Vec3 } from './math/Vec3'
 
 // extras
+export { OrbitControls } from './extras/controls/OrbitControls'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'
 export { SphereGeometry } from './extras/geometries/SphereGeometry'
 

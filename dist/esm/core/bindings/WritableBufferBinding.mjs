@@ -13,12 +13,13 @@ class WritableBufferBinding extends BufferBinding {
     visibility,
     useStruct = true,
     access = "read_write",
+    usage = [],
     struct = {},
     shouldCopyResult = false
   }) {
     bindingType = "storage";
-    visibility = "compute";
-    super({ label, name, bindingType, visibility, useStruct, access, struct });
+    visibility = ["compute"];
+    super({ label, name, bindingType, visibility, useStruct, access, usage, struct });
     this.options = {
       ...this.options,
       shouldCopyResult

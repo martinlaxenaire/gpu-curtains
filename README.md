@@ -168,9 +168,9 @@ window.addEventListener('load', async () => {
 
 ## Limitations
 
-Since gpu-curtains is mostly made to create quads based on HTML elements, it may lack some common 3D engines features.
+gpu-curtains is mostly made to create quads based on HTML elements, it may lack some common 3D engines features (even tho it is slowly evolving towards a real 3D engine).
 
-If you need a real 3D engine that could handle complex geometries or advanced rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
+If you need a more robust 3D engine that could handle complex geometries or advanced rendering mechanics, then you should probably go with another library like [three.js](https://github.com/mrdoob/three.js) or [Babylon.js](https://github.com/BabylonJS).
 
 ## Contributing
 

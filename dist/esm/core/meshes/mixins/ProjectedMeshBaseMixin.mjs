@@ -50,7 +50,7 @@ function ProjectedMeshBaseMixin(Base) {
       renderer = renderer && renderer.renderer || renderer;
       isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
       this.renderer = renderer;
-      const { geometry, frustumCulled, DOMFrustumMargins } = parameters;
+      const { frustumCulled, DOMFrustumMargins } = parameters;
       this.options = {
         ...this.options ?? {},
         // merge possible lower options?
@@ -58,8 +58,6 @@ function ProjectedMeshBaseMixin(Base) {
         DOMFrustumMargins
       };
       this.setDOMFrustum();
-      this.geometry = geometry;
-      this.shouldUpdateMatrixStack();
     }
     /* SHADERS */
     /**
@@ -95,11 +93,22 @@ function ProjectedMeshBaseMixin(Base) {
     }
     /* GEOMETRY */
     /**
+     * Set or update the Projected Mesh {@link Geometry}
+     * @param geometry - new {@link Geometry} to use
+     */
+    useGeometry(geometry) {
+      super.useGeometry(geometry);
+      if (this.domFrustum) {
+        this.domFrustum.boundingBox = this.geometry.boundingBox;
+      }
+      this.shouldUpdateMatrixStack();
+    }
+    /**
      * Set the Mesh frustum culling
      */
     setDOMFrustum() {
       this.domFrustum = new DOMFrustum({
-        boundingBox: this.geometry.boundingBox,
+        boundingBox: this.geometry?.boundingBox,
         modelViewProjectionMatrix: this.modelViewProjectionMatrix,
         containerBoundingRect: this.renderer.boundingRect,
         DOMFrustumMargins: this.options.DOMFrustumMargins,
@@ -132,6 +141,7 @@ function ProjectedMeshBaseMixin(Base) {
     setMaterial(meshParameters) {
       const matricesUniforms = {
         label: "Matrices",
+        visibility: ["vertex"],
         struct: {
           model: {
             type: "mat4x4f",
@@ -168,7 +178,7 @@ function ProjectedMeshBaseMixin(Base) {
      */
     applyScale() {
       super.applyScale();
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.resize();
       }
     }

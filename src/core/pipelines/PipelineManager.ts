@@ -1,8 +1,13 @@
 import { RenderPipelineEntry } from './RenderPipelineEntry'
 import { ComputePipelineEntry } from './ComputePipelineEntry'
-import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries'
+import {
+  PipelineEntryParams,
+  PipelineManagerRenderPipelineEntryParams,
+  RenderPipelineEntryParams,
+} from '../../types/PipelineEntries'
 import { ShaderOptions } from '../../types/Materials'
 import { compareRenderingOptions } from '../materials/utils'
+import { BindGroup } from '../bindGroups/BindGroup'
 
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry
@@ -22,12 +27,15 @@ export class PipelineManager {
   currentPipelineIndex: number | null
   /** Array of already created {@link ComputePipelineEntry} and {@link RenderPipelineEntry} */
   pipelineEntries: AllowedPipelineEntries[]
+  /** Array of current pass (used by {@link GPURenderPassEncoder} at the moment, but can be extended to {@link GPUComputePassEncoder} as well) already set {@link core/bindGroups/BindGroup.BindGroup | bind groups}. */
+  activeBindGroups: BindGroup[]
 
   constructor() {
     this.type = 'PipelineManager'
 
     this.currentPipelineIndex = null
     this.pipelineEntries = []
+    this.activeBindGroups = []
   }
 
   /**
@@ -53,7 +61,9 @@ export class PipelineManager {
       .filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry)
       .find((pipelineEntry: RenderPipelineEntry) => {
         const { options } = pipelineEntry
-        const { shaders, rendering } = parameters
+        const { shaders, rendering, cacheKey } = parameters
+
+        const sameCacheKey = cacheKey === options.cacheKey
 
         const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex)
         const sameFragmentShader =
@@ -62,9 +72,7 @@ export class PipelineManager {
 
         const differentParams = compareRenderingOptions(rendering, options.rendering)
 
-        // TODO might break with unused bindings!
-
-        return !differentParams.length && sameVertexShader && sameFragmentShader
+        return sameCacheKey && !differentParams.length && sameVertexShader && sameFragmentShader
       }) as RenderPipelineEntry | null
   }
 
@@ -74,35 +82,32 @@ export class PipelineManager {
    * @param parameters - {@link RenderPipelineEntryParams | RenderPipelineEntry parameters}
    * @returns - {@link RenderPipelineEntry}, either from cache or newly created
    */
-  createRenderPipeline(parameters: RenderPipelineEntryParams): RenderPipelineEntry {
-    const existingPipelineEntry = this.isSameRenderPipeline(parameters)
+  createRenderPipeline(parameters: PipelineManagerRenderPipelineEntryParams): RenderPipelineEntry {
+    const { attributes, bindGroups } = parameters
+    let cacheKey = attributes.layoutCacheKey
+    bindGroups.forEach((bindGroup) => {
+      bindGroup.bindings.forEach((binding) => {
+        cacheKey += binding.name + ','
+      })
+      cacheKey += bindGroup.layoutCacheKey
+    })
+
+    // render pipeline cache is based on 3 things:
+    // 1. geometry and bind groups buffers layout comparison, via the cacheKey
+    // 2. same rendering options via compareRenderingOptions()
+    // 3. same vertex and fragment shaders code and entry points
+    // see https://toji.dev/webgpu-gltf-case-study/#part-3-pipeline-caching
+    const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey })
 
     if (existingPipelineEntry) {
       return existingPipelineEntry
     } else {
-      const pipelineEntry = new RenderPipelineEntry(parameters)
+      const pipelineEntry = new RenderPipelineEntry({ ...parameters, cacheKey })
 
       this.pipelineEntries.push(pipelineEntry)
 
       return pipelineEntry
     }
-  }
-
-  /**
-   * Checks if the provided {@link PipelineEntryParams | parameters} belongs to an already created {@link ComputePipelineEntry}.
-   * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
-   * @returns - the found {@link ComputePipelineEntry}, or null if not found
-   */
-  isSameComputePipeline(parameters: PipelineEntryParams) {
-    const { shaders } = parameters
-
-    return this.pipelineEntries
-      .filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry)
-      .find((pipelineEntry: ComputePipelineEntry) => {
-        const { options } = pipelineEntry
-
-        return this.compareShaders(shaders.compute, options.shaders.compute)
-      }) as ComputePipelineEntry | null
   }
 
   /**
@@ -112,17 +117,11 @@ export class PipelineManager {
    * @returns - newly created {@link ComputePipelineEntry}
    */
   createComputePipeline(parameters: PipelineEntryParams): ComputePipelineEntry {
-    const existingPipelineEntry = this.isSameComputePipeline(parameters)
+    const pipelineEntry = new ComputePipelineEntry(parameters)
 
-    if (existingPipelineEntry) {
-      return existingPipelineEntry
-    } else {
-      const pipelineEntry = new ComputePipelineEntry(parameters)
+    this.pipelineEntries.push(pipelineEntry)
 
-      this.pipelineEntries.push(pipelineEntry)
-
-      return pipelineEntry
-    }
+    return pipelineEntry
   }
 
   /**
@@ -138,9 +137,28 @@ export class PipelineManager {
   }
 
   /**
-   * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
+   * Track the active/already set {@link core/bindGroups/BindGroup.BindGroup | bind groups} to avoid `setBindGroup()` redundant calls.
+   * @param pass - current pass encoder.
+   * @param bindGroups - array {@link core/bindGroups/BindGroup.BindGroup | bind groups} passed by the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
+   */
+  setActiveBindGroups(pass: GPURenderPassEncoder | GPUComputePassEncoder, bindGroups: BindGroup[]) {
+    bindGroups.forEach((bindGroup, index) => {
+      if (
+        !this.activeBindGroups[index] ||
+        this.activeBindGroups[index].uuid !== bindGroup.uuid ||
+        this.activeBindGroups[index].index !== bindGroup.index // the same bind group might be used at different indices
+      ) {
+        this.activeBindGroups[index] = bindGroup
+        pass.setBindGroup(bindGroup.index, bindGroup.bindGroup)
+      }
+    })
+  }
+
+  /**
+   * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} and {@link activeBindGroups} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
    */
   resetCurrentPipeline() {
     this.currentPipelineIndex = null
+    this.activeBindGroups = []
   }
 }

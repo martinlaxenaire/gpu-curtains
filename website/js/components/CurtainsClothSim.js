@@ -140,6 +140,7 @@ export class CurtainsClothSim {
       storages: {
         clothVertex: {
           access: 'read_write', // we want a readable AND writable buffer!
+          usage: ['vertex'], // we're going to use this buffer as a vertex buffer along default usages
           struct: {
             position: {
               type: 'array<vec4f>',
@@ -301,7 +302,7 @@ export class CurtainsClothSim {
 
     this.plane = new Plane(this.gpuCurtains, '#cloth', params)
 
-    const canvasTexture = this.plane.createTexture({
+    const canvasTexture = this.plane.createDOMTexture({
       label: 'Canvas texture',
       name: 'canvasTexture',
     })

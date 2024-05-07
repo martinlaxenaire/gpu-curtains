@@ -27,9 +27,7 @@ export class TestPingPong {
 
   async init() {
     const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-    const { PingPongPlane, Plane, RenderTexture, Sampler, Vec2, logSceneCommands } = await import(
-      /* @vite-ignore */ path
-    )
+    const { PingPongPlane, Plane, Texture, Sampler, Vec2, logSceneCommands } = await import(/* @vite-ignore */ path)
 
     this.mouse = new Vec2()
     this.velocity = new Vec2()
@@ -231,10 +229,10 @@ export class TestPingPong {
         //placeholderColor: [238, 101, 87, 255],
         placeholderColor: [0, 255, 255, 255],
       },
-      renderTextures: [
-        // ping pong planes use a RenderTexture internally
+      textures: [
+        // ping pong planes use a Texture internally
         // so we need to create one to use it in our plane
-        new RenderTexture(this.gpuCurtains, {
+        new Texture(this.gpuCurtains, {
           label: 'Flow map render texture',
           name: 'flowMapTexture',
           fromTexture: this.flowMap.renderTexture,

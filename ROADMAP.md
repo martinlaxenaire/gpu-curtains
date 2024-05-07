@@ -4,16 +4,16 @@
 
 - GPUDeviceManager (can handle multiple renderers / canvases)
 - Renderers (GPURenderer, GPUCameraRenderer, GPUCurtainsRenderer)
-- Scene graph with Object3D, ProjectedObject3D, DOMObject3D
+- Scene class with scene graph for Object3D, ProjectedObject3D, DOMObject3D
 - Camera
 - Geometries
 - Materials (Material, RenderMaterial, ComputeMaterial)
-- Bindings & BindGroups
+- Buffer & Bindings & BindGroups
 - Render + Compute Pipelines (async by default)
+- PipelineManager to cache RenderPipeline + set only needed BindGroup
 - Meshes (Mesh, DOMMesh, FullscreenPlane, Plane)
 - Compute passes
-- Scene class
-- Texture & RenderTexture (with storage & depth) classes
+- Texture (including storage & depth) & DOMTexture classes
 - Sampler class
 - RenderTarget (render to textures)
 - RenderPass (render pass descriptors) with MRT support
@@ -23,16 +23,19 @@
 - Basic CacheManager
 - Scroll + resize, frustum culling check
 - GPUCurtains
+- OrbitControls
 
 ## Work in progress
 
 - Examples & tests
+- glTF loading
 
 ## TODO / possible improvements
 
+- Add Mat3 class + normalMatrix to ProjectedObject3D?
+- Mesh raycasting
+- Lights management?
 - Improve typedoc documentation?
-- Use constants for WebGPU buffers and textures flags/usages? Add to options/parameters?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
-- Mesh raycasting?
 - More examples & tests?

@@ -1,12 +1,4 @@
-import {
-  GPUDeviceManager,
-  GPUCameraRenderer,
-  BoxGeometry,
-  RenderTexture,
-  Mesh,
-  Vec2,
-  Vec3,
-} from '../../dist/esm/index.mjs'
+import { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Texture, Mesh, Vec2, Vec3 } from '../../dist/esm/index.mjs'
 
 window.addEventListener('load', async () => {
   // create a device manager
@@ -57,10 +49,10 @@ window.addEventListener('load', async () => {
 
   const imageBitmaps = await Promise.all(promises)
 
-  const cubeMapTexture = new RenderTexture(gpuCameraRenderer, {
+  const cubeMapTexture = new Texture(gpuCameraRenderer, {
     name: 'cubeMapTexture',
     viewDimension: 'cube',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     fixedSize: {
       width: imageBitmaps[0].width,
       height: imageBitmaps[0].height,
@@ -69,11 +61,13 @@ window.addEventListener('load', async () => {
 
   for (let i = 0; i < imageBitmaps.length; i++) {
     const imageBitmap = imageBitmaps[i]
-    gpuCameraRenderer.device.queue.copyExternalImageToTexture(
-      { source: imageBitmap },
-      { texture: cubeMapTexture.texture, origin: [0, 0, i] },
-      [imageBitmap.width, imageBitmap.height]
-    )
+    cubeMapTexture.uploadSource({
+      source: imageBitmap,
+      width: imageBitmap.width,
+      height: imageBitmap.height,
+      depth: 1, // explicitly set the depth to 1
+      origin: [0, 0, i],
+    })
   }
 
   // now add objects to our scene
@@ -111,7 +105,7 @@ window.addEventListener('load', async () => {
 
   const cubeMap = new Mesh(gpuCameraRenderer, {
     geometry: cubeGeometry,
-    renderTextures: [cubeMapTexture],
+    textures: [cubeMapTexture],
     cullMode: 'none',
     shaders: {
       vertex: {

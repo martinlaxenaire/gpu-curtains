@@ -2,7 +2,7 @@ import { isRenderer, Renderer } from '../../core/renderers/utils'
 import { RenderTarget } from '../../core/renderPasses/RenderTarget'
 import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
 import { GPUCurtains } from '../GPUCurtains'
-import { RenderTexture, RenderTextureParams } from '../../core/textures/RenderTexture'
+import { Texture, TextureParams } from '../../core/textures/Texture'
 import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
 
 /**
@@ -70,26 +70,30 @@ export class PingPongPlane extends FullscreenPlane {
 
     this.type = 'PingPongPlane'
 
-    this.createRenderTexture({
+    this.createTexture({
       label: parameters.label ? `${parameters.label} render texture` : 'PingPongPlane render texture',
       name: 'renderTexture',
       ...(parameters.targets && parameters.targets.length && { format: parameters.targets[0].format }),
-    } as RenderTextureParams)
+      usage: ['copyDst', 'textureBinding'],
+    } as TextureParams)
   }
 
   /**
-   * Get our main {@link RenderTexture}, the one that contains our ping pong content
+   * Get our main {@link Texture}, the one that contains our ping pong content
    * @readonly
    */
-  get renderTexture(): RenderTexture | undefined {
-    return this.renderTextures.find((texture) => texture.options.name === 'renderTexture')
+  get renderTexture(): Texture | undefined {
+    return this.textures.find((texture) => texture.options.name === 'renderTexture')
   }
 
   /**
-   * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+   * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
    */
-  addToScene() {
-    this.renderer.pingPongPlanes.push(this)
+  addToScene(addToRenderer = false) {
+    if (addToRenderer) {
+      this.renderer.pingPongPlanes.push(this)
+    }
 
     if (this.autoRender) {
       this.renderer.scene.addPingPongPlane(this)
@@ -97,9 +101,10 @@ export class PingPongPlane extends FullscreenPlane {
   }
 
   /**
-   * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+   * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+   * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
    */
-  removeFromScene() {
+  removeFromScene(removeFromRenderer = false) {
     if (this.outputTarget) {
       this.outputTarget.destroy()
     }
@@ -108,6 +113,8 @@ export class PingPongPlane extends FullscreenPlane {
       this.renderer.scene.removePingPongPlane(this)
     }
 
-    this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid)
+    if (removeFromRenderer) {
+      this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid)
+    }
   }
 }

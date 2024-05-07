@@ -14,6 +14,7 @@ import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
 import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl'
 import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl'
+import { BufferBindingParams } from '../../bindings/BufferBinding'
 
 /**
  * Base parameters used to create a ProjectedMesh
@@ -209,7 +210,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this.renderer = renderer
 
-      const { geometry, frustumCulled, DOMFrustumMargins } = parameters
+      const { frustumCulled, DOMFrustumMargins } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
@@ -218,12 +219,6 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       }
 
       this.setDOMFrustum()
-
-      // explicitly needed for DOM Frustum
-      this.geometry = geometry
-
-      // tell the model and projection matrices to update right away
-      this.shouldUpdateMatrixStack()
     }
 
     /* SHADERS */
@@ -265,11 +260,27 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     /* GEOMETRY */
 
     /**
+     * Set or update the Projected Mesh {@link Geometry}
+     * @param geometry - new {@link Geometry} to use
+     */
+    useGeometry(geometry) {
+      super.useGeometry(geometry)
+
+      // update DOM Frustum bounding box
+      if (this.domFrustum) {
+        this.domFrustum.boundingBox = this.geometry.boundingBox
+      }
+
+      // tell the model and projection matrices to update right away
+      this.shouldUpdateMatrixStack()
+    }
+
+    /**
      * Set the Mesh frustum culling
      */
     setDOMFrustum() {
       this.domFrustum = new DOMFrustum({
-        boundingBox: this.geometry.boundingBox,
+        boundingBox: this.geometry?.boundingBox,
         modelViewProjectionMatrix: this.modelViewProjectionMatrix,
         containerBoundingRect: this.renderer.boundingRect,
         DOMFrustumMargins: this.options.DOMFrustumMargins,
@@ -310,8 +321,9 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       // add matrices uniforms
       // https://threejs.org/docs/#api/en/renderers/webgl/WebGLProgram
       // https://doc.babylonjs.com/features/featuresDeepDive/materials/shaders/introToShaders#built-in-variables
-      const matricesUniforms = {
+      const matricesUniforms: BufferBindingParams = {
         label: 'Matrices',
+        visibility: ['vertex'],
         struct: {
           model: {
             type: 'mat4x4f',
@@ -354,7 +366,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       super.applyScale()
 
       // resize textures on scale change!
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.resize()
       }
     }

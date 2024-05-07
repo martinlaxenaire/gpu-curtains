@@ -91,7 +91,7 @@ window.addEventListener('load', async () => {
   })
 
   // create our text texture as soon as our plane has been created
-  const canvasTexture = textPlane.createTexture({
+  const canvasTexture = textPlane.createDOMTexture({
     label: 'Canvas texture',
     name: 'canvasTexture',
   })

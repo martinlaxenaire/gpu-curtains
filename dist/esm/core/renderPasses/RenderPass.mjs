@@ -1,6 +1,6 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { generateUUID } from '../../utils/utils.mjs';
-import { RenderTexture } from '../textures/RenderTexture.mjs';
+import { Texture } from '../textures/Texture.mjs';
 
 class RenderPass {
   /**
@@ -79,13 +79,14 @@ class RenderPass {
       this.depthTexture = this.options.depthTexture;
       this.options.depthFormat = this.options.depthTexture.options.format;
     } else {
-      this.depthTexture = new RenderTexture(this.renderer, {
+      this.depthTexture = new Texture(this.renderer, {
         label: this.options.label + " depth texture",
         name: "depthTexture",
         format: this.options.depthFormat,
         sampleCount: this.options.sampleCount,
         qualityRatio: this.options.qualityRatio,
-        usage: "depth"
+        type: "depth",
+        usage: ["renderAttachment", "textureBinding"]
       });
     }
   }
@@ -95,13 +96,14 @@ class RenderPass {
   createViewTextures() {
     this.options.colorAttachments.forEach((colorAttachment, index) => {
       this.viewTextures.push(
-        new RenderTexture(this.renderer, {
+        new Texture(this.renderer, {
           label: `${this.options.label} colorAttachment[${index}] view texture`,
           name: `colorAttachment${index}ViewTexture`,
           format: colorAttachment.targetFormat,
           sampleCount: this.options.sampleCount,
           qualityRatio: this.options.qualityRatio,
-          usage: "texture"
+          type: "texture",
+          usage: ["copySrc", "copyDst", "renderAttachment", "textureBinding"]
         })
       );
     });
@@ -115,13 +117,13 @@ class RenderPass {
     if (this.options.sampleCount > 1) {
       this.options.colorAttachments.forEach((colorAttachment, index) => {
         this.resolveTargets.push(
-          this.options.renderToSwapChain && index === 0 ? null : new RenderTexture(this.renderer, {
+          this.options.renderToSwapChain && index === 0 ? null : new Texture(this.renderer, {
             label: `${this.options.label} resolve target[${index}] texture`,
             name: `resolveTarget${index}Texture`,
             format: colorAttachment.targetFormat,
             sampleCount: 1,
             qualityRatio: this.options.qualityRatio,
-            usage: "texture"
+            type: "texture"
           })
         );
       });
@@ -177,7 +179,7 @@ class RenderPass {
     };
   }
   /**
-   * Resize our {@link RenderPass}: reset its {@link RenderTexture}
+   * Resize our {@link RenderPass}: reset its {@link Texture}
    */
   resize() {
     if (this.options.useDepth) {

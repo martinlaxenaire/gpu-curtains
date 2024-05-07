@@ -19,7 +19,7 @@ class TextureBinding extends Binding {
   }) {
     bindingType = bindingType ?? "texture";
     if (bindingType === "storage") {
-      visibility = "compute";
+      visibility = ["compute"];
     }
     super({ label, name, bindingType, visibility });
     this.options = {

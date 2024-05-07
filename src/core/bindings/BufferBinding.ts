@@ -1,4 +1,4 @@
-import { Binding, BindingParams, BufferBindingMemoryAccessType } from './Binding'
+import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding'
 import { getBindGroupLayoutBindingType, getBindingWGSLVarType, getBufferLayout, TypedArray } from './utils'
 import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils'
 import { Vec2 } from '../../math/Vec2'
@@ -7,7 +7,7 @@ import { Input, InputBase, InputValue } from '../../types/BindGroups'
 import { BufferElement } from './bufferElements/BufferElement'
 import { BufferArrayElement } from './bufferElements/BufferArrayElement'
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement'
-import { Buffer } from '../buffers/Buffer'
+import { Buffer, BufferParams } from '../buffers/Buffer'
 
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
@@ -39,12 +39,17 @@ export interface BufferBindingBaseParams {
   access?: BufferBindingMemoryAccessType
   /** Object containing one or multiple {@link Input | inputs} describing the structure of the {@link BufferBinding} */
   struct?: Record<string, Input>
+  /** Allowed usages for the {@link BufferBinding#buffer} as an array of {@link core/buffers/utils.BufferUsageKeys | buffer usages names} */
+  usage?: BufferParams['usage']
 }
 
 /**
  * Parameters used to create a {@link BufferBinding}
  */
-export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {}
+export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {
+  /** The binding type of the {@link BufferBinding} */
+  bindingType?: BufferBindingType
+}
 
 /** All allowed {@link BufferElement | buffer elements} */
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement
@@ -74,6 +79,8 @@ export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferIn
  * ```
  */
 export class BufferBinding extends Binding {
+  /** The binding type of the {@link BufferBinding} */
+  bindingType: BufferBindingType
   /** Flag to indicate whether this {@link BufferBinding} {@link bufferElements | buffer elements} should be packed in a single structured object or if each one of them should be a separate binding. */
   useStruct: boolean
   /** All the {@link BufferBinding} data inputs */
@@ -113,6 +120,7 @@ export class BufferBinding extends Binding {
     visibility,
     useStruct = true,
     access = 'read',
+    usage = [],
     struct = {},
   }: BufferBindingParams) {
     bindingType = bindingType ?? 'uniform'
@@ -123,6 +131,7 @@ export class BufferBinding extends Binding {
       ...this.options,
       useStruct,
       access,
+      usage,
       struct,
     }
 

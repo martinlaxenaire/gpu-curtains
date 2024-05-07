@@ -165,40 +165,16 @@
     };
   })();
 
-  class Binding {
-    /**
-     * Binding constructor
-     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
-     */
-    constructor({ label = "Uniform", name = "uniform", bindingType = "uniform", visibility = "all" }) {
-      this.label = label;
-      this.name = toCamelCase(name);
-      this.bindingType = bindingType;
-      this.visibility = visibility ? (() => {
-        switch (visibility) {
-          case "vertex":
-            return GPUShaderStage.VERTEX;
-          case "fragment":
-            return GPUShaderStage.FRAGMENT;
-          case "compute":
-            return GPUShaderStage.COMPUTE;
-          case "all":
-          default:
-            return GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
-        }
-      })() : GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
-      this.options = {
-        label,
-        name,
-        bindingType,
-        visibility
-      };
-      this.shouldResetBindGroup = false;
-      this.shouldResetBindGroupLayout = false;
-      this.cacheKey = `${bindingType},${visibility},`;
-    }
-  }
-
+  const bindingVisibilities = /* @__PURE__ */ new Map([
+    ["vertex", GPUShaderStage.VERTEX],
+    ["fragment", GPUShaderStage.FRAGMENT],
+    ["compute", GPUShaderStage.COMPUTE]
+  ]);
+  const getBindingVisibility = (visibilities = []) => {
+    return visibilities.reduce((acc, v) => {
+      return acc | bindingVisibilities.get(v);
+    }, 0);
+  };
   const bufferLayouts = {
     i32: { numElements: 1, align: 4, size: 4, type: "i32", View: Int32Array },
     u32: { numElements: 1, align: 4, size: 4, type: "u32", View: Uint32Array },
@@ -314,6 +290,33 @@
       }
     })();
   };
+
+  class Binding {
+    /**
+     * Binding constructor
+     * @param parameters - {@link BindingParams | parameters} used to create our {@link Binding}
+     */
+    constructor({
+      label = "Uniform",
+      name = "uniform",
+      bindingType = "uniform",
+      visibility = ["vertex", "fragment", "compute"]
+    }) {
+      this.label = label;
+      this.name = toCamelCase(name);
+      this.bindingType = bindingType;
+      this.visibility = getBindingVisibility(visibility);
+      this.options = {
+        label,
+        name,
+        bindingType,
+        visibility
+      };
+      this.shouldResetBindGroup = false;
+      this.shouldResetBindGroupLayout = false;
+      this.cacheKey = `${bindingType},${visibility},`;
+    }
+  }
 
   class Vec2 {
     /**
@@ -979,6 +982,14 @@
       return Math.sqrt(this.lengthSq());
     }
     /**
+     * Get the euclidian distance between this {@link Vec3} and another {@link Vec3}
+     * @param vector - {@link Vec3} to use for distance calculation
+     * @returns - euclidian distance
+     */
+    distance(vector = new Vec3()) {
+      return Math.hypot(vector.x - this.x, vector.y - this.y, vector.z - this.z);
+    }
+    /**
      * Normalize this {@link Vec3}
      * @returns - normalized {@link Vec3}
      */
@@ -1482,6 +1493,24 @@
     }
   }
 
+  const bufferUsages = /* @__PURE__ */ new Map([
+    ["copySrc", GPUBufferUsage.COPY_SRC],
+    ["copyDst", GPUBufferUsage.COPY_DST],
+    ["index", GPUBufferUsage.INDEX],
+    ["indirect", GPUBufferUsage.INDIRECT],
+    ["mapRead", GPUBufferUsage.MAP_READ],
+    ["mapWrite", GPUBufferUsage.MAP_WRITE],
+    ["queryResolve", GPUBufferUsage.QUERY_RESOLVE],
+    ["storage", GPUBufferUsage.STORAGE],
+    ["uniform", GPUBufferUsage.UNIFORM],
+    ["vertex", GPUBufferUsage.VERTEX]
+  ]);
+  const getBufferUsages = (usages = []) => {
+    return usages.reduce((acc, v) => {
+      return acc | bufferUsages.get(v);
+    }, 0);
+  };
+
   class Buffer {
     /**
      * Buffer constructor
@@ -1490,7 +1519,7 @@
     constructor({
       label = "Buffer",
       size = 0,
-      usage = GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+      usage = ["copySrc", "copyDst"],
       mappedAtCreation = false
     } = {}) {
       this.type = "Buffer";
@@ -1500,7 +1529,7 @@
       this.options = {
         label,
         size,
-        usage,
+        usage: getBufferUsages(usage),
         mappedAtCreation
       };
     }
@@ -1518,7 +1547,12 @@
      * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
      */
     createBuffer(renderer, options = {}) {
-      this.options = { ...this.options, ...options };
+      const { usage, ...staticOptions } = options;
+      this.options = {
+        ...this.options,
+        ...staticOptions,
+        ...usage !== void 0 && { usage: getBufferUsages(usage) }
+      };
       this.setBuffer(renderer.createBuffer(this));
     }
     /**
@@ -1576,6 +1610,7 @@
       visibility,
       useStruct = true,
       access = "read",
+      usage = [],
       struct = {}
     }) {
       bindingType = bindingType ?? "uniform";
@@ -1584,6 +1619,7 @@
         ...this.options,
         useStruct,
         access,
+        usage,
         struct
       };
       this.cacheKey += `${useStruct},${access},`;
@@ -1907,12 +1943,13 @@
       visibility,
       useStruct = true,
       access = "read_write",
+      usage = [],
       struct = {},
       shouldCopyResult = false
     }) {
       bindingType = "storage";
-      visibility = "compute";
-      super({ label, name, bindingType, visibility, useStruct, access, struct });
+      visibility = ["compute"];
+      super({ label, name, bindingType, visibility, useStruct, access, usage, struct });
       this.options = {
         ...this.options,
         shouldCopyResult
@@ -1978,6 +2015,7 @@
       bindings.forEach((binding) => {
         if ("buffer" in binding) {
           this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+          binding.buffer.consumers.add(this.uuid);
         }
       });
       this.bindings = [...this.bindings, ...bindings];
@@ -1996,18 +2034,21 @@
      * @returns - a {@link bindings} array
      */
     createInputBindings(bindingType = "uniform", inputs = {}) {
-      const bindings = [
+      let bindings = [
         ...Object.keys(inputs).map((inputKey) => {
           const binding = inputs[inputKey];
+          if (!binding.struct)
+            return;
           const bindingParams = {
             label: toKebabCase(binding.label || inputKey),
             name: inputKey,
             bindingType,
-            visibility: binding.access === "read_write" ? "compute" : binding.visibility,
+            visibility: binding.access === "read_write" ? ["compute"] : binding.visibility,
             useStruct: true,
             // by default
             access: binding.access ?? "read",
             // read by default
+            ...binding.usage && { usage: binding.usage },
             struct: binding.struct,
             ...binding.shouldCopyResult !== void 0 && { shouldCopyResult: binding.shouldCopyResult }
           };
@@ -2034,6 +2075,7 @@
           });
         })
       ].flat();
+      bindings = bindings.filter(Boolean);
       bindings.forEach((binding) => {
         this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
       });
@@ -2132,6 +2174,17 @@
       this.needsPipelineFlush = true;
     }
     /**
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to update our bindings.
+     */
+    restoreContext() {
+      if (this.shouldCreateBindGroup) {
+        this.createBindGroup();
+      }
+      for (const bufferBinding of this.bufferBindings) {
+        bufferBinding.shouldUpdate = true;
+      }
+    }
+    /**
      * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
      */
     get bufferBindings() {
@@ -2146,13 +2199,13 @@
     createBindingBuffer(binding) {
       binding.buffer.createBuffer(this.renderer, {
         label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
-        usage: binding.bindingType === "uniform" ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
+        usage: [...["copySrc", "copyDst", binding.bindingType], ...binding.options.usage]
       });
       if ("resultBuffer" in binding) {
         binding.resultBuffer.createBuffer(this.renderer, {
           label: this.options.label + ": Result buffer from: " + binding.label,
           size: binding.arrayBuffer.byteLength,
-          usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+          usage: ["copyDst", "mapRead"]
         });
       }
     }
@@ -2343,7 +2396,7 @@
     }) {
       bindingType = bindingType ?? "texture";
       if (bindingType === "storage") {
-        visibility = "compute";
+        visibility = ["compute"];
       }
       super({ label, name, bindingType, visibility });
       this.options = {
@@ -3379,11 +3432,34 @@
     }
   }
 
+  const textureUsages = /* @__PURE__ */ new Map([
+    ["copySrc", GPUTextureUsage.COPY_SRC],
+    ["copyDst", GPUTextureUsage.COPY_DST],
+    ["renderAttachment", GPUTextureUsage.RENDER_ATTACHMENT],
+    ["storageBinding", GPUTextureUsage.STORAGE_BINDING],
+    ["textureBinding", GPUTextureUsage.TEXTURE_BINDING]
+  ]);
+  const getTextureUsages = (usages = []) => {
+    return usages.reduce((acc, v) => {
+      return acc | textureUsages.get(v);
+    }, 0);
+  };
+  const getDefaultTextureUsage = (usages = [], textureType) => {
+    if (usages.length) {
+      return getTextureUsages(usages);
+    }
+    return textureType !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
+  };
+  const getNumMipLevels = (...sizes) => {
+    const maxSize = Math.max(...sizes);
+    return 1 + Math.log2(maxSize) | 0;
+  };
+
   var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$7 = (obj, member, getter) => {
+  var __privateGet$8 = (obj, member, getter) => {
     __accessCheck$8(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -3393,27 +3469,27 @@
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var _parentRatio, _sourceRatio, _coverScale, _rotationMatrix;
-  const defaultTextureParams = {
+  const defaultDOMTextureParams = {
     name: "texture",
     generateMips: false,
     flipY: false,
     format: "rgba8unorm",
-    premultipliedAlpha: true,
+    premultipliedAlpha: false,
     placeholderColor: [0, 0, 0, 255],
     // default to black
     useExternalTextures: true,
     fromTexture: null,
     viewDimension: "2d",
-    visibility: "fragment",
+    visibility: ["fragment"],
     cache: true
   };
-  class Texture extends Object3D {
+  class DOMTexture extends Object3D {
     /**
-     * Texture constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
-     * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
+     * DOMTexture constructor
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+     * @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
      */
-    constructor(renderer, parameters = defaultTextureParams) {
+    constructor(renderer, parameters = defaultDOMTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
       __privateAdd$8(this, _parentRatio, new Vec3(1));
@@ -3436,7 +3512,7 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       const defaultOptions = {
-        ...defaultTextureParams,
+        ...defaultDOMTextureParams,
         source: parameters.fromTexture ? parameters.fromTexture.options.source : null,
         sourceType: parameters.fromTexture ? parameters.fromTexture.options.sourceType : null
       };
@@ -3467,7 +3543,7 @@
       this.sourceLoaded = false;
       this.sourceUploaded = false;
       this.shouldUpdate = false;
-      this.renderer.addTexture(this);
+      this.renderer.addDOMTexture(this);
       this.createTexture();
     }
     /**
@@ -3560,16 +3636,16 @@
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
-        __privateGet$7(this, _parentRatio).set(parentRatio, 1, 1);
-        __privateGet$7(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
+        __privateGet$8(this, _parentRatio).set(parentRatio, 1, 1);
+        __privateGet$8(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
       } else {
-        __privateGet$7(this, _parentRatio).set(1, 1 / parentRatio, 1);
-        __privateGet$7(this, _sourceRatio).set(1, sourceRatio, 1);
+        __privateGet$8(this, _parentRatio).set(1, 1 / parentRatio, 1);
+        __privateGet$8(this, _sourceRatio).set(1, sourceRatio, 1);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$7(this, _parentRatio).x * __privateGet$7(this, _sourceRatio).x : __privateGet$7(this, _sourceRatio).y * __privateGet$7(this, _parentRatio).y;
-      __privateGet$7(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
-      __privateGet$7(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
-      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$7(this, _coverScale)).premultiplyScale(__privateGet$7(this, _parentRatio)).premultiply(__privateGet$7(this, _rotationMatrix)).premultiplyScale(__privateGet$7(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$8(this, _parentRatio).x * __privateGet$8(this, _sourceRatio).x : __privateGet$8(this, _sourceRatio).y * __privateGet$8(this, _parentRatio).y;
+      __privateGet$8(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
+      __privateGet$8(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
+      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$8(this, _coverScale)).premultiplyScale(__privateGet$8(this, _parentRatio)).premultiply(__privateGet$8(this, _rotationMatrix)).premultiplyScale(__privateGet$8(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
     }
     /**
      * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
@@ -3581,7 +3657,7 @@
       }
     }
     /**
-     * Resize our {@link Texture}
+     * Resize our {@link DOMTexture}
      */
     resize() {
       if (this.source && this.source instanceof HTMLCanvasElement && (this.source.width !== this.size.width || this.source.height !== this.size.height)) {
@@ -3589,15 +3665,6 @@
         this.createTexture();
       }
       this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Get the number of mip levels create based on {@link size}
-     * @param sizes - Array containing our texture width, height and depth
-     * @returns - number of mip levels
-     */
-    getNumMipLevels(...sizes) {
-      const maxSize = Math.max(...sizes);
-      return 1 + Math.log2(maxSize) | 0;
     }
     /**
      * Tell the {@link Renderer} to upload or texture
@@ -3617,8 +3684,8 @@
       this.sourceUploaded = true;
     }
     /**
-     * Copy a {@link Texture}
-     * @param texture - {@link Texture} to copy
+     * Copy a {@link DOMTexture}
+     * @param texture - {@link DOMTexture} to copy
      */
     copy(texture) {
       if (this.options.sourceType === "externalVideo" && texture.options.sourceType !== "externalVideo") {
@@ -3666,7 +3733,7 @@
         usage: !!this.source ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
       };
       if (this.options.sourceType !== "externalVideo") {
-        options.mipLevelCount = this.options.generateMips ? this.getNumMipLevels(this.size.width, this.size.height) : 1;
+        options.mipLevelCount = this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height) : 1;
         this.texture?.destroy();
         this.texture = this.renderer.createTexture(options);
         this.textureBinding.resource = this.texture;
@@ -3705,7 +3772,7 @@
       const url = typeof source === "string" ? source : source.getAttribute("src");
       this.options.source = url;
       this.options.sourceType = "image";
-      const cachedTexture = this.renderer.textures.find((t) => t.options.source === url);
+      const cachedTexture = this.renderer.domTextures.find((t) => t.options.source === url);
       if (cachedTexture && cachedTexture.texture && cachedTexture.sourceUploaded) {
         this.copy(cachedTexture);
         return;
@@ -3815,7 +3882,7 @@
     /**
      * Callback to run when the {@link source} has been loaded
      * @param callback - callback to run when the {@link source} has been loaded
-     * @returns - our {@link Texture}
+     * @returns - our {@link DOMTexture}
      */
     onSourceLoaded(callback) {
       if (callback) {
@@ -3826,7 +3893,7 @@
     /**
      * Callback to run when the {@link source} has been uploaded
      * @param callback - callback to run when the {@link source} been uploaded
-     * @returns - our {@link Texture}
+     * @returns - our {@link DOMTexture}
      */
     onSourceUploaded(callback) {
       if (callback) {
@@ -3836,7 +3903,7 @@
     }
     /* RENDER */
     /**
-     * Render a {@link Texture}:
+     * Render a {@link DOMTexture}:
      * - Update its {@link modelMatrix} and {@link bindings} if needed
      * - Upload the texture if it needs to be done
      */
@@ -3855,7 +3922,7 @@
     }
     /* DESTROY */
     /**
-     * Destroy the {@link Texture}
+     * Destroy the {@link DOMTexture}
      */
     destroy() {
       if (this.videoFrameCallbackId) {
@@ -3870,7 +3937,7 @@
           }
         );
       }
-      this.renderer.removeTexture(this);
+      this.renderer.removeDOMTexture(this);
       this.texture?.destroy();
       this.texture = null;
     }
@@ -3954,7 +4021,7 @@
      */
     updateTextures() {
       for (const texture of this.textures) {
-        if (texture instanceof Texture) {
+        if (texture instanceof DOMTexture) {
           if (texture.options.fromTexture && texture.options.fromTexture.sourceUploaded && !texture.sourceUploaded) {
             texture.copy(texture.options.fromTexture);
           }
@@ -4053,7 +4120,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$6 = (obj, member, getter) => {
+  var __privateGet$7 = (obj, member, getter) => {
     __accessCheck$7(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -4062,7 +4129,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$5 = (obj, member, value, setter) => {
+  var __privateSet$6 = (obj, member, value, setter) => {
     __accessCheck$7(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
@@ -4177,7 +4244,7 @@
      * Get the {@link Camera} {@link fov | field of view}
      */
     get fov() {
-      return __privateGet$6(this, _fov);
+      return __privateGet$7(this, _fov);
     }
     /**
      * Set the {@link Camera} {@link fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
@@ -4186,7 +4253,7 @@
     set fov(fov) {
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        __privateSet$5(this, _fov, fov);
+        __privateSet$6(this, _fov, fov);
         this.shouldUpdateProjectionMatrix();
       }
       this.setScreenRatios();
@@ -4196,7 +4263,7 @@
      * Get the {@link Camera} {@link near} plane value.
      */
     get near() {
-      return __privateGet$6(this, _near);
+      return __privateGet$7(this, _near);
     }
     /**
      * Set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
@@ -4205,7 +4272,7 @@
     set near(near) {
       near = Math.max(near ?? this.near, 0.01);
       if (near !== this.near) {
-        __privateSet$5(this, _near, near);
+        __privateSet$6(this, _near, near);
         this.shouldUpdateProjectionMatrix();
       }
     }
@@ -4213,7 +4280,7 @@
      * Get / set the {@link Camera} {@link far} plane value.
      */
     get far() {
-      return __privateGet$6(this, _far);
+      return __privateGet$7(this, _far);
     }
     /**
      * Set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
@@ -4222,7 +4289,7 @@
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$5(this, _far, far);
+        __privateSet$6(this, _far, far);
         this.shouldUpdateProjectionMatrix();
       }
     }
@@ -4230,14 +4297,14 @@
      * Get the {@link Camera} {@link pixelRatio} value.
      */
     get pixelRatio() {
-      return __privateGet$6(this, _pixelRatio);
+      return __privateGet$7(this, _pixelRatio);
     }
     /**
      * Set the {@link Camera} {@link pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
      * @param pixelRatio - new pixel ratio value
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$5(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$6(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
     /**
@@ -4394,7 +4461,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$5 = (obj, member, getter) => {
+  var __privateGet$6 = (obj, member, getter) => {
     __accessCheck$6(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -4403,37 +4470,42 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$4 = (obj, member, value, setter) => {
+  var __privateSet$5 = (obj, member, value, setter) => {
     __accessCheck$6(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
   var _autoResize;
-  const defaultRenderTextureParams = {
-    label: "RenderTexture",
+  const defaultTextureParams = {
+    label: "Texture",
     name: "renderTexture",
-    usage: "texture",
+    // default to 'renderTexture' for render target usage
+    type: "texture",
     access: "write",
     fromTexture: null,
     viewDimension: "2d",
     sampleCount: 1,
-    qualityRatio: 1
+    qualityRatio: 1,
+    // copy external texture options
+    generateMips: false,
+    flipY: false,
+    premultipliedAlpha: false
   };
-  class RenderTexture {
+  class Texture {
     /**
-     * RenderTexture constructor
-     * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link RenderTexture}
-     * @param parameters - {@link RenderTextureParams | parameters} used to create this {@link RenderTexture}
+     * Texture constructor
+     * @param renderer - {@link Renderer | renderer} object or {@link GPUCurtains} class object used to create this {@link Texture}
+     * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
      */
-    constructor(renderer, parameters = defaultRenderTextureParams) {
+    constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
       __privateAdd$6(this, _autoResize, true);
       renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " RenderTexture" : "RenderTexture");
-      this.type = "RenderTexture";
+      isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
+      this.type = "Texture";
       this.renderer = renderer;
       this.uuid = generateUUID();
-      this.options = { ...defaultRenderTextureParams, ...parameters };
+      this.options = { ...defaultTextureParams, ...parameters };
       if (parameters.fromTexture) {
         this.options.format = parameters.fromTexture.texture.format;
         this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
@@ -4452,22 +4524,22 @@
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$4(this, _autoResize, false);
+        __privateSet$5(this, _autoResize, false);
       }
       this.setBindings();
-      this.renderer.addRenderTexture(this);
+      this.renderer.addTexture(this);
       this.createTexture();
     }
     /**
-     * Copy another {@link RenderTexture} into this {@link RenderTexture}
-     * @param texture - {@link RenderTexture} to copy
+     * Copy another {@link Texture} into this {@link Texture}
+     * @param texture - {@link Texture} to copy
      */
     copy(texture) {
       this.options.fromTexture = texture;
       this.createTexture();
     }
     /**
-     * Copy a {@link GPUTexture} directly into this {@link RenderTexture}. Mainly used for depth textures.
+     * Copy a {@link GPUTexture} directly into this {@link Texture}. Mainly used for depth textures.
      * @param texture - {@link GPUTexture} to copy
      */
     copyGPUTexture(texture) {
@@ -4500,23 +4572,45 @@
         size: [this.size.width, this.size.height, this.size.depth ?? 1],
         dimensions: this.options.viewDimension,
         sampleCount: this.options.sampleCount,
-        usage: (
-          // TODO let user chose?
-          // see https://matrix.to/#/!MFogdGJfnZLrDmgkBN:matrix.org/$vESU70SeCkcsrJQdyQGMWBtCgVd3XqnHcBxFDKTKKSQ?via=matrix.org&via=mozilla.org&via=hej.im
-          this.options.usage !== "storage" ? GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT : GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
-        )
+        mipLevelCount: this.options.generateMips ? getNumMipLevels(this.size.width, this.size.height, this.size.depth ?? 1) : 1,
+        usage: getDefaultTextureUsage(this.options.usage, this.options.type)
       });
       this.textureBinding.resource = this.texture;
     }
     /**
-     * Set our {@link RenderTexture#bindings | bindings}
+     * Upload a source to the GPU and use it for our {@link texture}.
+     * @param parameters - parameters used to upload the source.
+     * @param parameters.source - source to use for our {@link texture}.
+     * @param parameters.width - source width.
+     * @param parameters.height - source height.
+     * @param parameters.depth - source depth.
+     * @param parameters.origin - {@link GPUOrigin3D | origin} of the source copy.
+     */
+    uploadSource({
+      source,
+      width = this.size.width,
+      height = this.size.height,
+      depth = this.size.depth,
+      origin = [0, 0, 0]
+    }) {
+      this.renderer.device.queue.copyExternalImageToTexture(
+        { source, flipY: this.options.flipY },
+        { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+        [width, height, depth]
+      );
+      if (this.texture.mipLevelCount > 1) {
+        generateMips(this.renderer.device, this.texture);
+      }
+    }
+    /**
+     * Set our {@link Texture#bindings | bindings}
      */
     setBindings() {
       this.bindings = [
         new TextureBinding({
-          label: this.options.label + ": " + this.options.name + " render texture",
+          label: this.options.label + ": " + this.options.name + " texture",
           name: this.options.name,
-          bindingType: this.options.usage,
+          bindingType: this.options.type,
           visibility: this.options.visibility,
           texture: this.texture,
           format: this.options.format,
@@ -4533,11 +4627,11 @@
       return this.bindings[0];
     }
     /**
-     * Resize our {@link RenderTexture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
+     * Resize our {@link Texture}, which means recreate it/copy it again and tell the {@link core/bindGroups/TextureBindGroup.TextureBindGroup | texture bind group} to update
      * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size = null) {
-      if (!__privateGet$5(this, _autoResize))
+      if (!__privateGet$6(this, _autoResize))
         return;
       if (!size) {
         size = {
@@ -4553,10 +4647,10 @@
       this.createTexture();
     }
     /**
-     * Destroy our {@link RenderTexture}
+     * Destroy our {@link Texture}
      */
     destroy() {
-      this.renderer.removeRenderTexture(this);
+      this.renderer.removeTexture(this);
       if (!this.options.fromTexture) {
         this.texture?.destroy();
       }
@@ -4587,7 +4681,7 @@
         bindGroups,
         samplers,
         textures,
-        renderTextures
+        domTextures
       } = parameters;
       this.options = {
         shaders,
@@ -4599,7 +4693,7 @@
         ...bindGroups !== void 0 && { bindGroups },
         ...samplers !== void 0 && { samplers },
         ...textures !== void 0 && { textures },
-        ...renderTextures !== void 0 && { renderTextures }
+        ...domTextures !== void 0 && { domTextures }
       };
       this.bindGroups = [];
       this.texturesBindGroups = [];
@@ -4630,11 +4724,11 @@
      * Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to render
      */
     loseContext() {
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.texture = null;
         texture.sourceUploaded = false;
       }
-      for (const texture of this.renderTextures) {
+      for (const texture of this.textures) {
         texture.texture = null;
       }
       [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach(
@@ -4643,27 +4737,22 @@
       this.pipelineEntry.pipeline = null;
     }
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our bind groups.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
      */
     restoreContext() {
       for (const sampler of this.samplers) {
         sampler.createSampler();
         sampler.binding.resource = sampler.sampler;
       }
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.createTexture();
         texture.resize();
       }
-      for (const texture of this.renderTextures) {
+      for (const texture of this.textures) {
         texture.resize(texture.size);
       }
       [...this.bindGroups, ...this.clonedBindGroups, ...this.inputsBindGroups].forEach((bindGroup) => {
-        if (bindGroup.shouldCreateBindGroup) {
-          bindGroup.createBindGroup();
-        }
-        for (const bufferBinding of bindGroup.bufferBindings) {
-          bufferBinding.shouldUpdate = true;
-        }
+        bindGroup.restoreContext();
       });
     }
     /**
@@ -4783,10 +4872,10 @@
         if (bindGroup instanceof TextureBindGroup && !this.texturesBindGroups.find((bG) => bG.uuid === bindGroup.uuid)) {
           this.texturesBindGroups.push(bindGroup);
           for (const texture of bindGroup.textures) {
-            if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
+            if (texture instanceof DOMTexture && !this.domTextures.find((t) => t.uuid === texture.uuid)) {
+              this.domTextures.push(texture);
+            } else if (texture instanceof Texture && !this.textures.find((t) => t.uuid === texture.uuid)) {
               this.textures.push(texture);
-            } else if (texture instanceof RenderTexture && !this.renderTextures.find((t) => t.uuid === texture.uuid)) {
-              this.renderTextures.push(texture);
             }
           }
         }
@@ -4902,18 +4991,18 @@
      * Prepare our textures array and set the {@link TextureBindGroup}
      */
     setTextures() {
+      this.domTextures = [];
       this.textures = [];
-      this.renderTextures = [];
       this.texturesBindGroups.push(
         new TextureBindGroup(this.renderer, {
           label: this.options.label + ": Textures bind group"
         })
       );
       this.texturesBindGroup.consumers.add(this.uuid);
-      this.options.textures?.forEach((texture) => {
+      this.options.domTextures?.forEach((texture) => {
         this.addTexture(texture);
       });
-      this.options.renderTextures?.forEach((texture) => {
+      this.options.textures?.forEach((texture) => {
         this.addTexture(texture);
       });
     }
@@ -4922,18 +5011,18 @@
      * @param texture - texture to add
      */
     addTexture(texture) {
-      if (texture instanceof Texture) {
+      if (texture instanceof DOMTexture) {
+        this.domTextures.push(texture);
+      } else if (texture instanceof Texture) {
         this.textures.push(texture);
-      } else if (texture instanceof RenderTexture) {
-        this.renderTextures.push(texture);
       }
       if (this.options.shaders.vertex && this.options.shaders.vertex.code.indexOf(texture.options.name) !== -1 || this.options.shaders.fragment && this.options.shaders.fragment.code.indexOf(texture.options.name) !== -1 || this.options.shaders.compute && this.options.shaders.compute.code.indexOf(texture.options.name) !== -1) {
         this.texturesBindGroup.addTexture(texture);
       }
     }
     /**
-     * Destroy a {@link Texture} or {@link RenderTexture}, only if it is not used by another object or cached.
-     * @param texture - {@link Texture} or {@link RenderTexture} to eventually destroy
+     * Destroy a {@link DOMTexture} or {@link Texture}, only if it is not used by another object or cached.
+     * @param texture - {@link DOMTexture} or {@link Texture} to eventually destroy
      */
     destroyTexture(texture) {
       if (texture.options.cache)
@@ -4948,10 +5037,10 @@
      * Destroy all the Material textures
      */
     destroyTextures() {
+      this.domTextures?.forEach((texture) => this.destroyTexture(texture));
       this.textures?.forEach((texture) => this.destroyTexture(texture));
-      this.renderTextures?.forEach((texture) => this.destroyTexture(texture));
+      this.domTextures = [];
       this.textures = [];
-      this.renderTextures = [];
     }
     /**
      * Prepare our samplers array and always add a default sampler if not already passed as parameter
@@ -5031,12 +5120,12 @@
     /**
      * Called before rendering the Material.
      * First, check if we need to create our bind groups or pipeline
-     * Then render the {@link textures}
+     * Then render the {@link domTextures}
      * Finally updates all the {@link bindGroups | bind groups}
      */
     onBeforeRender() {
       this.compileMaterial();
-      for (const texture of this.textures) {
+      for (const texture of this.domTextures) {
         texture.render();
       }
       this.updateBindGroups();
@@ -5049,6 +5138,13 @@
       this.renderer.pipelineManager.setCurrentPipeline(pass, this.pipelineEntry);
     }
     /**
+     * Use the {@link Renderer#pipelineManager | renderer pipelineManager} to only set the bind groups that are not already set.
+     * @param pass - current pass encoder
+     */
+    setActiveBindGroups(pass) {
+      this.renderer.pipelineManager.setActiveBindGroups(pass, this.bindGroups);
+    }
+    /**
      * Render the material if it is ready:
      * Set the current pipeline and set the bind groups
      * @param pass - current pass encoder
@@ -5057,9 +5153,7 @@
       if (!this.ready)
         return;
       this.setPipeline(pass);
-      for (const bindGroup of this.bindGroups) {
-        pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
-      }
+      this.setActiveBindGroups(pass);
     }
     /**
      * Destroy the Material
@@ -5239,7 +5333,7 @@
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$4 = (obj, member, getter) => {
+  var __privateGet$5 = (obj, member, getter) => {
     __accessCheck$5(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
@@ -5248,7 +5342,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$3 = (obj, member, value, setter) => {
+  var __privateSet$4 = (obj, member, value, setter) => {
     __accessCheck$5(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
@@ -5299,8 +5393,8 @@
         storages,
         bindGroups,
         samplers,
+        domTextures,
         textures,
-        renderTextures,
         autoRender,
         useAsyncPipeline,
         texturesOptions,
@@ -5318,11 +5412,11 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$3(this, _autoRender$1, autoRender);
+        __privateSet$4(this, _autoRender$1, autoRender);
       }
       this.userData = {};
       this.ready = false;
-      this.setComputeMaterial({
+      this.setMaterial({
         label: this.options.label,
         shaders: this.options.shaders,
         uniforms,
@@ -5330,7 +5424,7 @@
         bindGroups,
         samplers,
         textures,
-        renderTextures,
+        domTextures,
         useAsyncPipeline,
         dispatchSize
       });
@@ -5354,7 +5448,7 @@
      */
     addToScene() {
       this.renderer.computePasses.push(this);
-      if (__privateGet$4(this, _autoRender$1)) {
+      if (__privateGet$5(this, _autoRender$1)) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -5362,7 +5456,7 @@
      * Remove our compute pass from the scene and the renderer
      */
     removeFromScene() {
-      if (__privateGet$4(this, _autoRender$1)) {
+      if (__privateGet$5(this, _autoRender$1)) {
         this.renderer.scene.removeComputePass(this);
       }
       this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
@@ -5371,8 +5465,15 @@
      * Create the compute pass material
      * @param computeParameters - {@link ComputeMaterial} parameters
      */
-    setComputeMaterial(computeParameters) {
-      this.material = new ComputeMaterial(this.renderer, computeParameters);
+    setMaterial(computeParameters) {
+      this.useMaterial(new ComputeMaterial(this.renderer, computeParameters));
+    }
+    /**
+     * Set or update the {@link ComputePass} {@link ComputeMaterial}
+     * @param material - new {@link ComputeMaterial} to use
+     */
+    useMaterial(material) {
+      this.material = material;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
@@ -5389,6 +5490,13 @@
     }
     /* TEXTURES */
     /**
+     * Get our {@link ComputeMaterial#domTextures | ComputeMaterial domTextures array}
+     * @readonly
+     */
+    get domTextures() {
+      return this.material?.domTextures || [];
+    }
+    /**
      * Get our {@link ComputeMaterial#textures | ComputeMaterial textures array}
      * @readonly
      */
@@ -5396,54 +5504,40 @@
       return this.material?.textures || [];
     }
     /**
-     * Get our {@link ComputeMaterial#renderTextures | ComputeMaterial render textures array}
-     * @readonly
+     * Create a new {@link DOMTexture}
+     * @param options - {@link DOMTextureParams | DOMTexture parameters}
+     * @returns - newly created {@link DOMTexture}
      */
-    get renderTextures() {
-      return this.material?.renderTextures || [];
-    }
-    /**
-     * Create a new {@link Texture}
-     * @param options - {@link TextureParams | Texture parameters}
-     * @returns - newly created {@link Texture}
-     */
-    createTexture(options) {
+    createDOMTexture(options) {
       if (!options.name) {
-        options.name = "texture" + this.textures.length;
+        options.name = "texture" + (this.textures.length + this.domTextures.length);
       }
       if (!options.label) {
         options.label = this.options.label + " " + options.name;
       }
-      const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+      const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
+      this.addTexture(domTexture);
+      return domTexture;
+    }
+    /**
+     * Create a new {@link Texture}
+     * @param  options - {@link TextureParams | Texture parameters}
+     * @returns - newly created {@link Texture}
+     */
+    createTexture(options) {
+      if (!options.name) {
+        options.name = "texture" + (this.textures.length + this.domTextures.length);
+      }
+      const texture = new Texture(this.renderer, options);
       this.addTexture(texture);
       return texture;
     }
     /**
-     * Add a {@link Texture}
+     * Add a {@link Texture} or {@link DOMTexture}
      * @param texture - {@link Texture} to add
      */
     addTexture(texture) {
       this.material.addTexture(texture);
-    }
-    /**
-     * Create a new {@link RenderTexture}
-     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-     * @returns - newly created {@link RenderTexture}
-     */
-    createRenderTexture(options) {
-      if (!options.name) {
-        options.name = "renderTexture" + this.renderTextures.length;
-      }
-      const renderTexture = new RenderTexture(this.renderer, options);
-      this.addRenderTexture(renderTexture);
-      return renderTexture;
-    }
-    /**
-     * Add a {@link RenderTexture}
-     * @param renderTexture - {@link RenderTexture} to add
-     */
-    addRenderTexture(renderTexture) {
-      this.material.addTexture(renderTexture);
     }
     /**
      * Get our {@link ComputeMaterial#uniforms | ComputeMaterial uniforms}
@@ -5626,6 +5720,12 @@
       return this;
     }
     /**
+     * Check whether the {@link Box3} min and max values have actually been set
+     */
+    isEmpty() {
+      return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
+    }
+    /**
      * Clone this {@link Box3}
      * @returns - cloned {@link Box3}
      */
@@ -5634,17 +5734,27 @@
     }
     /**
      * Get the {@link Box3} center
+     * @readonly
      * @returns - {@link Vec3 | center vector} of the {@link Box3}
      */
-    getCenter() {
+    get center() {
       return this.max.clone().add(this.min).multiplyScalar(0.5);
     }
     /**
      * Get the {@link Box3} size
+     * @readonly
      * @returns - {@link Vec3 | size vector} of the {@link Box3}
      */
-    getSize() {
+    get size() {
       return this.max.clone().sub(this.min);
+    }
+    /**
+     * Get the {@link Box3} radius
+     * @readonly
+     * @returns - radius of the {@link Box3}
+     */
+    get radius() {
+      return this.max.distance(this.min) * 0.5;
     }
     /**
      * Apply a {@link Mat4 | matrix} to a {@link Box3}
@@ -5653,6 +5763,8 @@
      * @returns - this {@link Box3} after {@link Mat4 | matrix} application
      */
     applyMat4(matrix = new Mat4()) {
+      if (this.isEmpty())
+        return this;
       const corners = [];
       if (this.min.z === this.max.z) {
         corners[0] = points[0].set(this.min.x, this.min.y, this.min.z).applyMat4(matrix);
@@ -5785,20 +5897,6 @@
     }
   }
 
-  var __accessCheck$4 = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateAdd$4 = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateMethod = (obj, member, method) => {
-    __accessCheck$4(obj, member, "access private method");
-    return method;
-  };
-  var _setWGSLFragment, setWGSLFragment_fn;
   class Geometry {
     /**
      * Geometry constructor
@@ -5811,11 +5909,6 @@
       vertexBuffers = [],
       mapBuffersAtCreation = true
     } = {}) {
-      /**
-       * Set the WGSL code snippet that will be appended to the vertex shader.
-       * @private
-       */
-      __privateAdd$4(this, _setWGSLFragment);
       this.verticesCount = 0;
       this.verticesOrder = verticesOrder;
       this.topology = topology;
@@ -5826,9 +5919,6 @@
       this.uuid = generateUUID();
       this.vertexBuffers = [];
       this.consumers = /* @__PURE__ */ new Set();
-      this.addVertexBuffer({
-        name: "attributes"
-      });
       this.options = {
         verticesOrder,
         topology,
@@ -5836,13 +5926,26 @@
         vertexBuffers,
         mapBuffersAtCreation
       };
+      const attributesBuffer = vertexBuffers.find((vertexBuffer) => vertexBuffer.name === "attributes");
+      if (!vertexBuffers.length || !attributesBuffer) {
+        this.addVertexBuffer({
+          name: "attributes"
+        });
+      }
       for (const vertexBuffer of vertexBuffers) {
         this.addVertexBuffer({
           stepMode: vertexBuffer.stepMode ?? "vertex",
           name: vertexBuffer.name,
           attributes: vertexBuffer.attributes,
-          ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer }
+          ...vertexBuffer.array && { array: vertexBuffer.array },
+          // TODO
+          ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
+          ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
+          ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
         });
+      }
+      if (attributesBuffer) {
+        this.setWGSLFragment();
       }
     }
     /**
@@ -5879,7 +5982,10 @@
       stepMode = "vertex",
       name,
       attributes = [],
-      buffer = null
+      buffer = null,
+      array = null,
+      bufferOffset = 0,
+      bufferSize = null
     } = {}) {
       buffer = buffer || new Buffer();
       const vertexBuffer = {
@@ -5889,7 +5995,9 @@
         bufferLength: 0,
         attributes: [],
         buffer,
-        array: null
+        array,
+        bufferOffset,
+        bufferSize
       };
       attributes?.forEach((attribute) => {
         this.setAttribute({
@@ -6046,8 +6154,29 @@
         }
       });
       if (!this.wgslStructFragment) {
-        __privateMethod(this, _setWGSLFragment, setWGSLFragment_fn).call(this);
+        this.setWGSLFragment();
       }
+    }
+    /**
+     * Set the WGSL code snippet that will be appended to the vertex shader.
+     */
+    setWGSLFragment() {
+      let locationIndex = -1;
+      this.wgslStructFragment = `struct Attributes {
+	@builtin(vertex_index) vertexIndex : u32,
+	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
+      return vertexBuffer.attributes.map((attribute) => {
+        locationIndex++;
+        return `
+	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
+      });
+    }).join(",")}
+};`;
+      this.layoutCacheKey = this.vertexBuffers.map((vertexBuffer) => {
+        return vertexBuffer.name + "," + vertexBuffer.attributes.map((attribute) => {
+          return `${attribute.name},${attribute.size}`;
+        });
+      }).join(",") + ",";
     }
     /**
      * Create the {@link Geometry} {@link vertexBuffers | vertex buffers}.
@@ -6059,11 +6188,14 @@
       if (this.ready)
         return;
       for (const vertexBuffer of this.vertexBuffers) {
+        if (!vertexBuffer.bufferSize) {
+          vertexBuffer.bufferSize = vertexBuffer.array.length * vertexBuffer.array.constructor.BYTES_PER_ELEMENT;
+        }
         if (!vertexBuffer.buffer.GPUBuffer && !vertexBuffer.buffer.consumers.size) {
           vertexBuffer.buffer.createBuffer(renderer, {
             label: label + ": " + vertexBuffer.name + " buffer",
-            size: vertexBuffer.bufferLength * Float32Array.BYTES_PER_ELEMENT,
-            usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.VERTEX : GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            size: vertexBuffer.bufferSize,
+            usage: this.options.mapBuffersAtCreation ? ["vertex"] : ["copyDst", "vertex"],
             mappedAtCreation: this.options.mapBuffersAtCreation
           });
           this.uploadBuffer(renderer, vertexBuffer);
@@ -6079,7 +6211,9 @@
      */
     uploadBuffer(renderer, buffer) {
       if (this.options.mapBuffersAtCreation) {
-        new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(buffer.array);
+        new buffer.array.constructor(buffer.buffer.GPUBuffer.getMappedRange()).set(
+          buffer.array
+        );
         buffer.buffer.GPUBuffer.unmap();
       } else {
         renderer.queueWriteBuffer(buffer.buffer.GPUBuffer, 0, buffer.array);
@@ -6092,7 +6226,7 @@
      */
     setGeometryBuffers(pass) {
       this.vertexBuffers.forEach((vertexBuffer, index) => {
-        pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer);
+        pass.setVertexBuffer(index, vertexBuffer.buffer.GPUBuffer, vertexBuffer.bufferOffset, vertexBuffer.bufferSize);
       });
     }
     /**
@@ -6129,20 +6263,6 @@
       }
     }
   }
-  _setWGSLFragment = new WeakSet();
-  setWGSLFragment_fn = function() {
-    let locationIndex = -1;
-    this.wgslStructFragment = `struct Attributes {
-	@builtin(vertex_index) vertexIndex : u32,
-	@builtin(instance_index) instanceIndex : u32,${this.vertexBuffers.map((vertexBuffer) => {
-    return vertexBuffer.attributes.map((attribute) => {
-      locationIndex++;
-      return `
-	@location(${locationIndex}) ${attribute.name}: ${attribute.type}`;
-    });
-  }).join(",")}
-};`;
-  };
 
   class IndexedGeometry extends Geometry {
     /**
@@ -6193,12 +6313,20 @@
      * Set our {@link indexBuffer}
      * @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
      */
-    setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0) }) {
+    setIndexBuffer({
+      bufferFormat = "uint32",
+      array = new Uint32Array(0),
+      buffer = new Buffer(),
+      bufferOffset = 0,
+      bufferSize = null
+    }) {
       this.indexBuffer = {
         array,
         bufferFormat,
         bufferLength: array.length,
-        buffer: new Buffer()
+        buffer,
+        bufferOffset,
+        bufferSize: bufferSize !== null ? bufferSize : array.length * array.constructor.BYTES_PER_ELEMENT
       };
     }
     /**
@@ -6208,13 +6336,15 @@
      * @param parameters.label - label to use for the vertex buffers.
      */
     createBuffers({ renderer, label = this.type }) {
-      this.indexBuffer.buffer.createBuffer(renderer, {
-        label: label + ": index buffer",
-        size: this.indexBuffer.array.byteLength,
-        usage: this.options.mapBuffersAtCreation ? GPUBufferUsage.INDEX : GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-        mappedAtCreation: this.options.mapBuffersAtCreation
-      });
-      this.uploadBuffer(renderer, this.indexBuffer);
+      if (!this.indexBuffer.buffer.GPUBuffer) {
+        this.indexBuffer.buffer.createBuffer(renderer, {
+          label: label + ": index buffer",
+          size: this.indexBuffer.array.byteLength,
+          usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
+          mappedAtCreation: this.options.mapBuffersAtCreation
+        });
+        this.uploadBuffer(renderer, this.indexBuffer);
+      }
       this.indexBuffer.buffer.consumers.add(this.uuid);
       super.createBuffers({ renderer, label });
     }
@@ -6226,7 +6356,12 @@
      */
     setGeometryBuffers(pass) {
       super.setGeometryBuffers(pass);
-      pass.setIndexBuffer(this.indexBuffer.buffer.GPUBuffer, this.indexBuffer.bufferFormat);
+      pass.setIndexBuffer(
+        this.indexBuffer.buffer.GPUBuffer,
+        this.indexBuffer.bufferFormat,
+        this.indexBuffer.bufferOffset,
+        this.indexBuffer.bufferSize
+      );
     }
     /**
      * Override the parentMesh draw method to draw indexed geometry
@@ -6262,7 +6397,7 @@
       vertexBuffers = [],
       topology
     } = {}) {
-      super({ verticesOrder: "cw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
+      super({ verticesOrder: "ccw", topology, instancesCount, vertexBuffers, mapBuffersAtCreation: true });
       this.type = "PlaneGeometry";
       widthSegments = Math.floor(widthSegments);
       heightSegments = Math.floor(heightSegments);
@@ -6334,9 +6469,9 @@
       let uvOffset = 0;
       for (let y = 0; y <= this.definition.height; y++) {
         for (let x = 0; x <= this.definition.width; x++) {
-          uv.array[uvOffset++] = x / this.definition.width;
+          uv.array[uvOffset++] = 1 - x / this.definition.width;
           uv.array[uvOffset++] = 1 - y / this.definition.height;
-          position.array[positionOffset++] = x * 2 / this.definition.width - 1;
+          position.array[positionOffset++] = 1 - x * 2 / this.definition.width;
           position.array[positionOffset++] = y * 2 / this.definition.height - 1;
           position.array[positionOffset++] = 0;
           normal.array[normalOffset++] = 0;
@@ -6358,6 +6493,56 @@
     });
   };
 
+  var default_projected_vsWgsl = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+  @location(1) normal: vec3f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = getOutputPosition(attributes.position);
+  vsOutput.uv = attributes.uv;
+  vsOutput.normal = attributes.normal;
+  
+  return vsOutput;
+}`
+  );
+
+  var default_vsWgsl = (
+    /* wgsl */
+    `
+struct VertexOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@vertex fn main(
+  attributes: Attributes,
+) -> VertexOutput {
+  var vsOutput: VertexOutput;
+
+  vsOutput.position = vec4f(attributes.position, 1.0);
+  vsOutput.uv = attributes.uv;
+  
+  return vsOutput;
+}`
+  );
+
+  var default_fsWgsl = (
+    /* wgsl */
+    `
+@fragment fn main() -> @location(0) vec4f {
+  return vec4(0.0, 0.0, 0.0, 1.0);
+}`
+  );
+
   class RenderMaterial extends Material {
     /**
      * RenderMaterial constructor
@@ -6368,16 +6553,28 @@
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderMaterial";
       isRenderer(renderer, type);
+      if (!parameters.shaders) {
+        parameters.shaders = {};
+      }
+      if (!parameters.shaders?.vertex) {
+        parameters.shaders.vertex = {
+          code: parameters.useProjection ? default_projected_vsWgsl : default_vsWgsl,
+          entryPoint: "main"
+        };
+      }
+      if (!parameters.shaders.vertex.entryPoint) {
+        parameters.shaders.vertex.entryPoint = "main";
+      }
+      if (parameters.shaders.fragment === void 0) {
+        parameters.shaders.fragment = {
+          entryPoint: "main",
+          code: default_fsWgsl
+        };
+      }
       super(renderer, parameters);
       this.type = type;
       this.renderer = renderer;
       const { shaders } = parameters;
-      if (!shaders.vertex.entryPoint) {
-        shaders.vertex.entryPoint = "main";
-      }
-      if (shaders.fragment && !shaders.fragment.entryPoint) {
-        shaders.fragment.entryPoint = "main";
-      }
       const {
         useProjection,
         transparent,
@@ -6418,20 +6615,19 @@
           topology
         }
       };
+      this.attributes = null;
+      this.pipelineEntry = null;
+    }
+    /**
+     * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
+     */
+    setPipelineEntry() {
       this.pipelineEntry = this.renderer.pipelineManager.createRenderPipeline({
         renderer: this.renderer,
         label: this.options.label + " render pipeline",
         shaders: this.options.shaders,
         useAsync: this.options.useAsyncPipeline,
-        rendering: this.options.rendering
-      });
-      this.attributes = null;
-    }
-    /**
-     * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry}
-     */
-    setPipelineEntryProperties() {
-      this.pipelineEntry.setPipelineEntryProperties({
+        rendering: this.options.rendering,
         attributes: this.attributes,
         bindGroups: this.bindGroups
       });
@@ -6449,8 +6645,10 @@
      */
     async compileMaterial() {
       super.compileMaterial();
-      if (this.attributes && this.pipelineEntry && this.pipelineEntry.canCompile) {
-        this.setPipelineEntryProperties();
+      if (this.attributes && !this.pipelineEntry) {
+        this.setPipelineEntry();
+      }
+      if (this.pipelineEntry && this.pipelineEntry.canCompile) {
         await this.compilePipelineEntry();
       }
     }
@@ -6460,16 +6658,46 @@
      */
     setRenderingOptions(renderingOptions = {}) {
       const newProperties = compareRenderingOptions(renderingOptions, this.options.rendering);
+      const oldRenderingOptions = { ...this.options.rendering };
       this.options.rendering = { ...this.options.rendering, ...renderingOptions };
       if (this.pipelineEntry) {
-        this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
         if (this.pipelineEntry.ready && newProperties.length) {
-          throwWarning(
-            `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be flushed and recompiled. This should be avoided. Rendering options responsible: { ${newProperties.map(
-            (key) => `"${key}": ${Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => `${JSON.stringify(optKey)}`).join(", ") : renderingOptions[key]}`
-          ).join(", ")} }`
-          );
-          this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+          if (!this.renderer.production) {
+            const oldProps = newProperties.map((key) => {
+              return {
+                [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key]
+              };
+            });
+            const newProps = newProperties.map((key) => {
+              return {
+                [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key]
+              };
+            });
+            throwWarning(
+              `${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.
+
+Old rendering options: ${JSON.stringify(
+              oldProps.reduce((acc, v) => {
+                return { ...acc, ...v };
+              }, {}),
+              null,
+              4
+            )}
+
+--------
+
+New rendering options: ${JSON.stringify(
+              newProps.reduce((acc, v) => {
+                return { ...acc, ...v };
+              }, {}),
+              null,
+              4
+            )}`
+            );
+          }
+          this.setPipelineEntry();
+        } else {
+          this.pipelineEntry.options.rendering = { ...this.pipelineEntry.options.rendering, ...this.options.rendering };
         }
       }
     }
@@ -6481,7 +6709,8 @@
     setAttributesFromGeometry(geometry) {
       this.attributes = {
         wgslStructFragment: geometry.wgslStructFragment,
-        vertexBuffers: geometry.vertexBuffers
+        vertexBuffers: geometry.vertexBuffers,
+        layoutCacheKey: geometry.layoutCacheKey
       };
     }
     /* BIND GROUPS */
@@ -6489,72 +6718,34 @@
      * Create the bind groups if they need to be created, but first add Camera bind group if needed
      */
     createBindGroups() {
-      const bindGroupStartIndex = this.options.rendering.useProjection ? 1 : 0;
-      if (this.texturesBindGroup.shouldCreateBindGroup) {
-        this.texturesBindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
-        this.texturesBindGroup.createBindGroup();
-        this.bindGroups.push(this.texturesBindGroup);
+      if ("cameraBindGroup" in this.renderer && this.options.rendering.useProjection) {
+        this.bindGroups.push(this.renderer.cameraBindGroup);
+        this.renderer.cameraBindGroup.consumers.add(this.uuid);
       }
-      for (const bindGroup of this.inputsBindGroups) {
-        if (bindGroup.shouldCreateBindGroup) {
-          bindGroup.setIndex(this.bindGroups.length + bindGroupStartIndex);
-          bindGroup.createBindGroup();
-          this.bindGroups.push(bindGroup);
-        }
-      }
+      super.createBindGroups();
     }
   }
 
-  var default_vsWgsl = (
-    /* wgsl */
-    `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
-
-  vsOutput.position = vec4f(attributes.position, 1.0);
-  vsOutput.uv = attributes.uv;
-  
-  return vsOutput;
-}`
-  );
-
-  var default_fsWgsl = (
-    /* wgsl */
-    `
-@fragment fn main() -> @location(0) vec4f {
-  return vec4(0.0, 0.0, 0.0, 1.0);
-}`
-  );
-
-  var __accessCheck$3 = (obj, member, msg) => {
+  var __accessCheck$4 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$3 = (obj, member, getter) => {
-    __accessCheck$3(obj, member, "read from private field");
+  var __privateGet$4 = (obj, member, getter) => {
+    __accessCheck$4(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$3 = (obj, member, value) => {
+  var __privateAdd$4 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$2 = (obj, member, value, setter) => {
-    __accessCheck$3(obj, member, "write to private field");
+  var __privateSet$3 = (obj, member, value, setter) => {
+    __accessCheck$4(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
   let meshIndex = 0;
   const defaultMeshBaseParams = {
-    // geometry
-    geometry: new Geometry(),
     // material
     autoRender: true,
     useProjection: false,
@@ -6592,7 +6783,7 @@ struct VertexOutput {
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-        __privateAdd$3(this, _autoRender, true);
+        __privateAdd$4(this, _autoRender, true);
         // callbacks / events
         /** function assigned to the {@link onReady} callback */
         this._onReadyCallback = () => {
@@ -6640,29 +6831,28 @@ struct VertexOutput {
           ...autoRender !== void 0 && { autoRender },
           ...meshParameters
         };
-        this.geometry = geometry;
-        this.geometry.consumers.add(this.uuid);
         if (autoRender !== void 0) {
-          __privateSet$2(this, _autoRender, autoRender);
+          __privateSet$3(this, _autoRender, autoRender);
         }
         this.visible = visible;
         this.renderOrder = renderOrder;
         this.ready = false;
         this.userData = {};
-        this.computeGeometry();
+        if (geometry) {
+          this.useGeometry(geometry);
+        }
         this.setMaterial({
           ...this.cleanupRenderMaterialParameters({ ...this.options }),
-          verticesOrder: geometry.verticesOrder,
-          topology: geometry.topology
+          ...geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }
         });
-        this.addToScene();
+        this.addToScene(true);
       }
       /**
        * Get private #autoRender value
        * @readonly
        */
       get autoRender() {
-        return __privateGet$3(this, _autoRender);
+        return __privateGet$4(this, _autoRender);
       }
       /**
        * Get/set whether a Mesh is ready or not
@@ -6679,23 +6869,29 @@ struct VertexOutput {
       }
       /* SCENE */
       /**
-       * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+       * Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+       * @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
        */
-      addToScene() {
-        this.renderer.meshes.push(this);
+      addToScene(addToRenderer = false) {
+        if (addToRenderer) {
+          this.renderer.meshes.push(this);
+        }
         this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
-        if (__privateGet$3(this, _autoRender)) {
+        if (__privateGet$4(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
         }
       }
       /**
-       * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+       * Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+       * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
        */
-      removeFromScene() {
-        if (__privateGet$3(this, _autoRender)) {
+      removeFromScene(removeFromRenderer = false) {
+        if (__privateGet$4(this, _autoRender)) {
           this.renderer.scene.removeMesh(this);
         }
-        this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+        if (removeFromRenderer) {
+          this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+        }
       }
       /**
        * Set a new {@link Renderer} for this Mesh
@@ -6710,9 +6906,9 @@ struct VertexOutput {
           return;
         }
         const oldRenderer = this.renderer;
-        this.removeFromScene();
+        this.removeFromScene(true);
         this.renderer = renderer;
-        this.addToScene();
+        this.addToScene(true);
         if (!oldRenderer.meshes.length) {
           oldRenderer.onBeforeRenderScene.add(
             (commandEncoder) => {
@@ -6786,6 +6982,45 @@ struct VertexOutput {
       }
       /* GEOMETRY */
       /**
+       * Set or update the Mesh {@link Geometry}
+       * @param geometry - new {@link Geometry} to use
+       */
+      useGeometry(geometry) {
+        if (this.geometry) {
+          if (geometry.shouldCompute) {
+            geometry.computeGeometry();
+          }
+          if (this.geometry.layoutCacheKey !== geometry.layoutCacheKey) {
+            throwWarning(
+              `${this.options.label} (${this.type}): the current and new geometries do not have the same vertexBuffers layout, causing a probable pipeline recompilation. This should be avoided.
+
+Current geometry layout:
+
+${this.geometry.wgslStructFragment}
+
+--------
+
+New geometry layout:
+
+${geometry.wgslStructFragment}`
+            );
+            this.material.setAttributesFromGeometry(geometry);
+            this.material.setPipelineEntry();
+          }
+          this.geometry.consumers.delete(this.uuid);
+        }
+        this.geometry = geometry;
+        this.geometry.consumers.add(this.uuid);
+        this.computeGeometry();
+        if (this.material) {
+          const renderingOptions = {
+            ...this.material.options.rendering,
+            ...{ verticesOrder: geometry.verticesOrder, topology: geometry.topology }
+          };
+          this.material.setRenderingOptions(renderingOptions);
+        }
+      }
+      /**
        * Compute the Mesh geometry if needed
        */
       computeGeometry() {
@@ -6814,6 +7049,8 @@ struct VertexOutput {
        */
       setRenderingOptionsForRenderPass(renderPass) {
         const renderingOptions = {
+          // transparency (blend)
+          transparent: this.transparent,
           // sample count
           sampleCount: renderPass.options.sampleCount,
           // color attachments
@@ -6849,15 +7086,23 @@ struct VertexOutput {
         return parameters;
       }
       /**
-       * Set a Mesh transparent property, then set its material
+       * Set or update the Mesh {@link RenderMaterial}
+       * @param material - new {@link RenderMaterial} to use
+       */
+      useMaterial(material) {
+        this.material = material;
+        this.transparent = this.material.options.rendering.transparent;
+        this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
+      }
+      /**
+       * Patch the shaders if needed, then set the Mesh material
        * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
        */
       setMaterial(meshParameters) {
-        this.transparent = meshParameters.transparent;
         this.setShaders();
         meshParameters.shaders = this.options.shaders;
-        this.material = new RenderMaterial(this.renderer, meshParameters);
-        this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+        meshParameters.label = meshParameters.label + " material";
+        this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
       }
       /**
        * Set Mesh material attributes
@@ -6867,7 +7112,34 @@ struct VertexOutput {
           this.material.setAttributesFromGeometry(this.geometry);
         }
       }
+      /**
+       * Get the transparent property value
+       */
+      get transparent() {
+        return this._transparent;
+      }
+      /**
+       * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
+       * @param value
+       */
+      set transparent(value) {
+        const switchTransparency = this.transparent !== void 0 && value !== this.transparent;
+        if (switchTransparency) {
+          this.removeFromScene();
+        }
+        this._transparent = value;
+        if (switchTransparency) {
+          this.addToScene();
+        }
+      }
       /* TEXTURES */
+      /**
+       * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
+       * @readonly
+       */
+      get domTextures() {
+        return this.material?.domTextures || [];
+      }
       /**
        * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
        * @readonly
@@ -6876,25 +7148,46 @@ struct VertexOutput {
         return this.material?.textures || [];
       }
       /**
-       * Get our {@link RenderMaterial#renderTextures | RenderMaterial render textures array}
-       * @readonly
+       * Create a new {@link DOMTexture}
+       * @param options - {@link DOMTextureParams | DOMTexture parameters}
+       * @returns - newly created {@link DOMTexture}
        */
-      get renderTextures() {
-        return this.material?.renderTextures || [];
-      }
-      /**
-       * Create a new {@link Texture}
-       * @param options - {@link TextureParams | Texture parameters}
-       * @returns - newly created {@link Texture}
-       */
-      createTexture(options) {
+      createDOMTexture(options) {
         if (!options.name) {
-          options.name = "texture" + this.textures.length;
+          options.name = "texture" + (this.textures.length + this.domTextures.length);
         }
         if (!options.label) {
           options.label = this.options.label + " " + options.name;
         }
-        const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+        const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
+        this.addDOMTexture(domTexture);
+        return domTexture;
+      }
+      /**
+       * Add a {@link DOMTexture}
+       * @param domTexture - {@link DOMTexture} to add
+       */
+      addDOMTexture(domTexture) {
+        this.material.addTexture(domTexture);
+        this.onDOMTextureAdded(domTexture);
+      }
+      /**
+       * Callback run when a new {@link DOMTexture} has been added
+       * @param domTexture - newly created DOMTexture
+       */
+      onDOMTextureAdded(domTexture) {
+        domTexture.parentMesh = this;
+      }
+      /**
+       * Create a new {@link Texture}
+       * @param  options - {@link TextureParams | Texture parameters}
+       * @returns - newly created {@link Texture}
+       */
+      createTexture(options) {
+        if (!options.name) {
+          options.name = "texture" + (this.textures.length + this.domTextures.length);
+        }
+        const texture = new Texture(this.renderer, options);
         this.addTexture(texture);
         return texture;
       }
@@ -6904,34 +7197,6 @@ struct VertexOutput {
        */
       addTexture(texture) {
         this.material.addTexture(texture);
-        this.onTextureAdded(texture);
-      }
-      /**
-       * Callback run when a new {@link Texture} has been added
-       * @param texture - newly created Texture
-       */
-      onTextureAdded(texture) {
-        texture.parentMesh = this;
-      }
-      /**
-       * Create a new {@link RenderTexture}
-       * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-       * @returns - newly created {@link RenderTexture}
-       */
-      createRenderTexture(options) {
-        if (!options.name) {
-          options.name = "renderTexture" + this.renderTextures.length;
-        }
-        const renderTexture = new RenderTexture(this.renderer, options);
-        this.addRenderTexture(renderTexture);
-        return renderTexture;
-      }
-      /**
-       * Add a {@link RenderTexture}
-       * @param renderTexture - {@link RenderTexture} to add
-       */
-      addRenderTexture(renderTexture) {
-        this.material.addTexture(renderTexture);
       }
       /* BINDINGS */
       /**
@@ -6957,12 +7222,12 @@ struct VertexOutput {
         if (super.resize) {
           super.resize(boundingRect);
         }
-        this.renderTextures?.forEach((renderTexture) => {
-          if (renderTexture.options.fromTexture) {
-            renderTexture.copy(renderTexture.options.fromTexture);
+        this.textures?.forEach((texture) => {
+          if (texture.options.fromTexture) {
+            texture.copy(texture.options.fromTexture);
           }
         });
-        this.textures?.forEach((texture) => {
+        this.domTextures?.forEach((texture) => {
           texture.resize();
         });
         this._onAfterResizeCallback && this._onAfterResizeCallback();
@@ -7087,7 +7352,7 @@ struct VertexOutput {
        * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
        */
       remove() {
-        this.removeFromScene();
+        this.removeFromScene(true);
         this.destroy();
         if (!this.renderer.meshes.length) {
           this.renderer.onBeforeRenderScene.add(
@@ -7171,7 +7436,7 @@ struct VertexOutput {
       if (!parameters.shaders || !parameters.shaders.vertex) {
         ["uniforms", "storages"].forEach((bindingType) => {
           Object.values(parameters[bindingType] ?? {}).forEach(
-            (binding) => binding.visibility = "fragment"
+            (binding) => binding.visibility = ["fragment"]
           );
         });
       }
@@ -7339,28 +7604,6 @@ struct VertexOutput {
     }
   }
 
-  var default_projected_vsWgsl = (
-    /* wgsl */
-    `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-  @location(1) normal: vec3f,
-};
-
-@vertex fn main(
-  attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
-
-  vsOutput.position = getOutputPosition(attributes.position);
-  vsOutput.uv = attributes.uv;
-  vsOutput.normal = attributes.normal;
-  
-  return vsOutput;
-}`
-  );
-
   var default_normal_fsWgsl = (
     /* wgsl */
     `
@@ -7422,7 +7665,7 @@ struct VSOutput {
         renderer = renderer && renderer.renderer || renderer;
         isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
-        const { geometry, frustumCulled, DOMFrustumMargins } = parameters;
+        const { frustumCulled, DOMFrustumMargins } = parameters;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
@@ -7430,8 +7673,6 @@ struct VSOutput {
           DOMFrustumMargins
         };
         this.setDOMFrustum();
-        this.geometry = geometry;
-        this.shouldUpdateMatrixStack();
       }
       /* SHADERS */
       /**
@@ -7467,11 +7708,22 @@ struct VSOutput {
       }
       /* GEOMETRY */
       /**
+       * Set or update the Projected Mesh {@link Geometry}
+       * @param geometry - new {@link Geometry} to use
+       */
+      useGeometry(geometry) {
+        super.useGeometry(geometry);
+        if (this.domFrustum) {
+          this.domFrustum.boundingBox = this.geometry.boundingBox;
+        }
+        this.shouldUpdateMatrixStack();
+      }
+      /**
        * Set the Mesh frustum culling
        */
       setDOMFrustum() {
         this.domFrustum = new DOMFrustum({
-          boundingBox: this.geometry.boundingBox,
+          boundingBox: this.geometry?.boundingBox,
           modelViewProjectionMatrix: this.modelViewProjectionMatrix,
           containerBoundingRect: this.renderer.boundingRect,
           DOMFrustumMargins: this.options.DOMFrustumMargins,
@@ -7504,6 +7756,7 @@ struct VSOutput {
       setMaterial(meshParameters) {
         const matricesUniforms = {
           label: "Matrices",
+          visibility: ["vertex"],
           struct: {
             model: {
               type: "mat4x4f",
@@ -7540,7 +7793,7 @@ struct VSOutput {
        */
       applyScale() {
         super.applyScale();
-        for (const texture of this.textures) {
+        for (const texture of this.domTextures) {
           texture.resize();
         }
       }
@@ -7616,7 +7869,7 @@ struct VSOutput {
      * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
      * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
      */
-    constructor(renderer, parameters) {
+    constructor(renderer, parameters = {}) {
       renderer = renderer && renderer.renderer || renderer;
       isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
       super(renderer, null, parameters);
@@ -7822,7 +8075,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
      */
     constructor(parameters) {
       let { renderer, ...pipelineParams } = parameters;
-      const { label, ...renderingOptions } = pipelineParams;
+      const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams;
       renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
@@ -7848,17 +8101,12 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
       this.descriptor = null;
       this.options = {
         ...this.options,
+        attributes,
+        bindGroups,
+        cacheKey,
         ...renderingOptions
       };
-    }
-    // TODO! need to chose whether we should silently add the camera bind group here
-    // or explicitly in the RenderMaterial class createBindGroups() method
-    /**
-     * Merge our {@link bindGroups | pipeline entry bind groups} with the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} if needed and set them
-     * @param bindGroups - {@link core/materials/RenderMaterial.RenderMaterial#bindGroups | bind groups} to use with this {@link RenderPipelineEntry}
-     */
-    setPipelineEntryBindGroups(bindGroups) {
-      this.bindGroups = "cameraBindGroup" in this.renderer && this.options.rendering.useProjection ? [this.renderer.cameraBindGroup, ...bindGroups] : bindGroups;
+      this.setPipelineEntryProperties({ attributes, bindGroups });
     }
     /**
      * Set {@link RenderPipelineEntry} properties (in this case the {@link bindGroups | bind groups} and {@link attributes})
@@ -7921,7 +8169,7 @@ ${this.shaders.full.head}`;
           binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
             groupsBindings.push({
               groupIndex: bindGroup.index,
-              visibility: binding.visibility,
+              visibility: binding.options.visibility,
               bindIndex,
               wgslStructFragment: binding.wgslStructFragment,
               wgslGroupFragment: groupFragment,
@@ -7932,7 +8180,7 @@ ${this.shaders.full.head}`;
         });
       }
       for (const groupBinding of groupsBindings) {
-        if (groupBinding.visibility === GPUShaderStage.VERTEX || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE)) {
+        if (groupBinding.visibility.includes("vertex")) {
           if (groupBinding.wgslStructFragment && this.shaders.vertex.head.indexOf(groupBinding.wgslStructFragment) === -1) {
             this.shaders.vertex.head = `
 ${groupBinding.wgslStructFragment}
@@ -7946,7 +8194,7 @@ ${this.shaders.vertex.head}`;
 `;
           }
         }
-        if (this.options.shaders.fragment && (groupBinding.visibility === GPUShaderStage.FRAGMENT || groupBinding.visibility === (GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE))) {
+        if (this.options.shaders.fragment && groupBinding.visibility.includes("fragment")) {
           if (groupBinding.wgslStructFragment && this.shaders.fragment.head.indexOf(groupBinding.wgslStructFragment) === -1) {
             this.shaders.fragment.head = `
 ${groupBinding.wgslStructFragment}
@@ -8181,7 +8429,6 @@ ${this.shaders.full.head}`;
           binding.wgslGroupFragment.forEach((groupFragment, groupFragmentIndex) => {
             groupsBindings.push({
               groupIndex: bindGroup.index,
-              visibility: binding.visibility,
               bindIndex,
               wgslStructFragment: binding.wgslStructFragment,
               wgslGroupFragment: groupFragment,
@@ -8286,6 +8533,7 @@ ${this.shaders.compute.head}`;
       this.type = "PipelineManager";
       this.currentPipelineIndex = null;
       this.pipelineEntries = [];
+      this.activeBindGroups = [];
     }
     /**
      * Compare two {@link ShaderOptions | shader objects}
@@ -8304,11 +8552,12 @@ ${this.shaders.compute.head}`;
     isSameRenderPipeline(parameters) {
       return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof RenderPipelineEntry).find((pipelineEntry) => {
         const { options } = pipelineEntry;
-        const { shaders, rendering } = parameters;
+        const { shaders, rendering, cacheKey } = parameters;
+        const sameCacheKey = cacheKey === options.cacheKey;
         const sameVertexShader = this.compareShaders(shaders.vertex, options.shaders.vertex);
         const sameFragmentShader = !shaders.fragment && !options.shaders.fragment || this.compareShaders(shaders.fragment, options.shaders.fragment);
         const differentParams = compareRenderingOptions(rendering, options.rendering);
-        return !differentParams.length && sameVertexShader && sameFragmentShader;
+        return sameCacheKey && !differentParams.length && sameVertexShader && sameFragmentShader;
       });
     }
     /**
@@ -8318,26 +8567,22 @@ ${this.shaders.compute.head}`;
      * @returns - {@link RenderPipelineEntry}, either from cache or newly created
      */
     createRenderPipeline(parameters) {
-      const existingPipelineEntry = this.isSameRenderPipeline(parameters);
+      const { attributes, bindGroups } = parameters;
+      let cacheKey = attributes.layoutCacheKey;
+      bindGroups.forEach((bindGroup) => {
+        bindGroup.bindings.forEach((binding) => {
+          cacheKey += binding.name + ",";
+        });
+        cacheKey += bindGroup.layoutCacheKey;
+      });
+      const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey });
       if (existingPipelineEntry) {
         return existingPipelineEntry;
       } else {
-        const pipelineEntry = new RenderPipelineEntry(parameters);
+        const pipelineEntry = new RenderPipelineEntry({ ...parameters, cacheKey });
         this.pipelineEntries.push(pipelineEntry);
         return pipelineEntry;
       }
-    }
-    /**
-     * Checks if the provided {@link PipelineEntryParams | parameters} belongs to an already created {@link ComputePipelineEntry}.
-     * @param parameters - {@link PipelineEntryParams | PipelineEntry parameters}
-     * @returns - the found {@link ComputePipelineEntry}, or null if not found
-     */
-    isSameComputePipeline(parameters) {
-      const { shaders } = parameters;
-      return this.pipelineEntries.filter((pipelineEntry) => pipelineEntry instanceof ComputePipelineEntry).find((pipelineEntry) => {
-        const { options } = pipelineEntry;
-        return this.compareShaders(shaders.compute, options.shaders.compute);
-      });
     }
     /**
      * Check if a {@link ComputePipelineEntry} has already been created with the given {@link PipelineEntryParams | parameters}.
@@ -8346,14 +8591,9 @@ ${this.shaders.compute.head}`;
      * @returns - newly created {@link ComputePipelineEntry}
      */
     createComputePipeline(parameters) {
-      const existingPipelineEntry = this.isSameComputePipeline(parameters);
-      if (existingPipelineEntry) {
-        return existingPipelineEntry;
-      } else {
-        const pipelineEntry = new ComputePipelineEntry(parameters);
-        this.pipelineEntries.push(pipelineEntry);
-        return pipelineEntry;
-      }
+      const pipelineEntry = new ComputePipelineEntry(parameters);
+      this.pipelineEntries.push(pipelineEntry);
+      return pipelineEntry;
     }
     /**
      * Check if the given {@link AllowedPipelineEntries | PipelineEntry} is already set, if not set it
@@ -8367,10 +8607,24 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
+     * Track the active/already set {@link core/bindGroups/BindGroup.BindGroup | bind groups} to avoid `setBindGroup()` redundant calls.
+     * @param pass - current pass encoder.
+     * @param bindGroups - array {@link core/bindGroups/BindGroup.BindGroup | bind groups} passed by the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
+     */
+    setActiveBindGroups(pass, bindGroups) {
+      bindGroups.forEach((bindGroup, index) => {
+        if (!this.activeBindGroups[index] || this.activeBindGroups[index].uuid !== bindGroup.uuid || this.activeBindGroups[index].index !== bindGroup.index) {
+          this.activeBindGroups[index] = bindGroup;
+          pass.setBindGroup(bindGroup.index, bindGroup.bindGroup);
+        }
+      });
+    }
+    /**
+     * Reset the {@link PipelineManager#currentPipelineIndex | current pipeline index} and {@link activeBindGroups} so the next {@link AllowedPipelineEntries | PipelineEntry} will be set for sure
      */
     resetCurrentPipeline() {
       this.currentPipelineIndex = null;
+      this.activeBindGroups = [];
     }
   }
 
@@ -8612,7 +8866,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Add a {@link RenderTarget} to our scene {@link renderPassEntries} outputTarget array.
-     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget RenderTexture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
+     * Every Meshes later added to this {@link RenderTarget} will be rendered to the {@link RenderTarget#renderTexture | RenderTarget Texture} using the {@link RenderTarget#renderPass.descriptor | RenderTarget RenderPass descriptor}
      * @param renderTarget - {@link RenderTarget} to add
      */
     addRenderTarget(renderTarget) {
@@ -8667,7 +8921,8 @@ ${this.shaders.compute.head}`;
       const similarMeshes = mesh.transparent ? projectionStack.transparent : projectionStack.opaque;
       similarMeshes.push(mesh);
       similarMeshes.sort((a, b) => {
-        return a.renderOrder - b.renderOrder || a.material.pipelineEntry.index - b.material.pipelineEntry.index || a.index - b.index;
+        return a.renderOrder - b.renderOrder || //a.material.pipelineEntry.index - b.material.pipelineEntry.index ||
+        a.index - b.index;
       });
       if ("parent" in mesh && !mesh.parent && mesh.material.options.rendering.useProjection) {
         mesh.parent = this;
@@ -8854,12 +9109,6 @@ ${this.shaders.compute.head}`;
           mesh.render(pass);
         }
         if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-          if (this.renderer.cameraBindGroup) {
-            pass.setBindGroup(
-              this.renderer.cameraBindGroup.index,
-              this.renderer.cameraBindGroup.bindGroup
-            );
-          }
           for (const mesh of renderPassEntry.stack.projected.opaque) {
             mesh.render(pass);
           }
@@ -8995,13 +9244,14 @@ ${this.shaders.compute.head}`;
         this.depthTexture = this.options.depthTexture;
         this.options.depthFormat = this.options.depthTexture.options.format;
       } else {
-        this.depthTexture = new RenderTexture(this.renderer, {
+        this.depthTexture = new Texture(this.renderer, {
           label: this.options.label + " depth texture",
           name: "depthTexture",
           format: this.options.depthFormat,
           sampleCount: this.options.sampleCount,
           qualityRatio: this.options.qualityRatio,
-          usage: "depth"
+          type: "depth",
+          usage: ["renderAttachment", "textureBinding"]
         });
       }
     }
@@ -9011,13 +9261,14 @@ ${this.shaders.compute.head}`;
     createViewTextures() {
       this.options.colorAttachments.forEach((colorAttachment, index) => {
         this.viewTextures.push(
-          new RenderTexture(this.renderer, {
+          new Texture(this.renderer, {
             label: `${this.options.label} colorAttachment[${index}] view texture`,
             name: `colorAttachment${index}ViewTexture`,
             format: colorAttachment.targetFormat,
             sampleCount: this.options.sampleCount,
             qualityRatio: this.options.qualityRatio,
-            usage: "texture"
+            type: "texture",
+            usage: ["copySrc", "copyDst", "renderAttachment", "textureBinding"]
           })
         );
       });
@@ -9031,13 +9282,13 @@ ${this.shaders.compute.head}`;
       if (this.options.sampleCount > 1) {
         this.options.colorAttachments.forEach((colorAttachment, index) => {
           this.resolveTargets.push(
-            this.options.renderToSwapChain && index === 0 ? null : new RenderTexture(this.renderer, {
+            this.options.renderToSwapChain && index === 0 ? null : new Texture(this.renderer, {
               label: `${this.options.label} resolve target[${index}] texture`,
               name: `resolveTarget${index}Texture`,
               format: colorAttachment.targetFormat,
               sampleCount: 1,
               qualityRatio: this.options.qualityRatio,
-              usage: "texture"
+              type: "texture"
             })
           );
         });
@@ -9093,7 +9344,7 @@ ${this.shaders.compute.head}`;
       };
     }
     /**
-     * Resize our {@link RenderPass}: reset its {@link RenderTexture}
+     * Resize our {@link RenderPass}: reset its {@link Texture}
      */
     resize() {
       if (this.options.useDepth) {
@@ -9204,30 +9455,30 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$2 = (obj, member, msg) => {
+  var __accessCheck$3 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$2 = (obj, member, getter) => {
-    __accessCheck$2(obj, member, "read from private field");
+  var __privateGet$3 = (obj, member, getter) => {
+    __accessCheck$3(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$2 = (obj, member, value) => {
+  var __privateAdd$3 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$1 = (obj, member, value, setter) => {
-    __accessCheck$2(obj, member, "write to private field");
+  var __privateSet$2 = (obj, member, value, setter) => {
+    __accessCheck$3(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet$1(obj, member, value, setter);
+      __privateSet$2(obj, member, value, setter);
     },
     get _() {
-      return __privateGet$2(obj, member, getter);
+      return __privateGet$3(obj, member, getter);
     }
   });
   var _taskCount;
@@ -9237,7 +9488,7 @@ ${this.shaders.compute.head}`;
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd$2(this, _taskCount, 0);
+      __privateAdd$3(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -9252,7 +9503,7 @@ ${this.shaders.compute.head}`;
         callback,
         order,
         once,
-        id: __privateGet$2(this, _taskCount)
+        id: __privateGet$3(this, _taskCount)
       };
       __privateWrapper(this, _taskCount)._++;
       this.queue.push(task);
@@ -9410,8 +9661,8 @@ ${this.shaders.compute.head}`;
      * Resize all tracked objects
      */
     onResize() {
-      this.renderTextures.forEach((renderTexture) => {
-        renderTexture.resize();
+      this.textures.forEach((texture) => {
+        texture.resize();
       });
       this.renderPass?.resize();
       this.postProcessingPass?.resize();
@@ -9557,13 +9808,13 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Called when the {@link GPUDeviceManager#device | device} should be restored.
-     * Configure the context again, resize the {@link RenderTarget | render targets} and {@link RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context.
+     * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
      * @async
      */
     restoreContext() {
       this.configureContext();
-      this.renderTextures.forEach((renderTexture) => {
-        renderTexture.createTexture();
+      this.textures.forEach((texture) => {
+        texture.createTexture();
       });
       this.renderPass?.resize();
       this.postProcessingPass?.resize();
@@ -9646,7 +9897,8 @@ ${this.shaders.compute.head}`;
         dstBuffer.createBuffer(this, {
           label: `GPURenderer (${this.options.label}): destination copy buffer from: ${srcBuffer.options.label}`,
           size: srcBuffer.GPUBuffer.size,
-          usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+          //usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+          usage: ["copyDst", "mapRead"]
         });
       }
       if (srcBuffer.GPUBuffer.mapState !== "unmapped") {
@@ -9767,39 +10019,39 @@ ${this.shaders.compute.head}`;
     }
     /* TEXTURES */
     /**
-     * Get all created {@link Texture} tracked by our {@link GPUDeviceManager}
+     * Get all created {@link DOMTexture} tracked by our {@link GPUDeviceManager}
      * @readonly
      */
-    get textures() {
-      return this.deviceManager.textures;
+    get domTextures() {
+      return this.deviceManager.domTextures;
     }
     /**
-     * Add a {@link Texture} to our {@link GPUDeviceManager#textures | textures array}
+     * Add a {@link DOMTexture} to our {@link GPUDeviceManager#domTextures | textures array}
+     * @param texture - {@link DOMTexture} to add
+     */
+    addDOMTexture(texture) {
+      this.deviceManager.addDOMTexture(texture);
+    }
+    /**
+     * Remove a {@link DOMTexture} from our {@link GPUDeviceManager#domTextures | textures array}
+     * @param texture - {@link DOMTexture} to remove
+     */
+    removeDOMTexture(texture) {
+      this.deviceManager.removeDOMTexture(texture);
+    }
+    /**
+     * Add a {@link Texture} to our {@link textures} array
      * @param texture - {@link Texture} to add
      */
     addTexture(texture) {
-      this.deviceManager.addTexture(texture);
+      this.textures.push(texture);
     }
     /**
-     * Remove a {@link Texture} from our {@link GPUDeviceManager#textures | textures array}
+     * Remove a {@link Texture} from our {@link textures} array
      * @param texture - {@link Texture} to remove
      */
     removeTexture(texture) {
-      this.deviceManager.removeTexture(texture);
-    }
-    /**
-     * Add a {@link RenderTexture} to our {@link renderTextures} array
-     * @param texture - {@link RenderTexture} to add
-     */
-    addRenderTexture(texture) {
-      this.renderTextures.push(texture);
-    }
-    /**
-     * Remove a {@link RenderTexture} from our {@link renderTextures} array
-     * @param texture - {@link RenderTexture} to remove
-     */
-    removeRenderTexture(texture) {
-      this.renderTextures = this.renderTextures.filter((t) => t.uuid !== texture.uuid);
+      this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
      * Create a {@link GPUTexture}
@@ -9810,8 +10062,8 @@ ${this.shaders.compute.head}`;
       return this.deviceManager.device?.createTexture(textureDescriptor);
     }
     /**
-     * Upload a {@link Texture#texture | texture} to the GPU
-     * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+     * Upload a {@linkDOMTexture#texture | texture} to the GPU
+     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
      */
     uploadTexture(texture) {
       this.deviceManager.uploadTexture(texture);
@@ -9876,7 +10128,7 @@ ${this.shaders.compute.head}`;
       this.shaderPasses = [];
       this.renderTargets = [];
       this.meshes = [];
-      this.renderTextures = [];
+      this.textures = [];
     }
     /**
      * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes)
@@ -9900,13 +10152,13 @@ ${this.shaders.compute.head}`;
       });
     }
     /**
-     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link Texture} or {@link RenderTexture}.
+     * Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link DOMTexture} or {@link Texture}.
      * Useful to know if a resource is used by multiple objects and if it is safe to destroy it or not.
-     * @param texture - {@link Texture} or {@link RenderTexture} to check
+     * @param texture - {@link DOMTexture} or {@link Texture} to check
      */
     getObjectsByTexture(texture) {
       return this.deviceRenderedObjects.filter((object) => {
-        return [...object.material.textures, ...object.material.renderTextures].some((t) => t.uuid === texture.uuid);
+        return [...object.material.domTextures, ...object.material.textures].some((t) => t.uuid === texture.uuid);
       });
     }
     /* EVENTS */
@@ -10046,7 +10298,7 @@ ${this.shaders.compute.head}`;
       this.postProcessingPass?.destroy();
       this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
       this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
-      this.renderTextures.forEach((texture) => texture.destroy());
+      this.textures.forEach((texture) => texture.destroy());
       this.context?.unconfigure();
     }
   }
@@ -10078,7 +10330,7 @@ ${this.shaders.compute.head}`;
         renderPass
       });
       this.type = "GPUCameraRenderer";
-      camera = { ...{ fov: 50, near: 0.1, far: 150 }, ...camera };
+      camera = { ...{ fov: 50, near: 0.1, far: 1e3 }, ...camera };
       this.options = {
         ...this.options,
         camera
@@ -10095,13 +10347,14 @@ ${this.shaders.compute.head}`;
       this.cameraBindGroup.loseContext();
     }
     /**
-     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} should be restored.
-     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/RenderTexture.RenderTexture | render textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
+     * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
+     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
      * @async
      */
-    async restoreContext() {
-      this.cameraBufferBinding.shouldUpdate = true;
-      return super.restoreContext();
+    restoreContext() {
+      super.restoreContext();
+      this.cameraBindGroup?.restoreContext();
+      this.updateCameraBindings();
     }
     /**
      * Set the {@link camera}
@@ -10140,7 +10393,7 @@ ${this.shaders.compute.head}`;
       this.cameraBufferBinding = new BufferBinding({
         label: "Camera",
         name: "camera",
-        visibility: "vertex",
+        visibility: ["vertex"],
         struct: {
           view: {
             // camera view matrix
@@ -10173,7 +10426,6 @@ ${this.shaders.compute.head}`;
      * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
      */
     updateCameraBindings() {
-      this.cameraBufferBinding?.shouldUpdateBinding("model");
       this.cameraBufferBinding?.shouldUpdateBinding("view");
       this.cameraBufferBinding?.shouldUpdateBinding("projection");
       this.cameraBindGroup?.update();
@@ -10223,19 +10475,6 @@ ${this.shaders.compute.head}`;
     }
     /* RENDER */
     /**
-     * Render a single {@link RenderedMesh | mesh} (binds the {@link cameraBindGroup | camera bind group} if needed)
-     * @param commandEncoder - current {@link GPUCommandEncoder}
-     * @param mesh - {@link RenderedMesh | mesh} to render
-     */
-    renderSingleMesh(commandEncoder, mesh) {
-      const pass = commandEncoder.beginRenderPass(this.renderPass.descriptor);
-      if (mesh.material.options.rendering.useProjection) {
-        pass.setBindGroup(this.cameraBindGroup.index, this.cameraBindGroup.bindGroup);
-      }
-      mesh.render(pass);
-      pass.end();
-    }
-    /**
      * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
@@ -10280,17 +10519,19 @@ ${this.shaders.compute.head}`;
       this.setDeviceObjects();
     }
     /**
-     * Set our {@link adapter} and {@link device} if possible
+     * Set our {@link adapter} and {@link device} if possible.
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    async setAdapterAndDevice() {
-      await this.setAdapter();
-      await this.setDevice();
+    async setAdapterAndDevice({ adapter = null, device = null } = {}) {
+      await this.setAdapter(adapter);
+      await this.setDevice(device);
     }
     /**
      * Set up our {@link adapter} and {@link device} and all the already created {@link renderers} contexts
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    async init() {
-      await this.setAdapterAndDevice();
+    async init({ adapter = null, device = null } = {}) {
+      await this.setAdapterAndDevice({ adapter, device });
       if (this.device) {
         for (const renderer of this.renderers) {
           if (!renderer.context) {
@@ -10303,37 +10544,49 @@ ${this.shaders.compute.head}`;
      * Set our {@link adapter} if possible.
      * The adapter represents a specific GPU. Some devices have multiple GPUs.
      * @async
+     * @param adapter - {@link GPUAdapter} to use if set.
      */
-    async setAdapter() {
+    async setAdapter(adapter = null) {
       if (!this.gpu) {
         this.onError();
         throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. No 'gpu' object in 'navigator'.");
       }
-      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
-      if (!this.adapter) {
-        this.onError();
-        throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+      if (adapter) {
+        this.adapter = adapter;
+      } else {
+        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+        if (!this.adapter) {
+          this.onError();
+          throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+        }
       }
       this.adapter?.requestAdapterInfo().then((infos) => {
         this.adapterInfos = infos;
       });
     }
     /**
-     * Set our {@link device}
+     * Set our {@link device}.
      * @async
+     * @param device - {@link GPUDevice} to use if set.
      */
-    async setDevice() {
-      try {
-        this.device = await this.adapter?.requestDevice({
-          label: this.label + " " + this.index
-        });
-        if (this.device) {
-          this.ready = true;
-          this.index++;
+    async setDevice(device = null) {
+      if (device) {
+        this.device = device;
+        this.ready = true;
+        this.index++;
+      } else {
+        try {
+          this.device = await this.adapter?.requestDevice({
+            label: this.label + " " + this.index
+          });
+          if (this.device) {
+            this.ready = true;
+            this.index++;
+          }
+        } catch (error) {
+          this.onError();
+          throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
         }
-      } catch (error) {
-        this.onError();
-        throwError(`${this.label}: WebGPU is not supported on your browser/OS. 'requestDevice' failed: ${error}`);
       }
       this.device?.lost.then((info) => {
         throwWarning(`${this.label}: WebGPU device was lost: ${info.message}`);
@@ -10363,10 +10616,12 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Called when the {@link device} should be restored.
-     * Restore all our renderers
+     * Restore all our renderers.
+     * @async
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    async restoreDevice() {
-      await this.setAdapterAndDevice();
+    async restoreDevice({ adapter = null, device = null } = {}) {
+      await this.setAdapterAndDevice({ adapter, device });
       if (this.device) {
         this.samplers.forEach((sampler) => {
           const { type, ...samplerOptions } = sampler.options;
@@ -10388,7 +10643,7 @@ ${this.shaders.compute.head}`;
       this.bindGroupLayouts = /* @__PURE__ */ new Map();
       this.bufferBindings = /* @__PURE__ */ new Map();
       this.samplers = [];
-      this.textures = [];
+      this.domTextures = [];
       this.texturesQueue = [];
     }
     /**
@@ -10455,15 +10710,15 @@ ${this.shaders.compute.head}`;
       this.samplers = this.samplers.filter((s) => s.uuid !== sampler.uuid);
     }
     /**
-     * Add a {@link Texture} to our {@link textures} array
-     * @param texture - {@link Texture} to add
+     * Add a {@link DOMTexture} to our {@link domTextures} array
+     * @param texture - {@link DOMTexture} to add
      */
-    addTexture(texture) {
-      this.textures.push(texture);
+    addDOMTexture(texture) {
+      this.domTextures.push(texture);
     }
     /**
-     * Upload a {@link Texture#texture | texture} to the GPU
-     * @param texture - {@link Texture} class object with the {@link Texture#texture | texture} to upload
+     * Upload a {@link DOMTexture#texture | texture} to the GPU
+     * @param texture - {@link DOMTexture} class object with the {@link DOMTexture#texture | texture} to upload
      */
     uploadTexture(texture) {
       if (texture.source) {
@@ -10493,11 +10748,11 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Remove a {@link Texture} from our {@link textures} array
-     * @param texture - {@link Texture} to remove
+     * Remove a {@link DOMTexture} from our {@link domTextures} array
+     * @param texture - {@link DOMTexture} to remove
      */
-    removeTexture(texture) {
-      this.textures = this.textures.filter((t) => t.uuid !== texture.uuid);
+    removeDOMTexture(texture) {
+      this.domTextures = this.domTextures.filter((t) => t.uuid !== texture.uuid);
     }
     /**
      * Render everything:
@@ -10505,7 +10760,7 @@ ${this.shaders.compute.head}`;
      * - create a {@link GPUCommandEncoder}
      * - render all our {@link renderers}
      * - submit our {@link GPUCommandBuffer}
-     * - upload {@link Texture#texture | textures} that do not have a parentMesh
+     * - upload {@link DOMTexture#texture | DOMTexture textures} that do not have a parentMesh
      * - empty our {@link texturesQueue} array
      * - call all our {@link renderers} {@link core/renderers/GPURenderer.GPURenderer#onAfterCommandEncoder | onAfterCommandEncoder} callbacks
      */
@@ -10521,7 +10776,7 @@ ${this.shaders.compute.head}`;
       !this.production && commandEncoder.popDebugGroup();
       const commandBuffer = commandEncoder.finish();
       this.device?.queue.submit([commandBuffer]);
-      this.textures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
+      this.domTextures.filter((texture) => !texture.parentMesh && texture.sourceLoaded && !texture.sourceUploaded).forEach((texture) => this.uploadTexture(texture));
       for (const texture of this.texturesQueue) {
         texture.sourceUploaded = true;
       }
@@ -10539,26 +10794,26 @@ ${this.shaders.compute.head}`;
       this.renderers.forEach((renderer) => renderer.destroy());
       this.bindGroups.forEach((bindGroup) => bindGroup.destroy());
       this.buffers.forEach((buffer) => buffer?.destroy());
-      this.textures.forEach((texture) => texture.destroy());
+      this.domTextures.forEach((texture) => texture.destroy());
       this.setDeviceObjects();
     }
   }
 
-  var __accessCheck$1 = (obj, member, msg) => {
+  var __accessCheck$2 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$1 = (obj, member, getter) => {
-    __accessCheck$1(obj, member, "read from private field");
+  var __privateGet$2 = (obj, member, getter) => {
+    __accessCheck$2(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$1 = (obj, member, value) => {
+  var __privateAdd$2 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet = (obj, member, value, setter) => {
-    __accessCheck$1(obj, member, "write to private field");
+  var __privateSet$1 = (obj, member, value, setter) => {
+    __accessCheck$2(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -10571,7 +10826,7 @@ ${this.shaders.compute.head}`;
      */
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$1(this, _autoRender, true);
+      __privateAdd$2(this, _autoRender, true);
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
@@ -10587,7 +10842,7 @@ ${this.shaders.compute.head}`;
         autoRender: autoRender === void 0 ? true : autoRender
       };
       if (autoRender !== void 0) {
-        __privateSet(this, _autoRender, autoRender);
+        __privateSet$1(this, _autoRender, autoRender);
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
@@ -10596,11 +10851,12 @@ ${this.shaders.compute.head}`;
         ...renderPassParams
       });
       if (renderPassParams.useColorAttachments !== false) {
-        this.renderTexture = new RenderTexture(this.renderer, {
+        this.renderTexture = new Texture(this.renderer, {
           label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
           name: "renderTexture",
           format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.preferredFormat,
-          ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio }
+          ...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
+          usage: ["copySrc", "renderAttachment", "textureBinding"]
         });
       }
       this.addToScene();
@@ -10622,7 +10878,7 @@ ${this.shaders.compute.head}`;
      */
     addToScene() {
       this.renderer.renderTargets.push(this);
-      if (__privateGet$1(this, _autoRender)) {
+      if (__privateGet$2(this, _autoRender)) {
         this.renderer.scene.addRenderTarget(this);
       }
     }
@@ -10630,7 +10886,7 @@ ${this.shaders.compute.head}`;
      * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
-      if (__privateGet$1(this, _autoRender)) {
+      if (__privateGet$2(this, _autoRender)) {
         this.renderer.scene.removeRenderTarget(this);
       }
       this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
@@ -10716,10 +10972,11 @@ struct VSOutput {
         this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
       }
       this.type = "ShaderPass";
-      this.createRenderTexture({
+      this.createTexture({
         label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
         name: "renderTexture",
         fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+        usage: ["copySrc", "copyDst", "textureBinding"],
         ...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
       });
     }
@@ -10735,11 +10992,11 @@ struct VSOutput {
       return parameters;
     }
     /**
-     * Get our main {@link RenderTexture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
+     * Get our main {@link Texture} that contains the input content to be used by the {@link ShaderPass}. Can also contain the ouputted content if {@link ShaderPassOptions#copyOutputToRenderTexture | copyOutputToRenderTexture} is set to true.
      * @readonly
      */
     get renderTexture() {
-      return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
+      return this.textures.find((texture) => texture.options.name === "renderTexture");
     }
     /**
      * Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
@@ -10766,10 +11023,13 @@ struct VSOutput {
       }
     }
     /**
-     * Add the {@link ShaderPass} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
+     * @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
-    addToScene() {
-      this.renderer.shaderPasses.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.shaderPasses.push(this);
+      }
       this.setRenderingOptionsForRenderPass(
         this.outputTarget ? this.outputTarget.renderPass : this.renderer.postProcessingPass
       );
@@ -10778,28 +11038,31 @@ struct VSOutput {
       }
     }
     /**
-     * Remove the {@link ShaderPass} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (this.outputTarget) {
         this.outputTarget.destroy();
       }
       if (this.autoRender) {
         this.renderer.scene.removeShaderPass(this);
       }
-      this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+      }
     }
   }
 
-  var __accessCheck = (obj, member, msg) => {
+  var __accessCheck$1 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet = (obj, member, getter) => {
-    __accessCheck(obj, member, "read from private field");
+  var __privateGet$1 = (obj, member, getter) => {
+    __accessCheck$1(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd = (obj, member, value) => {
+  var __privateAdd$1 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -10815,9 +11078,9 @@ struct VSOutput {
     constructor(renderer, element, parameters) {
       super(renderer);
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
-      __privateAdd(this, _DOMObjectWorldPosition, new Vec3());
+      __privateAdd$1(this, _DOMObjectWorldPosition, new Vec3());
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
-      __privateAdd(this, _DOMObjectWorldScale, new Vec3());
+      __privateAdd$1(this, _DOMObjectWorldScale, new Vec3());
       renderer = renderer && renderer.renderer || renderer;
       isCurtainsRenderer(renderer, "DOM3DObject");
       this.renderer = renderer;
@@ -10934,7 +11197,7 @@ struct VSOutput {
      * @readonly
      */
     get DOMObjectWorldScale() {
-      return __privateGet(this, _DOMObjectWorldScale).clone();
+      return __privateGet$1(this, _DOMObjectWorldScale).clone();
     }
     /**
      * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
@@ -10948,7 +11211,7 @@ struct VSOutput {
      * @readonly
      */
     get worldPosition() {
-      return __privateGet(this, _DOMObjectWorldPosition).clone();
+      return __privateGet$1(this, _DOMObjectWorldPosition).clone();
     }
     /**
      * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
@@ -10992,7 +11255,7 @@ struct VSOutput {
       if (!this.documentPosition.equals(worldPosition)) {
         worldPosition = this.documentToWorldSpace(this.documentPosition);
       }
-      __privateGet(this, _DOMObjectWorldPosition).set(
+      __privateGet$1(this, _DOMObjectWorldPosition).set(
         this.position.x + this.size.world.left + worldPosition.x,
         this.position.y + this.size.world.top + worldPosition.y,
         this.position.z + this.documentPosition.z / this.camera.CSSPerspective
@@ -11013,12 +11276,12 @@ struct VSOutput {
      */
     updateModelMatrix() {
       this.modelMatrix.composeFromOrigin(
-        __privateGet(this, _DOMObjectWorldPosition),
+        __privateGet$1(this, _DOMObjectWorldPosition),
         this.quaternion,
         this.scale,
         this.worldTransformOrigin
       );
-      this.modelMatrix.scale(__privateGet(this, _DOMObjectWorldScale));
+      this.modelMatrix.scale(__privateGet$1(this, _DOMObjectWorldScale));
       this.shouldUpdateWorldMatrix();
     }
     /**
@@ -11051,7 +11314,7 @@ struct VSOutput {
         top: (containerCenter.y - planeCenter.y) / containerBoundingRect.height * this.camera.screenRatio.height,
         left: (planeCenter.x - containerCenter.x) / containerBoundingRect.width * this.camera.screenRatio.width
       };
-      __privateGet(this, _DOMObjectWorldScale).set(this.size.world.width, this.size.world.height, 1);
+      __privateGet$1(this, _DOMObjectWorldScale).set(this.size.world.width, this.size.world.height, 1);
       this.setWorldTransformOrigin();
     }
     /**
@@ -11140,23 +11403,29 @@ struct VSOutput {
       this._sourcesReady = value;
     }
     /**
-     * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    addToScene() {
-      super.addToScene();
-      this.renderer.domMeshes.push(this);
+    addToScene(addToRenderer = false) {
+      super.addToScene(addToRenderer);
+      if (addToRenderer) {
+        this.renderer.domMeshes.push(this);
+      }
     }
     /**
-     * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    removeFromScene() {
-      super.removeFromScene();
-      this.renderer.domMeshes = this.renderer.domMeshes.filter(
-        (m) => m.uuid !== this.uuid
-      );
+    removeFromScene(removeFromRenderer = false) {
+      super.removeFromScene(removeFromRenderer);
+      if (removeFromRenderer) {
+        this.renderer.domMeshes = this.renderer.domMeshes.filter(
+          (m) => m.uuid !== this.uuid
+        );
+      }
     }
     /**
-     * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
+     * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}
      */
     setInitSources() {
       let loaderSize = 0;
@@ -11178,24 +11447,24 @@ struct VSOutput {
         }
         if (images.length) {
           images.forEach((image) => {
-            const texture = this.createTexture({
-              name: image.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            const texture = this.createDOMTexture({
+              name: image.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
             });
             texture.onSourceUploaded(() => onSourceUploaded(texture)).loadImage(image.src);
           });
         }
         if (videos.length) {
           videos.forEach((video) => {
-            const texture = this.createTexture({
-              name: video.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            const texture = this.createDOMTexture({
+              name: video.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
             });
             texture.onSourceUploaded(() => onSourceUploaded(texture)).loadVideo(video);
           });
         }
         if (canvases.length) {
           canvases.forEach((canvas) => {
-            const texture = this.createTexture({
-              name: canvas.getAttribute("data-texture-name") ?? "texture" + this.textures.length
+            const texture = this.createDOMTexture({
+              name: canvas.getAttribute("data-texture-name") ?? "texture" + this.domTextures.length
             });
             texture.onSourceUploaded(() => onSourceUploaded(texture)).loadCanvas(canvas);
           });
@@ -11239,8 +11508,8 @@ struct VSOutput {
     }
     /* EVENTS */
     /**
-     * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
-     * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
+     * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
+     * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
      * @returns - our {@link DOMMesh}
      */
     onLoading(callback) {
@@ -11275,39 +11544,46 @@ struct VSOutput {
       parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
       super(renderer, parameters);
       this.type = "PingPongPlane";
-      this.createRenderTexture({
+      this.createTexture({
         label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
         name: "renderTexture",
-        ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format }
+        ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format },
+        usage: ["copyDst", "textureBinding"]
       });
     }
     /**
-     * Get our main {@link RenderTexture}, the one that contains our ping pong content
+     * Get our main {@link Texture}, the one that contains our ping pong content
      * @readonly
      */
     get renderTexture() {
-      return this.renderTextures.find((texture) => texture.options.name === "renderTexture");
+      return this.textures.find((texture) => texture.options.name === "renderTexture");
     }
     /**
-     * Add the {@link PingPongPlane} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
      */
-    addToScene() {
-      this.renderer.pingPongPlanes.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.pingPongPlanes.push(this);
+      }
       if (this.autoRender) {
         this.renderer.scene.addPingPongPlane(this);
       }
     }
     /**
-     * Remove the {@link PingPongPlane} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (this.outputTarget) {
         this.outputTarget.destroy();
       }
       if (this.autoRender) {
         this.renderer.scene.removePingPongPlane(this);
       }
-      this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+      }
     }
   }
 
@@ -11638,10 +11914,12 @@ struct VSOutput {
       return this.renderers[0];
     }
     /**
-     * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts
+     * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
+     * @async
+     * @param parameters - {@link GPUAdapter} and/or {@link GPUDevice} to use if set.
      */
-    async setDevice() {
-      await this.deviceManager.init();
+    async setDevice({ adapter = null, device = null } = {}) {
+      await this.deviceManager.init({ adapter, device });
     }
     /**
      * Restore the {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device}
@@ -11861,6 +12139,223 @@ struct VSOutput {
       resizeManager.destroy();
     }
   }
+
+  var __accessCheck = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet = (obj, member, getter) => {
+    __accessCheck(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet = (obj, member, value, setter) => {
+    __accessCheck(obj, member, "write to private field");
+    setter ? setter.call(obj, value) : member.set(obj, value);
+    return value;
+  };
+  var _lastPosition, _isOrbiting, _element;
+  class OrbitControls extends Object3D {
+    /**
+     * OrbitControls constructor
+     * @param renderer - {@link CameraRenderer} used to get the {@link core/scenes/Scene.Scene | Scene} object to use as {@link Object3D#parent | parent}, and eventually the {@link CameraRenderer#camera | Camera} as well.
+     * @param camera - optional {@link Camera} to use.
+     */
+    constructor(renderer, camera = null) {
+      super();
+      /**
+       * Last pointer {@link Vec2 | position}, used internally for orbiting delta calculations.
+       * @private
+       */
+      __privateAdd(this, _lastPosition, new Vec2());
+      /**
+       * Whether the {@link OrbitControls} are currently orbiting.
+       * @private
+       */
+      __privateAdd(this, _isOrbiting, false);
+      /** Whether to constrain the orbit controls along X axis or not. */
+      this.constrainXOrbit = true;
+      /** Whether to constrain the orbit controls along Y axis or not. */
+      this.constrainYOrbit = false;
+      /** Minimum orbit values to apply along both axis if constrained. */
+      this.minOrbit = new Vec2(-Math.PI * 0.5, -Math.PI);
+      /** Maximum orbit values to apply along both axis if constrained. */
+      this.maxOrbit = new Vec2(Math.PI * 0.5, Math.PI);
+      /** Orbit step (speed) values to use. */
+      this.orbitStep = new Vec2(0.025);
+      /** Whether to constrain the zoom or not. */
+      this.constrainZoom = true;
+      /** Minimum zoom value to apply if constrained (can be negative). */
+      this.minZoom = 0;
+      /** Maximum zoom value to apply if constrained. */
+      this.maxZoom = 20;
+      /** Zoom step (speed) value to use. */
+      this.zoomStep = 5e-3;
+      /**
+       * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
+       * @private
+       */
+      __privateAdd(this, _element, null);
+      this.renderer = renderer;
+      this.parent = this.renderer.scene;
+      this.quaternion.setAxisOrder("YXZ");
+      this.camera = camera || this.renderer.camera;
+      this.camera.parent = this;
+      this.element = this.renderer.domElement.element;
+    }
+    /**
+     * Set the element to use for event listeners. Can remove previous event listeners first if needed.
+     * @param value - {@link HTMLElement} (or {@link Window} element) to use.
+     */
+    set element(value) {
+      if (__privateGet(this, _element) && (!value || __privateGet(this, _element) !== value)) {
+        this.removeEvents();
+      }
+      __privateSet(this, _element, value);
+      if (value) {
+        this.addEvents();
+      }
+    }
+    /**
+     * Get our element to use for event listeners.
+     * @returns - {@link HTMLElement} (or {@link Window} element) used.
+     */
+    get element() {
+      return __privateGet(this, _element);
+    }
+    /**
+     * Add the event listeners.
+     */
+    addEvents() {
+      __privateGet(this, _element).addEventListener("pointerdown", this.onPointerDown.bind(this));
+      __privateGet(this, _element).addEventListener("pointermove", this.onPointerMove.bind(this));
+      __privateGet(this, _element).addEventListener("pointerup", this.onPointerUp.bind(this));
+      __privateGet(this, _element).addEventListener("wheel", this.onMouseWheel.bind(this));
+    }
+    /**
+     * Remove the event listeners.
+     */
+    removeEvents() {
+      __privateGet(this, _element).removeEventListener("pointerdown", this.onPointerDown.bind(this));
+      __privateGet(this, _element).removeEventListener("pointermove", this.onPointerMove.bind(this));
+      __privateGet(this, _element).removeEventListener("pointerup", this.onPointerUp.bind(this));
+      __privateGet(this, _element).removeEventListener("wheel", this.onMouseWheel.bind(this));
+    }
+    /**
+     * Callback executed on pointer down event.
+     * @param e - {@link PointerEvent}.
+     */
+    onPointerDown(e) {
+      if (e.isPrimary) {
+        __privateSet(this, _isOrbiting, true);
+      }
+      __privateGet(this, _lastPosition).set(e.pageX, e.pageY);
+    }
+    /**
+     * Callback executed on pointer move event.
+     * @param e - {@link PointerEvent}.
+     */
+    onPointerMove(e) {
+      let xDelta, yDelta;
+      if (document.pointerLockElement) {
+        xDelta = e.movementX;
+        yDelta = e.movementY;
+        this.orbit(xDelta * this.orbitStep.x, yDelta * this.orbitStep.y);
+      } else if (__privateGet(this, _isOrbiting)) {
+        xDelta = e.pageX - __privateGet(this, _lastPosition).x;
+        yDelta = e.pageY - __privateGet(this, _lastPosition).y;
+        __privateGet(this, _lastPosition).set(e.pageX, e.pageY);
+        this.orbit(xDelta * this.orbitStep.x, yDelta * this.orbitStep.y);
+      }
+    }
+    /**
+     * Callback executed on pointer up event.
+     * @param e - {@link PointerEvent}.
+     */
+    onPointerUp(e) {
+      if (e.isPrimary) {
+        __privateSet(this, _isOrbiting, false);
+      }
+    }
+    /**
+     * Callback executed on wheel event.
+     * @param e - {@link WheelEvent}.
+     */
+    onMouseWheel(e) {
+      this.zoom(this.position.z + e.deltaY * this.zoomStep);
+      e.preventDefault();
+    }
+    /**
+     * Reset the {@link OrbitControls} {@link position} and {@link rotation} values.
+     */
+    reset() {
+      this.position.set(0);
+      this.rotation.set(0);
+    }
+    /**
+     * Update the {@link OrbitControls} {@link rotation} based on deltas.
+     * @param xDelta - delta along the X axis.
+     * @param yDelta - delta along the Y axis.
+     */
+    orbit(xDelta, yDelta) {
+      if (xDelta || yDelta) {
+        this.rotation.y -= xDelta;
+        if (this.constrainYOrbit) {
+          this.rotation.y = Math.min(Math.max(this.rotation.y, this.minOrbit.y), this.maxOrbit.y);
+        } else {
+          while (this.rotation.y < -Math.PI) {
+            this.rotation.y += Math.PI * 2;
+          }
+          while (this.rotation.y >= Math.PI) {
+            this.rotation.y -= Math.PI * 2;
+          }
+        }
+        this.rotation.x -= yDelta;
+        if (this.constrainXOrbit) {
+          this.rotation.x = Math.min(Math.max(this.rotation.x, this.minOrbit.x), this.maxOrbit.x);
+        } else {
+          while (this.rotation.x < -Math.PI) {
+            this.rotation.x += Math.PI * 2;
+          }
+          while (this.rotation.x >= Math.PI) {
+            this.rotation.x -= Math.PI * 2;
+          }
+        }
+      }
+    }
+    /**
+     * Update the {@link OrbitControls} {@link position} Z component based on the new distance.
+     * @param distance - new distance to use.
+     */
+    zoom(distance) {
+      this.position.z = distance;
+      if (this.constrainZoom) {
+        this.position.z = Math.min(Math.max(this.position.z, this.minZoom), this.maxZoom);
+      }
+    }
+    /**
+     * Override {@link Object3D#updateModelMatrix | updateModelMatrix} method to compose the {@link modelMatrix}.
+     */
+    updateModelMatrix() {
+      this.modelMatrix.identity().rotateFromQuaternion(this.quaternion).translate(this.position);
+      this.shouldUpdateWorldMatrix();
+    }
+    /**
+     * Destroy the {@link OrbitControls}.
+     */
+    destroy() {
+      this.camera.parent = this.renderer.scene;
+      this.parent = null;
+      this.element = null;
+    }
+  }
+  _lastPosition = new WeakMap();
+  _isOrbiting = new WeakMap();
+  _element = new WeakMap();
 
   class BoxGeometry extends IndexedGeometry {
     constructor({
@@ -12148,6 +12643,7 @@ struct VSOutput {
   exports.DOMFrustum = DOMFrustum;
   exports.DOMMesh = DOMMesh;
   exports.DOMObject3D = DOMObject3D;
+  exports.DOMTexture = DOMTexture;
   exports.FullscreenPlane = FullscreenPlane;
   exports.GPUCameraRenderer = GPUCameraRenderer;
   exports.GPUCurtains = GPUCurtains;
@@ -12160,6 +12656,7 @@ struct VSOutput {
   exports.Material = Material;
   exports.Mesh = Mesh;
   exports.Object3D = Object3D;
+  exports.OrbitControls = OrbitControls;
   exports.PingPongPlane = PingPongPlane;
   exports.PipelineEntry = PipelineEntry;
   exports.PipelineManager = PipelineManager;
@@ -12171,7 +12668,6 @@ struct VSOutput {
   exports.RenderPass = RenderPass;
   exports.RenderPipelineEntry = RenderPipelineEntry;
   exports.RenderTarget = RenderTarget;
-  exports.RenderTexture = RenderTexture;
   exports.Sampler = Sampler;
   exports.SamplerBinding = SamplerBinding;
   exports.Scene = Scene;

@@ -1,10 +1,10 @@
 /// <reference types="dist" />
-import { Binding, BindingParams, BufferBindingMemoryAccessType } from './Binding';
+import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding';
 import { Input, InputBase, InputValue } from '../../types/BindGroups';
 import { BufferElement } from './bufferElements/BufferElement';
 import { BufferArrayElement } from './bufferElements/BufferArrayElement';
 import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement';
-import { Buffer } from '../buffers/Buffer';
+import { Buffer, BufferParams } from '../buffers/Buffer';
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
  */
@@ -30,11 +30,15 @@ export interface BufferBindingBaseParams {
     access?: BufferBindingMemoryAccessType;
     /** Object containing one or multiple {@link Input | inputs} describing the structure of the {@link BufferBinding} */
     struct?: Record<string, Input>;
+    /** Allowed usages for the {@link BufferBinding#buffer} as an array of {@link core/buffers/utils.BufferUsageKeys | buffer usages names} */
+    usage?: BufferParams['usage'];
 }
 /**
  * Parameters used to create a {@link BufferBinding}
  */
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {
+    /** The binding type of the {@link BufferBinding} */
+    bindingType?: BufferBindingType;
 }
 /** All allowed {@link BufferElement | buffer elements} */
 export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferInterleavedArrayElement;
@@ -63,6 +67,8 @@ export type AllowedBufferElement = BufferElement | BufferArrayElement | BufferIn
  * ```
  */
 export declare class BufferBinding extends Binding {
+    /** The binding type of the {@link BufferBinding} */
+    bindingType: BufferBindingType;
     /** Flag to indicate whether this {@link BufferBinding} {@link bufferElements | buffer elements} should be packed in a single structured object or if each one of them should be a separate binding. */
     useStruct: boolean;
     /** All the {@link BufferBinding} data inputs */
@@ -89,7 +95,7 @@ export declare class BufferBinding extends Binding {
      * BufferBinding constructor
      * @param parameters - {@link BufferBindingParams | parameters} used to create our BufferBindings
      */
-    constructor({ label, name, bindingType, visibility, useStruct, access, struct, }: BufferBindingParams);
+    constructor({ label, name, bindingType, visibility, useStruct, access, usage, struct, }: BufferBindingParams);
     /**
      * Get {@link GPUBindGroupLayoutEntry#buffer | bind group layout entry resource}
      * @readonly

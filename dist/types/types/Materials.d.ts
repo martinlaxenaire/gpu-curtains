@@ -1,8 +1,8 @@
 /// <reference types="dist" />
 import { AllowedBindGroups, BindGroupInputs } from './BindGroups';
 import { BindGroup } from '../core/bindGroups/BindGroup';
+import { DOMTexture } from '../core/textures/DOMTexture';
 import { Texture } from '../core/textures/Texture';
-import { RenderTexture } from '../core/textures/RenderTexture';
 import { Sampler } from '../core/samplers/Sampler';
 import { Geometry } from '../core/geometries/Geometry';
 import { IndexedGeometry } from '../core/geometries/IndexedGeometry';
@@ -55,10 +55,10 @@ export interface MaterialInputBindingsParams extends BindGroupInputs {
     bindGroups?: BindGroup[];
     /** Array of already created {@link core/samplers/Sampler.Sampler | samplers} to be used by this {@link core/materials/Material.Material | Material} */
     samplers?: Sampler[];
-    /** Array of already created {@link core/textures/Texture.Texture | textures} to be used by this {@link core/materials/Material.Material | Material} */
+    /** Array of already created {@link Texture} to be used by this {@link core/materials/Material.Material | Material} */
     textures?: Texture[];
-    /** Array of already created {@link core/textures/RenderTexture.RenderTexture | render textures} to be used by this {@link core/materials/Material.Material | Material} */
-    renderTextures?: RenderTexture[];
+    /** Array of already created {@link DOMTexture} to be used by this {@link core/materials/Material.Material | Material} */
+    domTextures?: DOMTexture[];
 }
 /** Parameters used to create a {@link core/materials/Material.Material | Material} */
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {
@@ -90,6 +90,8 @@ export interface RenderMaterialAttributes {
     wgslStructFragment?: Geometry['wgslStructFragment'];
     /** Array of {@link types/Geometries.VertexBuffer | vertex buffers} to send to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
     vertexBuffers?: Geometry['vertexBuffers'];
+    /** A string representing the {@link core/geometries/Geometry.Geometry#vertexBuffers | Geometry vertex buffers} layout, used for {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipelines} caching */
+    layoutCacheKey?: Geometry['layoutCacheKey'];
 }
 /** Defines all basic allowed geometries */
 export type AllowedGeometries = Geometry | IndexedGeometry;
@@ -150,4 +152,4 @@ export interface RenderMaterialOptions extends MaterialOptions {
     rendering?: RenderMaterialRenderingOptions;
 }
 /** Defines all kind of textures a {@link core/materials/Material.Material | Material} can use */
-export type MaterialTexture = Texture | RenderTexture;
+export type MaterialTexture = DOMTexture | Texture;

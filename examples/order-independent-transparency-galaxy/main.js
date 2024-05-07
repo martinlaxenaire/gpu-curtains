@@ -9,7 +9,7 @@ import {
   ShaderPass,
   Vec2,
   Vec3,
-  RenderTexture,
+  Texture,
   ComputePass,
 } from '../../dist/esm/index.mjs'
 
@@ -200,6 +200,7 @@ window.addEventListener('load', async () => {
     storages: {
       particles: {
         access: 'read_write',
+        usage: ['vertex'],
         struct: {
           position: {
             type: 'array<vec4f>',
@@ -1002,27 +1003,27 @@ window.addEventListener('load', async () => {
   // ------------------------------------
 
   // opaque buffer
-  const OITOpaqueTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITOpaqueTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     format: OITOpaqueTarget.outputTextures[0].format, // optional
     fromTexture: OITOpaqueTarget.outputTextures[0],
   })
 
   // create 2 textures based on our OIT MRT output
-  const OITAccumTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITAccumTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT accum texture',
     name: 'oITAccumTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     format: OITTransparentTarget.outputTextures[0].format, // optional
     fromTexture: OITTransparentTarget.outputTextures[0],
   })
 
-  const OITRevealTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITRevealTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT reveal texture',
     name: 'oITRevealTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     format: OITTransparentTarget.outputTextures[1].format, // optional
     fromTexture: OITTransparentTarget.outputTextures[1],
   })
@@ -1091,7 +1092,7 @@ window.addEventListener('load', async () => {
 
   const compositingPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Compositing pass',
-    renderTextures: [OITOpaqueTexture, OITAccumTexture, OITRevealTexture],
+    textures: [OITOpaqueTexture, OITAccumTexture, OITRevealTexture],
     shaders: {
       fragment: {
         code: compositingPassFs,

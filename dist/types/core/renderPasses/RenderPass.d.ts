@@ -1,7 +1,7 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { RenderTexture } from '../textures/RenderTexture';
+import { Texture } from '../textures/Texture';
 /** Define the parameters of a color attachment */
 export interface ColorAttachmentParams {
     /** The {@link GPULoadOp | load operation} to perform while drawing this {@link RenderPass} */
@@ -32,7 +32,7 @@ export interface RenderPassParams {
     /** Whether this {@link RenderPass} should handle a depth texture */
     useDepth?: boolean;
     /** Whether this {@link RenderPass} should use an already created depth texture */
-    depthTexture?: RenderTexture;
+    depthTexture?: Texture;
     /** The {@link GPULoadOp | depth load operation} to perform while drawing this {@link RenderPass} */
     depthLoadOp?: GPULoadOp;
     /** The {@link GPUStoreOp | depth store operation} to perform while drawing this {@link RenderPass} */
@@ -54,12 +54,12 @@ export declare class RenderPass {
     readonly uuid: string;
     /** Options used to create this {@link RenderPass} */
     options: RenderPassParams;
-    /** Depth {@link RenderTexture} to use with this {@link RenderPass} if it should handle depth */
-    depthTexture: RenderTexture | undefined;
-    /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments view textures */
-    viewTextures: RenderTexture[];
-    /** Array of {@link RenderTexture} used for this {@link RenderPass} color attachments resolve textures */
-    resolveTargets: Array<null | RenderTexture>;
+    /** Depth {@link Texture} to use with this {@link RenderPass} if it should handle depth */
+    depthTexture: Texture | undefined;
+    /** Array of {@link Texture} used for this {@link RenderPass} color attachments view textures */
+    viewTextures: Texture[];
+    /** Array of {@link Texture} used for this {@link RenderPass} color attachments resolve textures */
+    resolveTargets: Array<null | Texture>;
     /** The {@link RenderPass} {@link GPURenderPassDescriptor | descriptor} */
     descriptor: GPURenderPassDescriptor;
     /**
@@ -87,13 +87,13 @@ export declare class RenderPass {
      *
      * @readonly
      */
-    get outputTextures(): RenderTexture[];
+    get outputTextures(): Texture[];
     /**
      * Set our render pass {@link descriptor}
      */
     setRenderPassDescriptor(): void;
     /**
-     * Resize our {@link RenderPass}: reset its {@link RenderTexture}
+     * Resize our {@link RenderPass}: reset its {@link Texture}
      */
     resize(): void;
     /**

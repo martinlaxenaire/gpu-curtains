@@ -14,7 +14,7 @@ import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry';
  */
 export declare class RenderMaterial extends Material {
     /** {@link RenderPipelineEntry | Render pipeline entry} used by this {@link RenderMaterial} */
-    pipelineEntry: RenderPipelineEntry;
+    pipelineEntry: RenderPipelineEntry | null;
     /** Mandatory {@link RenderMaterialAttributes | geometry attributes} to pass to the {@link RenderPipelineEntry | render pipeline entry} */
     attributes: RenderMaterialAttributes | null;
     /** Options used to create this {@link RenderMaterial} */
@@ -26,9 +26,9 @@ export declare class RenderMaterial extends Material {
      */
     constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams);
     /**
-     * When all bind groups and attributes are created, add them to the {@link RenderPipelineEntry}
+     * Set (or reset) the current {@link pipelineEntry}. Use the {@link Renderer#pipelineManager | renderer pipelineManager} to check whether we can get an already created {@link RenderPipelineEntry} from cache or if we should create a new one.
      */
-    setPipelineEntryProperties(): void;
+    setPipelineEntry(): void;
     /**
      * Compile the {@link RenderPipelineEntry}
      * @async

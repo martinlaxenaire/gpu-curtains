@@ -1,4 +1,5 @@
 import { generateUUID } from '../../utils/utils.mjs';
+import { getBufferUsages } from './utils.mjs';
 
 class Buffer {
   /**
@@ -8,7 +9,7 @@ class Buffer {
   constructor({
     label = "Buffer",
     size = 0,
-    usage = GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+    usage = ["copySrc", "copyDst"],
     mappedAtCreation = false
   } = {}) {
     this.type = "Buffer";
@@ -18,7 +19,7 @@ class Buffer {
     this.options = {
       label,
       size,
-      usage,
+      usage: getBufferUsages(usage),
       mappedAtCreation
     };
   }
@@ -36,7 +37,12 @@ class Buffer {
    * @param options - optional way to update the {@link options} previously set before creating the {@link GPUBuffer}.
    */
   createBuffer(renderer, options = {}) {
-    this.options = { ...this.options, ...options };
+    const { usage, ...staticOptions } = options;
+    this.options = {
+      ...this.options,
+      ...staticOptions,
+      ...usage !== void 0 && { usage: getBufferUsages(usage) }
+    };
     this.setBuffer(renderer.createBuffer(this));
   }
   /**

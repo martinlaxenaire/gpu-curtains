@@ -1,4 +1,4 @@
-import { WGSLVariableType } from '../core/bindings/utils'
+import { TypedArray, WGSLVariableType } from '../core/bindings/utils'
 import { Buffer } from '../core/buffers/Buffer'
 
 /**
@@ -46,9 +46,13 @@ export interface VertexBufferAttribute extends VertexBufferAttributeParams {
  */
 export interface GeometryBuffer {
   /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
-  array: Float32Array | Uint16Array | Uint32Array
+  array: TypedArray
   /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
   buffer: Buffer
+  /** Number representing the offset at which the data begins in the {@link GPUBuffer}. */
+  bufferOffset: number
+  /** Size in bytes of the data contained in the {@link GPUBuffer}. */
+  bufferSize: number | null
 }
 
 /**
@@ -66,21 +70,19 @@ export interface VertexBuffer extends GeometryBuffer {
   /** Array of {@link VertexBufferAttribute} used by this {@link VertexBuffer} */
   attributes: VertexBufferAttribute[]
   /** {@link VertexBuffer} data array to be used by the {@link GPUBuffer} */
-  array: null | Float32Array
+  array: null | TypedArray
 }
 
 /**
  * Parameters used to create a {@link VertexBuffer}
  */
-export interface VertexBufferParams {
+export interface VertexBufferParams extends Partial<GeometryBuffer> {
   /** Whether this {@link VertexBuffer} should hold data relative to vertices or instances */
   stepMode?: GPUVertexStepMode
   /** The name of the {@link VertexBuffer} */
   name?: string
   /** Array of {@link VertexBufferAttribute} to be used by this {@link VertexBuffer} */
   attributes?: VertexBufferAttributeParams[]
-  /** {@link GPUBuffer} sent to the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} */
-  buffer?: Buffer
 }
 
 /**

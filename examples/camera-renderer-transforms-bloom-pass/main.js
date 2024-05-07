@@ -422,10 +422,10 @@ window.addEventListener('load', async () => {
   })
 
   // pass the original scene pass result to our blend pass
-  blendPass.createRenderTexture({
+  blendPass.createTexture({
     label: 'Scene texture',
     name: 'sceneTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     fromTexture: scenePass.renderTexture,
   })
 })

@@ -58,6 +58,7 @@ class BindGroup {
     bindings.forEach((binding) => {
       if ("buffer" in binding) {
         this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
+        binding.buffer.consumers.add(this.uuid);
       }
     });
     this.bindings = [...this.bindings, ...bindings];
@@ -76,18 +77,21 @@ class BindGroup {
    * @returns - a {@link bindings} array
    */
   createInputBindings(bindingType = "uniform", inputs = {}) {
-    const bindings = [
+    let bindings = [
       ...Object.keys(inputs).map((inputKey) => {
         const binding = inputs[inputKey];
+        if (!binding.struct)
+          return;
         const bindingParams = {
           label: toKebabCase(binding.label || inputKey),
           name: inputKey,
           bindingType,
-          visibility: binding.access === "read_write" ? "compute" : binding.visibility,
+          visibility: binding.access === "read_write" ? ["compute"] : binding.visibility,
           useStruct: true,
           // by default
           access: binding.access ?? "read",
           // read by default
+          ...binding.usage && { usage: binding.usage },
           struct: binding.struct,
           ...binding.shouldCopyResult !== void 0 && { shouldCopyResult: binding.shouldCopyResult }
         };
@@ -114,6 +118,7 @@ class BindGroup {
         });
       })
     ].flat();
+    bindings = bindings.filter(Boolean);
     bindings.forEach((binding) => {
       this.renderer.deviceManager.bufferBindings.set(binding.cacheKey, binding);
     });
@@ -212,6 +217,17 @@ class BindGroup {
     this.needsPipelineFlush = true;
   }
   /**
+   * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to update our bindings.
+   */
+  restoreContext() {
+    if (this.shouldCreateBindGroup) {
+      this.createBindGroup();
+    }
+    for (const bufferBinding of this.bufferBindings) {
+      bufferBinding.shouldUpdate = true;
+    }
+  }
+  /**
    * Get all {@link BindGroup#bindings | bind group bindings} that handle a {@link GPUBuffer}
    */
   get bufferBindings() {
@@ -226,13 +242,13 @@ class BindGroup {
   createBindingBuffer(binding) {
     binding.buffer.createBuffer(this.renderer, {
       label: this.options.label + ": " + binding.bindingType + " buffer from: " + binding.label,
-      usage: binding.bindingType === "uniform" ? GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX
+      usage: [...["copySrc", "copyDst", binding.bindingType], ...binding.options.usage]
     });
     if ("resultBuffer" in binding) {
       binding.resultBuffer.createBuffer(this.renderer, {
         label: this.options.label + ": Result buffer from: " + binding.label,
         size: binding.arrayBuffer.byteLength,
-        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+        usage: ["copyDst", "mapRead"]
       });
     }
   }

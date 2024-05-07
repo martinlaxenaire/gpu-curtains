@@ -11,7 +11,7 @@ import {
   Vec2,
   Vec3,
   Mat4,
-  RenderTexture,
+  Texture,
   logSceneCommands,
 } from '../../dist/esm/index.mjs'
 
@@ -87,10 +87,10 @@ window.addEventListener('load', async () => {
   const urlSampleCount = searchParams.get('sampleCount') && parseInt(searchParams.get('sampleCount'))
   const sampleCount = urlSampleCount && urlSampleCount === 4 ? urlSampleCount : 1
 
-  const gBufferDepthTexture = new RenderTexture(gpuCameraRenderer, {
+  const gBufferDepthTexture = new Texture(gpuCameraRenderer, {
     label: 'GBuffer depth texture',
     name: 'gBufferDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: 'depth24plus',
     sampleCount,
   })
@@ -359,10 +359,10 @@ window.addEventListener('load', async () => {
 
   const noiseSize = new Vec2(4, 4)
 
-  const noiseComputeTexture = new RenderTexture(gpuCameraRenderer, {
+  const noiseComputeTexture = new Texture(gpuCameraRenderer, {
     label: 'Noise compute texture',
     name: 'noiseComputeTexture',
-    usage: 'storage',
+    type: 'storage',
     //format: 'rgba16float',
     format: 'rgba8unorm',
     fixedSize: {
@@ -373,7 +373,7 @@ window.addEventListener('load', async () => {
 
   // we cannot directly use a storage texture in a render pass
   // so copy it
-  const noiseTexture = new RenderTexture(gpuCameraRenderer, {
+  const noiseTexture = new Texture(gpuCameraRenderer, {
     label: 'Noise texture',
     name: 'noiseTexture',
     fixedSize: {
@@ -393,7 +393,7 @@ window.addEventListener('load', async () => {
     },
     autoRender: false, // we're going to render only once on demand
     dispatchSize: 1,
-    renderTextures: [noiseComputeTexture],
+    textures: [noiseComputeTexture],
     uniforms: {
       params: {
         struct: {
@@ -432,13 +432,13 @@ window.addEventListener('load', async () => {
   })
 
   // create textures based on our Geometry Buffer MRT output
-  const gBufferAlbedoTexture = new RenderTexture(gpuCameraRenderer, {
+  const gBufferAlbedoTexture = new Texture(gpuCameraRenderer, {
     label: 'GBuffer albedo texture',
     name: 'gBufferAlbedoTexture',
     fromTexture: writeGBufferRenderTarget.outputTextures[0],
   })
 
-  const gBufferNormalTexture = new RenderTexture(gpuCameraRenderer, {
+  const gBufferNormalTexture = new Texture(gpuCameraRenderer, {
     label: 'GBuffer normal texture',
     name: 'gBufferNormalTexture',
     fromTexture: writeGBufferRenderTarget.outputTextures[1],
@@ -447,7 +447,7 @@ window.addEventListener('load', async () => {
   // we could have used a position texture in the geometry buffer
   // but we're going to rebuild the positions from the depth buffer instead
   // directly in the occlusion pass
-  // const gBufferPositionTexture = new RenderTexture(gpuCameraRenderer, {
+  // const gBufferPositionTexture = new Texture(gpuCameraRenderer, {
   //   label: 'GBuffer position texture',
   //   name: 'gBufferPositionTexture',
   //   fromTexture: writeGBufferRenderTarget.outputTextures[2],
@@ -602,8 +602,8 @@ window.addEventListener('load', async () => {
         code: occlusionFs,
       },
     },
-    renderTextures: [gBufferDepthTexture, gBufferNormalTexture, noiseTexture],
-    //renderTextures: [gBufferDepthTexture, gBufferNormalTexture, gBufferPositionTexture, noiseTexture],
+    textures: [gBufferDepthTexture, gBufferNormalTexture, noiseTexture],
+    //textures: [gBufferDepthTexture, gBufferNormalTexture, gBufferPositionTexture, noiseTexture],
     samplers: [repeatSampler],
     uniforms: {
       params: {
@@ -796,7 +796,7 @@ window.addEventListener('load', async () => {
         code: ssaoPassFs,
       },
     },
-    renderTextures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
+    textures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
     uniforms: {
       camera: {
         struct: {

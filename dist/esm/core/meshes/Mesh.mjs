@@ -8,7 +8,7 @@ class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
    * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
    * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
    */
-  constructor(renderer, parameters) {
+  constructor(renderer, parameters = {}) {
     renderer = renderer && renderer.renderer || renderer;
     isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
     super(renderer, null, parameters);

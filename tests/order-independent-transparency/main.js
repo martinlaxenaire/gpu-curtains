@@ -6,13 +6,14 @@ window.addEventListener('load', async () => {
   const {
     GPUCameraRenderer,
     GPUDeviceManager,
+    OrbitControls,
     Object3D,
     PlaneGeometry,
     Mesh,
     RenderTarget,
     ShaderPass,
     Vec3,
-    RenderTexture,
+    Texture,
   } = await import(/* @vite-ignore */ path)
 
   // here is an example of how we can use a simple GPUCameraRenderer instead of GPUCurtains
@@ -43,20 +44,18 @@ window.addEventListener('load', async () => {
   })
 
   // get the camera
-  const { scene, camera } = gpuCameraRenderer
-
-  const cameraPivot = new Object3D()
-  cameraPivot.parent = scene
+  const { camera } = gpuCameraRenderer
 
   camera.position.z = 5
   camera.position.x = 2
-  camera.parent = cameraPivot
-
   camera.lookAt()
+
+  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  orbitControls.minZoom = -1
+  orbitControls.maxZoom = 2
 
   // render our scene manually
   const animate = () => {
-    cameraPivot.rotation.y += 0.005
     gpuDeviceManager.render()
 
     requestAnimationFrame(animate)
@@ -232,27 +231,27 @@ window.addEventListener('load', async () => {
   //console.log(OITOpaqueTarget, OITOpaqueTarget.outputTextures, OITOpaqueTarget.renderPass.outputTextures)
 
   // opaque buffer
-  const OITOpaqueTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITOpaqueTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT opaque texture',
     name: 'oITOpaqueTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     //format: OITOpaqueTarget.outputTextures[0].format,
     fromTexture: OITOpaqueTarget.outputTextures[0], // same as OITOpaqueTarget.renderTexture
   })
 
   // create 2 textures based on our OIT MRT output
-  const OITAccumTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITAccumTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT accum texture',
     name: 'oITAccumTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     //format: OITTransparentTarget.outputTextures[0].format,
     fromTexture: OITTransparentTarget.outputTextures[0],
   })
 
-  const OITRevealTexture = new RenderTexture(gpuCameraRenderer, {
+  const OITRevealTexture = new Texture(gpuCameraRenderer, {
     label: 'OIT reveal texture',
     name: 'oITRevealTexture',
-    visibility: 'fragment',
+    visibility: ['fragment'],
     //format: OITTransparentTarget.outputTextures[1].format,
     fromTexture: OITTransparentTarget.outputTextures[1],
   })
@@ -323,7 +322,7 @@ window.addEventListener('load', async () => {
 
   const compositingPass = new ShaderPass(gpuCameraRenderer, {
     label: 'Compositing pass',
-    renderTextures: [OITOpaqueTexture, OITAccumTexture, OITRevealTexture],
+    textures: [OITOpaqueTexture, OITAccumTexture, OITRevealTexture],
     shaders: {
       fragment: {
         code: compositingPassFs,

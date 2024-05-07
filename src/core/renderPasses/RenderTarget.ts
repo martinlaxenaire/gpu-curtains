@@ -1,6 +1,6 @@
 import { isRenderer, Renderer } from '../renderers/utils'
 import { RenderPass, RenderPassParams } from './RenderPass'
-import { RenderTexture } from '../textures/RenderTexture'
+import { Texture } from '../textures/Texture'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
@@ -19,7 +19,7 @@ export interface RenderTargetParams extends RenderPassParams {
  *
  * Can also be assigned as ShaderPass {@link core/renderPasses/ShaderPass.ShaderPass#inputTarget | input} or {@link core/renderPasses/ShaderPass.ShaderPass#outputTarget | output} targets.
  *
- * If the {@link RenderPass} created handle color attachments, then a {@link RenderTarget#renderTexture | RenderTexture} will be created to update and/or resolve the content of the current view. This {@link RenderTarget#renderTexture | RenderTexture} could therefore usually be used to access the current content of this {@link RenderTarget}.
+ * If the {@link RenderPass} created handle color attachments, then a {@link RenderTarget#renderTexture | Texture} will be created to update and/or resolve the content of the current view. This {@link RenderTarget#renderTexture | Texture} could therefore usually be used to access the current content of this {@link RenderTarget}.
  *
  * @example
  * ```javascript
@@ -50,8 +50,8 @@ export class RenderTarget {
 
   /** {@link RenderPass} used by this {@link RenderTarget} */
   renderPass: RenderPass
-  /** {@link RenderTexture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture} */
-  renderTexture?: RenderTexture
+  /** {@link Texture} that will be resolved by the {@link renderPass} when {@link RenderPass#updateView | setting the current texture} */
+  renderTexture?: Texture
 
   /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
   #autoRender = true
@@ -102,7 +102,7 @@ export class RenderTarget {
 
     if (renderPassParams.useColorAttachments !== false) {
       // this is the texture that will be resolved when setting the current render pass texture
-      this.renderTexture = new RenderTexture(this.renderer, {
+      this.renderTexture = new Texture(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Texture` : 'Render Target render texture',
         name: 'renderTexture',
         format:
@@ -110,6 +110,7 @@ export class RenderTarget {
             ? colorAttachments[0].targetFormat
             : this.renderer.options.preferredFormat,
         ...(this.options.qualityRatio !== undefined && { qualityRatio: this.options.qualityRatio }),
+        usage: ['copySrc', 'renderAttachment', 'textureBinding'],
       })
     }
 
@@ -123,7 +124,7 @@ export class RenderTarget {
    *
    * @readonly
    */
-  get outputTextures(): RenderTexture[] {
+  get outputTextures(): Texture[] {
     return !this.renderPass.outputTextures.length
       ? !this.renderTexture
         ? []

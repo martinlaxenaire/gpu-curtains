@@ -2,12 +2,13 @@
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
-    BoxGeometry,
     GPUCameraRenderer,
     GPUDeviceManager,
+    OrbitControls,
+    BoxGeometry,
     Mesh,
     RenderTarget,
-    RenderTexture,
+    Texture,
     ShaderPass,
     SphereGeometry,
     Vec2,
@@ -44,17 +45,16 @@ window.addEventListener('load', async () => {
   // get the camera
   const { camera } = gpuCameraRenderer
 
-  console.log(camera)
-
-  // each time we'll change the camera position, we'll update its transform origin as well
-  // that way it will act as an orbit camera
-  const cameraPosition = new Vec3().onChange(() => {
-    camera.position.copy(cameraPosition)
-    camera.transformOrigin.set(-1 * cameraPosition.x, -1 * cameraPosition.y, -1 * cameraPosition.z)
-  })
-
   // set the camera initial position
-  cameraPosition.z = systemSize * 3
+  camera.position.z = systemSize * 3
+
+  // orbit controls
+  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  orbitControls.zoomStep = 0.05
+  orbitControls.minZoom = systemSize * -1.5
+  orbitControls.maxZoom = systemSize * 3
+
+  console.log(camera)
 
   // render our scene manually
   const animate = () => {
@@ -66,56 +66,6 @@ window.addEventListener('load', async () => {
 
   animate()
 
-  // now the orbit controls
-  const mouse = {
-    current: new Vec2(Infinity),
-    last: new Vec2(Infinity),
-    delta: new Vec2(),
-    isDown: false,
-  }
-
-  window.addEventListener('touchstart', () => {
-    mouse.isDown = true
-  })
-  window.addEventListener('mousedown', () => {
-    mouse.isDown = true
-  })
-
-  window.addEventListener('touchend', () => {
-    mouse.isDown = false
-    mouse.last.set(Infinity)
-  })
-  window.addEventListener('mouseup', () => {
-    mouse.isDown = false
-    mouse.last.set(Infinity)
-  })
-
-  window.addEventListener('pointermove', (e) => {
-    if (!mouse.isDown) return
-
-    mouse.current.set(e.clientX, e.clientY)
-
-    if (mouse.last.x === Infinity) {
-      mouse.last.copy(mouse.current)
-    }
-
-    mouse.delta.set(mouse.current.x - mouse.last.x, mouse.current.y - mouse.last.y)
-
-    camera.rotation.y -= mouse.delta.x * 0.01
-    camera.rotation.x -= mouse.delta.y * 0.01 * Math.sign(Math.cos(camera.rotation.y))
-
-    mouse.last.copy(mouse.current)
-  })
-
-  window.addEventListener('wheel', (e) => {
-    const newPosition = cameraPosition.clone().multiplyScalar(1 + Math.sign(e.deltaY) * 0.1)
-
-    // max zoom
-    if (newPosition.length() <= systemSize * 6) {
-      cameraPosition.copy(newPosition)
-    }
-  })
-
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
   const sphereGeometry = new SphereGeometry()
@@ -125,10 +75,10 @@ window.addEventListener('load', async () => {
     label: 'Blank render target',
     //renderToSwapChain: false,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
-    depthTexture: new RenderTexture(gpuCameraRenderer, {
+    depthTexture: new Texture(gpuCameraRenderer, {
       label: 'Cube depth texture',
       name: 'cubeDepthTexture',
-      usage: 'depth',
+      type: 'depth',
       format: 'depth24plus',
       sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
     }),
@@ -137,10 +87,10 @@ window.addEventListener('load', async () => {
   const selectiveBloomTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Selective bloom render target',
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
-    depthTexture: new RenderTexture(gpuCameraRenderer, {
+    depthTexture: new Texture(gpuCameraRenderer, {
       label: 'Sphere depth texture',
       name: 'sphereDepthTexture',
-      usage: 'depthTexture',
+      type: 'depth',
       format: 'depth24plus',
       sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
     }),
@@ -437,7 +387,7 @@ window.addEventListener('load', async () => {
   })
 
   // pass the original scene pass result to our blend pass
-  blendBloomPass.createRenderTexture({
+  blendBloomPass.createTexture({
     label: 'Scene texture',
     name: 'sceneTexture',
     fromTexture: initBloomPass.renderTexture,
@@ -603,29 +553,29 @@ window.addEventListener('load', async () => {
     ],
   })
 
-  const cubeRenderTexture = blendPass.createRenderTexture({
+  const cubeRenderTexture = blendPass.createTexture({
     name: 'cubeRenderTexture',
     fromTexture: blankRenderTarget.renderTexture,
   })
 
-  const cubeDepthTexture = blendPass.createRenderTexture({
+  const cubeDepthTexture = blendPass.createTexture({
     name: 'cubeDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: 'depth24plus',
     fromTexture: blankRenderTarget.options.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,
   })
 
-  const bloomSphereTexture = blendPass.createRenderTexture({
+  const bloomSphereTexture = blendPass.createTexture({
     name: 'bloomSphereRenderTexture',
     fromTexture: blendBloomPass.renderTexture,
   })
 
   console.log(blendBloomPass)
 
-  const sphereDepthTexture = blendPass.createRenderTexture({
+  const sphereDepthTexture = blendPass.createTexture({
     name: 'sphereDepthTexture',
-    usage: 'depth',
+    type: 'depth',
     format: 'depth24plus',
     fromTexture: selectiveBloomTarget.options.depthTexture,
     sampleCount: gpuCameraRenderer.renderPass.options.sampleCount,

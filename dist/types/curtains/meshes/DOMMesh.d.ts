@@ -2,14 +2,14 @@ import { DOMObject3D } from '../objects3D/DOMObject3D';
 import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
-import { Texture } from '../../core/textures/Texture';
+import { DOMTexture } from '../../core/textures/DOMTexture';
 import { AllowedGeometries } from '../../types/Materials';
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement';
 /**
  * Base parameters to create a {@link DOMMesh}
  */
 export interface DOMMeshBaseParams extends MeshBaseRenderParams {
-    /** Whether to automatically create a {@link Texture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
+    /** Whether to automatically create a {@link DOMTexture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
     autoloadSources?: boolean;
     /** Whether to automatically update the {@link DOMMesh} position on scroll */
     watchScroll?: boolean;
@@ -48,12 +48,12 @@ declare const DOMMesh_base: import("../../core/meshes/mixins/MeshBaseMixin").Mix
 export declare class DOMMesh extends DOMMesh_base {
     /** {@link GPUCurtainsRenderer} used to create this {@link DOMObject3D} */
     renderer: GPUCurtainsRenderer;
-    /** Whether to automatically create a {@link Texture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
+    /** Whether to automatically create a {@link DOMTexture} for all {@link HTMLImageElement}, {@link HTMLVideoElement} and {@link HTMLCanvasElement} child of the specified {@link DOMMesh} {@link HTMLElement} */
     autoloadSources: boolean;
     /** Whether all the sources have been successfully loaded */
     _sourcesReady: boolean;
     /** function assigned to the {@link onLoading} callback */
-    _onLoadingCallback: (texture: Texture) => void;
+    _onLoadingCallback: (texture: DOMTexture) => void;
     /**
      * DOMMesh constructor
      * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}
@@ -74,15 +74,17 @@ export declare class DOMMesh extends DOMMesh_base {
     get sourcesReady(): boolean;
     set sourcesReady(value: boolean);
     /**
-     * Add a {@link DOMMesh} to the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Add a {@link DOMMesh} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link DOMMesh} to the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    addToScene(): void;
+    addToScene(addToRenderer?: boolean): void;
     /**
-     * Remove a {@link DOMMesh} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a {@link DOMMesh} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link DOMMesh} from the {@link GPUCurtainsRenderer#meshes | renderer meshes array} and {@link GPUCurtainsRenderer#domMeshes | renderer domMeshes array}
      */
-    removeFromScene(): void;
+    removeFromScene(removeFromRenderer?: boolean): void;
     /**
-     * Load initial {@link DOMMesh} sources if needed and create associated {@link Texture}
+     * Load initial {@link DOMMesh} sources if needed and create associated {@link DOMTexture}
      */
     setInitSources(): void;
     /**
@@ -95,10 +97,10 @@ export declare class DOMMesh extends DOMMesh_base {
      */
     get pixelRatioBoundingRect(): DOMElementBoundingRect;
     /**
-     * Called each time one of the initial sources associated {@link Texture#texture | GPU texture} has been uploaded to the GPU
-     * @param callback - callback to call each time a {@link Texture#texture | GPU texture} has been uploaded to the GPU
+     * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
+     * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
      * @returns - our {@link DOMMesh}
      */
-    onLoading(callback: (texture: Texture) => void): DOMMesh;
+    onLoading(callback: (texture: DOMTexture) => void): DOMMesh;
 }
 export {};

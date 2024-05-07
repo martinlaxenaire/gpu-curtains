@@ -1,9 +1,8 @@
 import { generateUUID, throwWarning } from '../../../utils/utils.mjs';
 import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
+import { DOMTexture } from '../../textures/DOMTexture.mjs';
 import { Texture } from '../../textures/Texture.mjs';
-import { Geometry } from '../../geometries/Geometry.mjs';
-import { RenderTexture } from '../../textures/RenderTexture.mjs';
 import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl.mjs';
 import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl.mjs';
 
@@ -27,8 +26,6 @@ var __privateSet = (obj, member, value, setter) => {
 };
 let meshIndex = 0;
 const defaultMeshBaseParams = {
-  // geometry
-  geometry: new Geometry(),
   // material
   autoRender: true,
   useProjection: false,
@@ -114,8 +111,6 @@ function MeshBaseMixin(Base) {
         ...autoRender !== void 0 && { autoRender },
         ...meshParameters
       };
-      this.geometry = geometry;
-      this.geometry.consumers.add(this.uuid);
       if (autoRender !== void 0) {
         __privateSet(this, _autoRender, autoRender);
       }
@@ -123,13 +118,14 @@ function MeshBaseMixin(Base) {
       this.renderOrder = renderOrder;
       this.ready = false;
       this.userData = {};
-      this.computeGeometry();
+      if (geometry) {
+        this.useGeometry(geometry);
+      }
       this.setMaterial({
         ...this.cleanupRenderMaterialParameters({ ...this.options }),
-        verticesOrder: geometry.verticesOrder,
-        topology: geometry.topology
+        ...geometry && { verticesOrder: geometry.verticesOrder, topology: geometry.topology }
       });
-      this.addToScene();
+      this.addToScene(true);
     }
     /**
      * Get private #autoRender value
@@ -153,23 +149,29 @@ function MeshBaseMixin(Base) {
     }
     /* SCENE */
     /**
-     * Add a Mesh to the renderer and the {@link core/scenes/Scene.Scene | Scene}. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+     * Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
+     * @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
      */
-    addToScene() {
-      this.renderer.meshes.push(this);
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.meshes.push(this);
+      }
       this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
       if (__privateGet(this, _autoRender)) {
         this.renderer.scene.addMesh(this);
       }
     }
     /**
-     * Remove a Mesh from the renderer and the {@link core/scenes/Scene.Scene | Scene}
+     * Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
      */
-    removeFromScene() {
+    removeFromScene(removeFromRenderer = false) {
       if (__privateGet(this, _autoRender)) {
         this.renderer.scene.removeMesh(this);
       }
-      this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+      if (removeFromRenderer) {
+        this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
+      }
     }
     /**
      * Set a new {@link Renderer} for this Mesh
@@ -184,9 +186,9 @@ function MeshBaseMixin(Base) {
         return;
       }
       const oldRenderer = this.renderer;
-      this.removeFromScene();
+      this.removeFromScene(true);
       this.renderer = renderer;
-      this.addToScene();
+      this.addToScene(true);
       if (!oldRenderer.meshes.length) {
         oldRenderer.onBeforeRenderScene.add(
           (commandEncoder) => {
@@ -260,6 +262,45 @@ function MeshBaseMixin(Base) {
     }
     /* GEOMETRY */
     /**
+     * Set or update the Mesh {@link Geometry}
+     * @param geometry - new {@link Geometry} to use
+     */
+    useGeometry(geometry) {
+      if (this.geometry) {
+        if (geometry.shouldCompute) {
+          geometry.computeGeometry();
+        }
+        if (this.geometry.layoutCacheKey !== geometry.layoutCacheKey) {
+          throwWarning(
+            `${this.options.label} (${this.type}): the current and new geometries do not have the same vertexBuffers layout, causing a probable pipeline recompilation. This should be avoided.
+
+Current geometry layout:
+
+${this.geometry.wgslStructFragment}
+
+--------
+
+New geometry layout:
+
+${geometry.wgslStructFragment}`
+          );
+          this.material.setAttributesFromGeometry(geometry);
+          this.material.setPipelineEntry();
+        }
+        this.geometry.consumers.delete(this.uuid);
+      }
+      this.geometry = geometry;
+      this.geometry.consumers.add(this.uuid);
+      this.computeGeometry();
+      if (this.material) {
+        const renderingOptions = {
+          ...this.material.options.rendering,
+          ...{ verticesOrder: geometry.verticesOrder, topology: geometry.topology }
+        };
+        this.material.setRenderingOptions(renderingOptions);
+      }
+    }
+    /**
      * Compute the Mesh geometry if needed
      */
     computeGeometry() {
@@ -288,6 +329,8 @@ function MeshBaseMixin(Base) {
      */
     setRenderingOptionsForRenderPass(renderPass) {
       const renderingOptions = {
+        // transparency (blend)
+        transparent: this.transparent,
         // sample count
         sampleCount: renderPass.options.sampleCount,
         // color attachments
@@ -323,15 +366,23 @@ function MeshBaseMixin(Base) {
       return parameters;
     }
     /**
-     * Set a Mesh transparent property, then set its material
+     * Set or update the Mesh {@link RenderMaterial}
+     * @param material - new {@link RenderMaterial} to use
+     */
+    useMaterial(material) {
+      this.material = material;
+      this.transparent = this.material.options.rendering.transparent;
+      this.material.options.domTextures?.filter((texture) => texture instanceof DOMTexture).forEach((texture) => this.onDOMTextureAdded(texture));
+    }
+    /**
+     * Patch the shaders if needed, then set the Mesh material
      * @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
      */
     setMaterial(meshParameters) {
-      this.transparent = meshParameters.transparent;
       this.setShaders();
       meshParameters.shaders = this.options.shaders;
-      this.material = new RenderMaterial(this.renderer, meshParameters);
-      this.material.options.textures?.filter((texture) => texture instanceof Texture).forEach((texture) => this.onTextureAdded(texture));
+      meshParameters.label = meshParameters.label + " material";
+      this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
     }
     /**
      * Set Mesh material attributes
@@ -341,7 +392,34 @@ function MeshBaseMixin(Base) {
         this.material.setAttributesFromGeometry(this.geometry);
       }
     }
+    /**
+     * Get the transparent property value
+     */
+    get transparent() {
+      return this._transparent;
+    }
+    /**
+     * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
+     * @param value
+     */
+    set transparent(value) {
+      const switchTransparency = this.transparent !== void 0 && value !== this.transparent;
+      if (switchTransparency) {
+        this.removeFromScene();
+      }
+      this._transparent = value;
+      if (switchTransparency) {
+        this.addToScene();
+      }
+    }
     /* TEXTURES */
+    /**
+     * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
+     * @readonly
+     */
+    get domTextures() {
+      return this.material?.domTextures || [];
+    }
     /**
      * Get our {@link RenderMaterial#textures | RenderMaterial textures array}
      * @readonly
@@ -350,25 +428,46 @@ function MeshBaseMixin(Base) {
       return this.material?.textures || [];
     }
     /**
-     * Get our {@link RenderMaterial#renderTextures | RenderMaterial render textures array}
-     * @readonly
+     * Create a new {@link DOMTexture}
+     * @param options - {@link DOMTextureParams | DOMTexture parameters}
+     * @returns - newly created {@link DOMTexture}
      */
-    get renderTextures() {
-      return this.material?.renderTextures || [];
-    }
-    /**
-     * Create a new {@link Texture}
-     * @param options - {@link TextureParams | Texture parameters}
-     * @returns - newly created {@link Texture}
-     */
-    createTexture(options) {
+    createDOMTexture(options) {
       if (!options.name) {
-        options.name = "texture" + this.textures.length;
+        options.name = "texture" + (this.textures.length + this.domTextures.length);
       }
       if (!options.label) {
         options.label = this.options.label + " " + options.name;
       }
-      const texture = new Texture(this.renderer, { ...options, ...this.options.texturesOptions });
+      const domTexture = new DOMTexture(this.renderer, { ...options, ...this.options.texturesOptions });
+      this.addDOMTexture(domTexture);
+      return domTexture;
+    }
+    /**
+     * Add a {@link DOMTexture}
+     * @param domTexture - {@link DOMTexture} to add
+     */
+    addDOMTexture(domTexture) {
+      this.material.addTexture(domTexture);
+      this.onDOMTextureAdded(domTexture);
+    }
+    /**
+     * Callback run when a new {@link DOMTexture} has been added
+     * @param domTexture - newly created DOMTexture
+     */
+    onDOMTextureAdded(domTexture) {
+      domTexture.parentMesh = this;
+    }
+    /**
+     * Create a new {@link Texture}
+     * @param  options - {@link TextureParams | Texture parameters}
+     * @returns - newly created {@link Texture}
+     */
+    createTexture(options) {
+      if (!options.name) {
+        options.name = "texture" + (this.textures.length + this.domTextures.length);
+      }
+      const texture = new Texture(this.renderer, options);
       this.addTexture(texture);
       return texture;
     }
@@ -378,34 +477,6 @@ function MeshBaseMixin(Base) {
      */
     addTexture(texture) {
       this.material.addTexture(texture);
-      this.onTextureAdded(texture);
-    }
-    /**
-     * Callback run when a new {@link Texture} has been added
-     * @param texture - newly created Texture
-     */
-    onTextureAdded(texture) {
-      texture.parentMesh = this;
-    }
-    /**
-     * Create a new {@link RenderTexture}
-     * @param  options - {@link RenderTextureParams | RenderTexture parameters}
-     * @returns - newly created {@link RenderTexture}
-     */
-    createRenderTexture(options) {
-      if (!options.name) {
-        options.name = "renderTexture" + this.renderTextures.length;
-      }
-      const renderTexture = new RenderTexture(this.renderer, options);
-      this.addRenderTexture(renderTexture);
-      return renderTexture;
-    }
-    /**
-     * Add a {@link RenderTexture}
-     * @param renderTexture - {@link RenderTexture} to add
-     */
-    addRenderTexture(renderTexture) {
-      this.material.addTexture(renderTexture);
     }
     /* BINDINGS */
     /**
@@ -431,12 +502,12 @@ function MeshBaseMixin(Base) {
       if (super.resize) {
         super.resize(boundingRect);
       }
-      this.renderTextures?.forEach((renderTexture) => {
-        if (renderTexture.options.fromTexture) {
-          renderTexture.copy(renderTexture.options.fromTexture);
+      this.textures?.forEach((texture) => {
+        if (texture.options.fromTexture) {
+          texture.copy(texture.options.fromTexture);
         }
       });
-      this.textures?.forEach((texture) => {
+      this.domTextures?.forEach((texture) => {
         texture.resize();
       });
       this._onAfterResizeCallback && this._onAfterResizeCallback();
@@ -561,7 +632,7 @@ function MeshBaseMixin(Base) {
      * Remove the Mesh from the {@link core/scenes/Scene.Scene | Scene} and destroy it
      */
     remove() {
-      this.removeFromScene();
+      this.removeFromScene(true);
       this.destroy();
       if (!this.renderer.meshes.length) {
         this.renderer.onBeforeRenderScene.add(
