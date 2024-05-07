@@ -519,7 +519,6 @@ export class GLTFLoader {
         const accessorByteOffset = accessor.byteOffset || 0
         if (byteStride && accessorByteOffset && accessorByteOffset < byteStride) {
           maxByteOffset = Math.max(accessorByteOffset, maxByteOffset)
-          interleavedBufferView = bufferView
         } else {
           maxByteOffset = 0
         }
@@ -529,6 +528,8 @@ export class GLTFLoader {
         if (name === 'position') {
           geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]))
           geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]))
+
+          interleavedBufferView = bufferView
         }
 
         const attributeParams = GLTFLoader.getVertexAttributeParamsFromType(accessor.type)
@@ -551,13 +552,70 @@ export class GLTFLoader {
       }
 
       if (maxByteOffset > 0) {
-        // we're lucky to have an interleaved array!
-        // we won't have to compute our geometry!
-        interleavedArray = new Float32Array(
-          this.gltf.buffers[interleavedBufferView.buffer],
-          interleavedBufferView.byteOffset,
-          (Math.ceil(interleavedBufferView.byteLength / 4) * 4) / Float32Array.BYTES_PER_ELEMENT
+        // check they are all really interleaved
+        const accessorsBufferViews = Object.values(primitive.attributes).map(
+          (accessorIndex) => this.gltf.accessors[accessorIndex].bufferView
         )
+
+        if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
+          // we're not that lucky since we have interleaved values coming from different positions of our main buffer
+          // we'll have to rebuild an interleaved array ourselves
+          const mainBufferStrides = {}
+          const arrayLength = Object.values(primitive.attributes).reduce((acc, accessorIndex) => {
+            const accessor = this.gltf.accessors[accessorIndex]
+
+            const attrSize = GLTFLoader.getVertexAttributeParamsFromType(accessor.type).size
+
+            if (!mainBufferStrides[accessor.bufferView]) {
+              mainBufferStrides[accessor.bufferView] = 0
+            }
+
+            mainBufferStrides[accessor.bufferView] = Math.max(
+              mainBufferStrides[accessor.bufferView],
+              accessor.byteOffset + attrSize * Float32Array.BYTES_PER_ELEMENT
+            )
+
+            return acc + accessor.count * attrSize
+          }, 0)
+
+          interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4)
+
+          const lastAccessor = this.gltf.accessors[accessorsBufferViews[accessorsBufferViews.length - 1]]
+          const lastAttributeSize = GLTFLoader.getVertexAttributeParamsFromType(lastAccessor.type).size
+
+          const totalStride = maxByteOffset + lastAttributeSize * Float32Array.BYTES_PER_ELEMENT
+
+          Object.values(primitive.attributes).forEach((accessorIndex) => {
+            const accessor = this.gltf.accessors[accessorIndex]
+            const bufferView = this.gltf.bufferViews[accessor.bufferView]
+
+            const attrSize = GLTFLoader.getVertexAttributeParamsFromType(accessor.type).size
+
+            for (let i = 0; i < accessor.count; i++) {
+              const startOffset =
+                accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT +
+                (i * totalStride) / Float32Array.BYTES_PER_ELEMENT
+
+              interleavedArray
+                .subarray(startOffset, startOffset + attrSize)
+                .set(
+                  new Float32Array(
+                    this.gltf.buffers[bufferView.buffer],
+                    bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
+                    attrSize
+                  )
+                )
+            }
+          })
+        } else {
+          // we're lucky to have an interleaved array!
+          // we won't have to compute our geometry!
+          interleavedArray = new Float32Array(
+            this.gltf.buffers[interleavedBufferView.buffer],
+            interleavedBufferView.byteOffset,
+            (Math.ceil(interleavedBufferView.byteLength / 4) * 4) / Float32Array.BYTES_PER_ELEMENT
+          )
+        }
       } else {
         // not interleaved?
         // let's try to reorder the attributes so we might benefit from pipeline cache
@@ -654,11 +712,6 @@ export class GLTFLoader {
             },
           },
         ]
-      }
-
-      // debug sponza optimized green curtains not showing?!
-      if (meshDescriptor.parameters.label && meshDescriptor.parameters.label.includes('Curtains')) {
-        console.log(meshDescriptor)
       }
 
       // uniforms
