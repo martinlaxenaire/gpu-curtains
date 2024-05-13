@@ -56,7 +56,7 @@ window.addEventListener('load', async () => {
     //mesh.rotation.x += 0.005
     mesh.rotation.y += 0.02
 
-    //mesh.position.x = Math.cos(time * 0.02) * 2
+    mesh.position.x = Math.cos(time * 0.02) * 2
 
     time++
   })
