@@ -334,6 +334,11 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
             type: 'mat4x4f',
             value: this.modelViewMatrix,
           },
+          normal: {
+            // normal matrix
+            type: 'mat3x3f',
+            value: this.normalMatrix,
+          },
           // modelViewProjection: {
           //   type: 'mat4x4f',
           //   value: this.modelViewProjectionMatrix,

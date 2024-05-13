@@ -41,6 +41,7 @@ export { DOMObject3D } from './curtains/objects3D/DOMObject3D.mjs';
 export { GPUCurtainsRenderer } from './curtains/renderers/GPUCurtainsRenderer.mjs';
 export { GPUCurtains } from './curtains/GPUCurtains.mjs';
 export { Box3 } from './math/Box3.mjs';
+export { Mat3 } from './math/Mat3.mjs';
 export { Mat4 } from './math/Mat4.mjs';
 export { Quat } from './math/Quat.mjs';
 export { Vec2 } from './math/Vec2.mjs';
