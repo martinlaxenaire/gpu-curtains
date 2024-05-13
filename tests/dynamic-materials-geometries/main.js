@@ -16,6 +16,7 @@ window.addEventListener('load', async () => {
     DOMTexture,
     RenderMaterial,
     Vec2,
+    Vec3,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager
@@ -55,7 +56,7 @@ window.addEventListener('load', async () => {
     //mesh.rotation.x += 0.005
     mesh.rotation.y += 0.02
 
-    mesh.position.x = Math.cos(time * 0.02) * 2
+    //mesh.position.x = Math.cos(time * 0.02) * 2
 
     time++
   })
@@ -130,27 +131,32 @@ window.addEventListener('load', async () => {
     1, 1,
   ])
 
+  const frontNormal = new Vec3(0, 1, 1).normalize()
+  const rightNormal = new Vec3(1, 1, 0).normalize()
+  const backNormal = new Vec3(0, 1, -1).normalize()
+  const leftNormal = new Vec3(-1, 1, 0).normalize()
+
   // prettier-ignore
   const normals = new Float32Array([
     // front face
-    0, 0.33, 0.66,
-    0, 0.33, 0.66,
-    0, 0.33, 0.66,
+    frontNormal.x, frontNormal.y, frontNormal.z,
+    frontNormal.x, frontNormal.y, frontNormal.z,
+    frontNormal.x, frontNormal.y, frontNormal.z,
 
     // right face
-    0.33, 0, 0.66,
-    0.33, 0, 0.66,
-    0.33, 0, 0.66,
+    rightNormal.x, rightNormal.y, rightNormal.z,
+    rightNormal.x, rightNormal.y, rightNormal.z,
+    rightNormal.x, rightNormal.y, rightNormal.z,
 
     // back face
-    0, 0.33, -0.66,
-    0, 0.33, -0.66,
-    0, 0.33, -0.66,
+    backNormal.x, backNormal.y, backNormal.z,
+    backNormal.x, backNormal.y, backNormal.z,
+    backNormal.x, backNormal.y, backNormal.z,
 
     // left face
-    -0.33, 0, 0.66,
-    -0.33, 0, 0.66,
-    -0.33, 0, 0.66,
+    leftNormal.x, leftNormal.y, leftNormal.z,
+    leftNormal.x, leftNormal.y, leftNormal.z,
+    leftNormal.x, leftNormal.y, leftNormal.z,
 
     // bottom first
     0, -1, 0,
@@ -189,7 +195,6 @@ window.addEventListener('load', async () => {
             size: 2,
             array: uvs,
           },
-
         ],
       },
     ],
