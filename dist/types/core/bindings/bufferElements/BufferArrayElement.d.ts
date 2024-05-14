@@ -1,4 +1,5 @@
 import { BufferElement, BufferElementParams } from './BufferElement';
+import { TypedArray } from '../utils';
 /**
  * Parameters used to create a {@link BufferArrayElement}
  */
@@ -36,5 +37,5 @@ export declare class BufferArrayElement extends BufferElement {
      * Set the strided {@link view} value from an array
      * @param value - array to use
      */
-    setValueFromArray(value: number[]): void;
+    setValueFromArray(value: number[] | TypedArray): void;
 }

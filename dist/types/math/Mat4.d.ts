@@ -21,22 +21,22 @@ export declare class Mat4 {
     /***
      * Sets the matrix from 16 numbers
      *
-     * @param n11 number
-     * @param n12 number
-     * @param n13 number
-     * @param n14 number
-     * @param n21 number
-     * @param n22 number
-     * @param n23 number
-     * @param n24 number
-     * @param n31 number
-     * @param n32 number
-     * @param n33 number
-     * @param n34 number
-     * @param n41 number
-     * @param n42 number
-     * @param n43 number
-     * @param n44 number
+     * @param n11 - number
+     * @param n12 - number
+     * @param n13 - number
+     * @param n14 - number
+     * @param n21 - number
+     * @param n22 - number
+     * @param n23 - number
+     * @param n24 - number
+     * @param n31 - number
+     * @param n32 - number
+     * @param n33 - number
+     * @param n34 - number
+     * @param n41 - number
+     * @param n42 - number
+     * @param n43 - number
+     * @param n44 - number
      *
      * @returns - this {@link Mat4} after being set
      */
@@ -54,7 +54,7 @@ export declare class Mat4 {
     setFromArray(array?: Float32Array | number[]): Mat4;
     /**
      * Copy another {@link Mat4}
-     * @param matrix
+     * @param matrix - matrix to copy
      * @returns - this {@link Mat4} after being set
      */
     copy(matrix?: Mat4): Mat4;
