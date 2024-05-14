@@ -1,4 +1,5 @@
 import { BufferArrayElement, BufferArrayElementParams } from './BufferArrayElement';
+import { InputValue } from '../../../types/BindGroups';
 /**
  * Used to compute alignment when dealing with arrays of Struct
  */
@@ -32,7 +33,7 @@ export declare class BufferInterleavedArrayElement extends BufferArrayElement {
      * Update the {@link view} based on the new value, and then update the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view} using sub arrays
      * @param value - new value to use
      */
-    update(value: any): void;
+    update(value: InputValue): void;
     /**
      * Extract the data corresponding to this specific {@link BufferInterleavedArrayElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data

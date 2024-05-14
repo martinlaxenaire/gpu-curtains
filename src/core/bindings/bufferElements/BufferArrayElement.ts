@@ -1,4 +1,5 @@
-import { BufferElement, BufferElementParams, bytesPerRow, bytesPerSlot } from './BufferElement'
+import { BufferElement, BufferElementParams, bytesPerSlot } from './BufferElement'
+import { TypedArray } from '../utils'
 
 /**
  * Parameters used to create a {@link BufferArrayElement}
@@ -57,7 +58,7 @@ export class BufferArrayElement extends BufferElement {
    * Set the strided {@link view} value from an array
    * @param value - array to use
    */
-  setValueFromArray(value: number[]) {
+  setValueFromArray(value: number[] | TypedArray) {
     let valueIndex = 0
 
     const viewLength = this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT

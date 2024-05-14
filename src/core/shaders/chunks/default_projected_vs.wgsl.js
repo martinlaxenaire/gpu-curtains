@@ -12,7 +12,7 @@ struct VertexOutput {
 
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
-  vsOutput.normal = attributes.normal;
+  vsOutput.normal = normalize(matrices.normal * attributes.normal);
   
   return vsOutput;
 }`

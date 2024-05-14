@@ -134,7 +134,7 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
       //vsOutput.fragPosition = matrices.modelView * vec4(attributes.position, 1.0);
       
-      vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize(matrices.normal * attributes.normal);
       
       return vsOutput;
     }
@@ -202,14 +202,6 @@ window.addEventListener('load', async () => {
         },
       },
       uniforms: {
-        normals: {
-          struct: {
-            inverseTransposeMatrix: {
-              type: 'mat4x4f',
-              value: new Mat4(),
-            },
-          },
-        },
         shading: {
           struct: {
             color: {
@@ -231,13 +223,6 @@ window.addEventListener('load', async () => {
     cubeMesh.scale.set(Math.random() * 50 + 10)
 
     cubeMesh.parent = objectsPivot
-
-    cubeMesh.onRender(() => {
-      // normals will be converted in view space in the occlusion shader
-      cubeMesh.uniforms.normals.inverseTransposeMatrix.value.copy(cubeMesh.worldMatrix).invert().transpose()
-      // explicitly tell the uniform to update
-      cubeMesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
-    })
   }
 
   // ------------------------------------
@@ -535,13 +520,10 @@ window.addEventListener('load', async () => {
           vec2<i32>(floor(screenPosition)),
           0
         ).xyz;
-        
-        // from world space normals to view space normals
-        var viewNormal: vec3f = normalize((camera.viewMatrix * vec4(normal, 0.0)).xyz);
 			
-			  var tangent: vec3f = normalize( random - viewNormal * dot( random, viewNormal ) );
-				var bitangent: vec3f = cross( viewNormal, tangent );
-				var kernelMatrix: mat3x3f = mat3x3f( tangent, bitangent, viewNormal );
+			  var tangent: vec3f = normalize( random - normal * dot( random, normal ) );
+				var bitangent: vec3f = cross( normal, tangent );
+				var kernelMatrix: mat3x3f = mat3x3f( tangent, bitangent, normal );
 				
 				var occlusion = 0.0;
 

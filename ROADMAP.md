@@ -32,7 +32,6 @@
 
 ## TODO / possible improvements
 
-- Add Mat3 class + normalMatrix to ProjectedObject3D?
 - Mesh raycasting
 - Lights management?
 - Improve typedoc documentation?

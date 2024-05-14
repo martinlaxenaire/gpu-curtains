@@ -4,6 +4,8 @@ import { Vec3 } from '../../../math/Vec3'
 import { Quat } from '../../../math/Quat'
 import { Mat4 } from '../../../math/Mat4'
 import { throwWarning } from '../../../utils/utils'
+import { Mat3 } from '../../../math/Mat3'
+import { InputValue } from '../../../types/BindGroups'
 
 /** Number of slots per row */
 export const slotsPerRow = 4
@@ -81,7 +83,7 @@ export class BufferElement {
   view?: TypedArray
 
   /** Function assigned to set the {@link view} values */
-  setValue: (value: number | number[] | Vec2 | Vec3 | Mat4 | Quat) => void | null
+  setValue: (value: InputValue) => void | null
 
   /**
    * BufferElement constructor
@@ -318,7 +320,7 @@ export class BufferElement {
   }
 
   /**
-   * Set the {@link view} value from a {@link Mat4} or a {@link Quat}
+   * Set the {@link view} value from a {@link Mat4} or {@link Quat}
    * @param value - {@link Mat4} or {@link Quat} to use
    */
   setValueFromMat4OrQuat(value: Mat4 | Quat) {
@@ -326,18 +328,27 @@ export class BufferElement {
   }
 
   /**
+   * Set the {@link view} value from a {@link Mat3}
+   * @param value - {@link Mat3} to use
+   */
+  setValueFromMat3(value: Mat3) {
+    // mat3x3f are padded!
+    this.setValueFromArrayWithPad(value.elements)
+  }
+
+  /**
    * Set the {@link view} value from an array
    * @param value - array to use
    */
-  setValueFromArray(value: number[]) {
-    this.view.set(value as number[])
+  setValueFromArray(value: number[] | TypedArray) {
+    this.view.set(value as number[] | TypedArray)
   }
 
   /**
    * Set the {@link view} value from an array with pad applied
    * @param value - array to use
    */
-  setValueFromArrayWithPad(value: number[]) {
+  setValueFromArrayWithPad(value: number[] | TypedArray) {
     for (
       let i = 0, offset = 0;
       i < this.view.length;
@@ -353,7 +364,7 @@ export class BufferElement {
    * Update the {@link view} based on the new value
    * @param value - new value to use
    */
-  update(value) {
+  update(value: InputValue) {
     if (!this.setValue) {
       this.setValue = ((value) => {
         if (this.type === 'f32' || this.type === 'u32' || this.type === 'i32') {
@@ -362,6 +373,8 @@ export class BufferElement {
           return this.setValueFromVec2
         } else if (this.type === 'vec3f') {
           return this.setValueFromVec3
+        } else if (this.type === 'mat3x3f') {
+          return (value as Mat3).elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad
         } else if ((value as Quat | Mat4).elements) {
           return this.setValueFromMat4OrQuat
         } else if (ArrayBuffer.isView(value) || Array.isArray(value)) {

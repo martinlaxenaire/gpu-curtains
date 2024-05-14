@@ -3,6 +3,8 @@ import { Vec2 } from '../../../math/Vec2';
 import { Vec3 } from '../../../math/Vec3';
 import { Quat } from '../../../math/Quat';
 import { Mat4 } from '../../../math/Mat4';
+import { Mat3 } from '../../../math/Mat3';
+import { InputValue } from '../../../types/BindGroups';
 /** Number of slots per row */
 export declare const slotsPerRow = 4;
 /** Number of bytes per slot */
@@ -71,7 +73,7 @@ export declare class BufferElement {
     /** Array containing the {@link BufferElement} values */
     view?: TypedArray;
     /** Function assigned to set the {@link view} values */
-    setValue: (value: number | number[] | Vec2 | Vec3 | Mat4 | Quat) => void | null;
+    setValue: (value: InputValue) => void | null;
     /**
      * BufferElement constructor
      * @param parameters - {@link BufferElementParams | parameters} used to create our {@link BufferElement}
@@ -174,25 +176,30 @@ export declare class BufferElement {
      */
     setValueFromVec3(value: Vec3 | number[]): void;
     /**
-     * Set the {@link view} value from a {@link Mat4} or a {@link Quat}
+     * Set the {@link view} value from a {@link Mat4} or {@link Quat}
      * @param value - {@link Mat4} or {@link Quat} to use
      */
     setValueFromMat4OrQuat(value: Mat4 | Quat): void;
     /**
+     * Set the {@link view} value from a {@link Mat3}
+     * @param value - {@link Mat3} to use
+     */
+    setValueFromMat3(value: Mat3): void;
+    /**
      * Set the {@link view} value from an array
      * @param value - array to use
      */
-    setValueFromArray(value: number[]): void;
+    setValueFromArray(value: number[] | TypedArray): void;
     /**
      * Set the {@link view} value from an array with pad applied
      * @param value - array to use
      */
-    setValueFromArrayWithPad(value: number[]): void;
+    setValueFromArrayWithPad(value: number[] | TypedArray): void;
     /**
      * Update the {@link view} based on the new value
      * @param value - new value to use
      */
-    update(value: any): void;
+    update(value: InputValue): void;
     /**
      * Extract the data corresponding to this specific {@link BufferElement} from a {@link Float32Array} holding the {@link GPUBuffer} data of the parentMesh {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}
      * @param result - {@link Float32Array} holding {@link GPUBuffer} data

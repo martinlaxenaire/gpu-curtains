@@ -139,10 +139,6 @@ export class IntroDOMMeshes {
       )
 
       sphereMesh.userData.scaleTween.progress(1 - (sphereIndex * Math.PI) / 24)
-
-      sphereMesh.onBeforeRender(() => {
-        sphereMesh.rotation.y += 0.01
-      })
     })
 
     this.sphereTween = gsap.timeline({
