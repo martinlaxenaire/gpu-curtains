@@ -17,6 +17,7 @@ import {
   GPUDeviceManagerSetupParams,
 } from '../core/renderers/GPUDeviceManager'
 import { Renderer } from '../core/renderers/utils'
+import { DOMObject3D } from './objects3D/DOMObject3D'
 
 /**
  * Options used to create a {@link GPUCurtains}
@@ -321,6 +322,13 @@ export class GPUCurtains {
       .flat()
   }
 
+  get domObjects(): DOMObject3D[] {
+    return this.renderers
+      ?.filter((renderer) => renderer instanceof GPUCurtainsRenderer)
+      .map((renderer: GPUCurtainsRenderer) => renderer.domObjects)
+      .flat()
+  }
+
   /**
    * Get all the created {@link Plane | planes}
    * @readonly
@@ -394,9 +402,9 @@ export class GPUCurtains {
    * @param delta - last {@link ScrollManager#delta | scroll delta values}
    */
   updateScroll(delta: DOMPosition = { x: 0, y: 0 }) {
-    this.domMeshes.forEach((mesh) => {
-      if (mesh.domElement) {
-        mesh.updateScrollPosition(delta)
+    this.domObjects.forEach((domObject) => {
+      if (domObject.domElement) {
+        domObject.updateScrollPosition(delta)
       }
     })
 

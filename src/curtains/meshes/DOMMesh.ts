@@ -8,6 +8,7 @@ import { GPUCurtains } from '../GPUCurtains'
 import { DOMTexture } from '../../core/textures/DOMTexture'
 import { AllowedGeometries } from '../../types/Materials'
 import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement'
+import { Vec3 } from '../../math/Vec3'
 
 /**
  * Base parameters to create a {@link DOMMesh}
@@ -258,6 +259,40 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       }
     )
   }
+
+  /**
+   * Compute the Mesh geometry if needed
+   */
+  computeGeometry() {
+    super.computeGeometry()
+    this.boundingBox = this.geometry.boundingBox
+  }
+
+  /**
+   * Compute the {@link DOMObject3D#size.world | world size}
+   * @param xScale - size of the {@link Geometry#boundingBox | geometry bounding box} along the X axis
+   * @param yScale - size of the {@link Geometry#boundingBox | geometry bounding box} along the Y axis
+   */
+  // computeWorldSizes(xScale = 2, yScale = 2) {
+  //   if (!this.geometry) {
+  //     super.computeWorldSizes(xScale, yScale)
+  //   } else {
+  //     if (this.geometry.shouldCompute) {
+  //       this.geometry.computeGeometry()
+  //     }
+  //     // not always ranging from -1 to 1!
+  //     const { x, y } = this.geometry.boundingBox.size
+  //
+  //     super.computeWorldSizes(x, y)
+  //
+  //     const { center } = this.geometry.boundingBox
+  //     center.divide(this.geometry.boundingBox.size)
+  //
+  //     // compensate for geometry center and size
+  //     this.size.world.top -= center.y * this.size.world.height * y
+  //     this.size.world.left -= center.x * this.size.world.width * x
+  //   }
+  // }
 
   /* EVENTS */
 

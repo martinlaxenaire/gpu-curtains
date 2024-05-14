@@ -5,6 +5,7 @@ import { isCurtainsRenderer } from '../../core/renderers/utils'
 import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition, RectBBox } from '../../core/DOM/DOMElement'
 import { Vec3 } from '../../math/Vec3'
 import { Object3DTransforms } from '../../core/objects3D/Object3D'
+import { Box3 } from '../../math/Box3'
 
 /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */
 export interface DOMObject3DSize {
@@ -66,6 +67,11 @@ export class DOMObject3D extends ProjectedObject3D {
   #DOMObjectWorldPosition: Vec3 = new Vec3()
   /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
   #DOMObjectWorldScale: Vec3 = new Vec3()
+  /** Private number representing the scale of the {@link DOMObject3D} along Z axis */
+  #DOMObjectDepthScale: number = 1
+
+  /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
+  private _boundingBox: Box3 = new Box3(new Vec3(-1), new Vec3(1))
 
   /**
    * DOMObject3D constructor
@@ -107,6 +113,7 @@ export class DOMObject3D extends ProjectedObject3D {
     this.camera = this.renderer.camera
 
     this.setDOMElement(element)
+    ;(this.renderer as GPUCurtainsRenderer).domObjects.push(this)
   }
 
   /**
@@ -291,11 +298,19 @@ export class DOMObject3D extends ProjectedObject3D {
       worldPosition = this.documentToWorldSpace(this.documentPosition)
     }
 
-    this.#DOMObjectWorldPosition.set(
+    // not always ranging from -1 to 1!
+    const { size, center } = this.boundingBox
+    center.divide(size)
+
+    this.setWorldPosition(
       this.position.x + this.size.world.left + worldPosition.x,
       this.position.y + this.size.world.top + worldPosition.y,
-      this.position.z + this.documentPosition.z / this.camera.CSSPerspective
+      this.position.z - center.z + this.documentPosition.z / this.camera.CSSPerspective
     )
+  }
+
+  setWorldPosition(x: number, y: number, z: number) {
+    this.#DOMObjectWorldPosition.set(x, y, z)
   }
 
   /**
@@ -326,9 +341,9 @@ export class DOMObject3D extends ProjectedObject3D {
 
     // we need to scale our meshes, from a square to a right sized rectangle
     // we're doing this after our transformation matrix because this scale transformation always have the same origin
-    this.modelMatrix.scale(this.#DOMObjectWorldScale)
+    this.modelMatrix.scale(this.DOMObjectWorldScale)
 
-    this.shouldUpdateWorldMatrix()
+    this.shouldUpdateModelMatrix()
   }
 
   /**
@@ -343,10 +358,19 @@ export class DOMObject3D extends ProjectedObject3D {
     )
   }
 
+  get boundingBox(): Box3 {
+    return this._boundingBox
+  }
+
+  set boundingBox(boundingBox: Box3) {
+    this._boundingBox.copy(boundingBox)
+    this.updateSizeAndPosition()
+  }
+
   /**
-   * Set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+   * Compute the {@link DOMObject3D#size.world | world size}
    */
-  setWorldSizes() {
+  computeWorldSizes() {
     const containerBoundingRect = this.renderer.boundingRect
 
     // dimensions and positions of our plane in the document and clip spaces
@@ -361,19 +385,59 @@ export class DOMObject3D extends ProjectedObject3D {
       y: containerBoundingRect.height / 2 + containerBoundingRect.top,
     }
 
+    // not always ranging from -1 to 1!
+    const { size, center } = this.boundingBox
+    center.divide(size)
+
+    console.log(center)
+
     // our DOM object world size
     // since our vertices values range from -1 to 1, we need to scale it relatively to our canvas
     // to display an accurately sized object
     this.size.world = {
-      width: ((this.size.document.width / containerBoundingRect.width) * this.camera.screenRatio.width) / 2,
-      height: ((this.size.document.height / containerBoundingRect.height) * this.camera.screenRatio.height) / 2,
+      width: ((this.size.document.width / containerBoundingRect.width) * this.camera.screenRatio.width) / size.x,
+      height: ((this.size.document.height / containerBoundingRect.height) * this.camera.screenRatio.height) / size.y,
       top: ((containerCenter.y - planeCenter.y) / containerBoundingRect.height) * this.camera.screenRatio.height,
       left: ((planeCenter.x - containerCenter.x) / containerBoundingRect.width) * this.camera.screenRatio.width,
     }
 
-    this.#DOMObjectWorldScale.set(this.size.world.width, this.size.world.height, 1)
+    // compensate for geometry center and size
+    this.size.world.top -= center.y * this.size.world.height * size.y
+    //this.size.world.left += center.x * this.size.world.width * size.x
+  }
+
+  /**
+   * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+   */
+  setWorldSizes() {
+    this.computeWorldSizes()
+
+    this.setWorldScale()
 
     this.setWorldTransformOrigin()
+  }
+
+  /**
+   * Set the {@link worldScale} accounting for world size and {@link DOMObjectDepthScale}
+   */
+  setWorldScale() {
+    //const depthScale = (this.boundingBox.size.z * this.worldScale.y) / this.boundingBox.size.y || 1
+    //console.log(depthScale, this.boundingBox.size, this.worldScale)
+    this.#DOMObjectWorldScale.set(this.size.world.width, this.size.world.height, this.#DOMObjectDepthScale)
+    //this.#DOMObjectWorldScale.set(this.size.world.width, this.size.world.height, depthScale)
+  }
+
+  /**
+   * Set {@link DOMObjectDepthScale}
+   * @param value - depth scale value to use
+   */
+  set DOMObjectDepthScale(value: number) {
+    this.#DOMObjectDepthScale = value
+
+    this.setWorldScale()
+
+    this.shouldUpdateModelMatrix()
+    this.shouldUpdateProjectionMatrixStack()
   }
 
   /**

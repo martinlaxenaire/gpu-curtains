@@ -370,9 +370,9 @@ export class GLTFLoader {
       }
     }
 
-    const { scenes, boundingBox } = this.createScenes()
+    const scene = this.createScenes()
 
-    return { gltf: this.gltf, scenes, boundingBox }
+    return { gltf: this.gltf, scenes: scene.scenes, boundingBox: scene.boundingBox, node: scene.node }
   }
 
   createTexture(material, image, name) {
@@ -454,33 +454,39 @@ export class GLTFLoader {
   }
 
   createScenes() {
-    const scenes = []
-    const boundingBox = new Box3()
+    const scene = {
+      node: new Object3D(),
+      boundingBox: new Box3(),
+      scenes: [],
+    }
+    //const scenes = []
+    //const boundingBox = new Box3()
+
+    scene.node.parent = this.renderer.scene
 
     const primitiveInstances = new Map()
 
-    this.gltf.scenes.forEach((scene) => {
+    this.gltf.scenes.forEach((childScene) => {
       const sceneDescriptor = {
-        name: scene.name,
+        name: childScene.name,
         children: [],
         node: new Object3D(),
-        //boundingBox: new Box3(), // TODO
       }
 
-      sceneDescriptor.node.parent = this.renderer.scene
+      sceneDescriptor.node.parent = scene.node
 
-      scenes.push(sceneDescriptor)
+      scene.scenes.push(sceneDescriptor)
 
-      scene.nodes.forEach((nodeIndex) => {
+      childScene.nodes.forEach((nodeIndex) => {
         const node = this.gltf.nodes[nodeIndex]
         this.createNode(sceneDescriptor, node, primitiveInstances)
       })
     })
 
     // now that we created all our nodes, update all the matrices
-    scenes.forEach((scene) => {
-      scene.node.shouldUpdateModelMatrix()
-      scene.node.updateMatrixStack()
+    scene.scenes.forEach((childScene) => {
+      childScene.node.shouldUpdateModelMatrix()
+      childScene.node.updateMatrixStack()
     })
 
     for (const [primitive, primitiveInstance] of primitiveInstances) {
@@ -652,6 +658,8 @@ export class GLTFLoader {
       const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry
 
       meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes)
+      //meshDescriptor.parameters.geometry.boundingBox.copy(geometryBBox)
+      meshDescriptor.parameters.geometry.boundingBox = geometryBBox
 
       if (isIndexedGeometry) {
         const accessor = this.gltf.accessors[primitive.indices]
@@ -786,14 +794,16 @@ export class GLTFLoader {
 
       // computed transformed bbox
       for (let i = 0; i < nodes.length; i++) {
+        // let transformedBbox = meshDescriptor.parameters.geometry.boundingBox.clone()
+        // transformedBbox = transformedBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix)
         const tempBbox = geometryBBox.clone()
         const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix)
 
-        boundingBox.min.min(transformedBbox.min)
-        boundingBox.max.max(transformedBbox.max)
+        scene.boundingBox.min.min(transformedBbox.min)
+        scene.boundingBox.max.max(transformedBbox.max)
       }
     }
 
-    return { scenes, boundingBox }
+    return scene
   }
 }

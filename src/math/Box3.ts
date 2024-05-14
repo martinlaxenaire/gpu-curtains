@@ -43,12 +43,17 @@ export class Box3 {
     return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z
   }
 
+  copy(box: Box3): Box3 {
+    this.set(box.min.clone(), box.max.clone())
+    return this
+  }
+
   /**
    * Clone this {@link Box3}
    * @returns - cloned {@link Box3}
    */
   clone(): Box3 {
-    return new Box3().set(this.min, this.max)
+    return new Box3().set(this.min.clone(), this.max.clone())
   }
 
   /**

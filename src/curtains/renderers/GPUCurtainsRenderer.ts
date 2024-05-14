@@ -1,5 +1,6 @@
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../../core/renderers/GPUCameraRenderer'
 import { DOMProjectedMesh } from '../../core/renderers/GPURenderer'
+import { DOMObject3D } from '../objects3D/DOMObject3D'
 
 /**
  * This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
@@ -24,6 +25,8 @@ import { DOMProjectedMesh } from '../../core/renderers/GPURenderer'
 export class GPUCurtainsRenderer extends GPUCameraRenderer {
   /** All created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes} and {@link curtains/meshes/Plane.Plane | planes} */
   domMeshes: DOMProjectedMesh[]
+
+  domObjects: DOMObject3D[]
 
   /**
    * GPUCurtainsRenderer constructor
@@ -62,5 +65,6 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     super.setRendererObjects()
 
     this.domMeshes = []
+    this.domObjects = []
   }
 }
