@@ -42,11 +42,8 @@ export class IntroDOMMeshes {
       this.cubeMeshes.push(cubeMesh)
 
       const updateCubeScaleAndPosition = () => {
-        // scale our cube along the Z axis based on its height (Y axis)
-        cubeMesh.scale.z = cubeMesh.worldScale.y
-
         // move our cube along the Z axis so the front face lies at (0, 0, 0) instead of the cube's center
-        cubeMesh.position.z = -1 * cubeMesh.geometry.boundingBox.max.z * cubeMesh.scale.z
+        cubeMesh.position.z = -1 * cubeMesh.worldScale.z
       }
 
       updateCubeScaleAndPosition()
@@ -128,12 +125,11 @@ export class IntroDOMMeshes {
         },
         {
           scaleFactor: 1,
-          duration: 0.875,
+          duration: 1,
           ease: 'power2.inOut',
           onUpdate: () => {
             const scale = 1 + sphereMesh.userData.scaleFactor * 0.2
-            sphereMesh.scale.set(scale, scale, 1)
-            sphereMesh.scale.z = sphereMesh.worldScale.y
+            sphereMesh.scale.set(scale)
           },
         }
       )
