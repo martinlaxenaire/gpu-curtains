@@ -89,7 +89,7 @@ export class PipelineManager {
       bindGroup.bindings.forEach((binding) => {
         cacheKey += binding.name + ','
       })
-      cacheKey += bindGroup.layoutCacheKey
+      cacheKey += bindGroup.pipelineCacheKey
     })
 
     // render pipeline cache is based on 3 things:

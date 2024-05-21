@@ -159,6 +159,13 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
       }
     );
   }
+  /**
+   * Compute the Mesh geometry if needed
+   */
+  computeGeometry() {
+    super.computeGeometry();
+    this.boundingBox.copy(this.geometry.boundingBox);
+  }
   /* EVENTS */
   /**
    * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU

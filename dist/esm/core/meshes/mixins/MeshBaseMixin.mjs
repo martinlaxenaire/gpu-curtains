@@ -412,6 +412,19 @@ ${geometry.wgslStructFragment}`
         this.addToScene();
       }
     }
+    /**
+     * Get the visible property value
+     */
+    get visible() {
+      return this._visible;
+    }
+    /**
+     * Set the visible property value
+     * @param value - new visibility value
+     */
+    set visible(value) {
+      this._visible = value;
+    }
     /* TEXTURES */
     /**
      * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}

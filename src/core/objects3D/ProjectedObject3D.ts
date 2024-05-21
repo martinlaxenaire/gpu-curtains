@@ -111,8 +111,8 @@ export class ProjectedObject3D extends Object3D {
         matrix: new Mat3(),
         shouldUpdate: true,
         onUpdate: () => {
-          // or normal matrix is the inverse transpose of the modelView matrix
-          this.normalMatrix.getNormalMatrix(this.modelViewMatrix)
+          // or normal matrix is the inverse transpose of the world matrix
+          this.normalMatrix.getNormalMatrix(this.worldMatrix)
         },
       },
     }

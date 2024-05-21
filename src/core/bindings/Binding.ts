@@ -95,6 +95,6 @@ export class Binding {
     this.shouldResetBindGroup = false
     this.shouldResetBindGroupLayout = false
 
-    this.cacheKey = `${bindingType},${visibility},`
+    this.cacheKey = `${bindingType},${this.visibility},`
   }
 }

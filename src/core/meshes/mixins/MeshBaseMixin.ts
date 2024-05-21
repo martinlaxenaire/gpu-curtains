@@ -111,7 +111,7 @@ export declare class MeshBaseClass {
   _transparent: boolean
 
   /** Flag indicating whether to draw this {@link MeshBaseClass} or not */
-  visible: boolean
+  _visible: boolean
   /** Flag indicating whether this {@link MeshBaseClass} is ready to be drawn */
   _ready: boolean
 
@@ -271,9 +271,20 @@ export declare class MeshBaseClass {
 
   /**
    * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
-   * @param value
+   * @param value - new transparency value
    */
   set transparent(value: boolean)
+
+  /**
+   * Get the visible property value
+   */
+  get visible(): boolean
+
+  /**
+   * Set the visible property value
+   * @param value - new visibility value
+   */
+  set visible(value: boolean)
 
   /**
    * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
@@ -435,7 +446,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     _transparent: boolean
 
     /** Flag indicating whether to draw this {@link MeshBase} or not */
-    visible: boolean
+    _visible: boolean
     /** Flag indicating whether this {@link MeshBase} is ready to be drawn */
     _ready: boolean
 
@@ -902,6 +913,21 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       if (switchTransparency) {
         this.addToScene()
       }
+    }
+
+    /**
+     * Get the visible property value
+     */
+    get visible(): boolean {
+      return this._visible
+    }
+
+    /**
+     * Set the visible property value
+     * @param value - new visibility value
+     */
+    set visible(value: boolean) {
+      this._visible = value
     }
 
     /* TEXTURES */

@@ -67,7 +67,7 @@ export class OrbitControls extends Object3D {
    */
   constructor(
     renderer: CameraRenderer,
-    { camera = null, element = null }?: { camera?: Camera; element?: HTMLElement | Window } = {}
+    { camera = null, element = null }: { camera?: Camera; element?: HTMLElement | Window } = {}
   ) {
     super()
 

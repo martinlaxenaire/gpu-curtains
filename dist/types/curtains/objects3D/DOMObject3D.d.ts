@@ -2,14 +2,35 @@ import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
 import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition, RectBBox } from '../../core/DOM/DOMElement';
+import { Vec2 } from '../../math/Vec2';
 import { Vec3 } from '../../math/Vec3';
 import { Object3DTransforms } from '../../core/objects3D/Object3D';
+import { Box3 } from '../../math/Box3';
 /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */
 export interface DOMObject3DSize {
-    /** The {@link DOMObject3D} bounding box in world space */
-    world: RectBBox;
     /** The {@link DOMObject3D} bounding box in document space */
     document: RectBBox;
+    /** Normalized world size represent the size ratio of the DOM element compared to its container (the renderer DOM element). */
+    normalizedWorld: {
+        /** 2D size of the {@link DOMObject3D} relative to the document, in the [0, 1] range. */
+        size: Vec2;
+        /** 2D position of the {@link DOMObject3D} relative to the document, in the [-1, 1] range, [0, 0] being at the container center. */
+        position: Vec2;
+    };
+    /** Camera world size and position are the {@link normalizedWorld} size and positions accounting for camera screen ratio (visible height / width in world unit) */
+    cameraWorld: {
+        /** 2D size of the {@link DOMObject3D} relative to the camera field of view and size. */
+        size: Vec2;
+        /** 2D position of the {@link DOMObject3D} relative to the camera field of view and size. */
+        position: Vec2;
+    };
+    /** Scaled world size and position are the {@link cameraWorld} size and position scaled by the geometry bounding box, because the geometry vertices are not always in the [-1, 1] range. */
+    scaledWorld: {
+        /** 3D size of the {@link DOMObject3D} relative to the camera field of view and size and the geometry bounding box. */
+        size: Vec3;
+        /** 3D position of the {@link DOMObject3D} relative to the camera field of view and size and the geometry bounding box. */
+        position: Vec3;
+    };
 }
 /**
  * Defines all necessary {@link Vec3 | vectors}/{@link math/Quat.Quat | quaternions} to compute a 3D {@link math/Mat4.Mat4 | model matrix} based on a DOM {@link HTMLElement}
@@ -40,7 +61,7 @@ export interface DOMObject3DParams {
 /**
  * This special kind of {@link ProjectedObject3D} uses an {@link HTMLElement} to convert the corresponding X and Y {@link DOMObject3D#scale | scale} and {@link DOMObject3D#position | position} relative to the 3D world space.
  *
- * Internally used by the {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} and {@link curtains/meshes/Plane.Plane | Plane}
+ * Internally used by the {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} and {@link curtains/meshes/Plane.Plane | Plane}, but can also be used as any {@link core/meshes/Mesh.Mesh | Mesh} {@link parent} to map it with an {@link HTMLElement} size and position values.
  */
 export declare class DOMObject3D extends ProjectedObject3D {
     #private;
@@ -54,6 +75,10 @@ export declare class DOMObject3D extends ProjectedObject3D {
     watchScroll: boolean;
     /** {@link DOMObject3DTransforms | Transformation object} of the {@link DOMObject3D} */
     transforms: DOMObject3DTransforms;
+    /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
+    boundingBox: Box3;
+    /** function assigned to the {@link onAfterDOMElementResize} callback */
+    _onAfterDOMElementResizeCallback: () => void;
     /**
      * DOMObject3D constructor
      * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}
@@ -80,10 +105,6 @@ export declare class DOMObject3D extends ProjectedObject3D {
      * Update the {@link DOMObject3D} sizes and position
      */
     updateSizeAndPosition(): void;
-    /**
-     * Update the {@link DOMObject3D} sizes, position and projection
-     */
-    shouldUpdateMatrixStack(): void;
     /**
      * Resize the {@link DOMObject3D}
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
@@ -162,9 +183,22 @@ export declare class DOMObject3D extends ProjectedObject3D {
      */
     documentToWorldSpace(vector?: Vec3): Vec3;
     /**
-     * Set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+     * Compute the {@link DOMObject3D#size | world sizes}
+     */
+    computeWorldSizes(): void;
+    /**
+     * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
      */
     setWorldSizes(): void;
+    /**
+     * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
+     */
+    setWorldScale(): void;
+    /**
+     * Set {@link DOMObjectDepthScaleRatio}. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis.
+     * @param value - depth scale ratio value to use
+     */
+    set DOMObjectDepthScaleRatio(value: number);
     /**
      * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
      */
@@ -174,6 +208,12 @@ export declare class DOMObject3D extends ProjectedObject3D {
      * @param delta - last {@link utils/ScrollManager.ScrollManager.delta | scroll delta values}
      */
     updateScrollPosition(delta?: DOMPosition): void;
+    /**
+     * Callback to execute just after the {@link domElement} has been resized.
+     * @param callback - callback to run just after {@link domElement} has been resized
+     * @returns - our Mesh
+     */
+    onAfterDOMElementResize(callback: () => void): DOMObject3D;
     /**
      * Destroy our {@link DOMObject3D}
      */

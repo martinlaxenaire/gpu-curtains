@@ -26,6 +26,11 @@ export declare class Box3 {
      */
     isEmpty(): boolean;
     /**
+     * Copy a {@link Box3} into this {@link Box3}.
+     * @param box - {@link Box3} to copy
+     */
+    copy(box: Box3): Box3;
+    /**
      * Clone this {@link Box3}
      * @returns - cloned {@link Box3}
      */

@@ -325,11 +325,12 @@ export class Camera extends Object3D {
   }
 
   /**
-   * Sets visible width / height at a given z-depth from our {@link Camera} parameters.<br>
+   * Get visible width / height at a given z-depth from our {@link Camera} parameters.<br>
    * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
    * @param depth - depth to use for calculations
+   * @returns - visible width and height at given depth
    */
-  setScreenRatios(depth = 0) {
+  getScreenRatiosAtDepth(depth = 0): RectSize {
     // compensate for cameras not positioned at z=0
     const cameraOffset = this.position.z
     if (depth < cameraOffset) {
@@ -344,10 +345,17 @@ export class Camera extends Object3D {
     // Math.abs to ensure the result is always positive
     const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth)
 
-    this.screenRatio = {
+    return {
       width: (height * this.size.width) / this.size.height,
       height,
     }
+  }
+
+  /**
+   * Sets visible width / height at a depth of 0.
+   */
+  setScreenRatios() {
+    this.screenRatio = this.getScreenRatiosAtDepth()
   }
 
   /**

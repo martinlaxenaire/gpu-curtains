@@ -32,6 +32,8 @@
 
 ## TODO / possible improvements
 
+- Sort transparent objects by distance from the camera to the object bounding box center + radius distance before drawing them
+- Option to chose between sphere and OBB frustum culling
 - Mesh raycasting
 - Lights management?
 - Improve typedoc documentation?

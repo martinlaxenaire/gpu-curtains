@@ -322,6 +322,10 @@ export class GPUCurtains {
       .flat()
   }
 
+  /**
+   * Get all created {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} which position should be updated on scroll.
+   * @readonly
+   */
   get domObjects(): DOMObject3D[] {
     return this.renderers
       ?.filter((renderer) => renderer instanceof GPUCurtainsRenderer)

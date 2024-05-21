@@ -149,11 +149,16 @@ export declare class Camera extends Object3D {
      */
     setCSSPerspective(): void;
     /**
-     * Sets visible width / height at a given z-depth from our {@link Camera} parameters.<br>
+     * Get visible width / height at a given z-depth from our {@link Camera} parameters.<br>
      * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
      * @param depth - depth to use for calculations
+     * @returns - visible width and height at given depth
      */
-    setScreenRatios(depth?: number): void;
+    getScreenRatiosAtDepth(depth?: number): RectSize;
+    /**
+     * Sets visible width / height at a depth of 0.
+     */
+    setScreenRatios(): void;
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
      * @param target - {@link Vec3 | target} to look at

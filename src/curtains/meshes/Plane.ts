@@ -136,7 +136,7 @@ export class Plane extends DOMMesh {
     const denominator = planeNormals.dot(rayDirection)
 
     if (Math.abs(denominator) >= 0.0001) {
-      const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix)
+      const inverseViewMatrix = this.worldMatrix.getInverse().premultiply(this.camera.viewMatrix)
 
       // get the plane's center coordinates
       // start with our transform origin point

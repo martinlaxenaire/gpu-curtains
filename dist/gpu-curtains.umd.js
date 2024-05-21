@@ -314,7 +314,7 @@
       };
       this.shouldResetBindGroup = false;
       this.shouldResetBindGroupLayout = false;
-      this.cacheKey = `${bindingType},${visibility},`;
+      this.cacheKey = `${bindingType},${this.visibility},`;
     }
   }
 
@@ -1060,6 +1060,18 @@
       this.x = (mArray[0] * x + mArray[4] * y + mArray[8] * z + mArray[12]) / w;
       this.y = (mArray[1] * x + mArray[5] * y + mArray[9] * z + mArray[13]) / w;
       this.z = (mArray[2] * x + mArray[6] * y + mArray[10] * z + mArray[14]) / w;
+      return this;
+    }
+    /**
+     * Set this {@link Vec3} to the translation component of a {@link Mat4 | matrix}.
+     * @param matrix - {@link Mat4 | matrix} to use
+     * @returns - this {@link Vec3} after {@link Mat4 | matrix} application.
+     */
+    setFromMatrixPosition(matrix) {
+      const e = matrix.elements;
+      this.x = e[12];
+      this.y = e[13];
+      this.z = e[14];
       return this;
     }
     /**
@@ -1994,6 +2006,7 @@
       if (this.options.uniforms || this.options.storages)
         this.setInputBindings();
       this.layoutCacheKey = "";
+      this.pipelineCacheKey = "";
       this.resetEntries();
       this.bindGroupLayout = null;
       this.bindGroup = null;
@@ -2129,6 +2142,7 @@
      */
     resetBindGroup() {
       this.entries.bindGroup = [];
+      this.pipelineCacheKey = "";
       for (const binding of this.bindings) {
         this.addBindGroupEntry(binding);
       }
@@ -2143,6 +2157,7 @@
         binding: this.entries.bindGroup.length,
         resource: binding.resource
       });
+      this.pipelineCacheKey += binding.cacheKey;
     }
     /**
      * Reset the {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entries}, recreates them and then recreate the {@link BindGroup#bindGroupLayout | GPU bind group layout}
@@ -2416,7 +2431,7 @@
         viewDimension,
         multisampled
       };
-      this.cacheKey += `${format},${access},${viewDimension},${multisampled}`;
+      this.cacheKey += `${format},${access},${viewDimension},${multisampled},`;
       this.resource = texture;
       this.setWGSLFragment();
     }
@@ -2458,6 +2473,7 @@
         if (bindingType)
           this.shouldResetBindGroupLayout = true;
         this.bindingType = bindingType;
+        this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
         this.setWGSLFragment();
       }
     }
@@ -2471,6 +2487,7 @@
       if (isNewFormat && this.bindingType === "storage") {
         this.setWGSLFragment();
         this.shouldResetBindGroupLayout = true;
+        this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
       }
     }
     /**
@@ -2483,6 +2500,7 @@
       if (isNewMultisampled && this.bindingType !== "storage") {
         this.setWGSLFragment();
         this.shouldResetBindGroupLayout = true;
+        this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
       }
     }
     /**
@@ -3200,8 +3218,11 @@
      * @param value - new parent to set, could be an {@link Object3D} or null
      */
     set parent(value) {
-      if (this.parent) {
-        this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+      if (this._parent && value && this._parent.object3DIndex === value.object3DIndex) {
+        return;
+      }
+      if (this._parent) {
+        this._parent.children = this._parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
       }
       if (value) {
         this.shouldUpdateWorldMatrix();
@@ -3438,6 +3459,16 @@
       for (let i = 0, l = this.children.length; i < l; i++) {
         this.children[i].updateMatrixStack();
       }
+    }
+    /**
+     * Destroy this {@link Object3D}. Removes its parent and set its children free.
+     */
+    destroy() {
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        if (this.children[i])
+          this.children[i].parent = null;
+      }
+      this.parent = null;
     }
   }
 
@@ -4138,7 +4169,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$6 = (obj, member, value, setter) => {
+  var __privateSet$7 = (obj, member, value, setter) => {
     __accessCheck$7(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
@@ -4262,7 +4293,7 @@
     set fov(fov) {
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        __privateSet$6(this, _fov, fov);
+        __privateSet$7(this, _fov, fov);
         this.shouldUpdateProjectionMatrix();
       }
       this.setScreenRatios();
@@ -4281,7 +4312,7 @@
     set near(near) {
       near = Math.max(near ?? this.near, 0.01);
       if (near !== this.near) {
-        __privateSet$6(this, _near, near);
+        __privateSet$7(this, _near, near);
         this.shouldUpdateProjectionMatrix();
       }
     }
@@ -4298,7 +4329,7 @@
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$6(this, _far, far);
+        __privateSet$7(this, _far, far);
         this.shouldUpdateProjectionMatrix();
       }
     }
@@ -4313,7 +4344,7 @@
      * @param pixelRatio - new pixel ratio value
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$6(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$7(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
     /**
@@ -4359,11 +4390,12 @@
       ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
     }
     /**
-     * Sets visible width / height at a given z-depth from our {@link Camera} parameters.<br>
+     * Get visible width / height at a given z-depth from our {@link Camera} parameters.<br>
      * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
      * @param depth - depth to use for calculations
+     * @returns - visible width and height at given depth
      */
-    setScreenRatios(depth = 0) {
+    getScreenRatiosAtDepth(depth = 0) {
       const cameraOffset = this.position.z;
       if (depth < cameraOffset) {
         depth -= cameraOffset;
@@ -4372,10 +4404,16 @@
       }
       const vFOV = this.fov * Math.PI / 180;
       const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth);
-      this.screenRatio = {
+      return {
         width: height * this.size.width / this.size.height,
         height
       };
+    }
+    /**
+     * Sets visible width / height at a depth of 0.
+     */
+    setScreenRatios() {
+      this.screenRatio = this.getScreenRatiosAtDepth();
     }
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
@@ -4479,7 +4517,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$5 = (obj, member, value, setter) => {
+  var __privateSet$6 = (obj, member, value, setter) => {
     __accessCheck$6(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
@@ -4533,7 +4571,7 @@
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$5(this, _autoResize, false);
+        __privateSet$6(this, _autoResize, false);
       }
       this.setBindings();
       this.renderer.addTexture(this);
@@ -5351,7 +5389,7 @@
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$4 = (obj, member, value, setter) => {
+  var __privateSet$5 = (obj, member, value, setter) => {
     __accessCheck$5(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
@@ -5421,7 +5459,7 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$4(this, _autoRender$1, autoRender);
+        __privateSet$5(this, _autoRender$1, autoRender);
       }
       this.userData = {};
       this.ready = false;
@@ -5735,11 +5773,19 @@
       return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
     }
     /**
+     * Copy a {@link Box3} into this {@link Box3}.
+     * @param box - {@link Box3} to copy
+     */
+    copy(box) {
+      this.set(box.min.clone(), box.max.clone());
+      return this;
+    }
+    /**
      * Clone this {@link Box3}
      * @returns - cloned {@link Box3}
      */
     clone() {
-      return new Box3().set(this.min, this.max);
+      return new Box3().copy(this);
     }
     /**
      * Get the {@link Box3} center
@@ -6518,7 +6564,7 @@ struct VertexOutput {
 
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
-  vsOutput.normal = normalize(matrices.normal * attributes.normal);
+  vsOutput.normal = getWorldNormal(attributes.normal);
   
   return vsOutput;
 }`
@@ -6748,7 +6794,7 @@ New rendering options: ${JSON.stringify(
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$3 = (obj, member, value, setter) => {
+  var __privateSet$4 = (obj, member, value, setter) => {
     __accessCheck$4(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
@@ -6841,7 +6887,7 @@ New rendering options: ${JSON.stringify(
           ...meshParameters
         };
         if (autoRender !== void 0) {
-          __privateSet$3(this, _autoRender, autoRender);
+          __privateSet$4(this, _autoRender, autoRender);
         }
         this.visible = visible;
         this.renderOrder = renderOrder;
@@ -7140,6 +7186,19 @@ ${geometry.wgslStructFragment}`
         if (switchTransparency) {
           this.addToScene();
         }
+      }
+      /**
+       * Get the visible property value
+       */
+      get visible() {
+        return this._visible;
+      }
+      /**
+       * Set the visible property value
+       * @param value - new visibility value
+       */
+      set visible(value) {
+        this._visible = value;
       }
       /* TEXTURES */
       /**
@@ -7753,7 +7812,7 @@ ${geometry.wgslStructFragment}`
           matrix: new Mat3(),
           shouldUpdate: true,
           onUpdate: () => {
-            this.normalMatrix.getNormalMatrix(this.modelViewMatrix);
+            this.normalMatrix.getNormalMatrix(this.worldMatrix);
           }
         }
       };
@@ -8017,6 +8076,20 @@ struct VSOutput {
         meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
         super.setMaterial(meshParameters);
       }
+      /**
+       * Get the visible property value
+       */
+      get visible() {
+        return this._visible;
+      }
+      /**
+       * Set the visible property value
+       * @param value - new visibility value
+       */
+      set visible(value) {
+        this.shouldUpdateMatrixStack();
+        this._visible = value;
+      }
       /* SIZE & TRANSFORMS */
       /**
        * Resize our {@link ProjectedMeshBaseClass}
@@ -8259,6 +8332,18 @@ fn getOutputPosition(position: vec3f) -> vec4f {
 }`
   );
 
+  var get_normals = (
+    /* wgsl */
+    `
+fn getWorldNormal(normal: vec3f) -> vec3f {
+  return normalize(matrices.normal * normal);
+}
+
+fn getViewNormal(normal: vec3f) -> vec3f {
+  return normalize((camera.view * vec4(matrices.normal * normal, 0.0)).xyz);
+}`
+  );
+
   var get_uv_cover = (
     /* wgsl */
     `
@@ -8301,7 +8386,9 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
     /** WGSL code chunks added to the vertex shader */
     vertex: {
       /** Get output vec4f position vector by applying model view projection matrix to vec3f attribute position vector */
-      get_output_position
+      get_output_position,
+      /** Get vec3f normals in world or view space */
+      get_normals
     },
     /** WGSL code chunks added to the fragment shader */
     fragment: {}
@@ -8812,7 +8899,7 @@ ${this.shaders.compute.head}`;
         bindGroup.bindings.forEach((binding) => {
           cacheKey += binding.name + ",";
         });
-        cacheKey += bindGroup.layoutCacheKey;
+        cacheKey += bindGroup.pipelineCacheKey;
       });
       const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey });
       if (existingPipelineEntry) {
@@ -9015,10 +9102,13 @@ ${this.shaders.compute.head}`;
      * @param boundingRect - new bounding rectangle
      */
     setSize(boundingRect = null) {
-      if (!this.element)
+      if (!this.element || this.isResizing)
         return;
+      this.isResizing = true;
       this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
-      this.isResizing = false;
+      setTimeout(() => {
+        this.isResizing = false;
+      }, 10);
     }
     /**
      * Destroy our DOMElement - remove from resize observer and clear throttle timeout
@@ -9707,14 +9797,14 @@ ${this.shaders.compute.head}`;
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$2 = (obj, member, value, setter) => {
+  var __privateSet$3 = (obj, member, value, setter) => {
     __accessCheck$3(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet$2(obj, member, value, setter);
+      __privateSet$3(obj, member, value, setter);
     },
     get _() {
       return __privateGet$3(obj, member, getter);
@@ -9909,19 +9999,14 @@ ${this.shaders.compute.head}`;
       this.computePasses.forEach((computePass) => computePass.resize());
       this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
       this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
+      this.resizeMeshes();
+    }
+    /**
+     * Resize the {@link meshes}.
+     */
+    resizeMeshes() {
       this.meshes.forEach((mesh) => {
-        if (!("domElement" in mesh)) {
-          mesh.resize(this.boundingRect);
-        } else {
-          this.onBeforeCommandEncoderCreation.add(
-            () => {
-              if (!mesh.domElement.isResizing) {
-                mesh.domElement.setSize();
-              }
-            },
-            { once: true }
-          );
-        }
+        mesh.resize(this.boundingRect);
       });
     }
     /**
@@ -10643,6 +10728,14 @@ ${this.shaders.compute.head}`;
             // camera projection matrix
             type: "mat4x4f",
             value: this.camera.projectionMatrix
+          },
+          position: {
+            // camera world position
+            type: "vec3f",
+            value: this.camera.position.clone().setFromMatrixPosition(this.camera.worldMatrix),
+            onBeforeUpdate: () => {
+              this.cameraBufferBinding.inputs.position.value.copy(this.camera.position).setFromMatrixPosition(this.camera.worldMatrix);
+            }
           }
         }
       });
@@ -10667,6 +10760,7 @@ ${this.shaders.compute.head}`;
     updateCameraBindings() {
       this.cameraBufferBinding?.shouldUpdateBinding("view");
       this.cameraBufferBinding?.shouldUpdateBinding("projection");
+      this.cameraBufferBinding?.shouldUpdateBinding("position");
       this.cameraBindGroup?.update();
     }
     /**
@@ -11051,7 +11145,7 @@ ${this.shaders.compute.head}`;
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$1 = (obj, member, value, setter) => {
+  var __privateSet$2 = (obj, member, value, setter) => {
     __accessCheck$2(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
@@ -11081,7 +11175,7 @@ ${this.shaders.compute.head}`;
         autoRender: autoRender === void 0 ? true : autoRender
       };
       if (autoRender !== void 0) {
-        __privateSet$1(this, _autoRender, autoRender);
+        __privateSet$2(this, _autoRender, autoRender);
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
@@ -11306,7 +11400,12 @@ struct VSOutput {
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var _DOMObjectWorldPosition, _DOMObjectWorldScale;
+  var __privateSet$1 = (obj, member, value, setter) => {
+    __accessCheck$1(obj, member, "write to private field");
+    setter ? setter.call(obj, value) : member.set(obj, value);
+    return value;
+  };
+  var _DOMObjectWorldPosition, _DOMObjectWorldScale, _DOMObjectDepthScaleRatio;
   class DOMObject3D extends ProjectedObject3D {
     /**
      * DOMObject3D constructor
@@ -11319,27 +11418,43 @@ struct VSOutput {
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
       __privateAdd$1(this, _DOMObjectWorldPosition, new Vec3());
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
-      __privateAdd$1(this, _DOMObjectWorldScale, new Vec3());
+      __privateAdd$1(this, _DOMObjectWorldScale, new Vec3(1));
+      /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
+      __privateAdd$1(this, _DOMObjectDepthScaleRatio, 1);
+      /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
+      this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
+      /** function assigned to the {@link onAfterDOMElementResize} callback */
+      this._onAfterDOMElementResizeCallback = () => {
+      };
       renderer = renderer && renderer.renderer || renderer;
       isCurtainsRenderer(renderer, "DOM3DObject");
       this.renderer = renderer;
       this.size = {
-        world: {
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0
-        },
         document: {
           width: 0,
           height: 0,
           top: 0,
           left: 0
+        },
+        normalizedWorld: {
+          size: new Vec2(1),
+          position: new Vec2()
+        },
+        cameraWorld: {
+          size: new Vec2(1),
+          position: new Vec2()
+        },
+        scaledWorld: {
+          size: new Vec3(1),
+          position: new Vec3()
         }
       };
       this.watchScroll = parameters.watchScroll;
       this.camera = this.renderer.camera;
+      this.boundingBox.min.onChange(() => this.updateSizeAndPosition());
+      this.boundingBox.max.onChange(() => this.updateSizeAndPosition());
       this.setDOMElement(element);
+      this.renderer.domObjects.push(this);
     }
     /**
      * Set the {@link domElement | DOM Element}
@@ -11378,24 +11493,17 @@ struct VSOutput {
     updateSizeAndPosition() {
       this.setWorldSizes();
       this.applyPosition();
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Update the {@link DOMObject3D} sizes, position and projection
-     */
-    shouldUpdateMatrixStack() {
-      this.updateSizeAndPosition();
-      super.shouldUpdateMatrixStack();
     }
     /**
      * Resize the {@link DOMObject3D}
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
      */
-    resize(boundingRect) {
+    resize(boundingRect = null) {
       if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
         return;
       this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-      this.shouldUpdateMatrixStack();
+      this.updateSizeAndPosition();
+      this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
     }
     /* BOUNDING BOXES GETTERS */
     /**
@@ -11495,9 +11603,9 @@ struct VSOutput {
         worldPosition = this.documentToWorldSpace(this.documentPosition);
       }
       __privateGet$1(this, _DOMObjectWorldPosition).set(
-        this.position.x + this.size.world.left + worldPosition.x,
-        this.position.y + this.size.world.top + worldPosition.y,
-        this.position.z + this.documentPosition.z / this.camera.CSSPerspective
+        this.position.x + this.size.scaledWorld.position.x + worldPosition.x,
+        this.position.y + this.size.scaledWorld.position.y + worldPosition.y,
+        this.position.z + this.size.scaledWorld.position.z + this.documentPosition.z / this.camera.CSSPerspective
       );
     }
     /**
@@ -11520,7 +11628,7 @@ struct VSOutput {
         this.scale,
         this.worldTransformOrigin
       );
-      this.modelMatrix.scale(__privateGet$1(this, _DOMObjectWorldScale));
+      this.modelMatrix.scale(this.DOMObjectWorldScale);
       this.shouldUpdateWorldMatrix();
     }
     /**
@@ -11535,9 +11643,9 @@ struct VSOutput {
       );
     }
     /**
-     * Set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+     * Compute the {@link DOMObject3D#size | world sizes}
      */
-    setWorldSizes() {
+    computeWorldSizes() {
       const containerBoundingRect = this.renderer.boundingRect;
       const planeCenter = {
         x: this.size.document.width / 2 + this.size.document.left,
@@ -11547,14 +11655,60 @@ struct VSOutput {
         x: containerBoundingRect.width / 2 + containerBoundingRect.left,
         y: containerBoundingRect.height / 2 + containerBoundingRect.top
       };
-      this.size.world = {
-        width: this.size.document.width / containerBoundingRect.width * this.camera.screenRatio.width / 2,
-        height: this.size.document.height / containerBoundingRect.height * this.camera.screenRatio.height / 2,
-        top: (containerCenter.y - planeCenter.y) / containerBoundingRect.height * this.camera.screenRatio.height,
-        left: (planeCenter.x - containerCenter.x) / containerBoundingRect.width * this.camera.screenRatio.width
-      };
-      __privateGet$1(this, _DOMObjectWorldScale).set(this.size.world.width, this.size.world.height, 1);
+      const { size, center } = this.boundingBox;
+      if (size.x !== 0 && size.y !== 0 && size.z !== 0) {
+        center.divide(size);
+      }
+      this.size.normalizedWorld.size.set(
+        this.size.document.width / containerBoundingRect.width,
+        this.size.document.height / containerBoundingRect.height
+      );
+      this.size.normalizedWorld.position.set(
+        (planeCenter.x - containerCenter.x) / containerBoundingRect.width,
+        (containerCenter.y - planeCenter.y) / containerBoundingRect.height
+      );
+      this.size.cameraWorld.size.set(
+        this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
+        this.size.normalizedWorld.size.y * this.camera.screenRatio.height
+      );
+      this.size.cameraWorld.position.set(
+        this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
+        this.size.normalizedWorld.position.y * this.camera.screenRatio.height
+      );
+      this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
+      this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
+      this.size.scaledWorld.position.set(
+        this.size.cameraWorld.position.x - center.x * this.size.scaledWorld.size.x * size.x,
+        this.size.cameraWorld.position.y - center.y * this.size.scaledWorld.size.y * size.y,
+        -center.z
+      );
+    }
+    /**
+     * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+     */
+    setWorldSizes() {
+      this.computeWorldSizes();
+      this.setWorldScale();
       this.setWorldTransformOrigin();
+    }
+    /**
+     * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
+     */
+    setWorldScale() {
+      __privateGet$1(this, _DOMObjectWorldScale).set(
+        this.size.scaledWorld.size.x,
+        this.size.scaledWorld.size.y,
+        this.size.scaledWorld.size.z * __privateGet$1(this, _DOMObjectDepthScaleRatio)
+      );
+      this.shouldUpdateMatrixStack();
+    }
+    /**
+     * Set {@link DOMObjectDepthScaleRatio}. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis.
+     * @param value - depth scale ratio value to use
+     */
+    set DOMObjectDepthScaleRatio(value) {
+      __privateSet$1(this, _DOMObjectDepthScaleRatio, value);
+      this.setWorldScale();
     }
     /**
      * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
@@ -11562,13 +11716,12 @@ struct VSOutput {
     setWorldTransformOrigin() {
       this.transforms.origin.world = new Vec3(
         (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-        this.size.world.width,
+        this.size.scaledWorld.size.x,
         -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-        this.size.world.height,
-        this.transformOrigin.z
+        this.size.scaledWorld.size.y,
+        this.transformOrigin.z * this.size.scaledWorld.size.z
       );
-      this.shouldUpdateModelMatrix();
-      this.shouldUpdateProjectionMatrixStack();
+      this.shouldUpdateMatrixStack();
     }
     /**
      * Update the {@link domElement | DOM Element} scroll position
@@ -11580,14 +11733,27 @@ struct VSOutput {
       }
     }
     /**
+     * Callback to execute just after the {@link domElement} has been resized.
+     * @param callback - callback to run just after {@link domElement} has been resized
+     * @returns - our Mesh
+     */
+    onAfterDOMElementResize(callback) {
+      if (callback) {
+        this._onAfterDOMElementResizeCallback = callback;
+      }
+      return this;
+    }
+    /**
      * Destroy our {@link DOMObject3D}
      */
     destroy() {
+      super.destroy();
       this.domElement?.destroy();
     }
   }
   _DOMObjectWorldPosition = new WeakMap();
   _DOMObjectWorldScale = new WeakMap();
+  _DOMObjectDepthScaleRatio = new WeakMap();
 
   const defaultDOMMeshParams = {
     autoloadSources: true,
@@ -11745,6 +11911,13 @@ struct VSOutput {
         }
       );
     }
+    /**
+     * Compute the Mesh geometry if needed
+     */
+    computeGeometry() {
+      super.computeGeometry();
+      this.boundingBox.copy(this.geometry.boundingBox);
+    }
     /* EVENTS */
     /**
      * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
@@ -11882,7 +12055,7 @@ struct VSOutput {
       const result = new Vec3(0, 0, 0);
       const denominator = planeNormals.dot(rayDirection);
       if (Math.abs(denominator) >= 1e-4) {
-        const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix);
+        const inverseViewMatrix = this.worldMatrix.getInverse().premultiply(this.camera.viewMatrix);
         const planeOrigin = this.worldTransformOrigin.clone().add(this.worldPosition);
         const rotatedOrigin = new Vec3(
           this.worldPosition.x - planeOrigin.x,
@@ -11936,6 +12109,31 @@ struct VSOutput {
     setRendererObjects() {
       super.setRendererObjects();
       this.domMeshes = [];
+      this.domObjects = [];
+    }
+    /**
+     * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/camera/Camera.Camera#position | position} or {@link core/camera/Camera.Camera#size | size} change.
+     */
+    onCameraMatricesChanged() {
+      super.onCameraMatricesChanged();
+      this.domObjects.forEach((domObject) => {
+        domObject.updateSizeAndPosition();
+      });
+    }
+    /**
+     * Resize the {@link meshes}.
+     */
+    resizeMeshes() {
+      this.meshes.forEach((mesh) => {
+        if (!("domElement" in mesh)) {
+          mesh.resize(this.boundingRect);
+        }
+      });
+      this.domObjects.forEach((domObject) => {
+        if (!domObject.domElement.isResizing) {
+          domObject.domElement.setSize();
+        }
+      });
     }
   }
 
@@ -12207,6 +12405,13 @@ struct VSOutput {
       return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domMeshes).flat();
     }
     /**
+     * Get all created {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} which position should be updated on scroll.
+     * @readonly
+     */
+    get domObjects() {
+      return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domObjects).flat();
+    }
+    /**
      * Get all the created {@link Plane | planes}
      * @readonly
      */
@@ -12271,9 +12476,9 @@ struct VSOutput {
      * @param delta - last {@link ScrollManager#delta | scroll delta values}
      */
     updateScroll(delta = { x: 0, y: 0 }) {
-      this.domMeshes.forEach((mesh) => {
-        if (mesh.domElement) {
-          mesh.updateScrollPosition(delta);
+      this.domObjects.forEach((domObject) => {
+        if (domObject.domElement) {
+          domObject.updateScrollPosition(delta);
         }
       });
       this._onScrollCallback && this._onScrollCallback();
@@ -12402,9 +12607,11 @@ struct VSOutput {
     /**
      * OrbitControls constructor
      * @param renderer - {@link CameraRenderer} used to get the {@link core/scenes/Scene.Scene | Scene} object to use as {@link Object3D#parent | parent}, and eventually the {@link CameraRenderer#camera | Camera} as well.
-     * @param camera - optional {@link Camera} to use.
+     * @param parameters - optional parameters.
+     * @param parameters.camera - optional {@link Camera} to use.
+     * @param parameters.element - optional {@link HTMLElement} (or {@link Window} element) to use for event listeners.
      */
-    constructor(renderer, camera = null) {
+    constructor(renderer, { camera = null, element = null } = {}) {
       super();
       /**
        * Last pointer {@link Vec2 | position}, used internally for orbiting delta calculations.
@@ -12444,7 +12651,7 @@ struct VSOutput {
       this.quaternion.setAxisOrder("YXZ");
       this.camera = camera || this.renderer.camera;
       this.camera.parent = this;
-      this.element = this.renderer.domElement.element;
+      this.element = element ?? this.renderer.domElement.element;
     }
     /**
      * Set the element to use for event listeners. Can remove previous event listeners first if needed.

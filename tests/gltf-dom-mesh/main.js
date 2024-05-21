@@ -1,10 +1,12 @@
 import { GLTFLoader } from '../gltf-loader/GLTFLoader.js'
-import { buildShaders, traverseScenes } from '../gltf-loader/utils.js'
+import { Vec3 } from '../../dist/esm/index.mjs'
+import { buildShaders } from '../gltf-loader/utils.js'
 
 // Goal of this test is to help debug any issue due to scroll or resize
 window.addEventListener('load', async () => {
-  const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUCurtains, DOMMesh, Vec3, DOMObject3D, Mesh, BoxGeometry } = await import(/* @vite-ignore */ path)
+  //const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
+  const path = '../../dist/esm/index.mjs'
+  const { GPUCurtains, DOMMesh, DOMObject3D, Object3D, BoxGeometry } = await import(/* @vite-ignore */ path)
 
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
@@ -23,118 +25,178 @@ window.addEventListener('load', async () => {
     document.body.classList.add('no-curtains')
   })
 
-  const gltfLoader = new GLTFLoader({ renderer: gpuCurtains.renderer })
-  // const url = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Duck/glTF/Duck.gltf'
-  // const url = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoomBox/glTF/BoomBox.gltf'
-  // const url =
-  //   'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF/DamagedHelmet.gltf'
-  const url =
-    'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AntiqueCamera/glTF/AntiqueCamera.gltf'
-  const { gltf, scenes, boundingBox, node } = await gltfLoader.loadFromUrl(url)
-
   const gltfElement = document.querySelector('#gltf')
-  const nodeParent = new DOMObject3D(gpuCurtains.renderer, gltfElement, {
+
+  // will hold our gltf scenes
+  const parentNode = new DOMObject3D(gpuCurtains.renderer, gltfElement, {
     watchScroll: true,
+  }).onAfterDOMElementResize(() => {
+    parentNode.position.z = -0.5 * parentNode.boundingBox.size.z * parentNode.DOMObjectWorldScale.z
   })
 
-  nodeParent.parent = gpuCurtains.renderer.scene
-  node.parent = nodeParent
+  parentNode.parent = gpuCurtains.renderer.scene
 
-  console.log(gltf, scenes, boundingBox, boundingBox.size, node)
+  gpuCurtains.onRender(() => {
+    parentNode.rotation.y += 0.02
+  })
 
-  gltfElement.style.aspectRatio = boundingBox.size.x / boundingBox.size.y
+  // helper
+  const helper = new DOMMesh(gpuCurtains, gltfElement, {
+    label: 'Helper',
+    geometry: new BoxGeometry({
+      topology: 'line-list',
+    }),
+    visible: false,
+  })
 
-  nodeParent.boundingBox = boundingBox
+  const updateTestCubeScale = () => {
+    console.log('after resize helper')
+    // move our cube along the Z axis so the front face lies at (0, 0, 0) instead of the cube's center
+    const { size } = helper.boundingBox
 
-  const createMesh = (parent, meshDescriptor) => {
-    if (meshDescriptor.parameters.geometry) {
-      console.warn('>>> Create mesh. Those can help you write the correct shaders:', {
-        meshDescriptor,
-      })
+    // adjust depth
+    helper.DOMObjectDepthScaleRatio =
+      helper.size.document.width /
+      helper.size.document.height /
+      (helper.size.scaledWorld.size.y / helper.size.scaledWorld.size.x)
 
-      // merge uniforms
-      meshDescriptor.parameters.uniforms = {
-        ...meshDescriptor.parameters.uniforms,
-        ...{
-          light: {
-            struct: {
-              position: {
-                type: 'vec3f',
-                value: new Vec3(10),
+    helper.position.z = -0.5 * size.z * helper.DOMObjectWorldScale.z
+  }
+
+  helper.onAfterResize(updateTestCubeScale)
+
+  const gltfLoader = new GLTFLoader({ renderer: gpuCurtains.renderer })
+
+  const models = {
+    boomBox: {
+      name: 'Boom Box',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoomBox/glTF/BoomBox.gltf',
+    },
+    duck: {
+      name: 'Duck',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Duck/glTF/Duck.gltf',
+    },
+    damagedHelmet: {
+      name: 'Damaged Helmet',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF/DamagedHelmet.gltf',
+    },
+    avocado: {
+      name: 'Avocado',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Avocado/glTF/Avocado.gltf',
+    },
+    antiqueCamera: {
+      name: 'Antique Camera',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AntiqueCamera/glTF/AntiqueCamera.gltf',
+    },
+  }
+
+  let gltfScenes = null
+
+  const loadGLTF = async (url) => {
+    gltfScenes = await gltfLoader.loadFromUrl(url)
+    const { gltf, sceneManager } = gltfScenes
+    const { scenes, node, boundingBox } = sceneManager
+    const { size, radius } = boundingBox
+
+    node.parent = parentNode
+    parentNode.rotation.y = 0
+
+    gltfElement.style.aspectRatio = size.x / size.y
+
+    //console.log('BBOX', boundingBox.size)
+
+    parentNode.boundingBox.copy(boundingBox)
+
+    gltfScenes.addMeshes({
+      patchMeshParameters: (parameters) => {
+        // add lights
+        parameters.uniforms = {
+          ...parameters.uniforms,
+          ...{
+            ambientLight: {
+              struct: {
+                intensity: {
+                  type: 'f32',
+                  value: 0.1,
+                },
+                color: {
+                  type: 'vec3f',
+                  value: new Vec3(1),
+                },
               },
-              color: {
-                type: 'vec3f',
-                value: new Vec3(1),
-              },
-              ambient: {
-                type: 'f32',
-                value: 0.1,
+            },
+            directionalLight: {
+              struct: {
+                position: {
+                  type: 'vec3f',
+                  value: new Vec3(5),
+                },
+                color: {
+                  type: 'vec3f',
+                  value: new Vec3(1),
+                },
+                intensity: {
+                  type: 'f32',
+                  value: 2,
+                },
               },
             },
           },
-        },
-      }
-
-      // now generate the shaders
-      const { vs, fs } = buildShaders(meshDescriptor)
-
-      //const mesh = new DOMMesh(gpuCurtains, gltfElement, {
-      const mesh = new Mesh(gpuCurtains, {
-        ...meshDescriptor.parameters,
-        frustumCulled: false,
-        shaders: {
-          vertex: {
-            code: vs,
-          },
-          fragment: {
-            code: fs,
-          },
-        },
-      })
-
-      if (meshDescriptor.nodes.length > 1) {
-        // if we're dealing with instances
-        // we must patch the mesh updateWorldMatrix method
-        // in order to update the instanceMatrix binding each time the mesh world matrix change
-        const originalWorldUpdateMatrix = mesh.updateWorldMatrix.bind(mesh)
-        mesh.updateWorldMatrix = () => {
-          originalWorldUpdateMatrix()
-
-          meshDescriptor.nodes.forEach((node, i) => {
-            mesh.storages.instances.instanceMatrix.value.set(node.worldMatrix.elements, i * 16)
-          })
-
-          mesh.storages.instances.instanceMatrix.shouldUpdate = true
         }
-      }
+      },
+      setCustomMeshShaders: (meshDescriptor) => {
+        const ambientContribution = /* wgsl */ `
+        ambientContribution = ambientLight.intensity * ambientLight.color;
+        `
 
-      mesh.parent = parent.node
+        const lightContribution = /* wgsl */ `
+        // An extremely simple directional lighting model, just to give our model some shape.
+        let N = normalize(normal);
+        let L = normalize(directionalLight.position);
+        let NDotL = max(dot(N, L), 0.0);
 
-      mesh.onBeforeRender(() => {
-        mesh.rotation.y += 0.02
-      })
+        lightContribution = color.rgb * NDotL * directionalLight.color;
+        `
 
-      const test = new DOMMesh(gpuCurtains, gltfElement, {
-        geometry: new BoxGeometry({
-          topology: 'line-list',
-        }),
-      })
-
-      const updateTestCubeScale = () => {
-        test.DOMObjectDepthScale =
-          (test.worldScale.y * test.geometry.boundingBox.size.z) / test.geometry.boundingBox.size.y
-      }
-
-      test.onAfterResize(updateTestCubeScale)
-      updateTestCubeScale()
-
-      console.log(mesh, nodeParent)
-
-      meshDescriptor.mesh = mesh
-    }
+        return buildShaders(meshDescriptor, { ambientContribution, lightContribution })
+      },
+    })
   }
 
-  traverseScenes(scenes, ({ child, meshDescriptor }) => {
-    createMesh(child, meshDescriptor)
+  // GUI
+  const gui = new lil.GUI({
+    title: 'GLTF loader',
   })
+
+  const currentModelKey = 'boomBox'
+  let currentModel = models[currentModelKey]
+
+  gui
+    .add(
+      { [currentModel.name]: currentModelKey },
+      currentModel.name,
+      Object.keys(models).reduce((acc, v) => {
+        return { ...acc, [models[v].name]: v }
+      }, {})
+    )
+    .onChange(async (value) => {
+      if (models[value].name !== currentModel.name) {
+        if (gltfScenes) {
+          gltfScenes.destroy()
+        }
+
+        currentModel = models[value]
+        await loadGLTF(currentModel.url)
+      }
+    })
+    .name('Models')
+
+  gui
+    .add({ visible: helper.visible }, 'visible')
+    .onChange((value) => {
+      helper.visible = value
+    })
+    .name('Show helper')
+
+  await loadGLTF(currentModel.url)
 })

@@ -30,7 +30,7 @@ class TextureBinding extends Binding {
       viewDimension,
       multisampled
     };
-    this.cacheKey += `${format},${access},${viewDimension},${multisampled}`;
+    this.cacheKey += `${format},${access},${viewDimension},${multisampled},`;
     this.resource = texture;
     this.setWGSLFragment();
   }
@@ -72,6 +72,7 @@ class TextureBinding extends Binding {
       if (bindingType)
         this.shouldResetBindGroupLayout = true;
       this.bindingType = bindingType;
+      this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
       this.setWGSLFragment();
     }
   }
@@ -85,6 +86,7 @@ class TextureBinding extends Binding {
     if (isNewFormat && this.bindingType === "storage") {
       this.setWGSLFragment();
       this.shouldResetBindGroupLayout = true;
+      this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
     }
   }
   /**
@@ -97,6 +99,7 @@ class TextureBinding extends Binding {
     if (isNewMultisampled && this.bindingType !== "storage") {
       this.setWGSLFragment();
       this.shouldResetBindGroupLayout = true;
+      this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
     }
   }
   /**

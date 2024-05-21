@@ -4,6 +4,7 @@
   }
 
   #gltf-content {
+    position: relative;
     float: left;
     width: 30%;
     box-sizing: border-box;
@@ -11,10 +12,13 @@
     margin: 0 2rem 2rem 0;
   }
 
-  /*#gltf {*/
-  /*  !* taken from glTF bounding box size x / y *!*/
-  /*  aspect-ratio: 0.019842308 / 0.01954326;*/
-  /*}*/
+  #gltf {
+    /*
+    Start with the Boom Box (first example) aspect ratio
+    taken from its glTF bounding box size x / y
+     */
+    aspect-ratio: 1.0153 / 1;
+  }
 }
 
 @media screen and (max-aspect-ratio: 10 / 8) {

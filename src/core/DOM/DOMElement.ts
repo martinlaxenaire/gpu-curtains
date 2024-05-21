@@ -192,11 +192,15 @@ export class DOMElement {
    * @param boundingRect - new bounding rectangle
    */
   setSize(boundingRect: DOMElementBoundingRect | null = null) {
-    if (!this.element) return
+    if (!this.element || this.isResizing) return
+
+    this.isResizing = true
 
     this.boundingRect = boundingRect ?? this.element.getBoundingClientRect()
 
-    this.isResizing = false
+    setTimeout(() => {
+      this.isResizing = false
+    }, 10)
   }
 
   /**

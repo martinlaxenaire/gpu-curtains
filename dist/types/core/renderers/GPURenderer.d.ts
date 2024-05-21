@@ -143,6 +143,10 @@ export declare class GPURenderer {
      */
     onResize(): void;
     /**
+     * Resize the {@link meshes}.
+     */
+    resizeMeshes(): void;
+    /**
      * Get our {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}. If there's no {@link domElement | DOM Element} (like when using an offscreen canvas for example), the {@link rectBBox} values are used.
      */
     get boundingRect(): DOMElementBoundingRect;
