@@ -50,11 +50,9 @@ window.addEventListener('load', async () => {
   })
 
   const updateTestCubeScale = () => {
-    console.log('after resize helper')
-    // move our cube along the Z axis so the front face lies at (0, 0, 0) instead of the cube's center
     const { size } = helper.boundingBox
 
-    // adjust depth
+    // adjust depth scale ratio to match our parent node
     helper.DOMObjectDepthScaleRatio =
       helper.size.document.width /
       helper.size.document.height /
@@ -94,16 +92,14 @@ window.addEventListener('load', async () => {
 
   const loadGLTF = async (url) => {
     gltfScenes = await gltfLoader.loadFromUrl(url)
-    const { gltf, sceneManager } = gltfScenes
-    const { scenes, node, boundingBox } = sceneManager
-    const { size, radius } = boundingBox
+    const { sceneManager } = gltfScenes
+    const { node, boundingBox } = sceneManager
+    const { size } = boundingBox
 
     node.parent = parentNode
     parentNode.rotation.y = 0
 
     gltfElement.style.aspectRatio = size.x / size.y
-
-    //console.log('BBOX', boundingBox.size)
 
     parentNode.boundingBox.copy(boundingBox)
 

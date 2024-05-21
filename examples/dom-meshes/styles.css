@@ -47,3 +47,15 @@
     border-radius: 50%;
   }
 }
+
+@media screen and (orientation: portrait) {
+  .dom-mesh {
+    flex-basis: 75%;
+    margin: 10vh 12.5%;
+  }
+
+  #large-cube-mesh {
+    flex-basis: 90%;
+    margin: 10vh 5%;
+  }
+}

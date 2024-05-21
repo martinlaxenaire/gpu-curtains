@@ -230,10 +230,10 @@
 
         const updateSphereScale = () => {
           // scale our sphere along the Z axis based on its height (Y axis scale)
-          sphereMesh.scale.z = sphereMesh.worldScale.y
+          sphereMesh.DOMObjectDepthScaleRatio = sphereMesh.worldScale.y / sphereMesh.size.scaledWorld.size.z
         }
 
-        sphereMesh.onAfterResize(updateSphereScale).onBeforeRender(() => (sphereMesh.rotation.y += 0.01))
+        sphereMesh.onAfterResize(updateSphereScale)
         updateSphereScale()
 
         // now the satellites
@@ -275,7 +275,7 @@
             pivot.position.copy(sphereMesh.worldPosition)
 
             // get the DOM #sphere size in the world space
-            const sphereSize = sphereMesh.DOMObjectWorldScale.y
+            const sphereSize = sphereMesh.worldScale.y
 
             // min distance so that the satellite sphere lies exactly at the border of our main sphere
             const minDistance = sphereSize + sphereSize * scale
@@ -286,7 +286,7 @@
             satelliteMesh.position.x = distance - sphereMesh.worldPosition.x
 
             // scale our sphere along the Z axis based on its height (Y axis scale)
-            satelliteMesh.scale.z = satelliteMesh.worldScale.y
+            satelliteMesh.DOMObjectDepthScaleRatio = satelliteMesh.worldScale.y / satelliteMesh.size.scaledWorld.size.z
 
             // look at our pivot center
             satelliteMesh.lookAt(pivot.position)
