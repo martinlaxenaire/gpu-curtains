@@ -96,11 +96,11 @@ window.addEventListener('load', async () => {
       orbitControls.minZoom = radius * -0.225
     } else {
       camera.position.y = center.y
-      camera.position.z = radius * 2
+      camera.position.z = radius * 2.5
       camera.fov = 50
 
       orbitControls.zoomStep = radius * 0.0025
-      orbitControls.minZoom = radius * -0.5
+      orbitControls.minZoom = radius * -1
     }
 
     orbitControls.maxZoom = radius * 2
@@ -115,7 +115,7 @@ window.addEventListener('load', async () => {
 
         const lightPosition = new Vec3(radius * 2, radius * 2, radius)
         const lightPositionLengthSq = lightPosition.lengthSq()
-        const lightPositionLength = Math.sqrt(lightPositionLengthSq)
+        const lightPositionLength = lightPosition.length()
 
         // add lights
         parameters.uniforms = {
