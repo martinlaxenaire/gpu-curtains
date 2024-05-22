@@ -1,12 +1,9 @@
 // Goals of this test:
-// - basic gltf loader
-import { GLTFLoader } from './GLTFLoader.js'
-import { Vec3 } from '../../dist/esm/index.mjs'
-import { buildShaders } from './utils.js'
-
+// - test various capacities of the gltf loader
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUDeviceManager, GPUCameraRenderer, OrbitControls, Mesh, Vec3 } = await import(/* @vite-ignore */ path)
+  const { GPUDeviceManager, GPUCameraRenderer, GLTFLoader, GLTFScenesManager, buildShaders, OrbitControls, Vec3 } =
+    await import(/* @vite-ignore */ path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -53,6 +50,22 @@ window.addEventListener('load', async () => {
       name: 'Flight Helmet',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf',
     },
+    suzanne: {
+      name: 'Suzanne',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Suzanne/glTF/Suzanne.gltf',
+    },
+    boxVertexColors: {
+      name: 'Box with vertex colors',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxVertexColors/glTF/BoxVertexColors.gltf',
+    },
+    multiUVTest: {
+      name: 'Multiple UVs',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MultiUVTest/glTF/MultiUVTest.gltf',
+    },
+    metalRoughSpheres: {
+      name: 'Metal-Rough Spheres',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MetalRoughSpheres/glTF/MetalRoughSpheres.gltf',
+    },
     sponza: {
       name: 'Sponza',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Sponza/glTF/Sponza.gltf',
@@ -61,26 +74,22 @@ window.addEventListener('load', async () => {
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
-    // boxVertexColors: {
-    //   name: 'Box with vertex colors',
-    //   url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxVertexColors/glTF/BoxVertexColors.gltf',
-    // },
   }
 
   // gltf
-  const gltfLoader = new GLTFLoader({
-    renderer: gpuCameraRenderer,
-  })
+  const gltfLoader = new GLTFLoader()
 
-  let gltfScenes = null
+  let gltfScenesManager = null
 
   const loadGLTF = async (url) => {
     container.classList.add('loading')
-    gltfScenes = await gltfLoader.loadFromUrl(url)
-    const { gltf, sceneManager } = gltfScenes
-    const { scenes, boundingBox } = sceneManager
+    const gltf = await gltfLoader.loadFromUrl(url)
+    gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
+
+    const { scenesManager } = gltfScenesManager
+    const { scenes, boundingBox } = scenesManager
     container.classList.remove('loading')
-    console.log({ gltf, sceneManager, scenes, boundingBox })
+    console.log({ gltf, scenesManager, scenes, boundingBox })
 
     const { center, radius } = boundingBox
 
@@ -108,7 +117,7 @@ window.addEventListener('load', async () => {
 
     camera.updateWorldMatrix()
 
-    gltfScenes.addMeshes({
+    gltfScenesManager.addMeshes({
       patchMeshParameters: (parameters) => {
         // disable frustum culling
         parameters.frustumCulled = false
@@ -216,9 +225,11 @@ window.addEventListener('load', async () => {
     )
     .onChange(async (value) => {
       if (models[value].name !== currentModel.name) {
-        if (gltfScenes) {
-          gltfScenes.destroy()
+        if (gltfScenesManager) {
+          gltfScenesManager.destroy()
         }
+
+        gltfScenesManager = null
 
         currentModel = models[value]
         await loadGLTF(currentModel.url)

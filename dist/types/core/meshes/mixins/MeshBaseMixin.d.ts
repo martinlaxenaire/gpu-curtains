@@ -12,7 +12,10 @@ import { DOMElementBoundingRect } from '../../DOM/DOMElement';
 import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
 import { RenderPass } from '../../renderPasses/RenderPass';
-export interface MeshBaseRenderParams extends RenderMaterialParams {
+/**
+ * Base render params used to create a Mesh
+ */
+export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'targets'> {
     /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
     /** Flag indicating whether to draw this Mesh or not */
@@ -23,6 +26,8 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
     outputTarget?: RenderTarget;
     /** Parameters used by this Mesh to create a {@link DOMTexture} */
     texturesOptions?: ExternalTextureParams;
+    /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties */
+    targets?: Partial<GPUColorTargetState>[];
 }
 /**
  * Base parameters used to create a Mesh

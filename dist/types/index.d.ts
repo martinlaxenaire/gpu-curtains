@@ -49,4 +49,7 @@ export { Vec3 } from './math/Vec3';
 export { OrbitControls } from './extras/controls/OrbitControls';
 export { BoxGeometry } from './extras/geometries/BoxGeometry';
 export { SphereGeometry } from './extras/geometries/SphereGeometry';
+export { GLTFLoader } from './extras/gltf/GLTFLoader';
+export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager';
+export * from './extras/gltf/utils';
 export * from './utils/debug';

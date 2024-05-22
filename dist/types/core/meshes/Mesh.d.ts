@@ -1,6 +1,6 @@
 import { CameraRenderer } from '../renderers/utils';
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D';
-import { MeshBaseParams } from './mixins/MeshBaseMixin';
+import { ProjectedMeshParameters } from './mixins/ProjectedMeshBaseMixin';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 declare const Mesh_base: import("./mixins/MeshBaseMixin").MixinConstructor<import("./mixins/ProjectedMeshBaseMixin").ProjectedMeshBaseClass> & typeof ProjectedObject3D;
 /**
@@ -40,6 +40,6 @@ export declare class Mesh extends Mesh_base {
      * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
      * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
      */
-    constructor(renderer: CameraRenderer | GPUCurtains, parameters?: MeshBaseParams);
+    constructor(renderer: CameraRenderer | GPUCurtains, parameters?: ProjectedMeshParameters);
 }
 export {};

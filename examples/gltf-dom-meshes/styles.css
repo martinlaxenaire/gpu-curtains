@@ -1,4 +1,8 @@
 @media screen {
+  h1 {
+    margin-bottom: 0;
+  }
+
   #content {
     overflow: hidden;
   }
@@ -6,10 +10,10 @@
   #gltf-content {
     position: relative;
     float: left;
-    width: 30%;
+    width: 25%;
     box-sizing: border-box;
     padding: 1rem;
-    margin: 0 2rem 2rem 0;
+    margin: 0 2rem 1rem 0;
   }
 
   #gltf {
@@ -30,7 +34,7 @@
 @media screen and (orientation: portrait) {
   #gltf-content {
     width: 75%;
-    margin: 0 auto 2rem auto;
+    margin: 0 auto 1rem auto;
     float: none;
   }
 }

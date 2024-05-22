@@ -1,78 +1,61 @@
-// helper to build vertex and fragment shaders based on our meshDescriptor object
-// TODO PBR
-// see https://github.com/toji/webgpu-clustered-shading/blob/main/js/webgpu-renderer/shaders/pbr.js
-export const buildShaders = (meshDescriptor, lightShading = null) => {
-  // textures check
-  const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === 'baseColorTexture')
-  const normalTexture = meshDescriptor.textures.find((t) => t.texture === 'normalTexture')
-  const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === 'emissiveTexture')
-  const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === 'occlusionTexture')
-  const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === 'metallicRoughnessTexture')
-
-  const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== 'position')
-
-  const structAttributes = facultativeAttributes
-    .map((attribute, index) => {
-      return `@location(${index}) ${attribute.name}: ${attribute.type},`
-    })
-    .join('\n\t')
-
-  let outputPositions = /* wgsl */ `
+const buildShaders = (meshDescriptor, shaderParameters = null) => {
+  const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
+  const normalTexture = meshDescriptor.textures.find((t) => t.texture === "normalTexture");
+  const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
+  const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === "occlusionTexture");
+  const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === "metallicRoughnessTexture");
+  const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
+  const structAttributes = facultativeAttributes.map((attribute, index) => {
+    return `@location(${index}) ${attribute.name}: ${attribute.type},`;
+  }).join("\n	");
+  let outputPositions = (
+    /* wgsl */
+    `
     let worldPos = matrices.model * vec4(attributes.position, 1.0);
     vsOutput.position = camera.projection * camera.view * worldPos;
     vsOutput.worldPosition = worldPos.xyz;
     vsOutput.viewDirection = camera.position - worldPos.xyz;
   `
-  let outputNormal = facultativeAttributes.find((attr) => attr.name === 'normal')
-    ? 'vsOutput.normal = getWorldNormal(attributes.normal);'
-    : ''
-
+  );
+  let outputNormal = facultativeAttributes.find((attr) => attr.name === "normal") ? "vsOutput.normal = getWorldNormal(attributes.normal);" : "";
   if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
-    outputPositions = /* wgsl */ `
+    outputPositions = /* wgsl */
+    `
       let worldPos: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(attributes.position, 1.0);
       vsOutput.position = camera.projection * camera.view * worldPos;
       vsOutput.worldPosition = worldPos.xyz;
       vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
-      `
-
-    outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz);`
+      `;
+    outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz);`;
   }
-
-  const outputAttributes = facultativeAttributes
-    .filter((attr) => attr.name !== 'normal')
-    .map((attribute) => {
-      return `vsOutput.${attribute.name} = attributes.${attribute.name};`
-    })
-    .join('\n\t')
-
+  const outputAttributes = facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
+    return `vsOutput.${attribute.name} = attributes.${attribute.name};`;
+  }).join("\n	");
   let vertexOutputContent = `
       @builtin(position) position: vec4f,
       @location(${facultativeAttributes.length}) viewDirection: vec3f,
       @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
       ${structAttributes}
-  `
-
-  let outputNormalMap = ''
-  const tangentAttribute = facultativeAttributes.find((attr) => attr.name === 'tangent')
-  const useNormalMap = !!(normalTexture && tangentAttribute)
-
+  `;
+  let outputNormalMap = "";
+  const tangentAttribute = facultativeAttributes.find((attr) => attr.name === "tangent");
+  const useNormalMap = !!(normalTexture && tangentAttribute);
   if (useNormalMap) {
     vertexOutputContent += `
       @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
-      `
-
+      `;
     outputNormalMap = `
         vsOutput.tangent = normalize(matrices.model * attributes.tangent);
         vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * attributes.tangent.w;
-      `
+      `;
   }
-
   const vertexOutput = `
     struct VSOutput {
       ${vertexOutputContent}
-    };`
-
-  const vs = /* wgsl */ `
+    };`;
+  const vs = (
+    /* wgsl */
+    `
     ${vertexOutput}
     
     @vertex fn main(
@@ -89,115 +72,125 @@ export const buildShaders = (meshDescriptor, lightShading = null) => {
       return vsOutput;
     }
   `
-
-  // not a PBR material for now, as it does not use roughness/metalness
-  // we might want to implement it later
-  // see https://github.com/oframe/ogl/blob/master/examples/load-gltf.html#L133
-  const initColor = /* wgsl */ 'var color: vec4f = vec4();'
-  const returnColor = /* wgsl */ 'return color;'
-
-  // start with the base color
-  // use vertex color 0 if defined
-  const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === 'color0')
-  let baseColor = /* wgsl */ !!vertexColor
-    ? vertexColor.type === 'vec3f'
-      ? 'var baseColor: vec4f = vec4(fsInput.color0, 1.0) * material.baseColorFactor;'
-      : 'var baseColor: vec4f = fsInput.color0 * material.baseColorFactor;'
-    : 'var baseColor: vec4f = material.baseColorFactor;'
-
+  );
+  const initColor = (
+    /* wgsl */
+    "var color: vec4f = vec4();"
+  );
+  const returnColor = (
+    /* wgsl */
+    "return color;"
+  );
+  const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === "color0");
+  let baseColor = (
+    /* wgsl */
+    !!vertexColor ? vertexColor.type === "vec3f" ? "var baseColor: vec4f = vec4(fsInput.color0, 1.0) * material.baseColorFactor;" : "var baseColor: vec4f = fsInput.color0 * material.baseColorFactor;" : "var baseColor: vec4f = material.baseColorFactor;"
+  );
   if (baseColorTexture) {
-    baseColor = /* wgsl */ `
-      var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.uv) * material.baseColorFactor;
+    baseColor = /* wgsl */
+    `
+      var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
       
       if (baseColor.a < material.alphaCutoff) {
         discard;
       }
-    `
+    `;
   }
-
-  // normal map
-  let normalMap = `let normal: vec3f = normalize(fsInput.normal);`
-
+  let normalMap = `let normal: vec3f = normalize(fsInput.normal);`;
   if (useNormalMap) {
     normalMap = `
       let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), normalize(fsInput.normal));
-      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.uv).rgb;
-      let normal = normalize(tbn * (2.0 * normalMap - vec3(1.0, 1.0, 1.0)));
-    `
+      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+      let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+    `;
   }
-
-  // metallic roughness
-  let metallicRoughness = /*  wgsl */ `
+  let metallicRoughness = (
+    /*  wgsl */
+    `
       var metallic = material.metallicFactor;
       var roughness = material.roughnessFactor;
   `
-
+  );
   if (metallicRoughnessTexture) {
-    metallicRoughness += /* wgsl */ `
-      let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.uv);
+    metallicRoughness += /* wgsl */
+    `
+      let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
       metallic = metallic * metallicRoughness.b;
       roughness = roughness * metallicRoughness.g;
-    `
+    `;
   }
-
-  let f0 = /* wgsl */ `
+  const f0 = (
+    /* wgsl */
+    `
       let dielectricSpec: vec3f = vec3(0.04, 0.04, 0.04);
       let f0 = mix(dielectricSpec, color.rgb, vec3(metallic));
   `
-
-  // emissive and occlusion
-  let emissiveOcclusion = /* wgsl */ `
+  );
+  let emissiveOcclusion = (
+    /* wgsl */
+    `
       var emissive: vec3f = vec3(0.0);
       var occlusion: f32 = 1.0;
   `
-
+  );
   if (emissiveTexture) {
-    emissiveOcclusion += /* wgsl */ `
-      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.uv).rgb * material.emissiveFactor;
-      `
+    emissiveOcclusion += /* wgsl */
+    `
+      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb * material.emissiveFactor;
+      `;
     if (occlusionTexture) {
-      emissiveOcclusion += /* wgsl */ `
-      occlusion = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.uv).r;
+      emissiveOcclusion += /* wgsl */
       `
+      occlusion = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.${occlusionTexture.texCoordAttributeName}).r;
+      `;
     }
   }
-
-  emissiveOcclusion += /* wgsl */ `
-      occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);
+  emissiveOcclusion += /* wgsl */
   `
-
-  // add lightning
-  const initLightShading = /* wgsl */ `
+      occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);
+  `;
+  const initLightShading = (
+    /* wgsl */
+    `
       var ambientContribution: vec3f;
       var lightContribution: vec3f;
       color = baseColor;
   `
-
-  // user defined lightning
-  const defaultAmbientContribution = /* wgsl */ `
+  );
+  const defaultAmbientContribution = (
+    /* wgsl */
+    `
     ambientContribution = vec3(1.0);
   `
-  const defaultLightContribution = /* wgsl */ `
+  );
+  const defaultLightContribution = (
+    /* wgsl */
+    `
     lightContribution = vec3(0.0);
   `
-
-  if (!lightShading) {
-    lightShading = {
+  );
+  if (!shaderParameters) {
+    shaderParameters = {
       ambientContribution: defaultAmbientContribution,
-      lightContribution: defaultLightContribution,
-    }
+      lightContribution: defaultLightContribution
+    };
   } else {
-    if (!lightShading.ambientContribution) lightShading.ambientContribution = defaultAmbientContribution
-    if (!lightShading.lightContribution) lightShading.lightContribution = defaultLightContribution
+    if (!shaderParameters.ambientContribution)
+      shaderParameters.ambientContribution = defaultAmbientContribution;
+    if (!shaderParameters.lightContribution)
+      shaderParameters.lightContribution = defaultLightContribution;
   }
-
-  const applyLightShading = /* wgsl */ `
+  const applyLightShading = (
+    /* wgsl */
+    `
       let ambient = ambientContribution * color.rgb * occlusion;
       color = vec4(linearTosRGB(lightContribution + ambient + emissive), color.a);
       //color = vec4(lightContribution + ambient + emissive, color.a);
   `
-
-  const fs = /* wgsl */ `
+  );
+  const fs = (
+    /* wgsl */
+    `
     // linear <-> sRGB conversions
     fn linearTosRGB(linear : vec3f) -> vec3f {
       if (all(linear <= vec3(0.0031308))) {
@@ -272,27 +265,27 @@ export const buildShaders = (meshDescriptor, lightShading = null) => {
       ${initLightShading}
       
       // user defined lightning
-      ${lightShading.ambientContribution}
-      ${lightShading.lightContribution}
+      ${shaderParameters.ambientContribution}
+      ${shaderParameters.lightContribution}
       
       
       ${applyLightShading}
       ${returnColor}
     }
   `
-
-  //console.log(fs)
-
+  );
   return {
     shaders: {
       vertex: {
         code: vs,
-        entryPoint: 'main',
+        entryPoint: "main"
       },
       fragment: {
         code: fs,
-        entryPoint: 'main',
-      },
-    },
-  }
-}
+        entryPoint: "main"
+      }
+    }
+  };
+};
+
+export { buildShaders };

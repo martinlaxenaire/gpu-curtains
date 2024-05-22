@@ -1,13 +1,16 @@
-import { GLTFLoader } from '../gltf-loader/GLTFLoader.js'
-import { Vec3 } from '../../dist/esm/index.mjs'
-import { buildShaders } from '../gltf-loader/utils.js'
+import {
+  GPUCurtains,
+  GLTFLoader,
+  GLTFScenesManager,
+  buildShaders,
+  DOMMesh,
+  DOMObject3D,
+  Vec3,
+  BoxGeometry,
+} from '../../dist/esm/index.mjs'
 
-// Goal of this test is to help debug any issue due to scroll or resize
+// Load glTF meshes and sync them with a DOM element
 window.addEventListener('load', async () => {
-  //const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const path = '../../dist/esm/index.mjs'
-  const { GPUCurtains, DOMMesh, DOMObject3D, Object3D, BoxGeometry } = await import(/* @vite-ignore */ path)
-
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
@@ -63,7 +66,7 @@ window.addEventListener('load', async () => {
 
   helper.onAfterResize(updateTestCubeScale)
 
-  const gltfLoader = new GLTFLoader({ renderer: gpuCurtains.renderer })
+  const gltfLoader = new GLTFLoader()
 
   const models = {
     boomBox: {
@@ -88,22 +91,27 @@ window.addEventListener('load', async () => {
     },
   }
 
-  let gltfScenes = null
+  let gltfScenesManager = null
 
   const loadGLTF = async (url) => {
-    gltfScenes = await gltfLoader.loadFromUrl(url)
-    const { sceneManager } = gltfScenes
-    const { node, boundingBox } = sceneManager
+    const gltf = await gltfLoader.loadFromUrl(url)
+    gltfScenesManager = new GLTFScenesManager({ renderer: gpuCurtains.renderer, gltf })
+    const { scenesManager } = gltfScenesManager
+    const { node, boundingBox } = scenesManager
     const { size } = boundingBox
 
     node.parent = parentNode
     parentNode.rotation.y = 0
 
+    // set the new DOM element aspect ratio
+    // this will automatically resize our parentNode
     gltfElement.style.aspectRatio = size.x / size.y
 
+    // copy new scenes bounding box into DOMObject3D own bounding box
     parentNode.boundingBox.copy(boundingBox)
 
-    gltfScenes.addMeshes({
+    // add the meshes with a really basic lightning setup
+    gltfScenesManager.addMeshes({
       patchMeshParameters: (parameters) => {
         // add lights
         parameters.uniforms = {
@@ -177,9 +185,11 @@ window.addEventListener('load', async () => {
     )
     .onChange(async (value) => {
       if (models[value].name !== currentModel.name) {
-        if (gltfScenes) {
-          gltfScenes.destroy()
+        if (gltfScenesManager) {
+          gltfScenesManager.destroy()
         }
+
+        gltfScenesManager = null
 
         currentModel = models[value]
         await loadGLTF(currentModel.url)
@@ -194,5 +204,6 @@ window.addEventListener('load', async () => {
     })
     .name('Show helper')
 
+  // load first model
   await loadGLTF(currentModel.url)
 })
