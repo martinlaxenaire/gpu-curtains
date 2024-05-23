@@ -117,60 +117,61 @@ window.addEventListener('load', async () => {
 
     camera.updateWorldMatrix()
 
-    gltfScenesManager.addMeshes({
-      patchMeshParameters: (parameters) => {
-        // disable frustum culling
-        parameters.frustumCulled = false
+    const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
+      const { parameters } = meshDescriptor
 
-        const lightPosition = new Vec3(radius * 2, radius * 2, radius)
-        const lightPositionLengthSq = lightPosition.lengthSq()
-        const lightPositionLength = lightPosition.length()
+      // disable frustum culling
+      parameters.frustumCulled = false
 
-        // add lights
-        parameters.uniforms = {
-          ...parameters.uniforms,
-          ...{
-            ambientLight: {
-              struct: {
-                intensity: {
-                  type: 'f32',
-                  value: 0.1,
-                },
-                color: {
-                  type: 'vec3f',
-                  value: new Vec3(1),
-                },
+      const lightPosition = new Vec3(radius * 2, radius * 2, radius)
+      const lightPositionLengthSq = lightPosition.lengthSq()
+      const lightPositionLength = lightPosition.length()
+
+      // add lights
+      parameters.uniforms = {
+        ...parameters.uniforms,
+        ...{
+          ambientLight: {
+            struct: {
+              intensity: {
+                type: 'f32',
+                value: 0.1,
               },
-            },
-            pointLight: {
-              struct: {
-                position: {
-                  type: 'vec3f',
-                  value: lightPosition,
-                },
-                range: {
-                  type: 'f32',
-                  value: lightPositionLength * 1.25,
-                },
-                color: {
-                  type: 'vec3f',
-                  value: new Vec3(1),
-                },
-                intensity: {
-                  type: 'f32',
-                  value: lightPositionLengthSq * 2,
-                },
+              color: {
+                type: 'vec3f',
+                value: new Vec3(1),
               },
             },
           },
-        }
-      },
-      setCustomMeshShaders: (meshDescriptor) => {
-        const ambientContribution = /* wgsl */ `
+          pointLight: {
+            struct: {
+              position: {
+                type: 'vec3f',
+                value: lightPosition,
+              },
+              range: {
+                type: 'f32',
+                value: lightPositionLength * 1.25,
+              },
+              color: {
+                type: 'vec3f',
+                value: new Vec3(1),
+              },
+              intensity: {
+                type: 'f32',
+                value: lightPositionLengthSq * 2,
+              },
+            },
+          },
+        },
+      }
+
+      // now the shaders
+      const ambientContribution = /* wgsl */ `
         ambientContribution = ambientLight.intensity * ambientLight.color;
         `
 
-        const lightContribution = /* wgsl */ `
+      const lightContribution = /* wgsl */ `
         let N = normalize(normal);
         let V = normalize(fsInput.viewDirection);
         let L = normalize(pointLight.position - fsInput.worldPosition);
@@ -200,11 +201,11 @@ window.addEventListener('load', async () => {
         let radiance = pointLight.color * pointLight.intensity * attenuation;
         lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
         `
-        return buildShaders(meshDescriptor, { ambientContribution, lightContribution })
-      },
+
+      parameters.shaders = buildShaders(meshDescriptor, { ambientContribution, lightContribution })
     })
 
-    console.log(gpuCameraRenderer)
+    console.log(gpuCameraRenderer, meshes)
   }
 
   // GUI

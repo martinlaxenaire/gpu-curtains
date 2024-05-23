@@ -3,9 +3,10 @@ import { CameraRenderer } from '../../core/renderers/utils';
 import { GLTF } from '../../types/gltf/GLTF';
 import { GLTFLoader } from './GLTFLoader';
 import { Texture } from '../../core/textures/Texture';
+import { Mesh } from '../../core/meshes/Mesh';
 import { TypedArrayConstructor } from '../../core/bindings/utils';
 import { VertexBufferAttribute } from '../../types/Geometries';
-import { ChildDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
+import { ChildDescriptor, MeshDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
 /**
  * Used to create a {@link GLTFScenesManager} from a given {@link GLTFLoader.gltf | gltf} object.
  *
@@ -116,16 +117,10 @@ export declare class GLTFScenesManager {
     createScenes(): void;
     /**
      * Add all the needed {@link Mesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
-     * @param parameters - optional helpers functions to help you patch the {@link Mesh} parameters.
-     * @param parameters.patchMeshParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add uniforms or storages, change rendering options, etc.)
-     * @param parameters.setCustomMeshShaders - allow to optionally define custom shaders to use for the {@link Mesh}, or use the built-in PBR shader builder.
+     * @param patchMeshesParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add custom shaders, uniforms or storages, change rendering options, etc.)
+     * @returns - Array of created {@link Mesh}.
      */
-    addMeshes({ patchMeshParameters, setCustomMeshShaders, }?: {
-        patchMeshParameters?: (parameters: any) => void;
-        setCustomMeshShaders?: (meshDescriptor: any, { ambientContribution, lightContribution }?: any) => {
-            shaders: import("../../types/Materials").MaterialShaders;
-        };
-    }): void;
+    addMeshes(patchMeshesParameters?: (meshDescriptor: MeshDescriptor) => void): Mesh[];
     /**
      * Destroy the current {@link ScenesManager} by removing all created {@link ScenesManager#meshes | meshes} and destroying all the {@link Object3D} nodes.
      */

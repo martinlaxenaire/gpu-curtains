@@ -1,5 +1,5 @@
 import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager';
-import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
+import { ShaderOptions } from '../../types/Materials';
 /**
  * Parameters used to build the PBR shaders
  */
@@ -16,6 +16,8 @@ export interface PBRShaderParameters {
  * @returns - object containing the shaders
  */
 export declare const buildShaders: (meshDescriptor: MeshDescriptor, shaderParameters?: PBRShaderParameters) => {
-    /** Shaders returned by the PBR shader builder. */
-    shaders: ProjectedMeshParameters['shaders'];
+    /** Vertex shader returned by the PBR shader builder. */
+    vertex: ShaderOptions;
+    /** Fragment shader returned by the PBR shader builder. */
+    fragment: ShaderOptions;
 };

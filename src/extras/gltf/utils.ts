@@ -1,5 +1,5 @@
 import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager'
-import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
+import { ShaderOptions } from '../../types/Materials'
 
 /**
  * Parameters used to build the PBR shaders
@@ -23,8 +23,10 @@ export const buildShaders = (
   meshDescriptor: MeshDescriptor,
   shaderParameters: PBRShaderParameters = null
 ): {
-  /** Shaders returned by the PBR shader builder. */
-  shaders: ProjectedMeshParameters['shaders']
+  /** Vertex shader returned by the PBR shader builder. */
+  vertex: ShaderOptions
+  /** Fragment shader returned by the PBR shader builder. */
+  fragment: ShaderOptions
 } => {
   // textures check
   const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === 'baseColorTexture')
@@ -307,15 +309,13 @@ export const buildShaders = (
   `
 
   return {
-    shaders: {
-      vertex: {
-        code: vs,
-        entryPoint: 'main',
-      },
-      fragment: {
-        code: fs,
-        entryPoint: 'main',
-      },
+    vertex: {
+      code: vs,
+      entryPoint: 'main',
+    },
+    fragment: {
+      code: fs,
+      entryPoint: 'main',
     },
   }
 }

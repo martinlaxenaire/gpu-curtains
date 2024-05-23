@@ -10,7 +10,6 @@ import { Mat4 } from '../../math/Mat4'
 import { Geometry } from '../../core/geometries/Geometry'
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
 import { Mesh } from '../../core/meshes/Mesh'
-import { buildShaders } from './utils'
 import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
 import { GeometryParams, VertexBufferAttribute } from '../../types/Geometries'
 import { ChildDescriptor, MeshDescriptor, PrimitiveInstances, ScenesManager } from '../../types/gltf/GLTFScenesManager'
@@ -836,29 +835,17 @@ export class GLTFScenesManager {
 
   /**
    * Add all the needed {@link Mesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
-   * @param parameters - optional helpers functions to help you patch the {@link Mesh} parameters.
-   * @param parameters.patchMeshParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add uniforms or storages, change rendering options, etc.)
-   * @param parameters.setCustomMeshShaders - allow to optionally define custom shaders to use for the {@link Mesh}, or use the built-in PBR shader builder.
+   * @param patchMeshesParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add custom shaders, uniforms or storages, change rendering options, etc.)
+   * @returns - Array of created {@link Mesh}.
    */
-  addMeshes({
-    patchMeshParameters = (parameters) => {},
-    setCustomMeshShaders = (meshDescriptor, { ambientContribution, lightContribution } = null) =>
-      buildShaders(meshDescriptor, { ambientContribution, lightContribution }),
-  } = {}) {
-    this.scenesManager.meshesDescriptors.forEach((meshDescriptor) => {
+  addMeshes(patchMeshesParameters = (meshDescriptor: MeshDescriptor) => {}): Mesh[] {
+    return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       if (meshDescriptor.parameters.geometry) {
-        // console.warn('>>> Create mesh. Those can help you write the correct shaders:', {
-        //   meshDescriptor,
-        // })
-
-        patchMeshParameters(meshDescriptor.parameters)
-
-        // now generate the shaders
-        const shaders = setCustomMeshShaders(meshDescriptor)
+        // patch the parameters
+        patchMeshesParameters(meshDescriptor)
 
         const mesh = new Mesh(this.renderer, {
           ...meshDescriptor.parameters,
-          ...shaders,
         })
 
         if (meshDescriptor.nodes.length > 1) {
@@ -885,6 +872,8 @@ export class GLTFScenesManager {
         mesh.parent = meshDescriptor.parent
 
         this.scenesManager.meshes.push(mesh)
+
+        return mesh
       }
     })
   }

@@ -8,7 +8,6 @@ import { Mat4 } from '../../math/Mat4.mjs';
 import { Geometry } from '../../core/geometries/Geometry.mjs';
 import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.mjs';
 import { Mesh } from '../../core/meshes/Mesh.mjs';
-import { buildShaders } from './utils.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -631,22 +630,16 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   }
   /**
    * Add all the needed {@link Mesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
-   * @param parameters - optional helpers functions to help you patch the {@link Mesh} parameters.
-   * @param parameters.patchMeshParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add uniforms or storages, change rendering options, etc.)
-   * @param parameters.setCustomMeshShaders - allow to optionally define custom shaders to use for the {@link Mesh}, or use the built-in PBR shader builder.
+   * @param patchMeshesParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add custom shaders, uniforms or storages, change rendering options, etc.)
+   * @returns - Array of created {@link Mesh}.
    */
-  addMeshes({
-    patchMeshParameters = (parameters) => {
-    },
-    setCustomMeshShaders = (meshDescriptor, { ambientContribution, lightContribution } = null) => buildShaders(meshDescriptor, { ambientContribution, lightContribution })
-  } = {}) {
-    this.scenesManager.meshesDescriptors.forEach((meshDescriptor) => {
+  addMeshes(patchMeshesParameters = (meshDescriptor) => {
+  }) {
+    return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       if (meshDescriptor.parameters.geometry) {
-        patchMeshParameters(meshDescriptor.parameters);
-        const shaders = setCustomMeshShaders(meshDescriptor);
+        patchMeshesParameters(meshDescriptor);
         const mesh = new Mesh(this.renderer, {
-          ...meshDescriptor.parameters,
-          ...shaders
+          ...meshDescriptor.parameters
         });
         if (meshDescriptor.nodes.length > 1) {
           const _updateWorldMatrix = mesh.updateWorldMatrix.bind(mesh);
@@ -663,6 +656,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         }
         mesh.parent = meshDescriptor.parent;
         this.scenesManager.meshes.push(mesh);
+        return mesh;
       }
     });
   }

@@ -275,15 +275,13 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
   `
   );
   return {
-    shaders: {
-      vertex: {
-        code: vs,
-        entryPoint: "main"
-      },
-      fragment: {
-        code: fs,
-        entryPoint: "main"
-      }
+    vertex: {
+      code: vs,
+      entryPoint: "main"
+    },
+    fragment: {
+      code: fs,
+      entryPoint: "main"
     }
   };
 };

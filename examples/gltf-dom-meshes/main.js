@@ -111,59 +111,59 @@ window.addEventListener('load', async () => {
     parentNode.boundingBox.copy(boundingBox)
 
     // add the meshes with a really basic lightning setup
-    gltfScenesManager.addMeshes({
-      patchMeshParameters: (parameters) => {
-        // add lights
-        parameters.uniforms = {
-          ...parameters.uniforms,
-          ...{
-            ambientLight: {
-              struct: {
-                intensity: {
-                  type: 'f32',
-                  value: 0.1,
-                },
-                color: {
-                  type: 'vec3f',
-                  value: new Vec3(1),
-                },
+    gltfScenesManager.addMeshes((meshDescriptor) => {
+      const { parameters } = meshDescriptor
+
+      // add lights
+      parameters.uniforms = {
+        ...parameters.uniforms,
+        ...{
+          ambientLight: {
+            struct: {
+              intensity: {
+                type: 'f32',
+                value: 0.1,
               },
-            },
-            directionalLight: {
-              struct: {
-                position: {
-                  type: 'vec3f',
-                  value: new Vec3(5),
-                },
-                color: {
-                  type: 'vec3f',
-                  value: new Vec3(1),
-                },
-                intensity: {
-                  type: 'f32',
-                  value: 2,
-                },
+              color: {
+                type: 'vec3f',
+                value: new Vec3(1),
               },
             },
           },
-        }
-      },
-      setCustomMeshShaders: (meshDescriptor) => {
-        const ambientContribution = /* wgsl */ `
-        ambientContribution = ambientLight.intensity * ambientLight.color;
-        `
+          directionalLight: {
+            struct: {
+              position: {
+                type: 'vec3f',
+                value: new Vec3(5),
+              },
+              color: {
+                type: 'vec3f',
+                value: new Vec3(1),
+              },
+              intensity: {
+                type: 'f32',
+                value: 2,
+              },
+            },
+          },
+        },
+      }
 
-        const lightContribution = /* wgsl */ `
+      // shaders
+      const ambientContribution = /* wgsl */ `
+        ambientContribution = ambientLight.intensity * ambientLight.color;
+      `
+
+      const lightContribution = /* wgsl */ `
         // An extremely simple directional lighting model, just to give our model some shape.
         let N = normalize(normal);
         let L = normalize(directionalLight.position);
         let NDotL = max(dot(N, L), 0.0);
 
         lightContribution = color.rgb * NDotL * directionalLight.color;
-        `
+      `
 
-        return buildShaders(meshDescriptor, { ambientContribution, lightContribution })
-      },
+      parameters.shaders = buildShaders(meshDescriptor, { ambientContribution, lightContribution })
     })
   }
 
