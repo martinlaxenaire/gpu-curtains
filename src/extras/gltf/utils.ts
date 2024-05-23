@@ -27,15 +27,14 @@ export interface BuiltShaders {
   fragment: ShaderOptions
 }
 
-// helper to build PBR vertex and fragment shaders based on our meshDescriptor object
-// see https://github.com/toji/webgpu-clustered-shading/blob/main/js/webgpu-renderer/shaders/pbr.js
+// helper to build vertex and fragment shaders based on our meshDescriptor object
 /**
- * Build Physically Based Rendering shaders based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | PBR shader parameters}.
+ * Build shaders based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | shader parameters}.
  * @param meshDescriptor - {@link MeshDescriptor} built by the {extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
- * @param shaderParameters - {@link ShaderBuilderParameters | PBR shader parameters} to use.
+ * @param shaderParameters - {@link ShaderBuilderParameters | shader parameters} to use.
  * @returns - object containing the shaders
  */
-export const buildPBRShaders = (
+export const buildShaders = (
   meshDescriptor: MeshDescriptor,
   shaderParameters: ShaderBuilderParameters = null
 ): BuiltShaders => {
@@ -175,8 +174,8 @@ export const buildPBRShaders = (
   if (metallicRoughnessTexture) {
     metallicRoughness += /* wgsl */ `
       let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
-      metallic = metallic * metallicRoughness.b;
-      roughness = roughness * metallicRoughness.g;
+      metallic = clamp(metallic * metallicRoughness.b, 0.001, 1.0);
+      roughness = clamp(roughness * metallicRoughness.g, 0.001, 1.0);
     `
   }
 
@@ -193,9 +192,11 @@ export const buildPBRShaders = (
 
   if (emissiveTexture) {
     emissiveOcclusion += /* wgsl */ `
-      // emissive = sRGBToLinear(textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb) * material.emissiveFactor;
+      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
       
-      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb * material.emissiveFactor;
+      // emissive = sRGBToLinear(emissive);
+      
+      emissive *= material.emissiveFactor;
       `
     if (occlusionTexture) {
       emissiveOcclusion += /* wgsl */ `
@@ -251,7 +252,7 @@ export const buildPBRShaders = (
     // PBR
     const PI = ${Math.PI};
     
-    /*
+    
     // tone maping
     fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
       var toneMapColor = color; 
@@ -270,64 +271,21 @@ export const buildPBRShaders = (
       let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
       return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
     }
-    */
+    
   
     // linear <-> sRGB conversions
-    fn linearTosRGB(linear : vec3f) -> vec3f {
+    fn linearTosRGB(linear: vec3f) -> vec3f {
       if (all(linear <= vec3(0.0031308))) {
         return linear * 12.92;
       }
       return (pow(abs(linear), vec3(1.0/2.4)) * 1.055) - vec3(0.055);
     }
   
-    fn sRGBToLinear(srgb : vec3f) -> vec3f {
+    fn sRGBToLinear(srgb: vec3f) -> vec3f {
       if (all(srgb <= vec3(0.04045))) {
         return srgb / vec3(12.92);
       }
       return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
-    }
-    
-    fn FresnelSchlick(cosTheta : f32, F0 : vec3f) -> vec3f {
-      return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
-    }
-    
-    fn DistributionGGX(N : vec3f, H : vec3f, roughness : f32) -> f32 {
-      let a      = roughness*roughness;
-      let a2     = a*a;
-      let NdotH  = max(dot(N, H), 0.0);
-      let NdotH2 = NdotH*NdotH;
-    
-      let num    = a2;
-      let denom  = (NdotH2 * (a2 - 1.0) + 1.0);
-    
-      return num / (PI * denom * denom);
-    }
-    
-    fn GeometrySchlickGGX(NdotV : f32, roughness : f32) -> f32 {
-      let r = (roughness + 1.0);
-      let k = (r*r) / 8.0;
-    
-      let num   = NdotV;
-      let denom = NdotV * (1.0 - k) + k;
-    
-      return num / denom;
-    }
-    
-    fn GeometrySmith(N : vec3f, V : vec3f, L : vec3f, roughness : f32) -> f32 {
-      let NdotV = max(dot(N, V), 0.0);
-      let NdotL = max(dot(N, L), 0.0);
-      let ggx2  = GeometrySchlickGGX(NdotV, roughness);
-      let ggx1  = GeometrySchlickGGX(NdotL, roughness);
-    
-      return ggx1 * ggx2;
-    }
-    
-    fn rangeAttenuation(range : f32, distance : f32) -> f32 {
-      if (range <= 0.0) {
-          // Negative range means no cutoff
-          return 1.0 / pow(distance, 2.0);
-      }
-      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
     }
     
     ${chunks.additionalFragmentHead}
@@ -368,11 +326,82 @@ export const buildPBRShaders = (
   }
 }
 
+// helper to build PBR vertex and fragment shaders based on our meshDescriptor object
+// see https://github.com/toji/webgpu-clustered-shading/blob/main/js/webgpu-renderer/shaders/pbr.js
+/**
+ * Build Physically Based Rendering shaders based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | PBR shader parameters}.
+ * @param meshDescriptor - {@link MeshDescriptor} built by the {extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
+ * @param shaderParameters - {@link ShaderBuilderParameters | PBR shader parameters} to use.
+ * @returns - object containing the shaders
+ */
+export const buildPBRShaders = (
+  meshDescriptor: MeshDescriptor,
+  shaderParameters: ShaderBuilderParameters = null
+): BuiltShaders => {
+  let { chunks } = shaderParameters
+
+  const pbrAdditionalFragmentHead = /* wgsl */ `
+    fn FresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
+      return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
+    }
+    
+    fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
+      let a      = roughness*roughness;
+      let a2     = a*a;
+      let NdotH2 = NdotH*NdotH;
+    
+      let num    = a2;
+      let denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+    
+      return num / (PI * denom * denom);
+    }
+    
+    fn GeometrySchlickGGX(NdotV : f32, roughness : f32) -> f32 {
+      let r = (roughness + 1.0);
+      let k = (r*r) / 8.0;
+    
+      let num   = NdotV;
+      let denom = NdotV * (1.0 - k) + k;
+    
+      return num / denom;
+    }
+    
+    fn GeometrySmith(NdotL: f32, NdotV: f32, roughness : f32) -> f32 {
+      let ggx2  = GeometrySchlickGGX(NdotV, roughness);
+      let ggx1  = GeometrySchlickGGX(NdotL, roughness);
+    
+      return ggx1 * ggx2;
+    }
+    
+    fn rangeAttenuation(range: f32, distance: f32) -> f32 {
+      if (range <= 0.0) {
+          // Negative range means no cutoff
+          return 1.0 / pow(distance, 2.0);
+      }
+      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
+    }
+  `
+
+  if (!chunks) {
+    chunks = {
+      additionalFragmentHead: pbrAdditionalFragmentHead,
+    }
+  } else {
+    if (!chunks.additionalFragmentHead) {
+      chunks.additionalFragmentHead = pbrAdditionalFragmentHead
+    } else {
+      chunks.additionalFragmentHead += pbrAdditionalFragmentHead
+    }
+  }
+
+  return buildShaders(meshDescriptor, shaderParameters)
+}
+
 /**
  * Parameters used to build the shaders
  */
 export interface IBLShaderBuilderParameters extends ShaderBuilderParameters {
-  /** Additional IBL parameters to pass as uniform. */
+  /** Additional IBL parameters to pass as uniform and textures. */
   iblParameters?: {
     /** Environment diffuse strength. Default to `0.5`. */
     diffuseStrength?: number
@@ -460,7 +489,7 @@ export const buildIBLShaders = (
     iblContributionHead = /* wgsl */ `
     const RECIPROCAL_PI = ${1 / Math.PI};
     const RECIPROCAL_PI2 = ${0.5 / Math.PI};
-    const ENV_LODS = 6.0;
+    const ENV_LODS = 4.0;
     const LN2 = 0.6931472;
     
     fn rGBMToLinear(rgbm: vec4f) -> vec4f {
@@ -486,11 +515,7 @@ export const buildIBLShaders = (
     }, vec2(NdV, roughness)).rgb);
       var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${
       envDiffuseTextureDescriptor.sampler
-    }, cartesianToPolar(n))).rgb;
-      // TODO
-      let envDiffuse: f32 = 0.5;
-      let envSpecular: f32 = 0.5;
-      
+    }, cartesianToPolar(n))).rgb;      
       diffuseLight = mix(vec3(1), diffuseLight, ibl.diffuseStrength);
       var blend: f32 = roughness * ENV_LODS;
       let level0: f32 = floor(blend);
@@ -532,6 +557,7 @@ export const buildIBLShaders = (
       let iblContribution = getIBLContribution(max(dot(normal, normalize(fsInput.viewDirection)), 0.0), roughness, normal, reflection, diffuseColor, specularColor);
       
       color = vec4(color.rgb + iblContribution.diffuse + iblContribution.specular, color.a);
+      
       // Add IBL spec to alpha for reflections on transparent surfaces (glass)
       color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
     `

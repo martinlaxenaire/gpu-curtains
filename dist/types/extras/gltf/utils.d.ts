@@ -25,6 +25,13 @@ export interface BuiltShaders {
     fragment: ShaderOptions;
 }
 /**
+ * Build shaders based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | shader parameters}.
+ * @param meshDescriptor - {@link MeshDescriptor} built by the {extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
+ * @param shaderParameters - {@link ShaderBuilderParameters | shader parameters} to use.
+ * @returns - object containing the shaders
+ */
+export declare const buildShaders: (meshDescriptor: MeshDescriptor, shaderParameters?: ShaderBuilderParameters) => BuiltShaders;
+/**
  * Build Physically Based Rendering shaders based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | PBR shader parameters}.
  * @param meshDescriptor - {@link MeshDescriptor} built by the {extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
  * @param shaderParameters - {@link ShaderBuilderParameters | PBR shader parameters} to use.
@@ -35,7 +42,7 @@ export declare const buildPBRShaders: (meshDescriptor: MeshDescriptor, shaderPar
  * Parameters used to build the shaders
  */
 export interface IBLShaderBuilderParameters extends ShaderBuilderParameters {
-    /** Additional IBL parameters to pass as uniform. */
+    /** Additional IBL parameters to pass as uniform and textures. */
     iblParameters?: {
         /** Environment diffuse strength. Default to `0.5`. */
         diffuseStrength?: number;

@@ -76,7 +76,9 @@ window.addEventListener('load', async () => {
     // reset orbit controls
     orbitControls.reset()
 
-    if (url.includes('Sponza')) {
+    const isSponza = url.includes('Sponza')
+
+    if (isSponza) {
       camera.position.y = center.y * 0.25
       camera.position.z = radius * 0.225
       camera.fov = 75
@@ -94,8 +96,6 @@ window.addEventListener('load', async () => {
 
     orbitControls.maxZoom = radius * 2
     camera.far = radius * 6
-
-    camera.updateWorldMatrix()
 
     gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
@@ -139,7 +139,7 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                value: lightPositionLengthSq * 1.5,
+                value: isSponza ? lightPositionLengthSq * 2 : lightPositionLengthSq * 1.5,
               },
             },
           },
@@ -156,19 +156,22 @@ window.addEventListener('load', async () => {
         let V = normalize(fsInput.viewDirection);
         let L = normalize(pointLight.position - fsInput.worldPosition);
         let H = normalize(V + L);
+        
+        let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
+        let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
+        let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
+        let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
       
         // cook-torrance brdf
-        let NDF = DistributionGGX(N, H, roughness);
-        let G = GeometrySmith(N, V, L, roughness);
-        let F = FresnelSchlick(max(dot(H, V), 0.0), f0);
+        let NDF = DistributionGGX(NdotH, roughness);
+        let G = GeometrySmith(NdotL, NdotV, roughness);
+        let F = FresnelSchlick(VdotH, f0);
       
         let kD = (vec3(1.0) - F) * (1.0 - metallic);
       
-        let NdotL = max(dot(N, L), 0.0);
-      
         let numerator = NDF * G * F;
-        let denominator = max(4.0 * max(dot(N, V), 0.0) * NdotL, 0.001);
-        //let denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
+        let denominator = max(4.0 * NdotV * NdotL, 0.001);
+        // let denominator = 4.0 * NdotV * NdotL + 0.0001;
         let specular = numerator / vec3(denominator);
       
         // add lights spec to alpha for reflections on transparent surfaces (glass)

@@ -51,5 +51,5 @@ export { BoxGeometry } from './extras/geometries/BoxGeometry.mjs';
 export { SphereGeometry } from './extras/geometries/SphereGeometry.mjs';
 export { GLTFLoader } from './extras/gltf/GLTFLoader.mjs';
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager.mjs';
-export { buildIBLShaders, buildPBRShaders } from './extras/gltf/utils.mjs';
+export { buildIBLShaders, buildPBRShaders, buildShaders } from './extras/gltf/utils.mjs';
 export { logSceneCommands } from './utils/debug.mjs';

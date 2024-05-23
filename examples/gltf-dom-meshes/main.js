@@ -2,7 +2,7 @@ import {
   GPUCurtains,
   GLTFLoader,
   GLTFScenesManager,
-  buildPBRShaders,
+  buildShaders,
   DOMMesh,
   DOMObject3D,
   Vec3,
@@ -163,7 +163,7 @@ window.addEventListener('load', async () => {
         lightContribution = color.rgb * NDotL * directionalLight.color;
       `
 
-      parameters.shaders = buildPBRShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
+      parameters.shaders = buildShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
     })
   }
 

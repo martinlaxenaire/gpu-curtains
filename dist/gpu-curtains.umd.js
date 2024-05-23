@@ -13826,7 +13826,7 @@ struct VSOutput {
   _primitiveInstances = new WeakMap();
   let GLTFScenesManager = _GLTFScenesManager;
 
-  const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
+  const buildShaders = (meshDescriptor, shaderParameters = null) => {
     const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
     const normalTexture = meshDescriptor.textures.find((t) => t.texture === "normalTexture");
     const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
@@ -13945,8 +13945,8 @@ struct VSOutput {
       metallicRoughness += /* wgsl */
       `
       let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
-      metallic = metallic * metallicRoughness.b;
-      roughness = roughness * metallicRoughness.g;
+      metallic = clamp(metallic * metallicRoughness.b, 0.001, 1.0);
+      roughness = clamp(roughness * metallicRoughness.g, 0.001, 1.0);
     `;
     }
     const f0 = (
@@ -13966,9 +13966,11 @@ struct VSOutput {
     if (emissiveTexture) {
       emissiveOcclusion += /* wgsl */
       `
-      // emissive = sRGBToLinear(textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb) * material.emissiveFactor;
+      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
       
-      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb * material.emissiveFactor;
+      // emissive = sRGBToLinear(emissive);
+      
+      emissive *= material.emissiveFactor;
       `;
       if (occlusionTexture) {
         emissiveOcclusion += /* wgsl */
@@ -14035,7 +14037,7 @@ struct VSOutput {
     // PBR
     const PI = ${Math.PI};
     
-    /*
+    
     // tone maping
     fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
       var toneMapColor = color; 
@@ -14054,64 +14056,21 @@ struct VSOutput {
       let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
       return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
     }
-    */
+    
   
     // linear <-> sRGB conversions
-    fn linearTosRGB(linear : vec3f) -> vec3f {
+    fn linearTosRGB(linear: vec3f) -> vec3f {
       if (all(linear <= vec3(0.0031308))) {
         return linear * 12.92;
       }
       return (pow(abs(linear), vec3(1.0/2.4)) * 1.055) - vec3(0.055);
     }
   
-    fn sRGBToLinear(srgb : vec3f) -> vec3f {
+    fn sRGBToLinear(srgb: vec3f) -> vec3f {
       if (all(srgb <= vec3(0.04045))) {
         return srgb / vec3(12.92);
       }
       return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
-    }
-    
-    fn FresnelSchlick(cosTheta : f32, F0 : vec3f) -> vec3f {
-      return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
-    }
-    
-    fn DistributionGGX(N : vec3f, H : vec3f, roughness : f32) -> f32 {
-      let a      = roughness*roughness;
-      let a2     = a*a;
-      let NdotH  = max(dot(N, H), 0.0);
-      let NdotH2 = NdotH*NdotH;
-    
-      let num    = a2;
-      let denom  = (NdotH2 * (a2 - 1.0) + 1.0);
-    
-      return num / (PI * denom * denom);
-    }
-    
-    fn GeometrySchlickGGX(NdotV : f32, roughness : f32) -> f32 {
-      let r = (roughness + 1.0);
-      let k = (r*r) / 8.0;
-    
-      let num   = NdotV;
-      let denom = NdotV * (1.0 - k) + k;
-    
-      return num / denom;
-    }
-    
-    fn GeometrySmith(N : vec3f, V : vec3f, L : vec3f, roughness : f32) -> f32 {
-      let NdotV = max(dot(N, V), 0.0);
-      let NdotL = max(dot(N, L), 0.0);
-      let ggx2  = GeometrySchlickGGX(NdotV, roughness);
-      let ggx1  = GeometrySchlickGGX(NdotL, roughness);
-    
-      return ggx1 * ggx2;
-    }
-    
-    fn rangeAttenuation(range : f32, distance : f32) -> f32 {
-      if (range <= 0.0) {
-          // Negative range means no cutoff
-          return 1.0 / pow(distance, 2.0);
-      }
-      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
     }
     
     ${chunks.additionalFragmentHead}
@@ -14150,6 +14109,65 @@ struct VSOutput {
         entryPoint: "main"
       }
     };
+  };
+  const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
+    let { chunks } = shaderParameters;
+    const pbrAdditionalFragmentHead = (
+      /* wgsl */
+      `
+    fn FresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
+      return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
+    }
+    
+    fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
+      let a      = roughness*roughness;
+      let a2     = a*a;
+      let NdotH2 = NdotH*NdotH;
+    
+      let num    = a2;
+      let denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+    
+      return num / (PI * denom * denom);
+    }
+    
+    fn GeometrySchlickGGX(NdotV : f32, roughness : f32) -> f32 {
+      let r = (roughness + 1.0);
+      let k = (r*r) / 8.0;
+    
+      let num   = NdotV;
+      let denom = NdotV * (1.0 - k) + k;
+    
+      return num / denom;
+    }
+    
+    fn GeometrySmith(NdotL: f32, NdotV: f32, roughness : f32) -> f32 {
+      let ggx2  = GeometrySchlickGGX(NdotV, roughness);
+      let ggx1  = GeometrySchlickGGX(NdotL, roughness);
+    
+      return ggx1 * ggx2;
+    }
+    
+    fn rangeAttenuation(range: f32, distance: f32) -> f32 {
+      if (range <= 0.0) {
+          // Negative range means no cutoff
+          return 1.0 / pow(distance, 2.0);
+      }
+      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
+    }
+  `
+    );
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: pbrAdditionalFragmentHead
+      };
+    } else {
+      if (!chunks.additionalFragmentHead) {
+        chunks.additionalFragmentHead = pbrAdditionalFragmentHead;
+      } else {
+        chunks.additionalFragmentHead += pbrAdditionalFragmentHead;
+      }
+    }
+    return buildShaders(meshDescriptor, shaderParameters);
   };
   const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
     const { iblParameters } = shaderParameters;
@@ -14203,7 +14221,7 @@ struct VSOutput {
       `
     const RECIPROCAL_PI = ${1 / Math.PI};
     const RECIPROCAL_PI2 = ${0.5 / Math.PI};
-    const ENV_LODS = 6.0;
+    const ENV_LODS = 4.0;
     const LN2 = 0.6931472;
     
     fn rGBMToLinear(rgbm: vec4f) -> vec4f {
@@ -14225,11 +14243,7 @@ struct VSOutput {
     
     fn getIBLContribution(NdV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, specularColor: vec3f) -> IBLContribution {
       let brdf: vec3f = sRGBToLinear(textureSample(${lutTextureDescriptor.texture}, ${lutTextureDescriptor.sampler}, vec2(NdV, roughness)).rgb);
-      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${envDiffuseTextureDescriptor.sampler}, cartesianToPolar(n))).rgb;
-      // TODO
-      let envDiffuse: f32 = 0.5;
-      let envSpecular: f32 = 0.5;
-      
+      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${envDiffuseTextureDescriptor.sampler}, cartesianToPolar(n))).rgb;      
       diffuseLight = mix(vec3(1), diffuseLight, ibl.diffuseStrength);
       var blend: f32 = roughness * ENV_LODS;
       let level0: f32 = floor(blend);
@@ -14267,6 +14281,9 @@ struct VSOutput {
       let iblContribution = getIBLContribution(max(dot(normal, normalize(fsInput.viewDirection)), 0.0), roughness, normal, reflection, diffuseColor, specularColor);
       
       color = vec4(color.rgb + iblContribution.diffuse + iblContribution.specular, color.a);
+      
+      // Add IBL spec to alpha for reflections on transparent surfaces (glass)
+      color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
     `;
     }
     let { chunks } = shaderParameters;
@@ -14435,6 +14452,7 @@ struct VSOutput {
   exports.WritableBufferBinding = WritableBufferBinding;
   exports.buildIBLShaders = buildIBLShaders;
   exports.buildPBRShaders = buildPBRShaders;
+  exports.buildShaders = buildShaders;
   exports.logSceneCommands = logSceneCommands;
 
 }));
