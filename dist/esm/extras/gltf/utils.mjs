@@ -98,7 +98,7 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
       }
     `;
   }
-  let normalMap = `let normal: vec3f = normalize(fsInput.normal);`;
+  let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? `let normal: vec3f = normalize(fsInput.normal);` : `let normal: vec3f = vec3(0.0);`;
   if (useNormalMap) {
     normalMap = `
       let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), normalize(fsInput.normal));

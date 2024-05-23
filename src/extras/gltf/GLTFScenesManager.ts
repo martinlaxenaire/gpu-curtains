@@ -14,6 +14,7 @@ import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
 import { GeometryParams, VertexBufferAttribute } from '../../types/Geometries'
 import { ChildDescriptor, MeshDescriptor, PrimitiveInstances, ScenesManager } from '../../types/gltf/GLTFScenesManager'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { Quat } from '../../math/Quat'
 
 // TODO limitations, example...
 // use a list like: https://github.com/warrenm/GLTFKit2?tab=readme-ov-file#status-and-conformance
@@ -411,6 +412,8 @@ export class GLTFScenesManager {
    * @param node - {@link GLTF.INode | GLTF Node} to use.
    */
   createNode(parent: ChildDescriptor, node: GLTF.INode) {
+    if (node.camera !== undefined) return
+
     const child: ChildDescriptor = {
       name: node.name,
       node: new Object3D(),

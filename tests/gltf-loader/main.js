@@ -118,6 +118,10 @@ window.addEventListener('load', async () => {
       name: 'Box with vertex colors',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxVertexColors/glTF/BoxVertexColors.gltf',
     },
+    cameras: {
+      name: 'Cameras',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Cameras/glTF/Cameras.gltf',
+    },
     multiUVTest: {
       name: 'Multiple UVs',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MultiUVTest/glTF/MultiUVTest.gltf',
@@ -151,11 +155,12 @@ window.addEventListener('load', async () => {
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
 
     const { scenesManager } = gltfScenesManager
-    const { scenes, boundingBox } = scenesManager
+    const { scenes, boundingBox, node } = scenesManager
     container.classList.remove('loading')
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
     const { center, radius } = boundingBox
+    node.position.sub(center)
 
     // reset orbit controls
     orbitControls.reset()
@@ -163,14 +168,15 @@ window.addEventListener('load', async () => {
     const isSponza = url.includes('Sponza')
 
     if (isSponza) {
-      camera.position.y = center.y * 0.25
+      camera.position.y = center.y * 0.25 + node.position.y
       camera.position.z = radius * 0.225
       camera.fov = 75
 
       orbitControls.zoomStep = radius * 0.00025
       orbitControls.minZoom = radius * -0.225
     } else {
-      camera.position.y = center.y
+      camera.position.x = 0
+      camera.position.y = 0
       camera.position.z = radius * 2.5
       camera.fov = 50
 

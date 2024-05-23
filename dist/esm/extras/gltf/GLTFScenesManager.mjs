@@ -318,6 +318,8 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    * @param node - {@link GLTF.INode | GLTF Node} to use.
    */
   createNode(parent, node) {
+    if (node.camera !== void 0)
+      return;
     const child = {
       name: node.name,
       node: new Object3D(),

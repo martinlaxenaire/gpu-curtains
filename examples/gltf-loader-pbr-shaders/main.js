@@ -68,10 +68,13 @@ window.addEventListener('load', async () => {
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
 
     const { scenesManager } = gltfScenesManager
-    const { boundingBox } = scenesManager
+    const { boundingBox, node } = scenesManager
     container.classList.remove('loading')
 
     const { center, radius } = boundingBox
+
+    // center model
+    node.position.sub(center)
 
     // reset orbit controls
     orbitControls.reset()
@@ -79,14 +82,15 @@ window.addEventListener('load', async () => {
     const isSponza = url.includes('Sponza')
 
     if (isSponza) {
-      camera.position.y = center.y * 0.25
+      camera.position.y = center.y * 0.25 + node.position.y
       camera.position.z = radius * 0.225
       camera.fov = 75
 
       orbitControls.zoomStep = radius * 0.00025
       orbitControls.minZoom = radius * -0.225
     } else {
-      camera.position.y = center.y
+      camera.position.x = 0
+      camera.position.y = 0
       camera.position.z = radius * 2.5
       camera.fov = 50
 
