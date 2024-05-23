@@ -168,6 +168,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
     if (this.gltf.samplers) {
       for (const [index, sampler] of Object.entries(this.gltf.samplers)) {
         const descriptor = {
+          label: "glTF sampler " + index,
           name: "gltfSampler" + index,
           // TODO better name?
           addressModeU: _GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
@@ -195,7 +196,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
       }
     } else {
-      this.scenesManager.samplers.push(new Sampler(this.renderer, { name: "gtlfSampler0" }));
+      this.scenesManager.samplers.push(new Sampler(this.renderer, { label: "Default sampler", name: "defaultSampler" }));
     }
   }
   /**
@@ -221,6 +222,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
       label: material.name ? material.name + ": " + name : name,
       name,
       format,
+      visibility: ["fragment"],
       generateMips: true,
       // generate mips by default
       fixedSize: {

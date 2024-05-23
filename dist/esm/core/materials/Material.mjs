@@ -399,7 +399,7 @@ class Material {
     });
     const hasDefaultSampler = this.samplers.find((sampler) => sampler.name === "defaultSampler");
     if (!hasDefaultSampler) {
-      const sampler = new Sampler(this.renderer, { name: "defaultSampler" });
+      const sampler = new Sampler(this.renderer, { label: "Default sampler", name: "defaultSampler" });
       this.addSampler(sampler);
     }
   }

@@ -2,8 +2,17 @@
 // - test various capacities of the gltf loader
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUDeviceManager, GPUCameraRenderer, GLTFLoader, GLTFScenesManager, buildShaders, OrbitControls, Vec3 } =
-    await import(/* @vite-ignore */ path)
+  const {
+    GPUDeviceManager,
+    GPUCameraRenderer,
+    Texture,
+    GLTFLoader,
+    GLTFScenesManager,
+    buildPBRShaders,
+    buildIBLShaders,
+    OrbitControls,
+    Vec3,
+  } = await import(/* @vite-ignore */ path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -28,6 +37,55 @@ window.addEventListener('load', async () => {
 
   const { camera } = gpuCameraRenderer
   const orbitControls = new OrbitControls(gpuCameraRenderer)
+
+  // IBL textures
+  const loadImageBitmap = async (src) => {
+    const response = await fetch(src)
+    return createImageBitmap(await response.blob())
+  }
+
+  const iblLUTBitmap = await loadImageBitmap('./assets/lut.png')
+  const envDiffuseBitmap = await loadImageBitmap('./assets/sunset-diffuse-RGBM.png')
+  const envSpecularBitmap = await loadImageBitmap('./assets/sunset-specular-RGBM.png')
+
+  const originalIblLUTTexture = new Texture(gpuCameraRenderer, {
+    name: 'iblLUTTexture',
+    visibility: ['fragment'],
+    fixedSize: {
+      width: iblLUTBitmap.width,
+      height: iblLUTBitmap.height,
+    },
+  })
+
+  originalIblLUTTexture.uploadSource({
+    source: iblLUTBitmap,
+  })
+
+  const originalEnvDiffuseTexture = new Texture(gpuCameraRenderer, {
+    name: 'envDiffuseTexture',
+    visibility: ['fragment'],
+    fixedSize: {
+      width: envDiffuseBitmap.width,
+      height: envDiffuseBitmap.height,
+    },
+  })
+
+  originalEnvDiffuseTexture.uploadSource({
+    source: envDiffuseBitmap,
+  })
+
+  const originalEnvSpecularTexture = new Texture(gpuCameraRenderer, {
+    name: 'envSpecularTexture',
+    visibility: ['fragment'],
+    fixedSize: {
+      width: envSpecularBitmap.width,
+      height: envSpecularBitmap.height,
+    },
+  })
+
+  originalEnvSpecularTexture.uploadSource({
+    source: envSpecularBitmap,
+  })
 
   const models = {
     damagedHelmet: {
@@ -120,6 +178,25 @@ window.addEventListener('load', async () => {
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
+      // add IBL textures
+      const iblLUTTexture = new Texture(gpuCameraRenderer, {
+        name: 'iblLUTTexture',
+        visibility: ['fragment'],
+        fromTexture: originalIblLUTTexture,
+      })
+
+      const envDiffuseTexture = new Texture(gpuCameraRenderer, {
+        name: 'envDiffuseTexture',
+        visibility: ['fragment'],
+        fromTexture: originalEnvDiffuseTexture,
+      })
+
+      const envSpecularTexture = new Texture(gpuCameraRenderer, {
+        name: 'envSpecularTexture',
+        visibility: ['fragment'],
+        fromTexture: originalEnvSpecularTexture,
+      })
+
       // disable frustum culling
       parameters.frustumCulled = false
 
@@ -135,7 +212,7 @@ window.addEventListener('load', async () => {
             struct: {
               intensity: {
                 type: 'f32',
-                value: 0.1,
+                value: 0.03,
               },
               color: {
                 type: 'vec3f',
@@ -159,7 +236,7 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                value: lightPositionLengthSq * 2,
+                value: lightPositionLengthSq,
               },
             },
           },
@@ -168,41 +245,50 @@ window.addEventListener('load', async () => {
 
       // now the shaders
       const ambientContribution = /* wgsl */ `
-        ambientContribution = ambientLight.intensity * ambientLight.color;
-        `
+      ambientContribution = ambientLight.intensity * ambientLight.color;
+      `
 
       const lightContribution = /* wgsl */ `
-        let N = normalize(normal);
-        let V = normalize(fsInput.viewDirection);
-        let L = normalize(pointLight.position - fsInput.worldPosition);
-        let H = normalize(V + L);
+      let N = normalize(normal);
+      let V = normalize(fsInput.viewDirection);
+      let L = normalize(pointLight.position - fsInput.worldPosition);
+      let H = normalize(V + L);
+    
+      // cook-torrance brdf
+      let NDF = DistributionGGX(N, H, roughness);
+      let G = GeometrySmith(N, V, L, roughness);
+      let F = FresnelSchlick(max(dot(H, V), 0.0), f0);
+    
+      let kD = (vec3(1.0) - F) * (1.0 - metallic);
+    
+      let NdotL = max(dot(N, L), 0.0);
+    
+      let numerator = NDF * G * F;
+      let denominator = max(4.0 * max(dot(N, V), 0.0) * NdotL, 0.001);
+      //let denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
+      let specular = numerator / vec3(denominator);
       
-        // cook-torrance brdf
-        let NDF = DistributionGGX(N, H, roughness);
-        let G = GeometrySmith(N, V, L, roughness);
-        let F = FresnelSchlick(max(dot(H, V), 0.0), f0);
+      // add lights spec to alpha for reflections on transparent surfaces (glass)
+      color.a = max(color.a, max(max(specular.r, specular.g), specular.b));
+              
+      let distance = length(pointLight.position - fsInput.worldPosition);
+      let attenuation = rangeAttenuation(pointLight.range, distance);
       
-        let kD = (vec3(1.0) - F) * (1.0 - metallic);
-      
-        let NdotL = max(dot(N, L), 0.0);
-      
-        let numerator = NDF * G * F;
-        let denominator = max(4.0 * max(dot(N, V), 0.0) * NdotL, 0.001);
-        //let denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
-        let specular = numerator / vec3(denominator);
-      
-        
-        // directional lights do not have attenuation
-        //let attenuation = 1.0;
-                
-        let distance = length(pointLight.position - fsInput.worldPosition);
-        let attenuation = rangeAttenuation(pointLight.range, distance);
-        
-        let radiance = pointLight.color * pointLight.intensity * attenuation;
-        lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
-        `
+      let radiance = pointLight.color * pointLight.intensity * attenuation;
+      lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
+      `
 
-      parameters.shaders = buildShaders(meshDescriptor, { ambientContribution, lightContribution })
+      //parameters.shaders = buildPBRShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
+      parameters.shaders = buildIBLShaders(meshDescriptor, {
+        iblParameters: {
+          diffuseStrength: 1,
+          specularStrength: 1,
+          lutTexture: iblLUTTexture,
+          envDiffuseTexture,
+          envSpecularTexture,
+        },
+        chunks: { ambientContribution, lightContribution },
+      })
     })
 
     console.log(gpuCameraRenderer, meshes)

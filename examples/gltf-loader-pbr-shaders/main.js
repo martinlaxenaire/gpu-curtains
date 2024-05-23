@@ -3,7 +3,7 @@ import {
   GPUCameraRenderer,
   GLTFLoader,
   GLTFScenesManager,
-  buildShaders,
+  buildPBRShaders,
   OrbitControls,
   Vec3,
 } from '../../dist/esm/index.mjs'
@@ -143,7 +143,7 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                value: lightPositionLengthSq * 2,
+                value: lightPositionLengthSq * 1.5,
               },
             },
           },
@@ -175,8 +175,11 @@ window.addEventListener('load', async () => {
         //let denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
         let specular = numerator / vec3(denominator);
       
+        // add lights spec to alpha for reflections on transparent surfaces (glass)
+        color.a = max(color.a, max(max(specular.r, specular.g), specular.b));
         
-        // directional lights do not have attenuation
+        // if we were using directional lights
+        // they would not have any attenuation
         //let attenuation = 1.0;
                 
         let distance = length(pointLight.position - fsInput.worldPosition);
@@ -186,7 +189,7 @@ window.addEventListener('load', async () => {
         lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
       `
 
-      parameters.shaders = buildShaders(meshDescriptor, { ambientContribution, lightContribution })
+      parameters.shaders = buildPBRShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
     })
   }
 

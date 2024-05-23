@@ -226,6 +226,7 @@ export class GLTFScenesManager {
     if (this.gltf.samplers) {
       for (const [index, sampler] of Object.entries(this.gltf.samplers)) {
         const descriptor = {
+          label: 'glTF sampler ' + index,
           name: 'gltfSampler' + index, // TODO better name?
           addressModeU: GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
           addressModeV: GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapT),
@@ -257,8 +258,8 @@ export class GLTFScenesManager {
         this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor))
       }
     } else {
-      // create a default sampler anyway?
-      this.scenesManager.samplers.push(new Sampler(this.renderer, { name: 'gtlfSampler0' }))
+      // create a default sampler
+      this.scenesManager.samplers.push(new Sampler(this.renderer, { label: 'Default sampler', name: 'defaultSampler' }))
     }
   }
 
@@ -286,6 +287,7 @@ export class GLTFScenesManager {
       label: material.name ? material.name + ': ' + name : name,
       name,
       format,
+      visibility: ['fragment'],
       generateMips: true, // generate mips by default
       fixedSize: {
         width: image.width,

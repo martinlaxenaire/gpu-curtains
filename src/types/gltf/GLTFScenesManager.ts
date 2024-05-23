@@ -26,7 +26,7 @@ export interface MeshDescriptorTexture {
   /** Name of the {@link Sampler} to use. */
   sampler: Sampler['name']
   /** {@link MeshDescriptorAttribute.name | Texture coordinate attribute name} to use to map this texture. */
-  texCoordAttributeName: string
+  texCoordAttributeName?: string
 }
 
 /**
@@ -54,7 +54,7 @@ export interface MaterialTextureDescriptor {
   /** {@link Sampler} to use. */
   sampler: Sampler
   /** {@link MeshDescriptorAttribute.name | Texture coordinate attribute name} to use to map this texture. */
-  texCoordAttributeName: string
+  texCoordAttributeName?: string
 }
 
 /**

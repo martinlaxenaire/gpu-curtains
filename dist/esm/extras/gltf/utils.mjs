@@ -1,4 +1,4 @@
-const buildShaders = (meshDescriptor, shaderParameters = null) => {
+const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
   const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
   const normalTexture = meshDescriptor.textures.find((t) => t.texture === "normalTexture");
   const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
@@ -91,6 +91,8 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     `
       var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
       
+      // baseColor = vec4(sRGBToLinear(baseColor.rgb), baseColor.a);
+      
       if (baseColor.a < material.alphaCutoff) {
         discard;
       }
@@ -136,6 +138,8 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
   if (emissiveTexture) {
     emissiveOcclusion += /* wgsl */
     `
+      // emissive = sRGBToLinear(textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb) * material.emissiveFactor;
+      
       emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb * material.emissiveFactor;
       `;
     if (occlusionTexture) {
@@ -157,6 +161,8 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
       color = baseColor;
   `
   );
+  const defaultAdditionalHead = "";
+  const defaultAdditionalColor = "";
   const defaultAmbientContribution = (
     /* wgsl */
     `
@@ -169,28 +175,59 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     lightContribution = vec3(0.0);
   `
   );
-  if (!shaderParameters) {
-    shaderParameters = {
+  let { chunks } = shaderParameters;
+  if (!chunks) {
+    chunks = {
+      additionalFragmentHead: defaultAdditionalHead,
       ambientContribution: defaultAmbientContribution,
-      lightContribution: defaultLightContribution
+      lightContribution: defaultLightContribution,
+      additionalColorContribution: defaultAdditionalColor
     };
   } else {
-    if (!shaderParameters.ambientContribution)
-      shaderParameters.ambientContribution = defaultAmbientContribution;
-    if (!shaderParameters.lightContribution)
-      shaderParameters.lightContribution = defaultLightContribution;
+    if (!chunks.additionalFragmentHead)
+      chunks.additionalFragmentHead = defaultAdditionalHead;
+    if (!chunks.ambientContribution)
+      chunks.ambientContribution = defaultAmbientContribution;
+    if (!chunks.lightContribution)
+      chunks.lightContribution = defaultLightContribution;
+    if (!chunks.additionalColorContribution)
+      chunks.additionalColorContribution = defaultAdditionalColor;
   }
   const applyLightShading = (
     /* wgsl */
     `
       let ambient = ambientContribution * color.rgb * occlusion;
       color = vec4(linearTosRGB(lightContribution + ambient + emissive), color.a);
-      //color = vec4(lightContribution + ambient + emissive, color.a);
+      //color = vec4(linearTosRGB(toneMapKhronosPbrNeutral(lightContribution + ambient + emissive)), color.a);
   `
   );
   const fs = (
     /* wgsl */
     `
+    // PBR
+    const PI = ${Math.PI};
+    
+    /*
+    // tone maping
+    fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
+      var toneMapColor = color; 
+      const startCompression: f32 = 0.8 - 0.04;
+      const desaturation: f32 = 0.15;
+      var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
+      var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
+      toneMapColor = toneMapColor - offset;
+      var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
+      if (peak < startCompression) {
+        return toneMapColor;
+      }
+      const d: f32 = 1. - startCompression;
+      let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
+      toneMapColor *= newPeak / peak;
+      let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
+      return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
+    }
+    */
+  
     // linear <-> sRGB conversions
     fn linearTosRGB(linear : vec3f) -> vec3f {
       if (all(linear <= vec3(0.0031308))) {
@@ -205,9 +242,6 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
       }
       return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
     }
-    
-    // PBR
-    const PI = ${Math.PI};
     
     fn FresnelSchlick(cosTheta : f32, F0 : vec3f) -> vec3f {
       return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
@@ -251,6 +285,8 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
       }
       return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
     }
+    
+    ${chunks.additionalFragmentHead}
   
     ${vertexOutput}
   
@@ -265,11 +301,13 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
       ${initLightShading}
       
       // user defined lightning
-      ${shaderParameters.ambientContribution}
-      ${shaderParameters.lightContribution}
-      
+      ${chunks.ambientContribution}
+      ${chunks.lightContribution}
       
       ${applyLightShading}
+      
+      ${chunks.additionalColorContribution}
+      
       ${returnColor}
     }
   `
@@ -285,5 +323,143 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     }
   };
 };
+const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
+  const { iblParameters } = shaderParameters;
+  meshDescriptor.parameters.uniforms = {
+    ...meshDescriptor.parameters.uniforms,
+    ...{
+      ibl: {
+        struct: {
+          diffuseStrength: {
+            type: "f32",
+            value: iblParameters?.diffuseStrength ?? 0.5
+          },
+          specularStrength: {
+            type: "f32",
+            value: iblParameters?.specularStrength ?? 0.5
+          }
+        }
+      }
+    }
+  };
+  const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters;
+  const useIBLContribution = envDiffuseTexture && envSpecularTexture && lutTexture;
+  let iblContributionHead = "";
+  let iblContribution = "";
+  if (useIBLContribution) {
+    meshDescriptor.parameters.textures = [
+      ...meshDescriptor.parameters.textures,
+      lutTexture,
+      envDiffuseTexture,
+      envSpecularTexture
+    ];
+    const lutTextureDescriptor = {
+      texture: lutTexture.options.name,
+      sampler: "defaultSampler"
+    };
+    const envDiffuseTextureDescriptor = {
+      texture: envDiffuseTexture.options.name,
+      sampler: "defaultSampler"
+    };
+    const envSpecularTextureDescriptor = {
+      texture: envSpecularTexture.options.name,
+      sampler: "defaultSampler"
+    };
+    meshDescriptor.textures = [
+      ...meshDescriptor.textures,
+      lutTextureDescriptor,
+      envDiffuseTextureDescriptor,
+      envSpecularTextureDescriptor
+    ];
+    iblContributionHead = /* wgsl */
+    `
+    const RECIPROCAL_PI = ${1 / Math.PI};
+    const RECIPROCAL_PI2 = ${0.5 / Math.PI};
+    const ENV_LODS = 6.0;
+    const LN2 = 0.6931472;
+    
+    fn rGBMToLinear(rgbm: vec4f) -> vec4f {
+      let maxRange: f32 = 6.0;
+      return vec4(rgbm.xyz * rgbm.w * maxRange, 1.0);
+    }
+    
+    fn cartesianToPolar(n: vec3f) -> vec2f {
+      var uv: vec2f;
+      uv.x = atan2(n.z, n.x) * RECIPROCAL_PI2 + 0.5;
+      uv.y = asin(n.y) * RECIPROCAL_PI + 0.5;
+      return uv;
+    }
+    
+    struct IBLContribution {
+      diffuse: vec3f,
+      specular: vec3f,
+    };
+    
+    fn getIBLContribution(NdV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, specularColor: vec3f) -> IBLContribution {
+      let brdf: vec3f = sRGBToLinear(textureSample(${lutTextureDescriptor.texture}, ${lutTextureDescriptor.sampler}, vec2(NdV, roughness)).rgb);
+      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${envDiffuseTextureDescriptor.sampler}, cartesianToPolar(n))).rgb;
+      // TODO
+      let envDiffuse: f32 = 0.5;
+      let envSpecular: f32 = 0.5;
+      
+      diffuseLight = mix(vec3(1), diffuseLight, ibl.diffuseStrength);
+      var blend: f32 = roughness * ENV_LODS;
+      let level0: f32 = floor(blend);
+      let level1: f32 = min(ENV_LODS, level0 + 1.0);
+      blend -= level0;
+      var uvSpec: vec2f = cartesianToPolar(reflection);
+      uvSpec.y /= 2.0;
+      var uv0: vec2f = uvSpec;
+      var uv1: vec2f = uvSpec;
+      uv0 /= pow(2.0, level0);
+      uv0.y += 1.0 - exp(-LN2 * level0);
+      uv1 /= pow(2.0, level1);
+      uv1.y += 1.0 - exp(-LN2 * level1);
+      let specular0: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv0)).rgb;
+      let specular1: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv1)).rgb;
+      let specularLight: vec3f = mix(specular0, specular1, blend);      
+      
+      var iblContribution: IBLContribution;
+      iblContribution.diffuse = diffuseLight * diffuseColor;
+      
+      let reflectivity: f32 = pow((1.0 - roughness), 2.0) * 0.05;
+      iblContribution.specular = specularLight * (specularColor * brdf.x + brdf.y + reflectivity);
+      iblContribution.specular *= ibl.specularStrength;
+      
+      return iblContribution;
+    }
+    `;
+    iblContribution = /* wgsl */
+    `
+      let reflection: vec3f = normalize(reflect(-normalize(fsInput.viewDirection), normal));
+      
+      let diffuseColor: vec3f = baseColor.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
+      let specularColor: vec3f = mix(f0, baseColor.rgb, metallic);
+    
+      let iblContribution = getIBLContribution(max(dot(normal, normalize(fsInput.viewDirection)), 0.0), roughness, normal, reflection, diffuseColor, specularColor);
+      
+      color = vec4(color.rgb + iblContribution.diffuse + iblContribution.specular, color.a);
+    `;
+  }
+  let { chunks } = shaderParameters;
+  if (!chunks) {
+    chunks = {
+      additionalFragmentHead: iblContributionHead,
+      additionalColorContribution: iblContribution
+    };
+  } else {
+    if (!chunks.additionalFragmentHead) {
+      chunks.additionalFragmentHead = iblContributionHead;
+    } else {
+      chunks.additionalFragmentHead += iblContributionHead;
+    }
+    if (!chunks.additionalColorContribution) {
+      chunks.additionalColorContribution = iblContribution;
+    } else {
+      chunks.additionalColorContribution += iblContribution;
+    }
+  }
+  return buildPBRShaders(meshDescriptor, shaderParameters);
+};
 
-export { buildShaders };
+export { buildIBLShaders, buildPBRShaders };
