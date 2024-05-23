@@ -47,10 +47,6 @@ window.addEventListener('load', async () => {
       name: 'Antique Camera',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AntiqueCamera/glTF/AntiqueCamera.gltf',
     },
-    buggy: {
-      name: 'Buggy',
-      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Buggy/glTF/Buggy.gltf',
-    },
     flightHelmet: {
       name: 'Flight Helmet',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf',

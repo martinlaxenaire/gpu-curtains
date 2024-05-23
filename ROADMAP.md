@@ -24,11 +24,12 @@
 - Scroll + resize, frustum culling check
 - GPUCurtains
 - OrbitControls
+- GLTFLoader + GLTFScenesManager
 
 ## Work in progress
 
 - Examples & tests
-- glTF loading
+- Add/improve GLTFScenesManager features
 
 ## TODO / possible improvements
 
