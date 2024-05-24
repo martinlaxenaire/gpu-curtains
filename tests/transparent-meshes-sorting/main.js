@@ -76,7 +76,6 @@ window.addEventListener('load', async () => {
     cubePivot.parent = pivot
 
     cubePivot.rotation.y = (Math.PI * i * 2) / nbCubes
-    console.log(cubePivot.rotation.y)
     mesh.position.x = 10
 
     mesh.parent = cubePivot
