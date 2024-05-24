@@ -91,11 +91,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
 
     const updateCubeScaleAndPosition = () => {
-      // scale our cube along the Z axis based on its height (Y axis)
-      cubeMesh.scale.z = cubeMesh.worldScale.y
+      // adjust our cube depth scale ratio based on its height (Y axis) and Z world scale
+      // in this case this is not needed because it will already have the Y scale applied to its Z scale
+      // but it can still be useful to understand the concept
+      cubeMesh.DOMObjectDepthScaleRatio = cubeMesh.worldScale.y / cubeMesh.size.scaledWorld.size.z
 
       // move our cube along the Z axis so the front face lies at (0, 0, 0) instead of the cube's center
-      cubeMesh.position.z = -1 * cubeGeometry.boundingBox.max.z * cubeMesh.scale.z
+      // since a box geometry bounding box size along Z axis equals 2
+      // we could also just set it to (-1 * cubeMesh.worldScale.z)
+      cubeMesh.position.z = -0.5 * cubeGeometry.boundingBox.size.z * cubeMesh.worldScale.z
     }
 
     cubeMesh
@@ -130,8 +134,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
 
     const updateSphereScale = () => {
-      // scale our sphere along the Z axis based on its height (Y axis)
-      sphereMesh.scale.z = sphereMesh.worldScale.y
+      // adjust our sphere depth scale ratio based on its height (Y axis) and Z world scale
+      // in this case this is not needed because it will already have the Y scale applied to its Z scale
+      // but it can still be useful to understand the concept
+      sphereMesh.DOMObjectDepthScaleRatio = sphereMesh.worldScale.y / sphereMesh.size.scaledWorld.size.z
     }
 
     sphereMesh

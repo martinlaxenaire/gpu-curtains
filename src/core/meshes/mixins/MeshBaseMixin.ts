@@ -18,7 +18,10 @@ import { RenderPass } from '../../renderPasses/RenderPass'
 
 let meshIndex = 0
 
-export interface MeshBaseRenderParams extends RenderMaterialParams {
+/**
+ * Base render params used to create a Mesh
+ */
+export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'targets'> {
   /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
   autoRender?: boolean
   /** Flag indicating whether to draw this Mesh or not */
@@ -29,6 +32,8 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
   outputTarget?: RenderTarget
   /** Parameters used by this Mesh to create a {@link DOMTexture} */
   texturesOptions?: ExternalTextureParams
+  /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties */
+  targets?: Partial<GPUColorTargetState>[]
 }
 
 /**
@@ -111,7 +116,7 @@ export declare class MeshBaseClass {
   _transparent: boolean
 
   /** Flag indicating whether to draw this {@link MeshBaseClass} or not */
-  visible: boolean
+  _visible: boolean
   /** Flag indicating whether this {@link MeshBaseClass} is ready to be drawn */
   _ready: boolean
 
@@ -271,9 +276,20 @@ export declare class MeshBaseClass {
 
   /**
    * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
-   * @param value
+   * @param value - new transparency value
    */
   set transparent(value: boolean)
+
+  /**
+   * Get the visible property value
+   */
+  get visible(): boolean
+
+  /**
+   * Set the visible property value
+   * @param value - new visibility value
+   */
+  set visible(value: boolean)
 
   /**
    * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
@@ -435,7 +451,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
     _transparent: boolean
 
     /** Flag indicating whether to draw this {@link MeshBase} or not */
-    visible: boolean
+    _visible: boolean
     /** Flag indicating whether this {@link MeshBase} is ready to be drawn */
     _ready: boolean
 
@@ -902,6 +918,21 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       if (switchTransparency) {
         this.addToScene()
       }
+    }
+
+    /**
+     * Get the visible property value
+     */
+    get visible(): boolean {
+      return this._visible
+    }
+
+    /**
+     * Set the visible property value
+     * @param value - new visibility value
+     */
+    set visible(value: boolean) {
+      this._visible = value
     }
 
     /* TEXTURES */

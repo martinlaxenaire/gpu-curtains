@@ -142,19 +142,14 @@ class GPURenderer {
     this.computePasses.forEach((computePass) => computePass.resize());
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
+    this.resizeMeshes();
+  }
+  /**
+   * Resize the {@link meshes}.
+   */
+  resizeMeshes() {
     this.meshes.forEach((mesh) => {
-      if (!("domElement" in mesh)) {
-        mesh.resize(this.boundingRect);
-      } else {
-        this.onBeforeCommandEncoderCreation.add(
-          () => {
-            if (!mesh.domElement.isResizing) {
-              mesh.domElement.setSize();
-            }
-          },
-          { once: true }
-        );
-      }
+      mesh.resize(this.boundingRect);
     });
   }
   /**

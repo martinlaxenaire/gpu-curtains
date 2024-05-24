@@ -72,8 +72,7 @@ window.addEventListener('load', async () => {
     
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
-      vsOutput.normal = normalize((matrices.model * vec4(attributes.normal, 0.0)).xyz);
-      //vsOutput.normal = attributes.normal;
+      vsOutput.normal = getWorldNormal(attributes.normal);
       
       return vsOutput;
     }

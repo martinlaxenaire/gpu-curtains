@@ -92,11 +92,11 @@ window.addEventListener('load', async () => {
     })
 
     const updateCubeScaleAndPosition = () => {
-      // scale our cube along the Z axis based on its height (Y axis)
-      cubeMesh.scale.z = cubeMesh.worldScale.y
+      // adjust our cube depth scale ratio based on its height (Y axis)
+      cubeMesh.DOMObjectDepthScaleRatio = cubeMesh.worldScale.y / cubeMesh.size.scaledWorld.size.z
 
       // move our cube along the Z axis so the front face lies at (0, 0, 0) instead of the cube's center
-      cubeMesh.position.z = -1 * cubeGeometry.boundingBox.max.z * cubeMesh.scale.z
+      cubeMesh.position.z = -1 * cubeMesh.worldScale.z
     }
 
     cubeMesh

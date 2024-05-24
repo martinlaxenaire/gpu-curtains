@@ -24,15 +24,17 @@
 - Scroll + resize, frustum culling check
 - GPUCurtains
 - OrbitControls
+- GLTFLoader + GLTFScenesManager
 
 ## Work in progress
 
 - Examples & tests
-- glTF loading
+- Add/improve GLTFScenesManager features
 
 ## TODO / possible improvements
 
-- Add Mat3 class + normalMatrix to ProjectedObject3D?
+- Sort transparent objects by distance from the camera to the object bounding box center + radius distance before drawing them
+- Option to chose between sphere and OBB frustum culling
 - Mesh raycasting
 - Lights management?
 - Improve typedoc documentation?

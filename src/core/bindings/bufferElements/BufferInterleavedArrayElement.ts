@@ -1,5 +1,5 @@
 import { BufferArrayElement, BufferArrayElementParams } from './BufferArrayElement'
-import { bytesPerRow } from './BufferElement'
+import { InputValue } from '../../../types/BindGroups'
 
 /**
  * Used to compute alignment when dealing with arrays of Struct
@@ -72,7 +72,7 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
    * Update the {@link view} based on the new value, and then update the {@link core/bindings/BufferBinding.BufferBinding#arrayView | buffer binding array view} using sub arrays
    * @param value - new value to use
    */
-  update(value) {
+  update(value: InputValue) {
     super.update(value)
 
     // now use our viewSetFunction to fill the array view with interleaved alignment

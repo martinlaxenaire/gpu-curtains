@@ -60,6 +60,15 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      */
     setMaterial(meshParameters: ProjectedRenderMaterialParams): void;
     /**
+     * Get the visible property value
+     */
+    get visible(): boolean;
+    /**
+     * Set the visible property value
+     * @param value - new visibility value
+     */
+    set visible(value: boolean);
+    /**
      * Resize our Mesh
      * @param boundingRect - the new bounding rectangle
      */

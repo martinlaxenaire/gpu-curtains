@@ -77,6 +77,8 @@ export declare class BindGroup {
     bindGroup: null | GPUBindGroup;
     /** A cache key allowing to get / set {@link GPUBindGroupLayout} from the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#bindGroupLayouts | device manager map cache}. */
     layoutCacheKey: string;
+    /** A cache key allowing the {@link core/pipelines/PipelineManager.PipelineManager | PipelineManager} to compare {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} bind groups content. */
+    pipelineCacheKey: string;
     /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
     needsPipelineFlush: boolean;
     /** A Set to store this {@link BindGroup} consumers ({@link core/materials/Material.Material#uuid | Material uuid})  */

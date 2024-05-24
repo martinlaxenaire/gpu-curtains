@@ -1,13 +1,18 @@
 // Goals of this test:
-// - test the GPUDeviceManager and GPUCameraRenderer without the use of GPUCurtains class
-// - test camera position, rotation, lookAt, fov
-// - test frustum culling
-import { GLTFLoader } from './GLTFLoader.js'
-import { buildShaders, traverseScenes } from './utils.js'
-
+// - test various capacities of the gltf loader
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUDeviceManager, GPUCameraRenderer, OrbitControls, Mesh, Vec3 } = await import(/* @vite-ignore */ path)
+  const {
+    GPUDeviceManager,
+    GPUCameraRenderer,
+    Texture,
+    GLTFLoader,
+    GLTFScenesManager,
+    buildPBRShaders,
+    buildIBLShaders,
+    OrbitControls,
+    Vec3,
+  } = await import(/* @vite-ignore */ path)
 
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
@@ -33,10 +38,65 @@ window.addEventListener('load', async () => {
   const { camera } = gpuCameraRenderer
   const orbitControls = new OrbitControls(gpuCameraRenderer)
 
+  // IBL textures
+  const loadImageBitmap = async (src) => {
+    const response = await fetch(src)
+    return createImageBitmap(await response.blob())
+  }
+
+  const iblLUTBitmap = await loadImageBitmap('./assets/lut.png')
+  const envDiffuseBitmap = await loadImageBitmap('./assets/sunset-diffuse-RGBM.png')
+  const envSpecularBitmap = await loadImageBitmap('./assets/sunset-specular-RGBM.png')
+
+  const originalIblLUTTexture = new Texture(gpuCameraRenderer, {
+    name: 'iblLUTTexture',
+    visibility: ['fragment'],
+    fixedSize: {
+      width: iblLUTBitmap.width,
+      height: iblLUTBitmap.height,
+    },
+  })
+
+  originalIblLUTTexture.uploadSource({
+    source: iblLUTBitmap,
+  })
+
+  const originalEnvDiffuseTexture = new Texture(gpuCameraRenderer, {
+    name: 'envDiffuseTexture',
+    visibility: ['fragment'],
+    format: 'rgba16float',
+    fixedSize: {
+      width: envDiffuseBitmap.width,
+      height: envDiffuseBitmap.height,
+    },
+  })
+
+  originalEnvDiffuseTexture.uploadSource({
+    source: envDiffuseBitmap,
+  })
+
+  const originalEnvSpecularTexture = new Texture(gpuCameraRenderer, {
+    name: 'envSpecularTexture',
+    visibility: ['fragment'],
+    format: 'rgba16float',
+    fixedSize: {
+      width: envSpecularBitmap.width,
+      height: envSpecularBitmap.height,
+    },
+  })
+
+  originalEnvSpecularTexture.uploadSource({
+    source: envSpecularBitmap,
+  })
+
   const models = {
     damagedHelmet: {
       name: 'Damaged Helmet',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF/DamagedHelmet.gltf',
+    },
+    avocado: {
+      name: 'Avocado',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Avocado/glTF/Avocado.gltf',
     },
     antiqueCamera: {
       name: 'Antique Camera',
@@ -50,6 +110,30 @@ window.addEventListener('load', async () => {
       name: 'Flight Helmet',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/FlightHelmet/glTF/FlightHelmet.gltf',
     },
+    suzanne: {
+      name: 'Suzanne',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Suzanne/glTF/Suzanne.gltf',
+    },
+    boxVertexColors: {
+      name: 'Box with vertex colors',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxVertexColors/glTF/BoxVertexColors.gltf',
+    },
+    cameras: {
+      name: 'Cameras',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Cameras/glTF/Cameras.gltf',
+    },
+    multiUVTest: {
+      name: 'Multiple UVs',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MultiUVTest/glTF/MultiUVTest.gltf',
+    },
+    metalRoughSpheresTextureless: {
+      name: 'Metal-Rough Spheres (textureless)',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MetalRoughSpheresNoTextures/glTF/MetalRoughSpheresNoTextures.gltf',
+    },
+    metalRoughSpheres: {
+      name: 'Metal-Rough Spheres',
+      url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MetalRoughSpheres/glTF/MetalRoughSpheres.gltf',
+    },
     sponza: {
       name: 'Sponza',
       url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Sponza/glTF/Sponza.gltf',
@@ -58,125 +142,174 @@ window.addEventListener('load', async () => {
       name: 'Sponza (optimized / interleaved)',
       url: 'https://raw.githubusercontent.com/toji/sponza-optimized/main/Sponza.gltf',
     },
-    // boxVertexColors: {
-    //   name: 'Box with vertex colors',
-    //   url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BoxVertexColors/glTF/BoxVertexColors.gltf',
-    // },
   }
 
   // gltf
-  const gltfLoader = new GLTFLoader({
-    renderer: gpuCameraRenderer,
-  })
+  const gltfLoader = new GLTFLoader()
 
-  let currentScenes = []
+  let gltfScenesManager = null
 
   const loadGLTF = async (url) => {
     container.classList.add('loading')
-    const { gltf, scenes, boundingBox } = await gltfLoader.loadFromUrl(url)
+    const gltf = await gltfLoader.loadFromUrl(url)
+    gltfScenesManager = new GLTFScenesManager({ renderer: gpuCameraRenderer, gltf })
+
+    const { scenesManager } = gltfScenesManager
+    const { scenes, boundingBox, node } = scenesManager
     container.classList.remove('loading')
-    console.log({ gltf, scenes, boundingBox })
-
-    currentScenes = scenes
-
-    const createMesh = (parent, meshDescriptor) => {
-      if (meshDescriptor.parameters.geometry) {
-        console.warn('>>> Create mesh. Those can help you write the correct shaders:', {
-          attributes: meshDescriptor.attributes,
-          textures: meshDescriptor.textures,
-          parameters: meshDescriptor.parameters,
-          nodes: meshDescriptor.nodes,
-        })
-
-        // merge uniforms
-        meshDescriptor.parameters.uniforms = {
-          ...meshDescriptor.parameters.uniforms,
-          ...{
-            light: {
-              struct: {
-                position: {
-                  type: 'vec3f',
-                  value: new Vec3(10),
-                },
-                color: {
-                  type: 'vec3f',
-                  value: new Vec3(1),
-                },
-                ambient: {
-                  type: 'f32',
-                  value: 0.1,
-                },
-              },
-            },
-          },
-        }
-
-        // now generate the shaders
-        const { vs, fs } = buildShaders(meshDescriptor)
-
-        const mesh = new Mesh(gpuCameraRenderer, {
-          ...meshDescriptor.parameters,
-          frustumCulled: false,
-          shaders: {
-            vertex: {
-              code: vs,
-            },
-            fragment: {
-              code: fs,
-            },
-          },
-        })
-
-        if (meshDescriptor.nodes.length > 1) {
-          // if we're dealing with instances
-          // we must patch the mesh updateWorldMatrix method
-          // in order to update the instanceMatrix binding each time the mesh world matrix change
-          const originalWorldUpdateMatrix = mesh.updateWorldMatrix.bind(mesh)
-          mesh.updateWorldMatrix = () => {
-            originalWorldUpdateMatrix()
-
-            meshDescriptor.nodes.forEach((node, i) => {
-              mesh.storages.instances.instanceMatrix.value.set(node.worldMatrix.elements, i * 16)
-            })
-
-            mesh.storages.instances.instanceMatrix.shouldUpdate = true
-          }
-        }
-
-        mesh.parent = parent.node
-
-        meshDescriptor.mesh = mesh
-      }
-    }
-
-    traverseScenes(scenes, ({ child, meshDescriptor }) => {
-      createMesh(child, meshDescriptor)
-    })
-
-    console.log(gpuCameraRenderer)
+    console.log({ gltf, scenesManager, scenes, boundingBox })
 
     const { center, radius } = boundingBox
+
+    // center model
+    node.position.sub(center)
 
     // reset orbit controls
     orbitControls.reset()
 
-    if (url.includes('Sponza')) {
-      camera.position.y = center.y * 0.25
+    const isSponza = url.includes('Sponza')
+
+    if (isSponza) {
+      camera.position.x = 0
+      camera.position.y = center.y * 0.25 + node.position.y
       camera.position.z = radius * 0.225
       camera.fov = 75
 
       orbitControls.zoomStep = radius * 0.00025
       orbitControls.minZoom = radius * -0.225
     } else {
-      camera.position.y = center.y
-      camera.position.z = radius * 2
+      camera.position.x = 0
+      camera.position.y = 0
+      camera.position.z = radius * 2.5
       camera.fov = 50
 
       orbitControls.zoomStep = radius * 0.0025
-      orbitControls.minZoom = radius * -0.5
+      orbitControls.minZoom = radius * -1
     }
 
     orbitControls.maxZoom = radius * 2
+    camera.far = radius * 6
+
+    const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
+      const { parameters } = meshDescriptor
+
+      // add IBL textures
+      const iblLUTTexture = new Texture(gpuCameraRenderer, {
+        name: 'iblLUTTexture',
+        visibility: ['fragment'],
+        fromTexture: originalIblLUTTexture,
+      })
+
+      const envDiffuseTexture = new Texture(gpuCameraRenderer, {
+        name: 'envDiffuseTexture',
+        visibility: ['fragment'],
+        fromTexture: originalEnvDiffuseTexture,
+      })
+
+      const envSpecularTexture = new Texture(gpuCameraRenderer, {
+        name: 'envSpecularTexture',
+        visibility: ['fragment'],
+        fromTexture: originalEnvSpecularTexture,
+      })
+
+      // disable frustum culling
+      parameters.frustumCulled = false
+
+      const lightPosition = new Vec3(radius * 2, radius * 2, radius)
+      const lightPositionLengthSq = lightPosition.lengthSq()
+      const lightPositionLength = lightPosition.length()
+
+      // add lights
+      parameters.uniforms = {
+        ...parameters.uniforms,
+        ...{
+          ambientLight: {
+            struct: {
+              intensity: {
+                type: 'f32',
+                value: 0.03,
+              },
+              color: {
+                type: 'vec3f',
+                value: new Vec3(1),
+              },
+            },
+          },
+          pointLight: {
+            struct: {
+              position: {
+                type: 'vec3f',
+                value: lightPosition,
+              },
+              range: {
+                type: 'f32',
+                value: lightPositionLength * 1.25,
+              },
+              color: {
+                type: 'vec3f',
+                value: new Vec3(1),
+              },
+              intensity: {
+                type: 'f32',
+                value: lightPositionLengthSq,
+              },
+            },
+          },
+        },
+      }
+
+      // now the shaders
+      const ambientContribution = /* wgsl */ `
+      ambientContribution = ambientLight.intensity * ambientLight.color;
+      `
+
+      const lightContribution = /* wgsl */ `
+      let N = normalize(normal);
+      let V = normalize(fsInput.viewDirection);
+      let L = normalize(pointLight.position - fsInput.worldPosition);
+      let H = normalize(V + L);
+      
+      let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
+      let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
+      let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
+      let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
+    
+      // cook-torrance brdf
+      let NDF = DistributionGGX(NdotH, roughness);
+      let G = GeometrySmith(NdotL, NdotV, roughness);
+      let F = FresnelSchlick(VdotH, f0);
+    
+      let kD = (vec3(1.0) - F) * (1.0 - metallic);
+    
+      let numerator = NDF * G * F;
+      let denominator = max(4.0 * NdotV * NdotL, 0.001);
+      //let denominator = 4.0 * NdotV * NdotL + 0.0001;
+      let specular = numerator / vec3(denominator);
+      
+      // add lights spec to alpha for reflections on transparent surfaces (glass)
+      color.a = max(color.a, max(max(specular.r, specular.g), specular.b));
+              
+      let distance = length(pointLight.position - fsInput.worldPosition);
+      let attenuation = rangeAttenuation(pointLight.range, distance);
+      
+      let radiance = pointLight.color * pointLight.intensity * attenuation;
+      lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
+      `
+
+      //parameters.shaders = buildPBRShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
+      parameters.shaders = buildIBLShaders(meshDescriptor, {
+        iblParameters: {
+          diffuseStrength: 0.5,
+          specularStrength: 1,
+          lutTexture: iblLUTTexture,
+          envDiffuseTexture,
+          envSpecularTexture,
+        },
+        chunks: { ambientContribution, lightContribution },
+      })
+    })
+
+    console.log(gpuCameraRenderer, meshes)
   }
 
   // GUI
@@ -197,13 +330,11 @@ window.addEventListener('load', async () => {
     )
     .onChange(async (value) => {
       if (models[value].name !== currentModel.name) {
-        traverseScenes(currentScenes, ({ meshDescriptor }) => {
-          if (meshDescriptor.mesh) {
-            meshDescriptor.mesh.remove()
-          }
-        })
+        if (gltfScenesManager) {
+          gltfScenesManager.destroy()
+        }
 
-        currentScenes = []
+        gltfScenesManager = null
 
         currentModel = models[value]
         await loadGLTF(currentModel.url)
@@ -217,10 +348,6 @@ window.addEventListener('load', async () => {
   const animate = () => {
     gpuDeviceManager.render()
     requestAnimationFrame(animate)
-
-    // currentScenes.forEach((scene) => {
-    //   scene.node.rotation.y += 0.01
-    // })
   }
 
   animate()

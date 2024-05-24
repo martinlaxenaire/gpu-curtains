@@ -47,7 +47,7 @@ class PipelineManager {
       bindGroup.bindings.forEach((binding) => {
         cacheKey += binding.name + ",";
       });
-      cacheKey += bindGroup.layoutCacheKey;
+      cacheKey += bindGroup.pipelineCacheKey;
     });
     const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey });
     if (existingPipelineEntry) {

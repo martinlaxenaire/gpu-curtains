@@ -1,0 +1,40 @@
+@media screen {
+  h1 {
+    margin-bottom: 0;
+  }
+
+  #content {
+    overflow: hidden;
+  }
+
+  #gltf-content {
+    position: relative;
+    float: left;
+    width: 25%;
+    box-sizing: border-box;
+    padding: 1rem;
+    margin: 0 2rem 1rem 0;
+  }
+
+  #gltf {
+    /*
+    Start with the Boom Box (first example) aspect ratio
+    taken from its glTF bounding box size x / y
+     */
+    aspect-ratio: 1.0153 / 1;
+  }
+}
+
+@media screen and (max-aspect-ratio: 10 / 8) {
+  #gltf-content {
+    width: 50%;
+  }
+}
+
+@media screen and (orientation: portrait) {
+  #gltf-content {
+    width: 75%;
+    margin: 0 auto 1rem auto;
+    float: none;
+  }
+}

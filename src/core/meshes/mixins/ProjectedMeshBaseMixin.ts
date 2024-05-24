@@ -91,6 +91,17 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   setMaterial(meshParameters: ProjectedRenderMaterialParams): void
 
   /**
+   * Get the visible property value
+   */
+  get visible(): boolean
+
+  /**
+   * Set the visible property value
+   * @param value - new visibility value
+   */
+  set visible(value: boolean)
+
+  /**
    * Resize our Mesh
    * @param boundingRect - the new bounding rectangle
    */
@@ -334,6 +345,11 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
             type: 'mat4x4f',
             value: this.modelViewMatrix,
           },
+          normal: {
+            // normal matrix
+            type: 'mat3x3f',
+            value: this.normalMatrix,
+          },
           // modelViewProjection: {
           //   type: 'mat4x4f',
           //   value: this.modelViewProjectionMatrix,
@@ -345,6 +361,22 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms }
 
       super.setMaterial(meshParameters)
+    }
+
+    /**
+     * Get the visible property value
+     */
+    get visible(): boolean {
+      return this._visible
+    }
+
+    /**
+     * Set the visible property value
+     * @param value - new visibility value
+     */
+    set visible(value: boolean) {
+      this.shouldUpdateMatrixStack()
+      this._visible = value
     }
 
     /* SIZE & TRANSFORMS */

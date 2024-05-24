@@ -1,6 +1,6 @@
 import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import { ProjectedMeshBaseMixin } from './mixins/ProjectedMeshBaseMixin'
+import { ProjectedMeshBaseMixin, ProjectedMeshParameters } from './mixins/ProjectedMeshBaseMixin'
 import { MeshBaseParams } from './mixins/MeshBaseMixin'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 
@@ -41,7 +41,7 @@ export class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
    * @param renderer - {@link CameraRenderer} object or {@link GPUCurtains} class object used to create this {@link Mesh}
    * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
    */
-  constructor(renderer: CameraRenderer | GPUCurtains, parameters: MeshBaseParams = {}) {
+  constructor(renderer: CameraRenderer | GPUCurtains, parameters: ProjectedMeshParameters = {}) {
     // we could pass our curtains object OR our curtains renderer object
     renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
 

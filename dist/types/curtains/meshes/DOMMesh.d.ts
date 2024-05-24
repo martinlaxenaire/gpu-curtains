@@ -97,6 +97,10 @@ export declare class DOMMesh extends DOMMesh_base {
      */
     get pixelRatioBoundingRect(): DOMElementBoundingRect;
     /**
+     * Compute the Mesh geometry if needed
+     */
+    computeGeometry(): void;
+    /**
      * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
      * @param callback - callback to call each time a {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
      * @returns - our {@link DOMMesh}

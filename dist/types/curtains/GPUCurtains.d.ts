@@ -13,6 +13,7 @@ import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/D
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer';
 import { GPUDeviceManager, GPUDeviceManagerBaseParams, GPUDeviceManagerSetupParams } from '../core/renderers/GPUDeviceManager';
 import { Renderer } from '../core/renderers/utils';
+import { DOMObject3D } from './objects3D/DOMObject3D';
 /**
  * Options used to create a {@link GPUCurtains}
  */
@@ -150,6 +151,11 @@ export declare class GPUCurtains {
      * @readonly
      */
     get domMeshes(): DOMMesh[];
+    /**
+     * Get all created {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} which position should be updated on scroll.
+     * @readonly
+     */
+    get domObjects(): DOMObject3D[];
     /**
      * Get all the created {@link Plane | planes}
      * @readonly

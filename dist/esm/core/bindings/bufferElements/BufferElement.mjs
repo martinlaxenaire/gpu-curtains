@@ -195,11 +195,18 @@ class BufferElement {
     this.view[2] = value.z ?? value[2] ?? 0;
   }
   /**
-   * Set the {@link view} value from a {@link Mat4} or a {@link Quat}
+   * Set the {@link view} value from a {@link Mat4} or {@link Quat}
    * @param value - {@link Mat4} or {@link Quat} to use
    */
   setValueFromMat4OrQuat(value) {
     this.view.set(value.elements);
+  }
+  /**
+   * Set the {@link view} value from a {@link Mat3}
+   * @param value - {@link Mat3} to use
+   */
+  setValueFromMat3(value) {
+    this.setValueFromArrayWithPad(value.elements);
   }
   /**
    * Set the {@link view} value from an array
@@ -232,6 +239,8 @@ class BufferElement {
           return this.setValueFromVec2;
         } else if (this.type === "vec3f") {
           return this.setValueFromVec3;
+        } else if (this.type === "mat3x3f") {
+          return value2.elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad;
         } else if (value2.elements) {
           return this.setValueFromMat4OrQuat;
         } else if (ArrayBuffer.isView(value2) || Array.isArray(value2)) {

@@ -61,7 +61,7 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       near: 1,
-      far: baseRadius * 5,
+      far: baseRadius * 10,
     },
     renderPass: {
       sampleCount,
@@ -339,11 +339,9 @@ window.addEventListener('load', async () => {
       var vsOutput : VSOutput;
       
       // billboard
-      var transformed: vec4f = 
-        vec4(attributes.position, 1.0) * matrices.modelView
-        + vec4(attributes.instancePosition.xyz, 1.0);
-      
-      vsOutput.position = getOutputPosition(transformed.xyz);
+      var mvPosition: vec4f = matrices.modelView * vec4(attributes.instancePosition.xyz, 1.0);
+      mvPosition += vec4(attributes.position, 0.0);
+      vsOutput.position = camera.projection * mvPosition;
       
       vsOutput.uv = attributes.uv;
       vsOutput.normal = attributes.normal;

@@ -165,9 +165,8 @@ window.addEventListener('load', async () => {
   const meshVs = /* wgsl */ `
     struct VertexOutput {
       @builtin(position) position: vec4f,
-      @location(0) fragPosition: vec3f,
-      @location(1) normal: vec3f,
-      @location(2) shadowPos: vec3f,
+      @location(0) normal: vec3f,
+      @location(1) shadowPos: vec3f,
     };
     
     @vertex fn main(
@@ -176,8 +175,7 @@ window.addEventListener('load', async () => {
       var vsOutput: VertexOutput;
     
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.fragPosition = attributes.position;
-      vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
+      vsOutput.normal = normalize(matrices.normal * attributes.normal);
       
       // XY is in (-1, 1) space, Z is in (0, 1) space
       let posFromLight = lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
@@ -196,9 +194,8 @@ window.addEventListener('load', async () => {
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
-      @location(0) fragPosition: vec3f,
-      @location(1) normal: vec3f,
-      @location(2) shadowPos: vec3f,
+      @location(0) normal: vec3f,
+      @location(1) shadowPos: vec3f,
     };
     
     const ambientFactor = 0.5;
@@ -225,7 +222,7 @@ window.addEventListener('load', async () => {
       }
       visibility /= 9.0;
       
-      let lambertFactor = max(dot(normalize(lightning.lightPosition - fsInput.fragPosition.xyz), normalize(fsInput.normal)), 0.0);
+      let lambertFactor = max(dot(normalize(lightning.lightPosition), normalize(fsInput.normal)), 0.0);
       let lightingFactor = min(ambientFactor + visibility * lambertFactor, 1.0);
 
       return vec4(lightingFactor * shading.color, 1.0);

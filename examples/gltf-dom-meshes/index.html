@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | glTF DOM Meshes example</title>
+    <meta
+      name="description"
+      content="Loads various glTF models and create DOM synced WebGPU Meshes with gpu-curtains"
+    />
+
+    <meta property="og:title" content="gpu-curtains | glTF DOM Meshes example" />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:description"
+      content="Loads various glTF models and create DOM synced WebGPU Meshes with gpu-curtains"
+    />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
+    />
+    <meta property="og:url" content="https://martinlaxenaire.github.io/gpu-curtains/examples/gltf-dom-meshes/" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link href="../common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <div id="canvas"></div>
+
+    <div id="page">
+      <h1>glTF DOM Meshes</h1>
+
+      <div id="content" class="small-container">
+        <div id="gltf-content">
+          <div id="gltf"></div>
+        </div>
+        <div id="text-content">
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi quis eros nunc. Aliquam erat volutpat.
+            Quisque a ornare diam. Aliquam felis nibh, feugiat vel sapien in, interdum ornare nisi. Nam ut justo nec
+            purus ornare cursus. Sed pellentesque bibendum ipsum, vitae dapibus est sollicitudin quis. Class aptent
+            taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Ut et pellentesque tellus.
+            Etiam in neque et erat hendrerit commodo a et ipsum. Vestibulum auctor pellentesque metus, sed interdum elit
+            consequat sit amet. Nulla facilisi. Nullam bibendum, erat sit amet maximus aliquam, mi justo lobortis dolor,
+            sed faucibus est lorem vitae orci.
+          </p>
+          <p>
+            Nunc id felis non turpis fermentum placerat. Aenean porta metus arcu, a aliquet quam pellentesque et.
+            Curabitur quis metus vitae risus ultrices condimentum nec vel nunc. Vestibulum ante ipsum primis in faucibus
+            orci luctus et ultrices posuere cubilia curae; Etiam a urna sed lacus tempus scelerisque sit amet quis
+            augue. Pellentesque sapien metus, ultrices at fringilla at, venenatis eget ipsum. Nulla quis tincidunt
+            magna. Sed suscipit condimentum sapien et facilisis. Quisque at luctus urna. Proin pharetra nibh eu
+            dignissim bibendum. Aliquam lobortis velit eros, sit amet pretium arcu mollis elementum. Aliquam consequat
+            justo sit amet lacus interdum fringilla.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/gltf-dom-meshes/main.js"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
+    <script src="main.js" type="module"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-45554DLGL6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+      gtag('js', new Date())
+
+      gtag('config', 'G-45554DLGL6')
+
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window['ga-disable-G-45554DLGL6'] = true
+      }
+    </script>
+  </body>
+</html>

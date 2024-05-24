@@ -28,6 +28,7 @@ class BindGroup {
     if (this.options.uniforms || this.options.storages)
       this.setInputBindings();
     this.layoutCacheKey = "";
+    this.pipelineCacheKey = "";
     this.resetEntries();
     this.bindGroupLayout = null;
     this.bindGroup = null;
@@ -163,6 +164,7 @@ class BindGroup {
    */
   resetBindGroup() {
     this.entries.bindGroup = [];
+    this.pipelineCacheKey = "";
     for (const binding of this.bindings) {
       this.addBindGroupEntry(binding);
     }
@@ -177,6 +179,7 @@ class BindGroup {
       binding: this.entries.bindGroup.length,
       resource: binding.resource
     });
+    this.pipelineCacheKey += binding.cacheKey;
   }
   /**
    * Reset the {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entries}, recreates them and then recreate the {@link BindGroup#bindGroupLayout | GPU bind group layout}

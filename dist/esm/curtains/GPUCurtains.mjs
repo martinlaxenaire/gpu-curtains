@@ -222,6 +222,13 @@ class GPUCurtains {
     return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domMeshes).flat();
   }
   /**
+   * Get all created {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} which position should be updated on scroll.
+   * @readonly
+   */
+  get domObjects() {
+    return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domObjects).flat();
+  }
+  /**
    * Get all the created {@link Plane | planes}
    * @readonly
    */
@@ -286,9 +293,9 @@ class GPUCurtains {
    * @param delta - last {@link ScrollManager#delta | scroll delta values}
    */
   updateScroll(delta = { x: 0, y: 0 }) {
-    this.domMeshes.forEach((mesh) => {
-      if (mesh.domElement) {
-        mesh.updateScrollPosition(delta);
+    this.domObjects.forEach((domObject) => {
+      if (domObject.domElement) {
+        domObject.updateScrollPosition(delta);
       }
     });
     this._onScrollCallback && this._onScrollCallback();

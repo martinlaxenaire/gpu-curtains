@@ -1,6 +1,7 @@
 import { Object3D } from './Object3D.mjs';
 import { isCameraRenderer } from '../renderers/utils.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
+import { Mat3 } from '../../math/Mat3.mjs';
 
 class ProjectedObject3D extends Object3D {
   /**
@@ -61,6 +62,13 @@ class ProjectedObject3D extends Object3D {
         onUpdate: () => {
           this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix);
         }
+      },
+      normal: {
+        matrix: new Mat3(),
+        shouldUpdate: true,
+        onUpdate: () => {
+          this.normalMatrix.getNormalMatrix(this.worldMatrix);
+        }
       }
     };
   }
@@ -107,6 +115,20 @@ class ProjectedObject3D extends Object3D {
     this.matrices.modelViewProjection.shouldUpdate = true;
   }
   /**
+   * Get our {@link normalMatrix | normal matrix}
+   */
+  get normalMatrix() {
+    return this.matrices.normal.matrix;
+  }
+  /**
+   * Set our {@link normalMatrix | normal matrix}
+   * @param value - new {@link normalMatrix | normal matrix}
+   */
+  set normalMatrix(value) {
+    this.matrices.normal.matrix = value;
+    this.matrices.normal.shouldUpdate = true;
+  }
+  /**
    * Set our projection matrices shouldUpdate flags to true (tell them to update)
    */
   shouldUpdateProjectionMatrixStack() {
@@ -119,6 +141,7 @@ class ProjectedObject3D extends Object3D {
   shouldUpdateWorldMatrix() {
     super.shouldUpdateWorldMatrix();
     this.shouldUpdateProjectionMatrixStack();
+    this.matrices.normal.shouldUpdate = true;
   }
   /**
    * Tell all our matrices to update

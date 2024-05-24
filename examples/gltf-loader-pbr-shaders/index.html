@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | glTF loader and PBR shaders example</title>
+    <meta
+      name="description"
+      content="Loads various glTF models and create Physically Based Rendered WebGPU Meshes with gpu-curtains"
+    />
+
+    <meta property="og:title" content="gpu-curtains | glTF loader and PBR shaders example" />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:description"
+      content="Loads various glTF models and create Physically Based Rendered WebGPU Meshes with gpu-curtains"
+    />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/gpu-curtains-logo-1920-1280.jpg"
+    />
+    <meta
+      property="og:url"
+      content="https://martinlaxenaire.github.io/gpu-curtains/examples/gltf-loader-pbr-shaders/"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <div id="canvas"></div>
+
+    <div id="credits">
+      Optimized Sponza model by
+      <a href="https://github.com/toji/sponza-optimized" target="_blank">Brandon Jones</a><br />
+      All other models by
+      <a href="https://github.com/KhronosGroup/glTF-Sample-Assets" target="_blank">glTF Sample Assets</a>
+    </div>
+
+    <a
+      href="https://github.com/martinlaxenaire/gpu-curtains/blob/main/examples/gltf-loader-pbr-shaders/main.js"
+      title="Show source code"
+      id="source-code-link"
+      class="primary-button"
+      target="_blank"
+      >&lt;/ &gt;</a
+    >
+
+    <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
+    <script src="main.js" type="module"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-45554DLGL6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+      gtag('js', new Date())
+
+      gtag('config', 'G-45554DLGL6')
+
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window['ga-disable-G-45554DLGL6'] = true
+      }
+    </script>
+  </body>
+</html>

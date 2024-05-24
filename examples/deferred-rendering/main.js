@@ -112,7 +112,8 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
       
-      vsOutput.normal = normalize((normals.inverseTransposeMatrix * vec4(attributes.normal, 0.0)).xyz);
+      // use view space normal when dealing using a geometry buffer
+      vsOutput.normal = getViewNormal(attributes.normal);
       
       return vsOutput;
     }
@@ -178,14 +179,6 @@ window.addEventListener('load', async () => {
         },
       },
       uniforms: {
-        normals: {
-          struct: {
-            inverseTransposeMatrix: {
-              type: 'mat4x4f',
-              value: new Mat4(),
-            },
-          },
-        },
         shading: {
           struct: {
             color: {
@@ -215,10 +208,6 @@ window.addEventListener('load', async () => {
     cubeMesh.onBeforeRender(() => {
       cubeMesh.rotation.y += rotationSpeed
       cubeMesh.rotation.z += rotationSpeed
-
-      cubeMesh.uniforms.normals.inverseTransposeMatrix.value.copy(cubeMesh.worldMatrix).invert().transpose()
-      // explicitly tell the uniform to update
-      cubeMesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
     })
   }
 
@@ -245,14 +234,6 @@ window.addEventListener('load', async () => {
       },
     },
     uniforms: {
-      normals: {
-        struct: {
-          inverseTransposeMatrix: {
-            type: 'mat4x4f',
-            value: new Mat4(),
-          },
-        },
-      },
       shading: {
         struct: {
           color: {
@@ -266,12 +247,6 @@ window.addEventListener('load', async () => {
 
   floor.rotation.x = -Math.PI / 2
   floor.scale.set(systemSize.x, systemSize.z, 1)
-
-  floor.onRender(() => {
-    floor.uniforms.normals.inverseTransposeMatrix.value.copy(floor.worldMatrix).invert().transpose()
-    // explicitly tell the uniform to update
-    floor.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
-  })
 
   // create 2 textures based on our GBuffer MRT output
   const gBufferAlbedoTexture = new Texture(gpuCameraRenderer, {

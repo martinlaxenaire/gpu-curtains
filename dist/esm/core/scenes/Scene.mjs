@@ -1,6 +1,11 @@
 import { isRenderer } from '../renderers/utils.mjs';
 import { Object3D } from '../objects3D/Object3D.mjs';
+import { Vec3 } from '../../math/Vec3.mjs';
 
+const camPosA = new Vec3();
+const camPosB = new Vec3();
+const posA = new Vec3();
+const posB = new Vec3();
 class Scene extends Object3D {
   /**
    * Scene constructor
@@ -293,11 +298,27 @@ class Scene extends Object3D {
     }
   }
   /**
+   * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
+   * @param meshes - transparent projected meshes array to sort
+   */
+  sortTransparentMeshes(meshes) {
+    meshes.sort((meshA, meshB) => {
+      if (meshA.renderOrder !== meshB.renderOrder) {
+        return meshA.renderOrder - meshB.renderOrder;
+      }
+      meshA.geometry ? posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix) : meshA.worldMatrix.getTranslation(posA);
+      meshB.geometry ? posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix) : meshB.worldMatrix.getTranslation(posB);
+      const radiusA = meshA.geometry ? meshA.geometry.boundingBox.radius * meshA.worldMatrix.getMaxScaleOnAxis() : 0;
+      const radiusB = meshB.geometry ? meshB.geometry.boundingBox.radius * meshB.worldMatrix.getMaxScaleOnAxis() : 0;
+      return meshB.camera.worldMatrix.getTranslation(camPosB).distance(posB) - radiusB - (meshA.camera.worldMatrix.getTranslation(camPosA).distance(posA) - radiusA);
+    });
+  }
+  /**
    * Here we render a {@link RenderPassEntry}:
    * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
    * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
    * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
-   * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link CameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
+   * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
    * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
    * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
    * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
@@ -324,6 +345,7 @@ class Scene extends Object3D {
         for (const mesh of renderPassEntry.stack.projected.opaque) {
           mesh.render(pass);
         }
+        this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
         for (const mesh of renderPassEntry.stack.projected.transparent) {
           mesh.render(pass);
         }

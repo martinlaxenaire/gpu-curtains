@@ -29,11 +29,19 @@ class Box3 {
     return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
   }
   /**
+   * Copy a {@link Box3} into this {@link Box3}.
+   * @param box - {@link Box3} to copy
+   */
+  copy(box) {
+    this.set(box.min.clone(), box.max.clone());
+    return this;
+  }
+  /**
    * Clone this {@link Box3}
    * @returns - cloned {@link Box3}
    */
   clone() {
-    return new Box3().set(this.min, this.max);
+    return new Box3().copy(this);
   }
   /**
    * Get the {@link Box3} center

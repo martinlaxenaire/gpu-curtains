@@ -3,10 +3,24 @@ import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { CameraRenderer } from '../renderers/utils';
 import { Mat4 } from '../../math/Mat4';
 import { Camera } from '../camera/Camera';
+import { Mat3 } from '../../math/Mat3';
+/**
+ * Defines an {@link Object3D} normal matrix object
+ */
+export interface Object3DNormalMatrix {
+    /** The {@link Mat3} matrix used */
+    matrix: Mat3;
+    /** Whether we should update the {@link Mat3} matrix */
+    shouldUpdate: boolean;
+    /** Function to update our {@link Mat3} matrix */
+    onUpdate: () => void;
+}
 /** Defines all kind of possible {@link ProjectedObject3D} matrix types */
 export type ProjectedObject3DMatricesType = Object3DMatricesType | 'modelView' | 'modelViewProjection';
+/** Defines the special {@link ProjectedObject3D} normal matrix type */
+export type ProjectedObject3DNormalMatrix = Record<'normal', Object3DNormalMatrix>;
 /** Defines all possible {@link Object3DTransformMatrix | matrix object} used by our {@link ProjectedObject3D} */
-export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix>;
+export type ProjectedObject3DMatrices = Record<ProjectedObject3DMatricesType, Object3DTransformMatrix> & ProjectedObject3DNormalMatrix;
 /**
  * Used to apply the {@link Camera#projectionMatrix | projection} and {@link Camera#viewMatrix | view} matrices of a {@link Camera} to an {@link Object3D}, in order to compute {@link ProjectedObject3D#modelViewMatrix | modelView} and {@link ProjectedObject3D#modelViewProjectionMatrix | modelViewProjection} matrices.
  */
@@ -68,6 +82,15 @@ export declare class ProjectedObject3D extends Object3D {
      * @param value - new {@link modelViewProjectionMatrix | model view projection matrix}s
      */
     set modelViewProjectionMatrix(value: Mat4);
+    /**
+     * Get our {@link normalMatrix | normal matrix}
+     */
+    get normalMatrix(): Mat3;
+    /**
+     * Set our {@link normalMatrix | normal matrix}
+     * @param value - new {@link normalMatrix | normal matrix}
+     */
+    set normalMatrix(value: Mat3);
     /**
      * Set our projection matrices shouldUpdate flags to true (tell them to update)
      */

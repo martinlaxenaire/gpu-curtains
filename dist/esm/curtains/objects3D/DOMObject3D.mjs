@@ -1,7 +1,9 @@
 import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D.mjs';
 import { isCurtainsRenderer } from '../../core/renderers/utils.mjs';
 import { DOMElement } from '../../core/DOM/DOMElement.mjs';
+import { Vec2 } from '../../math/Vec2.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { Box3 } from '../../math/Box3.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -16,7 +18,12 @@ var __privateAdd = (obj, member, value) => {
     throw TypeError("Cannot add the same private member more than once");
   member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 };
-var _DOMObjectWorldPosition, _DOMObjectWorldScale;
+var __privateSet = (obj, member, value, setter) => {
+  __accessCheck(obj, member, "write to private field");
+  setter ? setter.call(obj, value) : member.set(obj, value);
+  return value;
+};
+var _DOMObjectWorldPosition, _DOMObjectWorldScale, _DOMObjectDepthScaleRatio;
 class DOMObject3D extends ProjectedObject3D {
   /**
    * DOMObject3D constructor
@@ -29,27 +36,43 @@ class DOMObject3D extends ProjectedObject3D {
     /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
     __privateAdd(this, _DOMObjectWorldPosition, new Vec3());
     /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
-    __privateAdd(this, _DOMObjectWorldScale, new Vec3());
+    __privateAdd(this, _DOMObjectWorldScale, new Vec3(1));
+    /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
+    __privateAdd(this, _DOMObjectDepthScaleRatio, 1);
+    /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
+    this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
+    /** function assigned to the {@link onAfterDOMElementResize} callback */
+    this._onAfterDOMElementResizeCallback = () => {
+    };
     renderer = renderer && renderer.renderer || renderer;
     isCurtainsRenderer(renderer, "DOM3DObject");
     this.renderer = renderer;
     this.size = {
-      world: {
-        width: 0,
-        height: 0,
-        top: 0,
-        left: 0
-      },
       document: {
         width: 0,
         height: 0,
         top: 0,
         left: 0
+      },
+      normalizedWorld: {
+        size: new Vec2(1),
+        position: new Vec2()
+      },
+      cameraWorld: {
+        size: new Vec2(1),
+        position: new Vec2()
+      },
+      scaledWorld: {
+        size: new Vec3(1),
+        position: new Vec3()
       }
     };
     this.watchScroll = parameters.watchScroll;
     this.camera = this.renderer.camera;
+    this.boundingBox.min.onChange(() => this.updateSizeAndPosition());
+    this.boundingBox.max.onChange(() => this.updateSizeAndPosition());
     this.setDOMElement(element);
+    this.renderer.domObjects.push(this);
   }
   /**
    * Set the {@link domElement | DOM Element}
@@ -88,24 +111,17 @@ class DOMObject3D extends ProjectedObject3D {
   updateSizeAndPosition() {
     this.setWorldSizes();
     this.applyPosition();
-    this.shouldUpdateModelMatrix();
-  }
-  /**
-   * Update the {@link DOMObject3D} sizes, position and projection
-   */
-  shouldUpdateMatrixStack() {
-    this.updateSizeAndPosition();
-    super.shouldUpdateMatrixStack();
   }
   /**
    * Resize the {@link DOMObject3D}
    * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
-  resize(boundingRect) {
+  resize(boundingRect = null) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
       return;
     this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-    this.shouldUpdateMatrixStack();
+    this.updateSizeAndPosition();
+    this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
   }
   /* BOUNDING BOXES GETTERS */
   /**
@@ -205,9 +221,9 @@ class DOMObject3D extends ProjectedObject3D {
       worldPosition = this.documentToWorldSpace(this.documentPosition);
     }
     __privateGet(this, _DOMObjectWorldPosition).set(
-      this.position.x + this.size.world.left + worldPosition.x,
-      this.position.y + this.size.world.top + worldPosition.y,
-      this.position.z + this.documentPosition.z / this.camera.CSSPerspective
+      this.position.x + this.size.scaledWorld.position.x + worldPosition.x,
+      this.position.y + this.size.scaledWorld.position.y + worldPosition.y,
+      this.position.z + this.size.scaledWorld.position.z + this.documentPosition.z / this.camera.CSSPerspective
     );
   }
   /**
@@ -230,7 +246,7 @@ class DOMObject3D extends ProjectedObject3D {
       this.scale,
       this.worldTransformOrigin
     );
-    this.modelMatrix.scale(__privateGet(this, _DOMObjectWorldScale));
+    this.modelMatrix.scale(this.DOMObjectWorldScale);
     this.shouldUpdateWorldMatrix();
   }
   /**
@@ -245,9 +261,9 @@ class DOMObject3D extends ProjectedObject3D {
     );
   }
   /**
-   * Set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+   * Compute the {@link DOMObject3D#size | world sizes}
    */
-  setWorldSizes() {
+  computeWorldSizes() {
     const containerBoundingRect = this.renderer.boundingRect;
     const planeCenter = {
       x: this.size.document.width / 2 + this.size.document.left,
@@ -257,14 +273,60 @@ class DOMObject3D extends ProjectedObject3D {
       x: containerBoundingRect.width / 2 + containerBoundingRect.left,
       y: containerBoundingRect.height / 2 + containerBoundingRect.top
     };
-    this.size.world = {
-      width: this.size.document.width / containerBoundingRect.width * this.camera.screenRatio.width / 2,
-      height: this.size.document.height / containerBoundingRect.height * this.camera.screenRatio.height / 2,
-      top: (containerCenter.y - planeCenter.y) / containerBoundingRect.height * this.camera.screenRatio.height,
-      left: (planeCenter.x - containerCenter.x) / containerBoundingRect.width * this.camera.screenRatio.width
-    };
-    __privateGet(this, _DOMObjectWorldScale).set(this.size.world.width, this.size.world.height, 1);
+    const { size, center } = this.boundingBox;
+    if (size.x !== 0 && size.y !== 0 && size.z !== 0) {
+      center.divide(size);
+    }
+    this.size.normalizedWorld.size.set(
+      this.size.document.width / containerBoundingRect.width,
+      this.size.document.height / containerBoundingRect.height
+    );
+    this.size.normalizedWorld.position.set(
+      (planeCenter.x - containerCenter.x) / containerBoundingRect.width,
+      (containerCenter.y - planeCenter.y) / containerBoundingRect.height
+    );
+    this.size.cameraWorld.size.set(
+      this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
+      this.size.normalizedWorld.size.y * this.camera.screenRatio.height
+    );
+    this.size.cameraWorld.position.set(
+      this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
+      this.size.normalizedWorld.position.y * this.camera.screenRatio.height
+    );
+    this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
+    this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
+    this.size.scaledWorld.position.set(
+      this.size.cameraWorld.position.x - center.x * this.size.scaledWorld.size.x * size.x,
+      this.size.cameraWorld.position.y - center.y * this.size.scaledWorld.size.y * size.y,
+      -center.z
+    );
+  }
+  /**
+   * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+   */
+  setWorldSizes() {
+    this.computeWorldSizes();
+    this.setWorldScale();
     this.setWorldTransformOrigin();
+  }
+  /**
+   * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
+   */
+  setWorldScale() {
+    __privateGet(this, _DOMObjectWorldScale).set(
+      this.size.scaledWorld.size.x,
+      this.size.scaledWorld.size.y,
+      this.size.scaledWorld.size.z * __privateGet(this, _DOMObjectDepthScaleRatio)
+    );
+    this.shouldUpdateMatrixStack();
+  }
+  /**
+   * Set {@link DOMObjectDepthScaleRatio}. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis.
+   * @param value - depth scale ratio value to use
+   */
+  set DOMObjectDepthScaleRatio(value) {
+    __privateSet(this, _DOMObjectDepthScaleRatio, value);
+    this.setWorldScale();
   }
   /**
    * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
@@ -272,13 +334,12 @@ class DOMObject3D extends ProjectedObject3D {
   setWorldTransformOrigin() {
     this.transforms.origin.world = new Vec3(
       (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-      this.size.world.width,
+      this.size.scaledWorld.size.x,
       -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-      this.size.world.height,
-      this.transformOrigin.z
+      this.size.scaledWorld.size.y,
+      this.transformOrigin.z * this.size.scaledWorld.size.z
     );
-    this.shouldUpdateModelMatrix();
-    this.shouldUpdateProjectionMatrixStack();
+    this.shouldUpdateMatrixStack();
   }
   /**
    * Update the {@link domElement | DOM Element} scroll position
@@ -290,13 +351,26 @@ class DOMObject3D extends ProjectedObject3D {
     }
   }
   /**
+   * Callback to execute just after the {@link domElement} has been resized.
+   * @param callback - callback to run just after {@link domElement} has been resized
+   * @returns - our Mesh
+   */
+  onAfterDOMElementResize(callback) {
+    if (callback) {
+      this._onAfterDOMElementResizeCallback = callback;
+    }
+    return this;
+  }
+  /**
    * Destroy our {@link DOMObject3D}
    */
   destroy() {
+    super.destroy();
     this.domElement?.destroy();
   }
 }
 _DOMObjectWorldPosition = new WeakMap();
 _DOMObjectWorldScale = new WeakMap();
+_DOMObjectDepthScaleRatio = new WeakMap();
 
 export { DOMObject3D };

@@ -34,22 +34,22 @@ class Mat4 {
   /***
    * Sets the matrix from 16 numbers
    *
-   * @param n11 number
-   * @param n12 number
-   * @param n13 number
-   * @param n14 number
-   * @param n21 number
-   * @param n22 number
-   * @param n23 number
-   * @param n24 number
-   * @param n31 number
-   * @param n32 number
-   * @param n33 number
-   * @param n34 number
-   * @param n41 number
-   * @param n42 number
-   * @param n43 number
-   * @param n44 number
+   * @param n11 - number
+   * @param n12 - number
+   * @param n13 - number
+   * @param n14 - number
+   * @param n21 - number
+   * @param n22 - number
+   * @param n23 - number
+   * @param n24 - number
+   * @param n31 - number
+   * @param n32 - number
+   * @param n33 - number
+   * @param n34 - number
+   * @param n41 - number
+   * @param n42 - number
+   * @param n43 - number
+   * @param n44 - number
    *
    * @returns - this {@link Mat4} after being set
    */
@@ -129,7 +129,7 @@ class Mat4 {
   }
   /**
    * Copy another {@link Mat4}
-   * @param matrix
+   * @param matrix - matrix to copy
    * @returns - this {@link Mat4} after being set
    */
   copy(matrix = new Mat4()) {
@@ -408,6 +408,17 @@ class Mat4 {
     te[6] = yz + wx;
     te[10] = 1 - (xx + yy);
     return this;
+  }
+  /**
+   * Get the maximum scale of the {@link Mat4} on all axes
+   * @returns - maximum scale of the {@link Mat4}
+   */
+  getMaxScaleOnAxis() {
+    const te = this.elements;
+    const scaleXSq = te[0] * te[0] + te[1] * te[1] + te[2] * te[2];
+    const scaleYSq = te[4] * te[4] + te[5] * te[5] + te[6] * te[6];
+    const scaleZSq = te[8] * te[8] + te[9] * te[9] + te[10] * te[10];
+    return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
   }
   /**
    * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale

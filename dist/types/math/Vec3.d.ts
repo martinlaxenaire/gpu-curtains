@@ -208,6 +208,12 @@ export declare class Vec3 {
      */
     applyMat4(matrix: Mat4): Vec3;
     /**
+     * Set this {@link Vec3} to the translation component of a {@link Mat4 | matrix}.
+     * @param matrix - {@link Mat4 | matrix} to use
+     * @returns - this {@link Vec3} after {@link Mat4 | matrix} application.
+     */
+    setFromMatrixPosition(matrix: Mat4): this;
+    /**
      * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}
      * @param quaternion - {@link Quat | quaternion} to use
      * @returns - this {@link Vec3} with the transformation applied

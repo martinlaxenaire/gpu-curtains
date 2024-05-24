@@ -35,6 +35,36 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
   setRendererObjects() {
     super.setRendererObjects();
     this.domMeshes = [];
+    this.domObjects = [];
+  }
+  /**
+   * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/camera/Camera.Camera#position | position} or {@link core/camera/Camera.Camera#size | size} change.
+   */
+  onCameraMatricesChanged() {
+    super.onCameraMatricesChanged();
+    this.domObjects.forEach((domObject) => {
+      domObject.updateSizeAndPosition();
+    });
+  }
+  /**
+   * Resize the {@link meshes}.
+   */
+  resizeMeshes() {
+    this.meshes.forEach((mesh) => {
+      if (!("domElement" in mesh)) {
+        mesh.resize(this.boundingRect);
+      }
+    });
+    this.domObjects.forEach((domObject) => {
+      this.onBeforeCommandEncoderCreation.add(
+        () => {
+          if (!domObject.domElement.isResizing) {
+            domObject.domElement.setSize();
+          }
+        },
+        { once: true }
+      );
+    });
   }
 }
 

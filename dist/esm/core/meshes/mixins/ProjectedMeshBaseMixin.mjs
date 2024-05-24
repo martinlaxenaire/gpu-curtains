@@ -151,6 +151,11 @@ function ProjectedMeshBaseMixin(Base) {
             // model view matrix (world matrix multiplied by camera view matrix)
             type: "mat4x4f",
             value: this.modelViewMatrix
+          },
+          normal: {
+            // normal matrix
+            type: "mat3x3f",
+            value: this.normalMatrix
           }
           // modelViewProjection: {
           //   type: 'mat4x4f',
@@ -162,6 +167,20 @@ function ProjectedMeshBaseMixin(Base) {
         meshParameters.uniforms = {};
       meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
       super.setMaterial(meshParameters);
+    }
+    /**
+     * Get the visible property value
+     */
+    get visible() {
+      return this._visible;
+    }
+    /**
+     * Set the visible property value
+     * @param value - new visibility value
+     */
+    set visible(value) {
+      this.shouldUpdateMatrixStack();
+      this._visible = value;
     }
     /* SIZE & TRANSFORMS */
     /**
