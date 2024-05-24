@@ -92,6 +92,8 @@ export class BindGroup {
 
   /** A cache key allowing to get / set {@link GPUBindGroupLayout} from the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#bindGroupLayouts | device manager map cache}. */
   layoutCacheKey: string
+  /** A cache key allowing the {@link core/pipelines/PipelineManager.PipelineManager | PipelineManager} to compare {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry | RenderPipelineEntry} bind groups content. */
+  pipelineCacheKey: string
 
   /** Flag indicating whether we need to flush and recreate the pipeline using this {@link BindGroup} s*/
   needsPipelineFlush: boolean
@@ -132,6 +134,7 @@ export class BindGroup {
     if (this.options.uniforms || this.options.storages) this.setInputBindings()
 
     this.layoutCacheKey = ''
+    this.pipelineCacheKey = ''
     this.resetEntries()
 
     this.bindGroupLayout = null
@@ -305,6 +308,8 @@ export class BindGroup {
    */
   resetBindGroup() {
     this.entries.bindGroup = []
+    this.pipelineCacheKey = ''
+
     for (const binding of this.bindings) {
       this.addBindGroupEntry(binding)
     }
@@ -321,6 +326,8 @@ export class BindGroup {
       binding: this.entries.bindGroup.length,
       resource: binding.resource,
     })
+
+    this.pipelineCacheKey += binding.cacheKey
   }
 
   /**

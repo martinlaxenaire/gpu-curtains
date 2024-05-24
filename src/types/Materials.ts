@@ -42,16 +42,21 @@ export interface MaterialShaders {
 }
 
 /**
- * Base parameters used to create a {@link core/materials/Material.Material | Material}
+ * Base options of a {@link core/materials/Material.Material | Material}
  */
-export interface MaterialBaseParams {
+export interface MaterialBaseOptions {
   /** The label of the {@link core/materials/Material.Material | Material}, sent to various GPU objects for debugging purpose */
-  label?: string
+  label: string
   /** Shaders to use with this {@link core/materials/Material.Material | Material} */
-  shaders?: MaterialShaders
+  shaders: MaterialShaders
   /** Whether to compile the {@link core/materials/Material.Material | Material} {@link GPUPipelineBase | pipeline} asynchronously or not */
   useAsyncPipeline?: boolean
 }
+
+/**
+ * Base parameters used to create a {@link core/materials/Material.Material | Material}
+ */
+export interface MaterialBaseParams extends Partial<MaterialBaseOptions> {}
 
 /** Array of all allowed bind groups */
 export type MaterialBindGroups = AllowedBindGroups[]
@@ -74,14 +79,7 @@ export interface MaterialInputBindingsParams extends BindGroupInputs {
 export interface MaterialParams extends MaterialBaseParams, MaterialInputBindingsParams {}
 
 /** Options used to create this {@link core/materials/Material.Material | Material} */
-export interface MaterialOptions extends MaterialInputBindingsParams {
-  /** The label of the {@link core/materials/Material.Material | Material | Material}, sent to various GPU objects for debugging purpose */
-  label: string
-  /** Shaders to use with this {@link core/materials/Material.Material | Material} */
-  shaders: MaterialShaders
-  /** Whether to compile the {@link core/materials/Material.Material | Material} {@link GPUPipelineBase | pipeline} asynchronously or not */
-  useAsyncPipeline?: boolean
-}
+export interface MaterialOptions extends MaterialBaseOptions, MaterialInputBindingsParams {}
 
 /* COMPUTE MATERIAL */
 
@@ -162,14 +160,7 @@ export interface RenderMaterialRenderingOptions extends RenderMaterialBaseRender
 export interface RenderMaterialBaseParams extends RenderMaterialRenderingOptions, MaterialInputBindingsParams {}
 
 /** Parameters used to create a {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
-export interface RenderMaterialParams extends Partial<RenderMaterialBaseParams> {
-  /** The label of the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}, sent to various GPU objects for debugging purpose */
-  label?: string
-  /** Shaders to use with this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
-  shaders?: MaterialShaders
-  /** Whether to compile the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} asynchronously or not */
-  useAsyncPipeline?: boolean
-}
+export interface RenderMaterialParams extends MaterialBaseParams, Partial<RenderMaterialBaseParams> {}
 
 /** Options used to create this {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial} */
 export interface RenderMaterialOptions extends MaterialOptions {

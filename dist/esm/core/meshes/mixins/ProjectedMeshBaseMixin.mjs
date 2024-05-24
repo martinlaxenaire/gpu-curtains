@@ -168,6 +168,20 @@ function ProjectedMeshBaseMixin(Base) {
       meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
       super.setMaterial(meshParameters);
     }
+    /**
+     * Get the visible property value
+     */
+    get visible() {
+      return this._visible;
+    }
+    /**
+     * Set the visible property value
+     * @param value - new visibility value
+     */
+    set visible(value) {
+      this.shouldUpdateMatrixStack();
+      this._visible = value;
+    }
     /* SIZE & TRANSFORMS */
     /**
      * Resize our {@link ProjectedMeshBaseClass}

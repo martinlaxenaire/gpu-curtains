@@ -52,12 +52,14 @@ import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
  * ```wgsl
  * struct Matrices {
  * 	model: mat4x4f,
- * 	modelView: mat4x4f
+ * 	modelView: mat4x4f,
+ * 	normal: mat3x3f
  * };
  *
  * struct Camera {
  * 	view: mat4x4f,
- * 	projection: mat4x4f
+ * 	projection: mat4x4f,
+ * 	position: vec3f
  * };
  *
  * @group(0) @binding(0) var<uniform> camera: Camera;
@@ -74,7 +76,8 @@ import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
  * ```wgsl
  * struct Matrices {
  * 	model: mat4x4f,
- * 	modelView: mat4x4f
+ * 	modelView: mat4x4f,
+ * 	normal: mat3x3f
  * };
  *
  * // note that matrices uniform @group index might change depending on use cases
@@ -100,7 +103,11 @@ import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
  *
  * #### Vertex shaders
  *
- * If the Mesh is one of {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}, a function is added to the vertex shader to help you compute the vertices positions.
+ * If the Mesh is one of {@link core/meshes/Mesh.Mesh | Mesh}, {@link curtains/meshes/DOMMesh.DOMMesh | DOMMesh} or {@link curtains/meshes/Plane.Plane | Plane}, some functions are added to the vertex shader to help you compute the vertices positions and normals.
+ *
+ * ##### Position
+ *
+ * Position helper function:
  *
  * ```wgsl
  * fn getOutputPosition(position: vec3f) -> vec4f {
@@ -112,6 +119,20 @@ import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
  *
  * ```wgsl
  * var transformed: vec3f = camera.projection * camera.view * matrices.model * vec4f(position, 1.0);
+ * ```
+ *
+ * ##### Normal
+ *
+ * The normal matrix provided, available as `matrices.normal`, is computed in world space (i.e. it is the inverse transpose of the world matrix). A couple helpers functions are added to help you compute the normals in the right space:
+ *
+ * ```wgsl
+ * fn getWorldNormal(normal: vec3f) -> vec3f {
+ *   return normalize(matrices.normal * normal);
+ * }
+ *
+ * fn getViewNormal(normal: vec3f) -> vec3f {
+ *   return normalize((camera.view * vec4(matrices.normal * normal, 0.0)).xyz);
+ * }
  * ```
  *
  * #### Fragment shaders

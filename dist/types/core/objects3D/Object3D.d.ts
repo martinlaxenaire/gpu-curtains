@@ -187,4 +187,8 @@ export declare class Object3D {
      * Check at each render whether we should update our matrices, and update them if needed
      */
     updateMatrixStack(): void;
+    /**
+     * Destroy this {@link Object3D}. Removes its parent and set its children free.
+     */
+    destroy(): void;
 }

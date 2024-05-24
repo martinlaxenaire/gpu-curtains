@@ -67,7 +67,7 @@ class ProjectedObject3D extends Object3D {
         matrix: new Mat3(),
         shouldUpdate: true,
         onUpdate: () => {
-          this.normalMatrix.getNormalMatrix(this.modelViewMatrix);
+          this.normalMatrix.getNormalMatrix(this.worldMatrix);
         }
       }
     };

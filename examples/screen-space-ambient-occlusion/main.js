@@ -134,7 +134,8 @@ window.addEventListener('load', async () => {
       vsOutput.position = getOutputPosition(attributes.position);
       //vsOutput.fragPosition = matrices.modelView * vec4(attributes.position, 1.0);
       
-      vsOutput.normal = normalize(matrices.normal * attributes.normal);
+      // use view space normal when dealing using a geometry buffer
+      vsOutput.normal = getViewNormal(attributes.normal);
       
       return vsOutput;
     }

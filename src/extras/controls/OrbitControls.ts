@@ -2,7 +2,6 @@ import { CameraRenderer } from '../../core/renderers/utils'
 import { Camera } from '../../core/camera/Camera'
 import { Object3D } from '../../core/objects3D/Object3D'
 import { Vec2 } from '../../math/Vec2'
-import { Vec3 } from '../../math/Vec3'
 
 // port of https://github.com/toji/webgpu-gltf-case-study/blob/main/samples/js/tiny-webgpu-demo.js#L312
 
@@ -61,9 +60,14 @@ export class OrbitControls extends Object3D {
   /**
    * OrbitControls constructor
    * @param renderer - {@link CameraRenderer} used to get the {@link core/scenes/Scene.Scene | Scene} object to use as {@link Object3D#parent | parent}, and eventually the {@link CameraRenderer#camera | Camera} as well.
-   * @param camera - optional {@link Camera} to use.
+   * @param parameters - optional parameters.
+   * @param parameters.camera - optional {@link Camera} to use.
+   * @param parameters.element - optional {@link HTMLElement} (or {@link Window} element) to use for event listeners.
    */
-  constructor(renderer: CameraRenderer, camera: Camera = null) {
+  constructor(
+    renderer: CameraRenderer,
+    { camera = null, element = null }: { camera?: Camera; element?: HTMLElement | Window } = {}
+  ) {
     super()
 
     this.renderer = renderer
@@ -74,7 +78,7 @@ export class OrbitControls extends Object3D {
     this.camera = camera || this.renderer.camera
     this.camera.parent = this
 
-    this.element = this.renderer.domElement.element
+    this.element = element ?? this.renderer.domElement.element
   }
 
   /**

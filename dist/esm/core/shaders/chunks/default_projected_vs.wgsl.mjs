@@ -14,7 +14,7 @@ struct VertexOutput {
 
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
-  vsOutput.normal = normalize(matrices.normal * attributes.normal);
+  vsOutput.normal = getWorldNormal(attributes.normal);
   
   return vsOutput;
 }`

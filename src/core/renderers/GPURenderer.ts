@@ -311,21 +311,15 @@ export class GPURenderer {
     // especially useful to resize textures
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
+    this.resizeMeshes()
+  }
+
+  /**
+   * Resize the {@link meshes}.
+   */
+  resizeMeshes() {
     this.meshes.forEach((mesh) => {
-      if (!('domElement' in mesh)) {
-        // resize meshes that do not have a bound DOM element
-        mesh.resize(this.boundingRect)
-      } else {
-        this.onBeforeCommandEncoderCreation.add(
-          () => {
-            // update position for DOM meshes only if they're not currently being resized
-            if (!mesh.domElement.isResizing) {
-              mesh.domElement.setSize()
-            }
-          },
-          { once: true }
-        )
-      }
+      mesh.resize(this.boundingRect)
     })
   }
 

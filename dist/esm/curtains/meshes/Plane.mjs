@@ -61,7 +61,7 @@ class Plane extends DOMMesh {
     const result = new Vec3(0, 0, 0);
     const denominator = planeNormals.dot(rayDirection);
     if (Math.abs(denominator) >= 1e-4) {
-      const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix);
+      const inverseViewMatrix = this.worldMatrix.getInverse().premultiply(this.camera.viewMatrix);
       const planeOrigin = this.worldTransformOrigin.clone().add(this.worldPosition);
       const rotatedOrigin = new Vec3(
         this.worldPosition.x - planeOrigin.x,

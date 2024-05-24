@@ -329,6 +329,18 @@ class Vec3 {
     return this;
   }
   /**
+   * Set this {@link Vec3} to the translation component of a {@link Mat4 | matrix}.
+   * @param matrix - {@link Mat4 | matrix} to use
+   * @returns - this {@link Vec3} after {@link Mat4 | matrix} application.
+   */
+  setFromMatrixPosition(matrix) {
+    const e = matrix.elements;
+    this.x = e[12];
+    this.y = e[13];
+    this.z = e[14];
+    return this;
+  }
+  /**
    * Apply a {@link Quat | quaternion} (rotation in 3D space) to this {@link Vec3}
    * @param quaternion - {@link Quat | quaternion} to use
    * @returns - this {@link Vec3} with the transformation applied

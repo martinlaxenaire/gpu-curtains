@@ -314,7 +314,7 @@
       };
       this.shouldResetBindGroup = false;
       this.shouldResetBindGroupLayout = false;
-      this.cacheKey = `${bindingType},${visibility},`;
+      this.cacheKey = `${bindingType},${this.visibility},`;
     }
   }
 
@@ -1060,6 +1060,18 @@
       this.x = (mArray[0] * x + mArray[4] * y + mArray[8] * z + mArray[12]) / w;
       this.y = (mArray[1] * x + mArray[5] * y + mArray[9] * z + mArray[13]) / w;
       this.z = (mArray[2] * x + mArray[6] * y + mArray[10] * z + mArray[14]) / w;
+      return this;
+    }
+    /**
+     * Set this {@link Vec3} to the translation component of a {@link Mat4 | matrix}.
+     * @param matrix - {@link Mat4 | matrix} to use
+     * @returns - this {@link Vec3} after {@link Mat4 | matrix} application.
+     */
+    setFromMatrixPosition(matrix) {
+      const e = matrix.elements;
+      this.x = e[12];
+      this.y = e[13];
+      this.z = e[14];
       return this;
     }
     /**
@@ -1994,6 +2006,7 @@
       if (this.options.uniforms || this.options.storages)
         this.setInputBindings();
       this.layoutCacheKey = "";
+      this.pipelineCacheKey = "";
       this.resetEntries();
       this.bindGroupLayout = null;
       this.bindGroup = null;
@@ -2129,6 +2142,7 @@
      */
     resetBindGroup() {
       this.entries.bindGroup = [];
+      this.pipelineCacheKey = "";
       for (const binding of this.bindings) {
         this.addBindGroupEntry(binding);
       }
@@ -2143,6 +2157,7 @@
         binding: this.entries.bindGroup.length,
         resource: binding.resource
       });
+      this.pipelineCacheKey += binding.cacheKey;
     }
     /**
      * Reset the {@link BindGroup#entries.bindGroupLayout | bindGroupLayout entries}, recreates them and then recreate the {@link BindGroup#bindGroupLayout | GPU bind group layout}
@@ -2416,7 +2431,7 @@
         viewDimension,
         multisampled
       };
-      this.cacheKey += `${format},${access},${viewDimension},${multisampled}`;
+      this.cacheKey += `${format},${access},${viewDimension},${multisampled},`;
       this.resource = texture;
       this.setWGSLFragment();
     }
@@ -2458,6 +2473,7 @@
         if (bindingType)
           this.shouldResetBindGroupLayout = true;
         this.bindingType = bindingType;
+        this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
         this.setWGSLFragment();
       }
     }
@@ -2471,6 +2487,7 @@
       if (isNewFormat && this.bindingType === "storage") {
         this.setWGSLFragment();
         this.shouldResetBindGroupLayout = true;
+        this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
       }
     }
     /**
@@ -2483,6 +2500,7 @@
       if (isNewMultisampled && this.bindingType !== "storage") {
         this.setWGSLFragment();
         this.shouldResetBindGroupLayout = true;
+        this.cacheKey = `${this.bindingType},${this.visibility},${this.options.format},${this.options.access},${this.options.viewDimension},${this.options.multisampled},`;
       }
     }
     /**
@@ -3200,8 +3218,11 @@
      * @param value - new parent to set, could be an {@link Object3D} or null
      */
     set parent(value) {
-      if (this.parent) {
-        this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+      if (this._parent && value && this._parent.object3DIndex === value.object3DIndex) {
+        return;
+      }
+      if (this._parent) {
+        this._parent.children = this._parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
       }
       if (value) {
         this.shouldUpdateWorldMatrix();
@@ -3439,6 +3460,16 @@
         this.children[i].updateMatrixStack();
       }
     }
+    /**
+     * Destroy this {@link Object3D}. Removes its parent and set its children free.
+     */
+    destroy() {
+      for (let i = 0, l = this.children.length; i < l; i++) {
+        if (this.children[i])
+          this.children[i].parent = null;
+      }
+      this.parent = null;
+    }
   }
 
   const textureUsages = /* @__PURE__ */ new Map([
@@ -3464,15 +3495,15 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __accessCheck$8 = (obj, member, msg) => {
+  var __accessCheck$9 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$8 = (obj, member, getter) => {
-    __accessCheck$8(obj, member, "read from private field");
+  var __privateGet$9 = (obj, member, getter) => {
+    __accessCheck$9(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$8 = (obj, member, value) => {
+  var __privateAdd$9 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -3501,13 +3532,13 @@
     constructor(renderer, parameters = defaultDOMTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
-      __privateAdd$8(this, _parentRatio, new Vec3(1));
+      __privateAdd$9(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
-      __privateAdd$8(this, _sourceRatio, new Vec3(1));
+      __privateAdd$9(this, _sourceRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
-      __privateAdd$8(this, _coverScale, new Vec3(1));
+      __privateAdd$9(this, _coverScale, new Vec3(1));
       /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
-      __privateAdd$8(this, _rotationMatrix, new Mat4());
+      __privateAdd$9(this, _rotationMatrix, new Mat4());
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = () => {
@@ -3645,16 +3676,16 @@
       const parentRatio = parentWidth / parentHeight;
       const sourceRatio = this.size.width / this.size.height;
       if (parentWidth > parentHeight) {
-        __privateGet$8(this, _parentRatio).set(parentRatio, 1, 1);
-        __privateGet$8(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
+        __privateGet$9(this, _parentRatio).set(parentRatio, 1, 1);
+        __privateGet$9(this, _sourceRatio).set(1 / sourceRatio, 1, 1);
       } else {
-        __privateGet$8(this, _parentRatio).set(1, 1 / parentRatio, 1);
-        __privateGet$8(this, _sourceRatio).set(1, sourceRatio, 1);
+        __privateGet$9(this, _parentRatio).set(1, 1 / parentRatio, 1);
+        __privateGet$9(this, _sourceRatio).set(1, sourceRatio, 1);
       }
-      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$8(this, _parentRatio).x * __privateGet$8(this, _sourceRatio).x : __privateGet$8(this, _sourceRatio).y * __privateGet$8(this, _parentRatio).y;
-      __privateGet$8(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
-      __privateGet$8(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
-      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$8(this, _coverScale)).premultiplyScale(__privateGet$8(this, _parentRatio)).premultiply(__privateGet$8(this, _rotationMatrix)).premultiplyScale(__privateGet$8(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
+      const coverRatio = parentRatio > sourceRatio !== parentWidth > parentHeight ? 1 : parentWidth > parentHeight ? __privateGet$9(this, _parentRatio).x * __privateGet$9(this, _sourceRatio).x : __privateGet$9(this, _sourceRatio).y * __privateGet$9(this, _parentRatio).y;
+      __privateGet$9(this, _coverScale).set(1 / (coverRatio * this.scale.x), 1 / (coverRatio * this.scale.y), 1);
+      __privateGet$9(this, _rotationMatrix).rotateFromQuaternion(this.quaternion);
+      this.modelMatrix.identity().premultiplyTranslate(this.transformOrigin.clone().multiplyScalar(-1)).premultiplyScale(__privateGet$9(this, _coverScale)).premultiplyScale(__privateGet$9(this, _parentRatio)).premultiply(__privateGet$9(this, _rotationMatrix)).premultiplyScale(__privateGet$9(this, _sourceRatio)).premultiplyTranslate(this.transformOrigin).translate(this.position);
     }
     /**
      * If our {@link modelMatrix} has been updated, tell the {@link textureMatrix | texture matrix binding} to update as well
@@ -4125,21 +4156,21 @@
     }
   }
 
-  var __accessCheck$7 = (obj, member, msg) => {
+  var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$7 = (obj, member, getter) => {
-    __accessCheck$7(obj, member, "read from private field");
+  var __privateGet$8 = (obj, member, getter) => {
+    __accessCheck$8(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$7 = (obj, member, value) => {
+  var __privateAdd$8 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$6 = (obj, member, value, setter) => {
-    __accessCheck$7(obj, member, "write to private field");
+  var __privateSet$8 = (obj, member, value, setter) => {
+    __accessCheck$8(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -4161,13 +4192,13 @@
     } = {}) {
       super();
       /** Private {@link Camera} field of view */
-      __privateAdd$7(this, _fov, void 0);
+      __privateAdd$8(this, _fov, void 0);
       /** Private {@link Camera} near plane */
-      __privateAdd$7(this, _near, void 0);
+      __privateAdd$8(this, _near, void 0);
       /** Private {@link Camera} far plane */
-      __privateAdd$7(this, _far, void 0);
+      __privateAdd$8(this, _far, void 0);
       /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
-      __privateAdd$7(this, _pixelRatio, void 0);
+      __privateAdd$8(this, _pixelRatio, void 0);
       this.position.set(0, 0, 10);
       this.onMatricesChanged = onMatricesChanged;
       this.size = {
@@ -4253,7 +4284,7 @@
      * Get the {@link Camera} {@link fov | field of view}
      */
     get fov() {
-      return __privateGet$7(this, _fov);
+      return __privateGet$8(this, _fov);
     }
     /**
      * Set the {@link Camera} {@link fov | field of view}. Update the {@link projectionMatrix} only if the field of view actually changed
@@ -4262,7 +4293,7 @@
     set fov(fov) {
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
-        __privateSet$6(this, _fov, fov);
+        __privateSet$8(this, _fov, fov);
         this.shouldUpdateProjectionMatrix();
       }
       this.setScreenRatios();
@@ -4272,7 +4303,7 @@
      * Get the {@link Camera} {@link near} plane value.
      */
     get near() {
-      return __privateGet$7(this, _near);
+      return __privateGet$8(this, _near);
     }
     /**
      * Set the {@link Camera} {@link near} plane value. Update the {@link projectionMatrix} only if the near plane actually changed
@@ -4281,7 +4312,7 @@
     set near(near) {
       near = Math.max(near ?? this.near, 0.01);
       if (near !== this.near) {
-        __privateSet$6(this, _near, near);
+        __privateSet$8(this, _near, near);
         this.shouldUpdateProjectionMatrix();
       }
     }
@@ -4289,7 +4320,7 @@
      * Get / set the {@link Camera} {@link far} plane value.
      */
     get far() {
-      return __privateGet$7(this, _far);
+      return __privateGet$8(this, _far);
     }
     /**
      * Set the {@link Camera} {@link far} plane value. Update {@link projectionMatrix} only if the far plane actually changed
@@ -4298,7 +4329,7 @@
     set far(far) {
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
-        __privateSet$6(this, _far, far);
+        __privateSet$8(this, _far, far);
         this.shouldUpdateProjectionMatrix();
       }
     }
@@ -4306,14 +4337,14 @@
      * Get the {@link Camera} {@link pixelRatio} value.
      */
     get pixelRatio() {
-      return __privateGet$7(this, _pixelRatio);
+      return __privateGet$8(this, _pixelRatio);
     }
     /**
      * Set the {@link Camera} {@link pixelRatio} value. Update the {@link CSSPerspective} only if the pixel ratio actually changed
      * @param pixelRatio - new pixel ratio value
      */
     set pixelRatio(pixelRatio) {
-      __privateSet$6(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
+      __privateSet$8(this, _pixelRatio, pixelRatio ?? this.pixelRatio);
       this.setCSSPerspective();
     }
     /**
@@ -4359,11 +4390,12 @@
       ) / Math.tan(this.fov * 0.5 * Math.PI / 180);
     }
     /**
-     * Sets visible width / height at a given z-depth from our {@link Camera} parameters.<br>
+     * Get visible width / height at a given z-depth from our {@link Camera} parameters.<br>
      * {@link https://discourse.threejs.org/t/functions-to-calculate-the-visible-width-height-at-a-given-z-depth-from-a-perspective-camera/269 | See reference}
      * @param depth - depth to use for calculations
+     * @returns - visible width and height at given depth
      */
-    setScreenRatios(depth = 0) {
+    getScreenRatiosAtDepth(depth = 0) {
       const cameraOffset = this.position.z;
       if (depth < cameraOffset) {
         depth -= cameraOffset;
@@ -4372,10 +4404,16 @@
       }
       const vFOV = this.fov * Math.PI / 180;
       const height = 2 * Math.tan(vFOV / 2) * Math.abs(depth);
-      this.screenRatio = {
+      return {
         width: height * this.size.width / this.size.height,
         height
       };
+    }
+    /**
+     * Sets visible width / height at a depth of 0.
+     */
+    setScreenRatios() {
+      this.screenRatio = this.getScreenRatiosAtDepth();
     }
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
@@ -4466,21 +4504,21 @@
     }
   }
 
-  var __accessCheck$6 = (obj, member, msg) => {
+  var __accessCheck$7 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$6 = (obj, member, getter) => {
-    __accessCheck$6(obj, member, "read from private field");
+  var __privateGet$7 = (obj, member, getter) => {
+    __accessCheck$7(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$6 = (obj, member, value) => {
+  var __privateAdd$7 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$5 = (obj, member, value, setter) => {
-    __accessCheck$6(obj, member, "write to private field");
+  var __privateSet$7 = (obj, member, value, setter) => {
+    __accessCheck$7(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -4508,7 +4546,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$6(this, _autoResize, true);
+      __privateAdd$7(this, _autoResize, true);
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
@@ -4533,7 +4571,7 @@
         depth: this.options.viewDimension.indexOf("cube") !== -1 ? 6 : 1
       };
       if (this.options.fixedSize) {
-        __privateSet$5(this, _autoResize, false);
+        __privateSet$7(this, _autoResize, false);
       }
       this.setBindings();
       this.renderer.addTexture(this);
@@ -4640,7 +4678,7 @@
      * @param size - the optional new {@link TextureSize | size} to set
      */
     resize(size = null) {
-      if (!__privateGet$6(this, _autoResize))
+      if (!__privateGet$7(this, _autoResize))
         return;
       if (!size) {
         size = {
@@ -5061,7 +5099,7 @@
       });
       const hasDefaultSampler = this.samplers.find((sampler) => sampler.name === "defaultSampler");
       if (!hasDefaultSampler) {
-        const sampler = new Sampler(this.renderer, { name: "defaultSampler" });
+        const sampler = new Sampler(this.renderer, { label: "Default sampler", name: "defaultSampler" });
         this.addSampler(sampler);
       }
     }
@@ -5338,21 +5376,21 @@
     }
   }
 
-  var __accessCheck$5 = (obj, member, msg) => {
+  var __accessCheck$6 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$5 = (obj, member, getter) => {
-    __accessCheck$5(obj, member, "read from private field");
+  var __privateGet$6 = (obj, member, getter) => {
+    __accessCheck$6(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$5 = (obj, member, value) => {
+  var __privateAdd$6 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$4 = (obj, member, value, setter) => {
-    __accessCheck$5(obj, member, "write to private field");
+  var __privateSet$6 = (obj, member, value, setter) => {
+    __accessCheck$6(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -5369,7 +5407,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
        * @private
        */
-      __privateAdd$5(this, _autoRender$1, true);
+      __privateAdd$6(this, _autoRender$1, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback */
       this._onReadyCallback = () => {
@@ -5421,7 +5459,7 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$4(this, _autoRender$1, autoRender);
+        __privateSet$6(this, _autoRender$1, autoRender);
       }
       this.userData = {};
       this.ready = false;
@@ -5457,7 +5495,7 @@
      */
     addToScene() {
       this.renderer.computePasses.push(this);
-      if (__privateGet$5(this, _autoRender$1)) {
+      if (__privateGet$6(this, _autoRender$1)) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -5465,7 +5503,7 @@
      * Remove our compute pass from the scene and the renderer
      */
     removeFromScene() {
-      if (__privateGet$5(this, _autoRender$1)) {
+      if (__privateGet$6(this, _autoRender$1)) {
         this.renderer.scene.removeComputePass(this);
       }
       this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
@@ -5735,11 +5773,19 @@
       return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
     }
     /**
+     * Copy a {@link Box3} into this {@link Box3}.
+     * @param box - {@link Box3} to copy
+     */
+    copy(box) {
+      this.set(box.min.clone(), box.max.clone());
+      return this;
+    }
+    /**
      * Clone this {@link Box3}
      * @returns - cloned {@link Box3}
      */
     clone() {
-      return new Box3().set(this.min, this.max);
+      return new Box3().copy(this);
     }
     /**
      * Get the {@link Box3} center
@@ -6518,7 +6564,7 @@ struct VertexOutput {
 
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
-  vsOutput.normal = normalize(matrices.normal * attributes.normal);
+  vsOutput.normal = getWorldNormal(attributes.normal);
   
   return vsOutput;
 }`
@@ -6735,21 +6781,21 @@ New rendering options: ${JSON.stringify(
     }
   }
 
-  var __accessCheck$4 = (obj, member, msg) => {
+  var __accessCheck$5 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$4 = (obj, member, getter) => {
-    __accessCheck$4(obj, member, "read from private field");
+  var __privateGet$5 = (obj, member, getter) => {
+    __accessCheck$5(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$4 = (obj, member, value) => {
+  var __privateAdd$5 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$3 = (obj, member, value, setter) => {
-    __accessCheck$4(obj, member, "write to private field");
+  var __privateSet$5 = (obj, member, value, setter) => {
+    __accessCheck$5(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -6792,7 +6838,7 @@ New rendering options: ${JSON.stringify(
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-        __privateAdd$4(this, _autoRender, true);
+        __privateAdd$5(this, _autoRender, true);
         // callbacks / events
         /** function assigned to the {@link onReady} callback */
         this._onReadyCallback = () => {
@@ -6841,7 +6887,7 @@ New rendering options: ${JSON.stringify(
           ...meshParameters
         };
         if (autoRender !== void 0) {
-          __privateSet$3(this, _autoRender, autoRender);
+          __privateSet$5(this, _autoRender, autoRender);
         }
         this.visible = visible;
         this.renderOrder = renderOrder;
@@ -6861,7 +6907,7 @@ New rendering options: ${JSON.stringify(
        * @readonly
        */
       get autoRender() {
-        return __privateGet$4(this, _autoRender);
+        return __privateGet$5(this, _autoRender);
       }
       /**
        * Get/set whether a Mesh is ready or not
@@ -6886,7 +6932,7 @@ New rendering options: ${JSON.stringify(
           this.renderer.meshes.push(this);
         }
         this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.renderer.renderPass);
-        if (__privateGet$4(this, _autoRender)) {
+        if (__privateGet$5(this, _autoRender)) {
           this.renderer.scene.addMesh(this);
         }
       }
@@ -6895,7 +6941,7 @@ New rendering options: ${JSON.stringify(
        * @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
        */
       removeFromScene(removeFromRenderer = false) {
-        if (__privateGet$4(this, _autoRender)) {
+        if (__privateGet$5(this, _autoRender)) {
           this.renderer.scene.removeMesh(this);
         }
         if (removeFromRenderer) {
@@ -7140,6 +7186,19 @@ ${geometry.wgslStructFragment}`
         if (switchTransparency) {
           this.addToScene();
         }
+      }
+      /**
+       * Get the visible property value
+       */
+      get visible() {
+        return this._visible;
+      }
+      /**
+       * Set the visible property value
+       * @param value - new visibility value
+       */
+      set visible(value) {
+        this._visible = value;
       }
       /* TEXTURES */
       /**
@@ -7753,7 +7812,7 @@ ${geometry.wgslStructFragment}`
           matrix: new Mat3(),
           shouldUpdate: true,
           onUpdate: () => {
-            this.normalMatrix.getNormalMatrix(this.modelViewMatrix);
+            this.normalMatrix.getNormalMatrix(this.worldMatrix);
           }
         }
       };
@@ -8017,6 +8076,20 @@ struct VSOutput {
         meshParameters.uniforms = { matrices: matricesUniforms, ...meshParameters.uniforms };
         super.setMaterial(meshParameters);
       }
+      /**
+       * Get the visible property value
+       */
+      get visible() {
+        return this._visible;
+      }
+      /**
+       * Set the visible property value
+       * @param value - new visibility value
+       */
+      set visible(value) {
+        this.shouldUpdateMatrixStack();
+        this._visible = value;
+      }
       /* SIZE & TRANSFORMS */
       /**
        * Resize our {@link ProjectedMeshBaseClass}
@@ -8259,6 +8332,18 @@ fn getOutputPosition(position: vec3f) -> vec4f {
 }`
   );
 
+  var get_normals = (
+    /* wgsl */
+    `
+fn getWorldNormal(normal: vec3f) -> vec3f {
+  return normalize(matrices.normal * normal);
+}
+
+fn getViewNormal(normal: vec3f) -> vec3f {
+  return normalize((camera.view * vec4(matrices.normal * normal, 0.0)).xyz);
+}`
+  );
+
   var get_uv_cover = (
     /* wgsl */
     `
@@ -8301,7 +8386,9 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
     /** WGSL code chunks added to the vertex shader */
     vertex: {
       /** Get output vec4f position vector by applying model view projection matrix to vec3f attribute position vector */
-      get_output_position
+      get_output_position,
+      /** Get vec3f normals in world or view space */
+      get_normals
     },
     /** WGSL code chunks added to the fragment shader */
     fragment: {}
@@ -8812,7 +8899,7 @@ ${this.shaders.compute.head}`;
         bindGroup.bindings.forEach((binding) => {
           cacheKey += binding.name + ",";
         });
-        cacheKey += bindGroup.layoutCacheKey;
+        cacheKey += bindGroup.pipelineCacheKey;
       });
       const existingPipelineEntry = this.isSameRenderPipeline({ ...parameters, cacheKey });
       if (existingPipelineEntry) {
@@ -9015,10 +9102,13 @@ ${this.shaders.compute.head}`;
      * @param boundingRect - new bounding rectangle
      */
     setSize(boundingRect = null) {
-      if (!this.element)
+      if (!this.element || this.isResizing)
         return;
+      this.isResizing = true;
       this.boundingRect = boundingRect ?? this.element.getBoundingClientRect();
-      this.isResizing = false;
+      setTimeout(() => {
+        this.isResizing = false;
+      }, 10);
     }
     /**
      * Destroy our DOMElement - remove from resize observer and clear throttle timeout
@@ -9694,30 +9784,30 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$3 = (obj, member, msg) => {
+  var __accessCheck$4 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$3 = (obj, member, getter) => {
-    __accessCheck$3(obj, member, "read from private field");
+  var __privateGet$4 = (obj, member, getter) => {
+    __accessCheck$4(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$3 = (obj, member, value) => {
+  var __privateAdd$4 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$2 = (obj, member, value, setter) => {
-    __accessCheck$3(obj, member, "write to private field");
+  var __privateSet$4 = (obj, member, value, setter) => {
+    __accessCheck$4(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
   var __privateWrapper = (obj, member, setter, getter) => ({
     set _(value) {
-      __privateSet$2(obj, member, value, setter);
+      __privateSet$4(obj, member, value, setter);
     },
     get _() {
-      return __privateGet$3(obj, member, getter);
+      return __privateGet$4(obj, member, getter);
     }
   });
   var _taskCount;
@@ -9727,7 +9817,7 @@ ${this.shaders.compute.head}`;
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd$3(this, _taskCount, 0);
+      __privateAdd$4(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -9742,7 +9832,7 @@ ${this.shaders.compute.head}`;
         callback,
         order,
         once,
-        id: __privateGet$3(this, _taskCount)
+        id: __privateGet$4(this, _taskCount)
       };
       __privateWrapper(this, _taskCount)._++;
       this.queue.push(task);
@@ -9909,19 +9999,14 @@ ${this.shaders.compute.head}`;
       this.computePasses.forEach((computePass) => computePass.resize());
       this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
       this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
+      this.resizeMeshes();
+    }
+    /**
+     * Resize the {@link meshes}.
+     */
+    resizeMeshes() {
       this.meshes.forEach((mesh) => {
-        if (!("domElement" in mesh)) {
-          mesh.resize(this.boundingRect);
-        } else {
-          this.onBeforeCommandEncoderCreation.add(
-            () => {
-              if (!mesh.domElement.isResizing) {
-                mesh.domElement.setSize();
-              }
-            },
-            { once: true }
-          );
-        }
+        mesh.resize(this.boundingRect);
       });
     }
     /**
@@ -10643,6 +10728,14 @@ ${this.shaders.compute.head}`;
             // camera projection matrix
             type: "mat4x4f",
             value: this.camera.projectionMatrix
+          },
+          position: {
+            // camera world position
+            type: "vec3f",
+            value: this.camera.position.clone().setFromMatrixPosition(this.camera.worldMatrix),
+            onBeforeUpdate: () => {
+              this.cameraBufferBinding.inputs.position.value.copy(this.camera.position).setFromMatrixPosition(this.camera.worldMatrix);
+            }
           }
         }
       });
@@ -10667,6 +10760,7 @@ ${this.shaders.compute.head}`;
     updateCameraBindings() {
       this.cameraBufferBinding?.shouldUpdateBinding("view");
       this.cameraBufferBinding?.shouldUpdateBinding("projection");
+      this.cameraBufferBinding?.shouldUpdateBinding("position");
       this.cameraBindGroup?.update();
     }
     /**
@@ -11038,21 +11132,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$2 = (obj, member, msg) => {
+  var __accessCheck$3 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$2 = (obj, member, getter) => {
-    __accessCheck$2(obj, member, "read from private field");
+  var __privateGet$3 = (obj, member, getter) => {
+    __accessCheck$3(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$2 = (obj, member, value) => {
+  var __privateAdd$3 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet$1 = (obj, member, value, setter) => {
-    __accessCheck$2(obj, member, "write to private field");
+  var __privateSet$3 = (obj, member, value, setter) => {
+    __accessCheck$3(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -11065,7 +11159,7 @@ ${this.shaders.compute.head}`;
      */
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$2(this, _autoRender, true);
+      __privateAdd$3(this, _autoRender, true);
       renderer = renderer && renderer.renderer || renderer;
       isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
@@ -11081,7 +11175,7 @@ ${this.shaders.compute.head}`;
         autoRender: autoRender === void 0 ? true : autoRender
       };
       if (autoRender !== void 0) {
-        __privateSet$1(this, _autoRender, autoRender);
+        __privateSet$3(this, _autoRender, autoRender);
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
@@ -11117,7 +11211,7 @@ ${this.shaders.compute.head}`;
      */
     addToScene() {
       this.renderer.renderTargets.push(this);
-      if (__privateGet$2(this, _autoRender)) {
+      if (__privateGet$3(this, _autoRender)) {
         this.renderer.scene.addRenderTarget(this);
       }
     }
@@ -11125,7 +11219,7 @@ ${this.shaders.compute.head}`;
      * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
-      if (__privateGet$2(this, _autoRender)) {
+      if (__privateGet$3(this, _autoRender)) {
         this.renderer.scene.removeRenderTarget(this);
       }
       this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
@@ -11293,20 +11387,25 @@ struct VSOutput {
     }
   }
 
-  var __accessCheck$1 = (obj, member, msg) => {
+  var __accessCheck$2 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet$1 = (obj, member, getter) => {
-    __accessCheck$1(obj, member, "read from private field");
+  var __privateGet$2 = (obj, member, getter) => {
+    __accessCheck$2(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$1 = (obj, member, value) => {
+  var __privateAdd$2 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var _DOMObjectWorldPosition, _DOMObjectWorldScale;
+  var __privateSet$2 = (obj, member, value, setter) => {
+    __accessCheck$2(obj, member, "write to private field");
+    setter ? setter.call(obj, value) : member.set(obj, value);
+    return value;
+  };
+  var _DOMObjectWorldPosition, _DOMObjectWorldScale, _DOMObjectDepthScaleRatio;
   class DOMObject3D extends ProjectedObject3D {
     /**
      * DOMObject3D constructor
@@ -11317,29 +11416,45 @@ struct VSOutput {
     constructor(renderer, element, parameters) {
       super(renderer);
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
-      __privateAdd$1(this, _DOMObjectWorldPosition, new Vec3());
+      __privateAdd$2(this, _DOMObjectWorldPosition, new Vec3());
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
-      __privateAdd$1(this, _DOMObjectWorldScale, new Vec3());
+      __privateAdd$2(this, _DOMObjectWorldScale, new Vec3(1));
+      /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
+      __privateAdd$2(this, _DOMObjectDepthScaleRatio, 1);
+      /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
+      this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
+      /** function assigned to the {@link onAfterDOMElementResize} callback */
+      this._onAfterDOMElementResizeCallback = () => {
+      };
       renderer = renderer && renderer.renderer || renderer;
       isCurtainsRenderer(renderer, "DOM3DObject");
       this.renderer = renderer;
       this.size = {
-        world: {
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0
-        },
         document: {
           width: 0,
           height: 0,
           top: 0,
           left: 0
+        },
+        normalizedWorld: {
+          size: new Vec2(1),
+          position: new Vec2()
+        },
+        cameraWorld: {
+          size: new Vec2(1),
+          position: new Vec2()
+        },
+        scaledWorld: {
+          size: new Vec3(1),
+          position: new Vec3()
         }
       };
       this.watchScroll = parameters.watchScroll;
       this.camera = this.renderer.camera;
+      this.boundingBox.min.onChange(() => this.updateSizeAndPosition());
+      this.boundingBox.max.onChange(() => this.updateSizeAndPosition());
       this.setDOMElement(element);
+      this.renderer.domObjects.push(this);
     }
     /**
      * Set the {@link domElement | DOM Element}
@@ -11378,24 +11493,17 @@ struct VSOutput {
     updateSizeAndPosition() {
       this.setWorldSizes();
       this.applyPosition();
-      this.shouldUpdateModelMatrix();
-    }
-    /**
-     * Update the {@link DOMObject3D} sizes, position and projection
-     */
-    shouldUpdateMatrixStack() {
-      this.updateSizeAndPosition();
-      super.shouldUpdateMatrixStack();
     }
     /**
      * Resize the {@link DOMObject3D}
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
      */
-    resize(boundingRect) {
+    resize(boundingRect = null) {
       if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
         return;
       this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-      this.shouldUpdateMatrixStack();
+      this.updateSizeAndPosition();
+      this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
     }
     /* BOUNDING BOXES GETTERS */
     /**
@@ -11436,7 +11544,7 @@ struct VSOutput {
      * @readonly
      */
     get DOMObjectWorldScale() {
-      return __privateGet$1(this, _DOMObjectWorldScale).clone();
+      return __privateGet$2(this, _DOMObjectWorldScale).clone();
     }
     /**
      * Get the {@link DOMObject3D} scale in world space (accounting for {@link scale})
@@ -11450,7 +11558,7 @@ struct VSOutput {
      * @readonly
      */
     get worldPosition() {
-      return __privateGet$1(this, _DOMObjectWorldPosition).clone();
+      return __privateGet$2(this, _DOMObjectWorldPosition).clone();
     }
     /**
      * Get the {@link DOMObject3D} transform origin relative to the {@link DOMObject3D}
@@ -11494,10 +11602,10 @@ struct VSOutput {
       if (!this.documentPosition.equals(worldPosition)) {
         worldPosition = this.documentToWorldSpace(this.documentPosition);
       }
-      __privateGet$1(this, _DOMObjectWorldPosition).set(
-        this.position.x + this.size.world.left + worldPosition.x,
-        this.position.y + this.size.world.top + worldPosition.y,
-        this.position.z + this.documentPosition.z / this.camera.CSSPerspective
+      __privateGet$2(this, _DOMObjectWorldPosition).set(
+        this.position.x + this.size.scaledWorld.position.x + worldPosition.x,
+        this.position.y + this.size.scaledWorld.position.y + worldPosition.y,
+        this.position.z + this.size.scaledWorld.position.z + this.documentPosition.z / this.camera.CSSPerspective
       );
     }
     /**
@@ -11515,12 +11623,12 @@ struct VSOutput {
      */
     updateModelMatrix() {
       this.modelMatrix.composeFromOrigin(
-        __privateGet$1(this, _DOMObjectWorldPosition),
+        __privateGet$2(this, _DOMObjectWorldPosition),
         this.quaternion,
         this.scale,
         this.worldTransformOrigin
       );
-      this.modelMatrix.scale(__privateGet$1(this, _DOMObjectWorldScale));
+      this.modelMatrix.scale(this.DOMObjectWorldScale);
       this.shouldUpdateWorldMatrix();
     }
     /**
@@ -11535,9 +11643,9 @@ struct VSOutput {
       );
     }
     /**
-     * Set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+     * Compute the {@link DOMObject3D#size | world sizes}
      */
-    setWorldSizes() {
+    computeWorldSizes() {
       const containerBoundingRect = this.renderer.boundingRect;
       const planeCenter = {
         x: this.size.document.width / 2 + this.size.document.left,
@@ -11547,14 +11655,60 @@ struct VSOutput {
         x: containerBoundingRect.width / 2 + containerBoundingRect.left,
         y: containerBoundingRect.height / 2 + containerBoundingRect.top
       };
-      this.size.world = {
-        width: this.size.document.width / containerBoundingRect.width * this.camera.screenRatio.width / 2,
-        height: this.size.document.height / containerBoundingRect.height * this.camera.screenRatio.height / 2,
-        top: (containerCenter.y - planeCenter.y) / containerBoundingRect.height * this.camera.screenRatio.height,
-        left: (planeCenter.x - containerCenter.x) / containerBoundingRect.width * this.camera.screenRatio.width
-      };
-      __privateGet$1(this, _DOMObjectWorldScale).set(this.size.world.width, this.size.world.height, 1);
+      const { size, center } = this.boundingBox;
+      if (size.x !== 0 && size.y !== 0 && size.z !== 0) {
+        center.divide(size);
+      }
+      this.size.normalizedWorld.size.set(
+        this.size.document.width / containerBoundingRect.width,
+        this.size.document.height / containerBoundingRect.height
+      );
+      this.size.normalizedWorld.position.set(
+        (planeCenter.x - containerCenter.x) / containerBoundingRect.width,
+        (containerCenter.y - planeCenter.y) / containerBoundingRect.height
+      );
+      this.size.cameraWorld.size.set(
+        this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
+        this.size.normalizedWorld.size.y * this.camera.screenRatio.height
+      );
+      this.size.cameraWorld.position.set(
+        this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
+        this.size.normalizedWorld.position.y * this.camera.screenRatio.height
+      );
+      this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
+      this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
+      this.size.scaledWorld.position.set(
+        this.size.cameraWorld.position.x - center.x * this.size.scaledWorld.size.x * size.x,
+        this.size.cameraWorld.position.y - center.y * this.size.scaledWorld.size.y * size.y,
+        -center.z
+      );
+    }
+    /**
+     * Compute and set the {@link DOMObject3D#size.world | world size} and set the {@link DOMObject3D} world transform origin
+     */
+    setWorldSizes() {
+      this.computeWorldSizes();
+      this.setWorldScale();
       this.setWorldTransformOrigin();
+    }
+    /**
+     * Set the {@link worldScale} accounting for scaled world size and {@link DOMObjectDepthScaleRatio}
+     */
+    setWorldScale() {
+      __privateGet$2(this, _DOMObjectWorldScale).set(
+        this.size.scaledWorld.size.x,
+        this.size.scaledWorld.size.y,
+        this.size.scaledWorld.size.z * __privateGet$2(this, _DOMObjectDepthScaleRatio)
+      );
+      this.shouldUpdateMatrixStack();
+    }
+    /**
+     * Set {@link DOMObjectDepthScaleRatio}. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis.
+     * @param value - depth scale ratio value to use
+     */
+    set DOMObjectDepthScaleRatio(value) {
+      __privateSet$2(this, _DOMObjectDepthScaleRatio, value);
+      this.setWorldScale();
     }
     /**
      * Set the {@link DOMObject3D} world transform origin and tell the matrices to update
@@ -11562,13 +11716,12 @@ struct VSOutput {
     setWorldTransformOrigin() {
       this.transforms.origin.world = new Vec3(
         (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-        this.size.world.width,
+        this.size.scaledWorld.size.x,
         -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-        this.size.world.height,
-        this.transformOrigin.z
+        this.size.scaledWorld.size.y,
+        this.transformOrigin.z * this.size.scaledWorld.size.z
       );
-      this.shouldUpdateModelMatrix();
-      this.shouldUpdateProjectionMatrixStack();
+      this.shouldUpdateMatrixStack();
     }
     /**
      * Update the {@link domElement | DOM Element} scroll position
@@ -11580,14 +11733,27 @@ struct VSOutput {
       }
     }
     /**
+     * Callback to execute just after the {@link domElement} has been resized.
+     * @param callback - callback to run just after {@link domElement} has been resized
+     * @returns - our Mesh
+     */
+    onAfterDOMElementResize(callback) {
+      if (callback) {
+        this._onAfterDOMElementResizeCallback = callback;
+      }
+      return this;
+    }
+    /**
      * Destroy our {@link DOMObject3D}
      */
     destroy() {
+      super.destroy();
       this.domElement?.destroy();
     }
   }
   _DOMObjectWorldPosition = new WeakMap();
   _DOMObjectWorldScale = new WeakMap();
+  _DOMObjectDepthScaleRatio = new WeakMap();
 
   const defaultDOMMeshParams = {
     autoloadSources: true,
@@ -11745,6 +11911,13 @@ struct VSOutput {
         }
       );
     }
+    /**
+     * Compute the Mesh geometry if needed
+     */
+    computeGeometry() {
+      super.computeGeometry();
+      this.boundingBox.copy(this.geometry.boundingBox);
+    }
     /* EVENTS */
     /**
      * Called each time one of the initial sources associated {@link DOMTexture#texture | GPU texture} has been uploaded to the GPU
@@ -11882,7 +12055,7 @@ struct VSOutput {
       const result = new Vec3(0, 0, 0);
       const denominator = planeNormals.dot(rayDirection);
       if (Math.abs(denominator) >= 1e-4) {
-        const inverseViewMatrix = this.modelMatrix.getInverse().premultiply(this.camera.viewMatrix);
+        const inverseViewMatrix = this.worldMatrix.getInverse().premultiply(this.camera.viewMatrix);
         const planeOrigin = this.worldTransformOrigin.clone().add(this.worldPosition);
         const rotatedOrigin = new Vec3(
           this.worldPosition.x - planeOrigin.x,
@@ -11936,6 +12109,36 @@ struct VSOutput {
     setRendererObjects() {
       super.setRendererObjects();
       this.domMeshes = [];
+      this.domObjects = [];
+    }
+    /**
+     * Update the {@link domObjects} sizes and positions when the {@link camera} {@link core/camera/Camera.Camera#position | position} or {@link core/camera/Camera.Camera#size | size} change.
+     */
+    onCameraMatricesChanged() {
+      super.onCameraMatricesChanged();
+      this.domObjects.forEach((domObject) => {
+        domObject.updateSizeAndPosition();
+      });
+    }
+    /**
+     * Resize the {@link meshes}.
+     */
+    resizeMeshes() {
+      this.meshes.forEach((mesh) => {
+        if (!("domElement" in mesh)) {
+          mesh.resize(this.boundingRect);
+        }
+      });
+      this.domObjects.forEach((domObject) => {
+        this.onBeforeCommandEncoderCreation.add(
+          () => {
+            if (!domObject.domElement.isResizing) {
+              domObject.domElement.setSize();
+            }
+          },
+          { once: true }
+        );
+      });
     }
   }
 
@@ -12207,6 +12410,13 @@ struct VSOutput {
       return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domMeshes).flat();
     }
     /**
+     * Get all created {@link curtains/objects3D/DOMObject3D.DOMObject3D | DOMObject3D} which position should be updated on scroll.
+     * @readonly
+     */
+    get domObjects() {
+      return this.renderers?.filter((renderer) => renderer instanceof GPUCurtainsRenderer).map((renderer) => renderer.domObjects).flat();
+    }
+    /**
      * Get all the created {@link Plane | planes}
      * @readonly
      */
@@ -12271,9 +12481,9 @@ struct VSOutput {
      * @param delta - last {@link ScrollManager#delta | scroll delta values}
      */
     updateScroll(delta = { x: 0, y: 0 }) {
-      this.domMeshes.forEach((mesh) => {
-        if (mesh.domElement) {
-          mesh.updateScrollPosition(delta);
+      this.domObjects.forEach((domObject) => {
+        if (domObject.domElement) {
+          domObject.updateScrollPosition(delta);
         }
       });
       this._onScrollCallback && this._onScrollCallback();
@@ -12379,21 +12589,21 @@ struct VSOutput {
     }
   }
 
-  var __accessCheck = (obj, member, msg) => {
+  var __accessCheck$1 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
-  var __privateGet = (obj, member, getter) => {
-    __accessCheck(obj, member, "read from private field");
+  var __privateGet$1 = (obj, member, getter) => {
+    __accessCheck$1(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd = (obj, member, value) => {
+  var __privateAdd$1 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
-  var __privateSet = (obj, member, value, setter) => {
-    __accessCheck(obj, member, "write to private field");
+  var __privateSet$1 = (obj, member, value, setter) => {
+    __accessCheck$1(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -12402,20 +12612,22 @@ struct VSOutput {
     /**
      * OrbitControls constructor
      * @param renderer - {@link CameraRenderer} used to get the {@link core/scenes/Scene.Scene | Scene} object to use as {@link Object3D#parent | parent}, and eventually the {@link CameraRenderer#camera | Camera} as well.
-     * @param camera - optional {@link Camera} to use.
+     * @param parameters - optional parameters.
+     * @param parameters.camera - optional {@link Camera} to use.
+     * @param parameters.element - optional {@link HTMLElement} (or {@link Window} element) to use for event listeners.
      */
-    constructor(renderer, camera = null) {
+    constructor(renderer, { camera = null, element = null } = {}) {
       super();
       /**
        * Last pointer {@link Vec2 | position}, used internally for orbiting delta calculations.
        * @private
        */
-      __privateAdd(this, _lastPosition, new Vec2());
+      __privateAdd$1(this, _lastPosition, new Vec2());
       /**
        * Whether the {@link OrbitControls} are currently orbiting.
        * @private
        */
-      __privateAdd(this, _isOrbiting, false);
+      __privateAdd$1(this, _isOrbiting, false);
       /** Whether to constrain the orbit controls along X axis or not. */
       this.constrainXOrbit = true;
       /** Whether to constrain the orbit controls along Y axis or not. */
@@ -12438,23 +12650,23 @@ struct VSOutput {
        * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
        * @private
        */
-      __privateAdd(this, _element, null);
+      __privateAdd$1(this, _element, null);
       this.renderer = renderer;
       this.parent = this.renderer.scene;
       this.quaternion.setAxisOrder("YXZ");
       this.camera = camera || this.renderer.camera;
       this.camera.parent = this;
-      this.element = this.renderer.domElement.element;
+      this.element = element ?? this.renderer.domElement.element;
     }
     /**
      * Set the element to use for event listeners. Can remove previous event listeners first if needed.
      * @param value - {@link HTMLElement} (or {@link Window} element) to use.
      */
     set element(value) {
-      if (__privateGet(this, _element) && (!value || __privateGet(this, _element) !== value)) {
+      if (__privateGet$1(this, _element) && (!value || __privateGet$1(this, _element) !== value)) {
         this.removeEvents();
       }
-      __privateSet(this, _element, value);
+      __privateSet$1(this, _element, value);
       if (value) {
         this.addEvents();
       }
@@ -12464,25 +12676,25 @@ struct VSOutput {
      * @returns - {@link HTMLElement} (or {@link Window} element) used.
      */
     get element() {
-      return __privateGet(this, _element);
+      return __privateGet$1(this, _element);
     }
     /**
      * Add the event listeners.
      */
     addEvents() {
-      __privateGet(this, _element).addEventListener("pointerdown", this.onPointerDown.bind(this));
-      __privateGet(this, _element).addEventListener("pointermove", this.onPointerMove.bind(this));
-      __privateGet(this, _element).addEventListener("pointerup", this.onPointerUp.bind(this));
-      __privateGet(this, _element).addEventListener("wheel", this.onMouseWheel.bind(this));
+      __privateGet$1(this, _element).addEventListener("pointerdown", this.onPointerDown.bind(this));
+      __privateGet$1(this, _element).addEventListener("pointermove", this.onPointerMove.bind(this));
+      __privateGet$1(this, _element).addEventListener("pointerup", this.onPointerUp.bind(this));
+      __privateGet$1(this, _element).addEventListener("wheel", this.onMouseWheel.bind(this));
     }
     /**
      * Remove the event listeners.
      */
     removeEvents() {
-      __privateGet(this, _element).removeEventListener("pointerdown", this.onPointerDown.bind(this));
-      __privateGet(this, _element).removeEventListener("pointermove", this.onPointerMove.bind(this));
-      __privateGet(this, _element).removeEventListener("pointerup", this.onPointerUp.bind(this));
-      __privateGet(this, _element).removeEventListener("wheel", this.onMouseWheel.bind(this));
+      __privateGet$1(this, _element).removeEventListener("pointerdown", this.onPointerDown.bind(this));
+      __privateGet$1(this, _element).removeEventListener("pointermove", this.onPointerMove.bind(this));
+      __privateGet$1(this, _element).removeEventListener("pointerup", this.onPointerUp.bind(this));
+      __privateGet$1(this, _element).removeEventListener("wheel", this.onMouseWheel.bind(this));
     }
     /**
      * Callback executed on pointer down event.
@@ -12490,9 +12702,9 @@ struct VSOutput {
      */
     onPointerDown(e) {
       if (e.isPrimary) {
-        __privateSet(this, _isOrbiting, true);
+        __privateSet$1(this, _isOrbiting, true);
       }
-      __privateGet(this, _lastPosition).set(e.pageX, e.pageY);
+      __privateGet$1(this, _lastPosition).set(e.pageX, e.pageY);
     }
     /**
      * Callback executed on pointer move event.
@@ -12504,10 +12716,10 @@ struct VSOutput {
         xDelta = e.movementX;
         yDelta = e.movementY;
         this.orbit(xDelta * this.orbitStep.x, yDelta * this.orbitStep.y);
-      } else if (__privateGet(this, _isOrbiting)) {
-        xDelta = e.pageX - __privateGet(this, _lastPosition).x;
-        yDelta = e.pageY - __privateGet(this, _lastPosition).y;
-        __privateGet(this, _lastPosition).set(e.pageX, e.pageY);
+      } else if (__privateGet$1(this, _isOrbiting)) {
+        xDelta = e.pageX - __privateGet$1(this, _lastPosition).x;
+        yDelta = e.pageY - __privateGet$1(this, _lastPosition).y;
+        __privateGet$1(this, _lastPosition).set(e.pageX, e.pageY);
         this.orbit(xDelta * this.orbitStep.x, yDelta * this.orbitStep.y);
       }
     }
@@ -12517,7 +12729,7 @@ struct VSOutput {
      */
     onPointerUp(e) {
       if (e.isPrimary) {
-        __privateSet(this, _isOrbiting, false);
+        __privateSet$1(this, _isOrbiting, false);
       }
     }
     /**
@@ -12778,6 +12990,1325 @@ struct VSOutput {
     }
   }
 
+  const GL$1 = WebGLRenderingContext;
+  const GLB_MAGIC = 1179937895;
+  const CHUNK_TYPE = {
+    JSON: 1313821514,
+    BIN: 5130562
+  };
+  const DEFAULT_TRANSLATION = [0, 0, 0];
+  const DEFAULT_ROTATION = [0, 0, 0, 1];
+  const DEFAULT_SCALE = [1, 1, 1];
+  const absUriRegEx = new RegExp(`^${window.location.protocol}`, "i");
+  const dataUriRegEx = /^data:/;
+  class GLTFLoader {
+    /**
+     * {@link GLTFLoader} constructor.
+     */
+    constructor() {
+      this.gltf = null;
+    }
+    /**
+     * Build the absolute uri of the resource
+     * @param uri - uri of the resource
+     * @param baseUrl - base url from which to get all the other assets.
+     * @returns - absolute uri of the resource
+     */
+    static resolveUri(uri, baseUrl) {
+      if (!!uri.match(absUriRegEx) || !!uri.match(dataUriRegEx)) {
+        return uri;
+      }
+      return baseUrl + uri;
+    }
+    /**
+     * Load a glTF from the given url.
+     * @param url - url of the glTF.
+     * @returns - the {@link GPUCurtainsGLTF} created.
+     * @async
+     */
+    async loadFromUrl(url) {
+      const i = url.lastIndexOf("/");
+      const baseUrl = i !== 0 ? url.substring(0, i + 1) : "";
+      const response = await fetch(url);
+      if (url.endsWith(".gltf")) {
+        return this.loadFromJson(await response.json(), baseUrl);
+      } else if (url.endsWith(".glb")) {
+        return this.loadFromBinary(await response.arrayBuffer(), baseUrl);
+      } else {
+        throw new Error("Unrecognized file extension");
+      }
+    }
+    /**
+     * Parse a {@link GLTF.IGLTF | glTF json} and create our {@link gltf} base object.
+     * @param json - already parsed JSON content.
+     * @param baseUrl - base url from which to get all the other assets.
+     * @param binaryChunk - optional binary chunks.
+     * @returns - {@link gltf} base object.
+     * @async
+     */
+    async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
+      if (!baseUrl) {
+        throw new Error("baseUrl must be specified.");
+      }
+      if (!json.asset) {
+        throw new Error("Missing asset description.");
+      }
+      if (json.asset.minVersion !== "2.0" && json.asset.version !== "2.0") {
+        throw new Error("Incompatible asset version.");
+      }
+      for (const accessor of json.accessors) {
+        accessor.byteOffset = accessor.byteOffset ?? 0;
+        accessor.normalized = accessor.normalized ?? false;
+      }
+      for (const bufferView of json.bufferViews) {
+        bufferView.byteOffset = bufferView.byteOffset ?? 0;
+      }
+      for (const node of json.nodes) {
+        if (!node.matrix) {
+          node.rotation = node.rotation ?? DEFAULT_ROTATION;
+          node.scale = node.scale ?? DEFAULT_SCALE;
+          node.translation = node.translation ?? DEFAULT_TRANSLATION;
+        }
+      }
+      if (json.samplers) {
+        for (const sampler of json.samplers) {
+          sampler.wrapS = sampler.wrapS ?? GL$1.REPEAT;
+          sampler.wrapT = sampler.wrapT ?? GL$1.REPEAT;
+        }
+      }
+      const pendingBuffers = [];
+      if (binaryChunk) {
+        pendingBuffers.push(Promise.resolve(binaryChunk));
+      } else {
+        for (const index in json.buffers) {
+          const buffer = json.buffers[index];
+          const uri = GLTFLoader.resolveUri(buffer.uri, baseUrl);
+          pendingBuffers[index] = fetch(uri).then((response) => response.arrayBuffer());
+        }
+      }
+      const pendingImages = [];
+      for (let index = 0; index < json.images?.length || 0; ++index) {
+        const image = json.images[index];
+        if (image.uri) {
+          pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
+            return createImageBitmap(await response.blob());
+          });
+        } else {
+          const bufferView = json.bufferViews[image.bufferView];
+          pendingImages[index] = pendingBuffers[bufferView.buffer].then((buffer) => {
+            const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], {
+              type: image.mimeType
+            });
+            return createImageBitmap(blob);
+          });
+        }
+      }
+      return {
+        ...json,
+        arrayBuffers: await Promise.all(pendingBuffers),
+        imagesBitmaps: await Promise.all(pendingImages)
+      };
+    }
+    /**
+     * Load a glTF from a .glb file.
+     * @param arrayBuffer - {@link ArrayBuffer} containing the data.
+     * @param baseUrl - base url from which to get all the other assets.
+     * @returns - the {@link GPUCurtainsGLTF} created.
+     * @async
+     */
+    async loadFromBinary(arrayBuffer, baseUrl) {
+      const headerView = new DataView(arrayBuffer, 0, 12);
+      const magic = headerView.getUint32(0, true);
+      const version = headerView.getUint32(4, true);
+      const length = headerView.getUint32(8, true);
+      if (magic !== GLB_MAGIC) {
+        throw new Error("Invalid magic string in binary header.");
+      }
+      if (version !== 2) {
+        throw new Error("Incompatible version in binary header.");
+      }
+      const chunks = {};
+      let chunkOffset = 12;
+      while (chunkOffset < length) {
+        const chunkHeaderView = new DataView(arrayBuffer, chunkOffset, 8);
+        const chunkLength = chunkHeaderView.getUint32(0, true);
+        const chunkType = chunkHeaderView.getUint32(4, true);
+        chunks[chunkType] = arrayBuffer.slice(chunkOffset + 8, chunkOffset + 8 + chunkLength);
+        chunkOffset += chunkLength + 8;
+      }
+      if (!chunks[CHUNK_TYPE.JSON]) {
+        throw new Error("File contained no json chunk.");
+      }
+      const decoder = new TextDecoder("utf-8");
+      const jsonString = decoder.decode(chunks[CHUNK_TYPE.JSON]);
+      return this.loadFromJson(JSON.parse(jsonString), baseUrl, chunks[CHUNK_TYPE.BIN]);
+    }
+    /**
+     * Load the glTF json, parse the data and create our {@link GPUCurtainsGLTF} object.
+     * @param json - already parsed JSON content.
+     * @param baseUrl - base url from which to get all the other assets.
+     * @param binaryChunk - optional binary chunks.
+     * @returns - the {@link GPUCurtainsGLTF} created.
+     * @async
+     */
+    async loadFromJson(json, baseUrl, binaryChunk = null) {
+      this.gltf = await this.loadFromJsonBase(json, baseUrl, binaryChunk);
+      return this.gltf;
+    }
+  }
+
+  var __accessCheck = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet = (obj, member, getter) => {
+    __accessCheck(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet = (obj, member, value, setter) => {
+    __accessCheck(obj, member, "write to private field");
+    setter ? setter.call(obj, value) : member.set(obj, value);
+    return value;
+  };
+  var _primitiveInstances;
+  const GL = WebGLRenderingContext;
+  const _normalMatrix = new Mat4();
+  const _GLTFScenesManager = class _GLTFScenesManager {
+    /**
+     * {@link GLTFScenesManager} constructor.
+     * @param parameters - parameters used to create our {@link GLTFScenesManager}.
+     * @param parameters.renderer - our {@link CameraRenderer} class object.
+     * @param parameters.gltf - The {@link GLTFLoader.gltf | gltf} object used.
+     */
+    constructor({ renderer, gltf }) {
+      /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
+      __privateAdd(this, _primitiveInstances, void 0);
+      renderer = renderer && renderer.renderer || renderer;
+      isCameraRenderer(renderer, "GLTFScenesManager");
+      this.renderer = renderer;
+      this.gltf = gltf;
+      __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());
+      const traverseChildren = (child) => {
+        return [
+          child.node,
+          ...child.children?.map((c) => {
+            return [...traverseChildren(c)];
+          }).flat()
+        ].flat();
+      };
+      this.scenesManager = {
+        node: new Object3D(),
+        boundingBox: new Box3(),
+        samplers: [],
+        materialsTextures: [],
+        scenes: [],
+        meshes: [],
+        meshesDescriptors: [],
+        getScenesNodes: () => {
+          return this.scenesManager.scenes.map((scene) => {
+            return traverseChildren(scene);
+          }).flat();
+        }
+      };
+      this.createSamplers();
+      this.createMaterialTextures();
+      this.createScenes();
+    }
+    /**
+     * Get an attribute type, bufferFormat and size from its {@link GLTF.AccessorType | accessor type}.
+     * @param type - {@link GLTF.AccessorType | accessor type} to use.
+     * @returns - corresponding type, bufferFormat and size.
+     */
+    static getVertexAttributeParamsFromType(type) {
+      switch (type) {
+        case "VEC2":
+          return {
+            type: "vec2f",
+            bufferFormat: "float32x2",
+            size: 2
+          };
+        case "VEC3":
+          return {
+            type: "vec3f",
+            bufferFormat: "float32x3",
+            size: 3
+          };
+        case "VEC4":
+          return {
+            type: "vec4f",
+            bufferFormat: "float32x4",
+            size: 4
+          };
+        case "SCALAR":
+        default:
+          return {
+            type: "f32",
+            bufferFormat: "float32",
+            size: 1
+          };
+      }
+    }
+    /**
+     * Get the corresponding typed array constructor based on the {@link GLTF.AccessorComponentType | accessor component type}.
+     * @param componentType - {@link GLTF.AccessorComponentType | accessor component type} to use.
+     * @returns - corresponding typed array constructor.
+     */
+    static getTypedArrayConstructorFromComponentType(componentType) {
+      switch (componentType) {
+        case GL.BYTE:
+          return Int8Array;
+        case GL.UNSIGNED_BYTE:
+          return Uint8Array;
+        case GL.SHORT:
+          return Int16Array;
+        case GL.UNSIGNED_SHORT:
+          return Uint16Array;
+        case GL.UNSIGNED_INT:
+          return Uint32Array;
+        case GL.FLOAT:
+        default:
+          return Float32Array;
+      }
+    }
+    /**
+     * Get the {@link GPUPrimitiveTopology} based on the {@link GLTF.MeshPrimitiveMode | WebGL primitive mode}.
+     * @param mode - {@link GLTF.MeshPrimitiveMode | WebGL primitive mode} to use.
+     * @returns - corresponding {@link GPUPrimitiveTopology}.
+     */
+    static gpuPrimitiveTopologyForMode(mode) {
+      switch (mode) {
+        case GL.TRIANGLES:
+          return "triangle-list";
+        case GL.TRIANGLE_STRIP:
+          return "triangle-strip";
+        case GL.LINES:
+          return "line-list";
+        case GL.LINE_STRIP:
+          return "line-strip";
+        case GL.POINTS:
+          return "point-list";
+      }
+    }
+    /**
+     * Get the {@link GPUAddressMode} based on the {@link GLTF.TextureWrapMode | WebGL texture wrap mode}.
+     * @param wrap - {@link GLTF.TextureWrapMode | WebGL texture wrap mode} to use.
+     * @returns - corresponding {@link GPUAddressMode}.
+     */
+    static gpuAddressModeForWrap(wrap) {
+      switch (wrap) {
+        case GL.CLAMP_TO_EDGE:
+          return "clamp-to-edge";
+        case GL.MIRRORED_REPEAT:
+          return "mirror-repeat";
+        default:
+          return "repeat";
+      }
+    }
+    /**
+     * Create the {@link Sampler} and add them to the {@link ScenesManager.samplers | scenesManager samplers array}.
+     */
+    createSamplers() {
+      if (this.gltf.samplers) {
+        for (const [index, sampler] of Object.entries(this.gltf.samplers)) {
+          const descriptor = {
+            label: "glTF sampler " + index,
+            name: "gltfSampler" + index,
+            // TODO better name?
+            addressModeU: _GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
+            addressModeV: _GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapT)
+          };
+          if (!sampler.magFilter || sampler.magFilter === GL.LINEAR) {
+            descriptor.magFilter = "linear";
+          }
+          switch (sampler.minFilter) {
+            case GL.NEAREST:
+              break;
+            case GL.LINEAR:
+            case GL.LINEAR_MIPMAP_NEAREST:
+              descriptor.minFilter = "linear";
+              break;
+            case GL.NEAREST_MIPMAP_LINEAR:
+              descriptor.mipmapFilter = "linear";
+              break;
+            case GL.LINEAR_MIPMAP_LINEAR:
+            default:
+              descriptor.minFilter = "linear";
+              descriptor.mipmapFilter = "linear";
+              break;
+          }
+          this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
+        }
+      } else {
+        this.scenesManager.samplers.push(new Sampler(this.renderer, { label: "Default sampler", name: "defaultSampler" }));
+      }
+    }
+    /**
+     * Create a {@link Texture} based on the options.
+     * @param material - material using that texture.
+     * @param image - image source of the texture.
+     * @param name - name of the texture.
+     * @returns - newly created {@link Texture}.
+     */
+    createTexture(material, image, name) {
+      const format = (() => {
+        switch (name) {
+          case "baseColorTexture":
+          case "emissiveTexture":
+            return "bgra8unorm-srgb";
+          case "occlusionTexture":
+            return "r8unorm";
+          default:
+            return "bgra8unorm";
+        }
+      })();
+      const texture = new Texture(this.renderer, {
+        label: material.name ? material.name + ": " + name : name,
+        name,
+        format,
+        visibility: ["fragment"],
+        generateMips: true,
+        // generate mips by default
+        fixedSize: {
+          width: image.width,
+          height: image.height
+        }
+      });
+      texture.uploadSource({
+        source: image
+      });
+      return texture;
+    }
+    /**
+     * Create the {ScenesManager.materialsTextures | scenesManager materialsTextures array} and each associated {@link types/gltf/GLTFScenesManager.MaterialTexture | MaterialTexture} and their respective {@link Texture}.
+     */
+    createMaterialTextures() {
+      this.scenesManager.materialsTextures = [];
+      if (this.gltf.materials) {
+        for (const [materialIndex, material] of Object.entries(this.gltf.materials)) {
+          const materialTextures = {
+            material: materialIndex,
+            texturesDescriptors: []
+          };
+          const getUVAttributeName = (texture) => {
+            if (!texture.texCoord)
+              return "uv";
+            return texture.texCoord !== 0 ? "uv" + texture.texCoord : "uv";
+          };
+          this.scenesManager.materialsTextures[materialIndex] = materialTextures;
+          if (material.pbrMetallicRoughness) {
+            if (material.pbrMetallicRoughness.baseColorTexture && material.pbrMetallicRoughness.baseColorTexture.index !== void 0) {
+              const index = material.pbrMetallicRoughness.baseColorTexture.index;
+              const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
+              const texture = this.createTexture(material, image, "baseColorTexture");
+              const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
+              materialTextures.texturesDescriptors.push({
+                texture,
+                sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+                texCoordAttributeName: getUVAttributeName(material.pbrMetallicRoughness.baseColorTexture)
+              });
+            }
+            if (material.pbrMetallicRoughness.metallicRoughnessTexture && material.pbrMetallicRoughness.metallicRoughnessTexture.index !== void 0) {
+              const index = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
+              const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
+              const texture = this.createTexture(material, image, "metallicRoughnessTexture");
+              const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
+              materialTextures.texturesDescriptors.push({
+                texture,
+                sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+                texCoordAttributeName: getUVAttributeName(material.pbrMetallicRoughness.metallicRoughnessTexture)
+              });
+            }
+          }
+          if (material.normalTexture && material.normalTexture.index !== void 0) {
+            const index = material.normalTexture.index;
+            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
+            const texture = this.createTexture(material, image, "normalTexture");
+            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
+            materialTextures.texturesDescriptors.push({
+              texture,
+              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+              texCoordAttributeName: getUVAttributeName(material.normalTexture)
+            });
+          }
+          if (material.occlusionTexture && material.occlusionTexture.index !== void 0) {
+            const index = material.occlusionTexture.index;
+            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
+            const texture = this.createTexture(material, image, "occlusionTexture");
+            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
+            materialTextures.texturesDescriptors.push({
+              texture,
+              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+              texCoordAttributeName: getUVAttributeName(material.occlusionTexture)
+            });
+          }
+          if (material.emissiveTexture && material.emissiveTexture.index !== void 0) {
+            const index = material.emissiveTexture.index;
+            const image = this.gltf.imagesBitmaps[this.gltf.textures[index].source];
+            const texture = this.createTexture(material, image, "emissiveTexture");
+            const samplerIndex = this.gltf.textures.find((t) => t.source === index)?.sampler;
+            materialTextures.texturesDescriptors.push({
+              texture,
+              sampler: this.scenesManager.samplers[samplerIndex ?? 0],
+              texCoordAttributeName: getUVAttributeName(material.emissiveTexture)
+            });
+          }
+        }
+      }
+    }
+    /**
+     * Create a {@link ChildDescriptor} from a parent {@link ChildDescriptor} and a {@link GLTF.INode | GLTF Node}
+     * @param parent - parent {@link ChildDescriptor} to use.
+     * @param node - {@link GLTF.INode | GLTF Node} to use.
+     */
+    createNode(parent, node) {
+      if (node.camera !== void 0)
+        return;
+      const child = {
+        name: node.name,
+        node: new Object3D(),
+        children: []
+      };
+      parent.children.push(child);
+      child.node.parent = parent.node;
+      if (node.matrix) {
+        child.node.modelMatrix.setFromArray(new Float32Array(node.matrix));
+        child.node.matrices.model.shouldUpdate = false;
+      } else {
+        if (node.translation)
+          child.node.position.set(node.translation[0], node.translation[1], node.translation[2]);
+        if (node.scale)
+          child.node.scale.set(node.scale[0], node.scale[1], node.scale[2]);
+        if (node.rotation)
+          child.node.quaternion.setFromArray(new Float32Array(node.rotation));
+      }
+      const mesh = this.gltf.meshes[node.mesh];
+      if (node.children) {
+        node.children.forEach((childNodeIndex) => {
+          const childNode = this.gltf.nodes[childNodeIndex];
+          this.createNode(child, childNode);
+        });
+      }
+      if (mesh) {
+        mesh.primitives.forEach((primitive, index) => {
+          const meshDescriptor = {
+            parent: child.node,
+            attributes: [],
+            textures: [],
+            parameters: {
+              label: mesh.name ? mesh.name + " " + index : "glTF mesh " + index
+            },
+            nodes: []
+          };
+          let instancesDescriptor = __privateGet(this, _primitiveInstances).get(primitive);
+          if (!instancesDescriptor) {
+            instancesDescriptor = {
+              instances: [],
+              // instances
+              nodes: [],
+              // node transform
+              meshDescriptor
+            };
+            __privateGet(this, _primitiveInstances).set(primitive, instancesDescriptor);
+          }
+          instancesDescriptor.instances.push(node);
+          instancesDescriptor.nodes.push(child.node);
+        });
+      }
+    }
+    /**
+     * Create the {@link ScenesManager#scenes | ScenesManager scenes} based on the {@link gltf} object.
+     */
+    createScenes() {
+      this.scenesManager.node.parent = this.renderer.scene;
+      this.gltf.scenes.forEach((childScene) => {
+        const sceneDescriptor = {
+          name: childScene.name,
+          children: [],
+          node: new Object3D()
+        };
+        sceneDescriptor.node.parent = this.scenesManager.node;
+        this.scenesManager.scenes.push(sceneDescriptor);
+        childScene.nodes.forEach((nodeIndex) => {
+          const node = this.gltf.nodes[nodeIndex];
+          this.createNode(sceneDescriptor, node);
+        });
+      });
+      this.scenesManager.scenes.forEach((childScene) => {
+        childScene.node.shouldUpdateModelMatrix();
+        childScene.node.updateMatrixStack();
+      });
+      for (const [primitive, primitiveInstance] of __privateGet(this, _primitiveInstances)) {
+        const { instances, nodes, meshDescriptor } = primitiveInstance;
+        const instancesCount = instances.length;
+        meshDescriptor.nodes = nodes;
+        this.scenesManager.meshesDescriptors.push(meshDescriptor);
+        const geometryBBox = new Box3();
+        const defaultAttributes = [];
+        let interleavedArray = null;
+        let interleavedBufferView = null;
+        let maxByteOffset = 0;
+        for (const [attribName, accessorIndex] of Object.entries(primitive.attributes)) {
+          const accessor = this.gltf.accessors[accessorIndex];
+          const constructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
+          const bufferView = this.gltf.bufferViews[accessor.bufferView];
+          const name = attribName === "TEXCOORD_0" ? "uv" : attribName.replace("_", "").replace("TEXCOORD", "uv").toLowerCase();
+          const byteStride = bufferView.byteStride || 0;
+          const accessorByteOffset = accessor.byteOffset || 0;
+          if (byteStride && accessorByteOffset && accessorByteOffset < byteStride) {
+            maxByteOffset = Math.max(accessorByteOffset, maxByteOffset);
+          } else {
+            maxByteOffset = 0;
+          }
+          if (name === "position") {
+            geometryBBox.min.min(new Vec3(accessor.min[0], accessor.min[1], accessor.min[2]));
+            geometryBBox.max.max(new Vec3(accessor.max[0], accessor.max[1], accessor.max[2]));
+            interleavedBufferView = bufferView;
+          }
+          const attributeParams = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type);
+          const attribute = {
+            name,
+            ...attributeParams,
+            array: new constructor(
+              this.gltf.arrayBuffers[bufferView.buffer],
+              accessor.byteOffset + bufferView.byteOffset,
+              accessor.count * attributeParams.size
+            )
+          };
+          defaultAttributes.push(attribute);
+          meshDescriptor.attributes.push({
+            name: attribute.name,
+            type: attribute.type
+          });
+        }
+        if (maxByteOffset > 0) {
+          const accessorsBufferViews = Object.values(primitive.attributes).map(
+            (accessorIndex) => this.gltf.accessors[accessorIndex].bufferView
+          );
+          if (!accessorsBufferViews.every((val) => val === accessorsBufferViews[0])) {
+            let totalStride = 0;
+            const mainBufferStrides = {};
+            const arrayLength = Object.values(primitive.attributes).reduce(
+              (acc, accessorIndex) => {
+                const accessor = this.gltf.accessors[accessorIndex];
+                const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+                if (!mainBufferStrides[accessor.bufferView]) {
+                  mainBufferStrides[accessor.bufferView] = 0;
+                }
+                mainBufferStrides[accessor.bufferView] = Math.max(
+                  mainBufferStrides[accessor.bufferView],
+                  accessor.byteOffset + attrSize * Float32Array.BYTES_PER_ELEMENT
+                );
+                totalStride += attrSize * Float32Array.BYTES_PER_ELEMENT;
+                return acc + accessor.count * attrSize;
+              },
+              0
+            );
+            interleavedArray = new Float32Array(Math.ceil(arrayLength / 4) * 4);
+            Object.values(primitive.attributes).forEach((accessorIndex) => {
+              const accessor = this.gltf.accessors[accessorIndex];
+              const bufferView = this.gltf.bufferViews[accessor.bufferView];
+              const attrSize = _GLTFScenesManager.getVertexAttributeParamsFromType(accessor.type).size;
+              for (let i = 0; i < accessor.count; i++) {
+                const startOffset = accessor.byteOffset / Float32Array.BYTES_PER_ELEMENT + i * totalStride / Float32Array.BYTES_PER_ELEMENT;
+                interleavedArray.subarray(startOffset, startOffset + attrSize).set(
+                  new Float32Array(
+                    this.gltf.arrayBuffers[bufferView.buffer],
+                    bufferView.byteOffset + accessor.byteOffset + i * mainBufferStrides[accessor.bufferView],
+                    attrSize
+                  )
+                );
+              }
+            });
+          } else {
+            interleavedArray = new Float32Array(
+              this.gltf.arrayBuffers[interleavedBufferView.buffer],
+              interleavedBufferView.byteOffset,
+              Math.ceil(interleavedBufferView.byteLength / 4) * 4 / Float32Array.BYTES_PER_ELEMENT
+            );
+          }
+        } else {
+          const attribOrder = ["position", "uv", "normal"];
+          defaultAttributes.sort((a, b) => {
+            let aIndex = attribOrder.findIndex((attrName) => attrName === a.name);
+            aIndex = aIndex === -1 ? Infinity : aIndex;
+            let bIndex = attribOrder.findIndex((attrName) => attrName === b.name);
+            bIndex = bIndex === -1 ? Infinity : bIndex;
+            return aIndex - bIndex;
+          });
+        }
+        const geometryAttributes = {
+          instancesCount,
+          topology: _GLTFScenesManager.gpuPrimitiveTopologyForMode(primitive.mode),
+          vertexBuffers: [
+            {
+              name: "attributes",
+              stepMode: "vertex",
+              // explicitly set the stepMode even if not mandatory
+              attributes: defaultAttributes,
+              ...interleavedArray && { array: interleavedArray }
+              // interleaved array!
+            }
+          ]
+        };
+        const isIndexedGeometry = "indices" in primitive;
+        const GeometryConstructor = isIndexedGeometry ? IndexedGeometry : Geometry;
+        meshDescriptor.parameters.geometry = new GeometryConstructor(geometryAttributes);
+        meshDescriptor.parameters.geometry.boundingBox = geometryBBox;
+        if (isIndexedGeometry) {
+          const accessor = this.gltf.accessors[primitive.indices];
+          const bufferView = this.gltf.bufferViews[accessor.bufferView];
+          const constructor = _GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType);
+          const arrayOffset = accessor.byteOffset + bufferView.byteOffset;
+          const arrayBuffer = this.gltf.arrayBuffers[bufferView.buffer];
+          const arrayLength = Math.min(
+            (arrayBuffer.byteLength - arrayOffset) / constructor.BYTES_PER_ELEMENT,
+            Math.ceil(accessor.count / 4) * 4
+          );
+          const array = constructor.name === "Uint8Array" ? Uint16Array.from(new constructor(arrayBuffer, arrayOffset, arrayLength)) : new constructor(arrayBuffer, arrayOffset, arrayLength);
+          meshDescriptor.parameters.geometry.setIndexBuffer({
+            bufferFormat: constructor.name === "Uint32Array" ? "uint32" : "uint16",
+            array
+          });
+        }
+        const materialTextures = this.scenesManager.materialsTextures[primitive.material];
+        meshDescriptor.parameters.samplers = [];
+        meshDescriptor.parameters.textures = [];
+        materialTextures?.texturesDescriptors.forEach((t) => {
+          meshDescriptor.textures.push({
+            texture: t.texture.options.name,
+            sampler: t.sampler.name,
+            texCoordAttributeName: t.texCoordAttributeName
+          });
+          const samplerExists = meshDescriptor.parameters.samplers.find((s) => s.uuid === t.sampler.uuid);
+          if (!samplerExists) {
+            meshDescriptor.parameters.samplers.push(t.sampler);
+          }
+          meshDescriptor.parameters.textures.push(t.texture);
+        });
+        const material = this.gltf.materials && this.gltf.materials[primitive.material] || {};
+        meshDescriptor.parameters.cullMode = material.doubleSided ? "none" : "back";
+        if (material.alphaMode === "BLEND" || material.extensions && material.extensions.KHR_materials_transmission) {
+          meshDescriptor.parameters.transparent = true;
+          meshDescriptor.parameters.targets = [
+            {
+              blend: {
+                color: {
+                  srcFactor: "src-alpha",
+                  dstFactor: "one-minus-src-alpha"
+                },
+                alpha: {
+                  // This just prevents the canvas from having alpha "holes" in it.
+                  srcFactor: "one",
+                  dstFactor: "one"
+                }
+              }
+            }
+          ];
+        }
+        const materialUniformStruct = {
+          baseColorFactor: {
+            type: "vec4f",
+            value: material.pbrMetallicRoughness?.baseColorFactor || [1, 1, 1, 1]
+          },
+          alphaCutoff: {
+            type: "f32",
+            value: material.alphaCutoff !== void 0 ? material.alphaCutoff : material.alphaMode === "MASK" ? 0.5 : 0
+          },
+          metallicFactor: {
+            type: "f32",
+            value: material.pbrMetallicRoughness?.metallicFactor || 0
+          },
+          roughnessFactor: {
+            type: "f32",
+            value: material.pbrMetallicRoughness?.roughnessFactor || 1
+          },
+          normalMapScale: {
+            type: "f32",
+            value: material.normalTexture?.scale || 1
+          },
+          occlusionStrength: {
+            type: "f32",
+            value: material.occlusionTexture?.strength || 1
+          },
+          emissiveFactor: {
+            type: "vec3f",
+            value: material.emissiveFactor !== void 0 ? material.emissiveFactor : [1, 1, 1]
+          }
+        };
+        if (Object.keys(materialUniformStruct).length) {
+          meshDescriptor.parameters.uniforms = {
+            material: {
+              visibility: ["vertex", "fragment"],
+              struct: materialUniformStruct
+            }
+          };
+        }
+        if (instancesCount > 1) {
+          const worldMatrices = new Float32Array(instancesCount * 16);
+          const normalMatrices = new Float32Array(instancesCount * 16);
+          for (let i = 0; i < instancesCount; ++i) {
+            worldMatrices.set(nodes[i].worldMatrix.elements, i * 16);
+            _normalMatrix.copy(nodes[i].worldMatrix).invert().transpose();
+            normalMatrices.set(_normalMatrix.elements, i * 16);
+          }
+          meshDescriptor.parameters.storages = {
+            instances: {
+              visibility: ["vertex", "fragment"],
+              struct: {
+                modelMatrix: {
+                  type: "array<mat4x4f>",
+                  value: worldMatrices
+                },
+                normalMatrix: {
+                  type: "array<mat4x4f>",
+                  value: normalMatrices
+                }
+              }
+            }
+          };
+        }
+        for (let i = 0; i < nodes.length; i++) {
+          const tempBbox = geometryBBox.clone();
+          const transformedBbox = tempBbox.applyMat4(meshDescriptor.nodes[i].worldMatrix);
+          this.scenesManager.boundingBox.min.min(transformedBbox.min);
+          this.scenesManager.boundingBox.max.max(transformedBbox.max);
+        }
+      }
+    }
+    /**
+     * Add all the needed {@link Mesh} based on the {@link ScenesManager#meshesDescriptors | ScenesManager meshesDescriptors} array.
+     * @param patchMeshesParameters - allow to optionally patch the {@link Mesh} parameters before creating it (can be used to add custom shaders, uniforms or storages, change rendering options, etc.)
+     * @returns - Array of created {@link Mesh}.
+     */
+    addMeshes(patchMeshesParameters = (meshDescriptor) => {
+    }) {
+      return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
+        if (meshDescriptor.parameters.geometry) {
+          patchMeshesParameters(meshDescriptor);
+          const mesh = new Mesh(this.renderer, {
+            ...meshDescriptor.parameters
+          });
+          if (meshDescriptor.nodes.length > 1) {
+            const _updateWorldMatrix = mesh.updateWorldMatrix.bind(mesh);
+            mesh.updateWorldMatrix = () => {
+              _updateWorldMatrix();
+              meshDescriptor.nodes.forEach((node, i) => {
+                mesh.storages.instances.modelMatrix.value.set(node.worldMatrix.elements, i * 16);
+                _normalMatrix.copy(node.worldMatrix).invert().transpose();
+                mesh.storages.instances.normalMatrix.value.set(_normalMatrix.elements, i * 16);
+              });
+              mesh.storages.instances.modelMatrix.shouldUpdate = true;
+              mesh.storages.instances.normalMatrix.shouldUpdate = true;
+            };
+          }
+          mesh.parent = meshDescriptor.parent;
+          this.scenesManager.meshes.push(mesh);
+          return mesh;
+        }
+      });
+    }
+    /**
+     * Destroy the current {@link ScenesManager} by removing all created {@link ScenesManager#meshes | meshes} and destroying all the {@link Object3D} nodes.
+     */
+    destroy() {
+      this.scenesManager.meshes.forEach((mesh) => mesh.remove());
+      this.scenesManager.meshes = [];
+      const nodes = this.scenesManager.getScenesNodes();
+      nodes.forEach((node) => {
+        node.destroy();
+      });
+      this.scenesManager.node.destroy();
+    }
+  };
+  _primitiveInstances = new WeakMap();
+  let GLTFScenesManager = _GLTFScenesManager;
+
+  const buildShaders = (meshDescriptor, shaderParameters = null) => {
+    const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
+    const normalTexture = meshDescriptor.textures.find((t) => t.texture === "normalTexture");
+    const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
+    const occlusionTexture = meshDescriptor.textures.find((t) => t.texture === "occlusionTexture");
+    const metallicRoughnessTexture = meshDescriptor.textures.find((t) => t.texture === "metallicRoughnessTexture");
+    const facultativeAttributes = meshDescriptor.attributes.filter((attribute) => attribute.name !== "position");
+    const structAttributes = facultativeAttributes.map((attribute, index) => {
+      return `@location(${index}) ${attribute.name}: ${attribute.type},`;
+    }).join("\n	");
+    let outputPositions = (
+      /* wgsl */
+      `
+    let worldPos = matrices.model * vec4(attributes.position, 1.0);
+    vsOutput.position = camera.projection * camera.view * worldPos;
+    vsOutput.worldPosition = worldPos.xyz;
+    vsOutput.viewDirection = camera.position - worldPos.xyz;
+  `
+    );
+    let outputNormal = facultativeAttributes.find((attr) => attr.name === "normal") ? "vsOutput.normal = getWorldNormal(attributes.normal);" : "";
+    if (meshDescriptor.parameters.storages && meshDescriptor.parameters.storages.instances) {
+      outputPositions = /* wgsl */
+      `
+      let worldPos: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(attributes.position, 1.0);
+      vsOutput.position = camera.projection * camera.view * worldPos;
+      vsOutput.worldPosition = worldPos.xyz;
+      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
+      `;
+      outputNormal = `vsOutput.normal = normalize((instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz);`;
+    }
+    const outputAttributes = facultativeAttributes.filter((attr) => attr.name !== "normal").map((attribute) => {
+      return `vsOutput.${attribute.name} = attributes.${attribute.name};`;
+    }).join("\n	");
+    let vertexOutputContent = `
+      @builtin(position) position: vec4f,
+      @location(${facultativeAttributes.length}) viewDirection: vec3f,
+      @location(${facultativeAttributes.length + 1}) worldPosition: vec3f,
+      ${structAttributes}
+  `;
+    let outputNormalMap = "";
+    const tangentAttribute = facultativeAttributes.find((attr) => attr.name === "tangent");
+    const useNormalMap = !!(normalTexture && tangentAttribute);
+    if (useNormalMap) {
+      vertexOutputContent += `
+      @location(${facultativeAttributes.length + 2}) bitangent: vec3f,
+      `;
+      outputNormalMap = `
+        vsOutput.tangent = normalize(matrices.model * attributes.tangent);
+        vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * attributes.tangent.w;
+      `;
+    }
+    const vertexOutput = `
+    struct VSOutput {
+      ${vertexOutputContent}
+    };`;
+    const vs = (
+      /* wgsl */
+      `
+    ${vertexOutput}
+    
+    @vertex fn main(
+      attributes: Attributes,
+    ) -> VSOutput {
+      var vsOutput: VSOutput;
+    
+      ${outputPositions}
+      ${outputNormal}
+      ${outputAttributes}
+      
+      ${outputNormalMap}
+
+      return vsOutput;
+    }
+  `
+    );
+    const initColor = (
+      /* wgsl */
+      "var color: vec4f = vec4();"
+    );
+    const returnColor = (
+      /* wgsl */
+      "return color;"
+    );
+    const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === "color0");
+    let baseColor = (
+      /* wgsl */
+      !!vertexColor ? vertexColor.type === "vec3f" ? "var baseColor: vec4f = vec4(fsInput.color0, 1.0) * material.baseColorFactor;" : "var baseColor: vec4f = fsInput.color0 * material.baseColorFactor;" : "var baseColor: vec4f = material.baseColorFactor;"
+    );
+    if (baseColorTexture) {
+      baseColor = /* wgsl */
+      `
+      var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
+      
+      // baseColor = vec4(sRGBToLinear(baseColor.rgb), baseColor.a);
+      
+      if (baseColor.a < material.alphaCutoff) {
+        discard;
+      }
+    `;
+    }
+    let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? `let normal: vec3f = normalize(fsInput.normal);` : `let normal: vec3f = vec3(0.0);`;
+    if (useNormalMap) {
+      normalMap = `
+      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), normalize(fsInput.normal));
+      let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
+      let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+    `;
+    }
+    let metallicRoughness = (
+      /*  wgsl */
+      `
+      var metallic = material.metallicFactor;
+      var roughness = material.roughnessFactor;
+  `
+    );
+    if (metallicRoughnessTexture) {
+      metallicRoughness += /* wgsl */
+      `
+      let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
+      metallic = clamp(metallic * metallicRoughness.b, 0.001, 1.0);
+      roughness = clamp(roughness * metallicRoughness.g, 0.001, 1.0);
+    `;
+    }
+    const f0 = (
+      /* wgsl */
+      `
+      let dielectricSpec: vec3f = vec3(0.04, 0.04, 0.04);
+      let f0 = mix(dielectricSpec, color.rgb, vec3(metallic));
+  `
+    );
+    let emissiveOcclusion = (
+      /* wgsl */
+      `
+      var emissive: vec3f = vec3(0.0);
+      var occlusion: f32 = 1.0;
+  `
+    );
+    if (emissiveTexture) {
+      emissiveOcclusion += /* wgsl */
+      `
+      emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
+      
+      // emissive = sRGBToLinear(emissive);
+      
+      emissive *= material.emissiveFactor;
+      `;
+      if (occlusionTexture) {
+        emissiveOcclusion += /* wgsl */
+        `
+      occlusion = textureSample(occlusionTexture, ${occlusionTexture.sampler}, fsInput.${occlusionTexture.texCoordAttributeName}).r;
+      `;
+      }
+    }
+    emissiveOcclusion += /* wgsl */
+    `
+      occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);
+  `;
+    const initLightShading = (
+      /* wgsl */
+      `
+      var ambientContribution: vec3f;
+      var lightContribution: vec3f;
+      color = baseColor;
+  `
+    );
+    const defaultAdditionalHead = "";
+    const defaultAdditionalColor = "";
+    const defaultAmbientContribution = (
+      /* wgsl */
+      `
+    ambientContribution = vec3(1.0);
+  `
+    );
+    const defaultLightContribution = (
+      /* wgsl */
+      `
+    lightContribution = vec3(0.0);
+  `
+    );
+    let { chunks } = shaderParameters;
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: defaultAdditionalHead,
+        ambientContribution: defaultAmbientContribution,
+        lightContribution: defaultLightContribution,
+        additionalColorContribution: defaultAdditionalColor
+      };
+    } else {
+      if (!chunks.additionalFragmentHead)
+        chunks.additionalFragmentHead = defaultAdditionalHead;
+      if (!chunks.ambientContribution)
+        chunks.ambientContribution = defaultAmbientContribution;
+      if (!chunks.lightContribution)
+        chunks.lightContribution = defaultLightContribution;
+      if (!chunks.additionalColorContribution)
+        chunks.additionalColorContribution = defaultAdditionalColor;
+    }
+    const applyLightShading = (
+      /* wgsl */
+      `
+      let ambient = ambientContribution * color.rgb * occlusion;
+      color = vec4(linearTosRGB(lightContribution + ambient + emissive), color.a);
+      //color = vec4(linearTosRGB(toneMapKhronosPbrNeutral(lightContribution + ambient + emissive)), color.a);
+  `
+    );
+    const fs = (
+      /* wgsl */
+      `
+    // PBR
+    const PI = ${Math.PI};
+    
+    
+    // tone maping
+    fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
+      var toneMapColor = color; 
+      const startCompression: f32 = 0.8 - 0.04;
+      const desaturation: f32 = 0.15;
+      var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
+      var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
+      toneMapColor = toneMapColor - offset;
+      var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
+      if (peak < startCompression) {
+        return toneMapColor;
+      }
+      const d: f32 = 1. - startCompression;
+      let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
+      toneMapColor *= newPeak / peak;
+      let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
+      return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
+    }
+    
+  
+    // linear <-> sRGB conversions
+    fn linearTosRGB(linear: vec3f) -> vec3f {
+      if (all(linear <= vec3(0.0031308))) {
+        return linear * 12.92;
+      }
+      return (pow(abs(linear), vec3(1.0/2.4)) * 1.055) - vec3(0.055);
+    }
+  
+    fn sRGBToLinear(srgb: vec3f) -> vec3f {
+      if (all(srgb <= vec3(0.04045))) {
+        return srgb / vec3(12.92);
+      }
+      return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
+    }
+    
+    ${chunks.additionalFragmentHead}
+  
+    ${vertexOutput}
+  
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
+      ${initColor}
+      ${baseColor}
+      ${normalMap}
+      ${metallicRoughness}
+      ${f0}
+      ${emissiveOcclusion}
+      
+      ${initLightShading}
+      
+      // user defined lightning
+      ${chunks.ambientContribution}
+      ${chunks.lightContribution}
+      
+      ${applyLightShading}
+      
+      ${chunks.additionalColorContribution}
+      
+      ${returnColor}
+    }
+  `
+    );
+    return {
+      vertex: {
+        code: vs,
+        entryPoint: "main"
+      },
+      fragment: {
+        code: fs,
+        entryPoint: "main"
+      }
+    };
+  };
+  const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
+    let { chunks } = shaderParameters;
+    const pbrAdditionalFragmentHead = (
+      /* wgsl */
+      `
+    fn FresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
+      return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
+    }
+    
+    fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
+      let a      = roughness*roughness;
+      let a2     = a*a;
+      let NdotH2 = NdotH*NdotH;
+    
+      let num    = a2;
+      let denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+    
+      return num / (PI * denom * denom);
+    }
+    
+    fn GeometrySchlickGGX(NdotV : f32, roughness : f32) -> f32 {
+      let r = (roughness + 1.0);
+      let k = (r*r) / 8.0;
+    
+      let num   = NdotV;
+      let denom = NdotV * (1.0 - k) + k;
+    
+      return num / denom;
+    }
+    
+    fn GeometrySmith(NdotL: f32, NdotV: f32, roughness : f32) -> f32 {
+      let ggx2  = GeometrySchlickGGX(NdotV, roughness);
+      let ggx1  = GeometrySchlickGGX(NdotL, roughness);
+    
+      return ggx1 * ggx2;
+    }
+    
+    fn rangeAttenuation(range: f32, distance: f32) -> f32 {
+      if (range <= 0.0) {
+          // Negative range means no cutoff
+          return 1.0 / pow(distance, 2.0);
+      }
+      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
+    }
+  `
+    );
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: pbrAdditionalFragmentHead
+      };
+    } else {
+      if (!chunks.additionalFragmentHead) {
+        chunks.additionalFragmentHead = pbrAdditionalFragmentHead;
+      } else {
+        chunks.additionalFragmentHead += pbrAdditionalFragmentHead;
+      }
+    }
+    return buildShaders(meshDescriptor, shaderParameters);
+  };
+  const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
+    const { iblParameters } = shaderParameters;
+    meshDescriptor.parameters.uniforms = {
+      ...meshDescriptor.parameters.uniforms,
+      ...{
+        ibl: {
+          struct: {
+            diffuseStrength: {
+              type: "f32",
+              value: iblParameters?.diffuseStrength ?? 0.5
+            },
+            specularStrength: {
+              type: "f32",
+              value: iblParameters?.specularStrength ?? 0.5
+            }
+          }
+        }
+      }
+    };
+    const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters;
+    const useIBLContribution = envDiffuseTexture && envSpecularTexture && lutTexture;
+    let iblContributionHead = "";
+    let iblContribution = "";
+    if (useIBLContribution) {
+      meshDescriptor.parameters.textures = [
+        ...meshDescriptor.parameters.textures,
+        lutTexture,
+        envDiffuseTexture,
+        envSpecularTexture
+      ];
+      const lutTextureDescriptor = {
+        texture: lutTexture.options.name,
+        sampler: "defaultSampler"
+      };
+      const envDiffuseTextureDescriptor = {
+        texture: envDiffuseTexture.options.name,
+        sampler: "defaultSampler"
+      };
+      const envSpecularTextureDescriptor = {
+        texture: envSpecularTexture.options.name,
+        sampler: "defaultSampler"
+      };
+      meshDescriptor.textures = [
+        ...meshDescriptor.textures,
+        lutTextureDescriptor,
+        envDiffuseTextureDescriptor,
+        envSpecularTextureDescriptor
+      ];
+      iblContributionHead = /* wgsl */
+      `
+    const RECIPROCAL_PI = ${1 / Math.PI};
+    const RECIPROCAL_PI2 = ${0.5 / Math.PI};
+    const ENV_LODS = 4.0;
+    const LN2 = 0.6931472;
+    
+    fn rGBMToLinear(rgbm: vec4f) -> vec4f {
+      let maxRange: f32 = 6.0;
+      return vec4(rgbm.xyz * rgbm.w * maxRange, 1.0);
+    }
+    
+    fn cartesianToPolar(n: vec3f) -> vec2f {
+      var uv: vec2f;
+      uv.x = atan2(n.z, n.x) * RECIPROCAL_PI2 + 0.5;
+      uv.y = asin(n.y) * RECIPROCAL_PI + 0.5;
+      return uv;
+    }
+    
+    struct IBLContribution {
+      diffuse: vec3f,
+      specular: vec3f,
+    };
+    
+    fn getIBLContribution(NdV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, specularColor: vec3f) -> IBLContribution {
+      let brdf: vec3f = sRGBToLinear(textureSample(${lutTextureDescriptor.texture}, ${lutTextureDescriptor.sampler}, vec2(NdV, roughness)).rgb);
+      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${envDiffuseTextureDescriptor.sampler}, cartesianToPolar(n))).rgb;      
+      diffuseLight = mix(vec3(1), diffuseLight, ibl.diffuseStrength);
+      var blend: f32 = roughness * ENV_LODS;
+      let level0: f32 = floor(blend);
+      let level1: f32 = min(ENV_LODS, level0 + 1.0);
+      blend -= level0;
+      var uvSpec: vec2f = cartesianToPolar(reflection);
+      uvSpec.y /= 2.0;
+      var uv0: vec2f = uvSpec;
+      var uv1: vec2f = uvSpec;
+      uv0 /= pow(2.0, level0);
+      uv0.y += 1.0 - exp(-LN2 * level0);
+      uv1 /= pow(2.0, level1);
+      uv1.y += 1.0 - exp(-LN2 * level1);
+      let specular0: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv0)).rgb;
+      let specular1: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv1)).rgb;
+      let specularLight: vec3f = mix(specular0, specular1, blend);      
+      
+      var iblContribution: IBLContribution;
+      iblContribution.diffuse = diffuseLight * diffuseColor;
+      
+      let reflectivity: f32 = pow((1.0 - roughness), 2.0) * 0.05;
+      iblContribution.specular = specularLight * (specularColor * brdf.x + brdf.y + reflectivity);
+      iblContribution.specular *= ibl.specularStrength;
+      
+      return iblContribution;
+    }
+    `;
+      iblContribution = /* wgsl */
+      `
+      let reflection: vec3f = normalize(reflect(-normalize(fsInput.viewDirection), normal));
+      
+      let diffuseColor: vec3f = baseColor.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
+      let specularColor: vec3f = mix(f0, baseColor.rgb, metallic);
+    
+      let iblContribution = getIBLContribution(max(dot(normal, normalize(fsInput.viewDirection)), 0.0), roughness, normal, reflection, diffuseColor, specularColor);
+      
+      color = vec4(color.rgb + iblContribution.diffuse + iblContribution.specular, color.a);
+      
+      // Add IBL spec to alpha for reflections on transparent surfaces (glass)
+      color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
+    `;
+    }
+    let { chunks } = shaderParameters;
+    if (!chunks) {
+      chunks = {
+        additionalFragmentHead: iblContributionHead,
+        additionalColorContribution: iblContribution
+      };
+    } else {
+      if (!chunks.additionalFragmentHead) {
+        chunks.additionalFragmentHead = iblContributionHead;
+      } else {
+        chunks.additionalFragmentHead += iblContributionHead;
+      }
+      if (!chunks.additionalColorContribution) {
+        chunks.additionalColorContribution = iblContribution;
+      } else {
+        chunks.additionalColorContribution += iblContribution;
+      }
+    }
+    return buildPBRShaders(meshDescriptor, shaderParameters);
+  };
+
   const logSceneCommands = (renderer) => {
     const { scene } = renderer;
     if (!scene)
@@ -12884,6 +14415,8 @@ struct VSOutput {
   exports.DOMObject3D = DOMObject3D;
   exports.DOMTexture = DOMTexture;
   exports.FullscreenPlane = FullscreenPlane;
+  exports.GLTFLoader = GLTFLoader;
+  exports.GLTFScenesManager = GLTFScenesManager;
   exports.GPUCameraRenderer = GPUCameraRenderer;
   exports.GPUCurtains = GPUCurtains;
   exports.GPUCurtainsRenderer = GPUCurtainsRenderer;
@@ -12919,6 +14452,9 @@ struct VSOutput {
   exports.Vec2 = Vec2;
   exports.Vec3 = Vec3;
   exports.WritableBufferBinding = WritableBufferBinding;
+  exports.buildIBLShaders = buildIBLShaders;
+  exports.buildPBRShaders = buildPBRShaders;
+  exports.buildShaders = buildShaders;
   exports.logSceneCommands = logSceneCommands;
 
 }));

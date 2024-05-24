@@ -28,8 +28,11 @@ class Object3D {
    * @param value - new parent to set, could be an {@link Object3D} or null
    */
   set parent(value) {
-    if (this.parent) {
-      this.parent.children = this.parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
+    if (this._parent && value && this._parent.object3DIndex === value.object3DIndex) {
+      return;
+    }
+    if (this._parent) {
+      this._parent.children = this._parent.children.filter((child) => child.object3DIndex !== this.object3DIndex);
     }
     if (value) {
       this.shouldUpdateWorldMatrix();
@@ -266,6 +269,16 @@ class Object3D {
     for (let i = 0, l = this.children.length; i < l; i++) {
       this.children[i].updateMatrixStack();
     }
+  }
+  /**
+   * Destroy this {@link Object3D}. Removes its parent and set its children free.
+   */
+  destroy() {
+    for (let i = 0, l = this.children.length; i < l; i++) {
+      if (this.children[i])
+        this.children[i].parent = null;
+    }
+    this.parent = null;
   }
 }
 

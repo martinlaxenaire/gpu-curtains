@@ -103,6 +103,8 @@ window.addEventListener('load', async () => {
     })
     .onAfterResize(setMouseAspect)
 
+  console.log(plane)
+
   // GUI
   const gui = new lil.GUI({
     title: 'Plane transformations',

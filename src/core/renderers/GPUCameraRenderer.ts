@@ -145,7 +145,7 @@ export class GPUCameraRenderer extends GPURenderer {
    * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
    */
   setCameraBindGroupAndBinding() {
-    // TODO camera position?
+    // TODO add world matrix / inverseViewMatrix?
     this.cameraBufferBinding = new BufferBinding({
       label: 'Camera',
       name: 'camera',
@@ -160,6 +160,16 @@ export class GPUCameraRenderer extends GPURenderer {
           // camera projection matrix
           type: 'mat4x4f',
           value: this.camera.projectionMatrix,
+        },
+        position: {
+          // camera world position
+          type: 'vec3f',
+          value: this.camera.position.clone().setFromMatrixPosition(this.camera.worldMatrix),
+          onBeforeUpdate: () => {
+            ;(this.cameraBufferBinding.inputs.position.value as Vec3)
+              .copy(this.camera.position)
+              .setFromMatrixPosition(this.camera.worldMatrix)
+          },
         },
       },
     })
@@ -189,6 +199,7 @@ export class GPUCameraRenderer extends GPURenderer {
   updateCameraBindings() {
     this.cameraBufferBinding?.shouldUpdateBinding('view')
     this.cameraBufferBinding?.shouldUpdateBinding('projection')
+    this.cameraBufferBinding?.shouldUpdateBinding('position')
 
     // update buffers immediately
     this.cameraBindGroup?.update()

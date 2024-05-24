@@ -147,7 +147,6 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) normal: vec3f,
       @location(1) shadowPos: vec3f,
-      @location(2) lightViewDirection: vec3f,
     };
     
     @vertex fn main(
@@ -168,14 +167,6 @@ window.addEventListener('load', async () => {
         posFromLight.z
       );
       
-      // normals are in view space, so convert light direction to view space as well
-      vsOutput.lightViewDirection = (
-        camera.view * vec4(
-          normalize(lightning.lightPosition - attributes.position),
-          0.0
-        )
-      ).xyz;
-      
       return vsOutput;
     }
   `
@@ -185,7 +176,6 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) normal: vec3f,
       @location(1) shadowPos: vec3f,
-      @location(2) lightViewDirection: vec3f,
     };
     
     const ambientFactor = 0.5;
@@ -212,7 +202,7 @@ window.addEventListener('load', async () => {
       }
       visibility /= 9.0;
       
-      let lambertFactor = max(dot(normalize(fsInput.lightViewDirection), normalize(fsInput.normal)), 0.0);
+      let lambertFactor = max(dot(normalize(lightning.lightPosition), normalize(fsInput.normal)), 0.0);
       let lightingFactor = min(ambientFactor + visibility * lambertFactor, 1.0);
 
       return vec4(lightingFactor * shading.color, 1.0);

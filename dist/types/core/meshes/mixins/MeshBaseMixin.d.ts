@@ -12,7 +12,10 @@ import { DOMElementBoundingRect } from '../../DOM/DOMElement';
 import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
 import { RenderPass } from '../../renderPasses/RenderPass';
-export interface MeshBaseRenderParams extends RenderMaterialParams {
+/**
+ * Base render params used to create a Mesh
+ */
+export interface MeshBaseRenderParams extends Omit<RenderMaterialParams, 'targets'> {
     /** Whether we should add this Mesh to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     autoRender?: boolean;
     /** Flag indicating whether to draw this Mesh or not */
@@ -23,6 +26,8 @@ export interface MeshBaseRenderParams extends RenderMaterialParams {
     outputTarget?: RenderTarget;
     /** Parameters used by this Mesh to create a {@link DOMTexture} */
     texturesOptions?: ExternalTextureParams;
+    /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createRenderPipeline#targets | targets} properties */
+    targets?: Partial<GPUColorTargetState>[];
 }
 /**
  * Base parameters used to create a Mesh
@@ -76,7 +81,7 @@ export declare class MeshBaseClass {
     /** Whether this {@link MeshBaseClass} should be treated as transparent. Impacts the {@link core/pipelines/RenderPipelineEntry.RenderPipelineEntry#pipeline | render pipeline} blend properties */
     _transparent: boolean;
     /** Flag indicating whether to draw this {@link MeshBaseClass} or not */
-    visible: boolean;
+    _visible: boolean;
     /** Flag indicating whether this {@link MeshBaseClass} is ready to be drawn */
     _ready: boolean;
     /** Empty object to store any additional data or custom properties into your Mesh. */
@@ -209,9 +214,18 @@ export declare class MeshBaseClass {
     get transparent(): boolean | undefined;
     /**
      * Set the transparent property value. Update the {@link RenderMaterial} rendering options and {@link core/scenes/Scene.Scene | Scene} stack if needed.
-     * @param value
+     * @param value - new transparency value
      */
     set transparent(value: boolean);
+    /**
+     * Get the visible property value
+     */
+    get visible(): boolean;
+    /**
+     * Set the visible property value
+     * @param value - new visibility value
+     */
+    set visible(value: boolean);
     /**
      * Get our {@link RenderMaterial#domTextures | RenderMaterial domTextures array}
      * @readonly

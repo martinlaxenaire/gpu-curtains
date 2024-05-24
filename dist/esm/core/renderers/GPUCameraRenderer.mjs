@@ -105,6 +105,14 @@ class GPUCameraRenderer extends GPURenderer {
           // camera projection matrix
           type: "mat4x4f",
           value: this.camera.projectionMatrix
+        },
+        position: {
+          // camera world position
+          type: "vec3f",
+          value: this.camera.position.clone().setFromMatrixPosition(this.camera.worldMatrix),
+          onBeforeUpdate: () => {
+            this.cameraBufferBinding.inputs.position.value.copy(this.camera.position).setFromMatrixPosition(this.camera.worldMatrix);
+          }
         }
       }
     });
@@ -129,6 +137,7 @@ class GPUCameraRenderer extends GPURenderer {
   updateCameraBindings() {
     this.cameraBufferBinding?.shouldUpdateBinding("view");
     this.cameraBufferBinding?.shouldUpdateBinding("projection");
+    this.cameraBufferBinding?.shouldUpdateBinding("position");
     this.cameraBindGroup?.update();
   }
   /**

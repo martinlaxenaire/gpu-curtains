@@ -24,9 +24,11 @@ class OrbitControls extends Object3D {
   /**
    * OrbitControls constructor
    * @param renderer - {@link CameraRenderer} used to get the {@link core/scenes/Scene.Scene | Scene} object to use as {@link Object3D#parent | parent}, and eventually the {@link CameraRenderer#camera | Camera} as well.
-   * @param camera - optional {@link Camera} to use.
+   * @param parameters - optional parameters.
+   * @param parameters.camera - optional {@link Camera} to use.
+   * @param parameters.element - optional {@link HTMLElement} (or {@link Window} element) to use for event listeners.
    */
-  constructor(renderer, camera = null) {
+  constructor(renderer, { camera = null, element = null } = {}) {
     super();
     /**
      * Last pointer {@link Vec2 | position}, used internally for orbiting delta calculations.
@@ -66,7 +68,7 @@ class OrbitControls extends Object3D {
     this.quaternion.setAxisOrder("YXZ");
     this.camera = camera || this.renderer.camera;
     this.camera.parent = this;
-    this.element = this.renderer.domElement.element;
+    this.element = element ?? this.renderer.domElement.element;
   }
   /**
    * Set the element to use for event listeners. Can remove previous event listeners first if needed.
