@@ -1,6 +1,6 @@
 /// <reference types="dist" />
 import { Renderer } from '../renderers/utils';
-import { SceneStackedMesh, RenderedMesh } from '../renderers/GPURenderer';
+import { SceneStackedMesh, RenderedMesh, ProjectedMesh } from '../renderers/GPURenderer';
 import { ShaderPass } from '../renderPasses/ShaderPass';
 import { PingPongPlane } from '../../curtains/meshes/PingPongPlane';
 import { ComputePass } from '../computePasses/ComputePass';
@@ -157,11 +157,16 @@ export declare class Scene extends Object3D {
      */
     getObjectRenderPassEntry(object: RenderedMesh | RenderTarget): RenderPassEntry | undefined;
     /**
+     * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
+     * @param meshes - transparent projected meshes array to sort
+     */
+    sortTransparentMeshes(meshes: ProjectedMesh[]): void;
+    /**
      * Here we render a {@link RenderPassEntry}:
      * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
      * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
      * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
-     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link CameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
+     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
      * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
      * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
      * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}

@@ -590,6 +590,20 @@ export class Mat4 {
   }
 
   /**
+   * Get the maximum scale of the {@link Mat4} on all axes
+   * @returns - maximum scale of the {@link Mat4}
+   */
+  getMaxScaleOnAxis(): number {
+    const te = this.elements
+
+    const scaleXSq = te[0] * te[0] + te[1] * te[1] + te[2] * te[2]
+    const scaleYSq = te[4] * te[4] + te[5] * te[5] + te[6] * te[6]
+    const scaleZSq = te[8] * te[8] + te[9] * te[9] + te[10] * te[10]
+
+    return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq))
+  }
+
+  /**
    * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
    * Equivalent for applying translation, rotation and scale matrices but much faster
    * Source code from: http://glmatrix.net/docs/mat4.js.html

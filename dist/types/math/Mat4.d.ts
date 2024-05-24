@@ -134,6 +134,11 @@ export declare class Mat4 {
      */
     rotateFromQuaternion(quaternion?: Quat): Mat4;
     /**
+     * Get the maximum scale of the {@link Mat4} on all axes
+     * @returns - maximum scale of the {@link Mat4}
+     */
+    getMaxScaleOnAxis(): number;
+    /**
      * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
      * Equivalent for applying translation, rotation and scale matrices but much faster
      * Source code from: http://glmatrix.net/docs/mat4.js.html

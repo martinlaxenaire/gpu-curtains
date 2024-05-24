@@ -2920,6 +2920,17 @@
       return this;
     }
     /**
+     * Get the maximum scale of the {@link Mat4} on all axes
+     * @returns - maximum scale of the {@link Mat4}
+     */
+    getMaxScaleOnAxis() {
+      const te = this.elements;
+      const scaleXSq = te[0] * te[0] + te[1] * te[1] + te[2] * te[2];
+      const scaleYSq = te[4] * te[4] + te[5] * te[5] + te[6] * te[6];
+      const scaleZSq = te[8] * te[8] + te[9] * te[9] + te[10] * te[10];
+      return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
+    }
+    /**
      * Creates a {@link Mat4} from a {@link Quat | quaternion} rotation, {@link Vec3 | vector} translation and {@link Vec3 | vector} scale
      * Equivalent for applying translation, rotation and scale matrices but much faster
      * Source code from: http://glmatrix.net/docs/mat4.js.html
@@ -9118,6 +9129,10 @@ ${this.shaders.compute.head}`;
     }
   }
 
+  const camPosA = new Vec3();
+  const camPosB = new Vec3();
+  const posA = new Vec3();
+  const posB = new Vec3();
   class Scene extends Object3D {
     /**
      * Scene constructor
@@ -9410,11 +9425,27 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
+     * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
+     * @param meshes - transparent projected meshes array to sort
+     */
+    sortTransparentMeshes(meshes) {
+      meshes.sort((meshA, meshB) => {
+        if (meshA.renderOrder !== meshB.renderOrder) {
+          return meshA.renderOrder - meshB.renderOrder;
+        }
+        meshA.geometry ? posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix) : meshA.worldMatrix.getTranslation(posA);
+        meshB.geometry ? posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix) : meshB.worldMatrix.getTranslation(posB);
+        const radiusA = meshA.geometry ? meshA.geometry.boundingBox.radius * meshA.worldMatrix.getMaxScaleOnAxis() : 0;
+        const radiusB = meshB.geometry ? meshB.geometry.boundingBox.radius * meshB.worldMatrix.getMaxScaleOnAxis() : 0;
+        return meshB.camera.worldMatrix.getTranslation(camPosB).distance(posB) - radiusB - (meshA.camera.worldMatrix.getTranslation(camPosA).distance(posA) - radiusA);
+      });
+    }
+    /**
      * Here we render a {@link RenderPassEntry}:
      * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture
      * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified
      * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}
-     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link CameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
+     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraBindGroup | camera bind group} and draw projected opaque / transparent meshes
      * - End the {@link GPURenderPassEncoder | GPU render pass encoder}
      * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified
      * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}
@@ -9441,6 +9472,7 @@ ${this.shaders.compute.head}`;
           for (const mesh of renderPassEntry.stack.projected.opaque) {
             mesh.render(pass);
           }
+          this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
           for (const mesh of renderPassEntry.stack.projected.transparent) {
             mesh.render(pass);
           }
