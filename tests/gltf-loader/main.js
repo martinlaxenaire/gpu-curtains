@@ -160,6 +160,8 @@ window.addEventListener('load', async () => {
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
     const { center, radius } = boundingBox
+
+    // center model
     node.position.sub(center)
 
     // reset orbit controls
@@ -168,6 +170,7 @@ window.addEventListener('load', async () => {
     const isSponza = url.includes('Sponza')
 
     if (isSponza) {
+      camera.position.x = 0
       camera.position.y = center.y * 0.25 + node.position.y
       camera.position.z = radius * 0.225
       camera.fov = 75

@@ -2,7 +2,6 @@ import { CameraRenderer } from '../../core/renderers/utils'
 import { Camera } from '../../core/camera/Camera'
 import { Object3D } from '../../core/objects3D/Object3D'
 import { Vec2 } from '../../math/Vec2'
-import { Vec3 } from '../../math/Vec3'
 
 // port of https://github.com/toji/webgpu-gltf-case-study/blob/main/samples/js/tiny-webgpu-demo.js#L312
 
