@@ -31,7 +31,7 @@ class DOMObject3D extends ProjectedObject3D {
    * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
    * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
    */
-  constructor(renderer, element, parameters) {
+  constructor(renderer, element, parameters = {}) {
     super(renderer);
     /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
     __privateAdd(this, _DOMObjectWorldPosition, new Vec3());

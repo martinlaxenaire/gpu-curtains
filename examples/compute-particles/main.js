@@ -349,16 +349,29 @@ window.addEventListener('load', async () => {
     }
   `
 
-  // create a geometry from scratch that
+  // create a geometry from scratch that will use point-list topology
   // but this could also work with any geometry, topology, etc
-  // as long as we pass the instanced vertex buffer attributes
+  // as long as we pass an initial position attributes and the instanced vertex buffer attributes
   const particlesGeometry = new Geometry({
     instancesCount: nbParticles,
     // we will draw points
     topology: 'point-list',
-    // and they will use instancing
     vertexBuffers: [
       {
+        // set the default attributes position to an initial value of [0, 0, 0]
+        name: 'attributes',
+        attributes: [
+          {
+            name: 'position',
+            type: 'vec3f',
+            bufferFormat: 'float32x3',
+            size: 3,
+            array: new Float32Array([0, 0, 0]),
+          },
+        ],
+      },
+      {
+        // use instancing
         stepMode: 'instance',
         name: 'instanceAttributes',
         buffer: computePass.material.getBindingByName('particles')?.buffer, // pass the compute buffer right away
@@ -373,14 +386,6 @@ window.addEventListener('load', async () => {
         ],
       },
     ],
-  })
-
-  particlesGeometry.setAttribute({
-    name: 'position',
-    type: 'vec3f',
-    bufferFormat: 'float32x3',
-    size: 3,
-    array: new Float32Array([0, 0, 0]),
   })
 
   const particles = new Mesh(gpuCurtains, {

@@ -85,7 +85,7 @@ export declare class DOMObject3D extends ProjectedObject3D {
      * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
      * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
      */
-    constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: DOMElementParams['element'], parameters: DOMObject3DParams);
+    constructor(renderer: GPUCurtainsRenderer | GPUCurtains, element: DOMElementParams['element'], parameters?: DOMObject3DParams);
     /**
      * Set the {@link domElement | DOM Element}
      * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector to use

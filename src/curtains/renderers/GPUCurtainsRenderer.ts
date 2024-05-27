@@ -92,15 +92,10 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
 
     // resize dom objects as well
     this.domObjects.forEach((domObject) => {
-      this.onBeforeCommandEncoderCreation.add(
-        () => {
-          // update position for DOM objects only if they're not currently being resized
-          if (!domObject.domElement.isResizing) {
-            domObject.domElement.setSize()
-          }
-        },
-        { once: true }
-      )
+      // update position for DOM objects only if they're not currently being resized
+      if (!domObject.domElement.isResizing) {
+        domObject.domElement.setSize()
+      }
     })
   }
 }

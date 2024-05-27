@@ -108,7 +108,7 @@ export class DOMObject3D extends ProjectedObject3D {
   constructor(
     renderer: GPUCurtainsRenderer | GPUCurtains,
     element: DOMElementParams['element'],
-    parameters: DOMObject3DParams
+    parameters: DOMObject3DParams = {}
   ) {
     super(renderer)
 
