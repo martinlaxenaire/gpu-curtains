@@ -30,7 +30,7 @@ window.addEventListener('load', async () => {
     container,
     pixelRatio: Math.min(1, window.devicePixelRatio),
     camera: {
-      near: 0.01,
+      near: 0.001,
       far: 2000,
     },
   })
@@ -46,7 +46,7 @@ window.addEventListener('load', async () => {
 
   const iblLUTBitmap = await loadImageBitmap('./assets/lut.png')
   const envDiffuseBitmap = await loadImageBitmap('./assets/sunset-diffuse-RGBM.png')
-  const envSpecularBitmap = await loadImageBitmap('./assets/sunset-specular-RGBM.png')
+  const envSpecularBitmap = await loadImageBitmap('./assets/royal_esplanade_1k.png')
 
   const originalIblLUTTexture = new Texture(gpuCameraRenderer, {
     name: 'iblLUTTexture',
