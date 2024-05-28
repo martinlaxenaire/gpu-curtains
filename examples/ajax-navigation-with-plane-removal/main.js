@@ -22,15 +22,15 @@ window.addEventListener('load', async () => {
   // usually data come from a CMS but here it's hardcoded for more simplicity
   const images = [
     // beach
-    'https://source.unsplash.com/HfIex7qwTlI/1920x1280/',
-    'https://source.unsplash.com/n7DY58YFg9E/1920x1280/',
-    'https://source.unsplash.com/Rl9l9mL6Pvs/1920x1280/',
-    'https://source.unsplash.com/sGRMspZmfPE/1920x1280/',
+    'https://picsum.photos/id/179/1920/1080',
+    'https://picsum.photos/id/199/1920/1080',
+    'https://picsum.photos/id/218/1920/1080',
+    'https://picsum.photos/id/374/1920/1080',
     // mountain
-    'https://source.unsplash.com/ePpaQC2c1xA/1920x1280/',
-    'https://source.unsplash.com/cqbLg3lZEpk/1920x1280/',
-    'https://source.unsplash.com/Y8lCoTRgHPE/1920x1280/',
-    'https://source.unsplash.com/ahYX46whD8s/1920x1280/',
+    'https://picsum.photos/id/29/1920/1080',
+    'https://picsum.photos/id/177/1920/1080',
+    'https://picsum.photos/id/231/1920/1080',
+    'https://picsum.photos/id/235/1920/1080',
   ]
 
   const textures = []

@@ -74,7 +74,7 @@ export class Camera extends Object3D {
   /** A number representing what CSS perspective value (in pixel) should be used to obtain the same perspective effect as this {@link Camera} */
   CSSPerspective: number
   /** An object containing the visible width / height at a given z-depth from our camera parameters */
-  screenRatio: RectSize
+  visibleSize: RectSize
 
   /**
    * Camera constructor
@@ -173,7 +173,7 @@ export class Camera extends Object3D {
    */
   updateModelMatrix() {
     super.updateModelMatrix()
-    this.setScreenRatios()
+    this.setVisibleSize()
     this.matrices.view.shouldUpdate = true
   }
 
@@ -216,7 +216,7 @@ export class Camera extends Object3D {
       this.shouldUpdateProjectionMatrix()
     }
 
-    this.setScreenRatios()
+    this.setVisibleSize()
     this.setCSSPerspective()
   }
 
@@ -288,7 +288,7 @@ export class Camera extends Object3D {
     this.size.width = width
     this.size.height = height
 
-    this.setScreenRatios()
+    this.setVisibleSize()
     this.setCSSPerspective()
   }
 
@@ -330,7 +330,7 @@ export class Camera extends Object3D {
    * @param depth - depth to use for calculations
    * @returns - visible width and height at given depth
    */
-  getScreenRatiosAtDepth(depth = 0): RectSize {
+  getVisibleSizeAtDepth(depth = 0): RectSize {
     // compensate for cameras not positioned at z=0
     const cameraOffset = this.position.z
     if (depth < cameraOffset) {
@@ -354,8 +354,8 @@ export class Camera extends Object3D {
   /**
    * Sets visible width / height at a depth of 0.
    */
-  setScreenRatios() {
-    this.screenRatio = this.getScreenRatiosAtDepth()
+  setVisibleSize() {
+    this.visibleSize = this.getVisibleSizeAtDepth()
   }
 
   /**

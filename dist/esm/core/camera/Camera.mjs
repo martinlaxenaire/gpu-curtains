@@ -107,7 +107,7 @@ class Camera extends Object3D {
    */
   updateModelMatrix() {
     super.updateModelMatrix();
-    this.setScreenRatios();
+    this.setVisibleSize();
     this.matrices.view.shouldUpdate = true;
   }
   /**
@@ -142,7 +142,7 @@ class Camera extends Object3D {
       __privateSet(this, _fov, fov);
       this.shouldUpdateProjectionMatrix();
     }
-    this.setScreenRatios();
+    this.setVisibleSize();
     this.setCSSPerspective();
   }
   /**
@@ -203,7 +203,7 @@ class Camera extends Object3D {
     }
     this.size.width = width;
     this.size.height = height;
-    this.setScreenRatios();
+    this.setVisibleSize();
     this.setCSSPerspective();
   }
   /**
@@ -241,7 +241,7 @@ class Camera extends Object3D {
    * @param depth - depth to use for calculations
    * @returns - visible width and height at given depth
    */
-  getScreenRatiosAtDepth(depth = 0) {
+  getVisibleSizeAtDepth(depth = 0) {
     const cameraOffset = this.position.z;
     if (depth < cameraOffset) {
       depth -= cameraOffset;
@@ -258,8 +258,8 @@ class Camera extends Object3D {
   /**
    * Sets visible width / height at a depth of 0.
    */
-  setScreenRatios() {
-    this.screenRatio = this.getScreenRatiosAtDepth();
+  setVisibleSize() {
+    this.visibleSize = this.getVisibleSizeAtDepth();
   }
   /**
    * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}

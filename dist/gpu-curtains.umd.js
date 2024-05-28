@@ -1747,7 +1747,13 @@
         });
         binding.value = bindings[bindingKey].value;
         if (binding.value instanceof Vec2 || binding.value instanceof Vec3) {
-          binding.value.onChange(() => binding.shouldUpdate = true);
+          const _onChangeCallback = binding.value._onChangeCallback;
+          binding.value._onChangeCallback = () => {
+            if (_onChangeCallback) {
+              _onChangeCallback();
+            }
+            binding.shouldUpdate = true;
+          };
         }
         this.inputs[bindingKey] = binding;
         this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`;
@@ -4272,7 +4278,7 @@
      */
     updateModelMatrix() {
       super.updateModelMatrix();
-      this.setScreenRatios();
+      this.setVisibleSize();
       this.matrices.view.shouldUpdate = true;
     }
     /**
@@ -4307,7 +4313,7 @@
         __privateSet$8(this, _fov, fov);
         this.shouldUpdateProjectionMatrix();
       }
-      this.setScreenRatios();
+      this.setVisibleSize();
       this.setCSSPerspective();
     }
     /**
@@ -4368,7 +4374,7 @@
       }
       this.size.width = width;
       this.size.height = height;
-      this.setScreenRatios();
+      this.setVisibleSize();
       this.setCSSPerspective();
     }
     /**
@@ -4406,7 +4412,7 @@
      * @param depth - depth to use for calculations
      * @returns - visible width and height at given depth
      */
-    getScreenRatiosAtDepth(depth = 0) {
+    getVisibleSizeAtDepth(depth = 0) {
       const cameraOffset = this.position.z;
       if (depth < cameraOffset) {
         depth -= cameraOffset;
@@ -4423,8 +4429,8 @@
     /**
      * Sets visible width / height at a depth of 0.
      */
-    setScreenRatios() {
-      this.screenRatio = this.getScreenRatiosAtDepth();
+    setVisibleSize() {
+      this.visibleSize = this.getVisibleSizeAtDepth();
     }
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
@@ -10835,8 +10841,8 @@ ${this.shaders.compute.head}`;
      * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
      */
     onResize() {
-      super.onResize();
       this.setPerspective();
+      super.onResize();
     }
     /* RENDER */
     /**
@@ -11445,7 +11451,7 @@ struct VSOutput {
      * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
      * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
      */
-    constructor(renderer, element, parameters) {
+    constructor(renderer, element, parameters = {}) {
       super(renderer);
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
       __privateAdd$2(this, _DOMObjectWorldPosition, new Vec3());
@@ -11473,8 +11479,7 @@ struct VSOutput {
           position: new Vec2()
         },
         cameraWorld: {
-          size: new Vec2(1),
-          position: new Vec2()
+          size: new Vec2(1)
         },
         scaledWorld: {
           size: new Vec3(1),
@@ -11669,8 +11674,8 @@ struct VSOutput {
      */
     documentToWorldSpace(vector = new Vec3()) {
       return new Vec3(
-        vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.screenRatio.width,
-        -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.screenRatio.height,
+        vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.visibleSize.width,
+        -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.visibleSize.height,
         vector.z
       );
     }
@@ -11700,19 +11705,15 @@ struct VSOutput {
         (containerCenter.y - planeCenter.y) / containerBoundingRect.height
       );
       this.size.cameraWorld.size.set(
-        this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
-        this.size.normalizedWorld.size.y * this.camera.screenRatio.height
-      );
-      this.size.cameraWorld.position.set(
-        this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
-        this.size.normalizedWorld.position.y * this.camera.screenRatio.height
+        this.size.normalizedWorld.size.x * this.camera.visibleSize.width,
+        this.size.normalizedWorld.size.y * this.camera.visibleSize.height
       );
       this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
       this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
       this.size.scaledWorld.position.set(
-        this.size.cameraWorld.position.x - center.x * this.size.scaledWorld.size.x * size.x,
-        this.size.cameraWorld.position.y - center.y * this.size.scaledWorld.size.y * size.y,
-        -center.z
+        this.size.normalizedWorld.position.x * this.camera.visibleSize.width,
+        this.size.normalizedWorld.position.y * this.camera.visibleSize.height,
+        0
       );
     }
     /**
@@ -11748,10 +11749,10 @@ struct VSOutput {
     setWorldTransformOrigin() {
       this.transforms.origin.world = new Vec3(
         (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-        this.size.scaledWorld.size.x,
+        __privateGet$2(this, _DOMObjectWorldScale).x,
         -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-        this.size.scaledWorld.size.y,
-        this.transformOrigin.z * this.size.scaledWorld.size.z
+        __privateGet$2(this, _DOMObjectWorldScale).y,
+        this.transformOrigin.z * __privateGet$2(this, _DOMObjectWorldScale).z
       );
       this.shouldUpdateMatrixStack();
     }
@@ -11767,7 +11768,7 @@ struct VSOutput {
     /**
      * Callback to execute just after the {@link domElement} has been resized.
      * @param callback - callback to run just after {@link domElement} has been resized
-     * @returns - our Mesh
+     * @returns - our {@link DOMObject3D}
      */
     onAfterDOMElementResize(callback) {
       if (callback) {
@@ -11964,73 +11965,6 @@ struct VSOutput {
     }
   }
 
-  class PingPongPlane extends FullscreenPlane {
-    /**
-     * PingPongPlane constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
-     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
-     */
-    constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
-      const colorAttachments = parameters.targets && parameters.targets.length && parameters.targets.map((target) => {
-        return {
-          targetFormat: target.format
-        };
-      });
-      parameters.outputTarget = new RenderTarget(renderer, {
-        label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
-        useDepth: false,
-        ...colorAttachments && { colorAttachments }
-      });
-      parameters.transparent = false;
-      parameters.depth = false;
-      parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
-      super(renderer, parameters);
-      this.type = "PingPongPlane";
-      this.createTexture({
-        label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
-        name: "renderTexture",
-        ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format },
-        usage: ["copyDst", "textureBinding"]
-      });
-    }
-    /**
-     * Get our main {@link Texture}, the one that contains our ping pong content
-     * @readonly
-     */
-    get renderTexture() {
-      return this.textures.find((texture) => texture.options.name === "renderTexture");
-    }
-    /**
-     * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
-     * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
-     */
-    addToScene(addToRenderer = false) {
-      if (addToRenderer) {
-        this.renderer.pingPongPlanes.push(this);
-      }
-      if (this.autoRender) {
-        this.renderer.scene.addPingPongPlane(this);
-      }
-    }
-    /**
-     * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-     * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
-     */
-    removeFromScene(removeFromRenderer = false) {
-      if (this.outputTarget) {
-        this.outputTarget.destroy();
-      }
-      if (this.autoRender) {
-        this.renderer.scene.removePingPongPlane(this);
-      }
-      if (removeFromRenderer) {
-        this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
-      }
-    }
-  }
-
   const defaultPlaneParams = {
     label: "Plane",
     // geometry
@@ -12162,14 +12096,9 @@ struct VSOutput {
         }
       });
       this.domObjects.forEach((domObject) => {
-        this.onBeforeCommandEncoderCreation.add(
-          () => {
-            if (!domObject.domElement.isResizing) {
-              domObject.domElement.setSize();
-            }
-          },
-          { once: true }
-        );
+        if (!domObject.domElement.isResizing) {
+          domObject.domElement.setSize();
+        }
       });
     }
   }
@@ -13019,6 +12948,73 @@ struct VSOutput {
         array: this.useUint16IndexArray ? new Uint16Array(indices) : new Uint32Array(indices),
         bufferFormat: this.useUint16IndexArray ? "uint16" : "uint32"
       });
+    }
+  }
+
+  class PingPongPlane extends FullscreenPlane {
+    /**
+     * PingPongPlane constructor
+     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link PingPongPlane}
+     * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
+     */
+    constructor(renderer, parameters = {}) {
+      renderer = renderer && renderer.renderer || renderer;
+      isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
+      const colorAttachments = parameters.targets && parameters.targets.length && parameters.targets.map((target) => {
+        return {
+          targetFormat: target.format
+        };
+      });
+      parameters.outputTarget = new RenderTarget(renderer, {
+        label: parameters.label ? parameters.label + " render target" : "Ping Pong render target",
+        useDepth: false,
+        ...colorAttachments && { colorAttachments }
+      });
+      parameters.transparent = false;
+      parameters.depth = false;
+      parameters.label = parameters.label ?? "PingPongPlane " + renderer.pingPongPlanes?.length;
+      super(renderer, parameters);
+      this.type = "PingPongPlane";
+      this.createTexture({
+        label: parameters.label ? `${parameters.label} render texture` : "PingPongPlane render texture",
+        name: "renderTexture",
+        ...parameters.targets && parameters.targets.length && { format: parameters.targets[0].format },
+        usage: ["copyDst", "textureBinding"]
+      });
+    }
+    /**
+     * Get our main {@link Texture}, the one that contains our ping pong content
+     * @readonly
+     */
+    get renderTexture() {
+      return this.textures.find((texture) => texture.options.name === "renderTexture");
+    }
+    /**
+     * Add the {@link PingPongPlane} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer.
+     * @param addToRenderer - whether to add this {@link PingPongPlane} to the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
+     */
+    addToScene(addToRenderer = false) {
+      if (addToRenderer) {
+        this.renderer.pingPongPlanes.push(this);
+      }
+      if (this.autoRender) {
+        this.renderer.scene.addPingPongPlane(this);
+      }
+    }
+    /**
+     * Remove the {@link PingPongPlane} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+     * @param removeFromRenderer - whether to remove this {@link PingPongPlane} from the {@link Renderer#pingPongPlanes | Renderer pingPongPlanes array}
+     */
+    removeFromScene(removeFromRenderer = false) {
+      if (this.outputTarget) {
+        this.outputTarget.destroy();
+      }
+      if (this.autoRender) {
+        this.renderer.scene.removePingPongPlane(this);
+      }
+      if (removeFromRenderer) {
+        this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
+      }
     }
   }
 

@@ -38,7 +38,6 @@ export { DOMElement } from './core/DOM/DOMElement'
 
 // curtains
 export { DOMMesh } from './curtains/meshes/DOMMesh'
-export { PingPongPlane } from './curtains/meshes/PingPongPlane'
 export { Plane } from './curtains/meshes/Plane'
 export { DOMObject3D } from './curtains/objects3D/DOMObject3D'
 export { GPUCurtainsRenderer } from './curtains/renderers/GPUCurtainsRenderer'
@@ -56,6 +55,7 @@ export { Vec3 } from './math/Vec3'
 export { OrbitControls } from './extras/controls/OrbitControls'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'
 export { SphereGeometry } from './extras/geometries/SphereGeometry'
+export { PingPongPlane } from './extras/meshes/PingPongPlane'
 // gltf extras
 export { GLTFLoader } from './extras/gltf/GLTFLoader'
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'

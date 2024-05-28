@@ -272,7 +272,16 @@ export class BufferBinding extends Binding {
       binding.value = bindings[bindingKey].value
 
       if (binding.value instanceof Vec2 || binding.value instanceof Vec3) {
-        binding.value.onChange(() => (binding.shouldUpdate = true))
+        // add binding update to _onChangeCallback
+        const _onChangeCallback = binding.value._onChangeCallback
+
+        binding.value._onChangeCallback = () => {
+          if (_onChangeCallback) {
+            _onChangeCallback()
+          }
+
+          binding.shouldUpdate = true
+        }
       }
 
       this.inputs[bindingKey] = binding

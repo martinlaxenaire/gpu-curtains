@@ -4,7 +4,7 @@ window.addEventListener('load', async () => {
   const buildPlaneHTMLElement = (index) => {
     return `<div class="plane">
           <img
-            src="https://source.unsplash.com/featured/720x720/?nature&${index}"
+            src="https://picsum.photos/720/720?random=${index}"
             crossorigin=""
             loading="lazy"
             data-texture-name="planeTexture"

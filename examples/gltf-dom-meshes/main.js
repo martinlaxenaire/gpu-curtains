@@ -98,9 +98,14 @@ window.addEventListener('load', async () => {
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCurtains.renderer, gltf })
     const { scenesManager } = gltfScenesManager
     const { node, boundingBox } = scenesManager
-    const { size } = boundingBox
+    const { center, size } = boundingBox
 
+    // center the scenes manager parent node
+    // needed for accurate position and transform origin calculations
+    node.position.sub(center)
     node.parent = parentNode
+
+    // reset parent node rotation
     parentNode.rotation.y = 0
 
     // set the new DOM element aspect ratio

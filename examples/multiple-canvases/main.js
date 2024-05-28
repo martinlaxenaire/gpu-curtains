@@ -6,7 +6,7 @@ window.addEventListener('load', async () => {
     const isFront = Math.random() > 0.5
     return `<div class="plane ${isFront ? 'front-plane' : 'back-plane'}">
           <img
-            src="https://source.unsplash.com/featured/720x720/?nature&${index}"
+            src="https://picsum.photos/720/720?random=${index}"
             crossorigin=""
             loading="lazy"
             data-texture-name="planeTexture"

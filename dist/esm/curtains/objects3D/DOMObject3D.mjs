@@ -31,7 +31,7 @@ class DOMObject3D extends ProjectedObject3D {
    * @param element - {@link HTMLElement} or string representing an {@link HTMLElement} selector used to scale and position the {@link DOMObject3D}
    * @param parameters - {@link DOMObject3DParams | parameters} used to create this {@link DOMObject3D}
    */
-  constructor(renderer, element, parameters) {
+  constructor(renderer, element, parameters = {}) {
     super(renderer);
     /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
     __privateAdd(this, _DOMObjectWorldPosition, new Vec3());
@@ -59,8 +59,7 @@ class DOMObject3D extends ProjectedObject3D {
         position: new Vec2()
       },
       cameraWorld: {
-        size: new Vec2(1),
-        position: new Vec2()
+        size: new Vec2(1)
       },
       scaledWorld: {
         size: new Vec3(1),
@@ -255,8 +254,8 @@ class DOMObject3D extends ProjectedObject3D {
    */
   documentToWorldSpace(vector = new Vec3()) {
     return new Vec3(
-      vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.screenRatio.width,
-      -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.screenRatio.height,
+      vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.visibleSize.width,
+      -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.visibleSize.height,
       vector.z
     );
   }
@@ -286,19 +285,15 @@ class DOMObject3D extends ProjectedObject3D {
       (containerCenter.y - planeCenter.y) / containerBoundingRect.height
     );
     this.size.cameraWorld.size.set(
-      this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
-      this.size.normalizedWorld.size.y * this.camera.screenRatio.height
-    );
-    this.size.cameraWorld.position.set(
-      this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
-      this.size.normalizedWorld.position.y * this.camera.screenRatio.height
+      this.size.normalizedWorld.size.x * this.camera.visibleSize.width,
+      this.size.normalizedWorld.size.y * this.camera.visibleSize.height
     );
     this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
     this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
     this.size.scaledWorld.position.set(
-      this.size.cameraWorld.position.x - center.x * this.size.scaledWorld.size.x * size.x,
-      this.size.cameraWorld.position.y - center.y * this.size.scaledWorld.size.y * size.y,
-      -center.z
+      this.size.normalizedWorld.position.x * this.camera.visibleSize.width,
+      this.size.normalizedWorld.position.y * this.camera.visibleSize.height,
+      0
     );
   }
   /**
@@ -334,10 +329,10 @@ class DOMObject3D extends ProjectedObject3D {
   setWorldTransformOrigin() {
     this.transforms.origin.world = new Vec3(
       (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-      this.size.scaledWorld.size.x,
+      __privateGet(this, _DOMObjectWorldScale).x,
       -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-      this.size.scaledWorld.size.y,
-      this.transformOrigin.z * this.size.scaledWorld.size.z
+      __privateGet(this, _DOMObjectWorldScale).y,
+      this.transformOrigin.z * __privateGet(this, _DOMObjectWorldScale).z
     );
     this.shouldUpdateMatrixStack();
   }
@@ -353,7 +348,7 @@ class DOMObject3D extends ProjectedObject3D {
   /**
    * Callback to execute just after the {@link domElement} has been resized.
    * @param callback - callback to run just after {@link domElement} has been resized
-   * @returns - our Mesh
+   * @returns - our {@link DOMObject3D}
    */
   onAfterDOMElementResize(callback) {
     if (callback) {

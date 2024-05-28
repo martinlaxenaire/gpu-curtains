@@ -29,11 +29,11 @@
 ## Work in progress
 
 - Examples & tests
-- Add/improve GLTFScenesManager features
+- glTF IBL shader
 
 ## TODO / possible improvements
 
-- Sort transparent objects by distance from the camera to the object bounding box center + radius distance before drawing them
+- Add/improve GLTFScenesManager features
 - Option to chose between sphere and OBB frustum culling
 - Mesh raycasting
 - Lights management?

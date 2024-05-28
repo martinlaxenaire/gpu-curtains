@@ -248,8 +248,8 @@ export class GPUCameraRenderer extends GPURenderer {
    * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
    */
   onResize() {
-    super.onResize()
     this.setPerspective()
+    super.onResize()
   }
 
   /* RENDER */

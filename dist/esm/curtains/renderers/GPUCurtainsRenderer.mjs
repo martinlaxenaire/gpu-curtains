@@ -56,14 +56,9 @@ class GPUCurtainsRenderer extends GPUCameraRenderer {
       }
     });
     this.domObjects.forEach((domObject) => {
-      this.onBeforeCommandEncoderCreation.add(
-        () => {
-          if (!domObject.domElement.isResizing) {
-            domObject.domElement.setSize();
-          }
-        },
-        { once: true }
-      );
+      if (!domObject.domElement.isResizing) {
+        domObject.domElement.setSize();
+      }
     });
   }
 }
