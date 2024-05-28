@@ -2,7 +2,7 @@
 import { Renderer } from '../renderers/utils';
 import { SceneStackedMesh, RenderedMesh, ProjectedMesh } from '../renderers/GPURenderer';
 import { ShaderPass } from '../renderPasses/ShaderPass';
-import { PingPongPlane } from '../../curtains/meshes/PingPongPlane';
+import { PingPongPlane } from '../../extras/meshes/PingPongPlane';
 import { ComputePass } from '../computePasses/ComputePass';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 import { RenderTarget } from '../renderPasses/RenderTarget';

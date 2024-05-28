@@ -5,7 +5,7 @@ import { RenderPass, RenderPassParams } from '../renderPasses/RenderPass'
 import { generateUUID, throwError, throwWarning } from '../../utils/utils'
 
 import { ComputePass } from '../computePasses/ComputePass'
-import { PingPongPlane } from '../../curtains/meshes/PingPongPlane'
+import { PingPongPlane } from '../../extras/meshes/PingPongPlane'
 import { ShaderPass } from '../renderPasses/ShaderPass'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { DOMTexture } from '../textures/DOMTexture'
