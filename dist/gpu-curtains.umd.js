@@ -11479,8 +11479,7 @@ struct VSOutput {
           position: new Vec2()
         },
         cameraWorld: {
-          size: new Vec2(1),
-          position: new Vec2()
+          size: new Vec2(1)
         },
         scaledWorld: {
           size: new Vec3(1),
@@ -11709,16 +11708,12 @@ struct VSOutput {
         this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
         this.size.normalizedWorld.size.y * this.camera.screenRatio.height
       );
-      this.size.cameraWorld.position.set(
-        this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
-        this.size.normalizedWorld.position.y * this.camera.screenRatio.height
-      );
       this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
       this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
       this.size.scaledWorld.position.set(
-        this.size.cameraWorld.position.x - center.x * this.size.scaledWorld.size.x * size.x,
-        this.size.cameraWorld.position.y - center.y * this.size.scaledWorld.size.y * size.y,
-        -center.z
+        this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
+        this.size.normalizedWorld.position.y * this.camera.screenRatio.height,
+        0
       );
     }
     /**
@@ -11754,10 +11749,10 @@ struct VSOutput {
     setWorldTransformOrigin() {
       this.transforms.origin.world = new Vec3(
         (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-        this.size.scaledWorld.size.x,
+        __privateGet$2(this, _DOMObjectWorldScale).x,
         -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-        this.size.scaledWorld.size.y,
-        this.transformOrigin.z * this.size.scaledWorld.size.z
+        __privateGet$2(this, _DOMObjectWorldScale).y,
+        this.transformOrigin.z * __privateGet$2(this, _DOMObjectWorldScale).z
       );
       this.shouldUpdateMatrixStack();
     }
@@ -11773,7 +11768,7 @@ struct VSOutput {
     /**
      * Callback to execute just after the {@link domElement} has been resized.
      * @param callback - callback to run just after {@link domElement} has been resized
-     * @returns - our Mesh
+     * @returns - our {@link DOMObject3D}
      */
     onAfterDOMElementResize(callback) {
       if (callback) {

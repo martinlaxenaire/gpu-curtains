@@ -24,14 +24,12 @@ export interface DOMObject3DSize {
   cameraWorld: {
     /** 2D size of the {@link DOMObject3D} relative to the camera field of view and size. */
     size: Vec2
-    /** 2D position of the {@link DOMObject3D} relative to the camera field of view and size. */
-    position: Vec2
   }
   /** Scaled world size and position are the {@link cameraWorld} size and position scaled by the geometry bounding box, because the geometry vertices are not always in the [-1, 1] range. */
   scaledWorld: {
     /** 3D size of the {@link DOMObject3D} relative to the camera field of view and size and the geometry bounding box. */
     size: Vec3
-    /** 3D position of the {@link DOMObject3D} relative to the camera field of view and size and the geometry bounding box. */
+    /** 3D position of the {@link DOMObject3D} relative to the camera field of view and size and the normalized coordinates. */
     position: Vec3
   }
 }
@@ -132,7 +130,6 @@ export class DOMObject3D extends ProjectedObject3D {
       },
       cameraWorld: {
         size: new Vec2(1),
-        position: new Vec2(),
       },
       scaledWorld: {
         size: new Vec3(1),
@@ -420,11 +417,6 @@ export class DOMObject3D extends ProjectedObject3D {
       this.size.normalizedWorld.size.y * this.camera.screenRatio.height
     )
 
-    this.size.cameraWorld.position.set(
-      this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
-      this.size.normalizedWorld.position.y * this.camera.screenRatio.height
-    )
-
     // scaled world size and position are the camera world size and position scaled by the geometry bounding box
     // because the geometry vertices do not always have a [-1, 1] range
     this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1)
@@ -434,10 +426,11 @@ export class DOMObject3D extends ProjectedObject3D {
     this.size.scaledWorld.size.z =
       this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height))
 
+    // our scaled world position is the normalized position multiplied by the camera screen ratio
     this.size.scaledWorld.position.set(
-      this.size.cameraWorld.position.x - center.x * this.size.scaledWorld.size.x * size.x,
-      this.size.cameraWorld.position.y - center.y * this.size.scaledWorld.size.y * size.y,
-      -center.z
+      this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
+      this.size.normalizedWorld.position.y * this.camera.screenRatio.height,
+      0
     )
   }
 
@@ -480,10 +473,10 @@ export class DOMObject3D extends ProjectedObject3D {
     // set transformation origin relative to world space as well
     this.transforms.origin.world = new Vec3(
       (this.transformOrigin.x * 2 - 1) * // between -1 and 1
-        this.size.scaledWorld.size.x,
+        this.#DOMObjectWorldScale.x,
       -(this.transformOrigin.y * 2 - 1) * // between -1 and 1
-        this.size.scaledWorld.size.y,
-      this.transformOrigin.z * this.size.scaledWorld.size.z
+        this.#DOMObjectWorldScale.y,
+      this.transformOrigin.z * this.#DOMObjectWorldScale.z
     )
 
     this.shouldUpdateMatrixStack()
@@ -504,7 +497,7 @@ export class DOMObject3D extends ProjectedObject3D {
   /**
    * Callback to execute just after the {@link domElement} has been resized.
    * @param callback - callback to run just after {@link domElement} has been resized
-   * @returns - our Mesh
+   * @returns - our {@link DOMObject3D}
    */
   onAfterDOMElementResize(callback: () => void): DOMObject3D {
     if (callback) {

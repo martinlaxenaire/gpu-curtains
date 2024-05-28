@@ -21,14 +21,12 @@ export interface DOMObject3DSize {
     cameraWorld: {
         /** 2D size of the {@link DOMObject3D} relative to the camera field of view and size. */
         size: Vec2;
-        /** 2D position of the {@link DOMObject3D} relative to the camera field of view and size. */
-        position: Vec2;
     };
     /** Scaled world size and position are the {@link cameraWorld} size and position scaled by the geometry bounding box, because the geometry vertices are not always in the [-1, 1] range. */
     scaledWorld: {
         /** 3D size of the {@link DOMObject3D} relative to the camera field of view and size and the geometry bounding box. */
         size: Vec3;
-        /** 3D position of the {@link DOMObject3D} relative to the camera field of view and size and the geometry bounding box. */
+        /** 3D position of the {@link DOMObject3D} relative to the camera field of view and size and the normalized coordinates. */
         position: Vec3;
     };
 }
@@ -211,7 +209,7 @@ export declare class DOMObject3D extends ProjectedObject3D {
     /**
      * Callback to execute just after the {@link domElement} has been resized.
      * @param callback - callback to run just after {@link domElement} has been resized
-     * @returns - our Mesh
+     * @returns - our {@link DOMObject3D}
      */
     onAfterDOMElementResize(callback: () => void): DOMObject3D;
     /**

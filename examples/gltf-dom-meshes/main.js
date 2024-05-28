@@ -98,8 +98,10 @@ window.addEventListener('load', async () => {
     gltfScenesManager = new GLTFScenesManager({ renderer: gpuCurtains.renderer, gltf })
     const { scenesManager } = gltfScenesManager
     const { node, boundingBox } = scenesManager
-    const { size } = boundingBox
+    const { center, size } = boundingBox
 
+    // center the scenes manager parent node
+    node.position.sub(center)
     node.parent = parentNode
     parentNode.rotation.y = 0
 
