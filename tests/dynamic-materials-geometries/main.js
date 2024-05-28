@@ -240,7 +240,7 @@ window.addEventListener('load', async () => {
     generateMips: true,
   })
 
-  texture.loadImage('https://source.unsplash.com/featured/1920x1280/?nature&1')
+  texture.loadImage('https://picsum.photos/1920/1080')
 
   const texturedFs = /* wgsl */ `
     struct VSOutput {
