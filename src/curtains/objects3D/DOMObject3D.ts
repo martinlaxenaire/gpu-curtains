@@ -367,8 +367,8 @@ export class DOMObject3D extends ProjectedObject3D {
    */
   documentToWorldSpace(vector: Vec3 = new Vec3()): Vec3 {
     return new Vec3(
-      ((vector.x * this.renderer.pixelRatio) / this.renderer.boundingRect.width) * this.camera.screenRatio.width,
-      -((vector.y * this.renderer.pixelRatio) / this.renderer.boundingRect.height) * this.camera.screenRatio.height,
+      ((vector.x * this.renderer.pixelRatio) / this.renderer.boundingRect.width) * this.camera.visibleSize.width,
+      -((vector.y * this.renderer.pixelRatio) / this.renderer.boundingRect.height) * this.camera.visibleSize.height,
       vector.z
     )
   }
@@ -413,8 +413,8 @@ export class DOMObject3D extends ProjectedObject3D {
 
     // camera world size and position are the normalized world size and positions accounting for camera screen ratio (visible height / width in world unit).
     this.size.cameraWorld.size.set(
-      this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
-      this.size.normalizedWorld.size.y * this.camera.screenRatio.height
+      this.size.normalizedWorld.size.x * this.camera.visibleSize.width,
+      this.size.normalizedWorld.size.y * this.camera.visibleSize.height
     )
 
     // scaled world size and position are the camera world size and position scaled by the geometry bounding box
@@ -428,8 +428,8 @@ export class DOMObject3D extends ProjectedObject3D {
 
     // our scaled world position is the normalized position multiplied by the camera screen ratio
     this.size.scaledWorld.position.set(
-      this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
-      this.size.normalizedWorld.position.y * this.camera.screenRatio.height,
+      this.size.normalizedWorld.position.x * this.camera.visibleSize.width,
+      this.size.normalizedWorld.position.y * this.camera.visibleSize.height,
       0
     )
   }

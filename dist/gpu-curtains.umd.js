@@ -4278,7 +4278,7 @@
      */
     updateModelMatrix() {
       super.updateModelMatrix();
-      this.setScreenRatios();
+      this.setVisibleSize();
       this.matrices.view.shouldUpdate = true;
     }
     /**
@@ -4313,7 +4313,7 @@
         __privateSet$8(this, _fov, fov);
         this.shouldUpdateProjectionMatrix();
       }
-      this.setScreenRatios();
+      this.setVisibleSize();
       this.setCSSPerspective();
     }
     /**
@@ -4374,7 +4374,7 @@
       }
       this.size.width = width;
       this.size.height = height;
-      this.setScreenRatios();
+      this.setVisibleSize();
       this.setCSSPerspective();
     }
     /**
@@ -4412,7 +4412,7 @@
      * @param depth - depth to use for calculations
      * @returns - visible width and height at given depth
      */
-    getScreenRatiosAtDepth(depth = 0) {
+    getVisibleSizeAtDepth(depth = 0) {
       const cameraOffset = this.position.z;
       if (depth < cameraOffset) {
         depth -= cameraOffset;
@@ -4429,8 +4429,8 @@
     /**
      * Sets visible width / height at a depth of 0.
      */
-    setScreenRatios() {
-      this.screenRatio = this.getScreenRatiosAtDepth();
+    setVisibleSize() {
+      this.visibleSize = this.getVisibleSizeAtDepth();
     }
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
@@ -11674,8 +11674,8 @@ struct VSOutput {
      */
     documentToWorldSpace(vector = new Vec3()) {
       return new Vec3(
-        vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.screenRatio.width,
-        -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.screenRatio.height,
+        vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.visibleSize.width,
+        -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.visibleSize.height,
         vector.z
       );
     }
@@ -11705,14 +11705,14 @@ struct VSOutput {
         (containerCenter.y - planeCenter.y) / containerBoundingRect.height
       );
       this.size.cameraWorld.size.set(
-        this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
-        this.size.normalizedWorld.size.y * this.camera.screenRatio.height
+        this.size.normalizedWorld.size.x * this.camera.visibleSize.width,
+        this.size.normalizedWorld.size.y * this.camera.visibleSize.height
       );
       this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
       this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
       this.size.scaledWorld.position.set(
-        this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
-        this.size.normalizedWorld.position.y * this.camera.screenRatio.height,
+        this.size.normalizedWorld.position.x * this.camera.visibleSize.width,
+        this.size.normalizedWorld.position.y * this.camera.visibleSize.height,
         0
       );
     }

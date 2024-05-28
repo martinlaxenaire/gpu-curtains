@@ -254,8 +254,8 @@ class DOMObject3D extends ProjectedObject3D {
    */
   documentToWorldSpace(vector = new Vec3()) {
     return new Vec3(
-      vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.screenRatio.width,
-      -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.screenRatio.height,
+      vector.x * this.renderer.pixelRatio / this.renderer.boundingRect.width * this.camera.visibleSize.width,
+      -(vector.y * this.renderer.pixelRatio / this.renderer.boundingRect.height) * this.camera.visibleSize.height,
       vector.z
     );
   }
@@ -285,14 +285,14 @@ class DOMObject3D extends ProjectedObject3D {
       (containerCenter.y - planeCenter.y) / containerBoundingRect.height
     );
     this.size.cameraWorld.size.set(
-      this.size.normalizedWorld.size.x * this.camera.screenRatio.width,
-      this.size.normalizedWorld.size.y * this.camera.screenRatio.height
+      this.size.normalizedWorld.size.x * this.camera.visibleSize.width,
+      this.size.normalizedWorld.size.y * this.camera.visibleSize.height
     );
     this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
     this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
     this.size.scaledWorld.position.set(
-      this.size.normalizedWorld.position.x * this.camera.screenRatio.width,
-      this.size.normalizedWorld.position.y * this.camera.screenRatio.height,
+      this.size.normalizedWorld.position.x * this.camera.visibleSize.width,
+      this.size.normalizedWorld.position.y * this.camera.visibleSize.height,
       0
     );
   }

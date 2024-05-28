@@ -58,7 +58,7 @@ export declare class Camera extends Object3D {
     /** A number representing what CSS perspective value (in pixel) should be used to obtain the same perspective effect as this {@link Camera} */
     CSSPerspective: number;
     /** An object containing the visible width / height at a given z-depth from our camera parameters */
-    screenRatio: RectSize;
+    visibleSize: RectSize;
     /**
      * Camera constructor
      * @param parameters - {@link CameraParams | parameters} used to create our {@link Camera}
@@ -154,11 +154,11 @@ export declare class Camera extends Object3D {
      * @param depth - depth to use for calculations
      * @returns - visible width and height at given depth
      */
-    getScreenRatiosAtDepth(depth?: number): RectSize;
+    getVisibleSizeAtDepth(depth?: number): RectSize;
     /**
      * Sets visible width / height at a depth of 0.
      */
-    setScreenRatios(): void;
+    setVisibleSize(): void;
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}
      * @param target - {@link Vec3 | target} to look at

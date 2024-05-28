@@ -17,7 +17,7 @@ export class TestComputePasses {
     this.particleShrinkScale = 30
 
     // camera screen ratio depends on screen size, fov and camera position
-    this.cameraRatio = this.gpuCurtains.camera.screenRatio.height * this.particleShrinkScale * 0.5
+    this.cameraRatio = this.gpuCurtains.camera.visibleSize.height * this.particleShrinkScale * 0.5
 
     this.screenRatio = this.gpuCurtains.boundingRect.width / this.gpuCurtains.boundingRect.height
     this.systemSize = new Vec2(this.cameraRatio * this.screenRatio, this.cameraRatio)
@@ -237,7 +237,7 @@ export class TestComputePasses {
         pingPong++
       })
       .onAfterResize(() => {
-        this.cameraRatio = this.gpuCurtains.camera.screenRatio.height * this.particleShrinkScale * 0.5
+        this.cameraRatio = this.gpuCurtains.camera.visibleSize.height * this.particleShrinkScale * 0.5
         this.screenRatio = this.gpuCurtains.boundingRect.width / this.gpuCurtains.boundingRect.height
         this.computeBoidsPass.uniforms.params.systemSize.value.set(
           this.cameraRatio * this.screenRatio,
