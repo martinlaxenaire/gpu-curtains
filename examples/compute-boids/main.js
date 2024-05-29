@@ -318,21 +318,23 @@ window.addEventListener('load', async () => {
       {
         stepMode: 'instance',
         name: 'instanceAttributes',
-        buffer: particlesBufferBindingA.buffer, // pass the particles buffer right away
+        // pass the particles buffer right away
+        buffer: particlesBufferBindingA.buffer,
+        // since we passed a buffer, we do not need to specify arrays for the attributes
         attributes: [
           {
             name: 'instancePosition',
             type: 'vec2f',
             bufferFormat: 'float32x2',
             size: 2,
-            array: initialParticlePosition,
+            //array: initialParticlePosition,
           },
           {
             name: 'instanceVelocity',
             type: 'vec2f',
             bufferFormat: 'float32x2',
             size: 2,
-            array: initialParticleVelocity,
+            //array: initialParticleVelocity,
           },
         ],
       },

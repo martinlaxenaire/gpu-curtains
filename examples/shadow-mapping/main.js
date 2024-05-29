@@ -150,11 +150,7 @@ window.addEventListener('load', async () => {
     type: 'comparison',
   })
 
-  const depthVs = /* wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-    };
-    
+  const depthVs = /* wgsl */ `    
     @vertex fn main(
       attributes: Attributes,
     ) -> @builtin(position) vec4<f32> {
