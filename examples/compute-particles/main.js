@@ -27,7 +27,7 @@ const computeParticles = /* wgsl */ `
       particlesStaticData[index].maxLife = maxLife;
       
       // now set a different initial life for each particle
-      var initLife: f32 = round( maxLife * max(rand11(acos(fIndex * PI / nbParticles)), 0.0) );
+      var initLife: f32 = round( maxLife * max(rand11(cos(fIndex * PI * 2.0 / nbParticles)), 0.0) );
       
       particles.position[index].w = initLife;
       particlesStaticData[index].position.w = initLife;

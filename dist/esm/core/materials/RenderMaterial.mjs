@@ -51,14 +51,14 @@ class RenderMaterial extends Material {
       topology
     } = parameters;
     let { targets } = parameters;
-    if (!targets || !targets.length) {
+    if (targets === void 0) {
       targets = [
         {
           format: this.renderer.options.preferredFormat
         }
       ];
     }
-    if (!targets[0].format) {
+    if (targets && targets.length && !targets[0].format) {
       targets[0].format = this.renderer.options.preferredFormat;
     }
     this.options = {

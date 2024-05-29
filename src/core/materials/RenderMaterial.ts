@@ -92,14 +92,14 @@ export class RenderMaterial extends Material {
     let { targets } = parameters
 
     // patch default target format if not set
-    if (!targets || !targets.length) {
+    if (targets === undefined) {
       targets = [
         {
           format: this.renderer.options.preferredFormat,
         },
       ]
     }
-    if (!targets[0].format) {
+    if (targets && targets.length && !targets[0].format) {
       targets[0].format = this.renderer.options.preferredFormat
     }
 
