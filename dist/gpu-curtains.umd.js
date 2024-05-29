@@ -14063,8 +14063,15 @@ struct VSOutput {
       /* wgsl */
       `
       let ambient = ambientContribution * color.rgb * occlusion;
-      color = vec4(linearTosRGB(lightContribution + ambient + emissive), color.a);
-      //color = vec4(linearTosRGB(toneMapKhronosPbrNeutral(lightContribution + ambient + emissive)), color.a);
+      
+      color = vec4(
+        linearTosRGB(
+          toneMapKhronosPbrNeutral(
+            lightContribution + ambient + emissive
+          )
+        ),
+        color.a
+      );
   `
     );
     const fs = (
