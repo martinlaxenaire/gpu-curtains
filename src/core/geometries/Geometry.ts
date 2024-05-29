@@ -121,6 +121,14 @@ export class Geometry {
       this.addVertexBuffer({
         name: 'attributes',
       })
+    } else if (attributesBuffer) {
+      // always put attributes vertex buffer first
+      vertexBuffers.sort((a, b) => {
+        const aIndex = a.name !== 'attributes' ? Infinity : -1
+        const bIndex = b.name !== 'attributes' ? Infinity : -1
+
+        return aIndex - bIndex
+      })
     }
 
     for (const vertexBuffer of vertexBuffers) {
@@ -128,7 +136,7 @@ export class Geometry {
         stepMode: vertexBuffer.stepMode ?? 'vertex',
         name: vertexBuffer.name,
         attributes: vertexBuffer.attributes,
-        ...(vertexBuffer.array && { array: vertexBuffer.array }), // TODO
+        ...(vertexBuffer.array && { array: vertexBuffer.array }),
         ...(vertexBuffer.buffer && { buffer: vertexBuffer.buffer }),
         ...(vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset }),
         ...(vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }),
@@ -252,7 +260,8 @@ export class Geometry {
       size = 3
     }
 
-    const attributeCount = array.length / size
+    let arrayLength = array.length
+    const attributeCount = arrayLength / size
 
     if (name === 'position') {
       this.verticesCount = attributeCount
@@ -269,11 +278,15 @@ export class Geometry {
         }, current given: ${array.length}. (${this.verticesCount} vertices).`
       )
     } else if (vertexBuffer.stepMode === 'instance' && attributeCount !== this.instancesCount) {
-      throwError(
-        `Geometry instance attribute error. Attribute array of size ${size} must be of length: ${
-          this.instancesCount * size
-        }, current given: ${array.length}. (${this.instancesCount} instances).`
-      )
+      if (vertexBuffer.buffer) {
+        arrayLength = this.instancesCount * size
+      } else {
+        throwError(
+          `Geometry instance attribute error. Attribute array of size ${size} must be of length: ${
+            this.instancesCount * size
+          }, current given: ${array.length}. (${this.instancesCount} instances).`
+        )
+      }
     }
 
     // TODO we could force the use of a bufferOffset to 0
@@ -285,7 +298,7 @@ export class Geometry {
       type,
       bufferFormat,
       size,
-      bufferLength: array.length,
+      bufferLength: arrayLength,
       offset: attributesLength
         ? attributes.reduce((accumulator: number, currentValue) => {
             return accumulator + currentValue.bufferLength
@@ -366,7 +379,7 @@ export class Geometry {
 
           for (let s = 0; s < size; s++) {
             const attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s]
-            vertexBuffer.array[currentIndex] = attributeValue
+            vertexBuffer.array[currentIndex] = attributeValue ?? 0
 
             // compute bounding box
             if (name === 'position') {

@@ -6003,6 +6003,12 @@
         this.addVertexBuffer({
           name: "attributes"
         });
+      } else if (attributesBuffer) {
+        vertexBuffers.sort((a, b) => {
+          const aIndex = a.name !== "attributes" ? Infinity : -1;
+          const bIndex = b.name !== "attributes" ? Infinity : -1;
+          return aIndex - bIndex;
+        });
       }
       for (const vertexBuffer of vertexBuffers) {
         this.addVertexBuffer({
@@ -6010,7 +6016,6 @@
           name: vertexBuffer.name,
           attributes: vertexBuffer.attributes,
           ...vertexBuffer.array && { array: vertexBuffer.array },
-          // TODO
           ...vertexBuffer.buffer && { buffer: vertexBuffer.buffer },
           ...vertexBuffer.bufferOffset && { bufferOffset: vertexBuffer.bufferOffset },
           ...vertexBuffer.bufferSize && { bufferSize: vertexBuffer.bufferSize }
@@ -6116,7 +6121,8 @@
         bufferFormat = "float32x3";
         size = 3;
       }
-      const attributeCount = array.length / size;
+      let arrayLength = array.length;
+      const attributeCount = arrayLength / size;
       if (name === "position") {
         this.verticesCount = attributeCount;
       }
@@ -6125,16 +6131,20 @@
           `Geometry vertex attribute error. Attribute array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`
         );
       } else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) {
-        throwError(
-          `Geometry instance attribute error. Attribute array of size ${size} must be of length: ${this.instancesCount * size}, current given: ${array.length}. (${this.instancesCount} instances).`
-        );
+        if (vertexBuffer.buffer) {
+          arrayLength = this.instancesCount * size;
+        } else {
+          throwError(
+            `Geometry instance attribute error. Attribute array of size ${size} must be of length: ${this.instancesCount * size}, current given: ${array.length}. (${this.instancesCount} instances).`
+          );
+        }
       }
       const attribute = {
         name,
         type,
         bufferFormat,
         size,
-        bufferLength: array.length,
+        bufferLength: arrayLength,
         offset: attributesLength ? attributes.reduce((accumulator, currentValue) => {
           return accumulator + currentValue.bufferLength;
         }, 0) : 0,
@@ -6200,7 +6210,7 @@
             const { name, size, array, verticesStride } = vertexBuffer.attributes[j];
             for (let s = 0; s < size; s++) {
               const attributeValue = array[Math.floor(attributeIndex / verticesStride) * size + s];
-              vertexBuffer.array[currentIndex] = attributeValue;
+              vertexBuffer.array[currentIndex] = attributeValue ?? 0;
               if (name === "position") {
                 if (s % 3 === 0) {
                   if (this.boundingBox.min.x > attributeValue)
@@ -6660,14 +6670,14 @@ struct VertexOutput {
         topology
       } = parameters;
       let { targets } = parameters;
-      if (!targets || !targets.length) {
+      if (targets === void 0) {
         targets = [
           {
             format: this.renderer.options.preferredFormat
           }
         ];
       }
-      if (!targets[0].format) {
+      if (targets && targets.length && !targets[0].format) {
         targets[0].format = this.renderer.options.preferredFormat;
       }
       this.options = {
@@ -8625,11 +8635,7 @@ ${this.shaders.full.head}`;
           };
         }
       } else {
-        this.options.rendering.targets = [
-          {
-            format: this.renderer.options.preferredFormat
-          }
-        ];
+        this.options.rendering.targets = [];
       }
       this.descriptor = {
         label: this.options.label,
@@ -14057,8 +14063,15 @@ struct VSOutput {
       /* wgsl */
       `
       let ambient = ambientContribution * color.rgb * occlusion;
-      color = vec4(linearTosRGB(lightContribution + ambient + emissive), color.a);
-      //color = vec4(linearTosRGB(toneMapKhronosPbrNeutral(lightContribution + ambient + emissive)), color.a);
+      
+      color = vec4(
+        linearTosRGB(
+          toneMapKhronosPbrNeutral(
+            lightContribution + ambient + emissive
+          )
+        ),
+        color.a
+      );
   `
     );
     const fs = (

@@ -27,7 +27,7 @@ const computeParticles = /* wgsl */ `
       particlesStaticData[index].maxLife = maxLife;
       
       // now set a different initial life for each particle
-      var initLife: f32 = round( maxLife * max(rand11(acos(fIndex * PI / nbParticles)), 0.0) );
+      var initLife: f32 = round( maxLife * max(rand11(cos(fIndex * PI * 2.0 / nbParticles)), 0.0) );
       
       particles.position[index].w = initLife;
       particlesStaticData[index].position.w = initLife;
@@ -374,19 +374,23 @@ window.addEventListener('load', async () => {
         // use instancing
         stepMode: 'instance',
         name: 'instanceAttributes',
-        buffer: computePass.material.getBindingByName('particles')?.buffer, // pass the compute buffer right away
+        // pass the compute buffer right away
+        buffer: computePass.material.getBindingByName('particles')?.buffer,
+        // since we passed a buffer, we do not need to specify arrays for the attributes
         attributes: [
           {
             name: 'instancePosition',
             type: 'vec4f',
             bufferFormat: 'float32x4',
             size: 4,
-            array: new Float32Array(nbParticles * 4),
+            //array: new Float32Array(nbParticles * 4),
           },
         ],
       },
     ],
   })
+
+  console.log(particlesGeometry)
 
   const particles = new Mesh(gpuCurtains, {
     label: 'Particles mesh',

@@ -150,11 +150,7 @@ window.addEventListener('load', async () => {
     type: 'comparison',
   })
 
-  const depthVs = /* wgsl */ `
-    struct VertexOutput {
-      @builtin(position) position: vec4f,
-    };
-    
+  const depthVs = /* wgsl */ `    
     @vertex fn main(
       attributes: Attributes,
     ) -> @builtin(position) vec4<f32> {
@@ -175,7 +171,7 @@ window.addEventListener('load', async () => {
       var vsOutput: VertexOutput;
     
       vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.normal = normalize(matrices.normal * attributes.normal);
+      vsOutput.normal = getWorldNormal(attributes.normal);
       
       // XY is in (-1, 1) space, Z is in (0, 1) space
       let posFromLight = lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
@@ -233,9 +229,15 @@ window.addEventListener('load', async () => {
 
   // for each mesh that need to be rendered on the depth map
   const createMeshDepthMaterial = (mesh) => {
+    const renderingOptions = { ...mesh.material.options.rendering }
+
+    // explicitly set empty output targets
+    // we just want to write to the depth texture
+    renderingOptions.targets = []
+
     mesh.userData.depthMaterial = new RenderMaterial(gpuCameraRenderer, {
       label: mesh.options.label + ' Depth render material',
-      ...mesh.material.options.rendering,
+      ...renderingOptions,
       shaders: {
         vertex: {
           code: depthVs,
@@ -288,14 +290,6 @@ window.addEventListener('load', async () => {
             },
           },
         },
-        normals: {
-          struct: {
-            inverseTransposeMatrix: {
-              type: 'mat4x4f',
-              value: new Mat4(),
-            },
-          },
-        },
       },
     })
 
@@ -305,20 +299,11 @@ window.addEventListener('load', async () => {
 
     const rotationSpeed = (Math.random() * 0.01 + 0.01) * Math.sign(Math.random() - 0.5)
 
-    mesh
-      .onBeforeRender(() => {
-        // onBeforeRender is just called once before updating the Scene matrix stack
-        mesh.rotation.y += rotationSpeed
-        mesh.rotation.z += rotationSpeed
-      })
-      .onRender(() => {
-        // onRender is called when rendering the depth pass and the shading pass
-        // be sure we're actually rendering the shading pass
-        if (mesh.uniforms.normals) {
-          mesh.uniforms.normals.inverseTransposeMatrix.value.copy(mesh.worldMatrix).invert().transpose()
-          mesh.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
-        }
-      })
+    mesh.onBeforeRender(() => {
+      // onBeforeRender is just called once before updating the Scene matrix stack
+      mesh.rotation.y += rotationSpeed
+      mesh.rotation.z += rotationSpeed
+    })
 
     createMeshDepthMaterial(mesh)
 
@@ -365,24 +350,7 @@ window.addEventListener('load', async () => {
             },
           },
         },
-        normals: {
-          struct: {
-            inverseTransposeMatrix: {
-              type: 'mat4x4f',
-              value: new Mat4(),
-            },
-          },
-        },
       },
-    })
-
-    wall.onRender(() => {
-      // onRender is called when rendering the depth pass and the shading pass
-      // be sure we're actually rendering the shading pass
-      if (wall.uniforms.normals) {
-        wall.uniforms.normals.inverseTransposeMatrix.value.copy(wall.worldMatrix).invert().transpose()
-        wall.uniforms.normals.inverseTransposeMatrix.shouldUpdate = true
-      }
     })
 
     createMeshDepthMaterial(wall)

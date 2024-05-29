@@ -591,34 +591,35 @@ window.addEventListener('load', async () => {
     name: 'clothAttributes',
     // add the compute bind group vertex buffer right away
     buffer: computeBindGroup.getBindingByName('clothVertex')?.buffer,
+    // since we passed a buffer, we do not need to specify arrays for the attributes
     attributes: [
       {
         name: 'clothPosition',
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
-        array: vertexPositionArray,
+        //array: vertexPositionArray,
       },
       {
         name: 'clothNormal',
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
-        array: normalPositionArray,
+        //array: normalPositionArray,
       },
       {
         name: 'clothForce',
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
-        array: vertexForceArray,
+        //array: vertexForceArray,
       },
       {
         name: 'clothVelocity',
         type: 'vec4f',
         bufferFormat: 'float32x4',
         size: 4,
-        array: vertexVelocityArray,
+        //array: vertexVelocityArray,
       },
     ],
   })

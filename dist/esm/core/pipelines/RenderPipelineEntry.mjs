@@ -217,11 +217,7 @@ ${this.shaders.full.head}`;
         };
       }
     } else {
-      this.options.rendering.targets = [
-        {
-          format: this.renderer.options.preferredFormat
-        }
-      ];
+      this.options.rendering.targets = [];
     }
     this.descriptor = {
       label: this.options.label,

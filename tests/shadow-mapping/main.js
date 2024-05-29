@@ -213,9 +213,15 @@ window.addEventListener('load', async () => {
 
   // for each mesh that need to be rendered on the depth map
   const createMeshDepthMaterial = (mesh) => {
+    const renderingOptions = { ...mesh.material.options.rendering }
+
+    // explicitly set empty output targets
+    // we just want to write to the depth texture
+    renderingOptions.targets = []
+
     mesh.userData.depthMaterial = new RenderMaterial(gpuCameraRenderer, {
       label: mesh.options.label + ' Depth render material',
-      ...mesh.material.options.rendering,
+      ...renderingOptions,
       shaders: {
         vertex: {
           code: depthVs,
@@ -274,6 +280,8 @@ window.addEventListener('load', async () => {
   })
 
   createMeshDepthMaterial(sphere)
+
+  console.log(gpuCameraRenderer.pipelineManager, sphere.userData)
 
   // create floor
 

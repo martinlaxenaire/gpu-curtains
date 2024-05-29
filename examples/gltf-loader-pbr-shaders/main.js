@@ -136,7 +136,7 @@ window.addEventListener('load', async () => {
               },
               range: {
                 type: 'f32',
-                value: lightPositionLength * 1.25,
+                value: lightPositionLength * 2,
               },
               color: {
                 type: 'vec3f',
@@ -144,7 +144,7 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                value: isSponza ? lightPositionLengthSq * 2 : lightPositionLengthSq * 1.5,
+                value: isSponza ? lightPositionLengthSq * 2.75 : lightPositionLengthSq * 2,
               },
             },
           },

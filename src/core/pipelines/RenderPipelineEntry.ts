@@ -423,11 +423,7 @@ export class RenderPipelineEntry extends PipelineEntry {
             }
       }
     } else {
-      this.options.rendering.targets = [
-        {
-          format: this.renderer.options.preferredFormat,
-        },
-      ]
+      this.options.rendering.targets = []
     }
 
     this.descriptor = {
