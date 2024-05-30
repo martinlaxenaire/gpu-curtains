@@ -87,7 +87,7 @@ export declare class GPURenderer {
     /** The {@link Scene} used */
     scene: Scene;
     /** Whether we should render our {@link Scene} or not (useful to pause rendering if the renderer is out of view for example). */
-    renderScene: boolean;
+    shouldRenderScene: boolean;
     /** An array containing all our created {@link ComputePass} */
     computePasses: ComputePass[];
     /** An array containing all our created {@link PingPongPlane} */

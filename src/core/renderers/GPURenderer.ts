@@ -101,7 +101,7 @@ export class GPURenderer {
   scene: Scene
 
   /** Whether we should render our {@link Scene} or not (useful to pause rendering if the renderer is out of view for example). */
-  renderScene: boolean
+  shouldRenderScene: boolean
 
   /** An array containing all our created {@link ComputePass} */
   computePasses: ComputePass[]
@@ -171,7 +171,7 @@ export class GPURenderer {
     this.deviceManager = deviceManager
     this.deviceManager.addRenderer(this)
 
-    this.renderScene = true
+    this.shouldRenderScene = true
 
     // render pass default values
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
@@ -1042,7 +1042,7 @@ export class GPURenderer {
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
     this.onBeforeRenderScene.execute(commandEncoder)
 
-    if (this.renderScene) this.scene?.render(commandEncoder)
+    if (this.shouldRenderScene) this.scene?.render(commandEncoder)
 
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
     this.onAfterRenderScene.execute(commandEncoder)

@@ -9938,7 +9938,7 @@ ${this.shaders.compute.head}`;
       }
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
-      this.renderScene = true;
+      this.shouldRenderScene = true;
       renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
       preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
       this.options = {
@@ -10654,7 +10654,7 @@ ${this.shaders.compute.head}`;
         return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
       this.onBeforeRenderScene.execute(commandEncoder);
-      if (this.renderScene)
+      if (this.shouldRenderScene)
         this.scene?.render(commandEncoder);
       this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
       this.onAfterRenderScene.execute(commandEncoder);
