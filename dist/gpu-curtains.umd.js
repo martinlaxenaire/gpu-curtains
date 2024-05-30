@@ -9938,6 +9938,7 @@ ${this.shaders.compute.head}`;
       }
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
+      this.renderScene = true;
       renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
       preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
       this.options = {
@@ -10653,7 +10654,8 @@ ${this.shaders.compute.head}`;
         return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
       this.onBeforeRenderScene.execute(commandEncoder);
-      this.scene?.render(commandEncoder);
+      if (this.renderScene)
+        this.scene?.render(commandEncoder);
       this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
       this.onAfterRenderScene.execute(commandEncoder);
     }
@@ -10931,10 +10933,15 @@ ${this.shaders.compute.head}`;
       if (adapter) {
         this.adapter = adapter;
       } else {
-        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
-        if (!this.adapter) {
+        try {
+          this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+          if (!this.adapter) {
+            this.onError();
+            throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+          }
+        } catch (e) {
           this.onError();
-          throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+          throwError("GPUDeviceManager: " + e.message);
         }
       }
       this.adapter?.requestAdapterInfo().then((infos) => {

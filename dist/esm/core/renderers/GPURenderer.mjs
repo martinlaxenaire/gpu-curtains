@@ -37,6 +37,7 @@ class GPURenderer {
     }
     this.deviceManager = deviceManager;
     this.deviceManager.addRenderer(this);
+    this.renderScene = true;
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
     preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
     this.options = {
@@ -752,7 +753,8 @@ class GPURenderer {
       return;
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
     this.onBeforeRenderScene.execute(commandEncoder);
-    this.scene?.render(commandEncoder);
+    if (this.renderScene)
+      this.scene?.render(commandEncoder);
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
     this.onAfterRenderScene.execute(commandEncoder);
   }

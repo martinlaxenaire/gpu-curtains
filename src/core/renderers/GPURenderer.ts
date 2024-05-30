@@ -100,6 +100,9 @@ export class GPURenderer {
   /** The {@link Scene} used */
   scene: Scene
 
+  /** Whether we should render our {@link Scene} or not (useful to pause rendering if the renderer is out of view for example). */
+  renderScene: boolean
+
   /** An array containing all our created {@link ComputePass} */
   computePasses: ComputePass[]
   /** An array containing all our created {@link PingPongPlane} */
@@ -167,6 +170,8 @@ export class GPURenderer {
 
     this.deviceManager = deviceManager
     this.deviceManager.addRenderer(this)
+
+    this.renderScene = true
 
     // render pass default values
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
@@ -1037,7 +1042,7 @@ export class GPURenderer {
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
     this.onBeforeRenderScene.execute(commandEncoder)
 
-    this.scene?.render(commandEncoder)
+    if (this.renderScene) this.scene?.render(commandEncoder)
 
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
     this.onAfterRenderScene.execute(commandEncoder)
