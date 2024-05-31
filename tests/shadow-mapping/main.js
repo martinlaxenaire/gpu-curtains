@@ -296,7 +296,7 @@ window.addEventListener('load', async () => {
     geometry: planeGeometry,
     textures: [shadowDepthTexture],
     samplers: [lessCompareSampler],
-    frustumCulled: false, // always draw
+    frustumCulling: false, // always draw
     cullMode: 'none',
     shaders: {
       vertex: {
@@ -407,7 +407,7 @@ window.addEventListener('load', async () => {
     label: 'Debug depth plane',
     geometry: new PlaneGeometry(),
     depthWriteEnabled: false,
-    frustumCulled: false,
+    frustumCulling: false,
     visible: false,
     shaders: {
       vertex: {

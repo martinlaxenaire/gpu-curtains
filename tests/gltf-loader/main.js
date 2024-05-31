@@ -213,7 +213,7 @@ window.addEventListener('load', async () => {
       })
 
       // disable frustum culling
-      parameters.frustumCulled = false
+      parameters.frustumCulling = false
 
       const lightPosition = new Vec3(radius * 2, radius * 2, radius)
       const lightPositionLengthSq = lightPosition.lengthSq()

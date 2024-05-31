@@ -292,7 +292,7 @@ window.addEventListener('load', async () => {
   const transparentMeshParams = {
     depthWriteEnabled: false, // we'll read from opaque depth but we won't write to it!
     outputTarget: OITTransparentTarget,
-    frustumCulled: false,
+    frustumCulling: false,
     // targets format are not specified
     // because they're internally patched using the outputTarget colorAttachments
     targets: [
@@ -854,7 +854,7 @@ window.addEventListener('load', async () => {
     label: 'Sun',
     geometry: sphereGeometry,
     outputTarget: OITOpaqueTarget,
-    frustumCulled: false,
+    frustumCulling: false,
     shaders: {
       fragment: {
         code: sunFs,
@@ -943,7 +943,7 @@ window.addEventListener('load', async () => {
   //     label: 'Opaque planet',
   //     geometry: sphereGeometry,
   //     outputTarget: OITOpaqueTarget,
-  //     frustumCulled: false,
+  //     frustumCulling: false,
   //     shaders: {
   //       vertex: {
   //         code: planetVs,

@@ -62,7 +62,7 @@ window.addEventListener('load', async () => {
   const addMesh = (index) => {
     const mesh = new Mesh(gpuCameraRenderer, {
       geometry: Math.random() > 0.5 ? cubeGeometry : sphereGeometry,
-      // frustumCulled: false, // you can also gain a few fps without checking for frustum
+      // frustumCulling: false, // you can also gain a few fps without checking for frustum
     })
 
     mesh.position.x = Math.random() * systemSize * 2 * aspectRatio - systemSize * aspectRatio
@@ -118,11 +118,11 @@ window.addEventListener('load', async () => {
     })
 
   gui
-    .add({ frustumCulled: true }, 'frustumCulled')
+    .add({ frustumCulling: true }, 'frustumCulling')
     .name('Frustum culling')
     .onChange((value) => {
       for (let i = 0, l = meshes.length; i < l; i++) {
-        meshes[i].frustumCulled = value
+        meshes[i].frustumCulling = value
       }
     })
 })

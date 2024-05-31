@@ -7941,7 +7941,7 @@ struct VSOutput {
 
   const defaultProjectedMeshParams = {
     // frustum culling and visibility
-    frustumCulled: true,
+    frustumCulling: true,
     DOMFrustumMargins: {
       top: 0,
       right: 0,
@@ -7985,11 +7985,11 @@ struct VSOutput {
         renderer = renderer && renderer.renderer || renderer;
         isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
-        const { frustumCulled, DOMFrustumMargins } = parameters;
+        const { frustumCulling, DOMFrustumMargins } = parameters;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
-          frustumCulled,
+          frustumCulling,
           DOMFrustumMargins
         };
         this.setDOMFrustum();
@@ -8055,7 +8055,7 @@ struct VSOutput {
           }
         });
         this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
-        this.frustumCulled = this.options.frustumCulled;
+        this.frustumCulling = this.options.frustumCulling;
       }
       /* MATERIAL */
       /**
@@ -8064,7 +8064,7 @@ struct VSOutput {
        * @returns - cleaned parameters
        */
       cleanupRenderMaterialParameters(parameters) {
-        delete parameters.frustumCulled;
+        delete parameters.frustumCulling;
         delete parameters.DOMFrustumMargins;
         super.cleanupRenderMaterialParameters(parameters);
         return parameters;
@@ -8172,7 +8172,7 @@ struct VSOutput {
        */
       checkFrustumCulling() {
         if (this.matricesNeedUpdate) {
-          if (this.domFrustum && this.frustumCulled) {
+          if (this.domFrustum && this.frustumCulling) {
             this.domFrustum.computeProjectedToDocumentCoords();
           }
         }
@@ -8194,7 +8194,7 @@ struct VSOutput {
         if (!this.ready)
           return;
         this._onRenderCallback && this._onRenderCallback();
-        if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled) {
+        if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
           this.material.render(pass);
           this.geometry.render(pass);
         }

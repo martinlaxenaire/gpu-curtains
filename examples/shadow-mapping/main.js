@@ -332,7 +332,7 @@ window.addEventListener('load', async () => {
       geometry: planeGeometry,
       textures: [shadowDepthTexture],
       samplers: [lessCompareSampler],
-      frustumCulled: false, // always draw the walls
+      frustumCulling: false, // always draw the walls
       shaders: {
         vertex: {
           code: meshVs,
@@ -448,7 +448,7 @@ window.addEventListener('load', async () => {
     label: 'Debug depth plane',
     geometry: new PlaneGeometry(),
     depthWriteEnabled: false,
-    frustumCulled: false,
+    frustumCulling: false,
     visible: false,
     shaders: {
       vertex: {

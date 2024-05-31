@@ -111,7 +111,7 @@ export class ComputeFeature {
           code: featureInstancesFs,
         },
       },
-      frustumCulled: false,
+      frustumCulling: false,
       uniforms: {
         frames: {
           struct: {
