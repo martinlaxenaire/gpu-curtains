@@ -311,6 +311,7 @@ window.addEventListener('load', async () => {
   }
 
   // create walls
+  // the walls will not cast shadows, but they will receive them
 
   const planeGeometry = new PlaneGeometry()
 
@@ -352,8 +353,6 @@ window.addEventListener('load', async () => {
         },
       },
     })
-
-    createMeshDepthMaterial(wall)
 
     wall.parent = boxPivot
     wall.position.copy(position)

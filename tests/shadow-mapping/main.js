@@ -284,6 +284,7 @@ window.addEventListener('load', async () => {
   console.log(gpuCameraRenderer.pipelineManager, sphere.userData)
 
   // create floor
+  // the floor will not cast shadows, but it will receive them
 
   const planeGeometry = new PlaneGeometry()
 
@@ -317,8 +318,6 @@ window.addEventListener('load', async () => {
       },
     },
   })
-
-  createMeshDepthMaterial(floor)
 
   floor.parent = boxPivot
   floor.position.set(0, -1, -0.5)
