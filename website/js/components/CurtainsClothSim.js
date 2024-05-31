@@ -246,28 +246,24 @@ export class CurtainsClothSim {
           type: 'vec4f',
           bufferFormat: 'float32x4',
           size: 4,
-          array: this.vertexPositionArray,
         },
         {
           name: 'clothNormal',
           type: 'vec4f',
           bufferFormat: 'float32x4',
           size: 4,
-          array: this.normalPositionArray,
         },
         {
           name: 'clothForce',
           type: 'vec4f',
           bufferFormat: 'float32x4',
           size: 4,
-          array: this.vertexForceArray,
         },
         {
           name: 'clothVelocity',
           type: 'vec4f',
           bufferFormat: 'float32x4',
           size: 4,
-          array: this.vertexVelocityArray,
         },
       ],
     })

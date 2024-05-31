@@ -154,18 +154,26 @@ export class ComputeFeature {
       },
     })
 
+    // check if the renderer is into view on init
+    const { top, height } = this.renderer.boundingRect
+    const wh = window.innerHeight
+
+    if (top > wh || top + height < 0) {
+      this.renderer.shouldRender = false
+    }
+
     this.scrollObserver.observe({
       element: this.renderer.domElement.element,
       visibleRatio: 0,
       hiddenRatio: 0,
       keepObserving: true,
       onElVisible: () => {
-        this.shaderPass.visible = true
+        this.renderer.shouldRender = true
       },
       onElHidden: () => {
-        // if the shader pass is not visible,
-        // then everything that's in it is not drawn
-        this.shaderPass.visible = false
+        // if renderer is not visible,
+        // then stop rendering
+        this.renderer.shouldRender = false
       },
     })
   }
