@@ -63,10 +63,15 @@ class GPUDeviceManager {
     if (adapter) {
       this.adapter = adapter;
     } else {
-      this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
-      if (!this.adapter) {
+      try {
+        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+        if (!this.adapter) {
+          this.onError();
+          throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+        }
+      } catch (e) {
         this.onError();
-        throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+        throwError("GPUDeviceManager: " + e.message);
       }
     }
     this.adapter?.requestAdapterInfo().then((infos) => {
@@ -277,7 +282,8 @@ class GPUDeviceManager {
     if (!this.ready)
       return;
     for (const renderer of this.renderers) {
-      renderer.onBeforeCommandEncoder();
+      if (renderer.shouldRender)
+        renderer.onBeforeCommandEncoder();
     }
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
     !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
@@ -291,7 +297,8 @@ class GPUDeviceManager {
     }
     this.texturesQueue = [];
     for (const renderer of this.renderers) {
-      renderer.onAfterCommandEncoder();
+      if (renderer.shouldRender)
+        renderer.onAfterCommandEncoder();
     }
   }
   /**

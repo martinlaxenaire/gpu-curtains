@@ -57,7 +57,7 @@ window.addEventListener('load', async () => {
         code: floorFs,
       },
     },
-    frustumCulled: false, // always draw the floor
+    frustumCulling: false, // always draw the floor
     cullMode: 'none',
     uniforms: {
       checkerboard: {

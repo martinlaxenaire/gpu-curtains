@@ -7941,7 +7941,7 @@ struct VSOutput {
 
   const defaultProjectedMeshParams = {
     // frustum culling and visibility
-    frustumCulled: true,
+    frustumCulling: true,
     DOMFrustumMargins: {
       top: 0,
       right: 0,
@@ -7985,11 +7985,11 @@ struct VSOutput {
         renderer = renderer && renderer.renderer || renderer;
         isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
-        const { frustumCulled, DOMFrustumMargins } = parameters;
+        const { frustumCulling, DOMFrustumMargins } = parameters;
         this.options = {
           ...this.options ?? {},
           // merge possible lower options?
-          frustumCulled,
+          frustumCulling,
           DOMFrustumMargins
         };
         this.setDOMFrustum();
@@ -8055,7 +8055,7 @@ struct VSOutput {
           }
         });
         this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
-        this.frustumCulled = this.options.frustumCulled;
+        this.frustumCulling = this.options.frustumCulling;
       }
       /* MATERIAL */
       /**
@@ -8064,7 +8064,7 @@ struct VSOutput {
        * @returns - cleaned parameters
        */
       cleanupRenderMaterialParameters(parameters) {
-        delete parameters.frustumCulled;
+        delete parameters.frustumCulling;
         delete parameters.DOMFrustumMargins;
         super.cleanupRenderMaterialParameters(parameters);
         return parameters;
@@ -8172,7 +8172,7 @@ struct VSOutput {
        */
       checkFrustumCulling() {
         if (this.matricesNeedUpdate) {
-          if (this.domFrustum && this.frustumCulled) {
+          if (this.domFrustum && this.frustumCulling) {
             this.domFrustum.computeProjectedToDocumentCoords();
           }
         }
@@ -8194,7 +8194,7 @@ struct VSOutput {
         if (!this.ready)
           return;
         this._onRenderCallback && this._onRenderCallback();
-        if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulled) {
+        if (this.domFrustum && this.domFrustum.isIntersecting || !this.frustumCulling) {
           this.material.render(pass);
           this.geometry.render(pass);
         }
@@ -9938,6 +9938,8 @@ ${this.shaders.compute.head}`;
       }
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
+      this.shouldRender = true;
+      this.shouldRenderScene = true;
       renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
       preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
       this.options = {
@@ -10649,11 +10651,12 @@ ${this.shaders.compute.head}`;
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
-      if (!this.ready)
+      if (!this.ready || !this.shouldRender)
         return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
       this.onBeforeRenderScene.execute(commandEncoder);
-      this.scene?.render(commandEncoder);
+      if (this.shouldRenderScene)
+        this.scene?.render(commandEncoder);
       this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
       this.onAfterRenderScene.execute(commandEncoder);
     }
@@ -10931,10 +10934,15 @@ ${this.shaders.compute.head}`;
       if (adapter) {
         this.adapter = adapter;
       } else {
-        this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
-        if (!this.adapter) {
+        try {
+          this.adapter = await this.gpu?.requestAdapter(this.adapterOptions);
+          if (!this.adapter) {
+            this.onError();
+            throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+          }
+        } catch (e) {
           this.onError();
-          throwError("GPUDeviceManager: WebGPU is not supported on your browser/OS. 'requestAdapter' failed.");
+          throwError("GPUDeviceManager: " + e.message);
         }
       }
       this.adapter?.requestAdapterInfo().then((infos) => {
@@ -11145,7 +11153,8 @@ ${this.shaders.compute.head}`;
       if (!this.ready)
         return;
       for (const renderer of this.renderers) {
-        renderer.onBeforeCommandEncoder();
+        if (renderer.shouldRender)
+          renderer.onBeforeCommandEncoder();
       }
       const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
       !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
@@ -11159,7 +11168,8 @@ ${this.shaders.compute.head}`;
       }
       this.texturesQueue = [];
       for (const renderer of this.renderers) {
-        renderer.onAfterCommandEncoder();
+        if (renderer.shouldRender)
+          renderer.onAfterCommandEncoder();
       }
     }
     /**

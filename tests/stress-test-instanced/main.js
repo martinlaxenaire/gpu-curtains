@@ -122,7 +122,7 @@ window.addEventListener('load', async () => {
 
   const cubeInstances = new Mesh(gpuCurtains, {
     geometry: cubeGeometry,
-    //frustumCulled: false,
+    //frustumCulling: false,
     shaders: {
       vertex: {
         code: instancesVs,
@@ -162,7 +162,7 @@ window.addEventListener('load', async () => {
 
   const sphereInstances = new Mesh(gpuCurtains, {
     geometry: sphereGeometry,
-    //frustumCulled: false,
+    //frustumCulling: false,
     shaders: {
       vertex: {
         code: instancesVs,

@@ -35,10 +35,8 @@ window.addEventListener('load', async () => {
   })
 
   mesh.onBeforeRender(() => {
-    //mesh.rotation.x += 0.005
     mesh.rotation.y += 0.02
   })
 
-  //mesh.rotation.y = 2.5
   console.log(mesh)
 })

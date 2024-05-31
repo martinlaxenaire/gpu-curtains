@@ -21,7 +21,7 @@ import { BufferBindingParams } from '../../bindings/BufferBinding'
  */
 export interface ProjectedMeshBaseParams {
   /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-  frustumCulled?: boolean
+  frustumCulling?: boolean
   /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
   DOMFrustumMargins?: RectCoords
 }
@@ -35,7 +35,7 @@ export interface ProjectedRenderMaterialParams extends RenderMaterialParams, Pro
 /** @const - Default ProjectedMesh parameters to merge with user defined parameters */
 const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
   // frustum culling and visibility
-  frustumCulled: true,
+  frustumCulling: true,
   DOMFrustumMargins: {
     top: 0,
     right: 0,
@@ -58,7 +58,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   /** The ProjectedMesh {@link DOMFrustum} class object */
   domFrustum: DOMFrustum
   /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-  frustumCulled: boolean
+  frustumCulling: boolean
   /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
   DOMFrustumMargins: RectCoords
 
@@ -168,7 +168,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     /** The ProjectedMesh {@link DOMFrustum} class object */
     domFrustum: DOMFrustum
     /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-    frustumCulled: boolean
+    frustumCulling: boolean
     /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins: RectCoords
 
@@ -221,11 +221,11 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this.renderer = renderer
 
-      const { frustumCulled, DOMFrustumMargins } = parameters
+      const { frustumCulling, DOMFrustumMargins } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
-        frustumCulled,
+        frustumCulling,
         DOMFrustumMargins,
       }
 
@@ -304,7 +304,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       })
 
       this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins
-      this.frustumCulled = this.options.frustumCulled
+      this.frustumCulling = this.options.frustumCulling
     }
 
     /* MATERIAL */
@@ -316,7 +316,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      */
     cleanupRenderMaterialParameters(parameters: ProjectedRenderMaterialParams): MeshBaseRenderParams {
       // patch mesh parameters
-      delete parameters.frustumCulled
+      delete parameters.frustumCulling
       delete parameters.DOMFrustumMargins
 
       super.cleanupRenderMaterialParameters(parameters)
@@ -446,7 +446,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      */
     checkFrustumCulling() {
       if (this.matricesNeedUpdate) {
-        if (this.domFrustum && this.frustumCulled) {
+        if (this.domFrustum && this.frustumCulling) {
           // would be faster with a bounding sphere but...
           this.domFrustum.computeProjectedToDocumentCoords()
         }
@@ -473,7 +473,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this._onRenderCallback && this._onRenderCallback()
 
-      if ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulled) {
+      if ((this.domFrustum && this.domFrustum.isIntersecting) || !this.frustumCulling) {
         // render our material
         this.material.render(pass)
         // then render our geometry

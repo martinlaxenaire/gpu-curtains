@@ -10,7 +10,7 @@ import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D';
  */
 export interface ProjectedMeshBaseParams {
     /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-    frustumCulled?: boolean;
+    frustumCulling?: boolean;
     /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins?: RectCoords;
 }
@@ -34,7 +34,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
     /** The ProjectedMesh {@link DOMFrustum} class object */
     domFrustum: DOMFrustum;
     /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-    frustumCulled: boolean;
+    frustumCulling: boolean;
     /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins: RectCoords;
     /** Options used to create this {@link ProjectedMeshBaseClass} */

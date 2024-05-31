@@ -311,6 +311,7 @@ window.addEventListener('load', async () => {
   }
 
   // create walls
+  // the walls will not cast shadows, but they will receive them
 
   const planeGeometry = new PlaneGeometry()
 
@@ -331,7 +332,7 @@ window.addEventListener('load', async () => {
       geometry: planeGeometry,
       textures: [shadowDepthTexture],
       samplers: [lessCompareSampler],
-      frustumCulled: false, // always draw the walls
+      frustumCulling: false, // always draw the walls
       shaders: {
         vertex: {
           code: meshVs,
@@ -352,8 +353,6 @@ window.addEventListener('load', async () => {
         },
       },
     })
-
-    createMeshDepthMaterial(wall)
 
     wall.parent = boxPivot
     wall.position.copy(position)
@@ -449,7 +448,7 @@ window.addEventListener('load', async () => {
     label: 'Debug depth plane',
     geometry: new PlaneGeometry(),
     depthWriteEnabled: false,
-    frustumCulled: false,
+    frustumCulling: false,
     visible: false,
     shaders: {
       vertex: {

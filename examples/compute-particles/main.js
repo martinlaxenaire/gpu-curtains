@@ -404,7 +404,7 @@ window.addEventListener('load', async () => {
       },
     },
     transparent: true,
-    frustumCulled: false,
+    frustumCulling: false,
     targets: [
       {
         // additive blending with premultiplied alpha and a transparent background

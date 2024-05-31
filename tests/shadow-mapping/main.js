@@ -284,6 +284,7 @@ window.addEventListener('load', async () => {
   console.log(gpuCameraRenderer.pipelineManager, sphere.userData)
 
   // create floor
+  // the floor will not cast shadows, but it will receive them
 
   const planeGeometry = new PlaneGeometry()
 
@@ -295,7 +296,7 @@ window.addEventListener('load', async () => {
     geometry: planeGeometry,
     textures: [shadowDepthTexture],
     samplers: [lessCompareSampler],
-    frustumCulled: false, // always draw
+    frustumCulling: false, // always draw
     cullMode: 'none',
     shaders: {
       vertex: {
@@ -317,8 +318,6 @@ window.addEventListener('load', async () => {
       },
     },
   })
-
-  createMeshDepthMaterial(floor)
 
   floor.parent = boxPivot
   floor.position.set(0, -1, -0.5)
@@ -408,7 +407,7 @@ window.addEventListener('load', async () => {
     label: 'Debug depth plane',
     geometry: new PlaneGeometry(),
     depthWriteEnabled: false,
-    frustumCulled: false,
+    frustumCulling: false,
     visible: false,
     shaders: {
       vertex: {

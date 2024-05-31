@@ -100,6 +100,12 @@ export class GPURenderer {
   /** The {@link Scene} used */
   scene: Scene
 
+  /** Whether we should render our {@link GPURenderer} or not. If set to `false`, the render hooks {@link onBeforeCommandEncoderCreation}, {@link onBeforeRenderScene}, {@link onAfterRenderScene} and {@link onAfterCommandEncoderSubmission} won't be called, the scene graph will not be updated and the scene will not be rendered, completely pausing the renderer. Default to `true`. */
+  shouldRender: boolean
+
+  /** Whether we should explicitly update our {@link Scene} or not. If set to `false`, the scene graph will not be updated and the scene will not be rendered. Default to `true`. */
+  shouldRenderScene: boolean
+
   /** An array containing all our created {@link ComputePass} */
   computePasses: ComputePass[]
   /** An array containing all our created {@link PingPongPlane} */
@@ -167,6 +173,9 @@ export class GPURenderer {
 
     this.deviceManager = deviceManager
     this.deviceManager.addRenderer(this)
+
+    this.shouldRender = true
+    this.shouldRenderScene = true
 
     // render pass default values
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass }
@@ -1032,12 +1041,12 @@ export class GPURenderer {
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {
-    if (!this.ready) return
+    if (!this.ready || !this.shouldRender) return
 
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder)
     this.onBeforeRenderScene.execute(commandEncoder)
 
-    this.scene?.render(commandEncoder)
+    if (this.shouldRenderScene) this.scene?.render(commandEncoder)
 
     this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder)
     this.onAfterRenderScene.execute(commandEncoder)
