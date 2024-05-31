@@ -86,7 +86,9 @@ export declare class GPURenderer {
     postProcessingPass: RenderPass;
     /** The {@link Scene} used */
     scene: Scene;
-    /** Whether we should render our {@link Scene} or not (useful to pause rendering if the renderer is out of view for example). */
+    /** Whether we should render our {@link GPURenderer} or not. If set to `false`, the render hooks {@link onBeforeCommandEncoderCreation}, {@link onBeforeRenderScene}, {@link onAfterRenderScene} and {@link onAfterCommandEncoderSubmission} won't be called, the scene graph will not be updated and the scene will not be rendered, completely pausing the renderer. Default to `true`. */
+    shouldRender: boolean;
+    /** Whether we should explicitly update our {@link Scene} or not. If set to `false`, the scene graph will not be updated and the scene will not be rendered. Default to `true`. */
     shouldRenderScene: boolean;
     /** An array containing all our created {@link ComputePass} */
     computePasses: ComputePass[];

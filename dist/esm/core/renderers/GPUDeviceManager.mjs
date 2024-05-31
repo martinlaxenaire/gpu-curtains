@@ -282,7 +282,8 @@ class GPUDeviceManager {
     if (!this.ready)
       return;
     for (const renderer of this.renderers) {
-      renderer.onBeforeCommandEncoder();
+      if (renderer.shouldRender)
+        renderer.onBeforeCommandEncoder();
     }
     const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
     !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
@@ -296,7 +297,8 @@ class GPUDeviceManager {
     }
     this.texturesQueue = [];
     for (const renderer of this.renderers) {
-      renderer.onAfterCommandEncoder();
+      if (renderer.shouldRender)
+        renderer.onAfterCommandEncoder();
     }
   }
   /**

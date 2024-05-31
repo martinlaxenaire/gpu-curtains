@@ -9938,6 +9938,7 @@ ${this.shaders.compute.head}`;
       }
       this.deviceManager = deviceManager;
       this.deviceManager.addRenderer(this);
+      this.shouldRender = true;
       this.shouldRenderScene = true;
       renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
       preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
@@ -10650,7 +10651,7 @@ ${this.shaders.compute.head}`;
      * @param commandEncoder - current {@link GPUCommandEncoder}
      */
     render(commandEncoder) {
-      if (!this.ready)
+      if (!this.ready || !this.shouldRender)
         return;
       this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
       this.onBeforeRenderScene.execute(commandEncoder);
@@ -11152,7 +11153,8 @@ ${this.shaders.compute.head}`;
       if (!this.ready)
         return;
       for (const renderer of this.renderers) {
-        renderer.onBeforeCommandEncoder();
+        if (renderer.shouldRender)
+          renderer.onBeforeCommandEncoder();
       }
       const commandEncoder = this.device?.createCommandEncoder({ label: this.label + " command encoder" });
       !this.production && commandEncoder.pushDebugGroup(this.label + " command encoder: main render loop");
@@ -11166,7 +11168,8 @@ ${this.shaders.compute.head}`;
       }
       this.texturesQueue = [];
       for (const renderer of this.renderers) {
-        renderer.onAfterCommandEncoder();
+        if (renderer.shouldRender)
+          renderer.onAfterCommandEncoder();
       }
     }
     /**

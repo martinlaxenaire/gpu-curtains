@@ -37,6 +37,7 @@ class GPURenderer {
     }
     this.deviceManager = deviceManager;
     this.deviceManager.addRenderer(this);
+    this.shouldRender = true;
     this.shouldRenderScene = true;
     renderPass = { ...{ useDepth: true, sampleCount: 4, clearValue: [0, 0, 0, 0] }, ...renderPass };
     preferredFormat = preferredFormat ?? this.deviceManager.gpu?.getPreferredCanvasFormat();
@@ -749,7 +750,7 @@ class GPURenderer {
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder) {
-    if (!this.ready)
+    if (!this.ready || !this.shouldRender)
       return;
     this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
     this.onBeforeRenderScene.execute(commandEncoder);
