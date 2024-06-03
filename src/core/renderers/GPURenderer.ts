@@ -1056,6 +1056,8 @@ export class GPURenderer {
    * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
    */
   destroy() {
+    this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid)
+
     this.domElement?.destroy()
 
     // destroy render passes
