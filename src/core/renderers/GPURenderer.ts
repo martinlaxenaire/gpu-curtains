@@ -321,6 +321,11 @@ export class GPURenderer {
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect))
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect))
     this.resizeMeshes()
+
+    // if scene rendering is disabled, force matrix stack update
+    if (!this.shouldRender || !this.shouldRenderScene) {
+      this.scene.updateMatrixStack()
+    }
   }
 
   /**
