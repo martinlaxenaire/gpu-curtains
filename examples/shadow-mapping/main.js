@@ -90,10 +90,10 @@ window.addEventListener('load', async () => {
   )
 
   const lightProjectionMatrix = new Mat4().makeOrthographic({
-    left: -systemSize * 5,
-    right: systemSize * 5,
-    bottom: -systemSize * 5,
-    top: systemSize * 5,
+    left: -systemSize * 2,
+    right: systemSize * 2,
+    bottom: -systemSize * 2,
+    top: systemSize * 2,
     near: 1,
     far: systemSize * 30,
   })
@@ -146,6 +146,9 @@ window.addEventListener('load', async () => {
   const lessCompareSampler = new Sampler(gpuCameraRenderer, {
     label: 'Shadow sampler',
     name: 'shadowSampler',
+    // we do not want to repeat the shadows
+    addressModeU: 'clamp-to-edge',
+    addressModeV: 'clamp-to-edge',
     compare: 'less',
     type: 'comparison',
   })
@@ -174,8 +177,8 @@ window.addEventListener('load', async () => {
       vsOutput.normal = getWorldNormal(attributes.normal);
       
       // XY is in (-1, 1) space, Z is in (0, 1) space
-      let posFromLight = lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
-    
+      let posFromLight: vec4f = lightning.lightViewProjectionMatrix * matrices.model * vec4(attributes.position, 1.0);
+          
       // Convert XY to (0, 1)
       // Y is flipped because texture coords are Y-down.
       vsOutput.shadowPos = vec3(
@@ -218,7 +221,15 @@ window.addEventListener('load', async () => {
       }
       visibility /= 9.0;
       
-      let lambertFactor = max(dot(normalize(lightning.lightPosition), normalize(fsInput.normal)), 0.0);
+      // apply lightning and shadows
+      var normals: vec3f = normalize(fsInput.normal);
+      
+      // inverse the normals if we're using front face culling
+      if(shading.inverseNormals == 1) {
+        normals *= -1.0;
+      }
+      
+      let lambertFactor = max(dot(normalize(lightning.lightPosition), normals), 0.0);
       let lightingFactor = min(ambientFactor + visibility * lambertFactor, 1.0);
 
       return vec4(lightingFactor * shading.color, 1.0);
@@ -288,6 +299,10 @@ window.addEventListener('load', async () => {
               type: 'vec3f',
               value: isCube ? grey : Math.random() > 0.5 ? blue : pink,
             },
+            inverseNormals: {
+              type: 'i32',
+              value: 0,
+            },
           },
         },
       },
@@ -310,60 +325,57 @@ window.addEventListener('load', async () => {
     mesh.parent = meshesPivot
   }
 
-  // create walls
-  // the walls will not cast shadows, but they will receive them
-
-  const planeGeometry = new PlaneGeometry()
-
-  const boxPivot = new Object3D()
-  boxPivot.parent = scene
-
-  const aspectRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
-  boxPivot.scale.set(systemSize * 2 * aspectRatio, systemSize * 2, systemSize * 2)
-
-  gpuCameraRenderer.onAfterResize(() => {
-    const aspectRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
-    boxPivot.scale.set(systemSize * 2 * aspectRatio, systemSize * 2, systemSize * 2)
-  })
-
-  const createBoxWall = (label = 'Wall', position = new Vec3(), rotation = new Vec3()) => {
-    const wall = new Mesh(gpuCameraRenderer, {
-      label,
-      geometry: planeGeometry,
-      textures: [shadowDepthTexture],
-      samplers: [lessCompareSampler],
-      frustumCulling: false, // always draw the walls
-      shaders: {
-        vertex: {
-          code: meshVs,
-        },
-        fragment: {
-          code: meshFs,
-        },
+  // create a wrapping box
+  // the box will not cast shadows, but it will receive them
+  // it will be drawn by culling the front faces
+  // so we need to invert its normals in the fragment shader lightning calculations
+  const wrappingBox = new Mesh(gpuCameraRenderer, {
+    label: 'Wrapping box',
+    geometry: cubeGeometry,
+    cullMode: 'front',
+    textures: [shadowDepthTexture],
+    samplers: [lessCompareSampler],
+    frustumCulling: false, // always draw the walls
+    shaders: {
+      vertex: {
+        code: meshVs,
       },
-      bindings: [lightBufferBinding],
-      uniforms: {
-        shading: {
-          struct: {
-            color: {
-              type: 'vec3f',
-              value: new Vec3(0.5),
-            },
+      fragment: {
+        code: meshFs,
+      },
+    },
+    bindings: [lightBufferBinding],
+    uniforms: {
+      shading: {
+        struct: {
+          color: {
+            type: 'vec3f',
+            value: new Vec3(0.5),
+          },
+          inverseNormals: {
+            type: 'i32',
+            value: 1, // see fragment shader
           },
         },
       },
-    })
+    },
+  })
 
-    wall.parent = boxPivot
-    wall.position.copy(position)
-    wall.rotation.copy(rotation)
+  const setWrappingBoxScale = () => {
+    const visibleWidth = camera.getVisibleSizeAtDepth()
+    // should be multiplied by 0.5 to exactly fit the window sizes
+    // since we're gonna move the camera a bit, make the cube overflow a bit
+    // so we never see its edges
+    wrappingBox.scale.x = visibleWidth.width * 0.6
+    wrappingBox.scale.y = visibleWidth.height * 0.6
   }
 
-  createBoxWall('Back wall', new Vec3(0, 0, -1.5))
-  createBoxWall('Bottom wall', new Vec3(0, -1, -0.5), new Vec3(-Math.PI / 2, 0, 0))
-  createBoxWall('Left wall', new Vec3(-1, 0, -0.5), new Vec3(0, Math.PI / 2, 0))
-  createBoxWall('Top wall', new Vec3(0, 1, -0.5), new Vec3(Math.PI / 2, 0, 0))
-  createBoxWall('Right wall', new Vec3(1, 0, -0.5), new Vec3(0, -Math.PI / 2, 0))
+  wrappingBox.scale.z = systemSize * 1.5
+  wrappingBox.position.z = -wrappingBox.scale.z
+
+  setWrappingBoxScale()
+
+  wrappingBox.onAfterResize(setWrappingBoxScale)
 
   // DEPTH PASS
 
