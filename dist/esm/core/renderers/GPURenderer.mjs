@@ -92,8 +92,8 @@ class GPURenderer {
   setSize(rectBBox = null) {
     rectBBox = {
       ...{
-        width: this.boundingRect.width,
-        height: this.boundingRect.height,
+        width: Math.max(1, this.boundingRect.width),
+        height: Math.max(1, this.boundingRect.height),
         top: this.boundingRect.top,
         left: this.boundingRect.left
       },
