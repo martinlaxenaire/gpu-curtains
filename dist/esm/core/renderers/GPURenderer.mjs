@@ -145,6 +145,9 @@ class GPURenderer {
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
     this.resizeMeshes();
+    if (!this.shouldRender || !this.shouldRenderScene) {
+      this.scene.updateMatrixStack();
+    }
   }
   /**
    * Resize the {@link meshes}.
@@ -763,6 +766,7 @@ class GPURenderer {
    * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
    */
   destroy() {
+    this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid);
     this.domElement?.destroy();
     this.renderPass?.destroy();
     this.postProcessingPass?.destroy();

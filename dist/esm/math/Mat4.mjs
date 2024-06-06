@@ -575,16 +575,18 @@ class Mat4 {
    * This is a view matrix which transforms all other objects
    * to be in the space of the view defined by the parameters.
    *
+   * Equivalent to `matrix.lookAt(eye, target, up).invert()` but faster.
+   *
    * @param eye - the position of the object.
    * @param target - the position meant to be aimed at.
    * @param up - a vector pointing up.
    * @returns - the view {@link Mat4} matrix.
    */
   makeView(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
+    const te = this.elements;
     zAxis.copy(eye).sub(target).normalize();
     xAxis.crossVectors(up, zAxis).normalize();
     yAxis.crossVectors(zAxis, xAxis).normalize();
-    const te = this.elements;
     te[0] = xAxis.x;
     te[1] = yAxis.x;
     te[2] = zAxis.x;

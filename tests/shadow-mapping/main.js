@@ -126,6 +126,9 @@ window.addEventListener('load', async () => {
   const lessCompareSampler = new Sampler(gpuCameraRenderer, {
     label: 'Shadow sampler',
     name: 'shadowSampler',
+    // we do not want to repeat the shadows
+    addressModeU: 'clamp-to-edge',
+    addressModeV: 'clamp-to-edge',
     compare: 'less',
     type: 'comparison',
   })

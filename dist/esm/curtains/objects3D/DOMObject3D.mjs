@@ -48,6 +48,8 @@ class DOMObject3D extends ProjectedObject3D {
     isCurtainsRenderer(renderer, "DOM3DObject");
     this.renderer = renderer;
     this.size = {
+      shouldUpdate: true,
+      // TODO
       document: {
         width: 0,
         height: 0,
@@ -68,8 +70,8 @@ class DOMObject3D extends ProjectedObject3D {
     };
     this.watchScroll = parameters.watchScroll;
     this.camera = this.renderer.camera;
-    this.boundingBox.min.onChange(() => this.updateSizeAndPosition());
-    this.boundingBox.max.onChange(() => this.updateSizeAndPosition());
+    this.boundingBox.min.onChange(() => this.shouldUpdateComputedSizes());
+    this.boundingBox.max.onChange(() => this.shouldUpdateComputedSizes());
     this.setDOMElement(element);
     this.renderer.domObjects.push(this);
   }
@@ -91,7 +93,7 @@ class DOMObject3D extends ProjectedObject3D {
   onPositionChanged(boundingRect) {
     if (this.watchScroll) {
       this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-      this.updateSizeAndPosition();
+      this.shouldUpdateComputedSizes();
     }
   }
   /**
@@ -103,13 +105,6 @@ class DOMObject3D extends ProjectedObject3D {
       this.domElement.destroy();
     }
     this.setDOMElement(element);
-  }
-  /**
-   * Update the {@link DOMObject3D} sizes and position
-   */
-  updateSizeAndPosition() {
-    this.setWorldSizes();
-    this.applyPosition();
   }
   /**
    * Resize the {@link DOMObject3D}
@@ -205,11 +200,27 @@ class DOMObject3D extends ProjectedObject3D {
     this.transforms.origin.world = value;
   }
   /**
-   * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
+   * Check whether at least one of the matrix should be updated
    */
-  applyPosition() {
+  shouldUpdateMatrices() {
+    super.shouldUpdateMatrices();
+    if (this.matricesNeedUpdate || this.size.shouldUpdate) {
+      this.updateSizeAndPosition();
+    }
+    this.size.shouldUpdate = false;
+  }
+  /**
+   * Set the {@link DOMObject3D#size.shouldUpdate | size shouldUpdate} flag to true to compute the new sizes before next matrices calculations.
+   */
+  shouldUpdateComputedSizes() {
+    this.size.shouldUpdate = true;
+  }
+  /**
+   * Update the {@link DOMObject3D} sizes and position
+   */
+  updateSizeAndPosition() {
+    this.setWorldSizes();
     this.applyDocumentPosition();
-    super.applyPosition();
   }
   /**
    * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space

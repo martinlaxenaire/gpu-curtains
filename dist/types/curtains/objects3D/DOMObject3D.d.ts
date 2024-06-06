@@ -8,6 +8,8 @@ import { Object3DTransforms } from '../../core/objects3D/Object3D';
 import { Box3 } from '../../math/Box3';
 /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */
 export interface DOMObject3DSize {
+    /** Whether we should update the computed sizes before updating the matrices. */
+    shouldUpdate: boolean;
     /** The {@link DOMObject3D} bounding box in document space */
     document: RectBBox;
     /** Normalized world size represent the size ratio of the DOM element compared to its container (the renderer DOM element). */
@@ -100,10 +102,6 @@ export declare class DOMObject3D extends ProjectedObject3D {
      */
     resetDOMElement(element: string | HTMLElement): void;
     /**
-     * Update the {@link DOMObject3D} sizes and position
-     */
-    updateSizeAndPosition(): void;
-    /**
      * Resize the {@link DOMObject3D}
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
      */
@@ -160,9 +158,17 @@ export declare class DOMObject3D extends ProjectedObject3D {
      */
     set worldTransformOrigin(value: Vec3);
     /**
-     * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
+     * Check whether at least one of the matrix should be updated
      */
-    applyPosition(): void;
+    shouldUpdateMatrices(): void;
+    /**
+     * Set the {@link DOMObject3D#size.shouldUpdate | size shouldUpdate} flag to true to compute the new sizes before next matrices calculations.
+     */
+    shouldUpdateComputedSizes(): void;
+    /**
+     * Update the {@link DOMObject3D} sizes and position
+     */
+    updateSizeAndPosition(): void;
     /**
      * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
      */

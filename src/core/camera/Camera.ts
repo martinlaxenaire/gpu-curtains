@@ -2,6 +2,7 @@ import { Mat4 } from '../../math/Mat4'
 import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from '../objects3D/Object3D'
 import { RectSize } from '../DOM/DOMElement'
 import { Vec3 } from '../../math/Vec3'
+import { generateUUID } from '../../utils/utils'
 
 /**
  * Defines Camera basic perspective options
@@ -53,6 +54,8 @@ export type CameraObject3DMatrices = Record<CameraObject3DMatricesType, Object3D
  * Also note that the {@link Camera} default {@link Camera#position | position} is set at `(0, 0, 10)` so the object created with a default size do not appear too big nor too small.
  */
 export class Camera extends Object3D {
+  /** The universal unique id of the {@link Camera} */
+  uuid: string
   /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera} */
   matrices: CameraObject3DMatrices
 
@@ -95,6 +98,8 @@ export class Camera extends Object3D {
   ) {
     // Object3D
     super()
+
+    this.uuid = generateUUID()
 
     // camera can't be at position (0, 0, 0), it needs some recoil
     // arbitrarily set to 10 so objects of default size (1, 1, 1) don't appear too big

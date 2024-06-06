@@ -3091,16 +3091,18 @@
      * This is a view matrix which transforms all other objects
      * to be in the space of the view defined by the parameters.
      *
+     * Equivalent to `matrix.lookAt(eye, target, up).invert()` but faster.
+     *
      * @param eye - the position of the object.
      * @param target - the position meant to be aimed at.
      * @param up - a vector pointing up.
      * @returns - the view {@link Mat4} matrix.
      */
     makeView(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
+      const te = this.elements;
       zAxis.copy(eye).sub(target).normalize();
       xAxis.crossVectors(up, zAxis).normalize();
       yAxis.crossVectors(zAxis, xAxis).normalize();
-      const te = this.elements;
       te[0] = xAxis.x;
       te[1] = yAxis.x;
       te[2] = zAxis.x;
@@ -4216,6 +4218,7 @@
       __privateAdd$8(this, _far, void 0);
       /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
       __privateAdd$8(this, _pixelRatio, void 0);
+      this.uuid = generateUUID();
       this.position.set(0, 0, 10);
       this.onMatricesChanged = onMatricesChanged;
       this.size = {
@@ -10046,6 +10049,9 @@ ${this.shaders.compute.head}`;
       this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
       this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
       this.resizeMeshes();
+      if (!this.shouldRender || !this.shouldRenderScene) {
+        this.scene.updateMatrixStack();
+      }
     }
     /**
      * Resize the {@link meshes}.
@@ -10664,6 +10670,7 @@ ${this.shaders.compute.head}`;
      * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
      */
     destroy() {
+      this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid);
       this.domElement?.destroy();
       this.renderPass?.destroy();
       this.postProcessingPass?.destroy();
@@ -10733,18 +10740,44 @@ ${this.shaders.compute.head}`;
      */
     setCamera(cameraParameters) {
       const { width, height } = this.rectBBox;
-      this.camera = new Camera({
-        fov: cameraParameters.fov,
-        near: cameraParameters.near,
-        far: cameraParameters.far,
-        width,
-        height,
-        pixelRatio: this.pixelRatio,
-        onMatricesChanged: () => {
-          this.onCameraMatricesChanged();
-        }
-      });
+      this.useCamera(
+        new Camera({
+          fov: cameraParameters.fov,
+          near: cameraParameters.near,
+          far: cameraParameters.far,
+          width,
+          height,
+          pixelRatio: this.pixelRatio,
+          onMatricesChanged: () => {
+            this.onCameraMatricesChanged();
+          }
+        })
+      );
+    }
+    /**
+     * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBufferBinding} inputs view values and the {@link meshes} {@link Camera} object.
+     * @param camera - new {@link Camera} to use.
+     */
+    useCamera(camera) {
+      if (this.camera && camera && this.camera.uuid === camera.uuid)
+        return;
+      if (this.camera) {
+        this.camera.parent = null;
+        this.camera.onMatricesChanged = () => {
+        };
+      }
+      this.camera = camera;
       this.camera.parent = this.scene;
+      if (this.cameraBufferBinding) {
+        this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
+        this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix;
+        this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix;
+        for (const mesh of this.meshes) {
+          if ("modelViewMatrix" in mesh) {
+            mesh.camera = this.camera;
+          }
+        }
+      }
     }
     /**
      * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
@@ -11484,6 +11517,8 @@ struct VSOutput {
       isCurtainsRenderer(renderer, "DOM3DObject");
       this.renderer = renderer;
       this.size = {
+        shouldUpdate: true,
+        // TODO
         document: {
           width: 0,
           height: 0,
@@ -11504,8 +11539,8 @@ struct VSOutput {
       };
       this.watchScroll = parameters.watchScroll;
       this.camera = this.renderer.camera;
-      this.boundingBox.min.onChange(() => this.updateSizeAndPosition());
-      this.boundingBox.max.onChange(() => this.updateSizeAndPosition());
+      this.boundingBox.min.onChange(() => this.shouldUpdateComputedSizes());
+      this.boundingBox.max.onChange(() => this.shouldUpdateComputedSizes());
       this.setDOMElement(element);
       this.renderer.domObjects.push(this);
     }
@@ -11527,7 +11562,7 @@ struct VSOutput {
     onPositionChanged(boundingRect) {
       if (this.watchScroll) {
         this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-        this.updateSizeAndPosition();
+        this.shouldUpdateComputedSizes();
       }
     }
     /**
@@ -11539,13 +11574,6 @@ struct VSOutput {
         this.domElement.destroy();
       }
       this.setDOMElement(element);
-    }
-    /**
-     * Update the {@link DOMObject3D} sizes and position
-     */
-    updateSizeAndPosition() {
-      this.setWorldSizes();
-      this.applyPosition();
     }
     /**
      * Resize the {@link DOMObject3D}
@@ -11641,11 +11669,27 @@ struct VSOutput {
       this.transforms.origin.world = value;
     }
     /**
-     * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
+     * Check whether at least one of the matrix should be updated
      */
-    applyPosition() {
+    shouldUpdateMatrices() {
+      super.shouldUpdateMatrices();
+      if (this.matricesNeedUpdate || this.size.shouldUpdate) {
+        this.updateSizeAndPosition();
+      }
+      this.size.shouldUpdate = false;
+    }
+    /**
+     * Set the {@link DOMObject3D#size.shouldUpdate | size shouldUpdate} flag to true to compute the new sizes before next matrices calculations.
+     */
+    shouldUpdateComputedSizes() {
+      this.size.shouldUpdate = true;
+    }
+    /**
+     * Update the {@link DOMObject3D} sizes and position
+     */
+    updateSizeAndPosition() {
+      this.setWorldSizes();
       this.applyDocumentPosition();
-      super.applyPosition();
     }
     /**
      * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space

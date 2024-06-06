@@ -64,6 +64,11 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setCamera(cameraParameters: CameraBasePerspectiveOptions): void;
     /**
+     * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBufferBinding} inputs view values and the {@link meshes} {@link Camera} object.
+     * @param camera - new {@link Camera} to use.
+     */
+    useCamera(camera: Camera): void;
+    /**
      * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
      */
     onCameraMatricesChanged(): void;

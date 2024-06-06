@@ -49,6 +49,8 @@ export type CameraObject3DMatrices = Record<CameraObject3DMatricesType, Object3D
  */
 export declare class Camera extends Object3D {
     #private;
+    /** The universal unique id of the {@link Camera} */
+    uuid: string;
     /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera} */
     matrices: CameraObject3DMatrices;
     /** The {@link Camera} frustum width and height */

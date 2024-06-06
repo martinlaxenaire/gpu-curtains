@@ -102,6 +102,7 @@ export class ProjectedObject3D extends Object3D {
         matrix: new Mat4(),
         shouldUpdate: true,
         onUpdate: () => {
+          //console.log(this.projectionMatrix.elements)
           // our modelViewProjection matrix, useful for bounding box calculations and frustum culling
           // this is the result of our projection matrix multiplied by our modelView matrix
           this.modelViewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.modelViewMatrix)
