@@ -63,10 +63,7 @@ export class ShaderPass extends FullscreenPlane {
    * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: ShaderPassParams = {}) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, parameters.label ? parameters.label + ' ShaderPass' : 'ShaderPass')
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' ShaderPass' : 'ShaderPass')
 
     // disable depth for postprocessing passes
     parameters.depth = false

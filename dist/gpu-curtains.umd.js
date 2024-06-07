@@ -37,25 +37,28 @@
     throwError(error);
   };
   const isRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
     const isRenderer2 = renderer && (renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
     if (!isRenderer2) {
       formatRendererError(renderer, "GPURenderer", type);
     }
-    return isRenderer2;
+    return renderer;
   };
   const isCameraRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
     const isCameraRenderer2 = renderer && (renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
     if (!isCameraRenderer2) {
       formatRendererError(renderer, "GPUCameraRenderer", type);
     }
-    return isCameraRenderer2;
+    return renderer;
   };
   const isCurtainsRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
     const isCurtainsRenderer2 = renderer && renderer.type === "GPUCurtainsRenderer";
     if (!isCurtainsRenderer2) {
       formatRendererError(renderer, "GPUCurtainsRenderer", type);
     }
-    return isCurtainsRenderer2;
+    return renderer;
   };
   const generateMips = /* @__PURE__ */ (() => {
     let sampler;
@@ -1995,8 +1998,7 @@
      */
     constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
       this.type = "BindGroup";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, this.type);
+      renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.options = {
         label,
@@ -3566,8 +3568,7 @@
       this._onSourceUploadedCallback = () => {
       };
       this.type = "Texture";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
       const defaultOptions = {
@@ -4014,8 +4015,7 @@
      */
     constructor(renderer, { label, index = 0, bindings = [], uniforms, storages, textures = [], samplers = [] } = {}) {
       const type = "TextureBindGroup";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, type);
+      renderer = isRenderer(renderer, type);
       super(renderer, { label, index, bindings, uniforms, storages });
       this.options = {
         ...this.options,
@@ -4480,8 +4480,7 @@
     } = {}) {
       this.type = "Sampler";
       this.uuid = generateUUID();
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, label ? label + " " + this.type : this.type);
+      renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
       this.renderer = renderer;
       this.label = label;
       if (!name && !this.renderer.production) {
@@ -4567,8 +4566,7 @@
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
       __privateAdd$7(this, _autoResize, true);
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
       this.uuid = generateUUID();
@@ -4734,8 +4732,7 @@
      */
     constructor(renderer, parameters) {
       this.type = "Material";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, this.type);
+      renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
       const {
@@ -5238,9 +5235,8 @@
      * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
      */
     constructor(renderer, parameters) {
-      renderer = renderer && renderer.renderer || renderer;
       const type = "ComputeMaterial";
-      isRenderer(renderer, type);
+      renderer = isRenderer(renderer, type);
       super(renderer, parameters);
       this.type = type;
       this.renderer = renderer;
@@ -5445,8 +5441,7 @@
       this._onAfterResizeCallback = () => {
       };
       const type = "ComputePass";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type);
+      renderer = isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type);
       parameters.label = parameters.label ?? "ComputePass " + renderer.computePasses?.length;
       this.renderer = renderer;
       this.type = type;
@@ -6635,9 +6630,8 @@ struct VertexOutput {
      * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
      */
     constructor(renderer, parameters) {
-      renderer = renderer && renderer.renderer || renderer;
       const type = "RenderMaterial";
-      isRenderer(renderer, type);
+      renderer = isRenderer(renderer, type);
       if (!parameters.shaders) {
         parameters.shaders = {};
       }
@@ -6890,8 +6884,7 @@ New rendering options: ${JSON.stringify(
         this.type = "MeshBase";
         this.uuid = generateUUID();
         Object.defineProperty(this, "index", { value: meshIndex++ });
-        renderer = renderer && renderer.renderer || renderer;
-        isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+        renderer = isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
         const {
           label,
@@ -7524,8 +7517,7 @@ ${geometry.wgslStructFragment}`
      * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
      */
     constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
       let geometry = cacheManager.getPlaneGeometryByID(2);
       if (!geometry) {
         geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
@@ -7785,8 +7777,7 @@ ${geometry.wgslStructFragment}`
      */
     constructor(renderer) {
       super();
-      renderer = renderer && renderer.renderer || renderer;
-      isCameraRenderer(renderer, "ProjectedObject3D");
+      renderer = isCameraRenderer(renderer, "ProjectedObject3D");
       this.camera = renderer.camera;
     }
     /**
@@ -7985,8 +7976,7 @@ struct VSOutput {
           ...{ useProjection: true }
         };
         this.type = "MeshTransformed";
-        renderer = renderer && renderer.renderer || renderer;
-        isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+        renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
         const { frustumCulling, DOMFrustumMargins } = parameters;
         this.options = {
@@ -8212,8 +8202,7 @@ struct VSOutput {
      * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
      */
     constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
+      renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
       super(renderer, null, parameters);
       this.type = "Mesh";
     }
@@ -8229,8 +8218,7 @@ struct VSOutput {
       this.type = "PipelineEntry";
       let { renderer } = parameters;
       const { label, shaders, useAsync } = parameters;
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, label ? label + " " + this.type : this.type);
+      renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
       this.renderer = renderer;
       Object.defineProperty(this, "index", { value: pipelineId++ });
       this.layout = null;
@@ -8432,7 +8420,6 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
     constructor(parameters) {
       let { renderer, ...pipelineParams } = parameters;
       const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams;
-      renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
       super(parameters);
@@ -8743,9 +8730,8 @@ ${this.shaders.full.head}`;
      * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
      */
     constructor(parameters) {
-      let { renderer } = parameters;
+      const { renderer } = parameters;
       const { label } = parameters;
-      renderer = renderer && renderer.renderer || renderer;
       const type = "ComputePipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
       super(parameters);
@@ -9155,8 +9141,7 @@ ${this.shaders.compute.head}`;
      */
     constructor({ renderer }) {
       super();
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, "Scene");
+      renderer = isRenderer(renderer, "Scene");
       this.renderer = renderer;
       this.computePassEntries = [];
       this.renderPassEntries = {
@@ -9565,8 +9550,7 @@ ${this.shaders.compute.head}`;
       depthClearValue = 1,
       depthFormat = "depth24plus"
     } = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, "RenderPass");
+      renderer = isRenderer(renderer, "RenderPass");
       this.type = "RenderPass";
       this.uuid = generateUUID();
       this.renderer = renderer;
@@ -11259,8 +11243,7 @@ ${this.shaders.compute.head}`;
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
       __privateAdd$3(this, _autoRender, true);
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, "RenderTarget");
+      renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
@@ -11380,8 +11363,7 @@ struct VSOutput {
      * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
      */
     constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
       parameters.depth = false;
       parameters.transparent = true;
       parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
@@ -11525,8 +11507,7 @@ struct VSOutput {
       /** function assigned to the {@link onAfterDOMElementResize} callback */
       this._onAfterDOMElementResizeCallback = () => {
       };
-      renderer = renderer && renderer.renderer || renderer;
-      isCurtainsRenderer(renderer, "DOM3DObject");
+      renderer = isCurtainsRenderer(renderer, "DOM3DObject");
       this.renderer = renderer;
       this.size = {
         shouldUpdate: true,
@@ -11878,7 +11859,6 @@ struct VSOutput {
       this._onLoadingCallback = (texture) => {
       };
       parameters = { ...defaultDOMMeshParams, ...parameters };
-      renderer = renderer && renderer.renderer || renderer;
       isCurtainsRenderer(renderer, parameters.label ? parameters.label + " DOMMesh" : "DOMMesh");
       this.type = "DOMMesh";
       const { autoloadSources } = parameters;
@@ -12051,8 +12031,7 @@ struct VSOutput {
      * @param parameters - {@link PlaneParams | parameters} used to create this {@link Plane}
      */
     constructor(renderer, element, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isCurtainsRenderer(renderer, parameters.label ? parameters.label + " Plane" : "Plane");
+      renderer = isCurtainsRenderer(renderer, parameters.label ? parameters.label + " Plane" : "Plane");
       const params = { ...defaultPlaneParams, ...parameters };
       let { geometry, widthSegments, heightSegments, ...DOMMeshParams2 } = params;
       const { instancesCount, vertexBuffers, ...materialParams } = DOMMeshParams2;
@@ -12279,6 +12258,10 @@ struct VSOutput {
       if (container) {
         this.setContainer(container);
       }
+      this.initEvents();
+      if (this.options.autoRender) {
+        this.animate();
+      }
     }
     /**
      * Set the {@link container}
@@ -12306,7 +12289,7 @@ struct VSOutput {
         }
       }
       this.container = this.options.container;
-      this.setCurtains();
+      this.setMainRenderer();
     }
     /**
      * Set the default {@link GPUCurtainsRenderer | renderer}
@@ -12382,7 +12365,7 @@ struct VSOutput {
       return this.deviceManager.renderers;
     }
     /**
-     * Get the default {@link GPUCurtainsRenderer} created
+     * Get the first created {@link Renderer} if any
      * @readonly
      */
     get renderer() {
@@ -12402,16 +12385,6 @@ struct VSOutput {
      */
     async restoreContext() {
       await this.deviceManager.restoreDevice();
-    }
-    /**
-     * Set the various event listeners, set the {@link GPUCurtainsRenderer} and start rendering if needed
-     */
-    setCurtains() {
-      this.initEvents();
-      this.setMainRenderer();
-      if (this.options.autoRender) {
-        this.animate();
-      }
     }
     /* RENDERER TRACKED OBJECTS */
     /**
@@ -12462,27 +12435,6 @@ struct VSOutput {
      */
     get computePasses() {
       return this.renderers?.map((renderer) => renderer.computePasses).flat();
-    }
-    /**
-     * Get the {@link GPUCurtainsRenderer#camera | default GPUCurtainsRenderer camera}
-     * @readonly
-     */
-    get camera() {
-      return this.renderer?.camera;
-    }
-    /**
-     * Set the {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} perspective
-     * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-     */
-    setPerspective({ fov = 50, near = 0.01, far = 50 } = {}) {
-      this.renderer?.setPerspective({ fov, near, far });
-    }
-    /**
-     * Set the default {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} {@link Camera#position | position}
-     * @param position - new {@link Camera#position | position}
-     */
-    setCameraPosition(position = new Vec3(0, 0, 1)) {
-      this.renderer?.setCameraPosition(position);
     }
     /**
      * Get our {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer bounding rectangle}
@@ -13030,8 +12982,7 @@ struct VSOutput {
      * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
      */
     constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
       const colorAttachments = parameters.targets && parameters.targets.length && parameters.targets.map((target) => {
         return {
           targetFormat: target.format
@@ -13288,8 +13239,7 @@ struct VSOutput {
     constructor({ renderer, gltf }) {
       /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
       __privateAdd(this, _primitiveInstances, void 0);
-      renderer = renderer && renderer.renderer || renderer;
-      isCameraRenderer(renderer, "GLTFScenesManager");
+      renderer = isCameraRenderer(renderer, "GLTFScenesManager");
       this.renderer = renderer;
       this.gltf = gltf;
       __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());

@@ -86,9 +86,6 @@ export class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
 
     parameters = { ...defaultDOMMeshParams, ...parameters }
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as GPUCurtainsRenderer)
-
     isCurtainsRenderer(renderer, parameters.label ? parameters.label + ' DOMMesh' : 'DOMMesh')
 
     this.type = 'DOMMesh'

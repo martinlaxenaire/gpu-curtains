@@ -13,8 +13,7 @@ class Scene extends Object3D {
    */
   constructor({ renderer }) {
     super();
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, "Scene");
+    renderer = isRenderer(renderer, "Scene");
     this.renderer = renderer;
     this.computePassEntries = [];
     this.renderPassEntries = {

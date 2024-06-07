@@ -78,10 +78,7 @@ export class Sampler {
     this.type = 'Sampler'
     this.uuid = generateUUID()
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, label ? label + ' ' + this.type : this.type)
+    renderer = isRenderer(renderer, label ? label + ' ' + this.type : this.type)
 
     this.renderer = renderer
 

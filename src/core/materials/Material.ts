@@ -81,10 +81,7 @@ export class Material {
   constructor(renderer: Renderer | GPUCurtains, parameters: MaterialParams) {
     this.type = 'Material'
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, this.type)
+    renderer = isRenderer(renderer, this.type)
 
     this.renderer = renderer
 

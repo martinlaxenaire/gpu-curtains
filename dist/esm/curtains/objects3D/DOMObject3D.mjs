@@ -44,8 +44,7 @@ class DOMObject3D extends ProjectedObject3D {
     /** function assigned to the {@link onAfterDOMElementResize} callback */
     this._onAfterDOMElementResizeCallback = () => {
     };
-    renderer = renderer && renderer.renderer || renderer;
-    isCurtainsRenderer(renderer, "DOM3DObject");
+    renderer = isCurtainsRenderer(renderer, "DOM3DObject");
     this.renderer = renderer;
     this.size = {
       shouldUpdate: true,

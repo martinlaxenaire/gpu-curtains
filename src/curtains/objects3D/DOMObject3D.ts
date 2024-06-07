@@ -109,10 +109,7 @@ export class DOMObject3D extends ProjectedObject3D {
   ) {
     super(renderer)
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as GPUCurtainsRenderer)
-
-    isCurtainsRenderer(renderer, 'DOM3DObject')
+    renderer = isCurtainsRenderer(renderer, 'DOM3DObject')
 
     this.renderer = renderer
 

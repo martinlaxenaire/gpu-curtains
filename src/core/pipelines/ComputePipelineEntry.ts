@@ -28,11 +28,8 @@ export class ComputePipelineEntry extends PipelineEntry {
    * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
    */
   constructor(parameters: PipelineEntryParams) {
-    let { renderer } = parameters
+    const { renderer } = parameters
     const { label } = parameters
-
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
 
     const type = 'ComputePipelineEntry'
 

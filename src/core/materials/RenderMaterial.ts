@@ -39,12 +39,9 @@ export class RenderMaterial extends Material {
    * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: RenderMaterialParams) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
     const type = 'RenderMaterial'
 
-    isRenderer(renderer, type)
+    renderer = isRenderer(renderer, type)
 
     if (!parameters.shaders) {
       parameters.shaders = {}

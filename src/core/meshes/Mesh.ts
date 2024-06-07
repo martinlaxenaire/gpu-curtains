@@ -43,9 +43,7 @@ export class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
    */
   constructor(renderer: CameraRenderer | GPUCurtains, parameters: ProjectedMeshParameters = {}) {
     // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
-
-    isCameraRenderer(renderer, parameters.label ? parameters.label + ' Mesh' : 'Mesh')
+    renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + ' Mesh' : 'Mesh')
 
     // @ts-ignore
     super(renderer, null, parameters)

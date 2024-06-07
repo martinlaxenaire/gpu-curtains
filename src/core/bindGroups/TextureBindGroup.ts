@@ -74,10 +74,7 @@ export class TextureBindGroup extends BindGroup {
   ) {
     const type = 'TextureBindGroup'
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, type)
+    renderer = isRenderer(renderer, type)
 
     super(renderer, { label, index, bindings, uniforms, storages })
 

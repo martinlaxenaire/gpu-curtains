@@ -76,10 +76,7 @@ export class GLTFScenesManager {
    * @param parameters.gltf - The {@link GLTFLoader.gltf | gltf} object used.
    */
   constructor({ renderer, gltf }) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
-
-    isCameraRenderer(renderer, 'GLTFScenesManager')
+    renderer = isCameraRenderer(renderer, 'GLTFScenesManager')
 
     this.renderer = renderer
     this.gltf = gltf

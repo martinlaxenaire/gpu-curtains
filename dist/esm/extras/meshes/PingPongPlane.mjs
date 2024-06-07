@@ -9,8 +9,7 @@ class PingPongPlane extends FullscreenPlane {
    * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
    */
   constructor(renderer, parameters = {}) {
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
     const colorAttachments = parameters.targets && parameters.targets.length && parameters.targets.map((target) => {
       return {
         targetFormat: target.format

@@ -11,8 +11,7 @@ class BindGroup {
    */
   constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
     this.type = "BindGroup";
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, this.type);
+    renderer = isRenderer(renderer, this.type);
     this.renderer = renderer;
     this.options = {
       label,

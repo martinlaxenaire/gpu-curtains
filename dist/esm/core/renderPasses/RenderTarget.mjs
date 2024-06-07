@@ -31,8 +31,7 @@ class RenderTarget {
   constructor(renderer, parameters = {}) {
     /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
     __privateAdd(this, _autoRender, true);
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, "RenderTarget");
+    renderer = isRenderer(renderer, "RenderTarget");
     this.type = "RenderTarget";
     this.renderer = renderer;
     this.uuid = generateUUID();

@@ -8,9 +8,8 @@ class ComputeMaterial extends Material {
    * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
    */
   constructor(renderer, parameters) {
-    renderer = renderer && renderer.renderer || renderer;
     const type = "ComputeMaterial";
-    isRenderer(renderer, type);
+    renderer = isRenderer(renderer, type);
     super(renderer, parameters);
     this.type = type;
     this.renderer = renderer;

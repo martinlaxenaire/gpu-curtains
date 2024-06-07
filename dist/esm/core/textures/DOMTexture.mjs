@@ -59,8 +59,7 @@ class DOMTexture extends Object3D {
     this._onSourceUploadedCallback = () => {
     };
     this.type = "Texture";
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
     this.renderer = renderer;
     this.uuid = generateUUID();
     const defaultOptions = {

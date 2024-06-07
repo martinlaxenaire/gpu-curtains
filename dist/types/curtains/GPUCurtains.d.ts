@@ -1,14 +1,12 @@
 /// <reference types="dist" />
 import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer';
 import { ScrollManager } from '../utils/ScrollManager';
-import { Vec3 } from '../math/Vec3';
 import { PingPongPlane } from '../extras/meshes/PingPongPlane';
 import { ShaderPass } from '../core/renderPasses/ShaderPass';
 import { GPURenderer, GPURendererParams, SceneStackedMesh } from '../core/renderers/GPURenderer';
 import { DOMMesh } from './meshes/DOMMesh';
 import { Plane } from './meshes/Plane';
 import { ComputePass } from '../core/computePasses/ComputePass';
-import { Camera, CameraBasePerspectiveOptions } from '../core/camera/Camera';
 import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement';
 import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer';
 import { GPUDeviceManager, GPUDeviceManagerBaseParams, GPUDeviceManagerSetupParams } from '../core/renderers/GPUDeviceManager';
@@ -112,10 +110,10 @@ export declare class GPUCurtains {
      */
     get renderers(): Renderer[];
     /**
-     * Get the default {@link GPUCurtainsRenderer} created
+     * Get the first created {@link Renderer} if any
      * @readonly
      */
-    get renderer(): GPUCurtainsRenderer;
+    get renderer(): Renderer | undefined;
     /**
      * Set the {@link GPUDeviceManager} {@link GPUDeviceManager#adapter | adapter} and {@link GPUDeviceManager#device | device} if possible, then set all created {@link Renderer} contexts.
      * @async
@@ -127,10 +125,6 @@ export declare class GPUCurtains {
      * @async
      */
     restoreContext(): Promise<void>;
-    /**
-     * Set the various event listeners, set the {@link GPUCurtainsRenderer} and start rendering if needed
-     */
-    setCurtains(): void;
     /**
      * Get all the created {@link PingPongPlane}
      * @readonly
@@ -166,21 +160,6 @@ export declare class GPUCurtains {
      * @readonly
      */
     get computePasses(): ComputePass[];
-    /**
-     * Get the {@link GPUCurtainsRenderer#camera | default GPUCurtainsRenderer camera}
-     * @readonly
-     */
-    get camera(): Camera;
-    /**
-     * Set the {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} perspective
-     * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-     */
-    setPerspective({ fov, near, far }?: CameraBasePerspectiveOptions): void;
-    /**
-     * Set the default {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} {@link Camera#position | position}
-     * @param position - new {@link Camera#position | position}
-     */
-    setCameraPosition(position?: Vec3): void;
     /**
      * Get our {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer bounding rectangle}
      */

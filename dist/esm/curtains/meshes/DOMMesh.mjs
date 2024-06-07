@@ -21,7 +21,6 @@ class DOMMesh extends ProjectedMeshBaseMixin(DOMObject3D) {
     this._onLoadingCallback = (texture) => {
     };
     parameters = { ...defaultDOMMeshParams, ...parameters };
-    renderer = renderer && renderer.renderer || renderer;
     isCurtainsRenderer(renderer, parameters.label ? parameters.label + " DOMMesh" : "DOMMesh");
     this.type = "DOMMesh";
     const { autoloadSources } = parameters;

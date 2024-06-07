@@ -129,6 +129,13 @@ export class GPUCurtains {
     if (container) {
       this.setContainer(container)
     }
+
+    this.initEvents()
+
+    // only if auto render
+    if (this.options.autoRender) {
+      this.animate()
+    }
   }
 
   /**
@@ -160,7 +167,7 @@ export class GPUCurtains {
 
     this.container = this.options.container as HTMLElement
 
-    this.setCurtains()
+    this.setMainRenderer()
   }
 
   /**
@@ -247,11 +254,11 @@ export class GPUCurtains {
   }
 
   /**
-   * Get the default {@link GPUCurtainsRenderer} created
+   * Get the first created {@link Renderer} if any
    * @readonly
    */
-  get renderer(): GPUCurtainsRenderer {
-    return this.renderers[0] as GPUCurtainsRenderer
+  get renderer(): Renderer | undefined {
+    return this.renderers[0]
   }
 
   /**
@@ -269,20 +276,6 @@ export class GPUCurtains {
    */
   async restoreContext() {
     await this.deviceManager.restoreDevice()
-  }
-
-  /**
-   * Set the various event listeners, set the {@link GPUCurtainsRenderer} and start rendering if needed
-   */
-  setCurtains() {
-    this.initEvents()
-
-    this.setMainRenderer()
-
-    // only if auto render
-    if (this.options.autoRender) {
-      this.animate()
-    }
   }
 
   /* RENDERER TRACKED OBJECTS */
@@ -347,30 +340,6 @@ export class GPUCurtains {
    */
   get computePasses(): ComputePass[] {
     return this.renderers?.map((renderer) => renderer.computePasses).flat()
-  }
-
-  /**
-   * Get the {@link GPUCurtainsRenderer#camera | default GPUCurtainsRenderer camera}
-   * @readonly
-   */
-  get camera(): Camera {
-    return this.renderer?.camera
-  }
-
-  /**
-   * Set the {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} perspective
-   * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-   */
-  setPerspective({ fov = 50, near = 0.01, far = 50 }: CameraBasePerspectiveOptions = {}) {
-    this.renderer?.setPerspective({ fov, near, far })
-  }
-
-  /**
-   * Set the default {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} {@link Camera#position | position}
-   * @param position - new {@link Camera#position | position}
-   */
-  setCameraPosition(position: Vec3 = new Vec3(0, 0, 1)) {
-    this.renderer?.setCameraPosition(position)
   }
 
   /**

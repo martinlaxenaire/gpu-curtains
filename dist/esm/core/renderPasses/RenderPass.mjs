@@ -24,8 +24,7 @@ class RenderPass {
     depthClearValue = 1,
     depthFormat = "depth24plus"
   } = {}) {
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, "RenderPass");
+    renderer = isRenderer(renderer, "RenderPass");
     this.type = "RenderPass";
     this.uuid = generateUUID();
     this.renderer = renderer;

@@ -62,10 +62,7 @@ export class RenderTarget {
    * @param parameters - {@link RenderTargetParams | parameters} use to create this {@link RenderTarget}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as RenderTargetParams) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, 'RenderTarget')
+    renderer = isRenderer(renderer, 'RenderTarget')
 
     this.type = 'RenderTarget'
     this.renderer = renderer

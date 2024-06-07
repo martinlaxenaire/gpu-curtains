@@ -9,8 +9,7 @@ class Mesh extends ProjectedMeshBaseMixin(ProjectedObject3D) {
    * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
    */
   constructor(renderer, parameters = {}) {
-    renderer = renderer && renderer.renderer || renderer;
-    isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
+    renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
     super(renderer, null, parameters);
     this.type = "Mesh";
   }

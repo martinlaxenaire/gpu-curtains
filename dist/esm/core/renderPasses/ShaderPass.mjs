@@ -10,8 +10,7 @@ class ShaderPass extends FullscreenPlane {
    * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
    */
   constructor(renderer, parameters = {}) {
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
     parameters.depth = false;
     parameters.transparent = true;
     parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;

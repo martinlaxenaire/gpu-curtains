@@ -101,10 +101,7 @@ export class RenderPass {
       depthFormat = 'depth24plus' as GPUTextureFormat,
     } = {} as RenderPassParams
   ) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, 'RenderPass')
+    renderer = isRenderer(renderer, 'RenderPass')
 
     this.type = 'RenderPass'
     this.uuid = generateUUID()

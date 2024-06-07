@@ -5,25 +5,28 @@ const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
   throwError(error);
 };
 const isRenderer = (renderer, type) => {
+  renderer = renderer && renderer.renderer || renderer;
   const isRenderer2 = renderer && (renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
   if (!isRenderer2) {
     formatRendererError(renderer, "GPURenderer", type);
   }
-  return isRenderer2;
+  return renderer;
 };
 const isCameraRenderer = (renderer, type) => {
+  renderer = renderer && renderer.renderer || renderer;
   const isCameraRenderer2 = renderer && (renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
   if (!isCameraRenderer2) {
     formatRendererError(renderer, "GPUCameraRenderer", type);
   }
-  return isCameraRenderer2;
+  return renderer;
 };
 const isCurtainsRenderer = (renderer, type) => {
+  renderer = renderer && renderer.renderer || renderer;
   const isCurtainsRenderer2 = renderer && renderer.type === "GPUCurtainsRenderer";
   if (!isCurtainsRenderer2) {
     formatRendererError(renderer, "GPUCurtainsRenderer", type);
   }
-  return isCurtainsRenderer2;
+  return renderer;
 };
 const generateMips = /* @__PURE__ */ (() => {
   let sampler;

@@ -33,12 +33,9 @@ export class ComputeMaterial extends Material {
    * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputeMaterialParams) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
     const type = 'ComputeMaterial'
 
-    isRenderer(renderer, type)
+    renderer = isRenderer(renderer, type)
 
     super(renderer, parameters)
 

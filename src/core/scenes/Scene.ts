@@ -91,10 +91,7 @@ export class Scene extends Object3D {
   constructor({ renderer }: { renderer: Renderer | GPUCurtains }) {
     super()
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, 'Scene')
+    renderer = isRenderer(renderer, 'Scene')
 
     this.renderer = renderer
 

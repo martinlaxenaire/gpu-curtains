@@ -40,8 +40,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
   constructor({ renderer, gltf }) {
     /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
     __privateAdd(this, _primitiveInstances, void 0);
-    renderer = renderer && renderer.renderer || renderer;
-    isCameraRenderer(renderer, "GLTFScenesManager");
+    renderer = isCameraRenderer(renderer, "GLTFScenesManager");
     this.renderer = renderer;
     this.gltf = gltf;
     __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());

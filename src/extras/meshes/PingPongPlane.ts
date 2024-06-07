@@ -40,9 +40,7 @@ export class PingPongPlane extends FullscreenPlane {
    * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = {} as MeshBaseRenderParams) {
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, parameters.label ? parameters.label + ' PingPongPlane' : 'PingPongPlane')
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' PingPongPlane' : 'PingPongPlane')
 
     const colorAttachments =
       parameters.targets &&

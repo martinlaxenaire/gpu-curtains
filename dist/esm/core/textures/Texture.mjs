@@ -46,8 +46,7 @@ class Texture {
   constructor(renderer, parameters = defaultTextureParams) {
     /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
     __privateAdd(this, _autoResize, true);
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
     this.type = "Texture";
     this.renderer = renderer;
     this.uuid = generateUUID();

@@ -53,8 +53,7 @@ class ComputePass {
     this._onAfterResizeCallback = () => {
     };
     const type = "ComputePass";
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type);
+    renderer = isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type);
     parameters.label = parameters.label ?? "ComputePass " + renderer.computePasses?.length;
     this.renderer = renderer;
     this.type = type;

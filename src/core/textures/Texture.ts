@@ -117,10 +117,7 @@ export class Texture {
    * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = defaultTextureParams) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, parameters.label ? parameters.label + ' Texture' : 'Texture')
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' Texture' : 'Texture')
 
     this.type = 'Texture'
 
