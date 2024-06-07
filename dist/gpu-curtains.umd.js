@@ -9931,6 +9931,9 @@ ${this.shaders.compute.head}`;
       /** function assigned to the {@link onAfterRender} callback */
       this._onAfterRenderCallback = (commandEncoder) => {
       };
+      /** function assigned to the {@link resizeObjects} callback */
+      this._onResizeCallback = () => {
+      };
       /** function assigned to the {@link onAfterResize} callback */
       this._onAfterResizeCallback = () => {
       };
@@ -10032,13 +10035,14 @@ ${this.shaders.compute.head}`;
      */
     resize(rectBBox = null) {
       this.setSize(rectBBox);
-      this.onResize();
+      this._onResizeCallback && this._onResizeCallback();
+      this.resizeObjects();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
     /**
-     * Resize all tracked objects
+     * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
      */
-    onResize() {
+    resizeObjects() {
       this.textures.forEach((texture) => {
         texture.resize();
       });
@@ -10049,9 +10053,6 @@ ${this.shaders.compute.head}`;
       this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
       this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
       this.resizeMeshes();
-      if (!this.shouldRender || !this.shouldRenderScene) {
-        this.scene.updateMatrixStack();
-      }
     }
     /**
      * Resize the {@link meshes}.
@@ -10561,8 +10562,19 @@ ${this.shaders.compute.head}`;
       return this;
     }
     /**
-     * Assign a callback function to _onAfterResizeCallback
-     * @param callback - callback to run just after the {@link GPURenderer} has been resized
+     * Callback to run after the {@link GPURenderer} has been resized but before the {@link resizeObjects} method has been executed (before the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes are resized).
+     * @param callback - callback to execute.
+     * @returns - our {@link GPURenderer}
+     */
+    onResize(callback) {
+      if (callback) {
+        this._onResizeCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Callback to run after the {@link GPURenderer} has been resized and after the {@link resizeObjects} method has been executed (after the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes have been resized).
+     * @param callback - callback to execute.
      * @returns - our {@link GPURenderer}
      */
     onAfterResize(callback) {
@@ -10880,11 +10892,11 @@ ${this.shaders.compute.head}`;
       this.camera.position.copy(position);
     }
     /**
-     * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
+     * Call our {@link GPURenderer#resizeObjects | GPURenderer resizeObjects method} and resize our {@link camera} as well
      */
-    onResize() {
+    resizeObjects() {
       this.setPerspective();
-      super.onResize();
+      super.resizeObjects();
     }
     /* RENDER */
     /**
@@ -11518,13 +11530,6 @@ struct VSOutput {
       this.renderer = renderer;
       this.size = {
         shouldUpdate: true,
-        // TODO
-        document: {
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0
-        },
         normalizedWorld: {
           size: new Vec2(1),
           position: new Vec2()
@@ -11552,16 +11557,15 @@ struct VSOutput {
       this.domElement = new DOMElement({
         element,
         onSizeChanged: (boundingRect) => this.resize(boundingRect),
-        onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect)
+        onPositionChanged: () => this.onPositionChanged()
       });
+      this.updateSizeAndPosition();
     }
     /**
      * Update size and position when the {@link domElement | DOM Element} position changed
-     * @param boundingRect - the new bounding rectangle
      */
-    onPositionChanged(boundingRect) {
+    onPositionChanged() {
       if (this.watchScroll) {
-        this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
         this.shouldUpdateComputedSizes();
       }
     }
@@ -11582,7 +11586,6 @@ struct VSOutput {
     resize(boundingRect = null) {
       if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
         return;
-      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
       this.updateSizeAndPosition();
       this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
     }
@@ -11592,7 +11595,16 @@ struct VSOutput {
      * @readonly
      */
     get boundingRect() {
-      return this.domElement.boundingRect;
+      return this.domElement?.boundingRect ?? {
+        width: 1,
+        height: 1,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        x: 0,
+        y: 0
+      };
     }
     /* TRANSFOMS */
     /**
@@ -11745,8 +11757,8 @@ struct VSOutput {
     computeWorldSizes() {
       const containerBoundingRect = this.renderer.boundingRect;
       const planeCenter = {
-        x: this.size.document.width / 2 + this.size.document.left,
-        y: this.size.document.height / 2 + this.size.document.top
+        x: this.boundingRect.width / 2 + this.boundingRect.left,
+        y: this.boundingRect.height / 2 + this.boundingRect.top
       };
       const containerCenter = {
         x: containerBoundingRect.width / 2 + containerBoundingRect.left,
@@ -11757,8 +11769,8 @@ struct VSOutput {
         center.divide(size);
       }
       this.size.normalizedWorld.size.set(
-        this.size.document.width / containerBoundingRect.width,
-        this.size.document.height / containerBoundingRect.height
+        this.boundingRect.width / containerBoundingRect.width,
+        this.boundingRect.height / containerBoundingRect.height
       );
       this.size.normalizedWorld.position.set(
         (planeCenter.x - containerCenter.x) / containerBoundingRect.width,
@@ -11769,7 +11781,7 @@ struct VSOutput {
         this.size.normalizedWorld.size.y * this.camera.visibleSize.height
       );
       this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
-      this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
+      this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.boundingRect.width / this.boundingRect.height));
       this.size.scaledWorld.position.set(
         this.size.normalizedWorld.position.x * this.camera.visibleSize.width,
         this.size.normalizedWorld.position.y * this.camera.visibleSize.height,
@@ -12503,7 +12515,7 @@ struct VSOutput {
      */
     updateScroll(delta = { x: 0, y: 0 }) {
       this.domObjects.forEach((domObject) => {
-        if (domObject.domElement) {
+        if (domObject.domElement && domObject.watchScroll) {
           domObject.updateScrollPosition(delta);
         }
       });

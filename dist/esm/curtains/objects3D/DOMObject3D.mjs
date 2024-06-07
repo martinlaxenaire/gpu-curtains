@@ -49,13 +49,6 @@ class DOMObject3D extends ProjectedObject3D {
     this.renderer = renderer;
     this.size = {
       shouldUpdate: true,
-      // TODO
-      document: {
-        width: 0,
-        height: 0,
-        top: 0,
-        left: 0
-      },
       normalizedWorld: {
         size: new Vec2(1),
         position: new Vec2()
@@ -83,16 +76,15 @@ class DOMObject3D extends ProjectedObject3D {
     this.domElement = new DOMElement({
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
-      onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect)
+      onPositionChanged: () => this.onPositionChanged()
     });
+    this.updateSizeAndPosition();
   }
   /**
    * Update size and position when the {@link domElement | DOM Element} position changed
-   * @param boundingRect - the new bounding rectangle
    */
-  onPositionChanged(boundingRect) {
+  onPositionChanged() {
     if (this.watchScroll) {
-      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
       this.shouldUpdateComputedSizes();
     }
   }
@@ -113,7 +105,6 @@ class DOMObject3D extends ProjectedObject3D {
   resize(boundingRect = null) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
       return;
-    this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
     this.updateSizeAndPosition();
     this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
   }
@@ -123,7 +114,16 @@ class DOMObject3D extends ProjectedObject3D {
    * @readonly
    */
   get boundingRect() {
-    return this.domElement.boundingRect;
+    return this.domElement?.boundingRect ?? {
+      width: 1,
+      height: 1,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      x: 0,
+      y: 0
+    };
   }
   /* TRANSFOMS */
   /**
@@ -276,8 +276,8 @@ class DOMObject3D extends ProjectedObject3D {
   computeWorldSizes() {
     const containerBoundingRect = this.renderer.boundingRect;
     const planeCenter = {
-      x: this.size.document.width / 2 + this.size.document.left,
-      y: this.size.document.height / 2 + this.size.document.top
+      x: this.boundingRect.width / 2 + this.boundingRect.left,
+      y: this.boundingRect.height / 2 + this.boundingRect.top
     };
     const containerCenter = {
       x: containerBoundingRect.width / 2 + containerBoundingRect.left,
@@ -288,8 +288,8 @@ class DOMObject3D extends ProjectedObject3D {
       center.divide(size);
     }
     this.size.normalizedWorld.size.set(
-      this.size.document.width / containerBoundingRect.width,
-      this.size.document.height / containerBoundingRect.height
+      this.boundingRect.width / containerBoundingRect.width,
+      this.boundingRect.height / containerBoundingRect.height
     );
     this.size.normalizedWorld.position.set(
       (planeCenter.x - containerCenter.x) / containerBoundingRect.width,
@@ -300,7 +300,7 @@ class DOMObject3D extends ProjectedObject3D {
       this.size.normalizedWorld.size.y * this.camera.visibleSize.height
     );
     this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
-    this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
+    this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.boundingRect.width / this.boundingRect.height));
     this.size.scaledWorld.position.set(
       this.size.normalizedWorld.position.x * this.camera.visibleSize.width,
       this.size.normalizedWorld.position.y * this.camera.visibleSize.height,

@@ -203,11 +203,11 @@ class GPUCameraRenderer extends GPURenderer {
     this.camera.position.copy(position);
   }
   /**
-   * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
+   * Call our {@link GPURenderer#resizeObjects | GPURenderer resizeObjects method} and resize our {@link camera} as well
    */
-  onResize() {
+  resizeObjects() {
     this.setPerspective();
-    super.onResize();
+    super.resizeObjects();
   }
   /* RENDER */
   /**

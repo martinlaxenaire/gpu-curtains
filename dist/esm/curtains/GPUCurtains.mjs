@@ -294,7 +294,7 @@ class GPUCurtains {
    */
   updateScroll(delta = { x: 0, y: 0 }) {
     this.domObjects.forEach((domObject) => {
-      if (domObject.domElement) {
+      if (domObject.domElement && domObject.watchScroll) {
         domObject.updateScrollPosition(delta);
       }
     });

@@ -27,6 +27,9 @@ class GPURenderer {
     /** function assigned to the {@link onAfterRender} callback */
     this._onAfterRenderCallback = (commandEncoder) => {
     };
+    /** function assigned to the {@link resizeObjects} callback */
+    this._onResizeCallback = () => {
+    };
     /** function assigned to the {@link onAfterResize} callback */
     this._onAfterResizeCallback = () => {
     };
@@ -128,13 +131,14 @@ class GPURenderer {
    */
   resize(rectBBox = null) {
     this.setSize(rectBBox);
-    this.onResize();
+    this._onResizeCallback && this._onResizeCallback();
+    this.resizeObjects();
     this._onAfterResizeCallback && this._onAfterResizeCallback();
   }
   /**
-   * Resize all tracked objects
+   * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
    */
-  onResize() {
+  resizeObjects() {
     this.textures.forEach((texture) => {
       texture.resize();
     });
@@ -145,9 +149,6 @@ class GPURenderer {
     this.pingPongPlanes.forEach((pingPongPlane) => pingPongPlane.resize(this.boundingRect));
     this.shaderPasses.forEach((shaderPass) => shaderPass.resize(this.boundingRect));
     this.resizeMeshes();
-    if (!this.shouldRender || !this.shouldRenderScene) {
-      this.scene.updateMatrixStack();
-    }
   }
   /**
    * Resize the {@link meshes}.
@@ -657,8 +658,19 @@ class GPURenderer {
     return this;
   }
   /**
-   * Assign a callback function to _onAfterResizeCallback
-   * @param callback - callback to run just after the {@link GPURenderer} has been resized
+   * Callback to run after the {@link GPURenderer} has been resized but before the {@link resizeObjects} method has been executed (before the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes are resized).
+   * @param callback - callback to execute.
+   * @returns - our {@link GPURenderer}
+   */
+  onResize(callback) {
+    if (callback) {
+      this._onResizeCallback = callback;
+    }
+    return this;
+  }
+  /**
+   * Callback to run after the {@link GPURenderer} has been resized and after the {@link resizeObjects} method has been executed (after the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes have been resized).
+   * @param callback - callback to execute.
    * @returns - our {@link GPURenderer}
    */
   onAfterResize(callback) {

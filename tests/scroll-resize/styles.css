@@ -40,3 +40,13 @@
     object-fit: cover;
   }
 }
+
+@media screen and (orientation: portrait) {
+  .dom-mesh {
+    width: 66%;
+  }
+
+  #large-cube-mesh {
+    width: 90%;
+  }
+}
