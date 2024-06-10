@@ -67,8 +67,28 @@ export class ShaderPass extends FullscreenPlane {
 
     // disable depth for postprocessing passes
     parameters.depth = false
-    // force transparency to get the right alpha blending
-    parameters.transparent = true
+
+    // blend equation specific to shader passes
+    const defaultBlend: GPUBlendState = {
+      color: {
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    }
+
+    if (!parameters.targets) {
+      parameters.targets = [
+        {
+          blend: defaultBlend,
+        },
+      ]
+    } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
+      parameters.targets[0].blend = defaultBlend
+    }
 
     parameters.label = parameters.label ?? 'ShaderPass ' + renderer.shaderPasses?.length
 

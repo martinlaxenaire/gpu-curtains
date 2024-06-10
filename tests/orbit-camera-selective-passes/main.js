@@ -170,22 +170,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
-    targets: [
-      {
-        blend: {
-          color: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-          alpha: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-        },
-      },
-    ],
+    // targets: [
+    //   {
+    //     blend: {
+    //       color: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //       alpha: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //     },
+    //   },
+    // ],
   })
 
   const blurSettings = {
@@ -236,22 +236,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
-    targets: [
-      {
-        blend: {
-          color: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-          alpha: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-        },
-      },
-    ],
+    // targets: [
+    //   {
+    //     blend: {
+    //       color: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //       alpha: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //     },
+    //   },
+    // ],
   })
 
   const vBlurPassFs = /* wgsl */ `
@@ -297,22 +297,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
-    targets: [
-      {
-        blend: {
-          color: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-          alpha: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-        },
-      },
-    ],
+    // targets: [
+    //   {
+    //     blend: {
+    //       color: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //       alpha: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //     },
+    //   },
+    // ],
   })
 
   vBlurPass.onAfterResize(() => {
@@ -368,22 +368,22 @@ window.addEventListener('load', async () => {
         },
       },
     },
-    targets: [
-      {
-        blend: {
-          color: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-          alpha: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-        },
-      },
-    ],
+    // targets: [
+    //   {
+    //     blend: {
+    //       color: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //       alpha: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //     },
+    //   },
+    // ],
   })
 
   // pass the original scene pass result to our blend pass
@@ -535,22 +535,22 @@ window.addEventListener('load', async () => {
         code: blendShader,
       },
     },
-    targets: [
-      {
-        blend: {
-          color: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-          alpha: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-        },
-      },
-    ],
+    // targets: [
+    //   {
+    //     blend: {
+    //       color: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //       alpha: {
+    //         operation: 'add',
+    //         srcFactor: 'one',
+    //         dstFactor: 'one-minus-src-alpha',
+    //       },
+    //     },
+    //   },
+    // ],
   })
 
   const cubeRenderTexture = blendPass.createTexture({

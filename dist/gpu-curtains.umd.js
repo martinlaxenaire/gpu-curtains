@@ -6576,7 +6576,7 @@
   var default_projected_vsWgsl = (
     /* wgsl */
     `
-struct VertexOutput {
+struct VSOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
   @location(1) normal: vec3f,
@@ -6584,8 +6584,8 @@ struct VertexOutput {
 
 @vertex fn main(
   attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
+) -> VSOutput {
+  var vsOutput: VSOutput;
 
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
@@ -6598,15 +6598,15 @@ struct VertexOutput {
   var default_vsWgsl = (
     /* wgsl */
     `
-struct VertexOutput {
+struct VSOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
 };
 
 @vertex fn main(
   attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
+) -> VSOutput {
+  var vsOutput: VSOutput;
 
   vsOutput.position = vec4f(attributes.position, 1.0);
   vsOutput.uv = attributes.uv;
@@ -11365,7 +11365,25 @@ struct VSOutput {
     constructor(renderer, parameters = {}) {
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
       parameters.depth = false;
-      parameters.transparent = true;
+      const defaultBlend = {
+        color: {
+          srcFactor: "one",
+          dstFactor: "one-minus-src-alpha"
+        },
+        alpha: {
+          srcFactor: "one",
+          dstFactor: "one-minus-src-alpha"
+        }
+      };
+      if (!parameters.targets) {
+        parameters.targets = [
+          {
+            blend: defaultBlend
+          }
+        ];
+      } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
+        parameters.targets[0].blend = defaultBlend;
+      }
       parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
       parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
       if (!parameters.shaders) {
