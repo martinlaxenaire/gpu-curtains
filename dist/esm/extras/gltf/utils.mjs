@@ -177,7 +177,8 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     lightContribution = vec3(0.0);
   `
   );
-  let { chunks } = shaderParameters;
+  shaderParameters = shaderParameters ?? {};
+  let chunks = shaderParameters.chunks;
   if (!chunks) {
     chunks = {
       additionalFragmentHead: defaultAdditionalHead,
@@ -215,7 +216,6 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     `
     // PBR
     const PI = ${Math.PI};
-    
     
     // tone maping
     fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
@@ -290,7 +290,7 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
   };
 };
 const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
-  let { chunks } = shaderParameters;
+  let chunks = shaderParameters?.chunks;
   const pbrAdditionalFragmentHead = (
     /* wgsl */
     `
@@ -325,14 +325,6 @@ const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
     
       return ggx1 * ggx2;
     }
-    
-    fn rangeAttenuation(range: f32, distance: f32) -> f32 {
-      if (range <= 0.0) {
-          // Negative range means no cutoff
-          return 1.0 / pow(distance, 2.0);
-      }
-      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
-    }
   `
   );
   if (!chunks) {
@@ -349,7 +341,7 @@ const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
   return buildShaders(meshDescriptor, shaderParameters);
 };
 const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
-  const { iblParameters } = shaderParameters;
+  const iblParameters = shaderParameters?.iblParameters;
   meshDescriptor.parameters.uniforms = {
     ...meshDescriptor.parameters.uniforms,
     ...{
@@ -367,7 +359,7 @@ const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
       }
     }
   };
-  const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters;
+  const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {};
   const useIBLContribution = envDiffuseTexture && envSpecularTexture && lutTexture;
   let iblContributionHead = "";
   let iblContribution = "";
@@ -465,7 +457,7 @@ const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
       color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
     `;
   }
-  let { chunks } = shaderParameters;
+  let chunks = shaderParameters?.chunks;
   if (!chunks) {
     chunks = {
       additionalFragmentHead: iblContributionHead,

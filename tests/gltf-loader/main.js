@@ -259,6 +259,16 @@ window.addEventListener('load', async () => {
       }
 
       // now the shaders
+      const additionalFragmentHead = /* wgsl */ `
+      fn rangeAttenuation(range: f32, distance: f32) -> f32 {
+        if (range <= 0.0) {
+            // Negative range means no cutoff
+            return 1.0 / pow(distance, 2.0);
+        }
+        return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
+      }
+      `
+
       const ambientContribution = /* wgsl */ `
       ambientContribution = ambientLight.intensity * ambientLight.color;
       `
@@ -296,7 +306,9 @@ window.addEventListener('load', async () => {
       lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
       `
 
-      //parameters.shaders = buildPBRShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
+      // parameters.shaders = buildPBRShaders(meshDescriptor, {
+      //   chunks: { additionalFragmentHead, ambientContribution, lightContribution },
+      // })
       parameters.shaders = buildIBLShaders(meshDescriptor, {
         iblParameters: {
           diffuseStrength: 0.5,
@@ -305,7 +317,7 @@ window.addEventListener('load', async () => {
           envDiffuseTexture,
           envSpecularTexture,
         },
-        chunks: { ambientContribution, lightContribution },
+        chunks: { additionalFragmentHead, ambientContribution, lightContribution },
       })
     })
 

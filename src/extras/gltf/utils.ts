@@ -228,7 +228,9 @@ export const buildShaders = (
     lightContribution = vec3(0.0);
   `
 
-  let { chunks } = shaderParameters
+  shaderParameters = shaderParameters ?? {}
+
+  let chunks = shaderParameters.chunks
 
   if (!chunks) {
     chunks = {
@@ -260,7 +262,6 @@ export const buildShaders = (
   const fs = /* wgsl */ `
     // PBR
     const PI = ${Math.PI};
-    
     
     // tone maping
     fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
@@ -347,7 +348,7 @@ export const buildPBRShaders = (
   meshDescriptor: MeshDescriptor,
   shaderParameters: ShaderBuilderParameters = null
 ): BuiltShaders => {
-  let { chunks } = shaderParameters
+  let chunks = shaderParameters?.chunks
 
   const pbrAdditionalFragmentHead = /* wgsl */ `
     fn FresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
@@ -380,14 +381,6 @@ export const buildPBRShaders = (
       let ggx1  = GeometrySchlickGGX(NdotL, roughness);
     
       return ggx1 * ggx2;
-    }
-    
-    fn rangeAttenuation(range: f32, distance: f32) -> f32 {
-      if (range <= 0.0) {
-          // Negative range means no cutoff
-          return 1.0 / pow(distance, 2.0);
-      }
-      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
     }
   `
 
@@ -436,7 +429,7 @@ export const buildIBLShaders = (
   meshDescriptor: MeshDescriptor,
   shaderParameters: IBLShaderBuilderParameters = null
 ): BuiltShaders => {
-  const { iblParameters } = shaderParameters
+  const iblParameters = shaderParameters?.iblParameters
 
   // add lights & ibl uniforms
   meshDescriptor.parameters.uniforms = {
@@ -458,7 +451,7 @@ export const buildIBLShaders = (
   }
 
   // IBL
-  const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters
+  const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {}
 
   const useIBLContribution = envDiffuseTexture && envSpecularTexture && lutTexture
 
@@ -572,7 +565,7 @@ export const buildIBLShaders = (
     `
   }
 
-  let { chunks } = shaderParameters
+  let chunks = shaderParameters?.chunks
 
   if (!chunks) {
     chunks = {
