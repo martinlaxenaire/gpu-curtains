@@ -177,6 +177,7 @@ window.addEventListener('load', async () => {
   const meshFs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
+      @builtin(front_facing) frontFacing: bool,
       @location(0) normal: vec3f,
       @location(1) shadowPos: vec3f,
     };
@@ -205,7 +206,13 @@ window.addEventListener('load', async () => {
       }
       visibility /= 9.0;
       
-      let lambertFactor = max(dot(normalize(lightning.lightPosition), normalize(fsInput.normal)), 0.0);
+      // inverse the normals if we're using front face culling
+      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+      
+      // apply lightning and shadows
+      let normal: vec3f = normalize(faceDirection * fsInput.normal);
+      
+      let lambertFactor = max(dot(normalize(lightning.lightPosition), normal), 0.0);
       let lightingFactor = min(ambientFactor + visibility * lambertFactor, 1.0);
 
       return vec4(lightingFactor * shading.color, 1.0);
