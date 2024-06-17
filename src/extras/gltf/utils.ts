@@ -105,8 +105,14 @@ export const buildShaders = (
       `
   }
 
-  const vertexOutput = `
+  const vertexOutput = /*wgsl */ `
     struct VSOutput {
+      ${vertexOutputContent}
+    };`
+
+  const fragmentInput = /*wgsl */ `
+    struct VSOutput {
+      @builtin(front_facing) frontFacing: bool,
       ${vertexOutputContent}
     };`
 
@@ -305,7 +311,7 @@ export const buildShaders = (
     
     ${chunks.additionalFragmentHead}
   
-    ${vertexOutput}
+    ${fragmentInput}
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
       ${initColor}

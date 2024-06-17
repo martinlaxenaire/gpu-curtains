@@ -49,10 +49,21 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
         vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * attributes.tangent.w;
       `;
   }
-  const vertexOutput = `
+  const vertexOutput = (
+    /*wgsl */
+    `
     struct VSOutput {
       ${vertexOutputContent}
-    };`;
+    };`
+  );
+  const fragmentInput = (
+    /*wgsl */
+    `
+    struct VSOutput {
+      @builtin(front_facing) frontFacing: bool,
+      ${vertexOutputContent}
+    };`
+  );
   const vs = (
     /* wgsl */
     `
@@ -257,7 +268,7 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     
     ${chunks.additionalFragmentHead}
   
-    ${vertexOutput}
+    ${fragmentInput}
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
       ${initColor}
