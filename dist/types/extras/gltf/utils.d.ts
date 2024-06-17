@@ -9,6 +9,8 @@ export interface ShaderBuilderParameters {
     chunks?: {
         /** Additional WGSL chunk to add to the fragment shader head. */
         additionalFragmentHead?: string;
+        /** Preliminary modification to apply to the fragment shader `color` `vec4f` variable before applying any lightning calculations. */
+        preliminaryColorContribution?: string;
         /** Ambient light contribution to apply to the fragment shader `ambientContribution` `vec3f` variable. Default is `vec3(1.0)`. */
         ambientContribution?: string;
         /** Light contribution to apply to the fragment shader `lightContribution` `vec3f` variable. Default is `vec3(0.0)`. */

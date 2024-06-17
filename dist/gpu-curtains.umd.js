@@ -1691,7 +1691,7 @@
     clone(params) {
       const { struct, ...defaultParams } = params;
       const bufferBindingCopy = new this.constructor(defaultParams);
-      bufferBindingCopy.setBindings(struct);
+      struct && bufferBindingCopy.setBindings(struct);
       bufferBindingCopy.options.struct = struct;
       bufferBindingCopy.arrayBufferSize = this.arrayBufferSize;
       bufferBindingCopy.arrayBuffer = new ArrayBuffer(bufferBindingCopy.arrayBufferSize);
@@ -13068,7 +13068,7 @@ struct VSOutput {
   const DEFAULT_TRANSLATION = [0, 0, 0];
   const DEFAULT_ROTATION = [0, 0, 0, 1];
   const DEFAULT_SCALE = [1, 1, 1];
-  const absUriRegEx = new RegExp(`^${window.location.protocol}`, "i");
+  const absUriRegEx = typeof window !== "undefined" && new RegExp(`^${window.location.protocol}`, "i") || RegExp(`^(http|https):`, "i");
   const dataUriRegEx = /^data:/;
   class GLTFLoader {
     /**
@@ -13989,13 +13989,14 @@ struct VSOutput {
       `
       var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
       
-      // baseColor = vec4(sRGBToLinear(baseColor.rgb), baseColor.a);
-      
       if (baseColor.a < material.alphaCutoff) {
         discard;
       }
     `;
     }
+    baseColor += `
+      color = baseColor;
+  `;
     let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? `let normal: vec3f = normalize(fsInput.normal);` : `let normal: vec3f = vec3(0.0);`;
     if (useNormalMap) {
       normalMap = `
@@ -14038,8 +14039,6 @@ struct VSOutput {
       `
       emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
       
-      // emissive = sRGBToLinear(emissive);
-      
       emissive *= material.emissiveFactor;
       `;
       if (occlusionTexture) {
@@ -14062,6 +14061,7 @@ struct VSOutput {
   `
     );
     const defaultAdditionalHead = "";
+    const defaultPreliminaryColor = "";
     const defaultAdditionalColor = "";
     const defaultAmbientContribution = (
       /* wgsl */
@@ -14081,12 +14081,15 @@ struct VSOutput {
       chunks = {
         additionalFragmentHead: defaultAdditionalHead,
         ambientContribution: defaultAmbientContribution,
+        preliminaryColorContribution: defaultPreliminaryColor,
         lightContribution: defaultLightContribution,
         additionalColorContribution: defaultAdditionalColor
       };
     } else {
       if (!chunks.additionalFragmentHead)
         chunks.additionalFragmentHead = defaultAdditionalHead;
+      if (!chunks.preliminaryColorContribution)
+        chunks.preliminaryColorContribution = defaultPreliminaryColor;
       if (!chunks.ambientContribution)
         chunks.ambientContribution = defaultAmbientContribution;
       if (!chunks.lightContribution)

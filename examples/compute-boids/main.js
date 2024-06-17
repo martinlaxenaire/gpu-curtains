@@ -35,7 +35,7 @@ window.addEventListener('load', async () => {
   const particleShrinkScale = 30
 
   // camera screen ratio depends on screen size, fov and camera position
-  const cameraRatio = gpuCurtains.camera.visibleSize.height * particleShrinkScale * 0.5
+  const cameraRatio = gpuCurtains.renderer.camera.visibleSize.height * particleShrinkScale * 0.5
 
   const screenRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
   const systemSize = new Vec2(cameraRatio * screenRatio, cameraRatio)

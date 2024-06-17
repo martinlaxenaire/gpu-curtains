@@ -10,6 +10,8 @@ export interface ShaderBuilderParameters {
   chunks?: {
     /** Additional WGSL chunk to add to the fragment shader head. */
     additionalFragmentHead?: string
+    /** Preliminary modification to apply to the fragment shader `color` `vec4f` variable before applying any lightning calculations. */
+    preliminaryColorContribution?: string
     /** Ambient light contribution to apply to the fragment shader `ambientContribution` `vec3f` variable. Default is `vec3(1.0)`. */
     ambientContribution?: string
     /** Light contribution to apply to the fragment shader `lightContribution` `vec3f` variable. Default is `vec3(0.0)`. */
@@ -145,13 +147,15 @@ export const buildShaders = (
     baseColor = /* wgsl */ `
       var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
       
-      // baseColor = vec4(sRGBToLinear(baseColor.rgb), baseColor.a);
-      
       if (baseColor.a < material.alphaCutoff) {
         discard;
       }
     `
   }
+
+  baseColor += `
+      color = baseColor;
+  `
 
   // normal map
 
@@ -196,8 +200,6 @@ export const buildShaders = (
     emissiveOcclusion += /* wgsl */ `
       emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
       
-      // emissive = sRGBToLinear(emissive);
-      
       emissive *= material.emissiveFactor;
       `
     if (occlusionTexture) {
@@ -220,6 +222,7 @@ export const buildShaders = (
 
   // user defined chunks
   const defaultAdditionalHead = ''
+  const defaultPreliminaryColor = ''
   const defaultAdditionalColor = ''
   const defaultAmbientContribution = /* wgsl */ `
     ambientContribution = vec3(1.0);
@@ -236,11 +239,13 @@ export const buildShaders = (
     chunks = {
       additionalFragmentHead: defaultAdditionalHead,
       ambientContribution: defaultAmbientContribution,
+      preliminaryColorContribution: defaultPreliminaryColor,
       lightContribution: defaultLightContribution,
       additionalColorContribution: defaultAdditionalColor,
     }
   } else {
     if (!chunks.additionalFragmentHead) chunks.additionalFragmentHead = defaultAdditionalHead
+    if (!chunks.preliminaryColorContribution) chunks.preliminaryColorContribution = defaultPreliminaryColor
     if (!chunks.ambientContribution) chunks.ambientContribution = defaultAmbientContribution
     if (!chunks.lightContribution) chunks.lightContribution = defaultLightContribution
     if (!chunks.additionalColorContribution) chunks.additionalColorContribution = defaultAdditionalColor

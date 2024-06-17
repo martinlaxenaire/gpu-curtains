@@ -91,13 +91,14 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     `
       var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
       
-      // baseColor = vec4(sRGBToLinear(baseColor.rgb), baseColor.a);
-      
       if (baseColor.a < material.alphaCutoff) {
         discard;
       }
     `;
   }
+  baseColor += `
+      color = baseColor;
+  `;
   let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? `let normal: vec3f = normalize(fsInput.normal);` : `let normal: vec3f = vec3(0.0);`;
   if (useNormalMap) {
     normalMap = `
@@ -140,8 +141,6 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     `
       emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
       
-      // emissive = sRGBToLinear(emissive);
-      
       emissive *= material.emissiveFactor;
       `;
     if (occlusionTexture) {
@@ -164,6 +163,7 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
   `
   );
   const defaultAdditionalHead = "";
+  const defaultPreliminaryColor = "";
   const defaultAdditionalColor = "";
   const defaultAmbientContribution = (
     /* wgsl */
@@ -183,12 +183,15 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     chunks = {
       additionalFragmentHead: defaultAdditionalHead,
       ambientContribution: defaultAmbientContribution,
+      preliminaryColorContribution: defaultPreliminaryColor,
       lightContribution: defaultLightContribution,
       additionalColorContribution: defaultAdditionalColor
     };
   } else {
     if (!chunks.additionalFragmentHead)
       chunks.additionalFragmentHead = defaultAdditionalHead;
+    if (!chunks.preliminaryColorContribution)
+      chunks.preliminaryColorContribution = defaultPreliminaryColor;
     if (!chunks.ambientContribution)
       chunks.ambientContribution = defaultAmbientContribution;
     if (!chunks.lightContribution)

@@ -77,7 +77,7 @@ class BufferBinding extends Binding {
   clone(params) {
     const { struct, ...defaultParams } = params;
     const bufferBindingCopy = new this.constructor(defaultParams);
-    bufferBindingCopy.setBindings(struct);
+    struct && bufferBindingCopy.setBindings(struct);
     bufferBindingCopy.options.struct = struct;
     bufferBindingCopy.arrayBufferSize = this.arrayBufferSize;
     bufferBindingCopy.arrayBuffer = new ArrayBuffer(bufferBindingCopy.arrayBufferSize);

@@ -31,7 +31,8 @@ const DEFAULT_TRANSLATION = [0, 0, 0]
 const DEFAULT_ROTATION = [0, 0, 0, 1]
 const DEFAULT_SCALE = [1, 1, 1]
 
-const absUriRegEx = new RegExp(`^${window.location.protocol}`, 'i')
+const absUriRegEx =
+  (typeof window !== 'undefined' && new RegExp(`^${window.location.protocol}`, 'i')) || RegExp(`^(http|https):`, 'i')
 const dataUriRegEx = /^data:/
 
 /**
