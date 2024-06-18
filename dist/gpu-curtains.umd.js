@@ -4656,11 +4656,12 @@
       width = this.size.width,
       height = this.size.height,
       depth = this.size.depth,
-      origin = [0, 0, 0]
+      origin = [0, 0, 0],
+      colorSpace = "srgb"
     }) {
       this.renderer.device.queue.copyExternalImageToTexture(
         { source, flipY: this.options.flipY },
-        { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+        { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
         [width, height, depth]
       );
       if (this.texture.mipLevelCount > 1) {
@@ -13988,7 +13989,16 @@ struct VSOutput {
     );
     const returnColor = (
       /* wgsl */
-      "return color;"
+      `      
+      return vec4(
+        linearTosRGB(
+          toneMapKhronosPbrNeutral(
+            color.rgb
+          )
+        ),
+        color.a
+      );
+  `
     );
     const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === "color0");
     let baseColor = (
@@ -14006,9 +14016,14 @@ struct VSOutput {
     `;
     }
     baseColor += `
+      let dielectric: vec3f = vec3(0.04);
+      var f0: vec3f = dielectric;
       color = baseColor;
   `;
-    let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? `let normal: vec3f = normalize(fsInput.normal);` : `let normal: vec3f = vec3(0.0);`;
+    let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? `
+      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+      let normal: vec3f = normalize(faceDirection * fsInput.normal);
+    ` : `let normal: vec3f = vec3(0.0);`;
     if (useNormalMap) {
       normalMap = `
       let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), normalize(fsInput.normal));
@@ -14016,6 +14031,12 @@ struct VSOutput {
       let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `;
     }
+    normalMap += /* wgsl */
+    `
+      let N = normalize(normal);
+      let V = normalize(fsInput.viewDirection);
+      let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
+  `;
     let metallicRoughness = (
       /*  wgsl */
       `
@@ -14034,8 +14055,7 @@ struct VSOutput {
     const f0 = (
       /* wgsl */
       `
-      let dielectricSpec: vec3f = vec3(0.04, 0.04, 0.04);
-      let f0 = mix(dielectricSpec, color.rgb, vec3(metallic));
+      f0 = mix(dielectric, color.rgb, vec3(metallic));
   `
     );
     let emissiveOcclusion = (
@@ -14066,26 +14086,18 @@ struct VSOutput {
     const initLightShading = (
       /* wgsl */
       `
-      var ambientContribution: vec3f;
-      var lightContribution: vec3f;
-      color = baseColor;
+      var lightContribution: LightContribution;
+      
+      lightContribution.ambient = vec3(1.0);
+      lightContribution.diffuse = vec3(0.0);
+      lightContribution.specular = vec3(0.0);
   `
     );
     const defaultAdditionalHead = "";
     const defaultPreliminaryColor = "";
     const defaultAdditionalColor = "";
-    const defaultAmbientContribution = (
-      /* wgsl */
-      `
-    ambientContribution = vec3(1.0);
-  `
-    );
-    const defaultLightContribution = (
-      /* wgsl */
-      `
-    lightContribution = vec3(0.0);
-  `
-    );
+    const defaultAmbientContribution = "";
+    const defaultLightContribution = "";
     shaderParameters = shaderParameters ?? {};
     let chunks = shaderParameters.chunks;
     if (!chunks) {
@@ -14110,15 +14122,13 @@ struct VSOutput {
     }
     const applyLightShading = (
       /* wgsl */
-      `
-      let ambient = ambientContribution * color.rgb * occlusion;
+      `      
+      lightContribution.ambient *= color.rgb * occlusion;
+      lightContribution.diffuse *= occlusion;
+      lightContribution.specular *= occlusion;
       
       color = vec4(
-        linearTosRGB(
-          toneMapKhronosPbrNeutral(
-            lightContribution + ambient + emissive
-          )
-        ),
+        lightContribution.ambient + lightContribution.diffuse + lightContribution.specular + emissive,
         color.a
       );
   `
@@ -14126,6 +14136,13 @@ struct VSOutput {
     const fs = (
       /* wgsl */
       `
+    // Light
+    struct LightContribution {
+      ambient: vec3f,
+      diffuse: vec3f,
+      specular: vec3f,
+    };
+  
     // PBR
     const PI = ${Math.PI};
     
@@ -14168,15 +14185,19 @@ struct VSOutput {
   
     ${fragmentInput}
   
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
       ${initColor}
       ${baseColor}
+
       ${normalMap}
-      ${metallicRoughness}
+      ${metallicRoughness}  
+      ${initLightShading}  
+      
+      // user defined preliminary color contribution
+      ${chunks.preliminaryColorContribution}
+        
       ${f0}
       ${emissiveOcclusion}
-      
-      ${initLightShading}
       
       // user defined lightning
       ${chunks.ambientContribution}
@@ -14184,6 +14205,7 @@ struct VSOutput {
       
       ${applyLightShading}
       
+      // user defined additional color contribution
       ${chunks.additionalColorContribution}
       
       ${returnColor}
@@ -14253,6 +14275,7 @@ struct VSOutput {
     return buildShaders(meshDescriptor, shaderParameters);
   };
   const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
+    shaderParameters = shaderParameters || {};
     const iblParameters = shaderParameters?.iblParameters;
     meshDescriptor.parameters.uniforms = {
       ...meshDescriptor.parameters.uniforms,
@@ -14274,7 +14297,8 @@ struct VSOutput {
     const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {};
     const useIBLContribution = envDiffuseTexture && envSpecularTexture && lutTexture;
     let iblContributionHead = "";
-    let iblContribution = "";
+    let iblPreliminaryContribution = "";
+    let iblAdditionalContribution = "";
     if (useIBLContribution) {
       meshDescriptor.parameters.textures = [
         ...meshDescriptor.parameters.textures,
@@ -14324,14 +14348,32 @@ struct VSOutput {
       specular: vec3f,
     };
     
-    fn getIBLContribution(NdV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, specularColor: vec3f) -> IBLContribution {
-      let brdf: vec3f = sRGBToLinear(textureSample(${lutTextureDescriptor.texture}, ${lutTextureDescriptor.sampler}, vec2(NdV, roughness)).rgb);
-      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${envDiffuseTextureDescriptor.sampler}, cartesianToPolar(n))).rgb;      
-      diffuseLight = mix(vec3(1), diffuseLight, ibl.diffuseStrength);
+    fn getIBLContribution(NdotV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, f0: vec3f) -> IBLContribution {
+      var iblContribution: IBLContribution;
+    
+      // IBL diffuse
+      let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0, 0.0), vec2(1.0, 1.0));
+      
+      let brdf: vec3f = textureSample(${lutTextureDescriptor.texture}, ${lutTextureDescriptor.sampler}, brdfSamplePoint).rgb;
+    
+      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${envDiffuseTextureDescriptor.sampler}, cartesianToPolar(n))).rgb;
+    
+      let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+      let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+      var FssEss: vec3f = ibl.specularStrength * k_S * brdf.x + brdf.y;
+      let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+      let F_avg: vec3f = ibl.specularStrength * (f0 + (1.0 - f0) / 21.0);
+      let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
+      let k_D: vec3f = diffuseColor * (1.0 - FssEss + FmsEms);
+      
+      iblContribution.diffuse = (FmsEms + k_D) * diffuseLight * ibl.diffuseStrength;
+      
+      // IBL specular
       var blend: f32 = roughness * ENV_LODS;
       let level0: f32 = floor(blend);
       let level1: f32 = min(ENV_LODS, level0 + 1.0);
       blend -= level0;
+      
       var uvSpec: vec2f = cartesianToPolar(reflection);
       uvSpec.y /= 2.0;
       var uv0: vec2f = uvSpec;
@@ -14340,40 +14382,46 @@ struct VSOutput {
       uv0.y += 1.0 - exp(-LN2 * level0);
       uv1 /= pow(2.0, level1);
       uv1.y += 1.0 - exp(-LN2 * level1);
+      
       let specular0: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv0)).rgb;
       let specular1: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv1)).rgb;
-      let specularLight: vec3f = mix(specular0, specular1, blend);      
-      
-      var iblContribution: IBLContribution;
-      iblContribution.diffuse = diffuseLight * diffuseColor;
-      
-      let reflectivity: f32 = pow((1.0 - roughness), 2.0) * 0.05;
-      iblContribution.specular = specularLight * (specularColor * brdf.x + brdf.y + reflectivity);
-      iblContribution.specular *= ibl.specularStrength;
+      let specularLight: vec3f = mix(specular0, specular1, blend);  
+
+      FssEss = k_S * brdf.x + brdf.y;
+      iblContribution.specular = specularLight * FssEss * ibl.specularStrength;
       
       return iblContribution;
     }
     `;
-      iblContribution = /* wgsl */
+      iblPreliminaryContribution = /* wgsl */
       `
-      let reflection: vec3f = normalize(reflect(-normalize(fsInput.viewDirection), normal));
+      let reflection: vec3f = normalize(reflect(-V, N));
       
-      let diffuseColor: vec3f = baseColor.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
-      let specularColor: vec3f = mix(f0, baseColor.rgb, metallic);
+      f0 = mix(dielectric, color.rgb, vec3(metallic));
+      
+      //let diffuseColor: vec3f = color.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
+      let diffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
     
-      let iblContribution = getIBLContribution(max(dot(normal, normalize(fsInput.viewDirection)), 0.0), roughness, normal, reflection, diffuseColor, specularColor);
+      let iblContribution = getIBLContribution(NdotV, roughness, normal, reflection, diffuseColor, f0);
       
-      color = vec4(color.rgb + iblContribution.diffuse + iblContribution.specular, color.a);
+      //color = vec4(color.rgb + iblContribution.diffuse * occlusion + iblContribution.specular * occlusion, color.a);
+      lightContribution.diffuse += iblContribution.diffuse;
+      lightContribution.specular += iblContribution.specular;
       
       // Add IBL spec to alpha for reflections on transparent surfaces (glass)
       color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
+    `;
+      iblAdditionalContribution = /* wgsl */
+      `
+      
     `;
     }
     let chunks = shaderParameters?.chunks;
     if (!chunks) {
       chunks = {
         additionalFragmentHead: iblContributionHead,
-        additionalColorContribution: iblContribution
+        preliminaryColorContribution: iblPreliminaryContribution,
+        additionalColorContribution: iblAdditionalContribution
       };
     } else {
       if (!chunks.additionalFragmentHead) {
@@ -14381,12 +14429,18 @@ struct VSOutput {
       } else {
         chunks.additionalFragmentHead += iblContributionHead;
       }
-      if (!chunks.additionalColorContribution) {
-        chunks.additionalColorContribution = iblContribution;
+      if (!chunks.preliminaryColorContribution) {
+        chunks.preliminaryColorContribution = iblPreliminaryContribution;
       } else {
-        chunks.additionalColorContribution += iblContribution;
+        chunks.preliminaryColorContribution += iblPreliminaryContribution;
+      }
+      if (!chunks.additionalColorContribution) {
+        chunks.additionalColorContribution = iblAdditionalContribution;
+      } else {
+        chunks.additionalColorContribution += iblAdditionalContribution;
       }
     }
+    shaderParameters.chunks = chunks;
     return buildPBRShaders(meshDescriptor, shaderParameters);
   };
 

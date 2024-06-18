@@ -115,7 +115,7 @@ export const generateMips = (() => {
             @vertex fn vs(
               @builtin(vertex_index) vertexIndex : u32
             ) -> VSOutput {
-              var pos = array<vec2f, 6>(
+              let pos = array(
 
                 vec2f( 0.0,  0.0),  // center
                 vec2f( 1.0,  0.0),  // right, center
@@ -145,20 +145,19 @@ export const generateMips = (() => {
 
       sampler = device.createSampler({
         minFilter: 'linear',
+        magFilter: 'linear',
       })
     }
 
     if (!pipelineByFormat[texture.format]) {
       pipelineByFormat[texture.format] = device.createRenderPipeline({
-        label: 'mip level generator pipeline',
+        label: 'Mip level generator pipeline',
         layout: 'auto',
         vertex: {
           module,
-          entryPoint: 'vs',
         },
         fragment: {
           module,
-          entryPoint: 'fs',
           targets: [{ format: texture.format }],
         },
       })
@@ -166,7 +165,7 @@ export const generateMips = (() => {
     const pipeline = pipelineByFormat[texture.format]
 
     const encoder = device.createCommandEncoder({
-      label: 'mip gen encoder',
+      label: 'Mip gen encoder',
     })
 
     let width = texture.width
@@ -176,38 +175,48 @@ export const generateMips = (() => {
       width = Math.max(1, (width / 2) | 0)
       height = Math.max(1, (height / 2) | 0)
 
-      const bindGroup = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(0),
-        entries: [
-          { binding: 0, resource: sampler },
-          {
-            binding: 1,
-            resource: texture.createView({
-              baseMipLevel,
-              mipLevelCount: 1,
-            }),
-          },
-        ],
-      })
+      for (let layer = 0; layer < texture.depthOrArrayLayers; ++layer) {
+        const bindGroup = device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: sampler },
+            {
+              binding: 1,
+              resource: texture.createView({
+                dimension: '2d',
+                baseMipLevel,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1,
+              }),
+            },
+          ],
+        })
 
-      ++baseMipLevel
+        const renderPassDescriptor = {
+          label: 'Mip generation render pass',
+          colorAttachments: [
+            {
+              view: texture.createView({
+                dimension: '2d',
+                baseMipLevel: baseMipLevel + 1,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1,
+              }),
+              loadOp: 'clear',
+              storeOp: 'store',
+            },
+          ],
+        }
 
-      const renderPassDescriptor = {
-        label: 'our basic canvas renderPass',
-        colorAttachments: [
-          {
-            view: texture.createView({ baseMipLevel, mipLevelCount: 1 }),
-            loadOp: 'clear',
-            storeOp: 'store',
-          },
-        ],
+        const pass = encoder.beginRenderPass(renderPassDescriptor as GPURenderPassDescriptor)
+        pass.setPipeline(pipeline)
+        pass.setBindGroup(0, bindGroup)
+        pass.draw(6) // call our vertex shader 6 times
+        pass.end()
       }
-
-      const pass = encoder.beginRenderPass(renderPassDescriptor as GPURenderPassDescriptor)
-      pass.setPipeline(pipeline)
-      pass.setBindGroup(0, bindGroup)
-      pass.draw(6) // call our vertex shader 6 times
-      pass.end()
+      ++baseMipLevel
     }
 
     const commandBuffer = encoder.finish()

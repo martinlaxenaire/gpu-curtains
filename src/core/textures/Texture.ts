@@ -127,6 +127,13 @@ export class Texture {
 
     this.options = { ...defaultTextureParams, ...parameters }
 
+    if (
+      this.options.format === 'rgba32float' &&
+      !(this.renderer.deviceManager.adapter as GPUAdapter).features.has('float32-filterable')
+    ) {
+      this.options.format = 'rgba16float'
+    }
+
     if (parameters.fromTexture) {
       this.options.format = parameters.fromTexture.texture.format
       this.options.sampleCount = parameters.fromTexture.texture.sampleCount
@@ -238,16 +245,18 @@ export class Texture {
     height = this.size.height,
     depth = this.size.depth,
     origin = [0, 0, 0],
+    colorSpace = 'srgb',
   }: {
     source: GPUImageCopyExternalImageSource
     width?: number
     height?: number
     depth?: number
     origin?: GPUOrigin3D
+    colorSpace?: PredefinedColorSpace
   }) {
     this.renderer.device.queue.copyExternalImageToTexture(
       { source: source, flipY: this.options.flipY },
-      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
       [width, height, depth]
     )
 

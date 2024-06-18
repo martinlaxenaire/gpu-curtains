@@ -1,5 +1,7 @@
 // Goals of this test:
 // - test various capacities of the gltf loader
+import { Texture } from '../../dist/esm/index.mjs'
+
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -8,6 +10,7 @@ window.addEventListener('load', async () => {
     Texture,
     GLTFLoader,
     GLTFScenesManager,
+    buildShaders,
     buildPBRShaders,
     buildIBLShaders,
     OrbitControls,
@@ -45,12 +48,13 @@ window.addEventListener('load', async () => {
   }
 
   const iblLUTBitmap = await loadImageBitmap('./assets/lut.png')
-  const envDiffuseBitmap = await loadImageBitmap('./assets/sunset-diffuse-RGBM.png')
-  const envSpecularBitmap = await loadImageBitmap('./assets/royal_esplanade_1k.png')
+  // const envDiffuseBitmap = await loadImageBitmap('./assets/royal_esplanade_1k-diffuse-RGBM.png')
+  // const envSpecularBitmap = await loadImageBitmap('./assets/royal_esplanade_1k-specular-RGBM.png')
 
   const originalIblLUTTexture = new Texture(gpuCameraRenderer, {
     name: 'iblLUTTexture',
     visibility: ['fragment'],
+    format: 'rgba32float',
     fixedSize: {
       width: iblLUTBitmap.width,
       height: iblLUTBitmap.height,
@@ -61,33 +65,101 @@ window.addEventListener('load', async () => {
     source: iblLUTBitmap,
   })
 
+  // Fetch the 6 separate images for negative/positive x, y, z axis of a cubeMap
+  // and upload it into a GPUTexture.
+  // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]
+  const diffuseSrcs = [
+    './assets/hdr/diffuse/px.png',
+    './assets/hdr/diffuse/nx.png',
+    './assets/hdr/diffuse/py.png',
+    './assets/hdr/diffuse/ny.png',
+    './assets/hdr/diffuse/pz.png',
+    './assets/hdr/diffuse/nz.png',
+  ]
+
+  // const specularSrcs = [
+  //   './assets/hdr/specular-hdr/px.png',
+  //   './assets/hdr/specular-hdr/nx.png',
+  //   './assets/hdr/specular-hdr/py.png',
+  //   './assets/hdr/specular-hdr/ny.png',
+  //   './assets/hdr/specular-hdr/pz.png',
+  //   './assets/hdr/specular-hdr/nz.png',
+  // ]
+
+  const specularSrcs = [
+    './assets/hdr/specular/px.png',
+    './assets/hdr/specular/nx.png',
+    './assets/hdr/specular/py.png',
+    './assets/hdr/specular/ny.png',
+    './assets/hdr/specular/pz.png',
+    './assets/hdr/specular/nz.png',
+  ]
+
+  const diffusePromises = diffuseSrcs.map(async (src) => {
+    const response = await fetch(src)
+    return createImageBitmap(await response.blob())
+  })
+
+  const diffuseBitmaps = await Promise.all(diffusePromises)
+
+  const specularPromises = specularSrcs.map(async (src) => {
+    const response = await fetch(src)
+    return createImageBitmap(await response.blob())
+  })
+
+  const specularBitmaps = await Promise.all(specularPromises)
+
   const originalEnvDiffuseTexture = new Texture(gpuCameraRenderer, {
+    label: 'Environment diffuse texture',
     name: 'envDiffuseTexture',
     visibility: ['fragment'],
-    format: 'rgba16float',
+    format: 'rgba32float',
+    generateMips: true,
+    viewDimension: 'cube',
     fixedSize: {
-      width: envDiffuseBitmap.width,
-      height: envDiffuseBitmap.height,
+      width: diffuseBitmaps[0].width,
+      height: diffuseBitmaps[0].height,
     },
+    flipY: true, // taken from a WebGL example
   })
 
-  originalEnvDiffuseTexture.uploadSource({
-    source: envDiffuseBitmap,
-  })
+  for (let i = 0; i < diffuseBitmaps.length; i++) {
+    const imageBitmap = diffuseBitmaps[i]
+    originalEnvDiffuseTexture.uploadSource({
+      source: imageBitmap,
+      width: imageBitmap.width,
+      height: imageBitmap.height,
+      depth: 1, // explicitly set the depth to 1
+      origin: [0, 0, i],
+      colorSpace: 'display-p3',
+    })
+  }
 
   const originalEnvSpecularTexture = new Texture(gpuCameraRenderer, {
+    label: 'Environment specular texture',
     name: 'envSpecularTexture',
     visibility: ['fragment'],
-    format: 'rgba16float',
+    format: 'rgba32float',
+    generateMips: true,
+    viewDimension: 'cube',
     fixedSize: {
-      width: envSpecularBitmap.width,
-      height: envSpecularBitmap.height,
+      width: specularBitmaps[0].width,
+      height: specularBitmaps[0].height,
     },
+    flipY: true, // taken from a WebGL example
   })
 
-  originalEnvSpecularTexture.uploadSource({
-    source: envSpecularBitmap,
-  })
+  for (let i = 0; i < specularBitmaps.length; i++) {
+    const imageBitmap = specularBitmaps[i]
+    originalEnvSpecularTexture.uploadSource({
+      source: imageBitmap,
+      width: imageBitmap.width,
+      height: imageBitmap.height,
+      depth: 1, // explicitly set the depth to 1
+      origin: [0, 0, i],
+      colorSpace: 'display-p3',
+    })
+  }
 
   const models = {
     damagedHelmet: {
@@ -227,7 +299,8 @@ window.addEventListener('load', async () => {
             struct: {
               intensity: {
                 type: 'f32',
-                value: 0.03,
+                // value: 0.03,
+                value: 0,
               },
               color: {
                 type: 'vec3f',
@@ -243,7 +316,7 @@ window.addEventListener('load', async () => {
               },
               range: {
                 type: 'f32',
-                value: lightPositionLength * 1.25,
+                value: lightPositionLength,
               },
               color: {
                 type: 'vec3f',
@@ -251,7 +324,8 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                value: lightPositionLengthSq,
+                // value: lightPositionLengthSq,
+                value: 0,
               },
             },
           },
@@ -270,17 +344,14 @@ window.addEventListener('load', async () => {
       `
 
       const ambientContribution = /* wgsl */ `
-      ambientContribution = ambientLight.intensity * ambientLight.color;
+      lightContribution.ambient = ambientLight.intensity * ambientLight.color;
       `
 
       const lightContribution = /* wgsl */ `
-      let N = normalize(normal);
-      let V = normalize(fsInput.viewDirection);
       let L = normalize(pointLight.position - fsInput.worldPosition);
       let H = normalize(V + L);
       
       let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
-      let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
       let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
       let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
     
@@ -303,21 +374,37 @@ window.addEventListener('load', async () => {
       let attenuation = rangeAttenuation(pointLight.range, distance);
       
       let radiance = pointLight.color * pointLight.intensity * attenuation;
-      lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
+      
+      lightContribution.diffuse += (kD * color.rgb / vec3(PI)) * radiance * NdotL;
+      lightContribution.specular += specular * radiance * NdotL;
       `
+
+      const additionalColorContribution = `
+        //color = vec4(vec3(roughness), color.a);
+      `
+
+      //parameters.shaders = buildShaders(meshDescriptor)
 
       // parameters.shaders = buildPBRShaders(meshDescriptor, {
       //   chunks: { additionalFragmentHead, ambientContribution, lightContribution },
       // })
+
       parameters.shaders = buildIBLShaders(meshDescriptor, {
         iblParameters: {
-          diffuseStrength: 0.5,
+          diffuseStrength: 1,
           specularStrength: 1,
-          lutTexture: iblLUTTexture,
-          envDiffuseTexture,
-          envSpecularTexture,
+          lutTexture: {
+            texture: iblLUTTexture,
+          },
+          envDiffuseTexture: {
+            texture: envDiffuseTexture,
+          },
+          envSpecularTexture: {
+            texture: envSpecularTexture,
+            //isRGBM: true,
+          },
         },
-        chunks: { additionalFragmentHead, ambientContribution, lightContribution },
+        chunks: { additionalFragmentHead, ambientContribution, lightContribution, additionalColorContribution },
       })
     })
 

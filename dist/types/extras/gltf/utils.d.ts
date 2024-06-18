@@ -11,9 +11,9 @@ export interface ShaderBuilderParameters {
         additionalFragmentHead?: string;
         /** Preliminary modification to apply to the fragment shader `color` `vec4f` variable before applying any lightning calculations. */
         preliminaryColorContribution?: string;
-        /** Ambient light contribution to apply to the fragment shader `ambientContribution` `vec3f` variable. Default is `vec3(1.0)`. */
+        /** Ambient light contribution to apply to the fragment shader `lightContribution.ambient` `vec3f` variable. Default is `vec3(1.0)`. */
         ambientContribution?: string;
-        /** Light contribution to apply to the fragment shader `lightContribution` `vec3f` variable. Default is `vec3(0.0)`. */
+        /** Light contribution to apply to the fragment shader `lightContribution.diffuse` `vec3f` and `lightContribution.specular` `vec3f` variables. Default is `vec3(0.0)` for both. */
         lightContribution?: string;
         /** Additional modification to apply to the fragment shader `color` `vec4f` variable before returning it. */
         additionalColorContribution?: string;

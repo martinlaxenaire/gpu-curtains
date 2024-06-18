@@ -257,8 +257,28 @@ export class GLTFScenesManager {
       }
     } else {
       // create a default sampler
-      this.scenesManager.samplers.push(new Sampler(this.renderer, { label: 'Default sampler', name: 'defaultSampler' }))
+      this.scenesManager.samplers.push(
+        new Sampler(this.renderer, {
+          label: 'Default sampler',
+          name: 'defaultSampler',
+          magFilter: 'linear',
+          minFilter: 'linear',
+          mipmapFilter: 'linear',
+        })
+      )
     }
+
+    this.scenesManager.samplers.push(
+      new Sampler(this.renderer, {
+        label: 'Clamp sampler',
+        name: 'clampSampler',
+        magFilter: 'linear',
+        minFilter: 'linear',
+        mipmapFilter: 'linear',
+        addressModeU: 'clamp-to-edge',
+        addressModeV: 'clamp-to-edge',
+      })
+    )
   }
 
   /**
@@ -711,7 +731,7 @@ export class GLTFScenesManager {
 
       const materialTextures = this.scenesManager.materialsTextures[primitive.material]
 
-      meshDescriptor.parameters.samplers = []
+      meshDescriptor.parameters.samplers = [...this.scenesManager.samplers]
       meshDescriptor.parameters.textures = []
 
       materialTextures?.texturesDescriptors.forEach((t) => {
@@ -766,19 +786,25 @@ export class GLTFScenesManager {
         },
         metallicFactor: {
           type: 'f32',
-          value: material.pbrMetallicRoughness?.metallicFactor || 0,
+          value:
+            material.pbrMetallicRoughness?.metallicFactor === undefined
+              ? 1
+              : material.pbrMetallicRoughness.metallicFactor,
         },
         roughnessFactor: {
           type: 'f32',
-          value: material.pbrMetallicRoughness?.roughnessFactor || 1,
+          value:
+            material.pbrMetallicRoughness?.roughnessFactor === undefined
+              ? 1
+              : material.pbrMetallicRoughness.roughnessFactor,
         },
         normalMapScale: {
           type: 'f32',
-          value: material.normalTexture?.scale || 1,
+          value: material.normalTexture?.scale === undefined ? 1 : material.normalTexture.scale,
         },
         occlusionStrength: {
           type: 'f32',
-          value: material.occlusionTexture?.strength || 1,
+          value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
         },
         emissiveFactor: {
           type: 'vec3f',

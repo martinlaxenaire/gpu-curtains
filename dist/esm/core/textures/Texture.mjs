@@ -136,11 +136,12 @@ class Texture {
     width = this.size.width,
     height = this.size.height,
     depth = this.size.depth,
-    origin = [0, 0, 0]
+    origin = [0, 0, 0],
+    colorSpace = "srgb"
   }) {
     this.renderer.device.queue.copyExternalImageToTexture(
       { source, flipY: this.options.flipY },
-      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
       [width, height, depth]
     );
     if (this.texture.mipLevelCount > 1) {

@@ -156,16 +156,17 @@ window.addEventListener('load', async () => {
 
       // shaders
       const ambientContribution = /* wgsl */ `
-        ambientContribution = ambientLight.intensity * ambientLight.color;
+        lightContribution.ambient = ambientLight.intensity * ambientLight.color;
       `
 
       const lightContribution = /* wgsl */ `
         // An extremely simple directional lighting model, just to give our model some shape.
-        let N = normalize(normal);
+        // N is already defined as
+        // let N = normalize(normal);
         let L = normalize(directionalLight.position);
         let NDotL = max(dot(N, L), 0.0);
 
-        lightContribution = color.rgb * NDotL * directionalLight.color;
+        lightContribution.diffuse += NDotL * directionalLight.color;
       `
 
       parameters.shaders = buildShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
