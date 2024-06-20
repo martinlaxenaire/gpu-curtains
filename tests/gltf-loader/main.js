@@ -1,13 +1,12 @@
 // Goals of this test:
 // - test various capacities of the gltf loader
-import { Texture } from '../../dist/esm/index.mjs'
-
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
     GPUDeviceManager,
     GPUCameraRenderer,
     Texture,
+    Sampler,
     GLTFLoader,
     GLTFScenesManager,
     buildShaders,
@@ -59,6 +58,7 @@ window.addEventListener('load', async () => {
       width: iblLUTBitmap.width,
       height: iblLUTBitmap.height,
     },
+    flipY: true, // from a WebGL texture!
   })
 
   originalIblLUTTexture.uploadSource({
@@ -68,31 +68,26 @@ window.addEventListener('load', async () => {
   // Fetch the 6 separate images for negative/positive x, y, z axis of a cubeMap
   // and upload it into a GPUTexture.
   // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]
+  // We can also use a single gain map JPG as source
+  // Created from a .hdr with https://gainmap-creator.monogrid.com/
   const diffuseSrcs = [
-    './assets/hdr/diffuse/px.png',
-    './assets/hdr/diffuse/nx.png',
-    './assets/hdr/diffuse/py.png',
-    './assets/hdr/diffuse/ny.png',
-    './assets/hdr/diffuse/pz.png',
-    './assets/hdr/diffuse/nz.png',
+    // './assets/hdr-cube-maps/diffuse/px.png',
+    // './assets/hdr-cube-maps/diffuse/nx.png',
+    // './assets/hdr-cube-maps/diffuse/py.png',
+    // './assets/hdr-cube-maps/diffuse/ny.png',
+    // './assets/hdr-cube-maps/diffuse/pz.png',
+    // './assets/hdr-cube-maps/diffuse/nz.png',
+    './assets/hdr-gain-maps/cannon-1k-diffuse.jpg',
   ]
 
-  // const specularSrcs = [
-  //   './assets/hdr/specular-hdr/px.png',
-  //   './assets/hdr/specular-hdr/nx.png',
-  //   './assets/hdr/specular-hdr/py.png',
-  //   './assets/hdr/specular-hdr/ny.png',
-  //   './assets/hdr/specular-hdr/pz.png',
-  //   './assets/hdr/specular-hdr/nz.png',
-  // ]
-
   const specularSrcs = [
-    './assets/hdr/specular/px.png',
-    './assets/hdr/specular/nx.png',
-    './assets/hdr/specular/py.png',
-    './assets/hdr/specular/ny.png',
-    './assets/hdr/specular/pz.png',
-    './assets/hdr/specular/nz.png',
+    // './assets/hdr-cube-maps/specular/px.png',
+    // './assets/hdr-cube-maps/specular/nx.png',
+    // './assets/hdr-cube-maps/specular/py.png',
+    // './assets/hdr-cube-maps/specular/ny.png',
+    // './assets/hdr-cube-maps/specular/pz.png',
+    // './assets/hdr-cube-maps/specular/nz.png',
+    './assets/hdr-gain-maps/cannon-1k-specular.jpg',
   ]
 
   const diffusePromises = diffuseSrcs.map(async (src) => {
@@ -115,12 +110,12 @@ window.addEventListener('load', async () => {
     visibility: ['fragment'],
     format: 'rgba32float',
     generateMips: true,
-    viewDimension: 'cube',
+    viewDimension: diffuseBitmaps.length > 1 ? 'cube' : '2d',
     fixedSize: {
       width: diffuseBitmaps[0].width,
       height: diffuseBitmaps[0].height,
     },
-    flipY: true, // taken from a WebGL example
+    flipY: diffuseBitmaps.length, // cube map has been taken from a WebGL example
   })
 
   for (let i = 0; i < diffuseBitmaps.length; i++) {
@@ -141,12 +136,12 @@ window.addEventListener('load', async () => {
     visibility: ['fragment'],
     format: 'rgba32float',
     generateMips: true,
-    viewDimension: 'cube',
+    viewDimension: specularBitmaps.length > 1 ? 'cube' : '2d',
     fixedSize: {
       width: specularBitmaps[0].width,
       height: specularBitmaps[0].height,
     },
-    flipY: true, // taken from a WebGL example
+    flipY: specularBitmaps.length, // cube map has been taken from a WebGL example
   })
 
   for (let i = 0; i < specularBitmaps.length; i++) {
@@ -160,6 +155,17 @@ window.addEventListener('load', async () => {
       colorSpace: 'display-p3',
     })
   }
+
+  // finally we will need a clamp-to-edge sampler for those textures
+  const clampSampler = new Sampler(gpuCameraRenderer, {
+    label: 'Clamp sampler',
+    name: 'clampSampler',
+    magFilter: 'linear',
+    minFilter: 'linear',
+    mipmapFilter: 'linear',
+    addressModeU: 'clamp-to-edge',
+    addressModeV: 'clamp-to-edge',
+  })
 
   const models = {
     damagedHelmet: {
@@ -265,6 +271,9 @@ window.addEventListener('load', async () => {
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
+      // add clamp sampler
+      parameters.samplers = [...parameters.samplers, clampSampler]
+
       // add IBL textures
       const iblLUTTexture = new Texture(gpuCameraRenderer, {
         name: 'iblLUTTexture',
@@ -299,8 +308,7 @@ window.addEventListener('load', async () => {
             struct: {
               intensity: {
                 type: 'f32',
-                // value: 0.03,
-                value: 0,
+                value: 0.03,
               },
               color: {
                 type: 'vec3f',
@@ -324,8 +332,7 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                // value: lightPositionLengthSq,
-                value: 0,
+                value: lightPositionLengthSq,
               },
             },
           },
@@ -395,16 +402,23 @@ window.addEventListener('load', async () => {
           specularStrength: 1,
           lutTexture: {
             texture: iblLUTTexture,
+            samplerName: 'clampSampler', // use clamp sampler
           },
           envDiffuseTexture: {
             texture: envDiffuseTexture,
+            samplerName: 'clampSampler', // use clamp sampler
           },
           envSpecularTexture: {
             texture: envSpecularTexture,
-            //isRGBM: true,
+            samplerName: 'clampSampler', // use clamp sampler
           },
         },
-        chunks: { additionalFragmentHead, ambientContribution, lightContribution, additionalColorContribution },
+        chunks: {
+          additionalFragmentHead,
+          // ambientContribution,
+          // lightContribution,
+          additionalColorContribution,
+        },
       })
     })
 

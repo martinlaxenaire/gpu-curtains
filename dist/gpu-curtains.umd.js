@@ -77,7 +77,7 @@
             @vertex fn vs(
               @builtin(vertex_index) vertexIndex : u32
             ) -> VSOutput {
-              var pos = array<vec2f, 6>(
+              let pos = array(
 
                 vec2f( 0.0,  0.0),  // center
                 vec2f( 1.0,  0.0),  // right, center
@@ -105,27 +105,26 @@
           `
         });
         sampler = device.createSampler({
-          minFilter: "linear"
+          minFilter: "linear",
+          magFilter: "linear"
         });
       }
       if (!pipelineByFormat[texture.format]) {
         pipelineByFormat[texture.format] = device.createRenderPipeline({
-          label: "mip level generator pipeline",
+          label: "Mip level generator pipeline",
           layout: "auto",
           vertex: {
-            module,
-            entryPoint: "vs"
+            module
           },
           fragment: {
             module,
-            entryPoint: "fs",
             targets: [{ format: texture.format }]
           }
         });
       }
       const pipeline = pipelineByFormat[texture.format];
       const encoder = device.createCommandEncoder({
-        label: "mip gen encoder"
+        label: "Mip gen encoder"
       });
       let width = texture.width;
       let height = texture.height;
@@ -133,35 +132,46 @@
       while (width > 1 || height > 1) {
         width = Math.max(1, width / 2 | 0);
         height = Math.max(1, height / 2 | 0);
-        const bindGroup = device.createBindGroup({
-          layout: pipeline.getBindGroupLayout(0),
-          entries: [
-            { binding: 0, resource: sampler },
-            {
-              binding: 1,
-              resource: texture.createView({
-                baseMipLevel,
-                mipLevelCount: 1
-              })
-            }
-          ]
-        });
+        for (let layer = 0; layer < texture.depthOrArrayLayers; ++layer) {
+          const bindGroup = device.createBindGroup({
+            layout: pipeline.getBindGroupLayout(0),
+            entries: [
+              { binding: 0, resource: sampler },
+              {
+                binding: 1,
+                resource: texture.createView({
+                  dimension: "2d",
+                  baseMipLevel,
+                  mipLevelCount: 1,
+                  baseArrayLayer: layer,
+                  arrayLayerCount: 1
+                })
+              }
+            ]
+          });
+          const renderPassDescriptor = {
+            label: "Mip generation render pass",
+            colorAttachments: [
+              {
+                view: texture.createView({
+                  dimension: "2d",
+                  baseMipLevel: baseMipLevel + 1,
+                  mipLevelCount: 1,
+                  baseArrayLayer: layer,
+                  arrayLayerCount: 1
+                }),
+                loadOp: "clear",
+                storeOp: "store"
+              }
+            ]
+          };
+          const pass = encoder.beginRenderPass(renderPassDescriptor);
+          pass.setPipeline(pipeline);
+          pass.setBindGroup(0, bindGroup);
+          pass.draw(6);
+          pass.end();
+        }
         ++baseMipLevel;
-        const renderPassDescriptor = {
-          label: "our basic canvas renderPass",
-          colorAttachments: [
-            {
-              view: texture.createView({ baseMipLevel, mipLevelCount: 1 }),
-              loadOp: "clear",
-              storeOp: "store"
-            }
-          ]
-        };
-        const pass = encoder.beginRenderPass(renderPassDescriptor);
-        pass.setPipeline(pipeline);
-        pass.setBindGroup(0, bindGroup);
-        pass.draw(6);
-        pass.end();
       }
       const commandBuffer = encoder.finish();
       device.queue.submit([commandBuffer]);
@@ -4571,6 +4581,9 @@
       this.renderer = renderer;
       this.uuid = generateUUID();
       this.options = { ...defaultTextureParams, ...parameters };
+      if (this.options.format === "rgba32float" && !this.renderer.deviceManager.adapter.features.has("float32-filterable")) {
+        this.options.format = "rgba16float";
+      }
       if (parameters.fromTexture) {
         this.options.format = parameters.fromTexture.texture.format;
         this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
@@ -10991,8 +11004,13 @@ ${this.shaders.compute.head}`;
         this.index++;
       } else {
         try {
+          const requiredFeatures = [];
+          if (this.adapter.features.has("float32-filterable")) {
+            requiredFeatures.push("float32-filterable");
+          }
           this.device = await this.adapter?.requestDevice({
-            label: this.label + " " + this.index
+            label: this.label + " " + this.index,
+            requiredFeatures
           });
           if (this.device) {
             this.ready = true;
@@ -13413,7 +13431,15 @@ struct VSOutput {
           this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
         }
       } else {
-        this.scenesManager.samplers.push(new Sampler(this.renderer, { label: "Default sampler", name: "defaultSampler" }));
+        this.scenesManager.samplers.push(
+          new Sampler(this.renderer, {
+            label: "Default sampler",
+            name: "defaultSampler",
+            magFilter: "linear",
+            minFilter: "linear",
+            mipmapFilter: "linear"
+          })
+        );
       }
     }
     /**
@@ -13790,19 +13816,19 @@ struct VSOutput {
           },
           metallicFactor: {
             type: "f32",
-            value: material.pbrMetallicRoughness?.metallicFactor || 0
+            value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
           },
           roughnessFactor: {
             type: "f32",
-            value: material.pbrMetallicRoughness?.roughnessFactor || 1
+            value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
           },
           normalMapScale: {
             type: "f32",
-            value: material.normalTexture?.scale || 1
+            value: material.normalTexture?.scale === void 0 ? 1 : material.normalTexture.scale
           },
           occlusionStrength: {
             type: "f32",
-            value: material.occlusionTexture?.strength || 1
+            value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
           },
           emissiveFactor: {
             type: "vec3f",
@@ -13912,8 +13938,8 @@ struct VSOutput {
       `
     let worldPos = matrices.model * vec4(attributes.position, 1.0);
     vsOutput.position = camera.projection * camera.view * worldPos;
-    vsOutput.worldPosition = worldPos.xyz;
-    vsOutput.viewDirection = camera.position - worldPos.xyz;
+    vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+    vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
   `
     );
     let outputNormal = facultativeAttributes.find((attr) => attr.name === "normal") ? "vsOutput.normal = getWorldNormal(attributes.normal);" : "";
@@ -13989,7 +14015,7 @@ struct VSOutput {
     );
     const returnColor = (
       /* wgsl */
-      `      
+      `
       return vec4(
         linearTosRGB(
           toneMapKhronosPbrNeutral(
@@ -14015,27 +14041,37 @@ struct VSOutput {
       }
     `;
     }
-    baseColor += `
-      let dielectric: vec3f = vec3(0.04);
-      var f0: vec3f = dielectric;
+    baseColor += /* wgsl */
+    `
       color = baseColor;
   `;
-    let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? `
+    let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? (
+      /* wgsl */
+      `
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let normal: vec3f = normalize(faceDirection * fsInput.normal);
-    ` : `let normal: vec3f = vec3(0.0);`;
+      var geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
+    `
+    ) : (
+      /* wgsl */
+      `var geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
+    );
     if (useNormalMap) {
-      normalMap = `
-      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), normalize(fsInput.normal));
+      normalMap += /* wgsl */
+      `
+      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
       let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
       let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+    `;
+    } else {
+      normalMap += `
+      let normal = geometryNormal;
     `;
     }
     normalMap += /* wgsl */
     `
       let N = normalize(normal);
       let V = normalize(fsInput.viewDirection);
-      let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
+      let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
   `;
     let metallicRoughness = (
       /*  wgsl */
@@ -14048,14 +14084,15 @@ struct VSOutput {
       metallicRoughness += /* wgsl */
       `
       let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
-      metallic = clamp(metallic * metallicRoughness.b, 0.001, 1.0);
-      roughness = clamp(roughness * metallicRoughness.g, 0.001, 1.0);
+      
+      metallic = clamp(metallic * metallicRoughness.b, 0.0, 1.0);
+      roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
     `;
     }
     const f0 = (
       /* wgsl */
       `
-      f0 = mix(dielectric, color.rgb, vec3(metallic));
+      let f0 = mix(vec3(0.04), color.rgb, vec3(metallic));
   `
     );
     let emissiveOcclusion = (
@@ -14295,46 +14332,23 @@ struct VSOutput {
       }
     };
     const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {};
-    const useIBLContribution = envDiffuseTexture && envSpecularTexture && lutTexture;
+    const useIBLContribution = envDiffuseTexture && envDiffuseTexture.texture && envSpecularTexture && envSpecularTexture.texture && lutTexture && lutTexture.texture;
     let iblContributionHead = "";
-    let iblPreliminaryContribution = "";
-    let iblAdditionalContribution = "";
+    let iblLightContribution = "";
     if (useIBLContribution) {
       meshDescriptor.parameters.textures = [
         ...meshDescriptor.parameters.textures,
-        lutTexture,
-        envDiffuseTexture,
-        envSpecularTexture
+        lutTexture.texture,
+        envDiffuseTexture.texture,
+        envSpecularTexture.texture
       ];
-      const lutTextureDescriptor = {
-        texture: lutTexture.options.name,
-        sampler: "defaultSampler"
-      };
-      const envDiffuseTextureDescriptor = {
-        texture: envDiffuseTexture.options.name,
-        sampler: "defaultSampler"
-      };
-      const envSpecularTextureDescriptor = {
-        texture: envSpecularTexture.options.name,
-        sampler: "defaultSampler"
-      };
-      meshDescriptor.textures = [
-        ...meshDescriptor.textures,
-        lutTextureDescriptor,
-        envDiffuseTextureDescriptor,
-        envSpecularTextureDescriptor
-      ];
+      lutTexture.samplerName = lutTexture.samplerName || "defaultSampler";
+      envDiffuseTexture.samplerName = envDiffuseTexture.samplerName || "defaultSampler";
+      envSpecularTexture.samplerName = envSpecularTexture.samplerName || "defaultSampler";
       iblContributionHead = /* wgsl */
-      `
+      `  
     const RECIPROCAL_PI = ${1 / Math.PI};
     const RECIPROCAL_PI2 = ${0.5 / Math.PI};
-    const ENV_LODS = 4.0;
-    const LN2 = 0.6931472;
-    
-    fn rGBMToLinear(rgbm: vec4f) -> vec4f {
-      let maxRange: f32 = 6.0;
-      return vec4(rgbm.xyz * rgbm.w * maxRange, 1.0);
-    }
     
     fn cartesianToPolar(n: vec3f) -> vec2f {
       var uv: vec2f;
@@ -14351,77 +14365,66 @@ struct VSOutput {
     fn getIBLContribution(NdotV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, f0: vec3f) -> IBLContribution {
       var iblContribution: IBLContribution;
     
-      // IBL diffuse
-      let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0, 0.0), vec2(1.0, 1.0));
+      let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
       
-      let brdf: vec3f = textureSample(${lutTextureDescriptor.texture}, ${lutTextureDescriptor.sampler}, brdfSamplePoint).rgb;
-    
-      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${envDiffuseTextureDescriptor.sampler}, cartesianToPolar(n))).rgb;
+      let brdf: vec3f = textureSample(
+        ${lutTexture.texture.options.name},
+        ${lutTexture.samplerName},
+        brdfSamplePoint
+      ).rgb;
     
       let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
       let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
-      var FssEss: vec3f = ibl.specularStrength * k_S * brdf.x + brdf.y;
+      var FssEss: vec3f = k_S * brdf.x + brdf.y;
+      
+      // IBL specular
+      let lod: f32 = roughness * f32(textureNumLevels(${envSpecularTexture.texture.options.name}) - 1);
+      
+      let specularLight: vec4f = textureSampleLevel(
+        ${envSpecularTexture.texture.options.name},
+        ${envSpecularTexture.samplerName},
+        ${envSpecularTexture.texture.options.viewDimension === "cube" ? "reflection" : "cartesianToPolar(reflection)"},
+        lod
+      );
+      
+      iblContribution.specular = specularLight.rgb * FssEss * ibl.specularStrength;
+      
+      // IBL diffuse
+      let diffuseLight: vec4f = textureSample(
+        ${envDiffuseTexture.texture.options.name},
+        ${envDiffuseTexture.samplerName},
+        ${envDiffuseTexture.texture.options.viewDimension === "cube" ? "n" : "cartesianToPolar(n)"}
+      );
+            
+      FssEss = ibl.specularStrength * k_S * brdf.x + brdf.y;
+      
       let Ems: f32 = (1.0 - (brdf.x + brdf.y));
       let F_avg: vec3f = ibl.specularStrength * (f0 + (1.0 - f0) / 21.0);
       let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
       let k_D: vec3f = diffuseColor * (1.0 - FssEss + FmsEms);
       
-      iblContribution.diffuse = (FmsEms + k_D) * diffuseLight * ibl.diffuseStrength;
-      
-      // IBL specular
-      var blend: f32 = roughness * ENV_LODS;
-      let level0: f32 = floor(blend);
-      let level1: f32 = min(ENV_LODS, level0 + 1.0);
-      blend -= level0;
-      
-      var uvSpec: vec2f = cartesianToPolar(reflection);
-      uvSpec.y /= 2.0;
-      var uv0: vec2f = uvSpec;
-      var uv1: vec2f = uvSpec;
-      uv0 /= pow(2.0, level0);
-      uv0.y += 1.0 - exp(-LN2 * level0);
-      uv1 /= pow(2.0, level1);
-      uv1.y += 1.0 - exp(-LN2 * level1);
-      
-      let specular0: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv0)).rgb;
-      let specular1: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv1)).rgb;
-      let specularLight: vec3f = mix(specular0, specular1, blend);  
-
-      FssEss = k_S * brdf.x + brdf.y;
-      iblContribution.specular = specularLight * FssEss * ibl.specularStrength;
+      iblContribution.diffuse = (FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
       
       return iblContribution;
     }
     `;
-      iblPreliminaryContribution = /* wgsl */
+      iblLightContribution = /* wgsl */
       `
       let reflection: vec3f = normalize(reflect(-V, N));
       
-      f0 = mix(dielectric, color.rgb, vec3(metallic));
-      
-      //let diffuseColor: vec3f = color.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
       let diffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
     
-      let iblContribution = getIBLContribution(NdotV, roughness, normal, reflection, diffuseColor, f0);
+      let iblContribution = getIBLContribution(NdotV, roughness, N, reflection, diffuseColor, f0);
       
-      //color = vec4(color.rgb + iblContribution.diffuse * occlusion + iblContribution.specular * occlusion, color.a);
       lightContribution.diffuse += iblContribution.diffuse;
       lightContribution.specular += iblContribution.specular;
-      
-      // Add IBL spec to alpha for reflections on transparent surfaces (glass)
-      color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
-    `;
-      iblAdditionalContribution = /* wgsl */
-      `
-      
     `;
     }
     let chunks = shaderParameters?.chunks;
     if (!chunks) {
       chunks = {
         additionalFragmentHead: iblContributionHead,
-        preliminaryColorContribution: iblPreliminaryContribution,
-        additionalColorContribution: iblAdditionalContribution
+        lightContribution: iblLightContribution
       };
     } else {
       if (!chunks.additionalFragmentHead) {
@@ -14429,15 +14432,13 @@ struct VSOutput {
       } else {
         chunks.additionalFragmentHead += iblContributionHead;
       }
-      if (!chunks.preliminaryColorContribution) {
-        chunks.preliminaryColorContribution = iblPreliminaryContribution;
+      if (!chunks.lightContribution) {
+        chunks.lightContribution = iblLightContribution;
       } else {
-        chunks.preliminaryColorContribution += iblPreliminaryContribution;
+        chunks.lightContribution = iblLightContribution + chunks.lightContribution;
       }
-      if (!chunks.additionalColorContribution) {
-        chunks.additionalColorContribution = iblAdditionalContribution;
-      } else {
-        chunks.additionalColorContribution += iblAdditionalContribution;
+      if (!chunks.ambientContribution && useIBLContribution) {
+        chunks.ambientContribution = "lightContribution.ambient = vec3(0.0);";
       }
     }
     shaderParameters.chunks = chunks;

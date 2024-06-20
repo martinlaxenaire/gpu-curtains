@@ -1,6 +1,7 @@
 import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager';
 import { ShaderOptions } from '../../types/Materials';
 import { Texture } from '../../core/textures/Texture';
+import { Sampler } from '../../core/samplers/Sampler';
 /**
  * Parameters used to build the shaders
  */
@@ -41,6 +42,15 @@ export declare const buildShaders: (meshDescriptor: MeshDescriptor, shaderParame
  */
 export declare const buildPBRShaders: (meshDescriptor: MeshDescriptor, shaderParameters?: ShaderBuilderParameters) => BuiltShaders;
 /**
+ * Parameters to use for IBL textures
+ */
+export interface IBLShaderTextureParams {
+    /** {@link Texture} to use. */
+    texture: Texture;
+    /** {@link Sampler#name | Sampler name} to use. */
+    samplerName?: Sampler['name'];
+}
+/**
  * Parameters used to build the shaders
  */
 export interface IBLShaderBuilderParameters extends ShaderBuilderParameters {
@@ -50,12 +60,12 @@ export interface IBLShaderBuilderParameters extends ShaderBuilderParameters {
         diffuseStrength?: number;
         /** Environment specular strength. Default to `0.5`. */
         specularStrength?: number;
-        /** Look Up Table texture to use for IBL. */
-        lutTexture: Texture;
-        /** Environment diffuse texture to use for IBL. */
-        envDiffuseTexture: Texture;
-        /** Environment specular texture to use for IBL. */
-        envSpecularTexture: Texture;
+        /** Look Up Table texture parameters to use for IBL. */
+        lutTexture?: IBLShaderTextureParams;
+        /** Environment diffuse texture parameters to use for IBL. */
+        envDiffuseTexture?: IBLShaderTextureParams;
+        /** Environment specular texture parameters to use for IBL. */
+        envSpecularTexture?: IBLShaderTextureParams;
     };
 }
 /**

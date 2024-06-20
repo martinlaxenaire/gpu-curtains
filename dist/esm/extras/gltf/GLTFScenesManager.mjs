@@ -195,7 +195,15 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
       }
     } else {
-      this.scenesManager.samplers.push(new Sampler(this.renderer, { label: "Default sampler", name: "defaultSampler" }));
+      this.scenesManager.samplers.push(
+        new Sampler(this.renderer, {
+          label: "Default sampler",
+          name: "defaultSampler",
+          magFilter: "linear",
+          minFilter: "linear",
+          mipmapFilter: "linear"
+        })
+      );
     }
   }
   /**
@@ -572,19 +580,19 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         },
         metallicFactor: {
           type: "f32",
-          value: material.pbrMetallicRoughness?.metallicFactor || 0
+          value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
         },
         roughnessFactor: {
           type: "f32",
-          value: material.pbrMetallicRoughness?.roughnessFactor || 1
+          value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
         },
         normalMapScale: {
           type: "f32",
-          value: material.normalTexture?.scale || 1
+          value: material.normalTexture?.scale === void 0 ? 1 : material.normalTexture.scale
         },
         occlusionStrength: {
           type: "f32",
-          value: material.occlusionTexture?.strength || 1
+          value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
         },
         emissiveFactor: {
           type: "vec3f",

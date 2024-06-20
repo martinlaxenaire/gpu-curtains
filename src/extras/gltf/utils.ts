@@ -1,6 +1,7 @@
 import { MaterialTextureDescriptor, MeshDescriptor } from '../../types/gltf/GLTFScenesManager'
 import { ShaderOptions } from '../../types/Materials'
 import { Texture } from '../../core/textures/Texture'
+import { Sampler } from '../../core/samplers/Sampler'
 
 /**
  * Parameters used to build the shaders
@@ -138,7 +139,7 @@ export const buildShaders = (
   // we might want to implement it later
   // see https://github.com/oframe/ogl/blob/master/examples/load-gltf.html#L133
   const initColor = /* wgsl */ 'var color: vec4f = vec4();'
-  const returnColor = /* wgsl */ `  
+  const returnColor = /* wgsl */ `
       return vec4(
         linearTosRGB(
           toneMapKhronosPbrNeutral(
@@ -168,33 +169,35 @@ export const buildShaders = (
     `
   }
 
-  baseColor += `
-      let dielectric: vec3f = vec3(0.04);
-      var f0: vec3f = dielectric;
+  baseColor += /* wgsl */ `
       color = baseColor;
   `
 
   // normal map
 
   let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === 'normal')
-    ? `
+    ? /* wgsl */ `
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      let normal: vec3f = normalize(faceDirection * fsInput.normal);
+      var geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
     `
-    : `let normal: vec3f = vec3(0.0);`
+    : /* wgsl */ `var geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
 
   if (useNormalMap) {
-    normalMap = `
-      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), normalize(fsInput.normal));
+    normalMap += /* wgsl */ `
+      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
       let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
       let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
+    `
+  } else {
+    normalMap += `
+      let normal = geometryNormal;
     `
   }
 
   normalMap += /* wgsl */ `
       let N = normalize(normal);
       let V = normalize(fsInput.viewDirection);
-      let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
+      let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
   `
 
   // metallic roughness
@@ -213,7 +216,7 @@ export const buildShaders = (
   }
 
   const f0 = /* wgsl */ `
-      f0 = mix(dielectric, color.rgb, vec3(metallic));
+      let f0 = mix(vec3(0.04), color.rgb, vec3(metallic));
   `
 
   // emissive and occlusion
@@ -438,9 +441,14 @@ export const buildPBRShaders = (
   return buildShaders(meshDescriptor, shaderParameters)
 }
 
-export interface IBLShaderTextureDescriptor extends Partial<MaterialTextureDescriptor> {
+/**
+ * Parameters to use for IBL textures
+ */
+export interface IBLShaderTextureParams {
+  /** {@link Texture} to use. */
   texture: Texture
-  isRGBM?: boolean
+  /** {@link Sampler#name | Sampler name} to use. */
+  samplerName?: Sampler['name']
 }
 
 /**
@@ -453,12 +461,12 @@ export interface IBLShaderBuilderParameters extends ShaderBuilderParameters {
     diffuseStrength?: number
     /** Environment specular strength. Default to `0.5`. */
     specularStrength?: number
-    /** Look Up Table texture to use for IBL. */
-    lutTexture: IBLShaderTextureDescriptor
-    /** Environment diffuse texture to use for IBL. */
-    envDiffuseTexture: IBLShaderTextureDescriptor
-    /** Environment specular texture to use for IBL. */
-    envSpecularTexture: IBLShaderTextureDescriptor
+    /** Look Up Table texture parameters to use for IBL. */
+    lutTexture?: IBLShaderTextureParams
+    /** Environment diffuse texture parameters to use for IBL. */
+    envDiffuseTexture?: IBLShaderTextureParams
+    /** Environment specular texture parameters to use for IBL. */
+    envSpecularTexture?: IBLShaderTextureParams
   }
 }
 
@@ -507,7 +515,7 @@ export const buildIBLShaders = (
     lutTexture.texture
 
   let iblContributionHead = ''
-  let iblPreliminaryContribution = ''
+  let iblLightContribution = ''
 
   if (useIBLContribution) {
     meshDescriptor.parameters.textures = [
@@ -517,39 +525,19 @@ export const buildIBLShaders = (
       envSpecularTexture.texture,
     ]
 
-    const lutTextureDescriptor = {
-      texture: lutTexture.texture.options.name,
-      sampler: lutTexture.sampler || 'clampSampler',
-      ...(lutTexture.texCoordAttributeName && { texCoordAttributeName: lutTexture.texCoordAttributeName }),
-    }
+    lutTexture.samplerName = lutTexture.samplerName || 'defaultSampler'
+    envDiffuseTexture.samplerName = envDiffuseTexture.samplerName || 'defaultSampler'
+    envSpecularTexture.samplerName = envSpecularTexture.samplerName || 'defaultSampler'
 
-    const envDiffuseTextureDescriptor = {
-      texture: envDiffuseTexture.texture.options.name,
-      sampler: lutTexture.sampler || 'clampSampler',
-      ...(envDiffuseTexture.texCoordAttributeName && {
-        texCoordAttributeName: envDiffuseTexture.texCoordAttributeName,
-      }),
-    }
-
-    const envSpecularTextureDescriptor = {
-      texture: envSpecularTexture.texture.options.name,
-      sampler: lutTexture.sampler || 'clampSampler',
-      ...(envSpecularTexture.texCoordAttributeName && {
-        texCoordAttributeName: envSpecularTexture.texCoordAttributeName,
-      }),
-    }
-
-    meshDescriptor.textures = [
-      ...meshDescriptor.textures,
-      lutTextureDescriptor,
-      envDiffuseTextureDescriptor,
-      envSpecularTextureDescriptor,
-    ]
-
-    iblContributionHead = /* wgsl */ `    
-    fn rGBMToLinear(rgbm: vec4f) -> vec4f {
-      let maxRange: f32 = 6.0;
-      return vec4(rgbm.xyz * rgbm.w * maxRange, 1.0);
+    iblContributionHead = /* wgsl */ `  
+    const RECIPROCAL_PI = ${1 / Math.PI};
+    const RECIPROCAL_PI2 = ${0.5 / Math.PI};
+    
+    fn cartesianToPolar(n: vec3f) -> vec2f {
+      var uv: vec2f;
+      uv.x = atan2(n.z, n.x) * RECIPROCAL_PI2 + 0.5;
+      uv.y = asin(n.y) * RECIPROCAL_PI + 0.5;
+      return uv;
     }
     
     struct IBLContribution {
@@ -563,8 +551,8 @@ export const buildIBLShaders = (
       let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
       
       let brdf: vec3f = textureSample(
-        ${lutTextureDescriptor.texture},
-        ${lutTextureDescriptor.sampler},
+        ${lutTexture.texture.options.name},
+        ${lutTexture.samplerName},
         brdfSamplePoint
       ).rgb;
     
@@ -573,28 +561,24 @@ export const buildIBLShaders = (
       var FssEss: vec3f = k_S * brdf.x + brdf.y;
       
       // IBL specular
-      let lod: f32 = roughness * f32(textureNumLevels(${envSpecularTextureDescriptor.texture}) - 1);
+      let lod: f32 = roughness * f32(textureNumLevels(${envSpecularTexture.texture.options.name}) - 1);
       
-      var specularLight: vec4f = textureSampleLevel(
-        ${envSpecularTextureDescriptor.texture},
-        ${envSpecularTextureDescriptor.sampler},
-        reflection,
+      let specularLight: vec4f = textureSampleLevel(
+        ${envSpecularTexture.texture.options.name},
+        ${envSpecularTexture.samplerName},
+        ${envSpecularTexture.texture.options.viewDimension === 'cube' ? 'reflection' : 'cartesianToPolar(reflection)'},
         lod
       );
-      
-      ${envSpecularTexture.isRGBM ? 'specularLight = rGBMToLinear(specularLight);' : ''}
       
       iblContribution.specular = specularLight.rgb * FssEss * ibl.specularStrength;
       
       // IBL diffuse
-      var diffuseLight: vec4f = textureSample(
-        ${envDiffuseTextureDescriptor.texture},
-        ${envDiffuseTextureDescriptor.sampler},
-        n
+      let diffuseLight: vec4f = textureSample(
+        ${envDiffuseTexture.texture.options.name},
+        ${envDiffuseTexture.samplerName},
+        ${envDiffuseTexture.texture.options.viewDimension === 'cube' ? 'n' : 'cartesianToPolar(n)'}
       );
-      
-      ${envDiffuseTexture.isRGBM ? 'diffuseLight = rGBMToLinear(diffuseLight);' : ''}
-      
+            
       FssEss = ibl.specularStrength * k_S * brdf.x + brdf.y;
       
       let Ems: f32 = (1.0 - (brdf.x + brdf.y));
@@ -608,10 +592,8 @@ export const buildIBLShaders = (
     }
     `
 
-    iblPreliminaryContribution = /* wgsl */ `
+    iblLightContribution = /* wgsl */ `
       let reflection: vec3f = normalize(reflect(-V, N));
-      
-      f0 = mix(dielectric, color.rgb, vec3(metallic));
       
       let diffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
     
@@ -619,9 +601,6 @@ export const buildIBLShaders = (
       
       lightContribution.diffuse += iblContribution.diffuse;
       lightContribution.specular += iblContribution.specular;
-      
-      // Add IBL spec to alpha for reflections on transparent surfaces (glass)
-      color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
     `
   }
 
@@ -630,7 +609,7 @@ export const buildIBLShaders = (
   if (!chunks) {
     chunks = {
       additionalFragmentHead: iblContributionHead,
-      preliminaryColorContribution: iblPreliminaryContribution,
+      lightContribution: iblLightContribution,
     }
   } else {
     if (!chunks.additionalFragmentHead) {
@@ -639,10 +618,15 @@ export const buildIBLShaders = (
       chunks.additionalFragmentHead += iblContributionHead
     }
 
-    if (!chunks.preliminaryColorContribution) {
-      chunks.preliminaryColorContribution = iblPreliminaryContribution
+    if (!chunks.lightContribution) {
+      chunks.lightContribution = iblLightContribution
     } else {
-      chunks.preliminaryColorContribution += iblPreliminaryContribution
+      chunks.lightContribution = iblLightContribution + chunks.lightContribution
+    }
+
+    // remove ambient contribution if it's not defined but IBL is applied
+    if (!chunks.ambientContribution && useIBLContribution) {
+      chunks.ambientContribution = 'lightContribution.ambient = vec3(0.0);'
     }
   }
 

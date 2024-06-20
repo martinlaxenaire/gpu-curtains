@@ -267,18 +267,6 @@ export class GLTFScenesManager {
         })
       )
     }
-
-    this.scenesManager.samplers.push(
-      new Sampler(this.renderer, {
-        label: 'Clamp sampler',
-        name: 'clampSampler',
-        magFilter: 'linear',
-        minFilter: 'linear',
-        mipmapFilter: 'linear',
-        addressModeU: 'clamp-to-edge',
-        addressModeV: 'clamp-to-edge',
-      })
-    )
   }
 
   /**
@@ -731,7 +719,7 @@ export class GLTFScenesManager {
 
       const materialTextures = this.scenesManager.materialsTextures[primitive.material]
 
-      meshDescriptor.parameters.samplers = [...this.scenesManager.samplers]
+      meshDescriptor.parameters.samplers = []
       meshDescriptor.parameters.textures = []
 
       materialTextures?.texturesDescriptors.forEach((t) => {
