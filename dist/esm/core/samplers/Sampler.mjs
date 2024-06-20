@@ -22,8 +22,7 @@ class Sampler {
   } = {}) {
     this.type = "Sampler";
     this.uuid = generateUUID();
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, label ? label + " " + this.type : this.type);
+    renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
     this.renderer = renderer;
     this.label = label;
     if (!name && !this.renderer.production) {

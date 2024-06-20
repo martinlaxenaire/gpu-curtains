@@ -10,8 +10,7 @@ class ProjectedObject3D extends Object3D {
    */
   constructor(renderer) {
     super();
-    renderer = renderer && renderer.renderer || renderer;
-    isCameraRenderer(renderer, "ProjectedObject3D");
+    renderer = isCameraRenderer(renderer, "ProjectedObject3D");
     this.camera = renderer.camera;
   }
   /**

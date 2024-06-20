@@ -63,18 +63,44 @@ class GPUCameraRenderer extends GPURenderer {
    */
   setCamera(cameraParameters) {
     const { width, height } = this.rectBBox;
-    this.camera = new Camera({
-      fov: cameraParameters.fov,
-      near: cameraParameters.near,
-      far: cameraParameters.far,
-      width,
-      height,
-      pixelRatio: this.pixelRatio,
-      onMatricesChanged: () => {
-        this.onCameraMatricesChanged();
-      }
-    });
+    this.useCamera(
+      new Camera({
+        fov: cameraParameters.fov,
+        near: cameraParameters.near,
+        far: cameraParameters.far,
+        width,
+        height,
+        pixelRatio: this.pixelRatio,
+        onMatricesChanged: () => {
+          this.onCameraMatricesChanged();
+        }
+      })
+    );
+  }
+  /**
+   * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBufferBinding} inputs view values and the {@link meshes} {@link Camera} object.
+   * @param camera - new {@link Camera} to use.
+   */
+  useCamera(camera) {
+    if (this.camera && camera && this.camera.uuid === camera.uuid)
+      return;
+    if (this.camera) {
+      this.camera.parent = null;
+      this.camera.onMatricesChanged = () => {
+      };
+    }
+    this.camera = camera;
     this.camera.parent = this.scene;
+    if (this.cameraBufferBinding) {
+      this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
+      this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix;
+      this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix;
+      for (const mesh of this.meshes) {
+        if ("modelViewMatrix" in mesh) {
+          mesh.camera = this.camera;
+        }
+      }
+    }
   }
   /**
    * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
@@ -177,11 +203,11 @@ class GPUCameraRenderer extends GPURenderer {
     this.camera.position.copy(position);
   }
   /**
-   * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
+   * Call our {@link GPURenderer#resizeObjects | GPURenderer resizeObjects method} and resize our {@link camera} as well
    */
-  onResize() {
+  resizeObjects() {
     this.setPerspective();
-    super.onResize();
+    super.resizeObjects();
   }
   /* RENDER */
   /**

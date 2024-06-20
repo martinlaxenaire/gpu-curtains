@@ -175,6 +175,8 @@ export declare class Mat4 {
      * This is a view matrix which transforms all other objects
      * to be in the space of the view defined by the parameters.
      *
+     * Equivalent to `matrix.lookAt(eye, target, up).invert()` but faster.
+     *
      * @param eye - the position of the object.
      * @param target - the position meant to be aimed at.
      * @param up - a vector pointing up.

@@ -1,6 +1,7 @@
-import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager'
+import { MaterialTextureDescriptor, MeshDescriptor } from '../../types/gltf/GLTFScenesManager'
 import { ShaderOptions } from '../../types/Materials'
 import { Texture } from '../../core/textures/Texture'
+import { Sampler } from '../../core/samplers/Sampler'
 
 /**
  * Parameters used to build the shaders
@@ -10,9 +11,11 @@ export interface ShaderBuilderParameters {
   chunks?: {
     /** Additional WGSL chunk to add to the fragment shader head. */
     additionalFragmentHead?: string
-    /** Ambient light contribution to apply to the fragment shader `ambientContribution` `vec3f` variable. Default is `vec3(1.0)`. */
+    /** Preliminary modification to apply to the fragment shader `color` `vec4f` variable before applying any lightning calculations. */
+    preliminaryColorContribution?: string
+    /** Ambient light contribution to apply to the fragment shader `lightContribution.ambient` `vec3f` variable. Default is `vec3(1.0)`. */
     ambientContribution?: string
-    /** Light contribution to apply to the fragment shader `lightContribution` `vec3f` variable. Default is `vec3(0.0)`. */
+    /** Light contribution to apply to the fragment shader `lightContribution.diffuse` `vec3f` and `lightContribution.specular` `vec3f` variables. Default is `vec3(0.0)` for both. */
     lightContribution?: string
     /** Additional modification to apply to the fragment shader `color` `vec4f` variable before returning it. */
     additionalColorContribution?: string
@@ -30,7 +33,31 @@ export interface BuiltShaders {
 // helper to build vertex and fragment shaders based on our meshDescriptor object
 /**
  * Build shaders based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | shader parameters}.
- * @param meshDescriptor - {@link MeshDescriptor} built by the {extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
+ *
+ * The shaders built by this function allow you to access a bunch of variables inside your fragment shader that you can use in your {@link ShaderBuilderParameters | shader parameters} chunks:
+ *
+ * - `geometryNormal: vec3f`: the normalized geometry normals.
+ * - `normal: vec3f` or `N: vec3f`: the computed normalized normals accounting for the `normalTexture` and `tangent` attributes is defined, the `geometryNormal` else.
+ * - `worldPosition: vec3f`: the world position.
+ * - `viewDirection: vec3f`: the view direction in world space (camera position minus world position).
+ * - `V: vec3f`: the normalized view direction in world space (camera position minus world position).
+ * - `NdotV: f32`: the clamped dot product of `N` and `V`.
+ * - `metallic: f32`: the metallic value. Default to `1.0`.
+ * - `roughness: f32`: the roughness value. Default to `1.0`.
+ * - `f0: vec3f`: the fresnel reflectance.
+ * - `emissive: vec3f`: the emissive color value. Default to `vec3(0.0)`.
+ * - `occlusion: f32`: the occlusion value. Default to `1.0`.
+ * - `lightContribution: LightContribution`: the final light contribution to use. You should add your respective lightning calculations to this variable components, defined as follows:<br>
+ * ```wgsl
+ * struct LightContribution {
+ *   ambient: vec3f, // default to vec3(1.0)
+ *   diffuse: vec3f, // default to vec3(0.0)
+ *   specular: vec3f, // default to vec3(0.0)
+ * };
+ * ```
+ * - `color: vec4f`: the color that will be outputted. You can manipulate it with the `preliminaryColorContribution` (applied before lightning calculations) and `additionalColorContribution` (applied after lightning calculations).
+ *
+ * @param meshDescriptor - {@link MeshDescriptor} built by the {@link extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
  * @param shaderParameters - {@link ShaderBuilderParameters | shader parameters} to use.
  * @returns - object containing the shaders
  */
@@ -56,8 +83,8 @@ export const buildShaders = (
   let outputPositions = /* wgsl */ `
     let worldPos = matrices.model * vec4(attributes.position, 1.0);
     vsOutput.position = camera.projection * camera.view * worldPos;
-    vsOutput.worldPosition = worldPos.xyz;
-    vsOutput.viewDirection = camera.position - worldPos.xyz;
+    vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+    vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
   `
   let outputNormal = facultativeAttributes.find((attr) => attr.name === 'normal')
     ? 'vsOutput.normal = getWorldNormal(attributes.normal);'
@@ -103,8 +130,14 @@ export const buildShaders = (
       `
   }
 
-  const vertexOutput = `
+  const vertexOutput = /*wgsl */ `
     struct VSOutput {
+      ${vertexOutputContent}
+    };`
+
+  const fragmentInput = /*wgsl */ `
+    struct VSOutput {
+      @builtin(front_facing) frontFacing: bool,
       ${vertexOutputContent}
     };`
 
@@ -130,7 +163,16 @@ export const buildShaders = (
   // we might want to implement it later
   // see https://github.com/oframe/ogl/blob/master/examples/load-gltf.html#L133
   const initColor = /* wgsl */ 'var color: vec4f = vec4();'
-  const returnColor = /* wgsl */ 'return color;'
+  const returnColor = /* wgsl */ `
+      return vec4(
+        linearTosRGB(
+          toneMapKhronosPbrNeutral(
+            color.rgb
+          )
+        ),
+        color.a
+      );
+  `
 
   // start with the base color
   // use vertex color 0 if defined
@@ -145,27 +187,44 @@ export const buildShaders = (
     baseColor = /* wgsl */ `
       var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
       
-      // baseColor = vec4(sRGBToLinear(baseColor.rgb), baseColor.a);
-      
       if (baseColor.a < material.alphaCutoff) {
         discard;
       }
     `
   }
 
+  baseColor += /* wgsl */ `
+      color = baseColor;
+  `
+
   // normal map
 
   let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === 'normal')
-    ? `let normal: vec3f = normalize(fsInput.normal);`
-    : `let normal: vec3f = vec3(0.0);`
+    ? /* wgsl */ `
+      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+      let geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
+    `
+    : /* wgsl */ `let geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
 
   if (useNormalMap) {
-    normalMap = `
-      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), normalize(fsInput.normal));
+    normalMap += /* wgsl */ `
+      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
       let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
       let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `
+  } else {
+    normalMap += /* wgsl */ `
+      let normal = geometryNormal;
+    `
   }
+
+  normalMap += /* wgsl */ `
+      let worldPosition: vec3f = fsInput.worldPosition;
+      let viewDirection: vec3f = fsInput.viewDirection;
+      let N: vec3f = normal;
+      let V: vec3f = normalize(viewDirection);
+      let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
+  `
 
   // metallic roughness
   let metallicRoughness = /*  wgsl */ `
@@ -176,14 +235,14 @@ export const buildShaders = (
   if (metallicRoughnessTexture) {
     metallicRoughness += /* wgsl */ `
       let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
-      metallic = clamp(metallic * metallicRoughness.b, 0.001, 1.0);
-      roughness = clamp(roughness * metallicRoughness.g, 0.001, 1.0);
+      
+      metallic = clamp(metallic * metallicRoughness.b, 0.0, 1.0);
+      roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
     `
   }
 
   const f0 = /* wgsl */ `
-      let dielectricSpec: vec3f = vec3(0.04, 0.04, 0.04);
-      let f0 = mix(dielectricSpec, color.rgb, vec3(metallic));
+      let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));
   `
 
   // emissive and occlusion
@@ -195,8 +254,6 @@ export const buildShaders = (
   if (emissiveTexture) {
     emissiveOcclusion += /* wgsl */ `
       emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
-      
-      // emissive = sRGBToLinear(emissive);
       
       emissive *= material.emissiveFactor;
       `
@@ -213,54 +270,61 @@ export const buildShaders = (
 
   // add lightning
   const initLightShading = /* wgsl */ `
-      var ambientContribution: vec3f;
-      var lightContribution: vec3f;
-      color = baseColor;
+      var lightContribution: LightContribution;
+      
+      lightContribution.ambient = vec3(1.0);
+      lightContribution.diffuse = vec3(0.0);
+      lightContribution.specular = vec3(0.0);
   `
 
   // user defined chunks
   const defaultAdditionalHead = ''
+  const defaultPreliminaryColor = ''
   const defaultAdditionalColor = ''
-  const defaultAmbientContribution = /* wgsl */ `
-    ambientContribution = vec3(1.0);
-  `
-  const defaultLightContribution = /* wgsl */ `
-    lightContribution = vec3(0.0);
-  `
+  const defaultAmbientContribution = ''
+  const defaultLightContribution = ''
 
-  let { chunks } = shaderParameters
+  shaderParameters = shaderParameters ?? {}
+
+  let chunks = shaderParameters.chunks
 
   if (!chunks) {
     chunks = {
       additionalFragmentHead: defaultAdditionalHead,
       ambientContribution: defaultAmbientContribution,
+      preliminaryColorContribution: defaultPreliminaryColor,
       lightContribution: defaultLightContribution,
       additionalColorContribution: defaultAdditionalColor,
     }
   } else {
     if (!chunks.additionalFragmentHead) chunks.additionalFragmentHead = defaultAdditionalHead
+    if (!chunks.preliminaryColorContribution) chunks.preliminaryColorContribution = defaultPreliminaryColor
     if (!chunks.ambientContribution) chunks.ambientContribution = defaultAmbientContribution
     if (!chunks.lightContribution) chunks.lightContribution = defaultLightContribution
     if (!chunks.additionalColorContribution) chunks.additionalColorContribution = defaultAdditionalColor
   }
 
-  const applyLightShading = /* wgsl */ `
-      let ambient = ambientContribution * color.rgb * occlusion;
+  const applyLightShading = /* wgsl */ `      
+      lightContribution.ambient *= color.rgb * occlusion;
+      lightContribution.diffuse *= occlusion;
+      lightContribution.specular *= occlusion;
       
       color = vec4(
-        linearTosRGB(
-          toneMapKhronosPbrNeutral(
-            lightContribution + ambient + emissive
-          )
-        ),
+        lightContribution.ambient + lightContribution.diffuse + lightContribution.specular + emissive,
         color.a
       );
   `
 
   const fs = /* wgsl */ `
+    // Light
+    struct LightContribution {
+      ambient: vec3f,
+      diffuse: vec3f,
+      specular: vec3f,
+    };
+  
     // PBR
     const PI = ${Math.PI};
-    
     
     // tone maping
     fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
@@ -299,17 +363,21 @@ export const buildShaders = (
     
     ${chunks.additionalFragmentHead}
   
-    ${vertexOutput}
+    ${fragmentInput}
   
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
       ${initColor}
       ${baseColor}
+
       ${normalMap}
-      ${metallicRoughness}
+      ${metallicRoughness}  
+      ${initLightShading}  
+      
+      // user defined preliminary color contribution
+      ${chunks.preliminaryColorContribution}
+        
       ${f0}
       ${emissiveOcclusion}
-      
-      ${initLightShading}
       
       // user defined lightning
       ${chunks.ambientContribution}
@@ -317,6 +385,7 @@ export const buildShaders = (
       
       ${applyLightShading}
       
+      // user defined additional color contribution
       ${chunks.additionalColorContribution}
       
       ${returnColor}
@@ -347,7 +416,7 @@ export const buildPBRShaders = (
   meshDescriptor: MeshDescriptor,
   shaderParameters: ShaderBuilderParameters = null
 ): BuiltShaders => {
-  let { chunks } = shaderParameters
+  let chunks = shaderParameters?.chunks
 
   const pbrAdditionalFragmentHead = /* wgsl */ `
     fn FresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
@@ -381,14 +450,6 @@ export const buildPBRShaders = (
     
       return ggx1 * ggx2;
     }
-    
-    fn rangeAttenuation(range: f32, distance: f32) -> f32 {
-      if (range <= 0.0) {
-          // Negative range means no cutoff
-          return 1.0 / pow(distance, 2.0);
-      }
-      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
-    }
   `
 
   if (!chunks) {
@@ -407,6 +468,16 @@ export const buildPBRShaders = (
 }
 
 /**
+ * Parameters to use for IBL textures
+ */
+export interface IBLShaderTextureParams {
+  /** {@link Texture} to use. */
+  texture: Texture
+  /** {@link Sampler#name | Sampler name} to use. */
+  samplerName?: Sampler['name']
+}
+
+/**
  * Parameters used to build the shaders
  */
 export interface IBLShaderBuilderParameters extends ShaderBuilderParameters {
@@ -416,16 +487,16 @@ export interface IBLShaderBuilderParameters extends ShaderBuilderParameters {
     diffuseStrength?: number
     /** Environment specular strength. Default to `0.5`. */
     specularStrength?: number
-    /** Look Up Table texture to use for IBL. */
-    lutTexture: Texture
-    /** Environment diffuse texture to use for IBL. */
-    envDiffuseTexture: Texture
-    /** Environment specular texture to use for IBL. */
-    envSpecularTexture: Texture
+    /** Look Up Table texture parameters to use for IBL. */
+    lutTexture?: IBLShaderTextureParams
+    /** Environment diffuse texture parameters to use for IBL. */
+    envDiffuseTexture?: IBLShaderTextureParams
+    /** Environment specular texture parameters to use for IBL. */
+    envSpecularTexture?: IBLShaderTextureParams
   }
 }
 
-// based on https://github.com/oframe/ogl/blob/master/examples/load-gltf.html#L133
+// based on https://github.khronos.org/glTF-Sample-Viewer-Release/
 /**
  * Build Image Based Lightning shaders based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | IBL shader parameters}.
  * @param meshDescriptor - {@link MeshDescriptor} built by the {extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
@@ -436,7 +507,8 @@ export const buildIBLShaders = (
   meshDescriptor: MeshDescriptor,
   shaderParameters: IBLShaderBuilderParameters = null
 ): BuiltShaders => {
-  const { iblParameters } = shaderParameters
+  shaderParameters = shaderParameters || {}
+  const iblParameters = shaderParameters?.iblParameters
 
   // add lights & ibl uniforms
   meshDescriptor.parameters.uniforms = {
@@ -458,53 +530,34 @@ export const buildIBLShaders = (
   }
 
   // IBL
-  const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters
+  const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {}
 
-  const useIBLContribution = envDiffuseTexture && envSpecularTexture && lutTexture
+  const useIBLContribution =
+    envDiffuseTexture &&
+    envDiffuseTexture.texture &&
+    envSpecularTexture &&
+    envSpecularTexture.texture &&
+    lutTexture &&
+    lutTexture.texture
 
   let iblContributionHead = ''
-  let iblContribution = ''
+  let iblLightContribution = ''
 
   if (useIBLContribution) {
     meshDescriptor.parameters.textures = [
       ...meshDescriptor.parameters.textures,
-      lutTexture,
-      envDiffuseTexture,
-      envSpecularTexture,
+      lutTexture.texture,
+      envDiffuseTexture.texture,
+      envSpecularTexture.texture,
     ]
 
-    const lutTextureDescriptor = {
-      texture: lutTexture.options.name,
-      sampler: 'defaultSampler',
-    }
+    lutTexture.samplerName = lutTexture.samplerName || 'defaultSampler'
+    envDiffuseTexture.samplerName = envDiffuseTexture.samplerName || 'defaultSampler'
+    envSpecularTexture.samplerName = envSpecularTexture.samplerName || 'defaultSampler'
 
-    const envDiffuseTextureDescriptor = {
-      texture: envDiffuseTexture.options.name,
-      sampler: 'defaultSampler',
-    }
-
-    const envSpecularTextureDescriptor = {
-      texture: envSpecularTexture.options.name,
-      sampler: 'defaultSampler',
-    }
-
-    meshDescriptor.textures = [
-      ...meshDescriptor.textures,
-      lutTextureDescriptor,
-      envDiffuseTextureDescriptor,
-      envSpecularTextureDescriptor,
-    ]
-
-    iblContributionHead = /* wgsl */ `
+    iblContributionHead = /* wgsl */ `  
     const RECIPROCAL_PI = ${1 / Math.PI};
     const RECIPROCAL_PI2 = ${0.5 / Math.PI};
-    const ENV_LODS = 4.0;
-    const LN2 = 0.6931472;
-    
-    fn rGBMToLinear(rgbm: vec4f) -> vec4f {
-      let maxRange: f32 = 6.0;
-      return vec4(rgbm.xyz * rgbm.w * maxRange, 1.0);
-    }
     
     fn cartesianToPolar(n: vec3f) -> vec2f {
       var uv: vec2f;
@@ -518,66 +571,71 @@ export const buildIBLShaders = (
       specular: vec3f,
     };
     
-    fn getIBLContribution(NdV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, specularColor: vec3f) -> IBLContribution {
-      let brdf: vec3f = sRGBToLinear(textureSample(${lutTextureDescriptor.texture}, ${
-      lutTextureDescriptor.sampler
-    }, vec2(NdV, roughness)).rgb);
-      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${
-      envDiffuseTextureDescriptor.sampler
-    }, cartesianToPolar(n))).rgb;      
-      diffuseLight = mix(vec3(1), diffuseLight, ibl.diffuseStrength);
-      var blend: f32 = roughness * ENV_LODS;
-      let level0: f32 = floor(blend);
-      let level1: f32 = min(ENV_LODS, level0 + 1.0);
-      blend -= level0;
-      var uvSpec: vec2f = cartesianToPolar(reflection);
-      uvSpec.y /= 2.0;
-      var uv0: vec2f = uvSpec;
-      var uv1: vec2f = uvSpec;
-      uv0 /= pow(2.0, level0);
-      uv0.y += 1.0 - exp(-LN2 * level0);
-      uv1 /= pow(2.0, level1);
-      uv1.y += 1.0 - exp(-LN2 * level1);
-      let specular0: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${
-      envSpecularTextureDescriptor.sampler
-    }, uv0)).rgb;
-      let specular1: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${
-      envSpecularTextureDescriptor.sampler
-    }, uv1)).rgb;
-      let specularLight: vec3f = mix(specular0, specular1, blend);      
-      
+    fn getIBLContribution(NdotV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, f0: vec3f) -> IBLContribution {
       var iblContribution: IBLContribution;
-      iblContribution.diffuse = diffuseLight * diffuseColor;
+    
+      let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
       
-      let reflectivity: f32 = pow((1.0 - roughness), 2.0) * 0.05;
-      iblContribution.specular = specularLight * (specularColor * brdf.x + brdf.y + reflectivity);
-      iblContribution.specular *= ibl.specularStrength;
+      let brdf: vec3f = textureSample(
+        ${lutTexture.texture.options.name},
+        ${lutTexture.samplerName},
+        brdfSamplePoint
+      ).rgb;
+    
+      let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+      let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+      var FssEss: vec3f = k_S * brdf.x + brdf.y;
+      
+      // IBL specular
+      let lod: f32 = roughness * f32(textureNumLevels(${envSpecularTexture.texture.options.name}) - 1);
+      
+      let specularLight: vec4f = textureSampleLevel(
+        ${envSpecularTexture.texture.options.name},
+        ${envSpecularTexture.samplerName},
+        ${envSpecularTexture.texture.options.viewDimension === 'cube' ? 'reflection' : 'cartesianToPolar(reflection)'},
+        lod
+      );
+      
+      iblContribution.specular = specularLight.rgb * FssEss * ibl.specularStrength;
+      
+      // IBL diffuse
+      let diffuseLight: vec4f = textureSample(
+        ${envDiffuseTexture.texture.options.name},
+        ${envDiffuseTexture.samplerName},
+        ${envDiffuseTexture.texture.options.viewDimension === 'cube' ? 'n' : 'cartesianToPolar(n)'}
+      );
+            
+      FssEss = ibl.specularStrength * k_S * brdf.x + brdf.y;
+      
+      let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+      let F_avg: vec3f = ibl.specularStrength * (f0 + (1.0 - f0) / 21.0);
+      let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
+      let k_D: vec3f = diffuseColor * (1.0 - FssEss + FmsEms);
+      
+      iblContribution.diffuse = (FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
       
       return iblContribution;
     }
     `
 
-    iblContribution = /* wgsl */ `
-      let reflection: vec3f = normalize(reflect(-normalize(fsInput.viewDirection), normal));
+    iblLightContribution = /* wgsl */ `
+      let reflection: vec3f = normalize(reflect(-V, N));
       
-      let diffuseColor: vec3f = baseColor.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
-      let specularColor: vec3f = mix(f0, baseColor.rgb, metallic);
+      let iblDiffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
     
-      let iblContribution = getIBLContribution(max(dot(normal, normalize(fsInput.viewDirection)), 0.0), roughness, normal, reflection, diffuseColor, specularColor);
+      let iblContribution = getIBLContribution(NdotV, roughness, N, reflection, iblDiffuseColor, f0);
       
-      color = vec4(color.rgb + iblContribution.diffuse + iblContribution.specular, color.a);
-      
-      // Add IBL spec to alpha for reflections on transparent surfaces (glass)
-      color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
+      lightContribution.diffuse += iblContribution.diffuse;
+      lightContribution.specular += iblContribution.specular;
     `
   }
 
-  let { chunks } = shaderParameters
+  let chunks = shaderParameters?.chunks
 
   if (!chunks) {
     chunks = {
       additionalFragmentHead: iblContributionHead,
-      additionalColorContribution: iblContribution,
+      lightContribution: iblLightContribution,
     }
   } else {
     if (!chunks.additionalFragmentHead) {
@@ -586,12 +644,19 @@ export const buildIBLShaders = (
       chunks.additionalFragmentHead += iblContributionHead
     }
 
-    if (!chunks.additionalColorContribution) {
-      chunks.additionalColorContribution = iblContribution
+    if (!chunks.lightContribution) {
+      chunks.lightContribution = iblLightContribution
     } else {
-      chunks.additionalColorContribution += iblContribution
+      chunks.lightContribution = iblLightContribution + chunks.lightContribution
+    }
+
+    // remove ambient contribution if it's not defined but IBL is applied
+    if (!chunks.ambientContribution && useIBLContribution) {
+      chunks.ambientContribution = 'lightContribution.ambient = vec3(0.0);'
     }
   }
+
+  shaderParameters.chunks = chunks
 
   return buildPBRShaders(meshDescriptor, shaderParameters)
 }

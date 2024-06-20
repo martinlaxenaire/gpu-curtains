@@ -8,9 +8,8 @@ class ComputePipelineEntry extends PipelineEntry {
    * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
    */
   constructor(parameters) {
-    let { renderer } = parameters;
+    const { renderer } = parameters;
     const { label } = parameters;
-    renderer = renderer && renderer.renderer || renderer;
     const type = "ComputePipelineEntry";
     isRenderer(renderer, label ? label + " " + type : type);
     super(parameters);

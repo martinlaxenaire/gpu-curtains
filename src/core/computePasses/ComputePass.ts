@@ -135,10 +135,7 @@ export class ComputePass {
   constructor(renderer: Renderer | GPUCurtains, parameters: ComputePassParams = {}) {
     const type = 'ComputePass'
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type)
+    renderer = isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type)
 
     parameters.label = parameters.label ?? 'ComputePass ' + renderer.computePasses?.length
 

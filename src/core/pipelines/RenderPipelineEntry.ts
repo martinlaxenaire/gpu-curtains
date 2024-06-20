@@ -171,9 +171,6 @@ export class RenderPipelineEntry extends PipelineEntry {
     let { renderer, ...pipelineParams } = parameters
     const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
     const type = 'RenderPipelineEntry'
 
     isRenderer(renderer, label ? label + ' ' + type : type)

@@ -90,8 +90,13 @@ class GPUDeviceManager {
       this.index++;
     } else {
       try {
+        const requiredFeatures = [];
+        if (this.adapter.features.has("float32-filterable")) {
+          requiredFeatures.push("float32-filterable");
+        }
         this.device = await this.adapter?.requestDevice({
-          label: this.label + " " + this.index
+          label: this.label + " " + this.index,
+          requiredFeatures
         });
         if (this.device) {
           this.ready = true;

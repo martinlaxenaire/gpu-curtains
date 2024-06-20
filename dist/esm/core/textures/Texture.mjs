@@ -46,12 +46,14 @@ class Texture {
   constructor(renderer, parameters = defaultTextureParams) {
     /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
     __privateAdd(this, _autoResize, true);
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
     this.type = "Texture";
     this.renderer = renderer;
     this.uuid = generateUUID();
     this.options = { ...defaultTextureParams, ...parameters };
+    if (this.options.format === "rgba32float" && !this.renderer.deviceManager.adapter.features.has("float32-filterable")) {
+      this.options.format = "rgba16float";
+    }
     if (parameters.fromTexture) {
       this.options.format = parameters.fromTexture.texture.format;
       this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
@@ -137,11 +139,12 @@ class Texture {
     width = this.size.width,
     height = this.size.height,
     depth = this.size.depth,
-    origin = [0, 0, 0]
+    origin = [0, 0, 0],
+    colorSpace = "srgb"
   }) {
     this.renderer.device.queue.copyExternalImageToTexture(
       { source, flipY: this.options.flipY },
-      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
       [width, height, depth]
     );
     if (this.texture.mipLevelCount > 1) {

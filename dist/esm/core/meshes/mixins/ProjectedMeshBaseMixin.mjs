@@ -47,8 +47,7 @@ function ProjectedMeshBaseMixin(Base) {
         ...{ useProjection: true }
       };
       this.type = "MeshTransformed";
-      renderer = renderer && renderer.renderer || renderer;
-      isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+      renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
       this.renderer = renderer;
       const { frustumCulling, DOMFrustumMargins } = parameters;
       this.options = {

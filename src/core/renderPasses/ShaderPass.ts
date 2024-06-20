@@ -63,15 +63,32 @@ export class ShaderPass extends FullscreenPlane {
    * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters: ShaderPassParams = {}) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, parameters.label ? parameters.label + ' ShaderPass' : 'ShaderPass')
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' ShaderPass' : 'ShaderPass')
 
     // disable depth for postprocessing passes
     parameters.depth = false
-    // force transparency to get the right alpha blending
-    parameters.transparent = true
+
+    // blend equation specific to shader passes
+    const defaultBlend: GPUBlendState = {
+      color: {
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+      alpha: {
+        srcFactor: 'one',
+        dstFactor: 'one-minus-src-alpha',
+      },
+    }
+
+    if (!parameters.targets) {
+      parameters.targets = [
+        {
+          blend: defaultBlend,
+        },
+      ]
+    } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
+      parameters.targets[0].blend = defaultBlend
+    }
 
     parameters.label = parameters.label ?? 'ShaderPass ' + renderer.shaderPasses?.length
 

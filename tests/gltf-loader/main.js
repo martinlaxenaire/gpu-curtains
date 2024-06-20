@@ -6,8 +6,10 @@ window.addEventListener('load', async () => {
     GPUDeviceManager,
     GPUCameraRenderer,
     Texture,
+    Sampler,
     GLTFLoader,
     GLTFScenesManager,
+    buildShaders,
     buildPBRShaders,
     buildIBLShaders,
     OrbitControls,
@@ -45,48 +47,124 @@ window.addEventListener('load', async () => {
   }
 
   const iblLUTBitmap = await loadImageBitmap('./assets/lut.png')
-  const envDiffuseBitmap = await loadImageBitmap('./assets/sunset-diffuse-RGBM.png')
-  const envSpecularBitmap = await loadImageBitmap('./assets/royal_esplanade_1k.png')
+  // const envDiffuseBitmap = await loadImageBitmap('./assets/royal_esplanade_1k-diffuse-RGBM.png')
+  // const envSpecularBitmap = await loadImageBitmap('./assets/royal_esplanade_1k-specular-RGBM.png')
 
   const originalIblLUTTexture = new Texture(gpuCameraRenderer, {
     name: 'iblLUTTexture',
     visibility: ['fragment'],
+    format: 'rgba32float',
     fixedSize: {
       width: iblLUTBitmap.width,
       height: iblLUTBitmap.height,
     },
+    flipY: true, // from a WebGL texture!
   })
 
   originalIblLUTTexture.uploadSource({
     source: iblLUTBitmap,
   })
 
+  // Fetch the 6 separate images for negative/positive x, y, z axis of a cubeMap
+  // and upload it into a GPUTexture.
+  // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]
+  // We can also use a single gain map JPG as source
+  // Created from a .hdr with https://gainmap-creator.monogrid.com/
+  const diffuseSrcs = [
+    // './assets/hdr-cube-maps/diffuse/px.png',
+    // './assets/hdr-cube-maps/diffuse/nx.png',
+    // './assets/hdr-cube-maps/diffuse/py.png',
+    // './assets/hdr-cube-maps/diffuse/ny.png',
+    // './assets/hdr-cube-maps/diffuse/pz.png',
+    // './assets/hdr-cube-maps/diffuse/nz.png',
+    './assets/hdr-gain-maps/cannon-1k-diffuse.jpg',
+  ]
+
+  const specularSrcs = [
+    // './assets/hdr-cube-maps/specular/px.png',
+    // './assets/hdr-cube-maps/specular/nx.png',
+    // './assets/hdr-cube-maps/specular/py.png',
+    // './assets/hdr-cube-maps/specular/ny.png',
+    // './assets/hdr-cube-maps/specular/pz.png',
+    // './assets/hdr-cube-maps/specular/nz.png',
+    './assets/hdr-gain-maps/cannon-1k-specular.jpg',
+  ]
+
+  const diffusePromises = diffuseSrcs.map(async (src) => {
+    const response = await fetch(src)
+    return createImageBitmap(await response.blob())
+  })
+
+  const diffuseBitmaps = await Promise.all(diffusePromises)
+
+  const specularPromises = specularSrcs.map(async (src) => {
+    const response = await fetch(src)
+    return createImageBitmap(await response.blob())
+  })
+
+  const specularBitmaps = await Promise.all(specularPromises)
+
   const originalEnvDiffuseTexture = new Texture(gpuCameraRenderer, {
+    label: 'Environment diffuse texture',
     name: 'envDiffuseTexture',
     visibility: ['fragment'],
-    format: 'rgba16float',
+    format: 'rgba32float',
+    generateMips: true,
+    viewDimension: diffuseBitmaps.length > 1 ? 'cube' : '2d',
     fixedSize: {
-      width: envDiffuseBitmap.width,
-      height: envDiffuseBitmap.height,
+      width: diffuseBitmaps[0].width,
+      height: diffuseBitmaps[0].height,
     },
+    flipY: diffuseBitmaps.length, // cube map has been taken from a WebGL example
   })
 
-  originalEnvDiffuseTexture.uploadSource({
-    source: envDiffuseBitmap,
-  })
+  for (let i = 0; i < diffuseBitmaps.length; i++) {
+    const imageBitmap = diffuseBitmaps[i]
+    originalEnvDiffuseTexture.uploadSource({
+      source: imageBitmap,
+      width: imageBitmap.width,
+      height: imageBitmap.height,
+      depth: 1, // explicitly set the depth to 1
+      origin: [0, 0, i],
+      colorSpace: 'display-p3',
+    })
+  }
 
   const originalEnvSpecularTexture = new Texture(gpuCameraRenderer, {
+    label: 'Environment specular texture',
     name: 'envSpecularTexture',
     visibility: ['fragment'],
-    format: 'rgba16float',
+    format: 'rgba32float',
+    generateMips: true,
+    viewDimension: specularBitmaps.length > 1 ? 'cube' : '2d',
     fixedSize: {
-      width: envSpecularBitmap.width,
-      height: envSpecularBitmap.height,
+      width: specularBitmaps[0].width,
+      height: specularBitmaps[0].height,
     },
+    flipY: specularBitmaps.length, // cube map has been taken from a WebGL example
   })
 
-  originalEnvSpecularTexture.uploadSource({
-    source: envSpecularBitmap,
+  for (let i = 0; i < specularBitmaps.length; i++) {
+    const imageBitmap = specularBitmaps[i]
+    originalEnvSpecularTexture.uploadSource({
+      source: imageBitmap,
+      width: imageBitmap.width,
+      height: imageBitmap.height,
+      depth: 1, // explicitly set the depth to 1
+      origin: [0, 0, i],
+      colorSpace: 'display-p3',
+    })
+  }
+
+  // finally we will need a clamp-to-edge sampler for those textures
+  const clampSampler = new Sampler(gpuCameraRenderer, {
+    label: 'Clamp sampler',
+    name: 'clampSampler',
+    magFilter: 'linear',
+    minFilter: 'linear',
+    mipmapFilter: 'linear',
+    addressModeU: 'clamp-to-edge',
+    addressModeV: 'clamp-to-edge',
   })
 
   const models = {
@@ -193,6 +271,9 @@ window.addEventListener('load', async () => {
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
+      // add clamp sampler
+      parameters.samplers = [...parameters.samplers, clampSampler]
+
       // add IBL textures
       const iblLUTTexture = new Texture(gpuCameraRenderer, {
         name: 'iblLUTTexture',
@@ -243,7 +324,7 @@ window.addEventListener('load', async () => {
               },
               range: {
                 type: 'f32',
-                value: lightPositionLength * 1.25,
+                value: lightPositionLength,
               },
               color: {
                 type: 'vec3f',
@@ -259,18 +340,25 @@ window.addEventListener('load', async () => {
       }
 
       // now the shaders
+      const additionalFragmentHead = /* wgsl */ `
+      fn rangeAttenuation(range: f32, distance: f32) -> f32 {
+        if (range <= 0.0) {
+            // Negative range means no cutoff
+            return 1.0 / pow(distance, 2.0);
+        }
+        return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
+      }
+      `
+
       const ambientContribution = /* wgsl */ `
-      ambientContribution = ambientLight.intensity * ambientLight.color;
+      lightContribution.ambient = ambientLight.intensity * ambientLight.color;
       `
 
       const lightContribution = /* wgsl */ `
-      let N = normalize(normal);
-      let V = normalize(fsInput.viewDirection);
-      let L = normalize(pointLight.position - fsInput.worldPosition);
+      let L = normalize(pointLight.position - worldPosition);
       let H = normalize(V + L);
       
       let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
-      let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
       let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
       let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
     
@@ -289,23 +377,48 @@ window.addEventListener('load', async () => {
       // add lights spec to alpha for reflections on transparent surfaces (glass)
       color.a = max(color.a, max(max(specular.r, specular.g), specular.b));
               
-      let distance = length(pointLight.position - fsInput.worldPosition);
+      let distance = length(pointLight.position - worldPosition);
       let attenuation = rangeAttenuation(pointLight.range, distance);
       
       let radiance = pointLight.color * pointLight.intensity * attenuation;
-      lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
+      
+      lightContribution.diffuse += (kD * color.rgb / vec3(PI)) * radiance * NdotL;
+      lightContribution.specular += specular * radiance * NdotL;
       `
 
-      //parameters.shaders = buildPBRShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
+      const additionalColorContribution = `
+        //color = vec4(vec3(occlusion), color.a);
+      `
+
+      //parameters.shaders = buildShaders(meshDescriptor)
+
+      // parameters.shaders = buildPBRShaders(meshDescriptor, {
+      //   chunks: { additionalFragmentHead, ambientContribution, lightContribution },
+      // })
+
       parameters.shaders = buildIBLShaders(meshDescriptor, {
         iblParameters: {
-          diffuseStrength: 0.5,
+          diffuseStrength: 1,
           specularStrength: 1,
-          lutTexture: iblLUTTexture,
-          envDiffuseTexture,
-          envSpecularTexture,
+          lutTexture: {
+            texture: iblLUTTexture,
+            samplerName: 'clampSampler', // use clamp sampler
+          },
+          envDiffuseTexture: {
+            texture: envDiffuseTexture,
+            samplerName: 'clampSampler', // use clamp sampler
+          },
+          envSpecularTexture: {
+            texture: envSpecularTexture,
+            samplerName: 'clampSampler', // use clamp sampler
+          },
         },
-        chunks: { ambientContribution, lightContribution },
+        chunks: {
+          additionalFragmentHead,
+          // ambientContribution,
+          // lightContribution,
+          additionalColorContribution,
+        },
       })
     })
 

@@ -1,4 +1,4 @@
-import { BindGroup, ComputePass, Geometry, GPUCurtains, Mesh, Vec3 } from '../../dist/esm/index.mjs'
+import { BindGroup, ComputePass, Geometry, GPUCurtains, OrbitControls, Mesh, Vec3 } from '../../dist/esm/index.mjs'
 
 // inspired by https://barradeau.com/blog/?p=621
 // and https://www.clicktorelease.com/code/polygon-shredder/
@@ -11,7 +11,7 @@ const computeParticles = /* wgsl */ `
   fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
   
   // set initial positions and data
-  @compute @workgroup_size(64) fn setInitData(
+  @compute @workgroup_size(256) fn setInitData(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;
@@ -23,7 +23,7 @@ const computeParticles = /* wgsl */ `
       
       // calculate a random particle max life
       // max life is in number of frames
-      var maxLife: f32 = 250.0 + round( max(rand11(asin(fIndex * PI / nbParticles)), 0.0) * 1500.0 );
+      var maxLife: f32 = 250.0 + round( max(rand11(sin(cos(fIndex * PI / nbParticles) * PI)), 0.0) * 1500.0 );
       particlesStaticData[index].maxLife = maxLife;
       
       // now set a different initial life for each particle
@@ -37,7 +37,7 @@ const computeParticles = /* wgsl */ `
       var position: vec3f;
       position.x = rand11(cos(fIndex * PI / nbParticles)) * 2.0 - 1.0;
       position.y = rand11(sin(fIndex * PI / nbParticles)) * 2.0 - 1.0;
-      position.z = rand11(atan(fIndex * PI / nbParticles)) * 2.0 - 1.0;
+      position.z = rand11(cos(sin(fIndex * PI / nbParticles) * PI)) * 2.0 - 1.0;
       
       let posLength = length(position);
       if(posLength > 1.0) {
@@ -166,7 +166,7 @@ const computeParticles = /* wgsl */ `
   }
   
   // update particle positions
-  @compute @workgroup_size(128) fn updatePos(
+  @compute @workgroup_size(256) fn updatePos(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;
@@ -208,7 +208,7 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
-      near: 1,
+      near: 0.1,
       far: systemSize.z * 50,
     },
   })
@@ -286,7 +286,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'setInitData',
       },
     },
-    dispatchSize: Math.ceil(nbParticles / 64), //we divide the vertex count by the workgroup_size
+    dispatchSize: Math.ceil(nbParticles / 256), //we divide the vertex count by the workgroup_size
     bindGroups: [particlesBindGroup],
     autoRender: false, // we don't want to run this pass each frame
   })
@@ -306,7 +306,7 @@ window.addEventListener('load', async () => {
         entryPoint: 'updatePos',
       },
     },
-    dispatchSize: Math.ceil(nbParticles / 128),
+    dispatchSize: Math.ceil(nbParticles / 256),
     bindGroups: [particlesBindGroup],
   })
 
@@ -320,7 +320,13 @@ window.addEventListener('load', async () => {
     })
 
   // now the render part
-  gpuCurtains.camera.position.z = systemSize.z * 3
+  gpuCurtains.renderer.camera.position.z = systemSize.z * 3
+
+  // orbit controls
+  const orbitControls = new OrbitControls(gpuCurtains.renderer)
+  orbitControls.zoomStep = systemSize.z * 0.002
+  orbitControls.minZoom = systemSize.z * -1.5
+  orbitControls.maxZoom = systemSize.z * 1.5
 
   const particlesVs = /* wgsl */ `  
     struct VSOutput {
@@ -389,8 +395,6 @@ window.addEventListener('load', async () => {
       },
     ],
   })
-
-  console.log(particlesGeometry)
 
   const particles = new Mesh(gpuCurtains, {
     label: 'Particles mesh',

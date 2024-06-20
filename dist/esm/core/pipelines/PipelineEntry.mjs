@@ -10,8 +10,7 @@ class PipelineEntry {
     this.type = "PipelineEntry";
     let { renderer } = parameters;
     const { label, shaders, useAsync } = parameters;
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, label ? label + " " + this.type : this.type);
+    renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
     this.renderer = renderer;
     Object.defineProperty(this, "index", { value: pipelineId++ });
     this.layout = null;

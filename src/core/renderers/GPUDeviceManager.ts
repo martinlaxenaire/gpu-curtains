@@ -196,8 +196,15 @@ export class GPUDeviceManager {
       this.index++
     } else {
       try {
+        const requiredFeatures = [] as GPUFeatureName[]
+
+        if ((this.adapter as GPUAdapter).features.has('float32-filterable')) {
+          requiredFeatures.push('float32-filterable')
+        }
+
         this.device = await (this.adapter as GPUAdapter)?.requestDevice({
           label: this.label + ' ' + this.index,
+          requiredFeatures,
         })
 
         if (this.device) {

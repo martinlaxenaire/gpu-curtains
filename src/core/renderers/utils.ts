@@ -2,6 +2,7 @@ import { throwError } from '../../utils/utils'
 import { GPURenderer } from './GPURenderer'
 import { GPUCameraRenderer } from './GPUCameraRenderer'
 import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
+import { GPUCurtains } from '../../curtains/GPUCurtains'
 
 /**
  * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}
@@ -31,9 +32,11 @@ const formatRendererError = (renderer: Renderer, rendererType = 'GPURenderer', t
  * Check if the given renderer is a {@link Renderer}
  * @param renderer - renderer to test
  * @param type - object type used to format the error if needed
- * @returns - whether the given renderer is a {@link Renderer}
+ * @returns - the {@link Renderer} if correctly set
  */
-export const isRenderer = (renderer: Renderer | undefined, type: string | null): boolean => {
+export const isRenderer = (renderer: GPUCurtains | Renderer | undefined, type: string | null): Renderer => {
+  renderer = ((renderer && (renderer as GPUCurtains).renderer) || renderer) as Renderer
+
   const isRenderer =
     renderer &&
     (renderer.type === 'GPURenderer' ||
@@ -44,16 +47,21 @@ export const isRenderer = (renderer: Renderer | undefined, type: string | null):
     formatRendererError(renderer, 'GPURenderer', type)
   }
 
-  return isRenderer
+  return renderer
 }
 
 /**
  * Check if the given renderer is a {@link CameraRenderer}
  * @param renderer - renderer to test
  * @param type - object type used to format the error if needed
- * @returns - whether the given renderer is a {@link CameraRenderer}
+ * @returns - the {@link CameraRenderer} if correctly set
  */
-export const isCameraRenderer = (renderer: CameraRenderer | undefined, type: string | null): boolean => {
+export const isCameraRenderer = (
+  renderer: GPUCurtains | CameraRenderer | undefined,
+  type: string | null
+): CameraRenderer => {
+  renderer = ((renderer && (renderer as GPUCurtains).renderer) || renderer) as CameraRenderer
+
   const isCameraRenderer =
     renderer && (renderer.type === 'GPUCameraRenderer' || renderer.type === 'GPUCurtainsRenderer')
 
@@ -61,23 +69,28 @@ export const isCameraRenderer = (renderer: CameraRenderer | undefined, type: str
     formatRendererError(renderer, 'GPUCameraRenderer', type)
   }
 
-  return isCameraRenderer
+  return renderer
 }
 
 /**
  * Check if the given renderer is a {@link GPUCurtainsRenderer}
  * @param renderer - renderer to test
  * @param type - object type used to format the error if needed
- * @returns - whether the given renderer is a {@link GPUCurtainsRenderer}
+ * @returns - the {@link GPUCurtainsRenderer} if correctly set
  */
-export const isCurtainsRenderer = (renderer: GPUCurtainsRenderer | undefined, type: string | null): boolean => {
+export const isCurtainsRenderer = (
+  renderer: GPUCurtains | GPUCurtainsRenderer | undefined,
+  type: string | null
+): GPUCurtainsRenderer => {
+  renderer = ((renderer && (renderer as GPUCurtains).renderer) || renderer) as GPUCurtainsRenderer
+
   const isCurtainsRenderer = renderer && renderer.type === 'GPUCurtainsRenderer'
 
   if (!isCurtainsRenderer) {
     formatRendererError(renderer, 'GPUCurtainsRenderer', type)
   }
 
-  return isCurtainsRenderer
+  return renderer
 }
 
 /**
@@ -102,7 +115,7 @@ export const generateMips = (() => {
             @vertex fn vs(
               @builtin(vertex_index) vertexIndex : u32
             ) -> VSOutput {
-              var pos = array<vec2f, 6>(
+              let pos = array(
 
                 vec2f( 0.0,  0.0),  // center
                 vec2f( 1.0,  0.0),  // right, center
@@ -132,20 +145,19 @@ export const generateMips = (() => {
 
       sampler = device.createSampler({
         minFilter: 'linear',
+        magFilter: 'linear',
       })
     }
 
     if (!pipelineByFormat[texture.format]) {
       pipelineByFormat[texture.format] = device.createRenderPipeline({
-        label: 'mip level generator pipeline',
+        label: 'Mip level generator pipeline',
         layout: 'auto',
         vertex: {
           module,
-          entryPoint: 'vs',
         },
         fragment: {
           module,
-          entryPoint: 'fs',
           targets: [{ format: texture.format }],
         },
       })
@@ -153,7 +165,7 @@ export const generateMips = (() => {
     const pipeline = pipelineByFormat[texture.format]
 
     const encoder = device.createCommandEncoder({
-      label: 'mip gen encoder',
+      label: 'Mip gen encoder',
     })
 
     let width = texture.width
@@ -163,38 +175,48 @@ export const generateMips = (() => {
       width = Math.max(1, (width / 2) | 0)
       height = Math.max(1, (height / 2) | 0)
 
-      const bindGroup = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(0),
-        entries: [
-          { binding: 0, resource: sampler },
-          {
-            binding: 1,
-            resource: texture.createView({
-              baseMipLevel,
-              mipLevelCount: 1,
-            }),
-          },
-        ],
-      })
+      for (let layer = 0; layer < texture.depthOrArrayLayers; ++layer) {
+        const bindGroup = device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: sampler },
+            {
+              binding: 1,
+              resource: texture.createView({
+                dimension: '2d',
+                baseMipLevel,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1,
+              }),
+            },
+          ],
+        })
 
-      ++baseMipLevel
+        const renderPassDescriptor = {
+          label: 'Mip generation render pass',
+          colorAttachments: [
+            {
+              view: texture.createView({
+                dimension: '2d',
+                baseMipLevel: baseMipLevel + 1,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1,
+              }),
+              loadOp: 'clear',
+              storeOp: 'store',
+            },
+          ],
+        }
 
-      const renderPassDescriptor = {
-        label: 'our basic canvas renderPass',
-        colorAttachments: [
-          {
-            view: texture.createView({ baseMipLevel, mipLevelCount: 1 }),
-            loadOp: 'clear',
-            storeOp: 'store',
-          },
-        ],
+        const pass = encoder.beginRenderPass(renderPassDescriptor as GPURenderPassDescriptor)
+        pass.setPipeline(pipeline)
+        pass.setBindGroup(0, bindGroup)
+        pass.draw(6) // call our vertex shader 6 times
+        pass.end()
       }
-
-      const pass = encoder.beginRenderPass(renderPassDescriptor as GPURenderPassDescriptor)
-      pass.setPipeline(pipeline)
-      pass.setBindGroup(0, bindGroup)
-      pass.draw(6) // call our vertex shader 6 times
-      pass.end()
+      ++baseMipLevel
     }
 
     const commandBuffer = encoder.finish()

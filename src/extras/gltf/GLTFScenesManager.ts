@@ -76,10 +76,7 @@ export class GLTFScenesManager {
    * @param parameters.gltf - The {@link GLTFLoader.gltf | gltf} object used.
    */
   constructor({ renderer, gltf }) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
-
-    isCameraRenderer(renderer, 'GLTFScenesManager')
+    renderer = isCameraRenderer(renderer, 'GLTFScenesManager')
 
     this.renderer = renderer
     this.gltf = gltf
@@ -260,7 +257,15 @@ export class GLTFScenesManager {
       }
     } else {
       // create a default sampler
-      this.scenesManager.samplers.push(new Sampler(this.renderer, { label: 'Default sampler', name: 'defaultSampler' }))
+      this.scenesManager.samplers.push(
+        new Sampler(this.renderer, {
+          label: 'Default sampler',
+          name: 'defaultSampler',
+          magFilter: 'linear',
+          minFilter: 'linear',
+          mipmapFilter: 'linear',
+        })
+      )
     }
   }
 
@@ -769,19 +774,25 @@ export class GLTFScenesManager {
         },
         metallicFactor: {
           type: 'f32',
-          value: material.pbrMetallicRoughness?.metallicFactor || 0,
+          value:
+            material.pbrMetallicRoughness?.metallicFactor === undefined
+              ? 1
+              : material.pbrMetallicRoughness.metallicFactor,
         },
         roughnessFactor: {
           type: 'f32',
-          value: material.pbrMetallicRoughness?.roughnessFactor || 1,
+          value:
+            material.pbrMetallicRoughness?.roughnessFactor === undefined
+              ? 1
+              : material.pbrMetallicRoughness.roughnessFactor,
         },
         normalMapScale: {
           type: 'f32',
-          value: material.normalTexture?.scale || 1,
+          value: material.normalTexture?.scale === undefined ? 1 : material.normalTexture.scale,
         },
         occlusionStrength: {
           type: 'f32',
-          value: material.occlusionTexture?.strength || 1,
+          value: material.occlusionTexture?.strength === undefined ? 1 : material.occlusionTexture.strength,
         },
         emissiveFactor: {
           type: 'vec3f',

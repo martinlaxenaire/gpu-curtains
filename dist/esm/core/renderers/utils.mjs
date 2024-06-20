@@ -5,25 +5,28 @@ const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
   throwError(error);
 };
 const isRenderer = (renderer, type) => {
+  renderer = renderer && renderer.renderer || renderer;
   const isRenderer2 = renderer && (renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
   if (!isRenderer2) {
     formatRendererError(renderer, "GPURenderer", type);
   }
-  return isRenderer2;
+  return renderer;
 };
 const isCameraRenderer = (renderer, type) => {
+  renderer = renderer && renderer.renderer || renderer;
   const isCameraRenderer2 = renderer && (renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
   if (!isCameraRenderer2) {
     formatRendererError(renderer, "GPUCameraRenderer", type);
   }
-  return isCameraRenderer2;
+  return renderer;
 };
 const isCurtainsRenderer = (renderer, type) => {
+  renderer = renderer && renderer.renderer || renderer;
   const isCurtainsRenderer2 = renderer && renderer.type === "GPUCurtainsRenderer";
   if (!isCurtainsRenderer2) {
     formatRendererError(renderer, "GPUCurtainsRenderer", type);
   }
-  return isCurtainsRenderer2;
+  return renderer;
 };
 const generateMips = /* @__PURE__ */ (() => {
   let sampler;
@@ -42,7 +45,7 @@ const generateMips = /* @__PURE__ */ (() => {
             @vertex fn vs(
               @builtin(vertex_index) vertexIndex : u32
             ) -> VSOutput {
-              var pos = array<vec2f, 6>(
+              let pos = array(
 
                 vec2f( 0.0,  0.0),  // center
                 vec2f( 1.0,  0.0),  // right, center
@@ -70,27 +73,26 @@ const generateMips = /* @__PURE__ */ (() => {
           `
       });
       sampler = device.createSampler({
-        minFilter: "linear"
+        minFilter: "linear",
+        magFilter: "linear"
       });
     }
     if (!pipelineByFormat[texture.format]) {
       pipelineByFormat[texture.format] = device.createRenderPipeline({
-        label: "mip level generator pipeline",
+        label: "Mip level generator pipeline",
         layout: "auto",
         vertex: {
-          module,
-          entryPoint: "vs"
+          module
         },
         fragment: {
           module,
-          entryPoint: "fs",
           targets: [{ format: texture.format }]
         }
       });
     }
     const pipeline = pipelineByFormat[texture.format];
     const encoder = device.createCommandEncoder({
-      label: "mip gen encoder"
+      label: "Mip gen encoder"
     });
     let width = texture.width;
     let height = texture.height;
@@ -98,35 +100,46 @@ const generateMips = /* @__PURE__ */ (() => {
     while (width > 1 || height > 1) {
       width = Math.max(1, width / 2 | 0);
       height = Math.max(1, height / 2 | 0);
-      const bindGroup = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(0),
-        entries: [
-          { binding: 0, resource: sampler },
-          {
-            binding: 1,
-            resource: texture.createView({
-              baseMipLevel,
-              mipLevelCount: 1
-            })
-          }
-        ]
-      });
+      for (let layer = 0; layer < texture.depthOrArrayLayers; ++layer) {
+        const bindGroup = device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: sampler },
+            {
+              binding: 1,
+              resource: texture.createView({
+                dimension: "2d",
+                baseMipLevel,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1
+              })
+            }
+          ]
+        });
+        const renderPassDescriptor = {
+          label: "Mip generation render pass",
+          colorAttachments: [
+            {
+              view: texture.createView({
+                dimension: "2d",
+                baseMipLevel: baseMipLevel + 1,
+                mipLevelCount: 1,
+                baseArrayLayer: layer,
+                arrayLayerCount: 1
+              }),
+              loadOp: "clear",
+              storeOp: "store"
+            }
+          ]
+        };
+        const pass = encoder.beginRenderPass(renderPassDescriptor);
+        pass.setPipeline(pipeline);
+        pass.setBindGroup(0, bindGroup);
+        pass.draw(6);
+        pass.end();
+      }
       ++baseMipLevel;
-      const renderPassDescriptor = {
-        label: "our basic canvas renderPass",
-        colorAttachments: [
-          {
-            view: texture.createView({ baseMipLevel, mipLevelCount: 1 }),
-            loadOp: "clear",
-            storeOp: "store"
-          }
-        ]
-      };
-      const pass = encoder.beginRenderPass(renderPassDescriptor);
-      pass.setPipeline(pipeline);
-      pass.setBindGroup(0, bindGroup);
-      pass.draw(6);
-      pass.end();
     }
     const commandBuffer = encoder.finish();
     device.queue.submit([commandBuffer]);

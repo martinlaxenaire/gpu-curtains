@@ -10,10 +10,27 @@ class ShaderPass extends FullscreenPlane {
    * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
    */
   constructor(renderer, parameters = {}) {
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
     parameters.depth = false;
-    parameters.transparent = true;
+    const defaultBlend = {
+      color: {
+        srcFactor: "one",
+        dstFactor: "one-minus-src-alpha"
+      },
+      alpha: {
+        srcFactor: "one",
+        dstFactor: "one-minus-src-alpha"
+      }
+    };
+    if (!parameters.targets) {
+      parameters.targets = [
+        {
+          blend: defaultBlend
+        }
+      ];
+    } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
+      parameters.targets[0].blend = defaultBlend;
+    }
     parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
     parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
     if (!parameters.shaders) {

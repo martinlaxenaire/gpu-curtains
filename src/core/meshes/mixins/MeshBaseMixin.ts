@@ -509,10 +509,7 @@ function MeshBaseMixin<TBase extends MixinConstructor>(Base: TBase): MixinConstr
       this.uuid = generateUUID()
       Object.defineProperty(this as MeshBase, 'index', { value: meshIndex++ })
 
-      // we could pass our curtains object OR our curtains renderer object
-      renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-      isRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
       this.renderer = renderer
 

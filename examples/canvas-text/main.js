@@ -26,7 +26,7 @@ window.addEventListener('load', async () => {
         var vsOutput: VSOutput;
         
         // progressively increase strength
-        var strength: f32 = 0.2 * pow(min(frames.elapsed / 180.0, 1.0), 2.0);
+        var strength: f32 = 4.0 * pow(min(frames.elapsed / 180.0, 1.0), 2.0);
         var nbWaves: f32 = 5.0;
 
         // map vertices coordinates to the 0->1 range on the X axis

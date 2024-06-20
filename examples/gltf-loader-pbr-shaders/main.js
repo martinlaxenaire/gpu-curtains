@@ -152,18 +152,29 @@ window.addEventListener('load', async () => {
       }
 
       // PBR shaders
+      const additionalFragmentHead = /* wgsl */ `
+        fn rangeAttenuation(range: f32, distance: f32) -> f32 {
+          if (range <= 0.0) {
+              // Negative range means no cutoff
+              return 1.0 / pow(distance, 2.0);
+          }
+          return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
+        }
+      `
+
       const ambientContribution = /* wgsl */ `
-        ambientContribution = ambientLight.intensity * ambientLight.color;
+        lightContribution.ambient = ambientLight.intensity * ambientLight.color;
       `
 
       const lightContribution = /* wgsl */ `
-        let N = normalize(normal);
-        let V = normalize(fsInput.viewDirection);
+        // N, V and NdotV are already defined as
+        // let N = normalize(normal);
+        // let V = normalize(fsInput.viewDirection);
+        // let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
         let L = normalize(pointLight.position - fsInput.worldPosition);
         let H = normalize(V + L);
         
         let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
-        let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
         let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
         let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
       
@@ -190,10 +201,14 @@ window.addEventListener('load', async () => {
         let attenuation = rangeAttenuation(pointLight.range, distance);
         
         let radiance = pointLight.color * pointLight.intensity * attenuation;
-        lightContribution = (kD * color.rgb / vec3(PI) + specular) * radiance * NdotL;
+      
+        lightContribution.diffuse += (kD * color.rgb / vec3(PI)) * radiance * NdotL;
+        lightContribution.specular += specular * radiance * NdotL;
       `
 
-      parameters.shaders = buildPBRShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
+      parameters.shaders = buildPBRShaders(meshDescriptor, {
+        chunks: { additionalFragmentHead, ambientContribution, lightContribution },
+      })
     })
   }
 

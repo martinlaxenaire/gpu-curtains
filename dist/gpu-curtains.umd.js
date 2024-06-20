@@ -37,25 +37,28 @@
     throwError(error);
   };
   const isRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
     const isRenderer2 = renderer && (renderer.type === "GPURenderer" || renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
     if (!isRenderer2) {
       formatRendererError(renderer, "GPURenderer", type);
     }
-    return isRenderer2;
+    return renderer;
   };
   const isCameraRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
     const isCameraRenderer2 = renderer && (renderer.type === "GPUCameraRenderer" || renderer.type === "GPUCurtainsRenderer");
     if (!isCameraRenderer2) {
       formatRendererError(renderer, "GPUCameraRenderer", type);
     }
-    return isCameraRenderer2;
+    return renderer;
   };
   const isCurtainsRenderer = (renderer, type) => {
+    renderer = renderer && renderer.renderer || renderer;
     const isCurtainsRenderer2 = renderer && renderer.type === "GPUCurtainsRenderer";
     if (!isCurtainsRenderer2) {
       formatRendererError(renderer, "GPUCurtainsRenderer", type);
     }
-    return isCurtainsRenderer2;
+    return renderer;
   };
   const generateMips = /* @__PURE__ */ (() => {
     let sampler;
@@ -74,7 +77,7 @@
             @vertex fn vs(
               @builtin(vertex_index) vertexIndex : u32
             ) -> VSOutput {
-              var pos = array<vec2f, 6>(
+              let pos = array(
 
                 vec2f( 0.0,  0.0),  // center
                 vec2f( 1.0,  0.0),  // right, center
@@ -102,27 +105,26 @@
           `
         });
         sampler = device.createSampler({
-          minFilter: "linear"
+          minFilter: "linear",
+          magFilter: "linear"
         });
       }
       if (!pipelineByFormat[texture.format]) {
         pipelineByFormat[texture.format] = device.createRenderPipeline({
-          label: "mip level generator pipeline",
+          label: "Mip level generator pipeline",
           layout: "auto",
           vertex: {
-            module,
-            entryPoint: "vs"
+            module
           },
           fragment: {
             module,
-            entryPoint: "fs",
             targets: [{ format: texture.format }]
           }
         });
       }
       const pipeline = pipelineByFormat[texture.format];
       const encoder = device.createCommandEncoder({
-        label: "mip gen encoder"
+        label: "Mip gen encoder"
       });
       let width = texture.width;
       let height = texture.height;
@@ -130,35 +132,46 @@
       while (width > 1 || height > 1) {
         width = Math.max(1, width / 2 | 0);
         height = Math.max(1, height / 2 | 0);
-        const bindGroup = device.createBindGroup({
-          layout: pipeline.getBindGroupLayout(0),
-          entries: [
-            { binding: 0, resource: sampler },
-            {
-              binding: 1,
-              resource: texture.createView({
-                baseMipLevel,
-                mipLevelCount: 1
-              })
-            }
-          ]
-        });
+        for (let layer = 0; layer < texture.depthOrArrayLayers; ++layer) {
+          const bindGroup = device.createBindGroup({
+            layout: pipeline.getBindGroupLayout(0),
+            entries: [
+              { binding: 0, resource: sampler },
+              {
+                binding: 1,
+                resource: texture.createView({
+                  dimension: "2d",
+                  baseMipLevel,
+                  mipLevelCount: 1,
+                  baseArrayLayer: layer,
+                  arrayLayerCount: 1
+                })
+              }
+            ]
+          });
+          const renderPassDescriptor = {
+            label: "Mip generation render pass",
+            colorAttachments: [
+              {
+                view: texture.createView({
+                  dimension: "2d",
+                  baseMipLevel: baseMipLevel + 1,
+                  mipLevelCount: 1,
+                  baseArrayLayer: layer,
+                  arrayLayerCount: 1
+                }),
+                loadOp: "clear",
+                storeOp: "store"
+              }
+            ]
+          };
+          const pass = encoder.beginRenderPass(renderPassDescriptor);
+          pass.setPipeline(pipeline);
+          pass.setBindGroup(0, bindGroup);
+          pass.draw(6);
+          pass.end();
+        }
         ++baseMipLevel;
-        const renderPassDescriptor = {
-          label: "our basic canvas renderPass",
-          colorAttachments: [
-            {
-              view: texture.createView({ baseMipLevel, mipLevelCount: 1 }),
-              loadOp: "clear",
-              storeOp: "store"
-            }
-          ]
-        };
-        const pass = encoder.beginRenderPass(renderPassDescriptor);
-        pass.setPipeline(pipeline);
-        pass.setBindGroup(0, bindGroup);
-        pass.draw(6);
-        pass.end();
       }
       const commandBuffer = encoder.finish();
       device.queue.submit([commandBuffer]);
@@ -1688,7 +1701,7 @@
     clone(params) {
       const { struct, ...defaultParams } = params;
       const bufferBindingCopy = new this.constructor(defaultParams);
-      bufferBindingCopy.setBindings(struct);
+      struct && bufferBindingCopy.setBindings(struct);
       bufferBindingCopy.options.struct = struct;
       bufferBindingCopy.arrayBufferSize = this.arrayBufferSize;
       bufferBindingCopy.arrayBuffer = new ArrayBuffer(bufferBindingCopy.arrayBufferSize);
@@ -1995,8 +2008,7 @@
      */
     constructor(renderer, { label = "BindGroup", index = 0, bindings = [], uniforms, storages } = {}) {
       this.type = "BindGroup";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, this.type);
+      renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.options = {
         label,
@@ -3091,16 +3103,18 @@
      * This is a view matrix which transforms all other objects
      * to be in the space of the view defined by the parameters.
      *
+     * Equivalent to `matrix.lookAt(eye, target, up).invert()` but faster.
+     *
      * @param eye - the position of the object.
      * @param target - the position meant to be aimed at.
      * @param up - a vector pointing up.
      * @returns - the view {@link Mat4} matrix.
      */
     makeView(eye = new Vec3(), target = new Vec3(), up = new Vec3(0, 1, 0)) {
+      const te = this.elements;
       zAxis.copy(eye).sub(target).normalize();
       xAxis.crossVectors(up, zAxis).normalize();
       yAxis.crossVectors(zAxis, xAxis).normalize();
-      const te = this.elements;
       te[0] = xAxis.x;
       te[1] = yAxis.x;
       te[2] = zAxis.x;
@@ -3564,8 +3578,7 @@
       this._onSourceUploadedCallback = () => {
       };
       this.type = "Texture";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
       const defaultOptions = {
@@ -4012,8 +4025,7 @@
      */
     constructor(renderer, { label, index = 0, bindings = [], uniforms, storages, textures = [], samplers = [] } = {}) {
       const type = "TextureBindGroup";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, type);
+      renderer = isRenderer(renderer, type);
       super(renderer, { label, index, bindings, uniforms, storages });
       this.options = {
         ...this.options,
@@ -4216,6 +4228,7 @@
       __privateAdd$8(this, _far, void 0);
       /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
       __privateAdd$8(this, _pixelRatio, void 0);
+      this.uuid = generateUUID();
       this.position.set(0, 0, 10);
       this.onMatricesChanged = onMatricesChanged;
       this.size = {
@@ -4477,8 +4490,7 @@
     } = {}) {
       this.type = "Sampler";
       this.uuid = generateUUID();
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, label ? label + " " + this.type : this.type);
+      renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
       this.renderer = renderer;
       this.label = label;
       if (!name && !this.renderer.production) {
@@ -4564,12 +4576,14 @@
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
       __privateAdd$7(this, _autoResize, true);
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
       this.uuid = generateUUID();
       this.options = { ...defaultTextureParams, ...parameters };
+      if (this.options.format === "rgba32float" && !this.renderer.deviceManager.adapter.features.has("float32-filterable")) {
+        this.options.format = "rgba16float";
+      }
       if (parameters.fromTexture) {
         this.options.format = parameters.fromTexture.texture.format;
         this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
@@ -4655,11 +4669,12 @@
       width = this.size.width,
       height = this.size.height,
       depth = this.size.depth,
-      origin = [0, 0, 0]
+      origin = [0, 0, 0],
+      colorSpace = "srgb"
     }) {
       this.renderer.device.queue.copyExternalImageToTexture(
         { source, flipY: this.options.flipY },
-        { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+        { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
         [width, height, depth]
       );
       if (this.texture.mipLevelCount > 1) {
@@ -4731,8 +4746,7 @@
      */
     constructor(renderer, parameters) {
       this.type = "Material";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, this.type);
+      renderer = isRenderer(renderer, this.type);
       this.renderer = renderer;
       this.uuid = generateUUID();
       const {
@@ -5235,9 +5249,8 @@
      * @param parameters - {@link ComputeMaterialParams | parameters} used to create our {@link ComputeMaterial}
      */
     constructor(renderer, parameters) {
-      renderer = renderer && renderer.renderer || renderer;
       const type = "ComputeMaterial";
-      isRenderer(renderer, type);
+      renderer = isRenderer(renderer, type);
       super(renderer, parameters);
       this.type = type;
       this.renderer = renderer;
@@ -5442,8 +5455,7 @@
       this._onAfterResizeCallback = () => {
       };
       const type = "ComputePass";
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type);
+      renderer = isRenderer(renderer, parameters.label ? `${parameters.label} ${type}` : type);
       parameters.label = parameters.label ?? "ComputePass " + renderer.computePasses?.length;
       this.renderer = renderer;
       this.type = type;
@@ -6578,7 +6590,7 @@
   var default_projected_vsWgsl = (
     /* wgsl */
     `
-struct VertexOutput {
+struct VSOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
   @location(1) normal: vec3f,
@@ -6586,8 +6598,8 @@ struct VertexOutput {
 
 @vertex fn main(
   attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
+) -> VSOutput {
+  var vsOutput: VSOutput;
 
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;
@@ -6600,15 +6612,15 @@ struct VertexOutput {
   var default_vsWgsl = (
     /* wgsl */
     `
-struct VertexOutput {
+struct VSOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
 };
 
 @vertex fn main(
   attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
+) -> VSOutput {
+  var vsOutput: VSOutput;
 
   vsOutput.position = vec4f(attributes.position, 1.0);
   vsOutput.uv = attributes.uv;
@@ -6632,9 +6644,8 @@ struct VertexOutput {
      * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
      */
     constructor(renderer, parameters) {
-      renderer = renderer && renderer.renderer || renderer;
       const type = "RenderMaterial";
-      isRenderer(renderer, type);
+      renderer = isRenderer(renderer, type);
       if (!parameters.shaders) {
         parameters.shaders = {};
       }
@@ -6887,8 +6898,7 @@ New rendering options: ${JSON.stringify(
         this.type = "MeshBase";
         this.uuid = generateUUID();
         Object.defineProperty(this, "index", { value: meshIndex++ });
-        renderer = renderer && renderer.renderer || renderer;
-        isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+        renderer = isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
         const {
           label,
@@ -7521,8 +7531,7 @@ ${geometry.wgslStructFragment}`
      * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link FullscreenPlane}
      */
     constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " FullscreenQuadMesh" : "FullscreenQuadMesh");
       let geometry = cacheManager.getPlaneGeometryByID(2);
       if (!geometry) {
         geometry = new PlaneGeometry({ widthSegments: 1, heightSegments: 1 });
@@ -7782,8 +7791,7 @@ ${geometry.wgslStructFragment}`
      */
     constructor(renderer) {
       super();
-      renderer = renderer && renderer.renderer || renderer;
-      isCameraRenderer(renderer, "ProjectedObject3D");
+      renderer = isCameraRenderer(renderer, "ProjectedObject3D");
       this.camera = renderer.camera;
     }
     /**
@@ -7982,8 +7990,7 @@ struct VSOutput {
           ...{ useProjection: true }
         };
         this.type = "MeshTransformed";
-        renderer = renderer && renderer.renderer || renderer;
-        isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+        renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
         this.renderer = renderer;
         const { frustumCulling, DOMFrustumMargins } = parameters;
         this.options = {
@@ -8209,8 +8216,7 @@ struct VSOutput {
      * @param parameters - {@link MeshBaseParams | parameters} use to create this {@link Mesh}
      */
     constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
+      renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " Mesh" : "Mesh");
       super(renderer, null, parameters);
       this.type = "Mesh";
     }
@@ -8226,8 +8232,7 @@ struct VSOutput {
       this.type = "PipelineEntry";
       let { renderer } = parameters;
       const { label, shaders, useAsync } = parameters;
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, label ? label + " " + this.type : this.type);
+      renderer = isRenderer(renderer, label ? label + " " + this.type : this.type);
       this.renderer = renderer;
       Object.defineProperty(this, "index", { value: pipelineId++ });
       this.layout = null;
@@ -8429,7 +8434,6 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
     constructor(parameters) {
       let { renderer, ...pipelineParams } = parameters;
       const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams;
-      renderer = renderer && renderer.renderer || renderer;
       const type = "RenderPipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
       super(parameters);
@@ -8740,9 +8744,8 @@ ${this.shaders.full.head}`;
      * @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
      */
     constructor(parameters) {
-      let { renderer } = parameters;
+      const { renderer } = parameters;
       const { label } = parameters;
-      renderer = renderer && renderer.renderer || renderer;
       const type = "ComputePipelineEntry";
       isRenderer(renderer, label ? label + " " + type : type);
       super(parameters);
@@ -9152,8 +9155,7 @@ ${this.shaders.compute.head}`;
      */
     constructor({ renderer }) {
       super();
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, "Scene");
+      renderer = isRenderer(renderer, "Scene");
       this.renderer = renderer;
       this.computePassEntries = [];
       this.renderPassEntries = {
@@ -9562,8 +9564,7 @@ ${this.shaders.compute.head}`;
       depthClearValue = 1,
       depthFormat = "depth24plus"
     } = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, "RenderPass");
+      renderer = isRenderer(renderer, "RenderPass");
       this.type = "RenderPass";
       this.uuid = generateUUID();
       this.renderer = renderer;
@@ -9928,6 +9929,9 @@ ${this.shaders.compute.head}`;
       /** function assigned to the {@link onAfterRender} callback */
       this._onAfterRenderCallback = (commandEncoder) => {
       };
+      /** function assigned to the {@link resizeObjects} callback */
+      this._onResizeCallback = () => {
+      };
       /** function assigned to the {@link onAfterResize} callback */
       this._onAfterResizeCallback = () => {
       };
@@ -9993,8 +9997,8 @@ ${this.shaders.compute.head}`;
     setSize(rectBBox = null) {
       rectBBox = {
         ...{
-          width: this.boundingRect.width,
-          height: this.boundingRect.height,
+          width: Math.max(1, this.boundingRect.width),
+          height: Math.max(1, this.boundingRect.height),
           top: this.boundingRect.top,
           left: this.boundingRect.left
         },
@@ -10029,13 +10033,14 @@ ${this.shaders.compute.head}`;
      */
     resize(rectBBox = null) {
       this.setSize(rectBBox);
-      this.onResize();
+      this._onResizeCallback && this._onResizeCallback();
+      this.resizeObjects();
       this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
     /**
-     * Resize all tracked objects
+     * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
      */
-    onResize() {
+    resizeObjects() {
       this.textures.forEach((texture) => {
         texture.resize();
       });
@@ -10555,8 +10560,19 @@ ${this.shaders.compute.head}`;
       return this;
     }
     /**
-     * Assign a callback function to _onAfterResizeCallback
-     * @param callback - callback to run just after the {@link GPURenderer} has been resized
+     * Callback to run after the {@link GPURenderer} has been resized but before the {@link resizeObjects} method has been executed (before the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes are resized).
+     * @param callback - callback to execute.
+     * @returns - our {@link GPURenderer}
+     */
+    onResize(callback) {
+      if (callback) {
+        this._onResizeCallback = callback;
+      }
+      return this;
+    }
+    /**
+     * Callback to run after the {@link GPURenderer} has been resized and after the {@link resizeObjects} method has been executed (after the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes have been resized).
+     * @param callback - callback to execute.
      * @returns - our {@link GPURenderer}
      */
     onAfterResize(callback) {
@@ -10664,6 +10680,7 @@ ${this.shaders.compute.head}`;
      * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
      */
     destroy() {
+      this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid);
       this.domElement?.destroy();
       this.renderPass?.destroy();
       this.postProcessingPass?.destroy();
@@ -10733,18 +10750,44 @@ ${this.shaders.compute.head}`;
      */
     setCamera(cameraParameters) {
       const { width, height } = this.rectBBox;
-      this.camera = new Camera({
-        fov: cameraParameters.fov,
-        near: cameraParameters.near,
-        far: cameraParameters.far,
-        width,
-        height,
-        pixelRatio: this.pixelRatio,
-        onMatricesChanged: () => {
-          this.onCameraMatricesChanged();
-        }
-      });
+      this.useCamera(
+        new Camera({
+          fov: cameraParameters.fov,
+          near: cameraParameters.near,
+          far: cameraParameters.far,
+          width,
+          height,
+          pixelRatio: this.pixelRatio,
+          onMatricesChanged: () => {
+            this.onCameraMatricesChanged();
+          }
+        })
+      );
+    }
+    /**
+     * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBufferBinding} inputs view values and the {@link meshes} {@link Camera} object.
+     * @param camera - new {@link Camera} to use.
+     */
+    useCamera(camera) {
+      if (this.camera && camera && this.camera.uuid === camera.uuid)
+        return;
+      if (this.camera) {
+        this.camera.parent = null;
+        this.camera.onMatricesChanged = () => {
+        };
+      }
+      this.camera = camera;
       this.camera.parent = this.scene;
+      if (this.cameraBufferBinding) {
+        this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
+        this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix;
+        this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix;
+        for (const mesh of this.meshes) {
+          if ("modelViewMatrix" in mesh) {
+            mesh.camera = this.camera;
+          }
+        }
+      }
     }
     /**
      * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
@@ -10847,11 +10890,11 @@ ${this.shaders.compute.head}`;
       this.camera.position.copy(position);
     }
     /**
-     * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
+     * Call our {@link GPURenderer#resizeObjects | GPURenderer resizeObjects method} and resize our {@link camera} as well
      */
-    onResize() {
+    resizeObjects() {
       this.setPerspective();
-      super.onResize();
+      super.resizeObjects();
     }
     /* RENDER */
     /**
@@ -10961,8 +11004,13 @@ ${this.shaders.compute.head}`;
         this.index++;
       } else {
         try {
+          const requiredFeatures = [];
+          if (this.adapter.features.has("float32-filterable")) {
+            requiredFeatures.push("float32-filterable");
+          }
           this.device = await this.adapter?.requestDevice({
-            label: this.label + " " + this.index
+            label: this.label + " " + this.index,
+            requiredFeatures
           });
           if (this.device) {
             this.ready = true;
@@ -11214,8 +11262,7 @@ ${this.shaders.compute.head}`;
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
       __privateAdd$3(this, _autoRender, true);
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, "RenderTarget");
+      renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
       this.uuid = generateUUID();
@@ -11335,10 +11382,27 @@ struct VSOutput {
      * @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
      */
     constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
       parameters.depth = false;
-      parameters.transparent = true;
+      const defaultBlend = {
+        color: {
+          srcFactor: "one",
+          dstFactor: "one-minus-src-alpha"
+        },
+        alpha: {
+          srcFactor: "one",
+          dstFactor: "one-minus-src-alpha"
+        }
+      };
+      if (!parameters.targets) {
+        parameters.targets = [
+          {
+            blend: defaultBlend
+          }
+        ];
+      } else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) {
+        parameters.targets[0].blend = defaultBlend;
+      }
       parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
       parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
       if (!parameters.shaders) {
@@ -11480,16 +11544,10 @@ struct VSOutput {
       /** function assigned to the {@link onAfterDOMElementResize} callback */
       this._onAfterDOMElementResizeCallback = () => {
       };
-      renderer = renderer && renderer.renderer || renderer;
-      isCurtainsRenderer(renderer, "DOM3DObject");
+      renderer = isCurtainsRenderer(renderer, "DOM3DObject");
       this.renderer = renderer;
       this.size = {
-        document: {
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0
-        },
+        shouldUpdate: true,
         normalizedWorld: {
           size: new Vec2(1),
           position: new Vec2()
@@ -11504,8 +11562,8 @@ struct VSOutput {
       };
       this.watchScroll = parameters.watchScroll;
       this.camera = this.renderer.camera;
-      this.boundingBox.min.onChange(() => this.updateSizeAndPosition());
-      this.boundingBox.max.onChange(() => this.updateSizeAndPosition());
+      this.boundingBox.min.onChange(() => this.shouldUpdateComputedSizes());
+      this.boundingBox.max.onChange(() => this.shouldUpdateComputedSizes());
       this.setDOMElement(element);
       this.renderer.domObjects.push(this);
     }
@@ -11517,17 +11575,16 @@ struct VSOutput {
       this.domElement = new DOMElement({
         element,
         onSizeChanged: (boundingRect) => this.resize(boundingRect),
-        onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect)
+        onPositionChanged: () => this.onPositionChanged()
       });
+      this.updateSizeAndPosition();
     }
     /**
      * Update size and position when the {@link domElement | DOM Element} position changed
-     * @param boundingRect - the new bounding rectangle
      */
-    onPositionChanged(boundingRect) {
+    onPositionChanged() {
       if (this.watchScroll) {
-        this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
-        this.updateSizeAndPosition();
+        this.shouldUpdateComputedSizes();
       }
     }
     /**
@@ -11541,20 +11598,12 @@ struct VSOutput {
       this.setDOMElement(element);
     }
     /**
-     * Update the {@link DOMObject3D} sizes and position
-     */
-    updateSizeAndPosition() {
-      this.setWorldSizes();
-      this.applyPosition();
-    }
-    /**
      * Resize the {@link DOMObject3D}
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
      */
     resize(boundingRect = null) {
       if (!boundingRect && (!this.domElement || this.domElement?.isResizing))
         return;
-      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect();
       this.updateSizeAndPosition();
       this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
     }
@@ -11564,7 +11613,16 @@ struct VSOutput {
      * @readonly
      */
     get boundingRect() {
-      return this.domElement.boundingRect;
+      return this.domElement?.boundingRect ?? {
+        width: 1,
+        height: 1,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        x: 0,
+        y: 0
+      };
     }
     /* TRANSFOMS */
     /**
@@ -11641,11 +11699,27 @@ struct VSOutput {
       this.transforms.origin.world = value;
     }
     /**
-     * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
+     * Check whether at least one of the matrix should be updated
      */
-    applyPosition() {
+    shouldUpdateMatrices() {
+      super.shouldUpdateMatrices();
+      if (this.matricesNeedUpdate || this.size.shouldUpdate) {
+        this.updateSizeAndPosition();
+      }
+      this.size.shouldUpdate = false;
+    }
+    /**
+     * Set the {@link DOMObject3D#size.shouldUpdate | size shouldUpdate} flag to true to compute the new sizes before next matrices calculations.
+     */
+    shouldUpdateComputedSizes() {
+      this.size.shouldUpdate = true;
+    }
+    /**
+     * Update the {@link DOMObject3D} sizes and position
+     */
+    updateSizeAndPosition() {
+      this.setWorldSizes();
       this.applyDocumentPosition();
-      super.applyPosition();
     }
     /**
      * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
@@ -11701,8 +11775,8 @@ struct VSOutput {
     computeWorldSizes() {
       const containerBoundingRect = this.renderer.boundingRect;
       const planeCenter = {
-        x: this.size.document.width / 2 + this.size.document.left,
-        y: this.size.document.height / 2 + this.size.document.top
+        x: this.boundingRect.width / 2 + this.boundingRect.left,
+        y: this.boundingRect.height / 2 + this.boundingRect.top
       };
       const containerCenter = {
         x: containerBoundingRect.width / 2 + containerBoundingRect.left,
@@ -11713,8 +11787,8 @@ struct VSOutput {
         center.divide(size);
       }
       this.size.normalizedWorld.size.set(
-        this.size.document.width / containerBoundingRect.width,
-        this.size.document.height / containerBoundingRect.height
+        this.boundingRect.width / containerBoundingRect.width,
+        this.boundingRect.height / containerBoundingRect.height
       );
       this.size.normalizedWorld.position.set(
         (planeCenter.x - containerCenter.x) / containerBoundingRect.width,
@@ -11725,7 +11799,7 @@ struct VSOutput {
         this.size.normalizedWorld.size.y * this.camera.visibleSize.height
       );
       this.size.scaledWorld.size.set(this.size.cameraWorld.size.x / size.x, this.size.cameraWorld.size.y / size.y, 1);
-      this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height));
+      this.size.scaledWorld.size.z = this.size.scaledWorld.size.y * (size.x / size.y / (this.boundingRect.width / this.boundingRect.height));
       this.size.scaledWorld.position.set(
         this.size.normalizedWorld.position.x * this.camera.visibleSize.width,
         this.size.normalizedWorld.position.y * this.camera.visibleSize.height,
@@ -11822,7 +11896,6 @@ struct VSOutput {
       this._onLoadingCallback = (texture) => {
       };
       parameters = { ...defaultDOMMeshParams, ...parameters };
-      renderer = renderer && renderer.renderer || renderer;
       isCurtainsRenderer(renderer, parameters.label ? parameters.label + " DOMMesh" : "DOMMesh");
       this.type = "DOMMesh";
       const { autoloadSources } = parameters;
@@ -11995,8 +12068,7 @@ struct VSOutput {
      * @param parameters - {@link PlaneParams | parameters} used to create this {@link Plane}
      */
     constructor(renderer, element, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isCurtainsRenderer(renderer, parameters.label ? parameters.label + " Plane" : "Plane");
+      renderer = isCurtainsRenderer(renderer, parameters.label ? parameters.label + " Plane" : "Plane");
       const params = { ...defaultPlaneParams, ...parameters };
       let { geometry, widthSegments, heightSegments, ...DOMMeshParams2 } = params;
       const { instancesCount, vertexBuffers, ...materialParams } = DOMMeshParams2;
@@ -12223,6 +12295,10 @@ struct VSOutput {
       if (container) {
         this.setContainer(container);
       }
+      this.initEvents();
+      if (this.options.autoRender) {
+        this.animate();
+      }
     }
     /**
      * Set the {@link container}
@@ -12250,7 +12326,7 @@ struct VSOutput {
         }
       }
       this.container = this.options.container;
-      this.setCurtains();
+      this.setMainRenderer();
     }
     /**
      * Set the default {@link GPUCurtainsRenderer | renderer}
@@ -12326,7 +12402,7 @@ struct VSOutput {
       return this.deviceManager.renderers;
     }
     /**
-     * Get the default {@link GPUCurtainsRenderer} created
+     * Get the first created {@link Renderer} if any
      * @readonly
      */
     get renderer() {
@@ -12346,16 +12422,6 @@ struct VSOutput {
      */
     async restoreContext() {
       await this.deviceManager.restoreDevice();
-    }
-    /**
-     * Set the various event listeners, set the {@link GPUCurtainsRenderer} and start rendering if needed
-     */
-    setCurtains() {
-      this.initEvents();
-      this.setMainRenderer();
-      if (this.options.autoRender) {
-        this.animate();
-      }
     }
     /* RENDERER TRACKED OBJECTS */
     /**
@@ -12408,27 +12474,6 @@ struct VSOutput {
       return this.renderers?.map((renderer) => renderer.computePasses).flat();
     }
     /**
-     * Get the {@link GPUCurtainsRenderer#camera | default GPUCurtainsRenderer camera}
-     * @readonly
-     */
-    get camera() {
-      return this.renderer?.camera;
-    }
-    /**
-     * Set the {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} perspective
-     * @param parameters - {@link CameraBasePerspectiveOptions | parameters} to use for the perspective
-     */
-    setPerspective({ fov = 50, near = 0.01, far = 50 } = {}) {
-      this.renderer?.setPerspective({ fov, near, far });
-    }
-    /**
-     * Set the default {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer camera} {@link Camera#position | position}
-     * @param position - new {@link Camera#position | position}
-     */
-    setCameraPosition(position = new Vec3(0, 0, 1)) {
-      this.renderer?.setCameraPosition(position);
-    }
-    /**
      * Get our {@link GPUCurtainsRenderer#setPerspective | default GPUCurtainsRenderer bounding rectangle}
      */
     get boundingRect() {
@@ -12459,7 +12504,7 @@ struct VSOutput {
      */
     updateScroll(delta = { x: 0, y: 0 }) {
       this.domObjects.forEach((domObject) => {
-        if (domObject.domElement) {
+        if (domObject.domElement && domObject.watchScroll) {
           domObject.updateScrollPosition(delta);
         }
       });
@@ -12974,8 +13019,7 @@ struct VSOutput {
      * @param parameters - {@link MeshBaseRenderParams | parameters} use to create this {@link PingPongPlane}
      */
     constructor(renderer, parameters = {}) {
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " PingPongPlane" : "PingPongPlane");
       const colorAttachments = parameters.targets && parameters.targets.length && parameters.targets.map((target) => {
         return {
           targetFormat: target.format
@@ -13043,7 +13087,7 @@ struct VSOutput {
   const DEFAULT_TRANSLATION = [0, 0, 0];
   const DEFAULT_ROTATION = [0, 0, 0, 1];
   const DEFAULT_SCALE = [1, 1, 1];
-  const absUriRegEx = new RegExp(`^${window.location.protocol}`, "i");
+  const absUriRegEx = typeof window !== "undefined" && new RegExp(`^${window.location.protocol}`, "i") || RegExp(`^(http|https):`, "i");
   const dataUriRegEx = /^data:/;
   class GLTFLoader {
     /**
@@ -13232,8 +13276,7 @@ struct VSOutput {
     constructor({ renderer, gltf }) {
       /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
       __privateAdd(this, _primitiveInstances, void 0);
-      renderer = renderer && renderer.renderer || renderer;
-      isCameraRenderer(renderer, "GLTFScenesManager");
+      renderer = isCameraRenderer(renderer, "GLTFScenesManager");
       this.renderer = renderer;
       this.gltf = gltf;
       __privateSet(this, _primitiveInstances, /* @__PURE__ */ new Map());
@@ -13388,7 +13431,15 @@ struct VSOutput {
           this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
         }
       } else {
-        this.scenesManager.samplers.push(new Sampler(this.renderer, { label: "Default sampler", name: "defaultSampler" }));
+        this.scenesManager.samplers.push(
+          new Sampler(this.renderer, {
+            label: "Default sampler",
+            name: "defaultSampler",
+            magFilter: "linear",
+            minFilter: "linear",
+            mipmapFilter: "linear"
+          })
+        );
       }
     }
     /**
@@ -13765,19 +13816,19 @@ struct VSOutput {
           },
           metallicFactor: {
             type: "f32",
-            value: material.pbrMetallicRoughness?.metallicFactor || 0
+            value: material.pbrMetallicRoughness?.metallicFactor === void 0 ? 1 : material.pbrMetallicRoughness.metallicFactor
           },
           roughnessFactor: {
             type: "f32",
-            value: material.pbrMetallicRoughness?.roughnessFactor || 1
+            value: material.pbrMetallicRoughness?.roughnessFactor === void 0 ? 1 : material.pbrMetallicRoughness.roughnessFactor
           },
           normalMapScale: {
             type: "f32",
-            value: material.normalTexture?.scale || 1
+            value: material.normalTexture?.scale === void 0 ? 1 : material.normalTexture.scale
           },
           occlusionStrength: {
             type: "f32",
-            value: material.occlusionTexture?.strength || 1
+            value: material.occlusionTexture?.strength === void 0 ? 1 : material.occlusionTexture.strength
           },
           emissiveFactor: {
             type: "vec3f",
@@ -13887,8 +13938,8 @@ struct VSOutput {
       `
     let worldPos = matrices.model * vec4(attributes.position, 1.0);
     vsOutput.position = camera.projection * camera.view * worldPos;
-    vsOutput.worldPosition = worldPos.xyz;
-    vsOutput.viewDirection = camera.position - worldPos.xyz;
+    vsOutput.worldPosition = worldPos.xyz / worldPos.w;
+    vsOutput.viewDirection = camera.position - vsOutput.worldPosition.xyz;
   `
     );
     let outputNormal = facultativeAttributes.find((attr) => attr.name === "normal") ? "vsOutput.normal = getWorldNormal(attributes.normal);" : "";
@@ -13923,10 +13974,21 @@ struct VSOutput {
         vsOutput.bitangent = cross(vsOutput.normal, vsOutput.tangent.xyz) * attributes.tangent.w;
       `;
     }
-    const vertexOutput = `
+    const vertexOutput = (
+      /*wgsl */
+      `
     struct VSOutput {
       ${vertexOutputContent}
-    };`;
+    };`
+    );
+    const fragmentInput = (
+      /*wgsl */
+      `
+    struct VSOutput {
+      @builtin(front_facing) frontFacing: bool,
+      ${vertexOutputContent}
+    };`
+    );
     const vs = (
       /* wgsl */
       `
@@ -13953,7 +14015,16 @@ struct VSOutput {
     );
     const returnColor = (
       /* wgsl */
-      "return color;"
+      `
+      return vec4(
+        linearTosRGB(
+          toneMapKhronosPbrNeutral(
+            color.rgb
+          )
+        ),
+        color.a
+      );
+  `
     );
     const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === "color0");
     let baseColor = (
@@ -13965,21 +14036,46 @@ struct VSOutput {
       `
       var baseColor: vec4f = textureSample(baseColorTexture, ${baseColorTexture.sampler}, fsInput.${baseColorTexture.texCoordAttributeName}) * material.baseColorFactor;
       
-      // baseColor = vec4(sRGBToLinear(baseColor.rgb), baseColor.a);
-      
       if (baseColor.a < material.alphaCutoff) {
         discard;
       }
     `;
     }
-    let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? `let normal: vec3f = normalize(fsInput.normal);` : `let normal: vec3f = vec3(0.0);`;
+    baseColor += /* wgsl */
+    `
+      color = baseColor;
+  `;
+    let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === "normal") ? (
+      /* wgsl */
+      `
+      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+      let geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
+    `
+    ) : (
+      /* wgsl */
+      `let geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
+    );
     if (useNormalMap) {
-      normalMap = `
-      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), normalize(fsInput.normal));
+      normalMap += /* wgsl */
+      `
+      let tbn = mat3x3<f32>(normalize(fsInput.tangent.xyz), normalize(fsInput.bitangent), geometryNormal);
       let normalMap = textureSample(normalTexture, ${normalTexture.sampler}, fsInput.${normalTexture.texCoordAttributeName}).rgb;
       let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `;
+    } else {
+      normalMap += /* wgsl */
+      `
+      let normal = geometryNormal;
+    `;
     }
+    normalMap += /* wgsl */
+    `
+      let worldPosition: vec3f = fsInput.worldPosition;
+      let viewDirection: vec3f = fsInput.viewDirection;
+      let N: vec3f = normal;
+      let V: vec3f = normalize(viewDirection);
+      let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
+  `;
     let metallicRoughness = (
       /*  wgsl */
       `
@@ -13991,15 +14087,15 @@ struct VSOutput {
       metallicRoughness += /* wgsl */
       `
       let metallicRoughness = textureSample(metallicRoughnessTexture, ${metallicRoughnessTexture.sampler}, fsInput.${metallicRoughnessTexture.texCoordAttributeName});
-      metallic = clamp(metallic * metallicRoughness.b, 0.001, 1.0);
-      roughness = clamp(roughness * metallicRoughness.g, 0.001, 1.0);
+      
+      metallic = clamp(metallic * metallicRoughness.b, 0.0, 1.0);
+      roughness = clamp(roughness * metallicRoughness.g, 0.0, 1.0);
     `;
     }
     const f0 = (
       /* wgsl */
       `
-      let dielectricSpec: vec3f = vec3(0.04, 0.04, 0.04);
-      let f0 = mix(dielectricSpec, color.rgb, vec3(metallic));
+      let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));
   `
     );
     let emissiveOcclusion = (
@@ -14013,8 +14109,6 @@ struct VSOutput {
       emissiveOcclusion += /* wgsl */
       `
       emissive = textureSample(emissiveTexture, ${emissiveTexture.sampler}, fsInput.${emissiveTexture.texCoordAttributeName}).rgb;
-      
-      // emissive = sRGBToLinear(emissive);
       
       emissive *= material.emissiveFactor;
       `;
@@ -14032,36 +14126,33 @@ struct VSOutput {
     const initLightShading = (
       /* wgsl */
       `
-      var ambientContribution: vec3f;
-      var lightContribution: vec3f;
-      color = baseColor;
+      var lightContribution: LightContribution;
+      
+      lightContribution.ambient = vec3(1.0);
+      lightContribution.diffuse = vec3(0.0);
+      lightContribution.specular = vec3(0.0);
   `
     );
     const defaultAdditionalHead = "";
+    const defaultPreliminaryColor = "";
     const defaultAdditionalColor = "";
-    const defaultAmbientContribution = (
-      /* wgsl */
-      `
-    ambientContribution = vec3(1.0);
-  `
-    );
-    const defaultLightContribution = (
-      /* wgsl */
-      `
-    lightContribution = vec3(0.0);
-  `
-    );
-    let { chunks } = shaderParameters;
+    const defaultAmbientContribution = "";
+    const defaultLightContribution = "";
+    shaderParameters = shaderParameters ?? {};
+    let chunks = shaderParameters.chunks;
     if (!chunks) {
       chunks = {
         additionalFragmentHead: defaultAdditionalHead,
         ambientContribution: defaultAmbientContribution,
+        preliminaryColorContribution: defaultPreliminaryColor,
         lightContribution: defaultLightContribution,
         additionalColorContribution: defaultAdditionalColor
       };
     } else {
       if (!chunks.additionalFragmentHead)
         chunks.additionalFragmentHead = defaultAdditionalHead;
+      if (!chunks.preliminaryColorContribution)
+        chunks.preliminaryColorContribution = defaultPreliminaryColor;
       if (!chunks.ambientContribution)
         chunks.ambientContribution = defaultAmbientContribution;
       if (!chunks.lightContribution)
@@ -14071,15 +14162,13 @@ struct VSOutput {
     }
     const applyLightShading = (
       /* wgsl */
-      `
-      let ambient = ambientContribution * color.rgb * occlusion;
+      `      
+      lightContribution.ambient *= color.rgb * occlusion;
+      lightContribution.diffuse *= occlusion;
+      lightContribution.specular *= occlusion;
       
       color = vec4(
-        linearTosRGB(
-          toneMapKhronosPbrNeutral(
-            lightContribution + ambient + emissive
-          )
-        ),
+        lightContribution.ambient + lightContribution.diffuse + lightContribution.specular + emissive,
         color.a
       );
   `
@@ -14087,9 +14176,15 @@ struct VSOutput {
     const fs = (
       /* wgsl */
       `
+    // Light
+    struct LightContribution {
+      ambient: vec3f,
+      diffuse: vec3f,
+      specular: vec3f,
+    };
+  
     // PBR
     const PI = ${Math.PI};
-    
     
     // tone maping
     fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
@@ -14128,17 +14223,21 @@ struct VSOutput {
     
     ${chunks.additionalFragmentHead}
   
-    ${vertexOutput}
+    ${fragmentInput}
   
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {          
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
       ${initColor}
       ${baseColor}
+
       ${normalMap}
-      ${metallicRoughness}
+      ${metallicRoughness}  
+      ${initLightShading}  
+      
+      // user defined preliminary color contribution
+      ${chunks.preliminaryColorContribution}
+        
       ${f0}
       ${emissiveOcclusion}
-      
-      ${initLightShading}
       
       // user defined lightning
       ${chunks.ambientContribution}
@@ -14146,6 +14245,7 @@ struct VSOutput {
       
       ${applyLightShading}
       
+      // user defined additional color contribution
       ${chunks.additionalColorContribution}
       
       ${returnColor}
@@ -14164,7 +14264,7 @@ struct VSOutput {
     };
   };
   const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
-    let { chunks } = shaderParameters;
+    let chunks = shaderParameters?.chunks;
     const pbrAdditionalFragmentHead = (
       /* wgsl */
       `
@@ -14199,14 +14299,6 @@ struct VSOutput {
     
       return ggx1 * ggx2;
     }
-    
-    fn rangeAttenuation(range: f32, distance: f32) -> f32 {
-      if (range <= 0.0) {
-          // Negative range means no cutoff
-          return 1.0 / pow(distance, 2.0);
-      }
-      return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
-    }
   `
     );
     if (!chunks) {
@@ -14223,7 +14315,8 @@ struct VSOutput {
     return buildShaders(meshDescriptor, shaderParameters);
   };
   const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
-    const { iblParameters } = shaderParameters;
+    shaderParameters = shaderParameters || {};
+    const iblParameters = shaderParameters?.iblParameters;
     meshDescriptor.parameters.uniforms = {
       ...meshDescriptor.parameters.uniforms,
       ...{
@@ -14241,46 +14334,24 @@ struct VSOutput {
         }
       }
     };
-    const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters;
-    const useIBLContribution = envDiffuseTexture && envSpecularTexture && lutTexture;
+    const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {};
+    const useIBLContribution = envDiffuseTexture && envDiffuseTexture.texture && envSpecularTexture && envSpecularTexture.texture && lutTexture && lutTexture.texture;
     let iblContributionHead = "";
-    let iblContribution = "";
+    let iblLightContribution = "";
     if (useIBLContribution) {
       meshDescriptor.parameters.textures = [
         ...meshDescriptor.parameters.textures,
-        lutTexture,
-        envDiffuseTexture,
-        envSpecularTexture
+        lutTexture.texture,
+        envDiffuseTexture.texture,
+        envSpecularTexture.texture
       ];
-      const lutTextureDescriptor = {
-        texture: lutTexture.options.name,
-        sampler: "defaultSampler"
-      };
-      const envDiffuseTextureDescriptor = {
-        texture: envDiffuseTexture.options.name,
-        sampler: "defaultSampler"
-      };
-      const envSpecularTextureDescriptor = {
-        texture: envSpecularTexture.options.name,
-        sampler: "defaultSampler"
-      };
-      meshDescriptor.textures = [
-        ...meshDescriptor.textures,
-        lutTextureDescriptor,
-        envDiffuseTextureDescriptor,
-        envSpecularTextureDescriptor
-      ];
+      lutTexture.samplerName = lutTexture.samplerName || "defaultSampler";
+      envDiffuseTexture.samplerName = envDiffuseTexture.samplerName || "defaultSampler";
+      envSpecularTexture.samplerName = envSpecularTexture.samplerName || "defaultSampler";
       iblContributionHead = /* wgsl */
-      `
+      `  
     const RECIPROCAL_PI = ${1 / Math.PI};
     const RECIPROCAL_PI2 = ${0.5 / Math.PI};
-    const ENV_LODS = 4.0;
-    const LN2 = 0.6931472;
-    
-    fn rGBMToLinear(rgbm: vec4f) -> vec4f {
-      let maxRange: f32 = 6.0;
-      return vec4(rgbm.xyz * rgbm.w * maxRange, 1.0);
-    }
     
     fn cartesianToPolar(n: vec3f) -> vec2f {
       var uv: vec2f;
@@ -14294,56 +14365,69 @@ struct VSOutput {
       specular: vec3f,
     };
     
-    fn getIBLContribution(NdV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, specularColor: vec3f) -> IBLContribution {
-      let brdf: vec3f = sRGBToLinear(textureSample(${lutTextureDescriptor.texture}, ${lutTextureDescriptor.sampler}, vec2(NdV, roughness)).rgb);
-      var diffuseLight: vec3f = rGBMToLinear(textureSample(${envDiffuseTextureDescriptor.texture}, ${envDiffuseTextureDescriptor.sampler}, cartesianToPolar(n))).rgb;      
-      diffuseLight = mix(vec3(1), diffuseLight, ibl.diffuseStrength);
-      var blend: f32 = roughness * ENV_LODS;
-      let level0: f32 = floor(blend);
-      let level1: f32 = min(ENV_LODS, level0 + 1.0);
-      blend -= level0;
-      var uvSpec: vec2f = cartesianToPolar(reflection);
-      uvSpec.y /= 2.0;
-      var uv0: vec2f = uvSpec;
-      var uv1: vec2f = uvSpec;
-      uv0 /= pow(2.0, level0);
-      uv0.y += 1.0 - exp(-LN2 * level0);
-      uv1 /= pow(2.0, level1);
-      uv1.y += 1.0 - exp(-LN2 * level1);
-      let specular0: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv0)).rgb;
-      let specular1: vec3f = rGBMToLinear(textureSample(${envSpecularTextureDescriptor.texture}, ${envSpecularTextureDescriptor.sampler}, uv1)).rgb;
-      let specularLight: vec3f = mix(specular0, specular1, blend);      
-      
+    fn getIBLContribution(NdotV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, f0: vec3f) -> IBLContribution {
       var iblContribution: IBLContribution;
-      iblContribution.diffuse = diffuseLight * diffuseColor;
+    
+      let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
       
-      let reflectivity: f32 = pow((1.0 - roughness), 2.0) * 0.05;
-      iblContribution.specular = specularLight * (specularColor * brdf.x + brdf.y + reflectivity);
-      iblContribution.specular *= ibl.specularStrength;
+      let brdf: vec3f = textureSample(
+        ${lutTexture.texture.options.name},
+        ${lutTexture.samplerName},
+        brdfSamplePoint
+      ).rgb;
+    
+      let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+      let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+      var FssEss: vec3f = k_S * brdf.x + brdf.y;
+      
+      // IBL specular
+      let lod: f32 = roughness * f32(textureNumLevels(${envSpecularTexture.texture.options.name}) - 1);
+      
+      let specularLight: vec4f = textureSampleLevel(
+        ${envSpecularTexture.texture.options.name},
+        ${envSpecularTexture.samplerName},
+        ${envSpecularTexture.texture.options.viewDimension === "cube" ? "reflection" : "cartesianToPolar(reflection)"},
+        lod
+      );
+      
+      iblContribution.specular = specularLight.rgb * FssEss * ibl.specularStrength;
+      
+      // IBL diffuse
+      let diffuseLight: vec4f = textureSample(
+        ${envDiffuseTexture.texture.options.name},
+        ${envDiffuseTexture.samplerName},
+        ${envDiffuseTexture.texture.options.viewDimension === "cube" ? "n" : "cartesianToPolar(n)"}
+      );
+            
+      FssEss = ibl.specularStrength * k_S * brdf.x + brdf.y;
+      
+      let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+      let F_avg: vec3f = ibl.specularStrength * (f0 + (1.0 - f0) / 21.0);
+      let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
+      let k_D: vec3f = diffuseColor * (1.0 - FssEss + FmsEms);
+      
+      iblContribution.diffuse = (FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
       
       return iblContribution;
     }
     `;
-      iblContribution = /* wgsl */
+      iblLightContribution = /* wgsl */
       `
-      let reflection: vec3f = normalize(reflect(-normalize(fsInput.viewDirection), normal));
+      let reflection: vec3f = normalize(reflect(-V, N));
       
-      let diffuseColor: vec3f = baseColor.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
-      let specularColor: vec3f = mix(f0, baseColor.rgb, metallic);
+      let iblDiffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
     
-      let iblContribution = getIBLContribution(max(dot(normal, normalize(fsInput.viewDirection)), 0.0), roughness, normal, reflection, diffuseColor, specularColor);
+      let iblContribution = getIBLContribution(NdotV, roughness, N, reflection, iblDiffuseColor, f0);
       
-      color = vec4(color.rgb + iblContribution.diffuse + iblContribution.specular, color.a);
-      
-      // Add IBL spec to alpha for reflections on transparent surfaces (glass)
-      color.a = max(color.a, max(max(iblContribution.specular.r, iblContribution.specular.g), iblContribution.specular.b));
+      lightContribution.diffuse += iblContribution.diffuse;
+      lightContribution.specular += iblContribution.specular;
     `;
     }
-    let { chunks } = shaderParameters;
+    let chunks = shaderParameters?.chunks;
     if (!chunks) {
       chunks = {
         additionalFragmentHead: iblContributionHead,
-        additionalColorContribution: iblContribution
+        lightContribution: iblLightContribution
       };
     } else {
       if (!chunks.additionalFragmentHead) {
@@ -14351,12 +14435,16 @@ struct VSOutput {
       } else {
         chunks.additionalFragmentHead += iblContributionHead;
       }
-      if (!chunks.additionalColorContribution) {
-        chunks.additionalColorContribution = iblContribution;
+      if (!chunks.lightContribution) {
+        chunks.lightContribution = iblLightContribution;
       } else {
-        chunks.additionalColorContribution += iblContribution;
+        chunks.lightContribution = iblLightContribution + chunks.lightContribution;
+      }
+      if (!chunks.ambientContribution && useIBLContribution) {
+        chunks.ambientContribution = "lightContribution.ambient = vec3(0.0);";
       }
     }
+    shaderParameters.chunks = chunks;
     return buildPBRShaders(meshDescriptor, shaderParameters);
   };
 

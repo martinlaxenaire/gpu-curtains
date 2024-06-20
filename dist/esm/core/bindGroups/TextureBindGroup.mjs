@@ -10,8 +10,7 @@ class TextureBindGroup extends BindGroup {
    */
   constructor(renderer, { label, index = 0, bindings = [], uniforms, storages, textures = [], samplers = [] } = {}) {
     const type = "TextureBindGroup";
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, type);
+    renderer = isRenderer(renderer, type);
     super(renderer, { label, index, bindings, uniforms, storages });
     this.options = {
       ...this.options,

@@ -13,9 +13,8 @@ class RenderMaterial extends Material {
    * @param parameters - {@link RenderMaterialParams | parameters} used to create our RenderMaterial
    */
   constructor(renderer, parameters) {
-    renderer = renderer && renderer.renderer || renderer;
     const type = "RenderMaterial";
-    isRenderer(renderer, type);
+    renderer = isRenderer(renderer, type);
     if (!parameters.shaders) {
       parameters.shaders = {};
     }

@@ -60,10 +60,7 @@ export class Plane extends DOMMesh {
     element: DOMElementParams['element'],
     parameters = {} as PlaneParams
   ) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as GPUCurtainsRenderer)
-
-    isCurtainsRenderer(renderer, parameters.label ? parameters.label + ' Plane' : 'Plane')
+    renderer = isCurtainsRenderer(renderer, parameters.label ? parameters.label + ' Plane' : 'Plane')
 
     // assign default params if needed
     const params = { ...defaultPlaneParams, ...parameters }

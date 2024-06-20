@@ -120,6 +120,8 @@ export declare class GPURenderer {
     _onBeforeRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
     /** function assigned to the {@link onAfterRender} callback */
     _onAfterRenderCallback: (commandEncoder: GPUCommandEncoder) => void;
+    /** function assigned to the {@link resizeObjects} callback */
+    _onResizeCallback: () => void;
     /** function assigned to the {@link onAfterResize} callback */
     _onAfterResizeCallback: () => void;
     /**
@@ -143,9 +145,9 @@ export declare class GPURenderer {
      */
     resize(rectBBox?: RectBBox | null): void;
     /**
-     * Resize all tracked objects
+     * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
      */
-    onResize(): void;
+    resizeObjects(): void;
     /**
      * Resize the {@link meshes}.
      */
@@ -413,8 +415,14 @@ export declare class GPURenderer {
      */
     onAfterRender(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
     /**
-     * Assign a callback function to _onAfterResizeCallback
-     * @param callback - callback to run just after the {@link GPURenderer} has been resized
+     * Callback to run after the {@link GPURenderer} has been resized but before the {@link resizeObjects} method has been executed (before the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes are resized).
+     * @param callback - callback to execute.
+     * @returns - our {@link GPURenderer}
+     */
+    onResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;
+    /**
+     * Callback to run after the {@link GPURenderer} has been resized and after the {@link resizeObjects} method has been executed (after the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes have been resized).
+     * @param callback - callback to execute.
      * @returns - our {@link GPURenderer}
      */
     onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void): this;

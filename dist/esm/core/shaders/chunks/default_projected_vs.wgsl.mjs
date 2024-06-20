@@ -1,7 +1,7 @@
 var default_projected_vsWgsl = (
   /* wgsl */
   `
-struct VertexOutput {
+struct VSOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
   @location(1) normal: vec3f,
@@ -9,8 +9,8 @@ struct VertexOutput {
 
 @vertex fn main(
   attributes: Attributes,
-) -> VertexOutput {
-  var vsOutput: VertexOutput;
+) -> VSOutput {
+  var vsOutput: VSOutput;
 
   vsOutput.position = getOutputPosition(attributes.position);
   vsOutput.uv = attributes.uv;

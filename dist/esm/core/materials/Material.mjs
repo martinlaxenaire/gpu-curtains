@@ -14,8 +14,7 @@ class Material {
    */
   constructor(renderer, parameters) {
     this.type = "Material";
-    renderer = renderer && renderer.renderer || renderer;
-    isRenderer(renderer, this.type);
+    renderer = isRenderer(renderer, this.type);
     this.renderer = renderer;
     this.uuid = generateUUID();
     const {

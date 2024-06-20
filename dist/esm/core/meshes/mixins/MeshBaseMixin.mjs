@@ -85,8 +85,7 @@ function MeshBaseMixin(Base) {
       this.type = "MeshBase";
       this.uuid = generateUUID();
       Object.defineProperty(this, "index", { value: meshIndex++ });
-      renderer = renderer && renderer.renderer || renderer;
-      isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
+      renderer = isRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
       this.renderer = renderer;
       const {
         label,

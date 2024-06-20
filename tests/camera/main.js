@@ -4,7 +4,7 @@
 // - test frustum culling
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCameraRenderer, GPUDeviceManager, Mesh, PlaneGeometry, Vec2, Vec3 } = await import(
+  const { BoxGeometry, GPUCameraRenderer, Camera, GPUDeviceManager, Mesh, PlaneGeometry, Vec2, Vec3 } = await import(
     /* @vite-ignore */ path
   )
 
@@ -31,11 +31,49 @@ window.addEventListener('load', async () => {
 
   animate()
 
+  const lookAt = new Vec3()
+
+  const firstCamera = gpuCameraRenderer.camera
+
+  const secondCamera = new Camera({
+    width: gpuCameraRenderer.boundingRect.width,
+    height: gpuCameraRenderer.boundingRect.height,
+  })
+
+  secondCamera.position.x = 5
+  secondCamera.position.y = 10
+  secondCamera.position.z = 10
+  secondCamera.lookAt(lookAt)
+
   // now our scene
+  const floorVs = `
+    struct VertexOutput {
+      @builtin(position) position: vec4f,
+      @location(0) uv: vec2f,
+      @location(1) normal: vec3f,
+      @location(2) cameraPos: vec3f,
+    };
+    
+    @vertex fn main(
+      attributes: Attributes,
+    ) -> VertexOutput {
+      var vsOutput: VertexOutput;
+    
+      vsOutput.position = getOutputPosition(attributes.position);
+      vsOutput.uv = attributes.uv;
+      vsOutput.normal = getWorldNormal(attributes.normal);
+      vsOutput.cameraPos = camera.position;
+      
+      return vsOutput;
+    }
+  `
+
   const floorFs = `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
+      @location(1) normal: vec3f,
+      @location(2) cameraPos: vec3f,
     };
   
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
@@ -43,6 +81,12 @@ window.addEventListener('load', async () => {
       var checker: f32 = 2.0 * fract(c.x + c.y);
     
       var color: vec4f = vec4(vec3(checker) * 0.5, 1.0);
+      
+      // check for camera pos
+      if(fsInput.cameraPos.y > 2.0) {
+        color.r = 1.0;
+      }
+      
       return color;
     }
   `
@@ -53,6 +97,9 @@ window.addEventListener('load', async () => {
     label: 'Floor',
     geometry: new PlaneGeometry(),
     shaders: {
+      vertex: {
+        code: floorVs,
+      },
       fragment: {
         code: floorFs,
       },
@@ -134,7 +181,17 @@ window.addEventListener('load', async () => {
   })
 
   const { camera } = gpuCameraRenderer
-  const lookAt = new Vec3()
+
+  gui
+    .add({ useSecondCamera: false }, 'useSecondCamera')
+    .onChange((value) => {
+      if (value) {
+        gpuCameraRenderer.useCamera(secondCamera)
+      } else {
+        gpuCameraRenderer.useCamera(firstCamera)
+      }
+    })
+    .name('Use second camera')
 
   const perspectiveFolder = gui.addFolder('Perspective')
   perspectiveFolder.add(camera, 'fov', 1, 179, 1).name('Field of view')

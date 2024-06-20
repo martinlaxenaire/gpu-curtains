@@ -11,7 +11,6 @@ class RenderPipelineEntry extends PipelineEntry {
   constructor(parameters) {
     let { renderer, ...pipelineParams } = parameters;
     const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams;
-    renderer = renderer && renderer.renderer || renderer;
     const type = "RenderPipelineEntry";
     isRenderer(renderer, label ? label + " " + type : type);
     super(parameters);

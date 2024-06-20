@@ -1,6 +1,7 @@
 import { Mat4 } from '../../math/Mat4.mjs';
 import { Object3D } from '../objects3D/Object3D.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
+import { generateUUID } from '../../utils/utils.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -45,6 +46,7 @@ class Camera extends Object3D {
     __privateAdd(this, _far, void 0);
     /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
     __privateAdd(this, _pixelRatio, void 0);
+    this.uuid = generateUUID();
     this.position.set(0, 0, 10);
     this.onMatricesChanged = onMatricesChanged;
     this.size = {

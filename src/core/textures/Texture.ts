@@ -117,10 +117,7 @@ export class Texture {
    * @param parameters - {@link TextureParams | parameters} used to create this {@link Texture}
    */
   constructor(renderer: Renderer | GPUCurtains, parameters = defaultTextureParams) {
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, parameters.label ? parameters.label + ' Texture' : 'Texture')
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' Texture' : 'Texture')
 
     this.type = 'Texture'
 
@@ -129,6 +126,13 @@ export class Texture {
     this.uuid = generateUUID()
 
     this.options = { ...defaultTextureParams, ...parameters }
+
+    if (
+      this.options.format === 'rgba32float' &&
+      !(this.renderer.deviceManager.adapter as GPUAdapter).features.has('float32-filterable')
+    ) {
+      this.options.format = 'rgba16float'
+    }
 
     if (parameters.fromTexture) {
       this.options.format = parameters.fromTexture.texture.format
@@ -241,16 +245,18 @@ export class Texture {
     height = this.size.height,
     depth = this.size.depth,
     origin = [0, 0, 0],
+    colorSpace = 'srgb',
   }: {
     source: GPUImageCopyExternalImageSource
     width?: number
     height?: number
     depth?: number
     origin?: GPUOrigin3D
+    colorSpace?: PredefinedColorSpace
   }) {
     this.renderer.device.queue.copyExternalImageToTexture(
       { source: source, flipY: this.options.flipY },
-      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin },
+      { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
       [width, height, depth]
     )
 

@@ -120,10 +120,7 @@ export class DOMTexture extends Object3D {
 
     this.type = 'Texture'
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as Renderer)
-
-    isRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
+    renderer = isRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
     this.renderer = renderer
 

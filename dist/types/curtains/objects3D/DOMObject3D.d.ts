@@ -1,15 +1,15 @@
 import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D';
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
 import { GPUCurtains } from '../GPUCurtains';
-import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition, RectBBox } from '../../core/DOM/DOMElement';
+import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../../core/DOM/DOMElement';
 import { Vec2 } from '../../math/Vec2';
 import { Vec3 } from '../../math/Vec3';
 import { Object3DTransforms } from '../../core/objects3D/Object3D';
 import { Box3 } from '../../math/Box3';
 /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */
 export interface DOMObject3DSize {
-    /** The {@link DOMObject3D} bounding box in document space */
-    document: RectBBox;
+    /** Whether we should update the computed sizes before updating the matrices. */
+    shouldUpdate: boolean;
     /** Normalized world size represent the size ratio of the DOM element compared to its container (the renderer DOM element). */
     normalizedWorld: {
         /** 2D size of the {@link DOMObject3D} relative to the document, in the [0, 1] range. */
@@ -91,18 +91,13 @@ export declare class DOMObject3D extends ProjectedObject3D {
     setDOMElement(element: DOMElementParams['element']): void;
     /**
      * Update size and position when the {@link domElement | DOM Element} position changed
-     * @param boundingRect - the new bounding rectangle
      */
-    onPositionChanged(boundingRect?: DOMElementBoundingRect | null): void;
+    onPositionChanged(): void;
     /**
      * Reset the {@link domElement | DOMElement}
      * @param element - the new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use
      */
     resetDOMElement(element: string | HTMLElement): void;
-    /**
-     * Update the {@link DOMObject3D} sizes and position
-     */
-    updateSizeAndPosition(): void;
     /**
      * Resize the {@link DOMObject3D}
      * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
@@ -160,9 +155,17 @@ export declare class DOMObject3D extends ProjectedObject3D {
      */
     set worldTransformOrigin(value: Vec3);
     /**
-     * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
+     * Check whether at least one of the matrix should be updated
      */
-    applyPosition(): void;
+    shouldUpdateMatrices(): void;
+    /**
+     * Set the {@link DOMObject3D#size.shouldUpdate | size shouldUpdate} flag to true to compute the new sizes before next matrices calculations.
+     */
+    shouldUpdateComputedSizes(): void;
+    /**
+     * Update the {@link DOMObject3D} sizes and position
+     */
+    updateSizeAndPosition(): void;
     /**
      * Compute the {@link DOMObject3D} world position using its world position and document translation converted to world space
      */

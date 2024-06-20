@@ -196,7 +196,7 @@ export class BufferBinding extends Binding {
     const { struct, ...defaultParams } = params
 
     const bufferBindingCopy = new (this.constructor as typeof BufferBinding)(defaultParams)
-    bufferBindingCopy.setBindings(struct)
+    struct && bufferBindingCopy.setBindings(struct)
     bufferBindingCopy.options.struct = struct
 
     bufferBindingCopy.arrayBufferSize = this.arrayBufferSize

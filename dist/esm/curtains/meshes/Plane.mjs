@@ -19,8 +19,7 @@ class Plane extends DOMMesh {
    * @param parameters - {@link PlaneParams | parameters} used to create this {@link Plane}
    */
   constructor(renderer, element, parameters = {}) {
-    renderer = renderer && renderer.renderer || renderer;
-    isCurtainsRenderer(renderer, parameters.label ? parameters.label + " Plane" : "Plane");
+    renderer = isCurtainsRenderer(renderer, parameters.label ? parameters.label + " Plane" : "Plane");
     const params = { ...defaultPlaneParams, ...parameters };
     let { geometry, widthSegments, heightSegments, ...DOMMeshParams2 } = params;
     const { instancesCount, vertexBuffers, ...materialParams } = DOMMeshParams2;

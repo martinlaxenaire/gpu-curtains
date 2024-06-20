@@ -145,6 +145,10 @@ export class GPURenderer {
   _onAfterRenderCallback = (commandEncoder: GPUCommandEncoder) => {
     /* allow empty callback */
   }
+  /** function assigned to the {@link resizeObjects} callback */
+  _onResizeCallback: () => void = () => {
+    /* allow empty callback */
+  }
   /** function assigned to the {@link onAfterResize} callback */
   _onAfterResizeCallback: () => void = () => {
     /* allow empty callback */
@@ -246,8 +250,8 @@ export class GPURenderer {
     // patch rect bbox with missing values from bounding rect if needed
     rectBBox = {
       ...{
-        width: this.boundingRect.width,
-        height: this.boundingRect.height,
+        width: Math.max(1, this.boundingRect.width),
+        height: Math.max(1, this.boundingRect.height),
         top: this.boundingRect.top,
         left: this.boundingRect.left,
       },
@@ -293,15 +297,17 @@ export class GPURenderer {
   resize(rectBBox: RectBBox | null = null) {
     this.setSize(rectBBox)
 
-    this.onResize()
+    this._onResizeCallback && this._onResizeCallback()
+
+    this.resizeObjects()
 
     this._onAfterResizeCallback && this._onAfterResizeCallback()
   }
 
   /**
-   * Resize all tracked objects
+   * Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
    */
-  onResize() {
+  resizeObjects() {
     // resize textures first
     this.textures.forEach((texture) => {
       texture.resize()
@@ -926,8 +932,21 @@ export class GPURenderer {
   }
 
   /**
-   * Assign a callback function to _onAfterResizeCallback
-   * @param callback - callback to run just after the {@link GPURenderer} has been resized
+   * Callback to run after the {@link GPURenderer} has been resized but before the {@link resizeObjects} method has been executed (before the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes are resized).
+   * @param callback - callback to execute.
+   * @returns - our {@link GPURenderer}
+   */
+  onResize(callback: (commandEncoder?: GPUCommandEncoder) => void) {
+    if (callback) {
+      this._onResizeCallback = callback
+    }
+
+    return this
+  }
+
+  /**
+   * Callback to run after the {@link GPURenderer} has been resized and after the {@link resizeObjects} method has been executed (after the {@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes have been resized).
+   * @param callback - callback to execute.
    * @returns - our {@link GPURenderer}
    */
   onAfterResize(callback: (commandEncoder?: GPUCommandEncoder) => void) {
@@ -1056,6 +1075,8 @@ export class GPURenderer {
    * Destroy our {@link GPURenderer} and everything that needs to be destroyed as well
    */
   destroy() {
+    this.deviceManager.renderers = this.deviceManager.renderers.filter((renderer) => renderer.uuid !== this.uuid)
+
     this.domElement?.destroy()
 
     // destroy render passes

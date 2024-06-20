@@ -64,6 +64,11 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setCamera(cameraParameters: CameraBasePerspectiveOptions): void;
     /**
+     * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBufferBinding} inputs view values and the {@link meshes} {@link Camera} object.
+     * @param camera - new {@link Camera} to use.
+     */
+    useCamera(camera: Camera): void;
+    /**
      * Update the {@link ProjectedMesh | projected meshes} sizes and positions when the {@link camera} {@link Camera#position | position} changes
      */
     onCameraMatricesChanged(): void;
@@ -96,9 +101,9 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setCameraPosition(position?: Vec3): void;
     /**
-     * Call our {@link GPURenderer#onResize | GPURenderer onResize method} and resize our {@link camera} as well
+     * Call our {@link GPURenderer#resizeObjects | GPURenderer resizeObjects method} and resize our {@link camera} as well
      */
-    onResize(): void;
+    resizeObjects(): void;
     /**
      * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}

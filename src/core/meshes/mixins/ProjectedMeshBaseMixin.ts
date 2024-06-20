@@ -214,10 +214,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this.type = 'MeshTransformed'
 
-      // we could pass our curtains object OR our curtains renderer object
-      renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as CameraRenderer)
-
-      isCameraRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
+      renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + ' ' + this.type : this.type)
 
       this.renderer = renderer
 

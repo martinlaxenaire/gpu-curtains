@@ -10,9 +10,8 @@ import { Box3 } from '../../math/Box3'
 
 /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces */
 export interface DOMObject3DSize {
-  /** The {@link DOMObject3D} bounding box in document space */
-  document: RectBBox
-
+  /** Whether we should update the computed sizes before updating the matrices. */
+  shouldUpdate: boolean
   /** Normalized world size represent the size ratio of the DOM element compared to its container (the renderer DOM element). */
   normalizedWorld: {
     /** 2D size of the {@link DOMObject3D} relative to the document, in the [0, 1] range. */
@@ -110,20 +109,12 @@ export class DOMObject3D extends ProjectedObject3D {
   ) {
     super(renderer)
 
-    // we could pass our curtains object OR our curtains renderer object
-    renderer = (renderer && (renderer as GPUCurtains).renderer) || (renderer as GPUCurtainsRenderer)
-
-    isCurtainsRenderer(renderer, 'DOM3DObject')
+    renderer = isCurtainsRenderer(renderer, 'DOM3DObject')
 
     this.renderer = renderer
 
     this.size = {
-      document: {
-        width: 0,
-        height: 0,
-        top: 0,
-        left: 0,
-      },
+      shouldUpdate: true,
       normalizedWorld: {
         size: new Vec2(1),
         position: new Vec2(),
@@ -141,8 +132,8 @@ export class DOMObject3D extends ProjectedObject3D {
 
     this.camera = this.renderer.camera
 
-    this.boundingBox.min.onChange(() => this.updateSizeAndPosition())
-    this.boundingBox.max.onChange(() => this.updateSizeAndPosition())
+    this.boundingBox.min.onChange(() => this.shouldUpdateComputedSizes())
+    this.boundingBox.max.onChange(() => this.shouldUpdateComputedSizes())
 
     this.setDOMElement(element)
     ;(this.renderer as GPUCurtainsRenderer).domObjects.push(this)
@@ -156,18 +147,19 @@ export class DOMObject3D extends ProjectedObject3D {
     this.domElement = new DOMElement({
       element,
       onSizeChanged: (boundingRect) => this.resize(boundingRect),
-      onPositionChanged: (boundingRect) => this.onPositionChanged(boundingRect),
+      onPositionChanged: () => this.onPositionChanged(),
     })
+
+    // eagerly set size and position
+    this.updateSizeAndPosition()
   }
 
   /**
    * Update size and position when the {@link domElement | DOM Element} position changed
-   * @param boundingRect - the new bounding rectangle
    */
-  onPositionChanged(boundingRect?: DOMElementBoundingRect | null) {
+  onPositionChanged() {
     if (this.watchScroll) {
-      this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
-      this.updateSizeAndPosition()
+      this.shouldUpdateComputedSizes()
     }
   }
 
@@ -184,21 +176,14 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Update the {@link DOMObject3D} sizes and position
-   */
-  updateSizeAndPosition() {
-    this.setWorldSizes()
-    this.applyPosition()
-  }
-
-  /**
    * Resize the {@link DOMObject3D}
    * @param boundingRect - new {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}
    */
   resize(boundingRect: DOMElementBoundingRect | null = null) {
     if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return
 
-    this.size.document = boundingRect ?? this.domElement.element.getBoundingClientRect()
+    // update size and position eagerly on resize
+    // so we have new values in the callbacks
     this.updateSizeAndPosition()
 
     this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback()
@@ -211,7 +196,18 @@ export class DOMObject3D extends ProjectedObject3D {
    * @readonly
    */
   get boundingRect(): DOMElementBoundingRect {
-    return this.domElement.boundingRect
+    return (
+      this.domElement?.boundingRect ?? {
+        width: 1,
+        height: 1,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        x: 0,
+        y: 0,
+      }
+    )
   }
 
   /* TRANSFOMS */
@@ -304,11 +300,31 @@ export class DOMObject3D extends ProjectedObject3D {
   }
 
   /**
-   * Set the {@link DOMObject3D} world position using its world position and document translation converted to world space
+   * Check whether at least one of the matrix should be updated
    */
-  applyPosition() {
+  shouldUpdateMatrices() {
+    super.shouldUpdateMatrices()
+
+    if (this.matricesNeedUpdate || this.size.shouldUpdate) {
+      this.updateSizeAndPosition()
+    }
+
+    this.size.shouldUpdate = false
+  }
+
+  /**
+   * Set the {@link DOMObject3D#size.shouldUpdate | size shouldUpdate} flag to true to compute the new sizes before next matrices calculations.
+   */
+  shouldUpdateComputedSizes() {
+    this.size.shouldUpdate = true
+  }
+
+  /**
+   * Update the {@link DOMObject3D} sizes and position
+   */
+  updateSizeAndPosition() {
+    this.setWorldSizes()
     this.applyDocumentPosition()
-    super.applyPosition()
   }
 
   /**
@@ -382,8 +398,8 @@ export class DOMObject3D extends ProjectedObject3D {
     // dimensions and positions of our plane in the document and clip spaces
     // don't forget positions in webgl space are referring to the center of our plane and canvas
     const planeCenter = {
-      x: this.size.document.width / 2 + this.size.document.left,
-      y: this.size.document.height / 2 + this.size.document.top,
+      x: this.boundingRect.width / 2 + this.boundingRect.left,
+      y: this.boundingRect.height / 2 + this.boundingRect.top,
     }
 
     const containerCenter = {
@@ -400,8 +416,8 @@ export class DOMObject3D extends ProjectedObject3D {
     // normalized world size represent the size ratio of the DOM element compared to its container (the renderer DOM element)
     // in the [0, 1] range
     this.size.normalizedWorld.size.set(
-      this.size.document.width / containerBoundingRect.width,
-      this.size.document.height / containerBoundingRect.height
+      this.boundingRect.width / containerBoundingRect.width,
+      this.boundingRect.height / containerBoundingRect.height
     )
 
     // normalized world position represent the position of the DOM element compared to its container (the renderer DOM element)
@@ -424,7 +440,7 @@ export class DOMObject3D extends ProjectedObject3D {
     // Z size is based on Y component, because with a perspective camera, the width is based upon the height
     // we could still adjust with #DOMObjectDepthScaleRatio
     this.size.scaledWorld.size.z =
-      this.size.scaledWorld.size.y * (size.x / size.y / (this.size.document.width / this.size.document.height))
+      this.size.scaledWorld.size.y * (size.x / size.y / (this.boundingRect.width / this.boundingRect.height))
 
     // our scaled world position is the normalized position multiplied by the camera screen ratio
     this.size.scaledWorld.position.set(

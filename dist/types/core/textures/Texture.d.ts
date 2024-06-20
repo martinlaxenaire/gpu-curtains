@@ -111,12 +111,13 @@ export declare class Texture {
      * @param parameters.depth - source depth.
      * @param parameters.origin - {@link GPUOrigin3D | origin} of the source copy.
      */
-    uploadSource({ source, width, height, depth, origin, }: {
+    uploadSource({ source, width, height, depth, origin, colorSpace, }: {
         source: GPUImageCopyExternalImageSource;
         width?: number;
         height?: number;
         depth?: number;
         origin?: GPUOrigin3D;
+        colorSpace?: PredefinedColorSpace;
     }): void;
     /**
      * Set our {@link Texture#bindings | bindings}
