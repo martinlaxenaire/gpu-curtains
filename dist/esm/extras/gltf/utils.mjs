@@ -124,11 +124,11 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
     /* wgsl */
     `
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      var geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
+      let geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
     `
   ) : (
     /* wgsl */
-    `var geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
+    `let geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
   );
   if (useNormalMap) {
     normalMap += /* wgsl */
@@ -138,14 +138,17 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
       let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `;
   } else {
-    normalMap += `
+    normalMap += /* wgsl */
+    `
       let normal = geometryNormal;
     `;
   }
   normalMap += /* wgsl */
   `
-      let N = normalize(normal);
-      let V = normalize(fsInput.viewDirection);
+      let worldPosition: vec3f = fsInput.worldPosition;
+      let viewDirection: vec3f = fsInput.viewDirection;
+      let N: vec3f = normal;
+      let V: vec3f = normalize(viewDirection);
       let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
   `;
   let metallicRoughness = (
@@ -167,7 +170,7 @@ const buildShaders = (meshDescriptor, shaderParameters = null) => {
   const f0 = (
     /* wgsl */
     `
-      let f0 = mix(vec3(0.04), color.rgb, vec3(metallic));
+      let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));
   `
   );
   let emissiveOcclusion = (
@@ -487,9 +490,9 @@ const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
     `
       let reflection: vec3f = normalize(reflect(-V, N));
       
-      let diffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
+      let iblDiffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
     
-      let iblContribution = getIBLContribution(NdotV, roughness, N, reflection, diffuseColor, f0);
+      let iblContribution = getIBLContribution(NdotV, roughness, N, reflection, iblDiffuseColor, f0);
       
       lightContribution.diffuse += iblContribution.diffuse;
       lightContribution.specular += iblContribution.specular;

@@ -33,7 +33,31 @@ export interface BuiltShaders {
 // helper to build vertex and fragment shaders based on our meshDescriptor object
 /**
  * Build shaders based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | shader parameters}.
- * @param meshDescriptor - {@link MeshDescriptor} built by the {extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
+ *
+ * The shaders built by this function allow you to access a bunch of variables inside your fragment shader that you can use in your {@link ShaderBuilderParameters | shader parameters} chunks:
+ *
+ * - `geometryNormal: vec3f`: the normalized geometry normals.
+ * - `normal: vec3f` or `N: vec3f`: the computed normalized normals accounting for the `normalTexture` and `tangent` attributes is defined, the `geometryNormal` else.
+ * - `worldPosition: vec3f`: the world position.
+ * - `viewDirection: vec3f`: the view direction in world space (camera position minus world position).
+ * - `V: vec3f`: the normalized view direction in world space (camera position minus world position).
+ * - `NdotV: f32`: the clamped dot product of `N` and `V`.
+ * - `metallic: f32`: the metallic value. Default to `1.0`.
+ * - `roughness: f32`: the roughness value. Default to `1.0`.
+ * - `f0: vec3f`: the fresnel reflectance.
+ * - `emissive: vec3f`: the emissive color value. Default to `vec3(0.0)`.
+ * - `occlusion: f32`: the occlusion value. Default to `1.0`.
+ * - `lightContribution: LightContribution`: the final light contribution to use. You should add your respective lightning calculations to this variable components, defined as follows:<br>
+ * ```wgsl
+ * struct LightContribution {
+ *   ambient: vec3f, // default to vec3(1.0)
+ *   diffuse: vec3f, // default to vec3(0.0)
+ *   specular: vec3f, // default to vec3(0.0)
+ * };
+ * ```
+ * - `color: vec4f`: the color that will be outputted. You can manipulate it with the `preliminaryColorContribution` (applied before lightning calculations) and `additionalColorContribution` (applied after lightning calculations).
+ *
+ * @param meshDescriptor - {@link MeshDescriptor} built by the {@link extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
  * @param shaderParameters - {@link ShaderBuilderParameters | shader parameters} to use.
  * @returns - object containing the shaders
  */
@@ -178,9 +202,9 @@ export const buildShaders = (
   let normalMap = meshDescriptor.attributes.find((attribute) => attribute.name === 'normal')
     ? /* wgsl */ `
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
-      var geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
+      let geometryNormal: vec3f = normalize(faceDirection * fsInput.normal);
     `
-    : /* wgsl */ `var geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
+    : /* wgsl */ `let geometryNormal: vec3f = normalize(vec3(0.0, 0.0, 1.0));`
 
   if (useNormalMap) {
     normalMap += /* wgsl */ `
@@ -189,14 +213,16 @@ export const buildShaders = (
       let normal = normalize(tbn * (2.0 * normalMap - vec3(material.normalMapScale, material.normalMapScale, 1.0)));
     `
   } else {
-    normalMap += `
+    normalMap += /* wgsl */ `
       let normal = geometryNormal;
     `
   }
 
   normalMap += /* wgsl */ `
-      let N = normalize(normal);
-      let V = normalize(fsInput.viewDirection);
+      let worldPosition: vec3f = fsInput.worldPosition;
+      let viewDirection: vec3f = fsInput.viewDirection;
+      let N: vec3f = normal;
+      let V: vec3f = normalize(viewDirection);
       let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
   `
 
@@ -216,7 +242,7 @@ export const buildShaders = (
   }
 
   const f0 = /* wgsl */ `
-      let f0 = mix(vec3(0.04), color.rgb, vec3(metallic));
+      let f0: vec3f = mix(vec3(0.04), color.rgb, vec3(metallic));
   `
 
   // emissive and occlusion
@@ -595,9 +621,9 @@ export const buildIBLShaders = (
     iblLightContribution = /* wgsl */ `
       let reflection: vec3f = normalize(reflect(-V, N));
       
-      let diffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
+      let iblDiffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
     
-      let iblContribution = getIBLContribution(NdotV, roughness, N, reflection, diffuseColor, f0);
+      let iblContribution = getIBLContribution(NdotV, roughness, N, reflection, iblDiffuseColor, f0);
       
       lightContribution.diffuse += iblContribution.diffuse;
       lightContribution.specular += iblContribution.specular;

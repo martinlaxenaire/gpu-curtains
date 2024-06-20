@@ -355,7 +355,7 @@ window.addEventListener('load', async () => {
       `
 
       const lightContribution = /* wgsl */ `
-      let L = normalize(pointLight.position - fsInput.worldPosition);
+      let L = normalize(pointLight.position - worldPosition);
       let H = normalize(V + L);
       
       let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
@@ -377,7 +377,7 @@ window.addEventListener('load', async () => {
       // add lights spec to alpha for reflections on transparent surfaces (glass)
       color.a = max(color.a, max(max(specular.r, specular.g), specular.b));
               
-      let distance = length(pointLight.position - fsInput.worldPosition);
+      let distance = length(pointLight.position - worldPosition);
       let attenuation = rangeAttenuation(pointLight.range, distance);
       
       let radiance = pointLight.color * pointLight.intensity * attenuation;
@@ -387,7 +387,7 @@ window.addEventListener('load', async () => {
       `
 
       const additionalColorContribution = `
-        //color = vec4(vec3(roughness), color.a);
+        //color = vec4(vec3(occlusion), color.a);
       `
 
       //parameters.shaders = buildShaders(meshDescriptor)

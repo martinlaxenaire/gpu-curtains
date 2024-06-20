@@ -29,7 +29,6 @@
 ## Work in progress
 
 - Examples & tests
-- glTF IBL shader
 
 ## TODO / possible improvements
 
