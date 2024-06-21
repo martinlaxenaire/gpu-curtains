@@ -282,7 +282,7 @@ window.addEventListener('load', async () => {
               },
               range: {
                 type: 'f32',
-                value: lightPositionLength * 2,
+                value: lightPositionLength * 3,
               },
               color: {
                 type: 'vec3f',
@@ -290,7 +290,7 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                value: lightPositionLengthSq * 2,
+                value: lightPositionLengthSq * 3,
               },
             },
           },
