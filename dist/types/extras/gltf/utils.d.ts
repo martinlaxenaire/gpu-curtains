@@ -2,6 +2,7 @@ import { MeshDescriptor } from '../../types/gltf/GLTFScenesManager';
 import { ShaderOptions } from '../../types/Materials';
 import { Texture } from '../../core/textures/Texture';
 import { Sampler } from '../../core/samplers/Sampler';
+import { Renderer } from '../../core/renderers/utils';
 /**
  * Parameters used to build the shaders
  */
@@ -99,3 +100,10 @@ export interface IBLShaderBuilderParameters extends ShaderBuilderParameters {
  * @returns - object containing the shaders
  */
 export declare const buildIBLShaders: (meshDescriptor: MeshDescriptor, shaderParameters?: IBLShaderBuilderParameters) => BuiltShaders;
+/**
+ * Compute a diffuse cube map from a specular cube map using a {@link ComputePass} and copy the result into the diffuse texture {@link GPUTexture}.
+ * @param renderer - {@link Renderer} to use.
+ * @param diffuseTexture - diffuse cube map texture onto which the result of the {@link ComputePass} should be copied.
+ * @param specularTexture - specular cube map texture to use as a source.
+ */
+export declare const computeDiffuseFromSpecular: (renderer: Renderer, diffuseTexture: Texture, specularTexture: Texture) => Promise<void>;

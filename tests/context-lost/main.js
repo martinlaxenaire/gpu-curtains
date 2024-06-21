@@ -103,6 +103,20 @@ window.addEventListener('load', async () => {
         code: postProShader,
       },
     },
+    targets: [
+      {
+        blend: {
+          color: {
+            srcFactor: 'src-alpha',
+            dstFactor: 'one-minus-src-alpha',
+          },
+          alpha: {
+            srcFactor: 'one',
+            dstFactor: 'one-minus-src-alpha',
+          },
+        },
+      },
+    ],
   })
 
   console.log(gpuCurtains, plane, postProPass)

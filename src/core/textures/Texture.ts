@@ -37,6 +37,9 @@ export interface TextureBaseParams extends ExternalTextureParamsBase {
   visibility?: BindingParams['visibility']
   /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names} */
   usage?: TextureUsageKeys[]
+
+  /** Whether any {@link core/materials/Material.Material | Material} using this {@link Texture} should automatically destroy it upon destruction. Default to `true`. */
+  autoDestroy?: boolean
 }
 
 /**
@@ -61,6 +64,7 @@ const defaultTextureParams: TextureParams = {
   generateMips: false,
   flipY: false,
   premultipliedAlpha: false,
+  autoDestroy: true,
 }
 
 /**
@@ -257,6 +261,40 @@ export class Texture {
     this.renderer.device.queue.copyExternalImageToTexture(
       { source: source, flipY: this.options.flipY },
       { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
+      [width, height, depth]
+    )
+
+    if (this.texture.mipLevelCount > 1) {
+      generateMips(this.renderer.device, this.texture)
+    }
+  }
+
+  /**
+   * Use data as the {@link texture} source and upload it to the GPU.
+   * @param parameters - parameters used to upload the source.
+   * @param parameters.width - data source width.
+   * @param parameters.height - data source height.
+   * @param parameters.depth - data source depth.
+   * @param parameters.origin - {@link GPUOrigin3D | origin} of the data source copy.
+   * @param parameters.data - {@link Float32Array} data to use as source.
+   */
+  uploadData({
+    width = this.size.width,
+    height = this.size.height,
+    depth = this.size.depth,
+    origin = [0, 0, 0],
+    data = new Float32Array(width * height * 4),
+  }: {
+    width?: number
+    height?: number
+    depth?: number
+    origin?: GPUOrigin3D
+    data?: Float32Array
+  }) {
+    this.renderer.device.queue.writeTexture(
+      { texture: this.texture, origin },
+      data,
+      { bytesPerRow: width * data.BYTES_PER_ELEMENT * 4, rowsPerImage: height },
       [width, height, depth]
     )
 

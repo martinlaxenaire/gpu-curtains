@@ -51,5 +51,6 @@ export { SphereGeometry } from './extras/geometries/SphereGeometry.mjs';
 export { PingPongPlane } from './extras/meshes/PingPongPlane.mjs';
 export { GLTFLoader } from './extras/gltf/GLTFLoader.mjs';
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager.mjs';
-export { buildIBLShaders, buildPBRShaders, buildShaders } from './extras/gltf/utils.mjs';
+export { buildIBLShaders, buildPBRShaders, buildShaders, computeDiffuseFromSpecular } from './extras/gltf/utils.mjs';
+export { HDRLoader } from './extras/loaders/HDRLoader.mjs';
 export { logSceneCommands } from './utils/debug.mjs';

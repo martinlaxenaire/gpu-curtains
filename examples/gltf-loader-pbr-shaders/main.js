@@ -108,7 +108,7 @@ window.addEventListener('load', async () => {
       // disable frustum culling
       parameters.frustumCulling = false
 
-      const lightPosition = new Vec3(radius * 2, radius * 2, radius)
+      const lightPosition = new Vec3(radius * 4)
       const lightPositionLengthSq = lightPosition.lengthSq()
       const lightPositionLength = lightPosition.length()
 
@@ -136,7 +136,7 @@ window.addEventListener('load', async () => {
               },
               range: {
                 type: 'f32',
-                value: lightPositionLength * 2,
+                value: lightPositionLength * 4,
               },
               color: {
                 type: 'vec3f',
@@ -144,7 +144,7 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                value: isSponza ? lightPositionLengthSq * 2.75 : lightPositionLengthSq * 2,
+                value: lightPositionLengthSq * 3,
               },
             },
           },
@@ -170,11 +170,11 @@ window.addEventListener('load', async () => {
         // N, V and NdotV are already defined as
         // let N = normalize(normal);
         // let V = normalize(fsInput.viewDirection);
-        // let NdotV: f32 = clamp(dot(N, V), 0.001, 1.0);
-        let L = normalize(pointLight.position - fsInput.worldPosition);
+        // let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
+        let L = normalize(pointLight.position - worldPosition);
         let H = normalize(V + L);
         
-        let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
+        let NdotL: f32 = clamp(dot(N, L), 0.0, 1.0);
         let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
         let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
       
@@ -197,12 +197,12 @@ window.addEventListener('load', async () => {
         // they would not have any attenuation
         //let attenuation = 1.0;
                 
-        let distance = length(pointLight.position - fsInput.worldPosition);
+        let distance = length(pointLight.position - worldPosition);
         let attenuation = rangeAttenuation(pointLight.range, distance);
         
         let radiance = pointLight.color * pointLight.intensity * attenuation;
       
-        lightContribution.diffuse += (kD * color.rgb / vec3(PI)) * radiance * NdotL;
+        lightContribution.diffuse += (kD / vec3(PI)) * radiance * NdotL;
         lightContribution.specular += specular * radiance * NdotL;
       `
 

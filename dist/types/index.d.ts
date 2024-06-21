@@ -52,4 +52,5 @@ export { PingPongPlane } from './extras/meshes/PingPongPlane';
 export { GLTFLoader } from './extras/gltf/GLTFLoader';
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager';
 export * from './extras/gltf/utils';
+export { HDRLoader } from './extras/loaders/HDRLoader';
 export * from './utils/debug';

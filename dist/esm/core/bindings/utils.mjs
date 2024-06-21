@@ -63,7 +63,7 @@ const getTextureBindingWGSLVarType = (binding) => {
   if (binding.bindingType === "externalTexture") {
     return `var ${binding.name}: texture_external;`;
   }
-  return binding.bindingType === "storage" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depth" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension}<f32>;`;
+  return binding.bindingType === "storage" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension.replace("-", "_")}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depth" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension.replace("-", "_")};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension.replace("-", "_")}<f32>;`;
 };
 const getBindGroupLayoutBindingType = (binding) => {
   if (binding.bindingType === "storage" && binding.options.access === "read_write") {

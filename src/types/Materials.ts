@@ -26,7 +26,7 @@ export interface ShaderOptions {
   /** The shader WGSL code */
   code: string
   /** The shader main function entry point */
-  entryPoint: string
+  entryPoint?: string
 }
 
 /**

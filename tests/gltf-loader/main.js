@@ -6,6 +6,8 @@ window.addEventListener('load', async () => {
     GPUDeviceManager,
     GPUCameraRenderer,
     Texture,
+    computeDiffuseFromSpecular,
+    HDRLoader,
     Sampler,
     GLTFLoader,
     GLTFScenesManager,
@@ -50,111 +52,67 @@ window.addEventListener('load', async () => {
   // const envDiffuseBitmap = await loadImageBitmap('./assets/royal_esplanade_1k-diffuse-RGBM.png')
   // const envSpecularBitmap = await loadImageBitmap('./assets/royal_esplanade_1k-specular-RGBM.png')
 
-  const originalIblLUTTexture = new Texture(gpuCameraRenderer, {
+  const iblLUTTexture = new Texture(gpuCameraRenderer, {
     name: 'iblLUTTexture',
     visibility: ['fragment'],
     format: 'rgba32float',
+    //generateMips: true,
     fixedSize: {
       width: iblLUTBitmap.width,
       height: iblLUTBitmap.height,
     },
     flipY: true, // from a WebGL texture!
+    autoDestroy: false, // keep alive when changing glTF
   })
 
-  originalIblLUTTexture.uploadSource({
+  iblLUTTexture.uploadSource({
     source: iblLUTBitmap,
   })
 
-  // Fetch the 6 separate images for negative/positive x, y, z axis of a cubeMap
-  // and upload it into a GPUTexture.
-  // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]
-  // We can also use a single gain map JPG as source
-  // Created from a .hdr with https://gainmap-creator.monogrid.com/
-  const diffuseSrcs = [
-    // './assets/hdr-cube-maps/diffuse/px.png',
-    // './assets/hdr-cube-maps/diffuse/nx.png',
-    // './assets/hdr-cube-maps/diffuse/py.png',
-    // './assets/hdr-cube-maps/diffuse/ny.png',
-    // './assets/hdr-cube-maps/diffuse/pz.png',
-    // './assets/hdr-cube-maps/diffuse/nz.png',
-    './assets/hdr-gain-maps/cannon-1k-diffuse.jpg',
-  ]
+  const hdrLoader = new HDRLoader()
+  const specularHDR = await hdrLoader.loadFromUrl('./assets/cannon_1k.hdr')
 
-  const specularSrcs = [
-    // './assets/hdr-cube-maps/specular/px.png',
-    // './assets/hdr-cube-maps/specular/nx.png',
-    // './assets/hdr-cube-maps/specular/py.png',
-    // './assets/hdr-cube-maps/specular/ny.png',
-    // './assets/hdr-cube-maps/specular/pz.png',
-    // './assets/hdr-cube-maps/specular/nz.png',
-    './assets/hdr-gain-maps/cannon-1k-specular.jpg',
-  ]
+  // TODO use a compute pass?
+  const specFaceData = hdrLoader.equirectangularToCubeMap(specularHDR)
 
-  const diffusePromises = diffuseSrcs.map(async (src) => {
-    const response = await fetch(src)
-    return createImageBitmap(await response.blob())
+  const envSpecularTexture = new Texture(gpuCameraRenderer, {
+    label: 'Environment specular texture',
+    name: 'envSpecularTexture',
+    visibility: ['fragment', 'compute'],
+    format: 'rgba32float',
+    generateMips: true,
+    viewDimension: 'cube',
+    fixedSize: {
+      width: specFaceData[0].width,
+      height: specFaceData[0].height,
+    },
+    autoDestroy: false, // keep alive when changing glTF
   })
 
-  const diffuseBitmaps = await Promise.all(diffusePromises)
+  for (let i = 0; i < specFaceData.length; i++) {
+    envSpecularTexture.uploadData({
+      data: specFaceData[i].data,
+      origin: [0, 0, i],
+      depth: 1, // explicitly set the depth to 1
+    })
+  }
 
-  const specularPromises = specularSrcs.map(async (src) => {
-    const response = await fetch(src)
-    return createImageBitmap(await response.blob())
-  })
-
-  const specularBitmaps = await Promise.all(specularPromises)
-
-  const originalEnvDiffuseTexture = new Texture(gpuCameraRenderer, {
+  // diffuse cube map computed from the specular cube map in a compute shader
+  const envDiffuseTexture = new Texture(gpuCameraRenderer, {
     label: 'Environment diffuse texture',
     name: 'envDiffuseTexture',
     visibility: ['fragment'],
     format: 'rgba32float',
-    generateMips: true,
-    viewDimension: diffuseBitmaps.length > 1 ? 'cube' : '2d',
+    viewDimension: 'cube',
     fixedSize: {
-      width: diffuseBitmaps[0].width,
-      height: diffuseBitmaps[0].height,
+      width: specFaceData[0].width,
+      height: specFaceData[0].height,
     },
-    flipY: diffuseBitmaps.length, // cube map has been taken from a WebGL example
+    autoDestroy: false, // keep alive when changing glTF
   })
 
-  for (let i = 0; i < diffuseBitmaps.length; i++) {
-    const imageBitmap = diffuseBitmaps[i]
-    originalEnvDiffuseTexture.uploadSource({
-      source: imageBitmap,
-      width: imageBitmap.width,
-      height: imageBitmap.height,
-      depth: 1, // explicitly set the depth to 1
-      origin: [0, 0, i],
-      colorSpace: 'display-p3',
-    })
-  }
-
-  const originalEnvSpecularTexture = new Texture(gpuCameraRenderer, {
-    label: 'Environment specular texture',
-    name: 'envSpecularTexture',
-    visibility: ['fragment'],
-    format: 'rgba32float',
-    generateMips: true,
-    viewDimension: specularBitmaps.length > 1 ? 'cube' : '2d',
-    fixedSize: {
-      width: specularBitmaps[0].width,
-      height: specularBitmaps[0].height,
-    },
-    flipY: specularBitmaps.length, // cube map has been taken from a WebGL example
-  })
-
-  for (let i = 0; i < specularBitmaps.length; i++) {
-    const imageBitmap = specularBitmaps[i]
-    originalEnvSpecularTexture.uploadSource({
-      source: imageBitmap,
-      width: imageBitmap.width,
-      height: imageBitmap.height,
-      depth: 1, // explicitly set the depth to 1
-      origin: [0, 0, i],
-      colorSpace: 'display-p3',
-    })
-  }
+  // compute diffuse texture
+  await computeDiffuseFromSpecular(gpuCameraRenderer, envDiffuseTexture, envSpecularTexture)
 
   // finally we will need a clamp-to-edge sampler for those textures
   const clampSampler = new Sampler(gpuCameraRenderer, {
@@ -275,23 +233,23 @@ window.addEventListener('load', async () => {
       parameters.samplers = [...parameters.samplers, clampSampler]
 
       // add IBL textures
-      const iblLUTTexture = new Texture(gpuCameraRenderer, {
-        name: 'iblLUTTexture',
-        visibility: ['fragment'],
-        fromTexture: originalIblLUTTexture,
-      })
-
-      const envDiffuseTexture = new Texture(gpuCameraRenderer, {
-        name: 'envDiffuseTexture',
-        visibility: ['fragment'],
-        fromTexture: originalEnvDiffuseTexture,
-      })
-
-      const envSpecularTexture = new Texture(gpuCameraRenderer, {
-        name: 'envSpecularTexture',
-        visibility: ['fragment'],
-        fromTexture: originalEnvSpecularTexture,
-      })
+      // const iblLUTTexture = new Texture(gpuCameraRenderer, {
+      //   name: 'iblLUTTexture',
+      //   visibility: ['fragment'],
+      //   fromTexture: originalIblLUTTexture,
+      // })
+      //
+      // const envDiffuseTexture = new Texture(gpuCameraRenderer, {
+      //   name: 'envDiffuseTexture',
+      //   visibility: ['fragment'],
+      //   fromTexture: originalEnvDiffuseTexture,
+      // })
+      //
+      // const envSpecularTexture = new Texture(gpuCameraRenderer, {
+      //   name: 'envSpecularTexture',
+      //   visibility: ['fragment'],
+      //   fromTexture: originalEnvSpecularTexture,
+      // })
 
       // disable frustum culling
       parameters.frustumCulling = false
@@ -382,7 +340,7 @@ window.addEventListener('load', async () => {
       
       let radiance = pointLight.color * pointLight.intensity * attenuation;
       
-      lightContribution.diffuse += (kD * color.rgb / vec3(PI)) * radiance * NdotL;
+      lightContribution.diffuse += (kD / vec3(PI)) * radiance * NdotL;
       lightContribution.specular += specular * radiance * NdotL;
       `
 
@@ -406,17 +364,19 @@ window.addEventListener('load', async () => {
           },
           envDiffuseTexture: {
             texture: envDiffuseTexture,
-            samplerName: 'clampSampler', // use clamp sampler
+            // use clamp sampler for cube maps, default for equirectangular maps
+            samplerName: envDiffuseTexture.options.viewDimension === 'cube' ? 'clampSampler' : 'defaultSampler',
           },
           envSpecularTexture: {
             texture: envSpecularTexture,
-            samplerName: 'clampSampler', // use clamp sampler
+            // use clamp sampler for cube maps, default for equirectangular maps
+            samplerName: envSpecularTexture.options.viewDimension === 'cube' ? 'clampSampler' : 'defaultSampler',
           },
         },
         chunks: {
           additionalFragmentHead,
           // ambientContribution,
-          // lightContribution,
+          lightContribution,
           additionalColorContribution,
         },
       })

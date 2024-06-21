@@ -35,7 +35,8 @@ const defaultTextureParams = {
   // copy external texture options
   generateMips: false,
   flipY: false,
-  premultipliedAlpha: false
+  premultipliedAlpha: false,
+  autoDestroy: true
 };
 class Texture {
   /**
@@ -145,6 +146,32 @@ class Texture {
     this.renderer.device.queue.copyExternalImageToTexture(
       { source, flipY: this.options.flipY },
       { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
+      [width, height, depth]
+    );
+    if (this.texture.mipLevelCount > 1) {
+      generateMips(this.renderer.device, this.texture);
+    }
+  }
+  /**
+   * Use data as the {@link texture} source and upload it to the GPU.
+   * @param parameters - parameters used to upload the source.
+   * @param parameters.width - data source width.
+   * @param parameters.height - data source height.
+   * @param parameters.depth - data source depth.
+   * @param parameters.origin - {@link GPUOrigin3D | origin} of the data source copy.
+   * @param parameters.data - {@link Float32Array} data to use as source.
+   */
+  uploadData({
+    width = this.size.width,
+    height = this.size.height,
+    depth = this.size.depth,
+    origin = [0, 0, 0],
+    data = new Float32Array(width * height * 4)
+  }) {
+    this.renderer.device.queue.writeTexture(
+      { texture: this.texture, origin },
+      data,
+      { bytesPerRow: width * data.BYTES_PER_ELEMENT * 4, rowsPerImage: height },
       [width, height, depth]
     );
     if (this.texture.mipLevelCount > 1) {

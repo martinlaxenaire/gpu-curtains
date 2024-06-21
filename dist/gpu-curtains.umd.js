@@ -243,7 +243,7 @@
     if (binding.bindingType === "externalTexture") {
       return `var ${binding.name}: texture_external;`;
     }
-    return binding.bindingType === "storage" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depth" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension}<f32>;`;
+    return binding.bindingType === "storage" ? `var ${binding.name}: texture_storage_${binding.options.viewDimension.replace("-", "_")}<${binding.options.format}, ${binding.options.access}>;` : binding.bindingType === "depth" ? `var ${binding.name}: texture_depth${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension.replace("-", "_")};` : `var ${binding.name}: texture${binding.options.multisampled ? "_multisampled" : ""}_${binding.options.viewDimension.replace("-", "_")}<f32>;`;
   };
   const getBindGroupLayoutBindingType = (binding) => {
     if (binding.bindingType === "storage" && binding.options.access === "read_write") {
@@ -3526,15 +3526,15 @@
     return 1 + Math.log2(maxSize) | 0;
   };
 
-  var __accessCheck$9 = (obj, member, msg) => {
+  var __accessCheck$a = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$9 = (obj, member, getter) => {
-    __accessCheck$9(obj, member, "read from private field");
+    __accessCheck$a(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$9 = (obj, member, value) => {
+  var __privateAdd$a = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -3563,13 +3563,13 @@
     constructor(renderer, parameters = defaultDOMTextureParams) {
       super();
       /** Private {@link Vec3 | vector} used for {@link#modelMatrix} calculations, based on {@link parentMesh} {@link core/DOM/DOMElement.RectSize | size} */
-      __privateAdd$9(this, _parentRatio, new Vec3(1));
+      __privateAdd$a(this, _parentRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on {@link size | source size} */
-      __privateAdd$9(this, _sourceRatio, new Vec3(1));
+      __privateAdd$a(this, _sourceRatio, new Vec3(1));
       /** Private {@link Vec3 | vector} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio */
-      __privateAdd$9(this, _coverScale, new Vec3(1));
+      __privateAdd$a(this, _coverScale, new Vec3(1));
       /** Private rotation {@link Mat4 | matrix} based on texture {@link quaternion} */
-      __privateAdd$9(this, _rotationMatrix, new Mat4());
+      __privateAdd$a(this, _rotationMatrix, new Mat4());
       // callbacks / events
       /** function assigned to the {@link onSourceLoaded} callback */
       this._onSourceLoadedCallback = () => {
@@ -4185,21 +4185,21 @@
     }
   }
 
-  var __accessCheck$8 = (obj, member, msg) => {
+  var __accessCheck$9 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$8 = (obj, member, getter) => {
-    __accessCheck$8(obj, member, "read from private field");
+    __accessCheck$9(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$8 = (obj, member, value) => {
+  var __privateAdd$9 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$8 = (obj, member, value, setter) => {
-    __accessCheck$8(obj, member, "write to private field");
+    __accessCheck$9(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -4221,13 +4221,13 @@
     } = {}) {
       super();
       /** Private {@link Camera} field of view */
-      __privateAdd$8(this, _fov, void 0);
+      __privateAdd$9(this, _fov, void 0);
       /** Private {@link Camera} near plane */
-      __privateAdd$8(this, _near, void 0);
+      __privateAdd$9(this, _near, void 0);
       /** Private {@link Camera} far plane */
-      __privateAdd$8(this, _far, void 0);
+      __privateAdd$9(this, _far, void 0);
       /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
-      __privateAdd$8(this, _pixelRatio, void 0);
+      __privateAdd$9(this, _pixelRatio, void 0);
       this.uuid = generateUUID();
       this.position.set(0, 0, 10);
       this.onMatricesChanged = onMatricesChanged;
@@ -4533,21 +4533,21 @@
     }
   }
 
-  var __accessCheck$7 = (obj, member, msg) => {
+  var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$7 = (obj, member, getter) => {
-    __accessCheck$7(obj, member, "read from private field");
+    __accessCheck$8(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$7 = (obj, member, value) => {
+  var __privateAdd$8 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$7 = (obj, member, value, setter) => {
-    __accessCheck$7(obj, member, "write to private field");
+    __accessCheck$8(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -4565,7 +4565,8 @@
     // copy external texture options
     generateMips: false,
     flipY: false,
-    premultipliedAlpha: false
+    premultipliedAlpha: false,
+    autoDestroy: true
   };
   class Texture {
     /**
@@ -4575,7 +4576,7 @@
      */
     constructor(renderer, parameters = defaultTextureParams) {
       /** Whether this texture should be automatically resized when the {@link Renderer renderer} size changes. Default to true. */
-      __privateAdd$7(this, _autoResize, true);
+      __privateAdd$8(this, _autoResize, true);
       renderer = isRenderer(renderer, parameters.label ? parameters.label + " Texture" : "Texture");
       this.type = "Texture";
       this.renderer = renderer;
@@ -4675,6 +4676,32 @@
       this.renderer.device.queue.copyExternalImageToTexture(
         { source, flipY: this.options.flipY },
         { texture: this.texture, premultipliedAlpha: this.options.premultipliedAlpha, origin, colorSpace },
+        [width, height, depth]
+      );
+      if (this.texture.mipLevelCount > 1) {
+        generateMips(this.renderer.device, this.texture);
+      }
+    }
+    /**
+     * Use data as the {@link texture} source and upload it to the GPU.
+     * @param parameters - parameters used to upload the source.
+     * @param parameters.width - data source width.
+     * @param parameters.height - data source height.
+     * @param parameters.depth - data source depth.
+     * @param parameters.origin - {@link GPUOrigin3D | origin} of the data source copy.
+     * @param parameters.data - {@link Float32Array} data to use as source.
+     */
+    uploadData({
+      width = this.size.width,
+      height = this.size.height,
+      depth = this.size.depth,
+      origin = [0, 0, 0],
+      data = new Float32Array(width * height * 4)
+    }) {
+      this.renderer.device.queue.writeTexture(
+        { texture: this.texture, origin },
+        data,
+        { bytesPerRow: width * data.BYTES_PER_ELEMENT * 4, rowsPerImage: height },
         [width, height, depth]
       );
       if (this.texture.mipLevelCount > 1) {
@@ -5105,6 +5132,8 @@
     destroyTexture(texture) {
       if (texture.options.cache)
         return;
+      if (!texture.options.autoDestroy)
+        return;
       const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
       const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
       if (shouldDestroy) {
@@ -5406,21 +5435,21 @@
     }
   }
 
-  var __accessCheck$6 = (obj, member, msg) => {
+  var __accessCheck$7 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$6 = (obj, member, getter) => {
-    __accessCheck$6(obj, member, "read from private field");
+    __accessCheck$7(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$6 = (obj, member, value) => {
+  var __privateAdd$7 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$6 = (obj, member, value, setter) => {
-    __accessCheck$6(obj, member, "write to private field");
+    __accessCheck$7(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -5437,7 +5466,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
        * @private
        */
-      __privateAdd$6(this, _autoRender$1, true);
+      __privateAdd$7(this, _autoRender$1, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback */
       this._onReadyCallback = () => {
@@ -6819,21 +6848,21 @@ New rendering options: ${JSON.stringify(
     }
   }
 
-  var __accessCheck$5 = (obj, member, msg) => {
+  var __accessCheck$6 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$5 = (obj, member, getter) => {
-    __accessCheck$5(obj, member, "read from private field");
+    __accessCheck$6(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$5 = (obj, member, value) => {
+  var __privateAdd$6 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$5 = (obj, member, value, setter) => {
-    __accessCheck$5(obj, member, "write to private field");
+    __accessCheck$6(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -6876,7 +6905,7 @@ New rendering options: ${JSON.stringify(
           { ...defaultMeshBaseParams, ...params[2] }
         );
         /** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-        __privateAdd$5(this, _autoRender, true);
+        __privateAdd$6(this, _autoRender, true);
         // callbacks / events
         /** function assigned to the {@link onReady} callback */
         this._onReadyCallback = () => {
@@ -9829,21 +9858,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$4 = (obj, member, msg) => {
+  var __accessCheck$5 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$4 = (obj, member, getter) => {
-    __accessCheck$4(obj, member, "read from private field");
+    __accessCheck$5(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$4 = (obj, member, value) => {
+  var __privateAdd$5 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$4 = (obj, member, value, setter) => {
-    __accessCheck$4(obj, member, "write to private field");
+    __accessCheck$5(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -9862,7 +9891,7 @@ ${this.shaders.compute.head}`;
      */
     constructor() {
       /** Private number to assign a unique id to each {@link TaskQueueItem | task queue item} */
-      __privateAdd$4(this, _taskCount, 0);
+      __privateAdd$5(this, _taskCount, 0);
       this.queue = [];
     }
     /**
@@ -11234,21 +11263,21 @@ ${this.shaders.compute.head}`;
     }
   }
 
-  var __accessCheck$3 = (obj, member, msg) => {
+  var __accessCheck$4 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$3 = (obj, member, getter) => {
-    __accessCheck$3(obj, member, "read from private field");
+    __accessCheck$4(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$3 = (obj, member, value) => {
+  var __privateAdd$4 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$3 = (obj, member, value, setter) => {
-    __accessCheck$3(obj, member, "write to private field");
+    __accessCheck$4(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -11261,7 +11290,7 @@ ${this.shaders.compute.head}`;
      */
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$3(this, _autoRender, true);
+      __privateAdd$4(this, _autoRender, true);
       renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
@@ -11505,21 +11534,21 @@ struct VSOutput {
     }
   }
 
-  var __accessCheck$2 = (obj, member, msg) => {
+  var __accessCheck$3 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$2 = (obj, member, getter) => {
-    __accessCheck$2(obj, member, "read from private field");
+    __accessCheck$3(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$2 = (obj, member, value) => {
+  var __privateAdd$3 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$2 = (obj, member, value, setter) => {
-    __accessCheck$2(obj, member, "write to private field");
+    __accessCheck$3(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -11534,11 +11563,11 @@ struct VSOutput {
     constructor(renderer, element, parameters = {}) {
       super(renderer);
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space */
-      __privateAdd$2(this, _DOMObjectWorldPosition, new Vec3());
+      __privateAdd$3(this, _DOMObjectWorldPosition, new Vec3());
       /** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size} */
-      __privateAdd$2(this, _DOMObjectWorldScale, new Vec3(1));
+      __privateAdd$3(this, _DOMObjectWorldScale, new Vec3(1));
       /** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
-      __privateAdd$2(this, _DOMObjectDepthScaleRatio, 1);
+      __privateAdd$3(this, _DOMObjectDepthScaleRatio, 1);
       /** Helper {@link Box3 | bounding box} used to map the 3D object onto the 2D DOM element. */
       this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
       /** function assigned to the {@link onAfterDOMElementResize} callback */
@@ -12611,21 +12640,21 @@ struct VSOutput {
     }
   }
 
-  var __accessCheck$1 = (obj, member, msg) => {
+  var __accessCheck$2 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet$1 = (obj, member, getter) => {
-    __accessCheck$1(obj, member, "read from private field");
+    __accessCheck$2(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd$1 = (obj, member, value) => {
+  var __privateAdd$2 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet$1 = (obj, member, value, setter) => {
-    __accessCheck$1(obj, member, "write to private field");
+    __accessCheck$2(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -12644,12 +12673,12 @@ struct VSOutput {
        * Last pointer {@link Vec2 | position}, used internally for orbiting delta calculations.
        * @private
        */
-      __privateAdd$1(this, _lastPosition, new Vec2());
+      __privateAdd$2(this, _lastPosition, new Vec2());
       /**
        * Whether the {@link OrbitControls} are currently orbiting.
        * @private
        */
-      __privateAdd$1(this, _isOrbiting, false);
+      __privateAdd$2(this, _isOrbiting, false);
       /** Whether to constrain the orbit controls along X axis or not. */
       this.constrainXOrbit = true;
       /** Whether to constrain the orbit controls along Y axis or not. */
@@ -12672,7 +12701,7 @@ struct VSOutput {
        * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
        * @private
        */
-      __privateAdd$1(this, _element, null);
+      __privateAdd$2(this, _element, null);
       this.renderer = renderer;
       this.parent = this.renderer.scene;
       this.quaternion.setAxisOrder("YXZ");
@@ -13245,21 +13274,21 @@ struct VSOutput {
     }
   }
 
-  var __accessCheck = (obj, member, msg) => {
+  var __accessCheck$1 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
   };
   var __privateGet = (obj, member, getter) => {
-    __accessCheck(obj, member, "read from private field");
+    __accessCheck$1(obj, member, "read from private field");
     return getter ? getter.call(obj) : member.get(obj);
   };
-  var __privateAdd = (obj, member, value) => {
+  var __privateAdd$1 = (obj, member, value) => {
     if (member.has(obj))
       throw TypeError("Cannot add the same private member more than once");
     member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   };
   var __privateSet = (obj, member, value, setter) => {
-    __accessCheck(obj, member, "write to private field");
+    __accessCheck$1(obj, member, "write to private field");
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
@@ -13275,7 +13304,7 @@ struct VSOutput {
      */
     constructor({ renderer, gltf }) {
       /** The {@link PrimitiveInstances} Map, to group similar {@link Mesh} by instances. */
-      __privateAdd(this, _primitiveInstances, void 0);
+      __privateAdd$1(this, _primitiveInstances, void 0);
       renderer = isCameraRenderer(renderer, "GLTFScenesManager");
       this.renderer = renderer;
       this.gltf = gltf;
@@ -13900,6 +13929,12 @@ struct VSOutput {
               mesh.storages.instances.modelMatrix.shouldUpdate = true;
               mesh.storages.instances.normalMatrix.shouldUpdate = true;
             };
+            this.renderer.onAfterRenderScene.add(
+              () => {
+                mesh.shouldUpdateModelMatrix();
+              },
+              { once: true }
+            );
           }
           mesh.parent = meshDescriptor.parent;
           this.scenesManager.meshes.push(mesh);
@@ -14164,7 +14199,7 @@ struct VSOutput {
       /* wgsl */
       `      
       lightContribution.ambient *= color.rgb * occlusion;
-      lightContribution.diffuse *= occlusion;
+      lightContribution.diffuse *= color.rgb * occlusion;
       lightContribution.specular *= occlusion;
       
       color = vec4(
@@ -14365,7 +14400,7 @@ struct VSOutput {
       specular: vec3f,
     };
     
-    fn getIBLContribution(NdotV: f32, roughness: f32, n: vec3f, reflection: vec3f, diffuseColor: vec3f, f0: vec3f) -> IBLContribution {
+    fn getIBLContribution(NdotV: f32, roughness: f32, normal: vec3f, reflection: vec3f, diffuseColor: vec3f, f0: vec3f) -> IBLContribution {
       var iblContribution: IBLContribution;
     
       let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
@@ -14396,13 +14431,16 @@ struct VSOutput {
       let diffuseLight: vec4f = textureSample(
         ${envDiffuseTexture.texture.options.name},
         ${envDiffuseTexture.samplerName},
-        ${envDiffuseTexture.texture.options.viewDimension === "cube" ? "n" : "cartesianToPolar(n)"}
+        ${envDiffuseTexture.texture.options.viewDimension === "cube" ? "normal" : "cartesianToPolar(normal)"}
       );
+      
+      // product of specularFactor and specularTexture.a
+      let specularWeight: f32 = 1.0;
             
-      FssEss = ibl.specularStrength * k_S * brdf.x + brdf.y;
+      FssEss = specularWeight * k_S * brdf.x + brdf.y;
       
       let Ems: f32 = (1.0 - (brdf.x + brdf.y));
-      let F_avg: vec3f = ibl.specularStrength * (f0 + (1.0 - f0) / 21.0);
+      let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
       let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
       let k_D: vec3f = diffuseColor * (1.0 - FssEss + FmsEms);
       
@@ -14446,6 +14484,555 @@ struct VSOutput {
     }
     shaderParameters.chunks = chunks;
     return buildPBRShaders(meshDescriptor, shaderParameters);
+  };
+  const computeDiffuseFromSpecular = async (renderer, diffuseTexture, specularTexture) => {
+    if (specularTexture.options.viewDimension !== "cube") {
+      throwWarning(
+        "Could not compute the diffuse texture because the specular texture is not a cube map:" + specularTexture.options.viewDimension
+      );
+      return;
+    }
+    const computeDiffuseShader = `    
+    fn radicalInverse_VdC(inputBits: u32) -> f32 {
+        var bits: u32 = inputBits;
+        bits = (bits << 16u) | (bits >> 16u);
+        bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+        bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+        bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+        bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+        return f32(bits) * 2.3283064365386963e-10; // / 0x100000000
+    }
+    
+    // hammersley2d describes a sequence of points in the 2d unit square [0,1)^2
+    // that can be used for quasi Monte Carlo integration
+    fn hammersley2d(i: u32, N: u32) -> vec2f {
+        return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
+    }
+    
+    // TBN generates a tangent bitangent normal coordinate frame from the normal
+    // (the normal must be normalized)
+    fn generateTBN(normal: vec3f) -> mat3x3f {
+      var bitangent: vec3f = vec3(0.0, 1.0, 0.0);
+  
+      let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
+      let epsilon: f32 = 0.0000001;
+      
+      if (1.0 - abs(NdotUp) <= epsilon) {
+        // Sampling +Y or -Y, so we need a more robust bitangent.
+        if (NdotUp > 0.0) {
+          bitangent = vec3(0.0, 0.0, 1.0);
+        }
+        else {
+          bitangent = vec3(0.0, 0.0, -1.0);
+        }
+      }
+  
+      let tangent: vec3f = normalize(cross(bitangent, normal));
+      bitangent = cross(normal, tangent);
+  
+      return mat3x3f(tangent, bitangent, normal);
+    }
+    
+    // Mipmap Filtered Samples (GPU Gems 3, 20.4)
+    // https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-20-gpu-based-importance-sampling
+    // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
+    fn computeLod(pdf: f32) -> f32 {
+      // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
+      return 0.5 * log2( 6.0 * f32(params.faceSize) * f32(params.faceSize) / (f32(params.sampleCount) * pdf));
+    }
+    
+    fn transformDirection(face: u32, uv: vec2f) -> vec3f {
+      // Transform the direction based on the cubemap face
+      switch (face) {
+        case 0u {
+          // +X
+          return vec3f( 1.0,  uv.y, -uv.x);
+        }
+        case 1u {
+          // -X
+          return vec3f(-1.0,  uv.y,  uv.x);
+        }
+        case 2u {
+          // +Y
+          return vec3f( uv.x,  -1.0, uv.y);
+        }
+        case 3u {
+          // -Y
+          return vec3f( uv.x, 1.0,  -uv.y);
+        }
+        case 4u {
+          // +Z
+          return vec3f( uv.x,  uv.y,  1.0);
+        }
+        case 5u {
+          // -Z
+          return vec3f(-uv.x,  uv.y, -1.0);
+        }
+        default {
+          return vec3f(0.0, 0.0, 0.0);
+        }
+      }
+    }
+    
+    const PI = ${Math.PI};
+
+    @compute @workgroup_size(8, 8, 1) fn main(
+      @builtin(global_invocation_id) GlobalInvocationID: vec3u,
+    ) {
+      let faceSize: u32 = params.faceSize;
+      let sampleCount: u32 = params.sampleCount;
+      
+      let face: u32 = GlobalInvocationID.z;
+      let x: u32 = GlobalInvocationID.x;
+      let y: u32 = GlobalInvocationID.y;
+  
+      if (x >= faceSize || y >= faceSize) {
+          return;
+      }
+  
+      let texelSize: f32 = 1.0 / f32(faceSize);
+      let halfTexel: f32 = texelSize * 0.5;
+      
+      var uv: vec2f = vec2(
+        (f32(x) + halfTexel) * texelSize,
+        (f32(y) + halfTexel) * texelSize
+      );
+      
+      uv = uv * 2.0 - 1.0;
+  
+      let normal: vec3<f32> = transformDirection(face, uv);
+      
+      var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
+  
+      for (var i: u32 = 0; i < sampleCount; i++) {
+        // generate a quasi monte carlo point in the unit square [0.1)^2
+        let xi: vec2f = hammersley2d(i, sampleCount);
+        
+        let cosTheta: f32 = sqrt(1.0 - xi.y);
+        let sinTheta: f32 = sqrt(1.0 - cosTheta * cosTheta);
+        let phi: f32 = 2.0 * PI * xi.x;
+        let pdf: f32 = cosTheta / PI; // evaluation for solid angle, therefore drop the sinTheta
+
+        let sampleVec: vec3f = vec3f(
+            sinTheta * cos(phi),
+            sinTheta * sin(phi),
+            cosTheta
+        );
+        
+        let TBN: mat3x3f = generateTBN(normalize(normal));
+        
+        var direction: vec3f = TBN * sampleVec;
+        
+        // invert along Y axis
+        direction.y *= -1.0;
+        
+        let lod: f32 = computeLod(pdf);
+
+        // Convert sampleVec to texture coordinates of the specular env map
+        irradiance += textureSampleLevel(
+          envSpecularTexture,
+          specularSampler,
+          direction,
+          min(lod, f32(params.maxMipLevel))
+        ).rgb;
+      }
+  
+      irradiance /= f32(sampleCount);
+
+      textureStore(diffuseEnvMap, vec2(x, y), face, vec4f(irradiance, 1.0));
+    }
+  `;
+    let diffuseStorageTexture = new Texture(renderer, {
+      label: "Diffuse storage cubemap",
+      name: "diffuseEnvMap",
+      format: "rgba32float",
+      visibility: ["compute"],
+      usage: ["copySrc", "storageBinding"],
+      type: "storage",
+      fixedSize: {
+        width: specularTexture.size.width,
+        height: specularTexture.size.height,
+        depth: 6
+      },
+      viewDimension: "2d-array"
+    });
+    const sampler = new Sampler(renderer, {
+      label: "Compute diffuse sampler",
+      name: "specularSampler",
+      addressModeU: "clamp-to-edge",
+      addressModeV: "clamp-to-edge",
+      minFilter: "linear",
+      magFilter: "linear"
+    });
+    let computeDiffusePass = new ComputePass(renderer, {
+      autoRender: false,
+      // we're going to render only on demand
+      dispatchSize: [Math.ceil(specularTexture.size.width / 8), Math.ceil(specularTexture.size.height / 8), 6],
+      shaders: {
+        compute: {
+          code: computeDiffuseShader
+        }
+      },
+      uniforms: {
+        params: {
+          struct: {
+            faceSize: {
+              type: "u32",
+              value: specularTexture.size.width
+            },
+            maxMipLevel: {
+              type: "u32",
+              value: specularTexture.texture.mipLevelCount
+            },
+            sampleCount: {
+              type: "u32",
+              value: 2048
+            }
+          }
+        }
+      },
+      samplers: [sampler],
+      textures: [specularTexture, diffuseStorageTexture]
+    });
+    await computeDiffusePass.material.compileMaterial();
+    renderer.onBeforeRenderScene.add(
+      (commandEncoder) => {
+        renderer.renderSingleComputePass(commandEncoder, computeDiffusePass);
+        commandEncoder.copyTextureToTexture(
+          {
+            texture: diffuseStorageTexture.texture
+          },
+          {
+            texture: diffuseTexture.texture
+          },
+          [diffuseTexture.texture.width, diffuseTexture.texture.height, diffuseTexture.texture.depthOrArrayLayers]
+        );
+      },
+      { once: true }
+    );
+    renderer.onAfterCommandEncoderSubmission.add(
+      () => {
+        computeDiffusePass.destroy();
+        diffuseStorageTexture.destroy();
+        diffuseStorageTexture = null;
+        computeDiffusePass = null;
+      },
+      { once: true }
+    );
+  };
+
+  var __accessCheck = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateAdd = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateMethod = (obj, member, method) => {
+    __accessCheck(obj, member, "access private method");
+    return method;
+  };
+  var _decodeRGBE, decodeRGBE_fn, _parseHeader, parseHeader_fn, _parseSize, parseSize_fn, _readLine, readLine_fn, _parseData, parseData_fn, _parseNewRLE, parseNewRLE_fn, _swap, swap_fn, _flipX, flipX_fn, _flipY, flipY_fn;
+  class HDRLoader {
+    constructor() {
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _decodeRGBE);
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _parseHeader);
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _parseSize);
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _readLine);
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _parseData);
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _parseNewRLE);
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _swap);
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _flipX);
+      /**
+       * @ignore
+       */
+      __privateAdd(this, _flipY);
+    }
+    /**
+     * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
+     * @param url -  The url of the .hdr file to load
+     * @returns - The {@link HDRImageData}
+     */
+    async loadFromUrl(url) {
+      const buffer = await (await fetch(url)).arrayBuffer();
+      return __privateMethod(this, _decodeRGBE, decodeRGBE_fn).call(this, new DataView(buffer));
+    }
+    /**
+     * Convert an equirectangular {@link HDRImageData} to 6 {@link HDRImageData} cube map faces. Works but can display artifacts at the poles.
+     * @param parsedHdr - equirectangular {@link HDRImageData} to use.
+     * @returns - 6 {@link HDRImageData} cube map faces
+     */
+    equirectangularToCubeMap(parsedHdr) {
+      const faceSize = Math.max(parsedHdr.width / 4, parsedHdr.height / 2);
+      const faces = {
+        posX: new Float32Array(faceSize * faceSize * 4),
+        negX: new Float32Array(faceSize * faceSize * 4),
+        posY: new Float32Array(faceSize * faceSize * 4),
+        negY: new Float32Array(faceSize * faceSize * 4),
+        posZ: new Float32Array(faceSize * faceSize * 4),
+        negZ: new Float32Array(faceSize * faceSize * 4)
+      };
+      function getPixel(u, v) {
+        const x = Math.floor(u * parsedHdr.width);
+        const y = Math.floor(v * parsedHdr.height);
+        const index = (y * parsedHdr.width + x) * 4;
+        return [parsedHdr.data[index], parsedHdr.data[index + 1], parsedHdr.data[index + 2], parsedHdr.data[index + 3]];
+      }
+      function setPixel(face, x, y, pixel) {
+        const index = (y * faceSize + x) * 4;
+        faces[face][index] = pixel[0];
+        faces[face][index + 1] = pixel[1];
+        faces[face][index + 2] = pixel[2];
+        faces[face][index + 3] = pixel[3];
+      }
+      function mapDirection(face, x, y) {
+        const a = 2 * (x + 0.5) / faceSize - 1;
+        const b = 2 * (y + 0.5) / faceSize - 1;
+        switch (face) {
+          case "posX":
+            return [a, -1, -b];
+          case "negX":
+            return [-a, 1, -b];
+          case "posY":
+            return [-b, -a, 1];
+          case "negY":
+            return [b, -a, -1];
+          case "posZ":
+            return [-1, -a, -b];
+          case "negZ":
+            return [1, a, -b];
+        }
+      }
+      function directionToUV(direction) {
+        const [x, y, z] = direction;
+        const r = Math.sqrt(x * x + y * y);
+        const theta = Math.atan2(y, x);
+        const phi = Math.atan2(z, r);
+        const u = (theta + Math.PI) / (2 * Math.PI);
+        const v = (phi + Math.PI / 2) / Math.PI;
+        return [u, v];
+      }
+      for (const face in faces) {
+        for (let y = 0; y < faceSize; y++) {
+          for (let x = 0; x < faceSize; x++) {
+            const direction = mapDirection(face, x, y);
+            const [u, v] = directionToUV(direction);
+            const pixel = getPixel(u, v);
+            setPixel(face, x, y, pixel);
+          }
+        }
+      }
+      const facesData = [faces.posX, faces.negX, faces.posY, faces.negY, faces.posZ, faces.negZ];
+      return facesData.map((faceData) => {
+        return {
+          data: faceData,
+          width: faceSize,
+          height: faceSize,
+          exposure: parsedHdr.exposure,
+          gamma: parsedHdr.gamma
+        };
+      });
+    }
+  }
+  _decodeRGBE = new WeakSet();
+  decodeRGBE_fn = function(data) {
+    const stream = {
+      data,
+      offset: 0
+    };
+    const header = __privateMethod(this, _parseHeader, parseHeader_fn).call(this, stream);
+    return {
+      width: header.width,
+      height: header.height,
+      exposure: header.exposure,
+      gamma: header.gamma,
+      data: __privateMethod(this, _parseData, parseData_fn).call(this, stream, header)
+    };
+  };
+  _parseHeader = new WeakSet();
+  parseHeader_fn = function(stream) {
+    let line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
+    const header = {
+      colorCorr: [1, 1, 1],
+      exposure: 1,
+      gamma: 1,
+      width: 0,
+      height: 0,
+      flipX: false,
+      flipY: false
+    };
+    if (line !== "#?RADIANCE" && line !== "#?RGBE")
+      throw new Error("Incorrect file format!");
+    while (line !== "") {
+      line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
+      const parts2 = line.split("=");
+      switch (parts2[0]) {
+        case "GAMMA":
+          header.gamma = parseFloat(parts2[1]);
+          break;
+        case "FORMAT":
+          if (parts2[1] !== "32-bit_rle_rgbe" && parts2[1] !== "32-bit_rle_xyze")
+            throw new Error("Incorrect encoding format!");
+          break;
+        case "EXPOSURE":
+          header.exposure = parseFloat(parts2[1]);
+          break;
+        case "COLORCORR":
+          header.colorCorr = parts2[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
+          break;
+      }
+    }
+    line = __privateMethod(this, _readLine, readLine_fn).call(this, stream);
+    const parts = line.split(" ");
+    __privateMethod(this, _parseSize, parseSize_fn).call(this, parts[0], parseInt(parts[1]), header);
+    __privateMethod(this, _parseSize, parseSize_fn).call(this, parts[2], parseInt(parts[3]), header);
+    return header;
+  };
+  _parseSize = new WeakSet();
+  parseSize_fn = function(label, value, header) {
+    switch (label) {
+      case "+X":
+        header.width = value;
+        break;
+      case "-X":
+        header.width = value;
+        header.flipX = true;
+        console.warn("Flipping horizontal orientation not currently supported");
+        break;
+      case "-Y":
+        header.height = value;
+        header.flipY = true;
+        break;
+      case "+Y":
+        header.height = value;
+        break;
+    }
+  };
+  _readLine = new WeakSet();
+  readLine_fn = function(stream) {
+    let ch, str = "";
+    while ((ch = stream.data.getUint8(stream.offset++)) !== 10)
+      str += String.fromCharCode(ch);
+    return str;
+  };
+  _parseData = new WeakSet();
+  parseData_fn = function(stream, header) {
+    const hash = stream.data.getUint16(stream.offset);
+    let data;
+    if (hash === 514) {
+      data = __privateMethod(this, _parseNewRLE, parseNewRLE_fn).call(this, stream, header);
+      if (header.flipX)
+        __privateMethod(this, _flipX, flipX_fn).call(this, data, header);
+      if (header.flipY)
+        __privateMethod(this, _flipY, flipY_fn).call(this, data, header);
+    } else {
+      throw new Error("Obsolete HDR file version!");
+    }
+    return data;
+  };
+  _parseNewRLE = new WeakSet();
+  parseNewRLE_fn = function(stream, header) {
+    const { width, height, colorCorr } = header;
+    const tgt = new Float32Array(width * height * 4);
+    let i = 0;
+    let { offset, data } = stream;
+    for (let y = 0; y < height; ++y) {
+      if (data.getUint16(offset) !== 514)
+        throw new Error("Incorrect scanline start hash");
+      if (data.getUint16(offset + 2) !== width)
+        throw new Error("Scanline doesn't match picture dimension!");
+      offset += 4;
+      const numComps = width * 4;
+      const comps = [];
+      let x = 0;
+      while (x < numComps) {
+        let value = data.getUint8(offset++);
+        if (value > 128) {
+          const len = value - 128;
+          value = data.getUint8(offset++);
+          for (let rle = 0; rle < len; ++rle) {
+            comps[x++] = value;
+          }
+        } else {
+          for (let n = 0; n < value; ++n) {
+            comps[x++] = data.getUint8(offset++);
+          }
+        }
+      }
+      for (x = 0; x < width; ++x) {
+        const r = comps[x];
+        const g = comps[x + width];
+        const b = comps[x + width * 2];
+        let e = comps[x + width * 3];
+        e = e ? Math.pow(2, e - 136) : 0;
+        tgt[i++] = r * e * colorCorr[0];
+        tgt[i++] = g * e * colorCorr[1];
+        tgt[i++] = b * e * colorCorr[2];
+        tgt[i++] = e;
+      }
+    }
+    return tgt;
+  };
+  _swap = new WeakSet();
+  swap_fn = function(data, i1, i2) {
+    i1 *= 4;
+    i2 *= 4;
+    for (let i = 0; i < 4; ++i) {
+      const tmp = data[i1 + i];
+      data[i1 + i] = data[i2 + i];
+      data[i2 + i] = tmp;
+    }
+  };
+  _flipX = new WeakSet();
+  flipX_fn = function(data, header) {
+    const { width, height } = header;
+    const hw = width >> 1;
+    for (let y = 0; y < height; ++y) {
+      const b = y * width;
+      for (let x = 0; x < hw; ++x) {
+        const i1 = b + x;
+        const i2 = b + width - 1 - x;
+        __privateMethod(this, _swap, swap_fn).call(this, data, i1, i2);
+      }
+    }
+  };
+  _flipY = new WeakSet();
+  flipY_fn = function(data, header) {
+    const { width, height } = header;
+    const hh = height >> 1;
+    for (let y = 0; y < hh; ++y) {
+      const b1 = y * width;
+      const b2 = (height - 1 - y) * width;
+      for (let x = 0; x < width; ++x) {
+        __privateMethod(this, _swap, swap_fn).call(this, data, b1 + x, b2 + x);
+      }
+    }
   };
 
   const logSceneCommands = (renderer) => {
@@ -14562,6 +15149,7 @@ struct VSOutput {
   exports.GPUDeviceManager = GPUDeviceManager;
   exports.GPURenderer = GPURenderer;
   exports.Geometry = Geometry;
+  exports.HDRLoader = HDRLoader;
   exports.IndexedGeometry = IndexedGeometry;
   exports.Mat3 = Mat3;
   exports.Mat4 = Mat4;
@@ -14594,6 +15182,7 @@ struct VSOutput {
   exports.buildIBLShaders = buildIBLShaders;
   exports.buildPBRShaders = buildPBRShaders;
   exports.buildShaders = buildShaders;
+  exports.computeDiffuseFromSpecular = computeDiffuseFromSpecular;
   exports.logSceneCommands = logSceneCommands;
 
 }));

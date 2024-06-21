@@ -528,6 +528,7 @@ export class Material {
   destroyTexture(texture: DOMTexture | Texture) {
     // do not destroy a texture that must stay in cache
     if ((texture as DOMTexture).options.cache) return
+    if (!(texture as Texture).options.autoDestroy) return
 
     // check if this texture is used by another object before actually destroying it
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture)
