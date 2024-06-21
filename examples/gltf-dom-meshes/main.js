@@ -57,8 +57,8 @@ window.addEventListener('load', async () => {
 
     // adjust depth scale ratio to match our parent node
     helper.DOMObjectDepthScaleRatio =
-      helper.size.document.width /
-      helper.size.document.height /
+      helper.boundingRect.width /
+      helper.boundingRect.height /
       (helper.size.scaledWorld.size.y / helper.size.scaledWorld.size.x)
 
     helper.position.z = -0.5 * size.z * helper.DOMObjectWorldScale.z
@@ -116,7 +116,7 @@ window.addEventListener('load', async () => {
     parentNode.boundingBox.copy(boundingBox)
 
     // add the meshes with a really basic lightning setup
-    gltfScenesManager.addMeshes((meshDescriptor) => {
+    const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
       // add lights
@@ -147,7 +147,7 @@ window.addEventListener('load', async () => {
               },
               intensity: {
                 type: 'f32',
-                value: 2,
+                value: 1,
               },
             },
           },
@@ -163,10 +163,10 @@ window.addEventListener('load', async () => {
         // An extremely simple directional lighting model, just to give our model some shape.
         // N is already defined as
         // let N = normalize(normal);
-        let L = normalize(directionalLight.position);
+        let L = normalize(directionalLight.position - worldPosition);
         let NDotL = max(dot(N, L), 0.0);
 
-        lightContribution.diffuse += NDotL * directionalLight.color;
+        lightContribution.diffuse += NDotL * directionalLight.color * directionalLight.intensity;
       `
 
       parameters.shaders = buildShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })

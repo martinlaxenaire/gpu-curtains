@@ -340,7 +340,7 @@ window.addEventListener('load', async () => {
       
       let radiance = pointLight.color * pointLight.intensity * attenuation;
       
-      lightContribution.diffuse += (kD * color.rgb / vec3(PI)) * radiance * NdotL;
+      lightContribution.diffuse += (kD / vec3(PI)) * radiance * NdotL;
       lightContribution.specular += specular * radiance * NdotL;
       `
 

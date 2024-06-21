@@ -14199,7 +14199,7 @@ struct VSOutput {
       /* wgsl */
       `      
       lightContribution.ambient *= color.rgb * occlusion;
-      lightContribution.diffuse *= occlusion;
+      lightContribution.diffuse *= color.rgb * occlusion;
       lightContribution.specular *= occlusion;
       
       color = vec4(
