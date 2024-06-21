@@ -883,6 +883,15 @@ export class GLTFScenesManager {
             mesh.storages.instances.modelMatrix.shouldUpdate = true
             mesh.storages.instances.normalMatrix.shouldUpdate = true
           }
+
+          // be sure to have fresh model matrices
+          // TODO shouldn't be needed?
+          this.renderer.onAfterRenderScene.add(
+            () => {
+              mesh.shouldUpdateModelMatrix()
+            },
+            { once: true }
+          )
         }
 
         mesh.parent = meshDescriptor.parent

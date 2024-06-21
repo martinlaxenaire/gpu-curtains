@@ -61,5 +61,8 @@ export { GLTFLoader } from './extras/gltf/GLTFLoader'
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'
 export * from './extras/gltf/utils'
 
+// loaders
+export { HDRLoader } from './extras/loaders/HDRLoader'
+
 // debug
 export * from './utils/debug'
