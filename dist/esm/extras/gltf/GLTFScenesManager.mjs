@@ -664,6 +664,12 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             mesh.storages.instances.modelMatrix.shouldUpdate = true;
             mesh.storages.instances.normalMatrix.shouldUpdate = true;
           };
+          this.renderer.onAfterRenderScene.add(
+            () => {
+              mesh.shouldUpdateModelMatrix();
+            },
+            { once: true }
+          );
         }
         mesh.parent = meshDescriptor.parent;
         this.scenesManager.meshes.push(mesh);

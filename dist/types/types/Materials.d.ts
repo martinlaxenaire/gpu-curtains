@@ -21,7 +21,7 @@ export interface ShaderOptions {
     /** The shader WGSL code */
     code: string;
     /** The shader main function entry point */
-    entryPoint: string;
+    entryPoint?: string;
 }
 /**
  * Defines all possible {@link ShaderOptions | shader options} entries of a {@link core/materials/Material.Material | Material}

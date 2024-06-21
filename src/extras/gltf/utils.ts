@@ -167,15 +167,6 @@ export const buildShaders = (
   // see https://github.com/oframe/ogl/blob/master/examples/load-gltf.html#L133
   const initColor = /* wgsl */ 'var color: vec4f = vec4();'
   const returnColor = /* wgsl */ `
-      let diffuseLight: vec4f = textureSample(
-        envDiffuseTexture,
-        clampSampler,
-        normal
-      );
-  
-  
-      return diffuseLight;
-  
       return vec4(
         linearTosRGB(
           toneMapKhronosPbrNeutral(
@@ -899,7 +890,7 @@ export const computeDiffuseFromSpecular = async (
     },
     samplers: [sampler],
     textures: [specularTexture, diffuseStorageTexture],
-  } as ComputePassParams)
+  })
 
   await computeDiffusePass.material.compileMaterial()
 

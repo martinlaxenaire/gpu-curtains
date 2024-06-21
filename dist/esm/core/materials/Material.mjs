@@ -373,6 +373,8 @@ class Material {
   destroyTexture(texture) {
     if (texture.options.cache)
       return;
+    if (!texture.options.autoDestroy)
+      return;
     const objectsUsingTexture = this.renderer.getObjectsByTexture(texture);
     const shouldDestroy = !objectsUsingTexture || !objectsUsingTexture.some((object) => object.material.uuid !== this.uuid);
     if (shouldDestroy) {

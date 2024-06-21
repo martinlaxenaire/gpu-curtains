@@ -4,10 +4,15 @@
  * HDRImageData contains all decompressed image data.
  */
 export interface HDRImageData {
+  /** Width of the HDR image */
   width: number
+  /** Height of the HDR image */
   height: number
+  /** Exposure of the HDR image */
   exposure: number
+  /** Gamma of the HDR image */
   gamma: number
+  /** {@link Float32Array} holding the HDR image data */
   data: Float32Array
 }
 
@@ -72,6 +77,9 @@ export class HDRLoader {
     return this.#decodeRGBE(new DataView(buffer))
   }
 
+  /**
+   * @ignore
+   */
   #decodeRGBE(data: DataView): HDRImageData {
     const stream = {
       data,

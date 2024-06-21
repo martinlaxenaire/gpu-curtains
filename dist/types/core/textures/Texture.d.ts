@@ -33,6 +33,8 @@ export interface TextureBaseParams extends ExternalTextureParamsBase {
     visibility?: BindingParams['visibility'];
     /** Allowed usages for the {@link Texture#texture | GPU texture} as an array of {@link TextureUsageKeys | texture usages names} */
     usage?: TextureUsageKeys[];
+    /** Whether any {@link core/materials/Material.Material | Material} using this {@link Texture} should automatically destroy it upon destruction. Default to `true`. */
+    autoDestroy?: boolean;
 }
 /**
  * Parameters used to create a {@link Texture}
@@ -118,6 +120,22 @@ export declare class Texture {
         depth?: number;
         origin?: GPUOrigin3D;
         colorSpace?: PredefinedColorSpace;
+    }): void;
+    /**
+     * Use data as the {@link texture} source and upload it to the GPU.
+     * @param parameters - parameters used to upload the source.
+     * @param parameters.width - data source width.
+     * @param parameters.height - data source height.
+     * @param parameters.depth - data source depth.
+     * @param parameters.origin - {@link GPUOrigin3D | origin} of the data source copy.
+     * @param parameters.data - {@link Float32Array} data to use as source.
+     */
+    uploadData({ width, height, depth, origin, data, }: {
+        width?: number;
+        height?: number;
+        depth?: number;
+        origin?: GPUOrigin3D;
+        data?: Float32Array;
     }): void;
     /**
      * Set our {@link Texture#bindings | bindings}
