@@ -70,7 +70,7 @@ window.addEventListener('load', async () => {
   })
 
   const hdrLoader = new HDRLoader()
-  const specularHDR = await hdrLoader.loadFromUrl('./assets/hdr/cannon_1k.hdr')
+  const specularHDR = await hdrLoader.loadFromUrl('./assets/cannon_1k.hdr')
 
   // TODO use a compute pass?
   const specFaceData = hdrLoader.equirectangularToCubeMap(specularHDR)
