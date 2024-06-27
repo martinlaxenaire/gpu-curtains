@@ -33,7 +33,7 @@ class DOMFrustum {
     }
   }) {
     this.boundingBox = boundingBox;
-    this.clipSpaceAABB = new Box3();
+    this.clipSpaceOBB = new Box3();
     this.modelViewProjectionMatrix = modelViewProjectionMatrix;
     this.containerBoundingRect = containerBoundingRect;
     this.DOMFrustumMargins = { ...defaultDOMFrustumMargins, ...DOMFrustumMargins };
@@ -71,21 +71,21 @@ class DOMFrustum {
     };
   }
   /**
-   * Compute the axis aligned bounding box in clip space.
+   * Compute the oriented bounding box in clip space.
    */
-  computeClipSpaceAABB() {
-    this.clipSpaceAABB.set();
-    this.boundingBox.applyMat4(this.modelViewProjectionMatrix, this.clipSpaceAABB);
+  computeClipSpaceOBB() {
+    this.clipSpaceOBB.set();
+    this.boundingBox.applyMat4(this.modelViewProjectionMatrix, this.clipSpaceOBB);
   }
   /**
-   * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox}, i.e. apply AABB to document coordinates and set {@link projectedBoundingRect}.
+   * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox}, i.e. apply OBB to document coordinates and set {@link projectedBoundingRect}.
    */
-  setDocumentCoordsFromClipSpaceAABB() {
-    this.computeClipSpaceAABB();
-    const minX = (this.clipSpaceAABB.min.x + 1) * 0.5;
-    const maxX = (this.clipSpaceAABB.max.x + 1) * 0.5;
-    const minY = 1 - (this.clipSpaceAABB.min.y + 1) * 0.5;
-    const maxY = 1 - (this.clipSpaceAABB.max.y + 1) * 0.5;
+  setDocumentCoordsFromClipSpaceOBB() {
+    this.computeClipSpaceOBB();
+    const minX = (this.clipSpaceOBB.min.x + 1) * 0.5;
+    const maxX = (this.clipSpaceOBB.max.x + 1) * 0.5;
+    const minY = 1 - (this.clipSpaceOBB.min.y + 1) * 0.5;
+    const maxY = 1 - (this.clipSpaceOBB.max.y + 1) * 0.5;
     const { width, height, top, left } = this.containerBoundingRect;
     this.projectedBoundingRect = {
       left: minX * width + left,

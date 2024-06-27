@@ -28,8 +28,8 @@ export interface DOMFrustumParams {
 export declare class DOMFrustum {
     /** Our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link core/geometries/Geometry.Geometry | Geometry} */
     boundingBox: Box3;
-    /** Axis aligned bounding {@link Box3} in clip space. */
-    clipSpaceAABB: Box3;
+    /** Oriented bounding {@link Box3} in clip space. */
+    clipSpaceOBB: Box3;
     /** A model view projection matrix defining transformations, usually from a {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, to use for frustum calculations */
     modelViewProjectionMatrix: Mat4;
     /** The DOM bounding rectangle to check against, usually the renderer DOM Element bounding rectangle */
@@ -60,13 +60,13 @@ export declare class DOMFrustum {
      */
     get DOMFrustumBoundingRect(): RectCoords;
     /**
-     * Compute the axis aligned bounding box in clip space.
+     * Compute the oriented bounding box in clip space.
      */
-    computeClipSpaceAABB(): void;
+    computeClipSpaceOBB(): void;
     /**
-     * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox}, i.e. apply AABB to document coordinates and set {@link projectedBoundingRect}.
+     * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox}, i.e. apply OBB to document coordinates and set {@link projectedBoundingRect}.
      */
-    setDocumentCoordsFromClipSpaceAABB(): void;
+    setDocumentCoordsFromClipSpaceOBB(): void;
     /**
      * Apply the bounding sphere in clip space to document coordinates and set {@link projectedBoundingRect}.
      * @param boundingSphere - bounding sphere in clip space.
