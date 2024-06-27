@@ -163,8 +163,8 @@ window.addEventListener('load', async () => {
         // An extremely simple directional lighting model, just to give our model some shape.
         // N is already defined as
         // let N = normalize(normal);
-        let L = normalize(directionalLight.position - worldPosition);
-        let NDotL = max(dot(N, L), 0.0);
+        let L: vec3f = normalize(directionalLight.position - worldPosition);
+        let NDotL: f32 = max(dot(N, L), 0.0);
 
         lightContribution.diffuse += NDotL * directionalLight.color * directionalLight.intensity;
       `

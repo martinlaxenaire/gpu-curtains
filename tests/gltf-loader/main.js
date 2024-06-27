@@ -313,10 +313,10 @@ window.addEventListener('load', async () => {
       `
 
       const lightContribution = /* wgsl */ `
-      let L = normalize(pointLight.position - worldPosition);
-      let H = normalize(V + L);
+      let L: vec3f = normalize(pointLight.position - worldPosition);
+      let H: vec3f = normalize(V + L);
       
-      let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
+      let NdotL: f32 = clamp(dot(N, L), 0.0, 1.0);
       let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
       let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
     
