@@ -118,7 +118,7 @@ window.addEventListener('load', async () => {
     })
 
   gui
-    .add({ frustumCulling: true }, 'frustumCulling')
+    .add({ frustumCulling: 'AABB' }, 'frustumCulling', ['AABB', 'sphere', false])
     .name('Frustum culling')
     .onChange((value) => {
       for (let i = 0, l = meshes.length; i < l; i++) {

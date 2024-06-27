@@ -73,6 +73,11 @@ class Camera extends Object3D {
         matrix: new Mat4(),
         shouldUpdate: true,
         onUpdate: () => this.updateProjectionMatrix()
+      },
+      viewProjection: {
+        matrix: new Mat4(),
+        shouldUpdate: true,
+        onUpdate: () => this.viewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.viewMatrix)
       }
     };
   }
@@ -85,7 +90,7 @@ class Camera extends Object3D {
   }
   set viewMatrix(value) {
     this.matrices.view.matrix = value;
-    this.matrices.view.shouldUpdate = true;
+    this.shouldUpdateViewMatrices();
   }
   /**
    * Get our projection matrix
@@ -96,13 +101,28 @@ class Camera extends Object3D {
   }
   set projectionMatrix(value) {
     this.matrices.projection.matrix = value;
-    this.shouldUpdateProjectionMatrix();
+    this.shouldUpdateProjectionMatrices();
   }
   /**
-   * Set our projection matrix shouldUpdate flag to true (tell it to update)
+   * Get our view projection matrix
+   * @readonly
    */
-  shouldUpdateProjectionMatrix() {
+  get viewProjectionMatrix() {
+    return this.matrices.viewProjection.matrix;
+  }
+  /**
+   * Set our view dependent matrices shouldUpdate flag to true (tell it to update)
+   */
+  shouldUpdateViewMatrices() {
+    this.matrices.view.shouldUpdate = true;
+    this.matrices.viewProjection.shouldUpdate = true;
+  }
+  /**
+   * Set our projection dependent matrices shouldUpdate flag to true (tell it to update)
+   */
+  shouldUpdateProjectionMatrices() {
     this.matrices.projection.shouldUpdate = true;
+    this.matrices.viewProjection.shouldUpdate = true;
   }
   /**
    * Update our model matrix and tell our view matrix to update as well
@@ -110,14 +130,14 @@ class Camera extends Object3D {
   updateModelMatrix() {
     super.updateModelMatrix();
     this.setVisibleSize();
-    this.matrices.view.shouldUpdate = true;
+    this.shouldUpdateViewMatrices();
   }
   /**
    * Update our world matrix and tell our view matrix to update as well
    */
   updateWorldMatrix() {
     super.updateWorldMatrix();
-    this.matrices.view.shouldUpdate = true;
+    this.shouldUpdateViewMatrices();
   }
   /**
    * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
@@ -142,7 +162,7 @@ class Camera extends Object3D {
     fov = Math.max(1, Math.min(fov ?? this.fov, 179));
     if (fov !== this.fov) {
       __privateSet(this, _fov, fov);
-      this.shouldUpdateProjectionMatrix();
+      this.shouldUpdateProjectionMatrices();
     }
     this.setVisibleSize();
     this.setCSSPerspective();
@@ -161,7 +181,7 @@ class Camera extends Object3D {
     near = Math.max(near ?? this.near, 0.01);
     if (near !== this.near) {
       __privateSet(this, _near, near);
-      this.shouldUpdateProjectionMatrix();
+      this.shouldUpdateProjectionMatrices();
     }
   }
   /**
@@ -178,7 +198,7 @@ class Camera extends Object3D {
     far = Math.max(far ?? this.far, this.near + 1);
     if (far !== this.far) {
       __privateSet(this, _far, far);
-      this.shouldUpdateProjectionMatrix();
+      this.shouldUpdateProjectionMatrices();
     }
   }
   /**
@@ -201,7 +221,7 @@ class Camera extends Object3D {
    */
   setSize({ width, height }) {
     if (width !== this.size.width || height !== this.size.height) {
-      this.shouldUpdateProjectionMatrix();
+      this.shouldUpdateProjectionMatrices();
     }
     this.size.width = width;
     this.size.height = height;

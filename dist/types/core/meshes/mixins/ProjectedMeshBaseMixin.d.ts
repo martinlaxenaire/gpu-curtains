@@ -5,12 +5,15 @@ import { MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinConstructor } from
 import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement';
 import { RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D';
+import { Vec3 } from '../../../math/Vec3';
+/** Define all possible frustum culling checks. */
+export type FrustumCullingCheck = 'AABB' | 'sphere' | boolean;
 /**
  * Base parameters used to create a ProjectedMesh
  */
 export interface ProjectedMeshBaseParams {
-    /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-    frustumCulling?: boolean;
+    /** Frustum culling check to use. Accepts `AABB`, `sphere` or a boolean. Default to `AABB`. When set to `true`, `AABB` is used. */
+    frustumCulling?: FrustumCullingCheck;
     /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins?: RectCoords;
 }
@@ -33,8 +36,8 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
     renderer: CameraRenderer;
     /** The ProjectedMesh {@link DOMFrustum} class object */
     domFrustum: DOMFrustum;
-    /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-    frustumCulling: boolean;
+    /** Frustum culling check to use. Accepts `AABB`, `sphere` or a boolean. Default to `AABB`. When set to `true`, `AABB` is used. */
+    frustumCulling: FrustumCullingCheck;
     /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins: RectCoords;
     /** Options used to create this {@link ProjectedMeshBaseClass} */
@@ -94,6 +97,16 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
      * @returns - our Mesh
      */
     onLeaveView: (callback: () => void) => ProjectedMeshBaseClass;
+    /**
+     * Get the geometry bounding sphere in clip space.
+     * @readonly
+     */
+    get clipSpaceBoundingSphere(): {
+        /** Center of the bounding sphere. */
+        center: Vec3;
+        /** Radius of the bounding sphere. */
+        radius: number;
+    };
     /**
      * Check if the Mesh lies inside the {@link CameraRenderer#camera | camera} view frustum or not.
      */

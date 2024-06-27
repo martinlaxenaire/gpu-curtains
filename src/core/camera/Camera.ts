@@ -37,7 +37,7 @@ export interface CameraParams extends CameraPerspectiveOptions {
 }
 
 /** Defines all kind of possible {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} matrix types */
-export type CameraObject3DMatricesType = Object3DMatricesType | 'projection' | 'view'
+export type CameraObject3DMatricesType = Object3DMatricesType | 'projection' | 'view' | 'viewProjection'
 /** Defines all possible {@link Object3DTransformMatrix | matrix object} used by our {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} */
 export type CameraObject3DMatrices = Record<CameraObject3DMatricesType, Object3DTransformMatrix>
 
@@ -137,6 +137,11 @@ export class Camera extends Object3D {
         shouldUpdate: true,
         onUpdate: () => this.updateProjectionMatrix(),
       },
+      viewProjection: {
+        matrix: new Mat4(),
+        shouldUpdate: true,
+        onUpdate: () => this.viewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.viewMatrix),
+      },
     }
   }
 
@@ -150,7 +155,7 @@ export class Camera extends Object3D {
 
   set viewMatrix(value: Mat4) {
     this.matrices.view.matrix = value
-    this.matrices.view.shouldUpdate = true
+    this.shouldUpdateViewMatrices()
   }
 
   /**
@@ -163,14 +168,31 @@ export class Camera extends Object3D {
 
   set projectionMatrix(value: Mat4) {
     this.matrices.projection.matrix = value
-    this.shouldUpdateProjectionMatrix()
+    this.shouldUpdateProjectionMatrices()
   }
 
   /**
-   * Set our projection matrix shouldUpdate flag to true (tell it to update)
+   * Get our view projection matrix
+   * @readonly
    */
-  shouldUpdateProjectionMatrix() {
+  get viewProjectionMatrix(): Mat4 {
+    return this.matrices.viewProjection.matrix
+  }
+
+  /**
+   * Set our view dependent matrices shouldUpdate flag to true (tell it to update)
+   */
+  shouldUpdateViewMatrices() {
+    this.matrices.view.shouldUpdate = true
+    this.matrices.viewProjection.shouldUpdate = true
+  }
+
+  /**
+   * Set our projection dependent matrices shouldUpdate flag to true (tell it to update)
+   */
+  shouldUpdateProjectionMatrices() {
     this.matrices.projection.shouldUpdate = true
+    this.matrices.viewProjection.shouldUpdate = true
   }
 
   /**
@@ -179,7 +201,7 @@ export class Camera extends Object3D {
   updateModelMatrix() {
     super.updateModelMatrix()
     this.setVisibleSize()
-    this.matrices.view.shouldUpdate = true
+    this.shouldUpdateViewMatrices()
   }
 
   /**
@@ -187,7 +209,7 @@ export class Camera extends Object3D {
    */
   updateWorldMatrix() {
     super.updateWorldMatrix()
-    this.matrices.view.shouldUpdate = true
+    this.shouldUpdateViewMatrices()
   }
 
   /**
@@ -218,7 +240,7 @@ export class Camera extends Object3D {
 
     if (fov !== this.fov) {
       this.#fov = fov
-      this.shouldUpdateProjectionMatrix()
+      this.shouldUpdateProjectionMatrices()
     }
 
     this.setVisibleSize()
@@ -241,7 +263,7 @@ export class Camera extends Object3D {
 
     if (near !== this.near) {
       this.#near = near
-      this.shouldUpdateProjectionMatrix()
+      this.shouldUpdateProjectionMatrices()
     }
   }
 
@@ -261,7 +283,7 @@ export class Camera extends Object3D {
 
     if (far !== this.far) {
       this.#far = far
-      this.shouldUpdateProjectionMatrix()
+      this.shouldUpdateProjectionMatrices()
     }
   }
 
@@ -287,7 +309,7 @@ export class Camera extends Object3D {
    */
   setSize({ width, height }: RectSize) {
     if (width !== this.size.width || height !== this.size.height) {
-      this.shouldUpdateProjectionMatrix()
+      this.shouldUpdateProjectionMatrices()
     }
 
     this.size.width = width

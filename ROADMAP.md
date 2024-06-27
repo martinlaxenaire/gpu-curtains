@@ -33,7 +33,6 @@
 ## TODO / possible improvements
 
 - Add/improve GLTFScenesManager features
-- Option to chose between sphere and OBB frustum culling
 - Mesh raycasting
 - Lights management?
 - Improve typedoc documentation?

@@ -6,7 +6,7 @@ import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl.m
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
-  frustumCulling: true,
+  frustumCulling: "AABB",
   DOMFrustumMargins: {
     top: 0,
     right: 0,
@@ -232,12 +232,66 @@ function ProjectedMeshBaseMixin(Base) {
     }
     /* RENDER */
     /**
-     * Check if the Mesh lies inside the {@link camera} view frustum or not.
+     * Get the geometry bounding sphere in clip space.
+     * @readonly
+     */
+    get clipSpaceBoundingSphere() {
+      const { center, radius, min, max } = this.geometry.boundingBox;
+      const translation = this.worldMatrix.getTranslation();
+      const maxWorldRadius = radius * this.worldMatrix.getMaxScaleOnAxis();
+      const cMin = center.clone().add(translation);
+      cMin.z += min.z;
+      const cMax = center.clone().add(translation);
+      cMax.z += max.z;
+      const sMin = cMin.clone();
+      sMin.y += maxWorldRadius;
+      const sMax = cMax.clone();
+      sMax.y += maxWorldRadius;
+      cMin.applyMat4(this.camera.viewProjectionMatrix);
+      cMax.applyMat4(this.camera.viewProjectionMatrix);
+      sMin.applyMat4(this.camera.viewProjectionMatrix);
+      sMax.applyMat4(this.camera.viewProjectionMatrix);
+      const rMin = cMin.distance(sMin);
+      const rMax = cMax.distance(sMax);
+      const rectMin = {
+        xMin: cMin.x - rMin,
+        xMax: cMin.x + rMin,
+        yMin: cMin.y - rMin,
+        yMax: cMin.y + rMin
+      };
+      const rectMax = {
+        xMin: cMax.x - rMax,
+        xMax: cMax.x + rMax,
+        yMin: cMax.y - rMax,
+        yMax: cMax.y + rMax
+      };
+      const rect = {
+        xMin: Math.min(rectMin.xMin, rectMax.xMin),
+        yMin: Math.min(rectMin.yMin, rectMax.yMin),
+        xMax: Math.max(rectMin.xMax, rectMax.xMax),
+        yMax: Math.max(rectMin.yMax, rectMax.yMax)
+      };
+      const sphereCenter = cMax.add(cMin).multiplyScalar(0.5).clone();
+      sphereCenter.x = (rect.xMax + rect.xMin) / 2;
+      sphereCenter.y = (rect.yMax + rect.yMin) / 2;
+      const sphereRadius = Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin);
+      return {
+        center: sphereCenter,
+        radius: sphereRadius
+      };
+    }
+    /**
+     * Check if the Mesh lies inside the {@link camera} view frustum or not using the test defined by {@link frustumCulling}.
      */
     checkFrustumCulling() {
       if (this.matricesNeedUpdate) {
         if (this.domFrustum && this.frustumCulling) {
-          this.domFrustum.computeProjectedToDocumentCoords();
+          if (this.frustumCulling === "sphere") {
+            this.domFrustum.setDocumentCoordsFromClipSpaceSphere(this.clipSpaceBoundingSphere);
+          } else {
+            this.domFrustum.setDocumentCoordsFromClipSpaceAABB();
+          }
+          this.domFrustum.intersectsContainer();
         }
       }
     }

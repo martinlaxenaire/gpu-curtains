@@ -1,6 +1,7 @@
 import { Box3 } from '../../math/Box3';
 import { Mat4 } from '../../math/Mat4';
 import { DOMElementBoundingRect, RectCoords } from './DOMElement';
+import { Vec3 } from '../../math/Vec3';
 /**
  * An object defining all possible {@link DOMFrustum} class instancing parameters
  */
@@ -27,6 +28,8 @@ export interface DOMFrustumParams {
 export declare class DOMFrustum {
     /** Our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a {@link core/geometries/Geometry.Geometry | Geometry} */
     boundingBox: Box3;
+    /** Axis aligned bounding {@link Box3} in clip space. */
+    clipSpaceAABB: Box3;
     /** A model view projection matrix defining transformations, usually from a {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D}, to use for frustum calculations */
     modelViewProjectionMatrix: Mat4;
     /** The DOM bounding rectangle to check against, usually the renderer DOM Element bounding rectangle */
@@ -57,11 +60,23 @@ export declare class DOMFrustum {
      */
     get DOMFrustumBoundingRect(): RectCoords;
     /**
-     * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox} and then check against intersections
+     * Compute the axis aligned bounding box in clip space.
      */
-    computeProjectedToDocumentCoords(): void;
+    computeClipSpaceAABB(): void;
     /**
-     * Check whether our {@link projectedBoundingRect} intersects with our {@link DOMFrustumBoundingRect}
+     * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox}, i.e. apply AABB to document coordinates and set {@link projectedBoundingRect}.
+     */
+    setDocumentCoordsFromClipSpaceAABB(): void;
+    /**
+     * Apply the bounding sphere in clip space to document coordinates and set {@link projectedBoundingRect}.
+     * @param boundingSphere - bounding sphere in clip space.
+     */
+    setDocumentCoordsFromClipSpaceSphere(boundingSphere?: {
+        center: Vec3;
+        radius: number;
+    }): void;
+    /**
+     * Check whether our {@link projectedBoundingRect} intersects with our {@link DOMFrustumBoundingRect}.
      */
     intersectsContainer(): void;
 }
