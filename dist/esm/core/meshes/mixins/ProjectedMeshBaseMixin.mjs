@@ -6,7 +6,7 @@ import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl.m
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
-  frustumCulling: "AABB",
+  frustumCulling: "OBB",
   DOMFrustumMargins: {
     top: 0,
     right: 0,
@@ -289,7 +289,7 @@ function ProjectedMeshBaseMixin(Base) {
           if (this.frustumCulling === "sphere") {
             this.domFrustum.setDocumentCoordsFromClipSpaceSphere(this.clipSpaceBoundingSphere);
           } else {
-            this.domFrustum.setDocumentCoordsFromClipSpaceAABB();
+            this.domFrustum.setDocumentCoordsFromClipSpaceOBB();
           }
           this.domFrustum.intersectsContainer();
         }

@@ -7,12 +7,12 @@ import { RenderMaterialParams } from '../../../types/Materials';
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D';
 import { Vec3 } from '../../../math/Vec3';
 /** Define all possible frustum culling checks. */
-export type FrustumCullingCheck = 'AABB' | 'sphere' | boolean;
+export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean;
 /**
  * Base parameters used to create a ProjectedMesh
  */
 export interface ProjectedMeshBaseParams {
-    /** Frustum culling check to use. Accepts `AABB`, `sphere` or a boolean. Default to `AABB`. When set to `true`, `AABB` is used. */
+    /** Frustum culling check to use. Accepts `OBB`, `sphere` or a boolean. Default to `OBB`. When set to `true`, `OBB` is used. */
     frustumCulling?: FrustumCullingCheck;
     /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins?: RectCoords;
@@ -36,7 +36,7 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
     renderer: CameraRenderer;
     /** The ProjectedMesh {@link DOMFrustum} class object */
     domFrustum: DOMFrustum;
-    /** Frustum culling check to use. Accepts `AABB`, `sphere` or a boolean. Default to `AABB`. When set to `true`, `AABB` is used. */
+    /** Frustum culling check to use. Accepts `OBB`, `sphere` or a boolean. Default to `OBB`. When set to `true`, `OBB` is used. */
     frustumCulling: FrustumCullingCheck;
     /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins: RectCoords;

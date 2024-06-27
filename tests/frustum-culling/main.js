@@ -64,10 +64,10 @@ window.addEventListener('load', async () => {
     boundingSphereDiv.classList.add('bounding-box', 'sphere-bounding-box')
     document.body.appendChild(boundingSphereDiv)
 
-    const AABBDiv = document.createElement('div')
-    AABBDiv.setAttribute('id', 'aabb-' + i)
-    AABBDiv.classList.add('bounding-box', 'aabb-bounding-box')
-    document.body.appendChild(AABBDiv)
+    const OBBDiv = document.createElement('div')
+    OBBDiv.setAttribute('id', 'obb-' + i)
+    OBBDiv.classList.add('bounding-box', 'obb-bounding-box')
+    document.body.appendChild(OBBDiv)
 
     randomMeshTransform(mesh)
 
@@ -87,9 +87,9 @@ window.addEventListener('load', async () => {
           height: mesh.domFrustum.projectedBoundingRect.height + 'px',
         })
 
-        mesh.domFrustum.setDocumentCoordsFromClipSpaceAABB()
+        mesh.domFrustum.setDocumentCoordsFromClipSpaceOBB()
 
-        Object.assign(AABBDiv.style, {
+        Object.assign(OBBDiv.style, {
           left: mesh.domFrustum.projectedBoundingRect.left + 'px',
           top: mesh.domFrustum.projectedBoundingRect.top + 'px',
           width: mesh.domFrustum.projectedBoundingRect.width + 'px',
