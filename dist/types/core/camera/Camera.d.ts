@@ -32,7 +32,7 @@ export interface CameraParams extends CameraPerspectiveOptions {
     onMatricesChanged?: () => void;
 }
 /** Defines all kind of possible {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} matrix types */
-export type CameraObject3DMatricesType = Object3DMatricesType | 'projection' | 'view';
+export type CameraObject3DMatricesType = Object3DMatricesType | 'projection' | 'view' | 'viewProjection';
 /** Defines all possible {@link Object3DTransformMatrix | matrix object} used by our {@link core/objects3D/ProjectedObject3D.ProjectedObject3D | ProjectedObject3D} */
 export type CameraObject3DMatrices = Record<CameraObject3DMatricesType, Object3DTransformMatrix>;
 /**
@@ -83,9 +83,18 @@ export declare class Camera extends Object3D {
     get projectionMatrix(): Mat4;
     set projectionMatrix(value: Mat4);
     /**
-     * Set our projection matrix shouldUpdate flag to true (tell it to update)
+     * Get our view projection matrix
+     * @readonly
      */
-    shouldUpdateProjectionMatrix(): void;
+    get viewProjectionMatrix(): Mat4;
+    /**
+     * Set our view dependent matrices shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateViewMatrices(): void;
+    /**
+     * Set our projection dependent matrices shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateProjectionMatrices(): void;
     /**
      * Update our model matrix and tell our view matrix to update as well
      */

@@ -57,7 +57,8 @@ export declare class Box3 {
      * Apply a {@link Mat4 | matrix} to a {@link Box3}
      * Useful to apply a transformation {@link Mat4 | matrix} to a {@link Box3}
      * @param matrix - {@link Mat4 | matrix} to use
-     * @returns - this {@link Box3} after {@link Mat4 | matrix} application
+     * @param transformedBox - {@link Box3 | transformed Box3} to set
+     * @returns - the {@link Box3 | transformed Box3} after {@link Mat4 | matrix} application
      */
-    applyMat4(matrix?: Mat4): Box3;
+    applyMat4(matrix?: Mat4, transformedBox?: Box3): Box3;
 }

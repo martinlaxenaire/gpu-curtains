@@ -5,6 +5,7 @@ import { BufferBinding } from '../bindings/BufferBinding';
 import { BindGroup } from '../bindGroups/BindGroup';
 import { Vec3 } from '../../math/Vec3';
 import { AllowedBindGroups } from '../../types/BindGroups';
+import { RectBBox } from '../DOM/DOMElement';
 /**
  * Parameters used to create a {@link GPUCameraRenderer}
  */
@@ -101,9 +102,10 @@ export declare class GPUCameraRenderer extends GPURenderer {
      */
     setCameraPosition(position?: Vec3): void;
     /**
-     * Call our {@link GPURenderer#resizeObjects | GPURenderer resizeObjects method} and resize our {@link camera} as well
+     * Resize our {@link GPUCameraRenderer} and resize our {@link camera} before anything else.
+     * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
      */
-    resizeObjects(): void;
+    resize(rectBBox?: RectBBox | null): void;
     /**
      * {@link setCameraBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}
      * @param commandEncoder - current {@link GPUCommandEncoder}

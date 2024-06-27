@@ -4255,6 +4255,11 @@
           matrix: new Mat4(),
           shouldUpdate: true,
           onUpdate: () => this.updateProjectionMatrix()
+        },
+        viewProjection: {
+          matrix: new Mat4(),
+          shouldUpdate: true,
+          onUpdate: () => this.viewProjectionMatrix.multiplyMatrices(this.projectionMatrix, this.viewMatrix)
         }
       };
     }
@@ -4267,7 +4272,7 @@
     }
     set viewMatrix(value) {
       this.matrices.view.matrix = value;
-      this.matrices.view.shouldUpdate = true;
+      this.shouldUpdateViewMatrices();
     }
     /**
      * Get our projection matrix
@@ -4278,13 +4283,28 @@
     }
     set projectionMatrix(value) {
       this.matrices.projection.matrix = value;
-      this.shouldUpdateProjectionMatrix();
+      this.shouldUpdateProjectionMatrices();
     }
     /**
-     * Set our projection matrix shouldUpdate flag to true (tell it to update)
+     * Get our view projection matrix
+     * @readonly
      */
-    shouldUpdateProjectionMatrix() {
+    get viewProjectionMatrix() {
+      return this.matrices.viewProjection.matrix;
+    }
+    /**
+     * Set our view dependent matrices shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateViewMatrices() {
+      this.matrices.view.shouldUpdate = true;
+      this.matrices.viewProjection.shouldUpdate = true;
+    }
+    /**
+     * Set our projection dependent matrices shouldUpdate flag to true (tell it to update)
+     */
+    shouldUpdateProjectionMatrices() {
       this.matrices.projection.shouldUpdate = true;
+      this.matrices.viewProjection.shouldUpdate = true;
     }
     /**
      * Update our model matrix and tell our view matrix to update as well
@@ -4292,14 +4312,14 @@
     updateModelMatrix() {
       super.updateModelMatrix();
       this.setVisibleSize();
-      this.matrices.view.shouldUpdate = true;
+      this.shouldUpdateViewMatrices();
     }
     /**
      * Update our world matrix and tell our view matrix to update as well
      */
     updateWorldMatrix() {
       super.updateWorldMatrix();
-      this.matrices.view.shouldUpdate = true;
+      this.shouldUpdateViewMatrices();
     }
     /**
      * Callback to run when the camera {@link modelMatrix | model matrix} has been updated
@@ -4324,7 +4344,7 @@
       fov = Math.max(1, Math.min(fov ?? this.fov, 179));
       if (fov !== this.fov) {
         __privateSet$8(this, _fov, fov);
-        this.shouldUpdateProjectionMatrix();
+        this.shouldUpdateProjectionMatrices();
       }
       this.setVisibleSize();
       this.setCSSPerspective();
@@ -4343,7 +4363,7 @@
       near = Math.max(near ?? this.near, 0.01);
       if (near !== this.near) {
         __privateSet$8(this, _near, near);
-        this.shouldUpdateProjectionMatrix();
+        this.shouldUpdateProjectionMatrices();
       }
     }
     /**
@@ -4360,7 +4380,7 @@
       far = Math.max(far ?? this.far, this.near + 1);
       if (far !== this.far) {
         __privateSet$8(this, _far, far);
-        this.shouldUpdateProjectionMatrix();
+        this.shouldUpdateProjectionMatrices();
       }
     }
     /**
@@ -4383,7 +4403,7 @@
      */
     setSize({ width, height }) {
       if (width !== this.size.width || height !== this.size.height) {
-        this.shouldUpdateProjectionMatrix();
+        this.shouldUpdateProjectionMatrices();
       }
       this.size.width = width;
       this.size.height = height;
@@ -5873,9 +5893,10 @@
      * Apply a {@link Mat4 | matrix} to a {@link Box3}
      * Useful to apply a transformation {@link Mat4 | matrix} to a {@link Box3}
      * @param matrix - {@link Mat4 | matrix} to use
-     * @returns - this {@link Box3} after {@link Mat4 | matrix} application
+     * @param transformedBox - {@link Box3 | transformed Box3} to set
+     * @returns - the {@link Box3 | transformed Box3} after {@link Mat4 | matrix} application
      */
-    applyMat4(matrix = new Mat4()) {
+    applyMat4(matrix = new Mat4(), transformedBox = new Box3()) {
       if (this.isEmpty())
         return this;
       const corners = [];
@@ -5894,12 +5915,11 @@
         corners[6] = points[6].set(this.max.x, this.max.y, this.min.z).applyMat4(matrix);
         corners[7] = points[7].set(this.max.x, this.max.y, this.max.z).applyMat4(matrix);
       }
-      const transFormedBox = new Box3();
       for (let i = 0, cornersCount = corners.length; i < cornersCount; i++) {
-        transFormedBox.min.min(corners[i]);
-        transFormedBox.max.max(corners[i]);
+        transformedBox.min.min(corners[i]);
+        transformedBox.max.max(corners[i]);
       }
-      return transFormedBox;
+      return transformedBox;
     }
   }
 
@@ -5934,6 +5954,7 @@
       }
     }) {
       this.boundingBox = boundingBox;
+      this.clipSpaceAABB = new Box3();
       this.modelViewProjectionMatrix = modelViewProjectionMatrix;
       this.containerBoundingRect = containerBoundingRect;
       this.DOMFrustumMargins = { ...defaultDOMFrustumMargins, ...DOMFrustumMargins };
@@ -5971,29 +5992,52 @@
       };
     }
     /**
-     * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox} and then check against intersections
+     * Compute the axis aligned bounding box in clip space.
      */
-    computeProjectedToDocumentCoords() {
-      const projectedBox = this.boundingBox.applyMat4(this.modelViewProjectionMatrix);
-      projectedBox.min.x = (projectedBox.min.x + 1) * 0.5;
-      projectedBox.max.x = (projectedBox.max.x + 1) * 0.5;
-      projectedBox.min.y = 1 - (projectedBox.min.y + 1) * 0.5;
-      projectedBox.max.y = 1 - (projectedBox.max.y + 1) * 0.5;
-      const { width, height, top, left } = this.containerBoundingRect;
-      this.projectedBoundingRect = {
-        left: projectedBox.min.x * width + left,
-        x: projectedBox.min.x * width + left,
-        top: projectedBox.max.y * height + top,
-        y: projectedBox.max.y * height + top,
-        right: projectedBox.max.x * width + left,
-        bottom: projectedBox.min.y * height + top,
-        width: projectedBox.max.x * width + left - (projectedBox.min.x * width + left),
-        height: projectedBox.min.y * height + top - (projectedBox.max.y * height + top)
-      };
-      this.intersectsContainer();
+    computeClipSpaceAABB() {
+      this.clipSpaceAABB.set();
+      this.boundingBox.applyMat4(this.modelViewProjectionMatrix, this.clipSpaceAABB);
     }
     /**
-     * Check whether our {@link projectedBoundingRect} intersects with our {@link DOMFrustumBoundingRect}
+     * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox}, i.e. apply AABB to document coordinates and set {@link projectedBoundingRect}.
+     */
+    setDocumentCoordsFromClipSpaceAABB() {
+      this.computeClipSpaceAABB();
+      const minX = (this.clipSpaceAABB.min.x + 1) * 0.5;
+      const maxX = (this.clipSpaceAABB.max.x + 1) * 0.5;
+      const minY = 1 - (this.clipSpaceAABB.min.y + 1) * 0.5;
+      const maxY = 1 - (this.clipSpaceAABB.max.y + 1) * 0.5;
+      const { width, height, top, left } = this.containerBoundingRect;
+      this.projectedBoundingRect = {
+        left: minX * width + left,
+        x: minX * width + left,
+        top: maxY * height + top,
+        y: maxY * height + top,
+        right: maxX * width + left,
+        bottom: minY * height + top,
+        width: maxX * width + left - (minX * width + left),
+        height: minY * height + top - (maxY * height + top)
+      };
+    }
+    /**
+     * Apply the bounding sphere in clip space to document coordinates and set {@link projectedBoundingRect}.
+     * @param boundingSphere - bounding sphere in clip space.
+     */
+    setDocumentCoordsFromClipSpaceSphere(boundingSphere = { center: new Vec3(), radius: 0 }) {
+      const centerX = (boundingSphere.center.x + 1) * 0.5;
+      const centerY = 1 - (boundingSphere.center.y + 1) * 0.5;
+      const { width, height, top, left } = this.containerBoundingRect;
+      this.projectedBoundingRect.width = boundingSphere.radius * height * 0.5;
+      this.projectedBoundingRect.height = boundingSphere.radius * height * 0.5;
+      this.projectedBoundingRect.left = centerX * width + left - this.projectedBoundingRect.width * 0.5;
+      this.projectedBoundingRect.x = centerX * width + left - this.projectedBoundingRect.width * 0.5;
+      this.projectedBoundingRect.top = centerY * height + top - this.projectedBoundingRect.height * 0.5;
+      this.projectedBoundingRect.y = centerY * height + top - this.projectedBoundingRect.height * 0.5;
+      this.projectedBoundingRect.right = this.projectedBoundingRect.left + this.projectedBoundingRect.width;
+      this.projectedBoundingRect.bottom = this.projectedBoundingRect.top + this.projectedBoundingRect.height;
+    }
+    /**
+     * Check whether our {@link projectedBoundingRect} intersects with our {@link DOMFrustumBoundingRect}.
      */
     intersectsContainer() {
       if (Math.round(this.DOMFrustumBoundingRect.right) <= this.containerBoundingRect.left || Math.round(this.DOMFrustumBoundingRect.left) >= this.containerBoundingRect.left + this.containerBoundingRect.width || Math.round(this.DOMFrustumBoundingRect.bottom) <= this.containerBoundingRect.top || Math.round(this.DOMFrustumBoundingRect.top) >= this.containerBoundingRect.top + this.containerBoundingRect.height) {
@@ -7978,7 +8022,7 @@ struct VSOutput {
 
   const defaultProjectedMeshParams = {
     // frustum culling and visibility
-    frustumCulling: true,
+    frustumCulling: "AABB",
     DOMFrustumMargins: {
       top: 0,
       right: 0,
@@ -8204,12 +8248,66 @@ struct VSOutput {
       }
       /* RENDER */
       /**
-       * Check if the Mesh lies inside the {@link camera} view frustum or not.
+       * Get the geometry bounding sphere in clip space.
+       * @readonly
+       */
+      get clipSpaceBoundingSphere() {
+        const { center, radius, min, max } = this.geometry.boundingBox;
+        const translation = this.worldMatrix.getTranslation();
+        const maxWorldRadius = radius * this.worldMatrix.getMaxScaleOnAxis();
+        const cMin = center.clone().add(translation);
+        cMin.z += min.z;
+        const cMax = center.clone().add(translation);
+        cMax.z += max.z;
+        const sMin = cMin.clone();
+        sMin.y += maxWorldRadius;
+        const sMax = cMax.clone();
+        sMax.y += maxWorldRadius;
+        cMin.applyMat4(this.camera.viewProjectionMatrix);
+        cMax.applyMat4(this.camera.viewProjectionMatrix);
+        sMin.applyMat4(this.camera.viewProjectionMatrix);
+        sMax.applyMat4(this.camera.viewProjectionMatrix);
+        const rMin = cMin.distance(sMin);
+        const rMax = cMax.distance(sMax);
+        const rectMin = {
+          xMin: cMin.x - rMin,
+          xMax: cMin.x + rMin,
+          yMin: cMin.y - rMin,
+          yMax: cMin.y + rMin
+        };
+        const rectMax = {
+          xMin: cMax.x - rMax,
+          xMax: cMax.x + rMax,
+          yMin: cMax.y - rMax,
+          yMax: cMax.y + rMax
+        };
+        const rect = {
+          xMin: Math.min(rectMin.xMin, rectMax.xMin),
+          yMin: Math.min(rectMin.yMin, rectMax.yMin),
+          xMax: Math.max(rectMin.xMax, rectMax.xMax),
+          yMax: Math.max(rectMin.yMax, rectMax.yMax)
+        };
+        const sphereCenter = cMax.add(cMin).multiplyScalar(0.5).clone();
+        sphereCenter.x = (rect.xMax + rect.xMin) / 2;
+        sphereCenter.y = (rect.yMax + rect.yMin) / 2;
+        const sphereRadius = Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin);
+        return {
+          center: sphereCenter,
+          radius: sphereRadius
+        };
+      }
+      /**
+       * Check if the Mesh lies inside the {@link camera} view frustum or not using the test defined by {@link frustumCulling}.
        */
       checkFrustumCulling() {
         if (this.matricesNeedUpdate) {
           if (this.domFrustum && this.frustumCulling) {
-            this.domFrustum.computeProjectedToDocumentCoords();
+            if (this.frustumCulling === "sphere") {
+              this.domFrustum.setDocumentCoordsFromClipSpaceSphere(this.clipSpaceBoundingSphere);
+            } else {
+              this.domFrustum.setDocumentCoordsFromClipSpaceAABB();
+            }
+            this.domFrustum.intersectsContainer();
           }
         }
       }
@@ -10919,11 +11017,15 @@ ${this.shaders.compute.head}`;
       this.camera.position.copy(position);
     }
     /**
-     * Call our {@link GPURenderer#resizeObjects | GPURenderer resizeObjects method} and resize our {@link camera} as well
+     * Resize our {@link GPUCameraRenderer} and resize our {@link camera} before anything else.
+     * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
      */
-    resizeObjects() {
+    resize(rectBBox = null) {
+      this.setSize(rectBBox);
       this.setPerspective();
-      super.resizeObjects();
+      this._onResizeCallback && this._onResizeCallback();
+      this.resizeObjects();
+      this._onAfterResizeCallback && this._onAfterResizeCallback();
     }
     /* RENDER */
     /**
@@ -14197,13 +14299,17 @@ struct VSOutput {
     }
     const applyLightShading = (
       /* wgsl */
-      `      
-      lightContribution.ambient *= color.rgb * occlusion;
-      lightContribution.diffuse *= color.rgb * occlusion;
-      lightContribution.specular *= occlusion;
+      `
+      // apply color to ambient    
+      lightContribution.ambient *= color.rgb;
+      
+      // apply color based on metallic to diffuse
+      lightContribution.diffuse *= mix(color.rgb, vec3(0.0), vec3(metallic));
+      
+      let totalLight: vec3f = lightContribution.ambient + lightContribution.diffuse + lightContribution.specular;
       
       color = vec4(
-        lightContribution.ambient + lightContribution.diffuse + lightContribution.specular + emissive,
+        totalLight * occlusion + emissive,
         color.a
       );
   `
@@ -14303,34 +14409,34 @@ struct VSOutput {
     const pbrAdditionalFragmentHead = (
       /* wgsl */
       `
-    fn FresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
-      return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
+    fn FresnelSchlick(cosTheta: f32, f0: vec3f) -> vec3f {
+      return f0 + (vec3(1.0) - f0) * pow(1.0 - cosTheta, 5.0);
     }
     
     fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
-      let a      = roughness*roughness;
-      let a2     = a*a;
-      let NdotH2 = NdotH*NdotH;
+      let a: f32 = roughness * roughness;
+      let a2: f32 = a * a;
+      let NdotH2: f32 = NdotH * NdotH;
     
-      let num    = a2;
-      let denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+      let num: f32 = a2;
+      let denom: f32 = (NdotH2 * (a2 - 1.0) + 1.0);
     
       return num / (PI * denom * denom);
     }
     
-    fn GeometrySchlickGGX(NdotV : f32, roughness : f32) -> f32 {
-      let r = (roughness + 1.0);
-      let k = (r*r) / 8.0;
+    fn GeometrySchlickGGX(NdotV : f32, roughness: f32) -> f32 {
+      let r: f32 = (roughness + 1.0);
+      let k: f32 = (r * r) / 8.0;
     
-      let num   = NdotV;
-      let denom = NdotV * (1.0 - k) + k;
+      let num: f32 = NdotV;
+      let denom: f32 = NdotV * (1.0 - k) + k;
     
       return num / denom;
     }
     
-    fn GeometrySmith(NdotL: f32, NdotV: f32, roughness : f32) -> f32 {
-      let ggx2  = GeometrySchlickGGX(NdotV, roughness);
-      let ggx1  = GeometrySchlickGGX(NdotL, roughness);
+    fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
+      let ggx2: f32 = GeometrySchlickGGX(NdotV, roughness);
+      let ggx1: f32 = GeometrySchlickGGX(NdotL, roughness);
     
       return ggx1 * ggx2;
     }

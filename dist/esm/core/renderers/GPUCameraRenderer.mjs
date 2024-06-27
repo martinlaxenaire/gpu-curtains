@@ -203,11 +203,15 @@ class GPUCameraRenderer extends GPURenderer {
     this.camera.position.copy(position);
   }
   /**
-   * Call our {@link GPURenderer#resizeObjects | GPURenderer resizeObjects method} and resize our {@link camera} as well
+   * Resize our {@link GPUCameraRenderer} and resize our {@link camera} before anything else.
+   * @param rectBBox - the optional new {@link canvas} {@link RectBBox} to set
    */
-  resizeObjects() {
+  resize(rectBBox = null) {
+    this.setSize(rectBBox);
     this.setPerspective();
-    super.resizeObjects();
+    this._onResizeCallback && this._onResizeCallback();
+    this.resizeObjects();
+    this._onAfterResizeCallback && this._onAfterResizeCallback();
   }
   /* RENDER */
   /**

@@ -15,13 +15,17 @@ import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
 import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl'
 import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl'
 import { BufferBindingParams } from '../../bindings/BufferBinding'
+import { Vec3 } from '../../../math/Vec3'
+
+/** Define all possible frustum culling checks. */
+export type FrustumCullingCheck = 'AABB' | 'sphere' | boolean
 
 /**
  * Base parameters used to create a ProjectedMesh
  */
 export interface ProjectedMeshBaseParams {
-  /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-  frustumCulling?: boolean
+  /** Frustum culling check to use. Accepts `AABB`, `sphere` or a boolean. Default to `AABB`. When set to `true`, `AABB` is used. */
+  frustumCulling?: FrustumCullingCheck
   /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
   DOMFrustumMargins?: RectCoords
 }
@@ -35,7 +39,7 @@ export interface ProjectedRenderMaterialParams extends RenderMaterialParams, Pro
 /** @const - Default ProjectedMesh parameters to merge with user defined parameters */
 const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
   // frustum culling and visibility
-  frustumCulling: true,
+  frustumCulling: 'AABB',
   DOMFrustumMargins: {
     top: 0,
     right: 0,
@@ -57,8 +61,8 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   renderer: CameraRenderer
   /** The ProjectedMesh {@link DOMFrustum} class object */
   domFrustum: DOMFrustum
-  /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-  frustumCulling: boolean
+  /** Frustum culling check to use. Accepts `AABB`, `sphere` or a boolean. Default to `AABB`. When set to `true`, `AABB` is used. */
+  frustumCulling: FrustumCullingCheck
   /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
   DOMFrustumMargins: RectCoords
 
@@ -133,6 +137,17 @@ export declare class ProjectedMeshBaseClass extends MeshBaseClass {
   onLeaveView: (callback: () => void) => ProjectedMeshBaseClass
 
   /**
+   * Get the geometry bounding sphere in clip space.
+   * @readonly
+   */
+  get clipSpaceBoundingSphere(): {
+    /** Center of the bounding sphere. */
+    center: Vec3
+    /** Radius of the bounding sphere. */
+    radius: number
+  }
+
+  /**
    * Check if the Mesh lies inside the {@link CameraRenderer#camera | camera} view frustum or not.
    */
   checkFrustumCulling(): void
@@ -167,8 +182,8 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     renderer: CameraRenderer
     /** The ProjectedMesh {@link DOMFrustum} class object */
     domFrustum: DOMFrustum
-    /** Whether this ProjectedMesh should be frustum culled (not drawn when outside of {@link CameraRenderer#camera | camera} frustum) */
-    frustumCulling: boolean
+    /** Frustum culling check to use. Accepts `AABB`, `sphere` or a boolean. Default to `AABB`. When set to `true`, `AABB` is used. */
+    frustumCulling: FrustumCullingCheck
     /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
     DOMFrustumMargins: RectCoords
 
@@ -439,13 +454,97 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
     /* RENDER */
 
     /**
-     * Check if the Mesh lies inside the {@link camera} view frustum or not.
+     * Get the geometry bounding sphere in clip space.
+     * @readonly
+     */
+    get clipSpaceBoundingSphere(): {
+      /** Center of the bounding sphere. */
+      center: Vec3
+      /** Radius of the bounding sphere. */
+      radius: number
+    } {
+      const { center, radius, min, max } = this.geometry.boundingBox
+
+      // get actual translation and max scale
+      const translation = this.worldMatrix.getTranslation()
+      const maxWorldRadius = radius * this.worldMatrix.getMaxScaleOnAxis()
+
+      // get the center on the back face
+      const cMin = center.clone().add(translation)
+      cMin.z += min.z
+
+      // get the center on the front face
+      const cMax = center.clone().add(translation)
+      cMax.z += max.z
+
+      // get a point on the back face sphere
+      // use Y because the projection is dependent of the Y axis
+      const sMin = cMin.clone()
+      sMin.y += maxWorldRadius
+
+      // get a point on the front face sphere
+      const sMax = cMax.clone()
+      sMax.y += maxWorldRadius
+
+      // apply view projection matrix
+      cMin.applyMat4(this.camera.viewProjectionMatrix)
+      cMax.applyMat4(this.camera.viewProjectionMatrix)
+      sMin.applyMat4(this.camera.viewProjectionMatrix)
+      sMax.applyMat4(this.camera.viewProjectionMatrix)
+
+      // now get the bounding rectangle of the back and front face rectangles
+      const rMin = cMin.distance(sMin)
+      const rMax = cMax.distance(sMax)
+
+      const rectMin = {
+        xMin: cMin.x - rMin,
+        xMax: cMin.x + rMin,
+        yMin: cMin.y - rMin,
+        yMax: cMin.y + rMin,
+      }
+
+      const rectMax = {
+        xMin: cMax.x - rMax,
+        xMax: cMax.x + rMax,
+        yMin: cMax.y - rMax,
+        yMax: cMax.y + rMax,
+      }
+
+      // compute final rectangle
+      const rect = {
+        xMin: Math.min(rectMin.xMin, rectMax.xMin),
+        yMin: Math.min(rectMin.yMin, rectMax.yMin),
+        xMax: Math.max(rectMin.xMax, rectMax.xMax),
+        yMax: Math.max(rectMin.yMax, rectMax.yMax),
+      }
+
+      // get sphere center
+      const sphereCenter = cMax.add(cMin).multiplyScalar(0.5).clone()
+      sphereCenter.x = (rect.xMax + rect.xMin) / 2
+      sphereCenter.y = (rect.yMax + rect.yMin) / 2
+
+      // get sphere radius
+      const sphereRadius = Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin)
+
+      return {
+        center: sphereCenter,
+        radius: sphereRadius,
+      }
+    }
+
+    /**
+     * Check if the Mesh lies inside the {@link camera} view frustum or not using the test defined by {@link frustumCulling}.
      */
     checkFrustumCulling() {
       if (this.matricesNeedUpdate) {
         if (this.domFrustum && this.frustumCulling) {
-          // would be faster with a bounding sphere but...
-          this.domFrustum.computeProjectedToDocumentCoords()
+          if (this.frustumCulling === 'sphere') {
+            this.domFrustum.setDocumentCoordsFromClipSpaceSphere(this.clipSpaceBoundingSphere)
+          } else {
+            this.domFrustum.setDocumentCoordsFromClipSpaceAABB()
+          }
+
+          this.domFrustum.intersectsContainer()
         }
       }
     }

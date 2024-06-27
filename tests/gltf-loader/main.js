@@ -313,37 +313,38 @@ window.addEventListener('load', async () => {
       `
 
       const lightContribution = /* wgsl */ `
-      let L = normalize(pointLight.position - worldPosition);
-      let H = normalize(V + L);
+      let L: vec3f = normalize(pointLight.position - worldPosition);
+      let H: vec3f = normalize(V + L);
       
-      let NdotL: f32 = clamp(dot(N, L), 0.001, 1.0);
+      let NdotL: f32 = clamp(dot(N, L), 0.0, 1.0);
       let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
       let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
     
       // cook-torrance brdf
-      let NDF = DistributionGGX(NdotH, roughness);
-      let G = GeometrySmith(NdotL, NdotV, roughness);
-      let F = FresnelSchlick(VdotH, f0);
+      let NDF: f32 = DistributionGGX(NdotH, roughness);
+      let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
+      let F: vec3f = FresnelSchlick(VdotH, f0);
     
-      let kD = (vec3(1.0) - F) * (1.0 - metallic);
+      let kD: vec3f = (vec3(1.0) - F) * (1.0 - metallic);
     
-      let numerator = NDF * G * F;
-      let denominator = max(4.0 * NdotV * NdotL, 0.001);
+      let numerator: vec3f = NDF * G * F;
+      let denominator: f32 = max(4.0 * NdotV * NdotL, 0.001);
       //let denominator = 4.0 * NdotV * NdotL + 0.0001;
-      let specular = numerator / vec3(denominator);
+      let specular: vec3f = numerator / vec3(denominator);
       
       // add lights spec to alpha for reflections on transparent surfaces (glass)
       color.a = max(color.a, max(max(specular.r, specular.g), specular.b));
               
-      let distance = length(pointLight.position - worldPosition);
-      let attenuation = rangeAttenuation(pointLight.range, distance);
+      let distance: f32 = length(pointLight.position - worldPosition);
+      let attenuation: f32 = rangeAttenuation(pointLight.range, distance);
       
-      let radiance = pointLight.color * pointLight.intensity * attenuation;
+      let radiance: vec3f = pointLight.color * pointLight.intensity * attenuation;
       
       lightContribution.diffuse += (kD / vec3(PI)) * radiance * NdotL;
       lightContribution.specular += specular * radiance * NdotL;
       `
 
+      // debug
       const additionalColorContribution = `
         //color = vec4(vec3(occlusion), color.a);
       `

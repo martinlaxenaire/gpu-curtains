@@ -71,9 +71,10 @@ class Box3 {
    * Apply a {@link Mat4 | matrix} to a {@link Box3}
    * Useful to apply a transformation {@link Mat4 | matrix} to a {@link Box3}
    * @param matrix - {@link Mat4 | matrix} to use
-   * @returns - this {@link Box3} after {@link Mat4 | matrix} application
+   * @param transformedBox - {@link Box3 | transformed Box3} to set
+   * @returns - the {@link Box3 | transformed Box3} after {@link Mat4 | matrix} application
    */
-  applyMat4(matrix = new Mat4()) {
+  applyMat4(matrix = new Mat4(), transformedBox = new Box3()) {
     if (this.isEmpty())
       return this;
     const corners = [];
@@ -92,12 +93,11 @@ class Box3 {
       corners[6] = points[6].set(this.max.x, this.max.y, this.min.z).applyMat4(matrix);
       corners[7] = points[7].set(this.max.x, this.max.y, this.max.z).applyMat4(matrix);
     }
-    const transFormedBox = new Box3();
     for (let i = 0, cornersCount = corners.length; i < cornersCount; i++) {
-      transFormedBox.min.min(corners[i]);
-      transFormedBox.max.max(corners[i]);
+      transformedBox.min.min(corners[i]);
+      transformedBox.max.max(corners[i]);
     }
-    return transFormedBox;
+    return transformedBox;
   }
 }
 

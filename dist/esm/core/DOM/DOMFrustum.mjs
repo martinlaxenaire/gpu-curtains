@@ -1,5 +1,6 @@
 import { Box3 } from '../../math/Box3.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
+import { Vec3 } from '../../math/Vec3.mjs';
 
 const defaultDOMFrustumMargins = {
   top: 0,
@@ -32,6 +33,7 @@ class DOMFrustum {
     }
   }) {
     this.boundingBox = boundingBox;
+    this.clipSpaceAABB = new Box3();
     this.modelViewProjectionMatrix = modelViewProjectionMatrix;
     this.containerBoundingRect = containerBoundingRect;
     this.DOMFrustumMargins = { ...defaultDOMFrustumMargins, ...DOMFrustumMargins };
@@ -69,29 +71,52 @@ class DOMFrustum {
     };
   }
   /**
-   * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox} and then check against intersections
+   * Compute the axis aligned bounding box in clip space.
    */
-  computeProjectedToDocumentCoords() {
-    const projectedBox = this.boundingBox.applyMat4(this.modelViewProjectionMatrix);
-    projectedBox.min.x = (projectedBox.min.x + 1) * 0.5;
-    projectedBox.max.x = (projectedBox.max.x + 1) * 0.5;
-    projectedBox.min.y = 1 - (projectedBox.min.y + 1) * 0.5;
-    projectedBox.max.y = 1 - (projectedBox.max.y + 1) * 0.5;
-    const { width, height, top, left } = this.containerBoundingRect;
-    this.projectedBoundingRect = {
-      left: projectedBox.min.x * width + left,
-      x: projectedBox.min.x * width + left,
-      top: projectedBox.max.y * height + top,
-      y: projectedBox.max.y * height + top,
-      right: projectedBox.max.x * width + left,
-      bottom: projectedBox.min.y * height + top,
-      width: projectedBox.max.x * width + left - (projectedBox.min.x * width + left),
-      height: projectedBox.min.y * height + top - (projectedBox.max.y * height + top)
-    };
-    this.intersectsContainer();
+  computeClipSpaceAABB() {
+    this.clipSpaceAABB.set();
+    this.boundingBox.applyMat4(this.modelViewProjectionMatrix, this.clipSpaceAABB);
   }
   /**
-   * Check whether our {@link projectedBoundingRect} intersects with our {@link DOMFrustumBoundingRect}
+   * Applies all {@link modelViewProjectionMatrix} transformations to our {@link boundingBox}, i.e. apply AABB to document coordinates and set {@link projectedBoundingRect}.
+   */
+  setDocumentCoordsFromClipSpaceAABB() {
+    this.computeClipSpaceAABB();
+    const minX = (this.clipSpaceAABB.min.x + 1) * 0.5;
+    const maxX = (this.clipSpaceAABB.max.x + 1) * 0.5;
+    const minY = 1 - (this.clipSpaceAABB.min.y + 1) * 0.5;
+    const maxY = 1 - (this.clipSpaceAABB.max.y + 1) * 0.5;
+    const { width, height, top, left } = this.containerBoundingRect;
+    this.projectedBoundingRect = {
+      left: minX * width + left,
+      x: minX * width + left,
+      top: maxY * height + top,
+      y: maxY * height + top,
+      right: maxX * width + left,
+      bottom: minY * height + top,
+      width: maxX * width + left - (minX * width + left),
+      height: minY * height + top - (maxY * height + top)
+    };
+  }
+  /**
+   * Apply the bounding sphere in clip space to document coordinates and set {@link projectedBoundingRect}.
+   * @param boundingSphere - bounding sphere in clip space.
+   */
+  setDocumentCoordsFromClipSpaceSphere(boundingSphere = { center: new Vec3(), radius: 0 }) {
+    const centerX = (boundingSphere.center.x + 1) * 0.5;
+    const centerY = 1 - (boundingSphere.center.y + 1) * 0.5;
+    const { width, height, top, left } = this.containerBoundingRect;
+    this.projectedBoundingRect.width = boundingSphere.radius * height * 0.5;
+    this.projectedBoundingRect.height = boundingSphere.radius * height * 0.5;
+    this.projectedBoundingRect.left = centerX * width + left - this.projectedBoundingRect.width * 0.5;
+    this.projectedBoundingRect.x = centerX * width + left - this.projectedBoundingRect.width * 0.5;
+    this.projectedBoundingRect.top = centerY * height + top - this.projectedBoundingRect.height * 0.5;
+    this.projectedBoundingRect.y = centerY * height + top - this.projectedBoundingRect.height * 0.5;
+    this.projectedBoundingRect.right = this.projectedBoundingRect.left + this.projectedBoundingRect.width;
+    this.projectedBoundingRect.bottom = this.projectedBoundingRect.top + this.projectedBoundingRect.height;
+  }
+  /**
+   * Check whether our {@link projectedBoundingRect} intersects with our {@link DOMFrustumBoundingRect}.
    */
   intersectsContainer() {
     if (Math.round(this.DOMFrustumBoundingRect.right) <= this.containerBoundingRect.left || Math.round(this.DOMFrustumBoundingRect.left) >= this.containerBoundingRect.left + this.containerBoundingRect.width || Math.round(this.DOMFrustumBoundingRect.bottom) <= this.containerBoundingRect.top || Math.round(this.DOMFrustumBoundingRect.top) >= this.containerBoundingRect.top + this.containerBoundingRect.height) {

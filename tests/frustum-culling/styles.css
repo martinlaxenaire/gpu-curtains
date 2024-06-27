@@ -1,0 +1,37 @@
+#shuffle-button {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  font-size: 0.875rem;
+  z-index: 1;
+}
+
+.bounding-box {
+  position: fixed;
+  box-sizing: border-box;
+  font-size: 0.5rem;
+  color: var(--color, white);
+  border: 1px solid var(--color, white);
+}
+
+.bounding-box::after {
+  position: absolute;
+  top: 0.1em;
+  left: 0.1em;
+}
+
+.sphere-bounding-box {
+  --color: green;
+}
+
+.sphere-bounding-box::after {
+  content: 'sphere';
+}
+
+.aabb-bounding-box {
+  --color: red;
+}
+
+.aabb-bounding-box::after {
+  content: 'AABB';
+}
