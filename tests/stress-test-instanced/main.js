@@ -1,7 +1,9 @@
 // real basic instancing stress test
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCurtains, Mesh, SphereGeometry } = await import(/* @vite-ignore */ path)
+  const { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Mesh, SphereGeometry } = await import(
+    /* @vite-ignore */ path
+  )
 
   const stats = new Stats()
 
@@ -11,33 +13,41 @@ window.addEventListener('load', async () => {
 
   const systemSize = 50
 
-  // set our main GPUCurtains instance it will handle everything we need
-  // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
-  const gpuCurtains = new GPUCurtains({
+  const gpuDeviceManager = new GPUDeviceManager({
+    label: 'Custom device manager',
+    // production: true, // you can always gain a couple fps by not tracking the errors
+  })
+
+  // wait for the device to be created
+  await gpuDeviceManager.init()
+
+  // create a camera renderer
+  const gpuCameraRenderer = new GPUCameraRenderer({
+    deviceManager: gpuDeviceManager,
     container: '#canvas',
-    watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       near: systemSize,
       far: systemSize * 4,
     },
-    //production: true, // you can always gain a couple fps by not tracking the errors
   })
 
-  await gpuCurtains.setDevice()
+  // render it
+  const animate = () => {
+    requestAnimationFrame(animate)
 
-  gpuCurtains.renderer
-    .onBeforeRender(() => {
-      stats.begin()
-    })
-    .onAfterRender(() => {
-      stats.end()
-    })
+    stats.begin()
 
-  gpuCurtains.camera.position.z = systemSize * 2
+    gpuDeviceManager.render()
+    stats.end()
+  }
+
+  animate()
+
+  gpuCameraRenderer.camera.position.z = systemSize * 2
 
   // not specifically designed to be responsive
-  const aspectRatio = gpuCurtains.boundingRect.width / gpuCurtains.boundingRect.height
+  const aspectRatio = gpuCameraRenderer.boundingRect.width / gpuCameraRenderer.boundingRect.height
 
   console.time('creation time')
   let nbMeshes = 3000
@@ -82,15 +92,15 @@ window.addEventListener('load', async () => {
       var vsOutput : VSOutput;
       
       // get what instance is actually drawn
-      var instanceIndex: f32 = f32(attributes.instanceIndex);
+      let instanceIndex: f32 = f32(attributes.instanceIndex);
       
       // rotate instance first
       let instanceSpeed: f32 = rand11(instanceIndex) * 0.5 + 0.5;
-      var angle: f32 = 3.141592 * frames.elapsed * 0.0025 * instanceSpeed + instanceIndex;
+      let angle: f32 = 3.141592 * frames.elapsed * 0.0025 * instanceSpeed + instanceIndex;
       
       var transformed: vec3f = attributes.position;
       
-      var rotatedTransformed: vec4f = vec4(transformed, 1.0) * rotationMatrix(vec3(0.0, 1.0, 1.0), angle);
+      let rotatedTransformed: vec4f = vec4(transformed, 1.0) * rotationMatrix(vec3(0.0, 1.0, 1.0), angle);
       transformed = rotatedTransformed.xyz;
             
       // then instance translation
@@ -114,13 +124,14 @@ window.addEventListener('load', async () => {
       vsOutput.uv = attributes.uv;
       
       // normals      
-      vsOutput.normal = attributes.normal;
+      let rotatedNormal: vec4f = vec4(attributes.normal, 1.0) * rotationMatrix(vec3(0.0, 1.0, 1.0), angle);
+      vsOutput.normal = rotatedNormal.xyz;
             
       return vsOutput;
     }
   `
 
-  const cubeInstances = new Mesh(gpuCurtains, {
+  const cubeInstances = new Mesh(gpuCameraRenderer, {
     geometry: cubeGeometry,
     //frustumCulling: false,
     shaders: {
@@ -160,7 +171,7 @@ window.addEventListener('load', async () => {
     cubeInstances.uniforms.frames.elapsed.value++
   })
 
-  const sphereInstances = new Mesh(gpuCurtains, {
+  const sphereInstances = new Mesh(gpuCameraRenderer, {
     geometry: sphereGeometry,
     //frustumCulling: false,
     shaders: {

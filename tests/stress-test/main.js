@@ -1,7 +1,7 @@
 // real basic stress test
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, GPUCurtains, Mesh, SphereGeometry } = await import(
+  const { GPUDeviceManager, GPUCameraRenderer, BoxGeometry, Mesh, SphereGeometry } = await import(
     /* @vite-ignore */ path
   )
 
