@@ -1,8 +1,11 @@
 import { RenderMaterialShadersType } from '../../types/Materials'
-import get_output_position from './chunks/get_output_position.wgsl'
-import get_normals from './chunks/get_normals.wgsl'
-import get_uv_cover from './chunks/get_uv_cover.wgsl'
-import get_vertex_to_uv_coords from './chunks/get_vertex_to_uv_coords.wgsl'
+import get_output_position from './chunks/helpers/get_output_position.wgsl'
+import get_normals from './chunks/helpers/get_normals.wgsl'
+import get_uv_cover from './chunks/helpers/get_uv_cover.wgsl'
+import get_vertex_to_uv_coords from './chunks/helpers/get_vertex_to_uv_coords.wgsl'
+import light_contribution from './chunks/helpers/lights/light_contribution.wgsl'
+import get_lambert_light_contribution from './chunks/helpers/lights/get_lambert_light_contribution.wgsl'
+import get_phong_light_contribution from './chunks/helpers/lights/get_phong_light_contribution.wgsl'
 
 /** Defines {@link ShaderChunks} object structure */
 export type ShaderChunks = Record<RenderMaterialShadersType, Record<string, string>>
@@ -39,5 +42,9 @@ export const ProjectedShaderChunks = {
     get_normals,
   },
   /** WGSL code chunks added to the fragment shader */
-  fragment: {},
+  fragment: {
+    light_contribution,
+    get_lambert_light_contribution,
+    get_phong_light_contribution,
+  },
 } as ProjectedShaderChunks

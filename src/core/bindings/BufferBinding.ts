@@ -470,11 +470,14 @@ export class BufferBinding extends Binding {
             .join(',\n\t')}
 };\n\n`
 
-          const interleavedBufferStructDeclaration = `${this.name}Element: array<${kebabCaseLabel}Element${arrayLength}>,`
+          const interleavedBufferName = this.bufferElements.find((bufferElement) => bufferElement.name === 'elements')
+            ? `${this.name}Elements`
+            : 'elements'
+          const interleavedBufferStructDeclaration = `${interleavedBufferName}: array<${kebabCaseLabel}Element${arrayLength}>,`
 
           this.wgslStructFragment += `struct ${kebabCaseLabel} {\n\t${bufferElements
             .map((bufferElement) => bufferElement.name + ': ' + bufferElement.type)
-            .join(',\n\t')}
+            .join(',\n\t')},
 \t${interleavedBufferStructDeclaration}
 };`
 

@@ -4,7 +4,7 @@ import { RenderTarget } from './RenderTarget'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin'
 import { Texture } from '../textures/Texture'
-import default_pass_fsWGSl from '../shaders/chunks/default_pass_fs.wgsl'
+import default_pass_fsWGSl from '../shaders/chunks/default/default_pass_fs.wgsl'
 import { throwWarning } from '../../utils/utils'
 
 /**

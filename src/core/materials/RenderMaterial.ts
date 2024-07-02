@@ -1,5 +1,5 @@
 import { Material } from './Material'
-import { isRenderer, Renderer } from '../renderers/utils'
+import { isRenderer, Renderer, CameraRenderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
 import {
   AllowedGeometries,
@@ -12,9 +12,9 @@ import {
 import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
 import { throwWarning } from '../../utils/utils'
 import { compareRenderingOptions } from './utils'
-import default_projected_vsWgsl from '../shaders/chunks/default_projected_vs.wgsl'
-import default_vsWgsl from '../shaders/chunks/default_vs.wgsl'
-import default_fsWgsl from '../shaders/chunks/default_fs.wgsl'
+import default_projected_vsWgsl from '../shaders/chunks/default/default_projected_vs.wgsl'
+import default_vsWgsl from '../shaders/chunks/default/default_vs.wgsl'
+import default_fsWgsl from '../shaders/chunks/default/default_fs.wgsl'
 
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
@@ -238,15 +238,33 @@ export class RenderMaterial extends Material {
   /* BIND GROUPS */
 
   /**
-   * Create the bind groups if they need to be created, but first add Camera bind group if needed
+   * Get whether this {@link RenderMaterial} uses the renderer camera and lights bind group.
+   * @readonly
+   * */
+  get useCameraBindGroup(): boolean {
+    return 'cameraLightsBindGroup' in this.renderer && this.options.rendering.useProjection
+  }
+
+  /**
+   * Create the bind groups if they need to be created, but first add camera and lights bind group if needed.
    */
   createBindGroups() {
-    // camera first!
-    if ('cameraBindGroup' in this.renderer && this.options.rendering.useProjection) {
-      this.bindGroups.push(this.renderer.cameraBindGroup)
-      this.renderer.cameraBindGroup.consumers.add(this.uuid)
+    // camera and lights first!
+    if (this.useCameraBindGroup) {
+      this.bindGroups.push((this.renderer as CameraRenderer).cameraLightsBindGroup)
+      ;(this.renderer as CameraRenderer).cameraLightsBindGroup.consumers.add(this.uuid)
     }
 
     super.createBindGroups()
+  }
+
+  /**
+   * Update all bind groups, except for the camera and light bind groups if present, as it is already updated by the renderer itself.
+   */
+  updateBindGroups() {
+    const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0
+    for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
+      this.updateBindGroup(this.bindGroups[i])
+    }
   }
 }
