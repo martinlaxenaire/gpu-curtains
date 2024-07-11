@@ -42,6 +42,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
     alphaMode = 'premultiplied',
     renderPass,
     camera,
+    lights,
   }: GPUCameraRendererParams) {
     super({
       deviceManager,
@@ -53,6 +54,7 @@ export class GPUCurtainsRenderer extends GPUCameraRenderer {
       alphaMode,
       renderPass,
       camera,
+      lights,
     } as GPUCameraRendererParams)
 
     this.type = 'GPUCurtainsRenderer'

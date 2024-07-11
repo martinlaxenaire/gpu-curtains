@@ -16,6 +16,13 @@ import default_projected_vsWgsl from '../../shaders/chunks/default/default_proje
 import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl'
 import { BufferBindingParams } from '../../bindings/BufferBinding'
 import { Vec3 } from '../../../math/Vec3'
+import { ShadowCastingLights } from '../../lights/Light'
+import {
+  getPCFDirectionalShadows,
+  getPCFPointShadowContribution,
+  getPCFPointShadows,
+  getPCFShadowContribution,
+} from '../../shaders/chunks/utils/shadows'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean
@@ -28,6 +35,9 @@ export interface ProjectedMeshBaseParams {
   frustumCulling?: FrustumCullingCheck
   /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
   DOMFrustumMargins?: RectCoords
+
+  receiveShadows?: boolean
+  castShadows?: boolean
 }
 
 /** Parameters used to create a ProjectedMesh */
@@ -46,6 +56,8 @@ const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
     bottom: 0,
     left: 0,
   },
+  receiveShadows: false,
+  castShadows: false,
 }
 
 /** Base options used to create this ProjectedMesh */
@@ -233,12 +245,22 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this.renderer = renderer
 
-      const { frustumCulling, DOMFrustumMargins } = parameters
+      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
         frustumCulling,
         DOMFrustumMargins,
+        receiveShadows,
+        castShadows,
+      }
+
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.addShadowCastingMesh(this)
+          }
+        })
       }
 
       this.setDOMFrustum()
@@ -330,6 +352,54 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       // patch mesh parameters
       delete parameters.frustumCulling
       delete parameters.DOMFrustumMargins
+
+      if (this.options.receiveShadows) {
+        const depthTextures = []
+        let depthSamplers = []
+
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            depthTextures.push(light.shadow.depthTexture)
+            depthSamplers.push(light.shadow.depthComparisonSampler)
+          }
+        })
+
+        // add helpers to shaders
+        const hasDirectionalShadow = this.renderer.shadowCastingLights.find(
+          (light) => light.type === 'directionalLights' && light.shadow.isActive
+        )
+
+        if (hasDirectionalShadow && parameters.shaders.fragment) {
+          parameters.shaders.fragment.code =
+            getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + parameters.shaders.fragment.code
+        }
+
+        const hasPointShadow = this.renderer.shadowCastingLights.find(
+          (light) => light.type === 'pointLights' && light.shadow.isActive
+        )
+
+        if (hasPointShadow && parameters.shaders.fragment) {
+          parameters.shaders.fragment.code =
+            getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + parameters.shaders.fragment.code
+        }
+
+        // filter duplicate depth comparison samplers
+        depthSamplers = depthSamplers.filter(
+          (sampler, i, array) => array.findIndex((s) => s.uuid === sampler.uuid) === i
+        )
+
+        if (parameters.textures) {
+          parameters.textures = [...parameters.textures, ...depthTextures]
+        } else {
+          parameters.textures = depthTextures
+        }
+
+        if (parameters.samplers) {
+          parameters.samplers = [...parameters.samplers, ...depthSamplers]
+        } else {
+          parameters.samplers = depthSamplers
+        }
+      }
 
       super.cleanupRenderMaterialParameters(parameters)
 

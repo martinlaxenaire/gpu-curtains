@@ -9,19 +9,33 @@ export class AmbientLight extends Light {
 
     this.type = 'ambientLights'
 
-    this.rendererBinding = this.renderer.lightsBufferBindings[this.type]
+    this.rendererBinding = this.renderer.bindings[this.type]
 
-    if (this.index + 1 > this.renderer.lightsBufferBindingParams[this.type].max) {
+    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
       this.onMaxLightOverflow(this.type as LightsType)
     }
 
     this.init({ color, intensity })
   }
 
-  init({ color, intensity }) {
+  init({ color, intensity }: LightBaseParams) {
     this.rendererBinding.inputs.count.value = ambientLightIndex
     this.rendererBinding.inputs.count.shouldUpdate = true
 
     super.init({ color, intensity })
   }
+
+  // explicitly disable all kinds of transformations
+
+  /** @ignore */
+  applyRotation() {}
+
+  /** @ignore */
+  applyPosition() {}
+
+  /** @ignore */
+  applyScale() {}
+
+  /** @ignore */
+  applyTransformOrigin() {}
 }

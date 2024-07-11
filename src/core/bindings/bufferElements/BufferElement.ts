@@ -244,9 +244,11 @@ export class BufferElement {
       // go to next row
       nextPositionAvailable.row += 1
       nextPositionAvailable.byte = 0
-    } else if (size > bytesPerRow && nextPositionAvailable.byte > bytesPerRow) {
+    } else if (size > bytesPerRow && (nextPositionAvailable.byte > bytesPerRow || nextPositionAvailable.byte > 0)) {
       // there's also the case where the binding size is too big
       // and we have already padded it above
+      // or we've just started a new row
+      // but the binding size is too big to fit in one row
       // just go to next row as well
       nextPositionAvailable.row += 1
       nextPositionAvailable.byte = 0

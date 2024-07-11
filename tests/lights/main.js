@@ -1,4 +1,6 @@
 // Basic rotating cube for most simple tests
+import { getPhong } from '../../src/core/shaders/chunks/utils/lights.ts'
+
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -11,6 +13,8 @@ window.addEventListener('load', async () => {
     PointLight,
     Vec3,
     Mesh,
+    getLambertLightContribution,
+    getPhong,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager
@@ -66,35 +70,44 @@ window.addEventListener('load', async () => {
   const fs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
+      @builtin(front_facing) frontFacing: bool,
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
       @location(2) worldPosition: vec3f,
       @location(3) viewDirection: vec3f,
     };
+    
+    
+    ${getPhong}
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec3f = shading.color;
       
-      let normal = normalize(fsInput.normal);
+      // negate the normals if we're using front face culling
+      let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
+      let normal = normalize(faceDirection * fsInput.normal);
+      
       let worldPosition = fsInput.worldPosition;
       let viewDirection = normalize(fsInput.viewDirection);
-      
-      //let totalAmbient: vec3f = getAmbientContribution();
-      
-      // diffuse lambert shading
-      //let totalDiffuse: vec3f = getTotalDiffuseContribution(normal, worldPosition);
       
       var lightContribution: LightContribution;
       
       if(shading.useLambert == 1) {
         // lambert
         lightContribution = getLambertLightContribution(normal, worldPosition);
+        
+        //color = (lightContribution.ambient + lightContribution.diffuse + lightContribution.specular) * color;
+        color = getLambert(
+          normal,
+          worldPosition,
+          color
+        );
       } else {
         // phong shading
         let specularStrength: f32 = 1.0;
         let specularColor: vec3f = vec3(1.0);
         let shininess: f32 = 30;
-        lightContribution = getPhongLightContribution(
+        lightContribution = getPhong(
           normal,
           worldPosition,
           viewDirection,
@@ -102,9 +115,19 @@ window.addEventListener('load', async () => {
           phong.specularColor,
           phong.specularStrength
         );
+        
+        //color = (lightContribution.ambient + lightContribution.diffuse + lightContribution.specular) * color;
+        
+        color = getPhong(
+          normal,
+          worldPosition,
+          color,
+          viewDirection,
+          phong.specularColor,
+          phong.specularStrength,
+          phong.shininess
+        );
       }
-      
-      color = (lightContribution.ambient + lightContribution.diffuse + lightContribution.specular) * color;
       
       return vec4(color, 1.0);
     }
@@ -119,7 +142,7 @@ window.addEventListener('load', async () => {
   // setTimeout(() => {
   //   ambientLights.push(
   //     new AmbientLight(gpuCameraRenderer, {
-  //       color: new Vec3(0, 1, 0),
+  //       color: new Vec3(1, 1, 0),
   //       intensity: 0.2,
   //     })
   //   )
@@ -129,8 +152,13 @@ window.addEventListener('load', async () => {
     new DirectionalLight(gpuCameraRenderer, {
       color: new Vec3(1, 0, 0),
       position: new Vec3(10),
+      // shadow: {
+      //   intensity: 1,
+      // },
     })
   )
+
+  console.log(directionalLights)
 
   pointLights.push(
     new PointLight(gpuCameraRenderer, {
@@ -199,7 +227,7 @@ window.addEventListener('load', async () => {
       // mesh.rotation.y += 0.02
     })
     .onReady(() => {
-      //console.log(mesh.material.getAddedShaderCode('vertex'))
+      console.log(mesh.material.getAddedShaderCode('fragment'))
     })
 
   // mesh.rotation.x = 0.5

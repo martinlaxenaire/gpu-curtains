@@ -1,8 +1,13 @@
 import { Vec3 } from '../../math/Vec3'
 import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
 import { BufferBinding } from '../bindings/BufferBinding'
+import { Object3D } from '../objects3D/Object3D'
+import { generateUUID } from '../../utils/utils'
+import { DirectionalLight } from './DirectionalLight'
+import { PointLight } from './PointLight'
 
 export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights'
+export type ShadowCastingLights = DirectionalLight | PointLight
 
 export interface LightBaseParams {
   color?: Vec3
@@ -13,8 +18,9 @@ export interface LightParams extends LightBaseParams {
   index?: number
 }
 
-export class Light {
+export class Light extends Object3D {
   type: string | LightsType
+  uuid: string
   index: number
   renderer: CameraRenderer
 
@@ -25,6 +31,8 @@ export class Light {
   rendererBinding: BufferBinding | null
 
   constructor(renderer: CameraRenderer, { color = new Vec3(1), intensity = 1, index = 0 } = {} as LightParams) {
+    super()
+
     this.type = 'light'
 
     Object.defineProperty(this as Light, 'index', { value: index })
@@ -33,7 +41,11 @@ export class Light {
 
     this.renderer = renderer
 
+    this.uuid = generateUUID()
+
     this.rendererBinding = null // should be explicitly set by inheriting classes
+
+    this.renderer.addLight(this)
   }
 
   init({ color, intensity }) {
@@ -61,13 +73,11 @@ export class Light {
         this.rendererBinding.inputs[propertyKey].value[this.index * 3] = value.x
         this.rendererBinding.inputs[propertyKey].value[this.index * 3 + 1] = value.y
         this.rendererBinding.inputs[propertyKey].value[this.index * 3 + 2] = value.z
-
-        this.rendererBinding.inputs[propertyKey].shouldUpdate = true
       } else {
         this.rendererBinding.inputs[propertyKey].value[this.index] = value
-        this.rendererBinding.inputs[propertyKey].shouldUpdate = true
       }
 
+      this.rendererBinding.inputs[propertyKey].shouldUpdate = true
       this.renderer.shouldUpdateCameraLightsBindGroup()
     }
   }
@@ -75,7 +85,15 @@ export class Light {
   onMaxLightOverflow(lightsType: LightsType) {
     if (this.rendererBinding) {
       this.renderer.onMaxLightOverflow(lightsType)
-      this.rendererBinding = this.renderer.lightsBufferBindings[lightsType]
+      this.rendererBinding = this.renderer.bindings[lightsType]
     }
+  }
+
+  remove() {
+    this.renderer.removeLight(this)
+  }
+
+  destroy() {
+    this.parent = null
   }
 }

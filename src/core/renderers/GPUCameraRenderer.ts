@@ -4,11 +4,16 @@ import { Camera, CameraBasePerspectiveOptions } from '../camera/Camera'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { BindGroup } from '../bindGroups/BindGroup'
 import { Vec3 } from '../../math/Vec3'
-import { AllowedBindGroups } from '../../types/BindGroups'
+import { AllowedBindGroups, Input } from '../../types/BindGroups'
 import { RectBBox } from '../DOM/DOMElement'
-import { LightsType } from '../lights/Light'
+import { Light, LightsType, ShadowCastingLights } from '../lights/Light'
 import { WGSLVariableType } from '../bindings/utils'
 import { throwWarning } from '../../utils/utils'
+import { DirectionalLight } from '../lights/DirectionalLight'
+import { PointLight } from '../lights/PointLight'
+import { directionalShadowStruct } from '../shadows/DirectionalShadow'
+import { pointShadowStruct } from '../shadows/PointShadow'
+import { ShadowsType } from '../shadows/Shadow'
 
 export interface LightParams {
   max: number
@@ -16,12 +21,14 @@ export interface LightParams {
   params: Record<string, { type: WGSLVariableType; size: number }>
 }
 
-export type LightsBufferBindingParams = Record<LightsType, LightParams>
+export type LightsBindingParams = Record<LightsType, LightParams>
+
+export type GPUCameraRendererBindings = Record<'camera' | LightsType | ShadowsType, BufferBinding>
 
 export interface GPUCameraRendererLightParams {
-  maxAmbientLights?: LightsBufferBindingParams['ambientLights']['max']
-  maxDirectionalLights?: LightsBufferBindingParams['directionalLights']['max']
-  maxPointLights?: LightsBufferBindingParams['pointLights']['max']
+  maxAmbientLights?: LightsBindingParams['ambientLights']['max']
+  maxDirectionalLights?: LightsBindingParams['directionalLights']['max']
+  maxPointLights?: LightsBindingParams['pointLights']['max']
 }
 
 /**
@@ -29,12 +36,12 @@ export interface GPUCameraRendererLightParams {
  */
 export interface GPUCameraRendererParams extends GPURendererParams {
   /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
-  camera: CameraBasePerspectiveOptions
+  camera?: CameraBasePerspectiveOptions
   lights?: GPUCameraRendererLightParams
 }
 
 /**
- * This renderer also creates a {@link Camera} and its associated {@link cameraBufferBinding | binding} and {@link cameraLightsBindGroup | bind group}.<br>
+ * This renderer also creates a {@link Camera} and its associated {@link bindings} and {@link cameraLightsBindGroup | bind group}.<br>
  * Can be safely used to render compute passes and meshes if they do not need to be tied to the DOM.
  *
  * @example
@@ -57,13 +64,13 @@ export interface GPUCameraRendererParams extends GPURendererParams {
 export class GPUCameraRenderer extends GPURenderer {
   /** {@link Camera} used by this {@link GPUCameraRenderer} */
   camera: Camera
-  /** {@link BufferBinding | binding} handling the {@link camera} matrices */
-  cameraBufferBinding: BufferBinding
-  /** {@link BindGroup | bind group} handling the {@link cameraBufferBinding | camera buffer binding} */
+  /** {@link BindGroup | bind group} handling the {@link cameraBinding | camera buffer binding} */
   cameraLightsBindGroup: BindGroup
 
-  lightsBufferBindingParams: LightsBufferBindingParams
-  lightsBufferBindings: Record<LightsType, BufferBinding>
+  lights: Light[]
+  lightsBindingParams: LightsBindingParams
+  shadowsBindingsStruct: Record<string, Record<string, Input>>
+  bindings: GPUCameraRendererBindings
 
   /** Options used to create this {@link GPUCameraRenderer} */
   options: GPUCameraRendererParams
@@ -109,12 +116,16 @@ export class GPUCameraRenderer extends GPURenderer {
       lights,
     }
 
+    this.bindings = {} as GPUCameraRendererBindings
     this.#shouldUpdateCameraLightsBindGroup = true
+
+    this.lights = []
 
     this.setCamera(camera)
 
     this.setCameraBinding()
     this.setLightsBinding()
+    this.setShadowsBinding()
     this.setCameraLightsBindGroup()
   }
 
@@ -130,7 +141,7 @@ export class GPUCameraRenderer extends GPURenderer {
 
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
-   * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBufferBinding | camera buffer binding}.
+   * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBinding | camera buffer binding}.
    * @async
    */
   restoreContext() {
@@ -138,6 +149,8 @@ export class GPUCameraRenderer extends GPURenderer {
     this.cameraLightsBindGroup?.restoreContext()
     this.updateCameraBindings()
   }
+
+  /* CAMERA */
 
   /**
    * Set the {@link camera}
@@ -162,7 +175,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBufferBinding} inputs view values and the {@link meshes} {@link Camera} object.
+   * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBinding} inputs view values and the {@link meshes} {@link Camera} object.
    * @param camera - new {@link Camera} to use.
    */
   useCamera(camera: Camera) {
@@ -176,13 +189,13 @@ export class GPUCameraRenderer extends GPURenderer {
     this.camera = camera
     this.camera.parent = this.scene
 
-    if (this.cameraBufferBinding) {
+    if (this.bindings.camera) {
       this.camera.onMatricesChanged = () => this.onCameraMatricesChanged()
 
       // replace the 2 matrices inputs view values
       // position will be computed before updating the binding anyway
-      this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix
-      this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix
+      this.bindings.camera.inputs.view.value = this.camera.viewMatrix
+      this.bindings.camera.inputs.projection.value = this.camera.projectionMatrix
 
       for (const mesh of this.meshes) {
         if ('modelViewMatrix' in mesh) {
@@ -206,11 +219,11 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
+   * Set the {@link cameraBinding | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
    */
   setCameraBinding() {
     // TODO add world matrix / inverseViewMatrix?
-    this.cameraBufferBinding = new BufferBinding({
+    this.bindings.camera = new BufferBinding({
       label: 'Camera',
       name: 'camera',
       visibility: ['vertex'],
@@ -230,7 +243,7 @@ export class GPUCameraRenderer extends GPURenderer {
           type: 'vec3f',
           value: this.camera.position.clone().setFromMatrixPosition(this.camera.worldMatrix),
           onBeforeUpdate: () => {
-            ;(this.cameraBufferBinding.inputs.position.value as Vec3)
+            ;(this.bindings.camera.inputs.position.value as Vec3)
               .copy(this.camera.position)
               .setFromMatrixPosition(this.camera.worldMatrix)
           },
@@ -239,8 +252,19 @@ export class GPUCameraRenderer extends GPURenderer {
     })
   }
 
+  /* LIGHTS */
+
+  addLight(light: Light) {
+    this.lights.push(light)
+  }
+
+  removeLight(light: Light) {
+    this.lights = this.lights.filter((l) => l.uuid !== light.uuid)
+    light.destroy()
+  }
+
   setLightsBinding() {
-    this.lightsBufferBindingParams = {
+    this.lightsBindingParams = {
       ambientLights: {
         max: this.options.lights.maxAmbientLights,
         label: 'Ambient lights',
@@ -259,7 +283,7 @@ export class GPUCameraRenderer extends GPURenderer {
             type: 'array<vec3f>',
             size: 3,
           },
-          position: {
+          direction: {
             type: 'array<vec3f>',
             size: 3,
           },
@@ -285,37 +309,37 @@ export class GPUCameraRenderer extends GPURenderer {
       },
     }
 
-    this.lightsBufferBindings = {
+    const lightsBindings = {
       ambientLights: null,
       directionalLights: null,
       pointLights: null,
     }
 
-    Object.keys(this.lightsBufferBindings).forEach((lightsType) => {
-      this.setLightsTypeBufferBinding(lightsType as LightsType)
+    Object.keys(lightsBindings).forEach((lightsType) => {
+      this.setLightsTypeBinding(lightsType as LightsType)
     })
   }
 
-  setLightsTypeBufferBinding(lightsType: LightsType) {
-    const structParams = Object.keys(this.lightsBufferBindingParams[lightsType].params)
+  setLightsTypeBinding(lightsType: LightsType) {
+    const structParams = Object.keys(this.lightsBindingParams[lightsType].params)
       .map((paramKey) => {
         return {
           key: paramKey,
-          type: this.lightsBufferBindingParams[lightsType].params[paramKey].type,
-          size: this.lightsBufferBindingParams[lightsType].params[paramKey].size,
+          type: this.lightsBindingParams[lightsType].params[paramKey].type,
+          size: this.lightsBindingParams[lightsType].params[paramKey].size,
         }
       })
       .reduce((acc, binding) => {
         acc[binding.key] = {
           type: binding.type,
-          value: new Float32Array(this.lightsBufferBindingParams[lightsType].max * binding.size),
+          value: new Float32Array(this.lightsBindingParams[lightsType].max * binding.size),
         }
 
         return acc
       }, {})
 
-    this.lightsBufferBindings[lightsType] = new BufferBinding({
-      label: this.lightsBufferBindingParams[lightsType].label,
+    this.bindings[lightsType] = new BufferBinding({
+      label: this.lightsBindingParams[lightsType].label,
       name: lightsType,
       bindingType: 'storage',
       visibility: ['vertex', 'fragment', 'compute'], // TODO needed in compute?
@@ -333,39 +357,109 @@ export class GPUCameraRenderer extends GPURenderer {
     if (!this.production) {
       throwWarning(
         `${this.type}: You are overflowing the current max lights count of ${
-          this.lightsBufferBindingParams[lightsType].max
+          this.lightsBindingParams[lightsType].max
         } for this type of lights: ${lightsType}. This should be avoided by setting a larger ${
           'max' + lightsType.charAt(0).toUpperCase() + lightsType.slice(1)
         } when instancing your ${this.type}.`
       )
     }
 
+    this.lightsBindingParams[lightsType].max++
+
     const oldLightBinding = this.cameraLightsBindGroup.getBindingByName(lightsType)
     this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding as BufferBinding)
 
-    this.lightsBufferBindingParams[lightsType].max++
-    this.setLightsTypeBufferBinding(lightsType)
+    this.setLightsTypeBinding(lightsType)
 
-    this.cameraLightsBindGroup.bindings.forEach((binding, index) => {
-      if (binding.name === lightsType) {
-        this.cameraLightsBindGroup.bindings[index] = this.lightsBufferBindings[lightsType]
-      }
-    })
+    const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType)
+
+    this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType]
+
+    // increase shadows binding size as well
+    if (lightsType === 'directionalLights' || lightsType === 'pointLights') {
+      const shadowsType = (lightsType.replace('Lights', '') + 'Shadows') as ShadowsType
+      const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType)
+      this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding as BufferBinding)
+      this.setShadowsTypeBinding(lightsType)
+
+      const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex(
+        (binding) => binding.name === shadowsType
+      )
+      this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType]
+    }
 
     this.cameraLightsBindGroup.resetEntries()
     this.cameraLightsBindGroup.createBindGroup()
   }
 
+  /* SHADOW MAPS */
+
+  get shadowCastingLights(): ShadowCastingLights[] {
+    return this.lights.filter(
+      (light) => light instanceof DirectionalLight || light instanceof PointLight
+    ) as ShadowCastingLights[]
+  }
+
+  setShadowsBinding() {
+    this.shadowsBindingsStruct = {
+      directional: directionalShadowStruct,
+      point: pointShadowStruct,
+    }
+
+    this.setShadowsTypeBinding('directionalLights')
+    this.setShadowsTypeBinding('pointLights')
+  }
+
+  setShadowsTypeBinding(lightsType: LightsType) {
+    const type = lightsType.replace('Lights', '')
+    const shadowsType = (type + 'Shadows') as ShadowsType
+    const struct = this.shadowsBindingsStruct[type]
+    const label = type.charAt(0).toUpperCase() + type.slice(1) + ' shadows'
+
+    const binding = new BufferBinding({
+      label: label + ' element',
+      name: shadowsType + 'Elements',
+      bindingType: 'uniform',
+      visibility: ['vertex', 'fragment'],
+      struct,
+    })
+
+    this.bindings[shadowsType] = new BufferBinding({
+      label: label,
+      name: shadowsType,
+      bindingType: 'storage',
+      visibility: ['vertex', 'fragment', 'compute'], // TODO needed in compute?
+      bindings: Array.from(Array(this.lightsBindingParams[lightsType].max).keys()).map((i) => {
+        return binding.clone({
+          ...binding.options,
+          // clone struct with new arrays
+          struct: Object.keys(struct).reduce((acc, bindingKey) => {
+            const binding = struct[bindingKey]
+            return {
+              ...acc,
+              [bindingKey]: {
+                type: binding.type,
+                value:
+                  Array.isArray(binding.value) || ArrayBuffer.isView(binding.value)
+                    ? new binding.value.constructor(binding.value.length)
+                    : binding.value,
+              },
+            }
+          }, {}),
+        })
+      }),
+    })
+  }
+
+  /* CAMERA, LIGHTS & SHADOWS BIND GROUP */
+
   setCameraLightsBindGroup() {
     // now initialize bind group
     this.cameraLightsBindGroup = new BindGroup(this, {
       label: 'Camera and lights uniform bind group',
-      bindings: [
-        this.cameraBufferBinding,
-        ...Object.keys(this.lightsBufferBindings)
-          .map((lightsType) => this.lightsBufferBindings[lightsType])
-          .flat(),
-      ],
+      bindings: Object.keys(this.bindings)
+        .map((bindingName) => this.bindings[bindingName])
+        .flat(),
     })
 
     this.cameraLightsBindGroup.consumers.add(this.uuid)
@@ -386,12 +480,12 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
+   * Tell our {@link cameraBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
    */
   updateCameraBindings() {
-    this.cameraBufferBinding?.shouldUpdateBinding('view')
-    this.cameraBufferBinding?.shouldUpdateBinding('projection')
-    this.cameraBufferBinding?.shouldUpdateBinding('position')
+    this.bindings.camera?.shouldUpdateBinding('view')
+    this.bindings.camera?.shouldUpdateBinding('projection')
+    this.bindings.camera?.shouldUpdateBinding('position')
 
     // tell our bind group to update
     this.shouldUpdateCameraLightsBindGroup()
@@ -476,6 +570,7 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy()
+    this.lights.forEach((light) => light.remove())
     super.destroy()
   }
 }

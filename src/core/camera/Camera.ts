@@ -66,6 +66,8 @@ export class Camera extends Object3D {
   /** Private {@link Camera} far plane */
   #far: number
 
+  up: Vec3
+
   /** The {@link Camera} frustum width and height */
   size: RectSize
   /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
@@ -104,6 +106,7 @@ export class Camera extends Object3D {
     // camera can't be at position (0, 0, 0), it needs some recoil
     // arbitrarily set to 10 so objects of default size (1, 1, 1) don't appear too big
     this.position.set(0, 0, 10)
+    this.up = new Vec3(0, 1, 0)
 
     // callback to run if any of the matrices changed
     this.onMatricesChanged = onMatricesChanged
@@ -392,7 +395,7 @@ export class Camera extends Object3D {
    */
   lookAt(target: Vec3 = new Vec3(), position = this.position) {
     // since we know it's a camera, inverse position and target
-    super.lookAt(position, target)
+    super.lookAt(position, target, this.up)
   }
 
   /**

@@ -91,10 +91,10 @@ class GPUCameraRenderer extends GPURenderer {
     }
     this.camera = camera;
     this.camera.parent = this.scene;
-    if (this.cameraBufferBinding) {
+    if (this.cameraBinding) {
       this.camera.onMatricesChanged = () => this.onCameraMatricesChanged();
-      this.cameraBufferBinding.inputs.view.value = this.camera.viewMatrix;
-      this.cameraBufferBinding.inputs.projection.value = this.camera.projectionMatrix;
+      this.cameraBinding.inputs.view.value = this.camera.viewMatrix;
+      this.cameraBinding.inputs.projection.value = this.camera.projectionMatrix;
       for (const mesh of this.meshes) {
         if ("modelViewMatrix" in mesh) {
           mesh.camera = this.camera;
@@ -117,7 +117,7 @@ class GPUCameraRenderer extends GPURenderer {
    * Set the {@link cameraBufferBinding | camera buffer binding} and {@link cameraBindGroup | camera bind group}
    */
   setCameraBindGroupAndBinding() {
-    this.cameraBufferBinding = new BufferBinding({
+    this.cameraBinding = new BufferBinding({
       label: "Camera",
       name: "camera",
       visibility: ["vertex"],
@@ -137,14 +137,14 @@ class GPUCameraRenderer extends GPURenderer {
           type: "vec3f",
           value: this.camera.position.clone().setFromMatrixPosition(this.camera.worldMatrix),
           onBeforeUpdate: () => {
-            this.cameraBufferBinding.inputs.position.value.copy(this.camera.position).setFromMatrixPosition(this.camera.worldMatrix);
+            this.cameraBinding.inputs.position.value.copy(this.camera.position).setFromMatrixPosition(this.camera.worldMatrix);
           }
         }
       }
     });
     this.cameraBindGroup = new BindGroup(this, {
       label: "Camera Uniform bind group",
-      bindings: [this.cameraBufferBinding]
+      bindings: [this.cameraBinding]
     });
     this.cameraBindGroup.consumers.add(this.uuid);
   }
@@ -161,9 +161,9 @@ class GPUCameraRenderer extends GPURenderer {
    * Tell our {@link cameraBufferBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
    */
   updateCameraBindings() {
-    this.cameraBufferBinding?.shouldUpdateBinding("view");
-    this.cameraBufferBinding?.shouldUpdateBinding("projection");
-    this.cameraBufferBinding?.shouldUpdateBinding("position");
+    this.cameraBinding?.shouldUpdateBinding("view");
+    this.cameraBinding?.shouldUpdateBinding("projection");
+    this.cameraBinding?.shouldUpdateBinding("position");
     this.cameraBindGroup?.update();
   }
   /**

@@ -39,6 +39,10 @@ export { Texture } from './core/textures/Texture'
 export { DOMTexture } from './core/textures/DOMTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
+// shaders utils
+export * from './core/shaders/chunks/utils/lights'
+export * from './core/shaders/chunks/utils/shadows'
+
 // curtains
 export { DOMMesh } from './curtains/meshes/DOMMesh'
 export { Plane } from './curtains/meshes/Plane'
@@ -59,6 +63,7 @@ export { OrbitControls } from './extras/controls/OrbitControls'
 export { BoxGeometry } from './extras/geometries/BoxGeometry'
 export { SphereGeometry } from './extras/geometries/SphereGeometry'
 export { PingPongPlane } from './extras/meshes/PingPongPlane'
+
 // gltf extras
 export { GLTFLoader } from './extras/gltf/GLTFLoader'
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'

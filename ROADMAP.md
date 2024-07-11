@@ -29,12 +29,12 @@
 ## Work in progress
 
 - Examples & tests
+- Lights & Shadows
 
 ## TODO / possible improvements
 
 - Add/improve GLTFScenesManager features
 - Mesh raycasting
-- Lights management?
 - Improve typedoc documentation?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
