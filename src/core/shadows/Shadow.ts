@@ -16,6 +16,7 @@ import { Input } from '../../types/BindGroups'
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows'
 
+/** @ignore */
 export const shadowStruct: Record<string, Input> = {
   isActive: {
     type: 'i32',
@@ -119,7 +120,7 @@ export class Shadow {
   /** @ignore */
   #depthPassTaskID: null | number
 
-  /** {@link CameraRenderer} corresponding {@link BufferBinding} that holds all the bindings to send to the shaders. */
+  /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings to send to the shaders. */
   rendererBinding: BufferBinding | null
 
   /**
@@ -218,15 +219,15 @@ export class Shadow {
   setRendererBinding() {}
 
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
    */
   reset() {
     if (this.isActive) {
-      this.updateShadowProperty('isActive', 1)
-      this.updateShadowProperty('intensity', this.intensity)
-      this.updateShadowProperty('bias', this.bias)
-      this.updateShadowProperty('normalBias', this.normalBias)
-      this.updateShadowProperty('pcfSamples', this.pcfSamples)
+      this.onPropertyChanged('isActive', 1)
+      this.onPropertyChanged('intensity', this.intensity)
+      this.onPropertyChanged('bias', this.bias)
+      this.onPropertyChanged('normalBias', this.normalBias)
+      this.onPropertyChanged('pcfSamples', this.pcfSamples)
     }
   }
 
@@ -261,12 +262,12 @@ export class Shadow {
   }
 
   /**
-   * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+   * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    * @param value - The new {@link Shadow} intensity.
    */
   set intensity(value: number) {
     this.#intensity = value
-    if (this.isActive) this.updateShadowProperty('intensity', this.intensity)
+    if (this.isActive) this.onPropertyChanged('intensity', this.intensity)
   }
 
   /**
@@ -278,12 +279,12 @@ export class Shadow {
   }
 
   /**
-   * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+   * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    * @param value - The new {@link Shadow} bias.
    */
   set bias(value: number) {
     this.#bias = value
-    if (this.isActive) this.updateShadowProperty('bias', this.bias)
+    if (this.isActive) this.onPropertyChanged('bias', this.bias)
   }
 
   /**
@@ -295,12 +296,12 @@ export class Shadow {
   }
 
   /**
-   * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+   * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    * @param value - The new {@link Shadow} normal bias.
    */
   set normalBias(value: number) {
     this.#normalBias = value
-    if (this.isActive) this.updateShadowProperty('normalBias', this.normalBias)
+    if (this.isActive) this.onPropertyChanged('normalBias', this.normalBias)
   }
 
   /**
@@ -312,12 +313,12 @@ export class Shadow {
   }
 
   /**
-   * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+   * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    * @param value - The new {@link Shadow} PCF samples count.
    */
   set pcfSamples(value: number) {
     this.#pcfSamples = Math.max(1, Math.ceil(value))
-    if (this.isActive) this.updateShadowProperty('pcfSamples', this.pcfSamples)
+    if (this.isActive) this.onPropertyChanged('pcfSamples', this.pcfSamples)
   }
 
   /**
@@ -352,7 +353,7 @@ export class Shadow {
       this.setDepthPass()
     }
 
-    this.updateShadowProperty('isActive', 1)
+    this.onPropertyChanged('isActive', 1)
   }
 
   /**
@@ -415,11 +416,11 @@ export class Shadow {
   }
 
   /**
-   * Update the {@link CameraRenderer} corresponding {@link BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
+   * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
    * @param propertyKey - name of the property to update.
    * @param value - new value of the property.
    */
-  updateShadowProperty(propertyKey: string, value: Mat4 | number) {
+  onPropertyChanged(propertyKey: string, value: Mat4 | number) {
     if (this.rendererBinding) {
       if (value instanceof Mat4) {
         for (let i = 0; i < value.elements.length; i++) {
@@ -444,7 +445,7 @@ export class Shadow {
   }
 
   /**
-   * Remove the depth pass from its {@link utils/TaskQueueManager.TaskQueueManager | task queue manager}.
+   * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
    * @param depthPassTaskID - Task queue manager ID to use for removal.
    */
   removeDepthPass(depthPassTaskID) {
@@ -618,7 +619,7 @@ export class Shadow {
    * Destroy the {@link Shadow}.
    */
   destroy() {
-    this.updateShadowProperty('isActive', 0)
+    this.onPropertyChanged('isActive', 0)
 
     if (this.#depthPassTaskID !== null) {
       this.removeDepthPass(this.#depthPassTaskID)

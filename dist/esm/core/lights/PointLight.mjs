@@ -23,9 +23,16 @@ var __privateSet = (obj, member, value, setter) => {
 var _range, _actualPosition;
 let pointLightIndex = 0;
 class PointLight extends Light {
+  /**
+   * PointLight constructor
+   * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
+   * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+   */
   constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
     super(renderer, { color, intensity, index: pointLightIndex++, type: "pointLights" });
+    /** @ignore */
     __privateAdd(this, _range, void 0);
+    /** @ignore */
     __privateAdd(this, _actualPosition, void 0);
     this.options = {
       ...this.options,
@@ -47,19 +54,33 @@ class PointLight extends Light {
       this.shadow.cast(shadow);
     }
   }
+  /**
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
+   */
   reset() {
     super.reset();
     this.onPropertyChanged("range", this.range);
     this.setPosition();
     this.shadow?.reset();
   }
+  /**
+   * Get this {@link PointLight} range.
+   * @returns - The {@link PointLight} range.
+   */
   get range() {
     return __privateGet(this, _range);
   }
+  /**
+   * Set this {@link PointLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param value - The new {@link PointLight} range.
+   */
   set range(value) {
     __privateSet(this, _range, value);
     this.onPropertyChanged("range", this.range);
   }
+  /**
+   * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+   */
   setPosition() {
     this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet(this, _actualPosition)));
     this.shadow?.updateViewMatrices(__privateGet(this, _actualPosition));
@@ -72,7 +93,7 @@ class PointLight extends Light {
   applyTransformOrigin() {
   }
   /**
-   * If the {@link modelMatrix | model matrix} has been updated, set the new position from the matrix translation.
+   * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
    */
   updateMatrixStack() {
     super.updateMatrixStack();
@@ -80,10 +101,17 @@ class PointLight extends Light {
       this.setPosition();
     }
   }
+  /**
+   * Tell the {@link renderer} that the maximum number of {@link PointLight} has been overflown.
+   * @param lightsType - {@link type} of this light.
+   */
   onMaxLightOverflow(lightsType) {
     super.onMaxLightOverflow(lightsType);
     this.shadow?.setRendererBinding();
   }
+  /**
+   * Destroy this {@link PointLight} and associated {@link PointShadow}.
+   */
   destroy() {
     super.destroy();
     this.shadow.destroy();

@@ -26,6 +26,7 @@ export interface PointShadowParams extends ShadowBaseParams {
     /** {@link PerspectiveShadowCameraParams | Perspective projection parameters} to use. */
     camera?: PerspectiveShadowCameraParams;
 }
+/** @ignore */
 export declare const pointShadowStruct: Record<string, Input>;
 /**
  * Create a shadow map from a {@link PointLight} by rendering to a depth cube texture using an array of view {@link Mat4} based on the {@link PointLight} position and a {@link PerspectiveShadowCamera | perspective shadow camera} {@link Mat4}.
@@ -40,9 +41,9 @@ export declare class PointShadow extends Shadow {
     camera: PerspectiveShadowCamera;
     /** Options used to create this {@link PointShadow}. */
     options: PointShadowParams;
-    /** Array of {@link Vec3} representing each cube face up directions to compute the {@link camera#viewMatrices | camera view matrices}. */
+    /** Array of {@link Vec3} representing each cube face up directions to compute the {@link PointShadow#camera.viewMatrices | camera view matrices}. */
     cubeUps: Vec3[];
-    /** Array of {@link Vec3} representing each cube face directions to compute the {@link camera#viewMatrices | camera view matrices}. */
+    /** Array of {@link Vec3} representing each cube face directions to compute the {@link PointShadow#camera.viewMatrices | camera view matrices}. */
     cubeDirections: Vec3[];
     /**
      * PointShadow constructor
@@ -51,7 +52,7 @@ export declare class PointShadow extends Shadow {
      */
     constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera, }?: PointShadowParams);
     /**
-     * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     setRendererBinding(): void;
     /**
@@ -61,20 +62,20 @@ export declare class PointShadow extends Shadow {
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera }?: Omit<PointShadowParams, "light">): void;
     /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link camera#projectionMatrix | camera projection matrix} and start rendering to the shadow map.
+     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
      */
     init(): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
      */
     reset(): void;
     /**
-     * Update the {@link camera#projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     updateProjectionMatrix(): void;
     /**
-     * Update the {@link camera#viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link camera#viewMatrices | camera view matrices}, based on the {@link light} position.
+     * Update the {@link PointShadow#camera.viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
      */
     updateViewMatrices(position?: Vec3): void;
     /**
@@ -86,7 +87,7 @@ export declare class PointShadow extends Shadow {
      */
     createDepthTexture(): void;
     /**
-     * Remove the depth pass from its {@link utils/TaskQueueManager.TaskQueueManager | task queue manager}.
+     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
      * @param depthPassTaskID - Task queue manager ID to use for removal.
      */
     removeDepthPass(depthPassTaskID: any): void;

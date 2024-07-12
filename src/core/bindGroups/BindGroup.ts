@@ -188,6 +188,10 @@ export class BindGroup {
     this.bindings.push(binding)
   }
 
+  /**
+   * Destroy a {@link BufferBinding} buffers.
+   * @param binding - {@link BufferBinding} from which to destroy the buffers.
+   */
   destroyBufferBinding(binding: BindGroupBufferBindingElement) {
     if ('buffer' in binding) {
       this.renderer.removeBuffer(binding.buffer)

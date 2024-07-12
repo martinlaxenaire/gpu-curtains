@@ -1,3 +1,12 @@
+/**
+ * Shader chunk to add to the head of a fragment shader to be able to use lambert shading.
+ *
+ * @example
+ * ```wgsl
+ * var color: vec3f = vec3(1.0);
+ * color = getLambert(normal, worldPosition, color);
+ * ```
+ */
 export const getLambert = /* wgsl */ `
 fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
   return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
@@ -115,6 +124,15 @@ fn getLambert(
   return linearToOutput3(outgoingLight);
 }`
 
+/**
+ * Shader chunk to add to the head of a fragment shader to be able to use phong shading. This chunk also includes the {@link getLambert} chunk.
+ *
+ * @example
+ * ```wgsl
+ * var color: vec3f = vec3(1.0);
+ * color = getPhong(normal, worldPosition, color, viewDirection, specularColor, specularStrength, shininess);
+ * ```
+ */
 export const getPhong = /* wgsl */ `
 ${getLambert}
 

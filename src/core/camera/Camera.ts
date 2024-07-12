@@ -59,18 +59,19 @@ export class Camera extends Object3D {
   /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera} */
   matrices: CameraObject3DMatrices
 
-  /** Private {@link Camera} field of view */
+  /** @ignore */
   #fov: number
-  /** Private {@link Camera} near plane */
+  /** @ignore */
   #near: number
-  /** Private {@link Camera} far plane */
+  /** @ignore */
   #far: number
 
+  /** {@link Vec3 | Up vector} used for {@link lookAt} calculations. */
   up: Vec3
 
   /** The {@link Camera} frustum width and height */
   size: RectSize
-  /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
+  /** @ignore */
   #pixelRatio: number
 
   /** Callback to execute when one of the camera {@link matrices} changed */

@@ -68,7 +68,7 @@ class DirectionalShadow extends Shadow {
     });
   }
   /**
-   * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link BufferBinding}.
+   * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    */
   setRendererBinding() {
     this.rendererBinding = this.renderer.bindings.directionalShadows;
@@ -90,23 +90,23 @@ class DirectionalShadow extends Shadow {
     }
   }
   /**
-   * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link camera#projectionMatrix | camera projection matrix} and start rendering to the shadow map.
+   * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
    */
   init() {
     super.init();
     this.updateProjectionMatrix();
   }
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
    */
   reset() {
     this.setRendererBinding();
     super.reset();
-    this.updateShadowProperty("projectionMatrix", this.camera.projectionMatrix);
-    this.updateShadowProperty("viewMatrix", this.camera.viewMatrix);
+    this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+    this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
   }
   /**
-   * Update the {@link camera#projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+   * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    */
   updateProjectionMatrix() {
     this.camera.projectionMatrix.identity().makeOrthographic({
@@ -117,17 +117,17 @@ class DirectionalShadow extends Shadow {
       near: this.camera.near,
       far: this.camera.far
     });
-    this.updateShadowProperty("projectionMatrix", this.camera.projectionMatrix);
+    this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
   }
   /**
-   * Update the {@link camera#viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
-   * @param position - {@link Vec3} to use as position for the {@link camera#viewMatrix | camera view matrix}, based on the {@link light} position.
-   * @param target - {@link Vec3} to use as target for the {@link camera#viewMatrix | camera view matrix}, based on the {@link light} target.
+   * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
+   * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
    */
   updateViewMatrix(position = new Vec3(), target = new Vec3()) {
     if (this.isActive) {
       this.camera.viewMatrix.makeView(position, target, this.camera.up);
-      this.updateShadowProperty("viewMatrix", this.camera.viewMatrix);
+      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
   }
 }

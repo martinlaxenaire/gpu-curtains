@@ -104,6 +104,10 @@ export declare class BindGroup {
      * @param binding - binding to add
      */
     addBinding(binding: BindGroupBindingElement): void;
+    /**
+     * Destroy a {@link BufferBinding} buffers.
+     * @param binding - {@link BufferBinding} from which to destroy the buffers.
+     */
     destroyBufferBinding(binding: BindGroupBufferBindingElement): void;
     /**
      * Creates Bindings based on a list of inputs

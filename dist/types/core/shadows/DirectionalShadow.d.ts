@@ -34,6 +34,7 @@ export interface DirectionalShadowParams extends ShadowBaseParams {
     /** {@link OrthographicProjectionParams | Orthographic projection parameters} to use. */
     camera?: OrthographicProjectionParams;
 }
+/** @ignore */
 export declare const directionalShadowStruct: Record<string, Input>;
 /**
  * Create a shadow map from a {@link DirectionalLight} by rendering to a depth texture using a view {@link Mat4} based on the {@link DirectionalLight} position and target and an {@link OrthographicShadowCamera | orthographic shadow camera} {@link Mat4}.
@@ -52,7 +53,7 @@ export declare class DirectionalShadow extends Shadow {
      */
     constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera, }?: DirectionalShadowParams);
     /**
-     * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     setRendererBinding(): void;
     /**
@@ -62,21 +63,21 @@ export declare class DirectionalShadow extends Shadow {
      */
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera }?: Omit<DirectionalShadowParams, "light">): void;
     /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link camera#projectionMatrix | camera projection matrix} and start rendering to the shadow map.
+     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
      */
     init(): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
      */
     reset(): void;
     /**
-     * Update the {@link camera#projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     updateProjectionMatrix(): void;
     /**
-     * Update the {@link camera#viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link camera#viewMatrix | camera view matrix}, based on the {@link light} position.
-     * @param target - {@link Vec3} to use as target for the {@link camera#viewMatrix | camera view matrix}, based on the {@link light} target.
+     * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
+     * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
      */
     updateViewMatrix(position?: Vec3, target?: Vec3): void;
 }

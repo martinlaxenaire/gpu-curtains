@@ -32,6 +32,7 @@ export interface PointShadowParams extends ShadowBaseParams {
   camera?: PerspectiveShadowCameraParams
 }
 
+/** @ignore */
 export const pointShadowStruct: Record<string, Input> = {
   face: {
     type: 'i32',
@@ -71,9 +72,9 @@ export class PointShadow extends Shadow {
   /** Options used to create this {@link PointShadow}. */
   options: PointShadowParams
 
-  /** Array of {@link Vec3} representing each cube face up directions to compute the {@link camera.viewMatrices | camera view matrices}. */
+  /** Array of {@link Vec3} representing each cube face up directions to compute the {@link PointShadow#camera.viewMatrices | camera view matrices}. */
   cubeUps: Vec3[]
-  /** Array of {@link Vec3} representing each cube face directions to compute the {@link camera.viewMatrices | camera view matrices}. */
+  /** Array of {@link Vec3} representing each cube face directions to compute the {@link PointShadow#camera.viewMatrices | camera view matrices}. */
   cubeDirections: Vec3[]
   /**
    * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
@@ -160,7 +161,7 @@ export class PointShadow extends Shadow {
   }
 
   /**
-   * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link BufferBinding}.
+   * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    */
   setRendererBinding() {
     this.rendererBinding = this.renderer.bindings.pointShadows
@@ -186,7 +187,7 @@ export class PointShadow extends Shadow {
   }
 
   /**
-   * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
+   * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
    */
   init() {
     super.init()
@@ -194,19 +195,19 @@ export class PointShadow extends Shadow {
   }
 
   /**
-   * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
+   * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
    */
   reset() {
     this.setRendererBinding()
     super.reset()
-    this.updateShadowProperty('cameraNear', this.camera.near)
-    this.updateShadowProperty('cameraFar', this.camera.far)
-    this.updateShadowProperty('projectionMatrix', this.camera.projectionMatrix)
+    this.onPropertyChanged('cameraNear', this.camera.near)
+    this.onPropertyChanged('cameraFar', this.camera.far)
+    this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
     this.updateViewMatrices()
   }
 
   /**
-   * Update the {@link camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+   * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
    */
   updateProjectionMatrix() {
     this.camera.projectionMatrix.identity().makePerspective({
@@ -216,14 +217,14 @@ export class PointShadow extends Shadow {
       aspect: 1,
     })
 
-    this.updateShadowProperty('projectionMatrix', this.camera.projectionMatrix)
-    this.updateShadowProperty('cameraNear', this.camera.near)
-    this.updateShadowProperty('cameraFar', this.camera.far)
+    this.onPropertyChanged('projectionMatrix', this.camera.projectionMatrix)
+    this.onPropertyChanged('cameraNear', this.camera.near)
+    this.onPropertyChanged('cameraFar', this.camera.far)
   }
 
   /**
-   * Update the {@link camera.viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
-   * @param position - {@link Vec3} to use as position for the {@link camera.viewMatrices | camera view matrices}, based on the {@link light} position.
+   * Update the {@link PointShadow#camera.viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+   * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
    */
   updateViewMatrices(position = new Vec3()) {
     if (this.isActive) {
@@ -285,7 +286,7 @@ export class PointShadow extends Shadow {
   }
 
   /**
-   * Remove the depth pass from its {@link utils/TaskQueueManager.TaskQueueManager | task queue manager}.
+   * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
    * @param depthPassTaskID - Task queue manager ID to use for removal.
    */
   removeDepthPass(depthPassTaskID) {

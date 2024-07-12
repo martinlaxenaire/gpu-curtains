@@ -2128,6 +2128,10 @@
     addBinding(binding) {
       this.bindings.push(binding);
     }
+    /**
+     * Destroy a {@link BufferBinding} buffers.
+     * @param binding - {@link BufferBinding} from which to destroy the buffers.
+     */
     destroyBufferBinding(binding) {
       if ("buffer" in binding) {
         this.renderer.removeBuffer(binding.buffer);
@@ -6732,9 +6736,19 @@
   };
   var _intensity$1, _intensityColor;
   class Light extends Object3D {
+    /**
+     * Light constructor
+     * @param renderer - {@link CameraRenderer} used to create this {@link Light}.
+     * @param parameters - {@link LightParams | parameters} used to create this {@link Light}.
+     */
     constructor(renderer, { color = new Vec3(1), intensity = 1, index = 0, type = "lights" } = {}) {
       super();
+      /** @ignore */
       __privateAdd$c(this, _intensity$1, void 0);
+      /**
+       * A {@link Vec3} holding the {@link Light} {@link color} multiplied by its {@link intensity}.
+       * @private
+       */
       __privateAdd$c(this, _intensityColor, void 0);
       this.type = type;
       Object.defineProperty(this, "index", { value: index });
@@ -6754,22 +6768,41 @@
       this.intensity = intensity;
       this.renderer.addLight(this);
     }
+    /**
+     * Set or reset this {@link Light} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     */
     setRendererBinding() {
       if (this.renderer.bindings[this.type]) {
         this.rendererBinding = this.renderer.bindings[this.type];
       }
     }
+    /**
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed.
+     */
     reset() {
       this.setRendererBinding();
       this.onPropertyChanged("color", __privateGet$b(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
     }
+    /**
+     * Get this {@link Light} intensity.
+     * @returns - The {@link Light} intensity.
+     */
     get intensity() {
       return __privateGet$b(this, _intensity$1);
     }
+    /**
+     * Set this {@link Light} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link Light} intensity.
+     */
     set intensity(value) {
       __privateSet$b(this, _intensity$1, value);
       this.onPropertyChanged("color", __privateGet$b(this, _intensityColor).copy(this.color).multiplyScalar(this.intensity));
     }
+    /**
+     * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
+     * @param propertyKey - name of the property to update.
+     * @param value - new value of the property.
+     */
     onPropertyChanged(propertyKey, value) {
       if (this.rendererBinding && this.rendererBinding.inputs[propertyKey]) {
         if (value instanceof Vec3) {
@@ -6783,15 +6816,25 @@
         this.renderer.shouldUpdateCameraLightsBindGroup();
       }
     }
+    /**
+     * Tell the {@link renderer} that the maximum number for this {@link type} of light has been overflown.
+     * @param lightsType - {@link type} of light.
+     */
     onMaxLightOverflow(lightsType) {
       if (this.rendererBinding) {
         this.renderer.onMaxLightOverflow(lightsType);
         this.rendererBinding = this.renderer.bindings[lightsType];
       }
     }
+    /**
+     * Remove this {@link Light} from the {@link renderer}.
+     */
     remove() {
       this.renderer.removeLight(this);
     }
+    /**
+     * Destroy this {@link Light}.
+     */
     destroy() {
       this.parent = null;
     }
@@ -6801,6 +6844,11 @@
 
   let ambientLightIndex = 0;
   class AmbientLight extends Light {
+    /**
+     * AmbientLight constructor
+     * @param renderer - {@link CameraRenderer} used to create this {@link AmbientLight}.
+     * @param parameters - {@link LightBaseParams | parameters} used to create this {@link AmbientLight}.
+     */
     constructor(renderer, { color = new Vec3(1), intensity = 0.1 } = {}) {
       super(renderer, { color, intensity, index: ambientLightIndex++, type: "ambientLights" });
       if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
@@ -8150,15 +8198,15 @@ fn getPhongWithShadows(
     setRendererBinding() {
     }
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
      */
     reset() {
       if (this.isActive) {
-        this.updateShadowProperty("isActive", 1);
-        this.updateShadowProperty("intensity", this.intensity);
-        this.updateShadowProperty("bias", this.bias);
-        this.updateShadowProperty("normalBias", this.normalBias);
-        this.updateShadowProperty("pcfSamples", this.pcfSamples);
+        this.onPropertyChanged("isActive", 1);
+        this.onPropertyChanged("intensity", this.intensity);
+        this.onPropertyChanged("bias", this.bias);
+        this.onPropertyChanged("normalBias", this.normalBias);
+        this.onPropertyChanged("pcfSamples", this.pcfSamples);
       }
     }
     /**
@@ -8188,13 +8236,13 @@ fn getPhongWithShadows(
       return __privateGet$9(this, _intensity);
     }
     /**
-     * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} intensity.
      */
     set intensity(value) {
       __privateSet$9(this, _intensity, value);
       if (this.isActive)
-        this.updateShadowProperty("intensity", this.intensity);
+        this.onPropertyChanged("intensity", this.intensity);
     }
     /**
      * Get this {@link Shadow} bias.
@@ -8204,13 +8252,13 @@ fn getPhongWithShadows(
       return __privateGet$9(this, _bias);
     }
     /**
-     * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+     * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} bias.
      */
     set bias(value) {
       __privateSet$9(this, _bias, value);
       if (this.isActive)
-        this.updateShadowProperty("bias", this.bias);
+        this.onPropertyChanged("bias", this.bias);
     }
     /**
      * Get this {@link Shadow} normal bias.
@@ -8220,13 +8268,13 @@ fn getPhongWithShadows(
       return __privateGet$9(this, _normalBias);
     }
     /**
-     * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+     * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} normal bias.
      */
     set normalBias(value) {
       __privateSet$9(this, _normalBias, value);
       if (this.isActive)
-        this.updateShadowProperty("normalBias", this.normalBias);
+        this.onPropertyChanged("normalBias", this.normalBias);
     }
     /**
      * Get this {@link Shadow} PCF samples count.
@@ -8236,13 +8284,13 @@ fn getPhongWithShadows(
       return __privateGet$9(this, _pcfSamples);
     }
     /**
-     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} PCF samples count.
      */
     set pcfSamples(value) {
       __privateSet$9(this, _pcfSamples, Math.max(1, Math.ceil(value)));
       if (this.isActive)
-        this.updateShadowProperty("pcfSamples", this.pcfSamples);
+        this.onPropertyChanged("pcfSamples", this.pcfSamples);
     }
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
@@ -8269,7 +8317,7 @@ fn getPhongWithShadows(
       if (__privateGet$9(this, _depthPassTaskID) === null) {
         this.setDepthPass();
       }
-      this.updateShadowProperty("isActive", 1);
+      this.onPropertyChanged("isActive", 1);
     }
     /**
      * Reset the {@link depthTexture} when the {@link depthTextureSize} changes.
@@ -8322,11 +8370,11 @@ fn getPhongWithShadows(
       });
     }
     /**
-     * Update the {@link CameraRenderer} corresponding {@link BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
+     * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
      * @param propertyKey - name of the property to update.
      * @param value - new value of the property.
      */
-    updateShadowProperty(propertyKey, value) {
+    onPropertyChanged(propertyKey, value) {
       if (this.rendererBinding) {
         if (value instanceof Mat4) {
           for (let i = 0; i < value.elements.length; i++) {
@@ -8346,7 +8394,7 @@ fn getPhongWithShadows(
       __privateSet$9(this, _depthPassTaskID, this.depthPassTask());
     }
     /**
-     * Remove the depth pass from its {@link utils/TaskQueueManager.TaskQueueManager | task queue manager}.
+     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
      * @param depthPassTaskID - Task queue manager ID to use for removal.
      */
     removeDepthPass(depthPassTaskID) {
@@ -8484,7 +8532,7 @@ fn getPhongWithShadows(
      * Destroy the {@link Shadow}.
      */
     destroy() {
-      this.updateShadowProperty("isActive", 0);
+      this.onPropertyChanged("isActive", 0);
       if (__privateGet$9(this, _depthPassTaskID) !== null) {
         this.removeDepthPass(__privateGet$9(this, _depthPassTaskID));
         __privateSet$9(this, _depthPassTaskID, null);
@@ -8589,7 +8637,7 @@ fn getPhongWithShadows(
       });
     }
     /**
-     * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     setRendererBinding() {
       this.rendererBinding = this.renderer.bindings.directionalShadows;
@@ -8611,23 +8659,23 @@ fn getPhongWithShadows(
       }
     }
     /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link camera#projectionMatrix | camera projection matrix} and start rendering to the shadow map.
+     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
      */
     init() {
       super.init();
       this.updateProjectionMatrix();
     }
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link DirectionalLight} has been overflowed.
      */
     reset() {
       this.setRendererBinding();
       super.reset();
-      this.updateShadowProperty("projectionMatrix", this.camera.projectionMatrix);
-      this.updateShadowProperty("viewMatrix", this.camera.viewMatrix);
+      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
     /**
-     * Update the {@link camera#projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Update the {@link DirectionalShadow#camera.projectionMatrix | camera orthographic projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     updateProjectionMatrix() {
       this.camera.projectionMatrix.identity().makeOrthographic({
@@ -8638,17 +8686,17 @@ fn getPhongWithShadows(
         near: this.camera.near,
         far: this.camera.far
       });
-      this.updateShadowProperty("projectionMatrix", this.camera.projectionMatrix);
+      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
     }
     /**
-     * Update the {@link camera#viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link camera#viewMatrix | camera view matrix}, based on the {@link light} position.
-     * @param target - {@link Vec3} to use as target for the {@link camera#viewMatrix | camera view matrix}, based on the {@link light} target.
+     * Update the {@link DirectionalShadow#camera.viewMatrix | camera view matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param position - {@link Vec3} to use as position for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} position.
+     * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
      */
     updateViewMatrix(position = new Vec3(), target = new Vec3()) {
       if (this.isActive) {
         this.camera.viewMatrix.makeView(position, target, this.camera.up);
-        this.updateShadowProperty("viewMatrix", this.camera.viewMatrix);
+        this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
       }
     }
   }
@@ -8671,19 +8719,29 @@ fn getPhongWithShadows(
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
-  var _direction, _actualPosition$1;
+  var _actualPosition$1, _direction;
   let directionalLightIndex = 0;
   class DirectionalLight extends Light {
+    /**
+     * DirectionalLight constructor
+     * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalLight}.
+     * @param parameters - {@link DirectionalLightBaseParams | parameters} used to create this {@link DirectionalLight}.
+     */
     constructor(renderer, {
       color = new Vec3(1),
       intensity = 1,
-      position = new Vec3(),
+      position = new Vec3(1),
       target = new Vec3(),
       shadow = null
     } = {}) {
       super(renderer, { color, intensity, index: directionalLightIndex++, type: "directionalLights" });
-      __privateAdd$9(this, _direction, void 0);
+      /** @ignore */
       __privateAdd$9(this, _actualPosition$1, void 0);
+      /**
+       * The {@link Vec3 | direction} of the {@link DirectionalLight} is the {@link target} minus the actual {@link position}.
+       * @private
+       */
+      __privateAdd$9(this, _direction, void 0);
       this.options = {
         ...this.options,
         position,
@@ -8706,11 +8764,17 @@ fn getPhongWithShadows(
         this.shadow.cast(shadow);
       }
     }
+    /**
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link DirectionalLight} has been overflowed.
+     */
     reset() {
       super.reset();
       this.setDirection();
       this.shadow?.reset();
     }
+    /**
+     * Set the {@link DirectionalLight} direction based on the {@link target} and the {@link worldMatrix} translation and update the {@link DirectionalShadow} view matrix.
+     */
     setDirection() {
       __privateGet$8(this, _direction).copy(this.target).sub(this.worldMatrix.getTranslation(__privateGet$8(this, _actualPosition$1)));
       this.onPropertyChanged("direction", __privateGet$8(this, _direction));
@@ -8724,7 +8788,7 @@ fn getPhongWithShadows(
     applyTransformOrigin() {
     }
     /**
-     * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the matrix translation.
+     * If the {@link modelMatrix | model matrix} has been updated, set the new direction from the {@link worldMatrix} translation.
      */
     updateMatrixStack() {
       super.updateMatrixStack();
@@ -8732,17 +8796,24 @@ fn getPhongWithShadows(
         this.setDirection();
       }
     }
+    /**
+     * Tell the {@link renderer} that the maximum number of {@link DirectionalLight} has been overflown.
+     * @param lightsType - {@link type} of this light.
+     */
     onMaxLightOverflow(lightsType) {
       super.onMaxLightOverflow(lightsType);
       this.shadow?.setRendererBinding();
     }
+    /**
+     * Destroy this {@link DirectionalLight} and associated {@link DirectionalShadow}.
+     */
     destroy() {
       super.destroy();
       this.shadow.destroy();
     }
   }
-  _direction = new WeakMap();
   _actualPosition$1 = new WeakMap();
+  _direction = new WeakMap();
 
   var __accessCheck$8 = (obj, member, msg) => {
     if (!member.has(obj))
@@ -8857,7 +8928,7 @@ fn getPhongWithShadows(
       });
     }
     /**
-     * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     setRendererBinding() {
       this.rendererBinding = this.renderer.bindings.pointShadows;
@@ -8875,25 +8946,25 @@ fn getPhongWithShadows(
       }
     }
     /**
-     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link camera#projectionMatrix | camera projection matrix} and start rendering to the shadow map.
+     * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
      */
     init() {
       super.init();
       this.updateProjectionMatrix();
     }
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link PointLight} has been overflowed.
      */
     reset() {
       this.setRendererBinding();
       super.reset();
-      this.updateShadowProperty("cameraNear", this.camera.near);
-      this.updateShadowProperty("cameraFar", this.camera.far);
-      this.updateShadowProperty("projectionMatrix", this.camera.projectionMatrix);
+      this.onPropertyChanged("cameraNear", this.camera.near);
+      this.onPropertyChanged("cameraFar", this.camera.far);
+      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
       this.updateViewMatrices();
     }
     /**
-     * Update the {@link camera#projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Update the {@link PointShadow#camera.projectionMatrix | camera perspective projection matrix} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
     updateProjectionMatrix() {
       this.camera.projectionMatrix.identity().makePerspective({
@@ -8902,13 +8973,13 @@ fn getPhongWithShadows(
         fov: 90,
         aspect: 1
       });
-      this.updateShadowProperty("projectionMatrix", this.camera.projectionMatrix);
-      this.updateShadowProperty("cameraNear", this.camera.near);
-      this.updateShadowProperty("cameraFar", this.camera.far);
+      this.onPropertyChanged("projectionMatrix", this.camera.projectionMatrix);
+      this.onPropertyChanged("cameraNear", this.camera.near);
+      this.onPropertyChanged("cameraFar", this.camera.far);
     }
     /**
-     * Update the {@link camera#viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
-     * @param position - {@link Vec3} to use as position for the {@link camera#viewMatrices | camera view matrices}, based on the {@link light} position.
+     * Update the {@link PointShadow#camera.viewMatrices | camera view matrices} and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
      */
     updateViewMatrices(position = new Vec3()) {
       if (this.isActive) {
@@ -8959,7 +9030,7 @@ fn getPhongWithShadows(
       });
     }
     /**
-     * Remove the depth pass from its {@link utils/TaskQueueManager.TaskQueueManager | task queue manager}.
+     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
      * @param depthPassTaskID - Task queue manager ID to use for removal.
      */
     removeDepthPass(depthPassTaskID) {
@@ -9046,9 +9117,16 @@ fn getPhongWithShadows(
   var _range, _actualPosition;
   let pointLightIndex = 0;
   class PointLight extends Light {
+    /**
+     * PointLight constructor
+     * @param renderer - {@link CameraRenderer | CameraRenderer} used to create this {@link PointLight}.
+     * @param parameters - {@link PointLightBaseParams | parameters} used to create this {@link PointLight}.
+     */
     constructor(renderer, { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {}) {
       super(renderer, { color, intensity, index: pointLightIndex++, type: "pointLights" });
+      /** @ignore */
       __privateAdd$7(this, _range, void 0);
+      /** @ignore */
       __privateAdd$7(this, _actualPosition, void 0);
       this.options = {
         ...this.options,
@@ -9070,19 +9148,33 @@ fn getPhongWithShadows(
         this.shadow.cast(shadow);
       }
     }
+    /**
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of {@link PointLight} has been overflowed.
+     */
     reset() {
       super.reset();
       this.onPropertyChanged("range", this.range);
       this.setPosition();
       this.shadow?.reset();
     }
+    /**
+     * Get this {@link PointLight} range.
+     * @returns - The {@link PointLight} range.
+     */
     get range() {
       return __privateGet$6(this, _range);
     }
+    /**
+     * Set this {@link PointLight} range and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
+     * @param value - The new {@link PointLight} range.
+     */
     set range(value) {
       __privateSet$6(this, _range, value);
       this.onPropertyChanged("range", this.range);
     }
+    /**
+     * Set the {@link PointLight} position based on the {@link worldMatrix} translation and update the {@link PointShadow} view matrices.
+     */
     setPosition() {
       this.onPropertyChanged("position", this.worldMatrix.getTranslation(__privateGet$6(this, _actualPosition)));
       this.shadow?.updateViewMatrices(__privateGet$6(this, _actualPosition));
@@ -9095,7 +9187,7 @@ fn getPhongWithShadows(
     applyTransformOrigin() {
     }
     /**
-     * If the {@link modelMatrix | model matrix} has been updated, set the new position from the matrix translation.
+     * If the {@link modelMatrix | model matrix} has been updated, set the new position from the {@link worldMatrix} translation.
      */
     updateMatrixStack() {
       super.updateMatrixStack();
@@ -9103,10 +9195,17 @@ fn getPhongWithShadows(
         this.setPosition();
       }
     }
+    /**
+     * Tell the {@link renderer} that the maximum number of {@link PointLight} has been overflown.
+     * @param lightsType - {@link type} of this light.
+     */
     onMaxLightOverflow(lightsType) {
       super.onMaxLightOverflow(lightsType);
       this.shadow?.setRendererBinding();
     }
+    /**
+     * Destroy this {@link PointLight} and associated {@link PointShadow}.
+     */
     destroy() {
       super.destroy();
       this.shadow.destroy();
@@ -12900,7 +12999,7 @@ ${this.shaders.compute.head}`;
     }
     /**
      * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
-     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBinding | camera buffer binding}.
+     * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraLightsBindGroup | camera, lights and shadows bind group} bindings.
      * @async
      */
     restoreContext() {
@@ -12930,7 +13029,7 @@ ${this.shaders.compute.head}`;
       );
     }
     /**
-     * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBinding} inputs view values and the {@link meshes} {@link Camera} object.
+     * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link Camera} object.
      * @param camera - new {@link Camera} to use.
      */
     useCamera(camera) {
@@ -12966,7 +13065,7 @@ ${this.shaders.compute.head}`;
       }
     }
     /**
-     * Set the {@link cameraBinding | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
+     * Set the {@link GPUCameraRenderer#bindings.camera | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
      */
     setCameraBinding() {
       this.bindings.camera = new BufferBinding({
@@ -12996,13 +13095,24 @@ ${this.shaders.compute.head}`;
       });
     }
     /* LIGHTS */
+    /**
+     * Add a {@link Light} to the {@link lights} array.
+     * @param light - {@link Light} to add.
+     */
     addLight(light) {
       this.lights.push(light);
     }
+    /**
+     * Remove a {@link Light} from the {@link lights} array and destroy it.
+     * @param light - {@link Light} to remove.
+     */
     removeLight(light) {
       this.lights = this.lights.filter((l) => l.uuid !== light.uuid);
       light.destroy();
     }
+    /**
+     * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
+     */
     setLightsBinding() {
       this.lightsBindingParams = {
         ambientLights: {
@@ -13057,6 +13167,10 @@ ${this.shaders.compute.head}`;
         this.setLightsTypeBinding(lightsType);
       });
     }
+    /**
+     * Set or reset the {@link BufferBinding} for a given {@link LightsType | type of light}.
+     * @param lightsType - {@link LightsType | Type of light} for which to create the {@link BufferBinding}.
+     */
     setLightsTypeBinding(lightsType) {
       const structParams = Object.keys(this.lightsBindingParams[lightsType].params).map((paramKey) => {
         return {
@@ -13086,6 +13200,10 @@ ${this.shaders.compute.head}`;
         }
       });
     }
+    /**
+     * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
+     * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
+     */
     onMaxLightOverflow(lightsType) {
       if (!this.production) {
         throwWarning(
@@ -13117,20 +13235,30 @@ ${this.shaders.compute.head}`;
       });
     }
     /* SHADOW MAPS */
+    /**
+     * Get all the current {@link ShadowCastingLights | lights that can cast shadows}.
+     * @returns - All {@link ShadowCastingLights | lights that can cast shadows}.
+     */
     get shadowCastingLights() {
       return this.lights.filter(
         (light) => light instanceof DirectionalLight || light instanceof PointLight
       );
     }
+    /**
+     * Set the shadows {@link BufferBinding} based on the {@link shadowsBindingsStruct}.
+     */
     setShadowsBinding() {
       this.shadowsBindingsStruct = {
         directional: directionalShadowStruct,
         point: pointShadowStruct
       };
-      console.log(this.bindings);
       this.setShadowsTypeBinding("directionalLights");
       this.setShadowsTypeBinding("pointLights");
     }
+    /**
+     * Set or reset the associated shadow {@link BufferBinding} for a given {@link LightsType | type of light}.
+     * @param lightsType - {@link LightsType | Type of light} for which to create the associated shadow {@link BufferBinding}.
+     */
     setShadowsTypeBinding(lightsType) {
       const type = lightsType.replace("Lights", "");
       const shadowsType = type + "Shadows";
@@ -13168,6 +13296,9 @@ ${this.shaders.compute.head}`;
       });
     }
     /* CAMERA, LIGHTS & SHADOWS BIND GROUP */
+    /**
+     * Set the {@link cameraLightsBindGroup | camera, lights and shadows bind group}.
+     */
     setCameraLightsBindGroup() {
       this.cameraLightsBindGroup = new BindGroup(this, {
         label: "Camera and lights uniform bind group",
@@ -13176,7 +13307,7 @@ ${this.shaders.compute.head}`;
       this.cameraLightsBindGroup.consumers.add(this.uuid);
     }
     /**
-     * Create the {@link cameraLightsBindGroup | camera and lights bind group} buffers
+     * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
      */
     setCameraBindGroup() {
       if (this.cameraLightsBindGroup && this.cameraLightsBindGroup.shouldCreateBindGroup) {
@@ -13184,11 +13315,14 @@ ${this.shaders.compute.head}`;
         this.cameraLightsBindGroup.createBindGroup();
       }
     }
+    /**
+     * Tell our  {@link cameraLightsBindGroup | camera, lights and shadows bind group} to update.
+     */
     shouldUpdateCameraLightsBindGroup() {
       __privateSet$3(this, _shouldUpdateCameraLightsBindGroup, true);
     }
     /**
-     * Tell our {@link cameraBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
+     * Tell our {@link GPUCameraRenderer#bindings.camera | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
      */
     updateCameraBindings() {
       this.bindings.camera?.shouldUpdateBinding("view");
@@ -13263,7 +13397,7 @@ ${this.shaders.compute.head}`;
      */
     destroy() {
       this.cameraLightsBindGroup?.destroy();
-      this.lights.forEach((light) => light.remove());
+      this.lights.forEach((light) => this.removeLight(light));
       super.destroy();
     }
   }

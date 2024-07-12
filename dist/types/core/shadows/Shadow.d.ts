@@ -13,6 +13,7 @@ import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
 import { Input } from '../../types/BindGroups';
 /** Defines all types of shadows. */
 export type ShadowsType = 'directionalShadows' | 'pointShadows';
+/** @ignore */
 export declare const shadowStruct: Record<string, Input>;
 /**
  * Base parameters used to create a {@link Shadow}.
@@ -64,7 +65,7 @@ export declare class Shadow {
     depthComparisonSampler: null | Sampler;
     /** All the current {@link ProjectedMesh | meshes} rendered to the shadow map. */
     meshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
-    /** {@link CameraRenderer} corresponding {@link BufferBinding} that holds all the bindings to send to the shaders. */
+    /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings to send to the shaders. */
     rendererBinding: BufferBinding | null;
     /**
      * Shadow constructor
@@ -81,7 +82,7 @@ export declare class Shadow {
     /** @ignore */
     setRendererBinding(): void;
     /**
-     * Resend all properties to the {@link CameraRenderer} corresponding {@link BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
+     * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link core/lights/Light.Light | lights} has been overflowed.
      */
     reset(): void;
     /**
@@ -100,7 +101,7 @@ export declare class Shadow {
      */
     get intensity(): number;
     /**
-     * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link BufferBinding}.
+     * Set this {@link Shadow} intensity and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} intensity.
      */
     set intensity(value: number);
@@ -110,7 +111,7 @@ export declare class Shadow {
      */
     get bias(): number;
     /**
-     * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+     * Set this {@link Shadow} bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} bias.
      */
     set bias(value: number);
@@ -120,7 +121,7 @@ export declare class Shadow {
      */
     get normalBias(): number;
     /**
-     * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+     * Set this {@link Shadow} normal bias and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} normal bias.
      */
     set normalBias(value: number);
@@ -130,7 +131,7 @@ export declare class Shadow {
      */
     get pcfSamples(): number;
     /**
-     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link BufferBinding}..
+     * Set this {@link Shadow} PCF samples count and update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      * @param value - The new {@link Shadow} PCF samples count.
      */
     set pcfSamples(value: number);
@@ -155,17 +156,17 @@ export declare class Shadow {
      */
     createDepthPassTarget(): void;
     /**
-     * Update the {@link CameraRenderer} corresponding {@link BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
+     * Update the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} input value and tell the {@link CameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows} bind group to update.
      * @param propertyKey - name of the property to update.
      * @param value - new value of the property.
      */
-    updateShadowProperty(propertyKey: string, value: Mat4 | number): void;
+    onPropertyChanged(propertyKey: string, value: Mat4 | number): void;
     /**
      * Start the depth pass.
      */
     setDepthPass(): void;
     /**
-     * Remove the depth pass from its {@link utils/TaskQueueManager.TaskQueueManager | task queue manager}.
+     * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
      * @param depthPassTaskID - Task queue manager ID to use for removal.
      */
     removeDepthPass(depthPassTaskID: any): void;

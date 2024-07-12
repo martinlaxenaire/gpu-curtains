@@ -15,19 +15,39 @@ import { directionalShadowStruct } from '../shadows/DirectionalShadow'
 import { pointShadowStruct } from '../shadows/PointShadow'
 import { ShadowsType } from '../shadows/Shadow'
 
+/** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */
 export interface LightParams {
+  /** Maximum number for a given type of light. */
   max: number
+  /** Label for a given type of light. */
   label: string
-  params: Record<string, { type: WGSLVariableType; size: number }>
+  /** Parameters to use to build the {@link BufferBinding} for a given type of light. */
+  params: Record<
+    string,
+    {
+      /** WGSL type of the input. */
+      type: WGSLVariableType
+      /** Size of the input. */
+      size: number
+    }
+  >
 }
 
+/** Defines the {@link BufferBinding} parameters for all kinds of {@link LightsType | light types}. */
 export type LightsBindingParams = Record<LightsType, LightParams>
 
+/** Defines all the possible {@link BufferBinding} to use in the {@link GPUCameraRenderer#cameraLightsBindGroup | renderer camera, lights and shadows bind group}. */
 export type GPUCameraRendererBindings = Record<'camera' | LightsType | ShadowsType, BufferBinding>
 
+/**
+ * Base parameters for the maximum number of lights to use when creating a {@link GPUCameraRenderer}.
+ */
 export interface GPUCameraRendererLightParams {
+  /** Maximum number of {@link core/lights/AmbientLight.AmbientLight | AmbientLight} to use. Default to `2`. */
   maxAmbientLights?: LightsBindingParams['ambientLights']['max']
+  /** Maximum number of {@link DirectionalLight} to use. Default to `5`. */
   maxDirectionalLights?: LightsBindingParams['directionalLights']['max']
+  /** Maximum number of {@link PointLight} to use. Default to `5`. */
   maxPointLights?: LightsBindingParams['pointLights']['max']
 }
 
@@ -37,6 +57,7 @@ export interface GPUCameraRendererLightParams {
 export interface GPUCameraRendererParams extends GPURendererParams {
   /** An object defining {@link CameraBasePerspectiveOptions | camera perspective parameters} */
   camera?: CameraBasePerspectiveOptions
+  /** An object defining {@link GPUCameraRendererLightParams | the maximum number of light} to use when creating the {@link GPUCameraRenderer}. */
   lights?: GPUCameraRendererLightParams
 }
 
@@ -62,17 +83,21 @@ export interface GPUCameraRendererParams extends GPURendererParams {
  * ```
  */
 export class GPUCameraRenderer extends GPURenderer {
-  /** {@link Camera} used by this {@link GPUCameraRenderer} */
+  /** {@link Camera} used by this {@link GPUCameraRenderer}. */
   camera: Camera
-  /** {@link BindGroup | bind group} handling the {@link cameraBinding | camera buffer binding} */
+  /** {@link BindGroup | bind group} handling the camera, lights and shadows {@link BufferBinding}. */
   cameraLightsBindGroup: BindGroup
 
+  /** Array of all the created {@link Light}. */
   lights: Light[]
+  /** An object defining the current {@link LightsBindingParams | lights binding parameters}, including the maximum number of lights for each type and the structure used to create the associated {@link BufferBinding}. */
   lightsBindingParams: LightsBindingParams
+  /** An object defining the structure used to create the shadows {@link BufferBinding}. */
   shadowsBindingsStruct: Record<string, Record<string, Input>>
+  /** The bindings used by the {@link cameraLightsBindGroup | camera, lights and shadows bind group}. */
   bindings: GPUCameraRendererBindings
 
-  /** Options used to create this {@link GPUCameraRenderer} */
+  /** Options used to create this {@link GPUCameraRenderer}. */
   options: GPUCameraRendererParams
 
   /** @ignore */
@@ -141,7 +166,7 @@ export class GPUCameraRenderer extends GPURenderer {
 
   /**
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored.
-   * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraBinding | camera buffer binding}.
+   * Configure the context again, resize the {@link core/renderPasses/RenderTarget.RenderTarget | render targets} and {@link core/textures/Texture.Texture | textures}, restore our {@link renderedObjects | rendered objects} context, re-write our {@link cameraLightsBindGroup | camera, lights and shadows bind group} bindings.
    * @async
    */
   restoreContext() {
@@ -175,7 +200,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link cameraBinding} inputs view values and the {@link meshes} {@link Camera} object.
+   * Tell our {@link GPUCameraRenderer} to use this {@link Camera}. If a {@link camera} has already been set, reset the {@link GPUCameraRenderer#bindings.camera | camera binding} inputs view values and the {@link meshes} {@link Camera} object.
    * @param camera - new {@link Camera} to use.
    */
   useCamera(camera: Camera) {
@@ -219,7 +244,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Set the {@link cameraBinding | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
+   * Set the {@link GPUCameraRenderer#bindings.camera | camera buffer binding} and {@link cameraLightsBindGroup | camera bind group}
    */
   setCameraBinding() {
     // TODO add world matrix / inverseViewMatrix?
@@ -254,15 +279,26 @@ export class GPUCameraRenderer extends GPURenderer {
 
   /* LIGHTS */
 
+  /**
+   * Add a {@link Light} to the {@link lights} array.
+   * @param light - {@link Light} to add.
+   */
   addLight(light: Light) {
     this.lights.push(light)
   }
 
+  /**
+   * Remove a {@link Light} from the {@link lights} array and destroy it.
+   * @param light - {@link Light} to remove.
+   */
   removeLight(light: Light) {
     this.lights = this.lights.filter((l) => l.uuid !== light.uuid)
     light.destroy()
   }
 
+  /**
+   * Set the lights {@link BufferBinding} based on the {@link lightsBindingParams}.
+   */
   setLightsBinding() {
     this.lightsBindingParams = {
       ambientLights: {
@@ -320,6 +356,10 @@ export class GPUCameraRenderer extends GPURenderer {
     })
   }
 
+  /**
+   * Set or reset the {@link BufferBinding} for a given {@link LightsType | type of light}.
+   * @param lightsType - {@link LightsType | Type of light} for which to create the {@link BufferBinding}.
+   */
   setLightsTypeBinding(lightsType: LightsType) {
     const structParams = Object.keys(this.lightsBindingParams[lightsType].params)
       .map((paramKey) => {
@@ -353,6 +393,10 @@ export class GPUCameraRenderer extends GPURenderer {
     })
   }
 
+  /**
+   * Called when a {@link LightsType | type of light} has overflown its maximum capacity. Destroys the associated {@link BufferBinding} (and eventually the associated shadow {@link BufferBinding}), recreates the {@link cameraLightsBindGroup | camera, lights and shadows bind group} and reset all lights for this {@link LightsType | type of light}.
+   * @param lightsType - {@link LightsType | Type of light} that has overflown its maximum capacity.
+   */
   onMaxLightOverflow(lightsType: LightsType) {
     if (!this.production) {
       throwWarning(
@@ -401,24 +445,33 @@ export class GPUCameraRenderer extends GPURenderer {
 
   /* SHADOW MAPS */
 
+  /**
+   * Get all the current {@link ShadowCastingLights | lights that can cast shadows}.
+   * @returns - All {@link ShadowCastingLights | lights that can cast shadows}.
+   */
   get shadowCastingLights(): ShadowCastingLights[] {
     return this.lights.filter(
       (light) => light instanceof DirectionalLight || light instanceof PointLight
     ) as ShadowCastingLights[]
   }
 
+  /**
+   * Set the shadows {@link BufferBinding} based on the {@link shadowsBindingsStruct}.
+   */
   setShadowsBinding() {
     this.shadowsBindingsStruct = {
       directional: directionalShadowStruct,
       point: pointShadowStruct,
     }
 
-    console.log(this.bindings)
-
     this.setShadowsTypeBinding('directionalLights')
     this.setShadowsTypeBinding('pointLights')
   }
 
+  /**
+   * Set or reset the associated shadow {@link BufferBinding} for a given {@link LightsType | type of light}.
+   * @param lightsType - {@link LightsType | Type of light} for which to create the associated shadow {@link BufferBinding}.
+   */
   setShadowsTypeBinding(lightsType: LightsType) {
     const type = lightsType.replace('Lights', '')
     const shadowsType = (type + 'Shadows') as ShadowsType
@@ -462,6 +515,9 @@ export class GPUCameraRenderer extends GPURenderer {
 
   /* CAMERA, LIGHTS & SHADOWS BIND GROUP */
 
+  /**
+   * Set the {@link cameraLightsBindGroup | camera, lights and shadows bind group}.
+   */
   setCameraLightsBindGroup() {
     // now initialize bind group
     this.cameraLightsBindGroup = new BindGroup(this, {
@@ -475,7 +531,7 @@ export class GPUCameraRenderer extends GPURenderer {
   }
 
   /**
-   * Create the {@link cameraLightsBindGroup | camera and lights bind group} buffers
+   * Create the {@link cameraLightsBindGroup | camera, lights and shadows bind group} buffers
    */
   setCameraBindGroup() {
     if (this.cameraLightsBindGroup && this.cameraLightsBindGroup.shouldCreateBindGroup) {
@@ -484,12 +540,15 @@ export class GPUCameraRenderer extends GPURenderer {
     }
   }
 
+  /**
+   * Tell our  {@link cameraLightsBindGroup | camera, lights and shadows bind group} to update.
+   */
   shouldUpdateCameraLightsBindGroup() {
     this.#shouldUpdateCameraLightsBindGroup = true
   }
 
   /**
-   * Tell our {@link cameraBinding | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
+   * Tell our {@link GPUCameraRenderer#bindings.camera | camera buffer binding} that we should update its bindings and update the bind group. Called each time the camera matrices change.
    */
   updateCameraBindings() {
     this.bindings.camera?.shouldUpdateBinding('view')
@@ -579,7 +638,7 @@ export class GPUCameraRenderer extends GPURenderer {
    */
   destroy() {
     this.cameraLightsBindGroup?.destroy()
-    this.lights.forEach((light) => light.remove())
+    this.lights.forEach((light) => this.removeLight(light))
     super.destroy()
   }
 }
