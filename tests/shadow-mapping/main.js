@@ -40,8 +40,11 @@ window.addEventListener('load', async () => {
   // get the camera
   const { scene, camera } = gpuCameraRenderer
 
-  camera.position.y = 5
-  camera.position.z = 10
+  camera.position.y = 7.5
+  camera.position.z = 12.5
+
+  const scenePivot = new Object3D()
+  scenePivot.parent = scene
 
   camera.lookAt()
 
@@ -51,15 +54,6 @@ window.addEventListener('load', async () => {
   orbitControls.minZoom = -5
   orbitControls.maxZoom = 15
 
-  // render our scene manually
-  const animate = () => {
-    gpuDeviceManager.render()
-
-    requestAnimationFrame(animate)
-  }
-
-  animate()
-
   // LIGHTS
 
   const ambientLights = []
@@ -67,7 +61,7 @@ window.addEventListener('load', async () => {
   const pointLights = []
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.2,
+    intensity: 0.1,
   })
 
   ambientLights.push(ambientLight)
@@ -75,10 +69,10 @@ window.addEventListener('load', async () => {
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(15, 15, 15),
     shadow: {
-      intensity: 1,
+      //intensity: 1,
       bias: 0.002,
-      normalBias: 0.002,
-      depthTextureSize: new Vec2(1024, 1024),
+      //normalBias: 0.002,
+      depthTextureSize: new Vec2(256, 256),
     },
   })
 
@@ -87,52 +81,88 @@ window.addEventListener('load', async () => {
   const directionalLight2 = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(-15, 15, 15),
     shadow: {
-      intensity: 1,
+      //intensity: 1,
       bias: 0.002,
-      normalBias: 0.002,
-      depthTextureSize: new Vec2(512, 512),
+      //normalBias: 0.002,
+      //depthTextureSize: new Vec2(512, 512),
     },
   })
 
   directionalLights.push(directionalLight2)
 
+  const directionalLight3 = new DirectionalLight(gpuCameraRenderer, {
+    position: new Vec3(15, 15, -15),
+    shadow: {
+      //intensity: 1,
+      bias: 0.002,
+      //normalBias: 0.002,
+      depthTextureSize: new Vec2(1024, 1024),
+    },
+  })
+
+  directionalLights.push(directionalLight3)
+
+  const directionalLight4 = new DirectionalLight(gpuCameraRenderer, {
+    position: new Vec3(-15, 15, -15),
+    shadow: {
+      //intensity: 1,
+      bias: 0.002,
+      //normalBias: 0.002,
+      //depthTextureSize: new Vec2(512, 512),
+    },
+  })
+
+  directionalLights.push(directionalLight4)
+
   const pointLight = new PointLight(gpuCameraRenderer, {
     position: new Vec3(0, 0.5, 0),
     color: new Vec3(1),
-    range: 15,
-    intensity: 2,
+    range: 7.5,
+    intensity: 5,
   })
 
-  pointLight.shadow.setParameters({
-    bias: 0.005,
-    normalBias: 0,
-    intensity: 3,
-    depthTextureSize: new Vec2(512, 512),
-    camera: {
-      near: 0.01,
-    },
+  pointLight.shadow.cast({
+    bias: 0.0005,
+    //normalBias: 0.075,
+    //intensity: 1,
+    //depthTextureSize: new Vec2(512, 512),
+    // camera: {
+    //   near: 0.5,
+    // },
   })
 
   pointLights.push(pointLight)
 
-  const pointLight2 = new PointLight(gpuCameraRenderer, {
-    position: new Vec3(-2, 0.5, -2),
-    color: new Vec3(1),
-    range: 15,
-    intensity: 4,
-    shadow: {
-      bias: 0.005,
-      intensity: 1,
-      depthTextureSize: new Vec2(512, 512),
-    },
-  })
-
-  pointLights.push(pointLight2)
+  // const pointLight2 = new PointLight(gpuCameraRenderer, {
+  //   position: new Vec3(-5, 0.5, 0),
+  //   color: new Vec3(1),
+  //   range: 15,
+  //   intensity: 3,
+  //   shadow: {
+  //     bias: 0.005,
+  //     intensity: 5,
+  //     depthTextureSize: new Vec2(512, 512),
+  //   },
+  // })
+  //
+  // pointLights.push(pointLight2)
 
   setTimeout(() => {
     //directionalLight.shadow.depthTextureSize.set(256, 256)
     //directionalLight.shadow.intensity = 0.1
   }, 2000)
+
+  // RENDER
+
+  const animate = () => {
+    scenePivot.rotation.y += 0.015
+
+    gpuDeviceManager.render()
+
+    requestAnimationFrame(animate)
+  }
+
+  animate()
 
   const meshVs = /* wgsl */ `
     struct VertexOutput {
@@ -175,39 +205,6 @@ window.addEventListener('load', async () => {
       let normal: vec3f = normalize(faceDirection * fsInput.normal);
       
       let worldPosition: vec3f = fsInput.worldPosition;
-    
-    
-      // var directLight: LightContribution;
-      // var indirectLight: LightContribution;
-      //
-      // var visibility: f32 = 1.0;
-      // var color: vec3f = shading.color;
-      //
-      // var directLightColor = vec3(0.0);
-      //
-      // let pointShadows = getPCFPointShadows(worldPosition);
-      // let directionalShadows = getPCFDirectionalShadows(worldPosition);
-      //
-      // for(var i = 0; i < pointLights.count; i++) {
-      //   let lightDirection: vec3f = pointLights.elements[i].position - worldPosition;
-      //   let irradiance = getLightDiffuseContribution(normal, lightDirection) * pointShadows[i];
-      //   directLight.diffuse += irradiance * BRDF_Lambert(shading.color);
-      // }
-      //
-      // for(var i = 0; i < directionalLights.count; i++) {
-      //   let lightDirection: vec3f = worldPosition - directionalLights.elements[i].direction;
-      //   let irradiance = getLightDiffuseContribution(normal, lightDirection) * directionalShadows[i];
-      //   directLight.diffuse += irradiance * BRDF_Lambert(shading.color);
-      // }
-      //
-      //
-      // let irradiance = getAmbientContribution();
-      //
-      // indirectLight.diffuse += irradiance * BRDF_Lambert(shading.color);
-      //
-      //
-      // return linearToOutput(vec4(directLight.diffuse + indirectLight.diffuse, 1.0));
-      //return vec4(directLight.diffuse + indirectLight.diffuse, 1.0);
       
       var color: vec3f = shading.color;
       
@@ -216,6 +213,12 @@ window.addEventListener('load', async () => {
         worldPosition,
         color
       );
+      
+      // color = getLambert(
+      //   normal,
+      //   worldPosition,
+      //   color
+      // );
       
       return vec4(color, 1.0);
     }
@@ -250,17 +253,8 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(directionalLight, pointLight, gpuCameraRenderer, sphere)
-
-  sphere.position.x = -2
-
-  let time = 0
-
-  sphere.onBeforeRender(() => {
-    time += 0.0375
-    sphere.position.y = 1 + Math.sin(time)
-    directionalLight.position.z = Math.cos(time * 0.75) * 15
-  })
+  sphere.position.z = 2.5
+  sphere.parent = scenePivot
 
   const cube = new Mesh(gpuCameraRenderer, {
     label: 'Cube',
@@ -295,15 +289,60 @@ window.addEventListener('load', async () => {
     //cullMode: 'front',
   })
 
+  directionalLight3.shadow.addShadowCastingMesh(cube, {
+    //cullMode: 'front',
+  })
+
+  directionalLight4.shadow.addShadowCastingMesh(cube, {
+    //cullMode: 'front',
+  })
+
   pointLight.shadow.addShadowCastingMesh(cube, {
     //cullMode: 'front',
   })
 
-  pointLight2.shadow.addShadowCastingMesh(cube, {
-    //cullMode: 'front',
+  // pointLight2.shadow.addShadowCastingMesh(cube, {
+  //   //cullMode: 'front',
+  // })
+
+  cube.position.x = 2.5
+  cube.parent = scenePivot
+
+  cube.onBeforeRender(() => {
+    cube.rotation.y = -scenePivot.rotation.y
   })
 
-  cube.position.x = 2
+  const cube2 = new Mesh(gpuCameraRenderer, {
+    label: 'Cube 2',
+    geometry: new BoxGeometry(),
+    castShadows: true,
+    receiveShadows: true,
+    shaders: {
+      vertex: {
+        code: meshVs,
+      },
+      fragment: {
+        code: meshFs,
+      },
+    },
+    uniforms: {
+      shading: {
+        struct: {
+          color: {
+            type: 'vec3f',
+            value: new Vec3(0, 1, 0),
+          },
+        },
+      },
+    },
+  })
+
+  cube2.position.x = -2.5
+  cube2.parent = scenePivot
+
+  cube2.onBeforeRender(() => {
+    cube2.rotation.y = -scenePivot.rotation.y
+  })
 
   const sphere2 = new Mesh(gpuCameraRenderer, {
     label: 'Sphere 2',
@@ -330,7 +369,16 @@ window.addEventListener('load', async () => {
     },
   })
 
-  sphere2.position.z = -2
+  sphere2.position.z = -2.5
+  sphere2.parent = scenePivot
+
+  // let time = 0
+  //
+  // sphere2.onBeforeRender(() => {
+  //   time += 0.0375
+  //   sphere2.position.y = 1 + Math.sin(time)
+  //   directionalLight.position.z = Math.cos(time * 0.75) * 15
+  // })
 
   // create floor
   // the floor will not cast shadows, but it will receive them
@@ -359,7 +407,7 @@ window.addEventListener('load', async () => {
         struct: {
           color: {
             type: 'vec3f',
-            value: new Vec3(0.35),
+            value: new Vec3(0.15),
           },
         },
       },
@@ -409,11 +457,11 @@ window.addEventListener('load', async () => {
 
     if (directionalLight.shadow.isActive) {
       const directionalShadow = directionalLightFolder.addFolder('Shadow')
-      directionalShadow.add(directionalLight.shadow, 'intensity', 0, 1, 0.01)
+      directionalShadow.add(directionalLight.shadow, 'intensity', 0, 10, 0.01)
       directionalShadow.add(directionalLight.shadow, 'bias', 0, 0.01, 0.0001)
       directionalShadow.add(directionalLight.shadow, 'normalBias', 0, 0.01, 0.0001)
-      directionalShadow.add(directionalLight.shadow.depthTextureSize, 'x', 256, 1024, 128)
-      directionalShadow.add(directionalLight.shadow.depthTextureSize, 'y', 256, 1024, 128)
+      directionalShadow.add(directionalLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
+      directionalShadow.add(directionalLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
     }
   })
 
@@ -436,11 +484,11 @@ window.addEventListener('load', async () => {
 
     if (pointLight.shadow.isActive) {
       const pointShadow = pointLightFolder.addFolder('Shadow')
-      pointShadow.add(pointLight.shadow, 'intensity', 0, 1, 0.01)
+      pointShadow.add(pointLight.shadow, 'intensity', 0, 10, 0.01)
       pointShadow.add(pointLight.shadow, 'bias', 0, 0.01, 0.0001)
       pointShadow.add(pointLight.shadow, 'normalBias', 0, 0.01, 0.0001)
-      pointShadow.add(pointLight.shadow.depthTextureSize, 'x', 256, 1024, 128)
-      pointShadow.add(pointLight.shadow.depthTextureSize, 'y', 256, 1024, 128)
+      pointShadow.add(pointLight.shadow.depthTextureSize, 'x', 128, 1024, 64).name('Texture width')
+      pointShadow.add(pointLight.shadow.depthTextureSize, 'y', 128, 1024, 64).name('Texture height')
     }
   })
 })

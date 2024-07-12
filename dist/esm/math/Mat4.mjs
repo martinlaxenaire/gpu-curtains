@@ -610,22 +610,16 @@ class Mat4 {
    *  * the given the left, right, bottom, and top dimensions to -1 +1 in x, and y
    *  * and 0 to +1 in z.
    *
-   * @param parameters - parameters used to create the camera orthographic matrix.
-   * @param parameters.left - the left side of the camera near clipping plane viewport.
-   * @param parameters.right - the right side of the camera near clipping plane viewport.
-   * @param parameters.bottom - the bottom of the camera near clipping plane viewport.
-   * @param parameters.top - the top of the camera near clipping plane viewport.
-   * @param parameters.near - the camera near plane.
-   * @param parameters.far - the camera far plane.
+   * @param parameters - {@link OrthographicProjectionParams | parameters} used to create the camera orthographic matrix.
    * @returns - the camera orthographic {@link Mat4} matrix.
    */
   makeOrthographic({
-    left,
-    right,
-    bottom,
-    top,
-    near,
-    far
+    left = -5,
+    right = 5,
+    bottom = -5,
+    top = 5,
+    near = 0.1,
+    far = 50
   }) {
     const te = this.elements;
     te[0] = 2 / (right - left);
@@ -653,14 +647,10 @@ class Mat4 {
    * We assume a unit box extending from -1 to 1 in the x and y dimensions and
    * from -1 to 1 in the z dimension, as three.js and more generally WebGL handles it.
    *
-   * @param parameters - parameters used to create the camera perspective matrix.
-   * @param parameters.fov - the camera field of view (in radians).
-   * @param parameters.aspect - the camera aspect ratio (width / height).
-   * @param parameters.near - the camera near plane.
-   * @param parameters.far - the camera far plane.
+   * @param parameters - {@link PerspectiveProjectionParams | parameters} used to create the camera perspective matrix.
    * @returns - the camera perspective {@link Mat4} matrix.
    */
-  makePerspective({ fov, aspect, near, far }) {
+  makePerspective({ fov = 90, aspect = 1, near = 0.1, far = 150 }) {
     const top = near * Math.tan(Math.PI / 180 * 0.5 * fov);
     const height = 2 * top;
     const width = aspect * height;

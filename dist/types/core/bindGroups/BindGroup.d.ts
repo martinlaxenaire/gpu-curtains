@@ -104,6 +104,7 @@ export declare class BindGroup {
      * @param binding - binding to add
      */
     addBinding(binding: BindGroupBindingElement): void;
+    destroyBufferBinding(binding: BindGroupBufferBindingElement): void;
     /**
      * Creates Bindings based on a list of inputs
      * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}

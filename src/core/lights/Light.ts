@@ -16,6 +16,7 @@ export interface LightBaseParams {
 
 export interface LightParams extends LightBaseParams {
   index?: number
+  type?: string | LightsType
 }
 
 export class Light extends Object3D {
@@ -24,16 +25,21 @@ export class Light extends Object3D {
   index: number
   renderer: CameraRenderer
 
+  options: LightBaseParams
+
   color: Vec3
   #intensity: number
   #intensityColor: Vec3
 
   rendererBinding: BufferBinding | null
 
-  constructor(renderer: CameraRenderer, { color = new Vec3(1), intensity = 1, index = 0 } = {} as LightParams) {
+  constructor(
+    renderer: CameraRenderer,
+    { color = new Vec3(1), intensity = 1, index = 0, type = 'lights' } = {} as LightParams
+  ) {
     super()
 
-    this.type = 'light'
+    this.type = type
 
     Object.defineProperty(this as Light, 'index', { value: index })
 
@@ -41,14 +47,15 @@ export class Light extends Object3D {
 
     this.renderer = renderer
 
+    this.setRendererBinding()
+
     this.uuid = generateUUID()
 
-    this.rendererBinding = null // should be explicitly set by inheriting classes
+    this.options = {
+      color,
+      intensity,
+    }
 
-    this.renderer.addLight(this)
-  }
-
-  init({ color, intensity }) {
     this.color = color
     this.#intensityColor = this.color.clone()
     this.color.onChange(() =>
@@ -56,6 +63,19 @@ export class Light extends Object3D {
     )
 
     this.intensity = intensity
+
+    this.renderer.addLight(this)
+  }
+
+  setRendererBinding() {
+    if (this.renderer.bindings[this.type]) {
+      this.rendererBinding = this.renderer.bindings[this.type]
+    }
+  }
+
+  reset() {
+    this.setRendererBinding()
+    this.onPropertyChanged('color', this.#intensityColor.copy(this.color).multiplyScalar(this.intensity))
   }
 
   get intensity(): number {

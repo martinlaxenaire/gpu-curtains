@@ -7,7 +7,7 @@ import { Vec3 } from '../../math/Vec3'
 import { AllowedBindGroups, Input } from '../../types/BindGroups'
 import { RectBBox } from '../DOM/DOMElement'
 import { Light, LightsType, ShadowCastingLights } from '../lights/Light'
-import { WGSLVariableType } from '../bindings/utils'
+import { TypedArrayConstructor, WGSLVariableType } from '../bindings/utils'
 import { throwWarning } from '../../utils/utils'
 import { DirectionalLight } from '../lights/DirectionalLight'
 import { PointLight } from '../lights/PointLight'
@@ -376,6 +376,7 @@ export class GPUCameraRenderer extends GPURenderer {
     this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType]
 
     // increase shadows binding size as well
+    // TODO if the meshes shaders are already compiled, should we flush their pipelines?
     if (lightsType === 'directionalLights' || lightsType === 'pointLights') {
       const shadowsType = (lightsType.replace('Lights', '') + 'Shadows') as ShadowsType
       const oldShadowsBinding = this.cameraLightsBindGroup.getBindingByName(shadowsType)
@@ -390,6 +391,12 @@ export class GPUCameraRenderer extends GPURenderer {
 
     this.cameraLightsBindGroup.resetEntries()
     this.cameraLightsBindGroup.createBindGroup()
+
+    this.lights.forEach((light) => {
+      if (light.type === lightsType) {
+        light.reset()
+      }
+    })
   }
 
   /* SHADOW MAPS */
@@ -405,6 +412,8 @@ export class GPUCameraRenderer extends GPURenderer {
       directional: directionalShadowStruct,
       point: pointShadowStruct,
     }
+
+    console.log(this.bindings)
 
     this.setShadowsTypeBinding('directionalLights')
     this.setShadowsTypeBinding('pointLights')
@@ -441,7 +450,7 @@ export class GPUCameraRenderer extends GPURenderer {
                 type: binding.type,
                 value:
                   Array.isArray(binding.value) || ArrayBuffer.isView(binding.value)
-                    ? new binding.value.constructor(binding.value.length)
+                    ? new (binding.value.constructor as ArrayConstructor | TypedArrayConstructor)(binding.value.length)
                     : binding.value,
               },
             }

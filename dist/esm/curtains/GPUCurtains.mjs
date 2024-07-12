@@ -21,6 +21,7 @@ class GPUCurtains {
     adapterOptions = {},
     renderPass,
     camera,
+    lights,
     autoRender = true,
     autoResize = true,
     watchScroll = true
@@ -44,6 +45,7 @@ class GPUCurtains {
       label,
       pixelRatio,
       camera,
+      lights,
       production,
       adapterOptions,
       preferredFormat,
@@ -104,7 +106,8 @@ class GPUCurtains {
       preferredFormat: this.options.preferredFormat,
       alphaMode: this.options.alphaMode,
       renderPass: this.options.renderPass,
-      camera: this.options.camera
+      camera: this.options.camera,
+      lights: this.options.lights
     });
   }
   /**

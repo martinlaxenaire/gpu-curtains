@@ -26,13 +26,10 @@ export const getDefaultShadowDepthVs = (lightShadowIndex = 0) => /* wgsl */ `
 
 export const getPCFShadowContribution = /* wgsl */ `
 fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: texture_depth_2d) -> f32 {
-  // Percentage-closer filtering. Sample texels in the region
-  // to smooth the result.
-  var visibility = 0.0;
+  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
   
-  let lightShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[index];
-  
-  var shadowCoords: vec3f = vec3((lightShadow.projectionMatrix * lightShadow.viewMatrix * vec4(worldPosition, 1.0)).xyz);
+  // get shadow coords
+  var shadowCoords: vec3f = vec3((directionalShadow.projectionMatrix * directionalShadow.viewMatrix * vec4(worldPosition, 1.0)).xyz);
   
   // Convert XY to (0, 1)
   // Y is flipped because texture coords are Y-down.
@@ -41,24 +38,35 @@ fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: text
     shadowCoords.z
   );
   
+  // Percentage-closer filtering. Sample texels in the region
+  // to smooth the result.
+  var visibility = 0.0;
+  
   let size: vec2f = vec2f(textureDimensions(depthTexture).xy);
   
-  let oneOverShadowDepthTextureSize: vec2f = 1.0 / size;
-  for (var y = -1; y <= 1; y++) {
-    for (var x = -1; x <= 1; x++) {
-      let offset = vec2f(vec2(x, y)) * oneOverShadowDepthTextureSize;
+  let texelSize: vec2f = 1.0 / size;
+  
+  let sampleCount: i32 = directionalShadow.pcfSamples;
+  let maxSamples: f32 = f32(sampleCount) - 1.0;
+  
+  for (var x = 0; x < sampleCount; x++) {
+    for (var y = 0; y < sampleCount; y++) {
+      let offset = texelSize * vec2(
+        f32(x) - maxSamples * 0.5,
+        f32(y) - maxSamples * 0.5
+      );
       
       visibility += textureSampleCompare(
         depthTexture,
         depthComparisonSampler,
         shadowCoords.xy + offset,
-        shadowCoords.z - lightShadow.bias
+        shadowCoords.z - directionalShadow.bias
       );
     }
   }
-  visibility /= 9.0;
+  visibility /= f32(sampleCount * sampleCount);
   
-  visibility = clamp(visibility, 1.0 - clamp(lightShadow.intensity, 0.0, 1.0), 1.0);
+  visibility = clamp(visibility, 1.0 - clamp(directionalShadow.intensity, 0.0, 1.0), 1.0);
   
   let inFrustum: bool = shadowCoords.x >= 0.0 && shadowCoords.x <= 1.0 && shadowCoords.y >= 0.0 && shadowCoords.y <= 1.0;
   let frustumTest: bool = inFrustum && shadowCoords.z <= 1.0;
@@ -73,21 +81,20 @@ export const getPCFDirectionalShadows = (renderer: CameraRenderer) => {
   ) as DirectionalLight[]
 
   return /* wgsl */ `
-fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<vec3f, ${directionalLights.length}> {
-  var directionalShadowContribution: array<vec3f, ${directionalLights.length}>;
+fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${directionalLights.length}> {
+  var directionalShadowContribution: array<f32, ${directionalLights.length}>;
   
   var lightDirection: vec3f;
-  var shadow: f32;
   
   ${directionalLights
     .map((light, index) => {
       return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
       
-      directionalShadowContribution[${index}] = directionalLights.elements[${index}].color;
-      
-      shadow = select( 1.0, getPCFShadowContribution(${index}, worldPosition, shadowDepthTexture${index}), directionalShadows.directionalShadowsElements[${index}].isActive > 0);
-      
-      directionalShadowContribution[${index}] *= shadow;`
+      ${
+        light.shadow.isActive
+          ? `directionalShadowContribution[${index}] = select( 1.0, getPCFShadowContribution(${index}, worldPosition, shadowDepthTexture${index}), directionalShadows.directionalShadowsElements[${index}].isActive > 0);`
+          : ''
+      }`
     })
     .join('\n')}
   
@@ -140,66 +147,12 @@ struct PointShadowVSOutput {
   
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${pointShadowIndex}];
   
-  // map to [0;1] range by dividing by far plane
+  // map to [0, 1] range by dividing by far plane - near plane
   lightDistance = (lightDistance - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
   
   // write this as modified depth
   return clamp(lightDistance, 0.0, 1.0);
 }`
-
-// export const getDefaultShadowPosition = /* wgsl */ `
-// fn getDefaultPositionFromLight(directionalShadow: DirectionalShadowsElement, position: vec3f) -> vec4f {
-//   return directionalShadow.projectionMatrix * directionalShadow.viewMatrix * matrices.model * vec4(position, 1.0);
-// }
-//
-// fn getDefaultShadowPosition(directionalShadow: DirectionalShadowsElement, position: vec3f) -> vec3f {
-//   // XY is in (-1, 1) space, Z is in (0, 1) space
-//   let positionFromLight: vec4f = getDefaultPositionFromLight(directionalShadow, position);
-//
-//   // Convert XY to (0, 1)
-//   // Y is flipped because texture coords are Y-down.
-//   return vec3(
-//     positionFromLight.xy * vec2(0.5, -0.5) + vec2(0.5),
-//     positionFromLight.z
-//   );
-// }`
-//
-// export const getPCFShadowContributionOld = (light: DirectionalLight) => /* wgsl */ {
-//   if (!light.shadow.isActive) {
-//     return 'fn getPCFShadowContributionOld(directionalShadow: DirectionalShadowsElement, shadowPosition: vec3f) -> f32 { return 1.0; }'
-//   } else {
-//     return `
-// fn getPCFShadowContributionOld(directionalShadow: DirectionalShadowsElement, shadowPosition: vec3f) -> f32 {
-//   // Percentage-closer filtering. Sample texels in the region
-//   // to smooth the result.
-//   var visibility = 0.0;
-//
-//   let size: vec2f = vec2f(textureDimensions(${light.shadow.depthTexture.options.name}).xy);
-//
-//   let oneOverShadowDepthTextureSize: vec2f = 1.0 / size;
-//   for (var y = -1; y <= 1; y++) {
-//     for (var x = -1; x <= 1; x++) {
-//       let offset = vec2f(vec2(x, y)) * oneOverShadowDepthTextureSize;
-//
-//       visibility += textureSampleCompare(
-//         ${light.shadow.depthTexture.options.name},
-//         depthComparisonSampler,
-//         shadowPosition.xy + offset,
-//         shadowPosition.z - lightShadow.bias
-//       );
-//     }
-//   }
-//   visibility /= 9.0;
-//
-//   visibility = clamp(visibility, 1.0 - clamp(lightShadow.intensity, 0.0, 1.0), 1.0);
-//
-//   let inFrustum: bool = shadowPosition.x >= 0.0 && shadowPosition.x <= 1.0 && shadowPosition.y >= 0.0 && shadowPosition.y <= 1.0;
-//   let frustumTest: bool = inFrustum && shadowPosition.z <= 1.0;
-//
-//   return select(1.0, visibility, frustumTest);
-// }`
-//   }
-// }
 
 export const getPCFPointShadowContribution = /* wgsl */ `
 fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTexture: texture_depth_cube) -> f32 {
@@ -208,123 +161,44 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
   // Percentage-closer filtering. Sample texels in the region
   // to smooth the result.
   var visibility = 0.0;
-  // var closestDepth = 0.0;
-  // let currentDepth: f32 = shadowPosition.w;
-  //
-  // let maxSize: f32 = f32(max(textureDimensions(pointShadowMapDepthTextureArray).x, textureDimensions(pointShadowMapDepthTextureArray).y));
-  //
-  // let oneOverShadowDepthTextureSize: vec3f = vec3(1.0 / maxSize);
-  // for (var y = -1; y <= 1; y++) {
-  //   for (var x = -1; x <= 1; x++) {
-  //     for (var z = -1; z <= 1; z++) {
-  //       let offset = vec3f(vec3f(vec3(x, y, z)) * oneOverShadowDepthTextureSize);
-  //
-  //       closestDepth = textureSampleCompare(
-  //         pointShadowMapDepthTextureArray,
-  //         depthComparisonSampler,
-  //         shadowPosition.xyz + offset,
-  //         index,
-  //         (shadowPosition.w - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear)
-  //       );
-  //
-  //       closestDepth *= (pointShadow.cameraFar - pointShadow.cameraNear);
-  //       if(currentDepth - pointShadow.bias <= closestDepth) {
-  //         visibility += 1.0;
-  //       }
-  //     }
-  //   }
-  // }
-  // visibility /= 27.0;
-  
-  var shadow = 1.0;
-  let lightToPosition: vec3f = shadowPosition.xyz;
-  let lightToPositionLength: f32 = shadowPosition.w;
-  let shadowRadius: f32 = 1.0;
+  var closestDepth = 0.0;
+  let currentDepth: f32 = shadowPosition.w;
+  let cameraRange: f32 = pointShadow.cameraFar - pointShadow.cameraNear;
+  let normalizedDepth: f32 = (shadowPosition.w - pointShadow.cameraNear) / cameraRange;
 
-  var dp: f32 = ( lightToPositionLength - pointShadow.cameraNear ) / ( pointShadow.cameraFar - pointShadow.cameraNear );
-  dp -= pointShadow.bias;
-  let bd3D: vec3f = normalize( lightToPosition );
-  let texelSize: vec2f = vec2( 1.0 ) / ( vec2f(textureDimensions(depthCubeTexture).xy) * vec2( 4.0, 2.0 ) );
-  let offset: vec2f = vec2( -1, 1 ) * shadowRadius * texelSize.y;
-  shadow = (
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D + offset.xyy * texelSize.y,
-      dp
-    ) +
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D + offset.yyy * texelSize.y,
-      dp
-    ) +
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D + offset.xyx * texelSize.y,
-      dp
-    ) +
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D + offset.yyx * texelSize.y,
-      dp
-    ) +
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D,
-      dp
-    ) +
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D + offset.xxy * texelSize.y,
-      dp
-    ) +
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D + offset.yxy * texelSize.y,
-      dp
-    ) +
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D + offset.xxx * texelSize.y,
-      dp
-    ) +
-    textureSampleCompare(
-      depthCubeTexture,
-      depthComparisonSampler,
-      bd3D + offset.yxx * texelSize.y,
-      dp
-    )
-  ) * ( 1.0 / 9.0 );
+  let maxSize: f32 = f32(max(textureDimensions(depthCubeTexture).x, textureDimensions(depthCubeTexture).y));
 
+  let texelSize: vec3f = vec3(1.0 / maxSize);
+  let sampleCount: i32 = pointShadow.pcfSamples;
+  let maxSamples: f32 = f32(sampleCount) - 1.0;
+  
+  for (var x = 0; x < sampleCount; x++) {
+    for (var y = 0; y < sampleCount; y++) {
+      for (var z = 0; z < sampleCount; z++) {
+        let offset = texelSize * vec3(
+          f32(x) - maxSamples * 0.5,
+          f32(y) - maxSamples * 0.5,
+          f32(z) - maxSamples * 0.5
+        );
 
-  shadow = select(1.0, shadow, lightToPositionLength - pointShadow.cameraFar <= 0.0 && lightToPositionLength - pointShadow.cameraNear >= 0.0);
+        closestDepth = textureSampleCompare(
+          depthCubeTexture,
+          depthComparisonSampler,
+          shadowPosition.xyz + offset,
+          normalizedDepth - pointShadow.bias
+        );
 
-  visibility = mix( 1.0, shadow, pointShadow.intensity );
+        closestDepth *= cameraRange;
+        if(currentDepth <= closestDepth) {
+          visibility += 1.0;
+        }
+      }
+    }
+  }
   
-  // visibility = select(0.0, 1.0 - shadow, lightToPositionLength - pointShadow.cameraFar <= 0.0 && lightToPositionLength - pointShadow.cameraNear >= 0.0);
-  // visibility = clamp(visibility, 1.0 - clamp(pointShadow.intensity, 0.0, 1.0), 1.0);
+  visibility /= f32(sampleCount * sampleCount * sampleCount);
   
-  // closestDepth = textureSampleCompare(
-  //   pointShadowMapDepthTextureArray,
-  //   depthComparisonSampler,
-  //   shadowPosition.xyz,
-  //   index,
-  //   (shadowPosition.w - 0.1) / (150.0 - 0.1)
-  // );
-  //
-  // closestDepth *= (150.0 - 0.1);
-  //
-  // // now test for shadows
-  // visibility = select(1.0, 0.0, currentDepth - pointShadow.bias > closestDepth);
-  
-  //visibility = clamp(visibility, 1.0 - clamp(pointShadow.intensity, 0.0, 1.0), 1.0);
+  visibility = clamp(visibility, 1.0 - clamp(pointShadow.intensity, 0.0, 1.0), 1.0);
   
   return visibility;
 }`
@@ -333,23 +207,20 @@ export const getPCFPointShadows = (renderer: CameraRenderer) => {
   const pointLights = renderer.shadowCastingLights.filter((light) => light.type === 'pointLights') as PointLight[]
 
   return /* wgsl */ `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<vec3f, ${pointLights.length}> {
-  var pointShadowContribution: array<vec3f, ${pointLights.length}>;
+fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${pointLights.length}> {
+  var pointShadowContribution: array<f32, ${pointLights.length}>;
   
   var lightDirection: vec3f;
-  var attenuation: f32;
-  var shadow: f32;
   
   ${pointLights
     .map((light, index) => {
       return `lightDirection = pointLights.elements[${index}].position - worldPosition;
       
-      attenuation = rangeAttenuation(pointLights.elements[${index}].range, length(lightDirection));
-      pointShadowContribution[${index}] = pointLights.elements[${index}].color * attenuation;
-      
-      shadow = select( 1.0, getPCFPointShadowContribution(${index}, vec4(lightDirection, length(lightDirection)), pointShadowCubeDepthTexture${index}), pointShadows.pointShadowsElements[${index}].isActive > 0);
-      
-      pointShadowContribution[${index}] *= shadow;`
+      ${
+        light.shadow.isActive
+          ? `pointShadowContribution[${index}] = select( 1.0, getPCFPointShadowContribution(${index}, vec4(lightDirection, length(lightDirection)), pointShadowCubeDepthTexture${index}), pointShadows.pointShadowsElements[${index}].isActive > 0);`
+          : ''
+      }`
     })
     .join('\n')}
   

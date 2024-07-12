@@ -11,10 +11,11 @@ export interface DirectionalLightBaseParams extends LightBaseParams {
 }
 
 export class DirectionalLight extends Light {
-  position: Vec3
   target: Vec3
   #direction: Vec3
   #actualPosition: Vec3
+
+  options: DirectionalLightBaseParams
 
   shadow: DirectionalShadow
 
@@ -28,45 +29,49 @@ export class DirectionalLight extends Light {
       shadow = null,
     } = {} as DirectionalLightBaseParams
   ) {
-    super(renderer, { color, intensity, index: directionalLightIndex++ })
+    super(renderer, { color, intensity, index: directionalLightIndex++, type: 'directionalLights' })
 
-    this.type = 'directionalLights'
-
-    this.rendererBinding = this.renderer.bindings[this.type]
-
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type as LightsType)
+    this.options = {
+      ...this.options,
+      position,
+      target,
+      shadow,
     }
-
-    this.parent = this.renderer.scene
-
-    this.init({ color, intensity, position, target })
-
-    this.shadow = new DirectionalShadow(this.renderer, { light: this })
-
-    if (shadow) {
-      this.shadow.setParameters(shadow)
-    }
-  }
-
-  init({ color, intensity, position, target }: DirectionalLightBaseParams) {
-    super.init({ color, intensity })
-
-    this.rendererBinding.inputs.count.value = directionalLightIndex
-    this.rendererBinding.inputs.count.shouldUpdate = true
 
     this.#direction = new Vec3()
     this.#actualPosition = new Vec3()
     this.target = target
     this.target.onChange(() => this.setDirection())
     this.position.copy(position)
+
+    this.parent = this.renderer.scene
+
+    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+      this.onMaxLightOverflow(this.type as LightsType)
+    }
+
+    this.rendererBinding.inputs.count.value = directionalLightIndex
+    this.rendererBinding.inputs.count.shouldUpdate = true
+
+    this.shadow = new DirectionalShadow(this.renderer, { light: this })
+
+    if (shadow) {
+      this.shadow.cast(shadow)
+    }
+  }
+
+  reset() {
+    super.reset()
+    this.setDirection()
+
+    this.shadow?.reset()
   }
 
   setDirection() {
     this.#direction.copy(this.target).sub(this.worldMatrix.getTranslation(this.#actualPosition))
     this.onPropertyChanged('direction', this.#direction)
 
-    this.shadow.updateViewMatrix(this.#actualPosition, this.target)
+    this.shadow?.updateViewMatrix(this.#actualPosition, this.target)
   }
 
   // explicitly disable scale and transform origin transformations
@@ -86,6 +91,11 @@ export class DirectionalLight extends Light {
     if (this.matricesNeedUpdate) {
       this.setDirection()
     }
+  }
+
+  onMaxLightOverflow(lightsType: LightsType) {
+    super.onMaxLightOverflow(lightsType)
+    this.shadow?.setRendererBinding()
   }
 
   destroy() {

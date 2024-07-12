@@ -534,7 +534,7 @@ export class Scene extends Object3D {
   }
 
   /**
-   * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance.
+   * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
    */
   onBeforeRender() {
     // execute meshes onBeforeRender callback if needed
@@ -562,8 +562,6 @@ export class Scene extends Object3D {
    * @param commandEncoder - current {@link GPUCommandEncoder}
    */
   render(commandEncoder: GPUCommandEncoder) {
-    this.onBeforeRender()
-
     for (const computePass of this.computePassEntries) {
       const pass = commandEncoder.beginComputePass()
       computePass.render(pass)

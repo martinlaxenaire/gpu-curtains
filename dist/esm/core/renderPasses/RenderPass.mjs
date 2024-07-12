@@ -139,7 +139,7 @@ class RenderPass {
   /**
    * Set our render pass {@link descriptor}
    */
-  setRenderPassDescriptor() {
+  setRenderPassDescriptor(depthTextureView = null) {
     this.descriptor = {
       label: this.options.label + " descriptor",
       colorAttachments: this.options.colorAttachments.map((colorAttachment, index) => {
@@ -166,7 +166,7 @@ class RenderPass {
       }),
       ...this.options.useDepth && {
         depthStencilAttachment: {
-          view: this.depthTexture.texture.createView({
+          view: depthTextureView || this.depthTexture.texture.createView({
             label: this.depthTexture.texture.label + " view"
           }),
           depthClearValue: this.options.depthClearValue,

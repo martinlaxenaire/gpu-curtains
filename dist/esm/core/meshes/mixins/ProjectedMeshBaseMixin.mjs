@@ -1,8 +1,9 @@
 import { isCameraRenderer } from '../../renderers/utils.mjs';
 import { DOMFrustum } from '../../DOM/DOMFrustum.mjs';
 import { MeshBaseMixin } from './MeshBaseMixin.mjs';
-import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl.mjs';
-import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl.mjs';
+import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl.mjs';
+import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl.mjs';
+import { getPCFDirectionalShadows, getPCFShadowContribution, getPCFPointShadows, getPCFPointShadowContribution } from '../../shaders/chunks/utils/shadows.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -12,7 +13,9 @@ const defaultProjectedMeshParams = {
     right: 0,
     bottom: 0,
     left: 0
-  }
+  },
+  receiveShadows: false,
+  castShadows: false
 };
 function ProjectedMeshBaseMixin(Base) {
   return class ProjectedMeshBase extends MeshBaseMixin(Base) {
@@ -49,13 +52,22 @@ function ProjectedMeshBaseMixin(Base) {
       this.type = "MeshTransformed";
       renderer = isCameraRenderer(renderer, parameters.label ? parameters.label + " " + this.type : this.type);
       this.renderer = renderer;
-      const { frustumCulling, DOMFrustumMargins } = parameters;
+      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows } = parameters;
       this.options = {
         ...this.options ?? {},
         // merge possible lower options?
         frustumCulling,
-        DOMFrustumMargins
+        DOMFrustumMargins,
+        receiveShadows,
+        castShadows
       };
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.addShadowCastingMesh(this);
+          }
+        });
+      }
       this.setDOMFrustum();
     }
     /* SHADERS */
@@ -130,6 +142,33 @@ function ProjectedMeshBaseMixin(Base) {
     cleanupRenderMaterialParameters(parameters) {
       delete parameters.frustumCulling;
       delete parameters.DOMFrustumMargins;
+      if (this.options.receiveShadows) {
+        const depthTextures = [];
+        let depthSamplers = [];
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            depthTextures.push(light.shadow.depthTexture);
+            depthSamplers.push(light.shadow.depthComparisonSampler);
+          }
+        });
+        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive);
+        if (hasActiveShadows && parameters.shaders.fragment && typeof parameters.shaders.fragment === "object") {
+          parameters.shaders.fragment.code = getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + parameters.shaders.fragment.code;
+        }
+        depthSamplers = depthSamplers.filter(
+          (sampler, i, array) => array.findIndex((s) => s.uuid === sampler.uuid) === i
+        );
+        if (parameters.textures) {
+          parameters.textures = [...parameters.textures, ...depthTextures];
+        } else {
+          parameters.textures = depthTextures;
+        }
+        if (parameters.samplers) {
+          parameters.samplers = [...parameters.samplers, ...depthSamplers];
+        } else {
+          parameters.samplers = depthSamplers;
+        }
+      }
       super.cleanupRenderMaterialParameters(parameters);
       return parameters;
     }

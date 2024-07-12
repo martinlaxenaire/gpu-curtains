@@ -2,9 +2,9 @@ import { Material } from './Material.mjs';
 import { isRenderer } from '../renderers/utils.mjs';
 import { throwWarning } from '../../utils/utils.mjs';
 import { compareRenderingOptions } from './utils.mjs';
-import default_projected_vsWgsl from '../shaders/chunks/default_projected_vs.wgsl.mjs';
-import default_vsWgsl from '../shaders/chunks/default_vs.wgsl.mjs';
-import default_fsWgsl from '../shaders/chunks/default_fs.wgsl.mjs';
+import default_projected_vsWgsl from '../shaders/chunks/default/default_projected_vs.wgsl.mjs';
+import default_vsWgsl from '../shaders/chunks/default/default_vs.wgsl.mjs';
+import default_fsWgsl from '../shaders/chunks/default/default_fs.wgsl.mjs';
 
 class RenderMaterial extends Material {
   /**
@@ -177,14 +177,30 @@ New rendering options: ${JSON.stringify(
   }
   /* BIND GROUPS */
   /**
-   * Create the bind groups if they need to be created, but first add Camera bind group if needed
+   * Get whether this {@link RenderMaterial} uses the renderer camera and lights bind group.
+   * @readonly
+   * */
+  get useCameraBindGroup() {
+    return "cameraLightsBindGroup" in this.renderer && this.options.rendering.useProjection;
+  }
+  /**
+   * Create the bind groups if they need to be created, but first add camera and lights bind group if needed.
    */
   createBindGroups() {
-    if ("cameraBindGroup" in this.renderer && this.options.rendering.useProjection) {
-      this.bindGroups.push(this.renderer.cameraBindGroup);
-      this.renderer.cameraBindGroup.consumers.add(this.uuid);
+    if (this.useCameraBindGroup) {
+      this.bindGroups.push(this.renderer.cameraLightsBindGroup);
+      this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
     }
     super.createBindGroups();
+  }
+  /**
+   * Update all bind groups, except for the camera and light bind groups if present, as it is already updated by the renderer itself.
+   */
+  updateBindGroups() {
+    const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
+    for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) {
+      this.updateBindGroup(this.bindGroups[i]);
+    }
   }
 }
 

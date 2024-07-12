@@ -91,7 +91,7 @@ export declare class RenderPass {
     /**
      * Set our render pass {@link descriptor}
      */
-    setRenderPassDescriptor(): void;
+    setRenderPassDescriptor(depthTextureView?: any): void;
     /**
      * Resize our {@link RenderPass}: reset its {@link Texture}
      */

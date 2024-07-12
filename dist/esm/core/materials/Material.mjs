@@ -280,19 +280,26 @@ class Material {
     this.clonedBindGroups = [];
   }
   /**
-   * {@link BindGroup#update | Update} all bind groups:
-   * - Update all {@link texturesBindGroups | textures bind groups} textures
-   * - Update its {@link BindGroup#bufferBindings | buffer bindings}
-   * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}
-   * - Check if we need to flush the pipeline
+   * Update all bind groups.
    */
   updateBindGroups() {
     for (const bindGroup of this.bindGroups) {
-      bindGroup.update();
-      if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
-        this.pipelineEntry.flushPipelineEntry(this.bindGroups);
-        bindGroup.needsPipelineFlush = false;
-      }
+      this.updateBindGroup(bindGroup);
+    }
+  }
+  /**
+   * {@link BindGroup#update | Update a bind group}:
+   * - Update the textures if it's a {@link texturesBindGroups | textures bind group}.
+   * - Update its {@link BindGroup#bufferBindings | buffer bindings}.
+   * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}.
+   * - Check if we need to flush the pipeline.
+   * @param bindGroup - {@link BindGroup} to update.
+   */
+  updateBindGroup(bindGroup) {
+    bindGroup.update();
+    if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
+      this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+      bindGroup.needsPipelineFlush = false;
     }
   }
   /* INPUTS */

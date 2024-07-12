@@ -132,7 +132,7 @@ class BufferElement {
     if (size <= bytesPerRow && nextPositionAvailable.byte + size > bytesPerRow) {
       nextPositionAvailable.row += 1;
       nextPositionAvailable.byte = 0;
-    } else if (size > bytesPerRow && nextPositionAvailable.byte > bytesPerRow) {
+    } else if (size > bytesPerRow && (nextPositionAvailable.byte > bytesPerRow || nextPositionAvailable.byte > 0)) {
       nextPositionAvailable.row += 1;
       nextPositionAvailable.byte = 0;
     }

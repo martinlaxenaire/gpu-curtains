@@ -16,7 +16,6 @@ import default_projected_vsWgsl from '../../shaders/chunks/default/default_proje
 import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl'
 import { BufferBindingParams } from '../../bindings/BufferBinding'
 import { Vec3 } from '../../../math/Vec3'
-import { ShadowCastingLights } from '../../lights/Light'
 import {
   getPCFDirectionalShadows,
   getPCFPointShadowContribution,
@@ -33,10 +32,12 @@ export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean
 export interface ProjectedMeshBaseParams {
   /** Frustum culling check to use. Accepts `OBB`, `sphere` or a boolean. Default to `OBB`. When set to `true`, `OBB` is used. */
   frustumCulling?: FrustumCullingCheck
-  /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
+  /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not. */
   DOMFrustumMargins?: RectCoords
 
+  /** Whether the mesh should receive the shadows from shadow casting lights. If set to `true`, the lights shadow map textures and sampler will be added to the material, and some shader chunks helpers will be added. Default to `false`. */
   receiveShadows?: boolean
+  /** Whether the mesh should cast shadows from shadow casting lights. If set to `true`, the mesh will be automatically added to all shadow maps. If you want to cast only specific shadows, see {@link core/shadows/Shadow.Shadow#addShadowCastingMesh | shadow's addShadowCastingMesh} method. Default to `false`. */
   castShadows?: boolean
 }
 
@@ -364,23 +365,17 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
           }
         })
 
-        // add helpers to shaders
-        const hasDirectionalShadow = this.renderer.shadowCastingLights.find(
-          (light) => light.type === 'directionalLights' && light.shadow.isActive
-        )
+        // add chunks to shaders
+        // TODO what if we change the mesh renderer?
+        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive)
 
-        if (hasDirectionalShadow && parameters.shaders.fragment) {
+        if (hasActiveShadows && parameters.shaders.fragment && typeof parameters.shaders.fragment === 'object') {
           parameters.shaders.fragment.code =
-            getPCFDirectionalShadows(this.renderer) + getPCFShadowContribution + parameters.shaders.fragment.code
-        }
-
-        const hasPointShadow = this.renderer.shadowCastingLights.find(
-          (light) => light.type === 'pointLights' && light.shadow.isActive
-        )
-
-        if (hasPointShadow && parameters.shaders.fragment) {
-          parameters.shaders.fragment.code =
-            getPCFPointShadows(this.renderer) + getPCFPointShadowContribution + parameters.shaders.fragment.code
+            getPCFDirectionalShadows(this.renderer) +
+            getPCFShadowContribution +
+            getPCFPointShadows(this.renderer) +
+            getPCFPointShadowContribution +
+            parameters.shaders.fragment.code
         }
 
         // filter duplicate depth comparison samplers

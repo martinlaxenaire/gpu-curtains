@@ -53,6 +53,7 @@ export declare class Camera extends Object3D {
     uuid: string;
     /** {@link CameraObject3DMatrices | Matrices object} of the {@link Camera} */
     matrices: CameraObject3DMatrices;
+    up: Vec3;
     /** The {@link Camera} frustum width and height */
     size: RectSize;
     /** Callback to execute when one of the camera {@link matrices} changed */

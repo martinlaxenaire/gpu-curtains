@@ -170,7 +170,7 @@ export declare class Object3D {
      * @param target - {@link Vec3 | target} to look at
      * @param position - {@link Vec3 | postion} from which to look at
      */
-    lookAt(target?: Vec3, position?: Vec3): void;
+    lookAt(target?: Vec3, position?: Vec3, up?: Vec3): void;
     /**
      * Update our {@link modelMatrix | model matrix}
      */

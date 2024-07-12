@@ -11,9 +11,10 @@ export interface PointLightBaseParams extends LightBaseParams {
 }
 
 export class PointLight extends Light {
-  position: Vec3
   #range: number
   #actualPosition: Vec3
+
+  options: PointLightBaseParams
 
   shadow: PointShadow
 
@@ -21,37 +22,42 @@ export class PointLight extends Light {
     renderer,
     { color = new Vec3(1), intensity = 1, position = new Vec3(), range = 0, shadow = null } = {} as PointLightBaseParams
   ) {
-    super(renderer, { color, intensity, index: pointLightIndex++ })
+    super(renderer, { color, intensity, index: pointLightIndex++, type: 'pointLights' })
 
-    this.type = 'pointLights'
-
-    this.rendererBinding = this.renderer.bindings[this.type]
-
-    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
-      this.onMaxLightOverflow(this.type as LightsType)
+    this.options = {
+      ...this.options,
+      position,
+      range,
+      shadow,
     }
-
-    this.parent = this.renderer.scene
-
-    this.init({ color, intensity, position, range })
-
-    this.shadow = new PointShadow(this.renderer, { light: this })
-
-    if (shadow) {
-      this.shadow.setParameters(shadow)
-    }
-  }
-
-  init({ color, intensity, position, range }: PointLightBaseParams) {
-    super.init({ color, intensity })
-
-    this.rendererBinding.inputs.count.value = pointLightIndex
-    this.rendererBinding.inputs.count.shouldUpdate = true
 
     this.#actualPosition = new Vec3()
     this.position.copy(position)
 
     this.range = range
+
+    this.parent = this.renderer.scene
+
+    if (this.index + 1 > this.renderer.lightsBindingParams[this.type].max) {
+      this.onMaxLightOverflow(this.type as LightsType)
+    }
+
+    this.rendererBinding.inputs.count.value = pointLightIndex
+    this.rendererBinding.inputs.count.shouldUpdate = true
+
+    this.shadow = new PointShadow(this.renderer, { light: this })
+
+    if (shadow) {
+      this.shadow.cast(shadow)
+    }
+  }
+
+  reset() {
+    super.reset()
+    this.onPropertyChanged('range', this.range)
+    this.setPosition()
+
+    this.shadow?.reset()
   }
 
   get range(): number {
@@ -61,6 +67,11 @@ export class PointLight extends Light {
   set range(value: number) {
     this.#range = value
     this.onPropertyChanged('range', this.range)
+  }
+
+  setPosition() {
+    this.onPropertyChanged('position', this.worldMatrix.getTranslation(this.#actualPosition))
+    this.shadow?.updateViewMatrices(this.#actualPosition)
   }
 
   // explicitly disable scale and transform origin transformations
@@ -78,9 +89,13 @@ export class PointLight extends Light {
     super.updateMatrixStack()
 
     if (this.matricesNeedUpdate) {
-      this.onPropertyChanged('position', this.worldMatrix.getTranslation(this.#actualPosition))
-      this.shadow.updateViewMatrices(this.#actualPosition)
+      this.setPosition()
     }
+  }
+
+  onMaxLightOverflow(lightsType: LightsType) {
+    super.onMaxLightOverflow(lightsType)
+    this.shadow?.setRendererBinding()
   }
 
   destroy() {

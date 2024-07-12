@@ -89,35 +89,16 @@ window.addEventListener('load', async () => {
       
       let worldPosition = fsInput.worldPosition;
       let viewDirection = normalize(fsInput.viewDirection);
-      
-      var lightContribution: LightContribution;
-      
+            
       if(shading.useLambert == 1) {
         // lambert
-        lightContribution = getLambertLightContribution(normal, worldPosition);
-        
-        //color = (lightContribution.ambient + lightContribution.diffuse + lightContribution.specular) * color;
         color = getLambert(
           normal,
           worldPosition,
           color
         );
       } else {
-        // phong shading
-        let specularStrength: f32 = 1.0;
-        let specularColor: vec3f = vec3(1.0);
-        let shininess: f32 = 30;
-        lightContribution = getPhong(
-          normal,
-          worldPosition,
-          viewDirection,
-          phong.shininess,
-          phong.specularColor,
-          phong.specularStrength
-        );
-        
-        //color = (lightContribution.ambient + lightContribution.diffuse + lightContribution.specular) * color;
-        
+        // phong shading        
         color = getPhong(
           normal,
           worldPosition,
