@@ -51,7 +51,7 @@ export declare class DirectionalShadow extends Shadow {
      * @param renderer - {@link CameraRenderer} used to create this {@link DirectionalShadow}.
      * @param parameters - {@link DirectionalShadowParams | parameters} used to create this {@link DirectionalShadow}.
      */
-    constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera, }?: DirectionalShadowParams);
+    constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera, }?: DirectionalShadowParams);
     /**
      * Set or reset this {@link DirectionalShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
@@ -61,7 +61,7 @@ export declare class DirectionalShadow extends Shadow {
      * Called internally by the associated {@link DirectionalLight} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link DirectionalShadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera }?: Omit<DirectionalShadowParams, "light">): void;
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera }?: Omit<DirectionalShadowParams, "light">): void;
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
      */

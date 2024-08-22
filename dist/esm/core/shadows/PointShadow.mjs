@@ -2,7 +2,7 @@ import { shadowStruct, Shadow } from './Shadow.mjs';
 import { Mat4 } from '../../math/Mat4.mjs';
 import { Vec3 } from '../../math/Vec3.mjs';
 import { Texture } from '../textures/Texture.mjs';
-import { getDefaultPointShadowDepthVs, getDefaultPointShadowDepthFs } from '../shaders/chunks/utils/shadows.mjs';
+import { getDefaultPointShadowDepthVs, getDefaultPointShadowDepthFs } from '../shaders/chunks/shading/shadows.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -60,12 +60,22 @@ class PointShadow extends Shadow {
     pcfSamples,
     depthTextureSize,
     depthTextureFormat,
+    autoRender,
     camera = {
       near: 0.1,
       far: light.range || 150
     }
   } = {}) {
-    super(renderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+    super(renderer, {
+      light,
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender
+    });
     /**
      * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
      * @private
@@ -127,12 +137,12 @@ class PointShadow extends Shadow {
    * Called internally by the associated {@link PointLight} if any shadow parameters are specified when creating it. Can also be called directly.
    * @param parameters - parameters to use for this {@link PointShadow}.
    */
-  cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera } = {}) {
-    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+  cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
     if (camera) {
       this.camera.near = camera.near ?? 0.1;
       this.camera.far = camera.far ?? this.light.range;
     }
+    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
   }
   /**
    * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
@@ -171,16 +181,14 @@ class PointShadow extends Shadow {
    * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
    */
   updateViewMatrices(position = new Vec3()) {
-    if (this.isActive) {
-      for (let i = 0; i < 6; i++) {
-        __privateGet(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
-        this.camera.viewMatrices[i].makeView(position, __privateGet(this, _tempCubeDirection), this.cubeUps[i]);
-        for (let j = 0; j < 16; j++) {
-          this.rendererBinding.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
-        }
+    for (let i = 0; i < 6; i++) {
+      __privateGet(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
+      this.camera.viewMatrices[i].makeView(position, __privateGet(this, _tempCubeDirection), this.cubeUps[i]);
+      for (let j = 0; j < 16; j++) {
+        this.rendererBinding.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
       }
-      this.rendererBinding.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
     }
+    this.rendererBinding.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
   }
   /**
    * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
@@ -215,7 +223,9 @@ class PointShadow extends Shadow {
       fixedSize: {
         width: maxSize,
         height: maxSize
-      }
+      },
+      autoDestroy: false
+      // do not destroy when removing a mesh
     });
   }
   /**
@@ -235,8 +245,9 @@ class PointShadow extends Shadow {
    *   - Render all the {@link meshes}
    *   - Submit the command encoder
    * - Reset all the {@link meshes} materials to their original one.
+   * @param once - Whether to render it only once or not.
    */
-  depthPassTask() {
+  render(once = false) {
     return this.renderer.onBeforeCommandEncoderCreation.add(
       () => {
         if (!this.meshes.size)
@@ -262,6 +273,7 @@ class PointShadow extends Shadow {
         this.renderer.pipelineManager.resetCurrentPipeline();
       },
       {
+        once,
         order: this.index
       }
     );
@@ -270,8 +282,8 @@ class PointShadow extends Shadow {
    * Get the default depth pass vertex shader for this {@link PointShadow}.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs() {
-    return getDefaultPointShadowDepthVs(this.index);
+  getDefaultShadowDepthVs(hasInstances = false) {
+    return getDefaultPointShadowDepthVs(this.index, hasInstances);
   }
   /**
    * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.

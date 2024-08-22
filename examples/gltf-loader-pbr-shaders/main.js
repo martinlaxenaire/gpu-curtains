@@ -1,9 +1,11 @@
 import {
   GPUDeviceManager,
   GPUCameraRenderer,
+  AmbientLight,
+  PointLight,
   GLTFLoader,
   GLTFScenesManager,
-  buildPBRShaders,
+  buildShaders,
   OrbitControls,
   Vec3,
 } from '../../dist/esm/index.mjs'
@@ -33,6 +35,17 @@ window.addEventListener('load', async () => {
 
   const { camera } = gpuCameraRenderer
   const orbitControls = new OrbitControls(gpuCameraRenderer)
+
+  // LIGHTS
+  const ambientLight = new AmbientLight(gpuCameraRenderer, {
+    intensity: 0.1, // will be updated
+  })
+
+  const pointLight = new PointLight(gpuCameraRenderer, {
+    position: new Vec3(), // will be updated when model changes
+    intensity: 1, // will be updated when model changes
+    range: -1,
+  })
 
   const models = {
     damagedHelmet: {
@@ -108,105 +121,12 @@ window.addEventListener('load', async () => {
       // disable frustum culling
       parameters.frustumCulling = false
 
-      const lightPosition = new Vec3(radius * 4)
-      const lightPositionLengthSq = lightPosition.lengthSq()
-      const lightPositionLength = lightPosition.length()
+      pointLight.position.set(radius * 2)
+      const lightPositionLengthSq = pointLight.position.lengthSq()
+      pointLight.intensity = lightPositionLengthSq * 3
 
-      // add lights
-      parameters.uniforms = {
-        ...parameters.uniforms,
-        ...{
-          ambientLight: {
-            struct: {
-              intensity: {
-                type: 'f32',
-                value: 0.1,
-              },
-              color: {
-                type: 'vec3f',
-                value: new Vec3(1),
-              },
-            },
-          },
-          pointLight: {
-            struct: {
-              position: {
-                type: 'vec3f',
-                value: lightPosition,
-              },
-              range: {
-                type: 'f32',
-                value: lightPositionLength * 4,
-              },
-              color: {
-                type: 'vec3f',
-                value: new Vec3(1),
-              },
-              intensity: {
-                type: 'f32',
-                value: lightPositionLengthSq * 4,
-              },
-            },
-          },
-        },
-      }
-
-      // PBR shaders
-      const additionalFragmentHead = /* wgsl */ `
-        fn rangeAttenuation(range: f32, distance: f32) -> f32 {
-          if (range <= 0.0) {
-              // Negative range means no cutoff
-              return 1.0 / pow(distance, 2.0);
-          }
-          return clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0) / pow(distance, 2.0);
-        }
-      `
-
-      const ambientContribution = /* wgsl */ `
-        lightContribution.ambient = ambientLight.intensity * ambientLight.color;
-      `
-
-      const lightContribution = /* wgsl */ `
-        // N, V and NdotV are already defined as
-        // let N = normalize(normal);
-        // let V = normalize(fsInput.viewDirection);
-        // let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
-        let L: vec3f = normalize(pointLight.position - worldPosition);
-        let H: vec3f = normalize(V + L);
-        
-        let NdotL: f32 = clamp(dot(N, L), 0.0, 1.0);
-        let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
-        let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
-      
-        // cook-torrance brdf
-        let NDF: f32 = DistributionGGX(NdotH, roughness);
-        let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
-        let F: vec3f = FresnelSchlick(VdotH, f0);
-      
-        let kD: vec3f = (vec3(1.0) - F) * (1.0 - metallic);
-      
-        let numerator: vec3f = NDF * G * F;
-        let denominator: f32 = max(4.0 * NdotV * NdotL, 0.001);
-        let specular: vec3f = numerator / vec3(denominator);
-      
-        // add lights spec to alpha for reflections on transparent surfaces (glass)
-        color.a = max(color.a, max(max(specular.r, specular.g), specular.b));
-        
-        // if we were using directional lights
-        // they would not have any attenuation
-        //let attenuation = 1.0;
-                
-        let distance: f32 = length(pointLight.position - worldPosition);
-        let attenuation: f32 = rangeAttenuation(pointLight.range, distance);
-        
-        let radiance: vec3f = pointLight.color * pointLight.intensity * attenuation;
-      
-        lightContribution.diffuse += (kD / vec3(PI)) * radiance * NdotL;
-        lightContribution.specular += specular * radiance * NdotL;
-      `
-
-      parameters.shaders = buildPBRShaders(meshDescriptor, {
-        chunks: { additionalFragmentHead, ambientContribution, lightContribution },
+      parameters.shaders = buildShaders(meshDescriptor, {
+        shadingModel: 'PBR', // default anyway
       })
     })
   }

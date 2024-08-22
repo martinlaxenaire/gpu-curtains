@@ -50,7 +50,7 @@ export declare class PointShadow extends Shadow {
      * @param renderer - {@link CameraRenderer} used to create this {@link PointShadow}.
      * @param parameters - {@link PointShadowParams | parameters} used to create this {@link PointShadow}.
      */
-    constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera, }?: PointShadowParams);
+    constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera, }?: PointShadowParams);
     /**
      * Set or reset this {@link PointShadow} {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}.
      */
@@ -60,7 +60,7 @@ export declare class PointShadow extends Shadow {
      * Called internally by the associated {@link PointLight} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link PointShadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera }?: Omit<PointShadowParams, "light">): void;
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera }?: Omit<PointShadowParams, "light">): void;
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
      */
@@ -101,13 +101,14 @@ export declare class PointShadow extends Shadow {
      *   - Render all the {@link meshes}
      *   - Submit the command encoder
      * - Reset all the {@link meshes} materials to their original one.
+     * @param once - Whether to render it only once or not.
      */
-    depthPassTask(): number;
+    render(once?: boolean): number;
     /**
      * Get the default depth pass vertex shader for this {@link PointShadow}.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs(): string;
+    getDefaultShadowDepthVs(hasInstances?: boolean): string;
     /**
      * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
      * @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.

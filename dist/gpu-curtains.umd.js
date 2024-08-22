@@ -4278,13 +4278,13 @@
       }
     } = {}) {
       super();
-      /** Private {@link Camera} field of view */
+      /** @ignore */
       __privateAdd$f(this, _fov, void 0);
-      /** Private {@link Camera} near plane */
+      /** @ignore */
       __privateAdd$f(this, _near, void 0);
-      /** Private {@link Camera} far plane */
+      /** @ignore */
       __privateAdd$f(this, _far, void 0);
-      /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
+      /** @ignore */
       __privateAdd$f(this, _pixelRatio, void 0);
       this.uuid = generateUUID();
       this.position.set(0, 0, 10);
@@ -5427,6 +5427,8 @@
      * @async
      */
     async compileMaterial() {
+      if (this.ready)
+        return;
       super.compileMaterial();
       if (this.pipelineEntry && this.pipelineEntry.canCompile) {
         this.setPipelineEntryProperties();
@@ -5539,7 +5541,7 @@
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
-  var _autoRender$1;
+  var _autoRender$2;
   let computePassIndex = 0;
   class ComputePass {
     /**
@@ -5552,7 +5554,7 @@
        * Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically
        * @private
        */
-      __privateAdd$d(this, _autoRender$1, true);
+      __privateAdd$d(this, _autoRender$2, true);
       // callbacks / events
       /** function assigned to the {@link onReady} callback */
       this._onReadyCallback = () => {
@@ -5603,7 +5605,7 @@
       };
       this.renderOrder = renderOrder ?? 0;
       if (autoRender !== void 0) {
-        __privateSet$c(this, _autoRender$1, autoRender);
+        __privateSet$c(this, _autoRender$2, autoRender);
       }
       this.userData = {};
       this.ready = false;
@@ -5639,7 +5641,7 @@
      */
     addToScene() {
       this.renderer.computePasses.push(this);
-      if (__privateGet$c(this, _autoRender$1)) {
+      if (__privateGet$c(this, _autoRender$2)) {
         this.renderer.scene.addComputePass(this);
       }
     }
@@ -5647,7 +5649,7 @@
      * Remove our compute pass from the scene and the renderer
      */
     removeFromScene() {
-      if (__privateGet$c(this, _autoRender$1)) {
+      if (__privateGet$c(this, _autoRender$2)) {
         this.renderer.scene.removeComputePass(this);
       }
       this.renderer.computePasses = this.renderer.computePasses.filter((computePass) => computePass.uuid !== this.uuid);
@@ -5887,7 +5889,7 @@
       this.material?.destroy();
     }
   }
-  _autoRender$1 = new WeakMap();
+  _autoRender$2 = new WeakMap();
 
   const points = [new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3()];
   class Box3 {
@@ -7177,7 +7179,7 @@
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
-  var _autoRender;
+  var _autoRender$1;
   class RenderTarget {
     /**
      * RenderTarget constructor
@@ -7186,7 +7188,7 @@
      */
     constructor(renderer, parameters = {}) {
       /** Whether we should add this {@link RenderTarget} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-      __privateAdd$b(this, _autoRender, true);
+      __privateAdd$b(this, _autoRender$1, true);
       renderer = isRenderer(renderer, "RenderTarget");
       this.type = "RenderTarget";
       this.renderer = renderer;
@@ -7201,7 +7203,7 @@
         autoRender: autoRender === void 0 ? true : autoRender
       };
       if (autoRender !== void 0) {
-        __privateSet$a(this, _autoRender, autoRender);
+        __privateSet$a(this, _autoRender$1, autoRender);
       }
       this.renderPass = new RenderPass(this.renderer, {
         label: this.options.label ? `${this.options.label} Render Pass` : "Render Target Render Pass",
@@ -7237,7 +7239,7 @@
      */
     addToScene() {
       this.renderer.renderTargets.push(this);
-      if (__privateGet$a(this, _autoRender)) {
+      if (__privateGet$a(this, _autoRender$1)) {
         this.renderer.scene.addRenderTarget(this);
       }
     }
@@ -7245,7 +7247,7 @@
      * Remove the {@link RenderTarget} from the renderer and the {@link core/scenes/Scene.Scene | Scene}
      */
     removeFromScene() {
-      if (__privateGet$a(this, _autoRender)) {
+      if (__privateGet$a(this, _autoRender$1)) {
         this.renderer.scene.removeRenderTarget(this);
       }
       this.renderer.renderTargets = this.renderer.renderTargets.filter((renderTarget) => renderTarget.uuid !== this.uuid);
@@ -7285,7 +7287,7 @@
       this.renderTexture?.destroy();
     }
   }
-  _autoRender = new WeakMap();
+  _autoRender$1 = new WeakMap();
 
   const compareRenderingOptions = (newOptions = {}, baseOptions = {}) => {
     return Object.keys(newOptions).filter((key) => {
@@ -7447,10 +7449,12 @@ struct VSOutput {
       await this.pipelineEntry.compilePipelineEntry();
     }
     /**
-     * Check if attributes and all bind groups are ready, create them if needed and set {@link RenderPipelineEntry} bind group buffers and compile the pipeline
+     * Check if attributes and all bind groups are ready, create them if needed, set {@link RenderPipelineEntry} bind group buffers and compile the pipeline.
      * @async
      */
     async compileMaterial() {
+      if (this.ready)
+        return;
       super.compileMaterial();
       if (this.attributes && !this.pipelineEntry) {
         this.setPipelineEntry();
@@ -7549,216 +7553,26 @@ New rendering options: ${JSON.stringify(
     }
   }
 
-  const getLambert = (
-    /* wgsl */
+  const getPositionAndNormal = (hasInstances = false) => {
+    if (hasInstances) {
+      return (
+        /* wgsl */
+        `
+  var worldPosition: vec4f = instances[attributes.instanceIndex].modelMatrix * vec4f(attributes.position, 1.0);
+  let normal = (instances[attributes.instanceIndex].normalMatrix * vec4(attributes.normal, 0.0)).xyz;
     `
-fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
-  return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
-}
-
-fn linearToOutput3(value: vec3f) -> vec3f {
-  return vec3( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThan3( value.rgb, vec3( 0.0031308 ) ) ) ) );
-}
-
-fn linearToOutput4(value: vec4f) -> vec4f {
-  return vec4( linearToOutput3(value.rgb), value.a );
-}
-
-fn pow2( x: f32 ) -> f32 {
-    return x * x;
-}
-
-fn pow3( x: f32 ) -> f32 {
-    return x * x * x;
-}
-
-fn pow4( x: f32 ) -> f32 {
-    return pow2(x) * pow2(x);
-}
-
-fn rangeAttenuation(range: f32, distance: f32) -> f32 {
-  var distanceFalloff: f32 = 1.0 / max( pow( distance, 2.0 ), 0.01 );
-  if ( range > 0.0 ) {
-      distanceFalloff *= pow2( clamp( 1.0 - pow4( distance / range ), 0.0, 1.0 ) );
-  }
-  
-  return distanceFalloff;
-}
-
-fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
-  return RECIPROCAL_PI * diffuseColor;
-  //return diffuseColor;
-}
-
-// LIGHTS INFO
-
-struct DirectLight {
-  color: vec3f,
-  direction: vec3f,
-  visible: bool,
-}
-
-fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, worldPosition: vec3f, ptr_light: ptr<function, DirectLight>) {
-  (*ptr_light).color = directionalLight.color;
-  (*ptr_light).direction = worldPosition - directionalLight.direction;
-  (*ptr_light).visible = true;
-}
-
-fn getPointLightInfo(pointLight: PointLightsElement, worldPosition: vec3f, ptr_light: ptr<function, DirectLight>) {
-  let lightDirection: vec3f = pointLight.position - worldPosition;
-  (*ptr_light).direction = normalize(lightDirection);
-  let lightDistance: f32 = length(lightDirection);
-  (*ptr_light).color = pointLight.color;
-  (*ptr_light).color *= rangeAttenuation(pointLight.range, lightDistance);
-  
-  (*ptr_light).visible = (*ptr_light).color.r != 0.0 && (*ptr_light).color.g != 0.0 && (*ptr_light).color.b != 0.0;
-}
-
-fn getLambertDirect(
-  normal: vec3f,
-  diffuseColor: vec3f,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let L = normalize(directLight.direction);
-  let NdotL = max(dot(normal, L), 0.0);
-  
-  let irradiance: vec3f = NdotL * directLight.color;
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-}
-
-fn getLambertIndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-}
-
-fn getLambertTotalIndirectDiffuse(diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
-  var totalAmbientIrradiance: vec3f;
-  for(var i: i32 = 0; i < ambientLights.count; i++) {
-    totalAmbientIrradiance += ambientLights.color[i];
-  }
-  
-  getLambertIndirectDiffuse(totalAmbientIrradiance, diffuseColor, ptr_reflectedLight);
-}
-
-fn getLambert(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec3f
-) -> vec3f {
-  var directLight: DirectLight;
-  var reflectedLight: ReflectedLight;
-
-  // point lights
-  for(var i = 0; i < pointLights.count; i++) {
-    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
-  }
-  
-  // directional lights
-  for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
-    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
-  }
-  
-  // ambient lights
-  getLambertTotalIndirectDiffuse(diffuseColor, &reflectedLight);
-  
-  let outgoingLight: vec3f = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular;
-  
-  return linearToOutput3(outgoingLight);
-}`
-  );
-  const getPhong = (
-    /* wgsl */
+      );
+    } else {
+      return (
+        /* wgsl */
+        `
+  var worldPosition: vec4f = matrices.model * vec4(attributes.position, 1.0);
+  let normal = getWorldNormal(attributes.normal);
     `
-${getLambert}
-
-fn FresnelSchlick(cosTheta: f32, f0: vec3f) -> vec3f {
-  return f0 + (vec3(1.0) - f0) * pow(1.0 - cosTheta, 5.0);
-}
-
-fn D_BlinnPhong( shininess: f32, NdotH: f32 ) -> f32 {
-  return RECIPROCAL_PI * ( shininess * 0.5 + 1.0 ) * pow( NdotH, shininess );
-}
-
-fn BRDF_BlinnPhong(
-  normal: vec3f,
-  viewDirection: vec3f,
-  specularColor: vec3f,
-  shininess: f32,
-  directLight: DirectLight
-) -> vec3f {
-  let L = normalize(directLight.direction);
-  let NdotL = max(dot(normal, L), 0.0);
-  let H: vec3f = normalize(viewDirection + L);
-  
-  let NdotH: f32 = clamp(dot(normal, H), 0.0, 1.0);
-  let VdotH: f32 = clamp(dot(viewDirection, H), 0.0, 1.0);
-  let NdotV: f32 = clamp( dot(normal, viewDirection), 0.0, 1.0 );
-  
-  let F: vec3f = FresnelSchlick(VdotH, specularColor);
-  
-  let G: f32 = 0.25; // blinn phong implicit
-  
-  let D = D_BlinnPhong(shininess, NdotH);
-  
-  let specular: vec3f = F * G * D;
-        
-  return specular;
-}
-
-fn getPhongDirect(
-  normal: vec3f,
-  diffuseColor: vec3f,
-  viewDirection: vec3f,
-  specularColor: vec3f,
-  specularStrength: f32,
-  shininess: f32,
-  directLight: DirectLight,
-  ptr_reflectedLight: ptr<function, ReflectedLight>
-) {
-  let L = normalize(directLight.direction);
-  let NdotL = max(dot(normal, L), 0.0);
-  
-  let irradiance: vec3f = NdotL * directLight.color;
-  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
-  (*ptr_reflectedLight).directSpecular += irradiance * BRDF_BlinnPhong( normal, viewDirection, specularColor, shininess, directLight ) * specularStrength;
-}
-
-fn getPhong(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec3f,
-  viewDirection: vec3f,
-  specularColor: vec3f,
-  specularStrength: f32,
-  shininess: f32
-) -> vec3f {
-  var directLight: DirectLight;
-  var reflectedLight: ReflectedLight;
-
-  // point lights
-  for(var i = 0; i < pointLights.count; i++) {
-    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    getPhongDirect(normal, diffuseColor, viewDirection, specularColor, specularStrength, shininess, directLight, &reflectedLight);
-  }
-  
-  // directional lights
-  for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
-    getPhongDirect(normal, diffuseColor, viewDirection, specularColor, specularStrength, shininess, directLight, &reflectedLight);
-  }
-  
-  // ambient lights
-  getLambertTotalIndirectDiffuse(diffuseColor, &reflectedLight);
-  
-  let outgoingLight: vec3f = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular;
-  
-  return linearToOutput3(outgoingLight);
-}`
-  );
-
-  const getDefaultShadowDepthVs = (lightShadowIndex = 0) => (
+      );
+    }
+  };
+  const getDefaultShadowDepthVs = (lightShadowIndex = 0, hasInstances = false) => (
     /* wgsl */
     `
 @vertex fn main(
@@ -7766,9 +7580,8 @@ fn getPhong(
 ) -> @builtin(position) vec4f {  
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightShadowIndex}];
   
-  var worldPosition: vec4f = matrices.model * vec4(attributes.position, 1.0);
+  ${getPositionAndNormal(hasInstances)}
   
-  let normal = getWorldNormal(attributes.normal);
   let lightDirection: vec3f = normalize(worldPosition.xyz - directionalLights.elements[${lightShadowIndex}].direction);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
@@ -7839,8 +7652,11 @@ fn getPCFShadowContribution(index: i32, worldPosition: vec3f, depthTexture: text
     return (
       /* wgsl */
       `
-fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${directionalLights.length}> {
-  var directionalShadowContribution: array<f32, ${directionalLights.length}>;
+fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
+      renderer.lightsBindingParams.directionalLights.max,
+      1
+    )}> {
+  var directionalShadowContribution: array<f32, ${Math.max(renderer.lightsBindingParams.directionalLights.max, 1)}>;
   
   var lightDirection: vec3f;
   
@@ -7855,7 +7671,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${directionalLig
 `
     );
   };
-  const getDefaultPointShadowDepthVs = (pointShadowIndex = 0) => (
+  const getDefaultPointShadowDepthVs = (pointShadowIndex = 0, hasInstances = false) => (
     /* wgsl */
     `
 struct PointShadowVSOutput {
@@ -7867,11 +7683,11 @@ struct PointShadowVSOutput {
   attributes: Attributes,
 ) -> PointShadowVSOutput {  
   var pointShadowVSOutput: PointShadowVSOutput;
-  var worldPosition: vec4f = matrices.model * vec4(attributes.position, 1.0);
+  
+  ${getPositionAndNormal(hasInstances)}
   
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${pointShadowIndex}];
   
-  let normal = getWorldNormal(attributes.normal);
   let lightDirection: vec3f = normalize(pointLights.elements[${pointShadowIndex}].position - worldPosition.xyz);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
@@ -7964,8 +7780,11 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, depthCubeTex
     return (
       /* wgsl */
       `
-fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${pointLights.length}> {
-  var pointShadowContribution: array<f32, ${pointLights.length}>;
+fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
+      renderer.lightsBindingParams.pointLights.max,
+      1
+    )}> {
+  var pointShadowContribution: array<f32, ${Math.max(renderer.lightsBindingParams.pointLights.max, 1)}>;
   
   var lightDirection: vec3f;
   
@@ -7980,98 +7799,25 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${pointLights.length}>
 `
     );
   };
-  const getLambertWithShadows = (
+  const getPCFShadows = (
     /* wgsl */
     `
-${getLambert}
-
-fn getLambertWithShadows(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec3f
-) -> vec3f {
-  var directLight: DirectLight;
-  var reflectedLight: ReflectedLight;
-  
   let pointShadows = getPCFPointShadows(worldPosition);
   let directionalShadows = getPCFDirectionalShadows(worldPosition);
-
-  // point lights
-  for(var i = 0; i < pointLights.count; i++) {
-    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    
-    if(directLight.visible) {
-      directLight.color *= pointShadows[i];
-    }
-    
-    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
-  }
-  
-  // directional lights
-  for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
-    
-    directLight.color *= directionalShadows[i];
-    
-    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
-  }
-  
-  // ambient lights
-  getLambertTotalIndirectDiffuse(diffuseColor, &reflectedLight);
-  
-  let outgoingLight: vec3f = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular;
-  
-  return linearToOutput3(outgoingLight);
-}
 `
   );
-  const getPhongWithShadows = (
+  const applyPointShadows = (
     /* wgsl */
     `
-${getPhong}
-
-fn getPhongWithShadows(
-  normal: vec3f,
-  worldPosition: vec3f,
-  diffuseColor: vec3f,
-  viewDirection: vec3f,
-  specularColor: vec3f,
-  specularStrength: f32,
-  shininess: f32
-) -> vec3f {
-  var directLight: DirectLight;
-  var reflectedLight: ReflectedLight;
-  
-  let pointShadows = getPCFPointShadows(worldPosition);
-  let directionalShadows = getPCFDirectionalShadows(worldPosition);
-
-  // point lights
-  for(var i = 0; i < pointLights.count; i++) {
-    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    
     if(directLight.visible) {
       directLight.color *= pointShadows[i];
     }
-    
-    getPhongDirect(normal, diffuseColor, viewDirection, specularColor, specularStrength, shininess, directLight, &reflectedLight);
-  }
-  
-  // directional lights
-  for(var i = 0; i < directionalLights.count; i++) {
-    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
-    
+`
+  );
+  const applyDirectionalShadows = (
+    /* wgsl */
+    `
     directLight.color *= directionalShadows[i];
-    
-    getPhongDirect(normal, diffuseColor, viewDirection, specularColor, specularStrength, shininess, directLight, &reflectedLight);
-  }
-  
-  // ambient lights
-  getLambertTotalIndirectDiffuse(diffuseColor, &reflectedLight);
-  
-  let outgoingLight: vec3f = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular;
-  
-  return linearToOutput3(outgoingLight);
-}
 `
   );
 
@@ -8097,7 +7843,7 @@ fn getPhongWithShadows(
     __accessCheck$a(obj, member, "access private method");
     return method;
   };
-  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
+  var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
   const shadowStruct = {
     isActive: {
       type: "i32",
@@ -8133,7 +7879,8 @@ fn getPhongWithShadows(
       normalBias = 0,
       pcfSamples = 1,
       depthTextureSize = new Vec2(512),
-      depthTextureFormat = "depth24plus"
+      depthTextureFormat = "depth24plus",
+      autoRender = true
     } = {}) {
       /**
        * Set the {@link Shadow} parameters.
@@ -8151,6 +7898,7 @@ fn getPhongWithShadows(
       __privateAdd$a(this, _pcfSamples, void 0);
       /** @ignore */
       __privateAdd$a(this, _isActive, void 0);
+      __privateAdd$a(this, _autoRender, void 0);
       /**
        * Original {@link meshes} {@link RenderMaterial | materials}.
        * @private
@@ -8182,7 +7930,7 @@ fn getPhongWithShadows(
       __privateSet$9(this, _materials, /* @__PURE__ */ new Map());
       __privateSet$9(this, _depthMaterials, /* @__PURE__ */ new Map());
       __privateSet$9(this, _depthPassTaskID, null);
-      __privateMethod$1(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+      __privateMethod$1(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = false;
     }
     /**
@@ -8190,9 +7938,9 @@ fn getPhongWithShadows(
      * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link Shadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat } = {}) {
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
+      __privateMethod$1(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
       this.isActive = true;
-      __privateMethod$1(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
     }
     /** @ignore */
     setRendererBinding() {
@@ -8241,8 +7989,7 @@ fn getPhongWithShadows(
      */
     set intensity(value) {
       __privateSet$9(this, _intensity, value);
-      if (this.isActive)
-        this.onPropertyChanged("intensity", this.intensity);
+      this.onPropertyChanged("intensity", this.intensity);
     }
     /**
      * Get this {@link Shadow} bias.
@@ -8257,8 +8004,7 @@ fn getPhongWithShadows(
      */
     set bias(value) {
       __privateSet$9(this, _bias, value);
-      if (this.isActive)
-        this.onPropertyChanged("bias", this.bias);
+      this.onPropertyChanged("bias", this.bias);
     }
     /**
      * Get this {@link Shadow} normal bias.
@@ -8273,8 +8019,7 @@ fn getPhongWithShadows(
      */
     set normalBias(value) {
       __privateSet$9(this, _normalBias, value);
-      if (this.isActive)
-        this.onPropertyChanged("normalBias", this.normalBias);
+      this.onPropertyChanged("normalBias", this.normalBias);
     }
     /**
      * Get this {@link Shadow} PCF samples count.
@@ -8289,8 +8034,7 @@ fn getPhongWithShadows(
      */
     set pcfSamples(value) {
       __privateSet$9(this, _pcfSamples, Math.max(1, Math.ceil(value)));
-      if (this.isActive)
-        this.onPropertyChanged("pcfSamples", this.pcfSamples);
+      this.onPropertyChanged("pcfSamples", this.pcfSamples);
     }
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
@@ -8314,10 +8058,10 @@ fn getPhongWithShadows(
       if (!this.depthPassTarget) {
         this.createDepthPassTarget();
       }
-      if (__privateGet$9(this, _depthPassTaskID) === null) {
+      if (__privateGet$9(this, _depthPassTaskID) === null && __privateGet$9(this, _autoRender)) {
         this.setDepthPass();
+        this.onPropertyChanged("isActive", 1);
       }
-      this.onPropertyChanged("isActive", 1);
     }
     /**
      * Reset the {@link depthTexture} when the {@link depthTextureSize} changes.
@@ -8355,7 +8099,9 @@ fn getPhongWithShadows(
         fixedSize: {
           width: this.depthTextureSize.x,
           height: this.depthTextureSize.y
-        }
+        },
+        autoDestroy: false
+        // do not destroy when removing a mesh
       });
     }
     /**
@@ -8391,7 +8137,7 @@ fn getPhongWithShadows(
      * Start the depth pass.
      */
     setDepthPass() {
-      __privateSet$9(this, _depthPassTaskID, this.depthPassTask());
+      __privateSet$9(this, _depthPassTaskID, this.render());
     }
     /**
      * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
@@ -8405,8 +8151,9 @@ fn getPhongWithShadows(
      * - Force all the {@link meshes} to use their depth materials
      * - Render all the {@link meshes}
      * - Reset all the {@link meshes} materials to their original one.
+     * @param once - Whether to render it only once or not.
      */
-    depthPassTask() {
+    render(once = false) {
       return this.renderer.onBeforeRenderScene.add(
         (commandEncoder) => {
           if (!this.meshes.size)
@@ -8417,9 +8164,28 @@ fn getPhongWithShadows(
           this.renderer.pipelineManager.resetCurrentPipeline();
         },
         {
+          once,
           order: this.index
         }
       );
+    }
+    /**
+     * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
+     */
+    async renderOnce() {
+      if (!__privateGet$9(this, _autoRender)) {
+        this.onPropertyChanged("isActive", 1);
+        this.useDepthMaterials();
+        this.meshes.forEach((mesh) => {
+          mesh.setGeometry();
+        });
+        await Promise.all(
+          [...__privateGet$9(this, _depthMaterials).values()].map(async (depthMaterial) => {
+            await depthMaterial.compileMaterial();
+          })
+        );
+        this.render(true);
+      }
     }
     /**
      * Render all the {@link meshes} into the {@link depthPassTarget}.
@@ -8429,8 +8195,7 @@ fn getPhongWithShadows(
       this.renderer.pipelineManager.resetCurrentPipeline();
       const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
       this.meshes.forEach((mesh) => {
-        if (mesh.ready)
-          mesh.render(depthPass);
+        mesh.render(depthPass);
       });
       depthPass.end();
     }
@@ -8438,8 +8203,8 @@ fn getPhongWithShadows(
      * Get the default depth pass vertex shader for this {@link Shadow}.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs() {
-      return getDefaultShadowDepthVs(this.index);
+    getDefaultShadowDepthVs(hasInstances = false) {
+      return getDefaultShadowDepthVs(this.index, hasInstances);
     }
     /**
      * Get the default depth pass fragment shader for this {@link Shadow}.
@@ -8455,14 +8220,6 @@ fn getPhongWithShadows(
      * @returns - Patched parameters.
      */
     patchShadowCastingMeshParams(mesh, parameters = {}) {
-      if (!parameters.shaders) {
-        parameters.shaders = {
-          vertex: {
-            code: this.getDefaultShadowDepthVs()
-          },
-          fragment: this.getDefaultShadowDepthFs()
-        };
-      }
       parameters = { ...mesh.material.options.rendering, ...parameters };
       parameters.targets = [];
       parameters.sampleCount = this.sampleCount;
@@ -8471,6 +8228,15 @@ fn getPhongWithShadows(
         parameters.bindings = [mesh.material.getBufferBindingByName("matrices"), ...parameters.bindings];
       } else {
         parameters.bindings = [mesh.material.getBufferBindingByName("matrices")];
+      }
+      const hasInstances = mesh.material.inputsBindings.get("instances") && mesh.geometry.instancesCount > 1;
+      if (!parameters.shaders) {
+        parameters.shaders = {
+          vertex: {
+            code: this.getDefaultShadowDepthVs(hasInstances)
+          },
+          fragment: this.getDefaultShadowDepthFs()
+        };
       }
       return parameters;
     }
@@ -8550,6 +8316,7 @@ fn getPhongWithShadows(
   _normalBias = new WeakMap();
   _pcfSamples = new WeakMap();
   _isActive = new WeakMap();
+  _autoRender = new WeakMap();
   _materials = new WeakMap();
   _depthMaterials = new WeakMap();
   _depthPassTaskID = new WeakMap();
@@ -8560,7 +8327,8 @@ fn getPhongWithShadows(
     normalBias = 0,
     pcfSamples = 1,
     depthTextureSize = new Vec2(512),
-    depthTextureFormat = "depth24plus"
+    depthTextureFormat = "depth24plus",
+    autoRender = true
   } = {}) {
     this.intensity = intensity;
     this.bias = bias;
@@ -8569,6 +8337,7 @@ fn getPhongWithShadows(
     this.depthTextureSize = depthTextureSize;
     this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
     this.depthTextureFormat = depthTextureFormat;
+    __privateSet$9(this, _autoRender, autoRender);
   };
 
   const directionalShadowStruct = {
@@ -8596,6 +8365,7 @@ fn getPhongWithShadows(
       pcfSamples,
       depthTextureSize,
       depthTextureFormat,
+      autoRender,
       camera = {
         left: -10,
         right: 10,
@@ -8605,7 +8375,16 @@ fn getPhongWithShadows(
         far: 50
       }
     } = {}) {
-      super(renderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+      super(renderer, {
+        light,
+        intensity,
+        bias,
+        normalBias,
+        pcfSamples,
+        depthTextureSize,
+        depthTextureFormat,
+        autoRender
+      });
       this.options = {
         ...this.options,
         camera
@@ -8647,8 +8426,7 @@ fn getPhongWithShadows(
      * Called internally by the associated {@link DirectionalLight} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link DirectionalShadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera } = {}) {
-      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
       if (camera) {
         this.camera.left = camera.left ?? -10;
         this.camera.right = camera.right ?? 10;
@@ -8657,6 +8435,7 @@ fn getPhongWithShadows(
         this.camera.near = camera.near ?? 0.1;
         this.camera.far = camera.far ?? 50;
       }
+      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     }
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
@@ -8694,10 +8473,8 @@ fn getPhongWithShadows(
      * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
      */
     updateViewMatrix(position = new Vec3(), target = new Vec3()) {
-      if (this.isActive) {
-        this.camera.viewMatrix.makeView(position, target, this.camera.up);
-        this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
-      }
+      this.camera.viewMatrix.makeView(position, target, this.camera.up);
+      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
   }
 
@@ -8759,7 +8536,11 @@ fn getPhongWithShadows(
       }
       this.rendererBinding.inputs.count.value = directionalLightIndex;
       this.rendererBinding.inputs.count.shouldUpdate = true;
-      this.shadow = new DirectionalShadow(this.renderer, { light: this });
+      this.shadow = new DirectionalShadow(this.renderer, {
+        autoRender: false,
+        // will be set by calling cast()
+        light: this
+      });
       if (shadow) {
         this.shadow.cast(shadow);
       }
@@ -8871,12 +8652,22 @@ fn getPhongWithShadows(
       pcfSamples,
       depthTextureSize,
       depthTextureFormat,
+      autoRender,
       camera = {
         near: 0.1,
         far: light.range || 150
       }
     } = {}) {
-      super(renderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+      super(renderer, {
+        light,
+        intensity,
+        bias,
+        normalBias,
+        pcfSamples,
+        depthTextureSize,
+        depthTextureFormat,
+        autoRender
+      });
       /**
        * {@link Vec3} used to calculate the actual current direction based on the {@link PointLight} position.
        * @private
@@ -8938,12 +8729,12 @@ fn getPhongWithShadows(
      * Called internally by the associated {@link PointLight} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link PointShadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera } = {}) {
-      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
       if (camera) {
         this.camera.near = camera.near ?? 0.1;
         this.camera.far = camera.far ?? this.light.range;
       }
+      super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     }
     /**
      * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link PointShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
@@ -8982,16 +8773,14 @@ fn getPhongWithShadows(
      * @param position - {@link Vec3} to use as position for the {@link PointShadow#camera.viewMatrices | camera view matrices}, based on the {@link light} position.
      */
     updateViewMatrices(position = new Vec3()) {
-      if (this.isActive) {
-        for (let i = 0; i < 6; i++) {
-          __privateGet$7(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
-          this.camera.viewMatrices[i].makeView(position, __privateGet$7(this, _tempCubeDirection), this.cubeUps[i]);
-          for (let j = 0; j < 16; j++) {
-            this.rendererBinding.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
-          }
+      for (let i = 0; i < 6; i++) {
+        __privateGet$7(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
+        this.camera.viewMatrices[i].makeView(position, __privateGet$7(this, _tempCubeDirection), this.cubeUps[i]);
+        for (let j = 0; j < 16; j++) {
+          this.rendererBinding.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
         }
-        this.rendererBinding.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
       }
+      this.rendererBinding.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
     }
     /**
      * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
@@ -9026,7 +8815,9 @@ fn getPhongWithShadows(
         fixedSize: {
           width: maxSize,
           height: maxSize
-        }
+        },
+        autoDestroy: false
+        // do not destroy when removing a mesh
       });
     }
     /**
@@ -9046,8 +8837,9 @@ fn getPhongWithShadows(
      *   - Render all the {@link meshes}
      *   - Submit the command encoder
      * - Reset all the {@link meshes} materials to their original one.
+     * @param once - Whether to render it only once or not.
      */
-    depthPassTask() {
+    render(once = false) {
       return this.renderer.onBeforeCommandEncoderCreation.add(
         () => {
           if (!this.meshes.size)
@@ -9073,6 +8865,7 @@ fn getPhongWithShadows(
           this.renderer.pipelineManager.resetCurrentPipeline();
         },
         {
+          once,
           order: this.index
         }
       );
@@ -9081,8 +8874,8 @@ fn getPhongWithShadows(
      * Get the default depth pass vertex shader for this {@link PointShadow}.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs() {
-      return getDefaultPointShadowDepthVs(this.index);
+    getDefaultShadowDepthVs(hasInstances = false) {
+      return getDefaultPointShadowDepthVs(this.index, hasInstances);
     }
     /**
      * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
@@ -9143,7 +8936,11 @@ fn getPhongWithShadows(
       }
       this.rendererBinding.inputs.count.value = pointLightIndex;
       this.rendererBinding.inputs.count.shouldUpdate = true;
-      this.shadow = new PointShadow(this.renderer, { light: this });
+      this.shadow = new PointShadow(this.renderer, {
+        autoRender: false,
+        // will be set by calling cast()
+        light: this
+      });
       if (shadow) {
         this.shadow.cast(shadow);
       }
@@ -10506,8 +10303,7 @@ struct VSOutput {
             parameters.samplers = depthSamplers;
           }
         }
-        super.cleanupRenderMaterialParameters(parameters);
-        return parameters;
+        return super.cleanupRenderMaterialParameters(parameters);
       }
       /**
        * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
@@ -10693,6 +10489,16 @@ struct VSOutput {
           this.geometry.render(pass);
         }
       }
+      destroy() {
+        if (this.options.castShadows) {
+          this.renderer.shadowCastingLights.forEach((light) => {
+            if (light.shadow.isActive) {
+              light.shadow.removeMesh(this);
+            }
+          });
+        }
+        super.destroy();
+      }
     };
   }
 
@@ -10843,13 +10649,6 @@ ${formattedMessage}`);
     }
   }
 
-  var pi_definitions = (
-    /* wgsl */
-    `
-const PI = ${Math.PI};
-const RECIPROCAL_PI = ${1 / Math.PI};`
-  );
-
   var get_output_position = (
     /* wgsl */
     `
@@ -10898,33 +10697,14 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 `
   );
 
-  var light_contribution = (
-    /* wgsl */
-    `
-struct LightContribution {
-  ambient: vec3f,
-  diffuse: vec3f,
-  specular: vec3f
-};
-
-struct ReflectedLight {
-  directDiffuse: vec3f,
-  directSpecular: vec3f,
-  indirectDiffuse: vec3f,
-  indirectSpecular: vec3f,
-}`
-  );
-
   const ShaderChunks = {
     /** WGSL code chunks added to the vertex shader */
     vertex: {
-      pi_definitions,
       /** Applies given texture matrix to given uv coordinates */
       get_uv_cover
     },
     /** WGSL code chunks added to the fragment shader */
     fragment: {
-      pi_definitions,
       /** Applies given texture matrix to given uv coordinates */
       get_uv_cover,
       /** Convert vertex position to uv coordinates */
@@ -10940,9 +10720,7 @@ struct ReflectedLight {
       get_normals
     },
     /** WGSL code chunks added to the fragment shader */
-    fragment: {
-      light_contribution
-    }
+    fragment: {}
   };
 
   class RenderPipelineEntry extends PipelineEntry {
@@ -13864,6 +13642,717 @@ struct VSOutput {
     }
   }
 
+  var common = (
+    /* wgsl */
+    `
+fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
+  return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
+}
+
+fn pow2( x: f32 ) -> f32 {
+    return x * x;
+}
+
+fn pow3( x: f32 ) -> f32 {
+    return x * x * x;
+}
+
+fn pow4( x: f32 ) -> f32 {
+    return pow2(x) * pow2(x);
+}
+`
+  );
+
+  var light_utils = (
+    /* wgsl */
+    `
+${common}
+
+struct ReflectedLight {
+  directDiffuse: vec3f,
+  directSpecular: vec3f,
+  indirectDiffuse: vec3f,
+  indirectSpecular: vec3f,
+}
+
+struct DirectLight {
+  color: vec3f,
+  direction: vec3f,
+  visible: bool,
+}
+
+fn rangeAttenuation(range: f32, distance: f32) -> f32 {
+  var distanceFalloff: f32 = 1.0 / max( pow( distance, 2.0 ), 0.01 );
+  if ( range > 0.0 ) {
+      distanceFalloff *= pow2( clamp( 1.0 - pow4( distance / range ), 0.0, 1.0 ) );
+  }
+  
+  return distanceFalloff;
+}
+
+fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
+  return RECIPROCAL_PI * diffuseColor;
+}
+
+fn F_Schlick(VdotH: f32, f0: vec3f) -> vec3f {
+  let fresnel: f32 = pow( 1.0 - VdotH, 5.0 );
+  
+  // TODO if specular intensity is defined
+  // it could be: mix( specularIntensity, 1.0, metallic );
+  let f90: f32 = 1.0;
+  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
+}
+
+fn getDirectionalLightInfo(directionalLight: DirectionalLightsElement, worldPosition: vec3f, ptr_light: ptr<function, DirectLight>) {
+  (*ptr_light).color = directionalLight.color;
+  (*ptr_light).direction = worldPosition - directionalLight.direction;
+  (*ptr_light).visible = true;
+}
+
+fn getPointLightInfo(pointLight: PointLightsElement, worldPosition: vec3f, ptr_light: ptr<function, DirectLight>) {
+  let lightDirection: vec3f = pointLight.position - worldPosition;
+  (*ptr_light).direction = normalize(lightDirection);
+  let lightDistance: f32 = length(lightDirection);
+  (*ptr_light).color = pointLight.color;
+  (*ptr_light).color *= rangeAttenuation(pointLight.range, lightDistance);
+  
+  (*ptr_light).visible = (*ptr_light).color.r != 0.0 && (*ptr_light).color.g != 0.0 && (*ptr_light).color.b != 0.0;
+}
+`
+  );
+
+  const toneMappingUtils = (
+    /* wgsl */
+    `
+fn linearToOutput3(value: vec3f) -> vec3f {
+  return vec3( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThan3( value.rgb, vec3( 0.0031308 ) ) ) ) );
+}
+
+fn linearToOutput4(value: vec4f) -> vec4f {
+  return vec4( linearToOutput3(value.rgb), value.a );
+}
+
+// linear <-> sRGB conversions
+fn linearTosRGB(linear: vec3f) -> vec3f {
+  if (all(linear <= vec3(0.0031308))) {
+    return linear * 12.92;
+  }
+  return (pow(abs(linear), vec3(1.0/2.4)) * 1.055) - vec3(0.055);
+}
+
+fn sRGBToLinear(srgb: vec3f) -> vec3f {
+  if (all(srgb <= vec3(0.04045))) {
+    return srgb / vec3(12.92);
+  }
+  return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
+}
+
+fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
+  var toneMapColor = color; 
+  const startCompression: f32 = 0.8 - 0.04;
+  const desaturation: f32 = 0.15;
+  var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
+  var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
+  toneMapColor = toneMapColor - offset;
+  var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
+  if (peak < startCompression) {
+    return toneMapColor;
+  }
+  const d: f32 = 1. - startCompression;
+  let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
+  toneMapColor *= newPeak / peak;
+  let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
+  return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
+}
+`
+  );
+
+  var RE_indirect_diffuse = (
+    /* wgsl */
+    `
+fn getIndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
+  (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseColor );
+}
+
+// Indirect Diffuse RenderEquations
+fn RE_IndirectDiffuse(irradiance: vec3f, diffuseColor: vec3f, ptr_reflectedLight: ptr<function, ReflectedLight>) {
+  var totalAmbientIrradiance: vec3f = irradiance;
+  
+  for(var i: i32 = 0; i < ambientLights.count; i++) {
+    totalAmbientIrradiance += ambientLights.color[i];
+  }
+  
+  getIndirectDiffuse(totalAmbientIrradiance, diffuseColor, ptr_reflectedLight);
+}
+`
+  );
+
+  var constants = (
+    /* wgsl */
+    `
+const PI = ${Math.PI};
+const RECIPROCAL_PI = ${1 / Math.PI};
+const RECIPROCAL_PI2 = ${0.5 / Math.PI};
+const EPSILON = 1e-6;`
+  );
+
+  const lambertUtils = (
+    /* wgsl */
+    `
+${constants}
+${light_utils}
+${RE_indirect_diffuse}
+`
+  );
+  const getLambertDirect = (
+    /* wgsl */
+    `
+fn getLambertDirect(
+  normal: vec3f,
+  diffuseColor: vec3f,
+  directLight: DirectLight,
+  ptr_reflectedLight: ptr<function, ReflectedLight>
+) {
+  let L = normalize(directLight.direction);
+  let NdotL = max(dot(normal, L), 0.0);
+  
+  let irradiance: vec3f = NdotL * directLight.color;
+  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
+}
+`
+  );
+  const getLambert = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
+    /* wgsl */
+    `
+${addUtils ? lambertUtils : ""}
+${getLambertDirect}
+${toneMapping ? toneMappingUtils : ""}
+
+fn getLambert(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec3f,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec3f {
+  var directLight: DirectLight;
+  var reflectedLight: ReflectedLight;
+  
+  ${receiveShadows ? getPCFShadows : ""}
+
+  // point lights
+  for(var i = 0; i < pointLights.count; i++) {
+    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    ${receiveShadows ? applyPointShadows : ""}
+    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
+  }
+  
+  // directional lights
+  for(var i = 0; i < directionalLights.count; i++) {
+    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    ${receiveShadows ? applyDirectionalShadows : ""}
+    getLambertDirect(normal, diffuseColor, directLight, &reflectedLight);
+  }
+  
+  // ambient lights
+  var irradiance: vec3f = vec3(0.0);
+  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  
+  let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
+  var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
+  
+  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
+  
+  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  
+  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  
+  return outgoingLight;
+}
+`
+  );
+
+  const getPhongDirect = (
+    /* wgsl */
+    `
+fn D_BlinnPhong( shininess: f32, NdotH: f32 ) -> f32 {
+  return RECIPROCAL_PI * ( shininess * 0.5 + 1.0 ) * pow( NdotH, shininess );
+}
+
+fn BRDF_BlinnPhong(
+  normal: vec3f,
+  viewDirection: vec3f,
+  specularColor: vec3f,
+  shininess: f32,
+  directLight: DirectLight
+) -> vec3f {
+  let L = normalize(directLight.direction);
+  let NdotL = max(dot(normal, L), 0.0);
+  let H: vec3f = normalize(viewDirection + L);
+  
+  let NdotH: f32 = clamp(dot(normal, H), 0.0, 1.0);
+  let VdotH: f32 = clamp(dot(viewDirection, H), 0.0, 1.0);
+  let NdotV: f32 = clamp( dot(normal, viewDirection), 0.0, 1.0 );
+  
+  let F: vec3f = F_Schlick(VdotH, specularColor);
+  
+  let G: f32 = 0.25; // blinn phong implicit
+  
+  let D = D_BlinnPhong(shininess, NdotH);
+  
+  let specular: vec3f = F * G * D;
+        
+  return specular;
+}
+
+fn getPhongDirect(
+  normal: vec3f,
+  diffuseColor: vec3f,
+  viewDirection: vec3f,
+  specularColor: vec3f,
+  specularStrength: f32,
+  shininess: f32,
+  directLight: DirectLight,
+  ptr_reflectedLight: ptr<function, ReflectedLight>
+) {
+  let L = normalize(directLight.direction);
+  let NdotL = max(dot(normal, L), 0.0);
+  
+  let irradiance: vec3f = NdotL * directLight.color;
+  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
+  (*ptr_reflectedLight).directSpecular += irradiance * BRDF_BlinnPhong( normal, viewDirection, specularColor, shininess, directLight ) * specularStrength;
+}
+`
+  );
+  const getPhong = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
+    /* wgsl */
+    `
+${addUtils ? lambertUtils : ""}
+${getPhongDirect}
+${toneMapping ? toneMappingUtils : ""}
+
+fn getPhong(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec3f,
+  viewDirection: vec3f,
+  specularColor: vec3f,
+  specularStrength: f32,
+  shininess: f32,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec3f {
+  var directLight: DirectLight;
+  var reflectedLight: ReflectedLight;
+  
+  ${receiveShadows ? getPCFShadows : ""}
+
+  // point lights
+  for(var i = 0; i < pointLights.count; i++) {  
+    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    ${receiveShadows ? applyPointShadows : ""}
+    getPhongDirect(normal, diffuseColor, viewDirection, specularColor, specularStrength, shininess, directLight, &reflectedLight);
+  }
+  
+  // directional lights
+  for(var i = 0; i < directionalLights.count; i++) {
+    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    ${receiveShadows ? applyDirectionalShadows : ""}
+    getPhongDirect(normal, diffuseColor, viewDirection, specularColor, specularStrength, shininess, directLight, &reflectedLight);
+  }
+  
+  // ambient lights
+  var irradiance: vec3f = vec3(0.0);
+  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  
+  let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
+  var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
+  
+  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
+  
+  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  
+  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  
+  return outgoingLight;
+}
+`
+  );
+
+  var RE_indirect_specular = (
+    /* wgsl */
+    `
+fn DFGApprox(
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+) -> vec2f {
+  let dotNV: f32 = clamp( dot( normal, viewDirection ), 0.0, 1.0 );
+
+	let c0: vec4f = vec4( - 1, - 0.0275, - 0.572, 0.022 );
+	let c1: vec4f = vec4( 1, 0.0425, 1.04, - 0.04 );
+
+	let r: vec4f = roughness * c0 + c1;
+	let a004: f32 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
+	
+	let fab: vec2f = vec2( - 1.04, 1.04 ) * a004 + r.zw;
+
+	return fab;
+}
+
+struct TotalScattering {
+  single: vec3f,
+  multi: vec3f,
+}
+
+fn computeMultiscattering(
+  normal: vec3f,
+  viewDirection: vec3f,
+  specularColor: vec3f,
+  f90: f32,
+  roughness: f32,
+  ptr_totalScattering: ptr<function, TotalScattering>
+) {
+  let fab: vec2f = DFGApprox( normal, viewDirection, roughness );
+
+	let Fr: vec3f = specularColor;
+
+	let FssEss: vec3f = Fr * fab.x + f90 * fab.y;
+
+	let Ess: f32 = fab.x + fab.y;
+	let Ems: f32 = 1.0 - Ess;
+
+	let Favg: vec3f = Fr + ( 1.0 - Fr ) * 0.047619; // 1/21
+	let Fms: vec3f = FssEss * Favg / ( 1.0 - Ems * Favg );
+
+	(*ptr_totalScattering).single += FssEss;
+	(*ptr_totalScattering).multi += Fms * Ems;
+}
+
+// Indirect Specular RenderEquations
+fn RE_IndirectSpecular(
+  radiance: vec3f,
+  irradiance: vec3f,
+  normal: vec3f,
+  diffuseColor: vec3f,
+  viewDirection: vec3f,
+  metallic: f32,
+  roughness: f32,
+  ptr_reflectedLight: ptr<function, ReflectedLight>
+) {
+  var totalScattering: TotalScattering;
+  let cosineWeightedIrradiance: vec3f = irradiance * RECIPROCAL_PI;
+  
+  let specularColor: vec3f = mix( vec3( 0.04 ), diffuseColor, metallic );
+  
+  let f90: f32 = 1.0;
+  
+  computeMultiscattering( normal, viewDirection, specularColor, f90, roughness, &totalScattering );
+  
+  let totalScatter: vec3f = totalScattering.single + totalScattering.multi;
+  let diffuse: vec3f = diffuseColor * ( 1.0 - max( max( totalScatter.r, totalScatter.g ), totalScatter.b ) );
+
+  (*ptr_reflectedLight).indirectSpecular += radiance * totalScattering.single;
+  (*ptr_reflectedLight).indirectSpecular += totalScattering.multi * cosineWeightedIrradiance;
+
+  (*ptr_reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
+}
+`
+  );
+
+  const pbrUtils = `
+${lambertUtils}
+${RE_indirect_specular}
+`;
+  const getPBRDirect = (
+    /* wgsl */
+    `
+fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
+  let a: f32 = pow2( roughness );
+  let a2: f32 = pow2( a );
+
+  let denom: f32 = (pow2( NdotH ) * (a2 - 1.0) + 1.0);
+
+  return RECIPROCAL_PI * a2 / ( pow2( denom ) );
+}
+
+fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
+  let a: f32 = pow2( roughness );
+  let a2: f32 = pow2( a );
+  
+  let gv: f32 = NdotL * sqrt( a2 + ( 1.0 - a2 ) * pow2( NdotV ) );
+  let gl: f32 = NdotV * sqrt( a2 + ( 1.0 - a2 ) * pow2( NdotL ) );
+
+  return 0.5 / max( gv + gl, EPSILON );
+}
+
+fn BRDF_GGX(
+  NdotV: f32,
+  NdotL: f32,
+  NdotH: f32,
+  VdotH: f32,
+  roughness: f32,
+  f0: vec3f
+) -> vec3f {
+  // cook-torrance brdf
+  let G: f32 = GeometrySmith(NdotL, NdotV, roughness);
+  let D: f32 = DistributionGGX(NdotH, roughness);
+  let F: vec3f = F_Schlick(VdotH, f0);
+  
+  return G * D * F;
+}
+
+fn getPBRDirect(
+  normal: vec3f,
+  diffuseColor: vec3f,
+  viewDirection: vec3f,
+  f0: vec3f,
+  metallic: f32,
+  roughness: f32,
+  directLight: DirectLight,
+  ptr_reflectedLight: ptr<function, ReflectedLight>
+) {
+  let N: vec3f = normalize(normal);
+  let L: vec3f = normalize(directLight.direction);
+  let V: vec3f = normalize(viewDirection);
+  let H: vec3f = normalize(V + L);
+  let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
+  let NdotL: f32 = clamp(dot(N, L), 0.0, 1.0);
+  let NdotH: f32 = clamp(dot(N, H), 0.0, 1.0);
+  let VdotH: f32 = clamp(dot(V, H), 0.0, 1.0);
+
+  let irradiance: vec3f = NdotL * directLight.color;
+  let ggx: vec3f = BRDF_GGX(NdotV, NdotL, NdotH, VdotH, roughness, f0);
+  
+  (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
+  (*ptr_reflectedLight).directSpecular += ggx * irradiance;
+}
+`
+  );
+  const getPBR = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
+    /* wgsl */
+    `
+${addUtils ? pbrUtils : ""}
+${getPBRDirect}
+${toneMapping ? toneMappingUtils : ""}
+
+fn getPBR(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec3f,
+  viewDirection: vec3f,
+  f0: vec3f,
+  metallic: f32,
+  roughness: f32,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec3f {
+  var directLight: DirectLight;
+  var reflectedLight: ReflectedLight;
+  
+  ${receiveShadows ? getPCFShadows : ""}
+
+  // point lights
+  for(var i = 0; i < pointLights.count; i++) {
+    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    ${receiveShadows ? applyPointShadows : ""}
+    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+  }
+  
+  // directional lights
+  for(var i = 0; i < directionalLights.count; i++) {
+    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    ${receiveShadows ? applyDirectionalShadows : ""}
+    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+  }
+  
+  // ambient lights
+  var irradiance: vec3f = vec3(0.0);
+  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  
+  // ambient lights specular
+  // var radiance: vec3f = vec3(0.0);
+  // RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor, viewDirection, metallic, roughness, &reflectedLight);
+  
+  let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
+  var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
+  
+  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
+  
+  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  
+  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  
+  return outgoingLight;
+}
+`
+  );
+
+  const getIBLIndirect = (
+    /* wgsl */
+    `
+// struct IBLIndirect {
+//   diffuse: vec3f,
+//   specular: vec3f
+// }
+
+fn getIBLIndirect(
+  normal: vec3f,
+  viewDirection: vec3f,
+  roughness: f32,
+  metallic: f32,
+  diffuseColor: vec3f,
+  f0: vec3f,
+  lutTexture: texture_2d<f32>,
+  lutSampler: sampler,
+  envSpecularTexture: texture_cube<f32>,
+  envSpecularSampler: sampler,
+  envDiffuseTexture: texture_cube<f32>,
+  envDiffuseSampler: sampler,
+  ptr_reflectedLight: ptr<function, ReflectedLight>,
+  // ptr_iblIndirect: ptr<function, IBLIndirect>
+) {
+  let N: vec3f = normalize(normal);
+  let V: vec3f = normalize(viewDirection);
+  let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
+  
+  let reflection: vec3f = normalize(reflect(-V, N));
+  
+  let iblDiffuseColor: vec3f = mix(diffuseColor, vec3(0.0), vec3(metallic));
+
+  let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
+  
+  let brdf: vec3f = textureSample(
+    lutTexture,
+    lutSampler,
+    brdfSamplePoint
+  ).rgb;
+
+  let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
+  let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
+  var FssEss: vec3f = k_S * brdf.x + brdf.y;
+  
+  // IBL specular (radiance)
+  let lod: f32 = roughness * f32(textureNumLevels(envSpecularTexture) - 1);
+  
+  let specularLight: vec4f = textureSampleLevel(
+    envSpecularTexture,
+    envSpecularSampler,
+    reflection,
+    lod
+  );
+  
+  // IBL diffuse (irradiance)
+  let diffuseLight: vec4f = textureSample(
+    envDiffuseTexture,
+    envDiffuseSampler,
+    normal
+  );
+  
+  // product of specularFactor and specularTexture.a
+  let specularWeight: f32 = 1.0;
+        
+  FssEss = specularWeight * k_S * brdf.x + brdf.y;
+  
+  let Ems: f32 = (1.0 - (brdf.x + brdf.y));
+  let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
+  let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
+  let k_D: vec3f = iblDiffuseColor * (1.0 - FssEss + FmsEms);
+  
+  (*ptr_reflectedLight).indirectSpecular += specularLight.rgb * FssEss * ibl.specularStrength;
+  (*ptr_reflectedLight).indirectDiffuse += (FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
+  
+  // (*ptr_iblIndirect).diffuse = PI * diffuseLight.rgb * ibl.diffuseStrength;
+  // (*ptr_iblIndirect).specular = specularLight.rgb * ibl.specularStrength;
+}
+`
+  );
+  const getIBL = ({ addUtils = true, receiveShadows = false, toneMapping = "linear", useOcclusion = false } = {}) => (
+    /* wgsl */
+    `
+${addUtils ? pbrUtils : ""}
+${getPBRDirect}
+${getIBLIndirect}
+${toneMapping ? toneMappingUtils : ""}
+
+fn getIBL(
+  normal: vec3f,
+  worldPosition: vec3f,
+  diffuseColor: vec3f,
+  viewDirection: vec3f,
+  f0: vec3f,
+  metallic: f32,
+  roughness: f32,
+  lutTexture: texture_2d<f32>,
+  lutSampler: sampler,
+  envSpecularTexture: texture_cube<f32>,
+  envSpecularSampler: sampler,
+  envDiffuseTexture: texture_cube<f32>,
+  envDiffuseSampler: sampler,
+  ${useOcclusion ? "occlusion: f32," : ""}
+) -> vec3f {
+  var directLight: DirectLight;
+  var reflectedLight: ReflectedLight;
+  
+  ${receiveShadows ? getPCFShadows : ""}
+
+  // point lights
+  for(var i = 0; i < pointLights.count; i++) {
+    getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
+    ${receiveShadows ? applyPointShadows : ""}
+    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+  }
+  
+  // directional lights
+  for(var i = 0; i < directionalLights.count; i++) {
+    getDirectionalLightInfo(directionalLights.elements[i], worldPosition, &directLight);
+    ${receiveShadows ? applyDirectionalShadows : ""}
+    getPBRDirect(normal, diffuseColor, viewDirection, f0, metallic, roughness, directLight, &reflectedLight);
+  }
+  
+  var irradiance: vec3f = vec3(0.0);
+  var radiance: vec3f = vec3(0.0);
+  
+  // var iblIndirect: IBLIndirect;
+  
+  // IBL
+  getIBLIndirect(
+    normal,
+    viewDirection,
+    roughness,
+    metallic,
+    diffuseColor,
+    f0,
+    lutTexture,
+    lutSampler,
+    envSpecularTexture,
+    envSpecularSampler,
+    envDiffuseTexture,
+    envDiffuseSampler,
+    &reflectedLight,
+    // &iblIndirect
+  );
+  
+  // irradiance += iblIndirect.diffuse;
+  // radiance += iblIndirect.specular;
+  
+  // ambient lights
+  RE_IndirectDiffuse(irradiance, diffuseColor, &reflectedLight);
+  
+  // ambient lights specular
+  // RE_IndirectSpecular(radiance, irradiance, normal, diffuseColor, viewDirection, metallic, roughness, &reflectedLight);  
+  
+  let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
+  var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
+  
+  ${useOcclusion ? "totalIndirect *= occlusion;" : ""}
+  
+  var outgoingLight: vec3f = totalDirect + totalIndirect;
+  
+  ${toneMapping === "linear" ? "outgoingLight = linearToOutput3(outgoingLight);" : toneMapping === "khronos" ? "outgoingLight = linearTosRGB(toneMapKhronosPbrNeutral(outgoingLight));" : ""}
+  
+  return outgoingLight;
+}
+`
+  );
+
   var __accessCheck$3 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -16249,6 +16738,10 @@ struct VSOutput {
       return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
         if (meshDescriptor.parameters.geometry) {
           patchMeshesParameters(meshDescriptor);
+          const hasInstancedShadows = meshDescriptor.parameters.geometry.instancesCount > 1 && meshDescriptor.parameters.castShadows;
+          if (hasInstancedShadows) {
+            meshDescriptor.parameters.castShadows = false;
+          }
           const mesh = new Mesh(this.renderer, {
             ...meshDescriptor.parameters
           });
@@ -16270,6 +16763,16 @@ struct VSOutput {
               },
               { once: true }
             );
+          }
+          if (hasInstancedShadows) {
+            const instancesBinding = mesh.material.inputsBindings.get("instances");
+            this.renderer.shadowCastingLights.forEach((light) => {
+              if (light.shadow.isActive) {
+                light.shadow.addShadowCastingMesh(mesh, {
+                  bindings: [instancesBinding]
+                });
+              }
+            });
           }
           mesh.parent = meshDescriptor.parent;
           this.scenesManager.meshes.push(mesh);
@@ -16293,7 +16796,7 @@ struct VSOutput {
   _primitiveInstances = new WeakMap();
   let GLTFScenesManager = _GLTFScenesManager;
 
-  const buildShaders = (meshDescriptor, shaderParameters = null) => {
+  const buildShaders = (meshDescriptor, shaderParameters = {}) => {
     const baseColorTexture = meshDescriptor.textures.find((t) => t.texture === "baseColorTexture");
     const normalTexture = meshDescriptor.textures.find((t) => t.texture === "normalTexture");
     const emissiveTexture = meshDescriptor.textures.find((t) => t.texture === "emissiveTexture");
@@ -16386,14 +16889,7 @@ struct VSOutput {
     const returnColor = (
       /* wgsl */
       `
-      return vec4(
-        linearTosRGB(
-          toneMapKhronosPbrNeutral(
-            color.rgb
-          )
-        ),
-        color.a
-      );
+      return color;
   `
     );
     const vertexColor = meshDescriptor.attributes.find((attr) => attr.name === "color0");
@@ -16438,14 +16934,6 @@ struct VSOutput {
       let normal = geometryNormal;
     `;
     }
-    normalMap += /* wgsl */
-    `
-      let worldPosition: vec3f = fsInput.worldPosition;
-      let viewDirection: vec3f = fsInput.viewDirection;
-      let N: vec3f = normal;
-      let V: vec3f = normalize(viewDirection);
-      let NdotV: f32 = clamp(dot(N, V), 0.0, 1.0);
-  `;
     let metallicRoughness = (
       /*  wgsl */
       `
@@ -16493,29 +16981,71 @@ struct VSOutput {
     `
       occlusion = 1.0 + material.occlusionStrength * (occlusion - 1.0);
   `;
-    const initLightShading = (
-      /* wgsl */
-      `
-      var lightContribution: LightContribution;
-      
-      lightContribution.ambient = vec3(1.0);
-      lightContribution.diffuse = vec3(0.0);
-      lightContribution.specular = vec3(0.0);
-  `
-    );
-    const defaultAdditionalHead = "";
+    let { shadingModel } = shaderParameters;
+    if (!shadingModel) {
+      shadingModel = "PBR";
+    }
+    let { chunks } = shaderParameters || {};
+    const { iblParameters } = shaderParameters || {};
+    const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {};
+    const useIBLContribution = envDiffuseTexture && envDiffuseTexture.texture && envSpecularTexture && envSpecularTexture.texture && lutTexture && lutTexture.texture;
+    if (useIBLContribution && shadingModel === "IBL") {
+      meshDescriptor.parameters.uniforms = {
+        ...meshDescriptor.parameters.uniforms,
+        ...{
+          ibl: {
+            struct: {
+              diffuseStrength: {
+                type: "f32",
+                value: iblParameters?.diffuseStrength ?? 0.5
+              },
+              specularStrength: {
+                type: "f32",
+                value: iblParameters?.specularStrength ?? 0.5
+              }
+            }
+          }
+        }
+      };
+      meshDescriptor.parameters.textures = [
+        ...meshDescriptor.parameters.textures,
+        lutTexture.texture,
+        envDiffuseTexture.texture,
+        envSpecularTexture.texture
+      ];
+      lutTexture.samplerName = lutTexture.samplerName || "defaultSampler";
+      envDiffuseTexture.samplerName = envDiffuseTexture.samplerName || "defaultSampler";
+      envSpecularTexture.samplerName = envSpecularTexture.samplerName || "defaultSampler";
+    } else if (shadingModel === "IBL") {
+      throwWarning(
+        "IBL shading requested but one of the LUT, environment specular or diffuse texture is missing. Defaulting to PBR shading."
+      );
+      shadingModel = "PBR";
+    }
+    const shadingOptions = {
+      toneMapping: "khronos",
+      receiveShadows: !!meshDescriptor.parameters.receiveShadows,
+      useOcclusion: true
+    };
+    const defaultAdditionalHead = (() => {
+      switch (shadingModel) {
+        case "Lambert":
+        default:
+          return getLambert(shadingOptions);
+        case "Phong":
+          return getPhong(shadingOptions);
+        case "PBR":
+          return getPBR(shadingOptions);
+        case "IBL":
+          return getIBL(shadingOptions);
+      }
+    })();
     const defaultPreliminaryColor = "";
     const defaultAdditionalColor = "";
-    const defaultAmbientContribution = "";
-    const defaultLightContribution = "";
-    shaderParameters = shaderParameters ?? {};
-    let chunks = shaderParameters.chunks;
     if (!chunks) {
       chunks = {
         additionalFragmentHead: defaultAdditionalHead,
-        ambientContribution: defaultAmbientContribution,
         preliminaryColorContribution: defaultPreliminaryColor,
-        lightContribution: defaultLightContribution,
         additionalColorContribution: defaultAdditionalColor
       };
     } else {
@@ -16523,78 +17053,97 @@ struct VSOutput {
         chunks.additionalFragmentHead = defaultAdditionalHead;
       if (!chunks.preliminaryColorContribution)
         chunks.preliminaryColorContribution = defaultPreliminaryColor;
-      if (!chunks.ambientContribution)
-        chunks.ambientContribution = defaultAmbientContribution;
-      if (!chunks.lightContribution)
-        chunks.lightContribution = defaultLightContribution;
       if (!chunks.additionalColorContribution)
         chunks.additionalColorContribution = defaultAdditionalColor;
     }
-    const applyLightShading = (
+    const applyLightShading = (() => {
+      switch (shadingModel) {
+        case "Lambert":
+        default:
+          return (
+            /* wgsl */
+            `
+      color = vec4(
+        getLambert(
+          normal,
+          worldPosition,
+          color.rgb,
+          occlusion
+        ),
+        color.a
+      );`
+          );
+        case "Phong":
+          return (
+            /* wgsl */
+            `
+      color = vec4(
+        getPhong(
+          normal,
+          worldPosition,
+          color.rgb,
+          viewDirection,
+          f0, // specular color
+          metallic * (1.0 - roughness) + (1.0 - metallic) * 0.04, // specular strength
+          (1.0 - roughness) * 30.0, // TODO shininess
+          occlusion
+        ),
+        color.a
+      );`
+          );
+        case "PBR":
+          return (
+            /* wgsl */
+            `
+      color = vec4(
+        getPBR(
+          normal,
+          worldPosition,
+          color.rgb,
+          viewDirection,
+          f0,
+          metallic,
+          roughness,
+          occlusion
+        ),
+        color.a
+      );`
+          );
+        case "IBL":
+          return (
+            /* wgsl */
+            `
+      color = vec4(
+        getIBL(
+          normal,
+          worldPosition,
+          color.rgb,
+          viewDirection,
+          f0,
+          metallic,
+          roughness,
+          ${lutTexture.texture.options.name},
+          ${lutTexture.samplerName},
+          ${envSpecularTexture.texture.options.name},
+          ${envSpecularTexture.samplerName},
+          ${envDiffuseTexture.texture.options.name},
+          ${envDiffuseTexture.samplerName},
+          occlusion
+        ),
+        color.a
+      );`
+          );
+      }
+    })();
+    const applyEmissive = (
       /* wgsl */
       `
-      // apply color to ambient    
-      lightContribution.ambient *= color.rgb;
-      
-      // apply color based on metallic to diffuse
-      lightContribution.diffuse *= mix(color.rgb, vec3(0.0), vec3(metallic));
-      
-      let totalLight: vec3f = lightContribution.ambient + lightContribution.diffuse + lightContribution.specular;
-      
-      color = vec4(
-        totalLight * occlusion + emissive,
-        color.a
-      );
+    color = vec4(color.rgb + emissive, color.a);
   `
     );
     const fs = (
       /* wgsl */
-      `
-    // Light
-    struct LightContribution {
-      ambient: vec3f,
-      diffuse: vec3f,
-      specular: vec3f,
-    };
-  
-    // PBR
-    const PI = ${Math.PI};
-    
-    // tone maping
-    fn toneMapKhronosPbrNeutral( color: vec3f ) -> vec3f {
-      var toneMapColor = color; 
-      const startCompression: f32 = 0.8 - 0.04;
-      const desaturation: f32 = 0.15;
-      var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
-      var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
-      toneMapColor = toneMapColor - offset;
-      var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
-      if (peak < startCompression) {
-        return toneMapColor;
-      }
-      const d: f32 = 1. - startCompression;
-      let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
-      toneMapColor *= newPeak / peak;
-      let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
-      return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
-    }
-    
-  
-    // linear <-> sRGB conversions
-    fn linearTosRGB(linear: vec3f) -> vec3f {
-      if (all(linear <= vec3(0.0031308))) {
-        return linear * 12.92;
-      }
-      return (pow(abs(linear), vec3(1.0/2.4)) * 1.055) - vec3(0.055);
-    }
-  
-    fn sRGBToLinear(srgb: vec3f) -> vec3f {
-      if (all(srgb <= vec3(0.04045))) {
-        return srgb / vec3(12.92);
-      }
-      return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
-    }
-    
+      `  
     ${chunks.additionalFragmentHead}
   
     ${fragmentInput}
@@ -16602,10 +17151,12 @@ struct VSOutput {
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {       
       ${initColor}
       ${baseColor}
+      
+      let worldPosition: vec3f = fsInput.worldPosition;
+      let viewDirection: vec3f = fsInput.viewDirection;
 
       ${normalMap}
       ${metallicRoughness}  
-      ${initLightShading}  
       
       // user defined preliminary color contribution
       ${chunks.preliminaryColorContribution}
@@ -16613,11 +17164,8 @@ struct VSOutput {
       ${f0}
       ${emissiveOcclusion}
       
-      // user defined lightning
-      ${chunks.ambientContribution}
-      ${chunks.lightContribution}
-      
       ${applyLightShading}
+      ${applyEmissive}
       
       // user defined additional color contribution
       ${chunks.additionalColorContribution}
@@ -16636,193 +17184,6 @@ struct VSOutput {
         entryPoint: "main"
       }
     };
-  };
-  const buildPBRShaders = (meshDescriptor, shaderParameters = null) => {
-    let chunks = shaderParameters?.chunks;
-    const pbrAdditionalFragmentHead = (
-      /* wgsl */
-      `
-    fn FresnelSchlick(cosTheta: f32, f0: vec3f) -> vec3f {
-      return f0 + (vec3(1.0) - f0) * pow(1.0 - cosTheta, 5.0);
-    }
-    
-    fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
-      let a: f32 = roughness * roughness;
-      let a2: f32 = a * a;
-      let NdotH2: f32 = NdotH * NdotH;
-    
-      let num: f32 = a2;
-      let denom: f32 = (NdotH2 * (a2 - 1.0) + 1.0);
-    
-      return num / (PI * denom * denom);
-    }
-    
-    fn GeometrySchlickGGX(NdotV : f32, roughness: f32) -> f32 {
-      let r: f32 = (roughness + 1.0);
-      let k: f32 = (r * r) / 8.0;
-    
-      let num: f32 = NdotV;
-      let denom: f32 = NdotV * (1.0 - k) + k;
-    
-      return num / denom;
-    }
-    
-    fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
-      let ggx2: f32 = GeometrySchlickGGX(NdotV, roughness);
-      let ggx1: f32 = GeometrySchlickGGX(NdotL, roughness);
-    
-      return ggx1 * ggx2;
-    }
-  `
-    );
-    if (!chunks) {
-      chunks = {
-        additionalFragmentHead: pbrAdditionalFragmentHead
-      };
-    } else {
-      if (!chunks.additionalFragmentHead) {
-        chunks.additionalFragmentHead = pbrAdditionalFragmentHead;
-      } else {
-        chunks.additionalFragmentHead += pbrAdditionalFragmentHead;
-      }
-    }
-    return buildShaders(meshDescriptor, shaderParameters);
-  };
-  const buildIBLShaders = (meshDescriptor, shaderParameters = null) => {
-    shaderParameters = shaderParameters || {};
-    const iblParameters = shaderParameters?.iblParameters;
-    meshDescriptor.parameters.uniforms = {
-      ...meshDescriptor.parameters.uniforms,
-      ...{
-        ibl: {
-          struct: {
-            diffuseStrength: {
-              type: "f32",
-              value: iblParameters?.diffuseStrength ?? 0.5
-            },
-            specularStrength: {
-              type: "f32",
-              value: iblParameters?.specularStrength ?? 0.5
-            }
-          }
-        }
-      }
-    };
-    const { lutTexture, envDiffuseTexture, envSpecularTexture } = iblParameters || {};
-    const useIBLContribution = envDiffuseTexture && envDiffuseTexture.texture && envSpecularTexture && envSpecularTexture.texture && lutTexture && lutTexture.texture;
-    let iblContributionHead = "";
-    let iblLightContribution = "";
-    if (useIBLContribution) {
-      meshDescriptor.parameters.textures = [
-        ...meshDescriptor.parameters.textures,
-        lutTexture.texture,
-        envDiffuseTexture.texture,
-        envSpecularTexture.texture
-      ];
-      lutTexture.samplerName = lutTexture.samplerName || "defaultSampler";
-      envDiffuseTexture.samplerName = envDiffuseTexture.samplerName || "defaultSampler";
-      envSpecularTexture.samplerName = envSpecularTexture.samplerName || "defaultSampler";
-      iblContributionHead = /* wgsl */
-      `  
-    const RECIPROCAL_PI = ${1 / Math.PI};
-    const RECIPROCAL_PI2 = ${0.5 / Math.PI};
-    
-    fn cartesianToPolar(n: vec3f) -> vec2f {
-      var uv: vec2f;
-      uv.x = atan2(n.z, n.x) * RECIPROCAL_PI2 + 0.5;
-      uv.y = asin(n.y) * RECIPROCAL_PI + 0.5;
-      return uv;
-    }
-    
-    struct IBLContribution {
-      diffuse: vec3f,
-      specular: vec3f,
-    };
-    
-    fn getIBLContribution(NdotV: f32, roughness: f32, normal: vec3f, reflection: vec3f, diffuseColor: vec3f, f0: vec3f) -> IBLContribution {
-      var iblContribution: IBLContribution;
-    
-      let brdfSamplePoint: vec2f = clamp(vec2(NdotV, roughness), vec2(0.0), vec2(1.0));
-      
-      let brdf: vec3f = textureSample(
-        ${lutTexture.texture.options.name},
-        ${lutTexture.samplerName},
-        brdfSamplePoint
-      ).rgb;
-    
-      let Fr: vec3f = max(vec3(1.0 - roughness), f0) - f0;
-      let k_S: vec3f = f0 + Fr * pow(1.0 - NdotV, 5.0);
-      var FssEss: vec3f = k_S * brdf.x + brdf.y;
-      
-      // IBL specular
-      let lod: f32 = roughness * f32(textureNumLevels(${envSpecularTexture.texture.options.name}) - 1);
-      
-      let specularLight: vec4f = textureSampleLevel(
-        ${envSpecularTexture.texture.options.name},
-        ${envSpecularTexture.samplerName},
-        ${envSpecularTexture.texture.options.viewDimension === "cube" ? "reflection" : "cartesianToPolar(reflection)"},
-        lod
-      );
-      
-      iblContribution.specular = specularLight.rgb * FssEss * ibl.specularStrength;
-      
-      // IBL diffuse
-      let diffuseLight: vec4f = textureSample(
-        ${envDiffuseTexture.texture.options.name},
-        ${envDiffuseTexture.samplerName},
-        ${envDiffuseTexture.texture.options.viewDimension === "cube" ? "normal" : "cartesianToPolar(normal)"}
-      );
-      
-      // product of specularFactor and specularTexture.a
-      let specularWeight: f32 = 1.0;
-            
-      FssEss = specularWeight * k_S * brdf.x + brdf.y;
-      
-      let Ems: f32 = (1.0 - (brdf.x + brdf.y));
-      let F_avg: vec3f = specularWeight * (f0 + (1.0 - f0) / 21.0);
-      let FmsEms: vec3f = Ems * FssEss * F_avg / (1.0 - F_avg * Ems);
-      let k_D: vec3f = diffuseColor * (1.0 - FssEss + FmsEms);
-      
-      iblContribution.diffuse = (FmsEms + k_D) * diffuseLight.rgb * ibl.diffuseStrength;
-      
-      return iblContribution;
-    }
-    `;
-      iblLightContribution = /* wgsl */
-      `
-      let reflection: vec3f = normalize(reflect(-V, N));
-      
-      let iblDiffuseColor: vec3f = mix(color.rgb, vec3(0.0), vec3(metallic));
-    
-      let iblContribution = getIBLContribution(NdotV, roughness, N, reflection, iblDiffuseColor, f0);
-      
-      lightContribution.diffuse += iblContribution.diffuse;
-      lightContribution.specular += iblContribution.specular;
-    `;
-    }
-    let chunks = shaderParameters?.chunks;
-    if (!chunks) {
-      chunks = {
-        additionalFragmentHead: iblContributionHead,
-        lightContribution: iblLightContribution
-      };
-    } else {
-      if (!chunks.additionalFragmentHead) {
-        chunks.additionalFragmentHead = iblContributionHead;
-      } else {
-        chunks.additionalFragmentHead += iblContributionHead;
-      }
-      if (!chunks.lightContribution) {
-        chunks.lightContribution = iblLightContribution;
-      } else {
-        chunks.lightContribution = iblLightContribution + chunks.lightContribution;
-      }
-      if (!chunks.ambientContribution && useIBLContribution) {
-        chunks.ambientContribution = "lightContribution.ambient = vec3(0.0);";
-      }
-    }
-    shaderParameters.chunks = chunks;
-    return buildPBRShaders(meshDescriptor, shaderParameters);
   };
   const computeDiffuseFromSpecular = async (renderer, diffuseTexture, specularTexture) => {
     if (specularTexture.options.viewDimension !== "cube") {
@@ -17521,21 +17882,29 @@ struct VSOutput {
   exports.Vec2 = Vec2;
   exports.Vec3 = Vec3;
   exports.WritableBufferBinding = WritableBufferBinding;
-  exports.buildIBLShaders = buildIBLShaders;
-  exports.buildPBRShaders = buildPBRShaders;
+  exports.applyDirectionalShadows = applyDirectionalShadows;
+  exports.applyPointShadows = applyPointShadows;
   exports.buildShaders = buildShaders;
   exports.computeDiffuseFromSpecular = computeDiffuseFromSpecular;
   exports.getDefaultPointShadowDepthFs = getDefaultPointShadowDepthFs;
   exports.getDefaultPointShadowDepthVs = getDefaultPointShadowDepthVs;
   exports.getDefaultShadowDepthVs = getDefaultShadowDepthVs;
+  exports.getIBL = getIBL;
+  exports.getIBLIndirect = getIBLIndirect;
   exports.getLambert = getLambert;
-  exports.getLambertWithShadows = getLambertWithShadows;
+  exports.getLambertDirect = getLambertDirect;
+  exports.getPBR = getPBR;
+  exports.getPBRDirect = getPBRDirect;
   exports.getPCFDirectionalShadows = getPCFDirectionalShadows;
   exports.getPCFPointShadowContribution = getPCFPointShadowContribution;
   exports.getPCFPointShadows = getPCFPointShadows;
   exports.getPCFShadowContribution = getPCFShadowContribution;
+  exports.getPCFShadows = getPCFShadows;
   exports.getPhong = getPhong;
-  exports.getPhongWithShadows = getPhongWithShadows;
+  exports.getPhongDirect = getPhongDirect;
+  exports.lambertUtils = lambertUtils;
   exports.logSceneCommands = logSceneCommands;
+  exports.pbrUtils = pbrUtils;
+  exports.toneMappingUtils = toneMappingUtils;
 
 }));

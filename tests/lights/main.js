@@ -1,6 +1,4 @@
 // Basic rotating cube for most simple tests
-import { getPhong } from '../../src/core/shaders/chunks/utils/lights.ts'
-
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
   const {
@@ -13,7 +11,8 @@ window.addEventListener('load', async () => {
     PointLight,
     Vec3,
     Mesh,
-    getLambertLightContribution,
+    toneMappingUtils,
+    getLambert,
     getPhong,
   } = await import(/* @vite-ignore */ path)
 
@@ -43,30 +42,6 @@ window.addEventListener('load', async () => {
   const orbitControls = new OrbitControls(gpuCameraRenderer)
   orbitControls.minZoom = -5
 
-  const vs = /* wgsl */ `
-    struct VSOutput {
-      @builtin(position) position: vec4f,
-      @location(0) uv: vec2f,
-      @location(1) normal: vec3f,
-      @location(2) worldPosition: vec3f,
-      @location(3) viewDirection: vec3f,
-    };
-    
-    @vertex fn main(
-      attributes: Attributes,
-    ) -> VSOutput {
-      var vsOutput: VSOutput;
-    
-      vsOutput.position = getOutputPosition(attributes.position);
-      vsOutput.uv = attributes.uv;
-      vsOutput.normal = getWorldNormal(attributes.normal);
-      vsOutput.worldPosition = getWorldPosition(attributes.position).xyz;
-      vsOutput.viewDirection = camera.position - vsOutput.worldPosition;
-      
-      return vsOutput;
-    }
-  `
-
   const fs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
@@ -77,8 +52,17 @@ window.addEventListener('load', async () => {
       @location(3) viewDirection: vec3f,
     };
     
+    ${toneMappingUtils}
     
-    ${getPhong}
+    ${getPhong({
+      toneMapping: false,
+    })}
+    
+    ${getLambert({
+      addUtils: false,
+      toneMapping: false,
+    })}
+    
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec3f = shading.color;
@@ -89,7 +73,7 @@ window.addEventListener('load', async () => {
       
       let worldPosition = fsInput.worldPosition;
       let viewDirection = normalize(fsInput.viewDirection);
-            
+      
       if(shading.useLambert == 1) {
         // lambert
         color = getLambert(
@@ -98,7 +82,7 @@ window.addEventListener('load', async () => {
           color
         );
       } else {
-        // phong shading        
+        // phong shading
         color = getPhong(
           normal,
           worldPosition,
@@ -111,6 +95,7 @@ window.addEventListener('load', async () => {
       }
       
       return vec4(color, 1.0);
+      //return vec4(linearToOutput3(color), 1.0);
     }
   `
 
@@ -138,8 +123,6 @@ window.addEventListener('load', async () => {
       // },
     })
   )
-
-  console.log(directionalLights)
 
   pointLights.push(
     new PointLight(gpuCameraRenderer, {
@@ -223,12 +206,21 @@ window.addEventListener('load', async () => {
 
   const materialFolder = gui.addFolder('Material')
   const materialShadingFolder = materialFolder.addFolder('Shading')
+
+  // materialShadingFolder
+  //   .add({ materials }, 'material', materials)
+  //   .name('Material')
+  //   .onChange((value) => {
+  //     mesh.useMaterial(value)
+  //   })
+
   materialShadingFolder
     .add({ useLambert: !!mesh.uniforms.shading.useLambert.value }, 'useLambert', [false, true])
     .name('Use lambert shading')
     .onChange((value) => {
       mesh.uniforms.shading.useLambert.value = value ? 1 : 0
     })
+
   materialShadingFolder
     .addColor(
       {

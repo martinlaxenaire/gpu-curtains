@@ -858,6 +858,13 @@ export class GLTFScenesManager {
         // patch the parameters
         patchMeshesParameters(meshDescriptor)
 
+        const hasInstancedShadows =
+          meshDescriptor.parameters.geometry.instancesCount > 1 && meshDescriptor.parameters.castShadows
+
+        if (hasInstancedShadows) {
+          meshDescriptor.parameters.castShadows = false
+        }
+
         const mesh = new Mesh(this.renderer, {
           ...meshDescriptor.parameters,
         })
@@ -890,6 +897,19 @@ export class GLTFScenesManager {
             },
             { once: true }
           )
+        }
+
+        // instanced shadows
+        if (hasInstancedShadows) {
+          const instancesBinding = mesh.material.inputsBindings.get('instances')
+
+          this.renderer.shadowCastingLights.forEach((light) => {
+            if (light.shadow.isActive) {
+              light.shadow.addShadowCastingMesh(mesh, {
+                bindings: [instancesBinding],
+              })
+            }
+          })
         }
 
         mesh.parent = meshDescriptor.parent

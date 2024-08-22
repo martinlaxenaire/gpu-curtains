@@ -38,13 +38,13 @@ class Camera extends Object3D {
     }
   } = {}) {
     super();
-    /** Private {@link Camera} field of view */
+    /** @ignore */
     __privateAdd(this, _fov, void 0);
-    /** Private {@link Camera} near plane */
+    /** @ignore */
     __privateAdd(this, _near, void 0);
-    /** Private {@link Camera} far plane */
+    /** @ignore */
     __privateAdd(this, _far, void 0);
-    /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
+    /** @ignore */
     __privateAdd(this, _pixelRatio, void 0);
     this.uuid = generateUUID();
     this.position.set(0, 0, 10);

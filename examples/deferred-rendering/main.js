@@ -2,6 +2,10 @@ import {
   BoxGeometry,
   GPUCameraRenderer,
   GPUDeviceManager,
+  AmbientLight,
+  PointLight,
+  toneMappingUtils,
+  getPhong,
   Mesh,
   ShaderPass,
   PlaneGeometry,
@@ -23,11 +27,16 @@ window.addEventListener('load', async () => {
   // we need to wait for the device to be created
   await gpuDeviceManager.init()
 
+  const nbLights = 100
+
   // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
+    lights: {
+      maxPointLights: nbLights, // we'll use 100 point lights!
+    },
   })
 
   const systemSize = new Vec3(30, 10, 30)
@@ -264,27 +273,29 @@ window.addEventListener('load', async () => {
   })
 
   // we could eventually make the light move in a compute shader
-  const nbLights = 100
-  const lightsRadius = new Float32Array(nbLights)
-  const lightsPositions = new Float32Array(4 * nbLights)
-  const lightsColors = new Float32Array(3 * nbLights)
   const blue = new Vec3(0, 1, 1)
   const pink = new Vec3(1, 0, 1)
   const color = new Vec3()
 
+  const ambientLight = new AmbientLight(gpuCameraRenderer, {
+    intensity: 0.2,
+  })
+
+  const pointLights = []
+
   for (let i = 0, j = 0, k = 0; i < nbLights; i++, j += 4, k += 3) {
-    lightsRadius[i] = 7.5 + Math.random() * 7.5
-
-    lightsPositions[j] = Math.random() * systemSize.x * Math.sign(Math.random() - 0.5)
-    lightsPositions[j + 1] = Math.random() * 5 + 2.5
-    lightsPositions[j + 2] = Math.random() * systemSize.z * Math.sign(Math.random() - 0.5)
-    lightsPositions[j + 3] = 1
-
-    color.copy(pink).lerp(blue, Math.random())
-
-    lightsColors[k] = color.x
-    lightsColors[k + 1] = color.y
-    lightsColors[k + 2] = color.z
+    pointLights.push(
+      new PointLight(gpuCameraRenderer, {
+        position: new Vec3(
+          Math.random() * systemSize.x * Math.sign(Math.random() - 0.5),
+          Math.random() * 5 + 2.5,
+          Math.random() * systemSize.z * Math.sign(Math.random() - 0.5)
+        ),
+        color: color.copy(pink).lerp(blue, Math.random()),
+        intensity: 1,
+        range: 7.5 + Math.random() * 7.5,
+      })
+    )
   }
 
   // DEFERRED RENDERING
@@ -302,6 +313,9 @@ window.addEventListener('load', async () => {
       let posWorld = posWorldW.xyz / posWorldW.www;
       return posWorld;
     }
+    
+    ${toneMappingUtils}
+    ${getPhong()}
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {     
       var result : vec3<f32>;
@@ -332,39 +346,41 @@ window.addEventListener('load', async () => {
         vec2<i32>(floor(fsInput.position.xy)),
         0
       ).rgb;
-      
-      for (var i = 0u; i < arrayLength(&lights); i++) {
-        let L = lights[i].position.xyz - position;
+
+      // handmade phong
+      var reflectedLight: ReflectedLight;
+
+      for (var i = 0i; i < pointLights.count; i++) {
+        let L = pointLights.elements[i].position.xyz - position;
         let distance = length(L);
         
-        if (distance > lights[i].radius) {
+        if (distance > pointLights.elements[i].range) {
           continue;
         }
         
         let lightDir: vec3f = normalize(L);
-        let lightStrength: f32 = pow(1.0 - distance / lights[i].radius, 2.0);
+        let attenuation: f32 = pow(1.0 - distance / pointLights.elements[i].range, 2.0);
         
-        let lambert = max(dot(normal, lightDir), 0.0);
-        result += vec3<f32>(
-          lambert * lightStrength * lights[i].color
+        let NdotL = max(dot(normal, lightDir), 0.0);
+        reflectedLight.directDiffuse += vec3(
+          BRDF_Lambert(albedo) * NdotL * attenuation * pointLights.elements[i].color
         );
         
-        // specular
+        // cheap phong specular
         let viewDir: vec3f = normalize(camera.position - position);
         let reflectDir: vec3f = reflect(-lightDir, normal);
         let spec: f32 = pow(max(dot(viewDir, reflectDir), 0.0), phong.shininess);
-        let specular: vec3f = phong.specularStrength * spec * lights[i].color * lightStrength;
-        
-        result += specular;
+
+        reflectedLight.directSpecular += phong.specularStrength * spec * pointLights.elements[i].color * attenuation;
       }
-          
-      // some manual ambient
-      result += vec3(0.2);
       
-      // albedo
-      result *= albedo;
+      // ambient lights
+      var irradiance: vec3f = vec3(0.0);
+      RE_IndirectDiffuse(irradiance, albedo, &reflectedLight);
     
-      return vec4(result, 1.0);
+      result = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse + reflectedLight.directSpecular;
+    
+      return vec4(linearToOutput3(result), 1.0);
     }
   `
 
@@ -376,6 +392,12 @@ window.addEventListener('load', async () => {
       },
     },
     textures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
+    // we need all the renderer lights bindings
+    bindings: [
+      gpuCameraRenderer.bindings.ambientLights,
+      gpuCameraRenderer.bindings.directionalLights,
+      gpuCameraRenderer.bindings.pointLights,
+    ],
     uniforms: {
       camera: {
         struct: {
@@ -391,6 +413,10 @@ window.addEventListener('load', async () => {
       },
       phong: {
         struct: {
+          specularColor: {
+            type: 'vec3f',
+            value: new Vec3(1),
+          },
           specularStrength: {
             type: 'f32',
             value: 0.5,
@@ -398,24 +424,6 @@ window.addEventListener('load', async () => {
           shininess: {
             type: 'f32',
             value: 32,
-          },
-        },
-      },
-    },
-    storages: {
-      lights: {
-        struct: {
-          position: {
-            type: 'array<vec4f>',
-            value: lightsPositions,
-          },
-          color: {
-            type: 'array<vec3f>',
-            value: lightsColors,
-          },
-          radius: {
-            type: 'array<f32>',
-            value: lightsRadius,
           },
         },
       },

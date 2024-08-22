@@ -3,7 +3,7 @@ import { DOMFrustum } from '../../DOM/DOMFrustum.mjs';
 import { MeshBaseMixin } from './MeshBaseMixin.mjs';
 import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl.mjs';
 import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl.mjs';
-import { getPCFDirectionalShadows, getPCFShadowContribution, getPCFPointShadows, getPCFPointShadowContribution } from '../../shaders/chunks/utils/shadows.mjs';
+import { getPCFDirectionalShadows, getPCFShadowContribution, getPCFPointShadows, getPCFPointShadowContribution } from '../../shaders/chunks/shading/shadows.mjs';
 
 const defaultProjectedMeshParams = {
   // frustum culling and visibility
@@ -169,8 +169,7 @@ function ProjectedMeshBaseMixin(Base) {
           parameters.samplers = depthSamplers;
         }
       }
-      super.cleanupRenderMaterialParameters(parameters);
-      return parameters;
+      return super.cleanupRenderMaterialParameters(parameters);
     }
     /**
      * Set a Mesh matrices uniforms inputs then call {@link MeshBaseClass} super method
@@ -355,6 +354,16 @@ function ProjectedMeshBaseMixin(Base) {
         this.material.render(pass);
         this.geometry.render(pass);
       }
+    }
+    destroy() {
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.removeMesh(this);
+          }
+        });
+      }
+      super.destroy();
     }
   };
 }

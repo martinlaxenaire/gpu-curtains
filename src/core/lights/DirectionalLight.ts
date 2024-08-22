@@ -118,7 +118,10 @@ export class DirectionalLight extends Light {
     this.rendererBinding.inputs.count.value = directionalLightIndex
     this.rendererBinding.inputs.count.shouldUpdate = true
 
-    this.shadow = new DirectionalShadow(this.renderer, { light: this })
+    this.shadow = new DirectionalShadow(this.renderer, {
+      autoRender: false, // will be set by calling cast()
+      light: this,
+    })
 
     if (shadow) {
       this.shadow.cast(shadow)

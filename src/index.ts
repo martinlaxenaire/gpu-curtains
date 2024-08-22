@@ -39,9 +39,13 @@ export { Texture } from './core/textures/Texture'
 export { DOMTexture } from './core/textures/DOMTexture'
 export { DOMElement } from './core/DOM/DOMElement'
 
-// shaders utils
-export * from './core/shaders/chunks/utils/lights'
-export * from './core/shaders/chunks/utils/shadows'
+// shading
+export * from './core/shaders/chunks/shading/lambert-shading'
+export * from './core/shaders/chunks/shading/phong-shading'
+export * from './core/shaders/chunks/shading/pbr-shading'
+export * from './core/shaders/chunks/shading/ibl-shading'
+export * from './core/shaders/chunks/shading/shadows'
+export * from './core/shaders/chunks/shading/tone-mapping-utils'
 
 // curtains
 export { DOMMesh } from './curtains/meshes/DOMMesh'

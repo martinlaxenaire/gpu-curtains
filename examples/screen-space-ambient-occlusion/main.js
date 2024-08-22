@@ -1,6 +1,9 @@
 import {
   GPUDeviceManager,
   GPUCameraRenderer,
+  AmbientLight,
+  PointLight,
+  getLambert,
   Object3D,
   BoxGeometry,
   Sampler,
@@ -37,6 +40,7 @@ window.addEventListener('load', async () => {
   await gpuDeviceManager.init()
 
   const systemSize = new Vec3(200, 200, 200)
+  const nbLights = 25
 
   // then we can create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({
@@ -47,6 +51,9 @@ window.addEventListener('load', async () => {
       fov: 65,
       near: systemSize.z * 0.25,
       far: systemSize.z * 4,
+    },
+    lights: {
+      maxPointLights: nbLights,
     },
   })
 
@@ -682,25 +689,30 @@ window.addEventListener('load', async () => {
   // ------------------------------------
   // SHADING / LIGHTNING PASS
   // ------------------------------------
+  const ambientLight = new AmbientLight(gpuCameraRenderer, {
+    intensity: 0.3,
+  })
 
-  const nbLights = 25
-  const lightsRadius = new Float32Array(nbLights)
-  const lightsPositions = new Float32Array(4 * nbLights)
-  const lightsColors = new Float32Array(3 * nbLights)
+  const lights = []
+
+  const systemLengthSq = systemSize.lengthSq()
+  const systemLength = systemSize.length()
 
   for (let i = 0, j = 0, k = 0; i < nbLights; i++, j += 4, k += 3) {
-    lightsRadius[i] = systemSize.z * 3 + Math.random() * systemSize.z * 3
-
-    lightsPositions[j] = (systemSize.x * 1.25 + Math.random() * systemSize.x * 1.5) * Math.sign(Math.random() - 0.5)
-    lightsPositions[j + 1] = (systemSize.y * 1.25 + Math.random() * systemSize.y * 1.5) * Math.sign(Math.random() - 0.5)
-    lightsPositions[j + 2] = (systemSize.z * 1.25 + Math.random() * systemSize.z * 1.5) * Math.sign(Math.random() - 0.5)
-    lightsPositions[j + 3] = 1
-
     const color = Math.random() * 0.25 + 0.75
 
-    lightsColors[k] = color
-    lightsColors[k + 1] = color
-    lightsColors[k + 2] = color
+    lights.push(
+      new PointLight(gpuCameraRenderer, {
+        position: new Vec3(
+          (systemSize.x * 1.25 + Math.random() * systemSize.x * 1.5) * Math.sign(Math.random() - 0.5),
+          (systemSize.y * 1.25 + Math.random() * systemSize.y * 1.5) * Math.sign(Math.random() - 0.5),
+          (systemSize.z * 1.25 + Math.random() * systemSize.z * 1.5) * Math.sign(Math.random() - 0.5)
+        ),
+        color: new Vec3(color),
+        range: systemLength + Math.random() * systemLength * 2,
+        intensity: systemLengthSq,
+      })
+    )
   }
 
   const ssaoPassFs = /* wgsl */ `
@@ -708,6 +720,10 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
+    
+    ${getLambert({
+      useOcclusion: true,
+    })}
     
     fn worldPosFromScreenCoords(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
       // reconstruct world-space position from the screen coordinate.
@@ -749,23 +765,10 @@ window.addEventListener('load', async () => {
         0
       ).rgb;
       
-      for (var i = 0u; i < arrayLength(&lights); i++) {
-        let L = lights[i].position.xyz - position;
-        let distance = length(L);
-        if (distance > lights[i].radius) {
-          continue;
-        }
-        let lambert = max(dot(normal, normalize(L)), 0.0);
-        result += vec3<f32>(
-          lambert * pow(1.0 - distance / lights[i].radius, 2.0) * lights[i].color * albedo
-        );
-      }
-                          
-      // ambient * occlusion
-      result += vec3(0.3 * blurredOcclusion.r);
+      let color = getLambert(normal, position, albedo, blurredOcclusion.r);
       
       return select(
-        vec4(result, 1.0),
+        vec4(color, 1.0),
         vec4(blurredOcclusion.rgb, 1.0),
         bool(params.displaySSAOResult)
       );
@@ -780,6 +783,12 @@ window.addEventListener('load', async () => {
       },
     },
     textures: [gBufferDepthTexture, gBufferAlbedoTexture, gBufferNormalTexture],
+    // we need all the renderer lights bindings
+    bindings: [
+      gpuCameraRenderer.bindings.ambientLights,
+      gpuCameraRenderer.bindings.directionalLights,
+      gpuCameraRenderer.bindings.pointLights,
+    ],
     uniforms: {
       camera: {
         struct: {
@@ -794,24 +803,6 @@ window.addEventListener('load', async () => {
           displaySSAOResult: {
             type: 'u32',
             value: 0,
-          },
-        },
-      },
-    },
-    storages: {
-      lights: {
-        struct: {
-          position: {
-            type: 'array<vec4f>',
-            value: lightsPositions,
-          },
-          color: {
-            type: 'array<vec3f>',
-            value: lightsColors,
-          },
-          radius: {
-            type: 'array<f32>',
-            value: lightsRadius,
           },
         },
       },

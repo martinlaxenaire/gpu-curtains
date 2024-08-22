@@ -17,9 +17,7 @@ window.addEventListener('load', async () => {
     BoxGeometry,
     Vec3,
     Object3D,
-    getLambertLightContribution,
-    getLambertWithShadows,
-    getPCFShadowContribution,
+    getLambert,
   } = await import(/* @vite-ignore */ path)
 
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
@@ -117,7 +115,7 @@ window.addEventListener('load', async () => {
   const pointLight = new PointLight(gpuCameraRenderer, {
     position: new Vec3(0, 0.5, 0),
     color: new Vec3(1),
-    range: 7.5,
+    range: 15,
     intensity: 5,
   })
 
@@ -129,6 +127,7 @@ window.addEventListener('load', async () => {
     // camera: {
     //   near: 0.5,
     // },
+    // autoRender: false,
   })
 
   pointLights.push(pointLight)
@@ -154,8 +153,10 @@ window.addEventListener('load', async () => {
 
   // RENDER
 
+  let rotatePivot = true
+
   const animate = () => {
-    scenePivot.rotation.y += 0.015
+    if (rotatePivot) scenePivot.rotation.y += 0.015
 
     gpuDeviceManager.render()
 
@@ -191,11 +192,10 @@ window.addEventListener('load', async () => {
       @location(0) normal: vec3f,
       @location(1) worldPosition: vec3f,
     };
-    
-    const ambientFactor = 0.5;
-    
-    ${getLambertWithShadows}
         
+    ${getLambert({
+      receiveShadows: true,
+    })}
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
       // negate the normals if we're using front face culling
@@ -208,17 +208,11 @@ window.addEventListener('load', async () => {
       
       var color: vec3f = shading.color;
       
-      color = getLambertWithShadows(
+      color = getLambert(
         normal,
         worldPosition,
         color
       );
-      
-      // color = getLambert(
-      //   normal,
-      //   worldPosition,
-      //   color
-      // );
       
       return vec4(color, 1.0);
     }
@@ -419,12 +413,22 @@ window.addEventListener('load', async () => {
   floor.rotation.set(-Math.PI / 2, 0, 0)
   floor.scale.set(30)
 
+  // finally render point light once
+  // pointLight.shadow.renderOnce()
+
   // GUI
   const gui = new lil.GUI({
     title: 'Lights & shadows test',
   })
 
   gui.close()
+
+  gui
+    .add({ rotatePivot }, 'rotatePivot')
+    .name('Rotate scene')
+    .onChange((value) => {
+      rotatePivot = value
+    })
 
   const ambientLightsFolder = gui.addFolder('Ambient lights')
   ambientLights.forEach((ambientLight, index) => {

@@ -78,6 +78,7 @@ export class DirectionalShadow extends Shadow {
       pcfSamples,
       depthTextureSize,
       depthTextureFormat,
+      autoRender,
       camera = {
         left: -10,
         right: 10,
@@ -88,7 +89,16 @@ export class DirectionalShadow extends Shadow {
       },
     } = {} as DirectionalShadowParams
   ) {
-    super(renderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat })
+    super(renderer, {
+      light,
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender,
+    })
 
     this.options = {
       ...this.options,
@@ -139,13 +149,11 @@ export class DirectionalShadow extends Shadow {
    * @param parameters - parameters to use for this {@link DirectionalShadow}.
    */
   cast(
-    { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera } = {} as Omit<
+    { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {} as Omit<
       DirectionalShadowParams,
       'light'
     >
   ) {
-    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat })
-
     if (camera) {
       this.camera.left = camera.left ?? -10
       this.camera.right = camera.right ?? 10
@@ -154,6 +162,8 @@ export class DirectionalShadow extends Shadow {
       this.camera.near = camera.near ?? 0.1
       this.camera.far = camera.far ?? 50
     }
+
+    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
   }
 
   /**
@@ -196,9 +206,7 @@ export class DirectionalShadow extends Shadow {
    * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
    */
   updateViewMatrix(position = new Vec3(), target = new Vec3()) {
-    if (this.isActive) {
-      this.camera.viewMatrix.makeView(position, target, this.camera.up)
-      this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
-    }
+    this.camera.viewMatrix.makeView(position, target, this.camera.up)
+    this.onPropertyChanged('viewMatrix', this.camera.viewMatrix)
   }
 }

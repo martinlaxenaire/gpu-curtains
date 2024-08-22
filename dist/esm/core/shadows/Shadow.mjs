@@ -5,7 +5,7 @@ import { Texture } from '../textures/Texture.mjs';
 import { RenderTarget } from '../renderPasses/RenderTarget.mjs';
 import { Sampler } from '../samplers/Sampler.mjs';
 import { RenderMaterial } from '../materials/RenderMaterial.mjs';
-import { getDefaultShadowDepthVs } from '../shaders/chunks/utils/shadows.mjs';
+import { getDefaultShadowDepthVs } from '../shaders/chunks/shading/shadows.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))
@@ -29,7 +29,7 @@ var __privateMethod = (obj, member, method) => {
   __accessCheck(obj, member, "access private method");
   return method;
 };
-var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
+var _intensity, _bias, _normalBias, _pcfSamples, _isActive, _autoRender, _materials, _depthMaterials, _depthPassTaskID, _setParameters, setParameters_fn;
 const shadowStruct = {
   isActive: {
     type: "i32",
@@ -65,7 +65,8 @@ class Shadow {
     normalBias = 0,
     pcfSamples = 1,
     depthTextureSize = new Vec2(512),
-    depthTextureFormat = "depth24plus"
+    depthTextureFormat = "depth24plus",
+    autoRender = true
   } = {}) {
     /**
      * Set the {@link Shadow} parameters.
@@ -83,6 +84,7 @@ class Shadow {
     __privateAdd(this, _pcfSamples, void 0);
     /** @ignore */
     __privateAdd(this, _isActive, void 0);
+    __privateAdd(this, _autoRender, void 0);
     /**
      * Original {@link meshes} {@link RenderMaterial | materials}.
      * @private
@@ -114,7 +116,7 @@ class Shadow {
     __privateSet(this, _materials, /* @__PURE__ */ new Map());
     __privateSet(this, _depthMaterials, /* @__PURE__ */ new Map());
     __privateSet(this, _depthPassTaskID, null);
-    __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+    __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = false;
   }
   /**
@@ -122,9 +124,9 @@ class Shadow {
    * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
    * @param parameters - parameters to use for this {@link Shadow}.
    */
-  cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat } = {}) {
+  cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {}) {
+    __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     this.isActive = true;
-    __privateMethod(this, _setParameters, setParameters_fn).call(this, { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
   }
   /** @ignore */
   setRendererBinding() {
@@ -173,8 +175,7 @@ class Shadow {
    */
   set intensity(value) {
     __privateSet(this, _intensity, value);
-    if (this.isActive)
-      this.onPropertyChanged("intensity", this.intensity);
+    this.onPropertyChanged("intensity", this.intensity);
   }
   /**
    * Get this {@link Shadow} bias.
@@ -189,8 +190,7 @@ class Shadow {
    */
   set bias(value) {
     __privateSet(this, _bias, value);
-    if (this.isActive)
-      this.onPropertyChanged("bias", this.bias);
+    this.onPropertyChanged("bias", this.bias);
   }
   /**
    * Get this {@link Shadow} normal bias.
@@ -205,8 +205,7 @@ class Shadow {
    */
   set normalBias(value) {
     __privateSet(this, _normalBias, value);
-    if (this.isActive)
-      this.onPropertyChanged("normalBias", this.normalBias);
+    this.onPropertyChanged("normalBias", this.normalBias);
   }
   /**
    * Get this {@link Shadow} PCF samples count.
@@ -221,8 +220,7 @@ class Shadow {
    */
   set pcfSamples(value) {
     __privateSet(this, _pcfSamples, Math.max(1, Math.ceil(value)));
-    if (this.isActive)
-      this.onPropertyChanged("pcfSamples", this.pcfSamples);
+    this.onPropertyChanged("pcfSamples", this.pcfSamples);
   }
   /**
    * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
@@ -246,10 +244,10 @@ class Shadow {
     if (!this.depthPassTarget) {
       this.createDepthPassTarget();
     }
-    if (__privateGet(this, _depthPassTaskID) === null) {
+    if (__privateGet(this, _depthPassTaskID) === null && __privateGet(this, _autoRender)) {
       this.setDepthPass();
+      this.onPropertyChanged("isActive", 1);
     }
-    this.onPropertyChanged("isActive", 1);
   }
   /**
    * Reset the {@link depthTexture} when the {@link depthTextureSize} changes.
@@ -287,7 +285,9 @@ class Shadow {
       fixedSize: {
         width: this.depthTextureSize.x,
         height: this.depthTextureSize.y
-      }
+      },
+      autoDestroy: false
+      // do not destroy when removing a mesh
     });
   }
   /**
@@ -323,7 +323,7 @@ class Shadow {
    * Start the depth pass.
    */
   setDepthPass() {
-    __privateSet(this, _depthPassTaskID, this.depthPassTask());
+    __privateSet(this, _depthPassTaskID, this.render());
   }
   /**
    * Remove the depth pass from its {@link utils/TasksQueueManager.TasksQueueManager | task queue manager}.
@@ -337,8 +337,9 @@ class Shadow {
    * - Force all the {@link meshes} to use their depth materials
    * - Render all the {@link meshes}
    * - Reset all the {@link meshes} materials to their original one.
+   * @param once - Whether to render it only once or not.
    */
-  depthPassTask() {
+  render(once = false) {
     return this.renderer.onBeforeRenderScene.add(
       (commandEncoder) => {
         if (!this.meshes.size)
@@ -349,9 +350,28 @@ class Shadow {
         this.renderer.pipelineManager.resetCurrentPipeline();
       },
       {
+        once,
         order: this.index
       }
     );
+  }
+  /**
+   * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
+   */
+  async renderOnce() {
+    if (!__privateGet(this, _autoRender)) {
+      this.onPropertyChanged("isActive", 1);
+      this.useDepthMaterials();
+      this.meshes.forEach((mesh) => {
+        mesh.setGeometry();
+      });
+      await Promise.all(
+        [...__privateGet(this, _depthMaterials).values()].map(async (depthMaterial) => {
+          await depthMaterial.compileMaterial();
+        })
+      );
+      this.render(true);
+    }
   }
   /**
    * Render all the {@link meshes} into the {@link depthPassTarget}.
@@ -361,8 +381,7 @@ class Shadow {
     this.renderer.pipelineManager.resetCurrentPipeline();
     const depthPass = commandEncoder.beginRenderPass(this.depthPassTarget.renderPass.descriptor);
     this.meshes.forEach((mesh) => {
-      if (mesh.ready)
-        mesh.render(depthPass);
+      mesh.render(depthPass);
     });
     depthPass.end();
   }
@@ -370,8 +389,8 @@ class Shadow {
    * Get the default depth pass vertex shader for this {@link Shadow}.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs() {
-    return getDefaultShadowDepthVs(this.index);
+  getDefaultShadowDepthVs(hasInstances = false) {
+    return getDefaultShadowDepthVs(this.index, hasInstances);
   }
   /**
    * Get the default depth pass fragment shader for this {@link Shadow}.
@@ -387,14 +406,6 @@ class Shadow {
    * @returns - Patched parameters.
    */
   patchShadowCastingMeshParams(mesh, parameters = {}) {
-    if (!parameters.shaders) {
-      parameters.shaders = {
-        vertex: {
-          code: this.getDefaultShadowDepthVs()
-        },
-        fragment: this.getDefaultShadowDepthFs()
-      };
-    }
     parameters = { ...mesh.material.options.rendering, ...parameters };
     parameters.targets = [];
     parameters.sampleCount = this.sampleCount;
@@ -403,6 +414,15 @@ class Shadow {
       parameters.bindings = [mesh.material.getBufferBindingByName("matrices"), ...parameters.bindings];
     } else {
       parameters.bindings = [mesh.material.getBufferBindingByName("matrices")];
+    }
+    const hasInstances = mesh.material.inputsBindings.get("instances") && mesh.geometry.instancesCount > 1;
+    if (!parameters.shaders) {
+      parameters.shaders = {
+        vertex: {
+          code: this.getDefaultShadowDepthVs(hasInstances)
+        },
+        fragment: this.getDefaultShadowDepthFs()
+      };
     }
     return parameters;
   }
@@ -482,6 +502,7 @@ _bias = new WeakMap();
 _normalBias = new WeakMap();
 _pcfSamples = new WeakMap();
 _isActive = new WeakMap();
+_autoRender = new WeakMap();
 _materials = new WeakMap();
 _depthMaterials = new WeakMap();
 _depthPassTaskID = new WeakMap();
@@ -492,7 +513,8 @@ setParameters_fn = function({
   normalBias = 0,
   pcfSamples = 1,
   depthTextureSize = new Vec2(512),
-  depthTextureFormat = "depth24plus"
+  depthTextureFormat = "depth24plus",
+  autoRender = true
 } = {}) {
   this.intensity = intensity;
   this.bias = bias;
@@ -501,6 +523,7 @@ setParameters_fn = function({
   this.depthTextureSize = depthTextureSize;
   this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
   this.depthTextureFormat = depthTextureFormat;
+  __privateSet(this, _autoRender, autoRender);
 };
 
 export { Shadow, shadowStruct };

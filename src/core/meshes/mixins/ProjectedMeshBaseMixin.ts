@@ -21,7 +21,7 @@ import {
   getPCFPointShadowContribution,
   getPCFPointShadows,
   getPCFShadowContribution,
-} from '../../shaders/chunks/utils/shadows'
+} from '../../shaders/chunks/shading/shadows'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean
@@ -396,9 +396,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         }
       }
 
-      super.cleanupRenderMaterialParameters(parameters)
-
-      return parameters
+      return super.cleanupRenderMaterialParameters(parameters)
     }
 
     /**
@@ -640,6 +638,18 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         // then render our geometry
         this.geometry.render(pass)
       }
+    }
+
+    destroy() {
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.removeMesh(this)
+          }
+        })
+      }
+
+      super.destroy()
     }
   }
 }

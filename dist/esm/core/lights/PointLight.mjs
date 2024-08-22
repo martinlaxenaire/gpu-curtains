@@ -49,7 +49,11 @@ class PointLight extends Light {
     }
     this.rendererBinding.inputs.count.value = pointLightIndex;
     this.rendererBinding.inputs.count.shouldUpdate = true;
-    this.shadow = new PointShadow(this.renderer, { light: this });
+    this.shadow = new PointShadow(this.renderer, {
+      autoRender: false,
+      // will be set by calling cast()
+      light: this
+    });
     if (shadow) {
       this.shadow.cast(shadow);
     }

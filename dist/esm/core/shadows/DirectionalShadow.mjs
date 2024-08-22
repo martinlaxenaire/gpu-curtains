@@ -27,6 +27,7 @@ class DirectionalShadow extends Shadow {
     pcfSamples,
     depthTextureSize,
     depthTextureFormat,
+    autoRender,
     camera = {
       left: -10,
       right: 10,
@@ -36,7 +37,16 @@ class DirectionalShadow extends Shadow {
       far: 50
     }
   } = {}) {
-    super(renderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+    super(renderer, {
+      light,
+      intensity,
+      bias,
+      normalBias,
+      pcfSamples,
+      depthTextureSize,
+      depthTextureFormat,
+      autoRender
+    });
     this.options = {
       ...this.options,
       camera
@@ -78,8 +88,7 @@ class DirectionalShadow extends Shadow {
    * Called internally by the associated {@link DirectionalLight} if any shadow parameters are specified when creating it. Can also be called directly.
    * @param parameters - parameters to use for this {@link DirectionalShadow}.
    */
-  cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, camera } = {}) {
-    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat });
+  cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
     if (camera) {
       this.camera.left = camera.left ?? -10;
       this.camera.right = camera.right ?? 10;
@@ -88,6 +97,7 @@ class DirectionalShadow extends Shadow {
       this.camera.near = camera.near ?? 0.1;
       this.camera.far = camera.far ?? 50;
     }
+    super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
   }
   /**
    * Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget}, compute the {@link DirectionalShadow#camera.projectionMatrix | camera projection matrix} and start rendering to the shadow map.
@@ -125,10 +135,8 @@ class DirectionalShadow extends Shadow {
    * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
    */
   updateViewMatrix(position = new Vec3(), target = new Vec3()) {
-    if (this.isActive) {
-      this.camera.viewMatrix.makeView(position, target, this.camera.up);
-      this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
-    }
+    this.camera.viewMatrix.makeView(position, target, this.camera.up);
+    this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
   }
 }
 

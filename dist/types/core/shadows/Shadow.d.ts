@@ -31,6 +31,8 @@ export interface ShadowBaseParams {
     depthTextureSize?: Vec2;
     /** Format of the  depth {@link Texture} to use. Default to `depth24plus`. */
     depthTextureFormat?: GPUTextureFormat;
+    /** Whether the shadow should be automatically rendered each frame or not. Should be set to `false` if the scene is static and be rendered manually instead. Default to `true`. */
+    autoRender?: boolean;
     /** The {@link core/lights/Light.Light | light} that will be used to cast shadows. */
     light: DirectionalLight | PointLight;
 }
@@ -50,7 +52,7 @@ export declare class Shadow {
     /** The {@link core/lights/Light.Light | light} that will be used to cast shadows. */
     light: DirectionalLight | PointLight;
     /** Options used to create this {@link Shadow}. */
-    options: ShadowBaseParams;
+    options: Omit<ShadowBaseParams, 'autoRender'>;
     /** Sample count of the {@link depthTexture}. Only `1` is accepted for now. */
     sampleCount: number;
     /** Size of the depth {@link Texture} to use. Default to `Vec2(512)`. */
@@ -72,13 +74,13 @@ export declare class Shadow {
      * @param renderer - {@link CameraRenderer} used to create this {@link Shadow}.
      * @param parameters - {@link ShadowBaseParams | parameters} used to create this {@link Shadow}.
      */
-    constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, }?: ShadowBaseParams);
+    constructor(renderer: CameraRenderer, { light, intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, }?: ShadowBaseParams);
     /**
      * Set the parameters and start casting shadows by setting the {@link isActive} setter to `true`.<br>
      * Called internally by the associated {@link core/lights/Light.Light | Light} if any shadow parameters are specified when creating it. Can also be called directly.
      * @param parameters - parameters to use for this {@link Shadow}.
      */
-    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat }?: Omit<ShadowBaseParams, "light">): void;
+    cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender }?: Omit<ShadowBaseParams, "light">): void;
     /** @ignore */
     setRendererBinding(): void;
     /**
@@ -175,8 +177,13 @@ export declare class Shadow {
      * - Force all the {@link meshes} to use their depth materials
      * - Render all the {@link meshes}
      * - Reset all the {@link meshes} materials to their original one.
+     * @param once - Whether to render it only once or not.
      */
-    depthPassTask(): number;
+    render(once?: boolean): number;
+    /**
+     * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
+     */
+    renderOnce(): Promise<void>;
     /**
      * Render all the {@link meshes} into the {@link depthPassTarget}.
      * @param commandEncoder - {@link GPUCommandEncoder} to use.
@@ -186,7 +193,7 @@ export declare class Shadow {
      * Get the default depth pass vertex shader for this {@link Shadow}.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs(): string;
+    getDefaultShadowDepthVs(hasInstances?: boolean): string;
     /**
      * Get the default depth pass fragment shader for this {@link Shadow}.
      * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.

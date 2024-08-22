@@ -8,7 +8,7 @@ import { ProjectedMesh } from '../renderers/GPURenderer'
 import { RenderMaterial } from '../materials/RenderMaterial'
 import { DirectionalLight } from '../lights/DirectionalLight'
 import { PointLight } from '../lights/PointLight'
-import { getDefaultShadowDepthVs } from '../shaders/chunks/utils/shadows'
+import { getDefaultShadowDepthVs } from '../shaders/chunks/shading/shadows'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
 import { Input } from '../../types/BindGroups'
@@ -56,6 +56,8 @@ export interface ShadowBaseParams {
   depthTextureSize?: Vec2
   /** Format of the  depth {@link Texture} to use. Default to `depth24plus`. */
   depthTextureFormat?: GPUTextureFormat
+  /** Whether the shadow should be automatically rendered each frame or not. Should be set to `false` if the scene is static and be rendered manually instead. Default to `true`. */
+  autoRender?: boolean
   /** The {@link core/lights/Light.Light | light} that will be used to cast shadows. */
   light: DirectionalLight | PointLight
 }
@@ -77,7 +79,7 @@ export class Shadow {
   light: DirectionalLight | PointLight
 
   /** Options used to create this {@link Shadow}. */
-  options: ShadowBaseParams
+  options: Omit<ShadowBaseParams, 'autoRender'>
 
   /** Sample count of the {@link depthTexture}. Only `1` is accepted for now. */
   sampleCount: number
@@ -97,6 +99,8 @@ export class Shadow {
 
   /** @ignore */
   #isActive: boolean
+
+  #autoRender: boolean
 
   /** Depth {@link Texture} used to create the shadow map. */
   depthTexture: null | Texture
@@ -138,6 +142,7 @@ export class Shadow {
       pcfSamples = 1,
       depthTextureSize = new Vec2(512),
       depthTextureFormat = 'depth24plus' as GPUTextureFormat,
+      autoRender = true,
     } = {} as ShadowBaseParams
   ) {
     renderer = isCameraRenderer(renderer, this.constructor.name)
@@ -171,7 +176,7 @@ export class Shadow {
 
     this.#depthPassTaskID = null
 
-    this.#setParameters({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat })
+    this.#setParameters({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
 
     this.isActive = false
   }
@@ -189,6 +194,7 @@ export class Shadow {
       pcfSamples = 1,
       depthTextureSize = new Vec2(512),
       depthTextureFormat = 'depth24plus',
+      autoRender = true,
     } = {} as Omit<ShadowBaseParams, 'light'>
   ) {
     this.intensity = intensity
@@ -198,6 +204,7 @@ export class Shadow {
     this.depthTextureSize = depthTextureSize
     this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged())
     this.depthTextureFormat = depthTextureFormat as GPUTextureFormat
+    this.#autoRender = autoRender
   }
 
   /**
@@ -206,13 +213,13 @@ export class Shadow {
    * @param parameters - parameters to use for this {@link Shadow}.
    */
   cast(
-    { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat } = {} as Omit<
+    { intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender } = {} as Omit<
       ShadowBaseParams,
       'light'
     >
   ) {
+    this.#setParameters({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender })
     this.isActive = true
-    this.#setParameters({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat })
   }
 
   /** @ignore */
@@ -267,7 +274,7 @@ export class Shadow {
    */
   set intensity(value: number) {
     this.#intensity = value
-    if (this.isActive) this.onPropertyChanged('intensity', this.intensity)
+    this.onPropertyChanged('intensity', this.intensity)
   }
 
   /**
@@ -284,7 +291,7 @@ export class Shadow {
    */
   set bias(value: number) {
     this.#bias = value
-    if (this.isActive) this.onPropertyChanged('bias', this.bias)
+    this.onPropertyChanged('bias', this.bias)
   }
 
   /**
@@ -301,7 +308,7 @@ export class Shadow {
    */
   set normalBias(value: number) {
     this.#normalBias = value
-    if (this.isActive) this.onPropertyChanged('normalBias', this.normalBias)
+    this.onPropertyChanged('normalBias', this.normalBias)
   }
 
   /**
@@ -318,7 +325,7 @@ export class Shadow {
    */
   set pcfSamples(value: number) {
     this.#pcfSamples = Math.max(1, Math.ceil(value))
-    if (this.isActive) this.onPropertyChanged('pcfSamples', this.pcfSamples)
+    this.onPropertyChanged('pcfSamples', this.pcfSamples)
   }
 
   /**
@@ -349,11 +356,11 @@ export class Shadow {
       this.createDepthPassTarget()
     }
 
-    if (this.#depthPassTaskID === null) {
+    if (this.#depthPassTaskID === null && this.#autoRender) {
       this.setDepthPass()
+      // do net set active flag if it's not rendered
+      this.onPropertyChanged('isActive', 1)
     }
-
-    this.onPropertyChanged('isActive', 1)
   }
 
   /**
@@ -400,6 +407,7 @@ export class Shadow {
         width: this.depthTextureSize.x,
         height: this.depthTextureSize.y,
       },
+      autoDestroy: false, // do not destroy when removing a mesh
     })
   }
 
@@ -441,7 +449,7 @@ export class Shadow {
    */
   setDepthPass() {
     // add the depth pass (rendered each tick before our main scene)
-    this.#depthPassTaskID = this.depthPassTask()
+    this.#depthPassTaskID = this.render()
   }
 
   /**
@@ -457,8 +465,9 @@ export class Shadow {
    * - Force all the {@link meshes} to use their depth materials
    * - Render all the {@link meshes}
    * - Reset all the {@link meshes} materials to their original one.
+   * @param once - Whether to render it only once or not.
    */
-  depthPassTask(): number {
+  render(once = false): number {
     return this.renderer.onBeforeRenderScene.add(
       (commandEncoder) => {
         if (!this.meshes.size) return
@@ -476,9 +485,34 @@ export class Shadow {
         this.renderer.pipelineManager.resetCurrentPipeline()
       },
       {
+        once,
         order: this.index,
       }
     )
+  }
+
+  /**
+   * Render the shadow map only once. Useful with static scenes if autoRender has been set to `false` to only take one snapshot of the shadow map.
+   */
+  async renderOnce(): Promise<void> {
+    // no point if it's already rendered
+    if (!this.#autoRender) {
+      this.onPropertyChanged('isActive', 1)
+
+      this.useDepthMaterials()
+
+      this.meshes.forEach((mesh) => {
+        mesh.setGeometry()
+      })
+
+      await Promise.all(
+        [...this.#depthMaterials.values()].map(async (depthMaterial) => {
+          await depthMaterial.compileMaterial()
+        })
+      )
+
+      this.render(true)
+    }
   }
 
   /**
@@ -494,7 +528,7 @@ export class Shadow {
 
     // render meshes with their depth material
     this.meshes.forEach((mesh) => {
-      if (mesh.ready) mesh.render(depthPass)
+      mesh.render(depthPass)
     })
 
     depthPass.end()
@@ -504,8 +538,8 @@ export class Shadow {
    * Get the default depth pass vertex shader for this {@link Shadow}.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(): string {
-    return getDefaultShadowDepthVs(this.index)
+  getDefaultShadowDepthVs(hasInstances = false): string {
+    return getDefaultShadowDepthVs(this.index, hasInstances)
   }
 
   /**
@@ -523,15 +557,6 @@ export class Shadow {
    * @returns - Patched parameters.
    */
   patchShadowCastingMeshParams(mesh: ProjectedMesh, parameters: RenderMaterialParams = {}): RenderMaterialParams {
-    if (!parameters.shaders) {
-      parameters.shaders = {
-        vertex: {
-          code: this.getDefaultShadowDepthVs(),
-        },
-        fragment: this.getDefaultShadowDepthFs(),
-      }
-    }
-
     parameters = { ...mesh.material.options.rendering, ...parameters }
 
     // explicitly set empty output targets
@@ -545,6 +570,17 @@ export class Shadow {
       parameters.bindings = [mesh.material.getBufferBindingByName('matrices'), ...parameters.bindings]
     } else {
       parameters.bindings = [mesh.material.getBufferBindingByName('matrices')]
+    }
+
+    const hasInstances = mesh.material.inputsBindings.get('instances') && mesh.geometry.instancesCount > 1
+
+    if (!parameters.shaders) {
+      parameters.shaders = {
+        vertex: {
+          code: this.getDefaultShadowDepthVs(hasInstances),
+        },
+        fragment: this.getDefaultShadowDepthFs(),
+      }
     }
 
     return parameters
