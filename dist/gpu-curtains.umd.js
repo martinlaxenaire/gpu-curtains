@@ -13261,9 +13261,6 @@ ${this.shaders.compute.head}`;
           throwError("GPUDeviceManager: " + e.message);
         }
       }
-      this.adapter?.requestAdapterInfo().then((infos) => {
-        this.adapterInfos = infos;
-      });
     }
     /**
      * Set our {@link device}.

@@ -54,8 +54,6 @@ export declare class GPUDeviceManager {
     adapter: GPUAdapter | void;
     /** Additional options to use when requesting an {@link GPUAdapter | adapter} */
     adapterOptions: GPURequestAdapterOptions;
-    /** The WebGPU {@link GPUAdapter | adapter} informations */
-    adapterInfos: GPUAdapterInfo | undefined;
     /** The WebGPU {@link GPUDevice | device} used */
     device: GPUDevice | undefined;
     /** Flag indicating whether the {@link GPUDeviceManager} is ready, i.e. its {@link adapter} and {@link device} have been successfully created */
