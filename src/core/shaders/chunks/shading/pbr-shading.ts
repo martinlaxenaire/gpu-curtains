@@ -3,11 +3,13 @@ import RE_indirect_specular from '../helpers/lights/RE_indirect_specular.wgsl'
 import { GetShadingParams, lambertUtils } from './lambert-shading'
 import { applyDirectionalShadows, applyPointShadows, getPCFShadows } from './shadows'
 
+/** Basic minimum utils needed to compute PBR shading. Extends {@link lambertUtils | utils needed for lambert shading}. */
 export const pbrUtils = `
 ${lambertUtils}
 ${RE_indirect_specular}
 `
 
+/** Helper function chunk appended internally and used to compute PBR direct light contributions. */
 export const getPBRDirect = /* wgsl */ `
 fn DistributionGGX(NdotH: f32, roughness: f32) -> f32 {
   let a: f32 = pow2( roughness );
@@ -71,6 +73,16 @@ fn getPBRDirect(
 }
 `
 
+/**
+ * Shader chunk to add to the head of a fragment shader to be able to use PBR shading.
+ * @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the PBR shading.
+ *
+ * @example
+ * ```wgsl
+ * var color: vec3f = vec3(1.0);
+ * color = getPBR(normal, worldPosition, color, viewDirection, f0, metallic, roughness);
+ * ```
+ */
 export const getPBR = (
   { addUtils = true, receiveShadows = false, toneMapping = 'linear', useOcclusion = false } = {} as GetShadingParams
 ) => /* wgsl */ `

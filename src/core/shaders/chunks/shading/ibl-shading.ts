@@ -3,6 +3,7 @@ import { toneMappingUtils } from './tone-mapping-utils'
 import { applyDirectionalShadows, applyPointShadows, getPCFShadows } from './shadows'
 import { GetShadingParams } from './lambert-shading'
 
+/** Helper function chunk appended internally and used to compute IBL indirect light contributions, based on environment diffuse and specular maps. Image Based Lightning also use {@link getPBRDirect | PBR direct light contributions}. */
 // we could either compute the indirect contribution directly inside getIBLIndirect()
 // or compute IBL radiance (specular) and irradiance (diffuse) factors
 // and use them inside RE_IndirectSpecular() later to apply scattering
@@ -84,6 +85,16 @@ fn getIBLIndirect(
 }
 `
 
+/**
+ * Shader chunk to add to the head of a fragment shader to be able to use IBL shading.
+ * @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the IBL shading.
+ *
+ * @example
+ * ```wgsl
+ * var color: vec3f = vec3(1.0);
+ * color = getIBL(normal, worldPosition, color, viewDirection, f0, metallic, roughness, lutTeture, lutSampler, envSpecularTexture, envSpecularSampler, envDiffuseTexture, envDiffuseSampler);
+ * ```
+ */
 export const getIBL = (
   { addUtils = true, receiveShadows = false, toneMapping = 'linear', useOcclusion = false } = {} as GetShadingParams
 ) => /* wgsl */ `

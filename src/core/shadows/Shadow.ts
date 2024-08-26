@@ -99,7 +99,7 @@ export class Shadow {
 
   /** @ignore */
   #isActive: boolean
-
+  /** @ignore */
   #autoRender: boolean
 
   /** Depth {@link Texture} used to create the shadow map. */
@@ -124,7 +124,7 @@ export class Shadow {
   /** @ignore */
   #depthPassTaskID: null | number
 
-  /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings to send to the shaders. */
+  /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings for this type of shadow to send to the shaders. */
   rendererBinding: BufferBinding | null
 
   /**
@@ -432,12 +432,12 @@ export class Shadow {
     if (this.rendererBinding) {
       if (value instanceof Mat4) {
         for (let i = 0; i < value.elements.length; i++) {
-          this.rendererBinding.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i]
+          this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i]
         }
 
-        this.rendererBinding.bindings[this.index].inputs[propertyKey].shouldUpdate = true
+        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].shouldUpdate = true
       } else {
-        this.rendererBinding.bindings[this.index].inputs[propertyKey].value = value
+        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value = value
       }
 
       this.renderer.shouldUpdateCameraLightsBindGroup()
@@ -538,8 +538,11 @@ export class Shadow {
    * Get the default depth pass vertex shader for this {@link Shadow}.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(hasInstances = false): string {
-    return getDefaultShadowDepthVs(this.index, hasInstances)
+  getDefaultShadowDepthVs(hasInstances = false): ShaderOptions {
+    return {
+      /** Returned code. */
+      code: getDefaultShadowDepthVs(this.index, hasInstances),
+    }
   }
 
   /**
@@ -576,9 +579,7 @@ export class Shadow {
 
     if (!parameters.shaders) {
       parameters.shaders = {
-        vertex: {
-          code: this.getDefaultShadowDepthVs(hasInstances),
-        },
+        vertex: this.getDefaultShadowDepthVs(hasInstances),
         fragment: this.getDefaultShadowDepthFs(),
       }
     }

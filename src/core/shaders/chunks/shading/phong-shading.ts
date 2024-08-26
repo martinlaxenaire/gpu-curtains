@@ -2,6 +2,7 @@ import { toneMappingUtils } from './tone-mapping-utils'
 import { GetShadingParams, lambertUtils } from './lambert-shading'
 import { applyDirectionalShadows, applyPointShadows, getPCFShadows } from './shadows'
 
+/** Helper function chunk appended internally and used to compute Phong direct light contributions. */
 export const getPhongDirect = /* wgsl */ `
 fn D_BlinnPhong( shininess: f32, NdotH: f32 ) -> f32 {
   return RECIPROCAL_PI * ( shininess * 0.5 + 1.0 ) * pow( NdotH, shininess );
@@ -53,7 +54,8 @@ fn getPhongDirect(
 `
 
 /**
- * Shader chunk to add to the head of a fragment shader to be able to use phong shading.
+ * Shader chunk to add to the head of a fragment shader to be able to use Phong shading.
+ * @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the Phong shading.
  *
  * @example
  * ```wgsl

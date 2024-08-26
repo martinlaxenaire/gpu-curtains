@@ -1669,8 +1669,7 @@
         this.setBindings(struct);
         this.setInputsAlignment();
       }
-      this.bindings = bindings;
-      if (Object.keys(struct).length || this.bindings.length) {
+      if (Object.keys(struct).length || this.options.bindings.length) {
         this.setBufferAttributes();
         this.setWGSLFragment();
       }
@@ -1778,6 +1777,9 @@
         this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`;
       }
     }
+    /**
+     * Set the buffer alignments from {@link inputs}.
+     */
     setInputsAlignment() {
       let orderedBindings = Object.keys(this.inputs);
       const arrayBindings = orderedBindings.filter((bindingKey) => {
@@ -1875,18 +1877,18 @@
     setBufferAttributes() {
       const bufferElementsArrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount : 0;
       this.arrayBufferSize = bufferElementsArrayBufferSize;
-      this.bindings.forEach((binding) => {
+      this.options.bindings.forEach((binding) => {
         this.arrayBufferSize += binding.arrayBufferSize;
       });
       this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
       this.arrayView = new DataView(this.arrayBuffer, 0, bufferElementsArrayBufferSize);
-      this.bindings.forEach((binding, index) => {
+      this.options.bindings.forEach((binding, index) => {
         let offset = bufferElementsArrayBufferSize;
         for (let i = 0; i < index; i++) {
-          offset += this.bindings[i].arrayBuffer.byteLength;
+          offset += this.options.bindings[i].arrayBuffer.byteLength;
         }
         const bufferElLastRow = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1 : 0;
-        const bindingLastRow = index > 0 ? this.bindings[index - 1].bufferElements.length ? this.bindings[index - 1].bufferElements[this.bindings[index - 1].bufferElements.length - 1].alignment.end.row + 1 : 0 : 0;
+        const bindingLastRow = index > 0 ? this.options.bindings[index - 1].bufferElements.length ? this.options.bindings[index - 1].bufferElements[this.options.bindings[index - 1].bufferElements.length - 1].alignment.end.row + 1 : 0 : 0;
         binding.bufferElements.forEach((bufferElement) => {
           bufferElement.alignment.start.row += bufferElLastRow + bindingLastRow;
           bufferElement.alignment.end.row += bufferElLastRow + bindingLastRow;
@@ -1906,10 +1908,10 @@
      * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
      */
     setWGSLFragment() {
-      if (!this.bufferElements.length && !this.bindings.length)
+      if (!this.bufferElements.length && !this.options.bindings.length)
         return;
       const uniqueBindings = [];
-      this.bindings.forEach((binding) => {
+      this.options.bindings.forEach((binding) => {
         const bindingExists = uniqueBindings.find((b) => b.name === binding.name);
         if (!bindingExists) {
           uniqueBindings.push({
@@ -2005,7 +2007,7 @@
           binding.shouldUpdate = false;
         }
       }
-      this.bindings.forEach((binding) => {
+      this.options.bindings.forEach((binding) => {
         binding.update();
         if (binding.shouldUpdate) {
           this.shouldUpdate = true;
@@ -7572,17 +7574,17 @@ New rendering options: ${JSON.stringify(
       );
     }
   };
-  const getDefaultShadowDepthVs = (lightShadowIndex = 0, hasInstances = false) => (
+  const getDefaultShadowDepthVs = (lightIndex = 0, hasInstances = false) => (
     /* wgsl */
     `
 @vertex fn main(
   attributes: Attributes,
 ) -> @builtin(position) vec4f {  
-  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightShadowIndex}];
+  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightIndex}];
   
   ${getPositionAndNormal(hasInstances)}
   
-  let lightDirection: vec3f = normalize(worldPosition.xyz - directionalLights.elements[${lightShadowIndex}].direction);
+  let lightDirection: vec3f = normalize(worldPosition.xyz - directionalLights.elements[${lightIndex}].direction);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
@@ -7671,7 +7673,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
 `
     );
   };
-  const getDefaultPointShadowDepthVs = (pointShadowIndex = 0, hasInstances = false) => (
+  const getDefaultPointShadowDepthVs = (lightIndex = 0, hasInstances = false) => (
     /* wgsl */
     `
 struct PointShadowVSOutput {
@@ -7686,9 +7688,9 @@ struct PointShadowVSOutput {
   
   ${getPositionAndNormal(hasInstances)}
   
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${pointShadowIndex}];
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
-  let lightDirection: vec3f = normalize(pointLights.elements[${pointShadowIndex}].position - worldPosition.xyz);
+  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPosition.xyz);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = pointShadow.normalBias * sinNdotL;
@@ -7703,7 +7705,7 @@ struct PointShadowVSOutput {
   return pointShadowVSOutput;
 }`
   );
-  const getDefaultPointShadowDepthFs = (pointShadowIndex = 0) => (
+  const getDefaultPointShadowDepthFs = (lightIndex = 0) => (
     /* wgsl */
     `
 struct PointShadowVSOutput {
@@ -7713,9 +7715,9 @@ struct PointShadowVSOutput {
 
 @fragment fn main(fsInput: PointShadowVSOutput) -> @builtin(frag_depth) f32 {
   // get distance between fragment and light source
-  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${pointShadowIndex}].position);
+  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${lightIndex}].position);
   
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${pointShadowIndex}];
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
   // map to [0, 1] range by dividing by far plane - near plane
   lightDistance = (lightDistance - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
@@ -7806,18 +7808,18 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
   let directionalShadows = getPCFDirectionalShadows(worldPosition);
 `
   );
+  const applyDirectionalShadows = (
+    /* wgsl */
+    `
+    directLight.color *= directionalShadows[i];
+`
+  );
   const applyPointShadows = (
     /* wgsl */
     `
     if(directLight.visible) {
       directLight.color *= pointShadows[i];
     }
-`
-  );
-  const applyDirectionalShadows = (
-    /* wgsl */
-    `
-    directLight.color *= directionalShadows[i];
 `
   );
 
@@ -7898,6 +7900,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       __privateAdd$a(this, _pcfSamples, void 0);
       /** @ignore */
       __privateAdd$a(this, _isActive, void 0);
+      /** @ignore */
       __privateAdd$a(this, _autoRender, void 0);
       /**
        * Original {@link meshes} {@link RenderMaterial | materials}.
@@ -8124,11 +8127,11 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       if (this.rendererBinding) {
         if (value instanceof Mat4) {
           for (let i = 0; i < value.elements.length; i++) {
-            this.rendererBinding.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
+            this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
           }
-          this.rendererBinding.bindings[this.index].inputs[propertyKey].shouldUpdate = true;
+          this.rendererBinding.options.bindings[this.index].inputs[propertyKey].shouldUpdate = true;
         } else {
-          this.rendererBinding.bindings[this.index].inputs[propertyKey].value = value;
+          this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value = value;
         }
         this.renderer.shouldUpdateCameraLightsBindGroup();
       }
@@ -8204,7 +8207,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      * @returns - Depth pass vertex shader.
      */
     getDefaultShadowDepthVs(hasInstances = false) {
-      return getDefaultShadowDepthVs(this.index, hasInstances);
+      return {
+        /** Returned code. */
+        code: getDefaultShadowDepthVs(this.index, hasInstances)
+      };
     }
     /**
      * Get the default depth pass fragment shader for this {@link Shadow}.
@@ -8232,9 +8238,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       const hasInstances = mesh.material.inputsBindings.get("instances") && mesh.geometry.instancesCount > 1;
       if (!parameters.shaders) {
         parameters.shaders = {
-          vertex: {
-            code: this.getDefaultShadowDepthVs(hasInstances)
-          },
+          vertex: this.getDefaultShadowDepthVs(hasInstances),
           fragment: this.getDefaultShadowDepthFs()
         };
       }
@@ -8777,10 +8781,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
         __privateGet$7(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
         this.camera.viewMatrices[i].makeView(position, __privateGet$7(this, _tempCubeDirection), this.cubeUps[i]);
         for (let j = 0; j < 16; j++) {
-          this.rendererBinding.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
+          this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
         }
       }
-      this.rendererBinding.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
+      this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
     }
     /**
      * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
@@ -8855,7 +8859,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
                 baseArrayLayer: i
               })
             );
-            this.rendererBinding.bindings[this.index].inputs.face.value = i;
+            this.rendererBinding.options.bindings[this.index].inputs.face.value = i;
             this.renderer.cameraLightsBindGroup.update();
             this.renderDepthPass(commandEncoder);
             const commandBuffer = commandEncoder.finish();
@@ -8875,7 +8879,10 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      * @returns - Depth pass vertex shader.
      */
     getDefaultShadowDepthVs(hasInstances = false) {
-      return getDefaultPointShadowDepthVs(this.index, hasInstances);
+      return {
+        /** Returned code. */
+        code: getDefaultPointShadowDepthVs(this.index, hasInstances)
+      };
     }
     /**
      * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
@@ -8883,6 +8890,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      */
     getDefaultShadowDepthFs() {
       return {
+        /** Returned code. */
         code: getDefaultPointShadowDepthFs(this.index)
       };
     }

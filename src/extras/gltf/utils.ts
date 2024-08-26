@@ -61,6 +61,13 @@ export interface BuiltShaders {
   fragment: ShaderOptions
 }
 
+/**
+ * Build shaders made for glTF parsed objects, based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | shader parameters}.
+ *
+ * @param meshDescriptor - {@link MeshDescriptor} built by the {@link extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
+ * @param shaderParameters - {@link ShaderBuilderParameters | shader parameters} to use.
+ * @returns - An object containing the shaders.
+ */
 export const buildShaders = (
   meshDescriptor: MeshDescriptor,
   shaderParameters = {} as ShaderBuilderParameters

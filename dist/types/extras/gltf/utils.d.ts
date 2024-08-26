@@ -50,6 +50,13 @@ export interface BuiltShaders {
     /** Fragment shader returned by the PBR shader builder. */
     fragment: ShaderOptions;
 }
+/**
+ * Build shaders made for glTF parsed objects, based on a {@link MeshDescriptor} and optional {@link ShaderBuilderParameters | shader parameters}.
+ *
+ * @param meshDescriptor - {@link MeshDescriptor} built by the {@link extras/gltf/GLTFScenesManager.GLTFScenesManager | GLTFScenesManager}
+ * @param shaderParameters - {@link ShaderBuilderParameters | shader parameters} to use.
+ * @returns - An object containing the shaders.
+ */
 export declare const buildShaders: (meshDescriptor: MeshDescriptor, shaderParameters?: ShaderBuilderParameters) => BuiltShaders;
 /**
  * Compute a diffuse cube map from a specular cube map using a {@link ComputePass} and copy the result into the diffuse texture {@link GPUTexture}.

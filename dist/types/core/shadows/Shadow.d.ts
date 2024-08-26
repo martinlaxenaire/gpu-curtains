@@ -67,7 +67,7 @@ export declare class Shadow {
     depthComparisonSampler: null | Sampler;
     /** All the current {@link ProjectedMesh | meshes} rendered to the shadow map. */
     meshes: Map<ProjectedMesh['uuid'], ProjectedMesh>;
-    /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings to send to the shaders. */
+    /** {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} that holds all the bindings for this type of shadow to send to the shaders. */
     rendererBinding: BufferBinding | null;
     /**
      * Shadow constructor
@@ -193,7 +193,7 @@ export declare class Shadow {
      * Get the default depth pass vertex shader for this {@link Shadow}.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs(hasInstances?: boolean): string;
+    getDefaultShadowDepthVs(hasInstances?: boolean): ShaderOptions;
     /**
      * Get the default depth pass fragment shader for this {@link Shadow}.
      * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.

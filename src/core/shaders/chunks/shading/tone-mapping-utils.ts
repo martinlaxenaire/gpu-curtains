@@ -1,5 +1,10 @@
 // TODO add more tone mapping options?
 // see https://github.com/dmnsgn/glsl-tone-map
+
+/** Defines all available tone mapping types */
+export type ToneMappingTypes = 'linear' | 'khronos'
+
+/** Tone mapping utils chunks. */
 export const toneMappingUtils = /* wgsl */ `
 fn linearToOutput3(value: vec3f) -> vec3f {
   return vec3( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThan3( value.rgb, vec3( 0.0031308 ) ) ) ) );

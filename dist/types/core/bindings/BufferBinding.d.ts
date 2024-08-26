@@ -39,6 +39,7 @@ export interface BufferBindingBaseParams {
 export interface BufferBindingParams extends BindingParams, BufferBindingBaseParams {
     /** The binding type of the {@link BufferBinding} */
     bindingType?: BufferBindingType;
+    /** Optional array of already created {@link BufferBinding} to add to this {@link BufferBinding}. */
     bindings?: BufferBinding[];
 }
 /** All allowed {@link BufferElement | buffer elements} */
@@ -78,7 +79,6 @@ export declare class BufferBinding extends Binding {
     shouldUpdate: boolean;
     /** An array describing how each corresponding {@link inputs} should be inserted into our {@link arrayView} array */
     bufferElements: AllowedBufferElement[];
-    bindings: BufferBinding[];
     /** Total size of our {@link arrayBuffer} array in bytes */
     arrayBufferSize: number;
     /** Array buffer that will be sent to the {@link GPUBuffer} */
@@ -129,6 +129,9 @@ export declare class BufferBinding extends Binding {
      * @param bindings - bindings inputs
      */
     setBindings(bindings: Record<string, Input>): void;
+    /**
+     * Set the buffer alignments from {@link inputs}.
+     */
     setInputsAlignment(): void;
     /**
      * Set our buffer attributes:

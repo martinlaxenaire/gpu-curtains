@@ -185,10 +185,10 @@ class PointShadow extends Shadow {
       __privateGet(this, _tempCubeDirection).copy(this.cubeDirections[i]).add(position);
       this.camera.viewMatrices[i].makeView(position, __privateGet(this, _tempCubeDirection), this.cubeUps[i]);
       for (let j = 0; j < 16; j++) {
-        this.rendererBinding.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
+        this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] = this.camera.viewMatrices[i].elements[j];
       }
     }
-    this.rendererBinding.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
+    this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.shouldUpdate = true;
   }
   /**
    * Set or resize the {@link depthTexture} and eventually resize the {@link depthPassTarget} as well.
@@ -263,7 +263,7 @@ class PointShadow extends Shadow {
               baseArrayLayer: i
             })
           );
-          this.rendererBinding.bindings[this.index].inputs.face.value = i;
+          this.rendererBinding.options.bindings[this.index].inputs.face.value = i;
           this.renderer.cameraLightsBindGroup.update();
           this.renderDepthPass(commandEncoder);
           const commandBuffer = commandEncoder.finish();
@@ -283,7 +283,10 @@ class PointShadow extends Shadow {
    * @returns - Depth pass vertex shader.
    */
   getDefaultShadowDepthVs(hasInstances = false) {
-    return getDefaultPointShadowDepthVs(this.index, hasInstances);
+    return {
+      /** Returned code. */
+      code: getDefaultPointShadowDepthVs(this.index, hasInstances)
+    };
   }
   /**
    * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
@@ -291,6 +294,7 @@ class PointShadow extends Shadow {
    */
   getDefaultShadowDepthFs() {
     return {
+      /** Returned code. */
       code: getDefaultPointShadowDepthFs(this.index)
     };
   }

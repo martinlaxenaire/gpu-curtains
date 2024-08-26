@@ -1,24 +1,29 @@
 import light_utils from '../helpers/lights/light_utils.wgsl'
-import { toneMappingUtils } from './tone-mapping-utils'
+import { ToneMappingTypes, toneMappingUtils } from './tone-mapping-utils'
 import RE_indirect_diffuse from '../helpers/lights/RE_indirect_diffuse.wgsl'
 import { applyDirectionalShadows, applyPointShadows, getPCFShadows } from './shadows'
 import constants from '../helpers/constants.wgsl'
 
-export type ToneMappingTypes = 'linear' | 'khronos'
-
+/** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {
+  /** Whether to add the utils functions such as constants or helper functions. Default to `true`. */
   addUtils?: boolean
+  /** Whether the shading function should account for current shadows. Default to `false`. */
   receiveShadows?: boolean
+  /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'linear'`. */
   toneMapping?: ToneMappingTypes | boolean
+  /** Whether ambient occlusion should be accounted when calculating the shading. Default to `false`. If set to `true`, a float `f32` ambient occlusion value should be passed as the last shading function parameter. */
   useOcclusion?: boolean
 }
 
+/** Basic minimum utils needed to compute Lambert shading. */
 export const lambertUtils = /* wgsl */ `
 ${constants}
 ${light_utils}
 ${RE_indirect_diffuse}
 `
 
+/** Helper function chunk appended internally and used to compute Lambert direct light contributions. */
 export const getLambertDirect = /* wgsl */ `
 fn getLambertDirect(
   normal: vec3f,
@@ -35,7 +40,8 @@ fn getLambertDirect(
 `
 
 /**
- * Shader chunk to add to the head of a fragment shader to be able to use lambert shading.
+ * Shader chunk to add to the head of a fragment shader to be able to use Lambert shading.
+ * @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the Lambert shading.
  *
  * @example
  * ```wgsl

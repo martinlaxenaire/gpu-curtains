@@ -6,6 +6,7 @@ import { Texture } from '../textures/Texture'
 import { getDefaultPointShadowDepthFs, getDefaultPointShadowDepthVs } from '../shaders/chunks/shading/shadows'
 import { PointLight } from '../lights/PointLight'
 import { Input } from '../../types/BindGroups'
+import { ShaderOptions } from '../../types/Materials'
 
 /** Defines the perspective shadow camera params. */
 export type PerspectiveShadowCameraParams = Omit<PerspectiveProjectionParams, 'fov' | 'aspect'>
@@ -242,12 +243,12 @@ export class PointShadow extends Shadow {
       this.camera.viewMatrices[i].makeView(position, this.#tempCubeDirection, this.cubeUps[i])
 
       for (let j = 0; j < 16; j++) {
-        this.rendererBinding.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] =
+        this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.value[i * 16 + j] =
           this.camera.viewMatrices[i].elements[j]
       }
     }
 
-    this.rendererBinding.bindings[this.index].inputs.viewMatrices.shouldUpdate = true
+    this.rendererBinding.options.bindings[this.index].inputs.viewMatrices.shouldUpdate = true
   }
 
   /**
@@ -335,7 +336,7 @@ export class PointShadow extends Shadow {
           )
 
           // update face index
-          this.rendererBinding.bindings[this.index].inputs.face.value = i
+          this.rendererBinding.options.bindings[this.index].inputs.face.value = i
           // since we're not inside the main loop,
           // we need to explicitly update the renderer camera & lights bind group
           this.renderer.cameraLightsBindGroup.update()
@@ -364,16 +365,20 @@ export class PointShadow extends Shadow {
    * Get the default depth pass vertex shader for this {@link PointShadow}.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs(hasInstances = false) {
-    return getDefaultPointShadowDepthVs(this.index, hasInstances)
+  getDefaultShadowDepthVs(hasInstances = false): ShaderOptions {
+    return {
+      /** Returned code. */
+      code: getDefaultPointShadowDepthVs(this.index, hasInstances),
+    }
   }
 
   /**
    * Get the default depth pass {@link types/Materials.ShaderOptions | fragment shader options} for this {@link PointShadow}.
    * @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
    */
-  getDefaultShadowDepthFs() {
+  getDefaultShadowDepthFs(): ShaderOptions {
     return {
+      /** Returned code. */
       code: getDefaultPointShadowDepthFs(this.index),
     }
   }

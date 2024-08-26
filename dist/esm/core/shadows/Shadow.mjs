@@ -84,6 +84,7 @@ class Shadow {
     __privateAdd(this, _pcfSamples, void 0);
     /** @ignore */
     __privateAdd(this, _isActive, void 0);
+    /** @ignore */
     __privateAdd(this, _autoRender, void 0);
     /**
      * Original {@link meshes} {@link RenderMaterial | materials}.
@@ -310,11 +311,11 @@ class Shadow {
     if (this.rendererBinding) {
       if (value instanceof Mat4) {
         for (let i = 0; i < value.elements.length; i++) {
-          this.rendererBinding.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
+          this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value[i] = value.elements[i];
         }
-        this.rendererBinding.bindings[this.index].inputs[propertyKey].shouldUpdate = true;
+        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].shouldUpdate = true;
       } else {
-        this.rendererBinding.bindings[this.index].inputs[propertyKey].value = value;
+        this.rendererBinding.options.bindings[this.index].inputs[propertyKey].value = value;
       }
       this.renderer.shouldUpdateCameraLightsBindGroup();
     }
@@ -390,7 +391,10 @@ class Shadow {
    * @returns - Depth pass vertex shader.
    */
   getDefaultShadowDepthVs(hasInstances = false) {
-    return getDefaultShadowDepthVs(this.index, hasInstances);
+    return {
+      /** Returned code. */
+      code: getDefaultShadowDepthVs(this.index, hasInstances)
+    };
   }
   /**
    * Get the default depth pass fragment shader for this {@link Shadow}.
@@ -418,9 +422,7 @@ class Shadow {
     const hasInstances = mesh.material.inputsBindings.get("instances") && mesh.geometry.instancesCount > 1;
     if (!parameters.shaders) {
       parameters.shaders = {
-        vertex: {
-          code: this.getDefaultShadowDepthVs(hasInstances)
-        },
+        vertex: this.getDefaultShadowDepthVs(hasInstances),
         fragment: this.getDefaultShadowDepthFs()
       };
     }

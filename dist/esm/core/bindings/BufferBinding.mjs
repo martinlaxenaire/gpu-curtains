@@ -45,8 +45,7 @@ class BufferBinding extends Binding {
       this.setBindings(struct);
       this.setInputsAlignment();
     }
-    this.bindings = bindings;
-    if (Object.keys(struct).length || this.bindings.length) {
+    if (Object.keys(struct).length || this.options.bindings.length) {
       this.setBufferAttributes();
       this.setWGSLFragment();
     }
@@ -154,6 +153,9 @@ class BufferBinding extends Binding {
       this.cacheKey += `${bindingKey},${bindings[bindingKey].type},`;
     }
   }
+  /**
+   * Set the buffer alignments from {@link inputs}.
+   */
   setInputsAlignment() {
     let orderedBindings = Object.keys(this.inputs);
     const arrayBindings = orderedBindings.filter((bindingKey) => {
@@ -251,18 +253,18 @@ class BufferBinding extends Binding {
   setBufferAttributes() {
     const bufferElementsArrayBufferSize = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].paddedByteCount : 0;
     this.arrayBufferSize = bufferElementsArrayBufferSize;
-    this.bindings.forEach((binding) => {
+    this.options.bindings.forEach((binding) => {
       this.arrayBufferSize += binding.arrayBufferSize;
     });
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize);
     this.arrayView = new DataView(this.arrayBuffer, 0, bufferElementsArrayBufferSize);
-    this.bindings.forEach((binding, index) => {
+    this.options.bindings.forEach((binding, index) => {
       let offset = bufferElementsArrayBufferSize;
       for (let i = 0; i < index; i++) {
-        offset += this.bindings[i].arrayBuffer.byteLength;
+        offset += this.options.bindings[i].arrayBuffer.byteLength;
       }
       const bufferElLastRow = this.bufferElements.length ? this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1 : 0;
-      const bindingLastRow = index > 0 ? this.bindings[index - 1].bufferElements.length ? this.bindings[index - 1].bufferElements[this.bindings[index - 1].bufferElements.length - 1].alignment.end.row + 1 : 0 : 0;
+      const bindingLastRow = index > 0 ? this.options.bindings[index - 1].bufferElements.length ? this.options.bindings[index - 1].bufferElements[this.options.bindings[index - 1].bufferElements.length - 1].alignment.end.row + 1 : 0 : 0;
       binding.bufferElements.forEach((bufferElement) => {
         bufferElement.alignment.start.row += bufferElLastRow + bindingLastRow;
         bufferElement.alignment.end.row += bufferElLastRow + bindingLastRow;
@@ -282,10 +284,10 @@ class BufferBinding extends Binding {
    * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
    */
   setWGSLFragment() {
-    if (!this.bufferElements.length && !this.bindings.length)
+    if (!this.bufferElements.length && !this.options.bindings.length)
       return;
     const uniqueBindings = [];
-    this.bindings.forEach((binding) => {
+    this.options.bindings.forEach((binding) => {
       const bindingExists = uniqueBindings.find((b) => b.name === binding.name);
       if (!bindingExists) {
         uniqueBindings.push({
@@ -381,7 +383,7 @@ class BufferBinding extends Binding {
         binding.shouldUpdate = false;
       }
     }
-    this.bindings.forEach((binding) => {
+    this.options.bindings.forEach((binding) => {
       binding.update();
       if (binding.shouldUpdate) {
         this.shouldUpdate = true;

@@ -50,7 +50,7 @@ export interface BufferBindingParams extends BindingParams, BufferBindingBasePar
   /** The binding type of the {@link BufferBinding} */
   bindingType?: BufferBindingType
 
-  // TODO
+  /** Optional array of already created {@link BufferBinding} to add to this {@link BufferBinding}. */
   bindings?: BufferBinding[]
 }
 
@@ -94,9 +94,6 @@ export class BufferBinding extends Binding {
 
   /** An array describing how each corresponding {@link inputs} should be inserted into our {@link arrayView} array */
   bufferElements: AllowedBufferElement[]
-
-  // TODO
-  bindings: BufferBinding[]
 
   /** Total size of our {@link arrayBuffer} array in bytes */
   arrayBufferSize: number
@@ -159,9 +156,7 @@ export class BufferBinding extends Binding {
       this.setInputsAlignment()
     }
 
-    this.bindings = bindings
-
-    if (Object.keys(struct).length || this.bindings.length) {
+    if (Object.keys(struct).length || this.options.bindings.length) {
       this.setBufferAttributes()
       this.setWGSLFragment()
     }
@@ -305,6 +300,9 @@ export class BufferBinding extends Binding {
     }
   }
 
+  /**
+   * Set the buffer alignments from {@link inputs}.
+   */
   setInputsAlignment() {
     // early on, check if there's at least one array binding
     // If there's one and only one, put it at the end of the binding elements array, treat it as a single entry of the type, but loop on it by array.length / size to fill the alignment
@@ -455,18 +453,18 @@ export class BufferBinding extends Binding {
 
     this.arrayBufferSize = bufferElementsArrayBufferSize
 
-    this.bindings.forEach((binding) => {
+    this.options.bindings.forEach((binding) => {
       this.arrayBufferSize += binding.arrayBufferSize
     })
 
     this.arrayBuffer = new ArrayBuffer(this.arrayBufferSize)
     this.arrayView = new DataView(this.arrayBuffer, 0, bufferElementsArrayBufferSize)
 
-    this.bindings.forEach((binding, index) => {
+    this.options.bindings.forEach((binding, index) => {
       let offset = bufferElementsArrayBufferSize
 
       for (let i = 0; i < index; i++) {
-        offset += this.bindings[i].arrayBuffer.byteLength
+        offset += this.options.bindings[i].arrayBuffer.byteLength
       }
 
       const bufferElLastRow = this.bufferElements.length
@@ -475,9 +473,10 @@ export class BufferBinding extends Binding {
 
       const bindingLastRow =
         index > 0
-          ? this.bindings[index - 1].bufferElements.length
-            ? this.bindings[index - 1].bufferElements[this.bindings[index - 1].bufferElements.length - 1].alignment.end
-                .row + 1
+          ? this.options.bindings[index - 1].bufferElements.length
+            ? this.options.bindings[index - 1].bufferElements[
+                this.options.bindings[index - 1].bufferElements.length - 1
+              ].alignment.end.row + 1
             : 0
           : 0
 
@@ -506,10 +505,10 @@ export class BufferBinding extends Binding {
    * Set the WGSL code snippet to append to the shaders code. It consists of variable (and Struct structures if needed) declarations.
    */
   setWGSLFragment() {
-    if (!this.bufferElements.length && !this.bindings.length) return
+    if (!this.bufferElements.length && !this.options.bindings.length) return
 
     const uniqueBindings = []
-    this.bindings.forEach((binding) => {
+    this.options.bindings.forEach((binding) => {
       const bindingExists = uniqueBindings.find((b) => b.name === binding.name)
       if (!bindingExists) {
         uniqueBindings.push({
@@ -644,7 +643,7 @@ export class BufferBinding extends Binding {
       }
     }
 
-    this.bindings.forEach((binding) => {
+    this.options.bindings.forEach((binding) => {
       binding.update()
       if (binding.shouldUpdate) {
         this.shouldUpdate = true

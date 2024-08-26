@@ -17,17 +17,17 @@ const getPositionAndNormal = (hasInstances = false) => {
     );
   }
 };
-const getDefaultShadowDepthVs = (lightShadowIndex = 0, hasInstances = false) => (
+const getDefaultShadowDepthVs = (lightIndex = 0, hasInstances = false) => (
   /* wgsl */
   `
 @vertex fn main(
   attributes: Attributes,
 ) -> @builtin(position) vec4f {  
-  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightShadowIndex}];
+  let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightIndex}];
   
   ${getPositionAndNormal(hasInstances)}
   
-  let lightDirection: vec3f = normalize(worldPosition.xyz - directionalLights.elements[${lightShadowIndex}].direction);
+  let lightDirection: vec3f = normalize(worldPosition.xyz - directionalLights.elements[${lightIndex}].direction);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
@@ -116,7 +116,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
 `
   );
 };
-const getDefaultPointShadowDepthVs = (pointShadowIndex = 0, hasInstances = false) => (
+const getDefaultPointShadowDepthVs = (lightIndex = 0, hasInstances = false) => (
   /* wgsl */
   `
 struct PointShadowVSOutput {
@@ -131,9 +131,9 @@ struct PointShadowVSOutput {
   
   ${getPositionAndNormal(hasInstances)}
   
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${pointShadowIndex}];
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
-  let lightDirection: vec3f = normalize(pointLights.elements[${pointShadowIndex}].position - worldPosition.xyz);
+  let lightDirection: vec3f = normalize(pointLights.elements[${lightIndex}].position - worldPosition.xyz);
   let NdotL: f32 = dot(normalize(normal), lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = pointShadow.normalBias * sinNdotL;
@@ -148,7 +148,7 @@ struct PointShadowVSOutput {
   return pointShadowVSOutput;
 }`
 );
-const getDefaultPointShadowDepthFs = (pointShadowIndex = 0) => (
+const getDefaultPointShadowDepthFs = (lightIndex = 0) => (
   /* wgsl */
   `
 struct PointShadowVSOutput {
@@ -158,9 +158,9 @@ struct PointShadowVSOutput {
 
 @fragment fn main(fsInput: PointShadowVSOutput) -> @builtin(frag_depth) f32 {
   // get distance between fragment and light source
-  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${pointShadowIndex}].position);
+  var lightDistance: f32 = length(fsInput.worldPosition - pointLights.elements[${lightIndex}].position);
   
-  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${pointShadowIndex}];
+  let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
   
   // map to [0, 1] range by dividing by far plane - near plane
   lightDistance = (lightDistance - pointShadow.cameraNear) / (pointShadow.cameraFar - pointShadow.cameraNear);
@@ -251,18 +251,18 @@ const getPCFShadows = (
   let directionalShadows = getPCFDirectionalShadows(worldPosition);
 `
 );
+const applyDirectionalShadows = (
+  /* wgsl */
+  `
+    directLight.color *= directionalShadows[i];
+`
+);
 const applyPointShadows = (
   /* wgsl */
   `
     if(directLight.visible) {
       directLight.color *= pointShadows[i];
     }
-`
-);
-const applyDirectionalShadows = (
-  /* wgsl */
-  `
-    directLight.color *= directionalShadows[i];
 `
 );
 
