@@ -42,7 +42,10 @@ window.addEventListener('load', async () => {
   })
 
   const { camera } = gpuCameraRenderer
-  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  const orbitControls = new OrbitControls({
+    camera,
+    element: container,
+  })
 
   // IBL textures
   const loadImageBitmap = async (src) => {
@@ -221,30 +224,31 @@ window.addEventListener('load', async () => {
     // center model
     node.position.sub(center)
 
-    // reset orbit controls
-    orbitControls.reset()
-
     const isSponza = url.includes('Sponza')
 
     if (isSponza) {
-      camera.position.x = 0
-      camera.position.y = center.y * 0.25 + node.position.y
-      camera.position.z = radius * 0.225
+      node.position.y = 0
       camera.fov = 75
 
-      orbitControls.zoomStep = radius * 0.00025
-      orbitControls.minZoom = radius * -0.225
+      orbitControls.reset({
+        zoomSpeed: radius * 0.025,
+        minZoom: 0,
+        maxZoom: radius * 2,
+        position: new Vec3(radius * 0.25, center.y * 0.25, 0),
+        target: new Vec3(0, center.y * 0.1, 0),
+      })
     } else {
-      camera.position.x = 0
-      camera.position.y = 0
-      camera.position.z = radius * 2.5
       camera.fov = 50
 
-      orbitControls.zoomStep = radius * 0.0025
-      orbitControls.minZoom = radius * -1
+      orbitControls.reset({
+        zoomSpeed: radius * 0.25,
+        minZoom: radius,
+        maxZoom: radius * 4,
+        position: new Vec3(0, 0, radius * 2.5),
+        target: new Vec3(),
+      })
     }
 
-    orbitControls.maxZoom = radius * 2
     camera.far = radius * 6
 
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {

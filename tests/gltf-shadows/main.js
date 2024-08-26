@@ -39,11 +39,15 @@ window.addEventListener('load', async () => {
     camera: {
       near: 0.001,
       far: 2000,
+      fov: 75,
     },
   })
 
   const { camera } = gpuCameraRenderer
-  const orbitControls = new OrbitControls(gpuCameraRenderer)
+  const orbitControls = new OrbitControls({
+    camera,
+    element: container,
+  })
 
   // IBL textures
   const loadImageBitmap = async (src) => {
@@ -131,7 +135,7 @@ window.addEventListener('load', async () => {
   let shadingModel = 'PBR' // 'IBL', 'PBR', 'Phong' or 'Lambert'
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.3,
+    intensity: 0.4,
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
@@ -146,7 +150,7 @@ window.addEventListener('load', async () => {
         bottom: -20,
         top: 20,
         near: 1,
-        far: 500,
+        far: 600,
       },
     },
   })
@@ -175,16 +179,16 @@ window.addEventListener('load', async () => {
     // center model
     node.position.sub(center)
 
+    node.position.y = 0
+
     // reset orbit controls
-    orbitControls.reset()
+    //orbitControls.reset()
 
-    camera.position.x = 0
-    camera.position.y = center.y * 0.25 + node.position.y
-    camera.position.z = radius * 0.225
-    camera.fov = 75
+    orbitControls.updatePosition(new Vec3(radius * 0.25, center.y * 0.25, 0))
+    orbitControls.target.set(0, center.y * 0.1, 0)
 
-    orbitControls.zoomStep = radius * 0.00025
-    orbitControls.minZoom = radius * -0.225
+    orbitControls.zoomSpeed = radius * 0.025
+    orbitControls.minZoom = 0
 
     orbitControls.maxZoom = radius * 2
     camera.far = radius * 6
@@ -205,7 +209,7 @@ window.addEventListener('load', async () => {
       if (shadingModel === 'IBL') {
         ambientLight.intensity = 0
       } else {
-        ambientLight.intensity = 0.3
+        ambientLight.intensity = 0.4
       }
 
       // debug
@@ -337,7 +341,7 @@ window.addEventListener('load', async () => {
       // remap depth into something a bit more visible
       let depth = (1.0 - rawDepth);
       
-      var color: vec4f = vec4(vec3(depth), 1.0);
+      var color: vec4f = vec4(vec3(pow(depth, 5.0)), 1.0);
 
       return color;
     }

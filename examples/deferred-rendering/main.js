@@ -4,7 +4,6 @@ import {
   GPUDeviceManager,
   AmbientLight,
   PointLight,
-  toneMappingUtils,
   getPhong,
   Mesh,
   ShaderPass,
@@ -314,7 +313,6 @@ window.addEventListener('load', async () => {
       return posWorld;
     }
     
-    ${toneMappingUtils}
     ${getPhong()}
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {     

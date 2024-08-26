@@ -47,10 +47,8 @@ window.addEventListener('load', async () => {
   camera.lookAt()
 
   const orbitControls = new OrbitControls(gpuCameraRenderer)
-  orbitControls.maxOrbit.x = Math.PI * 0.15
-  orbitControls.zoomStep = 0.005
-  orbitControls.minZoom = -5
-  orbitControls.maxZoom = 15
+  orbitControls.maxPolarAngle = Math.PI * 0.4875
+  orbitControls.maxZoom = 20
 
   // LIGHTS
 

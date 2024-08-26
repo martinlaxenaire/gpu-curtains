@@ -1,55 +1,68 @@
-import { CameraRenderer } from '../../core/renderers/utils'
 import { Camera } from '../../core/camera/Camera'
-import { Object3D } from '../../core/objects3D/Object3D'
 import { Vec2 } from '../../math/Vec2'
+import { Vec3 } from '../../math/Vec3'
+import { throwWarning } from '../../utils/utils'
 
-// port of https://github.com/toji/webgpu-gltf-case-study/blob/main/samples/js/tiny-webgpu-demo.js#L312
+// largely based on https://github.com/oframe/ogl/blob/master/src/extras/Orbit.js
+
+const tempVec2a = new Vec2()
+const tempVec2b = new Vec2()
+const tempVec3 = new Vec3()
+
+/** Defines the base parameters used to set / reset an {@link OrbitControls}. */
+export interface OrbitControlsBaseParams {
+  /** The {@link Vec3 | focus point} or the {@link OrbitControls}. */
+  target?: Vec3
+  // zoom
+  /** Whether to allow zooming or not. */
+  enableZoom?: boolean
+  /** Minimum zoom value to use. */
+  minZoom?: number
+  /** Maximum zoom value to use. */
+  maxZoom?: number
+  /** Zoom speed value to use. */
+  zoomSpeed?: number
+  // rotate
+  /** Whether to allow rotating or not. */
+  enableRotate?: boolean
+  /** Minimum angle to use for vertical rotation. */
+  minPolarAngle?: number
+  /** Maximum angle to use for vertical rotation. */
+  maxPolarAngle?: number
+  /** Minimum angle to use for horizontal rotation. */
+  minAzimuthAngle?: number
+  /** Maximum angle to use for horizontal rotation. */
+  maxAzimuthAngle?: number
+  /** Rotate speed value to use. */
+  rotateSpeed?: number
+  // pan
+  /** Whether to allow paning or not. */
+  enablePan?: boolean
+  /** Pan speed value to use. */
+  panSpeed?: number
+}
+
+/** Defines base parameters used to create an {@link OrbitControls}. */
+export interface OrbitControlsParams extends OrbitControlsBaseParams {
+  /** Optional {@link Camera} to use. */
+  camera?: Camera
+  /** Optional {@link HTMLElement} (or {@link Window} element) to use for event listeners. */
+  element?: HTMLElement | Window
+}
 
 /**
- * Helper to create orbit camera controls (sometimes called arcball camera).
+ * Helper to create orbit camera controls (sometimes called arc ball camera).
  *
  * @example
  * ```javascript
- * const orbitControls = new OrbitControl(renderer)
+ * // assuming renderer is a valid CameraRenderer
+ * const { camera } = renderer
+ * const orbitControls = new OrbitControls({ camera })
  * ```
  */
-export class OrbitControls extends Object3D {
-  /** {@link CameraRenderer} used to get the {@link core/scenes/Scene.Scene | Scene} object to use as {@link Object3D#parent | parent}, and eventually the {@link CameraRenderer#camera | Camera} as well. */
-  renderer: CameraRenderer
+export class OrbitControls {
   /** {@link Camera} to use with this {@link OrbitControls}. */
   camera: Camera
-
-  /**
-   * Last pointer {@link Vec2 | position}, used internally for orbiting delta calculations.
-   * @private
-   */
-  #lastPosition = new Vec2()
-  /**
-   * Whether the {@link OrbitControls} are currently orbiting.
-   * @private
-   */
-  #isOrbiting = false
-
-  /** Whether to constrain the orbit controls along X axis or not. */
-  constrainXOrbit = true
-  /** Whether to constrain the orbit controls along Y axis or not. */
-  constrainYOrbit = false
-
-  /** Minimum orbit values to apply along both axis if constrained. */
-  minOrbit = new Vec2(-Math.PI * 0.5, -Math.PI)
-  /** Maximum orbit values to apply along both axis if constrained. */
-  maxOrbit = new Vec2(Math.PI * 0.5, Math.PI)
-  /** Orbit step (speed) values to use. */
-  orbitStep = new Vec2(0.025)
-
-  /** Whether to constrain the zoom or not. */
-  constrainZoom = true
-  /** Minimum zoom value to apply if constrained (can be negative). */
-  minZoom = 0
-  /** Maximum zoom value to apply if constrained. */
-  maxZoom = 20
-  /** Zoom step (speed) value to use. */
-  zoomStep = 0.005
 
   /**
    * {@link HTMLElement} (or {@link Window} element) to use for event listeners.
@@ -57,28 +70,209 @@ export class OrbitControls extends Object3D {
    */
   #element = null
 
+  /** The {@link Vec3 | focus point} or the {@link OrbitControls}. Default to `Vec3(0)`. */
+  target: Vec3
+
+  /** @ignore */
+  #offset = new Vec3()
+
+  /** Whether to allow zooming or not. Default to `true`. */
+  enableZoom: boolean
+  /** Minimum zoom value to use. Default to `0`. */
+  minZoom: number
+  /** Maximum zoom value to use. Default to `Infinity`. */
+  maxZoom: number
+  /** Zoom speed value to use. Default to `1`. */
+  zoomSpeed: number
+
+  /** Whether to allow rotating or not. Default to `true`. */
+  enableRotate: boolean
+  /** Minimum angle to use for vertical rotation. Default to `0`. */
+  minPolarAngle: number
+  /** Maximum angle to use for vertical rotation. Default to `Math.PI`. */
+  maxPolarAngle: number
+  /** Minimum angle to use for horizontal rotation. Default to `-Infinity`. */
+  minAzimuthAngle: number
+  /** Maximum angle to use for horizontal rotation. Default to `Infinity`. */
+  maxAzimuthAngle: number
+  /** Rotate speed value to use. Default to `1`. */
+  rotateSpeed: number
+  /** @ignore */
+  #isOrbiting = false
+  /** @ignore */
+  #spherical = { radius: 1, phi: 0, theta: 0 }
+  /** @ignore */
+  #rotateStart = new Vec2()
+
+  /** Whether to allow paning or not. Default to `true`. */
+  enablePan: boolean
+  /** Pan speed value to use. Default to `1`. */
+  panSpeed: number
+  /** @ignore */
+  #isPaning = false
+  /** @ignore */
+  #panStart = new Vec2()
+  /** @ignore */
+  #panDelta = new Vec3()
+
   /**
    * OrbitControls constructor
-   * @param renderer - {@link CameraRenderer} used to get the {@link core/scenes/Scene.Scene | Scene} object to use as {@link Object3D#parent | parent}, and eventually the {@link CameraRenderer#camera | Camera} as well.
-   * @param parameters - optional parameters.
-   * @param parameters.camera - optional {@link Camera} to use.
-   * @param parameters.element - optional {@link HTMLElement} (or {@link Window} element) to use for event listeners.
+=   * @param parameters - parameters to use.
    */
-  constructor(
-    renderer: CameraRenderer,
-    { camera = null, element = null }: { camera?: Camera; element?: HTMLElement | Window } = {}
-  ) {
-    super()
+  constructor({
+    camera,
+    element = null,
+    target = new Vec3(),
+    // zoom
+    enableZoom = true,
+    minZoom = 0,
+    maxZoom = Infinity,
+    zoomSpeed = 1,
+    // rotate
+    enableRotate = true,
+    minPolarAngle = 0,
+    maxPolarAngle = Math.PI,
+    minAzimuthAngle = -Infinity,
+    maxAzimuthAngle = Infinity,
+    rotateSpeed = 1,
+    // pan
+    enablePan = true,
+    panSpeed = 1,
+  }: OrbitControlsParams) {
+    if (!camera) {
+      throwWarning('OrbitControls: cannot initialize without a camera.')
+      return
+    }
 
-    this.renderer = renderer
-    this.parent = this.renderer.scene
+    this.camera = camera
 
-    this.quaternion.setAxisOrder('YXZ')
+    // options
+    this.#setBaseParams({
+      target,
+      enableZoom,
+      minZoom,
+      maxZoom,
+      zoomSpeed,
+      enableRotate,
+      minPolarAngle,
+      maxPolarAngle,
+      minAzimuthAngle,
+      maxAzimuthAngle,
+      rotateSpeed,
+      enablePan,
+      panSpeed,
+    })
 
-    this.camera = camera || this.renderer.camera
-    this.camera.parent = this
+    // Grab initial position values
+    this.#offset.copy(this.camera.position).sub(this.target)
+    this.#spherical.radius = this.#offset.length()
+    this.#spherical.theta = Math.atan2(this.#offset.x, this.#offset.z)
+    this.#spherical.phi = Math.acos(Math.min(Math.max(this.#offset.y / this.#spherical.radius, -1), 1))
 
-    this.element = element ?? this.renderer.domElement.element
+    this.camera.position.onChange(() => {
+      this.camera.lookAt(this.target)
+    })
+
+    this.element = element ?? (typeof window !== 'undefined' ? window : null)
+  }
+
+  /**
+   * Set / reset base params
+   * @ignore
+   */
+  #setBaseParams({
+    target,
+    // zoom
+    enableZoom = this.enableZoom,
+    minZoom = this.minZoom,
+    maxZoom = this.maxZoom,
+    zoomSpeed = this.zoomSpeed,
+    // rotate
+    enableRotate = this.enableRotate,
+    minPolarAngle = this.minPolarAngle,
+    maxPolarAngle = this.maxPolarAngle,
+    minAzimuthAngle = this.minAzimuthAngle,
+    maxAzimuthAngle = this.maxAzimuthAngle,
+    rotateSpeed = this.rotateSpeed,
+    // pan
+    enablePan = this.enablePan,
+    panSpeed = this.panSpeed,
+  }: OrbitControlsBaseParams = {}) {
+    if (target) {
+      this.target = target
+    }
+
+    this.enableZoom = enableZoom
+    this.minZoom = minZoom
+    this.maxZoom = maxZoom
+    this.zoomSpeed = zoomSpeed
+
+    this.enableRotate = enableRotate
+    this.minPolarAngle = minPolarAngle
+    this.maxPolarAngle = maxPolarAngle
+    this.minAzimuthAngle = minAzimuthAngle
+    this.maxAzimuthAngle = maxAzimuthAngle
+    this.rotateSpeed = rotateSpeed
+
+    this.enablePan = enablePan
+    this.panSpeed = panSpeed
+  }
+
+  /**
+   * Reset the {@link OrbitControls} values.
+   * @param parameters - Parameters used to reset the values. Those are the same as {@link OrbitControlsBaseParams} with an additional position parameter to allow to override the {@link OrbitControls} position.
+   */
+  reset({
+    position,
+    target,
+    // zoom
+    enableZoom = this.enableZoom,
+    minZoom = this.minZoom,
+    maxZoom = this.maxZoom,
+    zoomSpeed = this.zoomSpeed,
+    // rotate
+    enableRotate = this.enableRotate,
+    minPolarAngle = this.minPolarAngle,
+    maxPolarAngle = this.maxPolarAngle,
+    minAzimuthAngle = this.minAzimuthAngle,
+    maxAzimuthAngle = this.maxAzimuthAngle,
+    rotateSpeed = this.rotateSpeed,
+    // pan
+    enablePan = this.enablePan,
+    panSpeed = this.panSpeed,
+  }: { position?: Vec3 } & OrbitControlsBaseParams = {}) {
+    this.#setBaseParams({
+      target,
+      enableZoom,
+      minZoom,
+      maxZoom,
+      zoomSpeed,
+      enableRotate,
+      minPolarAngle,
+      maxPolarAngle,
+      minAzimuthAngle,
+      maxAzimuthAngle,
+      rotateSpeed,
+      enablePan,
+      panSpeed,
+    })
+
+    if (position) {
+      this.updatePosition(position)
+    }
+  }
+
+  /**
+   * Allow to override the {@link camera} position.
+   * @param position - new {@link camera} position to set.
+   */
+  updatePosition(position = new Vec3()) {
+    position.sub(this.target)
+    this.#spherical.radius = position.length()
+    this.#spherical.theta = Math.atan2(position.x, position.z)
+    this.#spherical.phi = Math.acos(Math.min(Math.max(position.y / this.#spherical.radius, -1), 1))
+
+    this.#update()
   }
 
   /**
@@ -87,13 +281,13 @@ export class OrbitControls extends Object3D {
    */
   set element(value: HTMLElement | Window | null) {
     if (this.#element && (!value || this.#element !== value)) {
-      this.removeEvents()
+      this.#removeEvents()
     }
 
     this.#element = value
 
     if (value) {
-      this.addEvents()
+      this.#addEvents()
     }
   }
 
@@ -107,146 +301,194 @@ export class OrbitControls extends Object3D {
 
   /**
    * Add the event listeners.
+   * @private
    */
-  addEvents() {
-    this.#element.addEventListener('pointerdown', this.onPointerDown.bind(this))
-    this.#element.addEventListener('pointermove', this.onPointerMove.bind(this))
-    this.#element.addEventListener('pointerup', this.onPointerUp.bind(this))
-    this.#element.addEventListener('wheel', this.onMouseWheel.bind(this))
+  #addEvents() {
+    this.#element.addEventListener('contextmenu', this.#onContextMenu.bind(this))
+    this.#element.addEventListener('pointerdown', this.#onPointerDown.bind(this))
+    this.#element.addEventListener('pointermove', this.#onPointerMove.bind(this))
+    this.#element.addEventListener('pointerup', this.#onPointerUp.bind(this))
+    this.#element.addEventListener('wheel', this.#onMouseWheel.bind(this))
   }
 
   /**
    * Remove the event listeners.
+   * @private
    */
-  removeEvents() {
-    this.#element.removeEventListener('pointerdown', this.onPointerDown.bind(this))
-    this.#element.removeEventListener('pointermove', this.onPointerMove.bind(this))
-    this.#element.removeEventListener('pointerup', this.onPointerUp.bind(this))
-    this.#element.removeEventListener('wheel', this.onMouseWheel.bind(this))
+  #removeEvents() {
+    this.#element.removeEventListener('contextmenu', this.#onContextMenu.bind(this))
+    this.#element.removeEventListener('pointerdown', this.#onPointerDown.bind(this))
+    this.#element.removeEventListener('pointermove', this.#onPointerMove.bind(this))
+    this.#element.removeEventListener('pointerup', this.#onPointerUp.bind(this))
+    this.#element.removeEventListener('wheel', this.#onMouseWheel.bind(this))
   }
 
   /**
    * Callback executed on pointer down event.
    * @param e - {@link PointerEvent}.
+   * @private
    */
-  onPointerDown(e: PointerEvent) {
-    if (e.isPrimary) {
+  #onPointerDown(e: PointerEvent) {
+    if (e.button === 0 && this.enableRotate) {
       this.#isOrbiting = true
+      this.#rotateStart.set(e.clientX, e.clientY)
+    } else if (e.button === 2 && this.enablePan) {
+      this.#isPaning = true
+      this.#panStart.set(e.clientX, e.clientY)
     }
 
-    this.#lastPosition.set(e.pageX, e.pageY)
+    e.stopPropagation()
+    e.preventDefault()
   }
 
   /**
    * Callback executed on pointer move event.
    * @param e - {@link PointerEvent}.
    */
-  onPointerMove(e: PointerEvent) {
-    let xDelta, yDelta
-
-    // TODO PointerLock API?
-    // https://developer.mozilla.org/en-US/docs/Web/API/Pointer_Lock_API
-    if (document.pointerLockElement) {
-      xDelta = e.movementX
-      yDelta = e.movementY
-      this.orbit(xDelta * this.orbitStep.x, yDelta * this.orbitStep.y)
-    } else if (this.#isOrbiting) {
-      xDelta = e.pageX - this.#lastPosition.x
-      yDelta = e.pageY - this.#lastPosition.y
-      this.#lastPosition.set(e.pageX, e.pageY)
-      this.orbit(xDelta * this.orbitStep.x, yDelta * this.orbitStep.y)
+  #onPointerMove(e: PointerEvent) {
+    if (this.#isOrbiting && this.enableRotate) {
+      this.#rotate(e.clientX, e.clientY)
+    } else if (this.#isPaning && this.enablePan) {
+      this.#pan(e.clientX, e.clientY)
     }
   }
 
   /**
    * Callback executed on pointer up event.
    * @param e - {@link PointerEvent}.
+   * @private
    */
-  onPointerUp(e: PointerEvent) {
+  #onPointerUp(e: PointerEvent) {
     if (e.isPrimary) {
       this.#isOrbiting = false
     }
+
+    this.#isOrbiting = false
+    this.#isPaning = false
   }
 
   /**
    * Callback executed on wheel event.
    * @param e - {@link WheelEvent}.
+   * @private
    */
-  onMouseWheel(e: WheelEvent) {
-    this.zoom(this.position.z + e.deltaY * this.zoomStep)
+  #onMouseWheel(e: WheelEvent) {
+    if (this.enableZoom) {
+      this.#zoom(e.deltaY)
+
+      e.preventDefault()
+    }
+  }
+
+  /**
+   * Prevent context menu apparition on right click
+   * @param e - {@link PointerEvent}.
+   * @private
+   */
+  #onContextMenu(e: PointerEvent) {
     e.preventDefault()
   }
 
   /**
-   * Reset the {@link OrbitControls} {@link position} and {@link rotation} values.
+   * Update the {@link camera} position based on the {@link target} and internal values.
+   * @private
    */
-  reset() {
-    this.position.set(0)
-    this.rotation.set(0)
+  #update() {
+    // apply rotation to offset
+    const sinPhiRadius = this.#spherical.radius * Math.sin(Math.max(0.000001, this.#spherical.phi))
+    this.#offset.x = sinPhiRadius * Math.sin(this.#spherical.theta)
+    this.#offset.y = this.#spherical.radius * Math.cos(this.#spherical.phi)
+    this.#offset.z = sinPhiRadius * Math.cos(this.#spherical.theta)
+
+    // Apply updated values to object
+    this.camera.position.copy(this.target).add(this.#offset)
   }
 
   /**
-   * Update the {@link OrbitControls} {@link rotation} based on deltas.
-   * @param xDelta - delta along the X axis.
-   * @param yDelta - delta along the Y axis.
+   * Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.
+   * @param x - input coordinate along the X axis.
+   * @param y - input coordinate along the Y axis.
+   * @private
    */
-  orbit(xDelta: number, yDelta: number) {
-    if (xDelta || yDelta) {
-      this.rotation.y -= xDelta
-      if (this.constrainYOrbit) {
-        this.rotation.y = Math.min(Math.max(this.rotation.y, this.minOrbit.y), this.maxOrbit.y)
-      } else {
-        while (this.rotation.y < -Math.PI) {
-          this.rotation.y += Math.PI * 2
-        }
-        while (this.rotation.y >= Math.PI) {
-          this.rotation.y -= Math.PI * 2
-        }
-      }
+  #rotate(x: number, y: number) {
+    tempVec2a.set(x, y)
+    tempVec2b.copy(tempVec2a).sub(this.#rotateStart).multiplyScalar(this.rotateSpeed)
+    this.#spherical.theta -= (2 * Math.PI * tempVec2b.x) / this.camera.size.height
+    this.#spherical.phi -= (2 * Math.PI * tempVec2b.y) / this.camera.size.height
 
-      this.rotation.x -= yDelta
-      if (this.constrainXOrbit) {
-        this.rotation.x = Math.min(Math.max(this.rotation.x, this.minOrbit.x), this.maxOrbit.x)
-      } else {
-        while (this.rotation.x < -Math.PI) {
-          this.rotation.x += Math.PI * 2
-        }
-        while (this.rotation.x >= Math.PI) {
-          this.rotation.x -= Math.PI * 2
-        }
-      }
-    }
+    this.#spherical.theta = Math.min(this.maxAzimuthAngle, Math.max(this.minAzimuthAngle, this.#spherical.theta))
+    this.#spherical.phi = Math.min(this.maxPolarAngle, Math.max(this.minPolarAngle, this.#spherical.phi))
+
+    this.#rotateStart.copy(tempVec2a)
+
+    this.#update()
   }
 
   /**
-   * Update the {@link OrbitControls} {@link position} Z component based on the new distance.
-   * @param distance - new distance to use.
+   * Pan the {@link camera} position based on input coordinates by updating {@link target}.
+   * @param x - input coordinate along the X axis.
+   * @param y - input coordinate along the Y axis.
+   * @private
    */
-  zoom(distance: number) {
-    this.position.z = distance
-    if (this.constrainZoom) {
-      this.position.z = Math.min(Math.max(this.position.z, this.minZoom), this.maxZoom)
-    }
+  #pan(x: number, y: number) {
+    tempVec2a.set(x, y)
+    tempVec2b.copy(tempVec2a).sub(this.#panStart).multiplyScalar(this.panSpeed)
+
+    this.#panDelta.set(0)
+
+    tempVec3.copy(this.camera.position).sub(this.target)
+    let targetDistance = tempVec3.length()
+    targetDistance *= Math.tan(((this.camera.fov / 2) * Math.PI) / 180.0)
+
+    // pan left
+    // get right direction axis accounting for camera transform
+    tempVec3.set(
+      this.camera.modelMatrix.elements[0],
+      this.camera.modelMatrix.elements[1],
+      this.camera.modelMatrix.elements[2]
+    )
+
+    tempVec3.multiplyScalar(-(2 * tempVec2b.x * targetDistance) / this.camera.size.height)
+    this.#panDelta.add(tempVec3)
+
+    // pan up
+    // get up direction axis accounting for camera transform
+    tempVec3.set(
+      this.camera.modelMatrix.elements[4],
+      this.camera.modelMatrix.elements[5],
+      this.camera.modelMatrix.elements[6]
+    )
+    tempVec3.multiplyScalar((2 * tempVec2b.y * targetDistance) / this.camera.size.height)
+    this.#panDelta.add(tempVec3)
+
+    this.#panStart.copy(tempVec2a)
+
+    this.target.add(this.#panDelta)
+    this.#offset.copy(this.camera.position).sub(this.target)
+    this.#spherical.radius = this.#offset.length()
+
+    this.#update()
   }
 
   /**
-   * Override {@link Object3D#updateModelMatrix | updateModelMatrix} method to compose the {@link modelMatrix}.
+   * Move the {@link camera} forward or backward.
+   * @param value - new value to use for zoom.
+   * @private
    */
-  updateModelMatrix() {
-    // compose our model transformation matrix from rotation and translation in the right order
-    this.modelMatrix.identity().rotateFromQuaternion(this.quaternion).translate(this.position)
+  #zoom(value: number) {
+    this.#spherical.radius = Math.min(
+      this.maxZoom,
+      Math.max(this.minZoom + 0.000001, this.#spherical.radius + (value * this.zoomSpeed) / 100)
+    )
 
-    // tell our world matrix to update
-    this.shouldUpdateWorldMatrix()
+    this.#update()
   }
 
   /**
    * Destroy the {@link OrbitControls}.
    */
   destroy() {
-    this.camera.parent = this.renderer.scene
-    this.parent = null
-
+    // will automatically remove listeners
     this.element = null
   }
 }

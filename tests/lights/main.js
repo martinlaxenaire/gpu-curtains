@@ -40,7 +40,6 @@ window.addEventListener('load', async () => {
   animate()
 
   const orbitControls = new OrbitControls(gpuCameraRenderer)
-  orbitControls.minZoom = -5
 
   const fs = /* wgsl */ `
     struct VSOutput {

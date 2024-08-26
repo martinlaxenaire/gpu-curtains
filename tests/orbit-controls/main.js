@@ -115,14 +115,19 @@ window.addEventListener('load', async () => {
 
   cube.position.y = 1
 
-  // orbit controls
-  const orbitControls = new OrbitControls(gpuCameraRenderer)
-  gpuCameraRenderer.camera.position.set(0)
-  orbitControls.target.position.set(0, 0.5, 0)
-  orbitControls.position.y = 2
-  orbitControls.position.z = 10
+  const { camera, container } = gpuCameraRenderer
 
-  orbitControls.zoomStep = 0.05
-  orbitControls.minZoom = -2
-  orbitControls.maxZoom = 4
+  // orbit controls
+  const orbitControls = new OrbitControls({
+    camera,
+    element: container,
+  })
+  orbitControls.target.set(0, 0.5, 0)
+
+  orbitControls.updatePosition(new Vec3(10, 2, 0))
+
+  orbitControls.minZoom = 2
+  orbitControls.maxZoom = 40
+
+  console.log(orbitControls)
 })
