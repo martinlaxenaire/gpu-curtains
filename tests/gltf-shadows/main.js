@@ -14,6 +14,7 @@ window.addEventListener('load', async () => {
     buildShaders,
     AmbientLight,
     DirectionalLight,
+    PointLight,
     OrbitControls,
     Vec3,
     Vec2,
@@ -38,15 +39,28 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1, window.devicePixelRatio),
     camera: {
       near: 0.001,
-      far: 2000,
+      far: 150,
       fov: 75,
     },
   })
 
+  // render it
+  const animate = () => {
+    gpuDeviceManager.render()
+    requestAnimationFrame(animate)
+  }
+
+  animate()
+
   const { camera } = gpuCameraRenderer
+  camera.position.set(7, 2.5, 0)
+
   const orbitControls = new OrbitControls({
     camera,
     element: container,
+    target: new Vec3(0, 0.5, 0),
+    zoomSpeed: 0.5,
+    maxZoom: 40,
   })
 
   // IBL textures
@@ -132,28 +146,78 @@ window.addEventListener('load', async () => {
     addressModeV: 'clamp-to-edge',
   })
 
-  let shadingModel = 'PBR' // 'IBL', 'PBR', 'Phong' or 'Lambert'
+  let shadingModel = 'IBL' // 'IBL', 'PBR', 'Phong' or 'Lambert'
 
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.4,
+    intensity: 1,
+    color: new Vec3(0.2, 0.4, 0.8),
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
-    position: new Vec3(60, 200, 20),
-    intensity: 4,
+    position: new Vec3(-10, 30, 3),
+    color: new Vec3(0.2, 0.4, 0.8),
+    //intensity: 6,
+    intensity: 3,
     shadow: {
-      bias: 0.007,
-      depthTextureSize: new Vec2(2048),
+      bias: 0.001,
+      depthTextureSize: new Vec2(1500),
+      pcfSamples: 3,
       camera: {
         left: -20,
         right: 20,
         bottom: -20,
         top: 20,
-        near: 1,
-        far: 600,
+        near: 0.01,
+        far: 200,
       },
+      autoRender: false,
     },
   })
+
+  const pointLights = []
+  const pointLightsSettings = {
+    color: new Vec3(0.85, 0.15, 0),
+    intensity: 7.5,
+    range: 40,
+    shadow: {
+      bias: 0.001,
+      pcfSamples: 2,
+      camera: {
+        near: 0.01,
+        far: 200,
+      },
+      autoRender: false,
+    },
+  }
+
+  const pointLightsPos = [
+    new Vec3(-4.45, 1.15, -1.45),
+    new Vec3(-4.45, 1.15, 1.45),
+    new Vec3(4.45, 1.15, -1.45),
+    new Vec3(4.45, 1.15, 1.45),
+  ]
+
+  pointLightsPos.forEach((position) => {
+    const pointLight = new PointLight(gpuCameraRenderer, {
+      //position: new Vec3(-5, 5, 0),
+      //position: new Vec3(-9, 1.7, -3.3),
+      position,
+      ...pointLightsSettings,
+    })
+
+    pointLights.push(pointLight)
+  })
+
+  let time = 0
+  gpuCameraRenderer.onBeforeRender(() => {
+    time++
+    pointLights.forEach((pointLight, i) => {
+      const sinusoidal = i % 2 === 0 ? Math.cos : Math.sin
+      pointLight.intensity = 6 + (sinusoidal(time * 0.05) + 1) * 0.5 + (Math.random() * 2 + 1)
+    })
+  })
+
+  console.log(pointLights)
 
   // gltf
   const gltfLoader = new GLTFLoader()
@@ -174,24 +238,11 @@ window.addEventListener('load', async () => {
     container.classList.remove('loading')
     console.log({ gltf, scenesManager, scenes, boundingBox })
 
-    const { center, radius } = boundingBox
+    const { center } = boundingBox
 
     // center model
     node.position.sub(center)
-
     node.position.y = 0
-
-    // reset orbit controls
-    //orbitControls.reset()
-
-    orbitControls.updatePosition(new Vec3(radius * 0.25, center.y * 0.25, 0))
-    orbitControls.target.set(0, center.y * 0.1, 0)
-
-    orbitControls.zoomSpeed = radius * 0.025
-    orbitControls.minZoom = 0
-
-    orbitControls.maxZoom = radius * 2
-    camera.far = radius * 6
 
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
@@ -206,11 +257,11 @@ window.addEventListener('load', async () => {
       parameters.castShadows = true
       parameters.receiveShadows = true
 
-      if (shadingModel === 'IBL') {
-        ambientLight.intensity = 0
-      } else {
-        ambientLight.intensity = 0.4
-      }
+      // if (shadingModel === 'IBL') {
+      //   ambientLight.intensity = 0
+      // } else {
+      //   ambientLight.intensity = 1
+      // }
 
       // debug
       const additionalColorContribution = `
@@ -223,8 +274,8 @@ window.addEventListener('load', async () => {
           additionalColorContribution,
         },
         iblParameters: {
-          diffuseStrength: 1,
-          specularStrength: 1,
+          diffuseStrength: 0.1,
+          specularStrength: 0.4,
           lutTexture: {
             texture: iblLUTTexture,
             samplerName: 'clampSampler', // use clamp sampler for LUT texture
@@ -241,7 +292,14 @@ window.addEventListener('load', async () => {
       })
     })
 
-    console.log(gpuCameraRenderer.samplers, meshes[0])
+    // finally render shadows
+    directionalLight.shadow.renderOnce()
+
+    pointLights.forEach((pointLight) => {
+      pointLight.shadow.renderOnce()
+    })
+
+    console.log(gpuCameraRenderer, meshes)
   }
 
   // GUI
@@ -266,6 +324,20 @@ window.addEventListener('load', async () => {
     })
     .name('Shading')
 
+  const ambientLightFolder = gui.addFolder('Ambient light')
+  ambientLightFolder.add(ambientLight, 'intensity', 0, 1, 0.01)
+  ambientLightFolder
+    .addColor({ color: { r: ambientLight.color.x, g: ambientLight.color.y, b: ambientLight.color.z } }, 'color')
+    .onChange((value) => {
+      ambientLight.color.set(value.r, value.g, value.b)
+    })
+
+  // const pointLightFolder = gui.addFolder('Point light')
+  // const pointLightPosFolder = pointLightFolder.addFolder('Position')
+  // pointLightPosFolder.add(pointLight.position, 'x', -20, 20, 0.1)
+  // pointLightPosFolder.add(pointLight.position, 'y', -20, 20, 0.1)
+  // pointLightPosFolder.add(pointLight.position, 'z', -20, 20, 0.1)
+
   const directionalLightFolder = gui.addFolder('Directional light')
   directionalLightFolder.add(directionalLight, 'intensity', 0, 10, 0.01)
   directionalLightFolder
@@ -278,29 +350,65 @@ window.addEventListener('load', async () => {
     })
 
   const directionalLightPosFolder = directionalLightFolder.addFolder('Position')
-  directionalLightPosFolder.add(directionalLight.position, 'x', -100, 100, 0.5)
-  directionalLightPosFolder.add(directionalLight.position, 'y', 0, 500, 0.5)
-  directionalLightPosFolder.add(directionalLight.position, 'z', -100, 100, 0.5)
+  directionalLightPosFolder
+    .add(directionalLight.position, 'x', -60, 60, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  directionalLightPosFolder
+    .add(directionalLight.position, 'y', 0, 200, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  directionalLightPosFolder
+    .add(directionalLight.position, 'z', -60, 60, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
 
   const directionalLightTargetFolder = directionalLightFolder.addFolder('Target')
-  directionalLightTargetFolder.add(directionalLight.target, 'x', -100, 100, 0.5)
-  directionalLightTargetFolder.add(directionalLight.target, 'y', -100, 100, 0.5)
-  directionalLightTargetFolder.add(directionalLight.target, 'z', -100, 100, 0.5)
+  directionalLightTargetFolder
+    .add(directionalLight.target, 'x', -100, 100, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  directionalLightTargetFolder
+    .add(directionalLight.target, 'y', -100, 100, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  directionalLightTargetFolder
+    .add(directionalLight.target, 'z', -100, 100, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
 
   let isDebug = false
 
-  const shadowFolder = gui.addFolder('Shadow map')
-  const showShadowMap = shadowFolder.add({ isDebug }, 'isDebug').name('Show shadow map')
+  const shadowFolder = gui.addFolder('Directional shadow')
+  shadowFolder.add(directionalLight.shadow, 'intensity', 0, 1, 0.01)
+  shadowFolder.add(directionalLight.shadow, 'bias', 0, 0.01, 0.0001)
+  shadowFolder.add(directionalLight.shadow, 'normalBias', 0, 0.01, 0.0001)
+  shadowFolder.add(directionalLight.shadow, 'pcfSamples', 1, 5, 1)
+  const shadowTextureSizeFolder = shadowFolder.addFolder('Depth texture size')
+  shadowTextureSizeFolder
+    .add(directionalLight.shadow.depthTextureSize, 'x', 100, 2048, 2)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  shadowTextureSizeFolder
+    .add(directionalLight.shadow.depthTextureSize, 'y', 100, 2048, 2)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  const shadowCameraFolder = shadowFolder.addFolder('Camera')
+  shadowCameraFolder
+    .add(directionalLight.shadow.camera, 'left', -100, 1, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  shadowCameraFolder
+    .add(directionalLight.shadow.camera, 'right', 1, 100, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  shadowCameraFolder
+    .add(directionalLight.shadow.camera, 'bottom', -100, 1, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  shadowCameraFolder
+    .add(directionalLight.shadow.camera, 'top', 1, 100, 0.5)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  shadowCameraFolder
+    .add(directionalLight.shadow.camera, 'near', 0.001, 1, 0.001)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+  shadowCameraFolder
+    .add(directionalLight.shadow.camera, 'far', 20, 500, 1)
+    .onChange(async () => await directionalLight.shadow.renderOnce())
+
+  const shadowMapFolder = shadowFolder.addFolder('Debug')
+  const showShadowMap = shadowMapFolder.add({ isDebug }, 'isDebug').name('Show shadow map')
 
   await loadGLTF()
-
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
 
   // DEBUG DEPTH
 
@@ -355,6 +463,7 @@ window.addEventListener('load', async () => {
     depthWriteEnabled: false,
     frustumCulling: false,
     visible: false,
+    renderOrder: 10,
     shaders: {
       vertex: {
         code: debugDepthVs,

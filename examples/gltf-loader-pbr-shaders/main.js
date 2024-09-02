@@ -33,6 +33,14 @@ window.addEventListener('load', async () => {
     },
   })
 
+  // render it
+  const animate = () => {
+    gpuDeviceManager.render()
+    requestAnimationFrame(animate)
+  }
+
+  animate()
+
   const { camera } = gpuCameraRenderer
   const orbitControls = new OrbitControls({
     camera,
@@ -166,12 +174,4 @@ window.addEventListener('load', async () => {
     .name('Models')
 
   await loadGLTF(currentModel.url)
-
-  // render it
-  const animate = () => {
-    gpuDeviceManager.render()
-    requestAnimationFrame(animate)
-  }
-
-  animate()
 })

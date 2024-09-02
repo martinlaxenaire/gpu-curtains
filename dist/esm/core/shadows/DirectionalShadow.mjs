@@ -135,6 +135,11 @@ class DirectionalShadow extends Shadow {
    * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
    */
   updateViewMatrix(position = new Vec3(), target = new Vec3()) {
+    if (position.x === 0 && position.z === 0) {
+      this.camera.up.set(0, 0, 1);
+    } else {
+      this.camera.up.set(0, 1, 0);
+    }
     this.camera.viewMatrix.makeView(position, target, this.camera.up);
     this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
   }

@@ -174,6 +174,8 @@ export class OrbitControls {
     })
 
     this.element = element ?? (typeof window !== 'undefined' ? window : null)
+
+    this.#update()
   }
 
   /**
@@ -304,11 +306,14 @@ export class OrbitControls {
    * @private
    */
   #addEvents() {
-    this.#element.addEventListener('contextmenu', this.#onContextMenu.bind(this))
-    this.#element.addEventListener('pointerdown', this.#onPointerDown.bind(this))
-    this.#element.addEventListener('pointermove', this.#onPointerMove.bind(this))
-    this.#element.addEventListener('pointerup', this.#onPointerUp.bind(this))
-    this.#element.addEventListener('wheel', this.#onMouseWheel.bind(this))
+    this.#element.addEventListener('contextmenu', this.#onContextMenu.bind(this), false)
+    this.#element.addEventListener('mousedown', this.#onMouseDown.bind(this), false)
+    this.#element.addEventListener('mousemove', this.#onMouseMove.bind(this), false)
+    this.#element.addEventListener('mouseup', this.#onMouseUp.bind(this), false)
+    this.#element.addEventListener('touchstart', this.#onTouchStart.bind(this), { passive: false })
+    this.#element.addEventListener('touchmove', this.#onTouchMove.bind(this), { passive: false })
+    this.#element.addEventListener('touchend', this.#onTouchEnd.bind(this), false)
+    this.#element.addEventListener('wheel', this.#onMouseWheel.bind(this), { passive: false })
   }
 
   /**
@@ -316,19 +321,22 @@ export class OrbitControls {
    * @private
    */
   #removeEvents() {
-    this.#element.removeEventListener('contextmenu', this.#onContextMenu.bind(this))
-    this.#element.removeEventListener('pointerdown', this.#onPointerDown.bind(this))
-    this.#element.removeEventListener('pointermove', this.#onPointerMove.bind(this))
-    this.#element.removeEventListener('pointerup', this.#onPointerUp.bind(this))
-    this.#element.removeEventListener('wheel', this.#onMouseWheel.bind(this))
+    this.#element.removeEventListener('contextmenu', this.#onContextMenu.bind(this), false)
+    this.#element.removeEventListener('mousedown', this.#onMouseDown.bind(this), false)
+    this.#element.removeEventListener('mousemove', this.#onMouseMove.bind(this), false)
+    this.#element.removeEventListener('mouseup', this.#onMouseUp.bind(this), false)
+    this.#element.removeEventListener('touchstart', this.#onTouchStart.bind(this), { passive: false })
+    this.#element.removeEventListener('touchmove', this.#onTouchMove.bind(this), { passive: false })
+    this.#element.removeEventListener('touchend', this.#onTouchEnd.bind(this), false)
+    this.#element.removeEventListener('wheel', this.#onMouseWheel.bind(this), { passive: false })
   }
 
   /**
-   * Callback executed on pointer down event.
-   * @param e - {@link PointerEvent}.
+   * Callback executed on mouse down event.
+   * @param e - {@link MouseEvent}.
    * @private
    */
-  #onPointerDown(e: PointerEvent) {
+  #onMouseDown(e: MouseEvent) {
     if (e.button === 0 && this.enableRotate) {
       this.#isOrbiting = true
       this.#rotateStart.set(e.clientX, e.clientY)
@@ -342,10 +350,23 @@ export class OrbitControls {
   }
 
   /**
-   * Callback executed on pointer move event.
-   * @param e - {@link PointerEvent}.
+   * Callback executed on touch start event.
+   * @param e - {@link TouchEvent}.
+   * @private
    */
-  #onPointerMove(e: PointerEvent) {
+  #onTouchStart(e: TouchEvent) {
+    // TODO zoom / pan with 2 fingers
+    if (e.touches.length === 1 && this.enableRotate) {
+      this.#isOrbiting = true
+      this.#rotateStart.set(e.touches[0].pageX, e.touches[0].pageY)
+    }
+  }
+
+  /**
+   * Callback executed on mouse move event.
+   * @param e - {@link MouseEvent}.
+   */
+  #onMouseMove(e: MouseEvent) {
     if (this.#isOrbiting && this.enableRotate) {
       this.#rotate(e.clientX, e.clientY)
     } else if (this.#isPaning && this.enablePan) {
@@ -354,15 +375,32 @@ export class OrbitControls {
   }
 
   /**
-   * Callback executed on pointer up event.
-   * @param e - {@link PointerEvent}.
+   * Callback executed on touch move event.
+   * @param e - {@link TouchEvent}.
    * @private
    */
-  #onPointerUp(e: PointerEvent) {
-    if (e.isPrimary) {
-      this.#isOrbiting = false
+  #onTouchMove(e: TouchEvent) {
+    if (this.#isOrbiting && this.enableRotate) {
+      this.#rotate(e.touches[0].pageX, e.touches[0].pageY)
     }
+  }
 
+  /**
+   * Callback executed on mouse up event.
+   * @param e - {@link MouseEvent}.
+   * @private
+   */
+  #onMouseUp(e: MouseEvent) {
+    this.#isOrbiting = false
+    this.#isPaning = false
+  }
+
+  /**
+   * Callback executed on touch end event.
+   * @param e - {@link MouseEvent}.
+   * @private
+   */
+  #onTouchEnd(e: TouchEvent) {
     this.#isOrbiting = false
     this.#isPaning = false
   }
@@ -382,10 +420,10 @@ export class OrbitControls {
 
   /**
    * Prevent context menu apparition on right click
-   * @param e - {@link PointerEvent}.
+   * @param e - {@link MouseEvent}.
    * @private
    */
-  #onContextMenu(e: PointerEvent) {
+  #onContextMenu(e: MouseEvent) {
     e.preventDefault()
   }
 

@@ -63,7 +63,7 @@ class PointShadow extends Shadow {
     autoRender,
     camera = {
       near: 0.1,
-      far: light.range || 150
+      far: 150
     }
   } = {}) {
     super(renderer, {
@@ -103,6 +103,9 @@ class PointShadow extends Shadow {
       new Vec3(0, -1, 0),
       new Vec3(0, -1, 0)
     ];
+    if (camera.far === -1) {
+      camera.far = 150;
+    }
     this.camera = {
       projectionMatrix: new Mat4(),
       viewMatrices: [],
@@ -140,7 +143,7 @@ class PointShadow extends Shadow {
   cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
     if (camera) {
       this.camera.near = camera.near ?? 0.1;
-      this.camera.far = camera.far ?? this.light.range;
+      this.camera.far = camera.far !== void 0 ? camera.far : this.light.range !== -1 ? this.light.range : 150;
     }
     super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
   }

@@ -8477,6 +8477,11 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
      * @param target - {@link Vec3} to use as target for the {@link DirectionalShadow#camera.viewMatrix | camera view matrix}, based on the {@link light} target.
      */
     updateViewMatrix(position = new Vec3(), target = new Vec3()) {
+      if (position.x === 0 && position.z === 0) {
+        this.camera.up.set(0, 0, 1);
+      } else {
+        this.camera.up.set(0, 1, 0);
+      }
       this.camera.viewMatrix.makeView(position, target, this.camera.up);
       this.onPropertyChanged("viewMatrix", this.camera.viewMatrix);
     }
@@ -8659,7 +8664,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
       autoRender,
       camera = {
         near: 0.1,
-        far: light.range || 150
+        far: 150
       }
     } = {}) {
       super(renderer, {
@@ -8699,6 +8704,9 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
         new Vec3(0, -1, 0),
         new Vec3(0, -1, 0)
       ];
+      if (camera.far === -1) {
+        camera.far = 150;
+      }
       this.camera = {
         projectionMatrix: new Mat4(),
         viewMatrices: [],
@@ -8736,7 +8744,7 @@ fn getPCFPointShadows(worldPosition: vec3f) -> array<f32, ${Math.max(
     cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender, camera } = {}) {
       if (camera) {
         this.camera.near = camera.near ?? 0.1;
-        this.camera.far = camera.far ?? this.light.range;
+        this.camera.far = camera.far !== void 0 ? camera.far : this.light.range !== -1 ? this.light.range : 150;
       }
       super.cast({ intensity, bias, normalBias, pcfSamples, depthTextureSize, depthTextureFormat, autoRender });
     }
@@ -12846,7 +12854,7 @@ ${this.shaders.compute.head}`;
       this.updateCameraBindings();
       for (const mesh of this.meshes) {
         if ("modelViewMatrix" in mesh) {
-          mesh.shouldUpdateMatrixStack();
+          mesh.shouldUpdateProjectionMatrixStack();
         }
       }
     }
@@ -13720,8 +13728,7 @@ fn getPointLightInfo(pointLight: PointLightsElement, worldPosition: vec3f, ptr_l
   let lightDistance: f32 = length(lightDirection);
   (*ptr_light).color = pointLight.color;
   (*ptr_light).color *= rangeAttenuation(pointLight.range, lightDistance);
-  
-  (*ptr_light).visible = (*ptr_light).color.r != 0.0 && (*ptr_light).color.g != 0.0 && (*ptr_light).color.b != 0.0;
+  (*ptr_light).visible = length((*ptr_light).color) > 0.0001;
 }
 `
   );
@@ -15491,7 +15498,7 @@ fn getIBL(
     __accessCheck$2(obj, member, "access private method");
     return method;
   };
-  var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _setBaseParams, setBaseParams_fn, _addEvents, addEvents_fn, _removeEvents, removeEvents_fn, _onPointerDown, onPointerDown_fn, _onPointerMove, onPointerMove_fn, _onPointerUp, onPointerUp_fn, _onMouseWheel, onMouseWheel_fn, _onContextMenu, onContextMenu_fn, _update, update_fn, _rotate, rotate_fn, _pan, pan_fn, _zoom, zoom_fn;
+  var _element, _offset, _isOrbiting, _spherical, _rotateStart, _isPaning, _panStart, _panDelta, _setBaseParams, setBaseParams_fn, _addEvents, addEvents_fn, _removeEvents, removeEvents_fn, _onMouseDown, onMouseDown_fn, _onTouchStart, onTouchStart_fn, _onMouseMove, onMouseMove_fn, _onTouchMove, onTouchMove_fn, _onMouseUp, onMouseUp_fn, _onTouchEnd, onTouchEnd_fn, _onMouseWheel, onMouseWheel_fn, _onContextMenu, onContextMenu_fn, _update, update_fn, _rotate, rotate_fn, _pan, pan_fn, _zoom, zoom_fn;
   const tempVec2a = new Vec2();
   const tempVec2b = new Vec2();
   const tempVec3 = new Vec3();
@@ -15536,22 +15543,40 @@ fn getIBL(
        */
       __privateAdd$2(this, _removeEvents);
       /**
-       * Callback executed on pointer down event.
-       * @param e - {@link PointerEvent}.
+       * Callback executed on mouse down event.
+       * @param e - {@link MouseEvent}.
        * @private
        */
-      __privateAdd$2(this, _onPointerDown);
+      __privateAdd$2(this, _onMouseDown);
       /**
-       * Callback executed on pointer move event.
-       * @param e - {@link PointerEvent}.
-       */
-      __privateAdd$2(this, _onPointerMove);
-      /**
-       * Callback executed on pointer up event.
-       * @param e - {@link PointerEvent}.
+       * Callback executed on touch start event.
+       * @param e - {@link TouchEvent}.
        * @private
        */
-      __privateAdd$2(this, _onPointerUp);
+      __privateAdd$2(this, _onTouchStart);
+      /**
+       * Callback executed on mouse move event.
+       * @param e - {@link MouseEvent}.
+       */
+      __privateAdd$2(this, _onMouseMove);
+      /**
+       * Callback executed on touch move event.
+       * @param e - {@link TouchEvent}.
+       * @private
+       */
+      __privateAdd$2(this, _onTouchMove);
+      /**
+       * Callback executed on mouse up event.
+       * @param e - {@link MouseEvent}.
+       * @private
+       */
+      __privateAdd$2(this, _onMouseUp);
+      /**
+       * Callback executed on touch end event.
+       * @param e - {@link MouseEvent}.
+       * @private
+       */
+      __privateAdd$2(this, _onTouchEnd);
       /**
        * Callback executed on wheel event.
        * @param e - {@link WheelEvent}.
@@ -15560,7 +15585,7 @@ fn getIBL(
       __privateAdd$2(this, _onMouseWheel);
       /**
        * Prevent context menu apparition on right click
-       * @param e - {@link PointerEvent}.
+       * @param e - {@link MouseEvent}.
        * @private
        */
       __privateAdd$2(this, _onContextMenu);
@@ -15636,6 +15661,7 @@ fn getIBL(
         this.camera.lookAt(this.target);
       });
       this.element = element ?? (typeof window !== "undefined" ? window : null);
+      __privateMethod$1(this, _update, update_fn).call(this);
     }
     /**
      * Reset the {@link OrbitControls} values.
@@ -15762,22 +15788,28 @@ fn getIBL(
   };
   _addEvents = new WeakSet();
   addEvents_fn = function() {
-    __privateGet$1(this, _element).addEventListener("contextmenu", __privateMethod$1(this, _onContextMenu, onContextMenu_fn).bind(this));
-    __privateGet$1(this, _element).addEventListener("pointerdown", __privateMethod$1(this, _onPointerDown, onPointerDown_fn).bind(this));
-    __privateGet$1(this, _element).addEventListener("pointermove", __privateMethod$1(this, _onPointerMove, onPointerMove_fn).bind(this));
-    __privateGet$1(this, _element).addEventListener("pointerup", __privateMethod$1(this, _onPointerUp, onPointerUp_fn).bind(this));
-    __privateGet$1(this, _element).addEventListener("wheel", __privateMethod$1(this, _onMouseWheel, onMouseWheel_fn).bind(this));
+    __privateGet$1(this, _element).addEventListener("contextmenu", __privateMethod$1(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$1(this, _element).addEventListener("mousedown", __privateMethod$1(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$1(this, _element).addEventListener("mousemove", __privateMethod$1(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$1(this, _element).addEventListener("mouseup", __privateMethod$1(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$1(this, _element).addEventListener("touchstart", __privateMethod$1(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$1(this, _element).addEventListener("touchmove", __privateMethod$1(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$1(this, _element).addEventListener("touchend", __privateMethod$1(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$1(this, _element).addEventListener("wheel", __privateMethod$1(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
   _removeEvents = new WeakSet();
   removeEvents_fn = function() {
-    __privateGet$1(this, _element).removeEventListener("contextmenu", __privateMethod$1(this, _onContextMenu, onContextMenu_fn).bind(this));
-    __privateGet$1(this, _element).removeEventListener("pointerdown", __privateMethod$1(this, _onPointerDown, onPointerDown_fn).bind(this));
-    __privateGet$1(this, _element).removeEventListener("pointermove", __privateMethod$1(this, _onPointerMove, onPointerMove_fn).bind(this));
-    __privateGet$1(this, _element).removeEventListener("pointerup", __privateMethod$1(this, _onPointerUp, onPointerUp_fn).bind(this));
-    __privateGet$1(this, _element).removeEventListener("wheel", __privateMethod$1(this, _onMouseWheel, onMouseWheel_fn).bind(this));
+    __privateGet$1(this, _element).removeEventListener("contextmenu", __privateMethod$1(this, _onContextMenu, onContextMenu_fn).bind(this), false);
+    __privateGet$1(this, _element).removeEventListener("mousedown", __privateMethod$1(this, _onMouseDown, onMouseDown_fn).bind(this), false);
+    __privateGet$1(this, _element).removeEventListener("mousemove", __privateMethod$1(this, _onMouseMove, onMouseMove_fn).bind(this), false);
+    __privateGet$1(this, _element).removeEventListener("mouseup", __privateMethod$1(this, _onMouseUp, onMouseUp_fn).bind(this), false);
+    __privateGet$1(this, _element).removeEventListener("touchstart", __privateMethod$1(this, _onTouchStart, onTouchStart_fn).bind(this), { passive: false });
+    __privateGet$1(this, _element).removeEventListener("touchmove", __privateMethod$1(this, _onTouchMove, onTouchMove_fn).bind(this), { passive: false });
+    __privateGet$1(this, _element).removeEventListener("touchend", __privateMethod$1(this, _onTouchEnd, onTouchEnd_fn).bind(this), false);
+    __privateGet$1(this, _element).removeEventListener("wheel", __privateMethod$1(this, _onMouseWheel, onMouseWheel_fn).bind(this), { passive: false });
   };
-  _onPointerDown = new WeakSet();
-  onPointerDown_fn = function(e) {
+  _onMouseDown = new WeakSet();
+  onMouseDown_fn = function(e) {
     if (e.button === 0 && this.enableRotate) {
       __privateSet$1(this, _isOrbiting, true);
       __privateGet$1(this, _rotateStart).set(e.clientX, e.clientY);
@@ -15788,19 +15820,34 @@ fn getIBL(
     e.stopPropagation();
     e.preventDefault();
   };
-  _onPointerMove = new WeakSet();
-  onPointerMove_fn = function(e) {
+  _onTouchStart = new WeakSet();
+  onTouchStart_fn = function(e) {
+    if (e.touches.length === 1 && this.enableRotate) {
+      __privateSet$1(this, _isOrbiting, true);
+      __privateGet$1(this, _rotateStart).set(e.touches[0].pageX, e.touches[0].pageY);
+    }
+  };
+  _onMouseMove = new WeakSet();
+  onMouseMove_fn = function(e) {
     if (__privateGet$1(this, _isOrbiting) && this.enableRotate) {
       __privateMethod$1(this, _rotate, rotate_fn).call(this, e.clientX, e.clientY);
     } else if (__privateGet$1(this, _isPaning) && this.enablePan) {
       __privateMethod$1(this, _pan, pan_fn).call(this, e.clientX, e.clientY);
     }
   };
-  _onPointerUp = new WeakSet();
-  onPointerUp_fn = function(e) {
-    if (e.isPrimary) {
-      __privateSet$1(this, _isOrbiting, false);
+  _onTouchMove = new WeakSet();
+  onTouchMove_fn = function(e) {
+    if (__privateGet$1(this, _isOrbiting) && this.enableRotate) {
+      __privateMethod$1(this, _rotate, rotate_fn).call(this, e.touches[0].pageX, e.touches[0].pageY);
     }
+  };
+  _onMouseUp = new WeakSet();
+  onMouseUp_fn = function(e) {
+    __privateSet$1(this, _isOrbiting, false);
+    __privateSet$1(this, _isPaning, false);
+  };
+  _onTouchEnd = new WeakSet();
+  onTouchEnd_fn = function(e) {
     __privateSet$1(this, _isOrbiting, false);
     __privateSet$1(this, _isPaning, false);
   };
@@ -16119,173 +16166,6 @@ fn getIBL(
     }
   }
 
-  const GL$1 = WebGLRenderingContext;
-  const GLB_MAGIC = 1179937895;
-  const CHUNK_TYPE = {
-    JSON: 1313821514,
-    BIN: 5130562
-  };
-  const DEFAULT_TRANSLATION = [0, 0, 0];
-  const DEFAULT_ROTATION = [0, 0, 0, 1];
-  const DEFAULT_SCALE = [1, 1, 1];
-  const absUriRegEx = typeof window !== "undefined" && new RegExp(`^${window.location.protocol}`, "i") || RegExp(`^(http|https):`, "i");
-  const dataUriRegEx = /^data:/;
-  class GLTFLoader {
-    /**
-     * {@link GLTFLoader} constructor.
-     */
-    constructor() {
-      this.gltf = null;
-    }
-    /**
-     * Build the absolute uri of the resource
-     * @param uri - uri of the resource
-     * @param baseUrl - base url from which to get all the other assets.
-     * @returns - absolute uri of the resource
-     */
-    static resolveUri(uri, baseUrl) {
-      if (!!uri.match(absUriRegEx) || !!uri.match(dataUriRegEx)) {
-        return uri;
-      }
-      return baseUrl + uri;
-    }
-    /**
-     * Load a glTF from the given url.
-     * @param url - url of the glTF.
-     * @returns - the {@link GPUCurtainsGLTF} created.
-     * @async
-     */
-    async loadFromUrl(url) {
-      const i = url.lastIndexOf("/");
-      const baseUrl = i !== 0 ? url.substring(0, i + 1) : "";
-      const response = await fetch(url);
-      if (url.endsWith(".gltf")) {
-        return this.loadFromJson(await response.json(), baseUrl);
-      } else if (url.endsWith(".glb")) {
-        return this.loadFromBinary(await response.arrayBuffer(), baseUrl);
-      } else {
-        throw new Error("Unrecognized file extension");
-      }
-    }
-    /**
-     * Parse a {@link GLTF.IGLTF | glTF json} and create our {@link gltf} base object.
-     * @param json - already parsed JSON content.
-     * @param baseUrl - base url from which to get all the other assets.
-     * @param binaryChunk - optional binary chunks.
-     * @returns - {@link gltf} base object.
-     * @async
-     */
-    async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
-      if (!baseUrl) {
-        throw new Error("baseUrl must be specified.");
-      }
-      if (!json.asset) {
-        throw new Error("Missing asset description.");
-      }
-      if (json.asset.minVersion !== "2.0" && json.asset.version !== "2.0") {
-        throw new Error("Incompatible asset version.");
-      }
-      for (const accessor of json.accessors) {
-        accessor.byteOffset = accessor.byteOffset ?? 0;
-        accessor.normalized = accessor.normalized ?? false;
-      }
-      for (const bufferView of json.bufferViews) {
-        bufferView.byteOffset = bufferView.byteOffset ?? 0;
-      }
-      for (const node of json.nodes) {
-        if (!node.matrix) {
-          node.rotation = node.rotation ?? DEFAULT_ROTATION;
-          node.scale = node.scale ?? DEFAULT_SCALE;
-          node.translation = node.translation ?? DEFAULT_TRANSLATION;
-        }
-      }
-      if (json.samplers) {
-        for (const sampler of json.samplers) {
-          sampler.wrapS = sampler.wrapS ?? GL$1.REPEAT;
-          sampler.wrapT = sampler.wrapT ?? GL$1.REPEAT;
-        }
-      }
-      const pendingBuffers = [];
-      if (binaryChunk) {
-        pendingBuffers.push(Promise.resolve(binaryChunk));
-      } else {
-        for (const index in json.buffers) {
-          const buffer = json.buffers[index];
-          const uri = GLTFLoader.resolveUri(buffer.uri, baseUrl);
-          pendingBuffers[index] = fetch(uri).then((response) => response.arrayBuffer());
-        }
-      }
-      const pendingImages = [];
-      for (let index = 0; index < json.images?.length || 0; ++index) {
-        const image = json.images[index];
-        if (image.uri) {
-          pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-            return createImageBitmap(await response.blob());
-          });
-        } else {
-          const bufferView = json.bufferViews[image.bufferView];
-          pendingImages[index] = pendingBuffers[bufferView.buffer].then((buffer) => {
-            const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], {
-              type: image.mimeType
-            });
-            return createImageBitmap(blob);
-          });
-        }
-      }
-      return {
-        ...json,
-        arrayBuffers: await Promise.all(pendingBuffers),
-        imagesBitmaps: await Promise.all(pendingImages)
-      };
-    }
-    /**
-     * Load a glTF from a .glb file.
-     * @param arrayBuffer - {@link ArrayBuffer} containing the data.
-     * @param baseUrl - base url from which to get all the other assets.
-     * @returns - the {@link GPUCurtainsGLTF} created.
-     * @async
-     */
-    async loadFromBinary(arrayBuffer, baseUrl) {
-      const headerView = new DataView(arrayBuffer, 0, 12);
-      const magic = headerView.getUint32(0, true);
-      const version = headerView.getUint32(4, true);
-      const length = headerView.getUint32(8, true);
-      if (magic !== GLB_MAGIC) {
-        throw new Error("Invalid magic string in binary header.");
-      }
-      if (version !== 2) {
-        throw new Error("Incompatible version in binary header.");
-      }
-      const chunks = {};
-      let chunkOffset = 12;
-      while (chunkOffset < length) {
-        const chunkHeaderView = new DataView(arrayBuffer, chunkOffset, 8);
-        const chunkLength = chunkHeaderView.getUint32(0, true);
-        const chunkType = chunkHeaderView.getUint32(4, true);
-        chunks[chunkType] = arrayBuffer.slice(chunkOffset + 8, chunkOffset + 8 + chunkLength);
-        chunkOffset += chunkLength + 8;
-      }
-      if (!chunks[CHUNK_TYPE.JSON]) {
-        throw new Error("File contained no json chunk.");
-      }
-      const decoder = new TextDecoder("utf-8");
-      const jsonString = decoder.decode(chunks[CHUNK_TYPE.JSON]);
-      return this.loadFromJson(JSON.parse(jsonString), baseUrl, chunks[CHUNK_TYPE.BIN]);
-    }
-    /**
-     * Load the glTF json, parse the data and create our {@link GPUCurtainsGLTF} object.
-     * @param json - already parsed JSON content.
-     * @param baseUrl - base url from which to get all the other assets.
-     * @param binaryChunk - optional binary chunks.
-     * @returns - the {@link GPUCurtainsGLTF} created.
-     * @async
-     */
-    async loadFromJson(json, baseUrl, binaryChunk = null) {
-      this.gltf = await this.loadFromJsonBase(json, baseUrl, binaryChunk);
-      return this.gltf;
-    }
-  }
-
   var __accessCheck$1 = (obj, member, msg) => {
     if (!member.has(obj))
       throw TypeError("Cannot " + msg);
@@ -16305,7 +16185,7 @@ fn getIBL(
     return value;
   };
   var _primitiveInstances;
-  const GL = WebGLRenderingContext;
+  const GL$1 = WebGLRenderingContext;
   const _normalMatrix = new Mat4();
   const _GLTFScenesManager = class _GLTFScenesManager {
     /**
@@ -16388,17 +16268,17 @@ fn getIBL(
      */
     static getTypedArrayConstructorFromComponentType(componentType) {
       switch (componentType) {
-        case GL.BYTE:
+        case GL$1.BYTE:
           return Int8Array;
-        case GL.UNSIGNED_BYTE:
+        case GL$1.UNSIGNED_BYTE:
           return Uint8Array;
-        case GL.SHORT:
+        case GL$1.SHORT:
           return Int16Array;
-        case GL.UNSIGNED_SHORT:
+        case GL$1.UNSIGNED_SHORT:
           return Uint16Array;
-        case GL.UNSIGNED_INT:
+        case GL$1.UNSIGNED_INT:
           return Uint32Array;
-        case GL.FLOAT:
+        case GL$1.FLOAT:
         default:
           return Float32Array;
       }
@@ -16410,15 +16290,15 @@ fn getIBL(
      */
     static gpuPrimitiveTopologyForMode(mode) {
       switch (mode) {
-        case GL.TRIANGLES:
+        case GL$1.TRIANGLES:
           return "triangle-list";
-        case GL.TRIANGLE_STRIP:
+        case GL$1.TRIANGLE_STRIP:
           return "triangle-strip";
-        case GL.LINES:
+        case GL$1.LINES:
           return "line-list";
-        case GL.LINE_STRIP:
+        case GL$1.LINE_STRIP:
           return "line-strip";
-        case GL.POINTS:
+        case GL$1.POINTS:
           return "point-list";
       }
     }
@@ -16429,9 +16309,9 @@ fn getIBL(
      */
     static gpuAddressModeForWrap(wrap) {
       switch (wrap) {
-        case GL.CLAMP_TO_EDGE:
+        case GL$1.CLAMP_TO_EDGE:
           return "clamp-to-edge";
-        case GL.MIRRORED_REPEAT:
+        case GL$1.MIRRORED_REPEAT:
           return "mirror-repeat";
         default:
           return "repeat";
@@ -16450,20 +16330,20 @@ fn getIBL(
             addressModeU: _GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapS),
             addressModeV: _GLTFScenesManager.gpuAddressModeForWrap(sampler.wrapT)
           };
-          if (!sampler.magFilter || sampler.magFilter === GL.LINEAR) {
+          if (!sampler.magFilter || sampler.magFilter === GL$1.LINEAR) {
             descriptor.magFilter = "linear";
           }
           switch (sampler.minFilter) {
-            case GL.NEAREST:
+            case GL$1.NEAREST:
               break;
-            case GL.LINEAR:
-            case GL.LINEAR_MIPMAP_NEAREST:
+            case GL$1.LINEAR:
+            case GL$1.LINEAR_MIPMAP_NEAREST:
               descriptor.minFilter = "linear";
               break;
-            case GL.NEAREST_MIPMAP_LINEAR:
+            case GL$1.NEAREST_MIPMAP_LINEAR:
               descriptor.mipmapFilter = "linear";
               break;
-            case GL.LINEAR_MIPMAP_LINEAR:
+            case GL$1.LINEAR_MIPMAP_LINEAR:
             default:
               descriptor.minFilter = "linear";
               descriptor.mipmapFilter = "linear";
@@ -16674,10 +16554,7 @@ fn getIBL(
           this.createNode(sceneDescriptor, node);
         });
       });
-      this.scenesManager.scenes.forEach((childScene) => {
-        childScene.node.shouldUpdateModelMatrix();
-        childScene.node.updateMatrixStack();
-      });
+      this.scenesManager.node.updateMatrixStack();
       for (const [primitive, primitiveInstance] of __privateGet(this, _primitiveInstances)) {
         const { instances, nodes, meshDescriptor } = primitiveInstance;
         const instancesCount = instances.length;
@@ -16923,6 +16800,7 @@ fn getIBL(
      */
     addMeshes(patchMeshesParameters = (meshDescriptor) => {
     }) {
+      this.scenesManager.node.updateMatrixStack();
       return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
         if (meshDescriptor.parameters.geometry) {
           patchMeshesParameters(meshDescriptor);
@@ -16945,12 +16823,6 @@ fn getIBL(
               mesh.storages.instances.modelMatrix.shouldUpdate = true;
               mesh.storages.instances.normalMatrix.shouldUpdate = true;
             };
-            this.renderer.onAfterRenderScene.add(
-              () => {
-                mesh.shouldUpdateModelMatrix();
-              },
-              { once: true }
-            );
           }
           if (hasInstancedShadows) {
             const instancesBinding = mesh.material.inputsBindings.get("instances");
@@ -17608,6 +17480,173 @@ fn getIBL(
       { once: true }
     );
   };
+
+  const GL = WebGLRenderingContext;
+  const GLB_MAGIC = 1179937895;
+  const CHUNK_TYPE = {
+    JSON: 1313821514,
+    BIN: 5130562
+  };
+  const DEFAULT_TRANSLATION = [0, 0, 0];
+  const DEFAULT_ROTATION = [0, 0, 0, 1];
+  const DEFAULT_SCALE = [1, 1, 1];
+  const absUriRegEx = typeof window !== "undefined" && new RegExp(`^${window.location.protocol}`, "i") || RegExp(`^(http|https):`, "i");
+  const dataUriRegEx = /^data:/;
+  class GLTFLoader {
+    /**
+     * {@link GLTFLoader} constructor.
+     */
+    constructor() {
+      this.gltf = null;
+    }
+    /**
+     * Build the absolute uri of the resource
+     * @param uri - uri of the resource
+     * @param baseUrl - base url from which to get all the other assets.
+     * @returns - absolute uri of the resource
+     */
+    static resolveUri(uri, baseUrl) {
+      if (!!uri.match(absUriRegEx) || !!uri.match(dataUriRegEx)) {
+        return uri;
+      }
+      return baseUrl + uri;
+    }
+    /**
+     * Load a glTF from the given url.
+     * @param url - url of the glTF.
+     * @returns - the {@link GPUCurtainsGLTF} created.
+     * @async
+     */
+    async loadFromUrl(url) {
+      const i = url.lastIndexOf("/");
+      const baseUrl = i !== 0 ? url.substring(0, i + 1) : "";
+      const response = await fetch(url);
+      if (url.endsWith(".gltf")) {
+        return this.loadFromJson(await response.json(), baseUrl);
+      } else if (url.endsWith(".glb")) {
+        return this.loadFromBinary(await response.arrayBuffer(), baseUrl);
+      } else {
+        throw new Error("Unrecognized file extension");
+      }
+    }
+    /**
+     * Parse a {@link GLTF.IGLTF | glTF json} and create our {@link gltf} base object.
+     * @param json - already parsed JSON content.
+     * @param baseUrl - base url from which to get all the other assets.
+     * @param binaryChunk - optional binary chunks.
+     * @returns - {@link gltf} base object.
+     * @async
+     */
+    async loadFromJsonBase(json, baseUrl, binaryChunk = null) {
+      if (!baseUrl) {
+        throw new Error("baseUrl must be specified.");
+      }
+      if (!json.asset) {
+        throw new Error("Missing asset description.");
+      }
+      if (json.asset.minVersion !== "2.0" && json.asset.version !== "2.0") {
+        throw new Error("Incompatible asset version.");
+      }
+      for (const accessor of json.accessors) {
+        accessor.byteOffset = accessor.byteOffset ?? 0;
+        accessor.normalized = accessor.normalized ?? false;
+      }
+      for (const bufferView of json.bufferViews) {
+        bufferView.byteOffset = bufferView.byteOffset ?? 0;
+      }
+      for (const node of json.nodes) {
+        if (!node.matrix) {
+          node.rotation = node.rotation ?? DEFAULT_ROTATION;
+          node.scale = node.scale ?? DEFAULT_SCALE;
+          node.translation = node.translation ?? DEFAULT_TRANSLATION;
+        }
+      }
+      if (json.samplers) {
+        for (const sampler of json.samplers) {
+          sampler.wrapS = sampler.wrapS ?? GL.REPEAT;
+          sampler.wrapT = sampler.wrapT ?? GL.REPEAT;
+        }
+      }
+      const pendingBuffers = [];
+      if (binaryChunk) {
+        pendingBuffers.push(Promise.resolve(binaryChunk));
+      } else {
+        for (const index in json.buffers) {
+          const buffer = json.buffers[index];
+          const uri = GLTFLoader.resolveUri(buffer.uri, baseUrl);
+          pendingBuffers[index] = fetch(uri).then((response) => response.arrayBuffer());
+        }
+      }
+      const pendingImages = [];
+      for (let index = 0; index < json.images?.length || 0; ++index) {
+        const image = json.images[index];
+        if (image.uri) {
+          pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
+            return createImageBitmap(await response.blob());
+          });
+        } else {
+          const bufferView = json.bufferViews[image.bufferView];
+          pendingImages[index] = pendingBuffers[bufferView.buffer].then((buffer) => {
+            const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], {
+              type: image.mimeType
+            });
+            return createImageBitmap(blob);
+          });
+        }
+      }
+      return {
+        ...json,
+        arrayBuffers: await Promise.all(pendingBuffers),
+        imagesBitmaps: await Promise.all(pendingImages)
+      };
+    }
+    /**
+     * Load a glTF from a .glb file.
+     * @param arrayBuffer - {@link ArrayBuffer} containing the data.
+     * @param baseUrl - base url from which to get all the other assets.
+     * @returns - the {@link GPUCurtainsGLTF} created.
+     * @async
+     */
+    async loadFromBinary(arrayBuffer, baseUrl) {
+      const headerView = new DataView(arrayBuffer, 0, 12);
+      const magic = headerView.getUint32(0, true);
+      const version = headerView.getUint32(4, true);
+      const length = headerView.getUint32(8, true);
+      if (magic !== GLB_MAGIC) {
+        throw new Error("Invalid magic string in binary header.");
+      }
+      if (version !== 2) {
+        throw new Error("Incompatible version in binary header.");
+      }
+      const chunks = {};
+      let chunkOffset = 12;
+      while (chunkOffset < length) {
+        const chunkHeaderView = new DataView(arrayBuffer, chunkOffset, 8);
+        const chunkLength = chunkHeaderView.getUint32(0, true);
+        const chunkType = chunkHeaderView.getUint32(4, true);
+        chunks[chunkType] = arrayBuffer.slice(chunkOffset + 8, chunkOffset + 8 + chunkLength);
+        chunkOffset += chunkLength + 8;
+      }
+      if (!chunks[CHUNK_TYPE.JSON]) {
+        throw new Error("File contained no json chunk.");
+      }
+      const decoder = new TextDecoder("utf-8");
+      const jsonString = decoder.decode(chunks[CHUNK_TYPE.JSON]);
+      return this.loadFromJson(JSON.parse(jsonString), baseUrl, chunks[CHUNK_TYPE.BIN]);
+    }
+    /**
+     * Load the glTF json, parse the data and create our {@link GPUCurtainsGLTF} object.
+     * @param json - already parsed JSON content.
+     * @param baseUrl - base url from which to get all the other assets.
+     * @param binaryChunk - optional binary chunks.
+     * @returns - the {@link GPUCurtainsGLTF} created.
+     * @async
+     */
+    async loadFromJson(json, baseUrl, binaryChunk = null) {
+      this.gltf = await this.loadFromJsonBase(json, baseUrl, binaryChunk);
+      return this.gltf;
+    }
+  }
 
   var __accessCheck = (obj, member, msg) => {
     if (!member.has(obj))

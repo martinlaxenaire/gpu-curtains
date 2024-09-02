@@ -69,11 +69,11 @@ export { SphereGeometry } from './extras/geometries/SphereGeometry'
 export { PingPongPlane } from './extras/meshes/PingPongPlane'
 
 // gltf extras
-export { GLTFLoader } from './extras/gltf/GLTFLoader'
 export { GLTFScenesManager } from './extras/gltf/GLTFScenesManager'
 export * from './extras/gltf/utils'
 
 // loaders
+export { GLTFLoader } from './extras/loaders/GLTFLoader'
 export { HDRLoader } from './extras/loaders/HDRLoader'
 
 // debug

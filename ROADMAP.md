@@ -17,6 +17,7 @@
 - Sampler class
 - RenderTarget (render to textures)
 - RenderPass (render pass descriptors) with MRT support
+- Lights & Shadows
 - Shader passes
 - PingPongPlane
 - Plane raycasting
@@ -29,12 +30,12 @@
 ## Work in progress
 
 - Examples & tests
-- Lights & Shadows
 
 ## TODO / possible improvements
 
-- Add/improve GLTFScenesManager features
+- Add/improve GLTFScenesManager features (sparse accessors, animations, morphing, skinning...)
 - Mesh raycasting
+- Add more lights (SpotLight...)
 - Improve typedoc documentation?
 - Use render bundles? Probably not suited to the library tho
 - Use indirect draw calls?
