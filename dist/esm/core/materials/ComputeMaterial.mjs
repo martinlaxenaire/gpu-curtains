@@ -71,6 +71,8 @@ class ComputeMaterial extends Material {
    * @async
    */
   async compileMaterial() {
+    if (this.ready)
+      return;
     super.compileMaterial();
     if (this.pipelineEntry && this.pipelineEntry.canCompile) {
       this.setPipelineEntryProperties();

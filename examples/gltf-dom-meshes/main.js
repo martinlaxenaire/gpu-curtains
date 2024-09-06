@@ -1,6 +1,8 @@
 import {
   GPUCurtains,
   GLTFLoader,
+  AmbientLight,
+  DirectionalLight,
   GLTFScenesManager,
   buildShaders,
   DOMMesh,
@@ -26,6 +28,16 @@ window.addEventListener('load', async () => {
   gpuCurtains.onError(() => {
     // display original images
     document.body.classList.add('no-curtains')
+  })
+
+  // LIGHTS
+  const ambientLight = new AmbientLight(gpuCurtains, {
+    intensity: 0.1, // will be updated
+  })
+
+  const directionalLight = new DirectionalLight(gpuCurtains, {
+    position: new Vec3(20),
+    intensity: 1,
   })
 
   const gltfElement = document.querySelector('#gltf')
@@ -119,57 +131,7 @@ window.addEventListener('load', async () => {
     const meshes = gltfScenesManager.addMeshes((meshDescriptor) => {
       const { parameters } = meshDescriptor
 
-      // add lights
-      parameters.uniforms = {
-        ...parameters.uniforms,
-        ...{
-          ambientLight: {
-            struct: {
-              intensity: {
-                type: 'f32',
-                value: 0.1,
-              },
-              color: {
-                type: 'vec3f',
-                value: new Vec3(1),
-              },
-            },
-          },
-          directionalLight: {
-            struct: {
-              position: {
-                type: 'vec3f',
-                value: new Vec3(5),
-              },
-              color: {
-                type: 'vec3f',
-                value: new Vec3(1),
-              },
-              intensity: {
-                type: 'f32',
-                value: 1,
-              },
-            },
-          },
-        },
-      }
-
-      // shaders
-      const ambientContribution = /* wgsl */ `
-        lightContribution.ambient = ambientLight.intensity * ambientLight.color;
-      `
-
-      const lightContribution = /* wgsl */ `
-        // An extremely simple directional lighting model, just to give our model some shape.
-        // N is already defined as
-        // let N = normalize(normal);
-        let L: vec3f = normalize(directionalLight.position - worldPosition);
-        let NDotL: f32 = max(dot(N, L), 0.0);
-
-        lightContribution.diffuse += NDotL * directionalLight.color * directionalLight.intensity;
-      `
-
-      parameters.shaders = buildShaders(meshDescriptor, { chunks: { ambientContribution, lightContribution } })
+      parameters.shaders = buildShaders(meshDescriptor, { shadingModel: 'Phong' })
     })
   }
 

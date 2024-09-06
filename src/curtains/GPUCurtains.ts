@@ -103,6 +103,7 @@ export class GPUCurtains {
     adapterOptions = {},
     renderPass,
     camera,
+    lights,
     autoRender = true,
     autoResize = true,
     watchScroll = true,
@@ -114,6 +115,7 @@ export class GPUCurtains {
       label,
       pixelRatio,
       camera,
+      lights,
       production,
       adapterOptions,
       preferredFormat,
@@ -185,6 +187,7 @@ export class GPUCurtains {
       alphaMode: this.options.alphaMode,
       renderPass: this.options.renderPass,
       camera: this.options.camera,
+      lights: this.options.lights,
     })
   }
 

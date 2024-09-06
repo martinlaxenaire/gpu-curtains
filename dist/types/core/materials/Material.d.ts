@@ -150,13 +150,18 @@ export declare class Material {
      */
     destroyBindGroups(): void;
     /**
-     * {@link BindGroup#update | Update} all bind groups:
-     * - Update all {@link texturesBindGroups | textures bind groups} textures
-     * - Update its {@link BindGroup#bufferBindings | buffer bindings}
-     * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}
-     * - Check if we need to flush the pipeline
+     * Update all bind groups.
      */
     updateBindGroups(): void;
+    /**
+     * {@link BindGroup#update | Update a bind group}:
+     * - Update the textures if it's a {@link texturesBindGroups | textures bind group}.
+     * - Update its {@link BindGroup#bufferBindings | buffer bindings}.
+     * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}.
+     * - Check if we need to flush the pipeline.
+     * @param bindGroup - {@link BindGroup} to update.
+     */
+    updateBindGroup(bindGroup: BindGroup): void;
     /**
      * Look for a {@link BindGroupBindingElement | binding} by name in all {@link inputsBindings | input bindings}
      * @param bindingName - the binding name or key

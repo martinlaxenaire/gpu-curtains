@@ -1,7 +1,7 @@
 /// <reference types="dist" />
 import { CameraRenderer } from '../../core/renderers/utils';
 import { GLTF } from '../../types/gltf/GLTF';
-import { GLTFLoader } from './GLTFLoader';
+import { GLTFLoader } from '../loaders/GLTFLoader';
 import { Texture } from '../../core/textures/Texture';
 import { Mesh } from '../../core/meshes/Mesh';
 import { TypedArrayConstructor } from '../../core/bindings/utils';

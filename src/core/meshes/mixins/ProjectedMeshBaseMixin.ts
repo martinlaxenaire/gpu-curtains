@@ -12,10 +12,16 @@ import { GPUCurtains } from '../../../curtains/GPUCurtains'
 import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement'
 import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
 import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
-import default_projected_vsWgsl from '../../shaders/chunks/default_projected_vs.wgsl'
-import default_normal_fsWgsl from '../../shaders/chunks/default_normal_fs.wgsl'
+import default_projected_vsWgsl from '../../shaders/chunks/default/default_projected_vs.wgsl'
+import default_normal_fsWgsl from '../../shaders/chunks/default/default_normal_fs.wgsl'
 import { BufferBindingParams } from '../../bindings/BufferBinding'
 import { Vec3 } from '../../../math/Vec3'
+import {
+  getPCFDirectionalShadows,
+  getPCFPointShadowContribution,
+  getPCFPointShadows,
+  getPCFShadowContribution,
+} from '../../shaders/chunks/shading/shadows'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean
@@ -26,8 +32,13 @@ export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean
 export interface ProjectedMeshBaseParams {
   /** Frustum culling check to use. Accepts `OBB`, `sphere` or a boolean. Default to `OBB`. When set to `true`, `OBB` is used. */
   frustumCulling?: FrustumCullingCheck
-  /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
+  /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not. */
   DOMFrustumMargins?: RectCoords
+
+  /** Whether the mesh should receive the shadows from shadow casting lights. If set to `true`, the lights shadow map textures and sampler will be added to the material, and some shader chunks helpers will be added. Default to `false`. */
+  receiveShadows?: boolean
+  /** Whether the mesh should cast shadows from shadow casting lights. If set to `true`, the mesh will be automatically added to all shadow maps. If you want to cast only specific shadows, see {@link core/shadows/Shadow.Shadow#addShadowCastingMesh | shadow's addShadowCastingMesh} method. Default to `false`. */
+  castShadows?: boolean
 }
 
 /** Parameters used to create a ProjectedMesh */
@@ -46,6 +57,8 @@ const defaultProjectedMeshParams: ProjectedMeshBaseParams = {
     bottom: 0,
     left: 0,
   },
+  receiveShadows: false,
+  castShadows: false,
 }
 
 /** Base options used to create this ProjectedMesh */
@@ -233,12 +246,22 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
 
       this.renderer = renderer
 
-      const { frustumCulling, DOMFrustumMargins } = parameters
+      const { frustumCulling, DOMFrustumMargins, receiveShadows, castShadows } = parameters
 
       this.options = {
         ...(this.options ?? {}), // merge possible lower options?
         frustumCulling,
         DOMFrustumMargins,
+        receiveShadows,
+        castShadows,
+      }
+
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.addShadowCastingMesh(this)
+          }
+        })
       }
 
       this.setDOMFrustum()
@@ -331,9 +354,49 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       delete parameters.frustumCulling
       delete parameters.DOMFrustumMargins
 
-      super.cleanupRenderMaterialParameters(parameters)
+      if (this.options.receiveShadows) {
+        const depthTextures = []
+        let depthSamplers = []
 
-      return parameters
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            depthTextures.push(light.shadow.depthTexture)
+            depthSamplers.push(light.shadow.depthComparisonSampler)
+          }
+        })
+
+        // add chunks to shaders
+        // TODO what if we change the mesh renderer?
+        const hasActiveShadows = this.renderer.shadowCastingLights.find((light) => light.shadow.isActive)
+
+        if (hasActiveShadows && parameters.shaders.fragment && typeof parameters.shaders.fragment === 'object') {
+          parameters.shaders.fragment.code =
+            getPCFDirectionalShadows(this.renderer) +
+            getPCFShadowContribution +
+            getPCFPointShadows(this.renderer) +
+            getPCFPointShadowContribution +
+            parameters.shaders.fragment.code
+        }
+
+        // filter duplicate depth comparison samplers
+        depthSamplers = depthSamplers.filter(
+          (sampler, i, array) => array.findIndex((s) => s.uuid === sampler.uuid) === i
+        )
+
+        if (parameters.textures) {
+          parameters.textures = [...parameters.textures, ...depthTextures]
+        } else {
+          parameters.textures = depthTextures
+        }
+
+        if (parameters.samplers) {
+          parameters.samplers = [...parameters.samplers, ...depthSamplers]
+        } else {
+          parameters.samplers = depthSamplers
+        }
+      }
+
+      return super.cleanupRenderMaterialParameters(parameters)
     }
 
     /**
@@ -575,6 +638,18 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         // then render our geometry
         this.geometry.render(pass)
       }
+    }
+
+    destroy() {
+      if (this.options.castShadows) {
+        this.renderer.shadowCastingLights.forEach((light) => {
+          if (light.shadow.isActive) {
+            light.shadow.removeMesh(this)
+          }
+        })
+      }
+
+      super.destroy()
     }
   }
 }

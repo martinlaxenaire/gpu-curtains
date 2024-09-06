@@ -412,24 +412,32 @@ export class Material {
   }
 
   /**
-   * {@link BindGroup#update | Update} all bind groups:
-   * - Update all {@link texturesBindGroups | textures bind groups} textures
-   * - Update its {@link BindGroup#bufferBindings | buffer bindings}
-   * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}
-   * - Check if we need to flush the pipeline
+   * Update all bind groups.
    */
   updateBindGroups() {
     // now update all bind groups in use and check if they need to flush the pipeline
     for (const bindGroup of this.bindGroups) {
-      bindGroup.update()
+      this.updateBindGroup(bindGroup)
+    }
+  }
 
-      // if a bind group needs to flush the pipeline
-      // usually happens if one of the struct bindingType has changed,
-      // which means the shader should be re-patched and recreated
-      if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
-        this.pipelineEntry.flushPipelineEntry(this.bindGroups)
-        bindGroup.needsPipelineFlush = false
-      }
+  /**
+   * {@link BindGroup#update | Update a bind group}:
+   * - Update the textures if it's a {@link texturesBindGroups | textures bind group}.
+   * - Update its {@link BindGroup#bufferBindings | buffer bindings}.
+   * - Check if it eventually needs a {@link BindGroup#resetBindGroup | reset}.
+   * - Check if we need to flush the pipeline.
+   * @param bindGroup - {@link BindGroup} to update.
+   */
+  updateBindGroup(bindGroup: BindGroup) {
+    bindGroup.update()
+
+    // if a bind group needs to flush the pipeline
+    // usually happens if one of the struct bindingType has changed,
+    // which means the shader should be re-patched and recreated
+    if (bindGroup.needsPipelineFlush && this.pipelineEntry.ready) {
+      this.pipelineEntry.flushPipelineEntry(this.bindGroups)
+      bindGroup.needsPipelineFlush = false
     }
   }
 

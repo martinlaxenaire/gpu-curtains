@@ -51,8 +51,7 @@ window.addEventListener('load', async () => {
   camera.lookAt()
 
   const orbitControls = new OrbitControls(gpuCameraRenderer)
-  orbitControls.minZoom = -1
-  orbitControls.maxZoom = 2
+  orbitControls.maxZoom = 12
 
   // render our scene manually
   const animate = () => {

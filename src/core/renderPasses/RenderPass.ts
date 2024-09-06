@@ -234,7 +234,7 @@ export class RenderPass {
   /**
    * Set our render pass {@link descriptor}
    */
-  setRenderPassDescriptor() {
+  setRenderPassDescriptor(depthTextureView = null) {
     this.descriptor = {
       label: this.options.label + ' descriptor',
       colorAttachments: this.options.colorAttachments.map((colorAttachment, index) => {
@@ -262,9 +262,11 @@ export class RenderPass {
 
       ...(this.options.useDepth && {
         depthStencilAttachment: {
-          view: this.depthTexture.texture.createView({
-            label: this.depthTexture.texture.label + ' view',
-          }),
+          view:
+            depthTextureView ||
+            this.depthTexture.texture.createView({
+              label: this.depthTexture.texture.label + ' view',
+            }),
           depthClearValue: this.options.depthClearValue,
           // the same way loadOp is working, we can specify if we want to clear or load the previous depth buffer result
           depthLoadOp: this.options.depthLoadOp,

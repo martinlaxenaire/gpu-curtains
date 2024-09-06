@@ -38,16 +38,17 @@ class Camera extends Object3D {
     }
   } = {}) {
     super();
-    /** Private {@link Camera} field of view */
+    /** @ignore */
     __privateAdd(this, _fov, void 0);
-    /** Private {@link Camera} near plane */
+    /** @ignore */
     __privateAdd(this, _near, void 0);
-    /** Private {@link Camera} far plane */
+    /** @ignore */
     __privateAdd(this, _far, void 0);
-    /** Private {@link Camera} pixel ratio, used in {@link CSSPerspective} calcs */
+    /** @ignore */
     __privateAdd(this, _pixelRatio, void 0);
     this.uuid = generateUUID();
     this.position.set(0, 0, 10);
+    this.up = new Vec3(0, 1, 0);
     this.onMatricesChanged = onMatricesChanged;
     this.size = {
       width: 1,
@@ -289,7 +290,7 @@ class Camera extends Object3D {
    * @param position - {@link Vec3 | postion} from which to look at
    */
   lookAt(target = new Vec3(), position = this.position) {
-    super.lookAt(position, target);
+    super.lookAt(position, target, this.up);
   }
   /**
    * Updates the {@link Camera} {@link projectionMatrix}

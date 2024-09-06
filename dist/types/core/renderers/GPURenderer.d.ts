@@ -449,7 +449,7 @@ export declare class GPURenderer {
      */
     forceClear(commandEncoder?: GPUCommandEncoder): void;
     /**
-     * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created
+     * Called by the {@link GPUDeviceManager#render | GPUDeviceManager render method} before the {@link GPUCommandEncoder} has been created. Used to update the {@link Scene} matrix stack.
      */
     onBeforeCommandEncoder(): void;
     /**

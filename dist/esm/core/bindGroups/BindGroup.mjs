@@ -71,6 +71,26 @@ class BindGroup {
     this.bindings.push(binding);
   }
   /**
+   * Destroy a {@link BufferBinding} buffers.
+   * @param binding - {@link BufferBinding} from which to destroy the buffers.
+   */
+  destroyBufferBinding(binding) {
+    if ("buffer" in binding) {
+      this.renderer.removeBuffer(binding.buffer);
+      binding.buffer.consumers.delete(this.uuid);
+      if (!binding.buffer.consumers.size) {
+        binding.buffer.destroy();
+      }
+    }
+    if ("resultBuffer" in binding) {
+      this.renderer.removeBuffer(binding.resultBuffer);
+      binding.resultBuffer.consumers.delete(this.uuid);
+      if (!binding.resultBuffer.consumers.size) {
+        binding.resultBuffer.destroy();
+      }
+    }
+  }
+  /**
    * Creates Bindings based on a list of inputs
    * @param bindingType - {@link core/bindings/Binding.Binding#bindingType | binding type}
    * @param inputs - {@link ReadOnlyInputBindings | inputs (uniform or storage)} that will be used to create the binding
@@ -312,14 +332,14 @@ class BindGroup {
     this.bindings.forEach((binding, index) => {
       if ("buffer" in binding) {
         binding.update();
-        if (binding.shouldUpdate) {
+        if (binding.shouldUpdate && binding.buffer.GPUBuffer) {
           if (!binding.useStruct && binding.bufferElements.length > 1) {
             this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.bufferElements[index].view);
           } else {
             this.renderer.queueWriteBuffer(binding.buffer.GPUBuffer, 0, binding.arrayBuffer);
           }
+          binding.shouldUpdate = false;
         }
-        binding.shouldUpdate = false;
       }
     });
   }
@@ -401,20 +421,7 @@ class BindGroup {
   destroy() {
     this.renderer.removeBindGroup(this);
     for (const binding of this.bufferBindings) {
-      if ("buffer" in binding) {
-        this.renderer.removeBuffer(binding.buffer);
-        binding.buffer.consumers.delete(this.uuid);
-        if (!binding.buffer.consumers.size) {
-          binding.buffer.destroy();
-        }
-      }
-      if ("resultBuffer" in binding) {
-        this.renderer.removeBuffer(binding.resultBuffer);
-        binding.resultBuffer.consumers.delete(this.uuid);
-        if (!binding.resultBuffer.consumers.size) {
-          binding.resultBuffer.destroy();
-        }
-      }
+      this.destroyBufferBinding(binding);
     }
     this.bindings = [];
     this.bindGroupLayout = null;

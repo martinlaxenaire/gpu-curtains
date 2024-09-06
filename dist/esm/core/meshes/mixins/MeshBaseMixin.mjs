@@ -3,8 +3,8 @@ import { isRenderer } from '../../renderers/utils.mjs';
 import { RenderMaterial } from '../../materials/RenderMaterial.mjs';
 import { DOMTexture } from '../../textures/DOMTexture.mjs';
 import { Texture } from '../../textures/Texture.mjs';
-import default_vsWgsl from '../../shaders/chunks/default_vs.wgsl.mjs';
-import default_fsWgsl from '../../shaders/chunks/default_fs.wgsl.mjs';
+import default_vsWgsl from '../../shaders/chunks/default/default_vs.wgsl.mjs';
+import default_fsWgsl from '../../shaders/chunks/default/default_fs.wgsl.mjs';
 
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj))

@@ -397,10 +397,7 @@ const _GLTFScenesManager = class _GLTFScenesManager {
         this.createNode(sceneDescriptor, node);
       });
     });
-    this.scenesManager.scenes.forEach((childScene) => {
-      childScene.node.shouldUpdateModelMatrix();
-      childScene.node.updateMatrixStack();
-    });
+    this.scenesManager.node.updateMatrixStack();
     for (const [primitive, primitiveInstance] of __privateGet(this, _primitiveInstances)) {
       const { instances, nodes, meshDescriptor } = primitiveInstance;
       const instancesCount = instances.length;
@@ -646,9 +643,14 @@ const _GLTFScenesManager = class _GLTFScenesManager {
    */
   addMeshes(patchMeshesParameters = (meshDescriptor) => {
   }) {
+    this.scenesManager.node.updateMatrixStack();
     return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
       if (meshDescriptor.parameters.geometry) {
         patchMeshesParameters(meshDescriptor);
+        const hasInstancedShadows = meshDescriptor.parameters.geometry.instancesCount > 1 && meshDescriptor.parameters.castShadows;
+        if (hasInstancedShadows) {
+          meshDescriptor.parameters.castShadows = false;
+        }
         const mesh = new Mesh(this.renderer, {
           ...meshDescriptor.parameters
         });
@@ -664,12 +666,16 @@ const _GLTFScenesManager = class _GLTFScenesManager {
             mesh.storages.instances.modelMatrix.shouldUpdate = true;
             mesh.storages.instances.normalMatrix.shouldUpdate = true;
           };
-          this.renderer.onAfterRenderScene.add(
-            () => {
-              mesh.shouldUpdateModelMatrix();
-            },
-            { once: true }
-          );
+        }
+        if (hasInstancedShadows) {
+          const instancesBinding = mesh.material.inputsBindings.get("instances");
+          this.renderer.shadowCastingLights.forEach((light) => {
+            if (light.shadow.isActive) {
+              light.shadow.addShadowCastingMesh(mesh, {
+                bindings: [instancesBinding]
+              });
+            }
+          });
         }
         mesh.parent = meshDescriptor.parent;
         this.scenesManager.meshes.push(mesh);

@@ -14,8 +14,12 @@ export type FrustumCullingCheck = 'OBB' | 'sphere' | boolean;
 export interface ProjectedMeshBaseParams {
     /** Frustum culling check to use. Accepts `OBB`, `sphere` or a boolean. Default to `OBB`. When set to `true`, `OBB` is used. */
     frustumCulling?: FrustumCullingCheck;
-    /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not */
+    /** Margins (in pixels) to applied to the {@link ProjectedMeshBaseClass#domFrustum | DOM Frustum} to determine if this ProjectedMesh should be frustum culled or not. */
     DOMFrustumMargins?: RectCoords;
+    /** Whether the mesh should receive the shadows from shadow casting lights. If set to `true`, the lights shadow map textures and sampler will be added to the material, and some shader chunks helpers will be added. Default to `false`. */
+    receiveShadows?: boolean;
+    /** Whether the mesh should cast shadows from shadow casting lights. If set to `true`, the mesh will be automatically added to all shadow maps. If you want to cast only specific shadows, see {@link core/shadows/Shadow.Shadow#addShadowCastingMesh | shadow's addShadowCastingMesh} method. Default to `false`. */
+    castShadows?: boolean;
 }
 /** Parameters used to create a ProjectedMesh */
 export interface ProjectedMeshParameters extends MeshBaseParams, ProjectedMeshBaseParams {
